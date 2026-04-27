@@ -1,0 +1,55 @@
+models:
+  - name: int_pregnancy_episodes_all
+    description: 'Person-level pregnancy episodes assembled from raw pregnancy observations.
+
+      Key Features:
+
+      • One row per pregnancy episode, with episode_start and episode_end
+
+      • episode_end = earliest delivery or pregnancy-loss code after start, else fallback at start + max_pregnancy_episode_weeks
+
+      • episode_end capped at start + max_pregnancy_episode_weeks (default 42) to guard against mis-dated outcome records
+
+      • outcome_type indicates how the episode ended: delivery, pregnancy_loss, or fallback_max_duration
+
+      Purpose: Provide a reusable episode-level view for cohort-building and exclusion-window logic.'
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - episode_id
+    columns:
+      - name: person_id
+        description: 'Unique identifier for the person'
+        tests:
+          - not_null
+      - name: episode_id
+        description: 'Sequential episode number per person (1 = earliest recorded pregnancy episode)'
+        tests:
+          - not_null
+      - name: episode_start
+        description: 'Date of the earliest pregnancy code in the episode'
+        tests:
+          - not_null
+      - name: episode_end
+        description: 'Date the episode ends: earliest delivery or loss code after start, else start + max_pregnancy_episode_weeks'
+        tests:
+          - not_null
+      - name: outcome_type
+        description: 'How the episode ended: delivery, pregnancy_loss, or fallback_max_duration'
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - delivery
+                  - pregnancy_loss
+                  - fallback_max_duration
+      - name: delivery_date
+        description: 'Earliest delivery code date in the episode, if any'
+      - name: loss_date
+        description: 'Earliest pregnancy-loss code date in the episode, if any'

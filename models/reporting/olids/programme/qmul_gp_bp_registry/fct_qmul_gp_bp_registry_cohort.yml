@@ -1,0 +1,49 @@
+models:
+  - name: fct_qmul_gp_bp_registry_cohort
+    description: 'Final QMUL GP BP Registry research cohort.
+
+      Persons on the QOF hypertension register with at least one oral antihypertensive medication order, whose eligible BP readings (post pregnancy/HDP-window exclusion, within the 2010-2025 extraction window) meet the spacing rule: at least qmul_gp_bp_registry_min_qualifying_readings readings spaced qmul_gp_bp_registry_min_reading_gap_weeks apart, spanning qmul_gp_bp_registry_min_span_months.
+      One row per included person.'
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+    columns:
+      - name: person_id
+        description: 'Unique identifier for the person'
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('dim_person')
+                field: person_id
+      - name: age
+        description: 'Current age in years'
+        tests:
+          - not_null
+      - name: earliest_diagnosis_date
+        description: 'Earliest active hypertension diagnosis date'
+      - name: latest_diagnosis_date
+        description: 'Most recent hypertension diagnosis date'
+      - name: earliest_antihyp_order_date
+        description: 'Earliest oral antihypertensive medication order date'
+      - name: latest_antihyp_order_date
+        description: 'Most recent oral antihypertensive medication order date'
+      - name: qualifying_reading_count
+        description: 'Number of readings in the spacing chain for this person'
+      - name: span_start
+        description: 'Date of the first reading in the chain'
+      - name: span_end
+        description: 'Date of the last reading in the chain'
+      - name: span_days
+        description: 'Days from span_start to span_end'
+      - name: inclusion_first_met_date
+        description: 'Date the patient first satisfies the BP spacing rule. Anchor for downstream extraction of BP / antihypertensive data within the inclusion window and beyond.'
+        tests:
+          - not_null
