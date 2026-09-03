@@ -1,0 +1,115 @@
+models:
+  - name: int_medication_adherence_order_durations
+    description: >
+      Dose parsing, calculated durations and refill chains for the
+      medicines-adherence (PDC) pipeline. Parses free-text dose instructions to
+      tablets_per_day (faithful replication of the original pattern precedence),
+      derives calculated_duration and order_enddate, deduplicates same-day
+      orders keeping the highest quantity, and computes days to the next order
+      per (person, drug) chain — in both the original 0-filled form and a
+      corrected NULL-on-last-order form. Port of MedicationTableSnowpark
+      clean_dose / calculate_duration_and_flags / calculate_order_end_date /
+      calculate_days_to_next_order; see the model header for documented
+      divergences. One row per (person_id, drug_name, order_date).
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - drug_name
+              - order_date
+    columns:
+      - name: medication_order_id
+        description: Source order id of the surviving row after same-day dedup (for traceability).
+        tests:
+          - not_null
+      - name: person_id
+        description: Person identifier.
+        tests:
+          - not_null
+      - name: order_date
+        description: Order date.
+        tests:
+          - not_null
+      - name: drug_name
+        description: Drug grouping key — VTM code where resolvable (see int_medication_adherence_orders).
+        tests:
+          - not_null
+      - name: drug_name_source
+        description: Resolution level of drug_name (VTM_SNOMED / VTM_BNF / CONCEPT_DISPLAY).
+      - name: vtm_name
+        description: Readable VTM label for drug_name; NULL on fallback rows.
+      - name: drug_class
+        description: Adherence drug class label.
+        tests:
+          - not_null
+      - name: bnf_code
+        description: Full presentation-level BNF code of the surviving order.
+      - name: dose
+        description: Free-text dose instructions as received.
+      - name: dose_clean
+        description: Normalised dose text the parser ran on (lowercased, '0d'->'od', whitespace collapsed). Retained for QA.
+      - name: count_token
+        description: First number-word or digit token extracted from dose_clean. Retained for QA.
+      - name: frequency
+        description: Parsed doses-per-day frequency (1-4, defaults to 1 when no pattern matches).
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 1
+                max_value: 4
+      - name: tablet_count
+        description: Parsed tablets per dose (numeric <= 4 kept, number-words mapped, else 1).
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 10
+      - name: tablets_per_day
+        description: tablet_count * frequency.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 40
+      - name: quantity_unit
+        description: Oral-form quantity unit.
+      - name: quantity_value
+        description: Quantity value; same-day dedup keeps the highest.
+      - name: duration_days
+        description: Source-recorded duration in days.
+      - name: calculated_duration_raw
+        description: quantity_value / tablets_per_day (NULL when either input unusable).
+      - name: duration_flag
+        description: 1 when calculated_duration_raw differs from duration_days (null-unsafe comparison, faithful to the original).
+        tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+      - name: calculated_duration
+        description: calculated_duration_raw, falling back to duration_days.
+      - name: order_enddate
+        description: order_date + calculated_duration days.
+      - name: next_order_date
+        description: Next order date in the (person, drug) chain; NULL on the final order.
+      - name: days_to_next_order
+        description: >
+          Days to the next order, 0-filled on the final order of each chain —
+          faithful to the original, and the source of the last-order quirk in
+          the PDC model.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: days_to_next_order_corrected
+        description: Days to the next order, NULL on the final order (corrected variant).
+      - name: is_last_order
+        description: TRUE on the final order of the (person, drug) chain.
