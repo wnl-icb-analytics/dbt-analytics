@@ -1,11 +1,11 @@
 models:
-  - name: int_cholesterol_all
-    description: 'Total cholesterol for all people, including inactive and deceased people. One row per
-      observation in the PCD CHOL2_COD cluster. Missing or future original clinical dates are excluded.
-      Invalid values and unsupported units remain available for audit. Valid means 0.5 to 20 mmol/L inclusive.
-      Concentrations retain source precision after unit conversion; values are not rounded before comparison.
-      The existing descriptive bands are retained: below 5 desirable, 5 to below 6.2 borderline high,
-      and 6.2 or above high. These are not NICE treatment targets.'
+  - name: int_cholesterol_hdl_ratio_all
+    description: Total cholesterol to HDL ratio for all people, including inactive and deceased people.
+      One row per observation in the PCD TCHOLHDL_COD cluster. Missing or future original clinical dates
+      are excluded. Invalid values and unsupported units remain available for audit. Valid means a positive
+      finite ratio. Blank units and explicit unknown-unit markers are inferred from the PCD ratio observable; incompatible recorded units
+      are invalid. Dimensionless total cholesterol divided by HDL as recorded. The model does not calculate
+      a ratio from separately dated results or assign a universal treatment target.
     config:
       meta:
         owner:
@@ -28,11 +28,10 @@ models:
         description: Original clinical effective date before the shared date correction.
       - name: date_recorded
         description: Date the observation was recorded in the source.
-      - name: cholesterol_value
-        description: Concentration in mmol/L, without display rounding. Null when a recorded unit is missing
-          or unsupported. Consult the validity flag before using the value.
+      - name: cholesterol_hdl_ratio
+        description: Recorded ratio after unit validation; null for an unsupported unit.
       - name: result_unit_display
-        description: 'Standard unit: mmol/L. Null when the unit cannot be standardised.'
+        description: 'Standard unit: ratio.'
       - name: original_result_value
         description: Numeric result before unit conversion.
       - name: original_result_unit_code
@@ -43,23 +42,20 @@ models:
           neither is available.
       - name: unit_status
         description: Whether the unit was recorded in standard form, converted, missing or unsupported.
-          Missing concentration units are not inferred from the value.
+          Blank ratio units and explicit unknown-unit markers are inferred from the observable.
       - name: concept_code
         description: Recorded mapped clinical concept code matched to the PCD cluster.
       - name: concept_display
         description: Recorded mapped clinical concept label.
       - name: source_cluster_id
-        description: 'Authoritative PCD observation cluster: CHOL2_COD.'
+        description: 'Authoritative PCD observation cluster: TCHOLHDL_COD.'
       - name: sampling_context
         description: Fasting, non-fasting or random only when specified in the PCD code description. Otherwise
           Not specified; no sampling status is inferred from the numeric value.
-      - name: is_valid_cholesterol
+      - name: is_valid_cholesterol_hdl_ratio
         description: Whether the result satisfies the documented validity rule. False includes missing
           values and unsupported units.
-      - name: cholesterol_category
-        description: 'The existing descriptive bands are retained: below 5 desirable, 5 to below 6.2 borderline
-          high, and 6.2 or above high. These are not NICE treatment targets.'
     tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: CHOL2_COD
+            cluster_ids: TCHOLHDL_COD

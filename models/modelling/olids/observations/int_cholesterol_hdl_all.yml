@@ -1,11 +1,12 @@
 models:
-  - name: int_cholesterol_all
-    description: 'Total cholesterol for all people, including inactive and deceased people. One row per
-      observation in the PCD CHOL2_COD cluster. Missing or future original clinical dates are excluded.
-      Invalid values and unsupported units remain available for audit. Valid means 0.5 to 20 mmol/L inclusive.
-      Concentrations retain source precision after unit conversion; values are not rounded before comparison.
-      The existing descriptive bands are retained: below 5 desirable, 5 to below 6.2 borderline high,
-      and 6.2 or above high. These are not NICE treatment targets.'
+  - name: int_cholesterol_hdl_all
+    description: HDL cholesterol for all people, including inactive and deceased people. One row per observation
+      in the PCD HDLCCHOL_COD cluster. Missing or future original clinical dates are excluded. Invalid
+      values and unsupported units remain available for audit. Valid means a positive, finite value with
+      a recognised unit. Concentrations retain source precision after unit conversion; values are not
+      rounded before comparison. Numeric bands support the HEART UK reference levels above 1.0 mmol/L
+      for men and above 1.2 for women. No sex is inferred from the observation, and higher HDL is not
+      necessarily protective.
     config:
       meta:
         owner:
@@ -49,7 +50,7 @@ models:
       - name: concept_display
         description: Recorded mapped clinical concept label.
       - name: source_cluster_id
-        description: 'Authoritative PCD observation cluster: CHOL2_COD.'
+        description: 'Authoritative PCD observation cluster: HDLCCHOL_COD.'
       - name: sampling_context
         description: Fasting, non-fasting or random only when specified in the PCD code description. Otherwise
           Not specified; no sampling status is inferred from the numeric value.
@@ -57,9 +58,10 @@ models:
         description: Whether the result satisfies the documented validity rule. False includes missing
           values and unsupported units.
       - name: cholesterol_category
-        description: 'The existing descriptive bands are retained: below 5 desirable, 5 to below 6.2 borderline
-          high, and 6.2 or above high. These are not NICE treatment targets.'
+        description: Numeric bands support the HEART UK reference levels above 1.0 mmol/L for men and
+          above 1.2 for women. No sex is inferred from the observation, and higher HDL is not necessarily
+          protective.
     tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: CHOL2_COD
+            cluster_ids: HDLCCHOL_COD

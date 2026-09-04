@@ -1,91 +1,100 @@
 models:
   - name: int_cholesterol_latest
-    description: 'Most recent valid cholesterol measurement per person for cardiovascular risk assessment and statin therapy decision-making.
-
-      One row per person with their latest cholesterol including clinical cholesterol categorisation and data quality validation.'
-
-    tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
+    description: 'Total cholesterol for all people, including inactive and deceased people. One row per
+      person with a valid recorded result. Validity is filtered before ranking by clinical effective date
+      descending, then observation ID descending for ties. People without valid results are absent. Valid
+      means 0.5 to 20 mmol/L inclusive. Concentrations retain source precision after unit conversion;
+      values are not rounded before comparison. The existing descriptive bands are retained: below 5 desirable,
+      5 to below 6.2 borderline high, and 6.2 or above high. These are not NICE treatment targets.'
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.heartuk.org.uk/cholesterol/understanding-your-cholesterol-test-results-
+        code_source: PCD
+        indicator:
+          id: CHOLESTEROL_LATEST
+          type: PATHOLOGY
+          category: LABORATORY_RESULT
+          clinical_domain: Cardiometabolic
+          name_short: Latest Cholesterol
+          description_short: Most recent total cholesterol measurement for cardiovascular risk assessment
+          description_long: Latest valid total cholesterol in mmol/L for all people. Descriptive bands
+            are below 5, 5 to below 6.2, and 6.2 or above. These bands do not define NICE primary or secondary
+            prevention treatment targets.
+          is_qof: false
+          source_column: cholesterol_value
+          usage_contexts:
+            - LABORATORY_MONITORING
+          code_clusters:
+            - cluster_id: CHOL2_COD
+              category: INCLUSION
+          thresholds:
+            - population_group: ALL
+              threshold_type: DESIRABLE
+              threshold_value: '5'
+              threshold_operator: BELOW
+              threshold_unit: mmol/L
+              description: Total cholesterol below 5 mmol/L
+              sort_order: 1
+            - population_group: ALL
+              threshold_type: BORDERLINE_HIGH
+              threshold_value: '6.2'
+              threshold_operator: BELOW
+              threshold_unit: mmol/L
+              description: Legacy descriptive band from 5 to below 6.2 mmol/L
+              sort_order: 2
+            - population_group: ALL
+              threshold_type: HIGH
+              threshold_value: '6.2'
+              threshold_operator: AT_OR_ABOVE
+              threshold_unit: mmol/L
+              description: Legacy descriptive band at or above 6.2 mmol/L
+              sort_order: 3
     columns:
+      - name: id
+        description: Source observation identifier. Used to break ties deterministically; it does not
+          imply clinical priority.
       - name: person_id
+        description: Person identifier. No active-registration or age restriction is applied.
         tests:
           - unique
           - not_null
-
-    config:
-      meta:
-        indicator:
-          id: "CHOLESTEROL_LATEST"
-          type: "PATHOLOGY"
-          category: "LABORATORY_RESULT"
-          clinical_domain: "Cardiometabolic"
-          name_short: "Latest Cholesterol"
-          description_short: "Most recent total cholesterol measurement for cardiovascular risk assessment"
-          description_long: >
-            Latest valid total cholesterol measurement per person supporting cardiovascular
-            risk assessment
-            and statin therapy decision-making. Provides current lipid profile status
-            with clinical
-            categorisation for cardiovascular risk stratification (<5 mmol/L desirable,
-            <4 mmol/L secondary
-            prevention target, ≥6.2 mmol/L high requiring intervention). Key biomarker
-            for primary and
-            secondary cardiovascular prevention programmes, diabetes care pathways,
-            and lipid management
-            protocols. Supports QOF reporting and clinical guideline compliance monitoring.
-          is_qof: false
-          source_column: "cholesterol_value"
-          usage_contexts:
-            - "LABORATORY_MONITORING"
-          code_clusters:
-            - cluster_id: "CHOL_COD"
-              category: "INCLUSION"
-          thresholds:
-            # Cardiovascular Risk Targets
-            - population_group: "PRIMARY_PREVENTION"
-              threshold_type: "RISK_REDUCTION_TARGET"
-              threshold_value: "5"
-              threshold_operator: "BELOW"
-              threshold_unit: "mmol/L"
-              description: "Primary prevention cholesterol target"
-              sort_order: 1
-            - population_group: "SECONDARY_PREVENTION"
-              threshold_type: "RISK_REDUCTION_TARGET"
-              threshold_value: "4"
-              threshold_operator: "BELOW"
-              threshold_unit: "mmol/L"
-              description: "Secondary prevention cholesterol target for established CVD"
-              sort_order: 2
-            - population_group: "DIABETES"
-              threshold_type: "DIABETES_TARGET"
-              threshold_value: "5"
-              threshold_operator: "BELOW"
-              threshold_unit: "mmol/L"
-              description: "Cholesterol target for diabetes patients"
-              sort_order: 3
-            # Clinical Categories
-            - population_group: "ALL"
-              threshold_type: "DESIRABLE"
-              threshold_value: "5"
-              threshold_operator: "BELOW"
-              threshold_unit: "mmol/L"
-              description: "Desirable cholesterol level"
-              sort_order: 4
-            - population_group: "ALL"
-              threshold_type: "BORDERLINE_HIGH"
-              threshold_value: "6.2"
-              threshold_operator: "BELOW"
-              threshold_unit: "mmol/L"
-              description: "Borderline high cholesterol requiring lifestyle advice"
-              sort_order: 5
-            - population_group: "ALL"
-              threshold_type: "HIGH"
-              threshold_value: "6.2"
-              threshold_operator: "AT_OR_ABOVE"
-              threshold_unit: "mmol/L"
-              description: "High cholesterol requiring intervention"
-              sort_order: 6
-        owner:
-          name: EddieDavison92
+      - name: clinical_effective_date
+        description: Observation date after the shared OLIDS correction for events dated after their recording
+          date.
+      - name: clinical_effective_date_raw
+        description: Original clinical effective date before the shared date correction.
+      - name: date_recorded
+        description: Date the observation was recorded in the source.
+      - name: cholesterol_value
+        description: Concentration in mmol/L, without display rounding. Null when a recorded unit is missing
+          or unsupported. Consult the validity flag before using the value.
+      - name: result_unit_display
+        description: 'Standard unit: mmol/L. Null when the unit cannot be standardised.'
+      - name: original_result_value
+        description: Numeric result before unit conversion.
+      - name: original_result_unit_code
+        description: Mapped unit code where supplied, otherwise the source unit concept code. Null if
+          neither is available.
+      - name: original_result_unit_display
+        description: Mapped unit label where supplied, otherwise the source unit concept label. Null if
+          neither is available.
+      - name: unit_status
+        description: Whether the unit was recorded in standard form, converted, missing or unsupported.
+          Missing concentration units are not inferred from the value.
+      - name: concept_code
+        description: Recorded mapped clinical concept code matched to the PCD cluster.
+      - name: concept_display
+        description: Recorded mapped clinical concept label.
+      - name: source_cluster_id
+        description: 'Authoritative PCD observation cluster: CHOL2_COD.'
+      - name: sampling_context
+        description: Fasting, non-fasting or random only when specified in the PCD code description. Otherwise
+          Not specified; no sampling status is inferred from the numeric value.
+      - name: is_valid_cholesterol
+        description: Whether the result satisfies the documented validity rule. False includes missing
+          values and unsupported units.
+      - name: cholesterol_category
+        description: 'The existing descriptive bands are retained: below 5 desirable, 5 to below 6.2 borderline
+          high, and 6.2 or above high. These are not NICE treatment targets.'

@@ -1,11 +1,11 @@
 models:
-  - name: int_cholesterol_all
-    description: 'Total cholesterol for all people, including inactive and deceased people. One row per
-      observation in the PCD CHOL2_COD cluster. Missing or future original clinical dates are excluded.
-      Invalid values and unsupported units remain available for audit. Valid means 0.5 to 20 mmol/L inclusive.
-      Concentrations retain source precision after unit conversion; values are not rounded before comparison.
-      The existing descriptive bands are retained: below 5 desirable, 5 to below 6.2 borderline high,
-      and 6.2 or above high. These are not NICE treatment targets.'
+  - name: int_cholesterol_non_hdl_latest
+    description: Non-HDL cholesterol for all people, including inactive and deceased people. One row per
+      person with a valid recorded result. Validity is filtered before ranking by clinical effective date
+      descending, then observation ID descending for ties. People without valid results are absent. Valid
+      means a positive, finite value with a recognised unit. Concentrations retain source precision after
+      unit conversion; values are not rounded before comparison. The general healthy-adult reference limit
+      is below 4 mmol/L. NICE secondary prevention uses a separate target of 2.6 mmol/L or below.
     config:
       meta:
         owner:
@@ -16,11 +16,11 @@ models:
       - name: id
         description: Source observation identifier. Used to break ties deterministically; it does not
           imply clinical priority.
+      - name: person_id
+        description: Person identifier. No active-registration or age restriction is applied.
         tests:
           - unique
           - not_null
-      - name: person_id
-        description: Person identifier. No active-registration or age restriction is applied.
       - name: clinical_effective_date
         description: Observation date after the shared OLIDS correction for events dated after their recording
           date.
@@ -49,7 +49,7 @@ models:
       - name: concept_display
         description: Recorded mapped clinical concept label.
       - name: source_cluster_id
-        description: 'Authoritative PCD observation cluster: CHOL2_COD.'
+        description: 'Authoritative PCD observation cluster: NONHDLCCHOL_COD.'
       - name: sampling_context
         description: Fasting, non-fasting or random only when specified in the PCD code description. Otherwise
           Not specified; no sampling status is inferred from the numeric value.
@@ -57,9 +57,5 @@ models:
         description: Whether the result satisfies the documented validity rule. False includes missing
           values and unsupported units.
       - name: cholesterol_category
-        description: 'The existing descriptive bands are retained: below 5 desirable, 5 to below 6.2 borderline
-          high, and 6.2 or above high. These are not NICE treatment targets.'
-    tests:
-      - cluster_ids_exist:
-          arguments:
-            cluster_ids: CHOL2_COD
+        description: The general healthy-adult reference limit is below 4 mmol/L. NICE secondary prevention
+          uses a separate target of 2.6 mmol/L or below.

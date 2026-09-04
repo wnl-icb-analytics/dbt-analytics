@@ -1,16 +1,10 @@
 models:
   - name: dq_cholesterol_issues
-    description: 'Data quality issues in cholesterol measurements requiring clinical review.
-
-      Quality Criteria:
-
-      • Valid range: 0.5-20 mmol/L (physiologically plausible values)
-
-      • Extreme outliers: >15 mmol/L (require clinical validation)
-
-      • Date validation: Missing or future dates
-
-      Purpose: Supports cholesterol data validation and clinical review of extreme values.'
+    description: >
+      One row per total cholesterol observation failing the shared validity rule.
+      Includes concentrations outside 0.5 to 20 mmol/L, missing numeric results,
+      and missing or unsupported units. Source observations with missing or future
+      clinical dates are excluded upstream. Includes all people.
     config:
       meta:
         owner:
@@ -21,6 +15,9 @@ models:
 
       - name: id
         description: Observation record identifier
+        tests:
+          - unique
+          - not_null
 
       - name: clinical_effective_date
         description: Date of cholesterol measurement
@@ -30,6 +27,12 @@ models:
 
       - name: result_unit_display
         description: Unit of measurement
+
+      - name: original_result_unit_display
+        description: Recorded unit label before standardisation, including source concept fallback.
+
+      - name: unit_status
+        description: Whether the original unit was standard, converted, missing or unsupported.
 
       - name: concept_code
         description: Concept code for cholesterol measurement

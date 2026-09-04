@@ -1,19 +1,68 @@
 models:
   - name: int_cholesterol_ldl_all
-    description: 'LDL (bad) cholesterol measurements for cardiovascular risk assessment with clinical categorisation.
-
-      One row per cholesterol observation using LDLCCHOL_COD cluster '
+    description: LDL cholesterol for all people, including inactive and deceased people. One row per observation
+      in the PCD LDLCCHOL_COD cluster. Missing or future original clinical dates are excluded. Invalid
+      values and unsupported units remain available for audit. Valid means a positive, finite value with
+      a recognised unit. Concentrations retain source precision after unit conversion; values are not
+      rounded before comparison. The general healthy-adult reference limit is below 3 mmol/L. This is
+      not a treatment target for people with cardiovascular disease.
     config:
       meta:
         owner:
           name: KateHomer55
+        clinical_source: https://www.heartuk.org.uk/cholesterol/understanding-your-cholesterol-test-results-
+        code_source: PCD
+    columns:
+      - name: id
+        description: Source observation identifier. Used to break ties deterministically; it does not
+          imply clinical priority.
+        tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Person identifier. No active-registration or age restriction is applied.
+      - name: clinical_effective_date
+        description: Observation date after the shared OLIDS correction for events dated after their recording
+          date.
+      - name: clinical_effective_date_raw
+        description: Original clinical effective date before the shared date correction.
+      - name: date_recorded
+        description: Date the observation was recorded in the source.
+      - name: cholesterol_value
+        description: Concentration in mmol/L, without display rounding. Null when a recorded unit is missing
+          or unsupported. Consult the validity flag before using the value.
+      - name: result_unit_display
+        description: 'Standard unit: mmol/L. Null when the unit cannot be standardised.'
+      - name: original_result_value
+        description: Numeric result before unit conversion.
+      - name: original_result_unit_code
+        description: Mapped unit code where supplied, otherwise the source unit concept code. Null if
+          neither is available.
+      - name: original_result_unit_display
+        description: Mapped unit label where supplied, otherwise the source unit concept label. Null if
+          neither is available.
+      - name: unit_status
+        description: Whether the unit was recorded in standard form, converted, missing or unsupported.
+          Missing concentration units are not inferred from the value.
+      - name: concept_code
+        description: Recorded mapped clinical concept code matched to the PCD cluster.
+      - name: concept_display
+        description: Recorded mapped clinical concept label.
+      - name: source_cluster_id
+        description: 'Authoritative PCD observation cluster: LDLCCHOL_COD.'
+      - name: sampling_context
+        description: Fasting, non-fasting or random only when specified in the PCD code description. Otherwise
+          Not specified; no sampling status is inferred from the numeric value.
+      - name: is_valid_cholesterol
+        description: Whether the result satisfies the documented validity rule. False includes missing
+          values and unsupported units.
+      - name: cholesterol_category
+        description: The general healthy-adult reference limit is below 3 mmol/L. This is not a treatment
+          target for people with cardiovascular disease.
+      - name: ldl_cvd_target_met
+        description: 'Legacy numeric flag: Met for valid LDL at or below 2 mmol/L, Not Met above 2, Unknown
+          for invalid results. Does not apply a CVD population, exclusions or a reporting period.'
     tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: LDLCCHOL_COD
-    columns:
-      - name: id
-        description: Unique identifier for each cholesterol observation
-        tests:
-          - unique
-          - not_null

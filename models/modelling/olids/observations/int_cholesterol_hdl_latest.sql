@@ -17,9 +17,8 @@ SELECT
     source_cluster_id,
     sampling_context,
     is_valid_cholesterol,
-    cholesterol_category,
-    ldl_cvd_target_met
-FROM {{ ref('int_cholesterol_ldl_all') }}
+    cholesterol_category
+FROM {{ ref('int_cholesterol_hdl_all') }}
 WHERE is_valid_cholesterol
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id
