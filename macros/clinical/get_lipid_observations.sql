@@ -11,8 +11,8 @@ recorded AS (
         obs.clinical_effective_date_raw,
         obs.date_recorded,
         obs.result_value AS original_result_value,
-        COALESCE(NULLIF(TRIM(obs.result_unit_code), ''), units.code) AS original_result_unit_code,
-        COALESCE(NULLIF(TRIM(obs.result_unit_display), ''), units.display) AS original_result_unit_display,
+        COALESCE(NULLIF(TRIM(obs.result_unit_code), ''), NULLIF(TRIM(units.code), '')) AS original_result_unit_code,
+        COALESCE(NULLIF(TRIM(obs.result_unit_display), ''), NULLIF(TRIM(units.display), '')) AS original_result_unit_display,
         -- OLIDS often retains the source unit concept without a mapped unit.
         LOWER(REPLACE(COALESCE(
             NULLIF(TRIM(obs.result_unit_display), ''),

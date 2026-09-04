@@ -1,0 +1,32 @@
+version: 2
+
+macros:
+  - name: get_lipid_observations
+    description: >
+      Lipid observations from one PCD cluster, one row per source observation
+      across all people. Excludes missing or future original clinical dates and
+      future corrected dates. Returns id, person_id, clinical_effective_date,
+      clinical_effective_date_raw, date_recorded, the named standardised value,
+      result_unit_display, original_result_value, original_result_unit_code,
+      original_result_unit_display, unit_status, concept_code, concept_display,
+      source_cluster_id and sampling_context.
+
+      Concentrations use mmol/L and ratios are dimensionless. Original unit
+      fields prefer observation units and fall back to source concept units;
+      blank values are null. Missing or unsupported concentration units produce
+      a null standardised value. Missing ratio units can be inferred from the
+      PCD observable; incompatible recorded units cannot. Values are not rounded.
+      Calling models define numeric validity and clinical categories.
+    arguments:
+      - name: cluster_id
+        type: string
+        description: Single PCD lipid cluster identifier, without SQL quotes or a comma-separated list.
+      - name: value_column
+        type: string
+        description: Unquoted snake_case SQL identifier for the returned standardised numeric value.
+      - name: triglycerides
+        type: boolean
+        description: Defaults to false. True uses triglyceride mass-conversion factors instead of cholesterol factors. Ignored when ratio is true.
+      - name: ratio
+        type: boolean
+        description: Defaults to false. True returns a dimensionless ratio, accepts equivalent ratio units and infers absent or explicitly unknown units from the PCD observable. No concentration conversion is applied.
