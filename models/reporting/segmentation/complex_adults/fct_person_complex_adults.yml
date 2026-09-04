@@ -1,0 +1,157 @@
+models:
+  - name: fct_person_complex_adults
+    description: |
+      Complex adults cohort (v2.2): adults with both clinical complexity and
+      high service use. Segment 7 of fct_person_segment.
+
+      Grain: one row per cohort member, keyed on person_id.
+
+      Population: everyone in dim_person_demographics aged 18+, i.e. anyone
+      with NCL GP registration history, including people who have since left
+      or died. Filter is_active = TRUE for the currently registered
+      population.
+
+      Membership needs a complexity criterion AND a utilisation criterion.
+
+      Complexity (any one):
+
+      - Moderate or severe frailty, by eFI2 or coded diagnosis
+      - 3+ of the 16 included LTCs
+      - Homeless
+      - On the palliative care register
+      - Alcohol misuse
+      - Substance misuse
+      - High acute use with no GP contact: 3+ ED attendances or 2+
+        non-elective admissions, with no attended GP appointment
+
+      Utilisation (any one, over a rolling 12 months):
+
+      - 3+ ED attendances
+      - 2+ non-elective admissions
+      - 15+ attended GP appointments
+      - Outpatient care across 5+ treatment-function specialties
+      - Housebound
+
+      Included LTCs (16): AF, asthma, CHD, CKD, COPD, dementia, depression,
+      diabetes, epilepsy, heart failure, hypertension, SMI, stroke/TIA,
+      Parkinson's, anxiety, and learning disability (65+ only). NAFLD is not
+      included here, unlike the wider segmentation LTC list.
+
+      Notes:
+
+      - Every criterion is exposed as its own column alongside
+        complexity_criteria_count, so the marginal contribution of any one
+        can be measured without rebuilding the model.
+      - Frailty is additive across its two sources: eFI2 scores only living
+        over-65s, the coded register has no age or death restriction.
+      - ED attendances cover all ECDS urgent and emergency care settings
+        (Type 1/2 A&E, UTC, WiC, SDEC).
+      - GP appointments are attended clinical appointments; DNAs and admin
+        are excluded.
+      - 12-month windows end on the latest activity date in each source, to
+        allow for reporting lag.
+
+      Criteria signed off by K Saravanakumar, 27 July 2026 (v2.0). v2.1 added
+      GP activity and outpatient specialty breadth to the utilisation limb;
+      v2.2 added high acute use with no GP contact to the complexity limb, as
+      a direct entry route for people using acute services with no primary
+      care footprint.
+
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        data_tests:
+          - unique
+          - not_null
+      - name: sk_patient_id
+        description: Pseudonymised patient key for joining to SUS activity
+      - name: is_active
+        description: Currently registered with an NCL GP practice
+      - name: age
+        description: Current age (>= 18 for all cohort members)
+
+      - name: has_learning_disability
+        description: On the learning disability register AND aged 65+. Only counts
+          towards ltc_count at 65+, so this is FALSE for under-65s on the register.
+      - name: ltc_count
+        description: Count of the 16 included LTC registers the person is on
+          (learning disability counted only at 65+)
+      - name: has_3plus_ltcs
+        description: Complexity criterion - ltc_count >= 3
+
+      - name: efi2_score
+        description: eFI2 score from fct_person_efi2. NULL for under-65s and deceased
+          persons, who are outside the eFI2 scoring population.
+      - name: efi2_category
+        description: eFI2 frailty category (ROBUST, MILD FRAILTY, MODERATE FRAILTY,
+          SEVERE FRAILTY). NULL for under-65s and deceased persons.
+      - name: has_efi2_moderate_severe_frailty
+        description: eFI2 category is MODERATE FRAILTY or SEVERE FRAILTY
+      - name: latest_frailty_severity
+        description: Latest recorded coded frailty severity (Mild, Moderate, Severe,
+          Unknown; null if not on the frailty register)
+      - name: has_coded_moderate_severe_frailty
+        description: Latest coded frailty severity is Moderate or Severe
+      - name: has_moderate_severe_frailty
+        description: Complexity criterion - moderate/severe frailty by eFI2 OR coded
+          diagnosis. Additive because eFI2 covers only living 65+, while the coded
+          register has no age or death restriction.
+
+      - name: is_homeless
+        description: Complexity criterion - latest residential code is a homelessness
+          code, or registered with the Camden Health Improvement Practice (Y02674)
+      - name: is_on_palliative_care_register
+        description: Complexity criterion - on the QOF palliative care register
+      - name: has_alcohol_misuse
+        description: Complexity criterion - any ALCOHOL_MISUSE_DISORDERS record, ever.
+          Ever-coded rather than active, because the cluster includes alcohol-caused
+          disease that does not resolve.
+      - name: latest_alcohol_disorder_date
+        description: Date of the most recent alcohol misuse disorder record
+      - name: has_substance_misuse
+        description: Complexity criterion - most recent ILLSUB_COD record is
+          QUALIFYING (see int_substance_misuse_status)
+      - name: latest_substance_misuse_date
+        description: Date of the most recent qualifying substance misuse record
+      - name: has_high_acute_use_no_gp
+        description: Complexity criterion - (>=3 ED attendances OR >=2 NEL
+          admissions in the last 12 months) AND 0 attended GP appointments in
+          the GP 12-month window. The GP side uses the same definition as
+          gp_appointments_12mo (attended clinical appointments only, lag-aware
+          window), so this flags acute service use with no primary care contact.
+
+      - name: complexity_criteria_count
+        description: How many of the seven complexity criteria the person meets
+          (1-7). A value of 1 means the person would leave the cohort if that
+          single criterion were removed.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 7
+
+      - name: nel_admissions_12mo
+        description: Non-elective admissions in last 12 months (SUS APC, admission methods 2x, births excluded)
+      - name: ed_attendances_12mo
+        description: Urgent & emergency care attendances in last 12 months (ECDS, all department types - Type 1/2 A&E, UTC, WiC, SDEC)
+      - name: gp_appointments_12mo
+        description: Activity criterion input - attended clinical GP appointments
+          in last 12 months (int_appointment_gp_clinical_recent, any clinical
+          practitioner role; DNAs and admin excluded). Criterion is >=15.
+      - name: outpatient_specialties_12mo
+        description: Activity criterion input - distinct treatment-function
+          specialties with an attended outpatient appointment in the last 12
+          months. Criterion is >=5.
+      - name: is_housebound
+        description: Latest housebound status is housebound

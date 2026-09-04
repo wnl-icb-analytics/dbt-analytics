@@ -1,0 +1,119 @@
+models:
+  - name: fct_person_complex_children
+    description: |
+      Children with complexity cohort: under-18s with complex health needs,
+      significant service use, or both. Segment 3 of fct_person_segment.
+
+      Grain: one row per cohort member, keyed on person_id.
+
+      Population: everyone in dim_person_demographics aged under 18, i.e.
+      anyone with NCL GP registration history, including people who have
+      since left. Filter is_active = TRUE for the currently registered
+      population.
+
+      Membership needs any one criterion, over a rolling 12 months unless
+      stated:
+
+      - 2+ qualifying LTCs (ever recorded)
+      - 1+ diagnosis from the NWL complex needs code list (ever recorded)
+      - 5+ attended paediatric outpatient appointments
+      - Outpatient care across 2+ main specialties, excluding trauma and
+        orthopaedics, ENT, ophthalmology, A&E, obstetrics and midwifery
+      - 1+ mental health inpatient stay
+      - 7+ attended community service contacts, excluding Health Visiting
+        Service contacts
+
+      Notes:
+
+      - Every criterion is exposed as its own column alongside
+        complexity_criteria_count, so the marginal contribution of any one
+        can be measured without rebuilding the model.
+      - Criteria and windows are defined in
+        int_segmentation_children_complexity.
+      - Children on the palliative care register appear here but segment as
+        End of Life (segment 8), which outranks complexity.
+      - 12-month windows end on the latest activity date in each source, to
+        allow for reporting lag.
+      - Community contact counts are a floor: some CSDS records carry no
+        patient key.
+      - Mental health inpatient stays count spells overlapping the window,
+        so long-stay patients admitted before it are included.
+
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        data_tests:
+          - unique
+          - not_null
+      - name: sk_patient_id
+        description: Pseudonymised patient key for joining to SUS/MHSDS/CSDS activity
+      - name: is_active
+        description: Currently registered with an NCL GP practice
+      - name: age
+        description: Current age (< 18 for all cohort members)
+      - name: ltc_count
+        description: Count of qualifying LTC registers (16 complex adults
+          conditions + NAFLD; CYP-aware)
+      - name: ltc_list
+        description: Sorted array of qualifying condition codes (null if none)
+      - name: has_2plus_ltcs
+        description: Criterion - on 2+ qualifying LTC registers
+      - name: complexity_diagnosis_codes
+        description: Distinct complexity diagnosis codes ever recorded (NWL
+          CLDCHN code list)
+      - name: latest_complexity_diagnosis_date
+        description: Date of the most recent complexity diagnosis record
+      - name: has_complexity_diagnosis
+        description: Criterion - at least one complexity diagnosis ever recorded
+      - name: paediatric_op_appointments_12mo
+        description: Attended outpatient appointments under a paediatric
+          treatment function in the last 12 months
+      - name: has_5plus_paediatric_op_appointments
+        description: Criterion - paediatric_op_appointments_12mo >= 5
+      - name: outpatient_specialties_12mo
+        description: Distinct main specialties with an attended outpatient
+          appointment in the last 12 months, excluding trauma & orthopaedics,
+          ENT, ophthalmology and A&E
+      - name: outpatient_specialties_excluding_maternity_12mo
+        description: Distinct main specialties after also excluding records
+          coded to obstetrics (501) or midwifery (560) in either main specialty
+          or treatment function
+      - name: has_2plus_outpatient_specialties
+        description: Criterion -
+          outpatient_specialties_excluding_maternity_12mo >= 2
+      - name: mh_inpatient_stays_12mo
+        description: Mental health inpatient spells overlapping the last 12
+          months (MHSDS, open spells included)
+      - name: mh_inpatient_stays_total
+        description: Mental health inpatient spells ever recorded (MHSDS)
+      - name: has_mh_inpatient_stay
+        description: Criterion - mh_inpatient_stays_12mo >= 1
+      - name: community_contacts_12mo
+        description: Attended community service contacts in the last 12 months
+          (CSDS)
+      - name: community_contacts_excluding_health_visiting_12mo
+        description: Attended community service contacts after excluding Health
+          Visiting Service contacts (team type 16)
+      - name: has_7plus_community_contacts
+        description: Criterion -
+          community_contacts_excluding_health_visiting_12mo >= 7
+      - name: complexity_criteria_count
+        description: How many of the six complexity criteria the person meets
+          (1-6). A value of 1 means the person would leave the cohort if that
+          single criterion were removed.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 6

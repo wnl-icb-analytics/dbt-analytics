@@ -1,0 +1,27 @@
+models:
+  - name: fct_complex_adults_nel_admissions
+    description: 'Non-elective admissions in the last 12 months for complex adults
+      cohort members. One row per spell with admission/discharge date and time,
+      length of stay, admission method and provider. End dates are imputed upstream
+      for open/incomplete spells.'
+
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+
+    columns:
+      - name: visit_occurrence_id
+        description: Unique identifier for the spell
+        data_tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Person identifier (cohort member)
+        data_tests:
+          - not_null

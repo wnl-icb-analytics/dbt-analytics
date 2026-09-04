@@ -19,27 +19,37 @@ Includes ALL persons (active, inactive, deceased) within 5 years following inter
 
 */
 
-with op_encounter_summary as(
+with max_attended_date as (
+    select max(start_date) as max_date
+    from {{ ref('int_sus_op_appointment') }}
+    where
+        appointment_attended_or_dna in ('5', '6')
+        and start_date <= current_date()
+),
+op_encounter_summary as(
     select
         sk_patient_id
         , count(distinct case when appointment_attended_or_dna in ('5', '6') -- Attended
                 then visit_occurrence_id end) as op_att_tot_12mo
         , count(distinct case when appointment_attended_or_dna in ('5', '6') -- Attended
-                and start_date between dateadd(month, -3, current_date()) and current_date() 
+                and start_date between dateadd(month, -3, max_date) and max_date
                 then visit_occurrence_id end) as op_att_tot_3mo
         , count(distinct case when appointment_attended_or_dna in ('5', '6') -- Attended
-                and start_date between dateadd(month, -1, current_date()) and current_date() 
+                and start_date between dateadd(month, -1, max_date) and max_date
                 then visit_occurrence_id end) as op_att_tot_1mo
         , count(distinct visit_occurrence_id) as op_app_tot_12mo
         , count(distinct case when appointment_attended_or_dna in ('5', '6') -- Attended
                 and appointment_first_attendance IN ('1', '3') -- First Appointment
                 then visit_occurrence_id end) as op_att_first_12mo
-        , count(distinct treatment_function_code) as op_spec_12mo
-        , count(distinct organisation_id) as op_prov_12mo
-    from 
+        , count(distinct case when appointment_attended_or_dna in ('5', '6')
+                then treatment_function_code end) as op_spec_12mo
+        , count(distinct case when appointment_attended_or_dna in ('5', '6')
+                then organisation_id end) as op_prov_12mo
+    from
         {{ ref('int_sus_op_appointment') }}
+    cross join max_attended_date
     where 
-        start_date between dateadd(month, -12, current_date()) and current_date()
+        start_date between dateadd(month, -12, max_date) and max_date
     group by 
         sk_patient_id
 ),
@@ -48,10 +58,12 @@ count_of_prov_per_spec as(
         sk_patient_id
         , treatment_function_code
         , count(distinct organisation_id) as op_prov_per_spec_12mo
-    from 
+    from
         {{ ref('int_sus_op_appointment') }}
+    cross join max_attended_date
     where 
-        start_date between dateadd(month, -12, current_date()) and current_date()
+        start_date between dateadd(month, -12, max_date) and max_date
+        and appointment_attended_or_dna in ('5', '6')
         and treatment_function_code is not null 
         and organisation_id is not null
     group by 

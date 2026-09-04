@@ -1,0 +1,28 @@
+models:
+  - name: int_segmentation_community_activity
+    description: >
+      Community services activity block for segmentation. One row per
+      sk_patient_id with any attended CSDS care contact in the rolling 12
+      months ending on the latest contact date (lag-aware). Counts are a
+      floor - some CSDS records carry no patient key. The general contact count
+      is retained alongside a count excluding Health Visiting Service contacts
+      (team type 16) for the child complexity criterion.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: sk_patient_id
+        description: Pseudonymised patient key
+        data_tests:
+          - unique
+          - not_null
+      - name: community_contacts_12mo
+        description: Attended contacts in the window
+        data_tests:
+          - not_null
+      - name: community_contacts_excluding_health_visiting_12mo
+        description: Attended contacts in the window excluding Health Visiting
+          Service contacts (team type 16)
+        data_tests:
+          - not_null

@@ -1,0 +1,165 @@
+models:
+  - name: fct_person_segment
+    description: |
+      Population segmentation: every person assigned to exactly one of eight
+      segments.
+
+      Grain: one row per person, keyed on person_id.
+
+      Population: everyone in dim_person_demographics, i.e. anyone with NCL GP
+      registration history, including people who have since left or died.
+      Filter is_active = TRUE for the currently registered population. People
+      never registered in NCL are out of scope, even where commissioning
+      activity exists for them.
+
+      Segments, assigned by hierarchy (highest wins):
+
+      - 8 End of Life - on the palliative care register, any age
+      - 7 Adults with Complexity - 18+, with both a complexity criterion
+        (moderate or severe frailty, 3+ LTCs, homeless, on the palliative
+        care register, alcohol or substance misuse, or high acute use with
+        no GP contact) and a utilisation criterion (3+ ED attendances, 2+
+        non-elective admissions, 15+ attended GP appointments, outpatient
+        care across 5+ treatment-function specialties, or housebound).
+        Activity counted over a rolling 12 months. See
+        fct_person_complex_adults
+      - 6 Adults with Multiple LTCs - 18+, 2+ qualifying LTCs
+      - 5 Adults with a Single LTC - 18+, exactly 1 qualifying LTC
+      - 4 Mostly Healthy Adults - 18+, none of the above
+      - 3 Children with Complexity - under 18, meeting any of: 2+ qualifying
+        LTCs; 1+ diagnosis from the NWL complex needs code list (ever
+        recorded); 5+ attended paediatric outpatient appointments;
+        outpatient care across 2+ main specialties, excluding trauma &
+        orthopaedics, ENT, ophthalmology and A&E; 1+ mental health inpatient
+        stay; 7+ attended community contacts. Activity criteria are over a
+        rolling 12 months. See int_segmentation_children_complexity
+      - 2 Children with Health Needs - under 18, 1+ qualifying LTC
+      - 1 Mostly Healthy Children - under 18, none of the above
+
+      Qualifying LTCs for segments 6, 5, 3 and 2 are the 16 complex adults
+      conditions plus NAFLD (int_segmentation_ltc_count); the complex adults
+      cohort keeps its own list without NAFLD. Segment 3 requires 2+ LTCs, so
+      a single LTC reads as health needs.
+
+      The source cohorts overlap, so each is also exposed as its own boolean
+      alongside the exclusive segment assignment.
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+      - dbt_utils.equal_rowcount:
+          arguments:
+            compare_model: ref('dim_person_demographics')
+      # Adult segments imply age >= 18
+      - dbt_utils.expression_is_true:
+          name: adult_segments_are_adults
+          arguments:
+            expression: "segment_number NOT IN (4, 5, 6, 7) OR age >= 18"
+      # Child segments imply age < 18
+      - dbt_utils.expression_is_true:
+          name: child_segments_are_children
+          arguments:
+            expression: "segment_number NOT IN (1, 2, 3) OR age < 18"
+      # Each segment_number publishes its agreed name. segment_name is derived
+      # from segment_number in the model, so this asserts the published
+      # contract rather than guarding drift: renaming a segment fails here and
+      # has to be an acknowledged breaking change for consumers.
+      - dbt_utils.expression_is_true:
+          name: segment_name_matches_segment_number
+          arguments:
+            expression: >-
+              segment_name = CASE segment_number
+              WHEN 8 THEN 'End of Life'
+              WHEN 7 THEN 'Adults with Complexity'
+              WHEN 6 THEN 'Adults with Multiple LTCs'
+              WHEN 5 THEN 'Adults with a Single LTC'
+              WHEN 4 THEN 'Mostly Healthy Adults'
+              WHEN 3 THEN 'Children with Complexity'
+              WHEN 2 THEN 'Children with Health Needs'
+              WHEN 1 THEN 'Mostly Healthy Children'
+              END
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        data_tests:
+          - unique
+          - not_null
+      - name: sk_patient_id
+        description: Pseudonymised patient key for joining to SUS/MHSDS/CSDS activity
+      - name: segment_number
+        description: Assigned segment, 1-8, mutually exclusive by hierarchy
+          (highest wins)
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5, 6, 7, 8]
+                quote: false
+      - name: segment_name
+        description: Assigned segment name
+        data_tests:
+          - not_null
+      - name: is_active
+        description: Currently registered with an NCL GP practice
+      - name: is_deceased
+        description: Person is recorded as deceased
+      - name: age
+        description: Current age (age at death for deceased persons)
+      - name: gender
+        description: Gender
+      - name: practice_code
+        description: Current or latest practice code
+      - name: practice_name
+        description: Current or latest practice name
+      - name: borough_registered
+        description: Practice borough where patient is registered
+      - name: neighbourhood_registered
+        description: Practice neighbourhood classification
+      - name: is_end_of_life
+        description: Cohort flag - on the QOF palliative care register (segment 8)
+      - name: is_complex_adult
+        description: Cohort flag - in the complex adults cohort
+          (fct_person_complex_adults, segment 7)
+      - name: has_multiple_ltcs
+        description: Cohort flag - aged >= 18 with 2+ qualifying LTCs (segment 6)
+      - name: has_single_ltc
+        description: Cohort flag - aged >= 18 with exactly 1 qualifying LTC
+          (segment 5)
+      - name: is_complex_child
+        description: Cohort flag - aged < 18 meeting any children complexity
+          criterion (segment 3)
+      - name: has_child_health_needs
+        description: Cohort flag - aged < 18 with 1+ qualifying LTC (segment 2)
+      - name: ltc_count
+        description: Count of qualifying LTC registers (16 complex adults
+          conditions + NAFLD; LD at 65+ or under 18)
+      - name: ltc_list
+        description: Sorted array of qualifying condition codes
+      - name: adult_complexity_criteria_count
+        description: Complexity criteria met in the complex adults cohort
+          (null if not in the cohort)
+      - name: child_complexity_criteria_count
+        description: Children complexity criteria met, 0-6 (null for adults)
+      - name: child_has_2plus_ltcs
+        description: Children criterion - 2+ qualifying LTCs (null for adults)
+      - name: child_has_complexity_diagnosis
+        description: Children criterion - 1+ coded complexity diagnosis, against
+          the NWL CLDCHN list in the children_complexity_diagnosis_codes seed
+          (null for adults).
+      - name: child_has_5plus_paediatric_op_appointments
+        description: Children criterion - 5+ attended paediatric outpatient
+          appointments in 12 months (null for adults)
+      - name: child_has_2plus_outpatient_specialties
+        description: Children criterion - attended outpatient care across 2+
+          main specialties in 12 months, excluding trauma & orthopaedics, ENT,
+          ophthalmology and A&E, per NWL (null for adults)
+      - name: child_has_mh_inpatient_stay
+        description: Children criterion - 1+ mental health inpatient stay in
+          12 months, MHSDS spells overlapping the window (null for adults)
+      - name: child_has_7plus_community_contacts
+        description: Children criterion - 7+ attended community service
+          contacts in 12 months, CSDS (null for adults)

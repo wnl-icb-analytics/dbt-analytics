@@ -1,0 +1,27 @@
+models:
+  - name: fct_complex_adults_ed_attendances
+    description: 'Urgent & emergency care attendances (all ECDS settings) in the
+      last 12 months for complex adults cohort members. One row per attendance with
+      setting (pod), arrival/departure date and time, provider, site, chief complaint
+      and primary diagnosis.'
+
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+
+    columns:
+      - name: visit_occurrence_id
+        description: Unique identifier for the attendance
+        data_tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Person identifier (cohort member)
+        data_tests:
+          - not_null

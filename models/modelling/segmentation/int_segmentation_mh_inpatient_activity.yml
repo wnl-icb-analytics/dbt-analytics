@@ -1,0 +1,27 @@
+models:
+  - name: int_segmentation_mh_inpatient_activity
+    description: >
+      Mental health inpatient activity block for segmentation. One row per
+      sk_patient_id with any MHSDS hospital provider spell.
+      mh_inpatient_stays_12mo counts spells overlapping the 12-month window
+      (admitted during it, discharged during it, or spanning it), so
+      long-stay patients admitted before the window still count. The window
+      ends on the latest spell start date (lag-aware).
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: sk_patient_id
+        description: Pseudonymised patient key
+        data_tests:
+          - unique
+          - not_null
+      - name: mh_inpatient_stays_total
+        description: Spells ever recorded
+        data_tests:
+          - not_null
+      - name: mh_inpatient_stays_12mo
+        description: Spells overlapping the window (open spells included)
+        data_tests:
+          - not_null

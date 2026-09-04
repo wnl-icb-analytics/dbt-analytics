@@ -1,0 +1,25 @@
+models:
+  - name: int_segmentation_gp_activity
+    description: >
+      GP activity block for segmentation. One row per person with at least
+      one attended clinical GP appointment in the rolling 12 months ending
+      on the latest attended appointment date (lag-aware). DNAs and admin
+      excluded. Absence of a row means zero attended clinical appointments
+      in the window - fct_person_complex_adults relies on this for both the
+      >=15 appointments activity criterion and the no-GP side of the high
+      acute use criterion.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        data_tests:
+          - unique
+          - not_null
+      - name: gp_appointments_12mo
+        description: Attended clinical GP appointments in the window (>= 1 by
+          construction)
+        data_tests:
+          - not_null
