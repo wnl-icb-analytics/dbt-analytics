@@ -79,10 +79,18 @@ SELECT
     , zeroifnull(op_spec_12mo) as op_spec_12mo
     , zeroifnull(op_prov_12mo) as op_prov_12mo
     , zeroifnull(d.op_num_spec_2_prov_12mo) as op_num_spec_2_prov_12mo
-from 
+    , zeroifnull(dna.op_dna_opportunities_12mo) as op_dna_opportunities_12mo
+    , zeroifnull(dna.op_dna_tot_12mo) as op_dna_tot_12mo
+    , dna.op_dna_rate_12mo
+    , dna.op_dna_rate_shrunk_12mo
+    , dna.op_dna_evidence_weight_12mo
+from
     op_encounter_summary as a
-left join 
-    potential_dup_provider as d 
+left join
+    potential_dup_provider as d
     on a.sk_patient_id = d.sk_patient_id
+left join
+    {{ ref('int_person_sus_op_dna_rate') }} as dna
+    on a.sk_patient_id = dna.sk_patient_id
 where a.sk_patient_id is not null and a.sk_patient_id != 1
 
