@@ -1,5 +1,5 @@
 SELECT
-    pseudo_nhs_number AS sk_patient_id,
+    {{ consistent_sk_patient_id_format('pseudo_nhs_number')}} as sk_patient_id,  
     dmic_dec_month_of_birth,
     dec_sex,
     dec_marital_status,

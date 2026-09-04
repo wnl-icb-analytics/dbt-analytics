@@ -72,7 +72,7 @@ prep as (
         )                                       as local_patient_id,
 
         -- 7-9: Patient identifiers (pseudonymised)
-        sk_patient_id_nhs_number                as sk_patient_id,
+        {{ consistent_sk_patient_id_format('sk_patient_id_nhs_number')}}                 as sk_patient_id,
         try_to_number(dv_yearof_birth)          as dv_year_of_birth,
         dv_partial_post_code                    as partial_postcode,
 

@@ -195,7 +195,7 @@ normalised as (
         meta_version_id                         as meta_version_id,
 
         -- Patient identifiers
-        sk_patient_id_nhs_number                as sk_patient_id,
+        {{ consistent_sk_patient_id_format('sk_patient_id_nhs_number') }}  as sk_patient_id,
         sk_patient_id                           as sk_patient_id_local_hash,
 
         -- Period

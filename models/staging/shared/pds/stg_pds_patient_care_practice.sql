@@ -1,6 +1,6 @@
 select
     row_id,
-    pseudo_nhs_number as sk_patient_id,
+    {{ consistent_sk_patient_id_format('pseudo_nhs_number')}} as sk_patient_id, 
     primary_care_provider as practice_code,
     to_date(primary_care_provider_business_effective_from_date) as event_from_date,
     to_date(primary_care_provider_business_effective_to_date) as event_to_date,

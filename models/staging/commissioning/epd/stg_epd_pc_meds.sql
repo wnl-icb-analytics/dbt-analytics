@@ -25,7 +25,7 @@ where prescribing cost is combined with the other PODs.
 
 select
     -- patient key (renamed from dmic_pseudo_nhs_number)
-    try_to_number(dmic_pseudo_nhs_number)       as sk_patient_id
+    {{consistent_sk_patient_id_format('dmic_pseudo_nhs_number')}}      as sk_patient_id
 
     -- period
     , processed_period                          as processed_period

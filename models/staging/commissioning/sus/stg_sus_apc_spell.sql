@@ -12,7 +12,7 @@ with core_data as(
 )
 
 select core.primarykey_id
-    , core.spell_patient_identity_nhs_number_value_pseudo as sk_patient_id
+    , {{ consistent_sk_patient_id_format('core.spell_patient_identity_nhs_number_value_pseudo') }} as sk_patient_id
     , spell_patient_identity_local_patient_identifier_value as local_patient_identifier
 
     /* spell details */

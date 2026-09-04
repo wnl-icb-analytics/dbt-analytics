@@ -5,7 +5,7 @@
 select  primarykey_id,
 
     -- patient details at time
-    appointment_patient_identity_nhs_number_value_pseudo as sk_patient_id,
+    {{ consistent_sk_patient_id_format('appointment_patient_identity_nhs_number_value_pseudo') }} as sk_patient_id,
     appointment_patient_identity_local_patient_identifier_value as local_patient_identifier,
     appointment_patient_residence_derived_postcode_district,
     appointment_patient_residence_derived_lsoa_11,

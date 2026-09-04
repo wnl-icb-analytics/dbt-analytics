@@ -4,7 +4,7 @@
 
 select primarykey_id
     , system_transaction_cds_unique_identifier
-    , patient_nhs_number_value_pseudo as sk_patient_id
+    , {{ consistent_sk_patient_id_format('patient_nhs_number_value_pseudo') }} as sk_patient_id
     , patient_local_patient_identifier_value as local_patient_identifier
     , commissioning_service_agreement_provider_reference_number
     , commissioning_national_pricing_costing_period

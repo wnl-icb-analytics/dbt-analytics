@@ -75,9 +75,9 @@ prep as (
         )                                       as local_patient_id,
         -- 8-10: Patient identifiers (pseudonymised)
         coalesce(
-            sk_patient_id_nhs_number,
-            sk_patient_id_nhsnumber,
-            sk_patient_id_nhs_no
+            {{ consistent_sk_patient_id_format('sk_patient_id_nhs_number') }},
+            {{ consistent_sk_patient_id_format('sk_patient_id_nhsnumber') }},
+            {{ consistent_sk_patient_id_format('sk_patient_id_nhs_no') }}
         )                                       as sk_patient_id,
         try_to_number(dv_yearof_birth)          as dv_year_of_birth,
         dv_partial_post_code                    as partial_postcode,
