@@ -191,37 +191,6 @@ models:
       - name: source_effective_from_at
         description: Timestamp from which the UKHFD definition revision applies.
 
-  - name: stg_ukhfd_data_dictionary_mhsds_inpatient_code_lookup
-    description: >-
-      UKHFD definitions for MHSDS inpatient code sets. One row per code set,
-      source code set, code and UKHFD definition revision.
-    config:
-      meta:
-        owner:
-          name: Eddie Davison
-    data_tests:
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - code_set_name
-              - source_code_set_name
-              - code
-              - source_effective_from_at
-    columns:
-      - name: code_set_name
-        description: Code-set name used by the inpatient facts.
-        data_tests: [not_null]
-      - name: source_code_set_name
-        description: NHS Data Model and Dictionary attribute name.
-        data_tests: [not_null]
-      - name: code
-        description: National code, upper-cased and trimmed.
-        data_tests: [not_null]
-      - name: description
-        description: Published code description.
-      - name: source_effective_from_at
-        description: Timestamp from which the UKHFD definition revision applies.
-
   - name: stg_ukhfd_data_dictionary_mhsds_service_or_team_intended_age_group
     description: >-
       UKHFD mental health service or team intended-age definitions. One row per
@@ -274,6 +243,94 @@ models:
 
   - name: stg_ukhfd_data_dictionary_mental_health_admitted_patient_classification_type
     description: UKHFD mental health admitted patient classification types. One row per code and definition revision.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [code, source_effective_from_at]
+    columns: *code_set_columns
+
+
+  - name: stg_ukhfd_data_dictionary_mhsds_inpatient_code_lookup
+    description: >-
+      UKHFD definitions for MHSDS inpatient code sets. One row per code set,
+      source code set, code and UKHFD definition revision.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - code_set_name
+              - source_code_set_name
+              - code
+              - source_effective_from_at
+    columns:
+      - name: code_set_name
+        description: Code-set name used by the inpatient facts.
+        data_tests: [not_null]
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute name.
+        data_tests: [not_null]
+      - name: code
+        description: National code, upper-cased and trimmed.
+        data_tests: [not_null]
+      - name: description
+        description: Published code description.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition revision applies.
+
+  - name: stg_ukhfd_data_dictionary_destination_of_discharge
+    description: >-
+      UKHFD discharge destination definitions. One row per code and definition
+      revision. Retains all revisions and retired codes without filtering.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [code, source_effective_from_at]
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_discharge_destination_legacy
+    description: >-
+      UKHFD legacy discharge destination definitions. One row per code and definition
+      revision. Retains all revisions and retired codes without filtering.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [code, source_effective_from_at]
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_method_of_discharge
+    description: >-
+      UKHFD discharge method definitions. One row per code and definition
+      revision. Retains all revisions and retired codes without filtering.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [code, source_effective_from_at]
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_discharge_method_legacy
+    description: >-
+      UKHFD legacy discharge method definitions. One row per code and definition
+      revision. Retains all revisions and retired codes without filtering.
     config:
       meta:
         owner:

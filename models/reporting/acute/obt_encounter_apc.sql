@@ -51,4 +51,9 @@ select
     , imd_at_event
     , reg_practice_at_event
     , visit_occurrence_type
+    , discharge_destination_code
+    , discharge_destination_name
+    , discharge_method_code
+    , discharge_method_name
+    , critical_care_days_for_length_of_stay
 from {{ ref('int_sus_apc_encounter') }}

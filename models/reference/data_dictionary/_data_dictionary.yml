@@ -184,6 +184,37 @@ models:
     data_tests: *history_grain_test
     columns: *history_columns
 
+  - name: csds_source_of_referral
+    description: >-
+      One row per community source-of-referral code ever published. Uses the
+      newest UKHFD definition and retains retired codes for historical joins.
+    config: *owner
+    columns: *default_columns
+
+  - name: csds_source_of_referral_history
+    description: >-
+      Community source-of-referral definition revisions from UKHFD. One row per
+      code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: csds_service_or_team_type
+    description: >-
+      One row per community service-or-team-type code ever published. Uses the
+      newest UKHFD definition and retains retired codes for historical joins.
+    config: *owner
+    columns: *default_columns
+
+  - name: csds_service_or_team_type_history
+    description: >-
+      Community service-or-team-type definition revisions from UKHFD. One row
+      per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+
   - name: mhsds_inpatient_code_lookup
     description: >-
       One row per MHSDS inpatient code set and code ever published. Uses the
@@ -233,32 +264,50 @@ models:
       - name: source_effective_from_at
         description: Timestamp from which the UKHFD definition revision applies.
 
-  - name: csds_source_of_referral
+  - name: discharge_destination
     description: >-
-      One row per community source-of-referral code ever published. Uses the
-      newest UKHFD definition and retains retired codes for historical joins.
-    config: *owner
+      One row per discharge destination code ever published by UKHFD. Uses the
+      latest definition in each source and prefers Destination Of Discharge over the
+      legacy code set where codes overlap. Retired codes remain available for
+      historical activity. Labels are the latest wording, not wording as at discharge.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
     columns: *default_columns
 
-  - name: csds_source_of_referral_history
+  - name: discharge_destination_history
     description: >-
-      Community source-of-referral definition revisions from UKHFD. One row per
-      code and UKHFD revision.
-    config: *owner
+      Modern and legacy UKHFD discharge destination definition revisions. One row
+      per source code set, code and UKHFD revision. Includes retired codes and
+      all revisions; source effective timestamps describe definition history.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
     data_tests: *history_grain_test
     columns: *history_columns
 
-  - name: csds_service_or_team_type
+  - name: discharge_method
     description: >-
-      One row per community service-or-team-type code ever published. Uses the
-      newest UKHFD definition and retains retired codes for historical joins.
-    config: *owner
+      One row per discharge method code ever published by UKHFD. Uses the
+      latest definition in each source and prefers Method Of Discharge over the
+      legacy code set where codes overlap. Retired codes remain available for
+      historical activity. Labels are the latest wording, not wording as at discharge.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
     columns: *default_columns
 
-  - name: csds_service_or_team_type_history
+  - name: discharge_method_history
     description: >-
-      Community service-or-team-type definition revisions from UKHFD. One row
-      per code and UKHFD revision.
-    config: *owner
+      Modern and legacy UKHFD discharge method definition revisions. One row
+      per source code set, code and UKHFD revision. Includes retired codes and
+      all revisions; source effective timestamps describe definition history.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
     data_tests: *history_grain_test
     columns: *history_columns
