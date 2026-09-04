@@ -8,7 +8,8 @@
 /*
 COPD Register - Point in Time (PIT)
 
-QOF v50 Business Logic (via calculate_copd_register macro):
+QOF v51 Business Logic (via calculate_copd_register macro):
+- Disorder evidence counts at any date; administrative evidence counts only in the preceding two years
 - Rule 1: EUNRESCOPD_DAT < 01/04/2023 → automatic inclusion
 - Rule 2: EUNRESCOPD_DAT >= 01/04/2023 + spirometry <0.7 within timeframe
 - Rule 3: Newly registered + spirometry within timeframe

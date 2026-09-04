@@ -1,4 +1,5 @@
 {% macro calculate_dementia_register(reference_date_expr='CURRENT_DATE()') %}
+    {# Pair: fct_person_dementia_register.sql. This macro is strict as-of; the live fact includes future-dated records. #}
     {#
     Calculates Dementia register status at a given reference date.
 

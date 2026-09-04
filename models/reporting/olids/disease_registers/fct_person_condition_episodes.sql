@@ -101,13 +101,15 @@ WITH all_condition_events AS (
         'COPD' as condition_code,
         'Respiratory' as clinical_domain,
         CASE 
-            WHEN is_diagnosis_code THEN 'onset'
+            WHEN is_disorder_code THEN 'onset'
+            WHEN is_admin_code THEN 'diagnosis'
             WHEN is_resolved_code THEN 'resolved'
         END as event_type,
         concept_code,
         concept_display
     FROM {{ ref('int_copd_diagnoses_all') }}
-    WHERE is_diagnosis_code OR is_resolved_code
+    -- Keep all administrative history here. The QOF register applies its two-year window downstream.
+    WHERE is_disorder_code OR is_admin_code OR is_resolved_code
     
     UNION ALL
     
@@ -680,6 +682,11 @@ episode_starts AS (
             WHEN row_num = 1 THEN 1
             -- For onset/resolved conditions: new episode after resolved
             WHEN event_type = 'onset' AND prev_event_type = 'resolved' THEN 1
+            -- A COPD admin code is diagnosis evidence, not an onset date, but
+            -- it still reopens COPD history after a resolved event.
+            WHEN condition_code = 'COPD'
+                AND event_type = 'diagnosis'
+                AND prev_event_type = 'resolved' THEN 1
             ELSE 0
         END as is_episode_start
     FROM events_with_row_numbers

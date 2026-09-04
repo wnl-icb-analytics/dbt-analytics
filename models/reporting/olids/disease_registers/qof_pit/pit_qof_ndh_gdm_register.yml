@@ -1,0 +1,33 @@
+models:
+  - name: pit_qof_ndh_gdm_register
+    description: >
+      QOF v51 NDH_REG v102 (CQRS NDHGDM) calculated as of {{ var('qof_reference_date') }}.
+      One row represents one qualifying person. NDH/IGT/PRD requires age 18
+      or over; gestational diabetes qualifies at any age. Diabetes history is
+      evaluated strictly as of the reference date using the same rule macro as
+      the current register.
+      Override with: dbt build --vars '{"qof_reference_date": "YYYY-MM-DD"}'
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: person_id
+        description: Person identifier
+        data_tests:
+          - unique
+          - not_null
+      - name: register_name
+        description: Register name (NDH)
+      - name: is_on_register
+        description: Always true because the PIT view contains register members only
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [true]
+      - name: reference_date
+        description: Date at which register status was calculated

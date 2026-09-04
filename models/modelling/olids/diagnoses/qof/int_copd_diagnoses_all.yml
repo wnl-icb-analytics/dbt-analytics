@@ -1,8 +1,8 @@
 models:
   - name: int_copd_diagnoses_all
-    description: 'COPD diagnosis and resolution observations for QOF register management.
+    description: 'COPD disorder, administrative and resolved observations.
 
-      One row per observation using COPD_COD (diagnosis) and COPDRES_COD (resolved) clusters. Post-April 2023 requires spirometry confirmation (FEV1/FVC <0.7).'
+      One row per observation using the QOF v51 COPDDIAG_COD, COPDPROC_COD and COPDRES_COD clusters. All administrative-code history is retained; the QOF register applies its two-year window downstream.'
     config:
       meta:
         owner:
@@ -21,26 +21,29 @@ models:
         description: 'Date when COPD observation was clinically effective'
 
       - name: concept_code
-        description: 'Clinical code for COPD diagnosis or resolution'
+        description: 'Clinical code for COPD disorder, administrative evidence or resolution'
 
       - name: concept_display
         description: 'Human-readable description of the clinical code'
 
       - name: source_cluster_id
-        description: 'QOF cluster identifier (COPD_COD or COPDRES_COD)'
+        description: 'QOF cluster identifier (COPDDIAG_COD, COPDPROC_COD or COPDRES_COD)'
 
-      - name: is_diagnosis_code
-        description: 'Flag indicating COPD diagnosis code (COPD_COD cluster)'
+      - name: is_disorder_code
+        description: 'Flag indicating a COPD disorder code (COPDDIAG_COD cluster)'
+
+      - name: is_admin_code
+        description: 'Flag indicating a COPD administrative code (COPDPROC_COD cluster)'
 
       - name: is_resolved_code
         description: 'Flag indicating COPD resolution code (COPDRES_COD cluster)'
 
       - name: copd_observation_type
-        description: 'Categorised COPD observation type (COPD Diagnosis or COPD Resolved)'
+        description: 'Categorised COPD observation type (COPD Disorder, COPD Administrative or COPD Resolved)'
 
-    tests:
+    data_tests:
       - dbt_utils.at_least_one:
           column_name: id
       - cluster_ids_exist:
           arguments:
-            cluster_ids: COPDRES_COD, COPD_COD
+            cluster_ids: COPDRES_COD, COPDDIAG_COD, COPDPROC_COD

@@ -1,10 +1,11 @@
 models:
   - name: fct_person_heart_failure_register
-    description: 'QOF heart failure register for patients with active heart failure
-      diagnosis.
-
-      One row per person with latest HF_COD > latest HFRES_COD or no resolution, including
-      subtype classification (General HF vs HF with LVSD/Reduced EF).'
+    description: >
+      QOF v51 heart failure registers. One row per person on HF1: the latest
+      HF_COD is after the latest HFRES_COD, or no resolution exists.
+      is_on_hfref_register identifies the HF3 subset with a REDEJCFRAC_COD.
+      HF3 replaces HF2 and is not comparable with the former LVSD-or-reduced-EF
+      sub-register.
 
     tests:
       - dbt_utils.at_least_one:
@@ -17,6 +18,12 @@ models:
           - unique
           - not_null
 
+      - name: is_on_register
+        description: Whether the person is on the unresolved heart failure register (HF1)
+
+      - name: is_on_hfref_register
+        description: Whether the person is also on the reduced-ejection-fraction-only register (HF3)
+
     config:
       meta:
         indicator:
@@ -27,12 +34,9 @@ models:
           name_short: "Heart Failure"
           description_short: "QOF heart failure register"
           description_long: >
-            Heart failure diagnosed using QOF criteria: Active heart failure diagnosis
-            where  latest HF code is more recent than any resolution code, or no resolution
-            recorded.  Includes subtype classification for General HF versus HF with
-            LVSD/Reduced EF. Used  for cardiovascular quality monitoring and medication
-            management. Maps to QOF indicator  HF001 (Heart Failure Register). Uses
-            HF_COD for diagnosis codes and HFRES_COD for  resolution codes.
+            QOF v51 HF1 contains patients with unresolved heart failure. HF3 is its
+            reduced-ejection-fraction-only subset and replaces the former HF2
+            LVSD-or-reduced-EF register. Uses HF_COD, HFRES_COD and REDEJCFRAC_COD.
           is_qof: true
           qof_indicator: "HF001"
           source_column: "is_on_register"
@@ -44,5 +48,7 @@ models:
               category: "INCLUSION"
             - cluster_id: "HFRES_COD"
               category: "RESOLUTION"
+            - cluster_id: "REDEJCFRAC_COD"
+              category: "INCLUSION"
         owner:
           name: EddieDavison92

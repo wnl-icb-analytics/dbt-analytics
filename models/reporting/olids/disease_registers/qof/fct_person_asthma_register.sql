@@ -1,3 +1,7 @@
+-- Pair: macros/qof_registers/calculate_asthma_register.sql.
+-- This live fact includes future-dated records. Its PIT pair is strict as-of
+-- and derives age at the reference date rather than using current age.
+
 {{
     config(
         materialized='table',
@@ -5,7 +9,7 @@
 }}
 
 -- Asthma Register (QOF Pattern 3: Complex QOF Register with External Validation)
--- Business Logic: Age ≥6 + Active asthma diagnosis (latest AST_COD > latest ASTRES_COD) + Recent asthma medication (last 12 months)
+-- Business Logic: Age ≥5 + Active asthma diagnosis (latest AST_COD > latest ASTRES_COD) + Recent asthma medication (last 12 months)
 -- External Validation: Requires medication confirmation to ensure active asthma management
 
 WITH asthma_diagnoses AS (
@@ -80,7 +84,7 @@ register_logic AS (
     SELECT
         diag.person_id,
 
-        -- Age restriction: ≥6 years for asthma register
+        -- Age restriction: ≥5 years for asthma register
         diag.earliest_diagnosis_date,
 
         -- Diagnosis component
@@ -106,7 +110,7 @@ register_logic AS (
 
         -- Traceability
         age.age,
-        COALESCE(age.age >= 6, FALSE) AS meets_age_criteria,
+        COALESCE(age.age >= 5, FALSE) AS meets_age_criteria,
         COALESCE(diag.has_active_asthma_diagnosis, FALSE)
             AS has_active_diagnosis,
         COALESCE(
@@ -116,7 +120,7 @@ register_logic AS (
 
         -- Person demographics
         COALESCE(
-            age.age >= 6
+            age.age >= 5
             AND diag.has_active_asthma_diagnosis = TRUE
             AND med.latest_asthma_medication_date IS NOT NULL,
             FALSE

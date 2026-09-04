@@ -1,0 +1,40 @@
+models:
+  - name: int_obesity2_lipids_all
+    description: >
+      Numeric LDL, triglyceride and HDL observations used to derive
+      dyslipidaemia for QOF OBES2. One row represents an observation and matched
+      lipid cluster.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [id, source_cluster_id]
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: LDLCCHOL_COD, TRIGLYC_COD, HDLCCHOL_COD
+    columns:
+      - name: id
+        description: Clinical observation identifier
+        data_tests:
+          - not_null
+      - name: person_id
+        description: Person identifier
+        data_tests:
+          - not_null
+      - name: clinical_effective_date
+        description: Clinical effective date
+        data_tests:
+          - not_null
+      - name: date_recorded
+        description: Date recorded in the source system
+      - name: lipid_value
+        description: Numeric test value in the source unit
+        data_tests:
+          - not_null
+      - name: result_unit_display
+        description: Display unit supplied with the result
+      - name: source_cluster_id
+        description: LDL, triglyceride or HDL QOF cluster identifier

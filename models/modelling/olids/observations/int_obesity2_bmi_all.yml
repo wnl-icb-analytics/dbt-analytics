@@ -1,0 +1,36 @@
+models:
+  - name: int_obesity2_bmi_all
+    description: >
+      BMI observations used by QOF OBES2. BMIVAL_COD rows retain their numeric
+      value; BMI35_COD rows identify codes whose meaning states BMI 35 or over.
+      One row represents an observation and matched QOF cluster.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [id, source_cluster_id]
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: BMI35_COD, BMIVAL_COD
+    columns:
+      - name: id
+        description: Clinical observation identifier
+        data_tests:
+          - not_null
+      - name: person_id
+        description: Person identifier
+        data_tests:
+          - not_null
+      - name: clinical_effective_date
+        description: Clinical effective date
+        data_tests:
+          - not_null
+      - name: date_recorded
+        description: Date recorded in the source system
+      - name: bmi_value
+        description: Numeric BMI in kg/m2 for BMIVAL_COD rows
+      - name: source_cluster_id
+        description: BMI35_COD or BMIVAL_COD

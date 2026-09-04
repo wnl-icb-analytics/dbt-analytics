@@ -1,0 +1,41 @@
+models:
+  - name: fct_person_cvd_register
+    description: >
+      QOF v51 CD_REG version 100 composite register (CQRS CD), supporting CD001
+      and CD002. Membership is the union of the coronary heart disease and
+      stroke/TIA registers. One row represents a person on either component
+      register. Future-dated records included by the live component registers
+      are retained.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier
+        data_tests:
+          - not_null
+          - unique
+      - name: is_on_register
+        description: Whether the person is on CD_REG
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true]
+      - name: is_qualified_via_chd
+        description: Whether CHD register membership qualifies the person
+        data_tests:
+          - not_null
+      - name: is_qualified_via_stroke_tia
+        description: Whether stroke/TIA register membership qualifies the person
+        data_tests:
+          - not_null
+      - name: earliest_qualifying_diagnosis_date
+        description: Earliest diagnosis date across qualifying component registers
+        data_tests:
+          - not_null
+      - name: earliest_chd_diagnosis_date
+        description: Earliest CHD diagnosis date, or null when CHD does not qualify the person
+      - name: earliest_stroke_tia_diagnosis_date
+        description: Earliest stroke or TIA diagnosis date, or null when stroke/TIA does not qualify the person

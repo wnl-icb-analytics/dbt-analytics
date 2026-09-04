@@ -1,3 +1,6 @@
+-- Pair: macros/qof_registers/calculate_hypertension_register.sql.
+-- This live fact includes future-dated records; its PIT pair is strict as-of.
+
 {{
     config(
         materialized='table',
@@ -84,7 +87,7 @@ latest_bp_events AS (
 
 register_logic AS (
     SELECT
-        p.person_id,
+        diag.person_id,
 
         -- Age restriction: ≥18 years for HTN register
         diag.earliest_diagnosis_date,
@@ -179,12 +182,10 @@ register_logic AS (
 
             ELSE 'Normal / High Normal'
         END AS latest_bp_htn_stage
-    FROM {{ ref('dim_person') }} AS p
-    INNER JOIN {{ ref('dim_person_age') }} AS age ON p.person_id = age.person_id
-    LEFT JOIN
-        hypertension_person_aggregates AS diag
-        ON p.person_id = diag.person_id
-    LEFT JOIN latest_bp_events AS bp ON p.person_id = bp.person_id
+    FROM hypertension_person_aggregates AS diag
+    LEFT JOIN {{ ref('dim_person_age') }} AS age
+        ON diag.person_id = age.person_id
+    LEFT JOIN latest_bp_events AS bp ON diag.person_id = bp.person_id
 )
 
 -- Final selection: Only individuals with active HTN diagnosis

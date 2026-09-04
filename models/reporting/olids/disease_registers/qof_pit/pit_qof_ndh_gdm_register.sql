@@ -16,7 +16,7 @@ Output: person_id, register_name, is_on_register, reference_date
 */
 
 WITH register_data AS (
-    {{ calculate_ndh_register(reference_date_expr=get_reference_date()) }}
+    {{ calculate_qof_ndh_gdm_register(reference_date_expr=get_reference_date()) }}
 )
 
 SELECT
@@ -25,3 +25,4 @@ SELECT
     is_on_register,
     {{ get_reference_date() }} AS reference_date
 FROM register_data
+WHERE is_on_register = TRUE

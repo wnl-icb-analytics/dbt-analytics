@@ -1,3 +1,6 @@
+-- Pair: macros/qof_registers/calculate_atrial_fibrillation_register.sql.
+-- This live fact includes future-dated records; its PIT pair is strict as-of.
+
 {{
     config(
         materialized='table',
@@ -71,7 +74,7 @@ register_logic AS (
         COALESCE(diag.has_active_af_diagnosis, FALSE) AS has_active_diagnosis,
         COALESCE(diag.has_active_af_diagnosis = TRUE, FALSE) AS is_on_register
     FROM af_diagnoses AS diag
-    INNER JOIN {{ ref('dim_person_age') }} AS age ON diag.person_id = age.person_id
+    LEFT JOIN {{ ref('dim_person_age') }} AS age ON diag.person_id = age.person_id
 )
 
 -- Final selection: Only individuals with active AF diagnosis

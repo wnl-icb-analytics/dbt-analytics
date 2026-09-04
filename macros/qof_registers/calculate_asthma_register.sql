@@ -1,9 +1,10 @@
 {% macro calculate_asthma_register(reference_date_expr='CURRENT_DATE()') %}
+    {# Pair: fct_person_asthma_register.sql. This macro is strict as-of and derives age at the reference date; the live fact includes future-dated records. #}
     {#
     Calculates Asthma register status at a given reference date.
 
     Business Logic:
-    - Age ≥6 at reference date
+    - Age ≥5 at reference date
     - Active asthma diagnosis (latest diagnosis > latest resolution)
     - Recent asthma medication (within 12 months prior to reference date)
 
@@ -65,7 +66,7 @@
             diag.person_id,
             'Asthma' AS register_name,
             COALESCE(
-                age.age >= 6
+                age.age >= 5
                 AND diag.has_active_asthma_diagnosis = TRUE
                 AND med.latest_medication_date IS NOT NULL,
                 FALSE

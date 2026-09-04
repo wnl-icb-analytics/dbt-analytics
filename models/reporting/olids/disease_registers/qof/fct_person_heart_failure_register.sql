@@ -1,3 +1,6 @@
+-- Pair: macros/qof_registers/calculate_heart_failure_register.sql.
+-- This live fact includes future-dated records; its PIT pair is strict as-of.
+
 {{
     config(
         materialized='table',
@@ -5,8 +8,8 @@
 }}
 
 -- Heart Failure Register (QOF Pattern 4: Type Classification Register)
--- Business Logic: Active HF diagnosis + Subtype classification (General HF vs HF with LVSD/Reduced EF)
--- Multiple registers: Both general HF and LVSD-specific registers
+-- Business Logic: HF1 is active HF; HF3 also requires a reduced ejection fraction code
+-- Multiple registers: General HF1 and reduced-ejection-fraction-only HF3
 
 WITH heart_failure_diagnoses AS (
     SELECT
@@ -32,12 +35,6 @@ WITH heart_failure_diagnoses AS (
                 WHEN is_resolved_code THEN clinical_effective_date
             END
         ) AS latest_resolved_date,
-
-        -- LVSD-specific dates
-        MIN(CASE WHEN is_hf_lvsd_code THEN clinical_effective_date END)
-            AS earliest_hf_lvsd_diagnosis_date,
-        MAX(CASE WHEN is_hf_lvsd_code THEN clinical_effective_date END)
-            AS latest_hf_lvsd_diagnosis_date,
 
         -- Reduced ejection fraction dates
         MIN(CASE WHEN is_reduced_ef_code THEN clinical_effective_date END)
@@ -76,14 +73,6 @@ WITH heart_failure_diagnoses AS (
                 END
             )
         ), FALSE) AS has_active_hf_diagnosis,
-
-        -- Subtype flags
-        COALESCE(MAX(
-            CASE WHEN is_hf_lvsd_code THEN clinical_effective_date END
-        ) IS NOT NULL
-        OR MAX(
-            CASE WHEN is_reduced_ef_code THEN clinical_effective_date END
-        ) IS NOT NULL, FALSE) AS has_lvsd_diagnosis,
 
         COALESCE(MAX(
             CASE WHEN is_reduced_ef_code THEN clinical_effective_date END
@@ -125,15 +114,12 @@ register_logic AS (
         -- General HF register inclusion
         diag.latest_diagnosis_date,
 
-        -- LVSD/Reduced EF register inclusion (subset of general HF register)
+        -- HF3 register inclusion (subset of general HF register)
         diag.latest_resolved_date,
 
         -- Clinical dates
-        diag.earliest_hf_lvsd_diagnosis_date,
-        diag.latest_hf_lvsd_diagnosis_date,
         diag.earliest_reduced_ef_diagnosis_date,
         diag.latest_reduced_ef_diagnosis_date,
-        diag.has_lvsd_diagnosis,
         diag.has_reduced_ef_diagnosis,
         diag.all_hf_concept_codes,
 
@@ -146,13 +132,11 @@ register_logic AS (
         COALESCE(diag.has_active_hf_diagnosis = TRUE, FALSE) AS is_on_register,
         COALESCE(
             diag.has_active_hf_diagnosis = TRUE
-            AND (
-                diag.has_lvsd_diagnosis = TRUE
-                OR diag.has_reduced_ef_diagnosis = TRUE
-            ), FALSE
-        ) AS is_on_hf_lvsd_reduced_ef_register
+            AND diag.has_reduced_ef_diagnosis = TRUE,
+            FALSE
+        ) AS is_on_hfref_register
     FROM heart_failure_diagnoses AS diag
-    INNER JOIN {{ ref('dim_person_age') }} AS age ON diag.person_id = age.person_id
+    LEFT JOIN {{ ref('dim_person_age') }} AS age ON diag.person_id = age.person_id
 )
 
 -- Final selection: Only individuals on heart failure register
@@ -160,21 +144,18 @@ SELECT
     person_id,
     age,
     is_on_register,
-    is_on_hf_lvsd_reduced_ef_register,
+    is_on_hfref_register,
 
     -- Clinical diagnosis dates
     earliest_diagnosis_date,
     latest_diagnosis_date,
     latest_resolved_date,
 
-    -- LVSD/Reduced EF specific dates
-    earliest_hf_lvsd_diagnosis_date,
-    latest_hf_lvsd_diagnosis_date,
+    -- Reduced ejection fraction dates
     earliest_reduced_ef_diagnosis_date,
     latest_reduced_ef_diagnosis_date,
 
     -- Subtype classification flags
-    has_lvsd_diagnosis,
     has_reduced_ef_diagnosis,
 
     -- Traceability for audit

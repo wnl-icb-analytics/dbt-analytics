@@ -1,11 +1,14 @@
 models:
   - name: stg_reference_combined_codesets
-    description: Combined code sets mapping cluster IDs to individual codes across multiple coding systems (SNOMED, Read, etc.)
+    description: >-
+      Combined code-set membership used by clinical models. Primary Care
+      Domain rows use the PCD source label and track the current active UKHFD
+      release exposed through REFERENCE.TERMINOLOGY.PCD_REFSET_LATEST.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
@@ -15,18 +18,25 @@ models:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
+      - pcd_refset_matches_latest:
+          arguments:
+            source_value: PCD
+      - pcd_refset_volume_guardrail:
+          arguments:
+            source_value: PCD
+            max_change_fraction: 0.10
     columns:
       - name: cluster_id
         description: Cluster identifier grouping related codes
-        tests:
+        data_tests:
           - not_null
       - name: cluster_description
         description: Description of the code cluster
       - name: code
         description: Individual code within the cluster
-        tests:
+        data_tests:
           - not_null
       - name: code_description
         description: Description of the individual code
       - name: source
-        description: Source coding system (SNOMED, Read, etc.)
+        description: Pipeline source label; Primary Care Domain rows use PCD
