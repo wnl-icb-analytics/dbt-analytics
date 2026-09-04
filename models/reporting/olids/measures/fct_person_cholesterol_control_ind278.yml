@@ -1,0 +1,104 @@
+models:
+  - name: fct_person_cholesterol_control_ind278
+    description: >
+      NICE IND278 cholesterol control before personalised care adjustments.
+      One row per currently registered, living, non-test person on the CHD,
+      stroke/TIA or PAD register, assessed on the build date. Register diagnoses
+      must start on or before that date. Any recorded FH diagnosis or history
+      of haemorrhagic stroke excludes the whole person, including overlapping
+      CVD conditions. Undated exclusion diagnoses count; future original dates do not.
+
+      Uses the last recorded LDL or non-HDL result between the reporting date
+      minus 12 calendar months and the reporting date, inclusive. LDL takes
+      priority when both types occur on the same calendar day. Within that type
+      and day, the latest timestamp and then observation ID descending break ties.
+      An invalid last result remains unassessable; it is not replaced with an older
+      result or the other lipid type. The numerator requires a valid unrounded
+      LDL at or below 2.0 mmol/L, or non-HDL at or below 2.6 mmol/L.
+
+      This is an unadjusted local NICE measure, not a QOF achievement calculation.
+      Personalised care adjustments for declined tests or treatment, non-attendance,
+      maximum tolerated therapy and inappropriate treatment are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply
+      National Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind278
+        indicator:
+          id: IND278
+          type: MEASURE
+          category: CARDIOVASCULAR
+          clinical_domain: Cardiometabolic
+          name_short: CVD cholesterol control
+          description_short: Last recorded LDL or non-HDL meets the secondary prevention target in the preceding 12 months
+          description_long: NICE IND278 for currently registered people with CVD, before personalised care adjustments. Excludes FH and any history of haemorrhagic stroke.
+          is_qof: false
+          source_column: is_in_numerator
+          usage_contexts:
+            - NICE_GUIDANCE
+          sort_order: NICE_IND278
+          thresholds:
+            - population_group: CVD
+              threshold_type: LDL_CHOLESTEROL
+              threshold_value: '2.0'
+              threshold_operator: AT_OR_BELOW
+              threshold_unit: mmol/L
+              description: Secondary prevention LDL cholesterol target
+              sort_order: 1
+            - population_group: CVD
+              threshold_type: NON_HDL_CHOLESTEROL
+              threshold_value: '2.6'
+              threshold_operator: AT_OR_BELOW
+              threshold_unit: mmol/L
+              description: Secondary prevention non-HDL cholesterol target
+              sort_order: 2
+    columns:
+      - name: person_id
+        description: Person in the unadjusted indicator denominator.
+        tests:
+          - unique
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier, IND278.
+      - name: indicator_name
+        description: Published NICE indicator name.
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period.
+      - name: measurement_period_start
+        description: Inclusive start date, 12 calendar months before the reporting date.
+      - name: current_practice_code
+        description: ODS code of the selected current registration practice.
+      - name: current_practice_name
+        description: Name of the selected current registration practice.
+      - name: has_chd
+        description: Whether the person qualifies through the CHD register by the reporting date.
+      - name: has_stroke_tia
+        description: Whether the person qualifies through the stroke/TIA register by the reporting date.
+      - name: has_pad
+        description: Whether the person qualifies through the PAD register by the reporting date.
+      - name: latest_lipid_observation_id
+        description: Selected source observation identifier; null if no result is recorded in the period.
+      - name: latest_lipid_date
+        description: Clinical date of the selected result; null if no result is recorded in the period.
+      - name: lipid_type
+        description: LDL cholesterol or Non-HDL cholesterol; null if no result is recorded in the period.
+      - name: latest_lipid_value
+        description: Selected unrounded concentration in mmol/L. Null for missing numeric values or unsupported or missing units, and when no result is recorded.
+      - name: unit_status
+        description: Unit interpretation from the observation model; null if no result is recorded in the period.
+      - name: indicator_threshold
+        description: Inclusive upper threshold in mmol/L for the selected lipid type; null if no result is recorded.
+      - name: threshold_unit
+        description: Unit for the indicator threshold and standardised lipid value, mmol/L.
+      - name: is_in_denominator
+        description: Always true. Every row is an eligible person before personalised care adjustments.
+      - name: is_lipid_recorded_in_last_12m
+        description: Whether an LDL or non-HDL observation exists in the inclusive measurement period, including invalid results.
+      - name: is_latest_lipid_valid
+        description: Whether the selected result has a recognised unit and a positive finite value. False when no result exists.
+      - name: is_in_numerator
+        description: Whether the last recorded result in the period is valid and at or below its inclusive target.
+      - name: indicator_status
+        description: Achievement label distinguishing no recent result, an unassessable result, a result above target and achievement.

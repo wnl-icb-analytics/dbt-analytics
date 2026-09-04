@@ -1,0 +1,36 @@
+models:
+  - name: int_haemorrhagic_stroke_diagnoses_all
+    description: >
+      Haemorrhagic stroke diagnosis evidence from the PCD HSTRK_COD cluster.
+      One row per observation for all people, including inactive and deceased
+      people. No age, registration or date restriction is applied. Consumers
+      assessing history at a reporting date must exclude future original dates.
+      An undated diagnosis remains evidence of a recorded history.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: HSTRK_COD
+    columns:
+      - name: id
+        description: Source observation identifier.
+        tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Person with the recorded diagnosis.
+      - name: clinical_effective_date
+        description: Shared corrected observation date; 1900-01-01 represents an absent source date.
+      - name: clinical_effective_date_raw
+        description: Original clinical date, null when not supplied.
+      - name: date_recorded
+        description: Source recording date.
+      - name: concept_code
+        description: Recorded mapped clinical code matched to HSTRK_COD.
+      - name: concept_display
+        description: Recorded mapped clinical concept label.
+      - name: source_cluster_id
+        description: PCD cluster HSTRK_COD.
