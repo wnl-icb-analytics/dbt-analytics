@@ -1,0 +1,39 @@
+models:
+  - name: int_qmul_gp_bp_registry_bp_readings_eligible
+    description: 'BP readings eligible for inclusion in the QMUL GP BP Registry cohort.
+
+      Paired systolic + diastolic BP events (from int_blood_pressure_all) for persons in the registry base population, with readings dropped if the event date falls inside any pregnancy or HDP exclusion window or outside the study extraction period (qmul_gp_bp_registry_extraction_start_date / _end_date, default 2010-01-01 to 2025-12-31).
+      One row per retained reading.'
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - effective_date
+    columns:
+      - name: person_id
+        description: 'Unique identifier for the person'
+        tests:
+          - not_null
+      - name: effective_date
+        description: 'Date of the BP reading'
+        tests:
+          - not_null
+      - name: systolic_value
+        description: 'Systolic BP value (mmHg)'
+        tests:
+          - not_null
+      - name: diastolic_value
+        description: 'Diastolic BP value (mmHg)'
+        tests:
+          - not_null
+      - name: is_home_bp_event
+        description: 'Flag indicating the reading was taken at home'
+      - name: is_abpm_bp_event
+        description: 'Flag indicating the reading was taken via ambulatory BP monitoring'
+      - name: is_hypertensive_range
+        description: 'Flag indicating the reading meets Stage 1 hypertensive thresholds'

@@ -1,0 +1,51 @@
+models:
+  - name: int_hdp_exclusion_windows_all
+    description: 'Unified pregnancy and hypertensive-disorder-of-pregnancy (HDP) exclusion windows for research cohort use.
+
+      Key Features:
+
+      • One row per window; three reasons: pregnancy, pregnancy_hdp, hdp_standalone
+
+      • pregnancy windows = pregnancy episodes with no HDP code inside
+
+      • pregnancy_hdp windows = pregnancy episodes containing an HDP code; window_end extended by hdp_postpartum_weeks
+
+      • hdp_standalone windows = HDP codes outside any pregnancy episode; window runs hdp_postpartum_weeks forward from the code date
+
+      Purpose: Let downstream models exclude BP readings (or other observations) during HDP-affected periods with a single join.'
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - window_id
+    columns:
+      - name: person_id
+        description: 'Unique identifier for the person'
+        tests:
+          - not_null
+      - name: window_id
+        description: 'Sequential window number per person, ordered by window_start'
+        tests:
+          - not_null
+      - name: window_start
+        description: 'Start date of the exclusion window (inclusive)'
+        tests:
+          - not_null
+      - name: window_end
+        description: 'End date of the exclusion window (inclusive)'
+        tests:
+          - not_null
+      - name: reason
+        description: 'Why the window exists: pregnancy, pregnancy_hdp, or hdp_standalone'
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - pregnancy
+                  - pregnancy_hdp
+                  - hdp_standalone
