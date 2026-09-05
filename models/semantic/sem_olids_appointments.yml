@@ -6,26 +6,27 @@ models:
       Data Set — primary care data from system suppliers, unified by the
       One London team.
 
-      Combines cleaned appointment data with patient demographics, long-term
-      condition flags, appointment-owning practice details (from dim_practice),
-      and PSSRU unit costs for GP access KPI reporting, DNA equity analysis,
-      workforce mix and appointment costing.
+      Combines cleaned appointment data with current patient demographics,
+      publisher-practice details (from dim_practice), and PSSRU unit costs for
+      access analysis, DNA analysis, workforce mix and appointment costing.
+      Link to sem_olids_population for condition cohorts.
 
       Grain: one row per appointment (appointment_id).
 
-      Scope: built from int_appointment_gp_clean_recent which restricts
-      to the rolling last 60 months of appointment data. This matches
+      Scope: built from int_appointment_gp_clinical_recent, which restricts
+      to the latest 60 months of appointment data, anchored to the maximum
+      appointment start date in the source rather than the current date. This matches
       OLIDS retention — anything older has been silently truncated to
       currently-registered patients only and would bias historical
       analysis. Apply the same 5-year caveat to any historical
       comparisons drawn from this view.
 
-      Practice attribution: publisher_organisation_code plus practice_name,
-      pcn_code, pcn_name, borough_registered come from dim_practice joined
-      via the appointment's publisher_organisation_code — this is the
-      practice that delivered the appointment, which may differ from the
-      patient's current registration if they have since transferred or
-      attended via NHS-wide access. Patient-side geography (borough_resident,
+      Practice attribution: appointment_practice_code plus
+      appointment_practice_name, appointment_pcn_code, appointment_pcn_name and
+      appointment_borough identify the practice from dim_practice joined via
+      the record's publisher organisation. This is the practice
+      that published or owns the record, not a guaranteed delivery location.
+      It may differ from the patient's current registration. Patient-side geography (borough_resident,
       neighbourhood_resident, IMD) is residence-based from
       dim_person_demographics.
 
@@ -36,6 +37,27 @@ models:
       Patient demographics (age bands, ethnicity, IMD) reflect the
       patient's current state, not their state at appointment time.
       Use age_at_event for event-time age cohorting.
+
+      appointment_count and patient_count include every retained appointment
+      status. Use attended_count or filter is_attended for delivered activity.
+      The DNA rate denominator is all retained appointment records, including
+      cancelled and other statuses.
+
+      national_slot_category_name is the recorded national category and the
+      preferred category field. local_slot_type is practice-defined free text.
+      slot_category is a legacy local grouping and is not the official GPAD
+      National Slot Type Group. service_setting records provision and funding
+      context rather than contact mode or physical location.
+
+      The derived urgent same-day and routine 7/14-day measures use this
+      model's existing urgency grouping. They do not exactly reproduce current
+      national definitions. See the [NHS England same-day appointments
+      guidance](https://www.england.nhs.uk/long-read/recording-same-day-appointments-for-all-clinically-urgent-patients/)
+      and [GP appointments national category mapping guide](https://digital.nhs.uk/dashboards/gp-appointments-data-dashboard/national-category-mapping-guide).
+
+      The source excludes available slots, but future booked appointments can
+      remain. Filter start_date at the current timestamp for observed past
+      activity.
 
     config:
       materialized: semantic_view

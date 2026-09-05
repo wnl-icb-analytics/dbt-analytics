@@ -16,7 +16,7 @@
     Grain: One row per medication order (issue)
 
     Core table (int_medication_order_bnf) pre-joins:
-    - SNOMED → BNF code mapping (96% coverage) for chapter/section filtering
+    - SNOMED → BNF code mapping for chapter/section filtering
     - Medication statement for prescription type (acute/repeat) and active status
 
     BNF hierarchy: bnf_chapter (2-digit) → bnf_section (4-digit) → bnf_paragraph (6-digit) → bnf_code (full).
@@ -176,7 +176,7 @@ RELATIONSHIPS(
 
 FACTS(
     -- Order details
-    rx.estimated_cost AS estimated_cost COMMENT = 'Estimated cost of this medication order (GBP). Populated for ~96% of orders.',
+    rx.estimated_cost AS estimated_cost COMMENT = 'Estimated cost of this medication order (GBP).',
     rx.quantity_value AS quantity_value COMMENT = 'Quantity prescribed',
     rx.duration_days AS duration_days COMMENT = 'Duration of prescription in days',
     rx.age_at_event AS age_at_event COMMENT = 'Patient age at time of order'
@@ -198,7 +198,10 @@ DIMENSIONS(
     rx.bnf_code AS bnf_code COMMENT = 'Full BNF product code (e.g. 0212000B0AAAAAA). 15-character format: chapter(2) + section(2) + paragraph(2) + chemical(3) + product(4) + formulation(2).',
     rx.bnf_name AS bnf_name COMMENT = 'BNF product name',
     rx.medication_name AS medication_name COMMENT = 'Medication name as recorded',
+    rx.mapped_concept_display AS mapped_concept_display COMMENT = 'Mapped medication concept description. Prefer BNF fields or pre-defined medication sets where available.',
+    rx.mapped_concept_code AS mapped_concept_code COMMENT = 'Mapped medication concept code. Use for exact concept filtering when no BNF or pre-defined medication classification is available.',
     rx.dose AS dose COMMENT = 'Dose as recorded',
+    rx.quantity_unit AS quantity_unit COMMENT = 'Unit for quantity_value. Only aggregate quantity within the same medication product and unit; quantities with different products or units are not comparable.',
 
     -- Prescription type (from statement)
     rx.issue_type AS issue_type WITH SYNONYMS = ('acute', 'repeat', 'prescription type') COMMENT = 'Prescription type (Acute, Repeat, Repeat Dispensing, Automatic). Acute = one-off; Repeat = ongoing repeat prescription; Repeat Dispensing = pharmacy-managed repeat; Automatic = auto-issued.',
@@ -242,6 +245,10 @@ DIMENSIONS(
     valproate.valproate_product_type AS valproate_product_type COMMENT = 'Valproate type (SODIUM_VALPROATE, VALPROIC_ACID, EPILIM, DEPAKOTE). Only for valproate orders.',
     valproate.clinical_indication AS clinical_indication COMMENT = 'Valproate indication (ANTI_EPILEPTIC, MOOD_STABILISER). Only for valproate orders.',
     valproate.dose_category AS dose_category COMMENT = 'Valproate dose category (LOW, MODERATE, HIGH, UNKNOWN). Only for valproate orders.',
+    valproate.formulation_type AS formulation_type COMMENT = 'Valproate formulation type. Only for valproate orders.',
+
+    -- Antibacterial classification (only populated for antibacterial orders)
+    antibacterials.antibacterial_class AS antibacterial_class COMMENT = 'Antibacterial class, such as penicillin, cephalosporin or macrolide. Only for antibacterial orders.',
 
     -- GLP-1 RA classification (only populated for GLP-1 orders)
     glp1.glp1_drug AS glp1_drug COMMENT = 'GLP-1 RA active ingredient (SEMAGLUTIDE, DULAGLUTIDE, LIRAGLUTIDE, EXENATIDE, LIXISENATIDE, ALBIGLUTIDE, TIRZEPATIDE, OTHER_GLP1RA). Only for GLP-1 orders.',
@@ -317,5 +324,5 @@ METRICS(
 )
 
 COMMENT = 'OLIDS Prescribing Semantic View - All medication orders with BNF classification, prescription type, prescribing-practice attribution, core patient demographics, and pre-defined drug category flags. Source: OLIDS (One London Integrated Data Set). Grain: one row per medication order. BNF chapter is the primary therapeutic filter — the chatbot has a BNF lookup tool to resolve drug class names. Condition, vulnerability, and polypharmacy cohorts come from sem_olids_population via person_id CTE joins.'
-AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is medication-order grain. Example: SELECT bnf_chapter, AGG(order_count), AGG(total_cost) FROM SEM_OLIDS_PRESCRIBING WHERE order_date >= DATEADD(year, -1, CURRENT_DATE) GROUP BY bnf_chapter. Example linkage: reduce active diabetes people in sem_olids_population and SGLT2 orders here before joining. Default treatment exposure is the last 12 months of order_date. For dimension-backed classes, filter the category dimension in WHERE (sglt2_drug, glp1_drug, dpp4_drug, statin_intensity, anticoagulant_type, valproate_product_type or metformin is_combination). For metric-only classes, use person-grain HAVING AGG(<class>_order_count) > 0. Never put a metric in WHERE. Every category has <class>_order_count and <class>_patient_count metrics — use AGG(<class>_patient_count) for "patients on X" headcounts. Prefer the pre-defined category tables over BNF filtering for known drug classes. BNF codes are compact, not dotted: bnf_chapter 2-digit (02 = Cardiovascular), bnf_section 4-digit (0205 = Hypertension and heart failure), bnf_code 15-character product code — use the BNF lookup tool to resolve drug class names, then WHERE bnf_section = result or bnf_code LIKE result || ''%''. order_date is clean (1990-01-01 to today). fiscal_year_start is an integer year (2024 = FY2024/25), not a date. Practice dimensions are prescribing practice; registered practice is in population. Demographics are current snapshot — use age_at_event for historical age cohorting.'
-AI_QUESTION_CATEGORIZATION 'Use this view for: prescribing volume and cost by BNF chapter/practice/PCN, statin prescribing rates and intensity, antibiotic stewardship, antipsychotic/antidepressant prescribing, valproate safety monitoring, repeat vs acute prescribing, cost per patient by therapeutic area, prescribing equity by deprivation/ethnicity, and any medication-related questions. For current population health (conditions, demographics) without prescribing use sem_olids_population. For clinical biomarkers use sem_olids_observations. Questions needing cohorts from TWO domains (e.g. medication x biomarker control, medication x appointment access, treated vs untreated gaps) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'
+AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is medication-order grain. Example: SELECT bnf_chapter, AGG(order_count), AGG(total_cost) FROM SEM_OLIDS_PRESCRIBING WHERE order_date >= DATEADD(year, -1, CURRENT_DATE) GROUP BY bnf_chapter. Example linkage: reduce active diabetes people in sem_olids_population and SGLT2 orders here before joining. Default treatment exposure is the last 12 months of order_date. For dimension-backed classes, filter the classification dimension in WHERE (antibacterial_class, sglt2_drug, glp1_drug, dpp4_drug, statin_intensity, anticoagulant_type, valproate_product_type or metformin is_combination). For metric-only medication sets, use person-grain HAVING AGG(<class>_order_count) > 0. Never put a metric in WHERE. Every pre-defined medication set has <class>_order_count and <class>_patient_count metrics — use AGG(<class>_patient_count) for "patients with X orders" headcounts. Prefer the pre-defined medication sets over BNF filtering for known drug classes. BNF codes are compact, not dotted: bnf_chapter 2-digit (02 = Cardiovascular), bnf_section 4-digit (0205 = Hypertension and heart failure), bnf_code 15-character product code — use the BNF lookup tool to resolve drug class names, then WHERE bnf_section = result or bnf_code LIKE result || ''%''. order_date is clean (1990-01-01 to today). fiscal_year_start is an integer year (2024 = FY2024/25), not a date. quantity_value is meaningful only within the same medication product and quantity_unit. Practice dimensions are prescribing practice; registered practice is in population. Demographics are current snapshot — use age_at_event for historical age cohorting.'
+AI_QUESTION_CATEGORIZATION 'Use this view for: medication orders, prescribing volume and estimated cost by BNF classification, medication, practice or PCN; exposed medication classes; repeat versus acute issues; and prescribing equity by deprivation or ethnicity. It does not contain dispensing, adherence, allergy or monitoring-test records. For current population health (conditions, demographics) without prescribing use sem_olids_population. For clinical biomarkers use sem_olids_observations. Questions needing cohorts from TWO domains (e.g. medication x biomarker control, medication x appointment access, treated vs untreated gaps) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'

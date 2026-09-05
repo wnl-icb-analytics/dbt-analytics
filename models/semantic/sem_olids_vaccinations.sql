@@ -55,10 +55,12 @@ DIMENSIONS(
 
     -- COVID and flu uptake: one row per person per campaign per risk group
     covid_flu.programme_type AS programme_type COMMENT = 'Vaccination programme: COVID or FLU. Always filter with campaign_id before uptake calculations.',
-    covid_flu.campaign_id AS campaign_id COMMENT = 'Campaign: COVID Autumn 2024, COVID Spring 2025, COVID Autumn 2025, COVID Spring 2026, COVID Autumn 2026, Flu 2024-25, Flu 2025-26, or Flu 2026-27.',
+    covid_flu.campaign_id AS campaign_id COMMENT = 'Programme-specific campaign identifier. Use an available campaign_id value and an explicit campaign or date period.',
     covid_flu.campaign_year AS campaign_year COMMENT = 'Campaign year, such as 2024/25',
     covid_flu.campaign_season AS campaign_season COMMENT = 'Campaign season: Autumn, Spring, or Annual.',
     covid_flu.risk_group AS risk_group COMMENT = 'Eligibility risk group. Eligible people can have more than one row, so use distinct-person metrics.',
+    covid_flu.subcohort AS subcohort COMMENT = 'More detailed campaign subcohort within the eligibility risk group.',
+    covid_flu.eligibility_reason AS eligibility_reason COMMENT = 'Recorded reason the person qualifies for the campaign.',
     covid_flu.campaign_category AS campaign_category COMMENT = 'Campaign eligibility category, or Not Eligible',
     covid_flu.uptake_category AS uptake_category COMMENT = 'Eligibility and vaccination outcome category',
     covid_flu.vaccination_status AS vaccination_status COMMENT = 'COVID/flu status: VACCINATION_ADMINISTERED, VACCINATION_DECLINED, NO_VACCINATION_RECORD, or LAIV_ADMINISTERED (flu only; counts as vaccinated).',
@@ -68,6 +70,9 @@ DIMENSIONS(
     covid_flu.is_eligible AS is_eligible COMMENT = 'Eligible for the selected programme and campaign',
     covid_flu.laiv_given AS laiv_given COMMENT = 'Live attenuated influenza vaccine given. FALSE for COVID.',
     covid_flu.vaccination_date AS vaccination_date COMMENT = 'Vaccination administration date',
+    covid_flu.campaign_start_date AS campaign_start_date COMMENT = 'Start date defining the campaign scope.',
+    covid_flu.campaign_reference_date AS campaign_reference_date COMMENT = 'Campaign reference date used for age and eligibility assessment.',
+    covid_flu.audit_end_date AS audit_end_date COMMENT = 'End date defining the campaign audit scope. This does not make eligibility a historical snapshot.',
     covid_flu.vaccinated_despite_ineligible AS vaccinated_despite_ineligible COMMENT = 'Vaccinated despite no recorded eligibility',
 
     -- Adult immunisations
@@ -129,5 +134,5 @@ METRICS(
 )
 
 COMMENT = 'OLIDS Vaccinations Semantic View - COVID and flu uptake by person, campaign and risk group; current-state pneumococcal, shingles and RSV vaccination status. COVID and flu are one row per person per campaign per risk group: headcounts must use COUNT(DISTINCT person_id), never COUNT(*) or flag sums. Pneumococcal and RSV are person grain; shingles is one row per person per DOSE (campaign = dose) - filter or group by campaign for shingles.'
-AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. COVID and flu are person-campaign-risk-group grain; filter programme_type and campaign_id before calculating uptake and do not sum flags. Example: SELECT AGG(eligible_patients), AGG(vaccinated_patients) FROM SEM_OLIDS_VACCINATIONS WHERE programme_type = ''FLU'' AND campaign_id = ''Flu 2025-26''. Example linkage: reduce flu patients here and diabetes people in sem_olids_population before joining. Campaigns: COVID Autumn 2024, COVID Spring 2025, COVID Autumn 2025, COVID Spring 2026, COVID Autumn 2026, Flu 2024-25, Flu 2025-26, Flu 2026-27. Flu LAIV counts as vaccinated. Pneumococcal, shingles and RSV are current-state programmes with no campaign history; shingles fans out one row per dose (campaign = dose), so filter or group by campaign there; cohorts: pneumococcal 65+ or PPV clinical risk group; shingles 70-79 catch-up, turned 65 after September 2023, or immunosuppressed 18+; RSV 75+, care home resident, or pregnant 12-55. Filter is_active = TRUE for coverage.'
+AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. COVID and flu are person-campaign-risk-group grain; filter programme_type and an available campaign_id value before calculating uptake and do not sum flags. State an explicit campaign or date period. Example: SELECT AGG(eligible_patients), AGG(vaccinated_patients) FROM SEM_OLIDS_VACCINATIONS WHERE programme_type = ''FLU'' AND campaign_id = ''Flu 2025-26''. Example linkage: reduce flu patients here and diabetes people in sem_olids_population before joining. campaign_start_date, campaign_reference_date and audit_end_date define campaign scope; they do not reconstruct eligibility at an earlier date. For uptake as at a date, vaccination_date defines the numerator cutoff, but this view does not reconstruct the historical eligibility denominator. Flu LAIV counts as vaccinated. Pneumococcal, shingles and RSV are current-state programmes with no campaign history; shingles fans out one row per dose (campaign = dose), so filter or group by campaign there; cohorts: pneumococcal 65+ or PPV clinical risk group; shingles 70-79 catch-up, turned 65 after September 2023, or immunosuppressed 18+; RSV 75+, care home resident, or pregnant 12-55. Filter is_active = TRUE for coverage.'
 AI_QUESTION_CATEGORIZATION 'Use this view for: COVID and flu vaccination uptake, eligibility and declines by campaign; pneumococcal, shingles and RSV vaccination status; and vaccination equity. Childhood immunisations are not included and will be in a future view.'
