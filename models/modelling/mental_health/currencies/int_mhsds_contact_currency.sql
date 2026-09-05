@@ -20,7 +20,7 @@ with eligible_contacts as (
         , c.uniq_care_cont_id
         , d.icd10_3
     from eligible_contacts as c
-    left join {{ ref('stg_mhsds_primdiag') }} as d
+    left join {{ ref('int_mhsds_currency_primary_diagnosis') }} as d
         on c.uniq_serv_req_id = d.uniq_serv_req_id
         and d.coded_diag_timestamp <= c.care_cont_date
     qualify row_number() over (

@@ -22,14 +22,15 @@ select
     , iff(a.dmic_dataset = 'V6', a.finding, a.code_find) as finding_code
     , a.master_snomed_ct_finding_code as standardised_snomed_finding_code
     -- V4.1 removed the scheme field when observations became SNOMED CT-only.
-    , case
-        when a.dmic_dataset = 'V6' and a.observation is not null then '03'
-        when a.dmic_dataset = 'V5' and a.code_obs is not null then '03'
-        when a.dmic_dataset = 'V4'
+    , coalesce(
+        (a.dmic_dataset = 'V6' and a.observation is not null)
+        or (a.dmic_dataset = 'V5' and a.code_obs is not null)
+        or (a.dmic_dataset = 'V4'
             and a.reporting_period_start_date >= '2020-04-01'
-            and a.code_obs is not null then '03'
-        else a.obs_scheme_in_use
-    end as observation_scheme_code
+            and a.code_obs is not null)
+        , false
+    ) as is_observation_scheme_inferred
+    , iff(is_observation_scheme_inferred, '03', a.obs_scheme_in_use) as observation_scheme_code
     , iff(a.dmic_dataset = 'V6', a.observation, a.code_obs) as observation_code
     , a.master_snomed_ct_obs_code as standardised_snomed_observation_code
     , a.obs_value as observation_value

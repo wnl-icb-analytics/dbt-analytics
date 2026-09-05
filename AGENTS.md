@@ -112,6 +112,12 @@ Check downstream impact with `dbt ls -s model_name+`. Compile and build the
 smallest useful selection, then build downstream models whose results may
 change. Use `dbt show` only under the data-safety rules below.
 
+Use the established dbt `dev` target and database layers for development builds.
+DEV is intentionally shared and not fully isolated. A Git worktree isolates
+code, not warehouse objects. Never create task-specific databases, schemas or
+target prefixes to isolate a build. Keep models alongside their existing domain
+models and follow `PROJECT_CONVENTIONS.md` for build selection and dependencies.
+
 Check the branch and worktree status, preserve unrelated work and read the diff
 before pushing. Never work on `main`; use a `type/short-description` branch. Use
 Conventional Commit form for commits and the pull request title. Open the

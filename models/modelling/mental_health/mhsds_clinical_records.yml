@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: int_mhsds_diagnosis
+    description: >
+      Recorded MHSDS diagnoses, one row per source table, provider-local
+      patient or referral, person, scheme, code and clinical time/precision.
+      Retains the latest accepted row for each fully identified diagnosis.
+      Missing parent, scheme, code or time retains individual source rows.
+      A missing national person identifier does not disable revision selection
+      within a complete provider-local key. Different codes and
+      person identifiers survive; this does not decide which diagnosis is
+      clinically current. First/last periods record submission evidence.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: source_record_id
+        description: Stable guarded logical diagnosis key, with source-row fallback for incomplete keys.
+        data_tests: [not_null, unique]
+      - name: diagnosis_scheme_code
+        description: Submitted diagnosis scheme, labelled in the reporting fact.
+      - name: accepted_source_record_count
+        description: Number of accepted source rows represented by this retained diagnosis.
+      - name: has_person_identifier_changed
+        description: TRUE when different national person identifiers occur for the source diagnosis key.
+
+  - name: int_mhsds_clinical_record
+    description: >
+      Long clinical-item assembly before shared patient and terminology joins.
+      One row per source occurrence and clinical record type. Expands the
+      established care-activity fact without staff joins. MHS606 and MHS607
+      retain every accepted source row, including repeated assessment scores.
+      Only a same-submission activity without conflicting person or referral
+      identifiers supplies MHS607 time. Both person identifiers may be missing
+      when the recorded activity and referral links agree.
+    config: *owner
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [source_table, source_record_id, clinical_record_type]
+    columns:
+      - name: source_record_id
+        description: Guarded diagnosis key, accepted assessment-row key or established activity key.
+        data_tests: [not_null]
+      - name: source_table
+        description: MHSDS table supplying the occurrence.
+      - name: clinical_record_type
+        description: Clinical component or assessment/diagnosis role.

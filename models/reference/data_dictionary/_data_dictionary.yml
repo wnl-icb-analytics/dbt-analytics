@@ -85,6 +85,32 @@ models:
     config: *owner
     columns: *default_columns
 
+  - name: diagnosis_scheme_history
+    description: Diagnosis coding-scheme history, one row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: diagnosis_scheme
+    description: >-
+      One row per diagnosis coding-scheme code ever published in UKHFD, using
+      its latest definition. Retired codes remain available for historical joins.
+    config: *owner
+    columns: *default_columns
+
+  - name: mhsds_diagnosis_scheme
+    description: >-
+      One row per diagnosis coding-scheme code, combining UKHFD historical
+      codes with specification-backed MHSDS labels not yet held in UKHFD.
+      Inclusion supplies a label, not validation for every MHSDS version.
+    config: *owner
+    columns:
+      - name: code
+        description: Diagnosis coding-scheme code.
+        data_tests: [not_null, unique]
+      - name: description
+        description: UKHFD label or MHSDS ETOS supplement when absent from UKHFD.
+
   - name: activity_location_type_history
     description: >-
       Activity-location-type definition revisions from UKHFD. One row per code

@@ -330,6 +330,15 @@ reviewers must still confirm that it covers the stated key or key combination.
 
 ## Validate the change
 
+Use the tracked `profiles.yml` and the established `dev` target for local builds.
+The naming macros place models in the existing `DEV__STAGING`, `DEV__REFERENCE`,
+`DEV__MODELLING`, `DEV__REPORTING` and other configured layers. Seeds and other
+shared resources keep their configured locations. DEV is intentionally shared
+and not fully isolated. Do not create task-specific databases, schemas or target
+prefixes, including when working in a Git worktree. Inspect the selected models
+and their dependencies before building; use the existing deferral workflow when
+needed rather than creating another environment.
+
 Build the smallest selection that answers the current question, then widen it
 when the change can affect consumers:
 

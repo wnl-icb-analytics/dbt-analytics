@@ -1,4 +1,4 @@
--- Diagnosis dates are not listed: stg_mhsds_primdiag still passes source
+-- Diagnosis dates are not listed: the currency diagnosis model still passes source
 -- values through uncast, so the sentinel rule does not yet hold there.
 with profile_sentinel_counts as (
     select
@@ -111,3 +111,13 @@ select
     offending_column,
     sentinel_row_count
 from profile_sentinels
+
+union all
+
+select
+    'clinical_record' as model_name,
+    'clinical_date' as offending_column,
+    count(*) as sentinel_row_count
+from {{ ref('fct_mhsds_clinical_record') }}
+where clinical_date < '1901-01-01'::date
+having count(*) > 0

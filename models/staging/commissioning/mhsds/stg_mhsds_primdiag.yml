@@ -2,54 +2,49 @@ version: 2
 
 models:
   - name: stg_mhsds_primdiag
-    description: >
-      MHSDS primary diagnosis history for currency grouping. Grain: one row per
-      uniq_serv_req_id and coded_diag_timestamp. Population: MHS604 primary
-      diagnoses with a recorded timestamp. A corrected code at the same
-      referral and timestamp supersedes the earlier value. Equal timestamps use
-      the NHS England grouper ordering.
+    description: >-
+      Accepted MHS604 clinical source records. One row per submitted record
+      across accepted provider reporting periods. Repeated clinical items
+      remain here; cross-period revision selection belongs in modelling.
     config:
       meta:
         owner:
           name: Eddie Davison
     columns:
       - name: mhs604_uniq_id
-        description: Identifier of the retained source row; changes on resubmission.
-        data_tests:
-          - not_null
+        description: Unique accepted source-row identifier; changes on resubmission.
+        data_tests: [not_null, unique]
       - name: uniq_serv_req_id
-        description: Unique service request identifier.
-        data_tests:
-          - not_null
-      - name: person_id
-        description: MHSDS person identifier.
-      - name: coded_diag_timestamp
-        description: Diagnosis coding timestamp.
-        data_tests:
-          - not_null
+        description: Recorded provider-qualified service request identifier.
       - name: diag_scheme_in_use
-        description: Diagnosis coding scheme.
+        description: Submitted diagnosis scheme; 02 is ICD-10 and 06 is SNOMED CT.
       - name: prim_diag
-        description: Primary diagnosis code as submitted.
-      - name: icd10_code
-        description: Resolved ICD-10 code before normalisation.
-      - name: icd10_3
-        description: Three-character normalised ICD-10 code.
+        description: Diagnosis code as submitted.
+      - name: coded_diag_timestamp
+        description: Stored diagnosis timestamp; original submitted offset and precision are unavailable.
+      - name: diag_date
+        description: Separate source-pipeline diagnosis date; may disagree with the timestamp.
+      - name: master_snomed_ct_prim_diag_code
+        description: Source-pipeline SNOMED CT mapping of the submitted diagnosis.
       - name: org_id_prov
         description: Provider organisation code.
-      - name: source_record_number
-        description: MHSDS record number used to resolve equal diagnosis timestamps.
-      - name: source_row_number
-        description: MHSDS row number used to resolve equal diagnosis timestamps.
+      - name: person_id
+        description: MHSDS national person identifier; may change between submissions.
       - name: uniq_submission_id
-        description: Submission containing the retained diagnosis.
+        description: Accepted submission containing the source row.
+      - name: uniq_month_id
+        description: Source reporting-month identifier.
+      - name: record_number
+        description: Source record number, retained for existing currency ordering.
+      - name: row_number
+        description: Source row position, retained for deterministic selection.
+      - name: reporting_period_start_date
+        description: Start of the accepted reporting period.
       - name: reporting_period_end_date
-        description: End of the reporting period containing the retained diagnosis.
+        description: End of the accepted reporting period.
       - name: effective_from
-        description: Time the retained source file was received.
-    data_tests:
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - uniq_serv_req_id
-              - coded_diag_timestamp
+        description: Time the source file was received.
+      - name: dmic_date_added
+        description: Time the source row was loaded.
+      - name: dmic_dataset
+        description: Source MHSDS specification version.
