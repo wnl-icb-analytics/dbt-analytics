@@ -16,6 +16,11 @@ models:
       result or the other lipid type. The numerator requires a valid unrounded
       LDL at or below 2.0 mmol/L, or non-HDL at or below 2.6 mmol/L.
 
+      Recorded values, unit provenance and review flags accompany the selected
+      candidate conversion. Review flags identify uncertainty and do not change
+      validity or achievement. Consumers can compare results with and without
+      flagged observations; these local review ranges are not clinical exclusions.
+
       This is an unadjusted local NICE measure, not a QOF achievement calculation.
       Personalised care adjustments for declined tests or treatment, non-attendance,
       maximum tolerated therapy and inappropriate treatment are not applied.
@@ -85,7 +90,23 @@ models:
       - name: lipid_type
         description: LDL cholesterol or Non-HDL cholesterol; null if no result is recorded in the period.
       - name: latest_lipid_value
-        description: Selected unrounded concentration in mmol/L. Null for missing numeric values or unsupported or missing units, and when no result is recorded.
+        description: Selected candidate conversion in mmol/L, without rounding. Check is_latest_lipid_review_required. Null for missing numeric values or unsupported or missing units, and when no result is recorded.
+      - name: latest_lipid_recorded_value
+        description: Numeric value received from OLIDS before our conversion. Null for a missing numeric value or no recent observation. Not guaranteed to be the original laboratory value.
+      - name: source_result_unit_display
+        description: Source unit concept label for the selected result. Null if unavailable.
+      - name: mapped_result_unit_display
+        description: Mapped unit label supplied by OLIDS for the selected result. Null if unavailable.
+      - name: conversion_factor
+        description: Multiplier applied to the recorded value. Null when units cannot be converted or no recent observation exists.
+      - name: plausibility_status
+        description: Screening status for the selected result using the shared observation review ranges. Null when no recent observation exists.
+      - name: is_latest_lipid_review_required
+        description: >
+          Whether the selected result has a unit conversion, conflicting unit metadata,
+          missing or unsupported units, or a numeric plausibility concern. Null when no
+          recent observation exists. Does not change numerator membership or replace the
+          selected observation with an older one. False is not verified accuracy.
       - name: unit_status
         description: Unit interpretation from the observation model; null if no result is recorded in the period.
       - name: indicator_threshold
