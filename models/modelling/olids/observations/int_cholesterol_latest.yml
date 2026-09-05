@@ -68,17 +68,46 @@ models:
       - name: date_recorded
         description: Date the observation was recorded in the source.
       - name: cholesterol_value
-        description: Concentration in mmol/L, without display rounding. Null when a recorded unit is missing
-          or unsupported. Consult the validity flag before using the value.
+        description: Compatibility alias of converted_value_mmol_l. Check is_lipid_review_required as well as validity before analysis.
       - name: result_unit_display
         description: 'Standard unit: mmol/L. Null when the unit cannot be standardised.'
+      - name: recorded_value
+        description: Numeric value received from OLIDS, unchanged by this model. Not guaranteed to be the original laboratory value.
+      - name: converted_value_mmol_l
+        description: Candidate concentration in mmol/L calculated using the recorded unit. Preserves precision and outliers. Null when the unit cannot be converted. A plausible result does not prove the unit was correct.
+      - name: source_result_unit_code
+        description: Unit code from the source concept, without mapped-unit substitution. Null if unavailable.
+      - name: source_result_unit_display
+        description: Unit label from the source concept, without mapped-unit substitution. Null if unavailable.
+      - name: mapped_result_unit_code
+        description: Mapped unit code supplied by OLIDS. Null if unavailable.
+      - name: mapped_result_unit_display
+        description: Mapped unit label supplied by OLIDS. Null if unavailable.
+      - name: conversion_unit_basis
+        description: Whether the calculation selected the mapped unit, source unit or no recorded unit. Missing ratio units are inferred from the PCD observable.
+      - name: conversion_factor
+        description: Multiplier applied to recorded_value. One for recognised standard units and inferred dimensionless ratios. Null when the unit cannot be converted.
+      - name: is_unit_metadata_conflict
+        description: True when populated source and mapped unit labels disagree after recognised aliases are normalised. Unknown labels are treated as absent. Does not identify which unit is correct.
+      - name: plausibility_status
+        description: >
+          Screening result after conversion using an inclusive local review range of 0.5 to 20 mmol/L.
+          These exploratory limits are not clinical exclusion thresholds. Rare genuine results
+          can lie outside them. Existing validity rules and row selection are unchanged.
+      - name: is_lipid_review_required
+        description: >
+          True for conflicting unit metadata, every non-standard unit conversion, missing or unsupported units, missing
+          or non-positive or non-finite values, or values outside the local review range.
+          False means no issue detected by these checks, not verified accuracy. Inferred
+          dimensionless ratio units do not alone trigger review. Does not change validity,
+          clinical categories or latest-valid selection.
       - name: original_result_value
-        description: Numeric result before unit conversion.
+        description: Compatibility alias of recorded_value, the unchanged numeric value received from OLIDS.
       - name: original_result_unit_code
-        description: Mapped unit code where supplied, otherwise the source unit concept code. Null if
+        description: Legacy combined unit field. Mapped unit code where supplied, otherwise the source unit concept code. Null if
           neither is available.
       - name: original_result_unit_display
-        description: Mapped unit label where supplied, otherwise the source unit concept label. Null if
+        description: Legacy combined unit field. Mapped unit label where supplied, otherwise the source unit concept label. Null if
           neither is available.
       - name: unit_status
         description: Whether the unit was recorded in standard form, converted, missing or unsupported.
