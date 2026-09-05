@@ -1,4 +1,4 @@
-# dbt Scheduled Production Runs
+# dbt Scheduled Runs
 #
 # Replaces the Snowflake task DAGs (Snowflake-Deployment: dbt Admin/dbt Prod
 # Automated Runs/setup.sql). Runs dbt (Fusion) directly on the runner.
@@ -13,6 +13,9 @@
 #                                         --full-refresh
 #   0 7,12 * * *   SDL intraday           SDL refresh procs, then
 #                                         build --select source:sdl_wnl+
+#   17 19 1 * *   Development full refresh from latest main, first evening monthly
+#                                         build --full-refresh --target dev
+#                 20:17 Europe/London in summer, 19:17 in winter.
 #
 # The daily build selects every descendant of the OLIDS source, regardless of
 # its folder, plus existing `daily` tags. Snapshots run in the same build so
@@ -48,6 +51,7 @@ run-name: >-
   dbt ${{ inputs.run_type
   || (github.event.schedule == '0 7,12 * * *' && 'sdl-intraday')
   || (github.event.schedule == '0 4 1 * *' && 'monthly-full-refresh')
+  || (github.event.schedule == '17 19 1 * *' && 'dev-monthly-full-refresh')
   || (github.event.schedule == '0 4 * * 1' && 'weekly')
   || 'daily' }}
 
@@ -57,6 +61,7 @@ on:
     - cron: '0 4 * * 1'
     - cron: '0 4 1 * *'
     - cron: '0 7,12 * * *'
+    - cron: '17 19 1 * *'
   workflow_dispatch:
     inputs:
       run_type:
@@ -67,18 +72,27 @@ on:
           - daily
           - weekly
           - monthly-full-refresh
+          - dev-monthly-full-refresh
           - snapshots
           - sdl-intraday
+
+# Dev refreshes also share the merge-validation lock before joining the prod queue.
+# Other schedules retain independent workflow runs and use only the job queue below.
+concurrency:
+  group: ${{ (inputs.run_type == 'dev-monthly-full-refresh' || github.event.schedule == '17 19 1 * *') && 'dbt-pr-validation-merge-queue' || format('dbt-scheduled-{0}', github.run_id) }}
+  cancel-in-progress: false
+  queue: max
 
 jobs:
   run:
     name: Scheduled dbt run
     runs-on: ubuntu-latest
     timeout-minutes: 350
-    # Same queue as deploys - prod runs never overlap.
+    # Share warehouse capacity with production deploys and scheduled builds.
     concurrency:
       group: dbt-prod
       cancel-in-progress: false
+      queue: max
     permissions:
       actions: read  # previous successful run for failure attribution
       contents: read
@@ -91,13 +105,6 @@ jobs:
       SNOWFLAKE_ROLE: DBT_ADMIN
       SNOWFLAKE_WAREHOUSE: WH_WNL_ENGINEERING_M
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          # Failure attribution compares dependency-path changes with the last
-          # successful run of the same schedule type.
-          fetch-depth: 0
-
       - name: Resolve run type
         id: plan
         env:
@@ -108,6 +115,7 @@ jobs:
             daily|"0 4 * * 0,2-6")        run_type=daily ;;
             weekly|"0 4 * * 1")           run_type=weekly ;;
             monthly-full-refresh|"0 4 1 * *") run_type=monthly-full-refresh ;;
+            dev-monthly-full-refresh|"17 19 1 * *") run_type=dev-monthly-full-refresh ;;
             snapshots)                    run_type=snapshots ;;  # dispatch only
             sdl-intraday|"0 7,12 * * *")  run_type=sdl-intraday ;;
             *) echo "Unknown schedule: $CRON" >&2; exit 1 ;;
@@ -119,10 +127,12 @@ jobs:
             run_type=skip
           fi
 
+          dbt_target=prod
           case "$run_type" in
             daily)                dbt_args="build --select +tag:daily source:olids+ resource_type:snapshot+ tag:indicator_definitions+" ;;
             weekly)               dbt_args="build --select +staging+ tag:indicator_definitions+" ;;
             monthly-full-refresh) dbt_args="build --select +staging+ tag:indicator_definitions+ --full-refresh" ;;
+            dev-monthly-full-refresh) dbt_args="build --full-refresh"; dbt_target=dev ;;
             snapshots)            dbt_args="snapshot" ;;
             sdl-intraday)         dbt_args="build --select source:sdl_wnl+" ;;
             skip)                 dbt_args="" ;;
@@ -130,7 +140,17 @@ jobs:
 
           echo "run_type=$run_type" >> "$GITHUB_OUTPUT"
           echo "dbt_args=$dbt_args" >> "$GITHUB_OUTPUT"
-          echo "Run type: $run_type / dbt $dbt_args"
+          echo "dbt_target=$dbt_target" >> "$GITHUB_OUTPUT"
+          echo "Run type: $run_type / dbt $dbt_args --target $dbt_target"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Resolve main after entering the shared queue, including manual dev runs.
+          ref: ${{ steps.plan.outputs.dbt_target == 'dev' && 'main' || github.ref }}
+          persist-credentials: false
+          # Failure attribution compares dependency-path changes with the last
+          # successful run of the same schedule type.
+          fetch-depth: 0
 
       - name: Install dbt Fusion
         if: steps.plan.outputs.run_type != 'skip'
@@ -191,7 +211,12 @@ jobs:
       - name: dbt run
         id: build
         if: steps.plan.outputs.run_type != 'skip'
-        run: dbt ${{ steps.plan.outputs.dbt_args }} --target prod --profiles-dir .
+        env:
+          DBT_ARGS: ${{ steps.plan.outputs.dbt_args }}
+          DBT_TARGET: ${{ steps.plan.outputs.dbt_target }}
+        run: |
+          read -r -a dbt_args <<< "$DBT_ARGS"
+          dbt "${dbt_args[@]}" --target "$DBT_TARGET" --profiles-dir .
 
       # Failure notifications ride the GitHub -> Teams app via issues (no
       # webhooks; NHS-tenant Teams blocks them). One open issue per run type,

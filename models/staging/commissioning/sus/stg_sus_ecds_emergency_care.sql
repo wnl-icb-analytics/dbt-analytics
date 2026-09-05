@@ -2,6 +2,13 @@
     config(materialized = 'view')
 }}
 
+-- Deduplicate the lookup before joining so dictionary versions cannot multiply attendances.
+with organisation_codes as (
+    select distinct organisation_code
+    from {{ ref('stg_dictionary_dbo_organisation') }}
+    where sk_organisation_type_id = 41
+)
+
 select primarykey_id
     , system_transaction_cds_unique_identifier
     , patient_nhs_number_value_pseudo as sk_patient_id
@@ -20,7 +27,10 @@ select primarykey_id
         as patient_gp_registration_general_practitioner
     , nullif(upper(trim(commissioning_service_agreement_commissioner)), '')
         as commissioning_service_agreement_commissioner
-    ,  {{ clean_organisation_id('attendance_location_hes_provider_3') }} as attendance_location_hes_provider_3
+    , case when provider.organisation_code is not null
+        then core.attendance_location_hes_provider_3
+        else left(core.attendance_location_hes_provider_3, 3)
+      end as attendance_location_hes_provider_3
     , nullif(upper(trim(attendance_location_site)), '') as attendance_location_site
     , attendance_location_department_type
     , attendance_location_activity_type
@@ -33,8 +43,10 @@ select primarykey_id
     , attendance_arrival_attendance_category
     , attendance_arrival_planned
     , attendance_arrival_ambulance_incident_number
-    , {{ clean_organisation_id('attendance_arrival_conveying_ambulance_trust') }}
-        as attendance_arrival_conveying_ambulance_trust
+    , case when ambulance.organisation_code is not null
+        then core.attendance_arrival_conveying_ambulance_trust
+        else left(core.attendance_arrival_conveying_ambulance_trust, 3)
+      end as attendance_arrival_conveying_ambulance_trust
     , attendance_arrival_ambulance_care_contact_identifier
     , attendance_arrival_attendance_source_code
     -- This field predominantly contains five-character site identifiers. Do not
@@ -105,4 +117,8 @@ select primarykey_id
     , patient_usual_address_index_of_multiple_deprivation_decile
     , patient_gp_registration_general_practice
 
-from {{ ref('raw_sus_ecds_emergency_care') }}
+from {{ ref('raw_sus_ecds_emergency_care') }} as core
+left join organisation_codes as provider
+    on core.attendance_location_hes_provider_3 = provider.organisation_code
+left join organisation_codes as ambulance
+    on core.attendance_arrival_conveying_ambulance_trust = ambulance.organisation_code
