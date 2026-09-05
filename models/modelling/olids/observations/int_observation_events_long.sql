@@ -113,6 +113,30 @@ events AS (
     WHERE cholesterol_value IS NOT NULL
 
     UNION ALL
+    SELECT person_id, id, 'HDL Cholesterol', 'Cardiovascular',
+        clinical_effective_date, cholesterol_value::FLOAT, 'mmol/L', cholesterol_category::VARCHAR
+    FROM {{ ref('int_cholesterol_hdl_all') }}
+    WHERE cholesterol_value IS NOT NULL
+
+    UNION ALL
+    SELECT person_id, id, 'Non-HDL Cholesterol', 'Cardiovascular',
+        clinical_effective_date, cholesterol_value::FLOAT, 'mmol/L', cholesterol_category::VARCHAR
+    FROM {{ ref('int_cholesterol_non_hdl_all') }}
+    WHERE cholesterol_value IS NOT NULL
+
+    UNION ALL
+    SELECT person_id, id, 'Triglycerides', 'Cardiovascular',
+        clinical_effective_date, triglycerides_value::FLOAT, 'mmol/L', triglycerides_category::VARCHAR
+    FROM {{ ref('int_triglycerides_all') }}
+    WHERE triglycerides_value IS NOT NULL
+
+    UNION ALL
+    SELECT person_id, id, 'Total Cholesterol to HDL Ratio', 'Cardiovascular',
+        clinical_effective_date, cholesterol_hdl_ratio::FLOAT, 'ratio', NULL::VARCHAR
+    FROM {{ ref('int_cholesterol_hdl_ratio_all') }}
+    WHERE cholesterol_hdl_ratio IS NOT NULL
+
+    UNION ALL
     SELECT person_id, id, 'QRISK', 'Cardiovascular',
         clinical_effective_date, qrisk_score::FLOAT, '%', cvd_risk_category::VARCHAR
     FROM {{ ref('int_qrisk_all') }}

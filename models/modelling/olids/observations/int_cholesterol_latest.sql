@@ -1,31 +1,37 @@
-{{
-    config(
-        materialized='table',
-        cluster_by=['person_id'])
-}}
-
-/*
-Latest valid total cholesterol measurement per person.
-Uses the comprehensive int_cholesterol_all model and filters to most recent valid cholesterol.
-*/
+{{ config(materialized='table', cluster_by=['person_id']) }}
 
 SELECT
+    id,
     person_id,
-    ID,
     clinical_effective_date,
+    clinical_effective_date_raw,
+    date_recorded,
     cholesterol_value,
+    result_unit_display,
+    recorded_value,
+    converted_value_mmol_l,
+    source_result_unit_code,
+    source_result_unit_display,
+    mapped_result_unit_code,
+    mapped_result_unit_display,
+    conversion_unit_basis,
+    conversion_factor,
+    is_unit_metadata_conflict,
+    plausibility_status,
+    is_lipid_review_required,
+    original_result_value,
+    original_result_unit_code,
+    original_result_unit_display,
+    unit_status,
     concept_code,
     concept_display,
     source_cluster_id,
-    cholesterol_category,
-    original_result_value
-
-FROM (
-    {{ get_latest_events(
-        ref('int_cholesterol_all'),
-        partition_by=['person_id'],
-        order_by='clinical_effective_date'
-    ) }}
-) latest_cholesterol
-
-WHERE is_valid_cholesterol = TRUE
+    sampling_context,
+    is_valid_cholesterol,
+    cholesterol_category
+FROM {{ ref('int_cholesterol_all') }}
+WHERE is_valid_cholesterol
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY person_id
+    ORDER BY clinical_effective_date DESC, id DESC
+) = 1

@@ -184,6 +184,7 @@ ldl_cholesterol_measurements as(
     from {{ ref('int_cholesterol_ldl_all')}} ldl 
     inner join inclusion_list il on il.olids_id = ldl.person_id
     where ldl.clinical_effective_date between dateadd(year, {{ measurement_cutoff }}, current_date()) and current_date()
+    and ldl.is_valid_cholesterol = true
     qualify 
         row_number() over (
             partition by il.patient_id, ldl.clinical_effective_date, ldl.cholesterol_value

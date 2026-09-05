@@ -1,4 +1,8 @@
-{{ config(materialized='table', cluster_by=['person_id']) }}
+{{ config(materialized='table', cluster_by=['person_id', 'clinical_effective_date']) }}
+
+WITH measurements AS (
+    {{ get_lipid_observations('TCHOLHDL_COD', 'cholesterol_hdl_ratio', ratio=true) }}
+)
 
 SELECT
     id,
@@ -6,10 +10,9 @@ SELECT
     clinical_effective_date,
     clinical_effective_date_raw,
     date_recorded,
-    cholesterol_value,
+    cholesterol_hdl_ratio,
     result_unit_display,
     recorded_value,
-    converted_value_mmol_l,
     source_result_unit_code,
     source_result_unit_display,
     mapped_result_unit_code,
@@ -27,12 +30,5 @@ SELECT
     concept_display,
     source_cluster_id,
     sampling_context,
-    is_valid_cholesterol,
-    cholesterol_category,
-    ldl_cvd_target_met
-FROM {{ ref('int_cholesterol_ldl_all') }}
-WHERE is_valid_cholesterol
-QUALIFY ROW_NUMBER() OVER (
-    PARTITION BY person_id
-    ORDER BY clinical_effective_date DESC, id DESC
-) = 1
+    COALESCE(cholesterol_hdl_ratio > 0 AND cholesterol_hdl_ratio < 'inf'::FLOAT, FALSE) AS is_valid_cholesterol_hdl_ratio
+FROM measurements

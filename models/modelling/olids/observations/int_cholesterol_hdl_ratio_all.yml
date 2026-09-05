@@ -1,22 +1,22 @@
 models:
-  - name: int_cholesterol_ldl_all
-    description: LDL cholesterol for all people, including inactive and deceased people. One row per observation
-      in the PCD LDLCCHOL_COD cluster. Missing or future original clinical dates are excluded. Invalid
-      values and unsupported units remain available for audit. Valid means a positive, finite value with
-      a recognised unit. Concentrations retain source precision after unit conversion; values are not
-      rounded before comparison. The general healthy-adult reference limit is below 3 mmol/L. This is
-      not a treatment target for people with cardiovascular disease.
+  - name: int_cholesterol_hdl_ratio_all
+    description: Total cholesterol to HDL ratio for all people, including inactive and deceased people.
+      One row per observation in the PCD TCHOLHDL_COD cluster. Missing or future original clinical dates
+      are excluded. Invalid values and unsupported units remain available for audit. Valid means a positive
+      finite ratio. Blank units and explicit unknown-unit markers are inferred from the PCD ratio observable; incompatible recorded units
+      are invalid. Dimensionless total cholesterol divided by HDL as recorded. The model does not calculate
+      a ratio from separately dated results or assign a universal treatment target.
     config:
       meta:
         owner:
-          name: KateHomer55
+          name: EddieDavison92
         clinical_source: https://www.heartuk.org.uk/cholesterol/understanding-your-cholesterol-test-results-
         code_source: PCD
     columns:
       - name: id
         description: Source observation identifier. Used to break ties deterministically; it does not
           imply clinical priority.
-        tests:
+        data_tests:
           - unique
           - not_null
       - name: person_id
@@ -28,14 +28,12 @@ models:
         description: Original clinical effective date before the shared date correction.
       - name: date_recorded
         description: Date the observation was recorded in the source.
-      - name: cholesterol_value
-        description: Compatibility alias of converted_value_mmol_l. Check is_lipid_review_required as well as validity before analysis.
+      - name: cholesterol_hdl_ratio
+        description: Recorded ratio after unit validation; null for an unsupported unit.
       - name: result_unit_display
-        description: 'Standard unit: mmol/L. Null when the unit cannot be standardised.'
+        description: 'Standard unit: ratio.'
       - name: recorded_value
         description: Numeric value received from OLIDS, unchanged by this model. Not guaranteed to be the original laboratory value.
-      - name: converted_value_mmol_l
-        description: Candidate concentration in mmol/L calculated using the recorded unit. Preserves precision and outliers. Null when the unit cannot be converted. A plausible result does not prove the unit was correct.
       - name: source_result_unit_code
         description: Unit code from the source concept, without mapped-unit substitution. Null if unavailable.
       - name: source_result_unit_display
@@ -52,7 +50,7 @@ models:
         description: True when populated source and mapped unit labels disagree after recognised aliases are normalised. Unknown labels are treated as absent. Does not identify which unit is correct.
       - name: plausibility_status
         description: >
-          Screening result after conversion using an inclusive local review range of 0.1 to 20 mmol/L.
+          Screening result after conversion using an inclusive local review range of 1 to 50.
           These exploratory limits are not clinical exclusion thresholds. Rare genuine results
           can lie outside them. Existing validity rules and row selection are unchanged.
       - name: is_lipid_review_required
@@ -72,26 +70,20 @@ models:
           neither is available.
       - name: unit_status
         description: Whether the unit was recorded in standard form, converted, missing or unsupported.
-          Missing concentration units are not inferred from the value.
+          Blank ratio units and explicit unknown-unit markers are inferred from the observable.
       - name: concept_code
         description: Recorded mapped clinical concept code matched to the PCD cluster.
       - name: concept_display
         description: Recorded mapped clinical concept label.
       - name: source_cluster_id
-        description: 'Authoritative PCD observation cluster: LDLCCHOL_COD.'
+        description: 'Authoritative PCD observation cluster: TCHOLHDL_COD.'
       - name: sampling_context
         description: Fasting, non-fasting or random only when specified in the PCD code description. Otherwise
           Not specified; no sampling status is inferred from the numeric value.
-      - name: is_valid_cholesterol
+      - name: is_valid_cholesterol_hdl_ratio
         description: Whether the result satisfies the documented validity rule. False includes missing
           values and unsupported units.
-      - name: cholesterol_category
-        description: The general healthy-adult reference limit is below 3 mmol/L. This is not a treatment
-          target for people with cardiovascular disease.
-      - name: ldl_cvd_target_met
-        description: 'Legacy numeric flag: Met for valid LDL at or below 2 mmol/L, Not Met above 2, Unknown
-          for invalid results. Does not apply a CVD population, exclusions or a reporting period.'
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: LDLCCHOL_COD
+            cluster_ids: TCHOLHDL_COD

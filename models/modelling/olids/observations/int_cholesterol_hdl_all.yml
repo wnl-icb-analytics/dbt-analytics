@@ -1,22 +1,23 @@
 models:
-  - name: int_cholesterol_ldl_all
-    description: LDL cholesterol for all people, including inactive and deceased people. One row per observation
-      in the PCD LDLCCHOL_COD cluster. Missing or future original clinical dates are excluded. Invalid
+  - name: int_cholesterol_hdl_all
+    description: HDL cholesterol for all people, including inactive and deceased people. One row per observation
+      in the PCD HDLCCHOL_COD cluster. Missing or future original clinical dates are excluded. Invalid
       values and unsupported units remain available for audit. Valid means a positive, finite value with
       a recognised unit. Concentrations retain source precision after unit conversion; values are not
-      rounded before comparison. The general healthy-adult reference limit is below 3 mmol/L. This is
-      not a treatment target for people with cardiovascular disease.
+      rounded before comparison. Numeric bands support the HEART UK reference levels above 1.0 mmol/L
+      for men and above 1.2 for women. No sex is inferred from the observation, and higher HDL is not
+      necessarily protective.
     config:
       meta:
         owner:
-          name: KateHomer55
+          name: EddieDavison92
         clinical_source: https://www.heartuk.org.uk/cholesterol/understanding-your-cholesterol-test-results-
         code_source: PCD
     columns:
       - name: id
         description: Source observation identifier. Used to break ties deterministically; it does not
           imply clinical priority.
-        tests:
+        data_tests:
           - unique
           - not_null
       - name: person_id
@@ -52,7 +53,7 @@ models:
         description: True when populated source and mapped unit labels disagree after recognised aliases are normalised. Unknown labels are treated as absent. Does not identify which unit is correct.
       - name: plausibility_status
         description: >
-          Screening result after conversion using an inclusive local review range of 0.1 to 20 mmol/L.
+          Screening result after conversion using an inclusive local review range of 0.1 to 5 mmol/L.
           These exploratory limits are not clinical exclusion thresholds. Rare genuine results
           can lie outside them. Existing validity rules and row selection are unchanged.
       - name: is_lipid_review_required
@@ -78,7 +79,7 @@ models:
       - name: concept_display
         description: Recorded mapped clinical concept label.
       - name: source_cluster_id
-        description: 'Authoritative PCD observation cluster: LDLCCHOL_COD.'
+        description: 'Authoritative PCD observation cluster: HDLCCHOL_COD.'
       - name: sampling_context
         description: Fasting, non-fasting or random only when specified in the PCD code description. Otherwise
           Not specified; no sampling status is inferred from the numeric value.
@@ -86,12 +87,10 @@ models:
         description: Whether the result satisfies the documented validity rule. False includes missing
           values and unsupported units.
       - name: cholesterol_category
-        description: The general healthy-adult reference limit is below 3 mmol/L. This is not a treatment
-          target for people with cardiovascular disease.
-      - name: ldl_cvd_target_met
-        description: 'Legacy numeric flag: Met for valid LDL at or below 2 mmol/L, Not Met above 2, Unknown
-          for invalid results. Does not apply a CVD population, exclusions or a reporting period.'
-    tests:
+        description: Numeric bands support the HEART UK reference levels above 1.0 mmol/L for men and
+          above 1.2 for women. No sex is inferred from the observation, and higher HDL is not necessarily
+          protective.
+    data_tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: LDLCCHOL_COD
+            cluster_ids: HDLCCHOL_COD

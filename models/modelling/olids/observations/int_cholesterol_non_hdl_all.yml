@@ -1,22 +1,22 @@
 models:
-  - name: int_cholesterol_ldl_all
-    description: LDL cholesterol for all people, including inactive and deceased people. One row per observation
-      in the PCD LDLCCHOL_COD cluster. Missing or future original clinical dates are excluded. Invalid
-      values and unsupported units remain available for audit. Valid means a positive, finite value with
-      a recognised unit. Concentrations retain source precision after unit conversion; values are not
-      rounded before comparison. The general healthy-adult reference limit is below 3 mmol/L. This is
-      not a treatment target for people with cardiovascular disease.
+  - name: int_cholesterol_non_hdl_all
+    description: Non-HDL cholesterol for all people, including inactive and deceased people. One row per
+      observation in the PCD NONHDLCCHOL_COD cluster. Missing or future original clinical dates are excluded.
+      Invalid values and unsupported units remain available for audit. Valid means a positive, finite
+      value with a recognised unit. Concentrations retain source precision after unit conversion; values
+      are not rounded before comparison. The general healthy-adult reference limit is below 4 mmol/L.
+      NICE secondary prevention uses a separate target of 2.6 mmol/L or below.
     config:
       meta:
         owner:
-          name: KateHomer55
+          name: EddieDavison92
         clinical_source: https://www.heartuk.org.uk/cholesterol/understanding-your-cholesterol-test-results-
         code_source: PCD
     columns:
       - name: id
         description: Source observation identifier. Used to break ties deterministically; it does not
           imply clinical priority.
-        tests:
+        data_tests:
           - unique
           - not_null
       - name: person_id
@@ -78,7 +78,7 @@ models:
       - name: concept_display
         description: Recorded mapped clinical concept label.
       - name: source_cluster_id
-        description: 'Authoritative PCD observation cluster: LDLCCHOL_COD.'
+        description: 'Authoritative PCD observation cluster: NONHDLCCHOL_COD.'
       - name: sampling_context
         description: Fasting, non-fasting or random only when specified in the PCD code description. Otherwise
           Not specified; no sampling status is inferred from the numeric value.
@@ -86,12 +86,9 @@ models:
         description: Whether the result satisfies the documented validity rule. False includes missing
           values and unsupported units.
       - name: cholesterol_category
-        description: The general healthy-adult reference limit is below 3 mmol/L. This is not a treatment
-          target for people with cardiovascular disease.
-      - name: ldl_cvd_target_met
-        description: 'Legacy numeric flag: Met for valid LDL at or below 2 mmol/L, Not Met above 2, Unknown
-          for invalid results. Does not apply a CVD population, exclusions or a reporting period.'
-    tests:
+        description: The general healthy-adult reference limit is below 4 mmol/L. NICE secondary prevention
+          uses a separate target of 2.6 mmol/L or below.
+    data_tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: LDLCCHOL_COD
+            cluster_ids: NONHDLCCHOL_COD

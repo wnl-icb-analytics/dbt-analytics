@@ -6,10 +6,9 @@ SELECT
     clinical_effective_date,
     clinical_effective_date_raw,
     date_recorded,
-    cholesterol_value,
+    cholesterol_hdl_ratio,
     result_unit_display,
     recorded_value,
-    converted_value_mmol_l,
     source_result_unit_code,
     source_result_unit_display,
     mapped_result_unit_code,
@@ -27,11 +26,9 @@ SELECT
     concept_display,
     source_cluster_id,
     sampling_context,
-    is_valid_cholesterol,
-    cholesterol_category,
-    ldl_cvd_target_met
-FROM {{ ref('int_cholesterol_ldl_all') }}
-WHERE is_valid_cholesterol
+    is_valid_cholesterol_hdl_ratio
+FROM {{ ref('int_cholesterol_hdl_ratio_all') }}
+WHERE is_valid_cholesterol_hdl_ratio
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id
     ORDER BY clinical_effective_date DESC, id DESC

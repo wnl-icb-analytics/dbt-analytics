@@ -1,4 +1,8 @@
-{{ config(materialized='table', cluster_by=['person_id']) }}
+{{ config(materialized='table', cluster_by=['person_id', 'clinical_effective_date']) }}
+
+WITH measurements AS (
+    {{ get_lipid_observations('NONHDLCCHOL_COD', 'cholesterol_value') }}
+)
 
 SELECT
     id,
@@ -27,12 +31,10 @@ SELECT
     concept_display,
     source_cluster_id,
     sampling_context,
-    is_valid_cholesterol,
-    cholesterol_category,
-    ldl_cvd_target_met
-FROM {{ ref('int_cholesterol_ldl_all') }}
-WHERE is_valid_cholesterol
-QUALIFY ROW_NUMBER() OVER (
-    PARTITION BY person_id
-    ORDER BY clinical_effective_date DESC, id DESC
-) = 1
+    COALESCE(cholesterol_value > 0 AND cholesterol_value < 'inf'::FLOAT, FALSE) AS is_valid_cholesterol,
+    CASE
+        WHEN NOT is_valid_cholesterol THEN 'Invalid'
+        WHEN cholesterol_value < 4 THEN 'Below general reference limit'
+        ELSE 'At or above general reference limit'
+    END AS cholesterol_category
+FROM measurements
