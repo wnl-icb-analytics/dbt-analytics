@@ -52,8 +52,6 @@
 
     SELECT
         o.id,
-        o.source_entity,
-        o.source_record_id,
         o.patient_id,
         o.person_id,
         -- Use date_recorded as fallback if clinical_effective_date is after it (data quality fix)
