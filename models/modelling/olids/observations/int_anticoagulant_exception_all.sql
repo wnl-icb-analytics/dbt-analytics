@@ -12,16 +12,15 @@ row per observation. exception_type separates:
 - ANTICOAGULANT_CONTRAINDICATED: TXORANTICOAGGENCON_COD (anticoagulation
   contraindicated or not tolerated; expiring)
 - ANTICOAGULANT_DECLINED: ORANTICOAGDEC_COD
-The broad QOF cluster TXORANTICOAG_COD is not used: it mixes drug-specific "not
-indicated" codes that are recorded when a person is on the other anticoagulant.
 - DOAC_CONTRAINDICATED: DOACCON_COD
 - DOAC_DECLINED: DOACDEC_COD
 - DOAC_NOT_INDICATED: DOACNI_COD
 - VALVULAR_AF: AF_VALVULAR_OBS (local ECL cluster: mitral stenosis and mechanical
   valve findings where a DOAC is not indicated)
 - ANTIPHOSPHOLIPID_SYNDROME: ANTIPHOSYND_COD
-NICE treats contraindications as persisting and declines as expiring; consumers
-apply the window. Includes ALL persons (active, inactive, deceased) following
+The broad QOF cluster TXORANTICOAG_COD is not used: it mixes drug-specific "not
+indicated" codes that are recorded when a person is on the other anticoagulant.
+Consumers decide which types persist and which expire. Includes ALL persons (active, inactive, deceased) following
 intermediate layer principles.
 */
 

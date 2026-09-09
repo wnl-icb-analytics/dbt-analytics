@@ -1,7 +1,8 @@
 {{ config(materialized='view') }}
 
 -- NICE IND247: https://www.nice.org.uk/indicators/ind247
--- DOAC order in 6 months, or a vitamin K antagonist order in 6 months where a DOAC exception is recorded, for people on the AF register with a latest CHA2DS2-VASc of 2 or more.
+-- DOAC order in 6 months, or a VKA order where a DOAC is ineligible (valvular AF, antiphospholipid syndrome),
+-- contraindicated, declined or not indicated, for people on the AF register with a latest CHA2DS2-VASc of 2 or more.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -25,15 +26,17 @@ assessed AS (
         population.latest_anticoagulant_type,
         population.latest_doac_order_date,
         population.latest_vka_order_date,
+        population.is_doac_ineligible,
         population.has_doac_exception,
         population.latest_anticoagulant_review_date,
         COALESCE(population.latest_doac_order_date >= DATEADD(month, -6, CURRENT_DATE()), FALSE) AS is_doac_in_period,
         COALESCE(population.latest_vka_order_date >= DATEADD(month, -6, CURRENT_DATE()), FALSE) AS is_vka_in_period,
-        COALESCE(population.latest_doac_order_date >= DATEADD(month, -6, CURRENT_DATE()), FALSE)
-            OR (
-                COALESCE(population.latest_vka_order_date >= DATEADD(month, -6, CURRENT_DATE()), FALSE)
-                AND population.has_doac_exception
-            ) AS is_in_numerator
+        -- Sequential criteria: DOAC unless ineligible (valvular AF, antiphospholipid syndrome),
+        -- then VKA where a DOAC is ineligible, contraindicated, declined or not indicated
+        CASE
+            WHEN population.is_doac_ineligible THEN is_vka_in_period
+            ELSE is_doac_in_period OR (is_vka_in_period AND population.has_doac_exception)
+        END AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
@@ -56,12 +59,14 @@ SELECT
     latest_anticoagulant_type,
     latest_doac_order_date,
     latest_vka_order_date,
+    is_doac_ineligible,
     has_doac_exception,
     latest_anticoagulant_review_date,
     TRUE AS is_in_denominator,
     is_in_numerator,
     CASE
         WHEN is_in_numerator THEN 'ACHIEVED'
+        WHEN is_doac_ineligible AND is_doac_in_period THEN 'DOAC_WHERE_VKA_INDICATED'
         WHEN is_vka_in_period THEN 'VKA_WITHOUT_DOAC_EXCEPTION'
         WHEN latest_anticoagulant_order_date IS NOT NULL THEN 'NOT_TREATED_IN_PERIOD'
         ELSE 'NEVER_TREATED'

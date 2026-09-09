@@ -16,6 +16,7 @@ WITH latest_chadsvasc AS (
         score_value AS latest_chadsvasc_score
     FROM {{ ref('int_stroke_risk_score_all') }}
     WHERE score_type = 'CHA2DS2-VASc'
+        AND score_value IS NOT NULL
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY person_id ORDER BY clinical_effective_date DESC, id DESC
     ) = 1
@@ -28,6 +29,7 @@ latest_chads2 AS (
         score_value AS latest_chads2_score
     FROM {{ ref('int_stroke_risk_score_all') }}
     WHERE score_type = 'CHADS2'
+        AND score_value IS NOT NULL
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY person_id ORDER BY clinical_effective_date DESC, id DESC
     ) = 1
@@ -49,10 +51,8 @@ exceptions AS (
             THEN clinical_effective_date::DATE END) AS latest_anticoagulant_contraindicated_date,
         MAX(CASE WHEN exception_type = 'ANTICOAGULANT_DECLINED'
             THEN clinical_effective_date::DATE END) AS latest_anticoagulant_declined_date,
-        BOOLOR_AGG(exception_type IN (
-            'DOAC_CONTRAINDICATED', 'DOAC_DECLINED', 'DOAC_NOT_INDICATED',
-            'VALVULAR_AF', 'ANTIPHOSPHOLIPID_SYNDROME'
-        )) AS has_doac_exception
+        BOOLOR_AGG(exception_type IN ('VALVULAR_AF', 'ANTIPHOSPHOLIPID_SYNDROME')) AS is_doac_ineligible,
+        BOOLOR_AGG(exception_type IN ('DOAC_CONTRAINDICATED', 'DOAC_DECLINED', 'DOAC_NOT_INDICATED')) AS has_doac_exception
     FROM {{ ref('int_anticoagulant_exception_all') }}
     GROUP BY person_id
 ),
@@ -80,6 +80,7 @@ SELECT
     COALESCE(exceptions.has_anticoagulant_adverse_reaction, FALSE) AS has_anticoagulant_adverse_reaction,
     exceptions.latest_anticoagulant_contraindicated_date,
     exceptions.latest_anticoagulant_declined_date,
+    COALESCE(exceptions.is_doac_ineligible, FALSE) AS is_doac_ineligible,
     COALESCE(exceptions.has_doac_exception, FALSE) AS has_doac_exception,
     reviews.latest_anticoagulant_review_date
 FROM {{ ref('fct_person_atrial_fibrillation_register') }} AS af

@@ -26,6 +26,7 @@ assessed AS (
         population.latest_anticoagulant_type,
         population.latest_doac_order_date,
         population.latest_vka_order_date,
+        population.is_doac_ineligible,
         population.has_doac_exception,
         population.latest_anticoagulant_review_date,
         COALESCE(population.latest_anticoagulant_review_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
@@ -51,6 +52,7 @@ SELECT
     latest_anticoagulant_type,
     latest_doac_order_date,
     latest_vka_order_date,
+    is_doac_ineligible,
     has_doac_exception,
     latest_anticoagulant_review_date,
     TRUE AS is_in_denominator,
