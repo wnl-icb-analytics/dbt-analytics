@@ -167,7 +167,7 @@ models:
         data_tests:
           - accepted_values:
               arguments:
-                values: ['IND156', 'IND157']
+                values: ['IND156', 'IND157', 'IND97']
       - name: indicator_status
         description: ACHIEVED or NOT_RECORDED_IN_PERIOD
         data_tests:
@@ -215,3 +215,38 @@ models:
         description: Outcome label at the build.
       - name: latest_smoking_status
         description: Latest recorded smoking status at the build.
+
+  - name: fct_person_smoking_ind97
+    description: >
+      NICE IND97 smoking status recording for long-term conditions including
+      severe mental illness. One row per currently registered, living, non-
+      test person on the CHD, PAD, stroke/TIA, hypertension, diabetes, COPD,
+      CKD, asthma or severe mental illness register, assessed on the build
+      date. The numerator requires a smoking status recorded in the preceding
+      12 months, or for a never smoker reaching 26 by the end of the financial
+      year, a never-smoked record made after the 25th birthday and after the
+      earliest listed diagnosis. IND156 is the later version of this indicator
+      without the mental health registers. NICE's exclusion for people for
+      whom smoking care was unsuitable is a personalised care adjustment and
+      is not applied. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind97
+        indicator:
+          id: "IND97"
+          type: "MEASURE"
+          category: "LIFESTYLE"
+          clinical_domain: "Lifestyle"
+          name_short: "LTC and SMI smoking status"
+          description_short: "Smoking status recorded in the preceding 12 months for people with a listed long-term condition or severe mental illness"
+          description_long: "NICE IND97 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND97"
+    columns: *smoking_columns

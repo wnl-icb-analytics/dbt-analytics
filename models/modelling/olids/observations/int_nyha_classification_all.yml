@@ -1,0 +1,40 @@
+models:
+  - name: int_nyha_classification_all
+    description: >
+      New York Heart Association classification records from the PCD NYHA_COD
+      cluster, one row per observation, for all people including inactive and
+      deceased. nyha_class is the class 1 to 4 carried by a class-specific
+      code; assessment-only codes carry no class. Observations dated after the
+      build date are excluded.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: NYHA_COD
+            source: PCD
+    columns:
+      - name: id
+        description: Source observation identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the record.
+      - name: nyha_class
+        description: NYHA class 1 (no limitation) to 4 (symptoms at rest); null for assessment codes without a class.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4]
+                quote: false
+      - name: concept_code
+        description: SNOMED code of the record.
+      - name: concept_display
+        description: Description of the record.
+      - name: source_cluster_id
+        description: Cluster that matched the code.
