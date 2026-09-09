@@ -1,0 +1,50 @@
+version: 2
+models:
+- name: int_csds_coded_immunisation
+  description: One retained coded immunisation per identified person, provider, scheme, procedure and
+    administration date. Latest accepted reporting evidence is selected; incomplete keys, including missing
+    national person identifiers, retain each source occurrence. Provider-local identifiers can change
+    across reports and do not define a new immunisation.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Guarded clinical revision key. Missing person, scheme, code or usable date retains the
+      source occurrence.
+    data_tests:
+    - not_null
+    - unique
+  - name: accepted_source_record_count
+    description: Number of accepted source occurrences represented by the retained immunisation.
+  - name: first_reported_period_end_date
+    description: Earliest accepted period containing this immunisation key.
+  - name: last_reported_period_end_date
+    description: Latest accepted period containing this immunisation key.
+- name: int_csds_clinical_record
+  description: One retained immunisation, accepted assessment occurrence or populated care-activity component
+    before clinical labelling. Referral and activity assessments retain repeated scores, including different
+    dates. Activity assessments inherit the same-submission contact time only when populated person identities
+    agree across assessment, activity and contact. No person or time association is inferred.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: originating_source_record_id
+    description: Immunisation revision key, accepted assessment occurrence or activity occurrence key.
+  - name: clinical_record_type
+    description: Immunisation, referral assessment, activity assessment, procedure, finding or observation.
+  - name: source_clinical_date
+    description: Submitted administration or assessment completion date; no time-of-day precision is inferred.
+  - name: source_derived_date
+    description: Warehouse-added activity-assessment observation date, kept separately from inherited
+      contact time.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - source_table
+        - originating_source_record_id
+        - clinical_record_type

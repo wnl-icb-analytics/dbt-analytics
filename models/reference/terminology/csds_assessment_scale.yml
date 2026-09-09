@@ -1,0 +1,56 @@
+version: 2
+models:
+  - name: csds_assessment_scale
+    description: >-
+      One row per published assessment observable concept. Uses the
+      ETOS v1.6.10 definition, including tool grouping and
+      published response domains. This is a label and interpretation reference,
+      not retrospective submission validation or a whole-questionnaire score.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: concept_code
+        description: Active or inactive SNOMED observable concept from the specification.
+        data_tests: [not_null, unique]
+      - name: assessment_tool_name
+        description: Named tool to which the observable belongs. Different observables are not interchangeable scores.
+      - name: assessment_description
+        description: Published observable description, not an inferred questionnaire total.
+      - name: published_values
+        description: Enumerated responses or numeric ranges, separated by semicolons.
+      - name: decimal_places
+        description: Published permitted decimal places. Null means no usable precision rule.
+      - name: numeric_range_count
+        description: Number of simple numeric ranges in the latest definition. Only a single range is interpreted automatically.
+      - name: minimum_numeric_value
+        description: Lower published range bound. Use only when numeric_range_count is one.
+      - name: maximum_numeric_value
+        description: Upper published range bound. Use only when numeric_range_count is one.
+      - name: specification_version
+        description: Latest available specification supplying the observable definition.
+  - name: csds_assessment_response
+    description: >-
+      Latest available definition for each assessment concept and enumerated
+      response code in ETOS v1.6.10. Includes published concepts and
+      responses, with explicit missing, unknown and not-applicable meanings.
+      Numeric ranges remain in csds_assessment_scale rather than being expanded.
+    config: *owner
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [concept_code, response_code]
+    columns:
+      - name: concept_code
+        description: SNOMED observable to which the response meaning applies.
+      - name: response_code
+        description: Case-sensitive published response code.
+      - name: response_description
+        description: Published label for this concept and response pair.
+      - name: numeric_response_value
+        description: Numeric representation of an enumerated response, not proof that it is a score.
+      - name: is_non_score_response
+        description: True only for published missing, unknown or not-applicable meanings. A number such as 9 or 999 has no universal exclusion rule.
+      - name: specification_version
+        description: Latest available specification containing this concept and response pair.
