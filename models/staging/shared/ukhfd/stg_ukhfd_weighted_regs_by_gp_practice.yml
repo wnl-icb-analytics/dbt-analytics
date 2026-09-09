@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: stg_ukhfd_weighted_regs_by_gp_practice
+    description: >
+      UKHFD practice-level allocation metrics: need indices, weighted
+      populations and registered populations for each year of each NHS
+      England allocations round. One row per practice, workbook title, metric
+      and allocation year. Metric names differ between rounds; title
+      identifies the round. Rows without a practice code or metric value are
+      dropped.
+
+      Source: UKHFD.Comm_Allocations.fact_Weighted_Regs_By_GP_Practice
+      (source 'ukhfd_comm_allocations' in models/sources/manual_ukhfd.yml)
+      via raw_ukhfd_weighted_regs_by_gp_practice.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [practice_code, title, metric_name, financial_year_start]
+    columns:
+      - name: practice_code
+        description: GP practice ODS code.
+        data_tests:
+          - not_null
+      - name: title
+        description: UKHFD workbook title identifying the allocations round, e.g. gp_need_index_2627.
+        data_tests:
+          - not_null
+      - name: metric_name
+        description: UKHFD need index, weighted-population or registered-population measure.
+        data_tests:
+          - not_null
+      - name: metric_value
+        description: Numeric metric value.
+        data_tests:
+          - not_null
+      - name: financial_year_start
+        description: First day of the allocation financial year the metric applies to.
+        data_tests:
+          - not_null
+      - name: source_file_version
+        description: UKHFD source-file version for the snapshot.

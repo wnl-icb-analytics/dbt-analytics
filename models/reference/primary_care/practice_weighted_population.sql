@@ -1,10 +1,10 @@
--- Practice need-weighted populations by allocation base year, from the NHS
--- England revenue allocations practice-level workbooks via UKHFD. One row per
--- practice and base year. All values are modelled for the base year, not
--- actual list counts; base years after today are projections. Practice-years
--- without a positive registered population are excluded. The headline
--- is NHS England's Core Services weighted population; the service-specific
--- populations are carried as separate columns.
+-- Practice need-weighted populations by allocation year, from the NHS
+-- England revenue allocations practice-level workbooks via UKHFD, 2025/26
+-- onwards. One row per practice and allocation year. All values are modelled
+-- for the year, not actual list counts; years after today are projections.
+-- Practice-years without a positive registered population are excluded. The
+-- headline is NHS England's Core Services weighted population; the
+-- service-specific populations are carried as separate columns.
 with metrics as (
     select
         practice_code,
@@ -12,9 +12,9 @@ with metrics as (
         source_file_version,
         metric_name,
         metric_value
-    from {{ ref('stg_ukhfd_weighted_regs_by_gp_practice_base') }}
-    where metric_name in (
-        'Registered population (base year)',
+    from {{ ref('stg_ukhfd_weighted_regs_by_gp_practice') }}
+    where (title = 'weighted populations (inputs)' or title like 'gp_need_index_%')
+      and (metric_name like 'Registered population %' or metric_name in (
         'Core Services weighted population',
         'General and Acute (G&A) weighted population',
         'Community Services (CS) weighted population',
@@ -23,7 +23,7 @@ with metrics as (
         'Prescribing weighted population',
         'Primary Medical Care weighted population',
         'Health inequalities (HI) weighted population'
-    )
+    ))
 ),
 
 practice_year as (
@@ -31,7 +31,7 @@ practice_year as (
         practice_code,
         financial_year_start,
         max(source_file_version) as source_file_version,
-        max(iff(metric_name = 'Registered population (base year)', metric_value, null))
+        max(iff(metric_name like 'Registered population %', metric_value, null))
             as registered_patients,
         max(iff(metric_name = 'Core Services weighted population', metric_value, null))
             as weighted_patients_core,
@@ -61,7 +61,7 @@ flagged as (
             financial_year_start = max(iff(financial_year_start <= current_date(), financial_year_start, null))
                 over (partition by practice_code),
             false
-        ) as is_current_base_year
+        ) as is_current_year
     from practice_year
     where registered_patients > 0
 )
@@ -74,7 +74,7 @@ select
         right((year(financial_year_start) + 1)::varchar, 2)
     ) as financial_year,
     financial_year_start,
-    is_current_base_year,
+    is_current_year,
     is_projection,
     registered_patients,
     weighted_patients_core,

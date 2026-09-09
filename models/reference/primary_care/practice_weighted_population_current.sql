@@ -1,5 +1,5 @@
--- Practice need-weighted population for the latest loaded allocation base
--- year that has started. One row per practice. Never a future projection.
+-- Practice need-weighted population for the latest loaded allocation year
+-- that has started. One row per practice. Never a future projection.
 select
     practice_code,
     financial_year,
@@ -16,4 +16,4 @@ select
     weighted_patients_health_inequalities,
     source_file_version
 from {{ ref('practice_weighted_population') }}
-where is_current_base_year
+where is_current_year

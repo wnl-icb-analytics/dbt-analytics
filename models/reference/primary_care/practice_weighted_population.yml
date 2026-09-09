@@ -2,25 +2,26 @@ version: 2
 models:
   - name: practice_weighted_population
     description: |
-      Practice need-weighted populations by allocation base year, from the NHS
+      Practice need-weighted populations by allocation year, from the NHS
       England revenue allocations practice-level workbooks via UKHFD. One row
-      per practice and base year. NHS England weights each practice's
-      registered population for need using the allocation formulae (technical
-      guide PRN01601 and successors). Practice-years without a positive
-      registered population are excluded.
+      per practice and allocation year, from 2025/26 onwards; earlier rounds
+      use a different metric set and are not included. NHS England weights
+      each practice's registered population for need using the allocation
+      formulae (technical guides PRN01601 for 2025/26 and PRN02116 for
+      2026/27 to 2028/29). Practice-years without a positive registered
+      population are excluded.
 
-      Every value is modelled for the base year rather than an actual list
-      count, which is why values carry decimals. A base year that has not
-      started yet (is_projection) rolls the list forward with population
-      growth and should not be used as a current denominator. Use
-      is_current_base_year, or practice_weighted_population_current, for the
-      latest loaded base year that has started. Use
-      practice_registered_patients for actual monthly headcounts.
+      Every value is modelled rather than an actual list count, which is why
+      values carry decimals. Each round weights actual registrations from a
+      base window and projects them to each allocation year with population
+      growth. A year that has not started yet (is_projection) should not be
+      used as a current denominator. Use is_current_year, or
+      practice_weighted_population_current, for the allocation year in force.
+      Use practice_registered_patients for actual monthly headcounts.
 
-      Flags are evaluated against the build date. A base year stays current
-      until a newer one starts, so 2025/26 remains current after 1 April 2026
-      until a 2026/27 round is loaded, and the 2028/29 rows flip to current
-      on 1 April 2028 even though they were projected in 2025.
+      Flags are evaluated against the build date. A year stays current until
+      a newer loaded year starts, and later years flip to current on their
+      1 April whether or not a fresh round has been loaded.
 
       The practice list is fixed at each allocation round, so closed and
       merged practices keep their own rows. Join to the practice reference
@@ -45,19 +46,19 @@ models:
         data_tests:
           - not_null
       - name: financial_year
-        description: Allocation base financial year label, e.g. 2025/26.
+        description: Allocation financial year label, e.g. 2026/27.
       - name: financial_year_start
-        description: 1 April of the base financial year.
-      - name: is_current_base_year
-        description: TRUE for the practice's latest loaded base year that has started. Never a projection. FALSE for every row of a practice with only projection years.
+        description: 1 April of the allocation financial year.
+      - name: is_current_year
+        description: TRUE for the practice's latest loaded allocation year that has started. Never a projection. FALSE for every row of a practice with only projection years.
         data_tests:
           - not_null
       - name: is_projection
-        description: TRUE when the base year starts after the build date.
+        description: TRUE when the allocation year starts after the build date.
         data_tests:
           - not_null
       - name: registered_patients
-        description: Modelled registered population for the base year. Always positive.
+        description: Modelled registered population for the allocation year. Always positive.
       - name: weighted_patients_core
         description: NHS England Core Services weighted population. Headline figure.
         data_tests:
@@ -101,16 +102,16 @@ models:
         data_tests:
           - not_null
       - name: source_file_version
-        description: UKHFD source-file version for the allocation snapshot. One file per base year is assumed; the highest version is kept if that changes.
+        description: UKHFD source-file version for the allocation snapshot. One file per year is assumed; the highest version is kept if that changes.
 
   - name: practice_weighted_population_current
     description: |
-      One row per practice for the latest loaded allocation base year that
-      has started, from practice_weighted_population where
-      is_current_base_year. Default source for a practice-level need-weighted
-      denominator; never a future projection. Closed and merged practices are
-      still present; join to the practice reference to restrict to open
-      practices.
+      One row per practice for the allocation year in force: the latest
+      loaded allocation year that has started, from
+      practice_weighted_population where is_current_year. Default source for
+      a practice-level need-weighted denominator; never a future projection.
+      Closed and merged practices are still present; join to the practice
+      reference to restrict to open practices.
     config:
       materialized: view
       meta:
@@ -123,11 +124,11 @@ models:
           - not_null
           - unique
       - name: financial_year
-        description: Allocation base financial year used, e.g. 2025/26.
+        description: Allocation financial year in force, e.g. 2026/27.
       - name: financial_year_start
-        description: 1 April of the base financial year.
+        description: 1 April of the allocation financial year.
       - name: registered_patients
-        description: Modelled registered population for the base year.
+        description: Modelled registered population for the allocation year.
       - name: weighted_patients_core
         description: NHS England Core Services weighted population. Headline figure.
       - name: weighted_to_registered_ratio
