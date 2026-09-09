@@ -1,0 +1,31 @@
+models:
+  - name: int_structured_medication_review_all
+    description: >
+      Structured medication review records, the shared decision-making review NICE and the PCN service specification describe. One row per observation from the PCD cluster
+      STRUCTMEDRVW_COD, for all people including inactive and deceased.
+      Observations dated after the build date are excluded.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: STRUCTMEDRVW_COD
+            source: PCD
+    columns:
+      - name: id
+        description: Source observation identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the record.
+      - name: concept_code
+        description: SNOMED code of the record.
+      - name: concept_display
+        description: Description of the record.
+      - name: source_cluster_id
+        description: Cluster that matched the code.

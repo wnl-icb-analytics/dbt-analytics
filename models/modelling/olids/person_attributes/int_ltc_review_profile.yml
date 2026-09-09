@@ -1,0 +1,97 @@
+models:
+  - name: int_ltc_review_profile
+    description: >
+      Per-person profile for the NICE long-term condition review indicators
+      (smoking, BMI recording, multimorbidity and alcohol). One row per person in
+      dim_person, including inactive and deceased people. Holds register
+      membership from the LTC summary, earliest diagnosis dates for the
+      populations those indicators define, frailty severity, and the latest
+      smoking, BMI, structured medication review, falls discussion, alcohol
+      screening and brief intervention records. Consumers apply their own windows
+      and join dim_person_active_patients.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: birth_date_approx
+        description: Approximate birth date from dim_person_age, for age-at-date rules.
+      - name: ltc_count
+        description: Number of distinct project LTC registers the person is on.
+      - name: has_chd
+        description: On the CHD register.
+      - name: has_pad
+        description: On the PAD register.
+      - name: has_stroke_tia
+        description: On the stroke/TIA register.
+      - name: has_hypertension
+        description: On the hypertension register.
+      - name: has_diabetes
+        description: On the diabetes register.
+      - name: has_ndh
+        description: On the non-diabetic hyperglycaemia register.
+      - name: has_copd
+        description: On the COPD register.
+      - name: has_ckd
+        description: On the CKD register.
+      - name: has_asthma
+        description: On the asthma register.
+      - name: has_atrial_fibrillation
+        description: On the atrial fibrillation register.
+      - name: has_heart_failure
+        description: On the heart failure register.
+      - name: has_dementia
+        description: On the dementia register.
+      - name: has_depression
+        description: On the depression register.
+      - name: has_anxiety
+        description: On the anxiety register.
+      - name: has_smi
+        description: On the SMI register.
+      - name: has_learning_disability
+        description: On the learning disability register.
+      - name: has_dyslipidaemia
+        description: Any dyslipidaemia diagnosis code from the local ECL cluster.
+      - name: has_obstructive_sleep_apnoea
+        description: Any obstructive sleep apnoea diagnosis code.
+      - name: earliest_smoking_ltc_diagnosis_date
+        description: Earliest diagnosis date across the CHD, PAD, stroke/TIA, hypertension, diabetes, COPD, CKD and asthma registers; null if none.
+      - name: earliest_hypertension_date
+        description: Earliest hypertension diagnosis date; null if none.
+      - name: earliest_depression_anxiety_date
+        description: Earliest depression or anxiety diagnosis date; null if none.
+      - name: latest_frailty_severity
+        description: Latest coded frailty severity; null if none.
+      - name: latest_smoking_status
+        description: Latest recorded smoking status; null if none.
+      - name: latest_smoking_status_date
+        description: Date of the latest smoking status record.
+      - name: latest_never_smoked_date
+        description: Date of the latest never-smoked record; null if none.
+      - name: latest_smoking_intervention_date
+        description: Date of the latest smoking cessation support record; null if none.
+      - name: latest_bmi_date
+        description: Date of the latest BMI with a value; null if none.
+      - name: latest_structured_medication_review_date
+        description: Date of the latest structured medication review; null if none.
+      - name: latest_falls_discussion_date
+        description: Date of the latest record of asking about falls; null if none.
+      - name: latest_alcohol_screen_date
+        description: Date of the latest FAST, AUDIT-C or AUDIT screen; null if none.
+      - name: latest_alcohol_screen_tool
+        description: Tool used for the latest screen.
+      - name: latest_alcohol_screen_score
+        description: Score of the latest screen; null when unscored.
+      - name: is_latest_alcohol_screen_positive
+        description: Whether the latest screen met the hazardous-drinking threshold.
+      - name: latest_positive_alcohol_screen_date
+        description: Date of the latest positive screen; null if none.
+      - name: latest_intervention_after_positive_screen_date
+        description: Date of the latest alcohol brief intervention within 3 months after the latest positive screen; null if none.
+      - name: has_alcohol_disorder
+        description: Any alcohol-related disease or disorder code recorded.

@@ -1,0 +1,66 @@
+{{ config(materialized='view') }}
+
+-- NICE IND198: https://www.nice.org.uk/indicators/ind198
+-- FAST or AUDIT-C screen within 3 months either side of a first depression or anxiety diagnosis in the preceding 12 months, aged 10 and over; excludes alcohol-related disorders.
+WITH indicator_population AS (
+    SELECT
+        profile.*,
+        age.age
+    FROM {{ ref('int_ltc_review_profile') }} AS profile
+    LEFT JOIN {{ ref('dim_person_age') }} AS age
+        ON profile.person_id = age.person_id
+    WHERE profile.earliest_depression_anxiety_date >= DATEADD(month, -12, CURRENT_DATE())
+        AND age.age >= 10
+        AND NOT profile.has_alcohol_disorder
+),
+
+assessed AS (
+    SELECT
+        population.person_id,
+        population.age,
+        active.current_practice_code,
+        active.current_practice_name,
+        population.latest_alcohol_screen_date,
+        population.latest_alcohol_screen_tool,
+        population.latest_alcohol_screen_score,
+        population.latest_positive_alcohol_screen_date,
+        population.latest_intervention_after_positive_screen_date,
+        population.earliest_depression_anxiety_date AS new_diagnosis_date,
+        (
+            SELECT MAX(screen.clinical_effective_date::DATE)
+            FROM {{ ref('int_alcohol_screening_all') }} AS screen
+            WHERE screen.person_id = population.person_id
+                AND screen.clinical_effective_date::DATE
+                    BETWEEN DATEADD(month, -3, population.earliest_depression_anxiety_date)
+                    AND DATEADD(month, 3, population.earliest_depression_anxiety_date)
+        ) AS latest_record_date,
+        latest_record_date IS NOT NULL AS is_in_numerator
+    FROM indicator_population AS population
+    INNER JOIN {{ ref('dim_person_active_patients') }} AS active
+        ON population.person_id = active.person_id
+)
+
+SELECT
+    person_id,
+    'IND198' AS indicator_id,
+    'Alcohol use: risk assessment for people with depression or anxiety' AS indicator_name,
+    CURRENT_DATE() AS reporting_date,
+    DATEADD(month, -12, CURRENT_DATE()) AS measurement_period_start,
+    age,
+    'Newly diagnosed depression or anxiety' AS condition_name,
+    current_practice_code,
+    current_practice_name,
+    new_diagnosis_date,
+    latest_alcohol_screen_date,
+    latest_alcohol_screen_tool,
+    latest_alcohol_screen_score,
+    latest_positive_alcohol_screen_date,
+    latest_intervention_after_positive_screen_date,
+    latest_record_date,
+    TRUE AS is_in_denominator,
+    is_in_numerator,
+    CASE
+        WHEN is_in_numerator THEN 'ACHIEVED'
+        ELSE 'NOT_RECORDED_IN_PERIOD'
+    END AS indicator_status
+FROM assessed

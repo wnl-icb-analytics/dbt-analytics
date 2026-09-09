@@ -1,0 +1,74 @@
+{{ config(materialized='view') }}
+
+-- NICE IND156: https://www.nice.org.uk/indicators/ind156
+-- Smoking status recorded in 12 months for people with a listed LTC; a never-smoker aged 26 or over is covered by a never-smoked record made after their 25th birthday and after their earliest listed diagnosis.
+WITH indicator_population AS (
+    SELECT
+        profile.*,
+        age.age
+    FROM {{ ref('int_ltc_review_profile') }} AS profile
+    LEFT JOIN {{ ref('dim_person_age') }} AS age
+        ON profile.person_id = age.person_id
+    WHERE (
+            profile.has_chd OR profile.has_pad OR profile.has_stroke_tia OR profile.has_hypertension
+            OR profile.has_diabetes OR profile.has_copd OR profile.has_ckd OR profile.has_asthma
+        )
+),
+
+assessed AS (
+    SELECT
+        population.person_id,
+        population.age,
+        active.current_practice_code,
+        active.current_practice_name,
+        population.latest_smoking_status,
+        population.latest_smoking_status_date,
+        population.latest_never_smoked_date,
+        population.latest_smoking_intervention_date,
+        COALESCE(population.latest_smoking_status_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_status_recorded_in_period,
+        COALESCE(
+            population.age >= 26
+            AND population.latest_smoking_status = 'Never Smoked'
+            AND population.latest_never_smoked_date > DATEADD(year, 25, population.birth_date_approx)
+            AND population.latest_never_smoked_date > population.earliest_smoking_ltc_diagnosis_date,
+            FALSE
+        ) AS is_never_smoker_covered,
+        CASE WHEN COALESCE(population.latest_smoking_status_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
+            THEN population.latest_smoking_status_date END AS latest_record_date,
+        COALESCE(population.latest_smoking_status_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
+        OR COALESCE(
+            population.age >= 26
+            AND population.latest_smoking_status = 'Never Smoked'
+            AND population.latest_never_smoked_date > DATEADD(year, 25, population.birth_date_approx)
+            AND population.latest_never_smoked_date > population.earliest_smoking_ltc_diagnosis_date,
+            FALSE
+        ) AS is_in_numerator
+    FROM indicator_population AS population
+    INNER JOIN {{ ref('dim_person_active_patients') }} AS active
+        ON population.person_id = active.person_id
+)
+
+SELECT
+    person_id,
+    'IND156' AS indicator_id,
+    'Smoking: smoking status of people with long-term conditions' AS indicator_name,
+    CURRENT_DATE() AS reporting_date,
+    DATEADD(month, -12, CURRENT_DATE()) AS measurement_period_start,
+    age,
+    'Long-term condition (CHD, PAD, stroke/TIA, hypertension, diabetes, COPD, CKD or asthma)' AS condition_name,
+    current_practice_code,
+    current_practice_name,
+    latest_smoking_status,
+    latest_smoking_status_date,
+    latest_never_smoked_date,
+    latest_smoking_intervention_date,
+    latest_record_date,
+    is_status_recorded_in_period,
+    is_never_smoker_covered,
+    TRUE AS is_in_denominator,
+    is_in_numerator,
+    CASE
+        WHEN is_in_numerator THEN 'ACHIEVED'
+        ELSE 'NOT_RECORDED_IN_PERIOD'
+    END AS indicator_status
+FROM assessed
