@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND156: https://www.nice.org.uk/indicators/ind156
--- Smoking status recorded in 12 months for people with a listed LTC; a never-smoker aged 26 or over is covered by a never-smoked record made after their 25th birthday and after their earliest listed diagnosis.
+-- Smoking status recorded in 12 months for people with a listed LTC; a never-smoker reaching 26 by the end of the financial year is covered by a never-smoked record made after their 25th birthday and after their earliest listed diagnosis.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -27,7 +27,8 @@ assessed AS (
         population.latest_smoking_intervention_date,
         COALESCE(population.latest_smoking_status_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_status_recorded_in_period,
         COALESCE(
-            population.age >= 26
+            DATEADD(year, 26, population.birth_date_approx)
+                <= DATE_FROM_PARTS(YEAR(CURRENT_DATE()) + IFF(MONTH(CURRENT_DATE()) >= 4, 1, 0), 3, 31)
             AND population.latest_smoking_status = 'Never Smoked'
             AND population.latest_never_smoked_date > DATEADD(year, 25, population.birth_date_approx)
             AND population.latest_never_smoked_date > population.earliest_smoking_ltc_diagnosis_date,
@@ -37,7 +38,8 @@ assessed AS (
             THEN population.latest_smoking_status_date END AS latest_record_date,
         COALESCE(population.latest_smoking_status_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
         OR COALESCE(
-            population.age >= 26
+            DATEADD(year, 26, population.birth_date_approx)
+                <= DATE_FROM_PARTS(YEAR(CURRENT_DATE()) + IFF(MONTH(CURRENT_DATE()) >= 4, 1, 0), 3, 31)
             AND population.latest_smoking_status = 'Never Smoked'
             AND population.latest_never_smoked_date > DATEADD(year, 25, population.birth_date_approx)
             AND population.latest_never_smoked_date > population.earliest_smoking_ltc_diagnosis_date,

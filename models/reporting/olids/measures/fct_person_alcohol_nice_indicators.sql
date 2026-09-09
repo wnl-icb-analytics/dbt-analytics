@@ -22,7 +22,7 @@ SELECT
     condition_name,
     current_practice_code,
     current_practice_name,
-    new_diagnosis_date,
+    {% if indicator_model in ['fct_person_alcohol_ind196', 'fct_person_alcohol_ind197', 'fct_person_alcohol_ind198', 'fct_person_alcohol_ind199'] %}new_diagnosis_date{% else %}CAST(NULL AS DATE) AS new_diagnosis_date{% endif %},
     latest_alcohol_screen_date,
     latest_alcohol_screen_tool,
     latest_alcohol_screen_score,

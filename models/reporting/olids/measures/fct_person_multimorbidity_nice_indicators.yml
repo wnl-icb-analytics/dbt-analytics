@@ -1,11 +1,7 @@
 models:
   - name: fct_person_multimorbidity_ind207
     description: >
-      NICE IND207 medication review in multimorbidity. One row per currently
-      registered, living, non-test person with moderate or severe coded
-      frailty or on two or more project long-term condition registers,
-      assessed on the build date; NICE does not fix the multimorbidity list,
-      so the project's LTC registers are used. The numerator requires a
+      NICE IND207 medication review in multimorbidity. One row per currently registered, living, non-test person with moderate or severe coded frailty or with conditions in four or more of the NICE IND205 multimorbidity clusters, assessed on the build date. Clusters are mapped from the project registers; chronic pain, constipation, diverticular disease, inflammatory bowel disease, eating disorders and substance misuse are not modelled, so the register side is conservative. The numerator requires a
       structured medication review code in the preceding 12 months, the coded
       form of the structured, tool-informed, shared review NICE describes.
       Personalised care adjustments are not applied. Secondary-use consumers
@@ -22,8 +18,8 @@ models:
           category: "MULTIMORBIDITY"
           clinical_domain: "Geriatric"
           name_short: "Multimorbidity medication review"
-          description_short: "Structured medication review in the preceding 12 months for people with frailty or multimorbidity"
-          description_long: "NICE IND207 before personalised care adjustments. Multimorbidity read as two or more project LTC registers."
+          description_short: "Structured medication review in the preceding 12 months for people with frailty or multimorbidity (four or more condition clusters)"
+          description_long: "NICE IND207 before personalised care adjustments. Multimorbidity as four or more NICE IND205 clusters from the project registers."
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -53,6 +49,8 @@ models:
         description: Name of the current registration practice
       - name: ltc_count
         description: Number of distinct project long-term condition registers the person is on
+      - name: multimorbidity_cluster_count
+        description: Number of NICE IND205 condition clusters the person has a condition in
       - name: latest_frailty_severity
         description: Latest coded frailty severity; null if none
       - name: latest_record_date
@@ -129,6 +127,8 @@ models:
                 values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
       - name: ltc_count
         description: Number of distinct project long-term condition registers the person is on
+      - name: multimorbidity_cluster_count
+        description: Number of NICE IND205 condition clusters the person has a condition in
       - name: latest_frailty_severity
         description: Latest coded frailty severity; null if none
       - name: latest_record_date
@@ -171,5 +171,7 @@ models:
         description: Outcome label at the build.
       - name: ltc_count
         description: Number of LTC registers at the build.
+      - name: multimorbidity_cluster_count
+        description: Number of NICE IND205 condition clusters at the build.
       - name: latest_frailty_severity
         description: Latest coded frailty severity at the build.

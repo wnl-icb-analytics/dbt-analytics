@@ -20,6 +20,7 @@ assessed AS (
         active.current_practice_code,
         active.current_practice_name,
         population.ltc_count,
+        population.multimorbidity_cluster_count,
         population.latest_frailty_severity,
         CASE WHEN COALESCE(population.latest_falls_discussion_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
             THEN population.latest_falls_discussion_date END AS latest_record_date,
@@ -40,6 +41,7 @@ SELECT
     current_practice_code,
     current_practice_name,
     ltc_count,
+    multimorbidity_cluster_count,
     latest_frailty_severity,
     latest_record_date,
     TRUE AS is_in_denominator,

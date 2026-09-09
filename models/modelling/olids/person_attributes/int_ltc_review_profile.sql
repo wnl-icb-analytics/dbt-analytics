@@ -11,9 +11,14 @@ window. No registration, living or test-patient filter; consumers join
 dim_person_active_patients.
 
 The smoking-status LTC list (IND156, IND157) is CHD, PAD, stroke/TIA,
-hypertension, diabetes, COPD, CKD and asthma. Multimorbidity is two or more
-project LTC registers. Alcohol brief intervention counts ALCOHOLINT_COD records
-only, not declined codes.
+hypertension, diabetes, COPD, CKD and asthma. Multimorbidity follows NICE IND205: four or
+more condition clusters, mapped from the project registers (cancer; circulatory;
+diabetes; digestive as chronic liver disease; learning disability; mental health
+including alcohol problems; musculoskeletal as rheumatoid arthritis; neurological;
+renal; respiratory). The chronic pain, constipation, diverticular disease,
+inflammatory bowel disease, eating disorder and substance misuse conditions are
+not modelled, so the count is conservative. Alcohol brief intervention counts
+intervention records (advice, education, referral), not declined codes.
 */
 
 WITH conditions AS (
@@ -28,15 +33,27 @@ WITH conditions AS (
         BOOLOR_AGG(condition_code = 'NDH') AS has_ndh,
         BOOLOR_AGG(condition_code = 'COPD') AS has_copd,
         BOOLOR_AGG(condition_code = 'CKD') AS has_ckd,
-        BOOLOR_AGG(condition_code = 'AST') AS has_asthma,
+        BOOLOR_AGG(condition_code IN ('AST', 'CYP_AST')) AS has_asthma,
         BOOLOR_AGG(condition_code = 'AF') AS has_atrial_fibrillation,
         BOOLOR_AGG(condition_code = 'HF') AS has_heart_failure,
         BOOLOR_AGG(condition_code = 'DEM') AS has_dementia,
         BOOLOR_AGG(condition_code = 'DEP') AS has_depression,
         BOOLOR_AGG(condition_code = 'ANX') AS has_anxiety,
         BOOLOR_AGG(condition_code = 'SMI') AS has_smi,
-        BOOLOR_AGG(condition_code = 'LD') AS has_learning_disability,
-        MIN(CASE WHEN condition_code IN ('CHD', 'PAD', 'STIA', 'HTN', 'DM', 'COPD', 'CKD', 'AST')
+        BOOLOR_AGG(condition_code IN ('LD', 'LD_U14')) AS has_learning_disability,
+        COUNT(DISTINCT CASE
+            WHEN condition_code = 'CAN' THEN 'CANCER'
+            WHEN condition_code IN ('CHD', 'AF', 'HF', 'HTN', 'STIA', 'PAD') THEN 'CIRCULATORY'
+            WHEN condition_code = 'DM' THEN 'DIABETES'
+            WHEN condition_code = 'CLD' THEN 'DIGESTIVE'
+            WHEN condition_code IN ('LD', 'LD_U14') THEN 'LEARNING_DISABILITY'
+            WHEN condition_code IN ('ANX', 'DEP', 'DEM', 'SMI') THEN 'MENTAL_HEALTH'
+            WHEN condition_code = 'RA' THEN 'MUSCULOSKELETAL'
+            WHEN condition_code IN ('EP', 'MS', 'PD') THEN 'NEUROLOGICAL'
+            WHEN condition_code = 'CKD' THEN 'RENAL'
+            WHEN condition_code IN ('AST', 'CYP_AST', 'COPD') THEN 'RESPIRATORY'
+        END) AS register_cluster_count,
+        MIN(CASE WHEN condition_code IN ('CHD', 'PAD', 'STIA', 'HTN', 'DM', 'COPD', 'CKD', 'AST', 'CYP_AST')
             THEN earliest_diagnosis_date::DATE END) AS earliest_smoking_ltc_diagnosis_date,
         MIN(CASE WHEN condition_code = 'HTN' THEN earliest_diagnosis_date::DATE END) AS earliest_hypertension_date,
         MIN(CASE WHEN condition_code IN ('DEP', 'ANX') THEN earliest_diagnosis_date::DATE END) AS earliest_depression_anxiety_date
@@ -50,10 +67,7 @@ smoking AS (
         person_id,
         clinical_effective_date::DATE AS latest_smoking_status_date,
         smoking_status AS latest_smoking_status
-    FROM {{ ref('int_smoking_status_all') }}
-    QUALIFY ROW_NUMBER() OVER (
-        PARTITION BY person_id ORDER BY clinical_effective_date DESC, id DESC
-    ) = 1
+    FROM {{ ref('int_smoking_status_latest') }}
 ),
 
 never_smoked AS (
@@ -147,6 +161,11 @@ SELECT
     person.person_id,
     age.birth_date_approx,
     COALESCE(c.ltc_count, 0) AS ltc_count,
+    -- Alcohol problems form part of the mental health cluster
+    COALESCE(c.register_cluster_count, 0)
+        + IFF(alcohol_disorder.person_id IS NOT NULL
+              AND NOT COALESCE(c.has_anxiety OR c.has_depression OR c.has_dementia OR c.has_smi, FALSE), 1, 0)
+        AS multimorbidity_cluster_count,
     COALESCE(c.has_chd, FALSE) AS has_chd,
     COALESCE(c.has_pad, FALSE) AS has_pad,
     COALESCE(c.has_stroke_tia, FALSE) AS has_stroke_tia,

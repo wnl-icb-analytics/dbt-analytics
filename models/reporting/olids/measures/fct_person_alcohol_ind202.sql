@@ -28,7 +28,6 @@ assessed AS (
         population.latest_alcohol_screen_score,
         population.latest_positive_alcohol_screen_date,
         population.latest_intervention_after_positive_screen_date,
-        NULL AS new_diagnosis_date,
         population.latest_intervention_after_positive_screen_date AS latest_record_date,
         population.latest_intervention_after_positive_screen_date IS NOT NULL AS is_in_numerator
     FROM indicator_population AS population
@@ -46,7 +45,6 @@ SELECT
     'Listed long-term condition with a positive alcohol screen' AS condition_name,
     current_practice_code,
     current_practice_name,
-    new_diagnosis_date,
     latest_alcohol_screen_date,
     latest_alcohol_screen_tool,
     latest_alcohol_screen_score,

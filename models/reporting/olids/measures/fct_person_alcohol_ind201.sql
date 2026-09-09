@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND201: https://www.nice.org.uk/indicators/ind201
--- FAST or AUDIT-C screen in the preceding 2 years for people with a listed LTC; excludes alcohol-related disorders.
+-- FAST, AUDIT-C or AUDIT screen in the preceding 2 years for people with a listed LTC; excludes alcohol-related disorders.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -27,7 +27,6 @@ assessed AS (
         population.latest_alcohol_screen_score,
         population.latest_positive_alcohol_screen_date,
         population.latest_intervention_after_positive_screen_date,
-        NULL AS new_diagnosis_date,
         CASE WHEN COALESCE(population.latest_alcohol_screen_date >= DATEADD(month, -24, CURRENT_DATE()), FALSE)
             THEN population.latest_alcohol_screen_date END AS latest_record_date,
         COALESCE(population.latest_alcohol_screen_date >= DATEADD(month, -24, CURRENT_DATE()), FALSE) AS is_in_numerator
@@ -46,7 +45,6 @@ SELECT
     'CHD, atrial fibrillation, heart failure, stroke/TIA, diabetes or dementia' AS condition_name,
     current_practice_code,
     current_practice_name,
-    new_diagnosis_date,
     latest_alcohol_screen_date,
     latest_alcohol_screen_tool,
     latest_alcohol_screen_score,

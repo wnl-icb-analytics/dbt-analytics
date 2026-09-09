@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND196: https://www.nice.org.uk/indicators/ind196
--- FAST or AUDIT-C screen within 3 months either side of a first hypertension diagnosis in the preceding 12 months; excludes alcohol-related disorders.
+-- FAST, AUDIT-C or AUDIT screen within 3 months either side of a first hypertension diagnosis in the preceding 12 months; excludes alcohol-related disorders.
 WITH indicator_population AS (
     SELECT
         profile.*,

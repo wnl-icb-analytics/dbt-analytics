@@ -18,6 +18,7 @@ SELECT
     current_practice_code,
     current_practice_name,
     ltc_count,
+    multimorbidity_cluster_count,
     latest_frailty_severity,
     latest_record_date,
     is_in_denominator,

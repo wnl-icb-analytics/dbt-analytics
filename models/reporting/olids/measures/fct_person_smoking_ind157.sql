@@ -26,8 +26,6 @@ assessed AS (
         population.latest_smoking_status_date,
         population.latest_never_smoked_date,
         population.latest_smoking_intervention_date,
-        FALSE AS is_status_recorded_in_period,
-        FALSE AS is_never_smoker_covered,
         CASE WHEN COALESCE(population.latest_smoking_intervention_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
             THEN population.latest_smoking_intervention_date END AS latest_record_date,
         COALESCE(population.latest_smoking_intervention_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
@@ -51,8 +49,6 @@ SELECT
     latest_never_smoked_date,
     latest_smoking_intervention_date,
     latest_record_date,
-    is_status_recorded_in_period,
-    is_never_smoker_covered,
     TRUE AS is_in_denominator,
     is_in_numerator,
     CASE
