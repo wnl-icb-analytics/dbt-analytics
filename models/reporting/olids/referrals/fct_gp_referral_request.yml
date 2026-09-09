@@ -2,17 +2,22 @@ models:
   - name: fct_gp_referral_request
     description: >-
       GP referral requests recorded in OLIDS, with one row per source referral
-      request ID. Includes every retained staging referral across the available
-      history: deleted records and records without a person ID are excluded
-      upstream. There is no current-registration, direction or date restriction.
+      request ID. The OLIDS stable feed restricts referrals to NCL publishing
+      practices and patients in its filtered patient spine, then retains the
+      latest version per referral ID by source transform time and recorded time.
+      Staging excludes deleted records and records without a person ID.
+      The fact includes every retained staging referral and adds no
+      current-registration, direction or date restriction.
       Clinical effective date and its recorded precision describe the referral;
       date recorded and source transform time have separate meanings.
       Referring, receiving and publishing organisations retain distinct roles.
       Organisation names describe the current retained organisation lookup,
       not necessarily the name when the referral was made. Unmatched organisations
-      leave null attributes without removing the referral. Concept codes and
-      displays retain the original source values, separately from the source-supplied
-      referral mapping. No terminology mapping or label replacement is applied.
+      leave null attributes without removing the referral. Codes and displays
+      for recorded concepts are resolved upstream through the dbt-olids enriched
+      concept map. They remain separate from mapped referral terminology, which
+      can include upstream repairs and backfills. The fact preserves these
+      stable-feed values without an additional terminology mapping or label replacement.
       Encounter and booking
       references are source-recorded links; they do not prove a consultation or
       that later activity in another system resulted from this referral.
@@ -81,41 +86,41 @@ models:
       - name: referral_request_source_concept_id
         description: Concept identifier describing the referral, as recorded by OLIDS.
       - name: referral_code
-        description: Original referral code supplied on the referral record, without a concept lookup or mapping.
+        description: Code for the recorded referral concept, resolved upstream through the dbt-olids enriched concept map. Preserved without an additional lookup here.
       - name: referral_name
-        description: Original referral display supplied on the referral record; null when unavailable.
+        description: Display for the recorded referral concept, resolved upstream through the enriched concept map. Not a historical snapshot of text on the referral; null when unavailable.
       - name: referral_coding_system
-        description: Coding system supplied on the referral record for its original code. No national meaning is inferred for local codes.
+        description: Source coding system supplied by the upstream enriched concept map for referral_code. No national meaning is inferred for local codes.
       - name: mapped_concept_code
-        description: Mapped referral concept code already supplied by referral staging. Retained separately from the original code; this model applies no additional mapping.
+        description: Mapped referral code supplied by the OLIDS stable feed after dbt-olids terminology enrichment, which can repair or backfill mappings. Retained separately from referral_code; no additional mapping is applied here.
       - name: mapped_concept_coding_system
-        description: Coding system supplied by OLIDS for mapped_concept_code. Not inferred from the source code.
+        description: Target coding system supplied by the upstream enriched concept map for mapped_concept_code. Not inferred by this fact.
       - name: mapped_concept_display
-        description: Mapped referral display already supplied by referral staging; null when unavailable.
+        description: Mapped referral display supplied by the OLIDS stable feed after upstream terminology enrichment; null when unavailable.
       - name: referral_request_priority_source_concept_id
         description: Concept identifier for referral priority, as recorded by OLIDS.
       - name: priority_code
-        description: Original priority code supplied on the referral record, without reclassification.
+        description: Code for the recorded priority concept, resolved upstream through the enriched concept map without reclassification in this fact.
       - name: priority_name
-        description: Original priority display supplied on the referral record; null when unavailable.
+        description: Display for the recorded priority concept, resolved upstream through the enriched concept map; null when unavailable.
       - name: referral_request_specialty_source_concept_id
         description: Concept identifier for referral specialty, as recorded by OLIDS.
       - name: specialty_code
-        description: Original specialty code supplied on the referral record, without national specialty mapping.
+        description: Code for the recorded specialty concept, resolved upstream through the enriched concept map. No national specialty mapping is added here.
       - name: specialty_name
-        description: Original specialty display supplied on the referral record; null when unavailable.
+        description: Display for the recorded specialty concept, resolved upstream through the enriched concept map; null when unavailable.
       - name: referral_request_type_source_concept_id
         description: Concept identifier for referral type, as recorded by OLIDS.
       - name: referral_type_code
-        description: Original referral type code supplied on the referral record, without reclassification.
+        description: Code for the recorded referral type concept, resolved upstream through the enriched concept map without reclassification in this fact.
       - name: referral_type_name
-        description: Original referral type display supplied on the referral record; null when unavailable.
+        description: Display for the recorded referral type concept, resolved upstream through the enriched concept map; null when unavailable.
       - name: clinical_effective_date_precision_source_concept_id
         description: Concept identifier for clinical date precision, as recorded by OLIDS.
       - name: clinical_date_precision_code
-        description: Original date-precision code supplied on the referral record. No additional timestamp precision is inferred.
+        description: Code for the recorded date-precision concept, resolved upstream through the enriched concept map. No additional timestamp precision is inferred.
       - name: clinical_date_precision_name
-        description: Original clinical date-precision display supplied on the referral record; null when unavailable.
+        description: Display for the recorded date-precision concept, resolved upstream through the enriched concept map; null when unavailable.
       - name: source_transform_datetime
         description: LDS transformation timestamp supplied on the referral. Delivery metadata, not clinical event time.
       - name: lds_source_record_id

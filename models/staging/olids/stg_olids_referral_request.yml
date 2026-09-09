@@ -2,8 +2,13 @@ models:
   - name: stg_olids_referral_request
     description: >-
       Referral requests recorded in OLIDS, one row per stable source referral ID.
-      Excludes deleted records and records without a person ID. Original codes
-      and displays remain distinct from the mappings supplied by the source.
+      The stable feed restricts referrals to NCL publishing practices and patients
+      in its filtered patient spine, then retains the latest version per referral
+      ID by source transform time and recorded time. Staging excludes deleted
+      records and records without a person ID. Codes and displays for recorded
+      concepts are resolved upstream through the dbt-olids enriched concept map.
+      They remain distinct from mapped terminology, which can include upstream
+      repairs and backfills. Staging applies no additional terminology mapping.
     config:
       meta:
         owner:
@@ -71,29 +76,29 @@ models:
       - name: lds_source_record_id
         description: LDS assigned unique identifier for the source record version
       - name: source_code
-        description: Original referral code supplied on the source record.
+        description: Code for the recorded referral concept, resolved upstream through the dbt-olids enriched concept map.
       - name: source_display
-        description: Original referral display supplied on the source record, without a current terminology lookup.
+        description: Display for the recorded referral concept, resolved upstream through the enriched concept map. Not a historical snapshot of text on the referral.
       - name: source_system
-        description: Coding system supplied for the original referral code.
+        description: Source coding system supplied by the upstream enriched concept map for source_code.
       - name: target_system
-        description: Coding system supplied for mapped_concept_code. No additional mapping is applied.
+        description: Target coding system supplied by the upstream enriched concept map for mapped_concept_code. No additional mapping is applied here.
       - name: referral_request_priority_source_code
-        description: Original referral priority code supplied on the source record.
+        description: Code for the recorded priority concept, resolved upstream through the enriched concept map.
       - name: referral_request_priority_source_display
-        description: Original referral priority display supplied on the source record.
+        description: Display for the recorded priority concept, resolved upstream through the enriched concept map.
       - name: referral_request_type_source_code
-        description: Original referral type code supplied on the source record.
+        description: Code for the recorded referral type concept, resolved upstream through the enriched concept map.
       - name: referral_request_type_source_display
-        description: Original referral type display supplied on the source record.
+        description: Display for the recorded referral type concept, resolved upstream through the enriched concept map.
       - name: referral_request_specialty_source_code
-        description: Original referral specialty code supplied on the source record.
+        description: Code for the recorded specialty concept, resolved upstream through the enriched concept map.
       - name: referral_request_specialty_source_display
-        description: Original referral specialty display supplied on the source record.
+        description: Display for the recorded specialty concept, resolved upstream through the enriched concept map.
       - name: date_precision_source_code
-        description: Original clinical date-precision code supplied on the source record.
+        description: Code for the recorded date-precision concept, resolved upstream through the enriched concept map.
       - name: date_precision_source_display
-        description: Original clinical date-precision display supplied on the source record.
+        description: Display for the recorded date-precision concept, resolved upstream through the enriched concept map.
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           config:
