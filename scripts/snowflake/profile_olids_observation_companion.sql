@@ -1,6 +1,32 @@
 -- Aggregate-only pre-publication impact checks. No source identifiers are returned.
 -- Native observation history is not rescanned for Valproate; the existing output is the baseline.
 
+-- Current code-set overlaps identify consumers needing entity-meaning review.
+-- Counts are source records, not new patients, net measure changes or campaign eligibility.
+-- Campaign models apply versioned code sets and further date/population rules.
+with added as (
+ select 'allergy_intolerance' as source_entity,mapped_concept_code as code,count(*) as records
+ from OLIDS_ENGINEERING.CONFORMED.ALLERGY_INTOLERANCE
+ where coalesce(lds_is_deleted,false)=false and person_id is not null
+ group by 1,2
+ union all
+ select 'referral_request',mapped_concept_code,count(*)
+ from OLIDS_ENGINEERING.CONFORMED.REFERRAL_REQUEST
+ where coalesce(lds_is_deleted,false)=false and person_id is not null
+ group by 1,2
+), code_sets as (
+ select distinct source,cluster_id,code
+ from STAGING.REFERENCE.STG_REFERENCE_COMBINED_CODESETS
+ where (source='PCD' and cluster_id in ('FOOTEXAM_COD','AST_COD','ALC_COD'))
+ or (source in ('UKHSA_COVID','UKHSA_FLU') and cluster_id in ('ASTADM_COD','DXT_CHEMO_COD','DIAB_COD'))
+ or (source='ECL_CACHE' and cluster_id='ALCOHOL_MISUSE_DISORDERS')
+)
+select a.source_entity,c.source,c.cluster_id,sum(a.records) as records,
+ count(*) as distinct_codes
+from added a join code_sets c on a.code=c.code
+group by 1,2,3
+order by c.source,c.cluster_id,a.source_entity;
+
 -- Pre-publication aggregate impact only. Uses existing materialised Valproate events.
 with codes as (
  select distinct code from STAGING.REFERENCE.STG_REFERENCE_VALPROATE_PROG_CODES where code_category='REFERRAL'

@@ -1,6 +1,6 @@
 # Expanded OLIDS observations
 
-`DATA_LAKE.OLIDS.OBSERVATION` includes native observations, allergy records and
+The proposed `DATA_LAKE.OLIDS.OBSERVATION` includes native observations, allergy records and
 referral requests. Each row represents one source entity record, not a unique
 clinical occurrence. Test requests, procedure requests and medication records
 are outside this expansion.
@@ -8,6 +8,59 @@ are outside this expansion.
 The dbt-olids conformed and stable models own the population and ID derivation.
 This project reads that shared output once. Staging continues to exclude records
 marked deleted and records without a person identifier.
+
+## Release blocker: clinical interpretation
+
+Preserving native columns and IDs does not establish that downstream measures
+remain correct. Existing consumers often interpret a matching code as a confirmed
+condition or completed care, without checking the source entity. The expanded
+population makes that assumption unsafe until the relevant clinical definitions
+establish which entities each consumer may use. Keep both changes in draft.
+
+Read-only checks on 9 September 2026 found these added records matching current
+combined reference code sets after the staging deletion and person filters:
+
+| Added entity | Reference code set | Matching records | Existing consumer interpretation |
+| --- | --- | ---: | --- |
+| Referral request | PCD `FOOTEXAM_COD` | 10,466 | Left and right foot checked flags in `int_foot_examination_all` |
+| Referral request | UKHSA `ASTADM_COD` | 7,639 | Asthma admission evidence, sufficient alone for the COVID asthma criterion within its date window |
+| Allergy | UKHSA `DXT_CHEMO_COD` | 1,764 | Recent chemotherapy/radiotherapy evidence within the campaign date window |
+| Allergy | PCD `AST_COD` | 5,983 | Asthma diagnosis evidence |
+| Allergy | UKHSA `DIAB_COD` | 1,328 | Diabetes evidence for vaccine eligibility |
+| Allergy | ECL `ALCOHOL_MISUSE_DISORDERS` | 104 | Historical alcohol-misuse disorder when the record is not an active problem |
+
+These counts are eligible code matches, not additional patients or measured
+changes. Campaign models use versioned code lists and date and population rules;
+the current-list counts do not establish campaign impact. Code sets overlap, so
+their counts must not be added.
+
+The matched referral concepts have the public SNOMED descriptions
+"Refer to diabetic foot screener (procedure)" and
+"Emergency hospital admission for asthma (procedure)" respectively. The first
+explicitly describes a referral, yet the foot-examination consumer derives
+checked flags from it. The second describes an admission but occurs in a referral
+request entity; that source context needs resolution. The matched allergy asthma, diabetes
+and chemotherapy code groups are disorders, not medication products or substances.
+This does not resolve why those concepts occur in an allergy entity or establish
+that a referral proves completed care. No new clinical inclusion rules have been
+implemented. Clinical owners need to agree entity eligibility for the affected
+consumers before release. Retaining native observations for confirmed-condition
+or completed-care measures is the proposed interim rule where that authority
+remains unresolved; it is not yet an approved change.
+
+The numerical-result check found no added `ALC_COD` matches and no matches in
+numeric-result value sets among the 90 value sets used by
+`get_ltc_lcs_observations_latest`, on either its mapped-code or source-code path.
+There is therefore no observed null-result displacement from this expansion in
+those checks. The macro still selects the latest matching record before a caller
+can require a numerical result, so this is evidence about the current added
+population, not a permanent guarantee. Some allergy matches are directly relevant
+to existing adverse-reaction and contraindication consumers. Blanket exclusion
+would also need a definition decision.
+
+The Valproate duplicate-reading bug below is a separate, demonstrated defect that
+this companion fixes. Its successful reconciliation does not clear these clinical
+interpretation blockers.
 
 ## Identifiers and clinical context
 
