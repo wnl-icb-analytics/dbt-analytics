@@ -9,13 +9,19 @@ The dbt-olids conformed and stable models own the population and ID derivation.
 This project reads that shared output once. Staging continues to exclude records
 marked deleted and records without a person identifier.
 
-## Release blocker: clinical interpretation
+## Recorded-code contract and consumer effects
 
-Preserving native columns and IDs does not establish that downstream measures
-remain correct. Existing consumers often interpret a matching code as a confirmed
-condition or completed care, without checking the source entity. The expanded
-population makes that assumption unsafe until the relevant clinical definitions
-establish which entities each consumer may use. Keep both changes in draft.
+The observations contract is recorded clinical codes with their dates and context.
+Consumers keep their existing code and date definitions when records previously
+held in allergy and referral tables become available. Source-table placement is
+provenance, not a separate clinical eligibility rule. Restoring that coverage can
+change counts and measure populations without changing how consumers interpret a
+recorded code. No blanket native-observation filter is required.
+
+The project owner identified EMIS document-related routing as a suspected reason
+for non-referral codes appearing in the referral source. That mechanism has not
+been independently verified here. The inclusion decision follows the recorded-code
+contract and does not depend on proving that explanation.
 
 Read-only checks on 9 September 2026 found these added records matching current
 combined reference code sets after the staging deletion and person filters:
@@ -41,15 +47,12 @@ explicitly describes a referral, yet the foot-examination consumer derives
 checked flags from it. This exposes a pre-existing consumer interpretation defect:
 that rule applies regardless of source entity. It does not make the referral
 record invalid or establish that it should be removed from the combined feed.
-The second describes an admission but occurs in a referral
-request entity; that source context needs resolution. The matched allergy asthma, diabetes
-and chemotherapy code groups are disorders, not medication products or substances.
-This does not resolve why those concepts occur in an allergy entity or establish
-that a referral proves completed care. No new clinical inclusion rules have been
-implemented. Clinical owners need to agree entity eligibility for the affected
-consumers before release. Retaining native observations for confirmed-condition
-or completed-care measures is the proposed interim rule where that authority
-remains unresolved; it is not yet an approved change.
+The second describes an admission; its placement in the referral source does not
+turn that code into a planned referral. The matched allergy asthma, diabetes and
+chemotherapy code groups are disorders, not medication products or substances.
+Consumers apply their existing definitions to these recorded codes. The combined
+feed does not independently verify care, just as native observations did not.
+No new clinical inclusion rules have been implemented.
 
 The numerical-result check found no added `ALC_COD` matches and no matches in
 numeric-result value sets among the 90 value sets used by
@@ -58,12 +61,12 @@ There is therefore no observed null-result displacement from this expansion in
 those checks. The macro still selects the latest matching record before a caller
 can require a numerical result, so this is evidence about the current added
 population, not a permanent guarantee. Some allergy matches are directly relevant
-to existing adverse-reaction and contraindication consumers. Blanket exclusion
-would also need a definition decision.
+to existing adverse-reaction and contraindication consumers.
 
 The Valproate duplicate-reading bug below is a separate, demonstrated defect that
-this companion fixes. Its successful reconciliation does not clear these clinical
-interpretation blockers.
+this companion fixes. The foot-check interpretation defect is a separate consumer
+correction, tracked in [issue 1125](https://github.com/wnl-icb-analytics/dbt-analytics/issues/1125).
+Neither requires withholding valid recorded codes from observations.
 
 ## Identifiers and clinical context
 
