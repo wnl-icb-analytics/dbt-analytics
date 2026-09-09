@@ -54,10 +54,17 @@ IDs keep their meaning and are not an event count.
 
 ## Deployment and historical rebuilds
 
-Publish the upstream conformed and stable changes, including all three new
-columns, before building this project's changed raw and staging models. There
-is no runtime fallback to the old schema. Source YAML describes the agreed
-upstream columns so the companion can compile before publication.
+Use a coordinated release window. Scheduled analytics must not run against the
+expanded upstream feed before this companion is deployed: the old valproate
+model would read each referral twice. Publish the upstream conformed and stable
+changes, including all three new columns, then complete DEV validation and
+deploy the companion before the next analytics run. If that sequence cannot
+fit between scheduled runs, use the existing job scheduling controls to hold
+analytics runs until both changes are ready. This change does not alter those
+controls or publish upstream data.
+
+There is no runtime fallback to the old schema. Source YAML describes the
+agreed upstream columns so the companion can compile before publication.
 
 After publication, use the existing `dev` target and shared `DEV__` layers:
 
@@ -90,7 +97,8 @@ this companion does not create alternate databases, schemas or source views.
 ## Companion validation
 
 The full project compiled on 9 September 2026 using the standard `dev` target:
-2,084 models, 4,775 tests, 33 snapshots, 39 seeds and 46 analyses, plus hooks.
+2,100 models, 4,812 tests, 33 snapshots, 39 seeds and 47 analyses, plus hooks,
+after merging the latest main branch.
 The existing unused-configuration warning was the only warning.
 
 Local synthetic validation executed the rendered valproate model with native,
