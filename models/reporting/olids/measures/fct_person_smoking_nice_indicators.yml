@@ -1,0 +1,217 @@
+models:
+  - name: fct_person_smoking_ind157
+    description: >
+      NICE IND157 smoking cessation support. One row per currently registered,
+      living, non-test person on a listed long-term condition register whose
+      latest recorded smoking status is current smoker, assessed on the build
+      date. The numerator requires an offer of support and treatment (smoking
+      cessation intervention code) in the preceding 12 months. Personalised
+      care adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind157
+        indicator:
+          id: "IND157"
+          type: "MEASURE"
+          category: "LIFESTYLE"
+          clinical_domain: "Lifestyle"
+          name_short: "LTC smokers offered support"
+          description_short: "Smoking cessation support offered in the preceding 12 months to current smokers with a listed long-term condition"
+          description_long: "NICE IND157 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND157"
+    columns: &smoking_columns
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_smoking_status
+        description: Latest recorded smoking status
+      - name: latest_smoking_status_date
+        description: Date of the latest smoking status record
+      - name: latest_never_smoked_date
+        description: Date of the latest never-smoked record; null if none
+      - name: latest_smoking_intervention_date
+        description: Date of the latest smoking cessation support record; null if none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+
+
+  - name: fct_person_smoking_ind156
+    description: >
+      NICE IND156 smoking status recording. One row per currently registered,
+      living, non-test person on the CHD, PAD, stroke/TIA, hypertension,
+      diabetes, COPD, CKD or asthma register, assessed on the build date. The
+      numerator requires a smoking status recorded in the preceding 12 months,
+      or, for a person who reaches 26 by the end of the current financial year and whose latest status is never smoked, a
+      never-smoked record made after their 25th birthday and after the
+      earliest diagnosis that qualifies them, as NICE allows. The optional ex-
+      smoker three-year rule is not applied. Personalised care adjustments are
+      not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind156
+        indicator:
+          id: "IND156"
+          type: "MEASURE"
+          category: "LIFESTYLE"
+          clinical_domain: "Lifestyle"
+          name_short: "LTC smoking status recorded"
+          description_short: "Smoking status recorded in the preceding 12 months for people with a listed long-term condition"
+          description_long: "NICE IND156 before personalised care adjustments. Never-smoker exemption applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND156"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_smoking_status
+        description: Latest recorded smoking status
+      - name: latest_smoking_status_date
+        description: Date of the latest smoking status record
+      - name: latest_never_smoked_date
+        description: Date of the latest never-smoked record; null if none
+      - name: latest_smoking_intervention_date
+        description: Date of the latest smoking cessation support record; null if none
+      - name: is_status_recorded_in_period
+        description: Whether a smoking status was recorded in the period (IND156)
+      - name: is_never_smoker_covered
+        description: Whether a never-smoker reaching 26 by the end of the financial year is covered by a never-smoked record after their 25th birthday and after their earliest listed diagnosis (IND156)
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+
+  - name: fct_person_smoking_nice_indicators
+    description: >
+      NICE IND156 and IND157 smoking status in a common interface. One row per
+      person and indicator on the current reporting date. Indicator-specific
+      views remain the source of each population definition. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering. Feeds fct_person_nice_indicator_status.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+      - name: indicator_id
+        description: NICE indicator identifier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IND156', 'IND157']
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+      - name: latest_smoking_status
+        description: Latest recorded smoking status
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+
+  - name: fct_person_smoking_nice_indicators_snapshot_input
+    description: >
+      Thin snapshot-input projection of fct_person_smoking_nice_indicators:
+      person, indicator, current practice, latest qualifying record and
+      outcome. Excludes reporting_date and measurement_period_start, which
+      advance on every build, so the SCD2 snapshot versions only on genuine
+      changes. Feeds fct_person_smoking_nice_indicators_snapshot.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: latest_record_date
+        description: Date of the latest qualifying record; null when none in the period.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.
+      - name: latest_smoking_status
+        description: Latest recorded smoking status at the build.
