@@ -7,7 +7,12 @@ with core_data as(
     from {{ ref('raw_sus_apc_spell') }} as core
     qualify row_number() over (
         partition by primarykey_id
-        order by system_transaction_cds_activity_date desc
+        order by
+            system_transaction_cds_activity_date desc nulls last
+            , try_to_number(system_record_version) desc nulls last
+            , system_interchange_received_date desc nulls last
+            , system_interchange_received_time desc nulls last
+            , rownumber_id desc
         ) = 1
 )
 
