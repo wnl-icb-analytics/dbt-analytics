@@ -1,0 +1,44 @@
+models:
+  - name: int_childhood_immunisation_profile
+    description: >
+      Per-child immunisation dose counts inside the NICE age windows, one row per
+      currently registered child in the childhood immunisation population.
+      Doses are distinct administration dates by vaccine group (6-in-1, 4-in-1
+      preschool booster, MMR including MMRV, rotavirus, MenB), so schedule
+      variants recorded against one visit count once. Windows are measured from
+      the approximate birth date. Contraindication flags come from contraindicated
+      event codes. Consumers apply the milestone-age denominators.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Child identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: birth_date_approx
+        description: Approximate birth date (mid-month).
+      - name: dtap_doses_by_8_months
+        description: Distinct 6-in-1 administration dates before 8 months of age.
+      - name: mmr_doses_12_to_18_months
+        description: Distinct MMR or MMRV administration dates between 12 and 18 months of age.
+      - name: mmr_doses_1_to_5_years
+        description: Distinct MMR or MMRV administration dates between the first and fifth birthdays.
+      - name: has_dtap_booster_1_to_5_years
+        description: Whether a 4-in-1 preschool booster was given between the first and fifth birthdays.
+      - name: rotavirus_doses_by_24_weeks
+        description: Distinct rotavirus administration dates before 24 weeks of age.
+      - name: menb_doses_by_8_months
+        description: Distinct MenB administration dates before 8 months of age.
+      - name: menb_doses_by_18_months
+        description: Distinct MenB administration dates before 18 months of age.
+      - name: has_dtap_contraindication
+        description: Any contraindicated code for the 6-in-1 or 4-in-1 vaccines.
+      - name: has_mmr_contraindication
+        description: Any contraindicated code for MMR or MMRV.
+      - name: has_rotavirus_contraindication
+        description: Any contraindicated code for rotavirus vaccine.
+      - name: has_menb_contraindication
+        description: Any contraindicated code for MenB vaccine.

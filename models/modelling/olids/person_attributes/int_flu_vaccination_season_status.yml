@@ -1,0 +1,30 @@
+models:
+  - name: int_flu_vaccination_season_status
+    description: >
+      People with a flu vaccination in the NICE season window, one row per
+      person. The window is the preceding 1 August to 31 March, taken as the
+      season starting on the most recent 1 August on or before the build date,
+      and vaccination comes from fct_flu_status for the matching campaign
+      (administered or LAIV, dated on or after 1 August). People not in that
+      campaign's population or without a vaccination record have no row.
+      Between April and July the window is the season just ended.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person vaccinated in the season window.
+        data_tests:
+          - unique
+          - not_null
+      - name: campaign_id
+        description: Flu campaign identifier for the season, such as Flu 2026-27.
+      - name: season_start_date
+        description: 1 August starting the season.
+      - name: season_end_date
+        description: 31 March ending the season.
+      - name: latest_vaccination_date
+        description: Latest administered vaccination date in the window.
+      - name: is_laiv
+        description: Whether any vaccination in the window was the live attenuated nasal vaccine.
