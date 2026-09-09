@@ -1,0 +1,43 @@
+version: 2
+models:
+  - name: fct_gp_appointment_clinical_record
+    description: >-
+      One appointment, clinical record type and clinical record ID with a recorded
+      encounter path for the same person. Includes non-deleted records in the
+      filtered NCL OLIDS patient spine, with all current statuses and
+      patient-associated blocked slots. This is a relationship for clinical
+      drill-down, not evidence of attendance or a shared event time. Join
+      clinical_record_id to id in stg_olids_observation, stg_olids_medication_order
+      or stg_olids_medication_statement according to clinical_record_type.
+      Observations already include allergies and referrals. Unlinked clinical
+      records remain in their detail tables. Successful OLIDS snapshot builds
+      replace changed and deleted links. Its scheduled run starts ahead of
+      analytics; the two schedules do not have a completion dependency.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [appointment_id, clinical_record_type, clinical_record_id]
+    columns:
+      - name: appointment_id
+        description: Appointment ID in fct_gp_appointment.
+        data_tests: [not_null]
+      - name: clinical_record_type
+        description: Detail entity, observation, medication_order or medication_statement.
+        data_tests: [not_null]
+      - name: clinical_record_id
+        description: ID in the named detail entity. Added allergies and referrals use their observation ID.
+        data_tests: [not_null]
+      - name: encounter_id
+        description: Encounter referenced by the clinical record and carrying the recorded appointment ID.
+      - name: person_id
+        description: Consistent person ID shared by all three records across practice registrations.
+      - name: sk_patient_id
+        description: >-
+          NHS number hash produced with a salt and pepper, obtained from the
+          established person mapping. Null when that mapping has no key.
+      - name: patient_id
+        description: Practice-level patient ID on the appointment. It can differ from the clinical record's patient ID for the same person.

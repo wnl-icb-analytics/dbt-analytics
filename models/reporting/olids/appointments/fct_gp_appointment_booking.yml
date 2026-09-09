@@ -1,0 +1,56 @@
+version: 2
+models:
+  - name: fct_gp_appointment_booking
+    description: >-
+      One current recorded booking per appointment with a supplied booking
+      timestamp. Inherits the filtered NCL patient population and all current
+      statuses, contexts and patient-associated blocked slots from
+      fct_gp_appointment. Use booked_at to analyse booking activity and
+      scheduled_at for the current intended appointment time. The source keeps
+      the current appointment record, so prior bookings, rebookings and
+      cancellations cannot be reconstructed after changes or slot reassignment.
+      This is a current snapshot, not an immutable booking history. Booking
+      timestamps can be later than the scheduled time after retrospective entry.
+      Join appointment_id to fct_gp_appointment for current status, contact mode,
+      practitioner, schedule and attendance details.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: appointment_id
+        description: Appointment ID identifying the single currently recorded booking. Not a separate historical booking identifier.
+        data_tests: [unique, not_null]
+      - name: person_id
+        description: Consistent person ID across practice registrations.
+      - name: sk_patient_id
+        description: NHS number hash produced with a salt and pepper, from the established person mapping. Null when unavailable.
+      - name: patient_id
+        description: Practice-level patient ID on the current appointment.
+      - name: booked_at
+        description: Supplied booking timestamp for the current appointment, used to date booking activity. Always populated in this fact.
+        data_tests: [not_null]
+      - name: scheduled_at
+        description: Current scheduled appointment time. Can precede booked_at after retrospective entry and can change after rebooking.
+      - name: source_booking_method_code
+        description: Booking method code from the source concept lookup.
+      - name: source_booking_method_name
+        description: Label for the source booking method.
+      - name: booking_method_code
+        description: Mapped booking method code from the upstream concept lookup.
+      - name: booking_method_name
+        description: Label for the mapped booking method.
+      - name: provider_organisation_id
+        description: Organisation ID recorded as the current appointment provider, not necessarily the organisation that made the booking.
+      - name: provider_organisation_code
+        description: Current appointment provider code from the OLIDS organisation lookup.
+      - name: provider_organisation_code_authority
+        description: Assigning authority for the provider organisation code.
+      - name: provider_organisation_name
+        description: Current appointment provider name from the OLIDS organisation lookup.
+      - name: publisher_organisation_id
+        description: Organisation ID of the data publisher, which need not be the provider or booking organisation.
+      - name: publisher_organisation_code
+        description: Publisher practice ODS code supplied on the current appointment.
+      - name: publisher_organisation_name
+        description: Publisher organisation name from the OLIDS organisation lookup.
