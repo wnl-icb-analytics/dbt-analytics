@@ -29,6 +29,23 @@ p.PERSON_ID
       WHEN p.ethnicity_category = 'Unknown' THEN 6
     END AS ethcat_order
 ,p.BOROUGH_REGISTERED
+,CASE 
+when p.local_authority_code not like 'E09%' then 'Outside London'
+when p.local_authority_code is null then 'Unknown'
+else p.local_authority_name end as BOROUGH_RESIDENT
+,case
+    -- all NCL Boroughs
+    when p.local_authority_code in ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019') then 'NCL'
+    -- all NWL Boroughs
+    when p.local_authority_code in ('E09000005','E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033') then 'NWL'
+    -- all NEL Boroughs
+    when p.local_authority_code in ('E09000002','E09000001','E09000012','E09000016','E09000025','E09000026','E09000030','E09000031') then 'NEL'
+    when p.local_authority_code like 'E09%' and p.local_authority_code not in ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019','E09000005', 
+    'E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033','E09000002','E09000001','E09000012',
+     'E09000016','E09000025','E09000026','E09000030','E09000031') then 'Other London'
+    when p.local_authority_code not like 'E09%' then 'Outside London'
+    when p.local_authority_code is null then 'Unknown'
+    end as residential_loc
 ,p.practice_code
 ,v.VACCINE_ID
 ,v.VACCINE_NAME
