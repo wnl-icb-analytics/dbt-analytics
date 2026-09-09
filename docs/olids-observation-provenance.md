@@ -38,7 +38,10 @@ The matched referral concepts have the public SNOMED descriptions
 "Refer to diabetic foot screener (procedure)" and
 "Emergency hospital admission for asthma (procedure)" respectively. The first
 explicitly describes a referral, yet the foot-examination consumer derives
-checked flags from it. The second describes an admission but occurs in a referral
+checked flags from it. This exposes a pre-existing consumer interpretation defect:
+that rule applies regardless of source entity. It does not make the referral
+record invalid or establish that it should be removed from the combined feed.
+The second describes an admission but occurs in a referral
 request entity; that source context needs resolution. The matched allergy asthma, diabetes
 and chemotherapy code groups are disorders, not medication products or substances.
 This does not resolve why those concepts occur in an allergy entity or establish
