@@ -1,37 +1,45 @@
 models:
-  - name: stg_csds_cyp202careactivity
-    description: CSDS CYP care activities (deduplicated)
-    config:
-      meta:
-        owner:
-          name: Emily Baldwin
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - unique_care_contact_identifier
-              - unique_care_activity_identifier
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
-    columns:
-      - name: unique_care_activity_identifier
-        description: activity identifier (PK)
-      - name: unique_care_contact_identifier
-        description: Care contact identifier (FK to care contact)
-        tests:
-          - not_null
-      - name: community_care_activity_type
-        description: Type of community care activity
-      - name: person_id
-        description: CSDS person identifier
-      - name: clinical_contact_duration_of_care_activity
-        description: Duration of clinical contact in minutes
-      - name: coded_procedure_clinical_terminology
-        description: SNOMED CT code for procedure
-      - name: coded_finding_coded_clinical_entry
-        description: SNOMED CT code for finding
-      - name: coded_observation_clinical_terminology
-        description: SNOMED CT code for observation
-      - name: effective_from
-        description: Effective from date for the activity
+- name: stg_csds_cyp202careactivity
+  description: Existing latest CSDS activity projection per (contact identifier, activity identifier),
+    ordered by file receipt time. Retained for existing summaries; occurrence-level activities use stg_csds_care_activity_history
+    and fct_csds_care_activity.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  columns:
+  - name: unique_care_activity_identifier
+    description: Supplied provider-qualified activity identifier. Reused across contacts, people and periods
+      in the loaded feed; not a global event key.
+  - name: unique_care_contact_identifier
+    description: Supplied provider-qualified contact identifier. Use submission context to locate the
+      historical parent.
+    data_tests:
+    - not_null
+  - name: community_care_activity_type
+    description: Supplied CSDS community activity type. The duplicate activity_type_code source alias
+      is omitted after equality validation.
+  - name: person_id
+    description: CSDS person identifier supplied on this row. It is not replaced by the parent person.
+  - name: clinical_contact_duration_of_care_activity
+    description: Supplied clinical contact duration in minutes.
+  - name: coded_procedure_clinical_terminology
+    description: Original procedure code interpreted using procedure_scheme_in_use_community_care. Null
+      means not supplied.
+  - name: coded_finding_coded_clinical_entry
+    description: Original finding code interpreted using finding_scheme_in_use_community_care. Null means
+      not supplied.
+  - name: coded_observation_clinical_terminology
+    description: Original observation code interpreted using observation_scheme_in_use_community_care.
+      Null means not supplied.
+  - name: effective_from
+    description: Date and time the submission portal received the file; not the time of care.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - unique_care_contact_identifier
+        - unique_care_activity_identifier
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1
