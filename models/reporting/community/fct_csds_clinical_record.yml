@@ -1,0 +1,213 @@
+version: 2
+models:
+- name: fct_csds_clinical_record
+  description: CSDS clinical history, one row per retained coded immunisation, accepted referral or activity
+    assessment occurrence, or populated care-activity component. Includes accepted history for all ages.
+    Repeated complete immunisation keys use the latest accepted row; unknown people retain individual
+    immunisation occurrences. Equal assessment scores on different dates remain present. These records
+    are clinical items, not encounters. Missing labels, identities, times and parents remain visible.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: sk_patient_id
+    description: Warehouse patient key from stg_csds_bridging; null when no mapping exists.
+  - name: clinical_record_id
+    description: Unique retained clinical item key. Immunisation identities survive repeated submissions;
+      assessment occurrence identities change on replacement submissions.
+  - name: source_record_id
+    description: Unique clinical-item key for cross-source drill-down to this fact. Equal to clinical_record_id;
+      use originating_source_record_id for the original source occurrence.
+    data_tests:
+    - not_null
+    - unique
+  - name: source_dataset
+    description: CSDS, identifying the source dataset for cross-source clinical drill-down.
+  - name: clinical_record_type
+    description: Immunisation, referral assessment, activity assessment, procedure, finding or observation.
+      Assessment records may be questions, dimensions, subtotals or totals.
+  - name: clinical_code
+    description: Submitted immunisation, assessment, procedure, finding or observation code. Unmatched
+      codes remain present.
+  - name: clinical_description
+    description: Submitted-code label from shared SNOMED CT, ICD-10 or scheme-qualified Read dictionaries, including explicit dictionary alternatives.
+      It is not replaced by the mapped SNOMED label.
+  - name: clinical_code_system
+    description: SNOMED CT, Read v2, CTV3 or ICD-10 for the supported resolvers; other recognised
+      schemes retain their authoritative UKHFD name. Established by the submitted field-specific scheme
+      or assessment specification, never code shape. Null for an unrecognised or absent scheme.
+  - name: coding_scheme_code
+    description: Submitted community-care scheme. Procedure 06, finding 04 and observation 03 mean SNOMED
+      CT. Null for assessments where SNOMED CT is fixed by specification.
+  - name: coding_scheme_name
+    description: UKHFD scheme label, or specification-fixed SNOMED CT. A dictionary label does not establish
+      version-specific submission validity.
+  - name: clinical_label_status
+    description: labelled, code_missing, coding_scheme_unrecognised, reference_not_available or code_or_expression_unmatched.
+      Reference availability is distinct from clinical validity.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - labelled
+          - code_missing
+          - coding_scheme_unrecognised
+          - reference_not_available
+          - code_or_expression_unmatched
+  - name: clinical_at
+    description: Unzoned same-submission contact timestamp, or submitted immunisation/completion date
+      at midnight. Interpret with clinical_time_precision; no time-zone conversion is inferred.
+  - name: clinical_date
+    description: Calendar date of clinical_at; immunisation administration, assessment completion or inherited
+      contact date.
+  - name: clinical_time_precision
+    description: date for submitted dates or contacts without a time; timestamp for inherited contacts
+      with a recorded time. Null without usable clinical time.
+  - name: clinical_time_basis
+    description: immunisation_administration, assessment_completion, same_submission_care_contact or same_submission_care_activity_contact.
+      Inherited times describe the recorded parent, not a separately submitted assessment time.
+  - name: assessment_tool_name
+    description: Specification tool grouping for an assessment observable. Do not sum its different questions
+      or dimensions without the tool's scoring method.
+  - name: clinical_value
+    description: Submitted assessment score or observation value as text. Null for records without a measured
+      value.
+  - name: clinical_value_description
+    description: Published meaning of this assessment concept and enumerated response pair. Null for numeric
+      ranges, observations or responses absent from the reference.
+  - name: clinical_value_numeric
+    description: Technical NUMBER(38,9) parse, including numeric missing-response codes. Use assessment_score_numeric
+      for interpreted assessment values. Source text remains available; parsing alone does not establish
+      a valid score.
+  - name: clinical_value_parse_status
+    description: value_missing, numeric, numeric_rounded, numeric_format_unverified or not_numeric_or_out_of_range.
+      Non-numeric does not necessarily mean an invalid assessment response.
+  - name: assessment_response_status
+    description: value_missing, known_non_score, enumerated_response, within_published_range, response_unmatched
+      or reference_not_available. Null outside assessments. This describes the latest available reference,
+      not historic submission validity.
+  - name: is_assessment_response_non_score
+    description: True for explicitly missing, unknown or not-applicable responses. False for other enumerated
+      responses; null without an enumerated definition. Never infer this from a number alone.
+  - name: assessment_definition_version
+    description: ETOS version supplying the assessment interpretation. Current reference membership is
+      not retrospective submission validation.
+  - name: unit_of_measurement_code
+    description: Recorded observation unit code. Assessment scores do not acquire an invented unit.
+  - name: unit_of_measurement_description
+    description: Exact-case unit label from UKHFD UCUM or a recognised warehouse dictionary symbol or
+      alias. CYP202 observations may also use the historical CSDS spelling for a matching weight,
+      height or BMI concept, after an exact reference match fails.
+  - name: unit_of_measurement_symbol
+    description: Reference symbol for the recorded unit. No value conversion is applied.
+  - name: unit_of_measurement_match_type
+    description: ucum_code, dictionary_symbol, known_alias or csds_etos_alias. The latter requires a
+      matching native SNOMED observation or positive scheme-qualified Read mapping. A dictionary or
+      alias match is not proof of UCUM conformance or current submission validity.
+  - name: unit_of_measurement_definition_source
+    description: UKHFD UCUM, the shared warehouse dictionary or CSDS ETOS historical unit alias.
+      Historical spelling provenance is separate from the canonical unit definition in the shared reference.
+  - name: provider_organisation_code
+    description: Organisation submitting the clinical record.
+  - name: provider_organisation_name
+    description: Latest shared name for the submitting provider. UKHFD ODS API takes precedence, then Dictionary, then the UKHFD closed archive for codes absent from both.
+  - name: immunisation_responsible_organisation_code
+    description: Recorded organisation responsible for administering an immunisation. Null for other clinical
+      types.
+  - name: immunisation_responsible_organisation_name
+    description: Latest shared name for the recorded immunisation organisation. UKHFD ODS API takes precedence, then Dictionary, then the UKHFD closed archive for codes absent from both.
+  - name: person_id
+    description: National CSDS person identifier retained on the source occurrence. Different populated
+      identities are not merged.
+  - name: local_patient_id
+    description: Retained CYP501 provider-local patient identifier. Use with provider_organisation_code;
+      it is not a national patient identifier.
+  - name: referral_id
+    description: Provider-qualified referral ID, joining fct_csds_referral.source_record_id. Directly recorded
+      for referral assessments and obtained through the same-submission activity parent for activity components.
+  - name: care_activity_source_record_id
+    description: Submission and activity occurrence key for fct_csds_care_activity. Retained for activity
+      assessments even when the parent is absent.
+  - name: activity_id
+    description: Provider-qualified activity identifier from the source. Join with submission_id
+      to the accepted activity occurrence.
+  - name: contact_id
+    description: Provider-qualified contact identifier from the same-submission parent activity; null
+      without an activity parent.
+  - name: is_care_activity_linked
+    description: Whether a source activity or an activity-assessment parent is present. Null when no activity
+      relationship applies.
+  - name: is_care_activity_person_consistent
+    description: True or false only when both assessment and linked activity have populated person IDs.
+      Null when a person ID or parent is absent. Activity components are true when their source person ID
+      is populated; otherwise null.
+  - name: is_submitted_contact_person_consistent
+    description: Activity-to-contact person consistency from the same accepted submission. Null when either
+      identity or the parent is absent.
+  - name: source_clinical_date
+    description: Submitted CYP501 administration date or CYP609 assessment completion date. Null for inherited
+      contact time.
+  - name: source_derived_date
+    description: CYP612 warehouse-added dmic_observation_date. Its derivation is not specified in ETOS;
+      it does not override the recorded parent time.
+  - name: is_clinical_date_after_reporting_period
+    description: TRUE when the stored clinical calendar date is after the accepted reporting period. This
+      is a source comparison, not offset-aware submission validation; records remain present.
+  - name: is_assessment_code_in_activity_component
+    description: True when a SNOMED-coded CYP202 component is in the CSDS assessment reference. Guidance
+      assigns scored assessments to CYP609/CYP612; this flag does not reclassify the source.
+  - name: reporting_period_start_date
+    description: Start of the accepted reporting period containing the retained row.
+  - name: reporting_period_end_date
+    description: End of the accepted reporting period containing the retained row.
+  - name: first_reported_period_end_date
+    description: First accepted period for a guarded immunisation revision key; the occurrence period
+      for other clinical records.
+  - name: last_reported_period_end_date
+    description: Last accepted period for a guarded immunisation revision key; the occurrence period for
+      other clinical records.
+  - name: accepted_source_record_count
+    description: Number of accepted source rows represented by a retained immunisation; one for assessment
+      and activity component occurrences.
+  - name: source_table
+    description: CSDS table supplying this clinical item.
+  - name: originating_source_record_id
+    description: Retained immunisation revision, assessment occurrence or activity occurrence key. An
+      activity key repeats across its populated components.
+  - name: source_row_id
+    description: Source table row identifier on the retained accepted occurrence.
+  - name: submission_id
+    description: Accepted submission containing the retained source occurrence.
+  - name: source_file_received_at
+    description: Time the retained source file was received.
+  - name: csds_version
+    description: CSDS version recorded by the accepted submission header.
+  - name: file_type
+    description: Source file type retained for delivery provenance.
+  - name: clinical_time
+    description: Stored unzoned time; null when only date precision is known.
+  - name: assessment_score_numeric
+    description: Numeric assessment response only when enumerated or within the published range and decimal
+      precision, excluding known non-score responses. Null otherwise. Compare the same observable and
+      scoring method; this does not derive questionnaire totals.
+  - name: is_source_derived_date_inconsistent
+    description: True when populated warehouse-derived date and inherited contact date disagree. Null
+      when either date is unavailable.
+  - name: is_assessment_before_reporting_period
+    description: Whether a referral-assessment completion date precedes its reporting period. Null outside
+      referral assessments or without a usable date.
+  - name: clinical_label_source
+    description: Reference supplying the submitted-code label. Read matches require exact case
+      and the submitted Read v2 or CTV3 system. UKHFD supplies historical seven-character
+      Read v2 code-and-term labels after existing Dictionary matches.
+  - name: dictionary_snomed_code
+    description: SNOMED mapping supplied by Dictionary.dbo.ReadCodes for the matched Read code or explicit dictionary alternative.
+      This is reference enrichment, not a mapping submitted in CSDS.
+  - name: dictionary_snomed_description
+    description: SNOMED dictionary description of the separately retained Read dictionary mapping; null
+      without a recognised mapped concept.
+  - name: read_code_match_type
+    description: How the submitted Read code matched its reference. Dictionary alternatives
+      are explicit source mappings. UKHFD historical terms match the complete five-character
+      Read v2 code plus its two-character term code, without inferring a SNOMED mapping.
