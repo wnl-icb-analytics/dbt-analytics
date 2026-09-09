@@ -1,0 +1,343 @@
+models:
+  - name: fct_person_alcohol_ind196
+    description: >
+      NICE IND196 alcohol screening at hypertension diagnosis. One row per
+      currently registered, living, non-test person whose earliest
+      hypertension diagnosis falls in the preceding 12 months, assessed on the
+      build date. People with an alcohol-related disease or disorder recorded
+      are excluded. The numerator requires a FAST, AUDIT-C or AUDIT screen
+      within 3 months either side of the diagnosis date. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind196
+        indicator:
+          id: "IND196"
+          type: "MEASURE"
+          category: "LIFESTYLE"
+          clinical_domain: "Lifestyle"
+          name_short: "New hypertension alcohol screen"
+          description_short: "Alcohol screening within 3 months of a new hypertension diagnosis"
+          description_long: "NICE IND196 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND196"
+    columns: &alcohol_columns
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: new_diagnosis_date
+        description: Earliest qualifying new diagnosis date for the new-diagnosis indicators; null for others
+      - name: latest_alcohol_screen_date
+        description: Date of the latest FAST, AUDIT-C or AUDIT screen; null if none
+      - name: latest_alcohol_screen_tool
+        description: Tool used for the latest screen
+      - name: latest_alcohol_screen_score
+        description: Score of the latest screen; null when unscored
+      - name: latest_positive_alcohol_screen_date
+        description: Date of the latest screen meeting the hazardous-drinking threshold; null if none
+      - name: latest_intervention_after_positive_screen_date
+        description: Date of the latest brief intervention within 3 months after the latest positive screen; null if none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+
+  - name: fct_person_alcohol_ind197
+    description: >
+      NICE IND197 brief intervention after a positive screen at hypertension
+      diagnosis. One row per currently registered, living, non-test person
+      whose earliest hypertension diagnosis and latest positive alcohol screen
+      (FAST 3 or more, AUDIT-C 5 or more, or AUDIT 8 or more) both fall in the
+      preceding 12 months, assessed on the build date. People with an alcohol-
+      related disease or disorder recorded are excluded. The numerator requires a brief intervention within 3 months after the latest positive screen; earlier positive screens are not assessed, a local simplification of NICE's "within 3 months of the score". Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind197
+        indicator:
+          id: "IND197"
+          type: "MEASURE"
+          category: "LIFESTYLE"
+          clinical_domain: "Lifestyle"
+          name_short: "New hypertension alcohol intervention"
+          description_short: "Brief intervention within 3 months of a positive alcohol screen for people newly diagnosed with hypertension"
+          description_long: "NICE IND197 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND197"
+    columns: *alcohol_columns
+
+  - name: fct_person_alcohol_ind198
+    description: >
+      NICE IND198 alcohol screening at depression or anxiety diagnosis. One
+      row per currently registered, living, non-test person aged 10 and over
+      whose earliest depression or anxiety diagnosis falls in the preceding 12
+      months, assessed on the build date. People with an alcohol-related
+      disease or disorder recorded are excluded. The numerator requires a
+      FAST, AUDIT-C or AUDIT screen within 3 months either side of the
+      diagnosis date. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind198
+        indicator:
+          id: "IND198"
+          type: "MEASURE"
+          category: "LIFESTYLE"
+          clinical_domain: "Lifestyle"
+          name_short: "New depression or anxiety alcohol screen"
+          description_short: "Alcohol screening within 3 months of a new depression or anxiety diagnosis"
+          description_long: "NICE IND198 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND198"
+    columns: *alcohol_columns
+
+  - name: fct_person_alcohol_ind199
+    description: >
+      NICE IND199 brief intervention after a positive screen at depression or
+      anxiety diagnosis. One row per currently registered, living, non-test
+      person aged 10 and over whose earliest depression or anxiety diagnosis
+      and latest positive alcohol screen both fall in the preceding 12 months,
+      assessed on the build date. People with an alcohol-related disease or
+      disorder recorded are excluded. The numerator requires a brief
+      intervention within 3 months after the latest positive screen.
+      Personalised care adjustments are not applied. Secondary-use consumers
+      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
+      Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind199
+        indicator:
+          id: "IND199"
+          type: "MEASURE"
+          category: "LIFESTYLE"
+          clinical_domain: "Lifestyle"
+          name_short: "New depression or anxiety alcohol intervention"
+          description_short: "Brief intervention within 3 months of a positive alcohol screen for people newly diagnosed with depression or anxiety"
+          description_long: "NICE IND199 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND199"
+    columns: *alcohol_columns
+
+  - name: fct_person_alcohol_ind200
+    description: >
+      NICE IND200 brief intervention after a positive screen in severe mental
+      illness. One row per currently registered, living, non-test person on
+      the SMI register whose latest positive alcohol screen falls in the
+      preceding 12 months, assessed on the build date. People with an alcohol-
+      related disease or disorder recorded are excluded. The numerator
+      requires a brief intervention within 3 months after the latest positive
+      screen. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind200
+        indicator:
+          id: "IND200"
+          type: "MEASURE"
+          category: "LIFESTYLE"
+          clinical_domain: "Lifestyle"
+          name_short: "SMI alcohol intervention"
+          description_short: "Brief intervention within 3 months of a positive alcohol screen for people with severe mental illness"
+          description_long: "NICE IND200 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND200"
+    columns: *alcohol_columns
+
+  - name: fct_person_alcohol_ind201
+    description: >
+      NICE IND201 alcohol screening in long-term conditions. One row per
+      currently registered, living, non-test person on the CHD, atrial
+      fibrillation, heart failure, stroke/TIA, diabetes or dementia register,
+      assessed on the build date. People with an alcohol-related disease or
+      disorder recorded are excluded. The numerator requires a FAST, AUDIT-C
+      or AUDIT screen in the preceding 2 years. Personalised care adjustments
+      are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind201
+        indicator:
+          id: "IND201"
+          type: "MEASURE"
+          category: "LIFESTYLE"
+          clinical_domain: "Lifestyle"
+          name_short: "LTC alcohol screen"
+          description_short: "Alcohol screening in the preceding 2 years for people with a listed long-term condition"
+          description_long: "NICE IND201 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND201"
+    columns: *alcohol_columns
+
+  - name: fct_person_alcohol_ind202
+    description: >
+      NICE IND202 brief intervention after a positive screen in long-term
+      conditions. One row per currently registered, living, non-test person on
+      a listed long-term condition register whose latest positive alcohol
+      screen falls in the preceding 2 years, assessed on the build date.
+      People with an alcohol-related disease or disorder recorded are
+      excluded. The numerator requires a brief intervention within 3 months
+      after the latest positive screen. Personalised care adjustments are not
+      applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind202
+        indicator:
+          id: "IND202"
+          type: "MEASURE"
+          category: "LIFESTYLE"
+          clinical_domain: "Lifestyle"
+          name_short: "LTC alcohol intervention"
+          description_short: "Brief intervention within 3 months of a positive alcohol screen for people with a listed long-term condition"
+          description_long: "NICE IND202 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND202"
+    columns: *alcohol_columns
+
+  - name: fct_person_alcohol_nice_indicators
+    description: >
+      NICE IND196 to IND202 alcohol use status in a common interface. One row
+      per person and indicator on the current reporting date. Indicator-
+      specific views remain the source of each population definition.
+      Personalised care adjustments are not applied. Secondary-use consumers
+      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
+      Out and Type 1 opt-out filtering. Feeds
+      fct_person_nice_indicator_status.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+      - name: indicator_id
+        description: NICE indicator identifier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IND196', 'IND197', 'IND198', 'IND199', 'IND200', 'IND201', 'IND202']
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+      - name: new_diagnosis_date
+        description: Earliest qualifying new diagnosis date for the new-diagnosis indicators; null for others
+      - name: latest_alcohol_screen_date
+        description: Date of the latest alcohol screen; null if none
+      - name: latest_positive_alcohol_screen_date
+        description: Date of the latest positive screen; null if none
+      - name: latest_intervention_after_positive_screen_date
+        description: Date of the latest brief intervention within 3 months after the latest positive screen; null if none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+
+  - name: fct_person_alcohol_nice_indicators_snapshot_input
+    description: >
+      Thin snapshot-input projection of fct_person_alcohol_nice_indicators:
+      person, indicator, current practice, latest qualifying record and
+      outcome. Excludes reporting_date and measurement_period_start, which
+      advance on every build, so the SCD2 snapshot versions only on genuine
+      changes. Feeds fct_person_alcohol_nice_indicators_snapshot.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: latest_alcohol_screen_date
+        description: Date of the latest alcohol screen at the build.
+      - name: latest_positive_alcohol_screen_date
+        description: Date of the latest positive screen at the build.
+      - name: latest_intervention_after_positive_screen_date
+        description: Date of the latest brief intervention after the latest positive screen at the build.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.
