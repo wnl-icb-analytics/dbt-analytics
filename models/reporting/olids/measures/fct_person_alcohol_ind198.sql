@@ -33,11 +33,17 @@ assessed AS (
                 AND screen.clinical_effective_date::DATE
                     BETWEEN DATEADD(month, -3, population.earliest_depression_anxiety_date)
                     AND DATEADD(month, 3, population.earliest_depression_anxiety_date)
-        ) AS latest_record_date,
-        latest_record_date IS NOT NULL AS is_in_numerator
+        ) AS latest_record_date
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
+),
+
+status AS (
+    SELECT
+        *,
+        latest_record_date IS NOT NULL AS is_in_numerator
+    FROM assessed
 )
 
 SELECT
@@ -63,4 +69,4 @@ SELECT
         WHEN is_in_numerator THEN 'ACHIEVED'
         ELSE 'NOT_RECORDED_IN_PERIOD'
     END AS indicator_status
-FROM assessed
+FROM status
