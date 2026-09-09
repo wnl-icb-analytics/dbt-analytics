@@ -1,10 +1,11 @@
 models:
   - name: cltcs_observations
     description: >
-      Coded GP observations for patients in the C-LTCS cohort. Rolling 1 year
+      Coded GP observations, allergy records and referral requests for patients in the C-LTCS cohort. Rolling 1 year
       window with up to 100 most recent observations per patient when volume
-      exceeds that cap. Sourced from stg_olids_observation (not concept-specific
-      intermediate models). One row per observation. Snowflake table clustered
+      exceeds that cap. The cap applies across source entities, so a newer allergy or referral
+      can displace an older observation. Sourced from stg_olids_observation (not concept-specific
+      intermediate models). One row per retained source entity record. Snowflake table clustered
       on patient_id.
     config:
       meta:
@@ -37,10 +38,19 @@ models:
 
       - name: observation_id
         data_type: varchar
-        description: "Unique observation identifier from OLIDS data [stg_olids_observation.id]"
+        description: "Conformed observation identifier, unique across source entities [stg_olids_observation.id]"
         data_tests:
           - not_null
           - unique
+
+      - name: source_entity
+        description: Original OLIDS entity, observation, allergy_intolerance or referral_request.
+      - name: source_record_id
+        description: Original UUID within source_entity. Use observation_id to join the expanded
+          observation feed; use this field with source_entity to trace the original record.
+      - name: allergy_medication_name
+        description: Medication name recorded on the source allergy record. Null for other entities or
+          when absent. Retained separately from observation result text.
 
       - name: clinical_effective_date
         data_type: timestamp_ntz
@@ -75,8 +85,8 @@ models:
         data_type: boolean
         description: >
           Source flag indicating whether the observation row represents a
-          problem/diagnosis (TRUE) rather than a discrete clinical event
-          (FALSE / NULL). Retained unfiltered so downstream consumers can
+          problem/diagnosis (TRUE). Null means the flag is unavailable or not applicable,
+          including allergy and referral request rows. Retained unfiltered so consumers can
           decide whether to treat problem rows as duplicates of dated events.
 
       - name: episodicity_display

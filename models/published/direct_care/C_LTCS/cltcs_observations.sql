@@ -10,11 +10,12 @@
 Patient data processing for CLTCS
 
 Clinical Purpose:
-- All coded GP observations for patients in the C-LTCS cohort over a rolling
-  1 year window, capped at the 100 most recent observations per patient when
+- Coded GP observations, allergy records and referral requests for the C-LTCS
+  cohort over a rolling 1 year window, capped at 100 recent records per patient when
   volume exceeds that limit. Minimal filtering by design so downstream
   consumers can decide how to summarise (e.g. by concept, episodicity,
-  problem flag).
+  problem flag). Source entity identifies the kind of record; the shared cap
+  can exclude an older observation when a newer allergy or referral is present.
 
 Source choice:
 - stg_olids_observation is used directly because the intermediate observation
@@ -37,6 +38,8 @@ gp_observations as (
         il.area_code,
         il.olids_id,
         o.id as observation_id,
+        o.source_entity,
+        o.source_record_id,
         -- Fall back to date_recorded when clinical_effective_date is in the
         -- future relative to when the record was written (matches the data
         -- quality fix applied by the get_observations macro).
@@ -48,6 +51,7 @@ gp_observations as (
         o.mapped_concept_display,
         o.result_value,
         o.result_text,
+        o.allergy_medication_name,
         o.result_unit_display,
         o.is_problem,
         -- Cast the UUID fallback to VARCHAR so the COALESCE output type is
@@ -77,11 +81,14 @@ select
     area_code,
     olids_id,
     observation_id,
+    source_entity,
+    source_record_id,
     clinical_effective_date,
     mapped_concept_code,
     mapped_concept_display,
     result_value,
     result_text,
+    allergy_medication_name,
     result_unit_display,
     is_problem,
     episodicity_display,

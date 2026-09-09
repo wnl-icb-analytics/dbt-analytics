@@ -1,15 +1,27 @@
 models:
   - name: stg_olids_observation
-    description: Clinical observations including test results, vital signs, and diagnoses. Deduplicated by id - note that deleted records are not filtered as lds_is_deleted is not used in this table.
+    description: One record from the expanded OLIDS observation feed, including native observations,
+      allergy records and referral requests. Excludes records marked deleted and records without a
+      person identifier. Does not deduplicate separate source entities into clinical occurrences.
     config:
       meta:
         owner:
           name: EddieDavison92
     columns:
       - name: id
-        description: Primary key - unique identifier for this observation
+        description: Conformed observation identifier. Native observation IDs remain unchanged; allergy and referral
+          request IDs include their source entity in the upstream UUID derivation. Use this field to join
+          the expanded observation feed.
         tests:
           - not_null
+      - name: source_entity
+        description: Original OLIDS entity, observation, allergy_intolerance or referral_request.
+      - name: source_record_id
+        description: Original UUID within source_entity, including the unchanged native observation ID.
+          Distinct from lds_source_record_id. Pair with source_entity when tracing an original record.
+      - name: allergy_medication_name
+        description: Medication name recorded on the source allergy record. Null for other entities or
+          when absent; does not describe a prescription or medication order.
       - name: patient_id
         description: Foreign key to patient.id
       - name: person_id
@@ -25,15 +37,15 @@ models:
       - name: clinical_effective_date_precision_source_concept_id
         description: Foreign key to concept.id - precision of the clinical effective date
       - name: result_value
-        description: Numeric result value of the observation
+        description: Recorded numeric observation result. Null on allergy and referral request rows; no measurement is inferred.
       - name: result_units_source_concept_id
         description: Foreign key to concept.id - unit of measure for the result value
       - name: result_date
         description: Date the result was obtained
       - name: result_text
-        description: Text description of the result
+        description: Recorded observation result text. Allergy medication names are retained separately.
       - name: is_problem
-        description: Boolean indicating if this observation represents a problem
+        description: Source problem flag. Null on allergy and referral request rows, where this observation-specific flag is not supplied.
       - name: is_review
         description: Boolean indicating if this is a review record
       - name: problem_end_date
@@ -63,15 +75,11 @@ models:
       - name: is_problem_deleted
         description: Boolean indicating if the associated problem has been deleted
       - name: is_confidential
-        description: Boolean indicating if the record is marked as confidential
+        description: Source confidentiality flag. Null when unavailable, including referral requests; null does not mean false.
       - name: lds_is_deleted
         description: Deletion flag from LDS
-      - name: lds_id
-        description: LDS system identifier
       - name: publisher_organisation_code
         description: "ODS code of the publisher organisation (post-2026 OLIDS rename — was record_owner_organisation_code)"
-      - name: lds_datetime_first_acquired
-        description: Datetime when data was acquired by LDS
       - name: mapped_concept_id
         description: Foreign key to concept.id - mapped standardized concept
       - name: mapped_concept_code
@@ -82,8 +90,8 @@ models:
         description: Code for the result unit
       - name: result_unit_display
         description: Display text for the result unit
-      - name: lds_start_datetime
-        description: LDS datetime stamp from which the record version was correct - used for deduplication to get the latest record
+      - name: lds_transform_datetime
+        description: Transformation timestamp supplied by the original OLIDS entity.
       - name: lds_source_record_id
         description: LDS assigned unique identifier for the source record version
     tests:

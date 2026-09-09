@@ -52,6 +52,8 @@
 
     SELECT
         o.id,
+        o.source_entity,
+        o.source_record_id,
         o.patient_id,
         o.person_id,
         -- Use date_recorded as fallback if clinical_effective_date is after it (data quality fix)
@@ -66,6 +68,7 @@
         o.result_unit_code,
         o.result_unit_display,
         o.result_text,
+        o.allergy_medication_name,
         o.is_problem,
         o.is_review,
         o.problem_end_date,

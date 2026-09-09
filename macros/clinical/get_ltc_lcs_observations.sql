@@ -42,6 +42,8 @@ with matched_observations as (
 {%- if match_paths in ['both', 'mapped'] %}
     select
         o.id as observation_id,
+        o.source_entity,
+        o.source_record_id,
         o.patient_id,
         o.person_id,
         o.clinical_effective_date,
@@ -49,6 +51,7 @@ with matched_observations as (
         o.result_units_source_concept_id,
         o.result_unit_display,
         o.result_text,
+        o.allergy_medication_name,
         o.is_problem,
         o.is_review,
         o.problem_end_date,
@@ -75,6 +78,8 @@ with matched_observations as (
 {%- if match_paths in ['both', 'source'] %}
     select
         o.id as observation_id,
+        o.source_entity,
+        o.source_record_id,
         o.patient_id,
         o.person_id,
         o.clinical_effective_date,
@@ -82,6 +87,7 @@ with matched_observations as (
         o.result_units_source_concept_id,
         o.result_unit_display,
         o.result_text,
+        o.allergy_medication_name,
         o.is_problem,
         o.is_review,
         o.problem_end_date,

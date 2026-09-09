@@ -1,8 +1,10 @@
 models:
   - name: int_valproate_araf_referral_events
-    description: 'ARAF referral events from observations using valproate programme codes.
-
-      One row per ARAF referral observation with person, date, concept details filtered to REFERRAL code category only.'
+    description: >-
+      ARAF referral-coded records from the expanded OLIDS observation feed, filtered to the
+      valproate REFERRAL code category. One row per person and conformed observation ID.
+      Includes native observations and source referral requests once each; source entities are
+      retained separately even when they share an original identifier.
 
     config:
       meta:
@@ -13,7 +15,7 @@ models:
           arguments:
             combination_of_columns:
               - person_id
-              - araf_referral_ID
+              - araf_referral_observation_id
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
@@ -21,6 +23,17 @@ models:
       - name: person_id
         tests:
           - not_null
-      - name: araf_referral_ID
+      - name: araf_referral_observation_id
+        description: Conformed identifier for joining stg_olids_observation.id. Distinguishes source
+          entities whose original IDs overlap.
+        data_tests: [not_null]
+      - name: source_entity
+        description: Original OLIDS entity supplying this referral-coded record.
+      - name: source_record_id
+        description: Original UUID within source_entity, before the upstream conformed ID derivation.
+      - name: araf_referral_id
+        description: Existing event identifier, preserved as the original referral request ID for
+          referral_request records and the conformed observation ID otherwise. This field alone
+          need not distinguish source entities; use araf_referral_observation_id for that purpose.
         tests:
           - not_null
