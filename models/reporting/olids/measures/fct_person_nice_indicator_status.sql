@@ -21,7 +21,11 @@ To add a measure, give it the shared columns and append it to the list below.
     'fct_person_smoking_nice_indicators',
     'fct_person_bmi_recording_ind320',
     'fct_person_multimorbidity_nice_indicators',
-    'fct_person_alcohol_nice_indicators'
+    'fct_person_alcohol_nice_indicators',
+    'fct_person_cervical_screening_nice_indicators',
+    'fct_person_flu_vaccination_nice_indicators',
+    'fct_person_shingles_vaccination_ind219',
+    'fct_person_childhood_immunisation_nice_indicators'
 ] %}
 
 {% for indicator_model in indicator_models %}
