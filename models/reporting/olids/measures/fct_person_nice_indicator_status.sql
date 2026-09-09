@@ -17,7 +17,11 @@ To add a measure, give it the shared columns and append it to the list below.
     'fct_person_antithrombotic_therapy_nice_indicators',
     'fct_person_ckd_albumin_testing_ind144',
     'fct_person_cvd_risk_assessment_nice_indicators',
-    'fct_person_atrial_fibrillation_nice_indicators'
+    'fct_person_atrial_fibrillation_nice_indicators',
+    'fct_person_smoking_nice_indicators',
+    'fct_person_bmi_recording_ind320',
+    'fct_person_multimorbidity_nice_indicators',
+    'fct_person_alcohol_nice_indicators'
 ] %}
 
 {% for indicator_model in indicator_models %}
