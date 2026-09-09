@@ -19,6 +19,7 @@ SELECT
     current_practice_code,
     current_practice_name,
     latest_completed_date,
+    latest_screening_date,
     programme_status,
     latest_record_date,
     is_in_denominator,

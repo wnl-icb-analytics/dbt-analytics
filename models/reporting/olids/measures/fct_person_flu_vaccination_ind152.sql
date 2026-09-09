@@ -27,7 +27,6 @@ assessed AS (
         population.age,
         active.current_practice_code,
         active.current_practice_name,
-        season.campaign_id,
         season.latest_vaccination_date,
         season.is_laiv,
         season.latest_vaccination_date AS latest_record_date,
@@ -35,7 +34,7 @@ assessed AS (
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
-    LEFT JOIN {{ ref('int_flu_vaccination_season_status') }} AS season
+    LEFT JOIN {{ ref('int_nice_flu_season_vaccination') }} AS season
         ON population.person_id = season.person_id
 )
 
@@ -49,7 +48,6 @@ SELECT
     'CHD, stroke/TIA, diabetes or COPD' AS condition_name,
     current_practice_code,
     current_practice_name,
-    campaign_id,
     latest_vaccination_date,
     is_laiv,
     latest_record_date,

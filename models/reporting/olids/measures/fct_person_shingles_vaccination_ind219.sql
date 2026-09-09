@@ -11,7 +11,8 @@ WITH indicator_population AS (
     FROM {{ ref('dim_person_age') }} AS age
     LEFT JOIN {{ ref('int_adult_imms_current_population') }} AS adult
         ON age.person_id = adult.person_id
-    WHERE DATEADD(year, 75, age.birth_date_approx) BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+    WHERE DATEADD(year, 75, age.birth_date_approx) > DATEADD(month, -12, CURRENT_DATE())
+        AND DATEADD(year, 75, age.birth_date_approx) <= CURRENT_DATE()
         -- NICE excludes immunocompromised people
         AND NOT COALESCE(adult.is_immunosuppressed, FALSE)
 ),

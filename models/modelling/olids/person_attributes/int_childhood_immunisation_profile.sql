@@ -6,7 +6,9 @@ currently registered child under 20 in int_childhood_imms_current_population.
 Doses come from the childhood immunisation event model, counting administered
 events (administration codes and dispensed vaccine orders) by vaccine group and
 distinct date, so schedule variants recorded against the same visit count once.
-Contraindication flags come from contraindicated event codes for the group.
+Contraindication flags come from contraindicated event codes for the group
+and are false when nothing is recorded. Age windows include the lower bound
+and exclude the upper one.
 
 Groups: DTAP_PRIMARY (6-in-1), DTAP_BOOSTER (4-in-1 preschool), MMR (MMR and
 MMRV), ROTAVIRUS and MENB. Windows are measured from the approximate birth date.
@@ -52,22 +54,31 @@ SELECT
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'DTAP_PRIMARY'
         AND event_date < DATEADD(month, 8, birth_date_approx) THEN event_date END) AS dtap_doses_by_8_months,
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'MMR'
-        AND event_date BETWEEN DATEADD(month, 12, birth_date_approx) AND DATEADD(month, 18, birth_date_approx)
+        AND event_date >= DATEADD(month, 12, birth_date_approx)
+        AND event_date < DATEADD(month, 18, birth_date_approx)
         THEN event_date END) AS mmr_doses_12_to_18_months,
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'MMR'
-        AND event_date BETWEEN DATEADD(year, 1, birth_date_approx) AND DATEADD(year, 5, birth_date_approx)
+        AND event_date >= DATEADD(year, 1, birth_date_approx)
+        AND event_date < DATEADD(year, 5, birth_date_approx)
         THEN event_date END) AS mmr_doses_1_to_5_years,
-    BOOLOR_AGG(is_administered AND vaccine_group = 'DTAP_BOOSTER'
-        AND event_date BETWEEN DATEADD(year, 1, birth_date_approx) AND DATEADD(year, 5, birth_date_approx)) AS has_dtap_booster_1_to_5_years,
+    COALESCE(BOOLOR_AGG(is_administered AND vaccine_group = 'DTAP_BOOSTER'
+        AND event_date >= DATEADD(year, 1, birth_date_approx)
+        AND event_date < DATEADD(year, 5, birth_date_approx)), FALSE) AS has_dtap_booster_1_to_5_years,
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'ROTAVIRUS'
         AND event_date < DATEADD(week, 24, birth_date_approx) THEN event_date END) AS rotavirus_doses_by_24_weeks,
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'MENB'
         AND event_date < DATEADD(month, 8, birth_date_approx) THEN event_date END) AS menb_doses_by_8_months,
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'MENB'
         AND event_date < DATEADD(month, 18, birth_date_approx) THEN event_date END) AS menb_doses_by_18_months,
-    BOOLOR_AGG(is_contraindicated AND vaccine_group IN ('DTAP_PRIMARY', 'DTAP_BOOSTER')) AS has_dtap_contraindication,
-    BOOLOR_AGG(is_contraindicated AND vaccine_group = 'MMR') AS has_mmr_contraindication,
-    BOOLOR_AGG(is_contraindicated AND vaccine_group = 'ROTAVIRUS') AS has_rotavirus_contraindication,
-    BOOLOR_AGG(is_contraindicated AND vaccine_group = 'MENB') AS has_menb_contraindication
+    COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'MENB'
+        AND event_date < DATEADD(month, 12, birth_date_approx) THEN event_date END) AS menb_primary_doses_by_12_months,
+    COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'MENB'
+        AND event_date >= DATEADD(month, 12, birth_date_approx)
+        AND event_date < DATEADD(month, 18, birth_date_approx)
+        THEN event_date END) AS menb_booster_doses_12_to_18_months,
+    COALESCE(BOOLOR_AGG(is_contraindicated AND vaccine_group IN ('DTAP_PRIMARY', 'DTAP_BOOSTER')), FALSE) AS has_dtap_contraindication,
+    COALESCE(BOOLOR_AGG(is_contraindicated AND vaccine_group = 'MMR'), FALSE) AS has_mmr_contraindication,
+    COALESCE(BOOLOR_AGG(is_contraindicated AND vaccine_group = 'ROTAVIRUS'), FALSE) AS has_rotavirus_contraindication,
+    COALESCE(BOOLOR_AGG(is_contraindicated AND vaccine_group = 'MENB'), FALSE) AS has_menb_contraindication
 FROM grouped
 GROUP BY person_id, birth_date_approx

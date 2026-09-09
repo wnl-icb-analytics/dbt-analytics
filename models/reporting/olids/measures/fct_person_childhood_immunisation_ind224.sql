@@ -12,7 +12,8 @@ WITH indicator_population AS (
     FROM {{ ref('int_childhood_immunisation_profile') }} AS profile
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE DATEADD(week, 24, profile.birth_date_approx) BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+    WHERE DATEADD(week, 24, profile.birth_date_approx) > DATEADD(month, -12, CURRENT_DATE())
+        AND DATEADD(week, 24, profile.birth_date_approx) <= CURRENT_DATE()
         -- NICE excludes children with a contraindication to the vaccine
         AND NOT profile.has_rotavirus_contraindication
 ),

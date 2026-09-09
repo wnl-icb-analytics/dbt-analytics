@@ -12,6 +12,7 @@ select
     , indicator_id
     , current_practice_code
     , latest_completed_date
+    , latest_screening_date
     , is_in_numerator
     , indicator_status
 from {{ ref('fct_person_cervical_screening_nice_indicators') }}

@@ -20,7 +20,6 @@ SELECT
     condition_name,
     current_practice_code,
     current_practice_name,
-    campaign_id,
     latest_vaccination_date,
     is_laiv,
     latest_record_date,

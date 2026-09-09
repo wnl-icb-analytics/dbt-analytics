@@ -4,9 +4,7 @@ models:
       NICE IND215 primary DTaP course. One row per currently registered baby
       whose eighth-month milestone falls in the preceding 12 months, assessed
       on the build date. The numerator requires three 6-in-1 doses before 8
-      months of age. Children with a contraindicated code for the vaccine are
-      excluded, as NICE specifies; anaphylaxis and immunocompromise are not
-      separately modelled. Doses are distinct administration dates by vaccine
+      months of age. NICE excludes a confirmed anaphylactic reaction to a previous dose; the contraindicated code for the vaccine is the recorded proxy. Doses are distinct administration dates by vaccine
       group from the childhood immunisation events, with age windows measured
       from the approximate birth date. Personalised care adjustments are not
       applied. Secondary-use consumers must join
@@ -70,9 +68,7 @@ models:
       NICE IND216 first MMR. One row per currently registered child whose
       18-month milestone falls in the preceding 12 months, assessed on the
       build date. The numerator requires at least one MMR or MMRV dose between
-      12 and 18 months of age. Children with a contraindicated code for the
-      vaccine are excluded, as NICE specifies; anaphylaxis and
-      immunocompromise are not separately modelled. Doses are distinct
+      12 and 18 months of age. NICE excludes anaphylaxis to a previous dose and immunocompromised children; the contraindicated code for the vaccine is the recorded proxy. Doses are distinct
       administration dates by vaccine group from the childhood immunisation
       events, with age windows measured from the approximate birth date.
       Personalised care adjustments are not applied. Secondary-use consumers
@@ -104,9 +100,7 @@ models:
       registered child whose fifth birthday falls in the preceding 12 months,
       assessed on the build date. The numerator requires a 4-in-1 preschool
       booster and at least two MMR or MMRV doses between the first and fifth
-      birthdays. doses_in_window holds the MMR count. Children with a
-      contraindicated code for the vaccine are excluded, as NICE specifies;
-      anaphylaxis and immunocompromise are not separately modelled. Doses are
+      birthdays. doses_in_window holds the MMR count. NICE excludes anaphylaxis to a previous dose and immunocompromised children; the contraindicated code for the vaccine is the recorded proxy. Doses are
       distinct administration dates by vaccine group from the childhood
       immunisation events, with age windows measured from the approximate
       birth date. Personalised care adjustments are not applied. Secondary-use
@@ -137,9 +131,7 @@ models:
       NICE IND218 MMR by 5. One row per currently registered child whose fifth
       birthday falls in the preceding 12 months, assessed on the build date.
       The numerator requires at least one MMR or MMRV dose between the first
-      and fifth birthdays. Children with a contraindicated code for the
-      vaccine are excluded, as NICE specifies; anaphylaxis and
-      immunocompromise are not separately modelled. Doses are distinct
+      and fifth birthdays. NICE excludes anaphylaxis to a previous dose and immunocompromised children; the contraindicated code for the vaccine is the recorded proxy. Doses are distinct
       administration dates by vaccine group from the childhood immunisation
       events, with age windows measured from the approximate birth date.
       Personalised care adjustments are not applied. Secondary-use consumers
@@ -170,9 +162,7 @@ models:
       NICE IND224 rotavirus. One row per currently registered baby whose
       24-week milestone falls in the preceding 12 months, assessed on the
       build date. The numerator requires two rotavirus doses before 24 weeks
-      of age. Children with a contraindicated code for the vaccine are
-      excluded, as NICE specifies; anaphylaxis and immunocompromise are not
-      separately modelled. Doses are distinct administration dates by vaccine
+      of age. NICE excludes children with a contraindicated code for the vaccine. Doses are distinct administration dates by vaccine
       group from the childhood immunisation events, with age windows measured
       from the approximate birth date. Personalised care adjustments are not
       applied. Secondary-use consumers must join
@@ -203,9 +193,7 @@ models:
       NICE IND225 MenB primary course. One row per currently registered baby
       whose eighth-month milestone falls in the preceding 12 months, assessed
       on the build date. The numerator requires two MenB doses before 8 months
-      of age. Children with a contraindicated code for the vaccine are
-      excluded, as NICE specifies; anaphylaxis and immunocompromise are not
-      separately modelled. Doses are distinct administration dates by vaccine
+      of age. NICE excludes children with a contraindicated code for the vaccine. Doses are distinct administration dates by vaccine
       group from the childhood immunisation events, with age windows measured
       from the approximate birth date. Personalised care adjustments are not
       applied. Secondary-use consumers must join
@@ -235,10 +223,9 @@ models:
     description: >
       NICE IND226 MenB course with booster. One row per currently registered
       child whose 18-month milestone falls in the preceding 12 months,
-      assessed on the build date. The numerator requires three MenB doses (two
-      primary and one booster) before 18 months of age. Children with a
-      contraindicated code for the vaccine are excluded, as NICE specifies;
-      anaphylaxis and immunocompromise are not separately modelled. Doses are
+      assessed on the build date. The numerator requires two primary MenB doses
+      before 12 months and one booster from 12 months, all before 18 months of
+      age. NICE excludes children with a contraindicated code for the vaccine. Doses are
       distinct administration dates by vaccine group from the childhood
       immunisation events, with age windows measured from the approximate
       birth date. Personalised care adjustments are not applied. Secondary-use
@@ -255,8 +242,7 @@ models:
           category: "IMMUNISATION"
           clinical_domain: "Prevention"
           name_short: "MenB 3 doses by 18 months"
-          description_short: "Two primary and one booster MenB dose before 18 months for children reaching 18 months in the preceding 12 months"
-          description_long: "NICE IND226 before personalised care adjustments. Contraindication exclusion applied."
+          description_short: "Two primary MenB doses before 12 months and one booster from 12 months, all before 18 months of age. Contraindication exclusion applied."
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -324,6 +310,10 @@ models:
               - person_id
               - indicator_id
     columns:
+      - name: primary_doses_by_12_months
+        description: Distinct MenB administration dates before 12 months of age
+      - name: booster_doses_12_to_18_months
+        description: Distinct MenB administration dates from 12 months up to but not including 18 months of age
       - name: person_id
         description: Person identifier; part of the snapshot unique_key.
         data_tests:

@@ -11,7 +11,6 @@ select
     person_id
     , indicator_id
     , current_practice_code
-    , campaign_id
     , latest_vaccination_date
     , is_in_numerator
     , indicator_status

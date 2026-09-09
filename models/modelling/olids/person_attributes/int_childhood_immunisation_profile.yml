@@ -6,8 +6,9 @@ models:
       Doses are distinct administration dates by vaccine group (6-in-1, 4-in-1
       preschool booster, MMR including MMRV, rotavirus, MenB), so schedule
       variants recorded against one visit count once. Windows are measured from
-      the approximate birth date. Contraindication flags come from contraindicated
-      event codes. Consumers apply the milestone-age denominators.
+      the approximate birth date and include the lower bound but not the upper.
+      Contraindication flags come from contraindicated event codes and are
+      false when nothing is recorded. Consumers apply the milestone-age denominators.
     config:
       meta:
         owner:
@@ -23,17 +24,21 @@ models:
       - name: dtap_doses_by_8_months
         description: Distinct 6-in-1 administration dates before 8 months of age.
       - name: mmr_doses_12_to_18_months
-        description: Distinct MMR or MMRV administration dates between 12 and 18 months of age.
+        description: Distinct MMR or MMRV administration dates from 12 months up to but not including 18 months of age.
       - name: mmr_doses_1_to_5_years
-        description: Distinct MMR or MMRV administration dates between the first and fifth birthdays.
+        description: Distinct MMR or MMRV administration dates from the first birthday up to but not including the fifth.
       - name: has_dtap_booster_1_to_5_years
-        description: Whether a 4-in-1 preschool booster was given between the first and fifth birthdays.
+        description: Whether a 4-in-1 preschool booster was given from the first birthday up to but not including the fifth.
       - name: rotavirus_doses_by_24_weeks
         description: Distinct rotavirus administration dates before 24 weeks of age.
       - name: menb_doses_by_8_months
         description: Distinct MenB administration dates before 8 months of age.
       - name: menb_doses_by_18_months
         description: Distinct MenB administration dates before 18 months of age.
+      - name: menb_primary_doses_by_12_months
+        description: Distinct MenB administration dates before 12 months of age, the primary course.
+      - name: menb_booster_doses_12_to_18_months
+        description: Distinct MenB administration dates from 12 months up to but not including 18 months of age, the booster.
       - name: has_dtap_contraindication
         description: Any contraindicated code for the 6-in-1 or 4-in-1 vaccines.
       - name: has_mmr_contraindication
