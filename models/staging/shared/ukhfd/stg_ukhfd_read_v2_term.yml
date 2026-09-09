@@ -1,0 +1,38 @@
+version: 2
+models:
+  - name: stg_ukhfd_read_v2_term
+    description: >-
+      Latest available UKHFD Read v2 term definition per exact seven-character code,
+      formed from the five-character Read code and two-character term code.
+      Reads full history and retains retired terms and codes absent from the latest
+      delivery. Repeated source revisions select the latest receipt and source identity.
+      Alternate terms are not assumed to be synonyms and carry no SNOMED mapping.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: code
+        description: Case-sensitive Read code plus term code. Dots and leading zeroes remain significant.
+        data_tests: [not_null, unique]
+      - name: read_code
+        description: Original five-character Read v2 code.
+      - name: term_code
+        description: Original two-character term code, retained as text.
+      - name: term
+        description: Longest supplied term, preferring Term_198, then Term_60, then Term_30.
+        data_tests: [not_null]
+      - name: status_flag
+        description: Historical source status flag; terms are not excluded by status.
+      - name: language_code
+        description: Source language code for the selected term.
+      - name: is_in_latest_source
+        description: Whether UKHFD found this row in its latest delivery; not a clinical validity flag.
+      - name: source_effective_from_at
+        description: Start of the selected UKHFD definition revision.
+      - name: source_effective_to_at
+        description: End of the selected UKHFD definition revision, if recorded.
+      - name: source_imported_at
+        description: UKHFD import time used to resolve equal revision starts.
+      - name: source_created_at
+        description: UKHFD row creation time used to resolve equal import times.

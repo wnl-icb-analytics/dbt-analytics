@@ -1,0 +1,25 @@
+version: 2
+models:
+- name: stg_dictionary_dbo_readcodes
+  description: One warehouse dictionary Read code record. Retains its exact-case code, supplied term,
+    alternative code, coding-system membership and recorded SNOMED mapping. Membership flags distinguish
+    Read v2 from CTV3.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: sk_read_code_id
+    description: Dictionary source row identifier.
+    data_tests:
+    - not_null
+    - unique
+  - name: read_code
+    description: Case-sensitive source Read code, including significant dots.
+    data_tests:
+    - not_null
+    - unique
+  - name: read_code_alt
+    description: Source-provided alternative code, not a locally inferred replacement.
+  - name: snomed_ct_code
+    description: Mapping supplied by the warehouse dictionary, not a submitted clinical code.
