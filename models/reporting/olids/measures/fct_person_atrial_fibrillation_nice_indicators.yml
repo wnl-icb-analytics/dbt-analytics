@@ -1,0 +1,246 @@
+models:
+  - name: fct_person_atrial_fibrillation_ind128
+    description: >
+      NICE IND128 anticoagulation in atrial fibrillation. One row per
+      currently registered, living, non-test person on the AF register whose
+      latest CHA2DS2-VASc score is 2 or more, or who has no CHA2DS2-VASc and a
+      latest CHADS2 of 2 or more, assessed on the build date. Excludes a persisting contraindication (any oral anticoagulant allergy or adverse reaction on the record) and an expiring contraindication (anticoagulation contraindicated or not tolerated recorded in the preceding 12 months), as NICE specifies. Drug-specific not-indicated codes are not treated as contraindications. The
+      numerator requires an oral anticoagulant order in the six months up to
+      the reporting date. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind128
+        indicator:
+          id: "IND128"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "AF anticoagulation"
+          description_short: "Oral anticoagulant prescribed in the preceding 6 months for people with AF and a stroke risk score of 2 or more"
+          description_long: "NICE IND128 before personalised care adjustments. Persisting and expiring anticoagulant contraindication exclusions applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND128"
+    columns: &af_columns
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_chadsvasc_score
+        description: Latest CHA2DS2-VASc score; null if none
+      - name: latest_chadsvasc_date
+        description: Date of the latest CHA2DS2-VASc assessment; null if none
+      - name: latest_chads2_score
+        description: Latest CHADS2 score; null if none
+      - name: latest_anticoagulant_order_date
+        description: Date of the most recent oral anticoagulant order; null if never
+      - name: latest_anticoagulant_type
+        description: DOAC or VKA for the most recent oral anticoagulant order
+      - name: latest_doac_order_date
+        description: Date of the most recent DOAC order; null if never
+      - name: latest_vka_order_date
+        description: Date of the most recent vitamin K antagonist order; null if never
+      - name: is_doac_ineligible
+        description: Any record of valvular AF or antiphospholipid syndrome, where a vitamin K antagonist is expected rather than a DOAC
+      - name: has_doac_exception
+        description: Any record that a DOAC is contraindicated, declined or not indicated
+      - name: latest_anticoagulant_review_date
+        description: Date of the latest anticoagulant medication review or AF annual review record; null if none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or the reason not achieved
+
+  - name: fct_person_atrial_fibrillation_ind247
+    description: >
+      NICE IND247 DOAC or vitamin K antagonist in atrial fibrillation. One row
+      per currently registered, living, non-test person on the AF register
+      whose latest CHA2DS2-VASc score is 2 or more, assessed on the build
+      date. The criteria are sequential, as NICE specifies. People with valvular AF or antiphospholipid syndrome are not assessed against the DOAC criterion and need a vitamin K antagonist order in the six months up to the reporting date; a DOAC there is DOAC_WHERE_VKA_INDICATED. Everyone else needs a DOAC order in that period, or a VKA order with a record that a DOAC is contraindicated, declined or not indicated; a VKA without such a record is VKA_WITHOUT_DOAC_EXCEPTION. Personalised care adjustments
+      are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind247
+        indicator:
+          id: "IND247"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "AF DOAC or VKA"
+          description_short: "DOAC, or VKA where a DOAC does not apply, prescribed in the preceding 6 months for people with AF and CHA2DS2-VASc 2 or more"
+          description_long: "NICE IND247 before personalised care adjustments. Sequential DOAC then VKA criteria."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND247"
+    columns: *af_columns
+
+  - name: fct_person_atrial_fibrillation_ind127
+    description: >
+      NICE IND127 annual stroke risk assessment in atrial fibrillation. One
+      row per currently registered, living, non-test person on the AF register
+      with no previous CHADS2 or CHA2DS2-VASc score of 2 or more, assessed on
+      the build date. The numerator requires a CHA2DS2-VASc assessment in the
+      preceding 12 months. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind127
+        indicator:
+          id: "IND127"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "AF stroke risk assessment"
+          description_short: "CHA2DS2-VASc assessed in the preceding 12 months for people with AF without a prior score of 2 or more"
+          description_long: "NICE IND127 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND127"
+    columns: *af_columns
+
+  - name: fct_person_atrial_fibrillation_ind169
+    description: >
+      NICE IND169 review of anticoagulation in atrial fibrillation. One row
+      per currently registered, living, non-test person aged over 18 on the AF
+      register with an oral anticoagulant order in the preceding 6 months,
+      assessed on the build date. The numerator requires an anticoagulant medication review or an AF annual review record in the preceding 12 months. NICE describes the review content (stroke and bleeding risk, renal function, adverse effects, adherence, choice of anticoagulant); the anticoagulant review code alone is rarely used, so the AF annual review code is taken as evidence too. This is a local reading. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind169
+        indicator:
+          id: "IND169"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "AF anticoagulation review"
+          description_short: "Anticoagulant or AF annual review recorded in the preceding 12 months for people with AF on an anticoagulant"
+          description_long: "NICE IND169 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND169"
+    columns: *af_columns
+
+  - name: fct_person_atrial_fibrillation_nice_indicators
+    description: >
+      NICE IND128, IND247, IND127 and IND169 atrial fibrillation status in a
+      common interface. One row per person and indicator on the current
+      reporting date. Indicator-specific views remain the source of each
+      population definition. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering. Feeds
+      fct_person_nice_indicator_status.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+      - name: indicator_id
+        description: NICE indicator identifier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IND128', 'IND247', 'IND127', 'IND169']
+      - name: indicator_status
+        description: ACHIEVED, NOT_TREATED_IN_PERIOD, NEVER_TREATED, VKA_WITHOUT_DOAC_EXCEPTION, DOAC_WHERE_VKA_INDICATED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_TREATED_IN_PERIOD', 'NEVER_TREATED', 'VKA_WITHOUT_DOAC_EXCEPTION', 'DOAC_WHERE_VKA_INDICATED', 'NOT_RECORDED_IN_PERIOD']
+      - name: latest_chadsvasc_score
+        description: Latest CHA2DS2-VASc score; null if none
+      - name: latest_anticoagulant_order_date
+        description: Date of the most recent oral anticoagulant order; null if never
+      - name: latest_anticoagulant_review_date
+        description: Date of the latest anticoagulant medication review or AF annual review record; null if none
+
+  - name: fct_person_atrial_fibrillation_nice_indicators_snapshot_input
+    description: >
+      Thin snapshot-input projection of
+      fct_person_atrial_fibrillation_nice_indicators: person, indicator,
+      current practice, latest score, order and review, and outcome. Excludes
+      reporting_date and measurement_period_start, which advance on every
+      build, so the SCD2 snapshot versions only on genuine changes. Feeds
+      fct_person_atrial_fibrillation_nice_indicators_snapshot.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: latest_chadsvasc_score
+        description: Latest CHA2DS2-VASc score.
+      - name: latest_anticoagulant_order_date
+        description: Date of the most recent oral anticoagulant order.
+      - name: latest_anticoagulant_type
+        description: DOAC or VKA for the most recent order.
+      - name: latest_anticoagulant_review_date
+        description: Date of the latest anticoagulant review.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.
