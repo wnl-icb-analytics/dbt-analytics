@@ -82,7 +82,7 @@ states, not from referrals being dropped by the fact. There are also 24
 populated key differences between those dimension versions. The fact uses the
 configured target's person dimension rather than hardcoding a production join.
 
-The complete-field profile and date/key diagnostics are retained in
+The complete-field profile and date diagnostics are retained in
 `analyses/olids/gp_referral_request_field_profile.sql` and
 `analyses/olids/gp_referral_request_quality_profile.sql`. The empty columns and
 blank names remain review findings on the draft analyst interface.
