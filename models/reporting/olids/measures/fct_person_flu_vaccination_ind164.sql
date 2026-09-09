@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND164: https://www.nice.org.uk/indicators/ind164
--- Flu vaccination in the season from 1 August for people on the stroke/TIA register.
+-- Flu vaccination in the most recently completed season (1 August to 31 March) for people on the stroke/TIA register.
 WITH register AS (
     SELECT person_id FROM {{ ref('fct_person_stroke_tia_register') }} WHERE is_on_register
 ),
@@ -38,7 +38,7 @@ SELECT
     'IND164' AS indicator_id,
     'Immunisation: flu vaccine for people with stroke or TIA' AS indicator_name,
     CURRENT_DATE() AS reporting_date,
-    DATE_FROM_PARTS(IFF(MONTH(CURRENT_DATE()) >= 8, YEAR(CURRENT_DATE()), YEAR(CURRENT_DATE()) - 1), 8, 1) AS measurement_period_start,
+    DATE_FROM_PARTS({{ nice_flu_season_year() }}, 8, 1) AS measurement_period_start,
     age,
     'Stroke or TIA' AS condition_name,
     current_practice_code,

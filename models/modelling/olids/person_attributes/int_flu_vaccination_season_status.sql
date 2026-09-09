@@ -2,8 +2,9 @@
 
 /*
 Flu vaccination in the NICE season window, one row per person vaccinated in that
-window. The window is the preceding 1 August to 31 March: the season that
-started on the most recent 1 August on or before the build date. Vaccination
+window. The window is the preceding 1 August to 31 March, read as the most
+recently completed season: from 1 April, the season that began the previous
+August; before that, the one before. nice_flu_season_year() owns the rule. Vaccination
 comes from fct_flu_status for the matching flu campaign, counting administered
 and LAIV records dated on or after 1 August. People not in that campaign's
 population, or with no vaccination record, have no row.
@@ -11,7 +12,7 @@ population, or with no vaccination record, have no row.
 
 WITH season AS (
     SELECT
-        IFF(MONTH(CURRENT_DATE()) >= 8, YEAR(CURRENT_DATE()), YEAR(CURRENT_DATE()) - 1) AS season_year
+        {{ nice_flu_season_year() }} AS season_year
 ),
 
 season_window AS (
