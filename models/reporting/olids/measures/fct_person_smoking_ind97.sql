@@ -32,7 +32,7 @@ assessed AS (
                 <= DATE_FROM_PARTS(YEAR(CURRENT_DATE()) + IFF(MONTH(CURRENT_DATE()) >= 4, 1, 0), 3, 31)
             AND population.latest_smoking_status = 'Never Smoked'
             AND population.latest_never_smoked_date > DATEADD(year, 25, population.birth_date_approx)
-            AND population.latest_never_smoked_date > population.earliest_smoking_ltc_diagnosis_date,
+            AND population.latest_never_smoked_date > population.earliest_smoking_smi_ltc_diagnosis_date,
             FALSE
         ) AS is_never_smoker_covered,
         CASE WHEN COALESCE(population.latest_smoking_status_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
@@ -43,7 +43,7 @@ assessed AS (
                 <= DATE_FROM_PARTS(YEAR(CURRENT_DATE()) + IFF(MONTH(CURRENT_DATE()) >= 4, 1, 0), 3, 31)
             AND population.latest_smoking_status = 'Never Smoked'
             AND population.latest_never_smoked_date > DATEADD(year, 25, population.birth_date_approx)
-            AND population.latest_never_smoked_date > population.earliest_smoking_ltc_diagnosis_date,
+            AND population.latest_never_smoked_date > population.earliest_smoking_smi_ltc_diagnosis_date,
             FALSE
         ) AS is_in_numerator
     FROM indicator_population AS population

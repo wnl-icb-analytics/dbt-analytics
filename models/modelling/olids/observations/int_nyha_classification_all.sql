@@ -6,7 +6,7 @@
 
 /*
 New York Heart Association classification records (NYHA_COD), one row per
-observation. nyha_class is the class 1 to 4 read from a class-specific code;
+observation. nyha_class is the class 1 to 4 read from a code that names the class;
 assessment-only codes carry no class. Includes ALL persons (active, inactive,
 deceased) following intermediate layer principles. Observations dated after the
 build date are excluded.
@@ -16,7 +16,7 @@ SELECT
     obs.id,
     obs.person_id,
     obs.clinical_effective_date,
-    CASE REGEXP_SUBSTR(obs.mapped_concept_display, 'class (IV|III|II|I)\\b', 1, 1, 'i', 1)
+    CASE REGEXP_SUBSTR(obs.mapped_concept_display, 'class (IV|III|II|I)($|[^IV])', 1, 1, 'i', 1)
         WHEN 'I' THEN 1
         WHEN 'II' THEN 2
         WHEN 'III' THEN 3

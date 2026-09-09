@@ -10,12 +10,12 @@ severity, the latest smoking, BMI, medication review, falls discussion, alcohol
 screening and brief intervention records, the latest condition review, care
 plan, health check, MRC, NYHA and thyroid function test records, the latest new
 depression diagnosis with its 10-to-35-day review, the first cancer care review
-after diagnosis and whether ethnicity is recorded, so each measure applies only
+after the latest new cancer diagnosis and whether ethnicity is recorded, so each measure applies only
 its own population and window. No registration, living or test-patient filter; consumers join
 dim_person_active_patients.
 
 The smoking-status LTC list (IND156, IND157) is CHD, PAD, stroke/TIA,
-hypertension, diabetes, COPD, CKD and asthma. Multimorbidity follows NICE IND205: four or
+hypertension, diabetes, COPD, CKD and asthma; IND97 adds severe mental illness. Multimorbidity follows NICE IND205: four or
 more condition clusters, mapped from the project registers (cancer; circulatory;
 diabetes; digestive as chronic liver disease; learning disability; mental health
 including alcohol problems; musculoskeletal as rheumatoid arthritis; neurological;
@@ -48,7 +48,7 @@ WITH conditions AS (
         BOOLOR_AGG(condition_code = 'RA') AS has_rheumatoid_arthritis,
         BOOLOR_AGG(condition_code = 'THY') AS has_hypothyroidism,
         BOOLOR_AGG(condition_code = 'CAN') AS has_cancer,
-        MIN(CASE WHEN condition_code = 'CAN' THEN earliest_diagnosis_date::DATE END) AS earliest_cancer_diagnosis_date,
+        MAX(CASE WHEN condition_code = 'CAN' THEN latest_diagnosis_date::DATE END) AS latest_cancer_diagnosis_date,
         COUNT(DISTINCT CASE
             WHEN condition_code = 'CAN' THEN 'CANCER'
             WHEN condition_code IN ('CHD', 'AF', 'HF', 'HTN', 'STIA', 'PAD') THEN 'CIRCULATORY'
@@ -63,6 +63,8 @@ WITH conditions AS (
         END) AS register_cluster_count,
         MIN(CASE WHEN condition_code IN ('CHD', 'PAD', 'STIA', 'HTN', 'DM', 'COPD', 'CKD', 'AST', 'CYP_AST')
             THEN earliest_diagnosis_date::DATE END) AS earliest_smoking_ltc_diagnosis_date,
+        MIN(CASE WHEN condition_code IN ('CHD', 'PAD', 'STIA', 'HTN', 'DM', 'COPD', 'CKD', 'AST', 'CYP_AST', 'SMI')
+            THEN earliest_diagnosis_date::DATE END) AS earliest_smoking_smi_ltc_diagnosis_date,
         MIN(CASE WHEN condition_code = 'HTN' THEN earliest_diagnosis_date::DATE END) AS earliest_hypertension_date,
         MIN(CASE WHEN condition_code IN ('DEP', 'ANX') THEN earliest_diagnosis_date::DATE END) AS earliest_depression_anxiety_date
     FROM {{ ref('fct_person_ltc_summary') }}
@@ -193,7 +195,7 @@ thyroid AS (
 ),
 
 cancer_review AS (
-    -- First cancer care review on or after the first cancer diagnosis
+    -- First cancer care review on or after the latest first-or-new-episode cancer diagnosis
     SELECT
         c.person_id,
         MIN(review.clinical_effective_date::DATE) AS first_cancer_care_review_after_diagnosis_date
@@ -201,7 +203,7 @@ cancer_review AS (
     INNER JOIN {{ ref('int_ltc_review_all') }} AS review
         ON c.person_id = review.person_id
         AND review.review_type = 'CANCER_CARE_REVIEW'
-        AND review.clinical_effective_date::DATE >= c.earliest_cancer_diagnosis_date
+        AND review.clinical_effective_date::DATE >= c.latest_cancer_diagnosis_date
     GROUP BY c.person_id
 ),
 
@@ -268,10 +270,11 @@ SELECT
     COALESCE(c.has_rheumatoid_arthritis, FALSE) AS has_rheumatoid_arthritis,
     COALESCE(c.has_hypothyroidism, FALSE) AS has_hypothyroidism,
     COALESCE(c.has_cancer, FALSE) AS has_cancer,
-    c.earliest_cancer_diagnosis_date,
+    c.latest_cancer_diagnosis_date,
     dyslipidaemia.person_id IS NOT NULL AS has_dyslipidaemia,
     sleep_apnoea.person_id IS NOT NULL AS has_obstructive_sleep_apnoea,
     c.earliest_smoking_ltc_diagnosis_date,
+    c.earliest_smoking_smi_ltc_diagnosis_date,
     c.earliest_hypertension_date,
     c.earliest_depression_anxiety_date,
     frailty.latest_frailty_severity,

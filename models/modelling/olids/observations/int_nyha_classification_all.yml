@@ -3,8 +3,8 @@ models:
     description: >
       New York Heart Association classification records from the PCD NYHA_COD
       cluster, one row per observation, for all people including inactive and
-      deceased. nyha_class is the class 1 to 4 carried by a class-specific
-      code; assessment-only codes carry no class. Observations dated after the
+      deceased. nyha_class is the class 1 to 4 carried by a code that names
+      the class; assessment-only codes carry no class. Observations dated after the
       build date are excluded.
     config:
       meta:
@@ -28,6 +28,9 @@ models:
       - name: nyha_class
         description: NYHA class 1 (no limitation) to 4 (symptoms at rest); null for assessment codes without a class.
         data_tests:
+          - not_null:
+              config:
+                where: "concept_display ILIKE '%class I%'"
           - accepted_values:
               arguments:
                 values: [1, 2, 3, 4]
