@@ -1,4 +1,4 @@
-# GP appointments and recorded clinical links
+# GP appointments, healthcare events and clinical records
 
 `fct_gp_appointment` contains one current patient-associated appointment from
 the filtered NCL OLIDS patient spine. It retains all current statuses, future
@@ -7,7 +7,8 @@ slots in the profiled snapshot. Analysts can select the population they need.
 Existing access and costing models retain their narrower clinical population.
 
 `fct_gp_appointment_booking` contains one current recorded booking per appointment
-with a supplied `booked_at`. It is a narrow view over `fct_gp_appointment`, with
+with a supplied `booked_at`. dbt-OLIDS selects these rows in conformed and
+publishes `APPOINTMENT_BOOKING`. The fact consumes that prepared output, with
 booking-method labels and the current appointment's provider and publisher.
 Those organisations do not establish who made the booking. Use `booked_at` to
 date booking activity and join `appointment_id` for the appointment details.
@@ -29,8 +30,9 @@ Slot reassignment prevents reconstruction of a complete cancellation history.
 
 `fct_gp_appointment_clinical_record` contains one appointment, clinical record
 type and clinical record ID with a recorded encounter path for the same person.
-Join the ID to the observation, medication order or medication statement
-staging table named by the type. Expanded observations already contain allergies
+Join `clinical_record_id` to `fct_gp_clinical_record.clinical_record_id`.
+Use `source_record_id` to join the observation, medication order or medication
+statement staging table named by `clinical_record_type`. Expanded observations already contain allergies
 and referrals; adding their source tables again would duplicate those records.
 The relation does not assert attendance or that clinical records occurred at
 the appointment time. Unlinked records remain in the clinical detail tables.
@@ -38,38 +40,68 @@ the appointment time. Unlinked records remain in the clinical detail tables.
 `person_id` is consistent across practice registrations. `patient_id` identifies
 a patient at a practice and can differ between linked records for the same
 person. The relation carries the appointment's patient ID. `sk_patient_id` is
-the NHS number hash produced with a salt and pepper. The facts reuse
-`dim_person_pseudo` for the established person-to-key mapping and retain rows
-when that mapping lacks a key.
+the NHS number hash produced with a salt and pepper. The appointment, booking and direct-link facts reuse `dim_person_pseudo`
+for the existing representative person-to-key mapping. The new event and clinical
+outputs use the hash approved upstream for the exact patient and person pair.
+Both retain rows without an approved hash. Independently refreshed mappings can
+differ; use `person_id` for longitudinal OLIDS history.
+
+## Event and clinical outputs
+
+`fct_gp_healthcare_event` reads the person-clustered upstream snapshot of current
+bookings, appointment slots and coded referrals. A slot does not prove attendance.
+Referral inclusion uses `<<3457005 |Patient referral (procedure)|` across expanded
+observations, with supported unambiguous historical successors. The reference
+lives in Snowflake, with current preferred labels for current and historical
+codes. No build or query calls a terminology server.
+
+`fct_gp_clinical_record` reads a separate person-clustered snapshot containing
+expanded observations, medication orders and medication statements. Codes define
+clinical meaning; the source record type identifies the detail table. Medications
+remain separate from observations, and quantities are not observation results.
+Neither test requests nor procedure requests enter these outputs.
+
+Clinical dates keep their source precision. Referral `event_at` is null because
+the source supplies dates, not timestamps. Partial, missing, historical and future
+clinical dates remain available. The clinical output retains numeric results,
+result dates and source unit codes and labels. Globally empty text-result and
+mapped-unit columns are omitted.
 
 ## Processing and release
 
-The large encounter and clinical joins belong in dbt-OLIDS conformed. Its stable
-snapshot materialises the narrow relationship and the normal publication
-exposes `DATA_LAKE.OLIDS.APPOINTMENT_CLINICAL_RECORD`. All three analytics facts are
-views, which avoid another daily copy of the appointment and relationship
-tables. Provider, publisher and principal practitioner labels come from the
-existing staging interfaces. No terminology service is called at query time.
+The large joins, union, code classification and person/date clustering belong in
+dbt-OLIDS conformed and stable. All five analytics facts are views. The normal
+upstream deployment publishes the new booking, event, clinical and relationship
+objects to `DATA_LAKE.OLIDS`.
 
-The OLIDS schedule starts ahead of analytics but does not guarantee completion
-before it. The analytics companion must wait for the new upstream relationship
-object to be built and published. PR #1123 does not create that object and is
-not a dependency of these models. No programme or shared observation macro
-changes are included.
+The OLIDS schedule starts ahead of analytics but does not guarantee completion.
+Publish all four upstream objects before merging this companion. PR #1123 does
+not create them and is not a dependency. The referral staging interface exposes the upstream observation link,
+classification labels and date precision. No programme or shared observation
+macro changes are included. Both PRs remain drafts pending actual stable writes,
+clustering performance, publication and downstream DEV builds. The full clinical
+snapshot exceeds two billion rows. The required staging and reporting grain
+tests repeat uniqueness scans; the exact analytics daily selection also needs
+performance validation. Thin views alone do not establish a cheap daily run.
 
 ## Validation on 9 September 2026
 
 The appointment fact built in DEV with 78,821,602 rows and unique, non-null
-appointment IDs. All three facts and the new raw and staging models compile.
+appointment IDs. All five facts and their new raw and staging interfaces compile.
 The repository checks for model descriptions, tests and reference boundaries
-pass. Lineage shows no existing programme downstream of the new models.
+pass. Lineage shows no existing programme downstream of the new facts. The corrected
+existing referral interface reaches Valproate, whose separate issue #1126 covers
+its observation/referral duplication.
 
-The booking fact built with 78,207,418 unique appointment IDs and populated
+The earlier booking view over the appointment fact built with 78,207,418 unique
+appointment IDs and populated
 booking timestamps. Its count and aggregate hash across all 17 columns match
 the appointment rows with a booking timestamp. Every booking column is
 populated throughout except `sk_patient_id`, which is missing on 5,475 rows.
 There are no non-null blank values. All three booking tests pass. The
 aggregate-only checks are in `scripts/snowflake/profile_gp_appointment_booking.sql`.
+The refactored upstream booking selection has the same 78,207,418 rows; repeat
+the downstream build and reconciliation after publication.
 
 All 44 appointment columns were profiled for non-null and blank values.
 There are no all-null columns or non-null blank values.
@@ -106,5 +138,35 @@ to 56,163,795 observations, 11,844,151 medication orders and 3,772,790 medicatio
 statements. The expanded observation input was simulated from PR #298's already
 conformed sources before its scheduled publication.
 
-The upstream stable build, data lake publication and analytics relationship
-build remain release checks. No immediate production build was triggered.
+The new event candidate has 78,207,418 bookings, 78,821,602 slots and 22,125,300
+coded referrals, each with unique event IDs within type. Type-specific namespaces
+separate their keys. Of 23,634,902 referral-request records, 1,871,444 do not meet
+the ECL; native observations contain another 361,842 qualifying referrals.
+All referral codes have labels, and 2,879 referrals have no clinical date.
+
+The clinical candidate reconciles to 1,588,949,549 expanded observations,
+384,524,265 medication orders and 98,440,569 medication statements. Every row
+has person and patient IDs, source code and label, source date-precision code
+and label, record-entry time and publisher details. No retained output column
+is empty throughout. Upstream profiles found no join multiplication.
+
+The upstream PR contains the complete field profile and reference checks.
+No immediate production build was triggered.
+
+## Corrected referral interface
+
+`stg_olids_referral_request` consumes the terminology-defined referral table
+prepared in conformed. Existing qualifying referral IDs and all original fields
+are preserved. Added observation referrals use namespaced IDs; `observation_id`
+links both populations to expanded observations. All original clinical content,
+including the 1,871,444 source records excluded as non-referrals, remains in
+observations. Added rows have no inferred destination, direction or priority.
+
+Some medication `referral_request_id` values now point to excluded source
+records: 35,343 orders and 8,714 statements in this snapshot. These supplied
+identifiers remain unchanged and the original content remains in observation
+provenance. Existing analytics has no joins using those medication IDs.
+
+Valproate's existing duplicate read remains separate in #1126. All 519 ARAF
+referral rows for 284 people remain original referrals; this change adds no
+further ARAF duplicate rows in the current profile. Programme code is unchanged.

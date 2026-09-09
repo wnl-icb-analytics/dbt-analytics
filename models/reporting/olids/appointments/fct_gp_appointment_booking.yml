@@ -3,16 +3,16 @@ models:
   - name: fct_gp_appointment_booking
     description: >-
       One current recorded booking per appointment with a supplied booking
-      timestamp. Inherits the filtered NCL patient population and all current
-      statuses, contexts and patient-associated blocked slots from
-      fct_gp_appointment. Use booked_at to analyse booking activity and
+      timestamp, selected in dbt-OLIDS conformed. Inherits the filtered NCL patient
+      population and all current statuses, contexts and patient-associated blocked
+      slots through stg_olids_appointment_booking. Use booked_at to analyse booking activity and
       scheduled_at for the current intended appointment time. The source keeps
       the current appointment record, so prior bookings, rebookings and
       cancellations cannot be reconstructed after changes or slot reassignment.
       This is a current snapshot, not an immutable booking history. Booking
       timestamps can be later than the scheduled time after retrospective entry.
       Join appointment_id to fct_gp_appointment for current status, contact mode,
-      practitioner, schedule and attendance details.
+      practitioner and schedule details.
     config:
       meta:
         owner:

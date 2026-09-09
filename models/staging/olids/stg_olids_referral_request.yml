@@ -1,75 +1,96 @@
 models:
-  - name: stg_olids_referral_request
-    description: Referral requests from GP to secondary care and other services. Deduplicated by id and filtered to exclude deleted records.
-    config:
-      meta:
-        owner:
-          name: EddieDavison92
-    columns:
-      - name: id
-        description: Primary key - unique identifier for this referral request
-        data_tests:
-          - unique
-          - not_null
-      - name: publisher_organisation_id
-        description: "Foreign key to organisation.id - publisher organisation for this referral (post-2026 OLIDS rename — was organisation_id)"
-      - name: person_id
-        description: Foreign key to person.id - person-level identifier
-      - name: patient_id
-        description: Foreign key to patient.id
-      - name: encounter_id
-        description: Foreign key to encounter.id - encounter when referral was made
-      - name: practitioner_id
-        description: Foreign key to practitioner.id - referring practitioner
-      - name: unique_booking_reference_number
-        description: Unique booking reference number (UBRN) for the referral
-      - name: clinical_effective_date
-        description: Date the referral request was clinically effective
-      - name: clinical_effective_date_precision_source_concept_id
-        description: Foreign key to concept.id - precision of the clinical effective date
-      - name: requester_organisation_id
-        description: Foreign key to organisation.id - organisation making the referral
-      - name: recipient_organisation_id
-        description: Foreign key to organisation.id - organisation receiving the referral
-      - name: referral_request_priority_source_concept_id
-        description: Foreign key to concept.id - priority of the referral (routine, urgent, two-week-wait, etc.)
-      - name: referral_request_type_source_concept_id
-        description: Foreign key to concept.id - type of referral
-      - name: referral_request_specialty_source_concept_id
-        description: Foreign key to concept.id - specialty to which the referral is made
-      - name: mode
-        description: Mode of the referral
-      - name: is_outgoing_referral
-        description: Boolean indicating if this is an outgoing referral from the organisation
-      - name: is_review
-        description: Boolean indicating if this is a review record
-      - name: referral_request_source_concept_id
-        description: Foreign key to concept.id - source concept for the referral
-      - name: age_at_event
-        description: Patient age in years at time of referral
-      - name: age_at_event_baby
-        description: Patient age in months for babies (0-24 months)
-      - name: age_at_event_neonate
-        description: Patient age in days for neonates (0-28 days)
-      - name: date_recorded
-        description: Date the record was entered into the system
-      - name: lds_id
-        description: LDS system identifier
-      - name: publisher_organisation_code
-        description: "ODS code of the publisher organisation (post-2026 OLIDS rename — was record_owner_organisation_code)"
-      - name: lds_datetime_first_acquired
-        description: Datetime when data was acquired by LDS
-      - name: lds_data_initial_received_date
-        description: Date when data was initially received by LDS
-      - name: lds_start_datetime
-        description: LDS datetime stamp from which the record version was correct - used for deduplication to get the latest record
-      - name: lds_is_deleted
-        description: Deletion flag - records with TRUE are filtered out in this staging layer
-      - name: lds_source_record_id
-        description: LDS assigned unique identifier for the source record version
-    tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          config:
-            severity: warn
-          arguments:
-            min_value: 1
+- name: stg_olids_referral_request
+  description: One terminology-defined patient referral from expanded OLIDS observations, prepared in
+    dbt-OLIDS conformed using <<3457005 |Patient referral (procedure)| and supported historical successors.
+    Preserves qualifying original referral IDs and adds matching observations with namespaced IDs. Excludes
+    deleted records and missing person IDs. Non-referral original content remains in observations. Added
+    rows have no inferred direction, destination, priority or specialty.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  columns:
+  - name: id
+    description: Primary key - unique identifier for this referral request
+    data_tests:
+    - unique
+    - not_null
+  - name: publisher_organisation_id
+    description: "Foreign key to organisation.id - publisher organisation for this referral (post-2026\
+      \ OLIDS rename \xE2\u20AC\u201D was organisation_id)"
+  - name: person_id
+    description: Foreign key to person.id - person-level identifier
+  - name: patient_id
+    description: Foreign key to patient.id
+  - name: encounter_id
+    description: Foreign key to encounter.id - encounter when referral was made
+  - name: practitioner_id
+    description: Foreign key to practitioner.id - referring practitioner
+  - name: unique_booking_reference_number
+    description: Unique booking reference number (UBRN) for the referral
+  - name: clinical_effective_date
+    description: Date the referral request was clinically effective
+  - name: clinical_effective_date_precision_source_concept_id
+    description: Foreign key to concept.id - precision of the clinical effective date
+  - name: requester_organisation_id
+    description: Foreign key to organisation.id - organisation making the referral
+  - name: recipient_organisation_id
+    description: Foreign key to organisation.id - organisation receiving the referral
+  - name: referral_request_priority_source_concept_id
+    description: Foreign key to concept.id - priority of the referral (routine, urgent, two-week-wait,
+      etc.)
+  - name: referral_request_type_source_concept_id
+    description: Foreign key to concept.id - type of referral
+  - name: referral_request_specialty_source_concept_id
+    description: Foreign key to concept.id - specialty to which the referral is made
+  - name: mode
+    description: Mode of the referral
+  - name: is_outgoing_referral
+    description: Boolean indicating if this is an outgoing referral from the organisation
+  - name: is_review
+    description: Boolean indicating if this is a review record
+  - name: referral_request_source_concept_id
+    description: Foreign key to concept.id - source concept for the referral
+  - name: age_at_event
+    description: Patient age in years at time of referral
+  - name: age_at_event_baby
+    description: Patient age in months for babies (0-24 months)
+  - name: age_at_event_neonate
+    description: Patient age in days for neonates (0-28 days)
+  - name: date_recorded
+    description: Date the record was entered into the system
+  - name: lds_id
+    description: LDS system identifier
+  - name: publisher_organisation_code
+    description: "ODS code of the publisher organisation (post-2026 OLIDS rename \xE2\u20AC\u201D was\
+      \ record_owner_organisation_code)"
+  - name: lds_datetime_first_acquired
+    description: Datetime when data was acquired by LDS
+  - name: lds_data_initial_received_date
+    description: Date when data was initially received by LDS
+  - name: lds_start_datetime
+    description: LDS datetime stamp from which the record version was correct - used for deduplication
+      to get the latest record
+  - name: lds_is_deleted
+    description: Deletion flag - records with TRUE are filtered out in this staging layer
+  - name: lds_source_record_id
+    description: LDS assigned unique identifier for the source record version
+  - name: observation_id
+    description: Expanded observation ID for the same clinical record. Use this to avoid double counting
+      referrals with observations.
+  - name: referral_snomed_code
+    description: Source or mapped SNOMED code supporting referral inclusion.
+  - name: referral_snomed_name
+    description: Latest preferred label for the referral SNOMED code, including supported historical codes.
+  - name: provider_organisation_id
+    description: Provider on the source observation, where supplied. Not a referral destination.
+  - name: date_precision_source_code
+    description: Supplied clinical-date precision code, including YMD, YM, Y and Unknown.
+  - name: date_precision_source_display
+    description: Supplied clinical-date precision label. A partial date does not establish an exact day.
+  tests:
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      config:
+        severity: warn
+      arguments:
+        min_value: 1

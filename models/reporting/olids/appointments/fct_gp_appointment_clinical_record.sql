@@ -4,6 +4,7 @@ select
     r.appointment_id,
     r.clinical_record_type,
     r.clinical_record_id,
+    r.source_record_id,
     r.encounter_id,
     r.person_id,
     p.sk_patient_id,
