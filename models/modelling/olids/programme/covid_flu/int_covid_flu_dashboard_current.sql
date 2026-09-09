@@ -204,4 +204,5 @@ LEFT JOIN {{ ref('dim_person_housebound_status') }} hs ON d.person_id = hs.perso
 --LEFT JOIN STAGING.REFERENCE.STG_REFERENCE_LSOA21_WARD25_LAD25 la on la.LSOA21_CD = d.LSOA_CODE_21
 LEFT JOIN {{ ref('stg_reference_lsoa21_ward25_lad25') }} la on la.LSOA21_CD = d.LSOA_CODE_21
 WHERE v.campaign_start_date >= '2025-09-01'::DATE
+AND d.person_id IS NOT NULL
 
