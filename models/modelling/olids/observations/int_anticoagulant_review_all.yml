@@ -1,10 +1,11 @@
 models:
   - name: int_anticoagulant_review_all
     description: >
-      Anticoagulant medication review records from the PCD cluster
-      ORANTICOAGREVW_COD, one row per observation for all people including
-      inactive and deceased. Observations dated after the build date are
-      excluded. Feeds the NICE anticoagulation review indicator.
+      Anticoagulant medication review (ORANTICOAGREVW_COD) and atrial
+      fibrillation annual review or monitoring (AFMON_COD) records from PCD, one
+      row per observation for all people including inactive and deceased.
+      Observations dated after the build date are excluded. Feeds the NICE
+      anticoagulation review indicator, which takes either as evidence of review.
     config:
       meta:
         owner:
@@ -12,7 +13,7 @@ models:
     data_tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: ORANTICOAGREVW_COD
+            cluster_ids: ORANTICOAGREVW_COD, AFMON_COD
             source: PCD
     columns:
       - name: id
@@ -24,9 +25,15 @@ models:
         description: Person identifier.
       - name: clinical_effective_date
         description: Date of the review record.
+      - name: review_type
+        description: ANTICOAGULANT_REVIEW or AF_ANNUAL_REVIEW, from the matching cluster.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ANTICOAGULANT_REVIEW', 'AF_ANNUAL_REVIEW']
       - name: concept_code
         description: SNOMED code of the record.
       - name: concept_display
         description: Description of the record.
       - name: source_cluster_id
-        description: Always ORANTICOAGREVW_COD.
+        description: ORANTICOAGREVW_COD or AFMON_COD.

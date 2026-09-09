@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND128: https://www.nice.org.uk/indicators/ind128
--- Oral anticoagulant order in 6 months for people on the AF register with a latest CHA2DS2-VASc of 2 or more, or no CHA2DS2-VASc and a latest CHADS2 of 2 or more; excludes persisting anticoagulant contraindication and anticoagulant declined in 12 months.
+-- Oral anticoagulant order in 6 months for people on the AF register with a latest CHA2DS2-VASc of 2 or more, or no CHA2DS2-VASc and a latest CHADS2 of 2 or more; excludes an anticoagulant allergy or adverse reaction ever, or anticoagulation contraindicated in 12 months.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -13,8 +13,10 @@ WITH indicator_population AS (
             profile.latest_chadsvasc_score >= 2
             OR (profile.latest_chadsvasc_date IS NULL AND profile.latest_chads2_score >= 2)
         )
-        AND NOT profile.has_anticoagulant_contraindication
-        AND NOT COALESCE(profile.latest_anticoagulant_declined_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
+        -- NICE exclusions: persisting contraindication anywhere on the record (allergy or adverse
+        -- reaction), or an expiring contraindication recorded in the preceding 12 months
+        AND NOT profile.has_anticoagulant_adverse_reaction
+        AND NOT COALESCE(profile.latest_anticoagulant_contraindicated_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
 ),
 
 assessed AS (

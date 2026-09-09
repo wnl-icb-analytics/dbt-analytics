@@ -44,7 +44,9 @@ score_history AS (
 exceptions AS (
     SELECT
         person_id,
-        BOOLOR_AGG(exception_type = 'ANTICOAGULANT_CONTRAINDICATED') AS has_anticoagulant_contraindication,
+        BOOLOR_AGG(exception_type = 'ANTICOAGULANT_ADVERSE_REACTION') AS has_anticoagulant_adverse_reaction,
+        MAX(CASE WHEN exception_type = 'ANTICOAGULANT_CONTRAINDICATED'
+            THEN clinical_effective_date::DATE END) AS latest_anticoagulant_contraindicated_date,
         MAX(CASE WHEN exception_type = 'ANTICOAGULANT_DECLINED'
             THEN clinical_effective_date::DATE END) AS latest_anticoagulant_declined_date,
         BOOLOR_AGG(exception_type IN (
@@ -75,7 +77,8 @@ SELECT
     therapy.latest_anticoagulant_type,
     therapy.latest_doac_order_date,
     therapy.latest_vka_order_date,
-    COALESCE(exceptions.has_anticoagulant_contraindication, FALSE) AS has_anticoagulant_contraindication,
+    COALESCE(exceptions.has_anticoagulant_adverse_reaction, FALSE) AS has_anticoagulant_adverse_reaction,
+    exceptions.latest_anticoagulant_contraindicated_date,
     exceptions.latest_anticoagulant_declined_date,
     COALESCE(exceptions.has_doac_exception, FALSE) AS has_doac_exception,
     reviews.latest_anticoagulant_review_date

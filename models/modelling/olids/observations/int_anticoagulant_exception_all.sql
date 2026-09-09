@@ -7,10 +7,13 @@
 /*
 Records that limit oral anticoagulant or DOAC treatment, from PCD clusters, one
 row per observation. exception_type separates:
-- ANTICOAGULANT_CONTRAINDICATED: TXORANTICOAG_COD (persisting: allergy, adverse
-  reaction, not tolerated, contraindicated for any oral anticoagulant) and
-  TXORANTICOAGGENCON_COD (general anticoagulation contraindicated or not tolerated)
+- ANTICOAGULANT_ADVERSE_REACTION: ORANTICOAGADVERS_COD (allergy or adverse reaction
+  to any oral anticoagulant; persisting)
+- ANTICOAGULANT_CONTRAINDICATED: TXORANTICOAGGENCON_COD (anticoagulation
+  contraindicated or not tolerated; expiring)
 - ANTICOAGULANT_DECLINED: ORANTICOAGDEC_COD
+The broad QOF cluster TXORANTICOAG_COD is not used: it mixes drug-specific "not
+indicated" codes that are recorded when a person is on the other anticoagulant.
 - DOAC_CONTRAINDICATED: DOACCON_COD
 - DOAC_DECLINED: DOACDEC_COD
 - DOAC_NOT_INDICATED: DOACNI_COD
@@ -28,7 +31,7 @@ WITH pcd AS (
         obs.person_id,
         obs.clinical_effective_date,
         CASE obs.cluster_id
-            WHEN 'TXORANTICOAG_COD' THEN 'ANTICOAGULANT_CONTRAINDICATED'
+            WHEN 'ORANTICOAGADVERS_COD' THEN 'ANTICOAGULANT_ADVERSE_REACTION'
             WHEN 'TXORANTICOAGGENCON_COD' THEN 'ANTICOAGULANT_CONTRAINDICATED'
             WHEN 'ORANTICOAGDEC_COD' THEN 'ANTICOAGULANT_DECLINED'
             WHEN 'DOACCON_COD' THEN 'DOAC_CONTRAINDICATED'
@@ -39,7 +42,7 @@ WITH pcd AS (
         obs.mapped_concept_code AS concept_code,
         obs.mapped_concept_display AS concept_display,
         obs.cluster_id AS source_cluster_id
-    FROM ({{ get_observations("'TXORANTICOAG_COD', 'TXORANTICOAGGENCON_COD', 'ORANTICOAGDEC_COD', 'DOACCON_COD', 'DOACDEC_COD', 'DOACNI_COD', 'ANTIPHOSYND_COD'", source='PCD') }}) obs
+    FROM ({{ get_observations("'ORANTICOAGADVERS_COD', 'TXORANTICOAGGENCON_COD', 'ORANTICOAGDEC_COD', 'DOACCON_COD', 'DOACDEC_COD', 'DOACNI_COD', 'ANTIPHOSYND_COD'", source='PCD') }}) obs
 ),
 
 valvular AS (
