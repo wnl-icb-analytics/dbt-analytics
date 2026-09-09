@@ -81,6 +81,14 @@ pds_patient_check as
                         THEN primary_id 
                         END) as barnet_hospital_count,
 
+    MIN( -- finds the date of the first non-elective admission date at Barnet Hospital in the period
+                    CASE 
+                        WHEN provider_site_code = 'RAL26' -- Barnet Hospital
+                            AND att_dx.activity_date >= '01-Jan-2025' AND att_dx.activity_date < DATE_TRUNC('month',CURRENT_DATE)
+                            AND pod IN ('NEL-ZLOS','NEL-LOS+1') 
+                        THEN att_dx.activity_date 
+                        END) as barnet_hospital_first_admission_date,
+
     CASE -- counts distinct attendance IDs and then flags as 1 if there is at least 1 non-elective attendance at non-Barnet Hospital site in the period
         WHEN COUNT(DISTINCT 
                     CASE 
@@ -150,6 +158,14 @@ pds_patient_check as
                         END) >= 1 
         THEN 1 
         ELSE 0 END AS Non_NCLProvider_flag,
+
+    MIN( -- finds the first
+                    CASE 
+                        WHEN provider_code IN ('RAL','RAP','RKE','RRV')
+                            AND att_dx.activity_date >= '01-Jan-2025' AND att_dx.activity_date < DATE_TRUNC('month',CURRENT_DATE)
+                            AND pod IN ('NEL-ZLOS','NEL-LOS+1') 
+                        THEN att_dx.activity_date 
+                        END) AS NCLProvider_first_attendance_date,
     
     COUNT(DISTINCT -- counts distinct attendance IDs non-NCL providers in the period
                     CASE
@@ -245,6 +261,12 @@ pds_patient_check as
     
     -- Chronic Liver Disease → Common public-health definition: K70, K73–K74 (often used for CLD monitoring). Some programmes include broader K70–K77 or aetiology-specific sets (viral B15–B19, etc.). Be clear which you adopt. (NHS England Digital, classbrowser.nhs.uk, GOV.UK)
     MAX(CASE WHEN LEFT(UPPER(diag_code), 3) IN ('K70','K73','K74') THEN 1 ELSE 0 END) AS chronic_liver_disease, 
+    
+    MIN(CASE WHEN LEFT(UPPER(diag_code), 3) IN ('I50','J44','J43','F00','F01','F02','F03','G30','N18','K72',
+        'J84','G20','J47','I48','I60','I61','I62','I63','I64','I65','I66','I67','I68','I69','I73','I74',
+        'I26','I27','I28','I20','I21','I22','I23','I24','I25','M80','M81','M05','M06','K70','K73','K74')
+        OR LEFT(UPPER(diag_code), 5) IN ('K70.4','N18.6','Z99.2','F10.2') THEN att_dx.activity_date END) AS first_high_risk_condition_date,
+    
     --- NON HIGH RISK CONDITIONS BUT HELPFUL FLAGS
     
     -- I10-I1A - Hypertensive diseases
@@ -258,6 +280,8 @@ pds_patient_check as
     CASE WHEN ppc.date_of_death IS NOT NULL THEN 1 ELSE 0 END AS is_dead_pds,
 
     CASE WHEN death.sk_patient_id IS NOT NULL THEN 1 ELSE 0 END AS is_dead_death_registry,
+
+    COALESCE(LEAST(ppc.date_of_death, death.reg_date_of_death), ppc.date_of_death, death.reg_date_of_death) AS date_of_death,
 
     CURRENT_TIMESTAMP() AS refresh_date
 FROM 
