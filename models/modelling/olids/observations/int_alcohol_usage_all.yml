@@ -1,0 +1,35 @@
+models:
+  - name: int_alcohol_usage_all
+    description: >
+      Alcohol usage status records from the PCD ALCUSAGE_COD cluster, one row
+      per observation, for all people including inactive and deceased. These
+      are coded descriptions of drinking (non-drinker, occasional, heavy and
+      similar) and count as a record of alcohol consumption alongside units per
+      week (int_alcohol_units_all) and screening tools
+      (int_alcohol_screening_all). Observations dated after the build date are
+      excluded.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: ALCUSAGE_COD
+            source: PCD
+    columns:
+      - name: id
+        description: Source observation identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the record.
+      - name: concept_code
+        description: SNOMED code of the record.
+      - name: concept_display
+        description: Description of the record.
+      - name: source_cluster_id
+        description: Cluster that matched the code.
