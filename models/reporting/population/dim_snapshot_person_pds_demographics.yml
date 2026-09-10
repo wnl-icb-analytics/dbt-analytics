@@ -29,9 +29,9 @@ models:
         description: Surrogate key patient identifier (pseudonymised NHS number)
         tests:
           - not_null
-      - name: current_ncl_person_flag
+      - name: ncl_person_flag
         data_type: boolean
-        description: TRUE if the person appears in DATA_LAKE.PDS.PDS_PERSON with no defined end date
+        description: Whether the registration record has no end date at this snapshot
       - name: record_person_end_date
         data_type: date
         description: Date that the latest record from the PDS Person table is valid until, NULL otherwise
@@ -86,19 +86,19 @@ models:
       - name: ncl_resident_flag
         data_type: boolean
         description: TRUE if the patient has a NCL address and the patient id has no record of death
-      - name: postcode_sector
+      - name: residence_postcode_sector
         data_type: varchar
         description: First half of the postcode for the person's residence, NULL implies no known residence
-      - name: lsoa_2021_code
+      - name: residence_lsoa_2021_code
         data_type: varchar
         description: LSOA code of residence using the 2021 LSOA definitions, NULL implies no known residence
-      - name: lsoa_2021_name
+      - name: residence_lsoa_2021_name
         data_type: varchar
         description: LSOA name of residence using the 2021 LSOA definitions, NULL implies no known residence
-      - name: ward_2025_code
+      - name: residence_ward_2025_code
         data_type: varchar
         description: Ward code of residence using the 2025 ward definitions
-      - name: ward_2025_name
+      - name: residence_ward_2025_name
         data_type: varchar
         description: Ward name of residence using the 2025 ward definitions
       - name: residence_borough
@@ -113,9 +113,6 @@ models:
       - name: residence_imd_decile
         data_type: number
         description: IMD Decile of the record's listed LSOA 2021 code using the latest available IMD data in the NCL_LOOKUP schema
-      - name: residence_imd_score
-        data_type: number
-        description: IMD Score of the record's listed LSOA 2021 code using the latest available IMD data in the NCL_LOOKUP schema
       - name: _timestamp
         data_type: datetime
         description: Timestamp of when the row was created, indication of when the refresh process for this table was last ran
