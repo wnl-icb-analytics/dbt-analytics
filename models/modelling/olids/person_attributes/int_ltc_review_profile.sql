@@ -2,16 +2,20 @@
 
 /*
 Per-person profile for the NICE long-term condition review indicators: smoking
-(IND156, IND157), BMI recording (IND320), multimorbidity (IND207, IND208) and
-alcohol (IND196 to IND202). One row per person in dim_person. Combines register
-membership from fct_person_ltc_summary, frailty severity, and the latest
-smoking, BMI, medication review, falls discussion, alcohol screening and brief
-intervention records, so each measure applies only its own population and
-window. No registration, living or test-patient filter; consumers join
+(IND97, IND156, IND157), BMI recording (IND320), multimorbidity (IND207, IND208),
+alcohol (IND196 to IND202) and the condition reviews (IND104, IND110, IND139,
+IND142, IND191, IND195, IND223, IND265, IND266, IND273). One row per person in
+dim_person. Combines register membership from fct_person_ltc_summary, frailty
+severity, the latest smoking, BMI, medication review, falls discussion, alcohol
+screening and brief intervention records, the latest condition review, care
+plan, health check, MRC, NYHA and thyroid function test records, the latest new
+depression diagnosis with its 10-to-35-day review, the first cancer care review
+after the latest new cancer diagnosis and whether ethnicity is recorded, so each measure applies only
+its own population and window. No registration, living or test-patient filter; consumers join
 dim_person_active_patients.
 
 The smoking-status LTC list (IND156, IND157) is CHD, PAD, stroke/TIA,
-hypertension, diabetes, COPD, CKD and asthma. Multimorbidity follows NICE IND205: four or
+hypertension, diabetes, COPD, CKD and asthma; IND97 adds severe mental illness. Multimorbidity follows NICE IND205: four or
 more condition clusters, mapped from the project registers (cancer; circulatory;
 diabetes; digestive as chronic liver disease; learning disability; mental health
 including alcohol problems; musculoskeletal as rheumatoid arthritis; neurological;
@@ -41,6 +45,10 @@ WITH conditions AS (
         BOOLOR_AGG(condition_code = 'ANX') AS has_anxiety,
         BOOLOR_AGG(condition_code = 'SMI') AS has_smi,
         BOOLOR_AGG(condition_code IN ('LD', 'LD_U14')) AS has_learning_disability,
+        BOOLOR_AGG(condition_code = 'RA') AS has_rheumatoid_arthritis,
+        BOOLOR_AGG(condition_code = 'THY') AS has_hypothyroidism,
+        BOOLOR_AGG(condition_code = 'CAN') AS has_cancer,
+        MAX(CASE WHEN condition_code = 'CAN' THEN latest_diagnosis_date::DATE END) AS latest_cancer_diagnosis_date,
         COUNT(DISTINCT CASE
             WHEN condition_code = 'CAN' THEN 'CANCER'
             WHEN condition_code IN ('CHD', 'AF', 'HF', 'HTN', 'STIA', 'PAD') THEN 'CIRCULATORY'
@@ -55,6 +63,8 @@ WITH conditions AS (
         END) AS register_cluster_count,
         MIN(CASE WHEN condition_code IN ('CHD', 'PAD', 'STIA', 'HTN', 'DM', 'COPD', 'CKD', 'AST', 'CYP_AST')
             THEN earliest_diagnosis_date::DATE END) AS earliest_smoking_ltc_diagnosis_date,
+        MIN(CASE WHEN condition_code IN ('CHD', 'PAD', 'STIA', 'HTN', 'DM', 'COPD', 'CKD', 'AST', 'CYP_AST', 'SMI')
+            THEN earliest_diagnosis_date::DATE END) AS earliest_smoking_smi_ltc_diagnosis_date,
         MIN(CASE WHEN condition_code = 'HTN' THEN earliest_diagnosis_date::DATE END) AS earliest_hypertension_date,
         MIN(CASE WHEN condition_code IN ('DEP', 'ANX') THEN earliest_diagnosis_date::DATE END) AS earliest_depression_anxiety_date
     FROM {{ ref('fct_person_ltc_summary') }}
@@ -149,6 +159,81 @@ alcohol_disorder AS (
     FROM {{ ref('int_alcohol_misuse_disorders') }}
 ),
 
+reviews AS (
+    SELECT
+        person_id,
+        MAX(CASE WHEN review_type = 'ASTHMA_REVIEW' THEN clinical_effective_date::DATE END) AS latest_asthma_review_date,
+        MAX(CASE WHEN review_type = 'COPD_REVIEW' THEN clinical_effective_date::DATE END) AS latest_copd_review_date,
+        MAX(CASE WHEN review_type = 'HEART_FAILURE_REVIEW' THEN clinical_effective_date::DATE END) AS latest_heart_failure_review_date,
+        MAX(CASE WHEN review_type IN ('MEDICATION_REVIEW', 'HEART_FAILURE_MEDICATION_REVIEW')
+            THEN clinical_effective_date::DATE END) AS latest_coded_medication_review_date,
+        MAX(CASE WHEN review_type = 'RHEUMATOID_ARTHRITIS_REVIEW' THEN clinical_effective_date::DATE END) AS latest_rheumatoid_arthritis_review_date,
+        MAX(CASE WHEN review_type = 'LEARNING_DISABILITY_HEALTH_CHECK' THEN clinical_effective_date::DATE END) AS latest_ld_health_check_date,
+        MAX(CASE WHEN review_type = 'LEARNING_DISABILITY_HEALTH_ACTION_PLAN' THEN clinical_effective_date::DATE END) AS latest_ld_health_action_plan_date,
+        MAX(CASE WHEN review_type IN ('DEMENTIA_CARE_PLAN', 'DEMENTIA_CARE_PLAN_REVIEW')
+            THEN clinical_effective_date::DATE END) AS latest_dementia_care_plan_date
+    FROM {{ ref('int_ltc_review_all') }}
+    GROUP BY person_id
+),
+
+mrc AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_mrc_dyspnoea_date
+    FROM {{ ref('int_mrc_dyspnoea_all') }}
+    GROUP BY person_id
+),
+
+nyha AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_nyha_date
+    FROM {{ ref('int_nyha_classification_all') }}
+    GROUP BY person_id
+),
+
+thyroid AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_thyroid_function_test_date
+    FROM {{ ref('int_thyroid_function_test_all') }}
+    GROUP BY person_id
+),
+
+cancer_review AS (
+    -- First cancer care review on or after the latest first-or-new-episode cancer diagnosis
+    SELECT
+        c.person_id,
+        MIN(review.clinical_effective_date::DATE) AS first_cancer_care_review_after_diagnosis_date
+    FROM conditions AS c
+    INNER JOIN {{ ref('int_ltc_review_all') }} AS review
+        ON c.person_id = review.person_id
+        AND review.review_type = 'CANCER_CARE_REVIEW'
+        AND review.clinical_effective_date::DATE >= c.latest_cancer_diagnosis_date
+    GROUP BY c.person_id
+),
+
+new_depression AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_new_depression_diagnosis_date
+    FROM {{ ref('int_depression_diagnoses_all') }}
+    WHERE is_diagnosis_code AND is_first_or_new_episode
+        AND clinical_effective_date <= CURRENT_DATE()
+    GROUP BY person_id
+),
+
+depression_review AS (
+    -- First depression review 10 to 35 days after the latest new diagnosis
+    SELECT
+        dx.person_id,
+        MIN(review.clinical_effective_date::DATE) AS first_depression_review_10_to_35_days_date
+    FROM new_depression AS dx
+    INNER JOIN {{ ref('int_ltc_review_all') }} AS review
+        ON dx.person_id = review.person_id
+        AND review.review_type = 'DEPRESSION_REVIEW'
+        AND review.clinical_effective_date::DATE BETWEEN DATEADD(day, 10, dx.latest_new_depression_diagnosis_date)
+            AND DATEADD(day, 35, dx.latest_new_depression_diagnosis_date)
+    GROUP BY dx.person_id
+),
+
+ethnicity AS (
+    SELECT person_id, ethnicity_category
+    FROM {{ ref('dim_person_demographics') }}
+),
+
 dyslipidaemia AS (
     SELECT DISTINCT person_id FROM {{ ref('int_dyslipidaemia_diagnoses_all') }}
 ),
@@ -182,9 +267,14 @@ SELECT
     COALESCE(c.has_anxiety, FALSE) AS has_anxiety,
     COALESCE(c.has_smi, FALSE) AS has_smi,
     COALESCE(c.has_learning_disability, FALSE) AS has_learning_disability,
+    COALESCE(c.has_rheumatoid_arthritis, FALSE) AS has_rheumatoid_arthritis,
+    COALESCE(c.has_hypothyroidism, FALSE) AS has_hypothyroidism,
+    COALESCE(c.has_cancer, FALSE) AS has_cancer,
+    c.latest_cancer_diagnosis_date,
     dyslipidaemia.person_id IS NOT NULL AS has_dyslipidaemia,
     sleep_apnoea.person_id IS NOT NULL AS has_obstructive_sleep_apnoea,
     c.earliest_smoking_ltc_diagnosis_date,
+    c.earliest_smoking_smi_ltc_diagnosis_date,
     c.earliest_hypertension_date,
     c.earliest_depression_anxiety_date,
     frailty.latest_frailty_severity,
@@ -201,7 +291,24 @@ SELECT
     COALESCE(latest_screen.is_latest_alcohol_screen_positive, FALSE) AS is_latest_alcohol_screen_positive,
     latest_positive.latest_positive_alcohol_screen_date,
     intervention_after_positive.latest_intervention_after_positive_screen_date,
-    alcohol_disorder.person_id IS NOT NULL AS has_alcohol_disorder
+    alcohol_disorder.person_id IS NOT NULL AS has_alcohol_disorder,
+    reviews.latest_asthma_review_date,
+    reviews.latest_copd_review_date,
+    mrc.latest_mrc_dyspnoea_date,
+    reviews.latest_heart_failure_review_date,
+    nyha.latest_nyha_date,
+    -- Any coded medication review, heart failure medication review or structured medication review
+    GREATEST_IGNORE_NULLS(reviews.latest_coded_medication_review_date,
+        medication_review.latest_structured_medication_review_date) AS latest_medication_review_date,
+    reviews.latest_rheumatoid_arthritis_review_date,
+    thyroid.latest_thyroid_function_test_date,
+    reviews.latest_ld_health_check_date,
+    reviews.latest_ld_health_action_plan_date,
+    reviews.latest_dementia_care_plan_date,
+    cancer_review.first_cancer_care_review_after_diagnosis_date,
+    new_depression.latest_new_depression_diagnosis_date,
+    depression_review.first_depression_review_10_to_35_days_date,
+    COALESCE(ethnicity.ethnicity_category NOT IN ('Unknown'), FALSE) AS has_ethnicity_recorded
 FROM {{ ref('dim_person') }} AS person
 LEFT JOIN {{ ref('dim_person_age') }} AS age ON person.person_id = age.person_id
 LEFT JOIN conditions AS c ON person.person_id = c.person_id
@@ -218,3 +325,11 @@ LEFT JOIN intervention_after_positive ON person.person_id = intervention_after_p
 LEFT JOIN alcohol_disorder ON person.person_id = alcohol_disorder.person_id
 LEFT JOIN dyslipidaemia ON person.person_id = dyslipidaemia.person_id
 LEFT JOIN sleep_apnoea ON person.person_id = sleep_apnoea.person_id
+LEFT JOIN reviews ON person.person_id = reviews.person_id
+LEFT JOIN mrc ON person.person_id = mrc.person_id
+LEFT JOIN nyha ON person.person_id = nyha.person_id
+LEFT JOIN thyroid ON person.person_id = thyroid.person_id
+LEFT JOIN cancer_review ON person.person_id = cancer_review.person_id
+LEFT JOIN new_depression ON person.person_id = new_depression.person_id
+LEFT JOIN depression_review ON person.person_id = depression_review.person_id
+LEFT JOIN ethnicity ON person.person_id = ethnicity.person_id
