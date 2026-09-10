@@ -26,5 +26,5 @@ union all
 select code, name, 'Dictionary.E-Referral' as name_source
 from dictionary_codes
 union all
-select code, name, 'Latest supplied e-RS action display' as name_source
+select code, name, 'Latest supplied e-RS action-reason display' as name_source
 from recorded_labels

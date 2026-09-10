@@ -38,7 +38,7 @@ with stats as (
         'previous_ubrn_id', object_construct('populated', count(previous_ubrn_id), 'blank', count_if(trim(previous_ubrn_id::varchar) = '')),
         'initial_ubrn', object_construct('populated', count(initial_ubrn), 'blank', count_if(trim(initial_ubrn::varchar) = '')),
         'previous_ubrn', object_construct('populated', count(previous_ubrn), 'blank', count_if(trim(previous_ubrn::varchar) = '')),
-        'next_ubrn', object_construct('populated', count(next_ubrn), 'blank', count_if(trim(next_ubrn::varchar) = '')),
+        'next_ubrn', object_construct('populated', count(next_ubrn), 'blank', count_if(trim(next_ubrn::varchar) = ''))
     ) as fields
     from {{ ref('fct_ers_referral') }}
 )

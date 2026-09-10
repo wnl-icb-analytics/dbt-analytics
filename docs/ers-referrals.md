@@ -71,8 +71,8 @@ That is a request action. Recorded triage outcomes remain separate action and
 reason codes here. The published ERS_ALL_SOURCES report also applies provider
 and period filters. These facts do not replace its published definitions.
 
-Initial full writes on the tracked Medium warehouse took about 70 seconds for
-actions and 26 seconds for referrals, before the additional label lookups.
+Final full writes on the tracked Medium warehouse took about 82 seconds for
+actions and 24 seconds for referrals, including the additional label lookups.
 Both tables cluster by patient and date for person-history analysis. Due date
 and test-patient flag are omitted because both are entirely unpopulated. A
 missing test flag must not be interpreted as false.
@@ -89,3 +89,25 @@ Reference agreement alone is not a confirmed person-level link.
 
 The queries in `analyses/ers/` return aggregate validation without patient records
 or identifier examples.
+
+## Final profile and review
+
+All 44 action columns and 38 referral columns were profiled. None is entirely
+empty. Every populated action and reason code has a label. The reference tables
+contain 56 action codes and 108 reason codes; five action and three reason labels
+come from their latest supplied displays with explicit reference provenance.
+All populated referring, action, provider and site organisation codes have names.
+There remain 127 action rows without a service name and 1,007 actions without a
+supplied action code. These are retained; missing codes cannot define a lifecycle
+event without further source information.
+
+All copied action fields have the same whole-table fingerprint as the 118,671,778
+active source rows. Synthetic checks using compiled SQL passed for source
+replacement, withdrawal, referral history without a creation action, latest
+service details after an administrative action, and conflicting patient keys.
+
+Code review suggested a single-read aggregation for referrals. A full-size
+comparison produced an identical fingerprint across all 18,678,390 rows, but its
+build took 47 seconds versus 25 seconds for the existing narrow aggregation and
+joins on selected action IDs. The faster existing query is retained. The fallback
+reason provenance was corrected to identify action-reason displays explicitly.
