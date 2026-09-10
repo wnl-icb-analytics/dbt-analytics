@@ -1,0 +1,86 @@
+models:
+- name: fct_ers_appointment
+  description: One planned e-RS appointment per UBRN identifier, service and scheduled timestamp across
+    active submitted actions. Multiple booking, rebooking, cancellation and administrative actions for
+    the same slot remain one row; every contributing action is accessible through rel_ers_appointment_action.
+    A changed service or time creates a different planned appointment. Missing-service values remain a
+    separate null-service group. Actions without a scheduled time remain in the action fact and are not
+    invented as appointments. Highest action ID defines the latest recorded appointment action and coherent
+    service details. Referral acceptance does not establish attendance. Refresh with the action fact using
+    the large_periodic selection.
+  config:
+    meta:
+      owner:
+        name: Jonathan Linney
+  columns:
+  - name: appointment_id
+    description: Stable key of UBRN identifier, service and scheduled time. Timestamp formatting is explicit
+      so the key does not depend on session display settings.
+    data_tests:
+    - unique
+    - not_null
+  - name: ubrn_id
+    description: Source identifier of the referral, triage or advice request.
+  - name: ubrn
+    description: Supplied booking reference, preserved unchanged.
+  - name: sk_patient_id
+    description: Shared pseudonymised NHS-number key. Null for blank values and the source unknown marker
+      1; no demographic or registration filter is applied.
+  - name: appointment_at
+    description: Recorded scheduled date and time. A planned appointment is not proof of attendance.
+  - name: service_id
+    description: Service associated with this action, where supplied. Different actions for a UBRN may
+      refer to different services.
+  - name: service_name
+    description: Latest retained service dictionary name, with supplied-label fallback. Historical service
+      IDs are retained.
+  - name: service_specialty_code
+    description: e-RS specialty of the receiving service, distinct from the referral search specialty.
+  - name: service_specialty_name
+    description: Latest retained service-specialty label, with supplied-label fallback.
+  - name: provider_organisation_code
+    description: ODS code of the service provider supplied on the action.
+  - name: provider_organisation_name
+    description: Latest organisation or site name from the shared UKHFD ODS, Dictionary and closed-archive
+      lookup plus e-RS application organisations, with supplied-label fallback. Not a historical name
+      at action time.
+  - name: site_code
+    description: ODS code of the service location supplied on the action.
+  - name: site_name
+    description: Latest organisation or site name from the shared UKHFD ODS, Dictionary and closed-archive
+      lookup plus e-RS application organisations, with supplied-label fallback. Not a historical name
+      at action time.
+  - name: appointment_type_code
+    description: e-RS service appointment type code.
+  - name: appointment_type_name
+    description: Latest retained appointment-type label, with supplied-label fallback.
+  - name: action_count
+    description: Number of contributing actions with this UBRN, service and scheduled time, including
+      administrative actions.
+  - name: recorded_booking_action_count
+    description: Number of Appointment Booked actions (1412). Repeated booking actions for the same slot
+      do not create additional appointments. Zero means no such action is present in the available history.
+  - name: first_observed_action_at
+    description: Earliest action time attached to this planned appointment. Not necessarily when it was
+      booked.
+  - name: last_observed_action_at
+    description: Latest action time attached to this planned appointment.
+  - name: latest_action_id
+    description: Highest contributing action ID. All service and organisation fields come together from
+      that action.
+  - name: latest_appointment_action_id
+    description: Highest action ID for booking, cancellation, displacement, rebooking, rebooking instructions,
+      acceptance, rejection or DNA. Later administrative actions do not replace it.
+  - name: latest_appointment_action_at
+    description: Time of the latest appointment-related action, where one is present.
+  - name: latest_appointment_action_code
+    description: Latest appointment-related e-RS action code. Retains cancellation-not-confirmed, DNA-resolved
+      and referral acceptance as distinct actions. Does not infer attendance, completion or a simplified
+      current state.
+  - name: latest_appointment_action_name
+    description: Reference label for the latest appointment-related action. Null if only other actions
+      describe this appointment.
+  - name: latest_appointment_action_reason_code
+    description: Reason attached to the latest appointment-related action.
+  - name: latest_appointment_action_reason_name
+    description: Label for that recorded reason.

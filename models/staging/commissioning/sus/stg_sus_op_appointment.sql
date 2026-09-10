@@ -28,6 +28,8 @@ select  primarykey_id,
     appointment_patient_identity_age_at_cds_activity_date,
 
     -- appointment information
+    appointment_referral_to_treatment_ubrn_value_pseudo as unique_booking_reference_number,
+    appointment_referral_to_treatment_ubrn_issuer as booking_reference_issuer,
     appointment_identifier, 
     appointment_date::date as appointment_date,
     appointment_time::time as appointment_time,

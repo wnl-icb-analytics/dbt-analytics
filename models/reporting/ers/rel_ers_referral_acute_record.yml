@@ -1,0 +1,50 @@
+models:
+- name: rel_ers_referral_acute_record
+  description: One recorded UBRN match between an e-RS request and a SUS outpatient appointment or admitted-patient
+    spell. Includes every matching source record regardless of attendance or discharge status. Matches
+    only normalised recorded UBRNs and keeps patient-key agreement, mismatch and missing-key states visible.
+    It does not infer a journey or causal link. ECDS is excluded because it supplies no populated UBRNs.
+    Uses the established SUS staging grains because downstream encounter facts do not expose the recorded
+    reference.
+  config:
+    meta:
+      owner:
+        name: Jonathan Linney
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - ubrn_id
+        - acute_source
+        - acute_source_record_id
+  columns:
+  - name: ubrn_id
+    description: Matched request identifier in fct_ers_referral.
+  - name: acute_source
+    description: 'SUS dataset owning the source record: outpatient appointment or admitted-patient spell.'
+  - name: acute_source_record_id
+    description: PRIMARYKEY_ID in stg_sus_op_appointment or stg_sus_apc_spell, interpreted with acute_source.
+  - name: acute_record_date
+    description: Outpatient scheduled date or admitted-patient admission date. Not an inferred referral
+      milestone.
+  - name: acute_booking_reference
+    description: Pseudonymised UBRN supplied on the SUS record, with original presentation retained.
+  - name: normalised_ubrn
+    description: Recorded UBRN with surrounding whitespace and display hyphens removed. No date or person-based
+      matching is used.
+  - name: ers_sk_patient_id
+    description: Shared patient key on the e-RS request. Kept separate from the acute key so disagreements
+      remain visible.
+  - name: acute_sk_patient_id
+    description: Shared patient key on the acute source record.
+  - name: patient_key_agreement
+    description: agree when both supplied patient keys are present and equal; mismatch when both are present
+      and differ; missing_key when either is absent. A reference match with mismatch or missing_key must
+      not be treated as a confirmed person-level link. Even agreement does not prove causality.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - agree
+          - mismatch
+          - missing_key
