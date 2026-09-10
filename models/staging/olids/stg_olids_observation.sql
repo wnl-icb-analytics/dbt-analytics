@@ -1,6 +1,8 @@
 select
     -- Primary key
     id,
+    source_entity,
+    source_record_id,
 
     -- Business columns
     patient_id,
@@ -14,6 +16,7 @@ select
     result_value_units_source_concept_id as result_units_source_concept_id,
     result_date,
     result_text,
+    allergy_medication_name,
     is_problem,
     is_review,
     problem_end_date,
