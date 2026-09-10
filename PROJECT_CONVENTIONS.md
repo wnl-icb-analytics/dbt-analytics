@@ -223,8 +223,10 @@ it.
 ## Person-level indicator measures
 
 NICE-style indicator measures with a numerator and denominator live in
-`models/reporting/olids/measures/` and share one contract so they roll up into
-`fct_person_nice_indicator_status`. Count-based measures such as the diabetes care
+`models/reporting/olids/measures/nice/<family>/` and share one contract so they
+roll up into `fct_person_nice_indicator_status`. Subfolders group a family's
+measures, union and snapshot input for navigation only; the schema comes from
+the `measures` folder, so every measure lands in `OLIDS_MEASURES`. Count-based measures such as the diabetes care
 processes are outside it. A measure is one row per person in the indicator's
 denominator, restricted to currently registered, living, non-test people
 through `dim_person_active_patients`, assessed on the build date. It emits the
