@@ -1,0 +1,52 @@
+-- Returns only whole-table column coverage.
+with stats as (
+    select object_construct(
+        'action_id', object_construct('populated', count(action_id), 'blank', count_if(trim(action_id::varchar) = '')),
+        'ubrn_id', object_construct('populated', count(ubrn_id), 'blank', count_if(trim(ubrn_id::varchar) = '')),
+        'ubrn', object_construct('populated', count(ubrn), 'blank', count_if(trim(ubrn::varchar) = '')),
+        'normalised_ubrn', object_construct('populated', count(normalised_ubrn), 'blank', count_if(trim(normalised_ubrn::varchar) = '')),
+        'sk_patient_id', object_construct('populated', count(sk_patient_id), 'blank', count_if(trim(sk_patient_id::varchar) = '')),
+        'pathway_started_at', object_construct('populated', count(pathway_started_at), 'blank', count_if(trim(pathway_started_at::varchar) = '')),
+        'action_at', object_construct('populated', count(action_at), 'blank', count_if(trim(action_at::varchar) = '')),
+        'action_code', object_construct('populated', count(action_code), 'blank', count_if(trim(action_code::varchar) = '')),
+        'action_name', object_construct('populated', count(action_name), 'blank', count_if(trim(action_name::varchar) = '')),
+        'action_reason_code', object_construct('populated', count(action_reason_code), 'blank', count_if(trim(action_reason_code::varchar) = '')),
+        'action_reason_name', object_construct('populated', count(action_reason_name), 'blank', count_if(trim(action_reason_name::varchar) = '')),
+        'priority_code', object_construct('populated', count(priority_code), 'blank', count_if(trim(priority_code::varchar) = '')),
+        'priority_name', object_construct('populated', count(priority_name), 'blank', count_if(trim(priority_name::varchar) = '')),
+        'specialty_code', object_construct('populated', count(specialty_code), 'blank', count_if(trim(specialty_code::varchar) = '')),
+        'specialty_name', object_construct('populated', count(specialty_name), 'blank', count_if(trim(specialty_name::varchar) = '')),
+        'clinic_type_code', object_construct('populated', count(clinic_type_code), 'blank', count_if(trim(clinic_type_code::varchar) = '')),
+        'clinic_type_name', object_construct('populated', count(clinic_type_name), 'blank', count_if(trim(clinic_type_name::varchar) = '')),
+        'referring_organisation_code', object_construct('populated', count(referring_organisation_code), 'blank', count_if(trim(referring_organisation_code::varchar) = '')),
+        'referring_organisation_name', object_construct('populated', count(referring_organisation_name), 'blank', count_if(trim(referring_organisation_name::varchar) = '')),
+        'action_organisation_code', object_construct('populated', count(action_organisation_code), 'blank', count_if(trim(action_organisation_code::varchar) = '')),
+        'action_organisation_name', object_construct('populated', count(action_organisation_name), 'blank', count_if(trim(action_organisation_name::varchar) = '')),
+        'service_id', object_construct('populated', count(service_id), 'blank', count_if(trim(service_id::varchar) = '')),
+        'service_name', object_construct('populated', count(service_name), 'blank', count_if(trim(service_name::varchar) = '')),
+        'service_specialty_code', object_construct('populated', count(service_specialty_code), 'blank', count_if(trim(service_specialty_code::varchar) = '')),
+        'service_specialty_name', object_construct('populated', count(service_specialty_name), 'blank', count_if(trim(service_specialty_name::varchar) = '')),
+        'provider_organisation_code', object_construct('populated', count(provider_organisation_code), 'blank', count_if(trim(provider_organisation_code::varchar) = '')),
+        'provider_organisation_name', object_construct('populated', count(provider_organisation_name), 'blank', count_if(trim(provider_organisation_name::varchar) = '')),
+        'site_code', object_construct('populated', count(site_code), 'blank', count_if(trim(site_code::varchar) = '')),
+        'site_name', object_construct('populated', count(site_name), 'blank', count_if(trim(site_name::varchar) = '')),
+        'appointment_at', object_construct('populated', count(appointment_at), 'blank', count_if(trim(appointment_at::varchar) = '')),
+        'appointment_type_code', object_construct('populated', count(appointment_type_code), 'blank', count_if(trim(appointment_type_code::varchar) = '')),
+        'appointment_type_name', object_construct('populated', count(appointment_type_name), 'blank', count_if(trim(appointment_type_name::varchar) = '')),
+        'rebooked_to_action_id', object_construct('populated', count(rebooked_to_action_id), 'blank', count_if(trim(rebooked_to_action_id::varchar) = '')),
+        'initial_ubrn_id', object_construct('populated', count(initial_ubrn_id), 'blank', count_if(trim(initial_ubrn_id::varchar) = '')),
+        'previous_ubrn_id', object_construct('populated', count(previous_ubrn_id), 'blank', count_if(trim(previous_ubrn_id::varchar) = '')),
+        'initial_ubrn', object_construct('populated', count(initial_ubrn), 'blank', count_if(trim(initial_ubrn::varchar) = '')),
+        'previous_ubrn', object_construct('populated', count(previous_ubrn), 'blank', count_if(trim(previous_ubrn::varchar) = '')),
+        'next_ubrn', object_construct('populated', count(next_ubrn), 'blank', count_if(trim(next_ubrn::varchar) = '')),
+        'assessment_outcome_code', object_construct('populated', count(assessment_outcome_code), 'blank', count_if(trim(assessment_outcome_code::varchar) = '')),
+        'assessment_outcome_name', object_construct('populated', count(assessment_outcome_name), 'blank', count_if(trim(assessment_outcome_name::varchar) = '')),
+        'advice_request_status_code', object_construct('populated', count(advice_request_status_code), 'blank', count_if(trim(advice_request_status_code::varchar) = '')),
+        'advice_request_status_name', object_construct('populated', count(advice_request_status_name), 'blank', count_if(trim(advice_request_status_name::varchar) = '')),
+        'source_submission_id', object_construct('populated', count(source_submission_id), 'blank', count_if(trim(source_submission_id::varchar) = '')),
+        'source_imported_at', object_construct('populated', count(source_imported_at), 'blank', count_if(trim(source_imported_at::varchar) = ''))
+    ) as fields
+    from {{ ref('fct_ers_referral_action') }}
+)
+select f.key as column_name, f.value as coverage
+from stats, lateral flatten(input => fields) f
