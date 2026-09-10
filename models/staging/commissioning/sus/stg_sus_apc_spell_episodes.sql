@@ -38,5 +38,10 @@ select primarykey_id
 from {{ ref('raw_sus_apc_spell_episodes') }}
 qualify row_number() over (
     partition by primarykey_id, episodes_id
-    order by system_transaction_cds_activity_date desc, rownumber_id desc -- THIS NEEDS CHECKING
+    order by
+        system_transaction_cds_activity_date desc nulls last
+        , try_to_number(system_record_version) desc nulls last
+        , system_interchange_received_date desc nulls last
+        , system_interchange_received_time desc nulls last
+        , rownumber_id desc
 ) = 1
