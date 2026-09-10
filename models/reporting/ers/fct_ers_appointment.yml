@@ -5,8 +5,10 @@ models:
     the same slot remain one row; every contributing action is accessible through rel_ers_appointment_action.
     A changed service or time creates a different planned appointment. Missing-service values remain a
     separate null-service group. Actions without a scheduled time remain in the action fact and are not
-    invented as appointments. Highest action ID defines the latest recorded appointment action and coherent
-    service details. Referral acceptance does not establish attendance. Refresh with the action fact using
+    invented as appointments. latest_action_id identifies the highest contributing action ID and supplies
+    coherent service details; it may be administrative. latest_appointment_action_id identifies the highest
+    appointment-related action ID and supplies the appointment action and reason fields. Referral acceptance
+    does not establish attendance. Refresh with the action fact using
     the large_periodic selection.
   config:
     meta:
@@ -24,8 +26,9 @@ models:
   - name: ubrn
     description: Supplied booking reference, preserved unchanged.
   - name: sk_patient_id
-    description: Shared pseudonymised NHS-number key. Null for blank values and the source unknown marker
-      1; no demographic or registration filter is applied.
+    description: Shared pseudonymised NHS-number key when all non-null keys in the appointment's action
+      history agree. Missing keys on some actions do not invalidate an agreed key. Null when every key
+      is missing or non-null keys conflict; no demographic or registration filter is applied.
   - name: appointment_at
     description: Recorded scheduled date and time. A planned appointment is not proof of attendance.
   - name: service_id

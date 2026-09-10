@@ -95,3 +95,18 @@ facts; this change does not add a daily full rebuild or create a schedule.
 The repeatable queries in `analyses/ers/` return aggregate coverage and
 reconciliation. Read [the referral and action guidance](ers-referrals.md) for
 source definitions, label provenance and legacy differences.
+
+## Review checks
+
+The review check found 17,742 requests with both missing and populated action
+patient keys, and no requests with conflicting non-null keys. Missing values on
+some actions do not invalidate a consistent request-level key. Acute agreement
+compares that request key with the acute record key; it does not assert that
+every contributing action contains a key.
+
+All 254,832 e-RS organisation dictionary codes were already trimmed and uppercase.
+Neither that dictionary nor the 447,926-row combined organisation reference had
+duplicate keys after case and whitespace normalisation.
+
+The action-reason provenance and appointment action descriptions were corrected
+after review. Both models rebuilt in DEV and their four grain tests passed.
