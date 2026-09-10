@@ -24,6 +24,8 @@ SELECT
     left_foot_risk_level,
     right_foot_risk_level,
     townson_scale_level,
+    has_screening_referral,
+    has_risk_classification,
     all_concept_codes,
     all_concept_displays,
     all_source_cluster_ids,
