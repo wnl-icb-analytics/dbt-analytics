@@ -11,7 +11,7 @@ union all
     )
     group by code
 ), recorded_labels as (
-    -- Retain older codes absent from the maintained dictionary using their latest supplied display.
+    -- Retain codes absent from the maintained dictionary using their latest supplied display.
     select
         a.action_reason_cd::varchar as code,
         nullif(trim(a.action_reason_desc), '') as name,

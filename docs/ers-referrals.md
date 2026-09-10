@@ -111,3 +111,6 @@ comparison produced an identical fingerprint across all 18,678,390 rows, but its
 build took 47 seconds versus 25 seconds for the existing narrow aggregation and
 joins on selected action IDs. The faster existing query is retained. The fallback
 reason provenance was corrected to identify action-reason displays explicitly.
+
+The final test selection passed 44 tests. The existing staging completeness test
+warned on the 1,007 actions without a code; those source rows remain available.
