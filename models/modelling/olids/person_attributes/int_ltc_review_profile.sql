@@ -262,7 +262,7 @@ cholesterol_hdl_ratio AS (
 hba1c AS (
     SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_hba1c_date
     FROM {{ ref('int_hba1c_all') }}
-    WHERE result_value IS NOT NULL
+    WHERE hba1c_original_value IS NOT NULL
     GROUP BY person_id
 ),
 
