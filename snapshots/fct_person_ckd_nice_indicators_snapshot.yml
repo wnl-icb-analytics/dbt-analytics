@@ -1,0 +1,30 @@
+snapshots:
+  - name: fct_person_ckd_nice_indicators_snapshot
+    relation: ref('fct_person_ckd_nice_indicators_snapshot_input')
+    description: >
+      SCD2 history of the NICE chronic kidney disease indicators (IND130,
+      IND144, IND233, IND234, IND235, IND263, IND264, IND324) per person and
+      indicator: current practice, latest qualifying record, latest eGFR, ACR
+      and blood pressure values and outcome. Replaces the single IND144
+      snapshot, whose table keeps its history. Sources the thin snapshot-input
+      view rather than the measure, because CURRENT_DATE() derived columns
+      change every run. check_cols: all over the thin projection. Rows leaving
+      the population are closed via hard_deletes: invalidate.
+    config:
+      strategy: check
+      unique_key: [person_id, indicator_id]
+      check_cols: all
+      hard_deletes: invalidate
+    columns:
+      - name: person_id
+        description: "Person identifier; part of the snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: "NICE indicator identifier; part of the snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

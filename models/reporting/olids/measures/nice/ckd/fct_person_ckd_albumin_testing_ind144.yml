@@ -6,7 +6,7 @@ models:
       holds stage 3 to 5 by code so stages 1 and 2 are excluded as NICE
       requires, assessed on the build date. The numerator requires a urine ACR
       or protein:creatinine ratio observation in the preceding 12 months, with
-      or without a recorded value. Feeds fct_person_nice_indicator_status.
+      or without a recorded value. Feeds fct_person_ckd_nice_indicators.
       Personalised care adjustments are not applied. Secondary-use consumers
       must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
       Out and Type 1 opt-out filtering.
@@ -62,28 +62,3 @@ models:
           - accepted_values:
               arguments:
                 values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
-  - name: fct_person_ckd_albumin_testing_ind144_snapshot_input
-    description: >
-      Thin snapshot-input projection of fct_person_ckd_albumin_testing_ind144:
-      person, indicator, current practice, the latest record and outcome.
-      Excludes reporting_date and measurement_period_start, which advance on
-      every build, so the SCD2 snapshot versions only on genuine changes.
-      Feeds fct_person_ckd_albumin_testing_ind144_snapshot.
-    config:
-      meta:
-        owner:
-          name: EddieDavison92
-    columns:
-      - name: person_id
-        description: Person identifier; snapshot unique_key.
-        data_tests:
-          - unique
-          - not_null
-      - name: current_practice_code
-        description: ODS code of the current registration practice at the build.
-      - name: is_in_numerator
-        description: Whether the person met the indicator at the build.
-      - name: indicator_status
-        description: Outcome label at the build.
-      - name: latest_record_date
-        description: Date of the latest ACR or PCR observation; null when none in the period.

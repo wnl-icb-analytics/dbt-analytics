@@ -1,0 +1,63 @@
+models:
+  - name: int_ckd_profile
+    description: >
+      Per-person profile for the NICE chronic kidney disease indicators, one
+      row per person on the CKD register (stage 3 to 5 by code), including
+      inactive and deceased people. Holds the register diagnosis date, the
+      latest eGFR and urine ACR values, proteinuria and microalbuminuria
+      records, frailty severity, diabetes type, hypertension, the latest
+      renin-angiotensin and SGLT2 inhibitor orders, ACE inhibitor and ARB
+      contraindications (persisting at any time or expiring in the preceding
+      12 months), and whether eGFR and ACR tests fall around the diagnosis
+      date. Consumers apply their own windows and join
+      dim_person_active_patients.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person on the CKD register.
+        data_tests:
+          - unique
+          - not_null
+      - name: ckd_diagnosis_date
+        description: Earliest CKD stage 3 to 5 diagnosis date from the register.
+      - name: latest_egfr_date
+        description: Date of the latest eGFR with a value; null if none.
+      - name: latest_egfr_value
+        description: Latest eGFR in ml/min/1.73m2; null if none.
+      - name: latest_acr_date
+        description: Date of the latest urine ACR ratio with a value; null if none.
+      - name: latest_acr_value
+        description: Latest urine ACR in mg/mmol; null if none.
+      - name: has_proteinuria
+        description: Any proteinuria, CKD proteinuria or persistent proteinuria code recorded.
+      - name: has_microalbuminuria
+        description: Any microalbuminuria code recorded.
+      - name: latest_frailty_severity
+        description: Latest coded frailty severity; null if none.
+      - name: has_diabetes
+        description: On the diabetes register.
+      - name: diabetes_type
+        description: Type 1, Type 2 or Unknown from the diabetes register; null when not on it.
+      - name: has_hypertension
+        description: On the hypertension register.
+      - name: latest_ras_order_date
+        description: Date of the latest ACE inhibitor or ARB order; null if none.
+      - name: latest_ras_class
+        description: ACE_INHIBITOR or ARB for the latest order; null if none.
+      - name: is_ace_inhibitor_contraindicated
+        description: Persisting ACE inhibitor contraindication at any time, or an expiring one in the preceding 12 months.
+      - name: is_arb_contraindicated
+        description: Persisting ARB contraindication at any time, or an expiring one in the preceding 12 months.
+      - name: latest_sglt2_order_date
+        description: Date of the latest SGLT2 inhibitor order; null if none.
+      - name: latest_sglt2_drug
+        description: Drug of the latest SGLT2 inhibitor order; null if none.
+      - name: has_egfr_pair_before_diagnosis
+        description: eGFR measured on two occasions at least 90 days apart with the second within 90 days before the diagnosis date.
+      - name: has_egfr_within_90_days_of_diagnosis
+        description: An eGFR record within 90 days before or after the diagnosis date.
+      - name: has_acr_within_90_days_of_diagnosis
+        description: A urine ACR ratio record within 90 days before or after the diagnosis date.

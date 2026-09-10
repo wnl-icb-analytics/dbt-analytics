@@ -1,0 +1,40 @@
+models:
+  - name: int_diabetes_structured_education_all
+    description: >
+      Diabetes structured education programme records from the PCD clusters
+      DSEP_COD (referred) and NDASEPOFF_COD (offered), one row per observation
+      and cluster, for all people including inactive and deceased.
+      Observations dated after the build date are excluded. Feeds NICE IND88.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: DSEP_COD, NDASEPOFF_COD
+            source: PCD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - id
+              - source_cluster_id
+    columns:
+      - name: id
+        description: Source observation identifier; one row per observation and cluster.
+        data_tests:
+          - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the record.
+      - name: record_type
+        description: REFERRED or OFFERED.
+        data_tests:
+          - not_null
+      - name: concept_code
+        description: SNOMED code of the record.
+      - name: concept_display
+        description: Description of the record.
+      - name: source_cluster_id
+        description: Cluster that matched the code.
