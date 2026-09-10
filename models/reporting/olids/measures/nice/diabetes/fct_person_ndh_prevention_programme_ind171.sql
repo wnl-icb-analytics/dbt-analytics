@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND171: https://www.nice.org.uk/indicators/ind171
--- Referral to the NHS Diabetes Prevention Programme for adults newly diagnosed with non-diabetic hyperglycaemia in the preceding 12 months, excluding unresolved diabetes.
+-- Referral (made or declined) to the NHS Diabetes Prevention Programme for adults newly diagnosed with non-diabetic hyperglycaemia in the preceding 12 months, excluding unresolved diabetes.
 WITH indicator_population AS (
     SELECT
         ndh.person_id,
@@ -24,7 +24,8 @@ referral AS (
     INNER JOIN {{ ref('int_referral_ndpp_all') }} AS dpp
         ON population.person_id = dpp.person_id
         AND dpp.clinical_effective_date::DATE >= population.diagnosis_date
-        AND LOWER(dpp.concept_display) NOT LIKE '%declin%'
+        -- Referral made or declined counts, as NICE includes declined referrals; an invitation does not
+        AND dpp.concept_code IN ('1025321000000109', '1025301000000100')
     GROUP BY population.person_id
 ),
 

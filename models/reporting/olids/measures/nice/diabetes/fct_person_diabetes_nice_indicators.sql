@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 -- Common long-form interface for the NICE diabetes, NDH and gestational diabetes indicator views.
--- IND165, IND135 and IND136 carry no frailty exclusion, so latest_frailty_severity is null for them.
+-- IND165, IND135 and IND136 carry no frailty exclusion but still report latest_frailty_severity.
 {% set indicator_models = [
     'fct_person_diabetes_hba1c_ind179',
     'fct_person_diabetes_hba1c_ind180',
