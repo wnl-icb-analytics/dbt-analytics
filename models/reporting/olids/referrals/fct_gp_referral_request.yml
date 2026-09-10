@@ -1,127 +1,156 @@
 models:
-  - name: fct_gp_referral_request
-    description: >-
-      GP referral requests recorded in OLIDS, with one row per source referral
-      request ID. The OLIDS stable feed restricts referrals to NCL publishing
-      practices and patients in its filtered patient spine, then retains the
-      latest version per referral ID by source transform time and recorded time.
-      Staging excludes deleted records and records without a person ID.
-      The fact includes every retained staging referral and adds no
-      current-registration, direction or date restriction.
-      Clinical effective date and its recorded precision describe the referral;
-      date recorded and source transform time have separate meanings.
-      Referring, receiving and publishing organisations retain distinct roles.
-      Organisation names describe the current retained organisation lookup,
-      not necessarily the name when the referral was made. Unmatched organisations
-      leave null attributes without removing the referral. Codes and displays
-      for recorded concepts are resolved upstream through the dbt-olids enriched
-      concept map. They remain separate from mapped referral terminology, which
-      can include upstream repairs and backfills. The fact preserves these
-      stable-feed values without an additional terminology mapping or label replacement.
-      Encounter and booking
-      references are source-recorded links; they do not prove a consultation or
-      that later activity in another system resulted from this referral.
-    config:
-      meta:
-        owner:
-          name: EddieDavison92
+- name: fct_gp_referral_request
+  description: Patient referrals from OLIDS, one row per conformed referral ID. Includes expanded observations
+    matching <<3457005 |Patient referral (procedure)| and supported historical successor mappings, as
+    prepared in dbt-OLIDS. All non-referral source content remains in observations. The NCL stable feed
+    excludes deleted records and missing person IDs. This fact retains every staging referral without
+    a current-registration, direction or date restriction. Original referral IDs remain unchanged; added
+    observation referrals have namespaced IDs and no inferred direction, destination or priority. observation_id
+    links the same record in expanded observations and prevents double counting. referral_snomed_code
+    and its latest preferred label explain inclusion; recorded and mapped concepts remain separate. Organisation
+    labels describe current retained lookups. Provider means the organisation on the observation, not
+    the referral destination. Clinical date precision limits interpretation of the timestamp. Recorded
+    encounter and booking links do not establish attendance or causality.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.equal_rowcount:
+      arguments:
+        compare_model: ref('stg_olids_referral_request')
+  columns:
+  - name: source_record_id
+    description: Conformed OLIDS referral ID. Qualifying original referral IDs remain unchanged; added
+      observation referrals use namespaced IDs.
     data_tests:
-      - dbt_utils.equal_rowcount:
-          arguments:
-            compare_model: ref('stg_olids_referral_request')
-    columns:
-      - name: source_record_id
-        description: OLIDS referral_request.id. Stable referral key and standard source_record_id for joins from shared healthcare records.
-        data_tests:
-          - not_null
-          - unique
-      - name: person_id
-        description: Recorded OLIDS person identifier. Supports person-level context without restricting referrals to current registrations.
-      - name: sk_patient_id
-        description: Current canonical cross-system patient key from dim_person_pseudo for the recorded person. Null when that person has no key in the dimension; the referral remains available.
-      - name: patient_id
-        description: Patient record identifier supplied on the referral. Distinct from the person-level cross-system key.
-      - name: encounter_id
-        description: Source-recorded encounter identifier. An encounter can represent administrative activity and is not proof of a GP consultation.
-      - name: practitioner_id
-        description: Practitioner identifier supplied on the referral. No practitioner identity is inferred when absent.
-      - name: unique_booking_reference_number
-        description: Booking reference supplied by OLIDS, retained unchanged. A populated value alone does not establish an e-RS or acute-record match.
-      - name: clinical_effective_date
-        description: Source clinical effective date/time, retained unchanged. Interpret alongside the recorded precision; missing or implausible values are not corrected here.
-      - name: date_recorded
-        description: Date/time the referral was recorded in the source. Not a substitute for clinical effective date.
-      - name: mode
-        description: Referral mode as supplied by OLIDS. No local or national classification is inferred.
-      - name: is_outgoing_referral
-        description: Source flag for outgoing referral direction. Null means no flag was supplied, not an incoming referral.
-      - name: is_review
-        description: Source review flag. Null means no flag was supplied.
-      - name: referring_organisation_id
-        description: Recorded requester organisation ID, identifying the organisation making the referral.
-      - name: referring_organisation_code
-        description: Current retained organisation code for the requester. Use its assigning authority to interpret the code; null for a missing or unmatched lookup.
-      - name: referring_organisation_code_authority
-        description: Authority that assigned the referring organisation code, as supplied by OLIDS.
-      - name: referring_organisation_name
-        description: Current retained name of the requester organisation; null if unavailable.
-      - name: receiving_organisation_id
-        description: Recorded recipient organisation ID, identifying the intended receiver. Does not prove receipt or attendance.
-      - name: receiving_organisation_code
-        description: Current retained organisation code for the recipient. Use its assigning authority to interpret the code; null for a missing or unmatched lookup.
-      - name: receiving_organisation_code_authority
-        description: Authority that assigned the receiving organisation code, as supplied by OLIDS.
-      - name: receiving_organisation_name
-        description: Current retained name of the recipient organisation; null if unavailable.
-      - name: publisher_organisation_id
-        description: Recorded organisation publishing the referral record. It is not assumed to be the referring, receiving or care-delivering organisation.
-      - name: publisher_organisation_code
-        description: Current retained organisation code matched through publisher_organisation_id. Null for a missing or unmatched lookup.
-      - name: publisher_organisation_code_authority
-        description: Authority that assigned the publisher organisation code, as supplied by OLIDS.
-      - name: publisher_organisation_name
-        description: Current retained name of the publishing organisation; null if unavailable.
-      - name: source_publisher_organisation_code
-        description: Publisher code stored directly on the referral, retained separately from the organisation-ID lookup so differences remain visible.
-      - name: referral_request_source_concept_id
-        description: Concept identifier describing the referral, as recorded by OLIDS.
-      - name: referral_code
-        description: Code for the recorded referral concept, resolved upstream through the dbt-olids enriched concept map. Preserved without an additional lookup here.
-      - name: referral_name
-        description: Display for the recorded referral concept, resolved upstream through the enriched concept map. Not a historical snapshot of text on the referral; null when unavailable.
-      - name: referral_coding_system
-        description: Source coding system supplied by the upstream enriched concept map for referral_code. No national meaning is inferred for local codes.
-      - name: mapped_concept_code
-        description: Mapped referral code supplied by the OLIDS stable feed after dbt-olids terminology enrichment, which can repair or backfill mappings. Retained separately from referral_code; no additional mapping is applied here.
-      - name: mapped_concept_coding_system
-        description: Target coding system supplied by the upstream enriched concept map for mapped_concept_code. Not inferred by this fact.
-      - name: mapped_concept_display
-        description: Mapped referral display supplied by the OLIDS stable feed after upstream terminology enrichment; null when unavailable.
-      - name: referral_request_priority_source_concept_id
-        description: Concept identifier for referral priority, as recorded by OLIDS.
-      - name: priority_code
-        description: Code for the recorded priority concept, resolved upstream through the enriched concept map without reclassification in this fact.
-      - name: priority_name
-        description: Display for the recorded priority concept, resolved upstream through the enriched concept map; null when unavailable.
-      - name: referral_request_specialty_source_concept_id
-        description: Concept identifier for referral specialty, as recorded by OLIDS.
-      - name: specialty_code
-        description: Code for the recorded specialty concept, resolved upstream through the enriched concept map. No national specialty mapping is added here.
-      - name: specialty_name
-        description: Display for the recorded specialty concept, resolved upstream through the enriched concept map; null when unavailable.
-      - name: referral_request_type_source_concept_id
-        description: Concept identifier for referral type, as recorded by OLIDS.
-      - name: referral_type_code
-        description: Code for the recorded referral type concept, resolved upstream through the enriched concept map without reclassification in this fact.
-      - name: referral_type_name
-        description: Display for the recorded referral type concept, resolved upstream through the enriched concept map; null when unavailable.
-      - name: clinical_effective_date_precision_source_concept_id
-        description: Concept identifier for clinical date precision, as recorded by OLIDS.
-      - name: clinical_date_precision_code
-        description: Code for the recorded date-precision concept, resolved upstream through the enriched concept map. No additional timestamp precision is inferred.
-      - name: clinical_date_precision_name
-        description: Display for the recorded date-precision concept, resolved upstream through the enriched concept map; null when unavailable.
-      - name: source_transform_datetime
-        description: LDS transformation timestamp supplied on the referral. Delivery metadata, not clinical event time.
-      - name: lds_source_record_id
-        description: LDS source record identifier retained for provenance, distinct from the referral key source_record_id.
+    - not_null
+    - unique
+  - name: person_id
+    description: Recorded OLIDS person identifier. Supports person-level context without restricting referrals
+      to current registrations.
+  - name: sk_patient_id
+    description: Current canonical cross-system patient key from dim_person_pseudo for the recorded person.
+      Null when that person has no key in the dimension; the referral remains available.
+  - name: patient_id
+    description: Patient record identifier supplied on the referral. Distinct from the person-level cross-system
+      key.
+  - name: encounter_id
+    description: Recorded encounter ID. Join to encounters on both encounter_id = id and person_id; recorded
+      links can disagree on person. An encounter can represent administrative activity and does not prove
+      a consultation.
+  - name: practitioner_id
+    description: Practitioner identifier supplied on the referral. No practitioner identity is inferred
+      when absent.
+  - name: unique_booking_reference_number
+    description: Booking reference supplied by OLIDS, retained unchanged. A populated value alone does
+      not establish an e-RS or acute-record match.
+  - name: clinical_effective_date
+    description: Source clinical effective date/time, retained unchanged. Interpret alongside the recorded
+      precision; missing or implausible values are not corrected here.
+  - name: date_recorded
+    description: Date/time the referral was recorded in the source. Not a substitute for clinical effective
+      date.
+  - name: mode
+    description: Referral mode as supplied by OLIDS. No local or national classification is inferred.
+  - name: is_outgoing_referral
+    description: Source flag for outgoing referral direction. Null means no flag was supplied, not an
+      incoming referral.
+  - name: is_review
+    description: Source review flag. Null means no flag was supplied.
+  - name: referring_organisation_id
+    description: Recorded requester organisation ID, identifying the organisation making the referral.
+  - name: referring_organisation_code
+    description: Current retained organisation code for the requester. Use its assigning authority to
+      interpret the code; null for a missing or unmatched lookup.
+  - name: referring_organisation_code_authority
+    description: Authority that assigned the referring organisation code, as supplied by OLIDS.
+  - name: referring_organisation_name
+    description: Current retained name of the requester organisation; null if unavailable.
+  - name: receiving_organisation_id
+    description: Recorded recipient organisation ID, identifying the intended receiver. Does not prove
+      receipt or attendance.
+  - name: receiving_organisation_code
+    description: Current retained organisation code for the recipient. Use its assigning authority to
+      interpret the code; null for a missing or unmatched lookup.
+  - name: receiving_organisation_code_authority
+    description: Authority that assigned the receiving organisation code, as supplied by OLIDS.
+  - name: receiving_organisation_name
+    description: Current retained name of the recipient organisation; null if unavailable.
+  - name: publisher_organisation_id
+    description: Recorded organisation publishing the referral record. It is not assumed to be the referring,
+      receiving or care-delivering organisation.
+  - name: publisher_organisation_code
+    description: Current retained organisation code matched through publisher_organisation_id. Null for
+      a missing or unmatched lookup.
+  - name: publisher_organisation_code_authority
+    description: Authority that assigned the publisher organisation code, as supplied by OLIDS.
+  - name: publisher_organisation_name
+    description: Current retained name of the publishing organisation; null if unavailable.
+  - name: source_publisher_organisation_code
+    description: Publisher code stored directly on the referral, retained separately from the organisation-ID
+      lookup so differences remain visible.
+  - name: referral_request_source_concept_id
+    description: Concept identifier describing the referral, as recorded by OLIDS.
+  - name: referral_code
+    description: Code for the recorded referral concept, resolved upstream through the dbt-olids enriched
+      concept map. Preserved without an additional lookup here.
+  - name: referral_name
+    description: Display for the recorded referral concept, resolved upstream through the enriched concept
+      map. Not a historical snapshot of text on the referral; null when unavailable.
+  - name: referral_coding_system
+    description: Source coding system supplied by the upstream enriched concept map for referral_code.
+      No national meaning is inferred for local codes.
+  - name: mapped_concept_code
+    description: Mapped referral code supplied by the OLIDS stable feed after dbt-olids terminology enrichment,
+      which can repair or backfill mappings. Retained separately from referral_code; no additional mapping
+      is applied here.
+  - name: mapped_concept_coding_system
+    description: Target coding system supplied by the upstream enriched concept map for mapped_concept_code.
+      Not inferred by this fact.
+  - name: mapped_concept_display
+    description: Mapped referral display supplied by the OLIDS stable feed after upstream terminology
+      enrichment; null when unavailable.
+  - name: referral_request_priority_source_concept_id
+    description: Concept identifier for referral priority, as recorded by OLIDS.
+  - name: priority_code
+    description: Code for the recorded priority concept, resolved upstream through the enriched concept
+      map without reclassification in this fact.
+  - name: priority_name
+    description: Display for the recorded priority concept, resolved upstream through the enriched concept
+      map; null when unavailable.
+  - name: referral_request_type_source_concept_id
+    description: Concept identifier for referral type, as recorded by OLIDS.
+  - name: referral_type_code
+    description: Code for the recorded referral type concept, resolved upstream through the enriched concept
+      map without reclassification in this fact.
+  - name: referral_type_name
+    description: Display for the recorded referral type concept, resolved upstream through the enriched
+      concept map; null when unavailable.
+  - name: clinical_effective_date_precision_source_concept_id
+    description: Concept identifier for clinical date precision, as recorded by OLIDS.
+  - name: clinical_date_precision_code
+    description: Code for the recorded date-precision concept, resolved upstream through the enriched
+      concept map. No additional timestamp precision is inferred.
+  - name: clinical_date_precision_name
+    description: Display for the recorded date-precision concept, resolved upstream through the enriched
+      concept map; null when unavailable.
+  - name: source_transform_datetime
+    description: LDS transformation timestamp supplied on the referral. Delivery metadata, not clinical
+      event time.
+  - name: lds_source_record_id
+    description: LDS source record identifier retained for provenance, distinct from the referral key
+      source_record_id.
+  - name: observation_id
+    description: Expanded observation ID for the same clinical record. Do not count it again when combining
+      referrals and observations.
+  - name: referral_snomed_code
+    description: Source or mapped SNOMED code supporting inclusion under the conformed referral definition.
+  - name: referral_snomed_name
+    description: Latest preferred SNOMED label, including supported historical codes.
+  - name: provider_organisation_id
+    description: Provider organisation recorded on the observation. Distinct from the receiving organisation.
+  - name: provider_organisation_code
+    description: Current retained organisation code for the recorded observation provider.
+  - name: provider_organisation_name
+    description: Current retained provider name; null when absent or blank.

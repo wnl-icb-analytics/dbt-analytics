@@ -44,8 +44,6 @@ select
     referral_request_priority_source_display,
     referral_request_type_source_code,
     referral_request_type_source_display,
-    referral_request_specialty_source_code,
-    referral_request_specialty_source_display,
 
     -- Metadata
     lds_is_deleted,

@@ -1,5 +1,11 @@
 select
     r.id as source_record_id,
+    r.observation_id,
+    r.referral_snomed_code,
+    r.referral_snomed_name,
+    r.provider_organisation_id,
+    provider.organisation_code as provider_organisation_code,
+    nullif(trim(provider.name), '') as provider_organisation_name,
     r.person_id,
     p.sk_patient_id,
     r.patient_id,
@@ -18,7 +24,7 @@ select
     r.recipient_organisation_id as receiving_organisation_id,
     receiving.organisation_code as receiving_organisation_code,
     receiving.organisation_code_assigning_authority as receiving_organisation_code_authority,
-    receiving.name as receiving_organisation_name,
+    nullif(trim(receiving.name), '') as receiving_organisation_name,
     r.publisher_organisation_id,
     publisher.organisation_code as publisher_organisation_code,
     publisher.organisation_code_assigning_authority as publisher_organisation_code_authority,
@@ -34,9 +40,6 @@ select
     r.referral_request_priority_source_concept_id,
     r.referral_request_priority_source_code as priority_code,
     r.referral_request_priority_source_display as priority_name,
-    r.referral_request_specialty_source_concept_id,
-    r.referral_request_specialty_source_code as specialty_code,
-    r.referral_request_specialty_source_display as specialty_name,
     r.referral_request_type_source_concept_id,
     r.referral_request_type_source_code as referral_type_code,
     r.referral_request_type_source_display as referral_type_name,
@@ -54,3 +57,5 @@ left join {{ ref('stg_olids_organisation') }} as receiving
     on r.recipient_organisation_id = receiving.id
 left join {{ ref('stg_olids_organisation') }} as publisher
     on r.publisher_organisation_id = publisher.id
+left join {{ ref('stg_olids_organisation') }} as provider
+    on r.provider_organisation_id = provider.id

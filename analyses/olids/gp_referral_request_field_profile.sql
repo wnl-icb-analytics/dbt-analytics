@@ -36,9 +36,6 @@ with stats as (
         'referral_request_priority_source_concept_id', object_construct('populated', count(referral_request_priority_source_concept_id), 'blank', count_if(trim(referral_request_priority_source_concept_id::varchar) = '')),
         'priority_code', object_construct('populated', count(priority_code), 'blank', count_if(trim(priority_code::varchar) = '')),
         'priority_name', object_construct('populated', count(priority_name), 'blank', count_if(trim(priority_name::varchar) = '')),
-        'referral_request_specialty_source_concept_id', object_construct('populated', count(referral_request_specialty_source_concept_id), 'blank', count_if(trim(referral_request_specialty_source_concept_id::varchar) = '')),
-        'specialty_code', object_construct('populated', count(specialty_code), 'blank', count_if(trim(specialty_code::varchar) = '')),
-        'specialty_name', object_construct('populated', count(specialty_name), 'blank', count_if(trim(specialty_name::varchar) = '')),
         'referral_request_type_source_concept_id', object_construct('populated', count(referral_request_type_source_concept_id), 'blank', count_if(trim(referral_request_type_source_concept_id::varchar) = '')),
         'referral_type_code', object_construct('populated', count(referral_type_code), 'blank', count_if(trim(referral_type_code::varchar) = '')),
         'referral_type_name', object_construct('populated', count(referral_type_name), 'blank', count_if(trim(referral_type_name::varchar) = '')),
@@ -46,7 +43,13 @@ with stats as (
         'clinical_date_precision_code', object_construct('populated', count(clinical_date_precision_code), 'blank', count_if(trim(clinical_date_precision_code::varchar) = '')),
         'clinical_date_precision_name', object_construct('populated', count(clinical_date_precision_name), 'blank', count_if(trim(clinical_date_precision_name::varchar) = '')),
         'source_transform_datetime', object_construct('populated', count(source_transform_datetime), 'blank', count_if(trim(source_transform_datetime::varchar) = '')),
-        'lds_source_record_id', object_construct('populated', count(lds_source_record_id), 'blank', count_if(trim(lds_source_record_id::varchar) = ''))
+        'lds_source_record_id', object_construct('populated', count(lds_source_record_id), 'blank', count_if(trim(lds_source_record_id::varchar) = '')),
+        'observation_id', object_construct('populated', count(observation_id), 'blank', count_if(trim(observation_id::varchar) = '')),
+        'referral_snomed_code', object_construct('populated', count(referral_snomed_code), 'blank', count_if(trim(referral_snomed_code::varchar) = '')),
+        'referral_snomed_name', object_construct('populated', count(referral_snomed_name), 'blank', count_if(trim(referral_snomed_name::varchar) = '')),
+        'provider_organisation_id', object_construct('populated', count(provider_organisation_id), 'blank', count_if(trim(provider_organisation_id::varchar) = '')),
+        'provider_organisation_code', object_construct('populated', count(provider_organisation_code), 'blank', count_if(trim(provider_organisation_code::varchar) = '')),
+        'provider_organisation_name', object_construct('populated', count(provider_organisation_name), 'blank', count_if(trim(provider_organisation_name::varchar) = ''))
     ) as field_counts
     from {{ ref('fct_gp_referral_request') }}
 )

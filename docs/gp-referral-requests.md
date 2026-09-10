@@ -1,88 +1,58 @@
 # GP referral requests
 
-`fct_gp_referral_request` contains one row per retained OLIDS referral request.
-`source_record_id` is the original `referral_request.id`, used for direct joins.
-The upstream stable feed restricts referrals to NCL publishing practices and
-patients in its filtered patient spine. It retains the latest version per
-referral ID, ordered by source transform time and then recorded time. Staging
-excludes deleted records and records without `person_id`. The fact retains every
-staging referral and adds no current-registration, referral-direction or date
-restriction. It does not contain every historical version of each referral.
+`REPORTING.OLIDS_REFERRALS.FCT_GP_REFERRAL_REQUEST` has one row per conformed
+OLIDS referral ID. It follows the patient-referral definition prepared in
+dbt-OLIDS from expanded observations using `<<3457005 |Patient referral (procedure)|`
+and supported historical successor mappings. Non-referral content stays in
+observations. No terminology server is queried when building or reading this fact.
 
-The landing referral record supplies concept identifiers. In `dbt-olids`,
-`conformed_referral_request` joins `int_enriched_concept_map` to resolve codes
-and displays for the recorded referral, priority, specialty, type and date
-precision concepts. These are upstream reference values, not historical
-snapshots of text on the referral. The fact preserves them as supplied by the
-stable feed.
+Use `observation_id` to find the same clinical record in observations. Counting
+both independently would double count it. Original referral IDs remain unchanged;
+added observation referrals have namespaced IDs. The referral SNOMED code and its
+latest preferred label explain inclusion. Recorded and mapped concepts remain
+available separately.
 
-Mapped referral code, display and coding system remain separate. The upstream
-enriched map can replace retired SNOMED targets, repair root targets and backfill
-missing EMIS mappings. Those results are already present in the stable feed;
-this fact applies no additional mapping or label replacement. Shared terminology
-processing remains in `dbt-olids`.
+`person_id` is consistent across OLIDS practice registrations. `patient_id` belongs
+to the practice patient record. `sk_patient_id` is the shared pseudonymised NHS-number
+key from the person dimension. A missing key does not remove the referral.
 
-Requester, recipient and publisher identify different organisation roles. Their
-names and codes come from the current retained OLIDS organisation lookup. They
-are not historical organisation attributes. The publisher code recorded on the
-referral remains separate so discrepancies can be investigated.
+Requester, recipient, publisher and observation provider have different roles.
+The observation provider is not an inferred referral destination. Current retained
+organisation names may differ from historical names. Specialty is omitted because
+the source does not populate it. Added observation referrals have no inferred
+recipient, priority or direction.
 
-`sk_patient_id` comes from the established person pseudonym dimension. Referrals
-without a matching key remain in the fact. Encounter IDs and booking references
-are recorded links. Neither proves that a consultation occurred or caused later
-activity in another system. Clinical date precision remains as supplied; this
-model does not infer timestamp precision or repair implausible dates.
+## Recorded links and dates
 
-## Coverage checked on 8 September 2026
+Join encounters on both `encounter_id = id` and `person_id`. The profile found
+473 recorded encounter links with a different person and five absent encounters.
+The fact preserves source IDs and does not use them to import another person's
+encounter details. A matching encounter is not proof of a consultation.
 
-The DEV build retained all 23,590,546 staged referrals, with no missing or extra
-keys and no differences in the source fields published by the fact. The staging
-extension left its original column values and row count unchanged.
+Booking references remain as supplied. A link to another system must check the
+recorded reference and patient-key agreement. Similar people and dates do not
+establish a referral pathway.
 
-- 23,588,144 referrals have a cross-system patient key; 2,402 remain unlinked.
-- 3,259,744 have a non-blank booking reference. No cross-source match is inferred.
-- No referral currently supplies an encounter ID or specialty concept ID.
-- 23,587,061 have a clinical effective date.
-- All referrals have source referral and date-precision displays. All 5,386,757
-  recorded priority and type concepts have source displays.
-- All referrals with recorded referring or publishing organisation IDs have
-  names. Of 5,386,757 referrals with a receiving organisation ID, 512 have no
-  retained organisation name.
+Interpret `clinical_effective_date` with its precision code and label. Partial
+dates do not prove a specific day. Recorded time and source transformation time
+are separate fields. Implausible supplied dates remain visible.
 
-These are source and lookup coverage limits. They do not justify dropping records
-or inventing links. Counts change as the underlying sources refresh.
+## Validation on 10 September 2026
 
-The reproducible aggregate check is
-[`gp_referral_request_validation.sql`](../analyses/olids/gp_referral_request_validation.sql).
-It returns counts only, including source reconciliation, recorded encounter
-coverage, encounter person-key disagreements, booking references and labels.
-Run it through `dbt show --target dev -s gp_referral_request_validation --output json`.
-The fact's permanent tests check a non-null unique referral key and equal row count
-with its staging input.
+The DEV fact has 22,133,989 rows and distinct IDs. It preserves every staging
+referral and source value checked by `gp_referral_request_validation`, with no
+missing, extra or changed rows. The two models and six tests passed.
 
+- All referrals have an observation link, referral SNOMED code and label, and
+  date-precision code and label.
+- 22,131,110 have clinical dates; 30 precede 1900 and seven are future dates.
+- 322,728 have recorded encounter links and 3,104,336 have booking references.
+- 5,098,950 have recorded priority and type, all labelled.
+- All recorded requester and observation-provider IDs have names. Of 5,098,950
+  recipient IDs, 506 have missing or blank names; blank names are exposed as null.
+- 14,131 referrals lack a patient key in the shared DEV person dimension. This
+  depends on the dimension refresh and does not remove those referrals.
+- All 49 fact columns were profiled for nulls and blanks. No column is entirely null.
 
-## Review on 9 September 2026
-
-A fresh DEV build passed both models and all six tests. The fact now reconciles
-to all 23,634,902 current staging rows, with no missing or extra keys and no
-changed source fields. The earlier DEV table was older than the refreshed
-source; rebuilding removed those comparison differences.
-
-All 46 published fields were profiled. Encounter ID and the three specialty
-fields remain entirely empty. Referral mode contains six text categories, not
-unlabelled numeric codes. The receiving-organisation lookup has 512 absent names
-and seven blank names. There are 409,232 referrals with unknown direction,
-31 clinical dates before 1900 and 14 after the validation date. Source values are
-retained; these dates need explicit treatment before longitudinal sequencing.
-
-The refreshed fact has 13,103 records without a DEV canonical patient key.
-A read-only comparison with the production person dimension leaves 2,471
-without a key. This difference comes from the dimensions' different refresh
-states, not from referrals being dropped by the fact. There are also 24
-populated key differences between those dimension versions. The fact uses the
-configured target's person dimension rather than hardcoding a production join.
-
-The complete-field profile and date diagnostics are retained in
-`analyses/olids/gp_referral_request_field_profile.sql` and
-`analyses/olids/gp_referral_request_quality_profile.sql`. The empty columns and
-blank names remain review findings on the draft analyst interface.
+The aggregate-only queries in `analyses/olids/gp_referral_request_*` can be rerun
+without returning patient records or identifier values.

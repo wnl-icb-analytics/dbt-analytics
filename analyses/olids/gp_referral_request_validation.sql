@@ -6,7 +6,11 @@ with source_reconciliation as (
         count_if(r.id is not null and f.source_record_id is null) as missing_referrals,
         count_if(r.id is null and f.source_record_id is not null) as extra_referrals,
         count_if(r.id is not null and f.source_record_id is not null and (
-            r.person_id is distinct from f.person_id
+            r.observation_id is distinct from f.observation_id
+            or r.referral_snomed_code is distinct from f.referral_snomed_code
+            or r.referral_snomed_name is distinct from f.referral_snomed_name
+            or r.provider_organisation_id is distinct from f.provider_organisation_id
+            or r.person_id is distinct from f.person_id
             or r.patient_id is distinct from f.patient_id
             or r.encounter_id is distinct from f.encounter_id
             or r.practitioner_id is distinct from f.practitioner_id
@@ -24,7 +28,6 @@ with source_reconciliation as (
             or r.mapped_concept_code is distinct from f.mapped_concept_code
             or r.mapped_concept_display is distinct from f.mapped_concept_display
             or r.referral_request_priority_source_concept_id is distinct from f.referral_request_priority_source_concept_id
-            or r.referral_request_specialty_source_concept_id is distinct from f.referral_request_specialty_source_concept_id
             or r.referral_request_type_source_concept_id is distinct from f.referral_request_type_source_concept_id
             or r.clinical_effective_date_precision_source_concept_id is distinct from f.clinical_effective_date_precision_source_concept_id
             or r.source_code is distinct from f.referral_code
@@ -35,8 +38,6 @@ with source_reconciliation as (
             or r.referral_request_priority_source_display is distinct from f.priority_name
             or r.referral_request_type_source_code is distinct from f.referral_type_code
             or r.referral_request_type_source_display is distinct from f.referral_type_name
-            or r.referral_request_specialty_source_code is distinct from f.specialty_code
-            or r.referral_request_specialty_source_display is distinct from f.specialty_name
             or r.date_precision_source_code is distinct from f.clinical_date_precision_code
             or r.date_precision_source_display is distinct from f.clinical_date_precision_name
             or r.lds_transform_datetime is distinct from f.source_transform_datetime
@@ -59,8 +60,6 @@ coverage as (
         count_if(f.referral_name is not null) as labelled_referral_rows,
         count_if(f.referral_request_priority_source_concept_id is not null) as priority_concept_rows,
         count_if(f.priority_name is not null) as labelled_priority_rows,
-        count_if(f.referral_request_specialty_source_concept_id is not null) as specialty_concept_rows,
-        count_if(f.specialty_name is not null) as labelled_specialty_rows,
         count_if(f.referral_request_type_source_concept_id is not null) as type_concept_rows,
         count_if(f.referral_type_name is not null) as labelled_type_rows,
         count_if(f.clinical_effective_date_precision_source_concept_id is not null) as date_precision_concept_rows,
