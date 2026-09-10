@@ -1,10 +1,15 @@
 models:
   - name: fct_person_frailty_register
-    description: 'Frailty register for patients with frailty diagnosis tracking latest
-      severity levels.
-
-      One row per person with FRAILTY_DX present including severity classification
-      (mild, moderate, severe).'
+    description: >
+      Frailty register from coded frailty severity. One row per person with any
+      code in the PCD clusters MILDFRAIL_COD, MODFRAIL_COD or SEVFRAIL_COD, which
+      cover the graded frailty findings and Clinical Frailty Scale levels 4 to 8.
+      latest_frailty_severity is the severity of the most recent coded finding,
+      with the more severe code winning a same-day tie, so GMS contract and NICE
+      measures that split on moderate or severe frailty can read it directly.
+      Frailty has no resolved codes. No age restriction is applied beyond a
+      recorded birth date. Calculated frailty scores such as eFI2 are separate
+      models.
 
     tests:
       - dbt_utils.at_least_one:
@@ -20,20 +25,22 @@ models:
           name_short: "Frailty"
           description_short: "Frailty register with severity stratification (non-QOF)"
           description_long: >
-            Frailty register for persons with any frailty diagnosis. Includes severity  classification
-            (mild, moderate, severe, unknown) based on specific frailty  codes. No
-            age restrictions applied, though frailty is more common in elderly.  No
-            resolution codes as frailty status can fluctuate over time. Latest severity  assessment
-            takes precedence. Used for comprehensive geriatric assessment,  falls
-            prevention, medication review, and care coordination. Uses FRAILTY_DX  cluster
-            codes for all frailty severity levels.
+            Frailty register for persons with a coded frailty severity from the PCD
+            clusters MILDFRAIL_COD, MODFRAIL_COD and SEVFRAIL_COD. Latest coded
+            severity takes precedence. No age restriction and no resolution codes.
+            Used for comprehensive geriatric assessment, falls prevention, medication
+            review, care coordination and frailty-stratified NICE measures.
           is_qof: false
           source_column: "is_on_register"
           sort_order: "COND_GERIAT_FRAILTY"
           usage_contexts:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
           code_clusters:
-            - cluster_id: "FRAILTY_DX"
+            - cluster_id: "MILDFRAIL_COD"
+              category: "INCLUSION"
+            - cluster_id: "MODFRAIL_COD"
+              category: "INCLUSION"
+            - cluster_id: "SEVFRAIL_COD"
               category: "INCLUSION"
 
         owner:
@@ -44,3 +51,30 @@ models:
         tests:
           - unique
           - not_null
+      - name: age
+        description: Age in years at the build date.
+      - name: is_on_register
+        description: Always true; every row is a person with a coded frailty severity.
+      - name: latest_frailty_severity
+        description: Severity of the most recent coded frailty finding. On the same date the more severe code wins, then the higher observation ID.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Mild', 'Moderate', 'Severe']
+      - name: earliest_diagnosis_date
+        description: Earliest coded frailty severity date.
+      - name: latest_diagnosis_date
+        description: Latest coded frailty severity date.
+      - name: mild_frailty_count
+        description: Count of mild frailty codes ever recorded.
+      - name: moderate_frailty_count
+        description: Count of moderate frailty codes ever recorded.
+      - name: severe_frailty_count
+        description: Count of severe frailty codes ever recorded.
+      - name: total_frailty_diagnoses
+        description: Count of coded frailty severity observations ever recorded.
+      - name: all_frailty_concept_codes
+        description: Distinct SNOMED codes recorded, for traceability.
+      - name: all_frailty_concept_displays
+        description: Descriptions of the distinct codes recorded.

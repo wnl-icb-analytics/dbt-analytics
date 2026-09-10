@@ -16,6 +16,8 @@ assessed AS (
     SELECT
         population.person_id,
         population.age,
+        active.current_practice_code,
+        active.current_practice_name,
         bp.latest_bp_date,
         bp.latest_systolic_value,
         bp.latest_diastolic_value,
@@ -23,7 +25,8 @@ assessed AS (
         bp.is_abpm_bp_event,
         bp.applied_measurement_context,
         COALESCE(
-            bp.is_latest_bp_within_recommended_interval,
+            bp.latest_bp_date::DATE
+                BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE(),
             FALSE
         ) AS is_bp_recorded_in_last_12m,
         CASE
@@ -37,6 +40,8 @@ assessed AS (
             ELSE 90
         END AS indicator_diastolic_threshold
     FROM indicator_population AS population
+    INNER JOIN {{ ref('dim_person_active_patients') }} AS active
+        ON population.person_id = active.person_id
     LEFT JOIN {{ ref('fct_person_bp_control') }} AS bp
         ON population.person_id = bp.person_id
 ),
@@ -57,7 +62,10 @@ SELECT
     'IND239' AS indicator_id,
     'Hypertension: blood pressure (79 years and under)' AS indicator_name,
     CURRENT_DATE() AS reporting_date,
+    DATEADD(month, -12, CURRENT_DATE()) AS measurement_period_start,
     age,
+    current_practice_code,
+    current_practice_name,
     'Hypertension' AS condition_name,
     latest_bp_date,
     latest_systolic_value,
@@ -73,8 +81,8 @@ SELECT
     is_bp_recorded_in_last_12m
         AND is_latest_bp_within_indicator_target AS is_in_numerator,
     CASE
-        WHEN NOT is_bp_recorded_in_last_12m THEN 'BP_NOT_RECORDED_IN_LAST_12M'
+        WHEN NOT is_bp_recorded_in_last_12m THEN 'NOT_RECORDED_IN_PERIOD'
         WHEN is_latest_bp_within_indicator_target THEN 'ACHIEVED'
-        ELSE 'BP_ABOVE_TARGET'
+        ELSE 'ABOVE_TARGET'
     END AS indicator_status
 FROM status

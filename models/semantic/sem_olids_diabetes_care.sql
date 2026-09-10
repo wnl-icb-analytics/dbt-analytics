@@ -56,7 +56,11 @@ RELATIONSHIPS(
 
 FACTS(
     cp.care_processes_8_completed AS care_processes_8_completed COMMENT = 'Count of the 8 standard care processes completed in the last 12 months (0-8)',
-    cp.care_processes_9_completed AS care_processes_9_completed COMMENT = 'Count including retinal screening (0-9)'
+    cp.care_processes_9_completed AS care_processes_9_completed COMMENT = 'Count including retinal screening (0-9)',
+    triple.latest_hba1c_value AS latest_hba1c_value COMMENT = 'Latest HbA1c value used for triple-target assessment, in the original recorded unit. Filter or group by hba1c_unit before summarising; do not apply mmol/mol thresholds across mixed units.',
+    triple.latest_systolic AS latest_systolic COMMENT = 'Latest systolic BP in mmHg used for triple-target assessment',
+    triple.latest_diastolic AS latest_diastolic COMMENT = 'Latest diastolic BP in mmHg used for triple-target assessment',
+    triple.latest_chol_value AS latest_chol_value COMMENT = 'Latest total cholesterol in mmol/L used for triple-target assessment'
 )
 
 DIMENSIONS(
@@ -76,7 +80,7 @@ DIMENSIONS(
     cp.retinal_screening_completed_in_last_12m AS retinal_screening_completed_in_last_12m WITH SYNONYMS = ('DM eye screening') COMMENT = 'Retinal screening completed in last 12m (9th care process)',
     cp.all_8_processes_completed AS all_8_processes_completed WITH SYNONYMS = ('all 8 care processes', 'DM 8CP') COMMENT = 'All 8 standard care processes completed in last 12m',
     cp.all_9_processes_completed AS all_9_processes_completed WITH SYNONYMS = ('all 9 care processes', 'DM 9CP') COMMENT = 'All 9 care processes (incl. retinal screening) completed in last 12m',
-    cp.latest_hba1c_date AS latest_hba1c_date COMMENT = 'Date of latest HbA1c',
+    triple.latest_hba1c_date AS latest_hba1c_date COMMENT = 'Date of the latest HbA1c value used for triple-target assessment',
     cp.latest_retinal_screening_date AS latest_retinal_screening_date COMMENT = 'Date of latest retinal screening',
 
     -- Triple target
@@ -85,8 +89,13 @@ DIMENSIONS(
     triple.bp_in_target_range AS bp_in_target_range COMMENT = 'Latest BP <130/80 (NICE diabetes target; FALSE if never measured)',
     triple.cholesterol_in_target_range AS cholesterol_in_target_range COMMENT = 'Latest total cholesterol <5 mmol/L (FALSE if never measured)',
     triple.all_three_targets_met AS all_three_targets_met WITH SYNONYMS = ('triple target') COMMENT = 'All three treatment targets met (latest-ever values)',
+    triple.hba1c_unit AS hba1c_unit COMMENT = 'Unit of the latest HbA1c value used for triple-target assessment',
+    triple.latest_bp_date AS latest_bp_date COMMENT = 'Date of the latest paired BP used for triple-target assessment',
+    triple.latest_chol_date AS latest_chol_date COMMENT = 'Date of the latest total cholesterol used for triple-target assessment',
     triple.hba1c_clinical_category AS hba1c_clinical_category COMMENT = 'HbA1c band: Normal, Prediabetes, Diabetes - At NICE Target, Diabetes - Elevated (within QOF), Diabetes - Above Target, Diabetes - High Risk, or Diabetes - Very High Risk.',
     triple.hba1c_measured_in_last_12m AS hba1c_measured_in_last_12m COMMENT = 'HbA1c recorded in last 12m (triple-target model)',
+    triple.bp_measured_in_last_12m AS bp_measured_in_last_12m COMMENT = 'Paired BP used for triple-target assessment was recorded in the last 12 months',
+    triple.cholesterol_measured_in_last_12m AS cholesterol_measured_in_last_12m COMMENT = 'Total cholesterol used for triple-target assessment was recorded in the last 12 months',
     triple.hba1c_recent_but_out_of_range AS hba1c_recent_but_out_of_range COMMENT = 'HbA1c measured in 12m but target not met',
     triple.bp_recent_but_out_of_range AS bp_recent_but_out_of_range COMMENT = 'BP measured in 12m but target not met',
     triple.cholesterol_recent_but_out_of_range AS cholesterol_recent_but_out_of_range COMMENT = 'Cholesterol measured in 12m but target not met',
@@ -155,6 +164,6 @@ METRICS(
     foot.permanently_exempt_count AS COUNT(DISTINCT CASE WHEN foot.is_permanently_exempt THEN foot.person_id END) COMMENT = 'People permanently exempt from foot checks'
 )
 
-COMMENT = 'OLIDS Diabetes Care Semantic View - care-process completion (8 + 9 with retinal), triple treatment targets, and foot-check detail for the diabetes register. Grain: one row per person on the diabetes register (QOF, age >=17). 12-month windows are rolling from build date. Register includes inactive/deceased persons — filter is_active = TRUE. Biomarker values (HbA1c, BP readings) live in sem_olids_observations.'
-AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is person grain; filter is_active = TRUE for current cohorts. Example: SELECT borough_resident, AGG(dm_register_count), AGG(all_8_count) FROM SEM_OLIDS_DIABETES_CARE WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce the diabetes cohort here and appointments in sem_olids_appointments before joining. Completion rate is AGG(all_8_count) / AGG(dm_register_count) (per-process AGG(*_done_count) over AGG(dm_register_count)). Targets are latest-ever values; use *_recent_but_out_of_range for recently-measured-but-out-of-range cohorts. For foot-check care-process reporting prefer the cp foot_check_completed_in_last_12m flag; use the foot model only for risk-level and exemption detail (its recency window uses month-boundary arithmetic and can differ slightly). The 12-month windows are relative to the build date, not the QOF year end.'
-AI_QUESTION_CATEGORIZATION 'Use this view for: diabetes 8/9 care processes, care-process gaps, retinal screening, foot checks and foot risk (Townson), triple target (HbA1c/BP/cholesterol), and diabetes care quality by practice/PCN/deprivation/ethnicity. For raw biomarker values and control categories use sem_olids_observations. For diabetes prevalence and type use sem_olids_population. For diabetes medications use sem_olids_prescribing.'
+COMMENT = 'OLIDS Diabetes Care Semantic View - care-process completion (8 + 9 with retinal), triple treatment targets with their matching latest measurement evidence, and foot-check detail for the diabetes register. Grain: one row per person on the diabetes register (QOF, age >=17). 12-month windows are rolling from build date. Register includes inactive/deceased persons — filter is_active = TRUE. Broader biomarker history and clinical categories live in sem_olids_observations and sem_olids_observations_history.'
+AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is person grain; filter is_active = TRUE for current cohorts. Example: SELECT borough_resident, AGG(dm_register_count), AGG(all_8_count) FROM SEM_OLIDS_DIABETES_CARE WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce the diabetes cohort here and appointments in sem_olids_appointments before joining. Completion rate is AGG(all_8_count) / AGG(dm_register_count) (per-process AGG(*_done_count) over AGG(dm_register_count)). Triple-target flags and the latest measurement evidence use the latest-ever values. latest_hba1c_value is in the original recorded hba1c_unit; filter or group by unit before summarising it, and do not apply mmol/mol cut-offs across mixed units. Check the three *_measured_in_last_12m flags before describing target achievement as recent; use *_recent_but_out_of_range for recently measured care gaps. For foot-check care-process reporting prefer the cp foot_check_completed_in_last_12m flag; use the foot model only for risk-level and exemption detail (its recency window uses month-boundary arithmetic and can differ slightly). The 12-month windows are relative to the build date, not the QOF year end.'
+AI_QUESTION_CATEGORIZATION 'Use this view for: diabetes 8/9 care processes, care-process gaps, retinal screening, foot checks and foot risk (Townson), triple target status and its matching latest HbA1c/BP/cholesterol evidence, and diabetes care quality by practice/PCN/deprivation/ethnicity. For broader latest biomarker analysis use sem_olids_observations; for serial readings use sem_olids_observations_history. For diabetes prevalence and type use sem_olids_population. For diabetes medications use sem_olids_prescribing.'

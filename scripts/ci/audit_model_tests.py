@@ -67,9 +67,10 @@ def main() -> int:
         if 'dbt_packages' in str(sql_file):
             continue
 
-        # Skip raw/ layer - tests not required
+        # Match check_model_tests.sh: raw models do not need tests, and Snowflake
+        # semantic views cannot be queried by ordinary SELECT-based data tests.
         path_str = str(sql_file).replace('\\', '/')
-        if '/raw/' in path_str:
+        if '/raw/' in path_str or path_str.startswith('models/semantic/'):
             continue
 
         files_checked += 1

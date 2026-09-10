@@ -1,0 +1,71 @@
+models:
+  - name: fct_person_nice_indicator_status
+    description: >
+      Person-level status for the NICE indicator measures in OLIDS_MEASURES that
+      emit the shared contract, in one long-form table. One row per person and
+      indicator on the current reporting date, for currently registered, living, non-test people in each
+      indicator's population. Carries only the shared columns; the family unions
+      and single-indicator measures hold indicator-specific detail such as
+      readings, thresholds and provenance. Join def_indicator on indicator_id
+      for names, categories and thresholds. Personalised care adjustments are
+      not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type 1
+      opt-out filtering.
+
+      New measures feed this model by emitting the shared columns and being
+      added to its model list; a measure missing from the list is not detected
+      by tests. Count-based measures such as the diabetes care processes are
+      outside this contract.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier, matching def_indicator. tests/nice_indicator_status_ids_defined.sql checks every id has a definition.
+        data_tests:
+          - not_null
+      - name: indicator_name
+        description: Published NICE indicator name.
+      - name: reporting_date
+        description: Build date on which eligibility and the measurement period are assessed.
+      - name: measurement_period_start
+        description: Inclusive start of the indicator's measurement period; the length depends on the indicator.
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded.
+      - name: current_practice_code
+        description: ODS code of the current registration practice.
+      - name: current_practice_name
+        description: Name of the current registration practice.
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments.
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date.
+      - name: indicator_status
+        description: >
+          ACHIEVED when in the numerator; otherwise the reason: ABOVE_TARGET,
+          NOT_RECORDED_IN_PERIOD, NOT_ASSESSABLE, NOT_TREATED_IN_PERIOD,
+          NEVER_TREATED, VKA_WITHOUT_DOAC_EXCEPTION or DOAC_WHERE_VKA_INDICATED.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - ACHIEVED
+                  - ABOVE_TARGET
+                  - NOT_RECORDED_IN_PERIOD
+                  - NOT_ASSESSABLE
+                  - NOT_TREATED_IN_PERIOD
+                  - NEVER_TREATED
+                  - VKA_WITHOUT_DOAC_EXCEPTION
+                  - DOAC_WHERE_VKA_INDICATED

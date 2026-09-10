@@ -1,0 +1,348 @@
+models:
+  - name: fct_person_lipid_lowering_therapy_ind230
+    description: >
+      NICE IND230 lipid-lowering therapy for secondary prevention. One row per
+      currently registered, living, non-test person on the CHD, stroke/TIA or PAD
+      register without a history of haemorrhagic stroke, assessed on the build
+      date. The numerator requires a counted lipid-lowering order in the six
+      months up to the reporting date. Counted classes are defined in
+      int_lipid_lowering_therapy_latest. Personalised care adjustments are not
+      applied. Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED
+      to apply National Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind230
+        indicator:
+          id: "IND230"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CVD lipid-lowering therapy"
+          description_short: "Lipid-lowering therapy prescribed in the preceding 6 months for people with CVD"
+          description_long: "NICE IND230 before personalised care adjustments. Excludes any history of haemorrhagic stroke."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND230"
+    columns: &indicator_columns
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the treatment window
+      - name: measurement_period_start
+        description: Inclusive start of the six-month treatment window, six calendar months before the reporting date
+      - name: age
+        description: Age in years on the reporting date
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_lipid_lowering_order_date
+        description: Date of the most recent counted lipid-lowering order; null if never treated
+      - name: latest_lipid_lowering_class
+        description: Class of the most recent counted order; null if never treated
+      - name: latest_lipid_lowering_product
+        description: BNF product name of the most recent counted order; null if never treated
+      - name: is_latest_lipid_lowering_statin
+        description: Whether the most recent counted order contains a statin; null if never treated
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether a counted lipid-lowering order falls in the six-month window
+      - name: indicator_status
+        description: ACHIEVED, NOT_TREATED_IN_PERIOD or NEVER_TREATED
+
+  - name: fct_person_lipid_lowering_therapy_ind231
+    description: >
+      NICE IND231 lipid-lowering therapy in CKD. One row per currently registered,
+      living, non-test person on the CKD register without a history of
+      haemorrhagic stroke, assessed on the build date. The numerator requires a
+      counted lipid-lowering order in the six months up to the reporting date.
+      Personalised care adjustments are not applied. Secondary-use consumers must
+      join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and
+      Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind231
+        indicator:
+          id: "IND231"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CKD lipid-lowering therapy"
+          description_short: "Lipid-lowering therapy prescribed in the preceding 6 months for people on the CKD register"
+          description_long: "NICE IND231 before personalised care adjustments. Excludes any history of haemorrhagic stroke."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND231"
+    columns: *indicator_columns
+
+  - name: fct_person_lipid_lowering_therapy_ind276
+    description: >
+      NICE IND276 lipid-lowering therapy for secondary prevention in diabetes. One
+      row per currently registered, living, non-test person on the diabetes
+      register and the CHD, stroke/TIA or PAD register, without a history of
+      haemorrhagic stroke, assessed on the build date. The numerator requires a
+      counted lipid-lowering order in the six months up to the reporting date.
+      Personalised care adjustments are not applied. Secondary-use consumers must
+      join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and
+      Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind276
+        indicator:
+          id: "IND276"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "Diabetes with CVD lipid-lowering therapy"
+          description_short: "Lipid-lowering therapy prescribed in the preceding 6 months for people with diabetes and CVD"
+          description_long: "NICE IND276 before personalised care adjustments. Excludes any history of haemorrhagic stroke."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND276"
+    columns: *indicator_columns
+
+  - name: fct_person_lipid_lowering_therapy_ind277
+    description: >
+      NICE IND277 lipid-lowering therapy in type 1 diabetes. One row per currently
+      registered, living, non-test person on the diabetes register whose
+      register type is Type 1, aged over 40 on the build date, without a history
+      of haemorrhagic stroke. Register type follows the diabetes register's
+      precedence rule, so a person coded with both types counts as Type 1. The numerator requires a counted lipid-lowering
+      order in the six months up to the reporting date. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type 1
+      opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind277
+        indicator:
+          id: "IND277"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "T1DM lipid-lowering therapy"
+          description_short: "Lipid-lowering therapy prescribed in the preceding 6 months for people with type 1 diabetes aged over 40"
+          description_long: "NICE IND277 before personalised care adjustments. Excludes any history of haemorrhagic stroke."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND277"
+    columns: *indicator_columns
+
+  - name: fct_person_lipid_lowering_therapy_ind229
+    description: >
+      NICE IND229 lipid-lowering therapy for primary prevention. One row per
+      currently registered, living, non-test person aged 25 to 84 whose last
+      recorded valid QRISK score is 10% or more and who has no established CVD
+      (CHD or PAD register, or stroke/TIA register without haemorrhagic stroke
+      history), assessed on the build date. The numerator requires a counted
+      lipid-lowering order in the six months up to the reporting date.
+      Personalised care adjustments are not applied. Secondary-use consumers
+      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
+      Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind229
+        indicator:
+          id: "IND229"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "Primary prevention lipid-lowering therapy"
+          description_short: "Lipid-lowering therapy prescribed in the preceding 6 months for people with a CVD risk score of 10% or more and no CVD"
+          description_long: "NICE IND229 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND229"
+    columns: *indicator_columns
+
+  - name: fct_person_lipid_lowering_therapy_ind274
+    description: >
+      NICE IND274 lipid-lowering therapy in type 2 diabetes with raised risk.
+      One row per currently registered, living, non-test person aged 25 to 84
+      with type 2 diabetes on the register, any valid QRISK score of 10% or more recorded in the preceding 12 months, no established CVD and no moderate
+      or severe coded frailty, assessed on the build date. The numerator
+      requires a counted lipid-lowering order in the six months up to the
+      reporting date. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind274
+        indicator:
+          id: "IND274"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "T2DM primary prevention lipid-lowering therapy"
+          description_short: "Lipid-lowering therapy prescribed in the preceding 6 months for people with type 2 diabetes and a recent CVD risk score of 10% or more"
+          description_long: "NICE IND274 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND274"
+    columns: *indicator_columns
+
+  - name: fct_person_lipid_lowering_therapy_ind275
+    description: >
+      NICE IND275 lipid-lowering therapy in diabetes aged 40 and over. One row
+      per currently registered, living, non-test person aged 40 and over on
+      the diabetes register with no established CVD and no moderate or severe
+      coded frailty, assessed on the build date. People with type 2 diabetes with any valid QRISK score below 10% in the preceding 3 years are excluded, as NICE specifies; people with no score stay in. The numerator requires a counted lipid-
+      lowering order in the six months up to the reporting date. Personalised
+      care adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind275
+        indicator:
+          id: "IND275"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "Diabetes over 40 lipid-lowering therapy"
+          description_short: "Lipid-lowering therapy prescribed in the preceding 6 months for people with diabetes aged 40 and over without CVD"
+          description_long: "NICE IND275 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND275"
+    columns: *indicator_columns
+
+  - name: fct_person_lipid_lowering_therapy_ind287
+    description: >
+      NICE IND287 lipid-lowering therapy after a new diagnosis. One row per
+      currently registered, living, non-test person aged 25 to 84 whose
+      earliest hypertension diagnosis or earliest type 2 diabetes code falls
+      in the preceding 12 months and any valid QRISK score of 10% or more in that period, assessed on the build date. Excludes established
+      CVD, CKD, familial hypercholesterolaemia and type 1 diabetes. The
+      numerator requires a counted lipid-lowering order in the six months up
+      to the reporting date. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind287
+        indicator:
+          id: "IND287"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "New hypertension or T2DM lipid-lowering therapy"
+          description_short: "Lipid-lowering therapy prescribed in the preceding 6 months for people newly diagnosed with hypertension or type 2 diabetes and a CVD risk score of 10% or more"
+          description_long: "NICE IND287 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND287"
+    columns: *indicator_columns
+
+  - name: fct_person_lipid_lowering_therapy_nice_indicators
+    description: >
+      NICE IND230, IND231, IND276, IND277, IND229, IND274, IND275 and IND287 lipid-lowering therapy status in a
+      common interface. One row per person and indicator on the current reporting
+      date. Indicator-specific views remain the source of each population
+      definition. Feeds fct_person_nice_indicator_status. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data
+      Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+      - name: indicator_id
+        description: NICE indicator identifier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IND230', 'IND231', 'IND276', 'IND277', 'IND229', 'IND274', 'IND275', 'IND287']
+      - name: indicator_status
+        description: ACHIEVED, NOT_TREATED_IN_PERIOD or NEVER_TREATED
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_TREATED_IN_PERIOD', 'NEVER_TREATED']
+
+  - name: fct_person_lipid_lowering_therapy_nice_indicators_snapshot_input
+    description: >
+      Thin snapshot-input projection of the lipid-lowering therapy indicator
+      union: person, indicator, current practice, latest counted order and
+      outcome. Excludes reporting_date and measurement_period_start, which advance
+      on every build, so the SCD2 snapshot versions only on genuine changes. Feeds
+      fct_person_lipid_lowering_therapy_nice_indicators_snapshot.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: latest_lipid_lowering_order_date
+        description: Date of the most recent counted order; null if never treated.
+      - name: latest_lipid_lowering_class
+        description: Class of the most recent counted order.
+      - name: is_in_numerator
+        description: Whether a counted order falls in the six-month window at the build.
+      - name: indicator_status
+        description: Outcome label at the build.

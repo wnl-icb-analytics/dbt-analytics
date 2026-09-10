@@ -21,12 +21,10 @@ SELECT
     is_ckd_indicator,
     original_result_value
 
-FROM (
-    {{ get_latest_events(
-        ref('int_egfr_all'),
-        partition_by=['person_id'],
-        order_by='clinical_effective_date'
-    ) }}
-) latest_egfr
+FROM {{ ref('int_egfr_all') }}
 
 WHERE is_valid_egfr = TRUE
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY person_id
+    ORDER BY clinical_effective_date DESC, id DESC
+) = 1

@@ -1,0 +1,44 @@
+{{
+    config(
+        description="Raw layer: Prepared clinical record from dbt-OLIDS.. 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE.OLIDS.CLINICAL_RECORD \ndbt: source(''olids'', ''CLINICAL_RECORD'') \nColumns:\n  CLINICAL_RECORD_ID -> clinical_record_id\n  SOURCE_RECORD_TYPE -> source_record_type\n  SOURCE_RECORD_ID -> source_record_id\n  PERSON_ID -> person_id\n  PATIENT_ID -> patient_id\n  SK_PATIENT_ID -> sk_patient_id\n  ENCOUNTER_ID -> encounter_id\n  CLINICAL_RECORD_DATE -> clinical_record_date\n  CLINICAL_DATE_PRECISION_CODE -> clinical_date_precision_code\n  CLINICAL_DATE_PRECISION_NAME -> clinical_date_precision_name\n  DATE_RECORDED -> date_recorded\n  SOURCE_CODE -> source_code\n  SOURCE_CODE_NAME -> source_code_name\n  SOURCE_CODING_SYSTEM -> source_coding_system\n  MAPPED_CODE -> mapped_code\n  MAPPED_CODE_NAME -> mapped_code_name\n  MAPPED_CODING_SYSTEM -> mapped_coding_system\n  RESULT_VALUE -> result_value\n  RESULT_DATE -> result_date\n  RESULT_UNIT_SOURCE_CODE -> result_unit_source_code\n  RESULT_UNIT_SOURCE_NAME -> result_unit_source_name\n  MEDICATION_NAME -> medication_name\n  MEDICATION_DOSE -> medication_dose\n  MEDICATION_QUANTITY_VALUE -> medication_quantity_value\n  MEDICATION_QUANTITY_UNIT -> medication_quantity_unit\n  MEDICATION_DURATION_DAYS -> medication_duration_days\n  MEDICATION_AUTHORISATION_TYPE_CODE -> medication_authorisation_type_code\n  MEDICATION_AUTHORISATION_TYPE_NAME -> medication_authorisation_type_name\n  PROVIDER_ORGANISATION_ID -> provider_organisation_id\n  PUBLISHER_ORGANISATION_ID -> publisher_organisation_id\n  PUBLISHER_ORGANISATION_CODE -> publisher_organisation_code\n  PRACTITIONER_ID -> practitioner_id\n  SOURCE_EXTRACTION_DATE -> source_extraction_date\n  PROVIDER_ORGANISATION_CODE -> provider_organisation_code\n  PROVIDER_CODE_AUTHORITY -> provider_code_authority\n  PROVIDER_ORGANISATION_NAME -> provider_organisation_name\n  PUBLISHER_ORGANISATION_NAME -> publisher_organisation_name"
+    )
+}}
+select
+    "CLINICAL_RECORD_ID" as clinical_record_id,
+    "SOURCE_RECORD_TYPE" as source_record_type,
+    "SOURCE_RECORD_ID" as source_record_id,
+    "PERSON_ID" as person_id,
+    "PATIENT_ID" as patient_id,
+    "SK_PATIENT_ID" as sk_patient_id,
+    "ENCOUNTER_ID" as encounter_id,
+    "CLINICAL_RECORD_DATE" as clinical_record_date,
+    "CLINICAL_DATE_PRECISION_CODE" as clinical_date_precision_code,
+    "CLINICAL_DATE_PRECISION_NAME" as clinical_date_precision_name,
+    "DATE_RECORDED" as date_recorded,
+    "SOURCE_CODE" as source_code,
+    "SOURCE_CODE_NAME" as source_code_name,
+    "SOURCE_CODING_SYSTEM" as source_coding_system,
+    "MAPPED_CODE" as mapped_code,
+    "MAPPED_CODE_NAME" as mapped_code_name,
+    "MAPPED_CODING_SYSTEM" as mapped_coding_system,
+    "RESULT_VALUE" as result_value,
+    "RESULT_DATE" as result_date,
+    "RESULT_UNIT_SOURCE_CODE" as result_unit_source_code,
+    "RESULT_UNIT_SOURCE_NAME" as result_unit_source_name,
+    "MEDICATION_NAME" as medication_name,
+    "MEDICATION_DOSE" as medication_dose,
+    "MEDICATION_QUANTITY_VALUE" as medication_quantity_value,
+    "MEDICATION_QUANTITY_UNIT" as medication_quantity_unit,
+    "MEDICATION_DURATION_DAYS" as medication_duration_days,
+    "MEDICATION_AUTHORISATION_TYPE_CODE" as medication_authorisation_type_code,
+    "MEDICATION_AUTHORISATION_TYPE_NAME" as medication_authorisation_type_name,
+    "PROVIDER_ORGANISATION_ID" as provider_organisation_id,
+    "PUBLISHER_ORGANISATION_ID" as publisher_organisation_id,
+    "PUBLISHER_ORGANISATION_CODE" as publisher_organisation_code,
+    "PRACTITIONER_ID" as practitioner_id,
+    "SOURCE_EXTRACTION_DATE" as source_extraction_date,
+    "PROVIDER_ORGANISATION_CODE" as provider_organisation_code,
+    "PROVIDER_CODE_AUTHORITY" as provider_code_authority,
+    "PROVIDER_ORGANISATION_NAME" as provider_organisation_name,
+    "PUBLISHER_ORGANISATION_NAME" as publisher_organisation_name
+from {{ source('olids', 'CLINICAL_RECORD') }}

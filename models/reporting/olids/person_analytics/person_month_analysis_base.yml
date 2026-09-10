@@ -1,46 +1,28 @@
 models:
   - name: person_month_analysis_base
-    description: 'Analysis foundation table providing person-months with demographics and condition flags for population health analytics.
-
-      Grain: One row per person per month (active registrations only, last 60 months)
-
-      Key Features:
-
-      • Person-month grain for time-series analysis
-
-      • Demographics from dim_person_demographics_historical via temporal SCD-2 join
-
-      • Age calculated dynamically for each analysis month using calculate_age_attributes macro
-
-      • Condition flags for all major long-term conditions (has_* and new_* flags)
-
-      • New episode detection for incidence analysis
-
-      • UK financial year and quarter dimensions
-
-      Inclusion Criteria:
-
-      • Must have active registration during the month (from dim_person_historical_practice)
-
-      • Must have valid birth_date_approx (inherited from dim_person_demographics_historical)
-
-      • Must have registration history (inherited from dim_person_demographics_historical)
-
-      • Limited to last 60 months (5-year rolling window)
-
-      Known Limitations:
-
-      • Address/geographic fields use current address for all historical months (address SCD dates not yet populated)
-
-      Purpose: Supports population health reporting and clinical quality indicators. Incremental processing handles new months whilst full refresh captures late-arriving data.'
+    description: >-
+      Demographics and condition flags for people registered during completed
+      calendar months, with one row per person and month. A full refresh returns
+      the latest 60 completed months. Includes people whose practice registration
+      overlaps the month and whose demographic history covers its month end.
+      Registration end dates account for death and deregistration upstream.
+      Age is calculated at month end; condition flags record episodes active
+      during the month and episodes that began in it.
+      Daily runs replace the latest completed month and add any missed months.
+      This incorporates late-arriving records and removes people no longer
+      included in a recalculated month. Earlier months retain their previous
+      values until the monthly full refresh, which also removes expired months.
+      The current, incomplete month is not published. Historical geography uses
+      the address available in demographic history; address changes are not
+      reconstructed where upstream history is missing.
     config:
-      tags: ['daily', 'monthly-full']
+      tags: ['daily']
       meta:
         owner:
           name: EddieDavison92
     columns:
       - name: analysis_month
-        description: Month end date for this analysis period
+        description: Completed calendar month-end date. The latest month is recalculated daily and can change as records arrive or are corrected.
 
       - name: person_id
         description: Unique person identifier
@@ -183,8 +165,8 @@ models:
       - name: pcn_name_with_borough
         description: PCN name including borough
 
-      - name: post_code_hash
-        description: Hashed postcode for privacy (current address used for all months)
+      - name: postcode_hash
+        description: Hashed residential postcode
 
       - name: uprn_hash
         description: Hashed UPRN for privacy
@@ -227,12 +209,6 @@ models:
 
       - name: period_sequence
         description: Sequence number for SCD2 periods
-
-      - name: is_current_period
-        description: Whether this is the current period
-
-      - name: age_changes_in_period
-        description: Whether age changes in this period
 
       - name: has_ast
         description: Had active asthma this month
@@ -390,7 +366,7 @@ models:
       - name: has_any_new_episode
         description: Whether person has any new episode this month
 
-    tests:
+    data_tests:
       # Data quality tests
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -447,7 +423,7 @@ models:
 
       # Practice must exist for active registrations
           arguments:
-            expression: "analysis_month <= CURRENT_DATE()"
+            expression: "analysis_month < DATE_TRUNC('month', CURRENT_DATE())"
       - dbt_utils.not_null_proportion:
           column_name: practice_name
           arguments:

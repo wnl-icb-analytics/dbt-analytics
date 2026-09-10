@@ -1,14 +1,18 @@
 models:
   - name: pds_olids_practice_discrepancies_secondary_use
     description: |
-      Published view showing practices with significant discrepancies (>=20%) between
-      PDS and OLIDS registration counts.
+      One row per practice with a significant discrepancy (>=20%) between current
+      PDS and OLIDS registration counts, as defined by
+      int_pds_olids_practice_registration_comparison. An empty view is valid when
+      no practices meet this threshold.
 
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
+    columns:
+      - name: practice_code
+        description: GP practice ODS code.
+        data_tests:
+          - not_null
+          - unique

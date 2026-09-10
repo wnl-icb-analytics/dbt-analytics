@@ -57,6 +57,7 @@ select
     , a.standardised_snomed_finding_code
     , mapped_snomed_finding.preferred_term as standardised_snomed_finding_description
     , a.observation_scheme_code
+    , a.is_observation_scheme_inferred
     , observation_scheme.description as observation_scheme_description
     , a.observation_code
     , observation.preferred_term as observation_description
@@ -75,7 +76,10 @@ select
         as standardised_snomed_observation_description
     , a.observation_value
     , a.unit_of_measurement_code
-    , unit_of_measurement.unit_name as unit_of_measurement_description
+    , unit_of_measurement.description as unit_of_measurement_description
+    , unit_of_measurement.unit_symbol as unit_of_measurement_symbol
+    , unit_of_measurement.match_type as unit_of_measurement_match_type
+    , unit_of_measurement.definition_source as unit_of_measurement_definition_source
     , case
         when a.unit_of_measurement_code is null then 'code_missing'
         when unit_of_measurement.code is null then 'code_unmatched'
@@ -138,7 +142,7 @@ left join {{ ref('mhsds_care_activity_code_lookup') }} as finding_scheme
     on upper(trim(a.finding_scheme_code)) = finding_scheme.code
     and finding_scheme.code_set_name = 'finding_scheme'
 left join {{ ref('stg_dictionary_dbo_diagnosis') }} as icd10_finding
-    on upper(replace(trim(a.finding_code), '.', '')) = upper(icd10_finding.code)
+    on {{ clean_icd10_code('upper(trim(a.finding_code))') }} = upper(icd10_finding.code)
     and a.finding_scheme_code = '01'
 left join {{ ref('stg_dictionary_snomed_concept') }} as snomed_finding
     on trim(a.finding_code) = snomed_finding.snomed_code
@@ -153,8 +157,8 @@ left join {{ ref('stg_dictionary_snomed_concept') }} as observation
 left join {{ ref('stg_dictionary_snomed_concept') }} as mapped_snomed_observation
     on trim(a.standardised_snomed_observation_code)
         = mapped_snomed_observation.snomed_code
-left join {{ ref('unit_of_measurement') }} as unit_of_measurement
-    on upper(trim(a.unit_of_measurement_code)) = unit_of_measurement.code
+left join {{ ref('clinical_unit_of_measurement') }} as unit_of_measurement
+    on trim(a.unit_of_measurement_code) = unit_of_measurement.code
 left join {{ ref('stg_mhsds_service_or_team_details') }} as td
     on coalesce(c.other_care_prof_team_local_id, c.care_prof_team_local_id)
         = td.care_prof_team_local_id

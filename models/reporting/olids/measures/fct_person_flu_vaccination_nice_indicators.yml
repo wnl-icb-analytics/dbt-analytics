@@ -1,0 +1,256 @@
+models:
+  - name: fct_person_flu_vaccination_ind131
+    description: >
+      NICE IND131 flu vaccination in coronary heart disease. One row per
+      currently registered, living, non-test person on the CHD register,
+      assessed on the build date, excluding a flu vaccination contraindication
+      recorded in the preceding 12 months. The season window is the preceding 1 August to 31 March, read as the most recently completed season so the figure is stable through the year; measurement_period_start is that season's 1 August. Vaccination comes from the flu campaign status model.
+      Personalised care adjustments are not applied. Secondary-use consumers
+      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
+      Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind131
+        indicator:
+          id: "IND131"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "CHD flu vaccination"
+          description_short: "Flu vaccination in the most recent completed season for people with coronary heart disease"
+          description_long: "NICE IND131 before personalised care adjustments. Contraindication exclusion applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND131"
+    columns: &flu_columns
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_vaccination_date
+        description: Latest vaccination date in the season window; null when none
+      - name: is_laiv
+        description: Whether a vaccination in the window was the live attenuated nasal vaccine; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+
+  - name: fct_person_flu_vaccination_ind141
+    description: >
+      NICE IND141 flu vaccination in COPD. One row per currently registered,
+      living, non-test person on the COPD register, assessed on the build
+      date, excluding a flu vaccination contraindication recorded in the
+      preceding 12 months. NICE gives no period for the IND141 contraindication; the 12-month reading of IND131 and IND163 is applied. The season window is the preceding 1 August to 31 March, read as the most recently completed season so the figure is stable through the year; measurement_period_start is that season's 1 August.
+      Vaccination comes from the flu campaign status model. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind141
+        indicator:
+          id: "IND141"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "COPD flu vaccination"
+          description_short: "Flu vaccination in the most recent completed season for people with COPD"
+          description_long: "NICE IND141 before personalised care adjustments. Contraindication exclusion applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND141"
+    columns: *flu_columns
+
+  - name: fct_person_flu_vaccination_ind152
+    description: >
+      NICE IND152 flu vaccination in long-term conditions. One row per
+      currently registered, living, non-test person on the CHD, stroke/TIA,
+      diabetes or COPD register, assessed on the build date. The season window is the preceding 1 August to 31 March, read as the most recently completed season so the figure is stable through the year; measurement_period_start is that season's 1 August. Vaccination comes from the flu
+      campaign status model. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind152
+        indicator:
+          id: "IND152"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "LTC flu vaccination"
+          description_short: "Flu vaccination in the most recent completed season for people with CHD, stroke/TIA, diabetes or COPD"
+          description_long: "NICE IND152 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND152"
+    columns: *flu_columns
+
+  - name: fct_person_flu_vaccination_ind163
+    description: >
+      NICE IND163 flu vaccination in diabetes. One row per currently
+      registered, living, non-test person on the diabetes register, assessed
+      on the build date, excluding a flu vaccination contraindication recorded
+      in the preceding 12 months. The season window is the preceding 1 August to 31 March, read as the most recently completed season so the figure is stable through the year; measurement_period_start is that season's 1 August.
+      Vaccination comes from the flu campaign status model. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind163
+        indicator:
+          id: "IND163"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "Diabetes flu vaccination"
+          description_short: "Flu vaccination in the most recent completed season for people with diabetes"
+          description_long: "NICE IND163 before personalised care adjustments. Contraindication exclusion applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND163"
+    columns: *flu_columns
+
+  - name: fct_person_flu_vaccination_ind164
+    description: >
+      NICE IND164 flu vaccination after stroke or TIA. One row per currently
+      registered, living, non-test person on the stroke/TIA register, assessed
+      on the build date. The season window is the preceding 1 August to 31 March, read as the most recently completed season so the figure is stable through the year; measurement_period_start is that season's 1 August.
+      Vaccination comes from the flu campaign status model. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind164
+        indicator:
+          id: "IND164"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "Stroke/TIA flu vaccination"
+          description_short: "Flu vaccination in the most recent completed season for people with stroke or TIA"
+          description_long: "NICE IND164 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND164"
+    columns: *flu_columns
+
+  - name: fct_person_flu_vaccination_nice_indicators
+    description: >
+      NICE IND131, IND141, IND152, IND163 and IND164 flu vaccination status in
+      a common interface. One row per person and indicator on the current
+      reporting date. Indicator-specific views remain the source of each
+      population definition. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering. Feeds
+      fct_person_nice_indicator_status.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+      - name: indicator_id
+        description: NICE indicator identifier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IND131', 'IND141', 'IND152', 'IND163', 'IND164']
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+      - name: latest_vaccination_date
+        description: Latest vaccination date in the season window; null when none
+      - name: is_laiv
+        description: Whether a vaccination in the window was the nasal vaccine
+      - name: latest_record_date
+        description: Date of the latest vaccination in the season; null when none
+
+  - name: fct_person_flu_vaccination_nice_indicators_snapshot_input
+    description: >
+      Thin snapshot-input projection of
+      fct_person_flu_vaccination_nice_indicators: person, indicator, current
+      practice, latest qualifying record and outcome. Excludes reporting_date
+      and measurement_period_start, which advance on every build, so the SCD2
+      snapshot versions only on genuine changes. Feeds
+      fct_person_flu_vaccination_nice_indicators_snapshot.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.
+      - name: latest_vaccination_date
+        description: Latest vaccination date in the season at the build.

@@ -1,0 +1,68 @@
+models:
+  - name: int_cvd_risk_profile
+    description: >
+      Per-person cardiovascular risk profile for the NICE primary-prevention and
+      risk assessment indicators. One row per person in dim_person, including
+      inactive and deceased people. Holds the latest valid QRISK score, the
+      highest score ever, the latest risk assessment record (scored or not), and
+      the register, frailty, lipid-therapy, smoking, obesity and cholesterol
+      facts the indicators use for denominators and exclusions. Established CVD
+      follows NICE: CHD or PAD register, or stroke/TIA register without
+      haemorrhagic stroke history. Consumers apply their own windows and join
+      dim_person_active_patients.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: latest_risk_score
+        description: Latest valid QRISK 10-year risk score in percent; null if none.
+      - name: latest_risk_score_date
+        description: Date of the latest valid QRISK score.
+      - name: latest_risk_score_type
+        description: QRISK, QRISK2 or QRISK3 for the latest score.
+      - name: max_risk_score_ever
+        description: Highest valid QRISK score ever recorded in percent.
+      - name: max_risk_score_12m
+        description: Highest valid QRISK score in the 12 months to the build date; null if none.
+      - name: min_risk_score_36m
+        description: Lowest valid QRISK score in the 36 months to the build date; null if none.
+      - name: latest_risk_assessment_date
+        description: Date of the latest CVD risk assessment record, scored or not.
+      - name: has_cvd
+        description: On the CHD or PAD register, or the stroke/TIA register without haemorrhagic stroke history.
+      - name: has_familial_hypercholesterolaemia
+        description: On the familial hypercholesterolaemia register.
+      - name: has_ckd
+        description: On the CKD register (stage 3 to 5 by code).
+      - name: has_diabetes
+        description: On the diabetes register.
+      - name: has_type1_diabetes
+        description: Diabetes register type is Type 1.
+      - name: has_type2_diabetes
+        description: Diabetes register type is Type 2.
+      - name: earliest_type2_diabetes_date
+        description: Earliest type 2 diabetes code date from the register; null if none.
+      - name: has_hypertension
+        description: On the hypertension register.
+      - name: earliest_hypertension_date
+        description: Earliest hypertension diagnosis date from the register; null if none.
+      - name: latest_frailty_severity
+        description: Latest coded frailty severity; null if none.
+      - name: latest_lipid_lowering_order_date
+        description: Date of the most recent counted lipid-lowering order; null if none.
+      - name: latest_statin_order_date
+        description: Date of the most recent statin order; null if none.
+      - name: is_current_smoker
+        description: Latest smoking status is Current Smoker.
+      - name: has_obesity
+        description: On the obesity register.
+      - name: latest_total_cholesterol
+        description: Latest total cholesterol in mmol/L; null if none.
+      - name: latest_total_cholesterol_date
+        description: Date of the latest total cholesterol result.

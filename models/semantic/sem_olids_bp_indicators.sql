@@ -53,10 +53,10 @@ DIMENSIONS(
     indicators.is_home_bp_event AS is_home_bp_event COMMENT = 'Latest BP was recorded using home monitoring',
     indicators.is_abpm_bp_event AS is_abpm_bp_event COMMENT = 'Latest BP was recorded using ambulatory monitoring',
     indicators.is_in_denominator AS is_in_denominator COMMENT = 'Person is in the indicator denominator before personalised care adjustments; always TRUE on these rows',
-    indicators.is_bp_recorded_in_last_12m AS is_bp_recorded_in_last_12m COMMENT = 'Latest BP is within the shared 12-month recommended interval',
+    indicators.is_bp_recorded_in_last_12m AS is_bp_recorded_in_last_12m COMMENT = 'Latest BP was recorded in the 12 months up to the reporting date',
     indicators.is_latest_bp_within_indicator_target AS is_latest_bp_within_indicator_target COMMENT = 'Latest BP is below both indicator thresholds, regardless of recording date',
     indicators.is_in_numerator AS is_in_numerator COMMENT = 'Recent BP is below both published indicator thresholds',
-    indicators.indicator_status AS indicator_status WITH SYNONYMS = ('achievement status', 'care gap reason') COMMENT = 'ACHIEVED, BP_NOT_RECORDED_IN_LAST_12M, or BP_ABOVE_TARGET',
+    indicators.indicator_status AS indicator_status WITH SYNONYMS = ('achievement status', 'care gap reason') COMMENT = 'ACHIEVED, NOT_RECORDED_IN_PERIOD, or ABOVE_TARGET',
 
     -- Demographics
     demographics.gender AS gender COMMENT = 'Patient gender',
@@ -92,11 +92,11 @@ METRICS(
     indicators.denominator_count AS COUNT(DISTINCT CASE WHEN indicators.is_in_denominator THEN indicators.person_id END) COMMENT = 'People in the selected indicator denominator before personalised care adjustments',
     indicators.numerator_count AS COUNT(DISTINCT CASE WHEN indicators.is_in_numerator THEN indicators.person_id END) COMMENT = 'People achieving the selected indicator',
     indicators.care_gap_count AS COUNT(DISTINCT CASE WHEN indicators.is_in_denominator AND NOT indicators.is_in_numerator THEN indicators.person_id END) COMMENT = 'People not achieving the selected indicator before personalised care adjustments',
-    indicators.bp_not_recorded_count AS COUNT(DISTINCT CASE WHEN indicators.indicator_status = 'BP_NOT_RECORDED_IN_LAST_12M' THEN indicators.person_id END) COMMENT = 'People without a BP in the preceding 12 months',
-    indicators.bp_above_target_count AS COUNT(DISTINCT CASE WHEN indicators.indicator_status = 'BP_ABOVE_TARGET' THEN indicators.person_id END) COMMENT = 'People with a recent BP above the indicator target',
+    indicators.bp_not_recorded_count AS COUNT(DISTINCT CASE WHEN indicators.indicator_status = 'NOT_RECORDED_IN_PERIOD' THEN indicators.person_id END) COMMENT = 'People without a BP in the preceding 12 months',
+    indicators.bp_above_target_count AS COUNT(DISTINCT CASE WHEN indicators.indicator_status = 'ABOVE_TARGET' THEN indicators.person_id END) COMMENT = 'People with a recent BP above the indicator target',
     indicators.achievement_rate AS COUNT(DISTINCT CASE WHEN indicators.is_in_numerator THEN indicators.person_id END) / NULLIF(COUNT(DISTINCT CASE WHEN indicators.is_in_denominator THEN indicators.person_id END), 0) COMMENT = 'Unadjusted indicator achievement rate from 0 to 1'
 )
 
-COMMENT = 'OLIDS NICE Blood Pressure Indicators Semantic View - IND239-246 denominator, achievement and care-gap status by condition, age, measurement context and population characteristics. Grain: one row per person per indicator. Personalised care adjustments are not applied. Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type 1 opt-out filtering.'
+COMMENT = 'OLIDS NICE Blood Pressure Indicators Semantic View - IND239-246 denominator, achievement and care-gap status by condition, age, measurement context and population characteristics. Grain: one row per person per indicator. Personalised care adjustments are not applied.'
 AI_SQL_GENERATION 'Filter indicator_id before using metrics because a person can appear in more than one indicator. Use AGG(achievement_rate), or AGG(numerator_count) / AGG(denominator_count), for the selected indicator. Filter is_active = TRUE for current-population reporting. Do not describe these as final QOF performance because personalised care adjustments are not applied. Example: SELECT indicator_id, borough_registered, AGG(denominator_count), AGG(numerator_count), AGG(achievement_rate) FROM SEM_OLIDS_BP_INDICATORS WHERE is_active = TRUE GROUP BY indicator_id, borough_registered. LINKAGE: first filter to one indicator and reduce to one row per person before joining another semantic view on person_id; never return person_id in final results.'
 AI_QUESTION_CATEGORIZATION 'Use this view for NICE blood pressure indicators IND239-246, hypertension/CHD/stroke-TIA/PAD BP achievement, missing BP care gaps, BP above-target gaps, and inequalities in these measures by practice, PCN, geography, ethnicity or deprivation. For general patient-specific NG136 BP control or raw latest BP values use sem_olids_observations.'

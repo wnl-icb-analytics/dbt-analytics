@@ -1,0 +1,273 @@
+models:
+  - name: fct_person_cvd_risk_assessment_ind269
+    description: >
+      NICE IND269 CVD risk assessment in the general population. One row per
+      currently registered, living, non-test person aged 45 to 84, assessed on
+      the build date, excluding type 1 diabetes, established CVD, familial
+      hypercholesterolaemia, CKD, a counted lipid-lowering order in the
+      preceding 6 months, and a valid QRISK score of 20% or more ever
+      recorded. The numerator requires a CVD risk assessment record in the
+      preceding 5 years. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind269
+        indicator:
+          id: "IND269"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CVD risk assessment, general population"
+          description_short: "CVD risk assessment recorded in the preceding 5 years for people aged 45 to 84 without CVD or lipid-lowering therapy"
+          description_long: "NICE IND269 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND269"
+    columns: &risk_assessment_columns
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_risk_score
+        description: Latest valid QRISK score in percent; null if none
+      - name: latest_risk_score_date
+        description: Date of the latest valid QRISK score
+      - name: latest_risk_assessment_date
+        description: Date of the latest CVD risk assessment record, scored or not
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether a risk assessment falls in the indicator's window
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+
+  - name: fct_person_cvd_risk_assessment_ind270
+    description: >
+      NICE IND270 CVD risk assessment with a modifiable risk factor. One row
+      per currently registered, living, non-test person aged 43 to 84 who is a
+      current smoker, on the obesity or hypertension register, or has a latest
+      total cholesterol above 5 mmol/L, assessed on the build date, with the
+      same exclusions as IND269. NICE does not define hypercholesterolaemia;
+      the 5 mmol/L total cholesterol threshold is a local reading. The
+      numerator requires a CVD risk assessment record in the preceding 3
+      years. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind270
+        indicator:
+          id: "IND270"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CVD risk assessment, modifiable risk factor"
+          description_short: "CVD risk assessment recorded in the preceding 3 years for people aged 43 to 84 with smoking, obesity, hypertension or raised cholesterol"
+          description_long: "NICE IND270 before personalised care adjustments. Hypercholesterolaemia read as total cholesterol above 5 mmol/L."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND270"
+    columns: *risk_assessment_columns
+
+  - name: fct_person_cvd_risk_assessment_ind181
+    description: >
+      NICE IND181 CVD risk assessment in type 2 diabetes. One row per
+      currently registered, living, non-test person aged 25 to 84 with type 2
+      diabetes on the register, no moderate or severe coded frailty and no
+      statin order in the preceding 6 months, assessed on the build date,
+      excluding established CVD, familial hypercholesterolaemia and CKD. The
+      numerator requires a CVD risk assessment record in the preceding 3
+      years. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind181
+        indicator:
+          id: "IND181"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "T2DM CVD risk assessment"
+          description_short: "CVD risk assessment recorded in the preceding 3 years for people with type 2 diabetes not on a statin"
+          description_long: "NICE IND181 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND181"
+    columns: *risk_assessment_columns
+
+  - name: fct_person_cvd_risk_assessment_ind161
+    description: >
+      NICE IND161 CVD risk assessment at a new diagnosis. One row per
+      currently registered, living, non-test person aged 25 to 84 whose
+      earliest hypertension diagnosis or earliest type 2 diabetes code falls
+      in the preceding 12 months, assessed on the build date, excluding
+      established CVD, CKD, familial hypercholesterolaemia and type 1
+      diabetes. The numerator requires a CVD risk assessment record within 3
+      months either side of the earlier qualifying diagnosis date.
+      Personalised care adjustments are not applied. Secondary-use consumers
+      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
+      Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind161
+        indicator:
+          id: "IND161"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "New hypertension or T2DM CVD risk assessment"
+          description_short: "CVD risk assessment within 3 months of a new hypertension or type 2 diabetes diagnosis"
+          description_long: "NICE IND161 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND161"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_risk_score
+        description: Latest valid QRISK score in percent; null if none
+      - name: latest_risk_score_date
+        description: Date of the latest valid QRISK score
+      - name: latest_risk_assessment_date
+        description: Date of the latest CVD risk assessment record, scored or not
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether a risk assessment falls in the indicator's window
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+      - name: new_diagnosis_date
+        description: Earlier of the qualifying hypertension and type 2 diabetes diagnosis dates in the period
+
+  - name: fct_person_cvd_risk_assessment_nice_indicators
+    description: >
+      NICE IND269, IND270, IND181 and IND161 CVD risk assessment status in a
+      common interface. One row per person and indicator on the current
+      reporting date. Indicator-specific views remain the source of each
+      population definition. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering. Feeds
+      fct_person_nice_indicator_status.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+      - name: indicator_id
+        description: NICE indicator identifier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IND269', 'IND270', 'IND181', 'IND161']
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+      - name: latest_risk_score
+        description: Latest valid QRISK score in percent; null if none
+      - name: latest_risk_assessment_date
+        description: Date of the latest CVD risk assessment record
+      - name: new_diagnosis_date
+        description: Earlier qualifying diagnosis date for IND161; null for other indicators
+
+  - name: fct_person_cvd_risk_assessment_nice_indicators_snapshot_input
+    description: >
+      Thin snapshot-input projection of
+      fct_person_cvd_risk_assessment_nice_indicators: person, indicator,
+      current practice, latest score and assessment date, and outcome.
+      Excludes reporting_date and measurement_period_start, which advance on
+      every build, so the SCD2 snapshot versions only on genuine changes.
+      Feeds fct_person_cvd_risk_assessment_nice_indicators_snapshot.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: latest_risk_score
+        description: Latest valid QRISK score in percent.
+      - name: latest_risk_assessment_date
+        description: Date of the latest CVD risk assessment record.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.

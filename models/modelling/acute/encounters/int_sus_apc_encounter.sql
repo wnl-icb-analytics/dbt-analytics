@@ -49,8 +49,11 @@ select
     , core.spell_admission_time as start_time
     , core.spell_discharge_date as end_date
     , core.spell_discharge_time as end_time
+    , core.spell_open_spell_indicator = 1 as is_open_spell
     , core.spell_discharge_length_of_hospital_stay as duration
     , datediff(day, core.spell_admission_date, coalesce(core.spell_discharge_date, current_date)) as duration_to_date -- inefficient? Change to calc only if no end date?
+    , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_unadjusted_days as unadjusted_length_of_stay_days
+    , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_excess_bed_days as excess_bed_days
    
     /* Admission information */
     , core.spell_admission_method as spell_admission_method 

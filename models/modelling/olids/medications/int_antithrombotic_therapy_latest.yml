@@ -1,0 +1,33 @@
+models:
+  - name: int_antithrombotic_therapy_latest
+    description: >
+      Latest antiplatelet (BNF 2.9) and oral anticoagulant (BNF 2.8.2) order per
+      person, one row per person with either class ever ordered, including
+      inactive and deceased people. Orders dated before 1990 or after the build
+      date are ignored. Parenteral anticoagulants are not included. Consumers
+      apply their own recency window; the NICE antithrombotic indicators use 12
+      or 15 months.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person with at least one antiplatelet or oral anticoagulant order.
+        data_tests:
+          - unique
+          - not_null
+      - name: latest_antiplatelet_order_date
+        description: Date of the most recent antiplatelet order; null if never ordered.
+      - name: antiplatelet_order_count
+        description: Number of antiplatelet orders ever.
+      - name: latest_anticoagulant_order_date
+        description: Date of the most recent oral anticoagulant order; null if never ordered.
+      - name: anticoagulant_order_count
+        description: Number of oral anticoagulant orders ever.
+      - name: latest_anticoagulant_type
+        description: Type of the most recent oral anticoagulant order, DOAC or VKA; null if never ordered.
+      - name: latest_doac_order_date
+        description: Date of the most recent DOAC order; null if never ordered.
+      - name: latest_vka_order_date
+        description: Date of the most recent vitamin K antagonist order; null if never ordered.

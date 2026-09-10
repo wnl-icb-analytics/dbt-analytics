@@ -44,7 +44,7 @@ The staging models:
 - [`stg_mhsds_spell.sql`](../models/staging/commissioning/mhsds/stg_mhsds_spell.sql) — one row per hospital spell.
 - [`stg_mhsds_mhs502wardstay.sql`](../models/staging/commissioning/mhsds/stg_mhsds_mhs502wardstay.sql) — ward stays per spell (bed type, dates).
 - [`stg_mhsds_servicetype.sql`](../models/staging/commissioning/mhsds/stg_mhsds_servicetype.sql) — one team type per referral, resolved MHS102 → MHS902 → MHS101-v6 (~23% of referrals only carry the last).
-- [`stg_mhsds_primdiag.sql`](../models/staging/commissioning/mhsds/stg_mhsds_primdiag.sql) — primary diagnosis history by referral and diagnosis timestamp. Repeated source versions and equal-timestamp rows are resolved using the grouper's ordering. ICD-10-coded rows pass through and SNOMED-coded rows map through the UK complex-map refset.
+- [`int_mhsds_currency_primary_diagnosis.sql`](../models/modelling/mental_health/currencies/int_mhsds_currency_primary_diagnosis.sql) holds primary diagnosis history by referral and diagnosis timestamp. Repeated source versions and equal-timestamp rows use the grouper's ordering. ICD-10-coded rows pass through and SNOMED-coded rows map through the UK complex-map refset. The clinical-record fact keeps a broader history and does not apply currency supersession.
 - [`stg_mhsds_mhactperiod.sql`](../models/staging/commissioning/mhsds/stg_mhsds_mhactperiod.sql) — Mental Health Act legal status periods (MHS401).
 - [`stg_mhsds_patientindicators.sql`](../models/staging/commissioning/mhsds/stg_mhsds_patientindicators.sql) — child protection / looked-after status (MHS005).
 - [`stg_mhsds_bridging.sql`](../models/staging/commissioning/mhsds/stg_mhsds_bridging.sql) — person → pseudonymised patient id.

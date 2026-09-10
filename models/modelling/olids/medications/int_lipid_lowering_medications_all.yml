@@ -1,0 +1,90 @@
+models:
+  - name: int_lipid_lowering_medications_all
+    description: >
+      Lipid-regulating medication orders, BNF section 2.12. One row per medication
+      order for any person, including inactive and deceased people. Covers statins,
+      ezetimibe, bempedoic acid, PCSK9 inhibitors, inclisiran, fibrates, bile acid
+      sequestrants, nicotinic acid derivatives and omega-3 products.
+      lipid_lowering_class splits the section by chemical substance so consumers can
+      select the products that count as lipid-lowering therapy for their purpose.
+      Orders dated before 1990 or after the build date are excluded.
+      Previously named int_statin_medications_all; that name described only part of
+      the section it selected.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: medication_order_id
+        description: Medication order identifier; one row per order.
+        data_tests:
+          - unique
+          - not_null
+      - name: medication_statement_id
+        description: Related medication statement identifier.
+      - name: order_date
+        description: Date the medication was ordered. Between 1990-01-01 and the build date.
+        data_tests:
+          - not_null
+      - name: order_medication_name
+        description: Name of medication as ordered.
+      - name: order_dose
+        description: Prescribed dose.
+      - name: order_quantity_value
+        description: Quantity ordered.
+      - name: order_quantity_unit
+        description: Unit of quantity ordered.
+      - name: order_duration_days
+        description: Duration in days.
+      - name: statement_medication_name
+        description: Name from medication statement.
+      - name: mapped_concept_code
+        description: Mapped SNOMED concept code.
+      - name: mapped_concept_display
+        description: Mapped SNOMED concept display name.
+      - name: bnf_code
+        description: BNF product code.
+      - name: bnf_name
+        description: BNF product name.
+      - name: bnf_chemical_code
+        description: First nine characters of the BNF code, identifying the chemical substance.
+      - name: lipid_lowering_class
+        description: >
+          Product class by chemical substance. STATIN, STATIN_COMBINATION (statin with
+          ezetimibe or fenofibrate), EZETIMIBE, BEMPEDOIC_ACID (including with ezetimibe),
+          PCSK9_INHIBITOR, INCLISIRAN, FIBRATE, BILE_ACID_SEQUESTRANT, NICOTINIC_ACID,
+          OMEGA_3, or OTHER for remaining section 2.12 products such as ispaghula husk.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - STATIN
+                  - STATIN_COMBINATION
+                  - EZETIMIBE
+                  - BEMPEDOIC_ACID
+                  - PCSK9_INHIBITOR
+                  - INCLISIRAN
+                  - FIBRATE
+                  - BILE_ACID_SEQUESTRANT
+                  - NICOTINIC_ACID
+                  - OMEGA_3
+                  - OTHER
+      - name: is_statin
+        description: Whether the product contains a statin, alone or in combination.
+      - name: statin_intensity
+        description: >
+          HIGH_INTENSITY (atorvastatin, rosuvastatin), MODERATE_INTENSITY (simvastatin,
+          pravastatin, fluvastatin), COMBINATION (statin combination products) or
+          OTHER_STATIN. Null for non-statin products.
+      - name: is_combination_therapy
+        description: Fixed-dose combination product (statin with ezetimibe or fenofibrate, bempedoic acid with ezetimibe).
+      - name: is_recent_3m
+        description: Order within 90 days before the build date.
+      - name: is_recent_6m
+        description: Order within 180 days before the build date.
+      - name: is_recent_12m
+        description: Order within 365 days before the build date.

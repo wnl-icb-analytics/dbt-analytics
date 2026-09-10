@@ -1,0 +1,40 @@
+version: 2
+models:
+- name: stg_ukhfd_ods_api_organisation
+  description: Full ODS organisation and site definition history, one row per organisation code and UKHFD
+    effective timestamp. Includes closed organisations and revisions absent from the current source delivery.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_register_id
+    description: UKHFD source register identifier used to resolve otherwise tied definition revisions.
+  - name: organisation_code
+    description: ODS organisation or site code, trimmed and upper case.
+  - name: organisation_name
+    description: Organisation or site name in this definition revision.
+  - name: organisation_identifier_root
+    description: Identifier namespace supplied by the ODS API.
+  - name: organisation_assigning_authority_name
+    description: Authority that assigned the organisation identifier.
+  - name: organisation_record_class
+    description: Organisation record class supplied by the ODS API.
+  - name: organisation_status
+    description: Status supplied by the ODS API. Closed organisations remain included.
+  - name: is_in_latest_source
+    description: Whether this revision is present in the latest source delivery.
+  - name: is_latest_definition
+    description: Whether UKHFD marks this as the newest definition for the organisation code.
+  - name: source_last_changed_date
+    description: Date the ODS source record last changed.
+  - name: source_effective_from_at
+    description: Start of this UKHFD definition revision, not the organisation opening date.
+  - name: source_effective_to_at
+    description: End of this UKHFD definition revision; null meaning follows the source.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - organisation_code
+        - source_effective_from_at

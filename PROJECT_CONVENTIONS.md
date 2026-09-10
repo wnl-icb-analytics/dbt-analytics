@@ -220,6 +220,31 @@ it.
   coding systems, maps and code-set definitions such as SNOMED CT, ICD-10,
   OPCS-4, dm+d and BNF.
 
+## Person-level indicator measures
+
+NICE-style indicator measures with a numerator and denominator live in
+`models/reporting/olids/measures/` and share one contract so they roll up into
+`fct_person_nice_indicator_status`. Count-based measures such as the diabetes care
+processes are outside it. A measure is one row per person in the indicator's
+denominator, restricted to currently registered, living, non-test people
+through `dim_person_active_patients`, assessed on the build date. It emits the
+shared columns listed in `fct_person_nice_indicator_status.yml` (`person_id`,
+`indicator_id`, `reporting_date`, `measurement_period_start`, `age`, practice,
+`is_in_denominator`, `is_in_numerator`, `indicator_status`) plus its own
+readings, thresholds and provenance.
+
+`indicator_status` is `ACHIEVED` when the person is in the numerator and
+otherwise one reason token from the accepted values in
+`fct_person_nice_indicator_status.yml`; add a token there before using a new one.
+Prefer applying the measurement window inside the measure, selecting the last
+recorded result within it and leaving an invalid latest result unassessable
+rather than falling back to an older one, as `fct_person_cholesterol_control_ind278`
+does. Name models `fct_person_<subject>_<condition>_indNNN` with a
+`meta.indicator` block, group a family in a `_nice_indicators` union that keeps
+the family's detail columns, and add the family union or single measure to the
+list in `fct_person_nice_indicator_status`. Snapshot a family through a thin
+`_snapshot_input` view that drops the build-date columns.
+
 ## Performance
 
 Performance depends on the data processed by each operation, not the length of
@@ -329,6 +354,15 @@ reviewers must still confirm that it covers the stated key or key combination.
   returned rows as potentially patient-level under the safety rules above.
 
 ## Validate the change
+
+Use the tracked `profiles.yml` and the established `dev` target for local builds.
+The naming macros place models in the existing `DEV__STAGING`, `DEV__REFERENCE`,
+`DEV__MODELLING`, `DEV__REPORTING` and other configured layers. Seeds and other
+shared resources keep their configured locations. DEV is intentionally shared
+and not fully isolated. Do not create task-specific databases, schemas or target
+prefixes, including when working in a Git worktree. Inspect the selected models
+and their dependencies before building; use the existing deferral workflow when
+needed rather than creating another environment.
 
 Build the smallest selection that answers the current question, then widen it
 when the change can affect consumers:

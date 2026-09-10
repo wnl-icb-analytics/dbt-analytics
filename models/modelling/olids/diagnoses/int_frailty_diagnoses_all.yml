@@ -1,47 +1,42 @@
 models:
   - name: int_frailty_diagnoses_all
-    description: 'Frailty diagnosis observations with severity classification for care planning and risk assessment.
-
-      Key Features:
-
-      • Uses FRAILTY_DX cluster for diagnosis identification
-
-      • Classifies severity levels (mild, moderate, severe, unknown)
-
-      • Supports frailty register data collection
-
-      • Enables care planning for frail elderly populations
-
-      Purpose: Provide observation-level data for frailty assessment and intervention tracking.'
+    description: >
+      Coded frailty severity observations, one row per observation for any person.
+      Uses the PCD clusters MILDFRAIL_COD, MODFRAIL_COD and SEVFRAIL_COD, which
+      cover the graded frailty findings and Clinical Frailty Scale levels 4 to 8.
+      Severity is the cluster that matched the code. Generic frailty codes without
+      a grade are not included. Calculated frailty scores such as eFI and eFI2 are
+      not part of this model.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.at_least_one:
           column_name: id
       - cluster_ids_exist:
           arguments:
-            cluster_ids: FRAILTY_DX
+            cluster_ids: MILDFRAIL_COD, MODFRAIL_COD, SEVFRAIL_COD
+            source: PCD
     columns:
       - name: id
-        description: 'Unique identifier for the clinical observation'
+        description: Observation identifier.
         tests:
           - unique
           - not_null
       - name: person_id
-        description: 'Unique identifier for the person'
+        description: Person identifier.
       - name: clinical_effective_date
-        description: 'Date when the frailty observation was recorded'
+        description: Date the frailty observation was recorded.
       - name: concept_code
-        description: 'Clinical code for the frailty diagnosis'
+        description: SNOMED code of the frailty observation.
       - name: concept_display
-        description: 'Human-readable description of the frailty diagnosis'
+        description: Description of the frailty observation.
       - name: source_cluster_id
-        description: 'Source cluster identifier (FRAILTY_DX for frailty diagnoses)'
+        description: PCD cluster that matched the code; determines frailty_severity.
       - name: is_diagnosis_code
-        description: 'Boolean flag indicating diagnosis code (always TRUE for frailty observations)'
+        description: Always true; every row is a coded frailty finding.
       - name: frailty_severity
-        description: 'Severity classification: Mild (925791000000100), Moderate (925831000000107), Severe (925861000000102), or Unknown'
-      - name: frailty_observation_type
-        description: 'Type of frailty observation (always "Frailty Diagnosis")'
+        description: Mild, Moderate or Severe, from the matching cluster.
+        data_tests:
+          - not_null

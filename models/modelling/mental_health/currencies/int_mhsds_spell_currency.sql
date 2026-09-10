@@ -87,7 +87,7 @@ with deduplicated as (
     from base as b
     -- end_date closes orphaned spells at their last submission evidence, so
     -- later-recorded diagnoses cannot reclassify them; open spells fall to today
-    left join {{ ref('stg_mhsds_primdiag') }} as d
+    left join {{ ref('int_mhsds_currency_primary_diagnosis') }} as d
         on b.uniq_serv_req_id = d.uniq_serv_req_id
         and d.coded_diag_timestamp <= coalesce(b.end_date, current_date)
     qualify row_number() over (

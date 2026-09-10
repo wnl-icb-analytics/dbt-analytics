@@ -66,6 +66,7 @@
         o.result_unit_code,
         o.result_unit_display,
         o.result_text,
+        o.allergy_medication_name,
         o.is_problem,
         o.is_review,
         o.problem_end_date,

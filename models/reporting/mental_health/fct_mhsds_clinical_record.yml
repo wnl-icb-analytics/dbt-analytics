@@ -1,0 +1,161 @@
+version: 2
+
+models:
+  - name: fct_mhsds_clinical_record
+    description: >-
+      MHSDS clinical items, one row per retained diagnosis, accepted assessment
+      question or dimension, or populated care-activity component. Includes
+      accepted history, not just current patients. Distinct diagnosis codes
+      and person identifiers remain separate; repeated dated diagnoses use
+      their latest accepted row. Undated diagnoses and all assessment occurrences
+      survive without unsupported deduplication. Assessments are not necessarily
+      whole questionnaires, and clinical items are not encounters. Descriptions
+      include authoritative labels and explicit unmatched states.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: sk_patient_id
+        description: "Warehouse patient key from the established MHSDS bridge; null when no mapping exists."
+      - name: clinical_record_id
+        description: "Identifier of the source occurrence and component type. Logical diagnoses survive reflow under the same person and key; assessment IDs change on replacement submissions."
+      - name: source_record_id
+        description: "Unique clinical-item key for cross-source drill-down to this fact. Equal to clinical_record_id; use originating_source_record_id for the original source occurrence."
+        data_tests: [not_null, unique]
+      - name: clinical_record_type
+        description: "Previous, provisional, primary or secondary diagnosis; referral or activity assessment; procedure, finding or observation."
+      - name: clinical_code
+        description: "Original diagnosis, assessment observable, procedure, finding or observation code."
+      - name: clinical_description
+        description: "Authoritative submitted-code label, or a mapped SNOMED CT label for legacy Read codes. Interpret with clinical_label_status."
+      - name: standardised_snomed_code
+        description: "Source-pipeline master SNOMED CT code, submitted or mapped. Kept separately from the original code."
+      - name: standardised_snomed_description
+        description: "Description of the separately recorded source-pipeline master SNOMED CT code, submitted or mapped."
+      - name: coding_scheme_code
+        description: "Submitted scheme code. Interpret within coding_scheme_kind; diagnosis 02 and finding 01 both mean ICD-10. Null where the specification fixes SNOMED CT."
+      - name: coding_scheme_description
+        description: "Authoritative label for the applicable coding scheme."
+      - name: coding_scheme_kind
+        description: "Which national scheme applies, or fixed_snomed when no submitted scheme is required."
+      - name: clinical_label_status
+        description: "Distinguishes labelled codes, mapped legacy codes, missing codes, unrecognised schemes, unmatched codes or expressions, and coding systems without a local reference. Labels do not establish scheme validity for a submitted MHSDS version."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [labelled, mapped_to_snomed, code_missing, coding_scheme_unrecognised, reference_not_available, code_or_expression_unmatched]
+      - name: clinical_at
+        description: "Stored unzoned clinical timestamp, or date at midnight when only a date is available. Original offsets are unavailable; interpret with time basis, precision and source-date discrepancy flag. This is not disease onset."
+      - name: clinical_date
+        description: "Calendar date of clinical_at. It is not an onset date."
+      - name: clinical_time
+        description: "Stored unzoned time; null when only date precision is known."
+      - name: clinical_time_basis
+        description: "Meaning and source of clinical time. Previous diagnoses use discussion time; MHS606 uses completion; MHS607 inherits its same-submission activity contact."
+      - name: clinical_time_precision
+        description: "date, timestamp inherited from a contact, or stored_timestamp_precision_unknown when the original precision was lost upstream."
+      - name: assessment_tool_name
+        description: "Specification tool grouping for an assessment observable. Do not sum its different questions or dimensions without the tool's scoring method."
+      - name: clinical_value
+        description: "Submitted assessment score or observation value as text. Null for records without a measured value."
+      - name: clinical_value_description
+        description: "Published meaning of this assessment concept and enumerated response pair. Null for numeric ranges, observations or responses absent from the reference."
+      - name: clinical_value_numeric
+        description: "Technical NUMBER(38,9) parse, including numeric missing-response codes. Use assessment_score_numeric for interpreted assessment values. Source text remains available; parsing alone does not establish a valid score."
+      - name: clinical_value_parse_status
+        description: "value_missing, numeric, numeric_rounded, or not_numeric_or_out_of_range. Non-numeric does not necessarily mean an invalid assessment response."
+      - name: assessment_score_numeric
+        description: "Numeric assessment response only when enumerated or within the published range and decimal precision, excluding known non-score responses. Null otherwise. Compare the same observable and scoring method; this does not derive questionnaire totals."
+      - name: is_assessment_response_non_score
+        description: "True for explicitly missing, unknown or not-applicable responses. False for other enumerated responses; null without an enumerated definition. Never infer this from a number alone."
+      - name: assessment_response_status
+        description: "value_missing, known_non_score, enumerated_response, within_published_range, response_unmatched or reference_not_available. Null outside assessments. This describes the latest available reference, not historic submission validity."
+      - name: assessment_definition_version
+        description: "Latest available ETOS version supplying the observable definition, including historical concepts. Not a retrospective validity assertion."
+      - name: assessment_response_definition_version
+        description: "Latest available ETOS version defining this enumerated response for the concept."
+      - name: unit_of_measurement_code
+        description: "Recorded observation unit code. Assessment scores do not acquire an invented unit."
+      - name: unit_of_measurement_description
+        description: "Exact-case unit label from UKHFD UCUM or a recognised warehouse dictionary symbol or alias."
+      - name: unit_of_measurement_symbol
+        description: "Reference symbol for the recorded unit. No value conversion is applied."
+      - name: unit_of_measurement_label_status
+        description: "Existing care-activity unit lookup status. Null when no observation unit applies."
+      - name: unit_of_measurement_match_type
+        description: "ucum_code, dictionary_symbol or known_alias. A dictionary or alias match is not proof of UCUM conformance."
+      - name: unit_of_measurement_definition_source
+        description: "UKHFD UCUM or the warehouse dictionary supplying the unit definition."
+      - name: provider_organisation_code
+        description: "Organisation submitting the clinical record."
+      - name: provider_organisation_name
+        description: "Organisation name from the established MHSDS organisation reference."
+      - name: person_id
+        description: "MHSDS national person identifier of the retained record."
+      - name: local_patient_id
+        description: "MHS601's directly recorded provider-local patient identifier. Use with provider_organisation_code; null for other clinical types, which retain their referral or activity links."
+      - name: referral_source_record_id
+        description: "Directly recorded provider-qualified service request identifier. Null for previous diagnoses without a referral link."
+      - name: uniq_care_cont_id
+        description: "Contact identifier recorded on the source. It is not a link to the latest contact state."
+      - name: care_activity_source_record_id
+        description: "Provider-period activity key linking to fct_mhsds_care_activity. Retained even when the parent is absent."
+      - name: uniq_care_act_id
+        description: "Source-derived activity identifier, scoped to the reporting period."
+      - name: uniq_care_prof_local_id
+        description: "MHS606 provider-qualified assessor identifier, retained for same-clinician outcome pairing."
+      - name: care_prof_local_id
+        description: "MHS606 assessor's submitted local identifier. Null for other record types."
+      - name: is_care_activity_linked
+        description: "Whether a source activity or an activity-assessment parent is present. Null when no activity relationship applies."
+      - name: is_care_activity_person_consistent
+        description: "Whether the activity assessment and its same-submission parent have matching person identifiers; null if no applicable parent."
+      - name: is_care_activity_referral_consistent
+        description: "Whether the activity assessment and its parent record the same referral; null if no applicable parent."
+      - name: is_care_activity_contact_consistent
+        description: "Whether the activity assessment and its parent record the same contact. Submitted links are retained when they differ."
+      - name: is_care_contact_person_consistent
+        description: "Whether the activity and the same-submission contact supplying its time have matching person identifiers. Null without an applicable contact. This is separate from assessment-to-activity consistency."
+      - name: has_person_identifier_changed
+        description: "TRUE when the diagnosis's source parent, scheme, code and time appear under different national person identifiers. Those identities are retained separately."
+      - name: source_timestamp
+        description: "Diagnosis or MHS606 timestamp as stored in the source pipeline, without its original offset. Null for inherited contact timing."
+      - name: source_derived_date
+        description: "Separate source-pipeline date for diagnoses and MHS606. Retained to expose discrepancies."
+      - name: is_source_date_inconsistent
+        description: "TRUE when a populated stored timestamp and separate derived date disagree on calendar date."
+      - name: has_source_date_sentinel
+        description: "TRUE when a source timestamp or derived date precedes 1901, following the project's source-epoch rule. Source values remain visible but are not used as clinical time or a diagnosis revision key."
+      - name: is_clinical_date_after_reporting_period
+        description: "TRUE when the stored clinical calendar date is after the accepted reporting period. This is a source comparison, not offset-aware submission validation; records remain present."
+      - name: is_assessment_before_reporting_period
+        description: "TRUE for MHS606 completion before its reporting period, FALSE otherwise on MHS606, and null for other types."
+      - name: reporting_period_start_date
+        description: "Start of the accepted reporting period containing the retained row."
+      - name: reporting_period_end_date
+        description: "End of the accepted reporting period containing the retained row."
+      - name: first_reported_period_end_date
+        description: "First accepted reporting period containing this guarded logical diagnosis; the source period for other clinical occurrences."
+      - name: last_reported_period_end_date
+        description: "Last accepted reporting period containing this guarded logical diagnosis. This is reporting evidence, not clinical resolution."
+      - name: reported_period_count
+        description: "Number of accepted reporting periods containing this guarded diagnosis. One for other clinical occurrences."
+      - name: accepted_source_record_count
+        description: "Number of accepted source rows represented by this retained diagnosis. One for each other clinical occurrence."
+      - name: source_dataset
+        description: "Source dataset, always MHSDS."
+      - name: source_table
+        description: "MHSDS table supplying this clinical item."
+      - name: originating_source_record_id
+        description: "Original source-occurrence key, previously exposed as source_record_id. Diagnosis keys identify a guarded logical diagnosis; assessments identify an accepted source row; activity components share their care-activity fact key. Not unique across clinical components."
+      - name: source_row_id
+        description: "Identifier of the retained submitted row in source_table."
+      - name: uniq_submission_id
+        description: "Accepted submission containing the retained source row."
+      - name: mhsds_version
+        description: "MHSDS specification version recorded by the source pipeline."
+      - name: source_file_received_at
+        description: "Time the retained source file was received."
+      - name: source_loaded_at
+        description: "Time the retained source row was loaded."

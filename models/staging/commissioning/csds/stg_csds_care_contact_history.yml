@@ -1,0 +1,23 @@
+version: 2
+models:
+- name: stg_csds_care_contact_history
+  description: One care contact from an accepted CSDS submission, including repeated monthly occurrences.
+    Use this history to attach activities from the same submission; contact identifiers are reused across
+    people and months. The latest contact interface remains separate.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - unique_submission_id
+        - unique_care_contact_identifier
+  columns:
+  - name: unique_submission_id
+    data_tests:
+    - not_null
+  - name: unique_care_contact_identifier
+    data_tests:
+    - not_null

@@ -1,0 +1,24 @@
+models:
+  - name: int_haemorrhagic_stroke_history
+    description: >
+      People with any recorded history of haemorrhagic stroke from the PCD cluster
+      HSTRK_COD, one row per person including inactive and deceased people. Undated
+      records count as history; records with an original date after the build date
+      do not. Shared exclusion for secondary-prevention measures where bleeding
+      risk may outweigh vascular benefit.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person with haemorrhagic stroke history.
+        data_tests:
+          - unique
+          - not_null
+      - name: earliest_recorded_date
+        description: Earliest dated record; null when every record is undated.
+      - name: has_undated_record
+        description: Whether any record has no original date.
+      - name: record_count
+        description: Number of qualifying records.

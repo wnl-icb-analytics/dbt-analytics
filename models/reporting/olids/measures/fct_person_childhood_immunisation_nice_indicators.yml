@@ -1,0 +1,334 @@
+models:
+  - name: fct_person_childhood_immunisation_ind215
+    description: >
+      NICE IND215 primary DTaP course. One row per currently registered baby
+      whose eighth-month milestone falls in the preceding 12 months, assessed
+      on the build date. The numerator requires three 6-in-1 doses before 8
+      months of age. NICE excludes a confirmed anaphylactic reaction to a previous dose; the contraindicated code for the vaccine is the recorded proxy. Doses are distinct administration dates by vaccine
+      group from the childhood immunisation events, with age windows measured
+      from the approximate birth date. Personalised care adjustments are not
+      applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind215
+        indicator:
+          id: "IND215"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "DTaP 3 doses by 8 months"
+          description_short: "Three 6-in-1 doses before 8 months for babies reaching 8 months in the preceding 12 months"
+          description_long: "NICE IND215 before personalised care adjustments. Contraindication exclusion applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND215"
+    columns: &childhood_columns
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: birth_date_approx
+        description: Approximate birth date (mid-month)
+      - name: milestone_date
+        description: Date the child reached the indicator's milestone age, which falls in the preceding 12 months
+      - name: doses_in_window
+        description: Distinct administration dates for the indicator's vaccine within its age window
+      - name: is_in_denominator
+        description: Always true; every row is an eligible child before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the child received the required doses within the age window
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+
+  - name: fct_person_childhood_immunisation_ind216
+    description: >
+      NICE IND216 first MMR. One row per currently registered child whose
+      18-month milestone falls in the preceding 12 months, assessed on the
+      build date. The numerator requires at least one MMR or MMRV dose between
+      12 and 18 months of age. NICE excludes anaphylaxis to a previous dose and immunocompromised children; the contraindicated code for the vaccine is the recorded proxy. Doses are distinct
+      administration dates by vaccine group from the childhood immunisation
+      events, with age windows measured from the approximate birth date.
+      Personalised care adjustments are not applied. Secondary-use consumers
+      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
+      Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind216
+        indicator:
+          id: "IND216"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "MMR 1 dose by 18 months"
+          description_short: "At least one MMR dose between 12 and 18 months for children reaching 18 months in the preceding 12 months"
+          description_long: "NICE IND216 before personalised care adjustments. Contraindication exclusion applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND216"
+    columns: *childhood_columns
+
+  - name: fct_person_childhood_immunisation_ind217
+    description: >
+      NICE IND217 preschool booster and second MMR. One row per currently
+      registered child whose fifth birthday falls in the preceding 12 months,
+      assessed on the build date. The numerator requires a 4-in-1 preschool
+      booster and at least two MMR or MMRV doses between the first and fifth
+      birthdays. doses_in_window holds the MMR count. NICE excludes anaphylaxis to a previous dose and immunocompromised children; the contraindicated code for the vaccine is the recorded proxy. Doses are
+      distinct administration dates by vaccine group from the childhood
+      immunisation events, with age windows measured from the approximate
+      birth date. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind217
+        indicator:
+          id: "IND217"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "DTaP/IPV and 2 MMR by 5 years"
+          description_short: "Preschool booster and two MMR doses between 1 and 5 years for children reaching 5 in the preceding 12 months"
+          description_long: "NICE IND217 before personalised care adjustments. Contraindication exclusion applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND217"
+    columns: *childhood_columns
+
+  - name: fct_person_childhood_immunisation_ind218
+    description: >
+      NICE IND218 MMR by 5. One row per currently registered child whose fifth
+      birthday falls in the preceding 12 months, assessed on the build date.
+      The numerator requires at least one MMR or MMRV dose between the first
+      and fifth birthdays. NICE excludes anaphylaxis to a previous dose and immunocompromised children; the contraindicated code for the vaccine is the recorded proxy. Doses are distinct
+      administration dates by vaccine group from the childhood immunisation
+      events, with age windows measured from the approximate birth date.
+      Personalised care adjustments are not applied. Secondary-use consumers
+      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
+      Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind218
+        indicator:
+          id: "IND218"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "MMR 1 dose by 5 years"
+          description_short: "At least one MMR dose between 1 and 5 years for children reaching 5 in the preceding 12 months"
+          description_long: "NICE IND218 before personalised care adjustments. Contraindication exclusion applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND218"
+    columns: *childhood_columns
+
+  - name: fct_person_childhood_immunisation_ind224
+    description: >
+      NICE IND224 rotavirus. One row per currently registered baby whose
+      24-week milestone falls in the preceding 12 months, assessed on the
+      build date. The numerator requires two rotavirus doses before 24 weeks
+      of age. NICE excludes children with a contraindicated code for the vaccine. Doses are distinct administration dates by vaccine
+      group from the childhood immunisation events, with age windows measured
+      from the approximate birth date. Personalised care adjustments are not
+      applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind224
+        indicator:
+          id: "IND224"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "Rotavirus 2 doses by 24 weeks"
+          description_short: "Two rotavirus doses before 24 weeks for babies reaching 24 weeks in the preceding 12 months"
+          description_long: "NICE IND224 before personalised care adjustments. Contraindication exclusion applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND224"
+    columns: *childhood_columns
+
+  - name: fct_person_childhood_immunisation_ind225
+    description: >
+      NICE IND225 MenB primary course. One row per currently registered baby
+      whose eighth-month milestone falls in the preceding 12 months, assessed
+      on the build date. The numerator requires two MenB doses before 8 months
+      of age. NICE excludes children with a contraindicated code for the vaccine. Doses are distinct administration dates by vaccine
+      group from the childhood immunisation events, with age windows measured
+      from the approximate birth date. Personalised care adjustments are not
+      applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind225
+        indicator:
+          id: "IND225"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "MenB 2 doses by 8 months"
+          description_short: "Two MenB doses before 8 months for babies reaching 8 months in the preceding 12 months"
+          description_long: "NICE IND225 before personalised care adjustments. Contraindication exclusion applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND225"
+    columns: *childhood_columns
+
+  - name: fct_person_childhood_immunisation_ind226
+    description: >
+      NICE IND226 MenB course with booster. One row per currently registered
+      child whose 18-month milestone falls in the preceding 12 months,
+      assessed on the build date. The numerator requires two primary MenB doses
+      before 12 months and one booster from 12 months, all before 18 months of
+      age. NICE excludes children with a contraindicated code for the vaccine. Doses are
+      distinct administration dates by vaccine group from the childhood
+      immunisation events, with age windows measured from the approximate
+      birth date. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind226
+        indicator:
+          id: "IND226"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "MenB 3 doses by 18 months"
+          description_short: "Two primary MenB doses before 12 months and one booster from 12 months, all before 18 months of age. Contraindication exclusion applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND226"
+    columns: *childhood_columns
+
+  - name: fct_person_childhood_immunisation_nice_indicators
+    description: >
+      NICE IND215 to IND218 and IND224 to IND226 childhood immunisation status
+      in a common interface. One row per person and indicator on the current
+      reporting date. Indicator-specific views remain the source of each
+      population definition. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering. Feeds
+      fct_person_nice_indicator_status.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+      - name: indicator_id
+        description: NICE indicator identifier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IND215', 'IND216', 'IND217', 'IND218', 'IND224', 'IND225', 'IND226']
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+      - name: birth_date_approx
+        description: Approximate birth date
+      - name: milestone_date
+        description: Date the child reached the indicator's milestone age
+      - name: doses_in_window
+        description: Distinct administration dates within the indicator's age window
+
+  - name: fct_person_childhood_immunisation_nice_indicators_snapshot_input
+    description: >
+      Thin snapshot-input projection of
+      fct_person_childhood_immunisation_nice_indicators: person, indicator,
+      current practice, latest qualifying record and outcome. Excludes
+      reporting_date and measurement_period_start, which advance on every
+      build, so the SCD2 snapshot versions only on genuine changes. Feeds
+      fct_person_childhood_immunisation_nice_indicators_snapshot.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: primary_doses_by_12_months
+        description: Distinct MenB administration dates before 12 months of age
+      - name: booster_doses_12_to_18_months
+        description: Distinct MenB administration dates from 12 months up to but not including 18 months of age
+      - name: person_id
+        description: Person identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.
+      - name: milestone_date
+        description: Date the child reached the milestone age.
+      - name: doses_in_window
+        description: Doses within the age window at the build.

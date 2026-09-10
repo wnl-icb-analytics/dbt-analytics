@@ -1,19 +1,98 @@
 models:
   - name: int_cholesterol_ldl_all
-    description: 'LDL (bad) cholesterol measurements for cardiovascular risk assessment with clinical categorisation.
-
-      One row per cholesterol observation using LDLCCHOL_COD cluster '
+    description: LDL cholesterol for all people, including inactive and deceased people. One row per observation
+      in the PCD LDLCCHOL_COD cluster. Missing or future original clinical dates are excluded. Invalid
+      values and unsupported units remain available for audit. Valid means 0.1 to 20 mmol/L inclusive. Concentrations retain source precision after unit conversion; values are not
+      rounded before comparison. The general healthy-adult reference limit is below 3 mmol/L. This is
+      not a treatment target for people with cardiovascular disease.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+        clinical_source: https://www.heartuk.org.uk/cholesterol/understanding-your-cholesterol-test-results-
+        code_source: PCD
+    columns:
+      - name: id
+        description: Source observation identifier. Used to break ties deterministically; it does not
+          imply clinical priority.
+        data_tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Person identifier. No active-registration or age restriction is applied.
+      - name: clinical_effective_date
+        description: Observation date after the shared OLIDS correction for events dated after their recording
+          date.
+      - name: clinical_effective_date_raw
+        description: Original clinical effective date before the shared date correction.
+      - name: date_recorded
+        description: Date the observation was recorded in the source.
+      - name: cholesterol_value
+        description: Compatibility alias of converted_value_mmol_l. Check is_lipid_review_required as well as validity before analysis.
+      - name: result_unit_display
+        description: 'Standard unit: mmol/L. Null when the unit cannot be standardised.'
+      - name: recorded_value
+        description: Numeric value received from OLIDS, unchanged by this model. Not guaranteed to be the original laboratory value.
+      - name: converted_value_mmol_l
+        description: Candidate concentration in mmol/L calculated using the recorded unit. Preserves precision and outliers. Null when the unit cannot be converted. A plausible result does not prove the unit was correct.
+      - name: source_result_unit_code
+        description: Unit code from the source concept, without mapped-unit substitution. Null if unavailable.
+      - name: source_result_unit_display
+        description: Unit label from the source concept, without mapped-unit substitution. Null if unavailable.
+      - name: mapped_result_unit_code
+        description: Mapped unit code supplied by OLIDS. Null if unavailable.
+      - name: mapped_result_unit_display
+        description: Mapped unit label supplied by OLIDS. Null if unavailable.
+      - name: conversion_unit_basis
+        description: Whether the calculation selected the mapped unit, source unit or no recorded unit. An unknown-unit placeholder in the mapped field falls through to the source unit. Missing ratio units are inferred from the PCD observable; missing concentration units are assumed to be mmol/L.
+      - name: conversion_factor
+        description: Multiplier applied to recorded_value. One for recognised standard units, missing or mislabelled units read as the standard unit, and inferred dimensionless ratios. Null when the unit cannot be converted.
+      - name: is_unit_metadata_conflict
+        description: True when populated source and mapped unit labels disagree after recognised aliases are normalised. Unknown labels are treated as absent. Does not identify which unit is correct.
+      - name: plausibility_status
+        description: >
+          Validity check after conversion against the inclusive range of 0.1 to 20 mmol/L. Within valid range
+          is the validity rule. Other values name why the result is invalid: unit cannot be converted,
+          missing numeric result, non-positive or non-finite, below or above the range. Rare genuine
+          results can lie outside the range and are excluded.
+      - name: is_lipid_review_required
+        description: >
+          True for conflicting unit metadata, every non-standard unit conversion, missing, mislabelled or
+          unsupported units, or any invalid result. False means no issue detected by these checks, not
+          verified accuracy. Inferred dimensionless ratio units do not alone trigger review. Does not
+          change validity, clinical categories or latest-valid selection.
+      - name: original_result_value
+        description: Compatibility alias of recorded_value, the unchanged numeric value received from OLIDS.
+      - name: original_result_unit_code
+        description: Legacy combined unit field. Mapped unit code where supplied, otherwise the source unit concept code. Null if
+          neither is available.
+      - name: original_result_unit_display
+        description: Legacy combined unit field. Mapped unit label where supplied, otherwise the source unit concept label. Null if
+          neither is available.
+      - name: unit_status
+        description: Recorded standard unit, Missing unit, Converted, Mislabelled standard unit or Unsupported
+          unit. A missing unit is read as mmol/L. Mislabelled covers labels whose recorded values
+          profile as mmol/L in OLIDS (mg/100ml, g, mmo1/l, nmol/l and (calculated)); they are read as
+          mmol/L and flagged for review. Only an unsupported unit produces a null standardised value.
+      - name: concept_code
+        description: Recorded mapped clinical concept code matched to the PCD cluster.
+      - name: concept_display
+        description: Recorded mapped clinical concept label.
+      - name: source_cluster_id
+        description: 'Authoritative PCD observation cluster: LDLCCHOL_COD.'
+      - name: sampling_context
+        description: Fasting, non-fasting or random only when specified in the PCD code description. Otherwise
+          Not specified; no sampling status is inferred from the numeric value.
+      - name: is_valid_cholesterol
+        description: True when plausibility_status is Within valid range. False includes missing values,
+          unsupported units and values outside the range.
+      - name: cholesterol_category
+        description: The general healthy-adult reference limit is below 3 mmol/L. This is not a treatment
+          target for people with cardiovascular disease.
+      - name: ldl_cvd_target_met
+        description: 'Legacy numeric flag: Met for valid LDL at or below 2 mmol/L, Not Met above 2, Unknown
+          for invalid results. Does not apply a CVD population, exclusions or a reporting period.'
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: LDLCCHOL_COD
-    columns:
-      - name: id
-        description: Unique identifier for each cholesterol observation
-        tests:
-          - unique
-          - not_null

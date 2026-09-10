@@ -1,53 +1,46 @@
-{{
-    config(
-        materialized='table',
-        cluster_by=['person_id', 'clinical_effective_date'])
-}}
+{{ config(materialized='table', cluster_by=['person_id', 'clinical_effective_date']) }}
 
-/*
-All Low density lipoprotein (LDL) ie BAD cholesterol test results codes. Observable values
-Includes ALL persons (active, inactive, deceased). QOF target CHOL004. 
-Percentage of patients on the QOF CHD, PAD, or STIA Register, with LDL as ≤ 2.0 mmol/L 
-*/
-
-WITH base_observations AS (
-
-    SELECT
-        obs.id,
-        obs.person_id,
-        obs.clinical_effective_date,
-        CAST(obs.result_value AS NUMBER(6,1)) AS cholesterol_value,
-        obs.result_unit_display,
-        obs.mapped_concept_code AS concept_code,
-        obs.mapped_concept_display AS concept_display,
-        obs.cluster_id AS source_cluster_id,
-        obs.result_value AS original_result_value
-
-    FROM ({{ get_observations("'LDLCCHOL_COD'") }}) obs
-    WHERE obs.clinical_effective_date IS NOT NULL
-      AND obs.result_value IS NOT NULL
-      AND obs.clinical_effective_date <= CURRENT_DATE() -- No future dates
+WITH measurements AS (
+    {{ get_lipid_observations('LDLCCHOL_COD', 'cholesterol_value') }}
 )
 
 SELECT
+    id,
     person_id,
-    ID,
     clinical_effective_date,
+    clinical_effective_date_raw,
+    date_recorded,
     cholesterol_value,
     result_unit_display,
+    recorded_value,
+    converted_value_mmol_l,
+    source_result_unit_code,
+    source_result_unit_display,
+    mapped_result_unit_code,
+    mapped_result_unit_display,
+    conversion_unit_basis,
+    conversion_factor,
+    is_unit_metadata_conflict,
+    plausibility_status,
+    is_lipid_review_required,
+    original_result_value,
+    original_result_unit_code,
+    original_result_unit_display,
+    unit_status,
     concept_code,
     concept_display,
     source_cluster_id,
-    original_result_value,
-
-       -- Clinical categorisation (mmol/L)
+    sampling_context,
+    plausibility_status = 'Within valid range' AS is_valid_cholesterol,
     CASE
-        WHEN cholesterol_value <= 2.0 THEN 'Met'
-        WHEN cholesterol_value > 2.0 THEN 'Not Met'
-        ELSE 'Unknown'
-    END AS LDL_CVD_Target_Met
-
-FROM base_observations
-
--- Sort for consistent output
-ORDER BY person_id, clinical_effective_date DESC
+        WHEN NOT is_valid_cholesterol THEN 'Invalid'
+        WHEN cholesterol_value < 3 THEN 'Below general reference limit'
+        ELSE 'At or above general reference limit'
+    END AS cholesterol_category,
+    -- Retained for consumers; eligibility and reporting periods belong in measures.
+    CASE
+        WHEN NOT is_valid_cholesterol THEN 'Unknown'
+        WHEN cholesterol_value <= 2 THEN 'Met'
+        ELSE 'Not Met'
+    END AS ldl_cvd_target_met
+FROM measurements

@@ -1,0 +1,485 @@
+models:
+  - name: fct_person_diabetes_hba1c_ind179
+    description: >
+      NICE IND179 HbA1c control. One row per currently registered, living,
+      non-test person on the diabetes register without moderate or severe
+      coded frailty, assessed on the build date. Excludes people with a
+      fructosamine measurement or a maximum tolerated treatment record in the
+      preceding 12 months, per the NICE specification. The numerator requires
+      the last recorded HbA1c between the reporting date minus 12 calendar
+      months and the reporting date to be valid and at or below 58 mmol/mol.
+      An invalid last result is unassessable and is not replaced by an older
+      result. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind179
+        indicator:
+          id: "IND179"
+          type: "MEASURE"
+          category: "DIABETES_QUALITY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "Diabetes HbA1c 58, no moderate or severe frailty"
+          description_short: "Last HbA1c in the preceding 12 months at or below 58 mmol/mol for people with diabetes without moderate or severe frailty"
+          description_long: "NICE IND179 before personalised care adjustments. Excludes fructosamine and maximum tolerated treatment in the period."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND179"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_frailty_severity
+        description: Latest coded frailty severity from the frailty register; null when none recorded
+      - name: latest_hba1c_observation_id
+        description: Selected source observation; null when no HbA1c falls in the period
+      - name: latest_record_date
+        description: Date of the last recorded HbA1c in the period; null when none
+      - name: latest_hba1c_value
+        description: Last recorded HbA1c in IFCC mmol/mol, converted from DCCT where needed; null when none or unusable
+      - name: is_latest_hba1c_valid
+        description: Whether the last recorded HbA1c is within the plausible range; false when none
+      - name: indicator_threshold
+        description: Inclusive upper HbA1c threshold in mmol/mol for this indicator
+      - name: threshold_unit
+        description: mmol/mol
+      - name: is_hba1c_recorded_in_period
+        description: Whether any HbA1c falls in the period, including invalid results
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or the reason not achieved
+  - name: fct_person_diabetes_hba1c_ind180
+    description: >
+      NICE IND180 HbA1c control in frailty. One row per currently registered,
+      living, non-test person on the diabetes register with moderate or severe
+      coded frailty, assessed on the build date. Excludes people with a
+      fructosamine measurement or a maximum tolerated treatment record in the
+      preceding 12 months, per the NICE specification. The numerator requires
+      the last recorded HbA1c between the reporting date minus 12 calendar
+      months and the reporting date to be valid and at or below 75 mmol/mol.
+      An invalid last result is unassessable and is not replaced by an older
+      result. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind180
+        indicator:
+          id: "IND180"
+          type: "MEASURE"
+          category: "DIABETES_QUALITY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "Diabetes HbA1c 75, moderate or severe frailty"
+          description_short: "Last HbA1c in the preceding 12 months at or below 75 mmol/mol for people with diabetes and moderate or severe frailty"
+          description_long: "NICE IND180 before personalised care adjustments. Excludes fructosamine and maximum tolerated treatment in the period."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND180"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_frailty_severity
+        description: Latest coded frailty severity from the frailty register; null when none recorded
+      - name: latest_hba1c_observation_id
+        description: Selected source observation; null when no HbA1c falls in the period
+      - name: latest_record_date
+        description: Date of the last recorded HbA1c in the period; null when none
+      - name: latest_hba1c_value
+        description: Last recorded HbA1c in IFCC mmol/mol, converted from DCCT where needed; null when none or unusable
+      - name: is_latest_hba1c_valid
+        description: Whether the last recorded HbA1c is within the plausible range; false when none
+      - name: indicator_threshold
+        description: Inclusive upper HbA1c threshold in mmol/mol for this indicator
+      - name: threshold_unit
+        description: mmol/mol
+      - name: is_hba1c_recorded_in_period
+        description: Whether any HbA1c falls in the period, including invalid results
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or the reason not achieved
+  - name: fct_person_diabetes_bp_ind249
+    description: >
+      NICE IND249 blood pressure in diabetes. One row per currently
+      registered, living, non-test person on the diabetes register aged 17 to
+      79 without moderate or severe coded frailty, assessed on the build date.
+      The numerator requires a reading in the preceding 12 months below 140/90
+      mmHg in clinic or 135/85 mmHg using HBPM or ABPM. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind249
+        indicator:
+          id: "IND249"
+          type: "MEASURE"
+          category: "DIABETES_QUALITY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "Diabetes BP control, no moderate or severe frailty"
+          description_short: "Diabetes BP target achieved in the preceding 12 months for people aged 17 to 79 without moderate or severe frailty"
+          description_long: "NICE IND249 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND249"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_frailty_severity
+        description: Latest coded frailty severity from the frailty register; null when none recorded
+      - name: latest_bp_date
+        description: Date of the latest valid paired blood pressure reading, regardless of period; null when none is recorded
+      - name: latest_record_date
+        description: Date of the latest reading when it falls in the period; null otherwise
+      - name: latest_systolic_value
+        description: Latest systolic blood pressure in mmHg
+      - name: latest_diastolic_value
+        description: Latest diastolic blood pressure in mmHg
+      - name: is_home_bp_event
+        description: Whether the latest reading was recorded using home monitoring
+      - name: is_abpm_bp_event
+        description: Whether the latest reading was recorded using ambulatory monitoring
+      - name: applied_measurement_context
+        description: Clinic or HBPM/ABPM context of the latest reading
+      - name: indicator_systolic_threshold
+        description: Exclusive systolic threshold in mmHg specified by this indicator
+      - name: indicator_diastolic_threshold
+        description: Exclusive diastolic threshold in mmHg specified by this indicator
+      - name: is_bp_recorded_in_last_12m
+        description: Whether the latest BP was recorded between measurement_period_start and the reporting date
+      - name: is_latest_bp_within_indicator_target
+        description: Whether the latest BP is below both indicator thresholds, regardless of recording date
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or the reason not achieved
+  - name: fct_person_diabetes_acr_ind111
+    description: >
+      NICE IND111 urine albumin:creatinine ratio testing. One row per
+      currently registered, living, non-test person on the diabetes register,
+      assessed on the build date. The numerator requires an ACR observation in
+      the preceding 15 months, with or without a recorded value. Personalised
+      care adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind111
+        indicator:
+          id: "IND111"
+          type: "MEASURE"
+          category: "DIABETES_QUALITY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "Diabetes ACR test"
+          description_short: "Urine ACR recorded in the preceding 15 months for people with diabetes"
+          description_long: "NICE IND111 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND111"
+    columns: &record_columns
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or the reason not achieved
+  - name: fct_person_diabetes_retinal_screening_ind137
+    description: >
+      NICE IND137 retinal screening. One row per currently registered, living,
+      non-test person on the diabetes register, assessed on the build date.
+      The numerator requires a retinal screening record in the preceding 12
+      months. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind137
+        indicator:
+          id: "IND137"
+          type: "MEASURE"
+          category: "DIABETES_QUALITY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "Diabetes retinal screening"
+          description_short: "Retinal screening recorded in the preceding 12 months for people with diabetes"
+          description_long: "NICE IND137 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND137"
+    columns: *record_columns
+  - name: fct_person_diabetes_foot_examination_ind160
+    description: >
+      NICE IND160 foot examination. One row per currently registered, living,
+      non-test person on the diabetes register, assessed on the build date.
+      The numerator requires a foot examination in the preceding 12 months
+      covering both feet, or one foot where the other is absent or amputated.
+      Declined or unsuitable records do not count. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind160
+        indicator:
+          id: "IND160"
+          type: "MEASURE"
+          category: "DIABETES_QUALITY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "Diabetes foot examination"
+          description_short: "Foot examination of both feet recorded in the preceding 12 months for people with diabetes"
+          description_long: "NICE IND160 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND160"
+    columns: *record_columns
+  - name: fct_person_ndh_glycaemic_test_ind172
+    description: >
+      NICE IND172 glycaemic monitoring in non-diabetic hyperglycaemia. One row
+      per currently registered, living, non-test person on the NDH register,
+      assessed on the build date. The numerator requires an HbA1c or fasting
+      plasma glucose test in the preceding 12 months. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind172
+        indicator:
+          id: "IND172"
+          type: "MEASURE"
+          category: "DIABETES_QUALITY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "NDH annual HbA1c or FPG"
+          description_short: "HbA1c or fasting plasma glucose recorded in the preceding 12 months for people with non-diabetic hyperglycaemia"
+          description_long: "NICE IND172 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND172"
+    columns: *record_columns
+  - name: fct_person_gestational_diabetes_hba1c_ind173
+    description: >
+      NICE IND173 HbA1c after gestational diabetes. One row per currently
+      registered, living, non-test person on the gestational diabetes register
+      whose latest diagnosis is within the preceding 12 months, assessed on
+      the build date; NICE excludes women diagnosed more than 12 months ago.
+      The numerator requires an HbA1c test in the preceding 12 months.
+      Personalised care adjustments are not applied. Secondary-use consumers
+      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
+      Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind173
+        indicator:
+          id: "IND173"
+          type: "MEASURE"
+          category: "DIABETES_QUALITY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "Gestational diabetes HbA1c"
+          description_short: "HbA1c recorded in the preceding 12 months for women with gestational diabetes diagnosed in that period"
+          description_long: "NICE IND173 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND173"
+    columns: *record_columns
+  - name: fct_person_diabetes_nice_indicators
+    description: >
+      NICE IND179, IND180, IND249, IND111, IND137, IND160, IND172 and IND173
+      status in a common interface. One row per person and indicator on the
+      current reporting date. Indicator-specific views remain the source of
+      each population definition. Personalised care adjustments are not
+      applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering. Feeds fct_person_nice_indicator_status.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_status
+        description: ACHIEVED, ABOVE_TARGET, NOT_ASSESSABLE, NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'ABOVE_TARGET', 'NOT_ASSESSABLE', 'NOT_RECORDED_IN_PERIOD']
+      - name: latest_record_date
+        description: Date of the latest qualifying record for the indicator; null when none in the period
+      - name: latest_hba1c_value
+        description: Last recorded HbA1c in mmol/mol for IND179 and IND180; null for other indicators
+      - name: hba1c_threshold
+        description: Inclusive HbA1c threshold in mmol/mol for IND179 and IND180; null for other indicators
+      - name: latest_systolic_value
+        description: Latest systolic BP in mmHg for IND249; null for other indicators
+      - name: latest_diastolic_value
+        description: Latest diastolic BP in mmHg for IND249; null for other indicators
+      - name: latest_frailty_severity
+        description: Latest coded frailty severity for IND179, IND180 and IND249; null for other indicators
+  - name: fct_person_diabetes_nice_indicators_snapshot_input
+    description: >
+      Thin snapshot-input projection of fct_person_diabetes_nice_indicators:
+      person, indicator, current practice, the latest record and outcome.
+      Excludes reporting_date and measurement_period_start, which advance on
+      every build, so the SCD2 snapshot versions only on genuine changes.
+      Feeds fct_person_diabetes_nice_indicators_snapshot.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.
+      - name: latest_record_date
+        description: Date of the latest qualifying record; null when none in the period.
+      - name: latest_hba1c_value
+        description: Last recorded HbA1c for the HbA1c indicators.
+      - name: latest_systolic_value
+        description: Latest systolic BP for IND249.
+      - name: latest_diastolic_value
+        description: Latest diastolic BP for IND249.
+      - name: latest_frailty_severity
+        description: Latest coded frailty severity for the frailty-split indicators.

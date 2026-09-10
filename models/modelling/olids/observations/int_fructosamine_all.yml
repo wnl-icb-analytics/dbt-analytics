@@ -1,0 +1,38 @@
+models:
+  - name: int_fructosamine_all
+    description: >
+      Serum or plasma fructosamine measurements from the PCD cluster SERFRUC_COD,
+      one row per observation for all people including inactive and deceased.
+      Observations dated after the build date are excluded. Fructosamine replaces
+      HbA1c when HbA1c is unreliable, so glycaemic target indicators exclude
+      people with a test in the period. Values are kept as recorded without unit
+      standardisation.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: SERFRUC_COD
+            source: PCD
+    columns:
+      - name: id
+        description: Source observation identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the measurement.
+      - name: fructosamine_value
+        description: Numeric result as recorded; null when absent or non-numeric.
+      - name: result_unit_display
+        description: Unit label as recorded.
+      - name: concept_code
+        description: SNOMED code of the observation.
+      - name: concept_display
+        description: Description of the observation.
+      - name: source_cluster_id
+        description: Always SERFRUC_COD.

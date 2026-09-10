@@ -17,8 +17,11 @@ select
     , start_time
     , end_date
     , end_time
+    , is_open_spell
     , duration
     , duration_to_date
+    , unadjusted_length_of_stay_days
+    , excess_bed_days
     , spell_admission_method
     , admission_method_name
     , admission_method_group

@@ -1,0 +1,39 @@
+models:
+  - name: int_cvd_risk_assessment_all
+    description: >
+      Cardiovascular risk assessment records from the PCD clusters CVDRISKASS_COD
+      and QRISKSCORE_COD, one row per observation for all people including
+      inactive and deceased. Covers QRISK, QRISK2, QRISK3, JBS and Framingham
+      score codes and "assessment done" codes, with or without a score value; an
+      observation in both clusters appears once. Observations dated after the
+      build date are excluded. Use int_qrisk_all for scored QRISK values; use
+      this model to count that an assessment took place.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: CVDRISKASS_COD, QRISKSCORE_COD
+            source: PCD
+    columns:
+      - name: id
+        description: Source observation identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the assessment record.
+      - name: risk_score_value
+        description: Numeric score as recorded, if any; scale depends on the tool.
+      - name: concept_code
+        description: SNOMED code of the record.
+      - name: concept_display
+        description: Description of the record.
+      - name: source_cluster_id
+        description: CVDRISKASS_COD or QRISKSCORE_COD; the first when both match.
+      - name: is_qrisk_code
+        description: Whether the code is a QRISK, QRISK2 or QRISK3 score code.

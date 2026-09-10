@@ -1,0 +1,41 @@
+version: 2
+models:
+  - name: read_code
+    description: >-
+      One term per scheme-qualified, exact-case Read v2 or CTV3 match code.
+      Dictionary rows use explicit membership flags. An exact Dictionary code
+      takes precedence over alternatives; ambiguous Dictionary alternatives are
+      excluded from those matches. An authoritative UKHFD full term may still
+      resolve a code absent from the remaining Dictionary matches.
+      Dictionary terms and SNOMED mappings are unchanged. Exact seven-character Read v2
+      term codes absent from those matches use the latest full-history UKHFD term.
+      These term-specific labels have no inferred SNOMED mapping; CTV3 term identifiers
+      are not supported.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [coding_system, code]
+    columns:
+      - name: coding_system
+        description: read_v2 or ctv3. Dictionary rows use explicit membership flags; UKHFD fallback rows are Read v2 only.
+      - name: code
+        description: Case-sensitive match code. Dots and letter case remain significant.
+      - name: dictionary_read_code
+        description: Original Dictionary code supplying the term and mapping; null for UKHFD term-specific fallback.
+      - name: term
+        description: Term supplied by the named definition source, retaining the exact Read term variant.
+      - name: match_type
+        description: exact_code, dictionary_alternative or read_v2_term_code, recording how the submitted code matches.
+      - name: snomed_ct_code
+        description: Positive Dictionary SNOMED mapping; null for non-positive placeholders and UKHFD term-specific labels.
+      - name: definition_source
+        description: Reference supplying the term. UKHFD historical term labels do not establish current clinical validity.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [Dictionary.dbo.ReadCodes, UKHFD Read v2 term history]

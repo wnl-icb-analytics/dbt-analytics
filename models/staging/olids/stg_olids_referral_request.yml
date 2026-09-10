@@ -1,107 +1,123 @@
 models:
-  - name: stg_olids_referral_request
-    description: >-
-      Referral requests recorded in OLIDS, one row per stable source referral ID.
-      The stable feed restricts referrals to NCL publishing practices and patients
-      in its filtered patient spine, then retains the latest version per referral
-      ID by source transform time and recorded time. Staging excludes deleted
-      records and records without a person ID. Codes and displays for recorded
-      concepts are resolved upstream through the dbt-olids enriched concept map.
-      They remain distinct from mapped terminology, which can include upstream
-      repairs and backfills. Staging applies no additional terminology mapping.
-    config:
-      meta:
-        owner:
-          name: EddieDavison92
-    columns:
-      - name: id
-        description: Primary key - unique identifier for this referral request
-        data_tests:
-          - unique
-          - not_null
-      - name: publisher_organisation_id
-        description: "Foreign key to organisation.id - publisher organisation for this referral (post-2026 OLIDS rename — was organisation_id)"
-      - name: person_id
-        description: Foreign key to person.id - person-level identifier
-      - name: patient_id
-        description: Foreign key to patient.id
-      - name: encounter_id
-        description: Foreign key to encounter.id - encounter when referral was made
-      - name: practitioner_id
-        description: Foreign key to practitioner.id - referring practitioner
-      - name: unique_booking_reference_number
-        description: Unique booking reference number (UBRN) for the referral
-      - name: clinical_effective_date
-        description: Date the referral request was clinically effective
-      - name: clinical_effective_date_precision_source_concept_id
-        description: Foreign key to concept.id - precision of the clinical effective date
-      - name: requester_organisation_id
-        description: Foreign key to organisation.id - organisation making the referral
-      - name: recipient_organisation_id
-        description: Foreign key to organisation.id - organisation receiving the referral
-      - name: referral_request_priority_source_concept_id
-        description: Foreign key to concept.id - priority of the referral (routine, urgent, two-week-wait, etc.)
-      - name: referral_request_type_source_concept_id
-        description: Foreign key to concept.id - type of referral
-      - name: referral_request_specialty_source_concept_id
-        description: Foreign key to concept.id - specialty to which the referral is made
-      - name: mode
-        description: Mode of the referral
-      - name: is_outgoing_referral
-        description: Boolean indicating if this is an outgoing referral from the organisation
-      - name: is_review
-        description: Boolean indicating if this is a review record
-      - name: referral_request_source_concept_id
-        description: Foreign key to concept.id - source concept for the referral
-      - name: age_at_event
-        description: Patient age in years at time of referral
-      - name: age_at_event_baby
-        description: Patient age in months for babies (0-24 months)
-      - name: age_at_event_neonate
-        description: Patient age in days for neonates (0-28 days)
-      - name: date_recorded
-        description: Date the record was entered into the system
-      - name: lds_id
-        description: LDS system identifier
-      - name: publisher_organisation_code
-        description: "ODS code of the publisher organisation (post-2026 OLIDS rename — was record_owner_organisation_code)"
-      - name: lds_datetime_first_acquired
-        description: Datetime when data was acquired by LDS
-      - name: lds_data_initial_received_date
-        description: Date when data was initially received by LDS
-      - name: lds_start_datetime
-        description: LDS datetime stamp from which the record version was correct - used for deduplication to get the latest record
-      - name: lds_is_deleted
-        description: Deletion flag - records with TRUE are filtered out in this staging layer
-      - name: lds_source_record_id
-        description: LDS assigned unique identifier for the source record version
-      - name: source_code
-        description: Code for the recorded referral concept, resolved upstream through the dbt-olids enriched concept map.
-      - name: source_display
-        description: Display for the recorded referral concept, resolved upstream through the enriched concept map. Not a historical snapshot of text on the referral.
-      - name: source_system
-        description: Source coding system supplied by the upstream enriched concept map for source_code.
-      - name: target_system
-        description: Target coding system supplied by the upstream enriched concept map for mapped_concept_code. No additional mapping is applied here.
-      - name: referral_request_priority_source_code
-        description: Code for the recorded priority concept, resolved upstream through the enriched concept map.
-      - name: referral_request_priority_source_display
-        description: Display for the recorded priority concept, resolved upstream through the enriched concept map.
-      - name: referral_request_type_source_code
-        description: Code for the recorded referral type concept, resolved upstream through the enriched concept map.
-      - name: referral_request_type_source_display
-        description: Display for the recorded referral type concept, resolved upstream through the enriched concept map.
-      - name: referral_request_specialty_source_code
-        description: Code for the recorded specialty concept, resolved upstream through the enriched concept map.
-      - name: referral_request_specialty_source_display
-        description: Display for the recorded specialty concept, resolved upstream through the enriched concept map.
-      - name: date_precision_source_code
-        description: Code for the recorded date-precision concept, resolved upstream through the enriched concept map.
-      - name: date_precision_source_display
-        description: Display for the recorded date-precision concept, resolved upstream through the enriched concept map.
-    tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          config:
-            severity: warn
-          arguments:
-            min_value: 1
+- name: stg_olids_referral_request
+  description: One terminology-defined patient referral from expanded OLIDS observations, prepared in
+    dbt-OLIDS conformed using <<3457005 |Patient referral (procedure)| and supported historical successors.
+    Preserves qualifying original referral IDs and adds matching observations with namespaced IDs. Excludes
+    deleted records and missing person IDs. Non-referral original content remains in observations. Added
+    rows have no inferred direction, destination, priority or specialty.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  columns:
+  - name: id
+    description: Primary key - unique identifier for this referral request
+    data_tests:
+    - unique
+    - not_null
+  - name: publisher_organisation_id
+    description: Recorded publishing organisation ID.
+  - name: person_id
+    description: Foreign key to person.id - person-level identifier
+  - name: patient_id
+    description: Foreign key to patient.id
+  - name: encounter_id
+    description: Foreign key to encounter.id - encounter when referral was made
+  - name: practitioner_id
+    description: Foreign key to practitioner.id - referring practitioner
+  - name: unique_booking_reference_number
+    description: Unique booking reference number (UBRN) for the referral
+  - name: clinical_effective_date
+    description: Date the referral request was clinically effective
+  - name: clinical_effective_date_precision_source_concept_id
+    description: Foreign key to concept.id - precision of the clinical effective date
+  - name: requester_organisation_id
+    description: Foreign key to organisation.id - organisation making the referral
+  - name: recipient_organisation_id
+    description: Foreign key to organisation.id - organisation receiving the referral
+  - name: referral_request_priority_source_concept_id
+    description: Foreign key to concept.id - priority of the referral (routine, urgent, two-week-wait,
+      etc.)
+  - name: referral_request_type_source_concept_id
+    description: Foreign key to concept.id - type of referral
+  - name: referral_request_specialty_source_concept_id
+    description: Foreign key to concept.id - specialty to which the referral is made
+  - name: mode
+    description: Mode of the referral
+  - name: is_outgoing_referral
+    description: Boolean indicating if this is an outgoing referral from the organisation
+  - name: is_review
+    description: Boolean indicating if this is a review record
+  - name: referral_request_source_concept_id
+    description: Foreign key to concept.id - source concept for the referral
+  - name: age_at_event
+    description: Patient age in years at time of referral
+  - name: age_at_event_baby
+    description: Patient age in months for babies (0-24 months)
+  - name: age_at_event_neonate
+    description: Patient age in days for neonates (0-28 days)
+  - name: date_recorded
+    description: Date the record was entered into the system
+  - name: lds_id
+    description: LDS system identifier
+  - name: publisher_organisation_code
+    description: ODS code supplied for the publishing organisation.
+  - name: lds_datetime_first_acquired
+    description: Datetime when data was acquired by LDS
+  - name: lds_data_initial_received_date
+    description: Date when data was initially received by LDS
+  - name: lds_start_datetime
+    description: LDS datetime stamp from which the record version was correct - used for deduplication
+      to get the latest record
+  - name: lds_is_deleted
+    description: Deletion flag - records with TRUE are filtered out in this staging layer
+  - name: lds_source_record_id
+    description: LDS assigned unique identifier for the source record version
+  - name: observation_id
+    description: Expanded observation ID for the same clinical record. Use this to avoid double counting
+      referrals with observations.
+  - name: referral_snomed_code
+    description: Source or mapped SNOMED code supporting referral inclusion.
+  - name: referral_snomed_name
+    description: Latest preferred label for the referral SNOMED code, including supported historical codes.
+  - name: provider_organisation_id
+    description: Provider on the source observation, where supplied. Not a referral destination.
+  - name: date_precision_source_code
+    description: Supplied clinical-date precision code, including YMD, YM, Y and Unknown.
+  - name: date_precision_source_display
+    description: Supplied clinical-date precision label. A partial date does not establish an exact day.
+  - name: source_code
+    description: Code for the recorded referral concept, resolved upstream through the dbt-olids enriched
+      concept map.
+  - name: source_display
+    description: Display for the recorded referral concept, resolved upstream through the enriched concept
+      map. Not a historical snapshot of text on the referral.
+  - name: source_system
+    description: Source coding system supplied by the upstream enriched concept map for source_code.
+  - name: target_system
+    description: Target coding system supplied by the upstream enriched concept map for mapped_concept_code.
+      No additional mapping is applied here.
+  - name: referral_request_priority_source_code
+    description: Code for the recorded priority concept, resolved upstream through the enriched concept
+      map.
+  - name: referral_request_priority_source_display
+    description: Display for the recorded priority concept, resolved upstream through the enriched concept
+      map.
+  - name: referral_request_type_source_code
+    description: Code for the recorded referral type concept, resolved upstream through the enriched concept
+      map.
+  - name: referral_request_type_source_display
+    description: Display for the recorded referral type concept, resolved upstream through the enriched
+      concept map.
+  - name: referral_request_specialty_source_code
+    description: Code for the recorded specialty concept, resolved upstream through the enriched concept
+      map.
+  - name: referral_request_specialty_source_display
+    description: Display for the recorded specialty concept, resolved upstream through the enriched concept
+      map.
+  tests:
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      config:
+        severity: warn
+      arguments:
+        min_value: 1

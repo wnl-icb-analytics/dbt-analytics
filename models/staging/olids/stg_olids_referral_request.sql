@@ -1,9 +1,12 @@
 select
     -- Primary key
     id,
+    observation_id,
+    referral_snomed_code,
+    referral_snomed_name,
+    provider_organisation_id,
 
     -- Business columns
-    -- stable_referral_request exposes publisher_organisation_id (not provider_).
     publisher_organisation_id,
     person_id,
     patient_id,
@@ -11,6 +14,8 @@ select
     practitioner_id,
     unique_booking_reference_number,
     clinical_effective_date,
+    date_precision_source_code,
+    date_precision_source_display,
     clinical_effective_date_precision_source_concept_id,
     requester_organisation_id,
     recipient_organisation_id,
@@ -41,8 +46,6 @@ select
     referral_request_type_source_display,
     referral_request_specialty_source_code,
     referral_request_specialty_source_display,
-    date_precision_source_code,
-    date_precision_source_display,
 
     -- Metadata
     lds_is_deleted,

@@ -1,0 +1,36 @@
+version: 2
+models:
+- name: organisation
+  description: Latest available organisation or site name, one row per normalised code. Uses the full
+    UKHFD ODS API history, then Dictionary for missing codes, then the UKHFD closed-since-1991 archive
+    for codes absent from both. Retains closed organisations
+    and historical codes without filtering current status. Supports provider, commissioner, referring
+    organisation and site labels across datasets; it does not derive organisational relationships or historical
+    names at an event date.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: organisation_code
+    description: Organisation or site code, trimmed and upper case. Includes historical and closed codes.
+    data_tests:
+    - not_null
+    - unique
+  - name: organisation_name
+    description: Latest available name, not the name at the date of an activity. ODS takes precedence
+      where a code exists in several sources. The closed archive never replaces an existing API or Dictionary name.
+    data_tests:
+    - not_null
+  - name: name_source
+    description: Source of the selected name. Priority is UKHFD ODS API, Dictionary, then UKHFD ODS closed archive.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - UKHFD ODS API
+          - Dictionary
+          - UKHFD ODS closed archive
+  - name: source_effective_from_at
+    description: UKHFD definition start for ODS names; Dictionary last update, or creation timestamp when
+      no update exists, for fallback names. Not an opening date or a common update clock across sources.

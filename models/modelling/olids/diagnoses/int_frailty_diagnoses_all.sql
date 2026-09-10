@@ -5,27 +5,14 @@
 }}
 
 /*
-All frailty diagnosis observations from clinical records.
-Uses frailty cluster ID:
-- FRAILTY_DX: Frailty diagnoses (includes mild, moderate, severe frailty states)
+All coded frailty severity observations from the PCD frailty clusters:
+- MILDFRAIL_COD: mild frailty, Clinical Frailty Scale levels 4-5
+- MODFRAIL_COD: moderate frailty, Clinical Frailty Scale level 6
+- SEVFRAIL_COD: severe frailty, Clinical Frailty Scale levels 7-8
 
-Clinical Purpose:
-- Frailty register data collection
-- Frailty assessment and stratification
-- Care planning for frail elderly populations
-- Risk assessment and intervention tracking
-
-Clinical Context:
-Frailty register includes persons with frailty diagnosis codes.
-Frailty can range from mild to severe and may change over time.
-No specific resolution codes as frailty status can fluctuate.
-
-Frailty codes included:
-- 248279007: Frailty
-- 404904002: Frail elderly
-- 925791000000100: Mild frailty
-- 925831000000107: Moderate frailty
-- 925861000000102: Severe frailty
+Severity comes from the cluster that matched the code. Generic frailty codes with
+no graded severity are not in these clusters and are not included. Calculated
+frailty scores (eFI, eFI2) are separate models; this is coded diagnosis only.
 
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 This is OBSERVATION-LEVEL data - one row per frailty observation.
@@ -39,22 +26,12 @@ SELECT
     obs.mapped_concept_code AS concept_code,
     obs.mapped_concept_display AS concept_display,
     obs.cluster_id AS source_cluster_id,
-
-    -- Frailty-specific flags (observation-level only)
     TRUE AS is_diagnosis_code,
+    CASE obs.cluster_id
+        WHEN 'MILDFRAIL_COD' THEN 'Mild'
+        WHEN 'MODFRAIL_COD' THEN 'Moderate'
+        WHEN 'SEVFRAIL_COD' THEN 'Severe'
+    END AS frailty_severity
 
-    -- Frailty severity determination based on concept codes
-    CASE
-        WHEN obs.mapped_concept_code = '925791000000100' THEN 'Mild'
-        WHEN obs.mapped_concept_code = '925831000000107' THEN 'Moderate'
-        WHEN obs.mapped_concept_code = '925861000000102' THEN 'Severe'
-        ELSE 'Unknown'
-    END AS frailty_severity,
-
-    -- Frailty observation type
-    'Frailty Diagnosis' AS frailty_observation_type
-
-FROM ({{ get_observations("'FRAILTY_DX'") }}) obs
+FROM ({{ get_observations("'MILDFRAIL_COD', 'MODFRAIL_COD', 'SEVFRAIL_COD'", source='PCD') }}) obs
 WHERE obs.clinical_effective_date IS NOT NULL
-
-ORDER BY person_id, clinical_effective_date, id

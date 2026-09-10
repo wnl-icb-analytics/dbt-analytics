@@ -6,72 +6,87 @@ Use the [dbt onboarding handbook](https://dbt-onboarding.vercel.app/) to learn
 the project, then keep [Project conventions](PROJECT_CONVENTIONS.md) beside
 you while changing models.
 
-## Before you start
+## Set up locally
 
-Make sure you have these prerequisites installed and configured on your Windows machine:
+Prerequisites (Windows):
 
-### 1. Install the required software
+- **Git for Windows:** [Download from git-scm.com](https://git-scm.com/download/win).
+  Version 2.34 or later is needed for SSH commit signing.
+- **Access to Snowflake** with the ANALYST role. You will need your account
+  identifier, username, role (`ANALYST`) and warehouse (usually `NCL_ANALYTICS_XS`).
+  To find them, log in to Snowflake, select your name in the bottom-left corner,
+  then "Connect a tool to Snowflake". Ask your team lead if you don't have access.
+- **A text editor:** We recommend [VS Code](https://code.visualstudio.com/).
 
-- **dbt Fusion engine:** Runs all dbt commands. `start_dbt.ps1` installs and keeps
-  it up to date automatically (to `%USERPROFILE%\.local\bin`), so you normally don't
-  install it by hand. To install manually:
-  ```powershell
-  irm https://public.cdn.getdbt.com/fs/install/install.ps1 | iex
-  ```
-  dbt is not a Python package in this project. It is the Fusion binary.
-- **Git for Windows:** [Download from git-scm.com](https://git-scm.com/download/win)
-  - Minimum version 2.34 required for SSH commit signing
-- **A text editor:** We recommend [VS Code](https://code.visualstudio.com/)
-- **Access to Snowflake** with the ANALYST role
-- **uv** *(optional):* Only needed to run the Python helper scripts in `scripts/`:
-  ```powershell
-  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-  ```
-
-### 2. Enable PowerShell script execution
-
-Open PowerShell and run:
+### Step 1: Allow PowerShell to run scripts
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 ```
 
-This allows the project's setup script (`start_dbt.ps1`) to run.
+### Step 2: Clone the repository
 
-### 3. Get your Snowflake connection details
-
-You'll need the following information from Snowflake (ask your team lead if you don't have access):
-
-**To find your connection details in Snowflake:**
-1. Log in to Snowflake web interface
-2. Click your user/role name in the bottom-left corner
-3. Select "Connect a tool to Snowflake"
-4. You'll see your account identifier and other connection details
-
-**You'll need:**
-- **Account identifier** - Shown in the connection dialog
-- **Username** - Your Snowflake username (usually your email prefix)
-- **Warehouse** - Usually `NCL_ANALYTICS_XS`
-- **Role** - `ANALYST`
-
-## Get started
-
-### Step 1: Clone the repository
-
-```bash
+```powershell
 git clone https://github.com/wnl-icb-analytics/dbt-analytics
 cd dbt-analytics
 ```
 
-### Step 2: Configure the Snowflake connection
+### Step 3: Run the setup script
 
-The first time you open a terminal with no `.env`, `start_dbt.ps1` walks you through
-setup interactively: it asks for your account, user, role and warehouse, then your
-auth method (browser SSO by default, or PAT / password+MFA), and writes `.env` for you.
+```powershell
+.\start_dbt.ps1
+```
 
-To configure it by hand instead:
+The script does the rest:
 
-```bash
+- configures git hooks and checks commit signing
+- installs the dbt Fusion engine if it is missing
+- installs `uv` and syncs the Python tooling for `scripts/`
+- asks for your Snowflake account, user, role, warehouse and auth method, then
+  writes `.env` (first run only)
+- installs dbt packages
+
+The VS Code workspace runs it every time you open a terminal, so you rarely need
+to run it by hand after this.
+
+### Step 4: Verify
+
+```powershell
+dbt debug
+```
+
+With browser SSO (the default), your browser opens for Snowflake authentication.
+Look for "All checks passed!" in the output.
+
+## Set up manually
+
+Use this only if the setup script cannot run on your machine. It reproduces what
+`start_dbt.ps1` does.
+
+**1. Install the dbt Fusion engine.** dbt is not a Python package in this
+project; it is the Fusion binary, installed to `%USERPROFILE%\.local\bin`:
+
+```powershell
+irm https://public.cdn.getdbt.com/fs/install/install.ps1 | iex
+```
+
+**2. Install uv** *(optional)*. Only needed for the Python helper scripts in
+`scripts/`:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+uv sync
+```
+
+**3. Configure git hooks:**
+
+```powershell
+git config core.hooksPath .githooks
+```
+
+**4. Configure the Snowflake connection:**
+
+```powershell
 cp env.example .env
 ```
 
@@ -84,32 +99,17 @@ SNOWFLAKE_WAREHOUSE=your-warehouse
 SNOWFLAKE_ROLE=your-role
 ```
 
-Auth: leave it there for **browser SSO** (the default). For a **PAT**, set `SNOWFLAKE_PAT`
-(Fusion authenticates via `programmatic_access_token`). For an **account password**, set
-`SNOWFLAKE_PASSWORD` (used with MFA). `profiles.yml` picks the authenticator from whichever
-you set.
+Leave it there for **browser SSO** (the default). For a **PAT**, set
+`SNOWFLAKE_PAT` (Fusion authenticates via `programmatic_access_token`). For an
+**account password**, set `SNOWFLAKE_PASSWORD` (used with MFA). `profiles.yml`
+picks the authenticator from whichever you set. Fusion loads `.env` itself.
 
-### Step 3: Initialise the development environment
-
-Run the setup script:
+**5. Install packages and verify:**
 
 ```powershell
-.\start_dbt.ps1
+dbt deps
+dbt debug
 ```
-
-The VS Code workspace runs this automatically when you open a terminal, so you
-rarely need to run it by hand. It installs/updates the dbt Fusion engine, configures
-git hooks, and syncs the Python tooling. (Fusion loads `.env` itself, so dbt works
-even if the script hasn't run.)
-
-### Step 4: Verify the installation
-
-```bash
-dbt deps    # Install dbt packages
-dbt debug   # Test connection
-```
-
-If you are using `externalbrowser`, your browser will open for Snowflake authentication. Look for "All checks passed!" in the output.
 
 ## Use GitHub Codespaces
 
@@ -124,7 +124,7 @@ Two scripts in the project root make development easier:
 
 | Script | Description |
 |--------|-------------|
-| `.\start_dbt.ps1` | Installs/updates dbt Fusion, configures git hooks, loads `.env`, syncs Python tooling (auto-runs on terminal open) |
+| `.\start_dbt.ps1` | Installs dbt Fusion, configures git hooks, sets up and loads `.env`, syncs Python tooling, installs dbt packages (auto-runs on terminal open) |
 | `.\build_changed.ps1` | Builds only models changed on your branch |
 
 **build_changed flags:**

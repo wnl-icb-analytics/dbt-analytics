@@ -1,0 +1,42 @@
+models:
+  - name: int_cvd_secondary_prevention_population
+    description: >
+      People with established cardiovascular disease, the shared denominator for
+      NICE secondary-prevention indicators such as IND278 and IND230. One row per
+      person on the CHD, stroke/TIA or PAD QOF register whose earliest register
+      diagnosis is on or before the build date, the registers the NICE
+      specifications name for cardiovascular disease. Includes inactive and deceased
+      people; consumers join dim_person_active_patients for a registered, living
+      population.
+
+      Familial hypercholesterolaemia and haemorrhagic stroke history are flags, not
+      filters, because measures differ in which they exclude. Undated records count
+      as history; records with an original date after the build date do not.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person on at least one CVD register.
+        data_tests:
+          - unique
+          - not_null
+      - name: has_chd
+        description: On the CHD register with a diagnosis by the build date.
+      - name: has_stroke_tia
+        description: On the stroke/TIA register with a diagnosis by the build date.
+      - name: has_pad
+        description: On the PAD register with a diagnosis by the build date.
+      - name: earliest_chd_diagnosis_date
+        description: Earliest CHD register diagnosis date; null if not on that register.
+      - name: earliest_stroke_tia_diagnosis_date
+        description: Earliest stroke/TIA register diagnosis date; null if not on that register.
+      - name: earliest_pad_diagnosis_date
+        description: Earliest PAD register diagnosis date; null if not on that register.
+      - name: earliest_cvd_diagnosis_date
+        description: Earliest diagnosis date across the qualifying registers.
+      - name: has_familial_hypercholesterolaemia
+        description: Any FH diagnosis code recorded, undated or dated by the build date.
+      - name: has_haemorrhagic_stroke
+        description: Any haemorrhagic stroke code recorded, undated or dated by the build date.

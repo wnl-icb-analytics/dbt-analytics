@@ -66,6 +66,27 @@ models:
         data_type: number
         description: "Length of stay in days. This value is an output of the grouper process and represents the sum of the Episode Adjusted Durations for non-excluded episodes in the spell."
 
+      - name: is_open_spell
+        data_type: boolean
+        description: >-
+          Whether SUS+ supplied an open-spell indicator of 1 for the latest spell
+          record. This preserves the supplied status and is not inferred from a
+          missing discharge date. Null means no indicator was supplied.
+
+      - name: unadjusted_length_of_stay_days
+        data_type: number
+        description: >-
+          SUS+-supplied length of stay before critical-care, rehabilitation,
+          palliative-care and delayed-discharge adjustments. Null means SUS+
+          supplied no value.
+
+      - name: excess_bed_days
+        data_type: number
+        description: >-
+          SUS+-supplied number of length-of-stay days above the tariff trim point.
+          dbt passes the spell-level value through without recalculation. Null
+          means SUS+ supplied no value.
+
       - name: duration_to_date
         data_type: number
         description: "Length of stay in days, including ongoing stays calculated to current date"

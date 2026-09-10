@@ -1,10 +1,10 @@
 models:
   - name: stg_sus_apc_spell
-    description: 'Admitted Patient Care (APC) spells from SUS data.
-
-      One row per spell.
-
-      '
+    description: >-
+      Admitted Patient Care (APC) spells from SUS data. One row per spell. When
+      SUS+ supplies several versions, the model keeps the latest activity date,
+      then the highest numeric source record version and latest interchange
+      receipt time. The raw row number breaks any remaining ties.
     config:
       meta:
         owner:
@@ -23,7 +23,24 @@ models:
       - name: spell_admission_patient_classification
       - name: spell_discharge_date
       - name: spell_discharge_time
+      - name: spell_open_spell_indicator
+        description: >-
+          SUS+-supplied indicator for whether the latest spell record is open.
+          A value of 1 means open. This model passes the supplied value through
+          and does not infer it from a missing discharge date. Null means SUS+
+          supplied no indicator.
       - name: spell_discharge_length_of_hospital_stay
+      - name: spell_commissioning_tariff_calculation_pbr_length_of_stay_unadjusted_days
+        description: >-
+          SUS+-supplied spell length of stay in days before critical-care,
+          rehabilitation, palliative-care and delayed-discharge adjustments.
+          This model passes the value through without recalculation. Null means
+          SUS+ supplied no value.
+      - name: spell_commissioning_tariff_calculation_pbr_length_of_stay_excess_bed_days
+        description: >-
+          SUS+-supplied number of spell length-of-stay days above the tariff trim
+          point. This model passes the value through without recalculation. Null
+          means SUS+ supplied no value.
       - name: spell_commissioning_service_agreement_provider
       - name: spell_commissioning_grouping_core_hrg
       - name: spell_clinical_coding_grouper_derived_primary_diagnosis
@@ -32,7 +49,6 @@ models:
       - name: spell_admission_admission_sub_type
       - name: spell_admission_admission_type
   # Spec Comm
-      - name: spec_comm
       - name: spell_commissioning_tariff_calculation_final_price
 
 

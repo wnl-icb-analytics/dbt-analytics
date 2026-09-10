@@ -1,0 +1,197 @@
+models:
+  - name: fct_person_antithrombotic_therapy_ind132
+    description: >
+      NICE IND132 antiplatelet or anticoagulant therapy in coronary heart
+      disease. One row per currently registered, living, non-test person on
+      the CHD register, assessed on the build date. The numerator requires an
+      antiplatelet or oral anticoagulant order in the preceding 12 months.
+      Contraindication exclusions are not applied. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind132
+        indicator:
+          id: "IND132"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CHD antiplatelet or anticoagulant"
+          description_short: "Antiplatelet or anticoagulant ordered in the preceding 12 months for people with coronary heart disease"
+          description_long: "NICE IND132 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND132"
+    columns: &antithrombotic_columns
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_antiplatelet_order_date
+        description: Date of the most recent antiplatelet order; null if never ordered
+      - name: latest_anticoagulant_order_date
+        description: Date of the most recent oral anticoagulant order; null if never ordered
+      - name: latest_anticoagulant_type
+        description: DOAC or VKA for the most recent oral anticoagulant order; null if never ordered
+      - name: is_antiplatelet_in_period
+        description: Whether an antiplatelet order falls in the measurement period
+      - name: is_anticoagulant_in_period
+        description: Whether an oral anticoagulant order falls in the measurement period; always false for IND94, whose denominator excludes them
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or the reason not achieved
+  - name: fct_person_antithrombotic_therapy_ind133
+    description: >
+      NICE IND133 antiplatelet or anticoagulant therapy after stroke or TIA.
+      One row per currently registered, living, non-test person on the
+      stroke/TIA register without a history of haemorrhagic stroke, assessed
+      on the build date. The numerator requires an antiplatelet or oral
+      anticoagulant order in the preceding 12 months. Contraindication and
+      declined exclusions are not applied. Personalised care adjustments are
+      not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind133
+        indicator:
+          id: "IND133"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "Stroke/TIA antiplatelet or anticoagulant"
+          description_short: "Antiplatelet or anticoagulant ordered in the preceding 12 months for people with non-haemorrhagic stroke or TIA"
+          description_long: "NICE IND133 before personalised care adjustments. Excludes any history of haemorrhagic stroke."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND133"
+    columns: *antithrombotic_columns
+  - name: fct_person_antithrombotic_therapy_ind94
+    description: >
+      NICE IND94 antiplatelet therapy in peripheral arterial disease. One row
+      per currently registered, living, non-test person on the PAD register
+      without an oral anticoagulant order in the preceding 15 months, assessed
+      on the build date; NICE excludes people already prescribed an
+      anticoagulant. The numerator requires an antiplatelet order in the
+      preceding 15 months. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind94
+        indicator:
+          id: "IND94"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "PAD antiplatelet"
+          description_short: "Antiplatelet ordered in the preceding 15 months for people with peripheral arterial disease not on an anticoagulant"
+          description_long: "NICE IND94 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND94"
+    columns: *antithrombotic_columns
+  - name: fct_person_antithrombotic_therapy_nice_indicators
+    description: >
+      NICE IND132, IND133 and IND94 antithrombotic therapy status in a common
+      interface. One row per person and indicator on the current reporting
+      date. Indicator-specific views remain the source of each population
+      definition. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering. Feeds
+      fct_person_nice_indicator_status.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_status
+        description: ACHIEVED, NOT_TREATED_IN_PERIOD, NEVER_TREATED
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_TREATED_IN_PERIOD', 'NEVER_TREATED']
+      - name: latest_antiplatelet_order_date
+        description: Date of the most recent antiplatelet order; null if never ordered
+      - name: latest_anticoagulant_order_date
+        description: Date of the most recent oral anticoagulant order; null if never ordered
+  - name: fct_person_antithrombotic_therapy_nice_indicators_snapshot_input
+    description: >
+      Thin snapshot-input projection of
+      fct_person_antithrombotic_therapy_nice_indicators: person, indicator,
+      current practice, the latest record and outcome. Excludes reporting_date
+      and measurement_period_start, which advance on every build, so the SCD2
+      snapshot versions only on genuine changes. Feeds
+      fct_person_antithrombotic_therapy_nice_indicators_snapshot.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.
+      - name: latest_antiplatelet_order_date
+        description: Date of the most recent antiplatelet order; null if never ordered.
+      - name: latest_anticoagulant_order_date
+        description: Date of the most recent oral anticoagulant order; null if never ordered.

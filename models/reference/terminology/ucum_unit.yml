@@ -1,0 +1,67 @@
+version: 2
+
+models:
+  - name: ucum_unit_history
+    description: >-
+      UKHFD UCUM definitions, one row per case-sensitive code and history start.
+      Includes codes absent from the latest source extract. This finite reference
+      is not a validator for all legal UCUM expressions.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [code, source_effective_from_at]
+    columns: &ucum_columns
+      - name: code
+        description: Case-sensitive UCUM expression. Never uppercase for matching.
+        data_tests: [not_null]
+      - name: description
+        description: Verbatim UKHFD descriptive name.
+      - name: synonym
+        description: Published alternative display, not necessarily a valid UCUM expression.
+      - name: quantity_name
+        description: Published kind of quantity, such as mass or substance concentration.
+      - name: status
+        description: Source terminology status, separate from presence in the latest extract.
+      - name: is_in_latest_source
+        description: Whether UKHFD found this definition in its latest source extract. False does not itself mean an invalid or retired unit.
+      - name: source_effective_from_at
+        description: Start of this UKHFD history row, not the clinical validity of the unit.
+      - name: source_effective_to_at
+        description: End of this UKHFD history row, null when open-ended.
+  - name: ucum_unit
+    description: >-
+      Latest available UKHFD definition for every historical case-sensitive UCUM
+      code, one row per code. Retains codes no longer in the source for safe
+      historical joins; does not interpret arbitrary UCUM expressions.
+    config: *owner
+    columns:
+      - name: code
+        description: Case-sensitive UCUM expression.
+        data_tests: [not_null, unique]
+      - name: description
+        description: Latest published description, including historical codes.
+  - name: clinical_unit_of_measurement
+    description: >-
+      One row per exact-case unit code or recognised alias. Prefers UKHFD UCUM
+      codes, then UKHFD synonyms, then warehouse dictionary symbols and aliases.
+      Excludes ambiguous aliases at the same priority. Dictionary matches do
+      not certify UCUM validity. No values are converted between units.
+    config: *owner
+    columns:
+      - name: code
+        description: Exact-case lookup key; callers may trim outer whitespace only.
+        data_tests: [not_null, unique]
+      - name: unit_symbol
+        description: Unit symbol selected by the named reference. It is UCUM only when definition_source is UKHFD UCUM.
+      - name: description
+        description: Authoritative label of the matched unit.
+      - name: quantity_name
+        description: Published kind of quantity.
+      - name: match_type
+        description: ucum_code, dictionary_symbol or known_alias. These distinguish canonical UCUM from display conventions.
+      - name: definition_source
+        description: Reference supplying the selected definition.

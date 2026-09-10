@@ -1,0 +1,85 @@
+version: 2
+models:
+- name: stg_csds_care_activity_history
+  description: One CYP202 activity occurrence in an accepted submission, at (unique_submission_id, unique_care_activity_identifier)
+    grain. Retains every accepted activity; reused activity identifiers across submissions are not collapsed.
+    Source delivery timestamps are not clinical activity dates.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  columns:
+  - name: unique_care_activity_identifier
+    description: Supplied provider-qualified activity identifier. Reused across contacts, people and periods
+      in the loaded feed; not a global event key.
+    data_tests:
+    - not_null
+  - name: care_activity_identifier
+    description: Local activity identifier as supplied by the provider.
+  - name: unique_care_contact_identifier
+    description: Supplied provider-qualified contact identifier. Use submission context to locate the
+      historical parent.
+  - name: care_contact_identifier
+    description: Local contact identifier as supplied by the provider.
+  - name: community_care_activity_type
+    description: Supplied CSDS community activity type. The duplicate activity_type_code source alias
+      is omitted after equality validation.
+  - name: care_professional_local_identifier
+    description: Supplied local identifier of the lead care professional. Several professionals do not
+      create extra activity rows.
+  - name: unique_care_professional_id_local
+    description: Source-derived provider-qualified lead care professional identifier; null when absent.
+  - name: clinical_contact_duration_of_care_activity
+    description: Supplied clinical contact duration in minutes.
+  - name: procedure_scheme_in_use_community_care
+    description: Original procedure coding-system code. The duplicate older source alias is omitted after
+      equality validation.
+  - name: coded_procedure_clinical_terminology
+    description: Original procedure code interpreted using procedure_scheme_in_use_community_care. Null
+      means not supplied.
+  - name: finding_scheme_in_use_community_care
+    description: Original finding coding-system code. The duplicate older source alias is omitted after
+      equality validation.
+  - name: coded_finding_coded_clinical_entry
+    description: Original finding code interpreted using finding_scheme_in_use_community_care. Null means
+      not supplied.
+  - name: observation_scheme_in_use_community_care
+    description: Original observation coding-system code. The duplicate older source alias is omitted
+      after equality validation.
+  - name: coded_observation_clinical_terminology
+    description: Original observation code interpreted using observation_scheme_in_use_community_care.
+      Null means not supplied.
+  - name: observation_value
+    description: Supplied value on this activity observation, kept with its code and unit. Null means
+      no supplied value.
+  - name: ucum_unit_of_measurement
+    description: Supplied UCUM unit for the observation value; null does not imply a unit.
+  - name: cyp202_unique_id
+    description: Identifier of one delivered CYP202 source row.
+  - name: person_id
+    description: CSDS person identifier supplied on this row. It is not replaced by the parent person.
+  - name: unique_submission_id
+    description: Accepted submission identifier. Combine with the activity identifier to locate a submitted
+      occurrence.
+    data_tests:
+    - not_null
+  - name: organisation_code_provider
+    description: Supplied provider organisation code.
+  - name: organisation_identifier_code_of_provider
+    description: Provider organisation identifier used to namespace submitted local identifiers.
+  - name: effective_from
+    description: Date and time the submission portal received the file; not the time of care.
+  - name: reporting_period_start_date
+    description: First date of the source reporting period; delivery context, not clinical event time.
+  - name: reporting_period_end_date
+    description: Last date of the source reporting period; delivery context, not clinical event time.
+  - name: file_type
+    description: Supplied submission file type.
+  - name: csds_version
+    description: Dataset version from the submission header.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - unique_submission_id
+        - unique_care_activity_identifier

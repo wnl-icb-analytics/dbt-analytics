@@ -1,0 +1,51 @@
+models:
+  - name: int_anticoagulant_exception_all
+    description: >
+      Records that limit oral anticoagulant or DOAC treatment, from the PCD
+      clusters for anticoagulant allergy or adverse reaction
+      (ORANTICOAGADVERS_COD), anticoagulation contraindicated or not tolerated
+      (TXORANTICOAGGENCON_COD), anticoagulant declined (ORANTICOAGDEC_COD), DOAC
+      contraindicated (DOACCON_COD), DOAC declined (DOACDEC_COD), DOAC not
+      indicated (DOACNI_COD) and antiphospholipid syndrome (ANTIPHOSYND_COD),
+      plus valvular atrial fibrillation from the local ECL cluster
+      AF_VALVULAR_OBS. One row per observation for all people including
+      inactive and deceased; observations dated after the build date are
+      excluded. A code in more than one cluster appears once per cluster.
+      Consumers decide which types persist and which expire.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: ORANTICOAGADVERS_COD, TXORANTICOAGGENCON_COD, ORANTICOAGDEC_COD, DOACCON_COD, DOACDEC_COD, DOACNI_COD, ANTIPHOSYND_COD
+            source: PCD
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: AF_VALVULAR_OBS
+            source: ECL_CACHE
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - id
+              - source_cluster_id
+    columns:
+      - name: id
+        description: Source observation identifier; one row per observation and cluster.
+        data_tests:
+          - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the record.
+      - name: exception_type
+        description: ANTICOAGULANT_ADVERSE_REACTION, ANTICOAGULANT_CONTRAINDICATED, ANTICOAGULANT_DECLINED, DOAC_CONTRAINDICATED, DOAC_DECLINED, DOAC_NOT_INDICATED, ANTIPHOSPHOLIPID_SYNDROME or VALVULAR_AF.
+        data_tests:
+          - not_null
+      - name: concept_code
+        description: SNOMED code of the record.
+      - name: concept_display
+        description: Description of the record.
+      - name: source_cluster_id
+        description: Cluster that matched the code.

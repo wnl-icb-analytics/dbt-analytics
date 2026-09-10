@@ -1,0 +1,24 @@
+snapshots:
+  - name: fct_person_ckd_albumin_testing_ind144_snapshot
+    relation: ref('fct_person_ckd_albumin_testing_ind144_snapshot_input')
+    description: >
+      SCD2 history of NICE IND144 urine albumin testing per person on the CKD
+      register: current practice, the latest qualifying test and the outcome.
+      Sources the thin snapshot-input view rather than the measure, because the
+      measure's CURRENT_DATE() derived columns change every run. check_cols: all
+      over the thin projection. Rows leaving the CKD register or deregistering
+      are closed via hard_deletes: invalidate.
+    config:
+      strategy: check
+      unique_key: [person_id]
+      check_cols: all
+      hard_deletes: invalidate
+    columns:
+      - name: person_id
+        description: "Person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

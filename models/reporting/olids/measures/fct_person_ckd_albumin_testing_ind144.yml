@@ -1,0 +1,89 @@
+models:
+  - name: fct_person_ckd_albumin_testing_ind144
+    description: >
+      NICE IND144 urine albumin testing in chronic kidney disease. One row per
+      currently registered, living, non-test person on the CKD register, which
+      holds stage 3 to 5 by code so stages 1 and 2 are excluded as NICE
+      requires, assessed on the build date. The numerator requires a urine ACR
+      or protein:creatinine ratio observation in the preceding 12 months, with
+      or without a recorded value. Feeds fct_person_nice_indicator_status.
+      Personalised care adjustments are not applied. Secondary-use consumers
+      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
+      Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind144
+        indicator:
+          id: "IND144"
+          type: "MEASURE"
+          category: "KIDNEY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CKD albumin test"
+          description_short: "Urine ACR or PCR recorded in the preceding 12 months for people on the CKD register"
+          description_long: "NICE IND144 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND144"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_record_date
+        description: Date of the latest ACR or PCR observation in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or the reason not achieved
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+  - name: fct_person_ckd_albumin_testing_ind144_snapshot_input
+    description: >
+      Thin snapshot-input projection of fct_person_ckd_albumin_testing_ind144:
+      person, indicator, current practice, the latest record and outcome.
+      Excludes reporting_date and measurement_period_start, which advance on
+      every build, so the SCD2 snapshot versions only on genuine changes.
+      Feeds fct_person_ckd_albumin_testing_ind144_snapshot.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier; snapshot unique_key.
+        data_tests:
+          - unique
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.
+      - name: latest_record_date
+        description: Date of the latest ACR or PCR observation; null when none in the period.

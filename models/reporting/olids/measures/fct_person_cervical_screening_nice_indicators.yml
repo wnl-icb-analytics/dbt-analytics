@@ -1,0 +1,217 @@
+models:
+  - name: fct_person_cervical_screening_ind176
+    description: >
+      NICE IND176 cervical screening at 25 to 49. One row per currently
+      registered, living, non-test woman aged 25 to 49, assessed on the build
+      date. Women whose any unsuitable screening record are
+      excluded as the nearest available reading of NICE's "without a cervix";
+      adequacy of the sample is not recorded, so any completed screening
+      record counts. Women with a non-response-to-invitations code in the
+      preceding 12 months or a pregnancy code in the preceding 9 months are
+      excluded, as NICE specifies. The numerator requires a completed
+      screening record in the preceding 3.5 years. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind176
+        indicator:
+          id: "IND176"
+          type: "MEASURE"
+          category: "SCREENING"
+          clinical_domain: "Prevention"
+          name_short: "Cervical screening 25 to 49"
+          description_short: "Cervical screening recorded in the preceding 3.5 years for women aged 25 to 49"
+          description_long: "NICE IND176 before personalised care adjustments. Unsuitable, non-response and pregnancy exclusions applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND176"
+    columns: &cervical_columns
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_completed_date
+        description: Date of the latest completed cervical screening record, regardless of period; null if never screened
+      - name: latest_screening_date
+        description: Date of the latest cervical screening record of any type; null when none
+      - name: latest_screening_date
+        description: Date of the latest cervical screening record of any type
+      - name: programme_status
+        description: Programme status from the screening model (Up to Date, Overdue, Never Screened, Unsuitable, Unknown)
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+
+  - name: fct_person_cervical_screening_ind177
+    description: >
+      NICE IND177 cervical screening at 50 to 64. One row per currently
+      registered, living, non-test woman aged 50 to 64, assessed on the build
+      date. Women whose any unsuitable screening record are
+      excluded as the nearest available reading of NICE's "without a cervix";
+      adequacy of the sample is not recorded, so any completed screening
+      record counts. Women with a non-response-to-invitations code in the
+      preceding 12 months or a pregnancy code in the preceding 9 months are
+      excluded, as NICE specifies. The numerator requires a completed
+      screening record in the preceding 5.5 years. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind177
+        indicator:
+          id: "IND177"
+          type: "MEASURE"
+          category: "SCREENING"
+          clinical_domain: "Prevention"
+          name_short: "Cervical screening 50 to 64"
+          description_short: "Cervical screening recorded in the preceding 5.5 years for women aged 50 to 64"
+          description_long: "NICE IND177 before personalised care adjustments. Unsuitable, non-response and pregnancy exclusions applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND177"
+    columns: *cervical_columns
+
+  - name: fct_person_cervical_screening_ind321
+    description: >
+      NICE IND321 cervical screening at 25 to 64. One row per currently
+      registered, living, non-test woman aged 25 to 64, assessed on the build
+      date. Women whose any unsuitable screening record are
+      excluded as the nearest available reading of NICE's "without a cervix";
+      adequacy of the sample is not recorded, so any completed screening
+      record counts. The numerator requires a completed screening record in
+      the preceding 5.5 years. Personalised care adjustments are not applied.
+      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
+      apply National Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind321
+        indicator:
+          id: "IND321"
+          type: "MEASURE"
+          category: "SCREENING"
+          clinical_domain: "Prevention"
+          name_short: "Cervical screening 25 to 64"
+          description_short: "Cervical screening recorded in the preceding 5.5 years for women aged 25 to 64"
+          description_long: "NICE IND321 before personalised care adjustments. Unsuitable exclusion applied."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND321"
+    columns: *cervical_columns
+
+  - name: fct_person_cervical_screening_nice_indicators
+    description: >
+      NICE IND176, IND177 and IND321 cervical screening status in a common
+      interface. One row per person and indicator on the current reporting
+      date. Indicator-specific views remain the source of each population
+      definition. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering. Feeds
+      fct_person_nice_indicator_status.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+      - name: indicator_id
+        description: NICE indicator identifier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IND176', 'IND177', 'IND321']
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+      - name: latest_completed_date
+        description: Date of the latest completed screening record; null if never screened
+      - name: latest_screening_date
+        description: Date of the latest cervical screening record of any type; null when none
+      - name: programme_status
+        description: Programme status from the screening model
+      - name: latest_record_date
+        description: Date of the latest completed screening in the period; null when none
+
+  - name: fct_person_cervical_screening_nice_indicators_snapshot_input
+    description: >
+      Thin snapshot-input projection of
+      fct_person_cervical_screening_nice_indicators: person, indicator,
+      current practice, latest qualifying record and outcome. Excludes
+      reporting_date and measurement_period_start, which advance on every
+      build, so the SCD2 snapshot versions only on genuine changes. Feeds
+      fct_person_cervical_screening_nice_indicators_snapshot.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.
+      - name: latest_completed_date
+        description: Date of the latest completed screening at the build.
+      - name: latest_screening_date
+        description: Date of the latest cervical screening record of any type; null when none

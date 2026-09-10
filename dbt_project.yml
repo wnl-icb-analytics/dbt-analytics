@@ -144,7 +144,7 @@ models:
       +schema: "SEMANTIC"
       +tags: ["semantic"]
       +meta:
-        custom_message: "Snowflake Semantic View - Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering. Query via SEMANTIC_VIEW() function."
+        custom_message: "Snowflake semantic view for aggregate analysis. Use the view definition for available dimensions, facts and metrics."
 
     # Partner layer - production-ready datasets for partner users
     partner:
@@ -167,13 +167,6 @@ models:
           {%- else -%}
           DEV__PUBLISHED_REPORTING__PARTNER.SECURITY.PARTNER_POLICY on (sk_patient_id)
           {%- endif -%}
-        olids:
-          +meta:
-            custom_message: "Includes OLIDS data already filtered via REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED (National Data Opt-Out and Type 1 opt-outs excluded). Safe to use for secondary purposes."
-          # Schema names automatically derived from subdomain folder names via generate_schema_name macro
-          +post-hook:
-            - "{{ add_model_comment() }}"
-            - "{{ log_row_count() }}"
 
     # Published layer - production-ready datasets for end users
     published:
