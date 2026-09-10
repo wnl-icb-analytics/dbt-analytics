@@ -1,6 +1,23 @@
 -- Returns only whole-table column coverage.
 with stats as (
     select object_construct(
+        'patient_age', object_construct('populated', count(patient_age), 'blank', count_if(trim(patient_age::varchar) = '')),
+        'patient_sex_code', object_construct('populated', count(patient_sex_code), 'blank', count_if(trim(patient_sex_code::varchar) = '')),
+        'patient_sex_name', object_construct('populated', count(patient_sex_name), 'blank', count_if(trim(patient_sex_name::varchar) = '')),
+        'residence_lsoa_code', object_construct('populated', count(residence_lsoa_code), 'blank', count_if(trim(residence_lsoa_code::varchar) = '')),
+        'residence_imd_2019_decile', object_construct('populated', count(residence_imd_2019_decile), 'blank', count_if(trim(residence_imd_2019_decile::varchar) = '')),
+        'registered_practice_code', object_construct('populated', count(registered_practice_code), 'blank', count_if(trim(registered_practice_code::varchar) = '')),
+        'registered_practice_name', object_construct('populated', count(registered_practice_name), 'blank', count_if(trim(registered_practice_name::varchar) = '')),
+        'residence_local_authority_code', object_construct('populated', count(residence_local_authority_code), 'blank', count_if(trim(residence_local_authority_code::varchar) = '')),
+        'residence_local_authority_name', object_construct('populated', count(residence_local_authority_name), 'blank', count_if(trim(residence_local_authority_name::varchar) = '')),
+        'registration_local_authority_code', object_construct('populated', count(registration_local_authority_code), 'blank', count_if(trim(registration_local_authority_code::varchar) = '')),
+        'registration_local_authority_name', object_construct('populated', count(registration_local_authority_name), 'blank', count_if(trim(registration_local_authority_name::varchar) = '')),
+        'referrer_commissioner_code', object_construct('populated', count(referrer_commissioner_code), 'blank', count_if(trim(referrer_commissioner_code::varchar) = '')),
+        'referrer_commissioner_name', object_construct('populated', count(referrer_commissioner_name), 'blank', count_if(trim(referrer_commissioner_name::varchar) = '')),
+        'financial_year', object_construct('populated', count(financial_year), 'blank', count_if(trim(financial_year::varchar) = '')),
+        'financial_month', object_construct('populated', count(financial_month), 'blank', count_if(trim(financial_month::varchar) = '')),
+        'financial_month_name', object_construct('populated', count(financial_month_name), 'blank', count_if(trim(financial_month_name::varchar) = '')),
+        'week_end_date', object_construct('populated', count(week_end_date), 'blank', count_if(trim(week_end_date::varchar) = '')),
         'action_id', object_construct('populated', count(action_id), 'blank', count_if(trim(action_id::varchar) = '')),
         'ubrn_id', object_construct('populated', count(ubrn_id), 'blank', count_if(trim(ubrn_id::varchar) = '')),
         'ubrn', object_construct('populated', count(ubrn), 'blank', count_if(trim(ubrn::varchar) = '')),

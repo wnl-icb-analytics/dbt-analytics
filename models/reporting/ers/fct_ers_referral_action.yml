@@ -10,8 +10,55 @@ models:
   config:
     meta:
       owner:
-        name: Jonathan Linney
+        name: Eddie Davison
   columns:
+  - name: financial_year
+    description: "NHS April-March financial year of action_at, formatted YYYYYY, for example 202526. Uses the shared financial-period macro."
+  - name: financial_month
+    description: "NHS financial month of action_at, where April is 1 and March is 12."
+  - name: financial_month_name
+    description: "Month name for action_at from the shared date dictionary."
+  - name: week_end_date
+    description: "Sunday ending the ISO week containing action_at, from the shared date dictionary. Independent of session WEEK_START settings."
+  - name: patient_age
+    description: >-
+      Age in years supplied with the selected action. Null means absent. The available public extract guidance does not establish its calculation date; do not treat it as a freshly calculated age at action or appointment time.
+  - name: patient_sex_code
+    description: >-
+      Patient sex application code supplied on the selected action. Uses the e-RS code system, which differs from national sex codes.
+  - name: patient_sex_name
+    description: >-
+      Latest retained Dictionary.E-Referral.Gender display, with supplied-label fallback. This describes the source patient sex field.
+  - name: residence_lsoa_code
+    description: >-
+      Residence LSOA supplied with the selected action. Preserves source geography rather than the current person address. The feed does not provide an explicit LSOA vintage.
+  - name: residence_imd_2019_decile
+    description: >-
+      IMD 2019 decile matched to the supplied residence LSOA. 1 is most deprived and 10 least deprived. Null means no supplied LSOA or no exact IMD 2019 match. This is an area measure using the named release, not an individual's deprivation or the release current at action time.
+  - name: registered_practice_code
+    description: >-
+      Registered GP practice supplied with the selected action, separate from the referring organisation. Not replaced by the person's current practice.
+  - name: registered_practice_name
+    description: >-
+      Latest retained organisation name for the supplied practice code, preferring historical UKHFD ODS coverage with Dictionary and source-label fallback.
+  - name: residence_local_authority_code
+    description: >-
+      Local authority of residence supplied with the selected action. Source enrichment timing is not established by the public e-RS guidance.
+  - name: residence_local_authority_name
+    description: >-
+      Latest retained Dictionary geography name for the supplied residence local-authority code, with supplied-label fallback. Historical codes remain available.
+  - name: registration_local_authority_code
+    description: >-
+      Local authority of GP registration supplied with the selected action. Distinct from residence and referring organisation geography.
+  - name: registration_local_authority_name
+    description: >-
+      Latest retained Dictionary geography name for the supplied registration local-authority code, with supplied-label fallback.
+  - name: referrer_commissioner_code
+    description: >-
+      Referrer commissioner code supplied with the selected action. Not an inferred commissioner for the patient's current registration.
+  - name: referrer_commissioner_name
+    description: >-
+      Latest retained organisation name for the supplied referrer commissioner code, with supplied-label fallback.
   - name: action_id
     description: Sequential identifier supplied by e-RS. One row per active submitted action; orders the
       action history.

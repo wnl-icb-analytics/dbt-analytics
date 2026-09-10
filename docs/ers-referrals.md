@@ -18,7 +18,10 @@ and next UBRNs remain as recorded; no journey is inferred.
 `sk_patient_id` uses the shared pseudonymised NHS-number key. Blank values and
 the unknown marker 1 become null. Conflicting keys within a request produce a
 null referral key and fail the consistency test. Missing keys do not remove
-requests. Demographics and geography are not repeated in these facts.
+requests. Recorded patient, practice and residence context is retained on actions
+and copied from the latest action onto requests. It is separate from current
+person demographics. See [analyst validation](ers-analyst-validation.md) for
+the legacy comparison, context timing and worked analyses.
 
 ## Names and codes
 

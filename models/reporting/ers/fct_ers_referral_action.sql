@@ -8,6 +8,28 @@ select
     {{ consistent_sk_patient_id_format('a.nhs_number_pseudo') }} as sk_patient_id,
     a.e_referral_pathway_start as pathway_started_at,
     a.action_dt_tm as action_at,
+    {{ fin_year_from_date('a.action_dt_tm') }} as financial_year,
+    {{ fin_month_from_date('a.action_dt_tm') }} as financial_month,
+    dates.fiscal_calendar_month_name as financial_month_name,
+    dates.end_of_iso_week_date as week_end_date,
+    -- Keep context supplied with the action; current person details cannot replace it.
+    a.patient_age as patient_age,
+    a.patient_sex_cd::varchar as patient_sex_code,
+    coalesce(sex.name, nullif(trim(a.patient_sex_desc), '')) as patient_sex_name,
+    nullif(trim(a.patients_lsoa), '') as residence_lsoa_code,
+    imd.imddecile as residence_imd_2019_decile,
+    nullif(trim(a.patients_reg_gp_practice_id), '') as registered_practice_code,
+    coalesce(practice.organisation_name, nullif(trim(a.patients_reg_gp_practice_name), ''))
+        as registered_practice_name,
+    nullif(trim(a.patients_la_of_residence_id), '') as residence_local_authority_code,
+    coalesce(residence_la.name, nullif(trim(a.patients_la_of_residence_name), ''))
+        as residence_local_authority_name,
+    nullif(trim(a.patients_la_of_registration_id), '') as registration_local_authority_code,
+    coalesce(registration_la.name, nullif(trim(a.patients_la_of_registration_name), ''))
+        as registration_local_authority_name,
+    nullif(trim(a.referrer_commissioner_id), '') as referrer_commissioner_code,
+    coalesce(commissioner.organisation_name, nullif(trim(a.referrer_commissioner_name), ''))
+        as referrer_commissioner_name,
     a.action_cd::varchar as action_code,
     coalesce(ac.name, nullif(trim(a.action_desc), '')) as action_name,
     a.action_reason_cd::varchar as action_reason_code,
@@ -72,3 +94,17 @@ left join {{ ref('ers_organisation') }} as site
     on upper(trim(a.location_org_id)) = site.organisation_code
 left join {{ ref('ers_service') }} as service
     on a.service_id = service.service_id
+left join {{ ref('ers_patient_sex') }} as sex
+    on a.patient_sex_cd::varchar = sex.code
+left join {{ ref('ers_organisation') }} as practice
+    on upper(trim(a.patients_reg_gp_practice_id)) = practice.organisation_code
+left join {{ ref('ers_organisation') }} as commissioner
+    on upper(trim(a.referrer_commissioner_id)) = commissioner.organisation_code
+left join {{ ref('stg_reference_imd2019') }} as imd
+    on a.patients_lsoa = imd.lsoacode
+left join {{ ref('stg_dictionary_dbo_dates') }} as dates
+    on a.action_dt_tm::date = dates.full_date
+left join {{ ref('ons_geography') }} as residence_la
+    on a.patients_la_of_residence_id = residence_la.code
+left join {{ ref('ons_geography') }} as registration_la
+    on a.patients_la_of_registration_id = registration_la.code
