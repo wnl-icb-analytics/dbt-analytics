@@ -247,5 +247,17 @@ produced 100 requests rather than 200 actions. Live receipt examples returned
 The receipt fixture also passed equal-timestamp tie-breaking, multiple providers,
 missing providers and a first receipt before the reporting start date.
 
+The review pass distinguishes SQL nulls, empty/whitespace strings and their
+combined missing count in every field profile; `populated` remains the non-null
+count. All 149 fields passed a synthetic four-row check with a null, an empty
+string, whitespace and a populated value. The creation example selects the
+earliest timestamp with action ID as its tie-breaker, including when ID and
+timestamp order differ. Advice response sequencing still follows action IDs.
+Geography joins now use the same trimmed codes exposed to analysts. No existing
+actions have padded geography codes, so this correction preserves current data.
+The follow-up DEV build passed all five e-RS models and 14 tests. Geography-code
+uniqueness is enforced in reference, where the latest definition is selected;
+staging retains supplied definitions without asserting one row per code.
+
 Eddie Davison owns the e-RS reporting models, their e-RS reference models and
 the staging/reference additions in this change.

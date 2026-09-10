@@ -3,7 +3,7 @@ with created as (
     select ubrn_id, action_at, referring_organisation_code, sk_patient_id
     from {{ ref('fct_ers_referral_action') }}
     where action_code = '1422'
-    qualify row_number() over (partition by ubrn_id order by action_id) = 1
+    qualify row_number() over (partition by ubrn_id order by action_at, action_id) = 1
 )
 select date_trunc('month', action_at)::date as created_month,
     count(*) as requests_with_creation,

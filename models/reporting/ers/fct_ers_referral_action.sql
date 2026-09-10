@@ -101,10 +101,10 @@ left join {{ ref('ers_organisation') }} as practice
 left join {{ ref('ers_organisation') }} as commissioner
     on upper(trim(a.referrer_commissioner_id)) = commissioner.organisation_code
 left join {{ ref('stg_reference_imd2019') }} as imd
-    on a.patients_lsoa = imd.lsoacode
+    on nullif(trim(a.patients_lsoa), '') = imd.lsoacode
 left join {{ ref('stg_dictionary_dbo_dates') }} as dates
     on a.action_dt_tm::date = dates.full_date
 left join {{ ref('ons_geography') }} as residence_la
-    on a.patients_la_of_residence_id = residence_la.code
+    on nullif(trim(a.patients_la_of_residence_id), '') = residence_la.code
 left join {{ ref('ons_geography') }} as registration_la
-    on a.patients_la_of_registration_id = registration_la.code
+    on nullif(trim(a.patients_la_of_registration_id), '') = registration_la.code
