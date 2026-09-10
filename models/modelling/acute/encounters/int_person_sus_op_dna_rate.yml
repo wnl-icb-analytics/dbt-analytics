@@ -1,0 +1,135 @@
+
+models:
+  - name: int_person_sus_op_dna_rate
+    description: >
+      Outpatient DNA (did not attend) propensity per patient over a rolling
+      12 months. One row per patient with at least one DNA opportunity in
+      the window; patients with no outpatient activity do not appear.
+
+      A DNA opportunity is an appointment the patient was expected at and
+      either attended or missed: attendance codes 3 (did not attend, no
+      advance warning), 5 (attended on time) and 6 (arrived late, seen).
+      Appointments cancelled by the patient (2) or by the provider (4) are
+      excluded, as is code 7 (arrived late, not seen), which is ambiguous
+      between patient and service failure and accounts for 0.02% of
+      activity. Counting all booked appointments instead gives a
+      non-attendance rate near 31%, most of it provider cancellations; the
+      DNA rate on this denominator is around 8%, in line with published NHS
+      outpatient figures.
+
+      Because a third of patients have only one DNA opportunity, where an
+      observed rate can only be 0% or 100%, each rate is shrunk towards the
+      population rate for the patient's age band using an empirical-Bayes
+      beta prior. The prior mean varies by age band; the prior strength is
+      fitted once across the whole population by the ANOVA moment estimator
+      of the intraclass correlation. Both an age-adjusted and an
+      age-neutral shrunk rate are published so consumers can see the age
+      contribution and choose for their use.
+
+      Use op_dna_evidence_weight_12mo to tell a well-evidenced rate from one
+      resting mostly on the prior. Do not rank patients by the shrunk rate
+      alone: a patient who missed their only appointment scores above a
+      patient who missed two of five, because the shrunk rate is a best
+      estimate rather than a measure of confidence.
+
+      The prior is refitted on every build, so a patient's shrunk rate can
+      move slightly without their own behaviour changing.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: sk_patient_id
+        data_type: varchar
+        description: "Unique identifier for the patient (pseudonymised NHS number)"
+        data_tests:
+          - not_null
+          - unique
+
+      - name: op_dna_opportunities_12mo
+        data_type: number
+        description: >
+          Appointments in the last 12 months the patient was expected at and
+          either attended or missed (attendance codes 3, 5, 6). The
+          denominator of every rate in this model. Always one or more.
+
+      - name: op_dna_tot_12mo
+        data_type: number
+        description: >
+          Appointments in the last 12 months the patient did not attend with
+          no advance warning (attendance code 3). Excludes appointments the
+          patient cancelled.
+
+      - name: op_dna_rate_12mo
+        data_type: float
+        description: >
+          Observed DNA rate, op_dna_tot_12mo / op_dna_opportunities_12mo,
+          expressed as a proportion between 0 and 1. Unreliable at low
+          opportunity counts: with a single opportunity it can only be 0 or
+          1. Prefer op_dna_rate_shrunk_12mo for comparison between patients.
+
+      - name: op_dna_rate_shrunk_12mo
+        data_type: float
+        description: >
+          Empirical-Bayes estimate of the patient's underlying DNA rate, as
+          a proportion between 0 and 1, shrunk towards the population rate
+          for their age band. This is the recommended rate for comparing
+          patients. It is a best estimate, not a confidence measure: read it
+          alongside op_dna_evidence_weight_12mo.
+
+      - name: op_dna_rate_shrunk_age_neutral_12mo
+        data_type: float
+        description: >
+          As op_dna_rate_shrunk_12mo but shrunk towards the single
+          population DNA rate rather than the patient's age band rate. The
+          difference between the two columns is the contribution of age.
+          Use this where scoring a patient partly on their age would be
+          inappropriate; band rates range from about 5.7% at 75-84 to about
+          12.6% at 18-24, so the two can differ materially at low
+          opportunity counts.
+
+      - name: op_dna_rate_posterior_sd_12mo
+        data_type: float
+        description: >
+          Standard deviation of the posterior beta distribution behind
+          op_dna_rate_shrunk_12mo, on the same proportion scale. Larger
+          values mean a less certain estimate. Together with
+          op_dna_prior_mean and op_dna_prior_strength this allows a
+          consumer to reconstruct the full posterior; the model does not
+          publish a credible interval because Snowflake has no beta
+          quantile function and a normal approximation is poor at the low
+          opportunity counts where an interval would matter most.
+
+      - name: op_dna_evidence_weight_12mo
+        data_type: float
+        description: >
+          Proportion of op_dna_rate_shrunk_12mo coming from this patient's
+          own appointments rather than the prior, calculated as
+          opportunities / (opportunities + prior strength). Reads directly
+          as how much of the score is the patient: around 0.22 at one
+          opportunity and around 0.69 at eight. The clearest single
+          indicator of whether a rate is well evidenced.
+
+      - name: op_dna_prior_age_band
+        data_type: varchar
+        description: >
+          Age band whose population DNA rate was used as this patient's
+          prior mean, based on their age at their most recent appointment in
+          the window. 'unknown' covers missing and out-of-range ages,
+          including the SUS 7001-7007 neonate day-codes; those patients take
+          the whole-population prior mean instead of a band mean.
+
+      - name: op_dna_prior_mean
+        data_type: float
+        description: >
+          Population DNA rate used as this patient's prior mean, as a
+          proportion. Recorded per row because the prior is refitted on
+          every build.
+
+      - name: op_dna_prior_strength
+        data_type: float
+        description: >
+          Fitted prior strength M in pseudo-appointments, the same for every
+          row. A patient's own data outweighs the prior once their
+          opportunity count exceeds it. Documented for audit because it is
+          refitted on every build.
