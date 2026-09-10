@@ -1,32 +1,36 @@
 version: 2
-
 models:
-  - name: stg_ers_ubrn_action
-    description: "Staging model for eRS UBRN action events (ebsx02UBRNAction).\nContact: Jonathan.Linney@nhs.net"
-    config:
-      meta:
-        owner:
-          name: Jonathan Linney
-    columns:
-      - name: action_id
-        description: "UBRN action event identifier"
-        tests:
-          - not_null
-      - name: ubrn_id
-        description: "Unique Booking Reference Number (UBRN) identifier"
-        tests:
-          - not_null
-      - name: action_cd
-        description: "eRS action code (e.g. 1422 = referral, 1420/1533 = accepted, 1424 = rejected)"
-        tests:
-          - not_null:
-              config:
-                severity: warn
-      - name: action_dt_tm
-        description: "Date/time the action occurred"
-        tests:
-          - not_null
-      - name: provider_org_id
-        description: "Provider organisation ID associated with this action"
-      - name: uniq_submission_id
-        description: "Submission batch identifier this action record was ingested under"
+- name: stg_ers_ubrn_action
+  description: One recorded e-RS action from a submission currently listed in ActiveSubmission. Includes
+    lifecycle and administrative actions, advice and triage requests, without a date or geography restriction.
+    The view follows submission additions and removals directly and avoids rebuilding the full action
+    history in the daily staging job. Patient and service attributes describe the supplied action. No
+    appointment or referral consolidation occurs here.
+  config:
+    meta:
+      owner:
+        name: Jonathan Linney
+  columns:
+  - name: action_id
+    description: UBRN action event identifier
+    data_tests:
+    - unique
+    - not_null
+  - name: ubrn_id
+    description: Unique Booking Reference Number (UBRN) identifier
+    tests:
+    - not_null
+  - name: action_cd
+    description: eRS action code (e.g. 1422 = referral, 1420/1533 = accepted, 1424 = rejected)
+    tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: action_dt_tm
+    description: Date/time the action occurred
+    tests:
+    - not_null
+  - name: provider_org_id
+    description: Provider organisation ID associated with this action
+  - name: uniq_submission_id
+    description: Submission batch identifier this action record was ingested under

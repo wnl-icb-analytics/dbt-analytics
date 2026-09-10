@@ -1,0 +1,111 @@
+models:
+- name: fct_ers_referral
+  description: One e-RS request per UBRN identifier across all available active actions, including referral,
+    advice and triage requests. A Referral Created action is not required because it is absent in part
+    of the history. Latest request attributes come from the highest sequential action ID. Last recorded
+    service fields come together from the highest service-bearing action and do not imply a current destination.
+    Full service changes and linked-UBRN history remain in fct_ers_referral_action. No demographic, registration,
+    geography or date restriction is applied. Refresh explicitly with tag:large_periodic after the action
+    fact.
+  config:
+    meta:
+      owner:
+        name: Jonathan Linney
+  columns:
+  - name: ubrn_id
+    description: One e-RS request identifier. Includes advice and triage requests; an initial Referral
+      Created action is not required.
+    data_tests:
+    - unique
+    - not_null
+  - name: ubrn
+    description: Supplied booking reference, preserved unchanged.
+  - name: normalised_ubrn
+    description: Booking reference with display hyphens and surrounding spaces removed. Use for recorded
+      cross-source matching and also check patient-key agreement.
+  - name: sk_patient_id
+    description: Shared patient key when all non-null keys in the action history agree. Null when missing
+      or conflicting; the referral remains available.
+  - name: pathway_started_at
+    description: Latest non-null pathway-start value by sequential action ID. Not inferred from the first
+      observed action.
+  - name: first_observed_action_at
+    description: Earliest recorded action time present in the active extract. History may begin after
+      the request was created.
+  - name: last_observed_action_at
+    description: Latest recorded action time present in the active extract.
+  - name: action_count
+    description: Number of active submitted actions, including administrative actions.
+  - name: first_action_id
+    description: Lowest sequential action ID available for this request.
+  - name: latest_action_id
+    description: Highest sequential action ID available for this request. Defines the latest request attributes.
+  - name: latest_action_code
+    description: Most recent recorded action code, including administrative actions. It is not a derived
+      referral status.
+  - name: latest_action_name
+    description: Label for the most recent recorded action; not a derived open, closed or attendance state.
+  - name: latest_action_reason_code
+    description: Reason attached to the latest recorded action.
+  - name: latest_action_reason_name
+    description: Label for the reason attached to the latest recorded action.
+  - name: priority_code
+    description: e-RS referral priority code supplied on the action.
+  - name: priority_name
+    description: Latest retained e-RS priority label, with supplied-label fallback.
+  - name: specialty_code
+    description: Specialty used in the referral search. Not a national treatment-function code and not
+      necessarily the receiving service specialty.
+  - name: specialty_name
+    description: Latest retained e-RS search specialty label, with supplied-label fallback.
+  - name: clinic_type_code
+    description: e-RS clinic type used for the request.
+  - name: clinic_type_name
+    description: Latest retained clinic-type label, with supplied-label fallback.
+  - name: referring_organisation_code
+    description: ODS code of the referring organisation supplied on the action.
+  - name: referring_organisation_name
+    description: Referrer name supplied by the enriched feed. Not a guaranteed historical name.
+  - name: recorded_service_count
+    description: Number of distinct services appearing in the action history. A referral can involve several
+      services.
+  - name: last_service_action_id
+    description: Highest action ID carrying a service. Identifies the source of all last-recorded service
+      attributes.
+  - name: last_service_action_at
+    description: Recorded time of the service-bearing action. Later administrative or cancellation actions
+      may exist.
+  - name: last_recorded_service_id
+    description: Last recorded service id, taken with the other service fields from last_service_action_id.
+      Does not establish the current destination or provider.
+  - name: last_recorded_service_name
+    description: Last recorded service name, taken with the other service fields from last_service_action_id.
+      Does not establish the current destination or provider.
+  - name: last_recorded_service_specialty_code
+    description: Last recorded service specialty code, taken with the other service fields from last_service_action_id.
+      Does not establish the current destination or provider.
+  - name: last_recorded_service_specialty_name
+    description: Last recorded service specialty name, taken with the other service fields from last_service_action_id.
+      Does not establish the current destination or provider.
+  - name: last_recorded_provider_code
+    description: Last recorded provider code, taken with the other service fields from last_service_action_id.
+      Does not establish the current destination or provider.
+  - name: last_recorded_provider_name
+    description: Last recorded provider name, taken with the other service fields from last_service_action_id.
+      Does not establish the current destination or provider.
+  - name: last_recorded_site_code
+    description: Last recorded site code, taken with the other service fields from last_service_action_id.
+      Does not establish the current destination or provider.
+  - name: last_recorded_site_name
+    description: Last recorded site name, taken with the other service fields from last_service_action_id.
+      Does not establish the current destination or provider.
+  - name: initial_ubrn_id
+    description: Initial UBRN source identifier supplied on the action.
+  - name: previous_ubrn_id
+    description: Previous UBRN source identifier supplied on the action.
+  - name: initial_ubrn
+    description: Supplied initial booking reference, retained unchanged.
+  - name: previous_ubrn
+    description: Supplied previous booking reference, retained unchanged.
+  - name: next_ubrn
+    description: Supplied next booking reference, retained unchanged.

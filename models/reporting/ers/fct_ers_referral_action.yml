@@ -1,0 +1,121 @@
+models:
+- name: fct_ers_referral_action
+  description: One recorded e-RS action from an active submission, including lifecycle, administrative,
+    advice and triage actions across the available history. No current-registration, geography, test-patient
+    or date restriction is applied. Replaced submissions are removed by the staging population before
+    each refresh. An action carrying an appointment time is not a separate appointment or proof of attendance.
+    Code labels use the retained e-RS dictionaries with supplied-label fallback. Service and organisation
+    attributes describe the source action, not an inferred current destination. This large table refreshes
+    explicitly with tag:large_periodic; it is not part of the daily full-build selection.
+  config:
+    meta:
+      owner:
+        name: Jonathan Linney
+  columns:
+  - name: action_id
+    description: Sequential identifier supplied by e-RS. One row per active submitted action; orders the
+      action history.
+    data_tests:
+    - unique
+    - not_null
+  - name: ubrn_id
+    description: Source identifier of the referral, triage or advice request.
+  - name: ubrn
+    description: Supplied booking reference, preserved unchanged.
+  - name: normalised_ubrn
+    description: Booking reference with display hyphens and surrounding spaces removed. Use for recorded
+      cross-source matching and also check patient-key agreement.
+  - name: sk_patient_id
+    description: Shared pseudonymised NHS-number key. Null for blank values and the source unknown marker
+      1; no demographic or registration filter is applied.
+  - name: pathway_started_at
+    description: Recorded e-RS referral-to-treatment pathway start. Not necessarily the first action time.
+  - name: action_at
+    description: Recorded date and time of the action.
+  - name: action_code
+    description: e-RS action code. Includes administrative actions, advice and triage.
+  - name: action_name
+    description: Latest retained e-RS dictionary label, falling back to the supplied label when the dictionary
+      has no display.
+  - name: action_reason_code
+    description: Supplied reason for the action. Null when none was recorded. For triage outcomes this
+      identifies the outcome.
+  - name: action_reason_name
+    description: Latest retained reason dictionary label, with supplied-label fallback.
+  - name: priority_code
+    description: e-RS referral priority code supplied on the action.
+  - name: priority_name
+    description: Latest retained e-RS priority label, with supplied-label fallback.
+  - name: specialty_code
+    description: Specialty used in the referral search. Not a national treatment-function code and not
+      necessarily the receiving service specialty.
+  - name: specialty_name
+    description: Latest retained e-RS search specialty label, with supplied-label fallback.
+  - name: clinic_type_code
+    description: e-RS clinic type used for the request.
+  - name: clinic_type_name
+    description: Latest retained clinic-type label, with supplied-label fallback.
+  - name: referring_organisation_code
+    description: ODS code of the referring organisation supplied on the action.
+  - name: referring_organisation_name
+    description: Latest organisation or site name from the shared UKHFD ODS, Dictionary and closed-archive
+      lookup plus e-RS application organisations, with supplied-label fallback. Not a historical name at action time.
+  - name: action_organisation_code
+    description: ODS code of the organisation carrying out this action. Distinct from the referrer and
+      provider.
+  - name: action_organisation_name
+    description: Latest organisation or site name from the shared UKHFD ODS, Dictionary and closed-archive
+      lookup plus e-RS application organisations, with supplied-label fallback. Not a historical name at action time.
+  - name: service_id
+    description: Service associated with this action, where supplied. Different actions for a UBRN may
+      refer to different services.
+  - name: service_name
+    description: Latest retained service dictionary name, with supplied-label fallback. Historical service
+      IDs are retained.
+  - name: service_specialty_code
+    description: e-RS specialty of the receiving service, distinct from the referral search specialty.
+  - name: service_specialty_name
+    description: Latest retained service-specialty label, with supplied-label fallback.
+  - name: provider_organisation_code
+    description: ODS code of the service provider supplied on the action.
+  - name: provider_organisation_name
+    description: Latest organisation or site name from the shared UKHFD ODS, Dictionary and closed-archive
+      lookup plus e-RS application organisations, with supplied-label fallback. Not a historical name at action time.
+  - name: site_code
+    description: ODS code of the service location supplied on the action.
+  - name: site_name
+    description: Latest organisation or site name from the shared UKHFD ODS, Dictionary and closed-archive
+      lookup plus e-RS application organisations, with supplied-label fallback. Not a historical name at action time.
+  - name: appointment_at
+    description: Scheduled appointment date and time attached to this action. Several actions may describe
+      the same planned appointment; this is not proof of attendance.
+  - name: appointment_type_code
+    description: e-RS service appointment type code.
+  - name: appointment_type_name
+    description: Latest retained appointment-type label, with supplied-label fallback.
+  - name: rebooked_to_action_id
+    description: Recorded reference to the booking action for a rebooking. Retained unchanged, including
+      references absent from this extract. Does not invent an old appointment or a cancellation.
+  - name: initial_ubrn_id
+    description: Initial UBRN source identifier supplied on the action.
+  - name: previous_ubrn_id
+    description: Previous UBRN source identifier supplied on the action.
+  - name: initial_ubrn
+    description: Supplied initial booking reference, retained unchanged.
+  - name: previous_ubrn
+    description: Supplied previous booking reference, retained unchanged.
+  - name: next_ubrn
+    description: Supplied next booking reference, retained unchanged.
+  - name: assessment_outcome_code
+    description: Supplied clinical assessment outcome. Distinct from the action reason used for triage
+      outcomes.
+  - name: assessment_outcome_name
+    description: Latest retained assessment-outcome label, with supplied-label fallback.
+  - name: advice_request_status_code
+    description: Advice-request status supplied on the action.
+  - name: advice_request_status_name
+    description: Supplied label for advice-request status.
+  - name: source_submission_id
+    description: Source submission active when the fact was refreshed.
+  - name: source_imported_at
+    description: Source import time. Separate from clinical or action time.
