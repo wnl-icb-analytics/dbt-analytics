@@ -75,14 +75,42 @@ upstream deployment publishes the new booking, event, clinical and relationship
 objects to `DATA_LAKE.OLIDS`.
 
 The OLIDS schedule starts ahead of analytics but does not guarantee completion.
-Publish all four upstream objects before merging this companion. PR #1123 does
-not create them and is not a dependency. The referral staging interface exposes the upstream observation link,
-classification labels and date precision. No programme or shared observation
-macro changes are included. Both PRs remain drafts pending actual stable writes,
-clustering performance, publication and downstream DEV builds. The full clinical
-snapshot exceeds two billion rows. The required staging and reporting grain
-tests repeat uniqueness scans; the exact analytics daily selection also needs
-performance validation. Thin views alone do not establish a cheap daily run.
+Publication must precede the analytics build. The referral staging interface
+exposes the upstream observation link, classification labels and date precision.
+No programme or shared observation macro changes are included in this companion.
+The full clinical snapshot exceeds two billion rows. The required staging and
+reporting grain tests repeat uniqueness scans, so downstream build timings matter
+alongside upstream write performance.
+
+## Publication on 10 September 2026
+
+dbt-OLIDS #299 and the test correction in #300 are merged. The first full run
+stopped because the observation-preservation test still compared original
+referral content with the newly filtered canonical referral table. The corrected
+test uses `conformed_referral_request_source` and passes with zero discrepancies.
+The remaining five models and 14 tests passed in a 53-second recovery build.
+The normal publication script verified all DATA_LAKE views and their ownership.
+Source and landing watermarks match; the recovery is recorded separately from
+the failed GitHub attempt.
+
+| Published output | Rows |
+|---|---:|
+| Clinical records | 2,072,591,733 |
+| Healthcare events | 179,222,868 |
+| Canonical referrals | 22,133,989 |
+| Appointment bookings | 78,237,384 |
+| Appointment clinical links | 71,795,677 |
+
+The clinical table took 11 minutes 31 seconds to write and its uniqueness test
+took 12 seconds on the large OLIDS warehouse. The event table took 41 seconds
+and its uniqueness test took 2 seconds. Both tables cluster by person, then date.
+A query across 100 people, with result caching disabled, took 1.64 seconds.
+It scanned 100 of 6,687 clinical partitions and 90 of 575 event partitions.
+This measures a person-history query, not the full analytics daily schedule.
+All 2,631 referral reference codes have their own preferred labels.
+
+Analytics #1123 deployed successfully. The normal merge queue validates this
+companion in DEV before merge; the production deployment also builds descendants.
 
 ## Validation on 9 September 2026
 
@@ -151,7 +179,7 @@ and label, record-entry time and publisher details. No retained output column
 is empty throughout. Upstream profiles found no join multiplication.
 
 The upstream PR contains the complete field profile and reference checks.
-No immediate production build was triggered.
+These candidate profiles preceded the production build documented above.
 
 ## Corrected referral interface
 
