@@ -4,7 +4,8 @@ models:
       Per-person profile for the NICE long-term condition review indicators:
       smoking, BMI recording, multimorbidity, alcohol and the condition reviews
       (asthma, COPD, heart failure, rheumatoid arthritis, hypothyroidism,
-      learning disability, cancer, dementia and depression). One row per person
+      learning disability, cancer, dementia and depression) and the severe
+      mental illness physical health checks. One row per person
       in dim_person, including inactive and deceased people. Holds register
       membership from the LTC summary, earliest diagnosis dates for the
       populations those indicators define, frailty severity, the latest
@@ -12,8 +13,12 @@ models:
       brief intervention records, the latest review, care plan, health check,
       MRC, NYHA and thyroid function test records, the latest new depression
       diagnosis with its 10-to-35-day review, the first cancer care review
-      after the latest new cancer diagnosis, and whether ethnicity is recorded.
-      Consumers apply their own windows and join dim_person_active_patients.
+      after the latest new cancer diagnosis, whether ethnicity is recorded, the
+      latest blood pressure, lipid, glucose or HbA1c and alcohol consumption
+      records, the SMI register detail (active diagnosis, lithium therapy, care
+      plan, latest lithium level) and the earliest cardiovascular disease and
+      diabetes diagnoses. Consumers apply their own windows and join
+      dim_person_active_patients.
     config:
       meta:
         owner:
@@ -142,3 +147,33 @@ models:
         description: Date of the first depression review 10 to 35 days after the latest new depression diagnosis; null if none.
       - name: has_ethnicity_recorded
         description: Whether an ethnicity category other than Unknown is recorded.
+      - name: earliest_smi_diagnosis_date
+        description: Earliest severe mental illness register diagnosis date; null if none.
+      - name: earliest_diabetes_diagnosis_date
+        description: Earliest diabetes register diagnosis date; null if none.
+      - name: earliest_cvd_diagnosis_date
+        description: Earliest CHD, stroke/TIA or PAD register diagnosis date; null if none.
+      - name: has_active_smi_diagnosis
+        description: On the SMI register with a schizophrenia, bipolar or psychosis diagnosis not in remission; false for lithium-only or remitted people.
+      - name: is_on_lithium
+        description: Lithium prescribed in the preceding 6 months without a stopped code, per the SMI register.
+      - name: latest_blood_pressure_date
+        description: Date of the latest blood pressure reading; null if none.
+      - name: latest_total_cholesterol_date
+        description: Date of the latest total cholesterol with a value; null if none.
+      - name: latest_cholesterol_hdl_ratio_date
+        description: Date of the latest total cholesterol to HDL ratio with a value; null if none.
+      - name: latest_lipid_date
+        description: Date of the latest total cholesterol or cholesterol to HDL ratio; null if none.
+      - name: latest_glucose_or_hba1c_date
+        description: Date of the latest HbA1c or blood glucose with a value; null if none.
+      - name: latest_alcohol_record_date
+        description: Date of the latest alcohol consumption record of any kind (units, usage status or screening tool); null if none.
+      - name: latest_smi_care_plan_date
+        description: Date of the latest mental health care plan record; null if none.
+      - name: latest_lithium_level_date
+        description: Date of the latest serum lithium record; null if none.
+      - name: latest_lithium_level
+        description: Latest serum lithium in mmol/L; null when the latest record has no value.
+      - name: is_latest_lithium_level_in_range
+        description: Whether the latest serum lithium is 0.4 to 1.0 mmol/L; false when no value or no record.

@@ -3,15 +3,19 @@
 /*
 Per-person profile for the NICE long-term condition review indicators: smoking
 (IND97, IND156, IND157), BMI recording (IND320), multimorbidity (IND207, IND208),
-alcohol (IND196 to IND202) and the condition reviews (IND104, IND110, IND139,
-IND142, IND191, IND195, IND223, IND265, IND266, IND273). One row per person in
-dim_person. Combines register membership from fct_person_ltc_summary, frailty
+alcohol (IND196 to IND202), the condition reviews (IND104, IND110, IND139,
+IND142, IND191, IND195, IND223, IND265, IND266, IND273) and the severe mental
+illness physical health checks (IND82 to IND87, IND143, IND154, IND155, IND158,
+IND159, IND248). One row per person in dim_person. Combines register membership from fct_person_ltc_summary, frailty
 severity, the latest smoking, BMI, medication review, falls discussion, alcohol
 screening and brief intervention records, the latest condition review, care
 plan, health check, MRC, NYHA and thyroid function test records, the latest new
 depression diagnosis with its 10-to-35-day review, the first cancer care review
-after the latest new cancer diagnosis and whether ethnicity is recorded, so each measure applies only
-its own population and window. No registration, living or test-patient filter; consumers join
+after the latest new cancer diagnosis, whether ethnicity is recorded, the
+latest blood pressure, lipid, glucose or HbA1c and alcohol consumption
+records, the SMI register detail (active diagnosis, lithium therapy, care
+plan, lithium levels) and the earliest cardiovascular disease and diabetes
+diagnoses, so each measure applies only its own population and window. No registration, living or test-patient filter; consumers join
 dim_person_active_patients.
 
 The smoking-status LTC list (IND156, IND157) is CHD, PAD, stroke/TIA,
@@ -49,6 +53,8 @@ WITH conditions AS (
         BOOLOR_AGG(condition_code = 'THY') AS has_hypothyroidism,
         BOOLOR_AGG(condition_code = 'CAN') AS has_cancer,
         MAX(CASE WHEN condition_code = 'CAN' THEN latest_diagnosis_date::DATE END) AS latest_cancer_diagnosis_date,
+        MIN(CASE WHEN condition_code = 'SMI' THEN earliest_diagnosis_date::DATE END) AS earliest_smi_diagnosis_date,
+        MIN(CASE WHEN condition_code = 'DM' THEN earliest_diagnosis_date::DATE END) AS earliest_diabetes_diagnosis_date,
         COUNT(DISTINCT CASE
             WHEN condition_code = 'CAN' THEN 'CANCER'
             WHEN condition_code IN ('CHD', 'AF', 'HF', 'HTN', 'STIA', 'PAD') THEN 'CIRCULATORY'
@@ -234,6 +240,81 @@ ethnicity AS (
     FROM {{ ref('dim_person_demographics') }}
 ),
 
+blood_pressure AS (
+    SELECT person_id, clinical_effective_date::DATE AS latest_blood_pressure_date
+    FROM {{ ref('int_blood_pressure_latest') }}
+),
+
+cholesterol AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_total_cholesterol_date
+    FROM {{ ref('int_cholesterol_all') }}
+    WHERE cholesterol_value IS NOT NULL
+    GROUP BY person_id
+),
+
+cholesterol_hdl_ratio AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_cholesterol_hdl_ratio_date
+    FROM {{ ref('int_cholesterol_hdl_ratio_all') }}
+    WHERE cholesterol_hdl_ratio IS NOT NULL
+    GROUP BY person_id
+),
+
+hba1c AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_hba1c_date
+    FROM {{ ref('int_hba1c_all') }}
+    WHERE hba1c_original_value IS NOT NULL
+    GROUP BY person_id
+),
+
+blood_glucose AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_blood_glucose_date
+    FROM {{ ref('int_blood_glucose_all') }}
+    WHERE result_value IS NOT NULL
+    GROUP BY person_id
+),
+
+alcohol_units AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_alcohol_units_date
+    FROM {{ ref('int_alcohol_units_all') }}
+    GROUP BY person_id
+),
+
+alcohol_usage AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_alcohol_usage_date
+    FROM {{ ref('int_alcohol_usage_all') }}
+    GROUP BY person_id
+),
+
+smi_register AS (
+    SELECT person_id, has_active_smi_diagnosis, is_on_lithium
+    FROM {{ ref('fct_person_smi_register') }}
+    WHERE is_on_register
+),
+
+smi_care_plan AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_smi_care_plan_date
+    FROM {{ ref('int_smi_care_plan_all') }}
+    GROUP BY person_id
+),
+
+lithium_level AS (
+    -- Latest serum lithium record, whether or not it carries a value
+    SELECT
+        person_id,
+        clinical_effective_date::DATE AS latest_lithium_level_date,
+        lithium_level AS latest_lithium_level,
+        is_in_therapeutic_range AS is_latest_lithium_level_in_range
+    FROM {{ ref('int_lithium_level_all') }}
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY person_id ORDER BY clinical_effective_date DESC, is_result_recorded DESC, id DESC
+    ) = 1
+),
+
+cvd AS (
+    SELECT person_id, earliest_cvd_diagnosis_date
+    FROM {{ ref('int_cvd_secondary_prevention_population') }}
+),
+
 dyslipidaemia AS (
     SELECT DISTINCT person_id FROM {{ ref('int_dyslipidaemia_diagnoses_all') }}
 ),
@@ -271,6 +352,11 @@ SELECT
     COALESCE(c.has_hypothyroidism, FALSE) AS has_hypothyroidism,
     COALESCE(c.has_cancer, FALSE) AS has_cancer,
     c.latest_cancer_diagnosis_date,
+    c.earliest_smi_diagnosis_date,
+    c.earliest_diabetes_diagnosis_date,
+    cvd.earliest_cvd_diagnosis_date,
+    COALESCE(smi_register.has_active_smi_diagnosis, FALSE) AS has_active_smi_diagnosis,
+    COALESCE(smi_register.is_on_lithium, FALSE) AS is_on_lithium,
     dyslipidaemia.person_id IS NOT NULL AS has_dyslipidaemia,
     sleep_apnoea.person_id IS NOT NULL AS has_obstructive_sleep_apnoea,
     c.earliest_smoking_ltc_diagnosis_date,
@@ -308,7 +394,21 @@ SELECT
     cancer_review.first_cancer_care_review_after_diagnosis_date,
     new_depression.latest_new_depression_diagnosis_date,
     depression_review.first_depression_review_10_to_35_days_date,
-    COALESCE(ethnicity.ethnicity_category NOT IN ('Unknown'), FALSE) AS has_ethnicity_recorded
+    COALESCE(ethnicity.ethnicity_category NOT IN ('Unknown'), FALSE) AS has_ethnicity_recorded,
+    blood_pressure.latest_blood_pressure_date,
+    cholesterol.latest_total_cholesterol_date,
+    cholesterol_hdl_ratio.latest_cholesterol_hdl_ratio_date,
+    -- Any lipid record: total cholesterol or total cholesterol:HDL ratio
+    GREATEST_IGNORE_NULLS(cholesterol.latest_total_cholesterol_date,
+        cholesterol_hdl_ratio.latest_cholesterol_hdl_ratio_date) AS latest_lipid_date,
+    GREATEST_IGNORE_NULLS(hba1c.latest_hba1c_date, blood_glucose.latest_blood_glucose_date) AS latest_glucose_or_hba1c_date,
+    -- Any alcohol consumption record: units per week, usage status or a screening tool
+    GREATEST_IGNORE_NULLS(alcohol_units.latest_alcohol_units_date, alcohol_usage.latest_alcohol_usage_date,
+        latest_screen.latest_alcohol_screen_date) AS latest_alcohol_record_date,
+    smi_care_plan.latest_smi_care_plan_date,
+    lithium_level.latest_lithium_level_date,
+    lithium_level.latest_lithium_level,
+    COALESCE(lithium_level.is_latest_lithium_level_in_range, FALSE) AS is_latest_lithium_level_in_range
 FROM {{ ref('dim_person') }} AS person
 LEFT JOIN {{ ref('dim_person_age') }} AS age ON person.person_id = age.person_id
 LEFT JOIN conditions AS c ON person.person_id = c.person_id
@@ -333,3 +433,14 @@ LEFT JOIN cancer_review ON person.person_id = cancer_review.person_id
 LEFT JOIN new_depression ON person.person_id = new_depression.person_id
 LEFT JOIN depression_review ON person.person_id = depression_review.person_id
 LEFT JOIN ethnicity ON person.person_id = ethnicity.person_id
+LEFT JOIN blood_pressure ON person.person_id = blood_pressure.person_id
+LEFT JOIN cholesterol ON person.person_id = cholesterol.person_id
+LEFT JOIN cholesterol_hdl_ratio ON person.person_id = cholesterol_hdl_ratio.person_id
+LEFT JOIN hba1c ON person.person_id = hba1c.person_id
+LEFT JOIN blood_glucose ON person.person_id = blood_glucose.person_id
+LEFT JOIN alcohol_units ON person.person_id = alcohol_units.person_id
+LEFT JOIN alcohol_usage ON person.person_id = alcohol_usage.person_id
+LEFT JOIN smi_register ON person.person_id = smi_register.person_id
+LEFT JOIN smi_care_plan ON person.person_id = smi_care_plan.person_id
+LEFT JOIN lithium_level ON person.person_id = lithium_level.person_id
+LEFT JOIN cvd ON person.person_id = cvd.person_id
