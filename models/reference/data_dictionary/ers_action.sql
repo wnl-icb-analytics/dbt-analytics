@@ -2,7 +2,7 @@ with dictionary_codes as (
     select code::varchar as code, display as name
     from {{ ref('stg_dictionary_ers_action') }}
 ), recorded_labels as (
-    -- Retain older codes absent from the maintained dictionary using their latest supplied display.
+    -- Retain codes absent from the maintained dictionary using their latest supplied display.
     select
         a.action_cd::varchar as code,
         nullif(trim(a.action_desc), '') as name,
