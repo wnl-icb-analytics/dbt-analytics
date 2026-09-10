@@ -47,6 +47,8 @@ missing, extra or changed rows. The two models and six tests passed.
   date-precision code and label.
 - 22,131,110 have clinical dates; 30 precede 1900 and seven are future dates.
 - 322,728 have recorded encounter links and 3,104,336 have booking references.
+  Requiring the same person gives 322,250 matched encounters. The coverage join
+  preserves all 22,133,989 referral rows; disagreements are counted separately.
 - 5,098,950 have recorded priority and type, all labelled.
 - All recorded requester and observation-provider IDs have names. Of 5,098,950
   recipient IDs, 506 have missing or blank names; blank names are exposed as null.
@@ -56,3 +58,7 @@ missing, extra or changed rows. The two models and six tests passed.
 
 The aggregate-only queries in `analyses/olids/gp_referral_request_*` can be rerun
 without returning patient records or identifier values.
+
+After the CodeRabbit review, referring and publishing organisation names use the
+same blank-to-null rule as the other organisation roles. The fact rebuilt and
+its three tests passed; source reconciliation still found no differences.

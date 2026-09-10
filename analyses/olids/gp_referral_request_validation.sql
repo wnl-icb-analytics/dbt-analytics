@@ -53,7 +53,6 @@ coverage as (
         count_if(f.sk_patient_id is not null) as patient_key_rows,
         count_if(f.encounter_id is not null) as recorded_encounter_rows,
         count_if(e.id is not null) as matched_encounter_rows,
-        count_if(e.id is not null and e.person_id is distinct from f.person_id) as encounter_person_disagreements,
         count_if(nullif(trim(f.unique_booking_reference_number), '') is not null) as booking_reference_rows,
         count_if(f.clinical_effective_date is not null) as clinical_date_rows,
         count_if(f.referral_request_source_concept_id is not null) as referral_concept_rows,
@@ -73,7 +72,17 @@ coverage as (
     from {{ ref('fct_gp_referral_request') }} as f
     left join {{ ref('stg_olids_encounter') }} as e
         on f.encounter_id = e.id
+        and f.person_id = e.person_id
+),
+encounter_disagreements as (
+    -- Diagnose rejected links separately from same-person encounter coverage.
+    select count(distinct f.source_record_id) as encounter_person_disagreements
+    from {{ ref('fct_gp_referral_request') }} as f
+    inner join {{ ref('stg_olids_encounter') }} as e
+        on f.encounter_id = e.id
+    where e.person_id is distinct from f.person_id
 )
 select *
 from source_reconciliation
 cross join coverage
+cross join encounter_disagreements
