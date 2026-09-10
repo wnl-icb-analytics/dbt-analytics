@@ -3,7 +3,8 @@
 -- Common long-form interface for the NICE smoking indicator views.
 {% set indicator_models = [
     'fct_person_smoking_ind156',
-    'fct_person_smoking_ind157'
+    'fct_person_smoking_ind157',
+    'fct_person_smoking_ind97'
 ] %}
 
 {% for indicator_model in indicator_models %}

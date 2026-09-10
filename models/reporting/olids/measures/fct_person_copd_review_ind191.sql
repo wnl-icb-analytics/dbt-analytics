@@ -1,0 +1,50 @@
+{{ config(materialized='view') }}
+
+-- NICE IND191: https://www.nice.org.uk/indicators/ind191
+-- COPD review and MRC dyspnoea grade both recorded in 12 months for people on the COPD register.
+WITH indicator_population AS (
+    SELECT
+        profile.*,
+        age.age
+    FROM {{ ref('int_ltc_review_profile') }} AS profile
+    LEFT JOIN {{ ref('dim_person_age') }} AS age
+        ON profile.person_id = age.person_id
+    WHERE profile.has_copd
+),
+
+assessed AS (
+    SELECT
+        population.person_id,
+        population.age,
+        active.current_practice_code,
+        active.current_practice_name,
+        population.latest_copd_review_date AS latest_review_date,
+        population.latest_mrc_dyspnoea_date AS latest_mrc_dyspnoea_date,
+        CASE WHEN population.latest_copd_review_date >= DATEADD(month, -12, CURRENT_DATE()) THEN population.latest_copd_review_date END AS latest_record_date,
+        COALESCE(population.latest_copd_review_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
+            AND COALESCE(population.latest_mrc_dyspnoea_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
+    FROM indicator_population AS population
+    INNER JOIN {{ ref('dim_person_active_patients') }} AS active
+        ON population.person_id = active.person_id
+)
+
+SELECT
+    person_id,
+    'IND191' AS indicator_id,
+    'COPD: annual review' AS indicator_name,
+    CURRENT_DATE() AS reporting_date,
+    DATEADD(month, -12, CURRENT_DATE()) AS measurement_period_start,
+    age,
+    'Chronic obstructive pulmonary disease' AS condition_name,
+    current_practice_code,
+    current_practice_name,
+    latest_review_date,
+    latest_mrc_dyspnoea_date,
+    latest_record_date,
+    TRUE AS is_in_denominator,
+    is_in_numerator,
+    CASE
+        WHEN is_in_numerator THEN 'ACHIEVED'
+        ELSE 'NOT_RECORDED_IN_PERIOD'
+    END AS indicator_status
+FROM assessed

@@ -16,8 +16,7 @@ models:
     - unique
     - not_null
   - name: publisher_organisation_id
-    description: "Foreign key to organisation.id - publisher organisation for this referral (post-2026\
-      \ OLIDS rename \xE2\u20AC\u201D was organisation_id)"
+    description: Recorded publishing organisation ID.
   - name: person_id
     description: Foreign key to person.id - person-level identifier
   - name: patient_id
@@ -59,18 +58,8 @@ models:
     description: Patient age in days for neonates (0-28 days)
   - name: date_recorded
     description: Date the record was entered into the system
-  - name: lds_id
-    description: LDS system identifier
   - name: publisher_organisation_code
-    description: "ODS code of the publisher organisation (post-2026 OLIDS rename \xE2\u20AC\u201D was\
-      \ record_owner_organisation_code)"
-  - name: lds_datetime_first_acquired
-    description: Datetime when data was acquired by LDS
-  - name: lds_data_initial_received_date
-    description: Date when data was initially received by LDS
-  - name: lds_start_datetime
-    description: LDS datetime stamp from which the record version was correct - used for deduplication
-      to get the latest record
+    description: ODS code supplied for the publishing organisation.
   - name: lds_is_deleted
     description: Deletion flag - records with TRUE are filtered out in this staging layer
   - name: lds_source_record_id
@@ -88,6 +77,31 @@ models:
     description: Supplied clinical-date precision code, including YMD, YM, Y and Unknown.
   - name: date_precision_source_display
     description: Supplied clinical-date precision label. A partial date does not establish an exact day.
+  - name: source_code
+    description: Code for the recorded referral concept, resolved upstream through the dbt-olids enriched
+      concept map.
+  - name: source_display
+    description: Display for the recorded referral concept, resolved upstream through the enriched concept
+      map. Not a historical snapshot of text on the referral.
+  - name: source_system
+    description: Source coding system supplied by the upstream enriched concept map for source_code.
+  - name: target_system
+    description: Target coding system supplied by the upstream enriched concept map for mapped_concept_code.
+      No additional mapping is applied here.
+  - name: referral_request_priority_source_code
+    description: Code for the recorded priority concept, resolved upstream through the enriched concept
+      map.
+  - name: referral_request_priority_source_display
+    description: Display for the recorded priority concept, resolved upstream through the enriched concept
+      map.
+  - name: referral_request_type_source_code
+    description: Code for the recorded referral type concept, resolved upstream through the enriched concept
+      map.
+  - name: referral_request_type_source_display
+    description: Display for the recorded referral type concept, resolved upstream through the enriched
+      concept map.
+  - name: lds_transform_datetime
+    description: Source transformation timestamp, separate from clinical time.
   tests:
   - dbt_expectations.expect_table_row_count_to_be_between:
       config:

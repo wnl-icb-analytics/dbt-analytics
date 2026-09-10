@@ -1,0 +1,41 @@
+models:
+  - name: int_ltc_review_all
+    description: >
+      Long-term condition review, care plan and health check records from the
+      PCD review clusters, one row per observation and cluster, for all people
+      including inactive and deceased. review_type names the record from its
+      cluster. Observations dated after the build date are excluded. Feeds the
+      NICE review indicators through int_ltc_review_profile.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: REV_COD, COPDRVW_COD, HFRVW_COD, HFMEDRVW_COD, MEDRVW_COD, RARTHRVW_COD, HLTHCHK_COD, HLTHAP_COD, MDRV_COD, DEMCP_COD, DEMCPRVW_COD, DEPRVW_COD
+            source: PCD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - id
+              - source_cluster_id
+    columns:
+      - name: id
+        description: Source observation identifier; one row per observation and cluster.
+        data_tests:
+          - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the record.
+      - name: review_type
+        description: "Record type from the cluster: ASTHMA_REVIEW, COPD_REVIEW, HEART_FAILURE_REVIEW, HEART_FAILURE_MEDICATION_REVIEW, MEDICATION_REVIEW, RHEUMATOID_ARTHRITIS_REVIEW, LEARNING_DISABILITY_HEALTH_CHECK, LEARNING_DISABILITY_HEALTH_ACTION_PLAN, CANCER_CARE_REVIEW, DEMENTIA_CARE_PLAN, DEMENTIA_CARE_PLAN_REVIEW, DEPRESSION_REVIEW."
+        data_tests:
+          - not_null
+      - name: concept_code
+        description: SNOMED code of the record.
+      - name: concept_display
+        description: Description of the record.
+      - name: source_cluster_id
+        description: Cluster that matched the code.

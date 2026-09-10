@@ -168,14 +168,9 @@ QUALIFY
 -- keep only rows that are not beaten by a future better priority
     AND priority = best_future_priority
 )
-/*
-Keep all SHING_1 / 1B / 1C rows (even duplicates on same day)
-Remove SHING_2 / 2B / 2C ONLY when they occur on the same EVENT_DATE as a dose 1
-Keep SHING_2 if it’s on a different date (valid second dose)
-Leave all other vaccines untouched
-*/
-,IMM_ADM_DOSE_DEDUP as (
-	SELECT 
+--IDENTIFY DUPLICATE ROWS WHERE SAME CODE CAN BE USED FOR DIFFERENT DOSES (SHINGLES)
+,IMM_ADM_RANKED as (
+SELECT 
 	PERSON_ID,
     BIRTH_DATE_APPROX,
     IS_CARE_HOME_RESIDENT,
@@ -183,34 +178,23 @@ Leave all other vaccines untouched
     IN_PPV_CLINICAL_RISK_GROUP,
     IS_PREGNANT,
     TURN_65_AFTER_SEP_2023,
-    AGE_DAYS_APPROX,
     AGE,
-    AGE_AT_EVENT,
     AGE_BAND_5Y,
+    AGE_DAYS_APPROX,
+    AGE_AT_EVENT,
     VACCINE_ORDER,
-	VACCINE_ID,
-	VACCINE_NAME,
-	DOSE_NUMBER,
+    VACCINE_ID,
+    VACCINE_NAME,
+    DOSE_NUMBER,
     ELIGIBLE_FROM_DATE,
     ELIGIBLE_TO_DATE,
     MAXIMUM_AGE_DAYS,
+    EVENT_DATE,
     EVENT_TYPE,
-	EVENT_DATE,
-	OUT_OF_SCHEDULE,
-   --  ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID ORDER BY EVENT_DATE ASC) AS row_num, 
-   -- COUNT(*) OVER (PARTITION BY PERSON_ID, VACCINE_ID, EVENT_TYPE) AS TOTAL_EVENTS
-    --COUNT(*) OVER (PARTITION BY PERSON_ID, VACCINE_NAME, DOSE_NUMBER) AS TOTAL_EVENTS 
-    FROM IMM_ADM_DECLINED_CONFLICT  
-     QUALIFY NOT (
-    -- Identify SHING dose 2 records
-    VACCINE_ID LIKE 'SHING_2%'
-    -- Check if a dose 1 exists on same day for same person
-    AND COUNT_IF(
-        VACCINE_ID LIKE 'SHING_1%'
-    ) OVER (
-        PARTITION BY PERSON_ID, EVENT_DATE
-    ) > 0
-          ) )
+    OUT_OF_SCHEDULE,
+       ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID ORDER BY EVENT_DATE ASC) AS row_num
+    FROM IMM_ADM_DECLINED_CONFLICT   
+      ) 
 --in some cases someone has been vaccinated and then had a subsequent contraindicated code added. Choose earlier Admin
 ,ADMIN_CONTRA_CONFLICT as (
 select *,
@@ -223,10 +207,13 @@ ROW_NUMBER() OVER (
                     ELSE 3
                 END,
                 event_date DESC
-        ) AS rownum
-FROM IMM_ADM_DOSE_DEDUP
+        ) AS rownum_contra
+FROM IMM_ADM_RANKED
+WHERE 
+--deduplicate where codes are non dose specific 
+(dose_number = 1 AND row_num = 1)
+OR (dose_number = 2 AND row_num = 2) 
 )
-
 --ADD VACCINATION STATUS FOR EVENTS.
 select *
 ,CASE 
@@ -263,4 +250,4 @@ WHEN EVENT_TYPE = 'Contraindicated' THEN 'Contraindicated'
 END as VACCINATION_STATUS
 --,ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID ORDER BY EVENT_DATE DESC) as rownum
 from ADMIN_CONTRA_CONFLICT
-where rownum = 1
+where rownum_contra = 1

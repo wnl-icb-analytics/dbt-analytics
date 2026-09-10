@@ -1,0 +1,791 @@
+models:
+  - name: fct_person_asthma_review_ind273
+    description: >
+      NICE IND273 asthma annual review. One row per currently registered,
+      living, non-test person aged 5 and over on the asthma register, assessed
+      on the build date. The numerator requires an asthma review code (PCD
+      REV_COD) in the preceding 12 months. NICE asks that the review covers
+      asthma control, the number of exacerbations and a written action plan;
+      the review code stands for those elements because they are not
+      separately clustered. Children under 5 are excluded as NICE specifies.
+      Personalised care adjustments are not applied. Secondary-use consumers
+      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
+      Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind273
+        indicator:
+          id: "IND273"
+          type: "MEASURE"
+          category: "REVIEW"
+          clinical_domain: "Respiratory"
+          name_short: "Asthma review"
+          description_short: "Asthma review recorded in the preceding 12 months for people aged 5 and over on the asthma register"
+          description_long: "NICE IND273 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND273"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_review_date
+        description: Date of the latest review, care plan, health check or test record for the indicator; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_copd_review_ind191
+    description: >
+      NICE IND191 COPD annual review. One row per currently registered,
+      living, non-test person on the COPD register, assessed on the build
+      date. The numerator requires a COPD review code (COPDRVW_COD) and an MRC
+      dyspnoea grade (MRC_COD) both recorded in the preceding 12 months. NICE
+      also asks for the number of exacerbations; the exacerbation count
+      cluster is rarely used so it is not required. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind191
+        indicator:
+          id: "IND191"
+          type: "MEASURE"
+          category: "REVIEW"
+          clinical_domain: "Respiratory"
+          name_short: "COPD review with MRC"
+          description_short: "COPD review and MRC dyspnoea grade recorded in the preceding 12 months"
+          description_long: "NICE IND191 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND191"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_review_date
+        description: Date of the latest review, care plan, health check or test record for the indicator; null when none
+      - name: latest_mrc_dyspnoea_date
+        description: Date of the latest MRC dyspnoea grade; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_heart_failure_review_ind195
+    description: >
+      NICE IND195 heart failure annual review. One row per currently
+      registered, living, non-test person on the heart failure register,
+      assessed on the build date. The numerator requires a heart failure
+      review code (HFRVW_COD), an NYHA classification record (NYHA_COD), counting assessment codes that carry no class, and a
+      medication review of any coded type (heart failure medication review,
+      medication review or structured medication review) all in the preceding
+      12 months. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind195
+        indicator:
+          id: "IND195"
+          type: "MEASURE"
+          category: "REVIEW"
+          clinical_domain: "Cardiovascular"
+          name_short: "Heart failure review"
+          description_short: "Heart failure review, NYHA classification and medication review recorded in the preceding 12 months"
+          description_long: "NICE IND195 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND195"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_review_date
+        description: Date of the latest review, care plan, health check or test record for the indicator; null when none
+      - name: latest_nyha_date
+        description: Date of the latest NYHA classification; null when none
+      - name: latest_medication_review_date
+        description: Date of the latest medication review of any coded type; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_rheumatoid_arthritis_review_ind110
+    description: >
+      NICE IND110 rheumatoid arthritis annual review. One row per currently
+      registered, living, non-test person on the rheumatoid arthritis
+      register, assessed on the build date. The numerator requires a
+      rheumatoid arthritis annual review code (RARTHRVW_COD) in the preceding
+      15 months. The face-to-face setting is not coded. NICE's exclusions for
+      people who chose not to attend or did not respond to two invitations are
+      personalised care adjustments and are not applied. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind110
+        indicator:
+          id: "IND110"
+          type: "MEASURE"
+          category: "REVIEW"
+          clinical_domain: "Musculoskeletal"
+          name_short: "RA annual review"
+          description_short: "Rheumatoid arthritis annual review recorded in the preceding 15 months"
+          description_long: "NICE IND110 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND110"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_review_date
+        description: Date of the latest review, care plan, health check or test record for the indicator; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_hypothyroidism_tft_ind139
+    description: >
+      NICE IND139 hypothyroidism thyroid function test. One row per currently
+      registered, living, non-test person on the hypothyroidism register,
+      assessed on the build date. The numerator requires a thyroid function
+      test record (TFT_COD) in the preceding 12 months. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind139
+        indicator:
+          id: "IND139"
+          type: "MEASURE"
+          category: "REVIEW"
+          clinical_domain: "Endocrine"
+          name_short: "Hypothyroidism TFT"
+          description_short: "Thyroid function test recorded in the preceding 12 months for people with hypothyroidism"
+          description_long: "NICE IND139 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND139"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_review_date
+        description: Date of the latest review, care plan, health check or test record for the indicator; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_learning_disability_health_check_ind265
+    description: >
+      NICE IND265 learning disability health check. One row per currently
+      registered, living, non-test person aged 14 and over on the learning
+      disability register, assessed on the build date. The numerator requires
+      a learning disability health check (HLTHCHK_COD) and a health action
+      plan (HLTHAP_COD) both recorded in the preceding 12 months. The age
+      floor follows the annual health check programme, which starts at 14.
+      Personalised care adjustments are not applied. Secondary-use consumers
+      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
+      Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind265
+        indicator:
+          id: "IND265"
+          type: "MEASURE"
+          category: "REVIEW"
+          clinical_domain: "Learning disability"
+          name_short: "LD health check and action plan"
+          description_short: "Learning disability health check and health action plan recorded in the preceding 12 months"
+          description_long: "NICE IND265 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND265"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_review_date
+        description: Date of the latest review, care plan, health check or test record for the indicator; null when none
+      - name: latest_health_action_plan_date
+        description: Date of the latest learning disability health action plan; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_learning_disability_health_check_ind266
+    description: >
+      NICE IND266 learning disability health check with ethnicity. One row per
+      currently registered, living, non-test person aged 14 and over on the
+      learning disability register, assessed on the build date. The numerator
+      requires a learning disability health check and a health action plan
+      both recorded in the preceding 12 months and an ethnicity category other
+      than Unknown on the demographic record; not-stated codes map to Unknown and so count as not recorded. Personalised care adjustments
+      are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind266
+        indicator:
+          id: "IND266"
+          type: "MEASURE"
+          category: "REVIEW"
+          clinical_domain: "Learning disability"
+          name_short: "LD health check with ethnicity"
+          description_short: "Learning disability health check, health action plan and recorded ethnicity"
+          description_long: "NICE IND266 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND266"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_review_date
+        description: Date of the latest review, care plan, health check or test record for the indicator; null when none
+      - name: latest_health_action_plan_date
+        description: Date of the latest learning disability health action plan; null when none
+      - name: has_ethnicity_recorded
+        description: Whether an ethnicity category other than Unknown is recorded
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_cancer_care_review_ind223
+    description: >
+      NICE IND223 cancer care review within 12 months. One row per currently
+      registered, living, non-test person on the cancer register whose
+      latest first-or-new-episode cancer diagnosis falls in the preceding 24
+      months, assessed on the build
+      date. The numerator requires a cancer care review code (MDRV_COD) within
+      12 months of that diagnosis. The cancer register excludes non-
+      melanoma skin cancer as NICE specifies. People diagnosed in the last 12
+      months without a review are not yet outside their window but count as
+      not achieved, as under NICE. Personalised care adjustments are not
+      applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind223
+        indicator:
+          id: "IND223"
+          type: "MEASURE"
+          category: "REVIEW"
+          clinical_domain: "Cancer"
+          name_short: "Cancer care review 12m"
+          description_short: "Cancer care review within 12 months of diagnosis for people diagnosed in the preceding 24 months"
+          description_long: "NICE IND223 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND223"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: diagnosis_date
+        description: Diagnosis date anchoring the indicator window; null when none
+      - name: latest_review_date
+        description: Date of the latest review, care plan, health check or test record for the indicator; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_dementia_care_plan_ind142
+    description: >
+      NICE IND142 dementia care planning. One row per currently registered,
+      living, non-test person on the dementia register, assessed on the build
+      date. The numerator requires a dementia care plan or care plan review
+      code (DEMCP_COD, DEMCPRVW_COD) in the preceding 12 months. NICE asks for
+      a face-to-face review; the setting is not coded. Personalised care
+      adjustments are not applied. Secondary-use consumers must join
+      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
+      1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind142
+        indicator:
+          id: "IND142"
+          type: "MEASURE"
+          category: "REVIEW"
+          clinical_domain: "Mental health"
+          name_short: "Dementia care plan review"
+          description_short: "Dementia care plan or care plan review recorded in the preceding 12 months"
+          description_long: "NICE IND142 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND142"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_review_date
+        description: Date of the latest review, care plan, health check or test record for the indicator; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_depression_review_ind104
+    description: >
+      NICE IND104 depression review within 10 to 35 days. One row per
+      currently registered, living, non-test person aged 18 and over whose
+      latest first or new episode depression diagnosis falls in the preceding
+      12 months, assessed on the build date. The numerator requires a
+      depression review code (DEPRVW_COD) dated 10 to 35 days after that
+      diagnosis. The 18-and-over floor comes from the QOF depression register, not the NICE page. Diagnoses with no episodicity are treated as new, as the register does. NICE frames the window as the preceding 1 April to 31 March;
+      a rolling 12 months is used so the figure does not reset each April.
+      People diagnosed in the last 35 days without a review count as not
+      achieved. Personalised care adjustments are not applied. Secondary-use
+      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
+      Data Opt-Out and Type 1 opt-out filtering.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind104
+        indicator:
+          id: "IND104"
+          type: "MEASURE"
+          category: "REVIEW"
+          clinical_domain: "Mental health"
+          name_short: "Depression review 10 to 35 days"
+          description_short: "Depression review 10 to 35 days after a new diagnosis in the preceding 12 months"
+          description_long: "NICE IND104 before personalised care adjustments."
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND104"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: diagnosis_date
+        description: Diagnosis date anchoring the indicator window; null when none
+      - name: latest_review_date
+        description: Date of the latest review, care plan, health check or test record for the indicator; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_ltc_review_nice_indicators
+    description: >
+      NICE long-term condition review indicators in one long-form table: IND104,
+      IND110, IND139, IND142, IND191, IND195, IND223, IND265, IND266 and IND273.
+      One row per person and indicator on the reporting date, keeping the family's
+      detail columns as typed nulls where a branch does not emit them. Feeds
+      fct_person_nice_indicator_status and the family snapshot.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IND104', 'IND110', 'IND139', 'IND142', 'IND191', 'IND195', 'IND223', 'IND265', 'IND266', 'IND273']
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_review_date
+        description: Date of the latest review, care plan, health check or test record for the indicator; null when none; typed null for branches that do not emit it
+      - name: latest_mrc_dyspnoea_date
+        description: Date of the latest MRC dyspnoea grade; null when none; typed null for branches that do not emit it
+      - name: latest_nyha_date
+        description: Date of the latest NYHA classification; null when none; typed null for branches that do not emit it
+      - name: latest_medication_review_date
+        description: Date of the latest medication review of any coded type; null when none; typed null for branches that do not emit it
+      - name: latest_health_action_plan_date
+        description: Date of the latest learning disability health action plan; null when none; typed null for branches that do not emit it
+      - name: has_ethnicity_recorded
+        description: Whether an ethnicity category other than Unknown is recorded; typed null for branches that do not emit it
+      - name: diagnosis_date
+        description: Diagnosis date anchoring the indicator window; null when none; typed null for branches that do not emit it
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+  - name: fct_person_ltc_review_nice_indicators_snapshot_input
+    description: >
+      Thin projection of fct_person_ltc_review_nice_indicators for SCD2
+      snapshotting. Drops reporting_date and measurement_period_start, which
+      advance every build, so a version opens only on a new review record, a
+      practice move or a record ageing out of the window.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_numerator
+        description: Whether the person meets the indicator
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
