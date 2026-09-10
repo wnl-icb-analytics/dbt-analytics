@@ -1,21 +1,24 @@
 models:
-  - name: stg_sus_op_appointment
-    description: >-
-      Outpatient appointments from SUS data, with one row per source appointment.
-      Provider codes retain their full value when present in organisation
-      dictionary type 41; otherwise they use the first three characters.
-      Null codes remain null.
-    config:
-      meta:
-        owner:
-          name: EddieDavison92
-    columns:
-      - name: primarykey_id
-        description: Unique identifier for the appointment (PRIMARYKEY_ID)
-        tests:
-          - not_null
-          - unique
+- name: stg_sus_op_appointment
+  description: Outpatient appointments from SUS data, with one row per source appointment. Provider codes
+    retain their full value when present in organisation dictionary type 41; otherwise they use the first
+    three characters. Null codes remain null.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  columns:
+  - name: primarykey_id
+    description: Unique identifier for the appointment (PRIMARYKEY_ID)
     tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
+    - not_null
+    - unique
+  - name: unique_booking_reference_number
+    description: Pseudonymised UBRN supplied on the SUS record, preserved with its original presentation.
+      Recorded reference agreement alone does not prove patient identity or causality.
+  - name: booking_reference_issuer
+    description: Issuer supplied for the UBRN. Null when not recorded.
+  tests:
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1

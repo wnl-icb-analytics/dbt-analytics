@@ -20,6 +20,9 @@ select core.primarykey_id
     , {{ consistent_sk_patient_id_format('core.spell_patient_identity_nhs_number_value_pseudo') }} as sk_patient_id
     , spell_patient_identity_local_patient_identifier_value as local_patient_identifier
 
+    , core.spell_referral_to_treatment_ubrn_value_pseudo as unique_booking_reference_number
+    , core.spell_referral_to_treatment_ubrn_issuer as booking_reference_issuer
+
     /* spell details */
     -- location
     , {{ clean_organisation_id('SPELL_COMMISSIONING_SERVICE_AGREEMENT_PROVIDER') }} as SPELL_COMMISSIONING_SERVICE_AGREEMENT_PROVIDER

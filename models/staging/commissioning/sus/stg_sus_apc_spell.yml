@@ -1,70 +1,63 @@
 models:
-  - name: stg_sus_apc_spell
-    description: >-
-      Admitted Patient Care (APC) spells from SUS data. One row per spell. When
-      SUS+ supplies several versions, the model keeps the latest activity date,
-      then the highest numeric source record version and latest interchange
-      receipt time. The raw row number breaks any remaining ties.
-    config:
-      meta:
-        owner:
-          name: EddieDavison92
-    columns:
-      - name: primarykey_id
-        description: Unique identifier for the spell (PRIMARYKEY_ID)
-        tests:
-          - not_null
-          - unique
-      - name: sk_patient_id
-      - name: spell_care_location_site_code_of_treatment
-      - name: spell_admission_date
-      - name: spell_admission_time
-      - name: spell_admission_method
-      - name: spell_admission_patient_classification
-      - name: spell_discharge_date
-      - name: spell_discharge_time
-      - name: spell_open_spell_indicator
-        description: >-
-          SUS+-supplied indicator for whether the latest spell record is open.
-          A value of 1 means open. This model passes the supplied value through
-          and does not infer it from a missing discharge date. Null means SUS+
-          supplied no indicator.
-      - name: spell_discharge_length_of_hospital_stay
-      - name: spell_commissioning_tariff_calculation_pbr_length_of_stay_unadjusted_days
-        description: >-
-          SUS+-supplied spell length of stay in days before critical-care,
-          rehabilitation, palliative-care and delayed-discharge adjustments.
-          This model passes the value through without recalculation. Null means
-          SUS+ supplied no value.
-      - name: spell_commissioning_tariff_calculation_pbr_length_of_stay_excess_bed_days
-        description: >-
-          SUS+-supplied number of spell length-of-stay days above the tariff trim
-          point. This model passes the value through without recalculation. Null
-          means SUS+ supplied no value.
-      - name: spell_commissioning_service_agreement_provider
-      - name: spell_commissioning_grouping_core_hrg
-      - name: spell_clinical_coding_grouper_derived_primary_diagnosis
-      - name: spell_clinical_coding_grouper_derived_secondary_diagnosis
-      - name: spell_clinical_coding_grouper_derived_dominant_procedure
-      - name: spell_admission_admission_sub_type
-      - name: spell_admission_admission_type
-  # Spec Comm
-      - name: spell_commissioning_tariff_calculation_final_price
-
-
+- name: stg_sus_apc_spell
+  description: Admitted Patient Care (APC) spells from SUS data. One row per spell. When SUS+ supplies
+    several versions, the model keeps the latest activity date, then the highest numeric source record
+    version and latest interchange receipt time. The raw row number breaks any remaining ties.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  columns:
+  - name: primarykey_id
+    description: Unique identifier for the spell (PRIMARYKEY_ID)
     tests:
-      - elementary.volume_anomalies:
-          description: "Detects anomalous daily row counts for APC spells."
-
-          arguments:
-            timestamp_column: 'spell_admission_date'
-      - elementary.dimension_anomalies:
-          description: "Monitors for missing or unusual volumes from specific Trusts."
-          arguments:
-            dimensions:
-              - 'SPELL_COMMISSIONING_SERVICE_AGREEMENT_PROVIDER'
-            timestamp_column: 'spell_admission_date'
-            sensitivity: 3
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
+    - not_null
+    - unique
+  - name: sk_patient_id
+  - name: spell_care_location_site_code_of_treatment
+  - name: spell_admission_date
+  - name: spell_admission_time
+  - name: spell_admission_method
+  - name: spell_admission_patient_classification
+  - name: spell_discharge_date
+  - name: spell_discharge_time
+  - name: spell_open_spell_indicator
+    description: SUS+-supplied indicator for whether the latest spell record is open. A value of 1 means
+      open. This model passes the supplied value through and does not infer it from a missing discharge
+      date. Null means SUS+ supplied no indicator.
+  - name: spell_discharge_length_of_hospital_stay
+  - name: spell_commissioning_tariff_calculation_pbr_length_of_stay_unadjusted_days
+    description: SUS+-supplied spell length of stay in days before critical-care, rehabilitation, palliative-care
+      and delayed-discharge adjustments. This model passes the value through without recalculation. Null
+      means SUS+ supplied no value.
+  - name: spell_commissioning_tariff_calculation_pbr_length_of_stay_excess_bed_days
+    description: SUS+-supplied number of spell length-of-stay days above the tariff trim point. This model
+      passes the value through without recalculation. Null means SUS+ supplied no value.
+  - name: spell_commissioning_service_agreement_provider
+  - name: spell_commissioning_grouping_core_hrg
+  - name: spell_clinical_coding_grouper_derived_primary_diagnosis
+  - name: spell_clinical_coding_grouper_derived_secondary_diagnosis
+  - name: spell_clinical_coding_grouper_derived_dominant_procedure
+  - name: spell_admission_admission_sub_type
+  - name: spell_admission_admission_type
+  - name: spell_commissioning_tariff_calculation_final_price
+  - name: unique_booking_reference_number
+    description: Pseudonymised UBRN supplied on the SUS record, preserved with its original presentation.
+      Recorded reference agreement alone does not prove patient identity or causality.
+  - name: booking_reference_issuer
+    description: Issuer supplied for the UBRN. Null when not recorded.
+  tests:
+  - elementary.volume_anomalies:
+      description: Detects anomalous daily row counts for APC spells.
+      arguments:
+        timestamp_column: spell_admission_date
+  - elementary.dimension_anomalies:
+      description: Monitors for missing or unusual volumes from specific Trusts.
+      arguments:
+        dimensions:
+        - SPELL_COMMISSIONING_SERVICE_AGREEMENT_PROVIDER
+        timestamp_column: spell_admission_date
+        sensitivity: 3
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1
