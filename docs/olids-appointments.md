@@ -1,5 +1,29 @@
 # GP appointments, healthcare events and clinical records
 
+## Medication orders in clinical history
+
+Clinical records contain expanded observations and medication orders. Standalone
+medication statements remain in their detail table but do not add clinical rows
+or appointment-clinical links. Existing observation and order IDs are unchanged.
+Person and clinical-date clustering is unchanged.
+
+Orders retain their own dates, codes, medication names, doses, quantities and
+durations. The clinical output adds these prescribing fields and the source
+code and label for authorisation type from the current linked statement.
+The statement must be non-deleted and belong to the same person. Missing or
+mismatched statements leave the order in place with null authorisation fields.
+Current statement context is not a historical authorisation status and does not
+overwrite order details. The empty quantity-description field is omitted.
+Supplied duration and quantity can be zero or negative; they are retained, not
+interpreted as validated treatment durations or administered quantities.
+
+The 10 September profile has 384,607,642 orders. Of these, 384,602,541 have a
+same-person statement with a labelled authorisation type; 118 have no available
+statement and 4,983 point to a different person. There are 3,383,873 statements
+with no matching order for the same person. They remain available separately.
+The earlier profiles below include standalone statements and describe the
+previous population.
+
 `fct_gp_appointment` contains one current patient-associated appointment from
 the filtered NCL OLIDS patient spine. It retains all current statuses, future
 appointments, administrative contexts and the 605 patient-associated blocked
@@ -31,8 +55,8 @@ Slot reassignment prevents reconstruction of a complete cancellation history.
 `fct_gp_appointment_clinical_record` contains one appointment, clinical record
 type and clinical record ID with a recorded encounter path for the same person.
 Join `clinical_record_id` to `fct_gp_clinical_record.clinical_record_id`.
-Use `source_record_id` to join the observation, medication order or medication
-statement staging table named by `clinical_record_type`. Expanded observations already contain allergies
+Use `source_record_id` to join the observation or medication order
+staging table named by `clinical_record_type`. Expanded observations already contain allergies
 and referrals; adding their source tables again would duplicate those records.
 The relation does not assert attendance or that clinical records occurred at
 the appointment time. Unlinked records remain in the clinical detail tables.
@@ -56,7 +80,7 @@ lives in Snowflake, with current preferred labels for current and historical
 codes. No build or query calls a terminology server.
 
 `fct_gp_clinical_record` reads a separate person-clustered snapshot containing
-expanded observations, medication orders and medication statements. Codes define
+expanded observations and medication orders. Codes define
 clinical meaning; the source record type identifies the detail table. Medications
 remain separate from observations, and quantities are not observation results.
 Neither test requests nor procedure requests enter these outputs.
