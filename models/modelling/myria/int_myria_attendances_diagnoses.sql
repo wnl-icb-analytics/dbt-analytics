@@ -26,8 +26,7 @@ SELECT
         ip.gender_at_event,
         ip.ethnicity_at_event,
         ip.age_at_event,
-        ip.reg_practice_at_event,
-        DATEDIFF(MM,ip.END_DATE,DATE_TRUNC('month',CURRENT_DATE)) as activity_months_ago -- use this in int_myria_conditions to flag 6 mth/1 year/2 year periods
+        ip.reg_practice_at_event
     FROM
        {{ ref("int_sus_apc_encounter") }} ip
     LEFT JOIN {{ ref("int_sus_apc_diagnosis") }} dx
@@ -57,8 +56,7 @@ SELECT
         op.gender_at_event,
         op.ethnicity_at_event,
         op.age_at_event,
-        op.reg_practice_at_event,
-        DATEDIFF(MM,op.START_DATE,DATE_TRUNC('month',CURRENT_DATE)) as activity_months_ago
+        op.reg_practice_at_event
     FROM 
        {{ ref("int_sus_op_encounter") }} op
     LEFT JOIN {{ ref("int_sus_op_diagnosis") }} dx
@@ -89,8 +87,7 @@ SELECT
         ae.gender_at_event,
         ae.ethnicity_at_event,
         ae.age_at_event,
-        ae.reg_practice_at_event,
-        DATEDIFF(MM,ae.START_DATE,DATE_TRUNC('month',CURRENT_DATE)) as activity_months_ago
+        ae.reg_practice_at_event
     FROM 
        {{ ref("int_sus_uec_encounter") }} ae
     LEFT JOIN {{ ref("int_sus_uec_diagnosis") }} dx
