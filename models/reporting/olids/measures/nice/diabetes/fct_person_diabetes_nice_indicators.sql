@@ -1,6 +1,7 @@
 {{ config(materialized='table') }}
 
 -- Common long-form interface for the NICE diabetes, NDH and gestational diabetes indicator views.
+-- IND165, IND135 and IND136 carry no frailty exclusion but still report latest_frailty_severity.
 {% set indicator_models = [
     'fct_person_diabetes_hba1c_ind179',
     'fct_person_diabetes_hba1c_ind180',
@@ -9,7 +10,15 @@
     'fct_person_diabetes_retinal_screening_ind137',
     'fct_person_diabetes_foot_examination_ind160',
     'fct_person_ndh_glycaemic_test_ind172',
-    'fct_person_gestational_diabetes_hba1c_ind173'
+    'fct_person_gestational_diabetes_hba1c_ind173',
+    'fct_person_diabetes_hba1c_ind165',
+    'fct_person_diabetes_hba1c_ind135',
+    'fct_person_diabetes_hba1c_ind136',
+    'fct_person_diabetes_ras_therapy_ind134',
+    'fct_person_diabetes_foot_risk_ind81',
+    'fct_person_diabetes_structured_education_ind88',
+    'fct_person_ndh_prevention_programme_ind171',
+    'fct_person_diabetes_care_processes_ind120'
 ] %}
 
 {% for indicator_model in indicator_models %}
@@ -24,7 +33,7 @@ SELECT
     current_practice_code,
     current_practice_name,
     latest_record_date,
-    {% if indicator_model in ['fct_person_diabetes_hba1c_ind179', 'fct_person_diabetes_hba1c_ind180'] %}
+    {% if indicator_model in ['fct_person_diabetes_hba1c_ind179', 'fct_person_diabetes_hba1c_ind180', 'fct_person_diabetes_hba1c_ind165', 'fct_person_diabetes_hba1c_ind135', 'fct_person_diabetes_hba1c_ind136'] %}
     latest_hba1c_value,
     indicator_threshold AS hba1c_threshold,
     NULL AS latest_systolic_value,

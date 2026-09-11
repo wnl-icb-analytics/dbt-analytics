@@ -1,0 +1,30 @@
+models:
+  - name: int_sglt2_therapy_latest
+    description: >
+      Latest SGLT2 inhibitor order per person, one row per person with any
+      order from int_sglt2_medications_all between 1990 and the build date.
+      Consumers apply their own window to latest_order_date; the NICE
+      indicators treat an order in the preceding six calendar months as
+      current treatment.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person with at least one order.
+        data_tests:
+          - unique
+          - not_null
+      - name: latest_order_date
+        description: Date of the latest order.
+      - name: latest_order_id
+        description: Medication order identifier of the latest order.
+      - name: latest_sglt2_drug
+        description: Drug of the latest order (DAPAGLIFLOZIN, EMPAGLIFLOZIN, CANAGLIFLOZIN, ERTUGLIFLOZIN or OTHER_SGLT2I).
+      - name: latest_product_name
+        description: BNF name of the latest product.
+      - name: first_order_date
+        description: Earliest order.
+      - name: order_count
+        description: Orders since 1990.
