@@ -238,11 +238,9 @@ WITH pds_patient_check AS (
     -- R54 - Age-related physical debility, Z91.81 - History of falling
     MAX(CASE WHEN LEFT(UPPER(diag_code), 3) IN ('R54') OR UPPER(diag_code) IN ('Z91.81', 'Z9181') THEN 1 ELSE 0 END) AS frailty_falls,
 
-    CASE WHEN ppc.practice_code IS NULL THEN 0 ELSE 1 END AS is_on_pds, -- flag NCL gps
-
-    CASE WHEN ppc.date_of_death IS NOT NULL THEN 1 ELSE 0 END AS is_dead_pds,
-
-    CASE WHEN death.sk_patient_id IS NOT NULL THEN 1 ELSE 0 END AS is_dead_death_registry,
+    CASE WHEN ppc.gp_code_pds IS NULL THEN 0 ELSE 1 END AS is_on_pds, -- flag NCL gps
+    --CASE WHEN ppc.date_of_death IS NOT NULL THEN 1 ELSE 0 END AS is_dead_pds,
+    --CASE WHEN death.sk_patient_id IS NOT NULL THEN 1 ELSE 0 END AS is_dead_death_registry,
 
     CURRENT_TIMESTAMP() AS refresh_date
 FROM 
@@ -258,7 +256,7 @@ WHERE
     AND att_dx.activity_date < DATE_TRUNC('month', CURRENT_DATE) -- only activity before the start of this month
     AND FLOOR(DATEDIFF('month', ppc.year_month_of_birth, CURRENT_DATE) /12) >= 18-- AND age_at_most_recent_nel_admission >= 18
     AND (ppc.date_of_death IS NULL OR ppc.date_of_death > CURRENT_DATE) -- only living patients
-GROUP BY 1,2,3,4,5,6
+GROUP BY ALL
 HAVING 
     NCLProvider_count >= 1 --barnet_hospital_count >= 1
     AND local_authority_sus IN ('Barnet', 'Camden', 'Enfield', 'Islington', 'Haringey') --AND local_authority IN ('Barnet','Enfield')

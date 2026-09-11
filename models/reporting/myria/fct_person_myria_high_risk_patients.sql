@@ -78,4 +78,3 @@ from
 where
     barnet_hospital_count >= 1
     AND local_authority_sus IN ('Barnet','Enfield')
-    AND date_of_death IS NULL

@@ -27,13 +27,13 @@ models:
         description: "Trust-provided patient identifier. (local patient identifier).
           Taken from most recent NEL admission from any provider."
 
-      - name: local_authority
-        description: "Most recent registered local authority based on GP practice."
+      - name: local_authority_sus
+        description: "Most recent registered local authority based on GP practice.at most recent acute activity."
 
-      - name: gp_code
+      - name: gp_code_sus
         description: "Registered GP practice code at most recent acute activity."
 
-      - name: gp_name
+      - name: gp_name_sus
         description: "Registered GP practice name at most recent acute activity."
 
       - name: local_authority_pds
@@ -45,8 +45,8 @@ models:
       - name: gp_name_pds
         description: "Registered GP practice name on PDS."
 
-      - name: age_at_most_recent_nel_admission
-        description: "Age at most recent non-elective admission."
+      - name: current_age
+        description: "Age at the time of run"
 
       - name: most_recent_nel_admission_date
         description: "Date of most recent non-elective admission."
@@ -66,10 +66,6 @@ models:
 
       - name: barnet_hospital_count
         description: "Count of distinct non-elective admissions at Barnet Hospital
-          between 01-Jan-2025 and start of current month (based on discharge date)."
-
-      - name: barnet_hospital_first_admission_date
-        description: "Date of first non-elective admission at Barnet Hospital
           between 01-Jan-2025 and start of current month (based on discharge date)."
 
       - name: RFL_ex_BH_flag
@@ -96,10 +92,6 @@ models:
         description: "Count of distinct non-elective admissions at NCL providers (RAL,
           RAP, RKE, RRV) between 01-Jan-2025 and start of current month (based on discharge date)."
       
-      - name: NCLProvider_first_admission_date
-        description: "Date of first non-elective admission at NCL providers (RAL,
-          RAP, RKE, RRV) between 01-Jan-2025 and start of current month (based on discharge date)."
-
       - name: Non_NCLProvider_flag
         description: "Flag (1/0) if patient had ≥1 non-elective admission at non-NCL
           providers between 01-Jan-2025 and start of current month (based on discharge date)."
@@ -185,9 +177,6 @@ models:
         description: "Flag (1/0) if patient has chronic liver disease (ICD-10 K70,
           K73–K74)."
 
-      - name: first_high_risk_condition_date
-        description: "Date of first recorded diagnosis for any of the high-risk conditions."
-
       - name: hypertension
         description: "Flag (1/0) if patient has hypertensive disease (ICD-10 I10–I1A)."
 
@@ -198,14 +187,3 @@ models:
       - name: is_on_pds
         description: "Binary flag for whether patient is registered at an NCL GP on
           PDS at time of running (1 if yes, 0 if no)."
-
-      - name: is_dead_pds
-        description: "Binary flag for whether patient has a recorded death on
-          PDS at time of running (1 if yes, 0 if no)."
-
-      - name: is_dead_death_registry
-        description: "Binary flag for whether patient has a recorded death on
-          the death registry at time of running (1 if yes, 0 if no)."
-
-      - name: date_of_death
-        description: "Date of death from PDS or death registry (earliest). Null if patient is alive"
