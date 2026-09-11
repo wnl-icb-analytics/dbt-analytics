@@ -3,6 +3,7 @@
 }}
 
 select primarykey_id
+    , {{ dbt_utils.generate_surrogate_key(['primarykey_id', 'snomed_id']) }} as source_record_id
     ,snomed_id
     ,rownumber_id
     ,code

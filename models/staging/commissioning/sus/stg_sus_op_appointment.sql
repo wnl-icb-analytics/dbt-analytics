@@ -31,6 +31,7 @@ select  primarykey_id,
     appointment_referral_to_treatment_ubrn_value_pseudo as unique_booking_reference_number,
     appointment_referral_to_treatment_ubrn_issuer as booking_reference_issuer,
     appointment_identifier, 
+    try_to_timestamp_ntz(core.system_interchange_received_date::varchar) as source_received_at,
     appointment_date::date as appointment_date,
     appointment_time::time as appointment_time,
     case when provider.organisation_code is not null

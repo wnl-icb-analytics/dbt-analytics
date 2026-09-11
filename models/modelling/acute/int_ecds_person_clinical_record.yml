@@ -1,0 +1,83 @@
+version: 2
+models:
+- name: int_ecds_person_clinical_record
+  description: ECDS clinical records, one row per source clinical item. Retains missing linkage and unsupported
+    dates. Prepared source facts retain domain-specific interpretation and all additional relationships. Incremental
+    loads process newly received deliveries and replay the boundary delivery. Withdrawn source keys are removed
+    on each run. Monthly full refreshes reconcile earlier corrections and reference changes.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - navigation_snomed_mapping
+  columns:
+  - name: clinical_record_id
+    description: '{{ doc(''navigation_clinical_record_id'') }}'
+    data_tests:
+    - unique
+  - name: sk_patient_id
+    description: '{{ doc(''navigation_sk_patient_id'') }}'
+  - name: source_dataset
+    description: '{{ doc(''navigation_source_dataset'') }}'
+  - name: source_record_type
+    description: '{{ doc(''navigation_source_record_type'') }}'
+  - name: source_record_id
+    description: '{{ doc(''navigation_source_record_id'') }}'
+  - name: source_model_name
+    description: '{{ doc(''navigation_source_model_name'') }}'
+  - name: clinical_record_type
+    description: '{{ doc(''navigation_clinical_record_type'') }}'
+  - name: clinical_record_date
+    description: '{{ doc(''navigation_clinical_record_date'') }}'
+  - name: clinical_time_precision
+    description: '{{ doc(''navigation_clinical_time_precision'') }}'
+  - name: clinical_time_basis
+    description: '{{ doc(''navigation_clinical_time_basis'') }}'
+  - name: source_code
+    description: '{{ doc(''navigation_source_code'') }}'
+  - name: source_code_name
+    description: '{{ doc(''navigation_source_code_name'') }}'
+  - name: source_coding_system
+    description: '{{ doc(''navigation_source_coding_system'') }}'
+  - name: mapped_code
+    description: '{{ doc(''navigation_mapped_code'') }}'
+  - name: mapped_code_name
+    description: '{{ doc(''navigation_mapped_code_name'') }}'
+  - name: mapped_coding_system
+    description: '{{ doc(''navigation_mapped_coding_system'') }}'
+  - name: provider_organisation_code
+    description: '{{ doc(''navigation_provider_organisation_code'') }}'
+  - name: provider_organisation_name
+    description: '{{ doc(''navigation_provider_organisation_name'') }}'
+  - name: provider_code_authority
+    description: '{{ doc(''navigation_provider_code_authority'') }}'
+  - name: parent_record_id
+    description: '{{ doc(''navigation_parent_record_id'') }}'
+  - name: parent_record_type
+    description: '{{ doc(''navigation_parent_record_type'') }}'
+  - name: parent_model_name
+    description: '{{ doc(''navigation_parent_model_name'') }}'
+  - name: relationship_type
+    description: '{{ doc(''navigation_relationship_type'') }}'
+  - name: source_received_at
+    description: '{{ doc(''navigation_source_received_at'') }}'
+  - name: clinical_record_at
+    description: '{{ doc(''navigation_clinical_record_at'') }}'
+  - name: qualifier_code
+    description: '{{ doc(''navigation_qualifier_code'') }}'
+  - name: qualifier_name
+    description: '{{ doc(''navigation_qualifier_name'') }}'
+  - name: is_primary_diagnosis
+    description: Recorded ECDS primary diagnosis indicator. Null where the source does not provide this indicator;
+      coding position remains separate.
+  - name: coding_position
+    description: Submitted diagnosis or procedure position within its parent and code system. Positions from different
+      coding systems are not interchangeable.
+  - name: parent_start_date
+    description: Start date of the recorded episode, outpatient appointment or emergency attendance. This is care
+      context, not the onset or date of the clinical item. APC dates require agreement between spell and episode
+      person keys.
+  - name: parent_end_date
+    description: End date of the recorded episode or emergency attendance. Retained as context without replacing
+      a missing clinical date. Null for parents without a supplied end date.

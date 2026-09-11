@@ -1,0 +1,31 @@
+version: 2
+macros:
+  - name: navigation_delivery_filter
+    description: >-
+      Emits an AND predicate during incremental builds. Loads null receipts and
+      replays the latest receipt boundary for one source record type. Earlier
+      receipts and reference changes reach historical rows at the monthly full refresh.
+      The destination must expose source_received_at and source_record_type.
+    arguments:
+      - name: received_at
+        type: string
+        description: SQL expression for the incoming source receipt timestamp.
+      - name: source_record_type
+        type: string
+        description: Fixed source entity label used to select its stored watermark.
+  - name: navigation_remove_withdrawn_records
+    description: >-
+      Incremental post-hook deleting destination rows whose logical key is absent
+      from all current source relations. Initial and full-refresh builds emit no SQL.
+      The destination must expose source_record_type and source_record_id.
+    arguments:
+      - name: sources
+        type: list
+        description: >-
+          Non-empty list of tuples containing the source record type, dbt model name
+          and SQL key expression. Include every source type retained in the destination.
+  - name: ers_remove_non_lifecycle_events
+    description: >-
+      Incremental post-hook removing e-RS referral actions whose current action code
+      is no longer selected by ers_healthcare_event_type. Used by int_ers_healthcare_event
+      alongside withdrawal handling. Takes no arguments.
