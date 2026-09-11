@@ -30,8 +30,17 @@ dominant_episode_information as (
         partition by primarykey_id 
         order by episodes_id -- TODO: check if this is correct, if multiple dominant episodes, should we take the first?
     ) = 1
+),
+
+episode_end_information as (
+    select
+        primarykey_id
+        , max(end_date)::date as latest_submitted_episode_end_date
+    from {{ ref('stg_sus_apc_spell_episodes') }}
+    where end_date is not null
+    group by primarykey_id
 )
-select 
+select
     /* Information needed to derive standard encounter information */
     core.primarykey_id as visit_occurrence_id
     , core.sk_patient_id
@@ -49,9 +58,30 @@ select
     , core.spell_admission_time as start_time
     , core.spell_discharge_date as end_date
     , core.spell_discharge_time as end_time
+    , case
+        when core.spell_open_spell_indicator = 0
+            and core.spell_discharge_date is null
+            then coalesce(
+                ep_end.latest_submitted_episode_end_date,
+                dateadd(day, core.spell_discharge_length_of_hospital_stay, core.spell_admission_date)::date
+            )
+        end as estimated_discharge_date
+    , estimated_discharge_date is not null as has_estimated_discharge_date
+    , case
+        when ep_end.latest_submitted_episode_end_date is not null
+            and estimated_discharge_date is not null
+            then 'EPISODE_END_DATE'
+        when estimated_discharge_date is not null
+            then 'ADMISSION_PLUS_GROUPER_LOS'
+        end as estimated_discharge_date_method
     , core.spell_open_spell_indicator = 1 as is_open_spell
     , core.spell_discharge_length_of_hospital_stay as duration
-    , datediff(day, core.spell_admission_date, coalesce(core.spell_discharge_date, current_date)) as duration_to_date -- inefficient? Change to calc only if no end date?
+    , case
+        when core.spell_discharge_date is not null
+            then datediff(day, core.spell_admission_date, core.spell_discharge_date)
+        when core.spell_open_spell_indicator = 1
+            then datediff(day, core.spell_admission_date, current_date)
+        end as duration_to_date
     , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_unadjusted_days as unadjusted_length_of_stay_days
     , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_excess_bed_days as excess_bed_days
    
@@ -71,11 +101,13 @@ select
             and core.spell_admission_patient_classification in ('3', '4') -- dict_patient_class.patient_classification_name in ('Regular day admission', 'Regular night admission')
             then 'RA' -- Regular Attender (day & night)
         when core.spell_admission_method in ('21', '22', '23', '24', '25', '28','2A','2B','2C','2D') -- dict_adm_method.admission_method_group = 'Non-elective - emergency'
-            and datediff(day, core.spell_admission_date, coalesce(core.spell_discharge_date, current_date)) = 0 
+            and datediff(day, core.spell_admission_date, core.spell_discharge_date) = 0
             then 'NEL-ZLOS'
         when core.spell_admission_method in ('21', '22', '23', '24', '25', '28','2A','2B','2C','2D') -- dict_adm_method.admission_method_group = 'Non-elective - emergency'
-            and datediff(day, core.spell_admission_date, coalesce(core.spell_discharge_date, current_date)) >= 1 
+            and datediff(day, core.spell_admission_date, core.spell_discharge_date) >= 1
             then 'NEL-LOS+1'
+        when core.spell_admission_method in ('21', '22', '23', '24', '25', '28','2A','2B','2C','2D')
+            then null
         when core.spell_admission_method in ('31', '32','82', '83') -- dict_adm_method.admission_method_group in ('Non-elective - Maternity') or dict_adm_method.admission_method_name in ('The birth of a baby', 'Baby born outside the Provider')
             then 'NELNE'
         when core.spell_admission_method = '81' -- dict_adm_method.admission_method_name = 'Transfer'
@@ -158,6 +190,9 @@ LEFT JOIN {{ ref('stg_dictionary_dbo_organisation') }} as dict_site
 
 left join dominant_episode_information as dom_ep_info
     ON core.primarykey_id = dom_ep_info.primarykey_id
+
+left join episode_end_information as ep_end
+    on core.primarykey_id = ep_end.primarykey_id
 
 LEFT JOIN  {{ ref('stg_dictionary_dbo_specialties')}} as dict_spec
     ON  dom_ep_info.care_professional_main_specialty = dict_spec.bk_specialty_code

@@ -17,6 +17,9 @@ select
     , start_time
     , end_date
     , end_time
+    , estimated_discharge_date
+    , has_estimated_discharge_date
+    , estimated_discharge_date_method
     , is_open_spell
     , duration
     , duration_to_date
