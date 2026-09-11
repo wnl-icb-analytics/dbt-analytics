@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND191: https://www.nice.org.uk/indicators/ind191
--- COPD review and MRC dyspnoea grade both recorded in 12 months for people on the COPD register.
+-- COPD review code in 12 months for people on the COPD register; the MRC dyspnoea date is carried as detail.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -21,8 +21,7 @@ assessed AS (
         population.latest_copd_review_date AS latest_review_date,
         population.latest_mrc_dyspnoea_date AS latest_mrc_dyspnoea_date,
         CASE WHEN population.latest_copd_review_date >= DATEADD(month, -12, CURRENT_DATE()) THEN population.latest_copd_review_date END AS latest_record_date,
-        COALESCE(population.latest_copd_review_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
-            AND COALESCE(population.latest_mrc_dyspnoea_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
+        COALESCE(population.latest_copd_review_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
