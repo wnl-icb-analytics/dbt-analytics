@@ -9,8 +9,7 @@ WITH indicator_population AS (
     FROM {{ ref('int_cvd_risk_profile') }} AS profile
     INNER JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE age.age BETWEEN 25 AND 84
-        AND profile.has_type2_diabetes
+    WHERE profile.has_type2_diabetes
         AND profile.max_risk_score_12m >= 10
         AND NOT profile.has_cvd
         AND COALESCE(profile.latest_frailty_severity, 'None') NOT IN ('Moderate', 'Severe')

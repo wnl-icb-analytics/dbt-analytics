@@ -2,29 +2,36 @@ models:
   - name: int_flu_vaccination_contraindication_all
     description: >
       Seasonal influenza vaccination contraindication records from the PCD
-      cluster FLUEXPCON_COD, one row per observation for all people including
-      inactive and deceased. Observations dated after the build date are
-      excluded. The NICE flu indicators treat a record in the preceding 12
-      months as an exclusion.
+      clusters XFLU_COD (persisting) and FLUEXPCON_COD (expiring), one row per
+      observation and cluster for all people including inactive and deceased.
+      Observations dated after the build date are excluded. The NICE flu
+      indicators exclude a persisting contraindication at any time and an
+      expiring one recorded in the preceding 12 months.
     config:
       meta:
         owner:
           name: EddieDavison92
     data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - id
+              - source_cluster_id
       - cluster_ids_exist:
           arguments:
-            cluster_ids: FLUEXPCON_COD
+            cluster_ids: XFLU_COD, FLUEXPCON_COD
             source: PCD
     columns:
       - name: id
-        description: Source observation identifier.
+        description: Source observation identifier; one row per observation and cluster.
         data_tests:
-          - unique
           - not_null
       - name: person_id
         description: Person identifier.
       - name: clinical_effective_date
         description: Date of the record.
+      - name: is_persisting
+        description: True for a persisting contraindication (XFLU_COD), false for an expiring one (FLUEXPCON_COD).
       - name: concept_code
         description: SNOMED code of the record.
       - name: concept_display

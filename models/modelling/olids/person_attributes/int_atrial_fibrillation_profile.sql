@@ -43,6 +43,16 @@ score_history AS (
     GROUP BY person_id
 ),
 
+-- Highest score recorded before the preceding 12 months: NICE IND127 excludes a "previous" score of 2 or more
+max_score_before_period AS (
+    SELECT
+        person_id,
+        MAX(score_value) AS max_stroke_risk_score_before_period
+    FROM {{ ref('int_stroke_risk_score_all') }}
+    WHERE clinical_effective_date::DATE < DATEADD(month, -12, CURRENT_DATE())
+    GROUP BY person_id
+),
+
 exceptions AS (
     SELECT
         person_id,
@@ -73,6 +83,7 @@ SELECT
     chads2.latest_chads2_score,
     chads2.latest_chads2_date,
     history.max_stroke_risk_score_ever,
+    max_score_before_period.max_stroke_risk_score_before_period,
     therapy.latest_anticoagulant_order_date,
     therapy.latest_anticoagulant_type,
     therapy.latest_doac_order_date,
@@ -87,6 +98,7 @@ FROM {{ ref('fct_person_atrial_fibrillation_register') }} AS af
 LEFT JOIN latest_chadsvasc AS chadsvasc ON af.person_id = chadsvasc.person_id
 LEFT JOIN latest_chads2 AS chads2 ON af.person_id = chads2.person_id
 LEFT JOIN score_history AS history ON af.person_id = history.person_id
+LEFT JOIN max_score_before_period ON af.person_id = max_score_before_period.person_id
 LEFT JOIN {{ ref('int_antithrombotic_therapy_latest') }} AS therapy ON af.person_id = therapy.person_id
 LEFT JOIN exceptions ON af.person_id = exceptions.person_id
 LEFT JOIN reviews ON af.person_id = reviews.person_id
