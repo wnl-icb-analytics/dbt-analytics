@@ -62,6 +62,7 @@ deployment-state manifest.
 | Workflow | Trigger and purpose |
 |----------|---------------------|
 | `dbt-scheduled.yml` | Runs configured dbt selections on a schedule or manual dispatch |
+| `source-sync.yml` | Regenerates source YAML and raw models from Snowflake metadata weekly and opens a pull request for review; never merges |
 | `test-coverage.yml` | Updates the model test-coverage badge after model changes on `main` |
 | `project-status-in-progress.yml` | Moves referenced issues to In Progress after branch pushes |
 | `project-status-blocked.yml` | Moves issues labelled Blocked to Blocked |
@@ -78,5 +79,9 @@ secrets:
 - `SNOWFLAKE__PASSPHRASE`
 
 Project-board automation uses `PROJECT_TOKEN`; the coverage badge uses
-`GIST_TOKEN`. Workflows write private keys only for the current job and remove
+`GIST_TOKEN`. The source sync opens its pull request with a GitHub App token when
+the `SOURCE_SYNC_APP_ID` variable and `SOURCE_SYNC_APP_PRIVATE_KEY` secret are
+set, because pull requests opened with `GITHUB_TOKEN` do not trigger the
+required checks. Without them the PR is still opened, and a maintainer must
+close and reopen it to start the checks. Workflows write private keys only for the current job and remove
 them in an `always()` cleanup step.

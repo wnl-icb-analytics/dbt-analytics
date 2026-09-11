@@ -1,0 +1,162 @@
+# Weekly source sync
+#
+# Regenerates the source YAML and raw models from live Snowflake metadata
+# (scripts/sources/run_all_source_generation.py) and opens a pull request
+# with whatever changed. Nothing is merged automatically: the PR runs the
+# normal checks, so a green Fusion compile means the drift is additive and
+# the PR can be merged as is, while a red compile means a staging model
+# references a column or table that moved and needs a fix on the PR branch.
+#
+# Schedule: Mondays 05:00 UTC, after the weekly dbt build starts and before
+# the working day. workflow_dispatch runs the same job on demand.
+#
+# One open sync PR at a time. If chore/source-sync already has an open PR
+# the run comments on it and stops, so fixes pushed to that branch are not
+# overwritten. Dispatch with replace_open_pr to rebuild the branch anyway.
+#
+# Token: PRs opened with GITHUB_TOKEN do not trigger pull_request workflows,
+# so the required checks would never run. Set the SOURCE_SYNC_APP_ID
+# repository variable and SOURCE_SYNC_APP_PRIVATE_KEY secret for a GitHub App
+# with contents and pull-requests write access; the PR is then authored by
+# the app bot and checks run. Without them the job falls back to
+# GITHUB_TOKEN and a maintainer must close and reopen the PR to start checks.
+# Commits are signed through the GitHub API either way, which satisfies the
+# signed-commits ruleset.
+
+name: Source sync
+
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+    inputs:
+      replace_open_pr:
+        description: Rebuild the sync branch even if it has an open PR (discards commits on it)
+        type: boolean
+        default: false
+
+concurrency:
+  group: source-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Regenerate sources and raw models
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      SYNC_BRANCH: chore/source-sync
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE__USERNAME }}
+      SNOWFLAKE_ROLE: DBT_ADMIN
+      SNOWFLAKE_WAREHOUSE: WH_NCL_ENGINEERING_XS
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
+    steps:
+      - name: Check for an open sync PR
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REPLACE: ${{ inputs.replace_open_pr }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          pr=$(gh pr list --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$pr" ] && [ "$REPLACE" != "true" ]; then
+            echo "Open sync PR #$pr found - skipping this run"
+            gh pr comment "$pr" --body "Weekly source sync skipped while this PR is open ([run]($RUN_URL)). Merge or close it to let the next run open a fresh one."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.existing.outputs.skip != 'true'
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        if: steps.existing.outputs.skip != 'true'
+        with:
+          version: "0.9.x"
+
+      - name: Install Python dependencies
+        if: steps.existing.outputs.skip != 'true'
+        run: uv sync --frozen
+
+      - name: Write Snowflake private key
+        if: steps.existing.outputs.skip != 'true'
+        env:
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE__PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.snowflake
+          printf '%s\n' "$SNOWFLAKE_PRIVATE_KEY" > ~/.snowflake/rsa_key.p8
+          chmod 600 ~/.snowflake/rsa_key.p8
+          echo "SNOWFLAKE_PRIVATE_KEY_PATH=$HOME/.snowflake/rsa_key.p8" >> "$GITHUB_ENV"
+
+      - name: Run source generation
+        if: steps.existing.outputs.skip != 'true'
+        run: uv run python scripts/sources/run_all_source_generation.py 2>&1 | tee source_sync.log
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f ~/.snowflake/rsa_key.p8
+
+      - name: Summarise changes
+        if: steps.existing.outputs.skip != 'true'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "Regenerated source YAML and raw models from live Snowflake metadata ([run]($RUN_URL))."
+            echo
+            echo "- Green **Fusion compile**: the drift is additive, merge as is."
+            echo "- Red **Fusion compile**: a staging model references a column or table that moved. Fix it on this branch."
+            echo
+            echo "## Changed files"
+            echo
+            echo '```'
+            git status --porcelain -- models/sources models/raw scripts/sources/metadata_query.sql || true
+            echo '```'
+            drift=$(grep -F '[drift]' source_sync.log || true)
+            if [ -n "$drift" ]; then
+              echo
+              echo "## Manual source drift warnings"
+              echo
+              echo "Manual YAML files are not rewritten by the generator. Update them by hand if the change matters."
+              echo
+              echo '```'
+              echo "$drift"
+              echo '```'
+            fi
+          } > pr_body.md
+          cat pr_body.md >> "$GITHUB_STEP_SUMMARY"
+          rm -f source_sync.log
+
+      - name: Create GitHub App token
+        id: app-token
+        if: steps.existing.outputs.skip != 'true' && vars.SOURCE_SYNC_APP_ID != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.SOURCE_SYNC_APP_ID }}
+          private-key: ${{ secrets.SOURCE_SYNC_APP_PRIVATE_KEY }}
+
+      - name: Open or update pull request
+        if: steps.existing.outputs.skip != 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ steps.app-token.outputs.token || github.token }}
+          sign-commits: true
+          branch: ${{ env.SYNC_BRANCH }}
+          base: main
+          delete-branch: true
+          add-paths: |
+            models/sources/**
+            models/raw/**
+            scripts/sources/metadata_query.sql
+          commit-message: "chore(sources): weekly source sync"
+          title: "chore(sources): weekly source sync"
+          body-path: pr_body.md
+          labels: source-sync

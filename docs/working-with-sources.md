@@ -167,6 +167,22 @@ Manual source drift check - 2 warning(s) across 14 table(s):
 
 `data_type` changes (e.g. `NUMBER(38,0)` → `NUMBER(38,2)`) are synced silently into the manual YAML on every run — you don't need to edit them by hand.
 
+## Weekly source sync
+
+`source-sync.yml` runs the full pipeline every Monday at 05:00 UTC (or on
+manual dispatch) as the service account and opens a pull request on the
+`chore/source-sync` branch with the regenerated `auto_*.yml`, raw models and
+any manual-YAML type updates. The PR body lists the changed files and the
+drift warnings above. Nothing merges automatically:
+
+- Green Fusion compile: the drift is additive. Merge the PR.
+- Red Fusion compile: a staging model references a column or table that moved.
+  Fix the staging model on the PR branch, then merge.
+
+Only one sync PR is open at a time. While one is open, later runs comment on it
+and stop, so fixes pushed to the branch are kept. Dispatch the workflow with
+`replace_open_pr` to rebuild the branch from scratch.
+
 ## Common pitfalls
 
 - **Never edit `models/raw/**/*.sql` or `auto_*.yml` by hand** — both are regenerated from the source YAMLs on every run. Fix the source YAML instead.
@@ -192,7 +208,8 @@ scripts/sources/
   run_all_source_generation.py   # Runs 1a -> 1b -> 2 -> 3
 ```
 
-Step `1b` opens a browser for Snowflake SSO. Steps `2` and `3` are offline.
+Step `1b` uses key-pair auth when `SNOWFLAKE_PRIVATE_KEY_PATH` is set (CI), a PAT when
+`SNOWFLAKE_PAT` is set, and browser SSO otherwise. Steps `2` and `3` are offline.
 
 ### Source file types
 

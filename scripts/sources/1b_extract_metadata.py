@@ -31,30 +31,30 @@ if __name__ == "__main__":
             output_file.unlink()
             print(f"Removed stale {output_file}", file=sys.stderr)
 
+    # Auth precedence: key pair (CI), then PAT, then browser SSO.
+    if os.getenv('SNOWFLAKE_PRIVATE_KEY_PATH'):
+        passphrase = os.getenv('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', '')
+        auth = {
+            'private_key_file': os.getenv('SNOWFLAKE_PRIVATE_KEY_PATH'),
+            'private_key_file_pwd': passphrase.encode() or None,
+        }
+    elif os.getenv('SNOWFLAKE_PAT') is not None:
+        auth = {'password': os.getenv('SNOWFLAKE_PAT')}
+    else:
+        auth = {'authenticator': 'externalbrowser'}
+
     conn = None
 
     try:
-        #Determine authentication used
-        if os.getenv('SNOWFLAKE_PAT') is not None:
-            conn = snowflake.connector.connect(
-                account=os.getenv('SNOWFLAKE_ACCOUNT'),
-                user=os.getenv('SNOWFLAKE_USER'),
-                password=os.getenv('SNOWFLAKE_PAT'), 
-                warehouse=os.getenv('SNOWFLAKE_WAREHOUSE'),
-                role=os.getenv('SNOWFLAKE_ROLE'),
-                database="MODELLING",
-                schema="DBT_DEV",
-            )
-        else:
-            conn = snowflake.connector.connect(
-                account=os.getenv('SNOWFLAKE_ACCOUNT'),
-                user=os.getenv('SNOWFLAKE_USER'),
-                authenticator="externalbrowser",
-                warehouse=os.getenv('SNOWFLAKE_WAREHOUSE'),
-                role=os.getenv('SNOWFLAKE_ROLE'),
-                database="MODELLING",
-                schema="DBT_DEV",
-            )
+        conn = snowflake.connector.connect(
+            account=os.getenv('SNOWFLAKE_ACCOUNT'),
+            user=os.getenv('SNOWFLAKE_USER'),
+            warehouse=os.getenv('SNOWFLAKE_WAREHOUSE'),
+            role=os.getenv('SNOWFLAKE_ROLE'),
+            database="MODELLING",
+            schema="DBT_DEV",
+            **auth,
+        )
         cur = conn.cursor()
         cur.execute(sql_query)
         df = cur.fetch_pandas_all()
