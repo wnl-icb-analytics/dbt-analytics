@@ -1,8 +1,9 @@
 # Longitudinal activity validation
 
 Validation used the established shared `dev` target on 11 September 2026.
-Only non-identifying aggregates were returned. OLIDS production outputs were
-read and compiled, not rebuilt. Their incremental change is in dbt-OLIDS #302.
+Only non-identifying aggregates were returned. OLIDS incremental loading is in
+dbt-OLIDS #302. The later person-lookup correction below rewrites the existing
+prepared OLIDS snapshots without rerunning their upstream transformations.
 
 ## Grain, time and increment behaviour
 
@@ -47,6 +48,34 @@ placed date-only rows after timed rows on their day and put undated rows last.
 The compiled model passed. Applying the view definition preserved its existing
 metadata and grants and did not rebuild any data tables. Outer queries still
 need their own `ORDER BY` when result ordering must be guaranteed.
+
+## Person lookup correction
+
+An analyst XS clinical lookup took 49 seconds and scanned about 123 GB.
+OLIDS stored a numeric `sk_patient_id` but clustered by its different
+`person_id`. The staging text conversion and trimming prevented useful pruning.
+
+Both prepared OLIDS snapshots were rewritten on L, preserving grants, column
+metadata and all source values. `sk_patient_id` is now stored as text and leads
+the clustering key. Staging retains the missing-key sentinel rule without
+trimming the already canonical key. Counts and whole-row aggregate fingerprints
+matched after converting the old numeric key to text for comparison:
+179,290,676 events and 1,974,867,939 clinical records. Rewriting the prepared
+snapshots took 31 seconds for events and 489 seconds for clinical records;
+these timings exclude the separate fingerprint checks.
+
+Re-planning the same lookup inside Snowflake, returning only scan statistics,
+reduced the OLIDS branch from 6,569 assigned partitions to one, about 19 MB.
+The complete query plan fell from 123.1 GB to 126.4 MB across 25 partitions.
+These are planned scan sizes, not a measured post-change execution time.
+
+Both shared views retain the upstream OLIDS UUIDs without text prefixes,
+including event-to-clinical links. The clinical view now applies the same
+person/date/time/ID presentation order as the event view. Its synthetic direct
+lookup passed dated, timed, date-only, undated and other-person cases. Both
+projects compiled and the five changed analytics views built successfully.
+The corresponding source changes must merge before the next scheduled OLIDS
+build to retain the corrected storage layout.
 
 ## Population reconciliation
 

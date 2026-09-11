@@ -239,3 +239,7 @@ select
     qualifier_name,
     initcap(replace(clinical_record_type, '_', ' ')) as clinical_record_type_name
 from {{ ref('int_ecds_person_clinical_record') }}
+
+-- Date-only rows follow timed rows on their day without implying an actual sequence.
+order by sk_patient_id nulls last, clinical_record_date nulls last,
+    clinical_record_at nulls last, clinical_record_id

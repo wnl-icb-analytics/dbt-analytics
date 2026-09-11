@@ -44,16 +44,17 @@ keep their configured warehouse. Normal increments keep the profile warehouse.
 The hooks evaluate at execution, avoiding cached full-refresh flags in model
 configuration. No project-wide warehouse configuration changes are needed.
 
-Initial deployment of the upstream clustering change needs a full refresh of
-the two stable outputs, or can wait for their monthly full refresh. Development
+Initial deployment of the upstream text key and clustering needs a full refresh
+of the two stable outputs or a rewrite of their existing prepared snapshots.
+An incremental merge alone does not change the stored key type. Development
 builds in dbt-analytics use the established `dev` target and shared `DEV__` layers.
 
 ## Time and clustering
 
-Materialised branches cluster by person, then
+Materialised branches cluster by the cross-system person key `sk_patient_id`, then
 `coalesce(event_at, event_date::timestamp_ntz)`. Clinical branches use the
-equivalent clinical fields. OLIDS uses its practice-consistent `person_id`;
-other branches use `sk_patient_id`. Where no source clinical clock exists,
+equivalent clinical fields. OLIDS stores the lookup key as text so analytics
+does not convert a numeric key for every lookup. Where no source clinical clock exists,
 the second clustering field is the clinical date.
 
 This fallback affects storage only. Published timestamps remain null when a
@@ -61,9 +62,9 @@ clock time is not established. Clustering helps pruning and retrieval, but SQL
 still requires `ORDER BY` to guarantee output order. A stable ID can break display
 ties; it does not establish which same-day event happened first.
 
-The healthcare-event view includes an `ORDER BY` across its complete source union
-for direct timeline lookups. It sorts by person, event date, event time and event
-ID. Date-only records follow timed records on the same day; undated records come
+Both shared views include an `ORDER BY` across their complete source unions
+for direct timeline lookups. They sort by `sk_patient_id`, the relevant date,
+time and record ID. Date-only records follow timed records on the same day; undated records come
 last. These are presentation rules, not additional clinical precision. Sorting
 happens at query time. Joins, aggregations and other outer queries can change
 the result order; use a top-level `ORDER BY` when order must be guaranteed.
@@ -119,7 +120,9 @@ positions are preserved, including repeated codes in distinct supplied positions
 patient ID must not replace it. `source_person_id` is scoped by `source_dataset`.
 Missing cross-system linkage does not remove the source record.
 
-Global IDs include a dataset namespace. Changes to dates preserve milestone IDs
+Global IDs encode a dataset namespace. OLIDS UUIDs already encode their source
+and record identity, so both outputs retain those upstream UUIDs without a text
+prefix. Changes to dates preserve milestone IDs
 when the underlying source key stays the same. e-RS slot identity itself includes
 the supplied slot timestamp, so a new slot is a different source record.
 

@@ -4,7 +4,9 @@ models:
   description: One source clinical item across the available OLIDS, MHSDS, CSDS, SUS and ECDS histories. Retains
     source coding positions and supported dates. Missing dates are not replaced by admission or appointment dates.
     OLIDS medication orders retain statement context; statements do not create extra rows. The same clinical occurrence
-    may appear in several feeds and is not deduplicated by person and time.
+    may appear in several feeds and is not deduplicated by person and time. Direct lookups sort by
+    sk_patient_id, clinical date, clinical time and record ID. Date-only rows follow timed rows on
+    the same day; undated rows come last. Outer queries need their own ORDER BY to guarantee order.
   config:
     meta:
       owner:

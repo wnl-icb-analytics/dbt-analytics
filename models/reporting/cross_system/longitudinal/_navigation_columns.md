@@ -1,13 +1,13 @@
 {% docs navigation_event_id %}
-Stable namespaced identifier for one source milestone. A date correction keeps the same event ID; this is not an audit version ID.
+Stable namespaced identifier for one source milestone. OLIDS retains its upstream UUID without a text prefix. A date correction keeps the same event ID; this is not an audit version ID.
 {% enddocs %}
 
 {% docs navigation_clinical_record_id %}
-Stable namespaced identifier for one clinical source record. On the event output, this is an explicitly linked clinical record, not a temporal match.
+Stable namespaced identifier for one clinical source record. OLIDS retains its upstream UUID without a text prefix in both outputs. On the event output, this is an explicitly linked clinical record, not a temporal match.
 {% enddocs %}
 
 {% docs navigation_sk_patient_id %}
-Cross-system pseudonymised NHS number key, produced with the approved salt and pepper. Missing linkage does not exclude a record. Never substitute a source person or practice patient ID.
+Cross-system pseudonymised NHS number key, produced with the approved salt and pepper. Use this key for person lookups; many clinical records and events can share it. It is not a unique row key. Missing linkage does not exclude a record. Never substitute a source person or practice patient ID.
 {% enddocs %}
 
 {% docs navigation_source_person_id %}

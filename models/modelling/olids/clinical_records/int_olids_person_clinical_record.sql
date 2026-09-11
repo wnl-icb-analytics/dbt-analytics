@@ -1,7 +1,7 @@
 {{ config(materialized='view', tags=['person_clinical_record']) }}
 
 select
-    'OLIDS:' || clinical_record_id::varchar as clinical_record_id,
+    clinical_record_id::varchar as clinical_record_id,
     sk_patient_id::varchar as sk_patient_id,
     person_id::varchar as source_person_id,
     'OLIDS'::varchar as source_dataset,

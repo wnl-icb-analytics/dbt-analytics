@@ -2,7 +2,7 @@
 
 -- The person-clustered rows are materialised once in dbt-OLIDS.
 select
-    'OLIDS:' || healthcare_event_id::varchar as event_id,
+    healthcare_event_id::varchar as event_id,
     sk_patient_id::varchar as sk_patient_id,
     person_id::varchar as source_person_id,
     'OLIDS'::varchar as source_dataset,
@@ -32,7 +32,7 @@ select
     event_code,
     event_code_name,
     event_coding_system,
-    'OLIDS:' || clinical_record_id::varchar as clinical_record_id,
+    clinical_record_id::varchar as clinical_record_id,
     provider_organisation_code,
     provider_organisation_name,
     provider_code_authority,
