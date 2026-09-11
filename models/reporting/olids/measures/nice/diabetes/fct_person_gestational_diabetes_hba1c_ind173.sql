@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND173: https://www.nice.org.uk/indicators/ind173
--- HbA1c in 12 months for women with gestational diabetes diagnosed in the last 12 months.
+-- HbA1c in 12 months for women whose latest gestational diabetes episode is more than 12 months old, excluding diabetes diagnosed more than 12 months ago (NICE pilot report reading).
 WITH indicator_population AS (
     SELECT
         gdm.person_id,
@@ -9,9 +9,14 @@ WITH indicator_population AS (
     FROM {{ ref('fct_person_gestational_diabetes_register') }} AS gdm
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON gdm.person_id = age.person_id
+    LEFT JOIN {{ ref('fct_person_diabetes_register') }} AS diabetes
+        ON gdm.person_id = diabetes.person_id
+        AND diabetes.is_on_register
     WHERE gdm.is_on_register
-        -- NICE excludes women diagnosed more than 12 months ago
-        AND gdm.latest_diagnosis_date::DATE >= DATEADD(month, -12, CURRENT_DATE())
+        -- The latest episode is more than 12 months old: current and recent pregnancies have their own monitoring
+        AND gdm.latest_diagnosis_date::DATE < DATEADD(month, -12, CURRENT_DATE())
+        -- Women who went on to develop diabetes more than 12 months ago are monitored as diabetes
+        AND NOT COALESCE(diabetes.earliest_diagnosis_date::DATE < DATEADD(month, -12, CURRENT_DATE()), FALSE)
 ),
 
 -- Latest qualifying record in the period
@@ -48,7 +53,7 @@ SELECT
     CURRENT_DATE() AS reporting_date,
     DATEADD(month, -12, CURRENT_DATE()) AS measurement_period_start,
     age,
-    'Gestational diabetes diagnosed in the last 12 months' AS condition_name,
+    'History of gestational diabetes, latest episode more than 12 months ago' AS condition_name,
     current_practice_code,
     current_practice_name,
     latest_record_date,
