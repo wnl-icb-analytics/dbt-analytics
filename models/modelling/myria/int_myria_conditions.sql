@@ -22,22 +22,18 @@ WITH pds_patient_check AS (
 
  SELECT 
     att_dx.patient_id,
-
     TO_VARCHAR(ARRAY_AGG(CASE WHEN pod IN ('NEL-ZLOS','NEL-LOS+1') AND provider_site_code = 'RAL26' THEN att_dx.local_patient_identifier END) 
         WITHIN GROUP (ORDER BY pod IN ('NEL-ZLOS','NEL-LOS+1') AND provider_site_code = 'RAL26' DESC, att_dx.activity_date desc
         )[0]) AS hospital_number_most_recent_nel_bh,
     TO_VARCHAR(ARRAY_AGG(CASE WHEN pod IN ('NEL-ZLOS','NEL-LOS+1') THEN att_dx.local_patient_identifier END) 
         WITHIN GROUP (ORDER BY pod IN ('NEL-ZLOS','NEL-LOS+1') DESC, att_dx.activity_date desc
         )[0]) AS hospital_number_most_recent_nel_any_provider,
-
     TO_VARCHAR(ARRAY_AGG(NCL.LOCAL_AUTHORITY) WITHIN GROUP (ORDER BY att_dx.activity_date desc)[0]) AS local_authority_sus, -- gets most recent registered local authority
     TO_VARCHAR(ARRAY_AGG(NCL.PRACTICE_CODE) WITHIN GROUP (ORDER BY att_dx.activity_date desc)[0]) AS gp_code_sus,
     TO_VARCHAR(ARRAY_AGG(NCL.PRACTICE_NAME) WITHIN GROUP (ORDER BY att_dx.activity_date desc)[0]) AS gp_name_sus,
-
     ppc.local_authority_pds,
     ppc.gp_code_pds,
     ppc.gp_name_pds,
-    
     TO_VARCHAR(ARRAY_AGG(CASE WHEN pod IN ('NEL-ZLOS','NEL-LOS+1') THEN att_dx.age_at_event END) 
         WITHIN GROUP (ORDER BY pod IN ('NEL-ZLOS','NEL-LOS+1') DESC, att_dx.activity_date desc
         )[0]) AS age_at_most_recent_nel_admission,
@@ -45,7 +41,6 @@ WITH pds_patient_check AS (
     MAX(CASE WHEN pod IN ('NEL-ZLOS','NEL-LOS+1') THEN att_dx.activity_date END) AS most_recent_nel_discharge_date,
     MAX(CASE WHEN pod IN ('NEL-ZLOS','NEL-LOS+1') AND provider_site_code = 'RAL26' THEN att_dx.activity_start_date END) AS most_recent_nel_admission_date_bh,
     MAX(CASE WHEN pod IN ('NEL-ZLOS','NEL-LOS+1') AND provider_site_code = 'RAL26' THEN att_dx.activity_date END) AS most_recent_nel_discharge_date_bh,
-    
     CASE -- counts distinct attendance IDs and then flags as 1 if there is at least 1 non-elective attendance at Barnet Hospital in the period
         WHEN COUNT(DISTINCT 
                     CASE 
@@ -54,7 +49,8 @@ WITH pds_patient_check AS (
                             AND pod IN ('NEL-ZLOS','NEL-LOS+1') 
                         THEN primary_id 
                         END) >= 1 
-        THEN 1 ELSE 0 END AS barnet_hospital_flag,
+        THEN 1 
+        ELSE 0 END AS barnet_hospital_flag,
 
     COUNT(DISTINCT -- counts distinct attendance IDs for non-elective attendances at Barnet Hospital in the period
                     CASE 
@@ -227,7 +223,6 @@ WITH pds_patient_check AS (
     
     -- Chronic Liver Disease → Common public-health definition: K70, K73–K74 (often used for CLD monitoring). Some programmes include broader K70–K77 or aetiology-specific sets (viral B15–B19, etc.). Be clear which you adopt. (NHS England Digital, classbrowser.nhs.uk, GOV.UK)
     MAX(CASE WHEN LEFT(UPPER(diag_code), 3) IN ('K70','K73','K74') THEN 1 ELSE 0 END) AS chronic_liver_disease, 
-
     --- NON HIGH RISK CONDITIONS BUT HELPFUL FLAGS
     
     -- I10-I1A - Hypertensive diseases
@@ -237,9 +232,9 @@ WITH pds_patient_check AS (
     MAX(CASE WHEN LEFT(UPPER(diag_code), 3) IN ('R54') OR UPPER(diag_code) IN ('Z91.81', 'Z9181') THEN 1 ELSE 0 END) AS frailty_falls,
 
     CASE WHEN ppc.gp_code_pds IS NULL THEN 0 ELSE 1 END AS is_on_pds, -- flag NCL gps
-    
+
     CASE WHEN ppc.date_of_death IS NOT NULL THEN 1 ELSE 0 END AS is_dead_pds,
-    
+
     CASE WHEN death.sk_patient_id IS NOT NULL THEN 1 ELSE 0 END AS is_dead_death_registry,
 
     CURRENT_TIMESTAMP() AS refresh_date
@@ -249,17 +244,17 @@ INNER JOIN
     {{ ref("dim_practice_neighbourhood") }} ncl -- REPORTING.OLIDS_ORGANISATION.DIM_PRACTICE_NEIGHBOURHOOD AS ncl 
     ON att_dx.gp_code = ncl.PRACTICE_CODE
 LEFT JOIN 
-    pds_patient_check ppc 
-    ON att_dx.patient_id = ppc.sk_patient_id
-LEFT JOIN {{ ref("stg_registries_deaths") }} death
+    {{ ref("stg_registries_deaths") }} death
     ON att_dx.patient_id = death.sk_patient_id -- check whether patient dead as of running model
     AND death.reg_date < CURRENT_DATE -- only include deaths that have been registered before the current date
+LEFT JOIN pds_patient_check ppc ON att_dx.patient_id = ppc.sk_patient_id
 WHERE
-    att_dx.patient_id IS NOT NULL
+    att_dx.patient_id IS NOT null
     AND att_dx.activity_date < DATE_TRUNC('month', CURRENT_DATE) -- only activity before the start of this month
     AND ppc.date_of_death IS NULL
     AND death.reg_date_of_death IS NULL
-GROUP BY ALL
+GROUP BY 
+    ALL
 HAVING 
     NCLProvider_count >= 1 --barnet_hospital_count >= 1
     AND local_authority_sus IN ('Barnet', 'Camden', 'Enfield', 'Islington', 'Haringey') --AND local_authority IN ('Barnet','Enfield')
