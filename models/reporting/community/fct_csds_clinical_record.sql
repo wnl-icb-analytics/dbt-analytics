@@ -19,8 +19,8 @@ with labelled as (
             else scheme.description
         end as clinical_code_system
         , coalesce(snomed.preferred_term, icd.description, read_code.term) as clinical_description
-        , case when snomed.snomed_code is not null then 'Dictionary.SNOMED.Concept'
-            when icd.code is not null then 'Dictionary.dbo.Diagnosis'
+        , case when snomed.snomed_code is not null then snomed.definition_source
+            when icd.code is not null then icd.definition_source
             when read_code.code is not null then read_code.definition_source end as clinical_label_source
         , read_code.match_type as read_code_match_type
         , read_code.snomed_ct_code::varchar as dictionary_snomed_code
@@ -73,14 +73,14 @@ with labelled as (
     left join {{ ref('csds_activity_code_lookup') }} as scheme
         on scheme.code_set_name = r.coding_scheme_kind || '_scheme'
         and trim(r.coding_scheme_code) = scheme.code
-    left join {{ ref('stg_dictionary_snomed_concept') }} as snomed
+    left join {{ ref('snomed_concept') }} as snomed
         on trim(r.clinical_code) = snomed.snomed_code
         and (r.coding_scheme_kind = 'fixed_snomed'
             or (r.coding_scheme_kind = 'procedure' and trim(r.coding_scheme_code) = '06')
             or (r.coding_scheme_kind = 'finding' and trim(r.coding_scheme_code) = '04')
             or (r.coding_scheme_kind = 'observation' and trim(r.coding_scheme_code) = '03'))
-    left join {{ ref('stg_dictionary_dbo_diagnosis') }} as icd
-        on {{ clean_icd10_code('upper(trim(r.clinical_code))') }} = upper(icd.code)
+    left join {{ ref('icd10_code') }} as icd
+        on replace({{ clean_icd10_code('upper(trim(r.clinical_code))') }}, '.', '') = icd.code
         and r.coding_scheme_kind = 'finding' and trim(r.coding_scheme_code) = '01'
     left join {{ ref('read_code') }} as read_code
         on trim(r.clinical_code) = read_code.code
@@ -94,7 +94,7 @@ with labelled as (
                 or (r.coding_scheme_kind = 'finding' and trim(r.coding_scheme_code) = '03')
                 or (r.coding_scheme_kind = 'observation' and trim(r.coding_scheme_code) = '02')))
         )
-    left join {{ ref('stg_dictionary_snomed_concept') }} as mapped_snomed
+    left join {{ ref('snomed_concept') }} as mapped_snomed
         on read_code.snomed_ct_code::varchar = mapped_snomed.snomed_code
     left join {{ ref('clinical_unit_of_measurement') }} as unit
         on trim(r.unit_of_measurement_code) = unit.code

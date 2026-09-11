@@ -98,29 +98,29 @@ left join {{ ref('clinical_unit_of_measurement') }} as unit
     on trim(a.ucum_unit_of_measurement) = unit.code
 left join {{ ref('organisation') }} as provider
     on upper(trim(a.organisation_code_provider)) = provider.organisation_code
-left join {{ ref('stg_dictionary_snomed_concept') }} as procedure_snomed
+left join {{ ref('snomed_concept') }} as procedure_snomed
     on trim(a.coded_procedure_clinical_terminology) = procedure_snomed.snomed_code
     and trim(a.procedure_scheme_in_use_community_care) = '06'
 left join {{ ref('read_code') }} as procedure_read
     on trim(a.coded_procedure_clinical_terminology) = procedure_read.code
     and ((trim(a.procedure_scheme_in_use_community_care) = '04' and procedure_read.coding_system = 'read_v2')
         or (trim(a.procedure_scheme_in_use_community_care) = '05' and procedure_read.coding_system = 'ctv3'))
-left join {{ ref('stg_dictionary_snomed_concept') }} as finding_snomed
+left join {{ ref('snomed_concept') }} as finding_snomed
     on trim(a.coded_finding_coded_clinical_entry) = finding_snomed.snomed_code
     and trim(a.finding_scheme_in_use_community_care) = '04'
 left join {{ ref('read_code') }} as finding_read
     on trim(a.coded_finding_coded_clinical_entry) = finding_read.code
     and ((trim(a.finding_scheme_in_use_community_care) = '02' and finding_read.coding_system = 'read_v2')
         or (trim(a.finding_scheme_in_use_community_care) = '03' and finding_read.coding_system = 'ctv3'))
-left join {{ ref('stg_dictionary_snomed_concept') }} as observation_snomed
+left join {{ ref('snomed_concept') }} as observation_snomed
     on trim(a.coded_observation_clinical_terminology) = observation_snomed.snomed_code
     and trim(a.observation_scheme_in_use_community_care) = '03'
 left join {{ ref('read_code') }} as observation_read
     on trim(a.coded_observation_clinical_terminology) = observation_read.code
     and ((trim(a.observation_scheme_in_use_community_care) = '01' and observation_read.coding_system = 'read_v2')
         or (trim(a.observation_scheme_in_use_community_care) = '02' and observation_read.coding_system = 'ctv3'))
-left join {{ ref('stg_dictionary_dbo_diagnosis') }} as finding_icd
-    on {{ clean_icd10_code('upper(trim(a.coded_finding_coded_clinical_entry))') }} = upper(finding_icd.code)
+left join {{ ref('icd10_code') }} as finding_icd
+    on replace({{ clean_icd10_code('upper(trim(a.coded_finding_coded_clinical_entry))') }}, '.', '') = finding_icd.code
     and trim(a.finding_scheme_in_use_community_care) = '01'
 left join {{ ref('csds_observation_unit_alias') }} as unit_alias
     on unit.code is null
