@@ -5,6 +5,10 @@
 Both retain unlinked and undated records. Neither assigns a journey or merges
 similar occurrences from different feeds. The business owner is Eddie Davison.
 
+The two facts and `dq_person_activity_coverage` are in `REPORTING.CROSS_SYSTEM`
+(`DEV__REPORTING.CROSS_SYSTEM` for development). These are shared cross-system
+models; Intelligent Navigation is one consumer.
+
 ## Storage and loading
 
 The shared outputs are views over prepared source branches. MHSDS, CSDS, acute
