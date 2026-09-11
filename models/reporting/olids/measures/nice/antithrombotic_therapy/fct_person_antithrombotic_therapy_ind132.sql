@@ -9,7 +9,7 @@ contraindicated AS (
     SELECT
         person_id,
         COUNT(DISTINCT drug_class) AS contraindicated_class_count
-    FROM { ref('int_antithrombotic_contraindication_all') }
+    FROM {{ ref('int_antithrombotic_contraindication_all') }}
     WHERE (is_persisting OR clinical_effective_date::DATE >= DATEADD(month, -12, CURRENT_DATE()))
         AND drug_class IN ('SALICYLATE', 'CLOPIDOGREL', 'ORAL_ANTICOAGULANT')
     GROUP BY person_id
