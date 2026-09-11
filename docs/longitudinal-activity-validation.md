@@ -116,3 +116,7 @@ These seven are corroborated recovery candidates. Applying them would establish
 a cross-source date-recovery rule; the original dates remain unchanged pending
 the business owner's decision. The remaining records have no demonstrated
 repair. No dates are corrected by rearranging their digits.
+
+`analyses/navigation/ers_appointment_date_recovery_profile.sql` reproduces the
+strong-candidate aggregate checks without returning person-level records.
+These counts do not establish a general maximum future booking date.
