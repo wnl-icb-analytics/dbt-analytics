@@ -138,7 +138,8 @@ select
         c.source_record_id is not null
             and a.person_id is not distinct from c.person_id
             and a.uniq_serv_req_id is not distinct from c.referral_source_record_id
-        , 'same_submission_care_activity_contact', null
+        , iff(c.care_activity_time_basis = 'source_derived_activity_date',
+            'source_derived_activity_date', 'same_submission_care_activity_contact'), null
     ) as clinical_time_basis
     , null::timestamp_ntz as source_timestamp
     , null::date as source_derived_date

@@ -1,3 +1,12 @@
+with activities as (
+    select
+        *
+        -- Submission and contact identifiers establish the link even when person IDs are absent.
+        , is_submitted_contact_linked
+            and is_submitted_contact_person_consistent is distinct from false as can_inherit_contact_time
+    from {{ ref('fct_csds_care_activity') }}
+)
+
 select
     i.source_record_id as originating_source_record_id
     , i.cyp501_unique_id::varchar as source_row_id
@@ -89,9 +98,24 @@ select
     , {{ dbt_utils.generate_surrogate_key(['r.unique_submission_id', 'r.unique_care_activity_identifier']) }} as care_activity_source_record_id
     , r.unique_care_activity_identifier as unique_care_activity_identifier
     , a.contact_id as unique_care_contact_identifier
-    , iff(a.source_record_id is not null and r.person_id is not null and r.person_id = a.person_id and a.is_submitted_contact_person_consistent, a.care_contact_at, null) as clinical_at
-    , iff(a.source_record_id is not null and r.person_id is not null and r.person_id = a.person_id and a.is_submitted_contact_person_consistent, a.care_contact_time_precision, null) as clinical_time_precision
-    , iff(a.source_record_id is not null and r.person_id is not null and r.person_id = a.person_id and a.is_submitted_contact_person_consistent, 'same_submission_care_activity_contact', null) as clinical_time_basis
+    , iff(
+        a.source_record_id is not null
+            and (r.person_id is null or a.person_id is null or r.person_id = a.person_id)
+            and a.can_inherit_contact_time
+        , a.care_contact_at, null
+    ) as clinical_at
+    , iff(
+        a.source_record_id is not null
+            and (r.person_id is null or a.person_id is null or r.person_id = a.person_id)
+            and a.can_inherit_contact_time
+        , a.care_contact_time_precision, null
+    ) as clinical_time_precision
+    , iff(
+        a.source_record_id is not null
+            and (r.person_id is null or a.person_id is null or r.person_id = a.person_id)
+            and a.can_inherit_contact_time
+        , 'same_submission_care_activity_contact', null
+    ) as clinical_time_basis
     , null::date as source_clinical_date
     , r.dmic_observation_date::date as source_derived_date
     , 'fixed_snomed' as coding_scheme_kind
@@ -112,7 +136,7 @@ select
     , iff(a.source_record_id is null or r.person_id is null or a.person_id is null, null, r.person_id = a.person_id) as is_care_activity_person_consistent
     , a.is_submitted_contact_person_consistent as is_submitted_contact_person_consistent
 from {{ ref('stg_csds_activity_assessment') }} as r
-left join {{ ref('fct_csds_care_activity') }} as a
+left join activities as a
     on r.unique_submission_id = a.submission_id
     and r.unique_care_activity_identifier = a.activity_id
     and r.organisation_code_provider = a.provider_organisation_code
@@ -132,9 +156,9 @@ select
     , a.source_record_id as care_activity_source_record_id
     , a.activity_id as unique_care_activity_identifier
     , a.contact_id as unique_care_contact_identifier
-    , iff(a.is_submitted_contact_person_consistent, a.care_contact_at, null) as clinical_at
-    , iff(a.is_submitted_contact_person_consistent, a.care_contact_time_precision, null) as clinical_time_precision
-    , iff(a.is_submitted_contact_person_consistent, 'same_submission_care_contact', null) as clinical_time_basis
+    , iff(a.can_inherit_contact_time, a.care_contact_at, null) as clinical_at
+    , iff(a.can_inherit_contact_time, a.care_contact_time_precision, null) as clinical_time_precision
+    , iff(a.can_inherit_contact_time, 'same_submission_care_contact', null) as clinical_time_basis
     , null::date as source_clinical_date
     , null::date as source_derived_date
     , 'procedure' as coding_scheme_kind
@@ -154,7 +178,7 @@ select
     , true as is_care_activity_linked
     , iff(a.person_id is null, null, true) as is_care_activity_person_consistent
     , a.is_submitted_contact_person_consistent as is_submitted_contact_person_consistent
-from {{ ref('fct_csds_care_activity') }} as a
+from activities as a
 where a.procedure_code is not null
 
 union all
@@ -172,9 +196,9 @@ select
     , a.source_record_id as care_activity_source_record_id
     , a.activity_id as unique_care_activity_identifier
     , a.contact_id as unique_care_contact_identifier
-    , iff(a.is_submitted_contact_person_consistent, a.care_contact_at, null) as clinical_at
-    , iff(a.is_submitted_contact_person_consistent, a.care_contact_time_precision, null) as clinical_time_precision
-    , iff(a.is_submitted_contact_person_consistent, 'same_submission_care_contact', null) as clinical_time_basis
+    , iff(a.can_inherit_contact_time, a.care_contact_at, null) as clinical_at
+    , iff(a.can_inherit_contact_time, a.care_contact_time_precision, null) as clinical_time_precision
+    , iff(a.can_inherit_contact_time, 'same_submission_care_contact', null) as clinical_time_basis
     , null::date as source_clinical_date
     , null::date as source_derived_date
     , 'finding' as coding_scheme_kind
@@ -194,7 +218,7 @@ select
     , true as is_care_activity_linked
     , iff(a.person_id is null, null, true) as is_care_activity_person_consistent
     , a.is_submitted_contact_person_consistent as is_submitted_contact_person_consistent
-from {{ ref('fct_csds_care_activity') }} as a
+from activities as a
 where a.finding_code is not null
 
 union all
@@ -212,9 +236,9 @@ select
     , a.source_record_id as care_activity_source_record_id
     , a.activity_id as unique_care_activity_identifier
     , a.contact_id as unique_care_contact_identifier
-    , iff(a.is_submitted_contact_person_consistent, a.care_contact_at, null) as clinical_at
-    , iff(a.is_submitted_contact_person_consistent, a.care_contact_time_precision, null) as clinical_time_precision
-    , iff(a.is_submitted_contact_person_consistent, 'same_submission_care_contact', null) as clinical_time_basis
+    , iff(a.can_inherit_contact_time, a.care_contact_at, null) as clinical_at
+    , iff(a.can_inherit_contact_time, a.care_contact_time_precision, null) as clinical_time_precision
+    , iff(a.can_inherit_contact_time, 'same_submission_care_contact', null) as clinical_time_basis
     , null::date as source_clinical_date
     , null::date as source_derived_date
     , 'observation' as coding_scheme_kind
@@ -234,5 +258,5 @@ select
     , true as is_care_activity_linked
     , iff(a.person_id is null, null, true) as is_care_activity_person_consistent
     , a.is_submitted_contact_person_consistent as is_submitted_contact_person_consistent
-from {{ ref('fct_csds_care_activity') }} as a
+from activities as a
 where a.observation_code is not null or a.observation_value is not null

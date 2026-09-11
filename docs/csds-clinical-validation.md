@@ -166,9 +166,15 @@ codes or assert that dictionary membership establishes clinical validity.
 
 Every assessment activity parent linked in the same accepted submission. No
 populated assessment/activity/contact person identifiers disagreed. The 396
-missing inherited times arise from incomplete person identity. CYP612 warehouse
+missing inherited times in that profile arose from incomplete person identity. CYP612 warehouse
 derived dates agreed with the safely inherited contact dates wherever both were
 available. There are 10,258 clinical records without a linked patient key.
+
+The 11 September date recovery uses explicit same-submission activity/contact
+links even when person identifiers are missing. All 396 previously undated
+items have one linked contact with a consistent provider, local contact
+identifier and date. Known person conflicts still block inheritance. Person
+identifiers, patient keys and unknown consistency flags are not filled.
 
 The assessment references recognise all 940,628 submitted assessment concepts.
 They interpret 940,526 scores: 938,773 within published ranges and 1,753
