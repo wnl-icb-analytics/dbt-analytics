@@ -1,11 +1,75 @@
 models:
   - name: int_foot_examination_all
-    description: 'Diabetic foot examination events for QOF DM019 reporting. Uses PCD cluster FOOTEXAM_COD (153 codes: neuropathy, monofilament, pedal pulses, ABPI, diabetic foot screen, Townson scale, laterality-specific risk findings) plus FEPU_COD / FEDEC_COD for unsuitable/declined and AMPL_COD / AMPR_COD / CONABL_COD / CONABR_COD for permanent exemption. One row per person per examination date. Codes with no left/right keyword and not Townson are treated as bilateral (both feet checked).'
+    description: >
+      Diabetic foot examination events, one row per person and examination
+      date, for all people including inactive and deceased. Examination
+      evidence is the PCD FOOTEXAM_COD cluster (neuropathy, monofilament,
+      pedal pulses, ABPI, diabetic foot screen, Townson scale and laterality
+      risk findings) plus the FRC_COD foot risk classification findings.
+      FEPU_COD and FEDEC_COD mark unsuitable and declined checks; AMPL_COD,
+      AMPR_COD, CONABL_COD and CONABR_COD mark an amputated or absent foot as a
+      permanent exemption. Codes with no left or right keyword that are not
+      Townson are treated as bilateral. The FOOTEXAM_COD referral to the
+      diabetic foot screener records a referral rather than an examination,
+      so it never sets a checked flag; it is kept as has_screening_referral
+      and in the code arrays for traceability. Feeds QOF DM012 style foot
+      checks and NICE IND81 and IND160.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: AMPL_COD, AMPR_COD, CONABL_COD, CONABR_COD, FEDEC_COD, FEPU_COD, FOOTEXAM_COD
+            cluster_ids: AMPL_COD, AMPR_COD, CONABL_COD, CONABR_COD, FEDEC_COD, FEPU_COD, FOOTEXAM_COD, FRC_COD
+            source: PCD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - clinical_effective_date
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: clinical_effective_date
+        description: Date of the records aggregated into the row.
+      - name: is_unsuitable
+        description: An unsuitable-for-examination code on the date.
+      - name: is_declined
+        description: A declined code on the date.
+      - name: left_foot_checked
+        description: Examination evidence for the left foot on the date; never set by a referral alone.
+      - name: right_foot_checked
+        description: Examination evidence for the right foot on the date; never set by a referral alone.
+      - name: both_feet_checked
+        description: A bilateral examination code, a Townson scale record, or left and right evidence on the same date.
+      - name: left_foot_absent
+        description: Congenital absence of the left foot recorded at any time.
+      - name: right_foot_absent
+        description: Congenital absence of the right foot recorded at any time.
+      - name: left_foot_amputated
+        description: Left foot amputation recorded at any time.
+      - name: right_foot_amputated
+        description: Right foot amputation recorded at any time.
+      - name: left_foot_risk_level
+        description: "Risk descriptor carried by the left foot codes: Low, Moderate, High or Ulcerated; null when none."
+      - name: right_foot_risk_level
+        description: "Risk descriptor carried by the right foot codes: Low, Moderate, High or Ulcerated; null when none."
+      - name: townson_scale_level
+        description: Townson scale level recorded on the date; null when none.
+      - name: has_screening_referral
+        description: A referral to the diabetic foot screener recorded on the date.
+      - name: has_risk_classification
+        description: A foot risk classification finding (FRC_COD) or an examination code carrying a risk descriptor on the date.
+      - name: all_concept_codes
+        description: All matched codes on the date, including any referral.
+      - name: all_concept_displays
+        description: Descriptions of all matched codes on the date.
+      - name: all_source_cluster_ids
+        description: Clusters matched on the date.
+      - name: examination_status
+        description: "Unsuitable, Declined, Complete - Both Feet, Complete with the other foot missing, Partial, Referred - Not Examined, or Not Done."
+      - name: diabetes_foot_risk_category
+        description: "Combined risk category from the foot risk levels: Ulcerated (High Risk), High Risk, Moderate Risk, Low Risk, Risk Not Specified or No Valid Examination."

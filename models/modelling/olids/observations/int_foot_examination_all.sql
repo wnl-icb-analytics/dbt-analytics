@@ -5,11 +5,14 @@
 }}
 
 /*
-All foot examination records and related observations.
-Includes unsuitable/declined checks, foot status, risk assessments, and Townson scale.
-Complex model that aggregates multiple foot-related cluster IDs by person and date.
-Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
-Enhanced with analytics-ready fields and legacy structure alignment.
+Foot examination records and related observations, one row per person and
+date. Examination evidence comes from FOOTEXAM_COD and the foot risk
+classification findings in FRC_COD; FEPU_COD and FEDEC_COD mark unsuitable and
+declined checks; CONABL_COD, CONABR_COD, AMPL_COD and AMPR_COD mark an absent or
+amputated foot. A referral to the diabetic foot screener sits in FOOTEXAM_COD
+but records a referral, not an examination: it is kept for traceability
+(has_screening_referral) and never sets a checked flag. Includes ALL persons
+(active, inactive, deceased) following intermediate layer principles.
 */
 
 WITH foot_observations AS (
@@ -21,6 +24,11 @@ WITH foot_observations AS (
         obs.mapped_concept_code AS concept_code,
         obs.mapped_concept_display AS concept_display,
         obs.cluster_id AS source_cluster_id,
+
+        -- A referral to the screener is not an examination
+        LOWER(obs.code_description) LIKE 'refer to %' AS is_referral,
+        obs.cluster_id IN ('FOOTEXAM_COD', 'FRC_COD')
+            AND NOT LOWER(obs.code_description) LIKE 'refer to %' AS is_examination_code,
 
         -- Check if code term contains 'left' or 'right' (case insensitive)
         REGEXP_LIKE(LOWER(obs.code_description), '.*left.*') AS has_left,
@@ -51,7 +59,7 @@ WITH foot_observations AS (
             ELSE NULL
         END AS risk_level
 
-    FROM ({{ get_observations("'FEPU_COD', 'FEDEC_COD', 'FOOTEXAM_COD', 'CONABL_COD', 'CONABR_COD', 'AMPL_COD', 'AMPR_COD'") }}) obs
+    FROM ({{ get_observations("'FEPU_COD', 'FEDEC_COD', 'FOOTEXAM_COD', 'FRC_COD', 'CONABL_COD', 'CONABR_COD', 'AMPL_COD', 'AMPR_COD'", source='PCD') }}) obs
     WHERE obs.clinical_effective_date IS NOT NULL
 ),
 
@@ -59,7 +67,7 @@ WITH foot_observations AS (
 foot_observations_tagged AS (
     SELECT
         *,
-        (source_cluster_id = 'FOOTEXAM_COD'
+        (is_examination_code
          AND NOT has_left
          AND NOT has_right
          AND NOT is_townson) AS is_bilateral_generic
@@ -90,31 +98,31 @@ check_details_raw AS (
 
         -- Left foot checked: explicit left code, Townson, or generic bilateral exam code
         MAX(CASE
-            WHEN source_cluster_id = 'FOOTEXAM_COD' AND (has_left OR is_townson OR is_bilateral_generic) THEN TRUE
+            WHEN is_examination_code AND (has_left OR is_townson OR is_bilateral_generic) THEN TRUE
             ELSE FALSE
         END) AS left_foot_checked,
 
         -- Right foot checked: explicit right code, Townson, or generic bilateral exam code
         MAX(CASE
-            WHEN source_cluster_id = 'FOOTEXAM_COD' AND (has_right OR is_townson OR is_bilateral_generic) THEN TRUE
+            WHEN is_examination_code AND (has_right OR is_townson OR is_bilateral_generic) THEN TRUE
             ELSE FALSE
         END) AS right_foot_checked,
 
         -- Bilateral signal at the row level (Townson or generic bilateral exam code).
         -- Paired left+right rows on the same date are folded in by check_details below.
         MAX(CASE
-            WHEN source_cluster_id = 'FOOTEXAM_COD' AND (is_townson OR is_bilateral_generic) THEN TRUE
+            WHEN is_examination_code AND (is_townson OR is_bilateral_generic) THEN TRUE
             ELSE FALSE
         END) AS both_feet_checked_row_level,
 
         -- Risk level by foot (only populated where the code carries an explicit risk descriptor)
         MAX(CASE
-            WHEN source_cluster_id = 'FOOTEXAM_COD' AND (has_left OR is_townson) THEN risk_level
+            WHEN is_examination_code AND (has_left OR is_townson) THEN risk_level
             ELSE NULL
         END) AS left_foot_risk_level,
 
         MAX(CASE
-            WHEN source_cluster_id = 'FOOTEXAM_COD' AND (has_right OR is_townson) THEN risk_level
+            WHEN is_examination_code AND (has_right OR is_townson) THEN risk_level
             ELSE NULL
         END) AS right_foot_risk_level,
 
@@ -123,6 +131,12 @@ check_details_raw AS (
             WHEN is_townson THEN townson_level
             ELSE NULL
         END) AS townson_scale_level,
+
+        -- Referral to the screener recorded on this date
+        MAX(is_referral) AS has_screening_referral,
+
+        -- A risk classification finding (FRC_COD) or an examination code carrying a risk descriptor
+        MAX(source_cluster_id = 'FRC_COD' OR (is_examination_code AND risk_level IS NOT NULL)) AS has_risk_classification,
 
         -- Collect all codes and terms for traceability
         ARRAY_AGG(DISTINCT concept_code) WITHIN GROUP (ORDER BY concept_code) AS all_concept_codes,
@@ -146,6 +160,8 @@ check_details AS (
         left_foot_risk_level,
         right_foot_risk_level,
         townson_scale_level,
+        has_screening_referral,
+        has_risk_classification,
         all_concept_codes,
         all_concept_displays,
         all_source_cluster_ids
@@ -168,11 +184,12 @@ SELECT
     cd.left_foot_risk_level,
     cd.right_foot_risk_level,
     cd.townson_scale_level,
+    cd.has_screening_referral,
+    cd.has_risk_classification,
     cd.all_concept_codes,
     cd.all_concept_displays,
     cd.all_source_cluster_ids,
 
-    -- Enhanced analytics fields (improvements over legacy)
     -- Check completion status
     CASE
         WHEN cd.is_unsuitable THEN 'Unsuitable'
@@ -182,12 +199,11 @@ SELECT
         WHEN cd.right_foot_checked AND (fs.left_foot_absent OR fs.left_foot_amputated) THEN 'Complete - Right Only (Left Missing)'
         WHEN cd.left_foot_checked THEN 'Partial - Left Only'
         WHEN cd.right_foot_checked THEN 'Partial - Right Only'
+        WHEN cd.has_screening_referral THEN 'Referred - Not Examined'
         ELSE 'Not Done'
     END AS examination_status,
 
-
-
-    -- Diabetes foot risk classification for analytics
+    -- Diabetes foot risk classification
     CASE
         WHEN cd.left_foot_risk_level = 'Ulcerated' OR cd.right_foot_risk_level = 'Ulcerated' THEN 'Ulcerated (High Risk)'
         WHEN cd.left_foot_risk_level = 'High' OR cd.right_foot_risk_level = 'High' THEN 'High Risk'
