@@ -13,7 +13,7 @@ select
     local_authority_pds,
     gp_code_pds,
     gp_name_pds,
-    current_age as age_at_most_recent_nel_admission,
+    age_at_most_recent_nel_admission,
     most_recent_nel_admission_date,
     most_recent_nel_discharge_date,
     most_recent_nel_admission_date_bh,

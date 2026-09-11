@@ -7,8 +7,7 @@
 WITH pds_patient_check AS (
     SELECT
     pp.sk_patient_id,
-    pp.year_month_of_birth,
-    COALESCE(LEAST(pp.date_of_death, death.reg_date_of_death), pp.date_of_death, death.reg_date_of_death) AS date_of_death,
+    pp.date_of_death,
     gp.practice_code as gp_code_pds,
     gp.practice_name as gp_name_pds,
     gp.local_authority as local_authority_pds
@@ -18,9 +17,6 @@ WITH pds_patient_check AS (
         AND CURRENT_DATE BETWEEN pc.event_from_date AND COALESCE(pc.event_to_date, '9999-12-31')
     LEFT JOIN {{ ref("dim_practice_neighbourhood") }} gp 
         ON pc.practice_code = gp.practice_code -- find most recent practice information
-    LEFT JOIN {{ ref("stg_registries_deaths") }} death
-        ON pp.sk_patient_id = death.sk_patient_id -- check whether patient dead as of running model
-        AND death.reg_date < CURRENT_DATE -- only include deaths that have been registered before the current date
     WHERE CURRENT_DATE BETWEEN pp.event_from_date AND COALESCE(pp.event_to_date, '9999-12-31')
 )
 
@@ -41,8 +37,10 @@ WITH pds_patient_check AS (
     ppc.local_authority_pds,
     ppc.gp_code_pds,
     ppc.gp_name_pds,
-    FLOOR(DATEDIFF('month', ppc.year_month_of_birth, CURRENT_DATE)/12) AS current_age, -- age_at_most_recent_nel_admission,
-
+    
+    TO_VARCHAR(ARRAY_AGG(CASE WHEN pod IN ('NEL-ZLOS','NEL-LOS+1') THEN att_dx.age_at_event END) 
+        WITHIN GROUP (ORDER BY pod IN ('NEL-ZLOS','NEL-LOS+1') DESC, att_dx.activity_date desc
+        )[0]) AS age_at_most_recent_nel_admission,
     MAX(CASE WHEN pod IN ('NEL-ZLOS','NEL-LOS+1') THEN att_dx.activity_start_date END) AS most_recent_nel_admission_date,
     MAX(CASE WHEN pod IN ('NEL-ZLOS','NEL-LOS+1') THEN att_dx.activity_date END) AS most_recent_nel_discharge_date,
     MAX(CASE WHEN pod IN ('NEL-ZLOS','NEL-LOS+1') AND provider_site_code = 'RAL26' THEN att_dx.activity_start_date END) AS most_recent_nel_admission_date_bh,
@@ -239,8 +237,10 @@ WITH pds_patient_check AS (
     MAX(CASE WHEN LEFT(UPPER(diag_code), 3) IN ('R54') OR UPPER(diag_code) IN ('Z91.81', 'Z9181') THEN 1 ELSE 0 END) AS frailty_falls,
 
     CASE WHEN ppc.gp_code_pds IS NULL THEN 0 ELSE 1 END AS is_on_pds, -- flag NCL gps
-    --CASE WHEN ppc.date_of_death IS NOT NULL THEN 1 ELSE 0 END AS is_dead_pds,
-    --CASE WHEN death.sk_patient_id IS NOT NULL THEN 1 ELSE 0 END AS is_dead_death_registry,
+    
+    CASE WHEN ppc.date_of_death IS NOT NULL THEN 1 ELSE 0 END AS is_dead_pds,
+    
+    CASE WHEN death.sk_patient_id IS NOT NULL THEN 1 ELSE 0 END AS is_dead_death_registry,
 
     CURRENT_TIMESTAMP() AS refresh_date
 FROM 
@@ -251,15 +251,19 @@ INNER JOIN
 LEFT JOIN 
     pds_patient_check ppc 
     ON att_dx.patient_id = ppc.sk_patient_id
+LEFT JOIN {{ ref("stg_registries_deaths") }} death
+    ON att_dx.patient_id = death.sk_patient_id -- check whether patient dead as of running model
+    AND death.reg_date < CURRENT_DATE -- only include deaths that have been registered before the current date
 WHERE
     att_dx.patient_id IS NOT NULL
     AND att_dx.activity_date < DATE_TRUNC('month', CURRENT_DATE) -- only activity before the start of this month
-    AND FLOOR(DATEDIFF('month', ppc.year_month_of_birth, CURRENT_DATE) /12) >= 18-- AND age_at_most_recent_nel_admission >= 18
-    AND (ppc.date_of_death IS NULL OR ppc.date_of_death > CURRENT_DATE) -- only living patients
+    AND ppc.date_of_death IS NULL
+    AND death.reg_date_of_death IS NULL
 GROUP BY ALL
 HAVING 
     NCLProvider_count >= 1 --barnet_hospital_count >= 1
     AND local_authority_sus IN ('Barnet', 'Camden', 'Enfield', 'Islington', 'Haringey') --AND local_authority IN ('Barnet','Enfield')
+    AND age_at_most_recent_nel_admission >= 18
     AND
     (heart_failure = 1 
     or copd = 1 
