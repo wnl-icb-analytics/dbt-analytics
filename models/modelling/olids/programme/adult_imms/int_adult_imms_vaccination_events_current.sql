@@ -91,7 +91,7 @@ where not exists (
        clut.EVENT_DATE,
             CASE 
             WHEN clut.codeclusterid LIKE '%_ADM' THEN 'Administration'
-            WHEN clut.codeclusterid LIKE '%_DRUG' THEN 'Administration_drug'
+            WHEN clut.codeclusterid LIKE '%_DRUG' THEN 'Administration'
             WHEN clut.codeclusterid LIKE '%_CONTRA' THEN 'Contraindicated'
             WHEN clut.codeclusterid LIKE '%_DEC' THEN 'Declined'
             ELSE NULL
@@ -169,7 +169,7 @@ QUALIFY
     AND priority = best_future_priority
 )
 --IDENTIFY DUPLICATE ROWS WHERE SAME CODE CAN BE USED FOR DIFFERENT DOSES (SHINGLES)
-,IMM_ADM_RANKED as (
+,IMM_ADM_DOSE_DEDUP as (
 SELECT 
 	PERSON_ID,
     BIRTH_DATE_APPROX,
@@ -192,6 +192,7 @@ SELECT
     EVENT_DATE,
     EVENT_TYPE,
     OUT_OF_SCHEDULE,
+    --do not partiton by event_type 
        ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID ORDER BY EVENT_DATE ASC) AS row_num
     FROM IMM_ADM_DECLINED_CONFLICT   
       ) 
@@ -208,7 +209,7 @@ ROW_NUMBER() OVER (
                 END,
                 event_date DESC
         ) AS rownum_contra
-FROM IMM_ADM_RANKED
+FROM IMM_ADM_DOSE_DEDUP
 WHERE 
 --deduplicate where codes are non dose specific 
 (dose_number = 1 AND row_num = 1)
