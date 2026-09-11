@@ -61,6 +61,13 @@ clock time is not established. Clustering helps pruning and retrieval, but SQL
 still requires `ORDER BY` to guarantee output order. A stable ID can break display
 ties; it does not establish which same-day event happened first.
 
+The healthcare-event view includes an `ORDER BY` across its complete source union
+for direct timeline lookups. It sorts by person, event date, event time and event
+ID. Date-only records follow timed records on the same day; undated records come
+last. These are presentation rules, not additional clinical precision. Sorting
+happens at query time. Joins, aggregations and other outer queries can change
+the result order; use a top-level `ORDER BY` when order must be guaranteed.
+
 Interpret dates with their precision:
 
 | Precision | Meaning |

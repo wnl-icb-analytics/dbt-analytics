@@ -39,6 +39,15 @@ The coverage table and its grain test passed in 35 seconds on M. Existing
 source references supply the clinical labels; no terminology service runs at
 query time. New model descriptions and owner checks pass.
 
+The shared reporting models were moved to `DEV__REPORTING.CROSS_SYSTEM` with
+Snowflake renames. The event view now includes a final person/date/time/ID sort
+for direct lookups. A synthetic filtered lookup without an outer `ORDER BY`
+interleaved source rows by date and time, excluded the other synthetic person,
+placed date-only rows after timed rows on their day and put undated rows last.
+The compiled model passed. Applying the view definition preserved its existing
+metadata and grants and did not rebuild any data tables. Outer queries still
+need their own `ORDER BY` when result ordering must be guaranteed.
+
 ## Population reconciliation
 
 These are source records, not distinct clinical occurrences or people.

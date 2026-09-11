@@ -244,3 +244,7 @@ select
     source_received_at,
     null::varchar as care_setting_name
 from {{ ref('int_ers_healthcare_event') }}
+
+-- Default timeline presentation across sources; undated events follow dated events.
+-- Date-only rows follow timed rows on their day without implying an actual sequence.
+order by sk_patient_id nulls last, event_date nulls last, event_at nulls last, event_id
