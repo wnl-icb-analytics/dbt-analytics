@@ -251,6 +251,23 @@ attach a different person's contact to 1,247 historical activities in the
 current data. The same-submission join has no person mismatches and leaves 303
 activities with a visible missing-parent state.
 
+Those 303 activities retain a valid `dmicActivityDate` on their selected source
+row. The fact uses it as a date-only fallback when the submitted contact date
+is unavailable, provided it is after 1900 and within the reporting period.
+`care_activity_time_basis = 'source_derived_activity_date'` identifies this
+route; contact linkage remains missing. Clinical components and compatible
+activity assessments inherit the same date and provenance.
+
+On 11 September, all 18,043,373 dated activity controls with a populated derived
+date agreed with their submitted contact date. Another 143 undated activities
+had an agreeing historical contact date, although those contact submissions
+were inactive. The fallback uses the selected activity's derived date rather
+than attaching an inactive parent or the latest contact for another person.
+
+Date-only records belong on their recorded day in a longitudinal timeline.
+Their precision does not establish ordering among events on the same day;
+midnight in a timestamp representation must not be treated as a supplied time.
+
 Before v6, MHS202 held one care professional directly. V6 moved the
 many-to-many relationship to MHS206. The relationship model combines both
 routes and never fills a missing historical MHS901 row from a later reporting

@@ -5,8 +5,9 @@ models:
     description: >-
       Accepted MHSDS care activities. One row represents one MHS202 activity
       in one provider reporting period. Contact date, service and commissioner
-      context comes from the linked care contact. Missing parents remain in
-      the fact and are identified by is_care_contact_linked.
+      context comes from the linked care contact. When its date is unavailable,
+      a valid source-derived activity date within the reporting period supplies
+      date precision. Missing parents remain identified by is_care_contact_linked.
     config: &owner
       meta:
         owner:
@@ -37,15 +38,18 @@ models:
       - name: sk_patient_id
         description: Shared pseudonymised patient identifier where the bridge contains the person.
       - name: care_activity_date
-        description: Date of the linked care contact; null when the contact is missing.
+        description: >-
+          Date of the linked care contact, falling back to the selected activity's
+          source-derived date when it is after 1900 and within the reporting period.
+          Null when neither is usable. Supports daily ordering without implying same-day order.
       - name: care_activity_time
         description: Time of the linked care contact where submitted.
       - name: care_activity_at
-        description: Timestamp of the linked care contact, using midnight when only a date was submitted.
+        description: Contact timestamp or recovered activity date at midnight. Read with care_activity_time_precision; midnight for date precision is not a recorded clock time.
       - name: care_activity_time_precision
         description: Whether care_activity_at has date or timestamp precision.
       - name: care_activity_time_basis
-        description: same_submission_care_contact when timing came from the accepted MHS201 parent.
+        description: same_submission_care_contact for the accepted MHS201 parent date, or source_derived_activity_date for the selected activity's date-only fallback.
       - name: clinical_contact_duration_minutes
         description: Clinical contact duration for the activity in minutes.
       - name: is_clinical_contact_duration_over_24_hours

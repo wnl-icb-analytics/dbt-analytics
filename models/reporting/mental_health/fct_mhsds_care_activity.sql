@@ -13,20 +13,27 @@ select
     , a.care_contact_id
     , a.person_id
     , b.sk_patient_id
-    , c.care_cont_date as care_activity_date
-    , c.care_cont_time as care_activity_time
+    -- The selected activity can retain a derived date when its submitted contact is absent.
+    , coalesce(c.care_cont_date, iff(
+        a.source_derived_activity_date >= '1901-01-01'::date
+            and a.source_derived_activity_date between a.reporting_period_start_date and a.reporting_period_end_date
+        , a.source_derived_activity_date, null
+    )) as care_activity_date
+    , iff(c.care_cont_date is not null, c.care_cont_time, null) as care_activity_time
     , case
-        when c.care_cont_date is null then null
-        when c.care_cont_time is null then c.care_cont_date::timestamp_ntz
-        else timestamp_ntz_from_parts(c.care_cont_date, c.care_cont_time)
+        when care_activity_date is null then null
+        when care_activity_time is null then care_activity_date::timestamp_ntz
+        else timestamp_ntz_from_parts(care_activity_date, care_activity_time)
     end as care_activity_at
     , case
-        when c.care_cont_date is null then null
-        when c.care_cont_time is null then 'date'
+        when care_activity_date is null then null
+        when care_activity_time is null then 'date'
         else 'timestamp'
     end as care_activity_time_precision
-    , iff(c.mhs201_uniq_id is not null, 'same_submission_care_contact', null)
-        as care_activity_time_basis
+    , case
+        when c.care_cont_date is not null then 'same_submission_care_contact'
+        when care_activity_date is not null then 'source_derived_activity_date'
+    end as care_activity_time_basis
     , a.clinical_contact_duration_minutes
     , coalesce(a.clinical_contact_duration_minutes > 1440, false)
         as is_clinical_contact_duration_over_24_hours

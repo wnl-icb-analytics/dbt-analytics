@@ -12,6 +12,7 @@ select
     , a.care_contact_id
     , a.uniq_serv_req_id
     , a.person_id
+    , a.dmic_activity_date::date as source_derived_activity_date
     , a.uniq_care_prof_local_id
     , a.care_prof_local_id
     , a.clin_contact_dur_of_care_act as clinical_contact_duration_minutes

@@ -5,7 +5,8 @@ where source_record_id is distinct from clinical_record_id
     or (clinical_time_precision = 'date' and clinical_time is not null)
     or (clinical_at is not null and clinical_time_precision is null)
     or (source_table in ('CYP202', 'CYP612') and clinical_at is not null
-        and (is_care_activity_person_consistent is distinct from true
-            or is_submitted_contact_person_consistent is distinct from true))
+        and (is_care_activity_linked is distinct from true
+            or is_care_activity_person_consistent = false
+            or is_submitted_contact_person_consistent = false))
     or (is_source_derived_date_inconsistent is distinct from
         (source_derived_date <> clinical_date))
