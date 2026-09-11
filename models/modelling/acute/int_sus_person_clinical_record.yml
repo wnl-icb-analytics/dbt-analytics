@@ -62,11 +62,13 @@ models:
       date.
   - name: is_parent_person_consistent
     description: Agreement between the clinical record and its linked parent person key where independently checked.
-      False identifies a conflict; null means not established. APC parent dates require positive agreement.
+      False identifies an APC spell-to-episode conflict; null means not independently established. APC parent
+      dates require positive agreement, and known conflicting parent links are not promoted. Outpatient clinical
+      records inherit their person key from the appointment rather than providing an independent comparison.
   - name: parent_start_date
-    description: Start date of the recorded episode, outpatient appointment or emergency attendance. This is care
+    description: Start date of the recorded episode or outpatient appointment. This is care
       context, not the onset or date of the clinical item. APC dates require agreement between spell and episode
       person keys.
   - name: parent_end_date
-    description: End date of the recorded episode or emergency attendance. Retained as context without replacing
+    description: End date of the recorded episode. Retained as context without replacing
       a missing clinical date. Null for parents without a supplied end date.
