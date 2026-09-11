@@ -7,13 +7,13 @@
 select 
     patient_id,
     hospital_number_most_recent_nel_any_provider as hospital_number,
-    local_authority,
-    gp_code,
-    gp_name,
+    local_authority_sus as local_authority,
+    gp_code_sus as gp_code,
+    gp_name_sus as gp_name,
     local_authority_pds,
     gp_code_pds,
     gp_name_pds,
-    age_at_most_recent_nel_admission,
+    current_age as age_at_most_recent_nel_admission,
     most_recent_nel_admission_date,
     most_recent_nel_discharge_date,
     barnet_hospital_count,
@@ -74,32 +74,8 @@ select
 from 
     {{ ref("int_myria_conditions") }} 
 where
-    (NCLProvider_count >= 1 OR Non_NCLProvider_count >= 1) -- 1 NEL attendance at any provider
-    AND local_authority IN ('Barnet','Enfield','Camden','Islington','Haringey') -- all NCL patients
-        AND NOT EXISTS (
+    NOT EXISTS (
                         select 1
                         from {{ ref("fct_person_myria_high_risk_patients") }} hrp
                         where hrp.patient_id = int_myria_conditions.patient_id
                         ) -- need exclusive cohorts
-    AND age_at_most_recent_nel_admission >= 18 -- otherwise criteria the same
-    AND is_dead_pds = 0
-    AND is_dead_death_registry = 0
-    AND
-    (heart_failure = 1 
-    or copd = 1 
-    or dementia = 1 
-    or end_stage_renal_failure = 1 
-    or severe_interstitial_lung_disease = 1 
-    or parkinsons_disease = 1 
-    or chronic_kidney_disease = 1 
-    or liver_failure = 1 
-    or alcohol_dependence = 1 
-    or bronchiectasis = 1 
-    or atrial_fibrillation = 1 
-    or cerebrovascular_disease = 1 
-    or peripheral_vascular_disease = 1 
-    or pulmonary_heart_disease = 1 
-    or coronary_heart_disease = 1 
-    or osteoporosis = 1 
-    or rheumatoid_arthritis = 1
-    or chronic_liver_disease = 1)
