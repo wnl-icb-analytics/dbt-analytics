@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND195: https://www.nice.org.uk/indicators/ind195
--- Heart failure review, NYHA classification and a medication review all recorded in 12 months for people on the heart failure register.
+-- Heart failure review code in 12 months for people on the heart failure register; the NYHA and medication review dates are carried as detail.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -22,9 +22,7 @@ assessed AS (
         population.latest_nyha_date AS latest_nyha_date,
         population.latest_medication_review_date AS latest_medication_review_date,
         CASE WHEN population.latest_heart_failure_review_date >= DATEADD(month, -12, CURRENT_DATE()) THEN population.latest_heart_failure_review_date END AS latest_record_date,
-        COALESCE(population.latest_heart_failure_review_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
-            AND COALESCE(population.latest_nyha_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
-            AND COALESCE(population.latest_medication_review_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
+        COALESCE(population.latest_heart_failure_review_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id

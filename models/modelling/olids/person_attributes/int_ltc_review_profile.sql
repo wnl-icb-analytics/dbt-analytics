@@ -286,7 +286,8 @@ alcohol_usage AS (
 ),
 
 smi_register AS (
-    SELECT person_id, has_active_smi_diagnosis, is_on_lithium
+    SELECT person_id, has_active_smi_diagnosis, is_on_lithium, latest_diagnosis_date::DATE AS latest_smi_diagnosis_date,
+        latest_resolved_date::DATE AS latest_smi_remission_date
     FROM {{ ref('fct_person_smi_register') }}
     WHERE is_on_register
 ),
@@ -357,6 +358,8 @@ SELECT
     cvd.earliest_cvd_diagnosis_date,
     COALESCE(smi_register.has_active_smi_diagnosis, FALSE) AS has_active_smi_diagnosis,
     COALESCE(smi_register.is_on_lithium, FALSE) AS is_on_lithium,
+    smi_register.latest_smi_diagnosis_date,
+    smi_register.latest_smi_remission_date,
     dyslipidaemia.person_id IS NOT NULL AS has_dyslipidaemia,
     sleep_apnoea.person_id IS NOT NULL AS has_obstructive_sleep_apnoea,
     c.earliest_smoking_ltc_diagnosis_date,

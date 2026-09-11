@@ -9,7 +9,9 @@ WITH indicator_population AS (
     FROM {{ ref('int_ltc_review_profile') }} AS profile
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE (
+    -- BMI values are modelled for adults only, so the denominator is 18 and over
+    WHERE age.age >= 18
+        AND (
             profile.has_chd OR profile.has_stroke_tia OR profile.has_diabetes OR profile.has_ndh
             OR profile.has_hypertension OR profile.has_pad OR profile.has_heart_failure OR profile.has_copd
             OR profile.has_dyslipidaemia OR profile.has_learning_disability

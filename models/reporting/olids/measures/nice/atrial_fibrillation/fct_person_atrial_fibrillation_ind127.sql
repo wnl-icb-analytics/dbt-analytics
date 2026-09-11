@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND127: https://www.nice.org.uk/indicators/ind127
--- CHA2DS2-VASc assessment in 12 months for people on the AF register, excluding anyone with a previous CHADS2 or CHA2DS2-VASc score of 2 or more.
+-- CHA2DS2-VASc assessment in 12 months for people on the AF register, excluding anyone with a CHADS2 or CHA2DS2-VASc score of 2 or more recorded before the 12-month period who was not reassessed in it.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -9,7 +9,10 @@ WITH indicator_population AS (
     FROM {{ ref('int_atrial_fibrillation_profile') }} AS profile
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE NOT COALESCE(profile.max_stroke_risk_score_ever >= 2, FALSE)
+    -- A previous score of 2 or more (recorded before the 12-month period) excludes a person only when they were
+    -- not reassessed in the period, as QOF AF006 reads it; a CHA2DS2-VASc score in the period is the assessment
+    WHERE NOT COALESCE(profile.max_stroke_risk_score_before_period >= 2, FALSE)
+        OR COALESCE(profile.latest_chadsvasc_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
 ),
 
 assessed AS (
@@ -41,7 +44,7 @@ SELECT
     CURRENT_DATE() AS reporting_date,
     DATEADD(month, -12, CURRENT_DATE()) AS measurement_period_start,
     age,
-    'Atrial fibrillation without a stroke risk score of 2 or more' AS condition_name,
+    'Atrial fibrillation, excluding a previous stroke risk score of 2 or more without reassessment' AS condition_name,
     current_practice_code,
     current_practice_name,
     latest_chadsvasc_score,

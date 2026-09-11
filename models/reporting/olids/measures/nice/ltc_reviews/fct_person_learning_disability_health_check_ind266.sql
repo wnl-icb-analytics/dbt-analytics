@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND266: https://www.nice.org.uk/indicators/ind266
--- Learning disability health check and health action plan in 12 months plus a recorded ethnicity for people aged 14 and over on the learning disability register.
+-- Learning disability health check and health action plan in 12 months plus a recorded ethnicity for people on the learning disability register.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -9,7 +9,7 @@ WITH indicator_population AS (
     FROM {{ ref('int_ltc_review_profile') }} AS profile
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE profile.has_learning_disability AND age.age >= 14
+    WHERE profile.has_learning_disability
 ),
 
 assessed AS (
@@ -24,6 +24,7 @@ assessed AS (
         CASE WHEN population.latest_ld_health_check_date >= DATEADD(month, -12, CURRENT_DATE()) THEN population.latest_ld_health_check_date END AS latest_record_date,
         COALESCE(population.latest_ld_health_check_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
             AND COALESCE(population.latest_ld_health_action_plan_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
+            AND COALESCE(population.latest_ld_health_action_plan_date >= population.latest_ld_health_check_date, FALSE)
             AND population.has_ethnicity_recorded AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
@@ -37,7 +38,7 @@ SELECT
     CURRENT_DATE() AS reporting_date,
     DATEADD(month, -12, CURRENT_DATE()) AS measurement_period_start,
     age,
-    'Learning disability (aged 14 and over)' AS condition_name,
+    'Learning disability' AS condition_name,
     current_practice_code,
     current_practice_name,
     latest_review_date,

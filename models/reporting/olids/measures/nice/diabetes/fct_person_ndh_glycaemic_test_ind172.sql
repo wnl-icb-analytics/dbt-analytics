@@ -10,6 +10,9 @@ WITH indicator_population AS (
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON ndh.person_id = age.person_id
     WHERE ndh.is_on_register
+        -- NICE excludes under-18s and an unresolved diabetes diagnosis
+        AND age.age >= 18
+        AND NOT COALESCE(ndh.has_diabetes_diagnosis AND NOT ndh.is_diabetes_resolved, FALSE)
 ),
 
 -- Latest qualifying record in the period

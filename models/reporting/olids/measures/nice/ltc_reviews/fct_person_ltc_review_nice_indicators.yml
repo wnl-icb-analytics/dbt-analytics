@@ -71,10 +71,7 @@ models:
     description: >
       NICE IND191 COPD annual review. One row per currently registered,
       living, non-test person on the COPD register, assessed on the build
-      date. The numerator requires a COPD review code (COPDRVW_COD) and an MRC
-      dyspnoea grade (MRC_COD) both recorded in the preceding 12 months. NICE
-      also asks for the number of exacerbations; the exacerbation count
-      cluster is rarely used so it is not required. Personalised care
+      date. The numerator requires a COPD review code (COPDRVW_COD) in the preceding 12 months. NICE asks that the review include the number of exacerbations and an MRC dyspnoea grade; as in QOF COPD010 the review code stands for those elements, and latest_mrc_dyspnoea_date shows whether a grade was recorded. Personalised care
       adjustments are not applied. Secondary-use consumers must join
       DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
       1 opt-out filtering.
@@ -89,7 +86,7 @@ models:
           category: "REVIEW"
           clinical_domain: "Respiratory"
           name_short: "COPD review with MRC"
-          description_short: "COPD review and MRC dyspnoea grade recorded in the preceding 12 months"
+          description_short: "COPD review recorded in the preceding 12 months"
           description_long: "NICE IND191 before personalised care adjustments."
           is_qof: false
           source_column: "is_in_numerator"
@@ -140,11 +137,7 @@ models:
     description: >
       NICE IND195 heart failure annual review. One row per currently
       registered, living, non-test person on the heart failure register,
-      assessed on the build date. The numerator requires a heart failure
-      review code (HFRVW_COD), an NYHA classification record (NYHA_COD), counting assessment codes that carry no class, and a
-      medication review of any coded type (heart failure medication review,
-      medication review or structured medication review) all in the preceding
-      12 months. Personalised care adjustments are not applied. Secondary-use
+      assessed on the build date. The numerator requires a heart failure review code (HFRVW_COD) in the preceding 12 months. NICE asks that the review include an NYHA assessment and a medication review; as in QOF HF007 the review code stands for those elements, and latest_nyha_date and latest_medication_review_date show whether they were recorded. Personalised care adjustments are not applied. Secondary-use
       consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
       Data Opt-Out and Type 1 opt-out filtering.
     config:
@@ -158,7 +151,7 @@ models:
           category: "REVIEW"
           clinical_domain: "Cardiovascular"
           name_short: "Heart failure review"
-          description_short: "Heart failure review, NYHA classification and medication review recorded in the preceding 12 months"
+          description_short: "Heart failure review recorded in the preceding 12 months"
           description_long: "NICE IND195 before personalised care adjustments."
           is_qof: false
           source_column: "is_in_numerator"
@@ -343,11 +336,7 @@ models:
   - name: fct_person_learning_disability_health_check_ind265
     description: >
       NICE IND265 learning disability health check. One row per currently
-      registered, living, non-test person aged 14 and over on the learning
-      disability register, assessed on the build date. The numerator requires
-      a learning disability health check (HLTHCHK_COD) and a health action
-      plan (HLTHAP_COD) both recorded in the preceding 12 months. The age
-      floor follows the annual health check programme, which starts at 14.
+      registered, living, non-test person on the learning disability register, assessed on the build date. NICE dropped the 14-and-over floor of the source NCD indicator when it published IND265, so no age floor is applied. The numerator requires a learning disability health check (HLTHCHK_COD) and a health action plan (HLTHAP_COD) both recorded in the preceding 12 months, with the plan dated on or after the check as the NCD rule requires.
       Personalised care adjustments are not applied. Secondary-use consumers
       must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
       Out and Type 1 opt-out filtering.
@@ -412,11 +401,9 @@ models:
   - name: fct_person_learning_disability_health_check_ind266
     description: >
       NICE IND266 learning disability health check with ethnicity. One row per
-      currently registered, living, non-test person aged 14 and over on the
-      learning disability register, assessed on the build date. The numerator
+      currently registered, living, non-test person on the learning disability register, assessed on the build date, with no age floor as NICE publishes it. The numerator
       requires a learning disability health check and a health action plan
-      both recorded in the preceding 12 months and an ethnicity category other
-      than Unknown on the demographic record; not-stated codes map to Unknown and so count as not recorded. Personalised care adjustments
+      both recorded in the preceding 12 months, the plan dated on or after the check, and an ethnicity category other than Unknown on the demographic record; not-stated codes map to Unknown and so count as not recorded, matching the NCD rule that excludes a not-stated ethnicity. Personalised care adjustments
       are not applied. Secondary-use consumers must join
       DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
       1 opt-out filtering.

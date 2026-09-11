@@ -1,0 +1,45 @@
+models:
+  - name: int_antithrombotic_contraindication_all
+    description: >
+      Contraindications to salicylates, clopidogrel, dipyridamole and oral
+      anticoagulants from the PCD persisting and expiring clusters, one row
+      per observation and cluster, for all people including inactive and
+      deceased. QOF CHD005 and STIA007 read a persisting contraindication as
+      standing and an expiring one as current for 12 months, and exclude a
+      person only when every class is contraindicated. Observations dated
+      after the build date are excluded. Feeds NICE IND132 and IND133.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: XSAL_COD, TXSAL_COD, XCLO_COD, TXCLO_COD, XDIPY_COD, TXDIPY_COD, XORANTICOAG_COD, TXORANTICOAG_COD, XORANTICOAGGENCON_COD, TXORANTICOAGGENCON_COD
+            source: PCD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - id
+              - source_cluster_id
+    columns:
+      - name: id
+        description: Source observation identifier; one row per observation and cluster.
+        data_tests:
+          - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the record.
+      - name: drug_class
+        description: SALICYLATE, CLOPIDOGREL, DIPYRIDAMOLE or ORAL_ANTICOAGULANT.
+        data_tests:
+          - not_null
+      - name: is_persisting
+        description: True for a persisting contraindication, false for an expiring one.
+      - name: concept_code
+        description: SNOMED code of the record.
+      - name: concept_display
+        description: Description of the record.
+      - name: source_cluster_id
+        description: Cluster that matched the code.

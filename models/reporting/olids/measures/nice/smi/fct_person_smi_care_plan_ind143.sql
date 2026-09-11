@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND143: https://www.nice.org.uk/indicators/ind143
--- Mental health care plan recorded in 12 months for people with an active SMI diagnosis.
+-- Mental health care plan recorded in 12 months and on or after the relapse (or first diagnosis) for people with an active SMI diagnosis.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -18,8 +18,13 @@ assessed AS (
         population.age,
         active.current_practice_code,
         active.current_practice_name,
+        -- A plan must postdate the relapse (the latest diagnosis after any remission) or the first diagnosis, as QOF MH002 reads NICE
+        CASE WHEN population.latest_smi_remission_date IS NOT NULL
+            THEN population.latest_smi_diagnosis_date ELSE population.earliest_smi_diagnosis_date END AS plan_anchor_date,
         CASE WHEN population.latest_smi_care_plan_date >= DATEADD(month, -12, CURRENT_DATE()) THEN population.latest_smi_care_plan_date END AS latest_record_date,
-        COALESCE(population.latest_smi_care_plan_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
+        COALESCE(population.latest_smi_care_plan_date >= DATEADD(month, -12, CURRENT_DATE())
+            AND population.latest_smi_care_plan_date >= CASE WHEN population.latest_smi_remission_date IS NOT NULL
+                THEN population.latest_smi_diagnosis_date ELSE population.earliest_smi_diagnosis_date END, FALSE) AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
@@ -35,6 +40,7 @@ SELECT
     'Severe mental illness (schizophrenia, bipolar affective disorder or other psychoses, not in remission)' AS condition_name,
     current_practice_code,
     current_practice_name,
+    plan_anchor_date,
     latest_record_date,
     TRUE AS is_in_denominator,
     is_in_numerator,
