@@ -7,10 +7,17 @@
 {% set in_year_lookback_months = -12 %}
 with
 base_encounters_raw as (
-    select *,
-    start_date is null as dq_start_date,
-    end_date is null as dq_end_date,
-    duration is null as dq_duration,
+    -- This model applies its own date-imputation rules for named consumers.
+    -- Do not mix the reporting estimate with those independently derived dates.
+    select
+        * exclude (
+            estimated_discharge_date,
+            has_estimated_discharge_date,
+            estimated_discharge_date_method
+        )
+        , start_date is null as dq_start_date
+        , end_date is null as dq_end_date
+        , duration is null as dq_duration
     from {{ ref('int_sus_apc_encounter') }}
     where (start_date between dateadd(month, {{ emit_lookback_months }}, current_date()) and current_date()
         or end_date between dateadd(month, {{ emit_lookback_months }}, current_date()) and current_date())
