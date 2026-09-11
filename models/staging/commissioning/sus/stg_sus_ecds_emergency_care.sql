@@ -10,6 +10,7 @@ with organisation_codes as (
 )
 
 select primarykey_id
+    , try_to_timestamp_ntz(core.system_interchange_received_date::varchar) as source_received_at
     , system_transaction_cds_unique_identifier
     , {{ consistent_sk_patient_id_format('patient_nhs_number_value_pseudo') }} as sk_patient_id
     , patient_local_patient_identifier_value as local_patient_identifier

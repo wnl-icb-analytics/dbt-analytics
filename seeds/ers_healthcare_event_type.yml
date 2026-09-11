@@ -1,0 +1,26 @@
+version: 2
+seeds:
+  - name: ers_healthcare_event_type
+    description: >-
+      Selected e-RS lifecycle action codes and their shared event types. Includes referral,
+      booking, advice, assessment and triage milestones. Excludes notifications, printing,
+      letter edits, searches, unconfirmed cancellation and administrative updates.
+      Action labels come from the maintained e-RS reference.
+    config:
+      column_types:
+        action_code: varchar
+        event_type: varchar
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: action_code
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('ers_action')
+                field: code
+      - name: event_type
+        data_tests: [not_null]

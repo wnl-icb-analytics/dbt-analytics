@@ -17,6 +17,10 @@ with core_data as(
 )
 
 select core.primarykey_id
+    , greatest_ignore_nulls(
+        try_to_timestamp_ntz(core.system_interchange_received_date::varchar),
+        try_to_timestamp_ntz(core.system_interchange_latest_episode_received_date::varchar)
+    ) as source_received_at
     , {{ consistent_sk_patient_id_format('core.spell_patient_identity_nhs_number_value_pseudo') }} as sk_patient_id
     , spell_patient_identity_local_patient_identifier_value as local_patient_identifier
 
