@@ -3,7 +3,20 @@
 -- NICE IND133: https://www.nice.org.uk/indicators/ind133
 -- Antiplatelet or oral anticoagulant order in 12 months on the stroke/TIA register. People with haemorrhagic
 -- stroke history stay in only through a TIA diagnosis.
-WITH tia_history AS (
+-- Excludes people contraindicated to all four of salicylates, clopidogrel, dipyridamole and oral anticoagulants (persisting at any time or expiring in 12 months), as NICE lists and QOF STIA007 applies.
+WITH
+-- Classes contraindicated: persisting at any time or expiring in the preceding 12 months (QOF reading)
+contraindicated AS (
+    SELECT
+        person_id,
+        COUNT(DISTINCT drug_class) AS contraindicated_class_count
+    FROM { ref('int_antithrombotic_contraindication_all') }
+    WHERE (is_persisting OR clinical_effective_date::DATE >= DATEADD(month, -12, CURRENT_DATE()))
+        AND drug_class IN ('SALICYLATE', 'CLOPIDOGREL', 'DIPYRIDAMOLE', 'ORAL_ANTICOAGULANT')
+    GROUP BY person_id
+),
+
+tia_history AS (
     SELECT DISTINCT person_id
     FROM {{ ref('int_stroke_tia_diagnoses_all') }}
     WHERE is_tia_diagnosis_code
@@ -21,7 +34,10 @@ indicator_population AS (
     LEFT JOIN tia_history AS tia
         ON register.person_id = tia.person_id
     -- NICE denominator: stroke shown to be non-haemorrhagic, or a history of TIA
+    LEFT JOIN contraindicated
+        ON register.person_id = contraindicated.person_id
     WHERE register.is_on_register
+        AND NOT COALESCE(contraindicated.contraindicated_class_count >= 4, FALSE)
         AND (haemorrhagic.person_id IS NULL OR tia.person_id IS NOT NULL)
 ),
 
