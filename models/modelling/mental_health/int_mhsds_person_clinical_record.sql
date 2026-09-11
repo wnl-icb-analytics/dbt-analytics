@@ -18,16 +18,21 @@ select
     -- Stored diagnosis and assessment timestamps do not establish submitted precision.
     case
         when s.clinical_date is null then 'unknown'
-        when s.clinical_time_precision = 'stored_timestamp_precision_unknown' then 'unknown'
+        when s.clinical_time_precision = 'stored_timestamp_precision_unknown' then 'date'
         else coalesce(s.clinical_time_precision, 'unknown')
     end::varchar as clinical_time_precision,
     s.clinical_time_basis::varchar as clinical_time_basis,
+    s.is_source_date_inconsistent,
     s.clinical_code::varchar as source_code,
     s.clinical_description::varchar as source_code_name,
     s.clinical_value::varchar as result_value,
     s.clinical_value_description::varchar as result_value_name,
     s.clinical_value_numeric::number(38,9) as result_value_numeric,
     s.clinical_value_parse_status::varchar as result_value_parse_status,
+    s.assessment_tool_name,
+    s.assessment_score_numeric,
+    s.assessment_response_status,
+    s.is_assessment_response_non_score,
     s.unit_of_measurement_code::varchar as result_unit_code,
     s.unit_of_measurement_description::varchar as result_unit_name,
     s.unit_of_measurement_symbol::varchar as result_unit_symbol,
@@ -38,7 +43,12 @@ select
     s.source_file_received_at::timestamp_ntz as source_received_at,
     'MHSDS'::varchar as source_dataset,
     'fct_mhsds_clinical_record'::varchar as source_model_name,
-    s.coding_scheme_description::varchar as source_coding_system,
+    case
+        when upper(s.coding_scheme_description) like 'SNOMED CT%' then 'SNOMED CT'
+        when upper(s.coding_scheme_description) in ('READ V2', 'READ CODED CLINICAL TERMS VERSION 2') then 'Read v2'
+        when upper(s.coding_scheme_description) in ('CTV3', 'READ CODED CLINICAL TERMS VERSION 3 (CTV3)') then 'CTV3'
+        else s.coding_scheme_description
+    end::varchar as source_coding_system,
     coalesce(source_snomed.snomed_code, mapped_snomed.snomed_code, read_snomed.snomed_code) as mapped_code,
     case
         when source_snomed.snomed_code is not null then source_snomed.preferred_term
@@ -68,8 +78,8 @@ left join {{ ref('snomed_concept') }} as mapped_snomed
 left join {{ ref('read_code') }} as read_mapping
     on trim(s.clinical_code) = read_mapping.code
     and read_mapping.coding_system = case
-        when s.coding_scheme_description in ('CTV3', 'Read coded clinical terms version 3 (CTV3)') then 'ctv3'
-        when s.coding_scheme_description = 'Read v2' then 'read_v2'
+        when upper(s.coding_scheme_description) in ('CTV3', 'READ CODED CLINICAL TERMS VERSION 3 (CTV3)') then 'ctv3'
+        when upper(s.coding_scheme_description) in ('READ V2', 'READ CODED CLINICAL TERMS VERSION 2') then 'read_v2'
     end
 left join {{ ref('snomed_concept') }} as read_snomed
     on read_mapping.snomed_ct_code = read_snomed.snomed_code

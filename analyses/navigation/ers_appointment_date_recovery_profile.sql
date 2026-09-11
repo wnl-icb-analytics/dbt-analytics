@@ -32,6 +32,7 @@ with suspect as (
     left join {{ ref('fct_ers_appointment') }} as existing
         on c.ubrn_id = existing.ubrn_id
         and equal_null(c.service_id, existing.service_id)
+        and existing.appointment_id <> c.appointment_id
         and existing.appointment_at = timestamp_ntz_from_parts(c.candidate_date, c.appointment_at::time)
     left join candidates as competing
         on c.ubrn_id = competing.ubrn_id

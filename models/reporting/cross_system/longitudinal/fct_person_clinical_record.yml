@@ -4,9 +4,9 @@ models:
   description: One source clinical item across the available OLIDS, MHSDS, CSDS, SUS and ECDS histories. Retains
     source coding positions and supported dates. Missing dates are not replaced by admission or appointment dates.
     OLIDS medication orders retain statement context; statements do not create extra rows. The same clinical occurrence
-    may appear in several feeds and is not deduplicated by person and time. Direct lookups sort by
-    sk_patient_id, clinical date, clinical time and record ID. Date-only rows follow timed rows on
-    the same day; undated rows come last. Outer queries need their own ORDER BY to guarantee order.
+    may appear in several feeds and is not deduplicated by person and time. Direct lookups sort by sk_patient_id,
+    clinical_record_at and record ID. Midnight and period starts are sorting conventions; precision remains explicit.
+    Undated rows come last. Outer queries need their own ORDER BY to guarantee order.
   config:
     meta:
       owner:
@@ -14,62 +14,29 @@ models:
       custom_message: Includes OLIDS data. For secondary use, filter only the OLIDS branch through dim_person_secondary_use_allowed
         on source_person_id = person_id. Apply the relevant governance for every other source.
   columns:
-  - name: clinical_record_id
-    description: '{{ doc(''navigation_clinical_record_id'') }}'
-    data_tests:
-    - unique
   - name: sk_patient_id
     description: '{{ doc(''navigation_sk_patient_id'') }}'
-  - name: source_person_id
-    description: '{{ doc(''navigation_source_person_id'') }}'
-  - name: source_dataset
-    description: '{{ doc(''navigation_source_dataset'') }}'
-  - name: source_record_type
-    description: '{{ doc(''navigation_source_record_type'') }}'
-  - name: source_record_id
-    description: '{{ doc(''navigation_source_record_id'') }}'
-  - name: source_model_name
-    description: '{{ doc(''navigation_source_model_name'') }}'
-  - name: provider_organisation_code
-    description: '{{ doc(''navigation_provider_organisation_code'') }}'
-  - name: provider_organisation_name
-    description: '{{ doc(''navigation_provider_organisation_name'') }}'
-  - name: provider_code_authority
-    description: '{{ doc(''navigation_provider_code_authority'') }}'
-  - name: parent_record_type
-    description: '{{ doc(''navigation_parent_record_type'') }}'
-  - name: parent_record_id
-    description: '{{ doc(''navigation_parent_record_id'') }}'
-  - name: parent_model_name
-    description: '{{ doc(''navigation_parent_model_name'') }}'
-  - name: relationship_type
-    description: '{{ doc(''navigation_relationship_type'') }}'
-  - name: source_submission_period
-    description: '{{ doc(''navigation_source_submission_period'') }}'
-  - name: source_received_at
-    description: '{{ doc(''navigation_source_received_at'') }}'
-  - name: clinical_record_type
-    description: '{{ doc(''navigation_clinical_record_type'') }}'
-  - name: clinical_record_date
-    description: '{{ doc(''navigation_clinical_record_date'') }}'
   - name: clinical_record_at
     description: '{{ doc(''navigation_clinical_record_at'') }}'
+  - name: clinical_record_date
+    description: '{{ doc(''navigation_clinical_record_date'') }}'
   - name: clinical_time_precision
     description: '{{ doc(''navigation_clinical_time_precision'') }}'
   - name: clinical_time_basis
     description: '{{ doc(''navigation_clinical_time_basis'') }}'
-  - name: source_code
-    description: '{{ doc(''navigation_source_code'') }}'
-  - name: source_code_name
-    description: '{{ doc(''navigation_source_code_name'') }}'
-  - name: source_coding_system
-    description: '{{ doc(''navigation_source_coding_system'') }}'
-  - name: mapped_code
-    description: '{{ doc(''navigation_mapped_code'') }}'
-  - name: mapped_code_name
-    description: '{{ doc(''navigation_mapped_code_name'') }}'
-  - name: mapped_coding_system
-    description: '{{ doc(''navigation_mapped_coding_system'') }}'
+  - name: clinical_record_type
+    description: '{{ doc(''navigation_clinical_record_type'') }}'
+  - name: clinical_record_type_name
+    description: '{{ doc(''navigation_clinical_record_type_name'') }}'
+  - name: code
+    description: Preferred analysis code. Uses the mapped SNOMED triplet when mapped_code is populated; otherwise
+      retains the source triplet. Original source and mapped fields remain available.
+  - name: code_name
+    description: Preferred analysis code name. Uses the mapped SNOMED triplet when mapped_code is populated; otherwise
+      retains the source triplet. Original source and mapped fields remain available.
+  - name: coding_system
+    description: Preferred analysis coding system. Uses the mapped SNOMED triplet when mapped_code is populated;
+      otherwise retains the source triplet. Original source and mapped fields remain available.
   - name: result_value
     description: '{{ doc(''navigation_result_value'') }}'
   - name: result_value_name
@@ -86,6 +53,17 @@ models:
     description: '{{ doc(''navigation_result_unit_name'') }}'
   - name: result_unit_symbol
     description: '{{ doc(''navigation_result_unit_symbol'') }}'
+  - name: assessment_tool_name
+    description: Published assessment tool name. Null for clinical items without an assessment definition.
+  - name: assessment_score_numeric
+    description: Usable numeric assessment score under the source specification. Known non-score responses are excluded.
+      Use this instead of result_value_numeric for scoring.
+  - name: assessment_response_status
+    description: 'Source assessment interpretation: enumerated_response, within_published_range, known_non_score,
+      value_missing, reference_not_available or response_unmatched. Null for other clinical items.'
+  - name: is_assessment_response_non_score
+    description: True for a published non-score response such as unable to assess. Null means the source has no
+      matching response definition.
   - name: medication_name
     description: '{{ doc(''navigation_medication_name'') }}'
   - name: medication_dose
@@ -100,12 +78,87 @@ models:
     description: '{{ doc(''navigation_medication_authorisation_type_code'') }}'
   - name: medication_authorisation_type_name
     description: '{{ doc(''navigation_medication_authorisation_type_name'') }}'
-  - name: qualifier_code
+  - name: diagnosis_qualifier_code
     description: '{{ doc(''navigation_qualifier_code'') }}'
-  - name: qualifier_name
+  - name: diagnosis_qualifier_name
     description: '{{ doc(''navigation_qualifier_name'') }}'
-  - name: clinical_record_type_name
-    description: '{{ doc(''navigation_clinical_record_type_name'') }}'
+  - name: provider_organisation_code
+    description: '{{ doc(''navigation_provider_organisation_code'') }}'
+  - name: provider_organisation_name
+    description: '{{ doc(''navigation_provider_organisation_name'') }}'
+  - name: provider_code_authority
+    description: '{{ doc(''navigation_provider_code_authority'') }}'
+  - name: recorded_at
+    description: OLIDS recording timestamp. It describes entry into the clinical system, not when the clinical condition
+      began. Never substituted for clinical_record_at.
+  - name: is_source_date_inconsistent
+    description: True when the source fact reports disagreement between its supplied and derived clinical dates.
+      Null when this comparison is unavailable.
+  - name: clinical_record_id
+    description: '{{ doc(''navigation_clinical_record_id'') }}'
+    data_tests:
+    - unique
+  - name: source_dataset
+    description: '{{ doc(''navigation_source_dataset'') }}'
+  - name: source_code
+    description: '{{ doc(''navigation_source_code'') }}'
+  - name: source_code_name
+    description: '{{ doc(''navigation_source_code_name'') }}'
+  - name: source_coding_system
+    description: '{{ doc(''navigation_source_coding_system'') }}'
+  - name: mapped_code
+    description: '{{ doc(''navigation_mapped_code'') }}'
+  - name: mapped_code_name
+    description: '{{ doc(''navigation_mapped_code_name'') }}'
+  - name: mapped_coding_system
+    description: '{{ doc(''navigation_mapped_coding_system'') }}'
+  - name: source_person_id
+    description: '{{ doc(''navigation_source_person_id'') }}'
+  - name: source_record_type
+    description: '{{ doc(''navigation_source_record_type'') }}'
+  - name: source_record_id
+    description: '{{ doc(''navigation_source_record_id'') }}'
+  - name: source_model_name
+    description: '{{ doc(''navigation_source_model_name'') }}'
+  - name: parent_record_type
+    description: '{{ doc(''navigation_parent_record_type'') }}'
+  - name: parent_record_id
+    description: '{{ doc(''navigation_parent_record_id'') }}'
+  - name: parent_model_name
+    description: '{{ doc(''navigation_parent_model_name'') }}'
+  - name: relationship_type
+    description: '{{ doc(''navigation_relationship_type'') }}'
+  - name: source_submission_period
+    description: '{{ doc(''navigation_source_submission_period'') }}'
+  - name: source_received_at
+    description: '{{ doc(''navigation_source_received_at'') }}'
+  - name: is_primary_diagnosis
+    description: Recorded ECDS primary diagnosis indicator. Null where the source does not provide this indicator;
+      coding position remains separate.
+  - name: coding_position
+    description: Submitted diagnosis or procedure position within its parent and code system. Positions from different
+      coding systems are not interchangeable.
+  - name: present_on_admission_code
+    description: Submitted SUS present-on-admission indicator. Retained without inferring onset from the encounter
+      date.
+  - name: is_parent_person_consistent
+    description: Agreement between the clinical record and its linked parent person key where independently checked.
+      False identifies a conflict; null means not independently established. APC and OLIDS parent dates require
+      positive agreement. Their known conflicting links are not promoted as parents.
+  - name: parent_start_date
+    description: Start date of the recorded episode, outpatient appointment, emergency attendance or OLIDS encounter.
+      Care context, not diagnosis onset. APC and OLIDS dates require positive person agreement. Interpret partial
+      dates with parent_start_date_precision.
+  - name: parent_end_date
+    description: End date of the recorded episode or emergency attendance. Retained as context without replacing
+      a missing clinical date. Null for parents without a supplied end date.
+  - name: present_on_admission_name
+    description: Readable interpretation of the NHS Data Dictionary national/default codes Y, N, 8 and 9. Missing
+      or unrecognised codes remain unlabelled. This field has limited mandated coverage; absence is not evidence
+      that a diagnosis developed after admission. See https://archive.datadictionary.nhs.uk/DD%20Release%20November%202021/data_elements/present_on_admission_indicator.html.
+  - name: parent_start_date_precision
+    description: 'Precision of parent_start_date: date, month, year or unknown. OLIDS retains its encounter precision;
+      an encounter context date is never substituted for the clinical date.'
   data_tests:
   - navigation_time_consistency:
       arguments:
@@ -113,3 +166,4 @@ models:
         date_column: clinical_record_date
         at_column: clinical_record_at
         precision_column: clinical_time_precision
+        at_is_sorting_anchor: true

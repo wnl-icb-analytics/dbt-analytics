@@ -1,5 +1,6 @@
 {{ config(materialized='view', tags=['person_clinical_record']) }}
 
+with source_records as (
 select
     clinical_record_id,
     sk_patient_id,
@@ -45,7 +46,20 @@ select
     null::varchar as medication_authorisation_type_name,
     null::varchar as qualifier_code,
     null::varchar as qualifier_name,
-    initcap(replace(clinical_record_type, '_', ' ')) as clinical_record_type_name
+    initcap(replace(clinical_record_type, '_', ' ')) as clinical_record_type_name,
+    assessment_tool_name,
+    assessment_score_numeric,
+    assessment_response_status,
+    is_assessment_response_non_score,
+    is_source_date_inconsistent,
+    null::timestamp_ntz as recorded_at,
+    null::boolean as is_primary_diagnosis,
+    null::number as coding_position,
+    null::varchar as present_on_admission_code,
+    null::boolean as is_parent_person_consistent,
+    null::date as parent_start_date,
+    null::date as parent_end_date,
+    null::varchar as parent_start_date_precision
 from {{ ref('int_mhsds_person_clinical_record') }}
 union all
 select
@@ -93,7 +107,20 @@ select
     null::varchar as medication_authorisation_type_name,
     null::varchar as qualifier_code,
     null::varchar as qualifier_name,
-    initcap(replace(clinical_record_type, '_', ' ')) as clinical_record_type_name
+    initcap(replace(clinical_record_type, '_', ' ')) as clinical_record_type_name,
+    assessment_tool_name,
+    assessment_score_numeric,
+    assessment_response_status,
+    is_assessment_response_non_score,
+    is_source_date_inconsistent,
+    null::timestamp_ntz as recorded_at,
+    null::boolean as is_primary_diagnosis,
+    null::number as coding_position,
+    null::varchar as present_on_admission_code,
+    null::boolean as is_parent_person_consistent,
+    null::date as parent_start_date,
+    null::date as parent_end_date,
+    null::varchar as parent_start_date_precision
 from {{ ref('int_csds_person_clinical_record') }}
 union all
 select
@@ -141,7 +168,20 @@ select
     medication_authorisation_type_name,
     null::varchar as qualifier_code,
     null::varchar as qualifier_name,
-    initcap(replace(clinical_record_type, '_', ' ')) as clinical_record_type_name
+    initcap(replace(clinical_record_type, '_', ' ')) as clinical_record_type_name,
+    null::varchar as assessment_tool_name,
+    null::number(38,9) as assessment_score_numeric,
+    null::varchar as assessment_response_status,
+    null::boolean as is_assessment_response_non_score,
+    null::boolean as is_source_date_inconsistent,
+    recorded_at,
+    null::boolean as is_primary_diagnosis,
+    null::number as coding_position,
+    null::varchar as present_on_admission_code,
+    is_parent_person_consistent,
+    parent_start_date,
+    null::date as parent_end_date,
+    parent_start_date_precision
 from {{ ref('int_olids_person_clinical_record') }}
 union all
 select
@@ -189,7 +229,20 @@ select
     null::varchar as medication_authorisation_type_name,
     null::varchar as qualifier_code,
     null::varchar as qualifier_name,
-    initcap(replace(clinical_record_type, '_', ' ')) as clinical_record_type_name
+    initcap(replace(clinical_record_type, '_', ' ')) as clinical_record_type_name,
+    null::varchar as assessment_tool_name,
+    null::number(38,9) as assessment_score_numeric,
+    null::varchar as assessment_response_status,
+    null::boolean as is_assessment_response_non_score,
+    null::boolean as is_source_date_inconsistent,
+    null::timestamp_ntz as recorded_at,
+    null::boolean as is_primary_diagnosis,
+    coding_position,
+    present_on_admission_code,
+    is_parent_person_consistent,
+    parent_start_date,
+    parent_end_date,
+    iff(parent_start_date is not null, 'date', 'unknown')::varchar as parent_start_date_precision
 from {{ ref('int_sus_person_clinical_record') }}
 union all
 select
@@ -237,9 +290,97 @@ select
     null::varchar as medication_authorisation_type_name,
     qualifier_code,
     qualifier_name,
-    initcap(replace(clinical_record_type, '_', ' ')) as clinical_record_type_name
+    initcap(replace(clinical_record_type, '_', ' ')) as clinical_record_type_name,
+    null::varchar as assessment_tool_name,
+    null::number(38,9) as assessment_score_numeric,
+    null::varchar as assessment_response_status,
+    null::boolean as is_assessment_response_non_score,
+    null::boolean as is_source_date_inconsistent,
+    null::timestamp_ntz as recorded_at,
+    is_primary_diagnosis,
+    coding_position,
+    null::varchar as present_on_admission_code,
+    null::boolean as is_parent_person_consistent,
+    parent_start_date,
+    parent_end_date,
+    iff(parent_start_date is not null, 'date', 'unknown')::varchar as parent_start_date_precision
 from {{ ref('int_ecds_person_clinical_record') }}
+)
+select
+    sk_patient_id,
+    case
+        when clinical_time_precision = 'timestamp' then clinical_record_at
+        when clinical_time_precision = 'month' then date_trunc('month', clinical_record_date)::timestamp_ntz
+        when clinical_time_precision = 'year' then date_trunc('year', clinical_record_date)::timestamp_ntz
+        else clinical_record_date::timestamp_ntz
+    end as clinical_record_at,
+    clinical_record_date,
+    clinical_time_precision,
+    clinical_time_basis,
+    clinical_record_type,
+    clinical_record_type_name,
+    iff(mapped_code is not null, mapped_code, source_code) as code,
+    iff(mapped_code is not null, mapped_code_name, source_code_name) as code_name,
+    iff(mapped_code is not null, mapped_coding_system, source_coding_system) as coding_system,
+    result_value,
+    result_value_name,
+    result_value_numeric,
+    result_value_parse_status,
+    result_date,
+    result_unit_code,
+    result_unit_name,
+    result_unit_symbol,
+    assessment_tool_name,
+    assessment_score_numeric,
+    assessment_response_status,
+    is_assessment_response_non_score,
+    medication_name,
+    medication_dose,
+    medication_quantity_value,
+    medication_quantity_unit,
+    medication_duration_days,
+    medication_authorisation_type_code,
+    medication_authorisation_type_name,
+    is_primary_diagnosis,
+    coding_position,
+    present_on_admission_code,
+    -- NHS Data Dictionary national and default present-on-admission codes.
+    case present_on_admission_code
+        when 'Y' then 'Present at admission'
+        when 'N' then 'Not present at admission'
+        when '8' then 'Not applicable'
+        when '9' then 'Unknown at admission'
+    end as present_on_admission_name,
+    is_parent_person_consistent,
+    parent_start_date,
+    parent_start_date_precision,
+    parent_end_date,
+    qualifier_code as diagnosis_qualifier_code,
+    qualifier_name as diagnosis_qualifier_name,
+    provider_organisation_code,
+    provider_organisation_name,
+    provider_code_authority,
+    recorded_at,
+    is_source_date_inconsistent,
+    clinical_record_id,
+    source_dataset,
+    source_code,
+    source_code_name,
+    source_coding_system,
+    mapped_code,
+    mapped_code_name,
+    mapped_coding_system,
+    source_person_id,
+    source_record_type,
+    source_record_id,
+    source_model_name,
+    parent_record_type,
+    parent_record_id,
+    parent_model_name,
+    relationship_type,
+    source_submission_period,
+    source_received_at
+from source_records
 
--- Date-only rows follow timed rows on their day without implying an actual sequence.
-order by sk_patient_id nulls last, clinical_record_date nulls last,
-    clinical_record_at nulls last, clinical_record_id
+-- Midnight and period starts are sorting anchors, not observed clock times.
+order by sk_patient_id nulls last, clinical_record_at nulls last, clinical_record_id

@@ -33,6 +33,7 @@ select
         else 'numeric'
     end as result_value_parse_status,
     result_date,
+    date_recorded::timestamp_ntz as recorded_at,
     result_unit_source_code as result_unit_code,
     result_unit_source_name as result_unit_name,
     medication_name,
@@ -45,9 +46,18 @@ select
     provider_organisation_code,
     provider_organisation_name,
     provider_code_authority,
-    encounter_id::varchar as parent_record_id,
-    iff(encounter_id is not null, 'encounter', null)::varchar as parent_record_type,
-    iff(encounter_id is not null, 'stg_olids_encounter', null)::varchar as parent_model_name,
-    iff(encounter_id is not null, 'recorded_parent', null)::varchar as relationship_type,
+    is_encounter_person_consistent as is_parent_person_consistent,
+    encounter_date::date as parent_start_date,
+    case
+        when encounter_date is null then 'unknown'
+        when encounter_date_precision_code = 'YMD' then 'date'
+        when encounter_date_precision_code = 'YM' then 'month'
+        when encounter_date_precision_code = 'Y' then 'year'
+        else 'unknown'
+    end::varchar as parent_start_date_precision,
+    iff(is_encounter_person_consistent is distinct from false, encounter_id, null)::varchar as parent_record_id,
+    iff(parent_record_id is not null, 'encounter', null)::varchar as parent_record_type,
+    iff(parent_record_id is not null, 'stg_olids_encounter', null)::varchar as parent_model_name,
+    iff(parent_record_id is not null, 'recorded_parent', null)::varchar as relationship_type,
     source_extraction_date as source_received_at
 from {{ ref('fct_gp_clinical_record') }}

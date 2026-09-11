@@ -6,8 +6,11 @@
         and r.source_coding_system like 'SNOMED CT%'
     left join {{ ref('snomed_concept') }} as mapped_concept
         on r.mapped_code = mapped_concept.snomed_code
-    -- Reference additions and label revisions reach older deliveries at full refresh.
-    where (source_concept.snomed_code is not null and r.mapped_code is not null
+    -- Historical deliveries can await new reference entries until full refresh.
+    where (source_concept.snomed_code is not null
+            {% if not flags.FULL_REFRESH %}
+            and r.mapped_code is not null
+            {% endif %}
             and r.mapped_code is distinct from source_concept.snomed_code)
         or (r.mapped_code is not null and mapped_concept.snomed_code is null)
         or (r.mapped_code is not null and r.mapped_coding_system is distinct from 'SNOMED CT')

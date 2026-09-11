@@ -29,7 +29,7 @@ OLIDS merges stable event or clinical IDs and also removes withdrawn keys.
 
 The monthly full refresh reconciles deliveries behind the watermark, changed
 reference labels and other upstream changes without a new delivery timestamp.
-This includes OLIDS statement-only context changes on existing medication orders.
+This includes OLIDS statement-only and encounter-only context changes on existing records.
 An increment is not a complete change-data-capture history. A failed build must
 be rerun before treating its output as current.
 
@@ -57,14 +57,15 @@ equivalent clinical fields. OLIDS stores the lookup key as text so analytics
 does not convert a numeric key for every lookup. Where no source clinical clock exists,
 the second clustering field is the clinical date.
 
-This fallback affects storage only. Published timestamps remain null when a
-clock time is not established. Clustering helps pruning and retrieval, but SQL
+The shared timestamp fields also provide a sorting anchor. A known day without
+a clock time uses midnight; a partial month or year uses the start of that period.
+The original date and precision remain explicit. Clustering helps pruning and retrieval, but SQL
 still requires `ORDER BY` to guarantee output order. A stable ID can break display
 ties; it does not establish which same-day event happened first.
 
 Both shared views include an `ORDER BY` across their complete source unions
-for direct timeline lookups. They sort by `sk_patient_id`, the relevant date,
-time and record ID. Date-only records follow timed records on the same day; undated records come
+for direct timeline lookups. They sort by `sk_patient_id`, `event_at` or
+`clinical_record_at`, then record ID. Midnight anchors precede timed records on the same day; undated records come
 last. These are presentation rules, not additional clinical precision. Sorting
 happens at query time. Joins, aggregations and other outer queries can change
 the result order; use a top-level `ORDER BY` when order must be guaranteed.
@@ -76,13 +77,32 @@ Interpret dates with their precision:
 | `timestamp` | A recorded clock time accompanies the date. |
 | `date` | The day is known; within-day order is unknown. |
 | `month`, `year` | A partial OLIDS clinical date. Do not interpret its stored day as exact. |
-| `unknown` | No established precision, including missing dates and uncertain MHSDS stored timestamps. |
+| `unknown` | No established precision. A retained source date can provide a sorting anchor; an absent date remains null. |
 
 MHSDS diagnosis and referral-assessment timestamps can lack their original
 submitted precision and offset. The shared clinical output retains the source
-date, marks precision unknown and leaves the timestamp null. The source fact
+date, marks precision `date` and uses a midnight sorting anchor. The source fact
 retains the stored timestamp, separately supplied date and inconsistency flags.
 See the [MHSDS source validation](mhsds-clinical-record-plan.md).
+
+Clock values remain as supplied in `timestamp_ntz`; the adapters do not convert
+them to UTC. Source offsets are not consistently available. A shared clock value
+therefore does not prove exact cross-system chronology, particularly around
+daylight-saving transitions.
+
+`parent_start_date` and `parent_end_date` describe the recorded care context.
+They do not replace a missing clinical date or establish diagnosis onset.
+APC context dates require positive agreement between the spell and episode person
+keys. OLIDS encounter context is prepared in dbt-OLIDS and requires a non-deleted
+encounter with the same person. Its precision remains in `parent_start_date_precision`.
+Known conflicting APC and OLIDS links are not promoted as parents; original source
+keys remain in the detailed models. `recorded_at` retains the OLIDS recording timestamp
+separately.
+
+Use `code`, `code_name` and `coding_system` together for routine clinical analysis.
+They select the mapped triplet when available, otherwise the source triplet.
+Both original triplets remain available. Use `assessment_score_numeric` for
+assessment scoring; `result_value_numeric` also contains numeric non-score responses.
 
 SUS procedures use their supplied procedure dates. Undated diagnoses remain
 undated; admission or appointment dates are not substituted. MHSDS and CSDS
@@ -182,6 +202,9 @@ type. A latest receipt does not prove every provider has supplied a complete
 period. MHSDS and CSDS reporting periods and source submission coverage remain
 available for choosing observation windows. e-RS future slots are planned
 activity; they do not extend the observation window for delivered care.
+
+The coverage model aggregates the prepared source branches directly. Reading the
+ordered analyst views would sort the complete populations before aggregation.
 
 Define the index event, source populations, completed-care criteria and period
 before calculating a time-to-care measure. Treat undated or partially dated

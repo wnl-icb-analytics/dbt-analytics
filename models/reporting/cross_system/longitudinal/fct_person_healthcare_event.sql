@@ -1,5 +1,6 @@
 {{ config(materialized='view', tags=['healthcare_event_stream']) }}
 
+with source_records as (
 select
     event_id,
     sk_patient_id,
@@ -46,7 +47,11 @@ select
     relationship_type,
     source_submission_period,
     source_received_at,
-    initcap(replace(care_setting, '_', ' ')) as care_setting_name
+    initcap(replace(care_setting, '_', ' ')) as care_setting_name,
+    null::varchar as service_id,
+    null::varchar as service_name,
+    null::varchar as priority_code,
+    null::varchar as priority_name
 from {{ ref('int_mhsds_healthcare_event') }}
 union all
 select
@@ -95,7 +100,11 @@ select
     relationship_type,
     source_submission_period,
     source_received_at,
-    initcap(replace(care_setting, '_', ' ')) as care_setting_name
+    initcap(replace(care_setting, '_', ' ')) as care_setting_name,
+    null::varchar as service_id,
+    null::varchar as service_name,
+    null::varchar as priority_code,
+    null::varchar as priority_name
 from {{ ref('int_csds_healthcare_event') }}
 union all
 select
@@ -144,7 +153,11 @@ select
     null::varchar as relationship_type,
     null::date as source_submission_period,
     source_received_at,
-    initcap(replace(care_setting, '_', ' ')) as care_setting_name
+    initcap(replace(care_setting, '_', ' ')) as care_setting_name,
+    null::varchar as service_id,
+    null::varchar as service_name,
+    null::varchar as priority_code,
+    null::varchar as priority_name
 from {{ ref('int_olids_healthcare_event') }}
 union all
 select
@@ -193,7 +206,11 @@ select
     null::varchar as relationship_type,
     null::date as source_submission_period,
     source_received_at,
-    initcap(replace(care_setting, '_', ' ')) as care_setting_name
+    initcap(replace(care_setting, '_', ' ')) as care_setting_name,
+    null::varchar as service_id,
+    null::varchar as service_name,
+    null::varchar as priority_code,
+    null::varchar as priority_name
 from {{ ref('int_sus_healthcare_event') }}
 union all
 select
@@ -242,9 +259,70 @@ select
     relationship_type,
     null::date as source_submission_period,
     source_received_at,
-    null::varchar as care_setting_name
+    null::varchar as care_setting_name,
+    service_id,
+    service_name,
+    priority_code,
+    priority_name
 from {{ ref('int_ers_healthcare_event') }}
+)
+select
+    sk_patient_id,
+    case
+        when event_time_precision = 'timestamp' then event_at
+        when event_time_precision = 'month' then date_trunc('month', event_date)::timestamp_ntz
+        when event_time_precision = 'year' then date_trunc('year', event_date)::timestamp_ntz
+        else event_date::timestamp_ntz
+    end as event_at,
+    event_date,
+    event_time_precision,
+    event_time_basis,
+    event_type,
+    event_name,
+    event_code,
+    event_code_name,
+    event_coding_system,
+    care_setting,
+    care_setting_name,
+    status_code,
+    status_name,
+    attendance_code as attendance_status_code,
+    attendance_name as attendance_status_name,
+    outcome_code,
+    outcome_name,
+    service_id,
+    service_name,
+    priority_code,
+    priority_name,
+    service_or_team_type_code,
+    service_or_team_type_name,
+    specialty_code,
+    specialty_name,
+    consultation_mechanism_code,
+    consultation_mechanism_name,
+    activity_location_type_code,
+    activity_location_type_name,
+    provider_organisation_code,
+    provider_organisation_name,
+    provider_code_authority,
+    site_code,
+    site_name,
+    referring_organisation_code,
+    referring_organisation_name,
+    event_id,
+    clinical_record_id,
+    source_dataset,
+    source_person_id,
+    source_record_type,
+    source_record_id,
+    source_model_name,
+    parent_record_type,
+    parent_record_id,
+    parent_model_name,
+    relationship_type,
+    source_submission_period,
+    source_received_at
+from source_records
 
--- Default timeline presentation across sources; undated events follow dated events.
--- Date-only rows follow timed rows on their day without implying an actual sequence.
-order by sk_patient_id nulls last, event_date nulls last, event_at nulls last, event_id
+-- Midnight and period starts are sorting anchors, not observed clock times.
+order by sk_patient_id nulls last, event_at nulls last, event_id

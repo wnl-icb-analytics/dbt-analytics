@@ -35,7 +35,7 @@ Recorded event date. Interpret with event_time_precision: month and year values 
 {% enddocs %}
 
 {% docs navigation_event_at %}
-Recorded event timestamp, present only when the source establishes a clock time. Date-only events keep event_date and have a null event_at.
+Timeline sorting timestamp. Retains an established source clock time; otherwise uses midnight on the recorded date, or the first day of a recorded month or year. These anchors are presentation conventions, not observed times. Null only when no source date is available. Interpret with event_time_precision.
 {% enddocs %}
 
 {% docs navigation_event_time_precision %}
@@ -195,11 +195,11 @@ Recorded or source-validated clinical date. SUS diagnoses and other undated code
 {% enddocs %}
 
 {% docs navigation_clinical_record_at %}
-Clinical timestamp only where a source clock time is available. Null for date-only, partial or undated clinical records.
+Timeline sorting timestamp. Retains an established source clock time; otherwise uses midnight on the clinical date, or the first day of a recorded month or year. These anchors do not establish within-day sequence or an exact day for a partial date. Undated records remain null; recording and encounter dates do not replace the clinical date.
 {% enddocs %}
 
 {% docs navigation_clinical_time_precision %}
-timestamp, date, month, year or unknown. Source day precision cannot establish ordering within that day. MHSDS stored timestamps with unknown submitted precision are unknown here, with a null clinical_record_at; the detailed source fact retains the stored timestamp and supplied date for inspection.
+timestamp, date, month, year or unknown. Source day precision cannot establish ordering within that day. MHSDS stored timestamps with unverified clock precision have date precision here. Their detailed source fact retains the original timestamp and supplied date; is_source_date_inconsistent identifies disagreements. Unknown precision with a populated date retains the source date as a sorting anchor without claiming its precision.
 {% enddocs %}
 
 {% docs navigation_clinical_time_basis %}
@@ -239,7 +239,7 @@ Published response label where a clinical assessment has an enumerated response.
 {% enddocs %}
 
 {% docs navigation_result_value_numeric %}
-Numeric representation at precision 38 and scale 9. Check result_value_parse_status before analysis; an enumerated non-score response is not necessarily a usable assessment score. Source facts retain scoring rules.
+Numeric representation at precision 38 and scale 9. Check result_value_parse_status before analysis; an enumerated non-score response is not necessarily a usable assessment score. Use assessment_score_numeric and assessment_response_status for assessment scoring.
 {% enddocs %}
 
 {% docs navigation_result_value_parse_status %}
