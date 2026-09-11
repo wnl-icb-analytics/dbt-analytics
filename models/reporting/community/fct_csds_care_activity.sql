@@ -37,22 +37,22 @@ select
     , procedure_scheme.description as procedure_scheme_name
     , a.coded_procedure_clinical_terminology as procedure_code
     , coalesce(procedure_snomed.preferred_term, procedure_read.term) as procedure_name
-    , case when procedure_snomed.preferred_term is not null then 'Dictionary.SNOMED.Concept'
+    , case when procedure_snomed.preferred_term is not null then procedure_snomed.definition_source
         when procedure_read.term is not null then procedure_read.definition_source
     end as procedure_name_definition_source
     , a.finding_scheme_in_use_community_care as finding_scheme_code
     , finding_scheme.description as finding_scheme_name
     , a.coded_finding_coded_clinical_entry as finding_code
     , coalesce(finding_snomed.preferred_term, finding_read.term, finding_icd.description) as finding_name
-    , case when finding_snomed.preferred_term is not null then 'Dictionary.SNOMED.Concept'
+    , case when finding_snomed.preferred_term is not null then finding_snomed.definition_source
         when finding_read.term is not null then finding_read.definition_source
-        when finding_icd.description is not null then 'Dictionary.dbo.Diagnosis'
+        when finding_icd.description is not null then finding_icd.definition_source
     end as finding_name_definition_source
     , a.observation_scheme_in_use_community_care as observation_scheme_code
     , observation_scheme.description as observation_scheme_name
     , a.coded_observation_clinical_terminology as observation_code
     , coalesce(observation_snomed.preferred_term, observation_read.term) as observation_name
-    , case when observation_snomed.preferred_term is not null then 'Dictionary.SNOMED.Concept'
+    , case when observation_snomed.preferred_term is not null then observation_snomed.definition_source
         when observation_read.term is not null then observation_read.definition_source
     end as observation_name_definition_source
     , a.observation_value
