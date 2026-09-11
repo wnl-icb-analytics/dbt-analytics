@@ -1,6 +1,6 @@
 {{
     config(
-        description="Raw layer (SNOMED CT cross-map and terminology reference data. Sourced by NHS TRUD.). 1:1 passthrough with cleaned column names. \nSource: REFERENCE.TERMINOLOGY.SNOMED_TO_OPCS4__LATEST \ndbt: source(''reference_trud_terminology'', ''SNOMED_TO_OPCS4__LATEST'') \nColumns:\n  SNOMED_CONCEPT_ID -> snomed_concept_id\n  SNOMED_TERM -> snomed_term\n  OPCS4_CODE -> opcs4_code\n  OPCS4_TERM -> opcs4_term\n  OPCS_VERSION -> opcs_version\n  MAP_GROUP -> map_group\n  MAP_PRIORITY -> map_priority\n  MAP_RULE -> map_rule\n  MAP_ADVICE -> map_advice\n  MAP_BLOCK -> map_block\n  EFFECTIVE_TIME -> effective_time\n  RELEASE_ID -> release_id"
+        description="Raw layer (SNOMED CT cross-map and terminology reference data. Sourced by NHS TRUD.). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE.TERMINOLOGY.SNOMED_TO_OPCS4__LATEST \ndbt: source(''reference_trud_terminology'', ''SNOMED_TO_OPCS4__LATEST'') \nColumns:\n  SNOMED_CONCEPT_ID -> snomed_concept_id\n  SNOMED_TERM -> snomed_term\n  OPCS4_CODE -> opcs4_code\n  OPCS4_TERM -> opcs4_term\n  OPCS_VERSION -> opcs_version\n  MAP_GROUP -> map_group\n  MAP_PRIORITY -> map_priority\n  MAP_RULE -> map_rule\n  MAP_ADVICE -> map_advice\n  MAP_BLOCK -> map_block\n  EFFECTIVE_TIME -> effective_time\n  RELEASE_ID -> release_id"
     )
 }}
 select

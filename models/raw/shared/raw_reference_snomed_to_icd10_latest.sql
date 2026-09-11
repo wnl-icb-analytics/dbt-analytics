@@ -1,6 +1,6 @@
 {{
     config(
-        description="Raw layer (SNOMED CT cross-map and terminology reference data. Sourced by NHS TRUD.). 1:1 passthrough with cleaned column names. \nSource: REFERENCE.TERMINOLOGY.SNOMED_TO_ICD10__LATEST \ndbt: source(''reference_trud_terminology'', ''SNOMED_TO_ICD10__LATEST'') \nColumns:\n  SNOMED_CONCEPT_ID -> snomed_concept_id\n  SNOMED_TERM -> snomed_term\n  ICD10_CODE -> icd10_code\n  ICD10_TERM -> icd10_term\n  MAP_GROUP -> map_group\n  MAP_PRIORITY -> map_priority\n  MAP_RULE -> map_rule\n  MAP_ADVICE -> map_advice\n  MAP_BLOCK -> map_block\n  EFFECTIVE_TIME -> effective_time\n  RELEASE_ID -> release_id"
+        description="Raw layer (SNOMED CT cross-map and terminology reference data. Sourced by NHS TRUD.). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE.TERMINOLOGY.SNOMED_TO_ICD10__LATEST \ndbt: source(''reference_trud_terminology'', ''SNOMED_TO_ICD10__LATEST'') \nColumns:\n  SNOMED_CONCEPT_ID -> snomed_concept_id\n  SNOMED_TERM -> snomed_term\n  ICD10_CODE -> icd10_code\n  ICD10_TERM -> icd10_term\n  MAP_GROUP -> map_group\n  MAP_PRIORITY -> map_priority\n  MAP_RULE -> map_rule\n  MAP_ADVICE -> map_advice\n  MAP_BLOCK -> map_block\n  EFFECTIVE_TIME -> effective_time\n  RELEASE_ID -> release_id"
     )
 }}
 select

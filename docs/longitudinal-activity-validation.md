@@ -137,11 +137,10 @@ exceptions. Unrecognised does not establish invalidity. A further 23,480,922
 OLIDS rows have recognised inactive targets, which remain valid historical
 identifiers.
 
-TRUD resources and the weekly loader now live in `REFERENCE.TERMINOLOGY`.
-All ten moved tables matched their previous counts and all-column fingerprints.
-Compatibility views preserve existing read paths; all 16 dependent views
-compiled. The loader skipped an already-loaded release. No classification
-reverse map was used to assign a clinical SNOMED code.
+TRUD ingestion remains in `DATA_LAKE.TERMINOLOGY`. dbt maps the landing
+resources through `scripts/sources`; only selected analytical references
+belong in `REFERENCE.TERMINOLOGY`. No classification reverse map was used to
+assign a clinical SNOMED code.
 
 ### Source coverage
 
