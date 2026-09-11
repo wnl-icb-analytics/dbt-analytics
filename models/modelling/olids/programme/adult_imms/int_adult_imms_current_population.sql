@@ -8,11 +8,11 @@
 WITH PPV_clinical_risk_groups AS (
 select distinct person_id
 FROM (
-SELECT person_id, risk_group, reference_date
-    --from REPORTING.OLIDS_PROGRAMME.FCT_COVID_ELIGIBILITY
-    FROM {{ ref('fct_covid_eligibility') }}
-   WHERE risk_group 
-   in ('Chronic Respiratory Disease','Asplenia/Spleen Dysfunction','Chronic Heart Disease','Chronic Kidney Disease','Diabetes','Chronic Liver Disease','Immunosuppression')
+SELECT person_id, subcohort as risk_group, reference_date
+    --from REPORTING.OLIDS_PROGRAMME.FCT_FLU_ELIGIBILITY
+    FROM {{ ref('fct_flu_eligibility') }}
+   WHERE subcohort 
+   in ('Chronic Respiratory Disease','Asplenia','Chronic Heart Disease','Chronic Kidney Disease','Diabetes','Chronic Liver Disease','Immunosuppression')
    QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, RISK_GROUP ORDER BY REFERENCE_DATE DESC) = 1
 
 UNION ALL
