@@ -49,7 +49,7 @@ WITH pds_patient_check AS (
                             AND pod IN ('NEL-ZLOS','NEL-LOS+1') 
                         THEN primary_id 
                         END) >= 1 
-        THEN 1 
+        THEN 1
         ELSE 0 END AS barnet_hospital_flag,
 
     COUNT(DISTINCT -- counts distinct attendance IDs for non-elective attendances at Barnet Hospital in the period
@@ -243,7 +243,7 @@ FROM
 INNER JOIN
     {{ ref("dim_practice_neighbourhood") }} ncl -- REPORTING.OLIDS_ORGANISATION.DIM_PRACTICE_NEIGHBOURHOOD AS ncl 
     ON att_dx.gp_code = ncl.PRACTICE_CODE
-LEFT JOIN 
+LEFT JOIN
     {{ ref("stg_registries_deaths") }} death
     ON att_dx.patient_id = death.sk_patient_id -- check whether patient dead as of running model
     AND death.reg_date < CURRENT_DATE -- only include deaths that have been registered before the current date
