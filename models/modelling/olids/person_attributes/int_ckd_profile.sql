@@ -6,7 +6,7 @@ IND233, IND234, IND235, IND263, IND264, IND324). One row per person on the CKD
 register (stage 3 to 5 by code). Combines the register diagnosis date, the
 latest eGFR and urine ACR values, proteinuria records, frailty, diabetes type,
 hypertension, the latest
-renin-angiotensin and SGLT2 inhibitor orders (and the first renin-angiotensin order), ACE
+renin-angiotensin and SGLT2 inhibitor orders (and the latest renin-angiotensin order preceding the last SGLT2 order), ACE
 inhibitor and ARB contraindications, and the eGFR and ACR tests around the
 diagnosis that the new-diagnosis indicators need. No registration, living or
 test-patient filter; consumers join dim_person_active_patients.
@@ -97,6 +97,22 @@ acr_near_diagnosis AS (
         AND acr.is_acr_ratio
         AND acr.clinical_effective_date::DATE BETWEEN DATEADD(day, -90, r.ckd_diagnosis_date) AND DATEADD(day, 90, r.ckd_diagnosis_date)
     GROUP BY r.person_id
+),
+
+-- Latest ACE inhibitor or ARB order dated on or before the person's latest SGLT2 inhibitor order (NICE IND324 sequence)
+ras_before_sglt2 AS (
+    SELECT
+        orders.person_id,
+        MAX(orders.order_date) AS latest_ras_order_before_last_sglt2_date
+    FROM (
+        SELECT person_id, order_date FROM {{ ref('int_ace_inhibitor_medications_all') }}
+        UNION ALL
+        SELECT person_id, order_date FROM {{ ref('int_arb_medications_all') }}
+    ) AS orders
+    INNER JOIN {{ ref('int_sglt2_therapy_latest') }} AS sglt2
+        ON orders.person_id = sglt2.person_id
+        AND orders.order_date <= sglt2.latest_order_date
+    GROUP BY orders.person_id
 )
 
 SELECT
@@ -113,7 +129,7 @@ SELECT
     diabetes.diabetes_type,
     hypertension.person_id IS NOT NULL AS has_hypertension,
     ras.latest_order_date AS latest_ras_order_date,
-    ras.first_order_date AS first_ras_order_date,
+    ras_before_sglt2.latest_ras_order_before_last_sglt2_date,
     ras.latest_ras_class,
     COALESCE(contraindication.is_ace_inhibitor_contraindicated, FALSE) AS is_ace_inhibitor_contraindicated,
     COALESCE(contraindication.is_arb_contraindicated, FALSE) AS is_arb_contraindicated,
@@ -137,6 +153,7 @@ LEFT JOIN {{ ref('fct_person_hypertension_register') }} AS hypertension
 LEFT JOIN {{ ref('int_renin_angiotensin_therapy_latest') }} AS ras ON r.person_id = ras.person_id
 LEFT JOIN contraindication ON r.person_id = contraindication.person_id
 LEFT JOIN {{ ref('int_sglt2_therapy_latest') }} AS sglt2 ON r.person_id = sglt2.person_id
+LEFT JOIN ras_before_sglt2 ON r.person_id = ras_before_sglt2.person_id
 LEFT JOIN egfr_pair ON r.person_id = egfr_pair.person_id
 LEFT JOIN egfr_near_diagnosis ON r.person_id = egfr_near_diagnosis.person_id
 LEFT JOIN acr_near_diagnosis ON r.person_id = acr_near_diagnosis.person_id

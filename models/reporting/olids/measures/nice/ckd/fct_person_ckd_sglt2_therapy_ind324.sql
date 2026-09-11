@@ -32,15 +32,16 @@ assessed AS (
         population.latest_acr_value,
         population.latest_egfr_value,
         population.latest_sglt2_order_date AS latest_therapy_order_date,
-        -- Outside type 2 diabetes NICE asks that renin-angiotensin treatment (or its contraindication) precede the last SGLT2 prescription
+        -- Outside type 2 diabetes NICE defines current renin-angiotensin treatment as a prescription in the last
+        -- 6 months that precedes the last SGLT2 prescription (or a contraindication to both classes)
         population.diabetes_type = 'Type 2'
             OR (population.is_ace_inhibitor_contraindicated AND population.is_arb_contraindicated)
-            OR population.first_ras_order_date <= population.latest_sglt2_order_date AS is_treatment_sequence_met,
+            OR population.latest_ras_order_before_last_sglt2_date >= DATEADD(month, -6, CURRENT_DATE()) AS is_treatment_sequence_met,
         CASE WHEN population.latest_sglt2_order_date >= DATEADD(month, -6, CURRENT_DATE()) THEN population.latest_sglt2_order_date END AS latest_record_date,
         COALESCE(population.latest_sglt2_order_date >= DATEADD(month, -6, CURRENT_DATE())
             AND (population.diabetes_type = 'Type 2'
                 OR (population.is_ace_inhibitor_contraindicated AND population.is_arb_contraindicated)
-                OR population.first_ras_order_date <= population.latest_sglt2_order_date), FALSE) AS is_in_numerator
+                OR population.latest_ras_order_before_last_sglt2_date >= DATEADD(month, -6, CURRENT_DATE())), FALSE) AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
