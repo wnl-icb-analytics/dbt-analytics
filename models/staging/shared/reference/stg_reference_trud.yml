@@ -1,0 +1,40 @@
+version: 2
+models:
+- name: stg_reference_icd10_code_term_latest
+  description: One ICD10 code and title in the current TRUD classification file. Codes are stored without dots.
+  config: &id001
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: code
+    description: Classification code without dots.
+    data_tests:
+    - unique
+    - not_null
+  - name: description
+    description: Published TRUD code title.
+- name: stg_reference_opcs4_code_term_latest
+  description: One OPCS4 code and title in the current TRUD classification file. Codes are stored without dots.
+  config: *id001
+  columns:
+  - name: code
+    description: Classification code without dots.
+    data_tests:
+    - unique
+    - not_null
+  - name: description
+    description: Published TRUD code title.
+- name: stg_reference_snomed_to_opcs4_latest
+  description: One active published SNOMED-to-OPCS-4 map member per source concept, target version, map block,
+    group and priority. Retains mapping rules and advice; does not select a classification for a patient.
+  config: *id001
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - snomed_concept_id
+        - opcs_version
+        - map_block
+        - map_group
+        - map_priority
