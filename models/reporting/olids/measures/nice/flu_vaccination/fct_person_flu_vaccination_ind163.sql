@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND163: https://www.nice.org.uk/indicators/ind163
--- Flu vaccination in the most recently completed season (1 August to 31 March) for people on the diabetes register; excludes a contraindication recorded in 12 months.
+-- Flu vaccination in the most recently completed season (1 August to 31 March) for people on the diabetes register; excludes a persisting contraindication or one recorded in 12 months.
 WITH register AS (
     SELECT person_id FROM {{ ref('fct_person_diabetes_register') }} WHERE is_on_register
 ),
@@ -15,7 +15,7 @@ indicator_population AS (
         ON register.person_id = age.person_id
     LEFT JOIN {{ ref('int_flu_vaccination_contraindication_all') }} AS contra
         ON register.person_id = contra.person_id
-        AND contra.clinical_effective_date::DATE >= DATEADD(month, -12, CURRENT_DATE())
+        AND (contra.is_persisting OR contra.clinical_effective_date::DATE >= DATEADD(month, -12, CURRENT_DATE()))
     WHERE contra.person_id IS NULL
 ),
 
