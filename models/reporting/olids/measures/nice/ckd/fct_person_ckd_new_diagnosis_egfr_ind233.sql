@@ -9,7 +9,7 @@ WITH indicator_population AS (
     FROM {{ ref('int_ckd_profile') }} AS profile
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE profile.ckd_diagnosis_date >= DATEADD(month, -12, CURRENT_DATE())
+    WHERE profile.ckd_diagnosis_date BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
 ),
 
 assessed AS (
@@ -21,7 +21,7 @@ assessed AS (
         population.ckd_diagnosis_date AS diagnosis_date,
         population.latest_egfr_value,
         population.latest_acr_value,
-        CASE WHEN population.has_egfr_pair_before_diagnosis THEN population.ckd_diagnosis_date END AS latest_record_date,
+        CASE WHEN population.has_egfr_pair_before_diagnosis THEN population.second_egfr_before_diagnosis_date END AS latest_record_date,
         population.has_egfr_pair_before_diagnosis AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active

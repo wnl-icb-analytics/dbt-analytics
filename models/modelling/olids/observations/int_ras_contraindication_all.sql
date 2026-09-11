@@ -1,6 +1,5 @@
 {{
     config(
-        materialized='table',
         cluster_by=['person_id', 'clinical_effective_date'])
 }}
 

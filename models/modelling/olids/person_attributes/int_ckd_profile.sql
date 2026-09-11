@@ -1,11 +1,12 @@
-{{ config(materialized='table', cluster_by=['person_id']) }}
+{{ config(cluster_by=['person_id']) }}
 
 /*
 Per-person profile for the NICE chronic kidney disease indicators (IND130,
 IND233, IND234, IND235, IND263, IND264, IND324). One row per person on the CKD
 register (stage 3 to 5 by code). Combines the register diagnosis date, the
 latest eGFR and urine ACR values, proteinuria records, frailty, diabetes type,
-hypertension, the latest renin-angiotensin and SGLT2 inhibitor orders, ACE
+hypertension, the latest
+renin-angiotensin and SGLT2 inhibitor orders (and the first renin-angiotensin order), ACE
 inhibitor and ARB contraindications, and the eGFR and ACR tests around the
 diagnosis that the new-diagnosis indicators need. No registration, living or
 test-patient filter; consumers join dim_person_active_patients.
@@ -52,33 +53,50 @@ contraindication AS (
     GROUP BY person_id
 ),
 
--- eGFR on two occasions at least 90 days apart, the second within 90 days before diagnosis
-egfr_pair AS (
-    SELECT DISTINCT r.person_id
-    FROM register AS r
-    INNER JOIN {{ ref('int_egfr_all') }} AS second
-        ON r.person_id = second.person_id
-        AND second.clinical_effective_date::DATE BETWEEN DATEADD(day, -90, r.ckd_diagnosis_date) AND r.ckd_diagnosis_date
-    INNER JOIN {{ ref('int_egfr_all') }} AS first
-        ON r.person_id = first.person_id
-        AND first.clinical_effective_date::DATE <= DATEADD(day, -90, second.clinical_effective_date::DATE)
-),
-
-egfr_near_diagnosis AS (
-    SELECT DISTINCT r.person_id
+-- Valued eGFR results for register people, with the person's first ever result
+egfr_results AS (
+    SELECT
+        r.person_id,
+        r.ckd_diagnosis_date,
+        egfr.clinical_effective_date::DATE AS egfr_date,
+        MIN(egfr.clinical_effective_date::DATE) OVER (PARTITION BY r.person_id) AS first_egfr_date
     FROM register AS r
     INNER JOIN {{ ref('int_egfr_all') }} AS egfr
         ON r.person_id = egfr.person_id
-        AND egfr.clinical_effective_date::DATE BETWEEN DATEADD(day, -90, r.ckd_diagnosis_date) AND DATEADD(day, 90, r.ckd_diagnosis_date)
+        AND egfr.egfr_value IS NOT NULL
+),
+
+-- eGFR on two occasions at least 90 days apart, the second within 90 days before diagnosis:
+-- a result in that window qualifies when the person's first result is at least 90 days earlier
+egfr_pair AS (
+    SELECT
+        person_id,
+        MAX(egfr_date) AS second_egfr_before_diagnosis_date
+    FROM egfr_results
+    WHERE egfr_date BETWEEN DATEADD(day, -90, ckd_diagnosis_date) AND ckd_diagnosis_date
+        AND first_egfr_date <= DATEADD(day, -90, egfr_date)
+    GROUP BY person_id
+),
+
+egfr_near_diagnosis AS (
+    SELECT
+        person_id,
+        MAX(egfr_date) AS egfr_within_90_days_of_diagnosis_date
+    FROM egfr_results
+    WHERE egfr_date BETWEEN DATEADD(day, -90, ckd_diagnosis_date) AND DATEADD(day, 90, ckd_diagnosis_date)
+    GROUP BY person_id
 ),
 
 acr_near_diagnosis AS (
-    SELECT DISTINCT r.person_id
+    SELECT
+        r.person_id,
+        MAX(acr.clinical_effective_date::DATE) AS acr_within_90_days_of_diagnosis_date
     FROM register AS r
     INNER JOIN {{ ref('int_urine_acr_all') }} AS acr
         ON r.person_id = acr.person_id
         AND acr.is_acr_ratio
         AND acr.clinical_effective_date::DATE BETWEEN DATEADD(day, -90, r.ckd_diagnosis_date) AND DATEADD(day, 90, r.ckd_diagnosis_date)
+    GROUP BY r.person_id
 )
 
 SELECT
@@ -95,14 +113,18 @@ SELECT
     diabetes.diabetes_type,
     hypertension.person_id IS NOT NULL AS has_hypertension,
     ras.latest_order_date AS latest_ras_order_date,
+    ras.first_order_date AS first_ras_order_date,
     ras.latest_ras_class,
     COALESCE(contraindication.is_ace_inhibitor_contraindicated, FALSE) AS is_ace_inhibitor_contraindicated,
     COALESCE(contraindication.is_arb_contraindicated, FALSE) AS is_arb_contraindicated,
     sglt2.latest_order_date AS latest_sglt2_order_date,
     sglt2.latest_sglt2_drug,
     egfr_pair.person_id IS NOT NULL AS has_egfr_pair_before_diagnosis,
+    egfr_pair.second_egfr_before_diagnosis_date,
     egfr_near_diagnosis.person_id IS NOT NULL AS has_egfr_within_90_days_of_diagnosis,
-    acr_near_diagnosis.person_id IS NOT NULL AS has_acr_within_90_days_of_diagnosis
+    egfr_near_diagnosis.egfr_within_90_days_of_diagnosis_date,
+    acr_near_diagnosis.person_id IS NOT NULL AS has_acr_within_90_days_of_diagnosis,
+    acr_near_diagnosis.acr_within_90_days_of_diagnosis_date
 FROM register AS r
 LEFT JOIN latest_egfr ON r.person_id = latest_egfr.person_id
 LEFT JOIN latest_acr ON r.person_id = latest_acr.person_id

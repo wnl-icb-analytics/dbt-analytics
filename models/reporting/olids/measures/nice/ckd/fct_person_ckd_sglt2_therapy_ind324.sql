@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND324: https://www.nice.org.uk/indicators/ind324
--- SGLT2 inhibitor order in 6 months for people on the CKD register with type 2 diabetes, or without it and on (or contraindicated to) ACE inhibitor or ARB therapy with eGFR 20 to 44, or eGFR 45 to 59 with ACR 22.6 or more; excludes eGFR below 20.
+-- SGLT2 inhibitor order in 6 months, preceded by renin-angiotensin treatment outside type 2 diabetes, for people on the CKD register with type 2 diabetes, or without it and on (or contraindicated to) ACE inhibitor or ARB therapy with eGFR 20 to 44, or eGFR 45 to 59 with ACR 22.6 or more; excludes eGFR below 20.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -32,8 +32,15 @@ assessed AS (
         population.latest_acr_value,
         population.latest_egfr_value,
         population.latest_sglt2_order_date AS latest_therapy_order_date,
+        -- Outside type 2 diabetes NICE asks that renin-angiotensin treatment (or its contraindication) precede the last SGLT2 prescription
+        population.diabetes_type = 'Type 2'
+            OR (population.is_ace_inhibitor_contraindicated AND population.is_arb_contraindicated)
+            OR population.first_ras_order_date <= population.latest_sglt2_order_date AS is_treatment_sequence_met,
         CASE WHEN population.latest_sglt2_order_date >= DATEADD(month, -6, CURRENT_DATE()) THEN population.latest_sglt2_order_date END AS latest_record_date,
-        COALESCE(population.latest_sglt2_order_date >= DATEADD(month, -6, CURRENT_DATE()), FALSE) AS is_in_numerator
+        COALESCE(population.latest_sglt2_order_date >= DATEADD(month, -6, CURRENT_DATE())
+            AND (population.diabetes_type = 'Type 2'
+                OR (population.is_ace_inhibitor_contraindicated AND population.is_arb_contraindicated)
+                OR population.first_ras_order_date <= population.latest_sglt2_order_date), FALSE) AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
@@ -52,6 +59,7 @@ SELECT
     latest_acr_value,
     latest_egfr_value,
     latest_therapy_order_date,
+    is_treatment_sequence_met,
     latest_record_date,
     TRUE AS is_in_denominator,
     is_in_numerator,

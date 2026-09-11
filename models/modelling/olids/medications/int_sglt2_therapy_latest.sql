@@ -1,4 +1,4 @@
-{{ config(materialized='table', cluster_by=['person_id']) }}
+{{ config(cluster_by=['person_id']) }}
 
 /*
 Latest SGLT2 inhibitor order per person, for "currently treated" measures.

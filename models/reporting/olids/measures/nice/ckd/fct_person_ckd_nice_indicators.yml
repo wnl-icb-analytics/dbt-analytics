@@ -148,7 +148,7 @@ models:
       diabetes and is on ACE inhibitor or ARB therapy in the preceding 6
       months (or contraindicated to both) with a latest eGFR of 20 to 44, or
       of 45 to 59 with a latest urine ACR of 22.6 mg/mmol or more, assessed on
-      the build date. The numerator requires an SGLT2 inhibitor order in the preceding 6 calendar months. NICE also asks that the renin-angiotensin treatment precede the last SGLT2 prescription; that ordering is not applied. An unknown diabetes type follows the non-type-2 branch. Personalised care adjustments are not
+      the build date. The numerator requires an SGLT2 inhibitor order in the preceding 6 calendar months. Outside type 2 diabetes, NICE also asks that the renin-angiotensin treatment precede the last SGLT2 prescription: the numerator requires the first ACE inhibitor or ARB order on or before the latest SGLT2 order, or a contraindication to both. An unknown diabetes type follows the non-type-2 branch. Personalised care adjustments are not
       applied. Secondary-use consumers must join
       DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
       1 opt-out filtering.
@@ -198,6 +198,8 @@ models:
         description: Latest urine ACR in mg/mmol; null when none
       - name: latest_therapy_order_date
         description: Date of the latest order of the counted therapy at any time; null when never ordered
+      - name: is_treatment_sequence_met
+        description: Whether the renin-angiotensin treatment (or a contraindication to both classes) precedes the latest SGLT2 order, or the person has type 2 diabetes
       - name: latest_record_date
         description: Date of the latest qualifying record in the period; null when none
       - name: is_in_denominator
@@ -205,7 +207,7 @@ models:
       - name: is_in_numerator
         description: Whether the person meets the indicator on the reporting date
       - name: indicator_status
-        description: ACHIEVED, NOT_TREATED_IN_PERIOD (an order more than 6 months ago) or NEVER_TREATED
+        description: ACHIEVED, NOT_TREATED_IN_PERIOD (an order more than 6 months ago or sequence not met) or NEVER_TREATED
         data_tests:
           - accepted_values:
               arguments:
@@ -382,9 +384,7 @@ models:
       NICE IND233 eGFR confirmation of new CKD. One row per currently
       registered, living, non-test person whose earliest CKD stage 3 to 5
       register diagnosis falls in the preceding 12 months, assessed on the
-      build date. The numerator requires eGFR measured on two occasions at
-      least 90 days apart with the second within 90 days before the diagnosis
-      date, the persistence test NICE NG203 uses to confirm CKD. Personalised
+      build date. The numerator requires a valued eGFR within 90 days before the diagnosis date with the person's first valued eGFR at least 90 days earlier, the persistence test NICE NG203 uses to confirm CKD; latest_record_date is the qualifying eGFR. Personalised
       care adjustments are not applied. Secondary-use consumers must join
       DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
       1 opt-out filtering.
@@ -453,8 +453,7 @@ models:
       NICE IND234 eGFR and ACR around new CKD. One row per currently
       registered, living, non-test person whose earliest CKD stage 3 to 5
       register diagnosis falls in the preceding 12 months, assessed on the
-      build date. The numerator requires an eGFR and a urine ACR ratio both
-      recorded within 90 days before or after the diagnosis date. Personalised
+      build date. The numerator requires a valued eGFR and a urine ACR ratio both recorded within 90 days before or after the diagnosis date; latest_record_date is the later of the two. Personalised
       care adjustments are not applied. Secondary-use consumers must join
       DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
       1 opt-out filtering.
@@ -574,6 +573,14 @@ models:
         description: Date of the latest order of the counted therapy at any time; null when never ordered; typed null for branches that do not emit it
       - name: diagnosis_date
         description: Diagnosis date anchoring the indicator window; typed null for branches that do not emit it
+      - name: latest_bp_date
+        description: Date of the latest blood pressure reading at any time for the BP indicators; typed null for other branches
+      - name: applied_measurement_context
+        description: CLINIC or HBPM_ABPM for the latest reading for the BP indicators; typed null for other branches
+      - name: indicator_systolic_threshold
+        description: Exclusive systolic threshold in mmHg for the BP indicators; typed null for other branches
+      - name: indicator_diastolic_threshold
+        description: Exclusive diastolic threshold in mmHg for the BP indicators; typed null for other branches
       - name: latest_record_date
         description: Date of the latest qualifying record in the period; null when none
       - name: is_in_denominator

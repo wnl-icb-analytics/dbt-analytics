@@ -1,4 +1,4 @@
-{{ config(materialized='table', cluster_by=['person_id']) }}
+{{ config(cluster_by=['person_id']) }}
 
 /*
 Latest renin-angiotensin system therapy order per person, for "currently
