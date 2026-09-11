@@ -9,14 +9,18 @@ WITH indicator_population AS (
     FROM {{ ref('fct_person_gestational_diabetes_register') }} AS gdm
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON gdm.person_id = age.person_id
-    LEFT JOIN {{ ref('fct_person_diabetes_register') }} AS diabetes
-        ON gdm.person_id = diabetes.person_id
-        AND diabetes.is_on_register
     WHERE gdm.is_on_register
         -- The latest episode is more than 12 months old: current and recent pregnancies have their own monitoring
         AND gdm.latest_diagnosis_date::DATE < DATEADD(month, -12, CURRENT_DATE())
-        -- Women who went on to develop diabetes more than 12 months ago are monitored as diabetes
-        AND NOT COALESCE(diabetes.earliest_diagnosis_date::DATE < DATEADD(month, -12, CURRENT_DATE()), FALSE)
+        -- Women who went on to develop diabetes more than 12 months ago are monitored as diabetes,
+        -- read from the diagnosis history so a later resolved code does not lift the exclusion
+        AND NOT EXISTS (
+            SELECT 1
+            FROM {{ ref('int_diabetes_diagnoses_all') }} AS diabetes
+            WHERE diabetes.person_id = gdm.person_id
+                AND diabetes.is_diagnosis_code
+                AND diabetes.clinical_effective_date::DATE < DATEADD(month, -12, CURRENT_DATE())
+        )
 ),
 
 -- Latest qualifying record in the period
