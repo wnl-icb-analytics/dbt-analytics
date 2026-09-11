@@ -1,6 +1,6 @@
 {{
     config(
-        description="Raw layer (SNOMED CT cross-map and terminology reference data. Sourced by NHS TRUD.). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE.TERMINOLOGY.INGEST_LOG \ndbt: source(''reference_trud_terminology'', ''INGEST_LOG'') \nColumns:\n  RUN_ID -> run_id\n  RUN_START -> run_start\n  RUN_END -> run_end\n  STATUS -> status\n  FORCE_RELOAD -> force_reload\n  RELEASE_ID -> release_id\n  RELEASE_DATE -> release_date\n  ROWS_STAGED -> rows_staged\n  ROWS_LATEST -> rows_latest\n  ROWS_ARCHIVED -> rows_archived\n  DURATION_SECONDS -> duration_seconds\n  ERROR_MESSAGE -> error_message"
+        description="Raw layer (SNOMED CT cross-map and terminology reference data. Sourced by NHS TRUD.). 1:1 passthrough with cleaned column names. \nSource: REFERENCE.TERMINOLOGY.INGEST_LOG \ndbt: source(''reference_trud_terminology'', ''INGEST_LOG'') \nColumns:\n  RUN_ID -> run_id\n  RUN_START -> run_start\n  RUN_END -> run_end\n  STATUS -> status\n  FORCE_RELOAD -> force_reload\n  RELEASE_ID -> release_id\n  RELEASE_DATE -> release_date\n  ROWS_STAGED -> rows_staged\n  ROWS_LATEST -> rows_latest\n  ROWS_ARCHIVED -> rows_archived\n  DURATION_SECONDS -> duration_seconds\n  ERROR_MESSAGE -> error_message"
     )
 }}
 select

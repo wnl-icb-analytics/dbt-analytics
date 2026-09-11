@@ -175,8 +175,11 @@ select
     clinical_time_precision,
     clinical_time_basis,
     source_code,
-    source_code_name,
+    coalesce(source_snomed.preferred_term, source_code_name) as source_code_name,
     source_coding_system,
+    source_snomed.snomed_code as mapped_code,
+    source_snomed.preferred_term as mapped_code_name,
+    iff(source_snomed.snomed_code is not null, 'SNOMED CT', null)::varchar as mapped_coding_system,
     provider_organisation_code,
     provider_organisation_name,
     provider_code_authority,
@@ -189,3 +192,5 @@ select
     qualifier_code,
     qualifier_name
 from clinical_records
+left join {{ ref('snomed_concept') }} as source_snomed
+    on trim(clinical_records.source_code) = source_snomed.snomed_code

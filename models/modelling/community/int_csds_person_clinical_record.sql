@@ -34,9 +34,12 @@ select
     'CSDS'::varchar as source_dataset,
     'fct_csds_clinical_record'::varchar as source_model_name,
     s.clinical_code_system::varchar as source_coding_system,
-    s.dictionary_snomed_code::varchar as mapped_code,
-    s.dictionary_snomed_description::varchar as mapped_code_name,
-    iff(s.dictionary_snomed_code is not null, 'SNOMED CT', null)::varchar as mapped_coding_system,
+    coalesce(source_snomed.snomed_code, mapped_snomed.snomed_code) as mapped_code,
+    case
+        when source_snomed.snomed_code is not null then source_snomed.preferred_term
+        else mapped_snomed.preferred_term
+    end::varchar as mapped_code_name,
+    iff(mapped_code is not null, 'SNOMED CT', null)::varchar as mapped_coding_system,
     case
         when s.is_care_activity_linked and s.is_care_activity_person_consistent is distinct from false then s.care_activity_source_record_id::varchar
         else s.referral_id::varchar
@@ -51,5 +54,10 @@ select
     end as parent_model_name,
     iff(parent_record_id is not null, 'recorded_parent', null)::varchar as relationship_type
 from {{ ref('fct_csds_clinical_record') }} as s
+left join {{ ref('snomed_concept') }} as source_snomed
+    on trim(s.clinical_code) = source_snomed.snomed_code
+    and s.clinical_code_system = 'SNOMED CT'
+left join {{ ref('snomed_concept') }} as mapped_snomed
+    on s.dictionary_snomed_code::varchar = mapped_snomed.snomed_code
 where true
 {{ navigation_delivery_filter('s.source_file_received_at', 'clinical_record') }}

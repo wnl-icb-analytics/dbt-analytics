@@ -153,6 +153,21 @@ codes retain the latest supported definition. No query calls a terminology
 server. Null labels mean no supported label was found; they do not invalidate
 the source code. Provider authorities distinguish ODS from local identifiers.
 
+`mapped_code` retains a recognised source SNOMED code, including an inactive
+historical concept. MHSDS, CSDS and ECDS validate codes against
+`snomed_concept`, which exposes the NHS Digital reporting model with its latest
+retained preferred terms. Supported Read mappings can supply a SNOMED target.
+The checks run when adapters load; monthly full refreshes apply reference
+changes to older deliveries. OLIDS retains its upstream EMIS mappings, some of
+which are not recognised in this reference.
+
+ICD-10 and OPCS-4 source codes remain available with their source coding system.
+Their mapped fields stay empty because the available TRUD reverse tables are
+local inversions of forward classification maps. The
+[NHS implementation guide](https://digital.nhs.uk/binaries/content/assets/website-assets/isce/scci0034/0034352016guidance-v2.pdf)
+states that published forward maps cannot be used in reverse. An individual
+SNOMED equivalent is not inferred from an ICD-10 or OPCS-4 code.
+
 ## Population and observation windows
 
 OLIDS currently contains the filtered NCL spine. Other feeds retain their

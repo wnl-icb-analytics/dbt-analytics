@@ -219,11 +219,11 @@ Source clinical coding system or its source-supplied label. Keep source and mapp
 {% enddocs %}
 
 {% docs navigation_mapped_code %}
-Supported mapped clinical code retained by the prepared source model. Null means no mapping is supplied; it does not invalidate the original code.
+SNOMED CT code for analysis. A recognised source SNOMED code is used directly, including inactive historical concepts. MHSDS, CSDS and ECDS validate candidates against the NHS Digital concept reference when loaded; supported Read mappings can supply a target. OLIDS retains its prepared EMIS mapping, including targets not recognised in that reference. ICD-10 and OPCS-4 reverse-map candidates are not assigned as clinical equivalents. Null means no mapping was resolved; the source code remains available. Monthly full refreshes apply reference changes to older deliveries.
 {% enddocs %}
 
 {% docs navigation_mapped_code_name %}
-Retained reference label for mapped_code.
+Preferred reference label for mapped_code. MHSDS, CSDS and ECDS use the latest retained NHS Digital term, including for historical concepts. OLIDS retains its prepared mapping label.
 {% enddocs %}
 
 {% docs navigation_mapped_coding_system %}

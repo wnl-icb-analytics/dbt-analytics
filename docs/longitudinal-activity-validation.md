@@ -104,6 +104,47 @@ encounter population.
 
 ## Known coverage limits
 
+### SNOMED mapping validation, 11 September 2026
+
+The new `snomed_concept` reference contains 1,151,519 recognised concepts,
+including 312,564 inactive concepts. Every concept has a retained preferred
+term. Historical source concepts keep their original code, without replacement
+by an active successor.
+
+| Adapter | Rows | Populated mapped codes | Historical source SNOMED records |
+|---|---:|---:|---:|
+| CSDS | 37,606,281 | 15,445,981 | 330,385 |
+| MHSDS | 26,278,485 | 23,922,929 | 891,570 |
+| ECDS | 96,030,808 | 93,431,141 | 1,320,395 |
+
+The full refreshes passed all six grain and mapping tests. Aggregate
+fingerprints prove identical row counts and values for every unchanged field.
+Only mapped code, mapped label and mapped system changed, together with ECDS
+source labels. No recognised source SNOMED code was replaced or left unmapped;
+all mapped targets were recognised and had the latest retained label at build
+time. `analyses/navigation/clinical_mapping_coverage.sql` reproduces those
+aggregate checks without sorting the shared clinical timeline.
+
+This adds direct mappings for 129,489,791 previously unmapped source SNOMED
+records and 18 MHSDS Read records. It withholds 38,500 existing CSDS and 23,316
+MHSDS target codes absent from both available SNOMED dictionaries and the
+history table. Their source rows, source codes and detailed facts remain.
+
+OLIDS retains its prepared EMIS mappings. Of its 1,974,867,939 clinical rows,
+1,619,598 have targets unrecognised in those references and 3,048 have no map.
+The available EMIS reference supplied no supported replacement for these
+exceptions. Unrecognised does not establish invalidity. A further 23,480,922
+OLIDS rows have recognised inactive targets, which remain valid historical
+identifiers.
+
+TRUD resources and the weekly loader now live in `REFERENCE.TERMINOLOGY`.
+All ten moved tables matched their previous counts and all-column fingerprints.
+Compatibility views preserve existing read paths; all 16 dependent views
+compiled. The loader skipped an already-loaded release. No classification
+reverse map was used to assign a clinical SNOMED code.
+
+### Source coverage
+
 `dq_person_activity_coverage` publishes missing patient keys, missing provider
 codes, code-label coverage and date completeness by output and source type.
 These are diagnostic counts, not automatic exclusion rules.
