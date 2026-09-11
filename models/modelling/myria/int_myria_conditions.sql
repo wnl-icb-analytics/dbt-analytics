@@ -165,7 +165,7 @@ pds_patient_check as
                             AND att_dx.activity_date >= '01-Jan-2025' AND att_dx.activity_date < DATE_TRUNC('month',CURRENT_DATE)
                             AND pod IN ('NEL-ZLOS','NEL-LOS+1') 
                         THEN att_dx.activity_date 
-                        END) AS NCLProvider_first_attendance_date,
+                        END) AS NCLProvider_first_admission_date,
     
     COUNT(DISTINCT -- counts distinct attendance IDs non-NCL providers in the period
                     CASE

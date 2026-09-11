@@ -27,7 +27,7 @@ select
     RFL_flag,
     NCLProvider_count,
     NCLProvider_flag,
-    NCLProvider_first_attendance_date,
+    NCLProvider_first_admission_date,
     Non_NCLProvider_count,
     Non_NCLProvider_flag,
     nel_ip_admissions_last_24_months,
