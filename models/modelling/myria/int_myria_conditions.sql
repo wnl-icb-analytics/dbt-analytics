@@ -256,8 +256,8 @@ WHERE
 GROUP BY 
     ALL
 HAVING 
-    NCLProvider_count >= 1 --barnet_hospital_count >= 1
-    AND local_authority_sus IN ('Barnet', 'Camden', 'Enfield', 'Islington', 'Haringey') --AND local_authority IN ('Barnet','Enfield')
+    (NCLProvider_count >= 1 OR Non_NCLProvider_count >= 1)
+    AND local_authority_sus IN ('Barnet', 'Camden', 'Enfield', 'Islington', 'Haringey')
     AND age_at_most_recent_nel_admission >= 18
     AND
     (heart_failure = 1 
