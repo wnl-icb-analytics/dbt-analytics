@@ -35,6 +35,4 @@ from final_icd_codes f
 left join  {{ ref('stg_common_aicentre_vocab') }} c
     on c.concept_code = f.code
     and c.vocabulary_id = 'ICD10'
-left join {{ ref("int_sus_apc_encounter") }} se on se.visit_occurrence_id = f.primarykey_id
-
-where se.sk_patient_id is not null and se.sk_patient_id != '1'
+inner join {{ ref("int_sus_apc_encounter") }} se on se.visit_occurrence_id = f.primarykey_id
