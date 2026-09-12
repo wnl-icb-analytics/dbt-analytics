@@ -5,8 +5,8 @@
 #
 # Schedules (GitHub cron is UTC; times target 05:00/08:00/13:00
 # Europe/London in summer, an hour earlier in winter):
-#   0 4 * * 0,2-6  Daily build            build --select +tag:daily resource_type:snapshot+
-#   0 4 * * 1      Weekly build           build --select +staging+  (skips the 1st)
+#   0 4 * * 0,2-6  Daily build            excludes tag:monthly-full
+#   0 4 * * 1      Weekly build           excludes tag:monthly-full
 #   0 4 1 * *      Monthly full refresh   build --select +staging+ --full-refresh
 #   0 7,12 * * *   SDL intraday           SDL refresh procs, then
 #                                         build --select source:sdl_wnl+
@@ -109,8 +109,8 @@ jobs:
           fi
 
           case "$run_type" in
-            daily)                dbt_args="build --select +tag:daily resource_type:snapshot+" ;;
-            weekly)               dbt_args="build --select +staging+" ;;
+            daily)                dbt_args="build --select +tag:daily resource_type:snapshot+ --exclude tag:monthly-full" ;;
+            weekly)               dbt_args="build --select +staging+ --exclude tag:monthly-full" ;;
             monthly-full-refresh) dbt_args="build --select +staging+ --full-refresh" ;;
             snapshots)            dbt_args="snapshot" ;;
             sdl-intraday)         dbt_args="build --select source:sdl_wnl+" ;;
@@ -119,6 +119,9 @@ jobs:
 
           echo "run_type=$run_type" >> "$GITHUB_OUTPUT"
           echo "dbt_args=$dbt_args" >> "$GITHUB_OUTPUT"
+          if [ "$run_type" = "monthly-full-refresh" ]; then
+            echo "EFI2_HISTORY_WAREHOUSE=WH_WNL_OLIDS_L" >> "$GITHUB_ENV"
+          fi
           echo "Run type: $run_type / dbt $dbt_args"
 
       - name: Install dbt Fusion

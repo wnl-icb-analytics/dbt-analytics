@@ -43,15 +43,7 @@ select
     person_id,
     end_date,
     efi_score,
-    case
-        when efi_score < 0.0857
-        then 'ROBUST'
-        when efi_score < 0.1624
-        then 'MILD FRAILTY'
-        when efi_score <= 0.2391
-        then 'MODERATE FRAILTY'
-        else 'SEVERE FRAILTY'
-    end as category,
+    {{ efi2_category('efi_score') }} as category,
     age_at_end,
     gender,
     date_of_death

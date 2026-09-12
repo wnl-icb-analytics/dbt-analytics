@@ -1,0 +1,44 @@
+models:
+  - name: int_efi2_rules_history
+    description: >-
+      eFI2 deficit rules evaluated at each historical month-end. One row
+      represents one distinct deficit result for a person and scoring month.
+      BMI and haemoglobin use the latest eligible reading at that month-end.
+      Same-day BMI ties use the derived evidence identifier without preferring
+      a higher or lower result.
+      Repeated month-expanded rule results are removed before storage; this is
+      score-neutral because chronology uses the same distinct score keys.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - end_date
+              - deficit
+              - other_instructions
+              - has_deficit
+              - sub_deficit
+              - last_date
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: deficit
+        description: Frailty deficit.
+      - name: other_instructions
+        description: Rule instruction evaluated.
+      - name: has_deficit
+        description: Person meets the deficit rule at the month-end.
+      - name: sub_deficit
+        description: Deficit sub-classification.
+      - name: end_date
+        description: Completed month-end used as the scoring date.
+        data_tests:
+          - not_null
+      - name: last_date
+        description: Most recent qualifying observation date.

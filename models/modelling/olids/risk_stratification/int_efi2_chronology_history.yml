@@ -1,0 +1,25 @@
+models:
+  - name: int_efi2_chronology_history
+    description: >-
+      Weighted eFI2 score at each historical month-end after dementia, alcohol,
+      BMI, smoking, missing-data and polypharmacy rules. One row represents one
+      person and scoring month.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, end_date]
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: end_date
+        description: Completed month-end used as the scoring date.
+        data_tests:
+          - not_null
+      - name: efi
+        description: Sum of the applicable eFI2 deficit weights.

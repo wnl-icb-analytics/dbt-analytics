@@ -1,0 +1,36 @@
+models:
+  - name: int_efi2_patient_list_history
+    description: >-
+      Monthly eFI2 population. One row represents one person aged at least 65
+      who was alive and GP registered in NCL at a retained completed month-end.
+      Age uses the first day of the approximate birth month, matching the
+      current eFI2 eligibility rule. Unlike the current patient list, this
+      population requires an active registration at the scoring date.
+      Incremental runs replace the latest completed month in one transaction
+      and add missing newer months, but do not remove months that have aged
+      out, so the model holds at least the last 60 completed month-ends. The
+      monthly full refresh rebuilds the rolling 60-month window and trims the
+      extra months.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, end_date]
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: end_date
+        description: Completed month-end used as the scoring date.
+        data_tests:
+          - not_null
+      - name: gender
+        description: Gender normalised for eFI2 rules.
+      - name: date_of_birth
+        description: Approximate birth date.
+      - name: date_of_death
+        description: Approximate death date where recorded.

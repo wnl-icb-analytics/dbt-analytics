@@ -10,7 +10,7 @@
         unique_key=['person_id', 'analysis_month'],
         on_schema_change='append_new_columns',
         cluster_by=['analysis_month'],
-        tags=['daily', 'monthly-full']
+        tags=['daily']
     )
 }}
 
