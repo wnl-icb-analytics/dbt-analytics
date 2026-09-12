@@ -117,6 +117,8 @@ sources:
       data_type: NUMBER(38,0)
     - name: APPOINTMENT_STATUS_SOURCE_CONCEPT_ID
       data_type: UUID
+    - name: APPOINTMENT_STATUS_DERIVED
+      data_type: TEXT
     - name: APPOINTMENT_STATUS_SOURCE_CODE
       data_type: TEXT
     - name: APPOINTMENT_STATUS_SOURCE_DISPLAY
@@ -187,10 +189,37 @@ sources:
       data_type: TIMESTAMP_NTZ
     - name: LDS_TRANSFORM_DATETIME
       data_type: TIMESTAMP_LTZ
+  - name: APPOINTMENT_BOOKING
+    identifier: '"APPOINTMENT_BOOKING"'
+    columns:
+    - name: APPOINTMENT_ID
+      data_type: UUID
+    - name: PATIENT_ID
+      data_type: TEXT
+    - name: PERSON_ID
+      data_type: NUMBER(38,0)
+    - name: DATETIME_BOOKED
+      data_type: TIMESTAMP_NTZ
+    - name: START_DATE
+      data_type: TIMESTAMP_NTZ
+    - name: BOOKING_METHOD_SOURCE_CODE
+      data_type: TEXT
+    - name: BOOKING_METHOD_SOURCE_DISPLAY
+      data_type: TEXT
+    - name: BOOKING_METHOD_CODE
+      data_type: TEXT
+    - name: BOOKING_METHOD_DISPLAY
+      data_type: TEXT
+    - name: PROVIDER_ORGANISATION_ID
+      data_type: UUID
+    - name: PUBLISHER_ORGANISATION_ID
+      data_type: UUID
+    - name: PUBLISHER_ORGANISATION_CODE
+      data_type: TEXT
+    - name: SOURCE_EXTRACTION_DATE
+      data_type: TIMESTAMP_NTZ
   - name: APPOINTMENT_CLINICAL_RECORD
     identifier: '"APPOINTMENT_CLINICAL_RECORD"'
-    description: Current source-recorded appointment to clinical record relationships,
-      prepared in dbt-OLIDS.
     columns:
     - name: APPOINTMENT_ID
       data_type: UUID
@@ -198,14 +227,14 @@ sources:
       data_type: TEXT
     - name: CLINICAL_RECORD_ID
       data_type: UUID
+    - name: SOURCE_RECORD_ID
+      data_type: UUID
     - name: ENCOUNTER_ID
       data_type: UUID
     - name: PATIENT_ID
       data_type: TEXT
     - name: PERSON_ID
       data_type: NUMBER(38,0)
-    - name: SOURCE_RECORD_ID
-      data_type: UUID
   - name: APPOINTMENT_PRACTITIONER
     identifier: '"APPOINTMENT_PRACTITIONER"'
     columns:
@@ -237,6 +266,91 @@ sources:
       data_type: TIMESTAMP_NTZ
     - name: LDS_TRANSFORM_DATETIME
       data_type: TIMESTAMP_LTZ
+  - name: CLINICAL_RECORD
+    identifier: '"CLINICAL_RECORD"'
+    columns:
+    - name: CLINICAL_RECORD_ID
+      data_type: UUID
+    - name: SOURCE_RECORD_TYPE
+      data_type: TEXT
+    - name: SOURCE_RECORD_ID
+      data_type: UUID
+    - name: PERSON_ID
+      data_type: NUMBER(38,0)
+    - name: PATIENT_ID
+      data_type: TEXT
+    - name: SK_PATIENT_ID
+      data_type: TEXT
+    - name: ENCOUNTER_ID
+      data_type: UUID
+    - name: IS_ENCOUNTER_PERSON_CONSISTENT
+      data_type: BOOLEAN
+    - name: ENCOUNTER_DATE
+      data_type: DATE
+    - name: ENCOUNTER_DATE_PRECISION_CODE
+      data_type: TEXT
+    - name: ENCOUNTER_DATE_PRECISION_NAME
+      data_type: TEXT
+    - name: CLINICAL_RECORD_DATE
+      data_type: DATE
+    - name: CLINICAL_DATE_PRECISION_CODE
+      data_type: TEXT
+    - name: CLINICAL_DATE_PRECISION_NAME
+      data_type: TEXT
+    - name: DATE_RECORDED
+      data_type: TIMESTAMP_NTZ
+    - name: SOURCE_CODE
+      data_type: TEXT
+    - name: SOURCE_CODE_NAME
+      data_type: TEXT
+    - name: SOURCE_CODING_SYSTEM
+      data_type: TEXT
+    - name: MAPPED_CODE
+      data_type: TEXT
+    - name: MAPPED_CODE_NAME
+      data_type: TEXT
+    - name: MAPPED_CODING_SYSTEM
+      data_type: TEXT
+    - name: RESULT_VALUE
+      data_type: FLOAT
+    - name: RESULT_DATE
+      data_type: DATE
+    - name: RESULT_UNIT_SOURCE_CODE
+      data_type: TEXT
+    - name: RESULT_UNIT_SOURCE_NAME
+      data_type: TEXT
+    - name: MEDICATION_NAME
+      data_type: TEXT
+    - name: MEDICATION_DOSE
+      data_type: TEXT
+    - name: MEDICATION_QUANTITY_VALUE
+      data_type: FLOAT
+    - name: MEDICATION_QUANTITY_UNIT
+      data_type: TEXT
+    - name: MEDICATION_DURATION_DAYS
+      data_type: NUMBER(38,0)
+    - name: MEDICATION_AUTHORISATION_TYPE_CODE
+      data_type: TEXT
+    - name: MEDICATION_AUTHORISATION_TYPE_NAME
+      data_type: TEXT
+    - name: PROVIDER_ORGANISATION_ID
+      data_type: UUID
+    - name: PUBLISHER_ORGANISATION_ID
+      data_type: UUID
+    - name: PUBLISHER_ORGANISATION_CODE
+      data_type: TEXT
+    - name: PRACTITIONER_ID
+      data_type: UUID
+    - name: SOURCE_EXTRACTION_DATE
+      data_type: TIMESTAMP_NTZ
+    - name: PROVIDER_ORGANISATION_CODE
+      data_type: TEXT
+    - name: PROVIDER_CODE_AUTHORITY
+      data_type: TEXT
+    - name: PROVIDER_ORGANISATION_NAME
+      data_type: TEXT
+    - name: PUBLISHER_ORGANISATION_NAME
+      data_type: TEXT
   - name: CONCEPT
     identifier: '"CONCEPT"'
     columns:
@@ -279,6 +393,8 @@ sources:
       data_type: TEXT
     - name: EQUIVALENCE_RANK
       data_type: NUMBER(3,0)
+    - name: LAST_UPDATED_DATE
+      data_type: DATE
   - name: DIAGNOSTIC_ORDER
     identifier: '"DIAGNOSTIC_ORDER"'
     columns:
@@ -474,6 +590,8 @@ sources:
       data_type: TEXT
     - name: EQUIVALENCE_RANK
       data_type: NUMBER(3,0)
+    - name: LAST_UPDATED_DATE
+      data_type: DATE
   - name: EPISODE_OF_CARE
     identifier: '"EPISODE_OF_CARE"'
     columns:
@@ -632,6 +750,65 @@ sources:
       data_type: TEXT
     - name: WORST_PUBLISHER_LAG_DAYS
       data_type: NUMBER(9,0)
+  - name: HEALTHCARE_EVENT
+    identifier: '"HEALTHCARE_EVENT"'
+    columns:
+    - name: HEALTHCARE_EVENT_ID
+      data_type: UUID
+    - name: EVENT_TYPE
+      data_type: TEXT
+    - name: PERSON_ID
+      data_type: NUMBER(38,0)
+    - name: PATIENT_ID
+      data_type: TEXT
+    - name: SK_PATIENT_ID
+      data_type: TEXT
+    - name: EVENT_AT
+      data_type: TIMESTAMP_NTZ
+    - name: EVENT_DATE
+      data_type: DATE
+    - name: EVENT_TIME_PRECISION
+      data_type: TEXT
+    - name: EVENT_TIME_BASIS
+      data_type: TEXT
+    - name: SOURCE_RECORD_TYPE
+      data_type: TEXT
+    - name: SOURCE_RECORD_ID
+      data_type: UUID
+    - name: APPOINTMENT_ID
+      data_type: UUID
+    - name: CLINICAL_RECORD_ID
+      data_type: UUID
+    - name: EVENT_CODE
+      data_type: TEXT
+    - name: EVENT_CODE_NAME
+      data_type: TEXT
+    - name: EVENT_CODING_SYSTEM
+      data_type: TEXT
+    - name: SOURCE_STATUS_CODE
+      data_type: TEXT
+    - name: SOURCE_STATUS_NAME
+      data_type: TEXT
+    - name: STATUS_CODE
+      data_type: TEXT
+    - name: STATUS_NAME
+      data_type: TEXT
+    - name: PROVIDER_ORGANISATION_ID
+      data_type: UUID
+    - name: PUBLISHER_ORGANISATION_ID
+      data_type: UUID
+    - name: PUBLISHER_ORGANISATION_CODE
+      data_type: TEXT
+    - name: SOURCE_EXTRACTION_DATE
+      data_type: TIMESTAMP_NTZ
+    - name: PROVIDER_ORGANISATION_CODE
+      data_type: TEXT
+    - name: PROVIDER_CODE_AUTHORITY
+      data_type: TEXT
+    - name: PROVIDER_ORGANISATION_NAME
+      data_type: TEXT
+    - name: PUBLISHER_ORGANISATION_NAME
+      data_type: TEXT
   - name: LOCATION
     identifier: '"LOCATION"'
     columns:
@@ -1024,11 +1201,11 @@ sources:
     - name: LDS_TRANSFORM_DATETIME
       data_type: TIMESTAMP_LTZ
     - name: SOURCE_ENTITY
-      data_type: VARCHAR
+      data_type: TEXT
     - name: SOURCE_RECORD_ID
       data_type: UUID
     - name: ALLERGY_MEDICATION_NAME
-      data_type: VARCHAR
+      data_type: TEXT
   - name: ORGANISATION
     identifier: '"ORGANISATION"'
     columns:
@@ -1083,6 +1260,10 @@ sources:
       data_type: TEXT
     - name: SK_PATIENT_ID
       data_type: NUMBER(38,0)
+    - name: PDS_TRACE_STATUS
+      data_type: TEXT
+    - name: SK_LINKAGE_STATUS
+      data_type: TEXT
     - name: TITLE
       data_type: TEXT
     - name: GENDER_SOURCE_CONCEPT_ID
@@ -1201,6 +1382,27 @@ sources:
       data_type: TIMESTAMP_NTZ
     - name: LDS_TRANSFORM_DATETIME
       data_type: TIMESTAMP_LTZ
+  - name: PATIENT_OPT_OUT
+    identifier: '"PATIENT_OPT_OUT"'
+    columns:
+    - name: LDS_BUSINESS_ID
+      data_type: UUID
+    - name: LDS_RECORD_ID
+      data_type: UUID
+    - name: SK_PATIENT_ID
+      data_type: NUMBER(38,0)
+    - name: PATIENT_INSTRUCTION_CATEGORY
+      data_type: TEXT
+    - name: PATIENT_INSTRUCTION_STATE
+      data_type: TEXT
+    - name: LDS_IS_DELETED
+      data_type: BOOLEAN
+    - name: EFFECTIVE_FROM
+      data_type: TIMESTAMP_NTZ
+    - name: EFFECTIVE_TO
+      data_type: TIMESTAMP_NTZ
+    - name: IS_LATEST
+      data_type: BOOLEAN
   - name: PATIENT_PERSON
     identifier: '"PATIENT_PERSON"'
     columns:
@@ -1315,6 +1517,8 @@ sources:
   - name: POSTCODE_HASH
     identifier: '"POSTCODE_HASH"'
     columns:
+    - name: POSTCODE
+      data_type: TEXT
     - name: POSTCODE_HASH
       data_type: TEXT
     - name: OUTCODE
@@ -1336,7 +1540,7 @@ sources:
     - name: VERSION
       data_type: TEXT
     - name: LAST_UPDATED
-      data_type: TIMESTAMP_LTZ
+      data_type: TIMESTAMP_NTZ
   - name: PRACTITIONER
     identifier: '"PRACTITIONER"'
     columns:
@@ -1597,7 +1801,6 @@ sources:
       data_type: TEXT
     - name: REFERRAL_SNOMED_NAME
       data_type: TEXT
-
   - name: SCHEDULE
     identifier: '"SCHEDULE"'
     columns:
@@ -1660,171 +1863,3 @@ sources:
       data_type: TIMESTAMP_NTZ
     - name: LDS_TRANSFORM_DATETIME
       data_type: TIMESTAMP_LTZ
-  - name: APPOINTMENT_BOOKING
-    identifier: '"APPOINTMENT_BOOKING"'
-    description: Prepared appointment booking from dbt-OLIDS.
-    columns:
-    - name: APPOINTMENT_ID
-      data_type: UUID
-    - name: PATIENT_ID
-      data_type: TEXT
-    - name: PERSON_ID
-      data_type: NUMBER(38,0)
-    - name: DATETIME_BOOKED
-      data_type: TIMESTAMP_NTZ
-    - name: START_DATE
-      data_type: TIMESTAMP_NTZ
-    - name: BOOKING_METHOD_SOURCE_CODE
-      data_type: TEXT
-    - name: BOOKING_METHOD_SOURCE_DISPLAY
-      data_type: TEXT
-    - name: BOOKING_METHOD_CODE
-      data_type: TEXT
-    - name: BOOKING_METHOD_DISPLAY
-      data_type: TEXT
-    - name: PROVIDER_ORGANISATION_ID
-      data_type: UUID
-    - name: PUBLISHER_ORGANISATION_ID
-      data_type: UUID
-    - name: PUBLISHER_ORGANISATION_CODE
-      data_type: TEXT
-    - name: SOURCE_EXTRACTION_DATE
-      data_type: TIMESTAMP_NTZ
-  - name: CLINICAL_RECORD
-    identifier: '"CLINICAL_RECORD"'
-    description: Prepared clinical record from dbt-OLIDS.
-    columns:
-    - name: CLINICAL_RECORD_ID
-      data_type: UUID
-    - name: SOURCE_RECORD_TYPE
-      data_type: TEXT
-    - name: SOURCE_RECORD_ID
-      data_type: UUID
-    - name: PERSON_ID
-      data_type: NUMBER(38,0)
-    - name: PATIENT_ID
-      data_type: TEXT
-    - name: SK_PATIENT_ID
-      data_type: NUMBER(38,0)
-    - name: ENCOUNTER_ID
-      data_type: UUID
-    - name: CLINICAL_RECORD_DATE
-      data_type: DATE
-    - name: CLINICAL_DATE_PRECISION_CODE
-      data_type: TEXT
-    - name: CLINICAL_DATE_PRECISION_NAME
-      data_type: TEXT
-    - name: DATE_RECORDED
-      data_type: TIMESTAMP_NTZ
-    - name: SOURCE_CODE
-      data_type: TEXT
-    - name: SOURCE_CODE_NAME
-      data_type: TEXT
-    - name: SOURCE_CODING_SYSTEM
-      data_type: TEXT
-    - name: MAPPED_CODE
-      data_type: TEXT
-    - name: MAPPED_CODE_NAME
-      data_type: TEXT
-    - name: MAPPED_CODING_SYSTEM
-      data_type: TEXT
-    - name: RESULT_VALUE
-      data_type: FLOAT
-    - name: RESULT_DATE
-      data_type: DATE
-    - name: RESULT_UNIT_SOURCE_CODE
-      data_type: TEXT
-    - name: RESULT_UNIT_SOURCE_NAME
-      data_type: TEXT
-    - name: MEDICATION_NAME
-      data_type: TEXT
-    - name: MEDICATION_DOSE
-      data_type: TEXT
-    - name: MEDICATION_QUANTITY_VALUE
-      data_type: FLOAT
-    - name: MEDICATION_QUANTITY_UNIT
-      data_type: TEXT
-    - name: MEDICATION_DURATION_DAYS
-      data_type: NUMBER(38,0)
-    - name: MEDICATION_AUTHORISATION_TYPE_CODE
-      data_type: TEXT
-    - name: MEDICATION_AUTHORISATION_TYPE_NAME
-      data_type: TEXT
-    - name: PROVIDER_ORGANISATION_ID
-      data_type: UUID
-    - name: PUBLISHER_ORGANISATION_ID
-      data_type: UUID
-    - name: PUBLISHER_ORGANISATION_CODE
-      data_type: TEXT
-    - name: PRACTITIONER_ID
-      data_type: UUID
-    - name: SOURCE_EXTRACTION_DATE
-      data_type: TIMESTAMP_NTZ
-    - name: PROVIDER_ORGANISATION_CODE
-      data_type: TEXT
-    - name: PROVIDER_CODE_AUTHORITY
-      data_type: TEXT
-    - name: PROVIDER_ORGANISATION_NAME
-      data_type: TEXT
-    - name: PUBLISHER_ORGANISATION_NAME
-      data_type: TEXT
-  - name: HEALTHCARE_EVENT
-    identifier: '"HEALTHCARE_EVENT"'
-    description: Prepared healthcare event from dbt-OLIDS.
-    columns:
-    - name: HEALTHCARE_EVENT_ID
-      data_type: UUID
-    - name: EVENT_TYPE
-      data_type: TEXT
-    - name: PERSON_ID
-      data_type: NUMBER(38,0)
-    - name: PATIENT_ID
-      data_type: TEXT
-    - name: SK_PATIENT_ID
-      data_type: NUMBER(38,0)
-    - name: EVENT_AT
-      data_type: TIMESTAMP_NTZ
-    - name: EVENT_DATE
-      data_type: DATE
-    - name: EVENT_TIME_PRECISION
-      data_type: TEXT
-    - name: EVENT_TIME_BASIS
-      data_type: TEXT
-    - name: SOURCE_RECORD_TYPE
-      data_type: TEXT
-    - name: SOURCE_RECORD_ID
-      data_type: UUID
-    - name: APPOINTMENT_ID
-      data_type: UUID
-    - name: CLINICAL_RECORD_ID
-      data_type: UUID
-    - name: EVENT_CODE
-      data_type: TEXT
-    - name: EVENT_CODE_NAME
-      data_type: TEXT
-    - name: EVENT_CODING_SYSTEM
-      data_type: TEXT
-    - name: SOURCE_STATUS_CODE
-      data_type: TEXT
-    - name: SOURCE_STATUS_NAME
-      data_type: TEXT
-    - name: STATUS_CODE
-      data_type: TEXT
-    - name: STATUS_NAME
-      data_type: TEXT
-    - name: PROVIDER_ORGANISATION_ID
-      data_type: UUID
-    - name: PUBLISHER_ORGANISATION_ID
-      data_type: UUID
-    - name: PUBLISHER_ORGANISATION_CODE
-      data_type: TEXT
-    - name: SOURCE_EXTRACTION_DATE
-      data_type: TIMESTAMP_NTZ
-    - name: PROVIDER_ORGANISATION_CODE
-      data_type: TEXT
-    - name: PROVIDER_CODE_AUTHORITY
-      data_type: TEXT
-    - name: PROVIDER_ORGANISATION_NAME
-      data_type: TEXT
-    - name: PUBLISHER_ORGANISATION_NAME
-      data_type: TEXT
