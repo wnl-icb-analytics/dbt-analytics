@@ -19,19 +19,23 @@ models:
       - 5+ attended paediatric outpatient appointments
         (int_segmentation_op_activity)
       - Outpatient care across 2+ main specialties, excluding trauma and
-        orthopaedics, ENT, ophthalmology and A&E, aligned to NWL
+        orthopaedics, ENT, ophthalmology, A&E, obstetrics and midwifery,
+        aligned to NWL
         (int_segmentation_op_activity)
       - 1+ mental health inpatient stay, counting spells overlapping the
         window (int_segmentation_mh_inpatient_activity)
-      - 7+ attended community service contacts
+      - 7+ attended community service contacts, excluding Health Visiting
+        Service contacts
         (int_segmentation_community_activity)
 
       Notes:
 
       - The LTC criterion is 2+ rather than the circulated 1+, so a single
         LTC reads as health needs (segment 2) rather than complexity.
-      - 12-month windows end on the latest activity date in each source, to
-        allow for reporting lag.
+      - Every 12-month window ends on the segmentation reporting date (last
+        completed month-end unless the segmentation_reporting_date var is
+        set). MHSDS and CSDS are monthly feeds, so their latest month may not
+        have arrived by that date.
       - SUS, MHSDS and CSDS activity joins on sk_patient_id; some CSDS
         records carry no patient key, so community contact counts are a
         floor.
@@ -76,8 +80,13 @@ models:
         description: Distinct main specialties with an attended outpatient
           appointment in the last 12 months, excluding trauma & orthopaedics
           (110), ENT (120), ophthalmology (130) and A&E (180)
+      - name: outpatient_specialties_excluding_maternity_12mo
+        description: Distinct main specialties after also excluding records
+          coded to obstetrics (501) or midwifery (560) in either main specialty
+          or treatment function
       - name: has_2plus_outpatient_specialties
-        description: Criterion - outpatient_specialties_12mo >= 2
+        description: Criterion -
+          outpatient_specialties_excluding_maternity_12mo >= 2
       - name: mh_inpatient_stays_12mo
         description: Mental health inpatient spells overlapping the last 12
           months (MHSDS, open spells included)
@@ -88,8 +97,12 @@ models:
       - name: community_contacts_12mo
         description: Attended community service contacts in the last 12 months
           (CSDS)
+      - name: community_contacts_excluding_health_visiting_12mo
+        description: Attended community service contacts after excluding Health
+          Visiting Service contacts (team type 16)
       - name: has_7plus_community_contacts
-        description: Criterion - community_contacts_12mo >= 7
+        description: Criterion -
+          community_contacts_excluding_health_visiting_12mo >= 7
       - name: meets_any_criterion
         description: Meets at least one of the six complexity criteria
         data_tests:
