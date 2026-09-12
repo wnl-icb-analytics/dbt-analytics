@@ -1,0 +1,90 @@
+models:
+  - name: int_segmentation_clinical_status_history
+    description: >-
+      Monthly non-activity clinical criteria used by population segmentation.
+      One row represents one active person meeting at least one criterion at
+      one of the last 60 completed month-ends. Status-based criteria use the
+      latest record available by the month-end. Alcohol and child complexity
+      diagnoses remain qualifying once first recorded.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, end_date]
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: RESIDE_COD, HOMELESS_COD, ILLSUB_COD
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: end_date
+        description: Completed month-end used as the reference date.
+        data_tests:
+          - not_null
+      - name: has_coded_moderate_severe_frailty
+        description: Latest coded frailty severity is moderate or severe.
+        data_tests:
+          - not_null
+      - name: latest_frailty_severity
+        description: Latest qualifying coded frailty severity.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [Moderate, Severe]
+      - name: latest_frailty_date
+        description: Date of the latest qualifying frailty code.
+      - name: is_on_palliative_care_register
+        description: Meets the QOF palliative care register at the month-end.
+        data_tests:
+          - not_null
+      - name: latest_palliative_care_date
+        description: Latest qualifying palliative care code date.
+      - name: latest_palliative_no_longer_indicated_date
+        description: Latest palliative care no-longer-indicated code date.
+      - name: is_homeless
+        description: >-
+          Latest residential status is homeless or registered with Camden
+          Health Improvement Practice at the month-end.
+        data_tests:
+          - not_null
+      - name: latest_residential_status_date
+        description: >-
+          Date of the latest residential status code where that code is a
+          homelessness code. Null where the person qualifies only through
+          Camden Health Improvement Practice registration.
+      - name: is_registered_chip
+        description: Registered with Camden Health Improvement Practice.
+        data_tests:
+          - not_null
+      - name: has_alcohol_misuse
+        description: Has an alcohol misuse disorder code recorded from age 16.
+        data_tests:
+          - not_null
+      - name: latest_alcohol_disorder_date
+        description: Latest alcohol misuse disorder code date.
+      - name: has_substance_misuse
+        description: Latest ILLSUB_COD record has qualifying status.
+        data_tests:
+          - not_null
+      - name: latest_substance_misuse_date
+        description: Date of the latest qualifying substance misuse status.
+      - name: is_housebound
+        description: Latest housebound status is housebound.
+        data_tests:
+          - not_null
+      - name: latest_housebound_status_date
+        description: Date of the latest qualifying housebound status.
+      - name: has_child_complexity_diagnosis
+        description: >-
+          Person is under 18 and has a code from the child complexity list.
+        data_tests:
+          - not_null
+      - name: complexity_diagnosis_codes
+        description: Distinct child complexity diagnosis codes by the month-end.
+      - name: latest_complexity_diagnosis_date
+        description: Latest child complexity diagnosis code date.

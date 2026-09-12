@@ -1,0 +1,36 @@
+models:
+  - name: int_segmentation_complex_adults_ltc_history
+    description: >-
+      Monthly LTC flags for the complex-adults criteria. One row represents
+      one active adult on at least one included register at one of the last 60
+      completed month-ends. The list contains 15 conditions plus learning
+      disability from age 65 and excludes NAFLD.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, end_date]
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: end_date
+        description: Completed month-end used as the register reference date.
+        data_tests:
+          - not_null
+      - name: ltc_count
+        description: Count of included registers, from 1 to 16.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 16
+      - name: has_learning_disability
+        description: On the learning disability register and aged 65 or over.
+        data_tests:
+          - not_null
