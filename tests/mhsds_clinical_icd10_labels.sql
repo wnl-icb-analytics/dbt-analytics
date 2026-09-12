@@ -1,12 +1,3 @@
-{{
-    config(
-        tags=['full_build_only'],
-        error_if='>5'
-    )
-}}
--- Skip in daily builds: fct_mhsds_clinical_record and fct_mhsds_care_activity are
--- not rebuilt daily, so description drift from stg_dictionary_dbo_diagnosis is
--- expected until the next full build.
 with checked as (
     select
         'diagnosis' as record_group
