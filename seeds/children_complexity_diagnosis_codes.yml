@@ -1,0 +1,37 @@
+seeds:
+  - name: children_complexity_diagnosis_codes
+    description: >
+      Primary care diagnosis codes indicating complex health needs in
+      under-18s, driving the has_complexity_diagnosis criterion of
+      int_segmentation_children_complexity (segment 3, children with
+      complexity). Per the segmentation spec, the code list is as per NWL.
+
+      Source: NWL's DIM_PAT_SEG_CODE reference table, filtered to
+      PAT_SEG = 'CLDCHN' (5,634 of its 5,909 rows; the remainder carry the
+      SMI, DACD and LD segment markers, which NCL derives elsewhere).
+      Loaded as supplied, with NWL's SNOMED_CODE and SNOMED_TERM only;
+      the source carries no condition grouping, so no category column is
+      published rather than shipping one that is null throughout.
+
+      Codes are matched against observation.mapped_concept_code with no
+      date window (ever recorded), mirroring NWL. Note that a subset of
+      the list uses 15-16 digit extension-namespace identifiers rather
+      than 6-10 digit international SNOMED CT concept ids; these are
+      retained as supplied but may not resolve against NCL data.
+    config:
+      column_types:
+        snomed_code: varchar(18)
+        description: varchar(500)
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: snomed_code
+        description: SNOMED CT concept id, as supplied by NWL.
+        data_tests:
+          - not_null
+          - unique
+      - name: description
+        description: Code description (NWL SNOMED_TERM).
+        data_tests:
+          - not_null

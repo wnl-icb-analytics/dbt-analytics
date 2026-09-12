@@ -1,0 +1,37 @@
+models:
+  - name: int_segmentation_ltc_count
+    description: >
+      LTC count for population segmentation. One row per person on at least
+      one qualifying LTC register, all ages, regardless of registration
+      status.
+
+      Condition list is the 16 complex adults conditions (AF, asthma, CHD,
+      CKD, COPD, dementia, depression, diabetes, epilepsy, heart failure,
+      hypertension, SMI, stroke/TIA, Parkinson's, anxiety, learning
+      disability) plus NAFLD. CYP register variants are canonicalised before
+      counting (CYP_AST -> AST, LD_U14 -> LD). Learning disability counts at
+      age >= 65 or under 18.
+
+      Feeds the adult multiple/single LTC segments, children with health
+      needs and the LTC criterion of children with complexity in
+      fct_person_segment. The complex adults cohort keeps its own list
+      without NAFLD.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        data_tests:
+          - unique
+          - not_null
+      - name: ltc_count
+        description: Count of distinct qualifying LTC registers (>= 1 by construction)
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: ltc_list
+        description: Sorted array of canonical condition codes the person is on

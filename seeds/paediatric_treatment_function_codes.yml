@@ -1,0 +1,31 @@
+seeds:
+  - name: paediatric_treatment_function_codes
+    description: >
+      Paediatric treatment function codes (42), taken from the national
+      treatment function list in the specialties dictionary
+      (stg_dictionary_dbo_specialties, is_treatment_function = TRUE).
+
+      Includes every paediatric-named treatment function plus Paediatrics (420),
+      Paediatric Neurology (421), Paediatric Cardiology (321) and Neonatal
+      Critical Care (422). Excludes the Well Baby Service (424), which is
+      routine newborn care rather than a marker of health need.
+
+      Used by int_segmentation_children_complexity to count paediatric
+      outpatient appointments for the children with complexity segment.
+    config:
+      column_types:
+        treatment_function_code: varchar(10)
+        treatment_function_name: varchar(100)
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: treatment_function_code
+        description: National treatment function code.
+        data_tests:
+          - not_null
+          - unique
+      - name: treatment_function_name
+        description: Treatment function name from the specialties dictionary.
+        data_tests:
+          - not_null
