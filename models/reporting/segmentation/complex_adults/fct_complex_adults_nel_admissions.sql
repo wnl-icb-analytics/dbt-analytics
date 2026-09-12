@@ -4,9 +4,10 @@
         cluster_by=['person_id'])
 }}
 
--- Non-elective admissions in the last 12 months for complex adults cohort members.
--- One row per spell (admission methods 2x, births excluded upstream; end dates
--- imputed for open/incomplete spells). Window is rolling from the build date.
+-- Non-elective admissions in the 12 months ending on the segmentation
+-- reporting date for complex adults cohort members. One row per spell
+-- (admission method 2x excluding 2C, baby born at home; end dates imputed for
+-- open/incomplete spells).
 --
 -- The cohort is joined on sk_patient_id. A small number of sk_patient_ids map to
 -- more than one person_id (duplicate person records for the same human), which
@@ -29,8 +30,15 @@ SELECT
 FROM {{ ref('int_sus_apc_imputed_spells') }} AS s
 INNER JOIN {{ ref('fct_person_complex_adults') }} AS c
     ON s.sk_patient_id = c.sk_patient_id
-WHERE LEFT(s.spell_admission_method, 1) = '2'
-    AND s.start_date >= DATEADD(MONTH, -12, CURRENT_DATE())
+-- Window and key filters must match int_segmentation_acute_activity, which
+-- produces the nel_admissions_12mo count that decides cohort membership.
+WHERE
+    LEFT(s.spell_admission_method, 1) = '2'
+    AND s.spell_admission_method != '2C'
+    AND s.start_date BETWEEN DATEADD('month', -12, {{ segmentation_reporting_date() }})
+    AND {{ segmentation_reporting_date() }}
+    AND s.sk_patient_id IS NOT NULL
+    AND s.sk_patient_id != '1'
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY s.visit_occurrence_id
     ORDER BY c.person_id

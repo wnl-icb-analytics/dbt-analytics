@@ -22,10 +22,7 @@ WITH scored AS (
         ON pl.person_id = score.person_id
         AND pl.end_date = score.end_date
     {% if is_incremental() %}
-    WHERE pl.end_date > (
-        SELECT COALESCE(MAX(end_date), '1900-01-01'::DATE) FROM {{ this }}
-    )
-        OR pl.end_date = LAST_DAY(DATEADD('month', -1, CURRENT_DATE))
+    WHERE {{ rebuild_month_window('pl.end_date', 'end_date') }}
     {% endif %}
 )
 

@@ -6,7 +6,13 @@ models:
       of the last 60 completed month-ends. LTCs, diagnoses and rolling activity
       are evaluated at that month-end. Missing rows do not meet the cohort
       definition. Community coverage is incomplete before December 2023 and
-      may understate the cohort in earlier months.
+      may understate the cohort in earlier months. Outpatient and
+      mental-health windows end on the calendar month-end rather than on the
+      latest date each source has reached, so the newest month-ends
+      undercount sources that submit in arrears and can understate the cohort.
+      Read the lag columns in
+      int_segmentation_service_activity_coverage_history before interpreting a
+      trend at the trailing edge.
     config:
       meta:
         owner:
@@ -20,6 +26,8 @@ models:
         description: Person identifier.
         data_tests:
           - not_null
+      - name: sk_patient_id
+        description: Pseudonymised patient key used for commissioning activity.
       - name: end_date
         description: Completed month-end used as the reference date.
         data_tests:
@@ -41,32 +49,79 @@ models:
                 max_value: 17
       - name: ltc_list
         description: Sorted qualifying condition codes; null when the count is zero.
+      - name: complexity_diagnosis_codes
+        description: >-
+          Distinct codes from the NWL child-complexity list recorded by the
+          month-end.
+      - name: latest_complexity_diagnosis_date
+        description: Date of the latest child-complexity diagnosis code.
+
+      - name: paediatric_op_appointments_12mo
+        description: >-
+          Attended outpatient appointments under a paediatric treatment
+          function in the rolling 12 months. Criterion is 5 or more.
+      - name: outpatient_specialties_12mo
+        description: >-
+          Distinct main specialties with an attended outpatient appointment in
+          the rolling 12 months, excluding trauma and orthopaedics (110), ENT
+          (120), ophthalmology (130) and A&E (180), their paediatric
+          treatment functions (214, 215, 216), and obstetrics (501) or
+          midwifery (560) in either main specialty or treatment function.
+          Criterion is 2 or more.
+      - name: mh_inpatient_stays_12mo
+        description: >-
+          MHSDS hospital spells overlapping the rolling 12 months, so spells
+          starting before the window still count. Criterion is 1 or more.
+      - name: community_contacts_12mo
+        description: >-
+          Attended CSDS care contacts in the rolling community window,
+          excluding Health Visiting Service contacts (team type 16). Some
+          CSDS records carry no patient key, so the count is a floor.
+          Criterion is 7 or more.
+
+      - name: community_window_end_date
+        description: Latest CSDS contact date available by the month-end.
+      - name: is_community_window_complete
+        description: CSDS covers the full rolling community window.
+        data_tests:
+          - not_null
+      - name: community_lag_days
+        description: >-
+          Days between community_window_end_date and the month-end. Higher
+          values mean CSDS activity near the month-end has not yet arrived.
+
       - name: has_2plus_ltcs
-        description: Meets the two-or-more LTC criterion.
+        description: Criterion - at least 2 qualifying LTC registers.
         data_tests:
           - not_null
       - name: has_complexity_diagnosis
-        description: Has a diagnosis from the NWL child-complexity code list.
+        description: >-
+          Criterion - at least 1 diagnosis from the NWL child-complexity code
+          list recorded by the month-end.
         data_tests:
           - not_null
       - name: has_5plus_paediatric_op_appointments
-        description: Has at least five paediatric outpatient appointments.
+        description: >-
+          Criterion - at least 5 attended paediatric outpatient appointments
+          in the rolling 12 months.
         data_tests:
           - not_null
       - name: has_2plus_outpatient_specialties
-        description: Has qualifying outpatient care across two main specialties.
+        description: >-
+          Criterion - attended outpatient care across at least 2 qualifying
+          main specialties in the rolling 12 months.
         data_tests:
           - not_null
       - name: has_mh_inpatient_stay
-        description: Has a mental-health inpatient stay overlapping the window.
+        description: >-
+          Criterion - at least 1 mental-health inpatient stay overlapping the
+          rolling 12 months.
         data_tests:
           - not_null
       - name: has_7plus_community_contacts
-        description: Has at least seven community contacts in the window.
-        data_tests:
-          - not_null
-      - name: is_community_window_complete
-        description: CSDS covers the full rolling community window.
+        description: >-
+          Criterion - at least 7 community contacts in the rolling community
+          window.
         data_tests:
           - not_null
       - name: complexity_criteria_count

@@ -8,30 +8,14 @@
 
 -- Non-activity clinical criteria used by adult and child segmentation.
 
-WITH frailty_events AS (
-    SELECT
-        obs.id,
-        obs.person_id,
-        obs.clinical_effective_date,
-        obs.date_recorded,
-        CASE
-            WHEN obs.mapped_concept_code = '925791000000100' THEN 'Mild'
-            WHEN obs.mapped_concept_code = '925831000000107' THEN 'Moderate'
-            WHEN obs.mapped_concept_code = '925861000000102' THEN 'Severe'
-            ELSE 'Unknown'
-        END AS frailty_severity
-    FROM ({{ get_observations("'FRAILTY_DX'") }}) AS obs
-    WHERE obs.clinical_effective_date IS NOT NULL
-),
-
-frailty_latest AS (
+WITH frailty_latest AS (
     SELECT
         pm.person_id,
         pm.month_end_date AS end_date,
         f.clinical_effective_date AS latest_frailty_date,
         f.frailty_severity AS latest_frailty_severity
     FROM {{ ref('int_segmentation_person_month_spine') }} AS pm
-    INNER JOIN frailty_events AS f
+    INNER JOIN {{ ref('int_frailty_diagnoses_all') }} AS f
         ON pm.person_id = f.person_id
         AND f.clinical_effective_date <= pm.month_end_date
         AND (
@@ -121,9 +105,15 @@ residential_latest AS (
             OR CAST(r.date_recorded AS DATE) <= pm.month_end_date
         )
     WHERE pm.is_active
+    -- A homelessness code wins a same-day tie with another residential code
+    -- (UKHSA HOMELESS_DAT >= RESIDE_DAT), matching dim_person_homeless.
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY pm.person_id, pm.month_end_date
-        ORDER BY r.clinical_effective_date DESC, r.id DESC
+        ORDER BY
+            CAST(r.clinical_effective_date AS DATE) DESC,
+            r.is_homeless_status DESC,
+            r.clinical_effective_date DESC,
+            r.id DESC
     ) = 1
 ),
 
@@ -135,10 +125,18 @@ chip_months AS (
     WHERE is_active AND practice_code = 'Y02674'
 ),
 
-homeless_keys AS (
-    SELECT person_id, end_date
+homeless_residential AS (
+    SELECT
+        person_id,
+        end_date,
+        latest_residential_status_date
     FROM residential_latest
     WHERE is_homeless_status
+),
+
+homeless_keys AS (
+    SELECT person_id, end_date
+    FROM homeless_residential
 
     UNION
 
@@ -146,6 +144,8 @@ homeless_keys AS (
     FROM chip_months
 ),
 
+-- The date is only carried where the latest residential code is a
+-- homelessness code, so it never contradicts the flag beside it.
 homeless_qualifying AS (
     SELECT
         k.person_id,
@@ -153,7 +153,7 @@ homeless_qualifying AS (
         r.latest_residential_status_date,
         c.person_id IS NOT NULL AS is_registered_chip
     FROM homeless_keys AS k
-    LEFT JOIN residential_latest AS r
+    LEFT JOIN homeless_residential AS r
         ON k.person_id = r.person_id
         AND k.end_date = r.end_date
     LEFT JOIN chip_months AS c
@@ -161,24 +161,14 @@ homeless_qualifying AS (
         AND k.end_date = c.end_date
 ),
 
-alcohol_events AS (
-    SELECT
-        obs.person_id,
-        obs.clinical_effective_date,
-        obs.date_recorded
-    FROM ({{ get_observations("'ALCOHOL_MISUSE_DISORDERS'") }}) AS obs
-    WHERE
-        obs.clinical_effective_date IS NOT NULL
-        AND obs.age_at_event >= 16
-),
-
+-- int_alcohol_misuse_disorders owns the age 16 recording threshold.
 alcohol_qualifying AS (
     SELECT
         pm.person_id,
         pm.month_end_date AS end_date,
         MAX(a.clinical_effective_date) AS latest_alcohol_disorder_date
     FROM {{ ref('int_segmentation_person_month_spine') }} AS pm
-    INNER JOIN alcohol_events AS a
+    INNER JOIN {{ ref('int_alcohol_misuse_disorders') }} AS a
         ON pm.person_id = a.person_id
         AND a.clinical_effective_date <= pm.month_end_date
         AND (
@@ -234,18 +224,12 @@ substance_qualifying AS (
 
 housebound_events AS (
     SELECT
-        obs.id,
-        obs.person_id,
-        obs.clinical_effective_date,
-        obs.date_recorded,
-        obs.cluster_id = 'HOUSEBOUND' AS is_housebound_status
-    FROM (
-        {{ get_observations(
-            "'HOUSEBOUND', 'NO_LONGER_HOUSEBOUND'",
-            source='ECL_CACHE'
-        ) }}
-    ) AS obs
-    WHERE obs.clinical_effective_date IS NOT NULL
+        id,
+        person_id,
+        clinical_effective_date,
+        date_recorded,
+        source_cluster_id = 'HOUSEBOUND' AS is_housebound_status
+    FROM {{ ref('int_housebound_status_all') }}
 ),
 
 housebound_latest AS (

@@ -4,12 +4,18 @@ models:
       Rolling 12-month outpatient, mental-health inpatient and community
       activity for segmentation. One row represents one active person with at
       least one qualifying event at one of the last 60 completed month-ends.
-      Windows include the reference month and the exact boundary date 12
-      months earlier. Community windows end on the latest CSDS contact date
-      available by the reference month, matching the current lag-aware model.
+      Outpatient and mental-health windows run from the exact date 12 months
+      before the reference month-end up to and including that month-end.
+      Community windows cover the 12 months ending on the latest CSDS contact
+      date available by the reference month, matching the current lag-aware
+      model.
       Missing rows represent zero activity. CSDS coverage begins in December
       2022; completeness is exposed by
-      int_segmentation_service_activity_coverage_history.
+      int_segmentation_service_activity_coverage_history. The outpatient and
+      mental-health windows end on the calendar month-end rather than on the
+      latest date each source has reached, so the newest month-ends
+      undercount sources that submit in arrears. Read the lag columns in the
+      coverage model before interpreting a trend at the trailing edge.
     config:
       meta:
         owner:
@@ -46,7 +52,9 @@ models:
       - name: outpatient_specialties_12mo
         description: >-
           Distinct attended main specialties after the child-complexity
-          exclusions.
+          exclusions: main specialties 110, 120, 130 and 180, treatment
+          functions 214-216, and obstetrics (501) or midwifery (560) in either
+          main specialty or treatment function.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -60,7 +68,8 @@ models:
               arguments:
                 min_value: 0
       - name: community_contacts_12mo
-        description: Attended CSDS care contacts in the rolling window.
+        description: Attended CSDS care contacts in the rolling window,
+          excluding Health Visiting Service contacts (team type 16).
         data_tests:
           - not_null
           - dbt_utils.accepted_range:

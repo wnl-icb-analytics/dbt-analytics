@@ -1,10 +1,17 @@
 models:
   - name: int_segmentation_service_activity_coverage_history
     description: >-
-      CSDS source coverage for each historical segmentation month. One row
-      represents one of the last 60 completed month-ends. The community window
-      ends on the latest contact date available by the reference month. A
-      complete window has 12 months of source history before that date.
+      Source coverage and reporting lag for each historical segmentation
+      month. One row represents one of the last 60 completed month-ends. For
+      every source feeding int_segmentation_acute_activity_history and
+      int_segmentation_service_activity_history it gives the latest activity
+      date the source had reached by that month-end and the lag in days behind
+      it. The community window ends on that latest CSDS contact date, and a
+      complete window has 12 months of source history before it. The other
+      windows end on the month-end itself, so their lag shows how far the
+      newest month-ends undercount sources that submit in arrears. Latest
+      dates other than CSDS are read over the date range the rolling windows
+      can reach, and are null when a source has no activity in that range.
     config:
       meta:
         owner:
@@ -29,3 +36,44 @@ models:
           - not_null
       - name: community_lag_days
         description: Days between the community window end and reference month-end.
+      - name: gp_latest_activity_date
+        description: >-
+          Latest attended clinical GP appointment date on or before the
+          month-end (int_appointment_gp_clinical).
+      - name: gp_lag_days
+        description: >-
+          Days between gp_latest_activity_date and the month-end. Higher
+          values mean gp_appointments_12mo undercounts that month.
+      - name: outpatient_latest_activity_date
+        description: >-
+          Latest attended outpatient appointment date on or before the
+          month-end (int_sus_op_appointment).
+      - name: outpatient_lag_days
+        description: >-
+          Days between outpatient_latest_activity_date and the month-end.
+          Applies to outpatient_treatment_functions_12mo,
+          paediatric_op_appointments_12mo and outpatient_specialties_12mo.
+      - name: apc_latest_activity_date
+        description: >-
+          Latest inpatient admission date on or before the month-end
+          (int_sus_apc_encounter, before any admission-method exclusion).
+      - name: apc_lag_days
+        description: >-
+          Days between apc_latest_activity_date and the month-end. Applies to
+          nel_admissions_12mo.
+      - name: ed_latest_activity_date
+        description: >-
+          Latest urgent and emergency care attendance date on or before the
+          month-end (int_sus_uec_encounter).
+      - name: ed_lag_days
+        description: >-
+          Days between ed_latest_activity_date and the month-end. Applies to
+          ed_attendances_12mo.
+      - name: mh_latest_activity_date
+        description: >-
+          Latest MHSDS hospital spell start date on or before the month-end
+          (int_mhsds_spell_encounters).
+      - name: mh_lag_days
+        description: >-
+          Days between mh_latest_activity_date and the month-end. Applies to
+          mh_inpatient_stays_12mo.

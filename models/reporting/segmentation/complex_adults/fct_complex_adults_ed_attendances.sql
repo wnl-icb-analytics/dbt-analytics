@@ -4,9 +4,10 @@
         cluster_by=['person_id'])
 }}
 
--- Urgent & emergency care attendances (all ECDS settings) in the last 12 months
--- for complex adults cohort members. One row per attendance; pod identifies the
--- setting (AE-T1, AE-Other, UCC, WiC, SDEC). Window is rolling from the build date.
+-- Urgent & emergency care attendances (all ECDS settings) in the 12 months
+-- ending on the segmentation reporting date for complex adults cohort members.
+-- One row per attendance; pod identifies the setting (AE-T1, AE-Other, UCC,
+-- WiC, SDEC).
 --
 -- The cohort is joined on sk_patient_id. A small number of sk_patient_ids map to
 -- more than one person_id (duplicate person records for the same human), which
@@ -35,12 +36,11 @@ SELECT
 FROM {{ ref('int_sus_uec_encounter') }} AS e
 INNER JOIN {{ ref('fct_person_complex_adults') }} AS c
     ON e.sk_patient_id = c.sk_patient_id
--- Window and key filters must match fct_person_sus_uec_recent, which produces the
--- ed_attendances_12mo count that decides cohort membership. Without the upper
--- bound a future-dated attendance would appear here but not in the count, and
--- without the sk_patient_id != '1' guard the shared pseudo-key's entire ED
--- history would attach to any cohort member carrying it.
-WHERE e.start_date BETWEEN DATEADD(MONTH, -12, CURRENT_DATE()) AND CURRENT_DATE()
+-- Window and key filters must match int_segmentation_acute_activity, which
+-- produces the ed_attendances_12mo count that decides cohort membership.
+WHERE
+    e.start_date BETWEEN DATEADD('month', -12, {{ segmentation_reporting_date() }})
+    AND {{ segmentation_reporting_date() }}
     AND e.sk_patient_id IS NOT NULL
     AND e.sk_patient_id != '1'
 QUALIFY ROW_NUMBER() OVER (

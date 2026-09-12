@@ -14,6 +14,9 @@ models:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns: [person_id, end_date]
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: RESIDE_COD, HOMELESS_COD, ILLSUB_COD
     columns:
       - name: person_id
         description: Person identifier.
@@ -50,7 +53,10 @@ models:
         data_tests:
           - not_null
       - name: latest_residential_status_date
-        description: Date of the latest residential status code.
+        description: >-
+          Date of the latest residential status code where that code is a
+          homelessness code. Null where the person qualifies only through
+          Camden Health Improvement Practice registration.
       - name: is_registered_chip
         description: Registered with Camden Health Improvement Practice.
         data_tests:

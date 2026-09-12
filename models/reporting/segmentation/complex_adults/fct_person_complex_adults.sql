@@ -60,8 +60,9 @@
 --
 -- ED attendances count all urgent & emergency care settings from ECDS
 -- (Type 1/2 A&E, UTC, WiC, SDEC).
--- GP and outpatient 12-month windows end on the latest available activity date
--- in each source to account for reporting lag.
+-- ED, NEL, GP and outpatient 12-month windows all end on the segmentation
+-- reporting date (segmentation_reporting_date macro). Clinical criteria
+-- reflect records at build time.
 --
 -- Every complexity criterion is exposed as its own column alongside
 -- complexity_criteria_count, so the marginal contribution of any single
@@ -136,21 +137,27 @@ WITH complexity AS (
         sub.latest_qualifying_date AS latest_substance_misuse_date,
 
         -- High acute use with no GP contact: (>=3 ED attendances OR >=2 NEL
-        -- admissions in 12 months) AND no attended GP appointment in the GP
-        -- 12-month window. No row in int_segmentation_gp_activity means zero
-        -- attended clinical appointments, so the GP side matches the >=15
-        -- criterion's definition (DNAs and admin excluded, lag-aware window).
+        -- admissions in 12 months) AND no attended GP appointment in the same
+        -- window. No row in int_segmentation_gp_activity means zero attended
+        -- clinical appointments, so the GP side matches the >=15 criterion's
+        -- definition (DNAs and admin excluded).
         (
-            (ZEROIFNULL(ae.ae_tot_12mo) >= 3 OR ZEROIFNULL(ip.apc_nel_12mo) >= 2)
+            (
+                ZEROIFNULL(acute.ed_attendances_12mo) >= 3
+                OR ZEROIFNULL(acute.nel_admissions_12mo) >= 2
+            )
             AND gp.person_id IS NULL
         ) AS has_high_acute_use_no_gp,
 
         -- Utilisation
-        ZEROIFNULL(ip.apc_nel_12mo) AS nel_admissions_12mo,
-        ZEROIFNULL(ae.ae_tot_12mo) AS ed_attendances_12mo,
+        ZEROIFNULL(acute.nel_admissions_12mo) AS nel_admissions_12mo,
+        ZEROIFNULL(acute.ed_attendances_12mo) AS ed_attendances_12mo,
         ZEROIFNULL(gp.gp_appointments_12mo) AS gp_appointments_12mo,
-        ZEROIFNULL(op.op_spec_12mo) AS outpatient_specialties_12mo,
-        COALESCE(h.is_housebound, FALSE) AS is_housebound
+        ZEROIFNULL(op.outpatient_treatment_functions_12mo)
+            AS outpatient_specialties_12mo,
+        COALESCE(h.is_housebound, FALSE) AS is_housebound,
+
+        {{ segmentation_reporting_date() }} AS reporting_date
 
     FROM {{ ref('dim_person_demographics') }} AS d
     LEFT JOIN {{ ref('int_segmentation_complex_adults_ltc') }} AS l
@@ -169,14 +176,12 @@ WITH complexity AS (
         ON d.person_id = sub.person_id
     LEFT JOIN {{ ref('int_segmentation_gp_activity') }} AS gp
         ON d.person_id = gp.person_id
-    LEFT JOIN {{ ref('fct_person_sus_op_recent') }} AS op
+    LEFT JOIN {{ ref('int_segmentation_op_activity') }} AS op
         ON d.sk_patient_id = op.sk_patient_id
     LEFT JOIN {{ ref('dim_person_housebound_status') }} AS h
         ON d.person_id = h.person_id
-    LEFT JOIN {{ ref('fct_person_sus_apc_recent') }} AS ip
-        ON d.sk_patient_id = ip.sk_patient_id
-    LEFT JOIN {{ ref('fct_person_sus_uec_recent') }} AS ae
-        ON d.sk_patient_id = ae.sk_patient_id
+    LEFT JOIN {{ ref('int_segmentation_acute_activity') }} AS acute
+        ON d.sk_patient_id = acute.sk_patient_id
     WHERE d.age >= 18
 )
 

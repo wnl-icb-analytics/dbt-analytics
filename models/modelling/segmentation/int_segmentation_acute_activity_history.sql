@@ -52,7 +52,13 @@ gp_full_months AS (
     GROUP BY pm.person_id, pm.month_end_date
 ),
 
-gp_boundary_day AS (
+-- Each window is the whole months after the boundary month, plus the part of
+-- the boundary month from the window start onwards. The two branches cover
+-- different months, so their counts add without overlapping. The boundary
+-- branch has to be a range because the start is not always a month end:
+-- 12 months before 28 February in a non-leap year is 28 February in a leap
+-- year, so 29 February also falls inside the window.
+gp_boundary_partial_month AS (
     SELECT
         pm.person_id,
         pm.month_end_date AS end_date,
@@ -60,7 +66,9 @@ gp_boundary_day AS (
     FROM {{ ref('int_segmentation_person_month_spine') }} AS pm
     INNER JOIN gp_activity AS g
         ON pm.person_id = g.person_id
-        AND g.activity_date = DATEADD('month', -12, pm.month_end_date)
+        AND g.activity_date BETWEEN
+            DATEADD('month', -12, pm.month_end_date)
+            AND LAST_DAY(DATEADD('month', -12, pm.month_end_date))
     WHERE pm.is_active
     GROUP BY pm.person_id, pm.month_end_date
 ),
@@ -72,7 +80,7 @@ gp_rolling AS (
         ZEROIFNULL(f.appointment_count) + ZEROIFNULL(b.appointment_count)
             AS gp_appointments_12mo
     FROM gp_full_months AS f
-    FULL OUTER JOIN gp_boundary_day AS b
+    FULL OUTER JOIN gp_boundary_partial_month AS b
         ON f.person_id = b.person_id AND f.end_date = b.end_date
 ),
 
@@ -115,7 +123,7 @@ ed_full_months AS (
     GROUP BY pm.person_id, pm.month_end_date
 ),
 
-ed_boundary_day AS (
+ed_boundary_partial_month AS (
     SELECT
         pm.person_id,
         pm.month_end_date AS end_date,
@@ -123,7 +131,9 @@ ed_boundary_day AS (
     FROM {{ ref('int_segmentation_person_month_spine') }} AS pm
     INNER JOIN ed_activity AS e
         ON pm.sk_patient_id = e.sk_patient_id
-        AND e.activity_date = DATEADD('month', -12, pm.month_end_date)
+        AND e.activity_date BETWEEN
+            DATEADD('month', -12, pm.month_end_date)
+            AND LAST_DAY(DATEADD('month', -12, pm.month_end_date))
     WHERE pm.is_active
     GROUP BY pm.person_id, pm.month_end_date
 ),
@@ -135,14 +145,23 @@ ed_rolling AS (
         ZEROIFNULL(f.attendance_count) + ZEROIFNULL(b.attendance_count)
             AS ed_attendances_12mo
     FROM ed_full_months AS f
-    FULL OUTER JOIN ed_boundary_day AS b
+    FULL OUTER JOIN ed_boundary_partial_month AS b
         ON f.person_id = b.person_id AND f.end_date = b.end_date
 ),
 
--- The current recent mart uses int_sus_apc_imputed_spells, which emits only
--- two years. The underlying encounter model has the same admission definition
--- and continuous coverage for all 60 historical windows. Apply the current
--- mart's spell deduplication key across that full history.
+-- The current recent mart reads int_sus_apc_imputed_spells, which emits only
+-- two years. The encounter model underneath it has continuous coverage for
+-- all 60 historical windows, so history is built from it directly, sharing
+-- the mart's admission-method exclusions and spell deduplication key.
+--
+-- It does not share the mart's date imputation, which fills a missing
+-- admission date from the discharge date and duration before deduplicating.
+-- So spells with no admission date are excluded here although the mart
+-- recovers them, and a missing discharge date leaves the start_date =
+-- end_date term of the deduplication key null, letting same-day spells the
+-- mart keeps separate collapse into one. Together this affects under 0.1% of
+-- in-scope spells and can move nel_admissions_12mo in either direction
+-- against fct_person_sus_apc_recent.apc_nel_12mo.
 nel_spells_deduplicated AS (
     SELECT
         sk_patient_id,
@@ -214,7 +233,7 @@ nel_full_months AS (
     GROUP BY pm.person_id, pm.month_end_date
 ),
 
-nel_boundary_day AS (
+nel_boundary_partial_month AS (
     SELECT
         pm.person_id,
         pm.month_end_date AS end_date,
@@ -222,7 +241,9 @@ nel_boundary_day AS (
     FROM {{ ref('int_segmentation_person_month_spine') }} AS pm
     INNER JOIN nel_activity AS n
         ON pm.sk_patient_id = n.sk_patient_id
-        AND n.activity_date = DATEADD('month', -12, pm.month_end_date)
+        AND n.activity_date BETWEEN
+            DATEADD('month', -12, pm.month_end_date)
+            AND LAST_DAY(DATEADD('month', -12, pm.month_end_date))
     WHERE pm.is_active
     GROUP BY pm.person_id, pm.month_end_date
 ),
@@ -234,7 +255,7 @@ nel_rolling AS (
         ZEROIFNULL(f.admission_count) + ZEROIFNULL(b.admission_count)
             AS nel_admissions_12mo
     FROM nel_full_months AS f
-    FULL OUTER JOIN nel_boundary_day AS b
+    FULL OUTER JOIN nel_boundary_partial_month AS b
         ON f.person_id = b.person_id AND f.end_date = b.end_date
 ),
 

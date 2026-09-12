@@ -16,7 +16,8 @@
 # Prerequisites:
 #   - Snowflake secrets: SNOWFLAKE_ACCOUNT, SNOWFLAKE__USERNAME,
 #     SNOWFLAKE__PRIVATE_KEY, SNOWFLAKE__PASSPHRASE
-#   - DBT_ADMIN role with USAGE on WH_WNL_ENGINEERING_M / WH_NCL_ENGINEERING_XS
+#   - DBT_ADMIN role with USAGE on WH_WNL_ENGINEERING_M,
+#     WH_NCL_ENGINEERING_XS and WH_WNL_OLIDS_L (eFI2 history models)
 #   - Stage DATA_LAKE__NCL.DBT_OBSERVABILITY.STG_DBT_ARTIFACTS
 #     (Snowflake-Deployment: dbt Admin/dbt GitHub Actions Runs/setup.sql)
 
@@ -118,6 +119,11 @@ jobs:
       SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
       SNOWFLAKE_ROLE: DBT_ADMIN
       SNOWFLAKE_WAREHOUSE: WH_WNL_ENGINEERING_M
+      # The eFI2 history models expand observations across 60 month-ends. The
+      # first build after they merge is a full build (the tables do not exist
+      # yet), so route them off the Medium warehouse here as well as on the
+      # monthly refresh in dbt-scheduled.yml.
+      EFI2_HISTORY_WAREHOUSE: WH_WNL_OLIDS_L
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:

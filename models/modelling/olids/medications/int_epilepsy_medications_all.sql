@@ -18,6 +18,7 @@ SELECT
     medication_order_id,
     medication_statement_id,
     order_date,
+    date_recorded,
     order_medication_name,
     order_dose,
     order_quantity_value,
