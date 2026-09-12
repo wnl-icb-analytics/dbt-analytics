@@ -1,3 +1,6 @@
+-- Pair: macros/qof_registers/calculate_chd_register.sql.
+-- This live fact includes future-dated records; its PIT pair is strict as-of.
+
 {{
     config(
         materialized='table')

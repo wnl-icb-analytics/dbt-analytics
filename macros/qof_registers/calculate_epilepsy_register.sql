@@ -1,4 +1,5 @@
 {% macro calculate_epilepsy_register(reference_date_expr='CURRENT_DATE()') %}
+    {# Pair: fct_person_epilepsy_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
     {#
     Calculates Epilepsy register status at a given reference date.
 

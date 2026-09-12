@@ -1,0 +1,39 @@
+models:
+  - name: int_obesity2_ethnicity_all
+    description: >
+      QOF v51 journal ethnicity observations used by OBES2. The lower-threshold
+      flag identifies South Asian, Chinese, other Asian, Middle Eastern, Black
+      African and African-Caribbean family backgrounds. One row represents an
+      observation and matched ethnicity cluster.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [id, source_cluster_id]
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: ETHALLAB_COD, ETHALLAC_COD, ETHALLAI_COD, ETHALLAO_COD, ETHALLAP_COD, ETHALLBA_COD, ETHALLBC_COD, ETHALLBO_COD, ETHALLMO_COD, ETHALLMWA_COD, ETHALLMWBA_COD, ETHALLMWBC_COD, ETHALLOA_COD, ETHALLOO_COD, ETHALLWB_COD, ETHALLWGT_COD, ETHALLWI_COD, ETHALLWO_COD, ETHNICITYND_COD
+    columns:
+      - name: id
+        description: Clinical observation identifier
+        data_tests:
+          - not_null
+      - name: person_id
+        description: Person identifier
+        data_tests:
+          - not_null
+      - name: clinical_effective_date
+        description: Clinical effective date
+        data_tests:
+          - not_null
+      - name: date_recorded
+        description: Date recorded in the source system
+      - name: source_cluster_id
+        description: QOF v51 ethnicity cluster identifier
+      - name: is_lower_bmi_threshold_ethnicity
+        description: Whether the cluster qualifies for the OBES2 BMI 32.5 threshold
+        data_tests:
+          - not_null

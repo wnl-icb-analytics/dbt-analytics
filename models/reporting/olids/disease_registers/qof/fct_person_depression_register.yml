@@ -1,10 +1,10 @@
 models:
   - name: fct_person_depression_register
-    description: 'QOF depression register for patients aged 18+ with active depression
-      diagnosis.
-
-      One row per person with latest DEP_COD > latest DEPRES_COD or no resolution
-      recorded.'
+    description: >
+      Disease Registers (QOF v51) depression register. One row per person aged 18
+      or over whose latest first or new depression episode is on or after 1 April
+      2006 and is not followed by DEPRES_COD. V51 activates extraction of this
+      previously dormant register.
 
     tests:
       - dbt_utils.at_least_one:
@@ -27,12 +27,9 @@ models:
           name_short: "Depression"
           description_short: "QOF depression register"
           description_long: >
-            Depression diagnosed using QOF criteria: Age ≥18 years with latest depression  episode
-            on/after 1 April 2006, where latest depression code is more recent than  any
-            resolution code, or no resolved code present. Used for depression care
-            pathways,  treatment monitoring, recovery planning, and psychological
-            therapy access. Maps to  QOF indicator DEP001 (Depression Register). Uses
-            DEP_COD for diagnosis codes and  DEPRES_COD for resolution codes.
+            Disease Registers (QOF v51) depression register for patients aged 18 or
+            over with an unresolved first or new episode on or after 1 April 2006.
+            V51 activates register extraction; it does not change membership logic.
           is_qof: true
           qof_indicator: "DEP001"
           source_column: "is_on_register"
@@ -40,7 +37,7 @@ models:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
             - "QOF"
           code_clusters:
-            - cluster_id: "DEP_COD"
+            - cluster_id: "DEPR_COD"
               category: "INCLUSION"
             - cluster_id: "DEPRES_COD"
               category: "RESOLUTION"

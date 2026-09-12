@@ -1,0 +1,62 @@
+models:
+  - name: fct_person_ndh_register
+    description: >
+      Clinical NDH register at the current date. One row represents one person
+      aged 18 or over with NDH, impaired glucose tolerance or pre-diabetes
+      evidence and no unresolved diabetes. Gestational diabetes alone never
+      adds a row; use fct_person_qof_ndh_gdm_register for the QOF v51 denominator.
+    config:
+      meta:
+        indicator:
+          id: "NDH_CLINICAL"
+          type: "CONDITION"
+          category: "LTC"
+          clinical_domain: "Cardiometabolic"
+          name_short: "Non-Diabetic Hyperglycaemia"
+          description_short: "Clinical NDH register"
+          description_long: >
+            People aged 18 or over with NDH, impaired glucose tolerance or
+            pre-diabetes evidence who meet the diabetes-history rules. This
+            population-health cohort excludes the QOF gestational-diabetes route.
+          is_qof: false
+          source_column: "is_on_register"
+          usage_contexts:
+            - "POPULATION_HEALTH_NEEDS_DASHBOARD"
+          code_clusters:
+            - cluster_id: "NDH_COD"
+              category: "INCLUSION"
+            - cluster_id: "IGT_COD"
+              category: "INCLUSION"
+            - cluster_id: "PRD_COD"
+              category: "INCLUSION"
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.at_least_one:
+          column_name: person_id
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: >-
+              has_ndh_diagnosis OR has_igt_diagnosis OR has_prd_diagnosis
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        data_tests:
+          - unique
+          - not_null
+      - name: is_on_register
+        description: Always true because this fact contains register members only
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [true]
+      - name: earliest_diagnosis_date
+        description: Earliest NDH, impaired glucose tolerance or pre-diabetes date
+      - name: latest_diagnosis_date
+        description: Latest NDH, impaired glucose tolerance or pre-diabetes date
+      - name: has_ndh_route
+        description: Always true because every row has age-eligible NDH evidence
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [true]

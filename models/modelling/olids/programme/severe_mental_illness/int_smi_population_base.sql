@@ -8,6 +8,92 @@
 
 --SMI REGISTER BASE POPULATION
 
+WITH smi_diagnoses AS (
+    SELECT
+        person_id,
+        MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END)
+            AS latest_diagnosis_date,
+        MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END)
+            AS latest_resolved_date
+    FROM {{ ref('int_smi_diagnoses_all') }}
+    WHERE clinical_effective_date <= CURRENT_DATE()
+        AND (
+            date_recorded IS NULL
+            OR CAST(date_recorded AS DATE) <= CURRENT_DATE()
+        )
+    GROUP BY person_id
+),
+
+diagnosis_membership AS (
+    SELECT
+        person_id,
+        COALESCE(latest_resolved_date >= latest_diagnosis_date, FALSE)
+            AS has_recent_resolved_code,
+        NOT COALESCE(latest_resolved_date >= latest_diagnosis_date, FALSE)
+            AS has_active_smi_diagnosis
+    FROM smi_diagnoses
+    WHERE latest_diagnosis_date IS NOT NULL
+),
+
+lithium_stops AS (
+    SELECT
+        person_id,
+        MAX(CAST(clinical_effective_date AS DATE)) AS latest_stop_date
+    FROM ({{ get_observations("'LITSTP_COD'", source='PCD') }})
+    WHERE clinical_effective_date <= CURRENT_DATE()
+        AND (
+            date_recorded IS NULL
+            OR CAST(date_recorded AS DATE) <= CURRENT_DATE()
+        )
+    GROUP BY person_id
+),
+
+recent_lithium AS (
+    SELECT
+        person_id,
+        MAX(CAST(order_date AS DATE)) AS latest_order_date
+    FROM {{ ref('int_lithium_medications_all') }}
+    WHERE CAST(order_date AS DATE) <= CURRENT_DATE()
+        AND CAST(order_date AS DATE) > DATEADD('month', -6, CURRENT_DATE())
+        AND (
+            date_recorded IS NULL
+            OR CAST(date_recorded AS DATE) <= CURRENT_DATE()
+        )
+    GROUP BY person_id
+),
+
+active_lithium AS (
+    SELECT lithium.person_id
+    FROM recent_lithium AS lithium
+    LEFT JOIN lithium_stops AS stops
+        ON lithium.person_id = stops.person_id
+        AND stops.latest_stop_date > lithium.latest_order_date
+    WHERE stops.person_id IS NULL
+),
+
+programme_membership AS (
+    SELECT
+        diagnosis.person_id,
+        lithium.person_id IS NOT NULL AS is_on_lithium,
+        diagnosis.has_active_smi_diagnosis,
+        diagnosis.has_recent_resolved_code
+    FROM diagnosis_membership AS diagnosis
+    LEFT JOIN active_lithium AS lithium
+        ON diagnosis.person_id = lithium.person_id
+
+    UNION ALL
+
+    SELECT
+        lithium.person_id,
+        TRUE AS is_on_lithium,
+        FALSE AS has_active_smi_diagnosis,
+        FALSE AS has_recent_resolved_code
+    FROM active_lithium AS lithium
+    LEFT JOIN diagnosis_membership AS diagnosis
+        ON lithium.person_id = diagnosis.person_id
+    WHERE diagnosis.person_id IS NULL
+)
+
 select
 dem.PERSON_ID
 ,ID.HX_FLAKE
@@ -123,7 +209,7 @@ ELSE la.RESIDENT_FLAG END as RESIDENTIAL_LOC
 ,smi.HAS_ACTIVE_SMI_DIAGNOSIS
 ,smi.HAS_RECENT_RESOLVED_CODE
 FROM {{ ref('dim_person_demographics') }} dem 
-INNER JOIN {{ ref('fct_person_smi_register') }} smi using (PERSON_ID)
+INNER JOIN programme_membership smi using (PERSON_ID)
 LEFT JOIN {{ ref('dim_person_conditions') }} ltc using (PERSON_ID)
 LEFT JOIN {{ ref('person_pseudo') }} AS ID  using (PERSON_ID)
 LEFT JOIN {{ ref('stg_reference_lsoa21_ward25_lad25') }} la on la.LSOA21_CD = dem.LSOA_CODE_21

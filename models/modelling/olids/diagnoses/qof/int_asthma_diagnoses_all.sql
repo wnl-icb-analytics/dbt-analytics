@@ -16,7 +16,7 @@ Clinical Purpose:
 QOF Context:
 Asthma register includes persons with asthma diagnosis codes who have not
 been resolved. Resolution logic applied in downstream fact models.
-Age restrictions (typically 6+ years) applied in fact layer.
+Age restrictions (5+ years for QOF v51) are applied in the fact layer.
 
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 Use this model as input for asthma register and respiratory care models.

@@ -1,8 +1,9 @@
 models:
   - name: pit_heart_failure_register
     description: >
-      Heart Failure register calculated as of reference date {{ var('qof_reference_date')
-      }}.
+      QOF v51 HF1 and HF3 status calculated as of {{ var('qof_reference_date')
+      }}. HF3 requires unresolved heart failure and a reduced ejection fraction
+      code. It replaces HF2 and is not comparable with that register.
       Override with: dbt build --vars '{"qof_reference_date": "YYYY-MM-DD"}'
     config:
       meta:
@@ -21,6 +22,8 @@ models:
       - name: register_name
         description: Register name (e.g., 'Heart Failure')
       - name: is_on_register
-        description: Whether person qualifies for register at reference date
+        description: Whether the person is on the unresolved heart failure register (HF1)
+      - name: is_on_hfref_register
+        description: Whether the person is also on the reduced-ejection-fraction-only register (HF3)
       - name: reference_date
         description: Date at which register status was calculated

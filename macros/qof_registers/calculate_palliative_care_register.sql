@@ -1,4 +1,5 @@
 {% macro calculate_palliative_care_register(reference_date_expr='CURRENT_DATE()') %}
+    {# Pair: fct_person_palliative_care_register.sql. This macro is strict as-of; the live fact includes future-dated records. #}
     {#
     Calculates Palliative Care register status at a given reference date.
 

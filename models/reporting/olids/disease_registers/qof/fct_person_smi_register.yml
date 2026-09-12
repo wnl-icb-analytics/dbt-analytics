@@ -1,13 +1,18 @@
 models:
   - name: fct_person_smi_register
-    description: 'QOF v50 MH001 serious mental illness register. One row per person on
-      the register: MH1_REG — has an MH_COD diagnosis (remission does not exclude;
-      remission-only does not qualify); or MH2_REG — LIT_COD lithium in the last 6 months,
-      not subsequently stopped (LITSTP_COD). Aligned with the calculate_smi_register macro.'
+    description: >
+      QOF v51 serious mental illness register. One row per person with an MH_COD
+      diagnosis; remission does not exclude them and remission-only records do not
+      qualify. The retired MH2 lithium route is removed, so counts are not comparable
+      with the former combined register. Lithium fields remain informational for
+      diagnosis-qualified people.
 
-    tests:
+    data_tests:
       - dbt_utils.at_least_one:
           column_name: person_id
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: LITSTP_COD
 
     columns:
       - name: person_id
@@ -26,12 +31,10 @@ models:
           name_short: "Serious Mental Illness"
           description_short: "QOF serious mental illness register"
           description_long: >
-            Serious mental illness register (QOF v50 MH001). Included if the patient has
-            an MH_COD diagnosis (bipolar disorder, schizophrenia and other psychoses);
-            remission (MHREM_COD) does not remove them from the register, but a
-            remission-only record does not qualify. Also included on lithium therapy: a
-            LIT_COD order in the last 6 months not subsequently stopped (LITSTP_COD).
-            No age restriction.
+            QOF v51 MH1 register for patients with an MH_COD diagnosis covering bipolar
+            disorder, schizophrenia and other psychoses. Remission does not remove a
+            diagnosed person, but a remission-only record does not qualify. The former
+            MH2 lithium route is retired. No age restriction.
           is_qof: true
           qof_indicator: "MH003"
           source_column: "is_on_register"
@@ -42,10 +45,6 @@ models:
             - cluster_id: "MH_COD"
               category: "INCLUSION"
             - cluster_id: "MHREM_COD"
-              category: "RESOLUTION"
-            - cluster_id: "LIT_COD"
-              category: "INCLUSION"
-            - cluster_id: "LITSTP_COD"
               category: "RESOLUTION"
         owner:
           name: EddieDavison92

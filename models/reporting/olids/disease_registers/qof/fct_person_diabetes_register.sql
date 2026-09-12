@@ -1,3 +1,7 @@
+-- Pair: macros/qof_registers/calculate_diabetes_register.sql.
+-- This live fact includes future-dated records. Its PIT pair is strict as-of
+-- and derives age at the reference date where age is used.
+
 {{
     config(
         materialized='table',
@@ -91,7 +95,8 @@ register_logic AS (
         COALESCE(age.age >= 17, FALSE) AS meets_age_criteria,
         CASE
             WHEN diag.latest_resolved_date IS NULL THEN TRUE -- Never resolved
-            WHEN diag.latest_diagnosis_date > diag.latest_resolved_date THEN TRUE -- Re-diagnosed after resolution
+            -- DMRES_DAT is a resolution after DMLAT_DAT; a same-day resolution does not remove it
+            WHEN diag.latest_diagnosis_date::DATE >= diag.latest_resolved_date::DATE THEN TRUE
             ELSE FALSE -- Currently resolved
         END AS has_active_diabetes_diagnosis,
         COALESCE(
@@ -99,7 +104,7 @@ register_logic AS (
             AND diag.earliest_diagnosis_date IS NOT NULL -- Has diabetes diagnosis
             AND (
                 diag.latest_resolved_date IS NULL -- Never resolved
-                OR diag.latest_diagnosis_date > diag.latest_resolved_date -- Re-diagnosed after resolution
+                OR diag.latest_diagnosis_date::DATE >= diag.latest_resolved_date::DATE -- No later resolution
             ), FALSE
         ) AS is_on_register,
 

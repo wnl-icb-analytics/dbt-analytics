@@ -1,4 +1,5 @@
 {% macro calculate_rheumatoid_arthritis_register(reference_date_expr='CURRENT_DATE()') %}
+    {# Pair: fct_person_rheumatoid_arthritis_register.sql. This macro is strict as-of; the live fact includes future-dated records. #}
     {#
     Calculates Rheumatoid Arthritis register status at a given reference date.
 

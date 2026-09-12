@@ -1,10 +1,11 @@
 {% macro calculate_diabetes_register(reference_date_expr='CURRENT_DATE()') %}
+    {# Pair: fct_person_diabetes_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
     {#
     Calculates Diabetes register status at a given reference date.
 
     Business Logic:
     - Age ≥17 at reference date
-    - Active diabetes diagnosis (latest diagnosis > latest resolution)
+    - Active diabetes diagnosis (no resolution after the latest diagnosis; same-day resolution retains it)
     - Type classification (Type 1 vs Type 2 vs Unknown)
 
     Parameters:
@@ -41,7 +42,14 @@
         SELECT
             person_id,
             birth_date_approx,
-            FLOOR(DATEDIFF('month', birth_date_approx, {{ reference_date_expr }}) / 12) AS age
+            FLOOR(DATEDIFF(
+                'month',
+                birth_date_approx,
+                CASE
+                    WHEN death_date_approx <= {{ reference_date_expr }} THEN death_date_approx
+                    ELSE {{ reference_date_expr }}
+                END
+            ) / 12) AS age
         FROM {{ ref('dim_person_birth_death') }}
         WHERE birth_date_approx IS NOT NULL
     ),
@@ -55,7 +63,7 @@
                 AND diag.earliest_diagnosis_date IS NOT NULL
                 AND (
                     diag.latest_resolved_date IS NULL
-                    OR diag.latest_diagnosis_date > diag.latest_resolved_date
+                    OR diag.latest_diagnosis_date::DATE >= diag.latest_resolved_date::DATE
                 ),
                 FALSE
             ) AS is_on_register,
@@ -65,7 +73,7 @@
                     AND diag.earliest_diagnosis_date IS NOT NULL
                     AND (
                         diag.latest_resolved_date IS NULL
-                        OR diag.latest_diagnosis_date > diag.latest_resolved_date
+                        OR diag.latest_diagnosis_date::DATE >= diag.latest_resolved_date::DATE
                     ),
                     FALSE
                 ) = FALSE THEN NULL
