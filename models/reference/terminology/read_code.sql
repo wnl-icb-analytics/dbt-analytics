@@ -40,3 +40,15 @@ from {{ ref('stg_ukhfd_read_v2_term') }} as h
 where not exists (
     select 1 from dictionary d where d.coding_system = 'read_v2' and d.code = h.code
 )
+union all
+select 'ctv3', h.code, null::varchar, h.term, 'ctv3_term_code', null::varchar,
+    'UKHFD CTV3 term history'
+from {{ ref('stg_ukhfd_ctv3_term') }} as h
+where h.term is not null
+    and not exists (
+        select 1 from dictionary d where d.coding_system = 'ctv3' and d.code = h.code
+    )
+    -- Do not reinterpret a known concept code as a term identifier.
+    and not exists (
+        select 1 from {{ ref('stg_ukhfd_ctv3_concept') }} c where c.code = h.code
+    )
