@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND160: https://www.nice.org.uk/indicators/ind160
--- Foot examination of both feet in 12 months on the diabetes register, allowing an absent or amputated foot; declined or unsuitable does not count.
+-- Monofilament foot sensation testing in 12 months on the diabetes register.
 WITH indicator_population AS (
     SELECT
         diabetes.person_id,
@@ -22,12 +22,7 @@ latest_record AS (
         ON obs.person_id = population.person_id
     WHERE obs.clinical_effective_date::DATE
         BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
-        AND NOT (obs.is_unsuitable OR obs.is_declined)
-        AND (
-            obs.both_feet_checked
-            OR (obs.left_foot_checked AND (obs.right_foot_absent OR obs.right_foot_amputated))
-            OR (obs.right_foot_checked AND (obs.left_foot_absent OR obs.left_foot_amputated))
-        )
+        AND obs.has_monofilament_test
     GROUP BY obs.person_id
 ),
 

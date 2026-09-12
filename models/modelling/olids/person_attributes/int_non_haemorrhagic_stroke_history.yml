@@ -1,0 +1,27 @@
+models:
+  - name: int_non_haemorrhagic_stroke_history
+    description: >
+      Recorded non-haemorrhagic stroke history from the PCD OSTR_COD cluster,
+      one row per person including inactive and deceased people. Undated records
+      count as history; original dates after the build date do not. QOF v51
+      STIA007 uses this evidence for the NICE IND133 population. An unspecified
+      stroke without this evidence does not establish non-haemorrhagic stroke.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: OSTR_COD
+            source: PCD
+    columns:
+      - name: person_id
+        description: Person with recorded non-haemorrhagic stroke.
+        data_tests:
+          - unique
+          - not_null
+      - name: earliest_recorded_date
+        description: Earliest original diagnosis date; null if every record is undated.
+      - name: has_undated_record
+        description: Whether any qualifying record has no original diagnosis date.

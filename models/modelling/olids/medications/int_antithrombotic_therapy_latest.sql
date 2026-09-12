@@ -6,6 +6,9 @@ taken" measures such as NICE IND132, IND133 and IND94. One row per person with
 either class ever ordered. Antiplatelets are BNF 2.9; oral anticoagulants are
 BNF 2.8.2. Orders dated before 1990 or after the build date are ignored.
 
+Recorded OTC salicylate use (OSAL_COD) and oral anticoagulant prophylaxis
+(ORANTICOAG_COD) also establish that treatment is being taken for NICE IND132,
+IND133 and IND94. They do not establish an anticoagulant prescription for AF.
 Consumers apply their own window to the latest dates.
 */
 
@@ -30,16 +33,31 @@ anticoagulant AS (
     FROM {{ ref('int_anticoagulant_medications_all') }}
     WHERE order_date BETWEEN '1990-01-01' AND CURRENT_DATE()
     GROUP BY person_id
+),
+
+treatment_records AS (
+    SELECT
+        obs.person_id,
+        MAX(CASE WHEN obs.cluster_id = 'OSAL_COD'
+            THEN obs.clinical_effective_date::DATE END) AS latest_antiplatelet_record_date,
+        MAX(CASE WHEN obs.cluster_id = 'ORANTICOAG_COD'
+            THEN obs.clinical_effective_date::DATE END) AS latest_anticoagulant_record_date
+    FROM ({{ get_observations("'OSAL_COD', 'ORANTICOAG_COD'", source='PCD') }}) obs
+    WHERE obs.clinical_effective_date::DATE BETWEEN '1990-01-01' AND CURRENT_DATE()
+    GROUP BY obs.person_id
 )
 
 SELECT
-    COALESCE(ap.person_id, ac.person_id) AS person_id,
+    COALESCE(ap.person_id, ac.person_id, records.person_id) AS person_id,
     ap.latest_antiplatelet_order_date,
     ap.antiplatelet_order_count,
     ac.latest_anticoagulant_order_date,
     ac.anticoagulant_order_count,
     ac.latest_anticoagulant_type,
     ac.latest_doac_order_date,
-    ac.latest_vka_order_date
+    ac.latest_vka_order_date,
+    records.latest_antiplatelet_record_date,
+    records.latest_anticoagulant_record_date
 FROM antiplatelet ap
 FULL OUTER JOIN anticoagulant ac ON ap.person_id = ac.person_id
+FULL OUTER JOIN treatment_records records ON COALESCE(ap.person_id, ac.person_id) = records.person_id

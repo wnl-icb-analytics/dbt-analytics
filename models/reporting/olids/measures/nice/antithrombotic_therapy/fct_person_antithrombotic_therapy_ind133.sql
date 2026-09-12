@@ -1,9 +1,8 @@
 {{ config(materialized='view') }}
 
 -- NICE IND133: https://www.nice.org.uk/indicators/ind133
--- Antiplatelet or oral anticoagulant order in 12 months on the stroke/TIA register. People with haemorrhagic
--- stroke history stay in only through a TIA diagnosis.
--- Excludes people contraindicated to all four of salicylates, clopidogrel, dipyridamole and oral anticoagulants (persisting at any time or expiring in 12 months), as NICE lists and QOF STIA007 applies.
+-- Antiplatelet or oral anticoagulant evidence in 12 months for recorded non-haemorrhagic stroke or TIA.
+-- Excludes people contraindicated to all four of salicylates, clopidogrel, dipyridamole and oral anticoagulants (persisting at any time or expiring in 12 months), as NICE lists; QOF resolves the timing of persisting and expiring records.
 WITH
 -- Classes contraindicated: persisting at any time or expiring in the preceding 12 months (QOF reading)
 contraindicated AS (
@@ -20,6 +19,7 @@ tia_history AS (
     SELECT DISTINCT person_id
     FROM {{ ref('int_stroke_tia_diagnoses_all') }}
     WHERE is_tia_diagnosis_code
+        AND clinical_effective_date::DATE <= CURRENT_DATE()
 ),
 
 indicator_population AS (
@@ -29,8 +29,8 @@ indicator_population AS (
     FROM {{ ref('fct_person_stroke_tia_register') }} AS register
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON register.person_id = age.person_id
-    LEFT JOIN {{ ref('int_haemorrhagic_stroke_history') }} AS haemorrhagic
-        ON register.person_id = haemorrhagic.person_id
+    LEFT JOIN {{ ref('int_non_haemorrhagic_stroke_history') }} AS non_haemorrhagic
+        ON register.person_id = non_haemorrhagic.person_id
     LEFT JOIN tia_history AS tia
         ON register.person_id = tia.person_id
     -- NICE denominator: stroke shown to be non-haemorrhagic, or a history of TIA
@@ -38,7 +38,7 @@ indicator_population AS (
         ON register.person_id = contraindicated.person_id
     WHERE register.is_on_register
         AND NOT COALESCE(contraindicated.contraindicated_class_count >= 4, FALSE)
-        AND (haemorrhagic.person_id IS NULL OR tia.person_id IS NOT NULL)
+        AND (non_haemorrhagic.person_id IS NOT NULL OR tia.person_id IS NOT NULL)
 ),
 
 assessed AS (
@@ -50,9 +50,11 @@ assessed AS (
         therapy.latest_antiplatelet_order_date,
         therapy.latest_anticoagulant_order_date,
         therapy.latest_anticoagulant_type,
-        COALESCE(therapy.latest_antiplatelet_order_date
+        therapy.latest_antiplatelet_record_date,
+        therapy.latest_anticoagulant_record_date,
+        COALESCE(GREATEST_IGNORE_NULLS(therapy.latest_antiplatelet_order_date, therapy.latest_antiplatelet_record_date)
             >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_antiplatelet_in_period,
-        COALESCE(therapy.latest_anticoagulant_order_date
+        COALESCE(GREATEST_IGNORE_NULLS(therapy.latest_anticoagulant_order_date, therapy.latest_anticoagulant_record_date)
             >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_anticoagulant_in_period
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
@@ -74,6 +76,8 @@ SELECT
     latest_antiplatelet_order_date,
     latest_anticoagulant_order_date,
     latest_anticoagulant_type,
+    latest_antiplatelet_record_date,
+    latest_anticoagulant_record_date,
     is_antiplatelet_in_period,
     is_anticoagulant_in_period,
     TRUE AS is_in_denominator,
@@ -81,7 +85,9 @@ SELECT
     CASE
         WHEN is_antiplatelet_in_period OR is_anticoagulant_in_period THEN 'ACHIEVED'
         WHEN latest_antiplatelet_order_date IS NOT NULL
-            OR latest_anticoagulant_order_date IS NOT NULL THEN 'NOT_TREATED_IN_PERIOD'
+            OR latest_antiplatelet_record_date IS NOT NULL
+            OR latest_anticoagulant_order_date IS NOT NULL
+            OR latest_anticoagulant_record_date IS NOT NULL THEN 'NOT_TREATED_IN_PERIOD'
         ELSE 'NEVER_TREATED'
     END AS indicator_status
 FROM assessed

@@ -1,0 +1,40 @@
+models:
+  - name: int_nice_alcohol_screen_intervention
+    description: >
+      NICE alcohol brief-intervention evidence, one row per positive screening
+      observation and source cluster for all people, including inactive and
+      deceased people. A qualifying screen is FAST at least 3 or AUDIT-C at
+      least 5, using the valid scores in int_alcohol_screening_all. Full AUDIT
+      does not qualify. Holds the latest recorded intervention from
+      int_alcohol_intervention on or after that screen and within three calendar
+      months, including both dates. Declined interventions and future evidence
+      do not count. Screens without an intervention remain with a null date.
+      IND197, IND199, IND200 and IND202 apply their own screen windows; a later
+      unmatched screen does not erase an earlier completed intervention.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - screening_observation_id
+              - source_cluster_id
+    columns:
+      - name: screening_observation_id
+        description: Source observation identifier; part of the observation and cluster key.
+        data_tests:
+          - not_null
+      - name: source_cluster_id
+        description: FAST_COD or AUDITC_COD cluster identifying the screening tool.
+      - name: person_id
+        description: Person who received the positive screen.
+      - name: screen_date
+        description: Date of the qualifying positive screen, on or before the build date.
+      - name: screening_tool
+        description: FAST or AUDIT-C.
+      - name: score_value
+        description: Valid score from the named tool, at least 3 for FAST or 5 for AUDIT-C.
+      - name: latest_intervention_date
+        description: Latest recorded intervention within zero to three calendar months after this screen; null if none by the build date.

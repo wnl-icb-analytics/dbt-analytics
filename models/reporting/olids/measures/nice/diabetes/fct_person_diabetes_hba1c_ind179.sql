@@ -2,7 +2,21 @@
 
 -- NICE IND179: https://www.nice.org.uk/indicators/ind179
 -- Last HbA1c in 12 months at or below 58 mmol/mol, diabetes register without moderate or severe frailty.
-WITH indicator_population AS (
+WITH fructosamine_without_hba1c AS (
+    SELECT person_id
+    FROM {{ ref('int_fructosamine_all') }}
+    WHERE clinical_effective_date::DATE
+        BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+
+    EXCEPT
+
+    SELECT person_id
+    FROM {{ ref('int_hba1c_all') }}
+    WHERE clinical_effective_date::DATE
+        BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+),
+
+indicator_population AS (
     SELECT
         diabetes.person_id,
         age.age,
@@ -17,9 +31,8 @@ WITH indicator_population AS (
         -- NICE exclusions: fructosamine measured instead of HbA1c, or on maximum tolerated treatment, in the period
         AND NOT EXISTS (
             SELECT 1
-            FROM {{ ref('int_fructosamine_all') }} AS fructosamine
+            FROM fructosamine_without_hba1c AS fructosamine
             WHERE fructosamine.person_id = diabetes.person_id
-                AND fructosamine.clinical_effective_date::DATE >= DATEADD(month, -12, CURRENT_DATE())
         )
         AND NOT EXISTS (
             SELECT 1

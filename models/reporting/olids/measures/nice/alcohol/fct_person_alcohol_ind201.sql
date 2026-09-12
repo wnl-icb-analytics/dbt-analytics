@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND201: https://www.nice.org.uk/indicators/ind201
--- FAST, AUDIT-C or AUDIT screen in the preceding 2 years for people with a listed LTC; excludes alcohol-related disorders.
+-- FAST or AUDIT-C screen in the preceding 2 years for people with a listed LTC; excludes alcohol-related disorders.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -16,6 +16,14 @@ WITH indicator_population AS (
         AND NOT profile.has_alcohol_disorder
 ),
 
+qualifying_screens AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_record_date
+    FROM {{ ref('int_alcohol_screening_all') }}
+    WHERE screening_tool IN ('FAST', 'AUDIT-C')
+        AND clinical_effective_date::DATE >= DATEADD(month, -24, CURRENT_DATE())
+    GROUP BY person_id
+),
+
 assessed AS (
     SELECT
         population.person_id,
@@ -27,12 +35,13 @@ assessed AS (
         population.latest_alcohol_screen_score,
         population.latest_positive_alcohol_screen_date,
         population.latest_intervention_after_positive_screen_date,
-        CASE WHEN COALESCE(population.latest_alcohol_screen_date >= DATEADD(month, -24, CURRENT_DATE()), FALSE)
-            THEN population.latest_alcohol_screen_date END AS latest_record_date,
-        COALESCE(population.latest_alcohol_screen_date >= DATEADD(month, -24, CURRENT_DATE()), FALSE) AS is_in_numerator
+        screen.latest_record_date,
+        screen.latest_record_date IS NOT NULL AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
+    LEFT JOIN qualifying_screens AS screen
+        ON population.person_id = screen.person_id
 )
 
 SELECT

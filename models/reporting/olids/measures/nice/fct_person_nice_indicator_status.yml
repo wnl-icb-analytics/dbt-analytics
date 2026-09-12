@@ -1,21 +1,19 @@
 models:
   - name: fct_person_nice_indicator_status
-    description: >
-      Person-level status for the NICE indicator measures in OLIDS_MEASURES that
-      emit the shared contract, in one long-form table. One row per person and
-      indicator on the current reporting date, for currently registered, living, non-test people in each
-      indicator's population. Carries only the shared columns; the family unions
-      and single-indicator measures hold indicator-specific detail such as
-      readings, thresholds and provenance. Join def_indicator on indicator_id
-      for names, categories and thresholds. Personalised care adjustments are
-      not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type 1
-      opt-out filtering.
+    description: |
+      Current NICE indicator results. One row per eligible person and indicator,
+      assessed on the build date. People must be currently registered, living and
+      non-test, and meet the individual indicator's population rules.
 
-      New measures feed this model by emitting the shared columns and being
-      added to its model list; a measure missing from the list is not detected
-      by tests. Count-based measures such as the diabetes care processes are
-      outside this contract.
+      Includes achieved and unachieved results. indicator_status gives the reason
+      when the achievement rule is not met. Family tables and individual measures
+      provide the clinical readings, thresholds and supporting evidence.
+
+      Join def_indicator on indicator_id for names, categories and clinical
+      definitions. Measures count people meeting a rule; separate reports that
+      count individual care processes are outside this table.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:

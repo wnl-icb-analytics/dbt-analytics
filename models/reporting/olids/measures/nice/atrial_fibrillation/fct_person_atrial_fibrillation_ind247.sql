@@ -1,8 +1,8 @@
 {{ config(materialized='view') }}
 
 -- NICE IND247: https://www.nice.org.uk/indicators/ind247
--- DOAC order in 6 months, or a VKA order where a DOAC is ineligible (valvular AF, antiphospholipid syndrome),
--- contraindicated, declined or not indicated, for people on the AF register with a latest CHA2DS2-VASc of 2 or more.
+-- DOAC order in 6 months, or a VKA order for valvular AF, antiphospholipid syndrome or a DOAC exception,
+-- for people on the AF register with a latest CHA2DS2-VASc of 2 or more.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -31,8 +31,7 @@ assessed AS (
         population.latest_anticoagulant_review_date,
         COALESCE(population.latest_doac_order_date >= DATEADD(month, -6, CURRENT_DATE()), FALSE) AS is_doac_in_period,
         COALESCE(population.latest_vka_order_date >= DATEADD(month, -6, CURRENT_DATE()), FALSE) AS is_vka_in_period,
-        -- Sequential criteria: DOAC unless ineligible (valvular AF, antiphospholipid syndrome),
-        -- then VKA where a DOAC is ineligible, contraindicated, declined or not indicated
+        -- NICE excludes valvular AF from DOAC success. Antiphospholipid syndrome allows either success.
         CASE
             WHEN population.is_doac_ineligible THEN is_vka_in_period
             ELSE is_doac_in_period OR (is_vka_in_period AND population.has_doac_exception)
