@@ -1,7 +1,11 @@
 {{ config(materialized='view') }}
 
--- Stable segmentation fields for prospective SCD2 change tracking.
--- Age and general demographics are excluded to avoid unrelated versions.
+-- Core segment fields for prospective SCD2 change tracking: the segment
+-- assignment, population state and cohort membership.
+-- Age, general demographics and the drivers behind each cohort (LTC counts
+-- and criterion flags) are excluded so they do not open extra versions.
+-- Cohort membership can still change because a rolling 12-month activity
+-- window moved rather than because new evidence was recorded.
 
 SELECT
     person_id,
@@ -14,15 +18,5 @@ SELECT
     has_multiple_ltcs,
     has_single_ltc,
     is_complex_child,
-    has_child_health_needs,
-    ltc_count,
-    ltc_list,
-    adult_complexity_criteria_count,
-    child_complexity_criteria_count,
-    child_has_2plus_ltcs,
-    child_has_complexity_diagnosis,
-    child_has_5plus_paediatric_op_appointments,
-    child_has_2plus_outpatient_specialties,
-    child_has_mh_inpatient_stay,
-    child_has_7plus_community_contacts
+    has_child_health_needs
 FROM {{ ref('fct_person_segment') }}
