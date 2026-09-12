@@ -21,6 +21,8 @@ SELECT
     latest_antiplatelet_order_date,
     latest_anticoagulant_order_date,
     latest_anticoagulant_type,
+    latest_antiplatelet_record_date,
+    latest_anticoagulant_record_date,
     is_antiplatelet_in_period,
     is_anticoagulant_in_period,
     is_in_denominator,

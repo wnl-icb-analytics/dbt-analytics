@@ -1,39 +1,25 @@
 models:
   - name: fct_person_cholesterol_control_ind278
-    description: >
-      NICE IND278 cholesterol control before personalised care adjustments.
-      One row per currently registered, living, non-test person on the CHD,
-      stroke/TIA or PAD register, assessed on the build date. The register
-      population and exclusion flags come from int_cvd_secondary_prevention_population,
-      where register diagnoses must start on or before that date. Any recorded FH diagnosis or history
-      of haemorrhagic stroke excludes the whole person, including overlapping
-      CVD conditions. Undated exclusion diagnoses count; future original dates do not.
+    description: |
+      NICE IND278 cholesterol control for secondary prevention. One row per currently
+      registered, living, non-test person on the coronary heart disease, stroke or TIA, or
+      peripheral arterial disease register, assessed on the build date.
 
-      Uses the last recorded LDL or non-HDL result between the reporting date
-      minus 12 calendar months and the reporting date, inclusive. LDL takes
-      priority when both types occur on the same calendar day. Within that type
-      and day, the latest timestamp and then observation ID descending break ties.
-      An invalid last result remains unassessable; it is not replaced with an older
-      result or the other lipid type. The numerator requires a valid unrounded
-      LDL at or below 2.0 mmol/L, or non-HDL at or below 2.6 mmol/L.
+      Achievement requires the last LDL or non-HDL cholesterol result in the preceding 12
+      months to be valid and at or below 2.0 mmol/L for LDL or 2.6 mmol/L for non-HDL. LDL
+      takes priority when both types occur on the same day.
 
-      Recorded values, unit provenance and review flags accompany the selected
-      candidate conversion. Review flags identify uncertainty and do not change
-      validity or achievement. Validity itself uses the shared lipid ranges, so an
-      out-of-range result is unassessable rather than counted. Consumers can compare
-      results with and without flagged observations.
+      Excludes familial hypercholesterolaemia and any haemorrhagic stroke history,
+      including people with another qualifying cardiovascular condition. An invalid last
+      result remains unassessable. Unit review flags identify uncertainty but do not
+      change achievement.
 
-      This is an unadjusted local NICE measure, not a QOF achievement calculation.
-      Personalised care adjustments for declined tests or treatment, non-attendance,
-      maximum tolerated therapy and inappropriate treatment are not applied.
-      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply
-      National Data Opt-Out and Type 1 opt-out filtering. Feeds
-      fct_person_nice_indicator_status.
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
           name: EddieDavison92
-        clinical_source: https://www.nice.org.uk/indicators/ind278
+        clinical_source: https://www.nice.org.uk/indicators/ind278-cardiovascular-disease-prevention-cholesterol-treatment-target-secondary-prevention
         indicator:
           id: IND278
           type: MEASURE
@@ -41,7 +27,22 @@ models:
           clinical_domain: Cardiometabolic
           name_short: CVD cholesterol control
           description_short: Last recorded LDL or non-HDL meets the secondary prevention target in the preceding 12 months
-          description_long: NICE IND278 for currently registered people with CVD, before personalised care adjustments. Excludes FH and any history of haemorrhagic stroke.
+          description_long: |
+            NICE IND278 cholesterol control for secondary prevention. One row per
+            currently registered, living, non-test person on the coronary heart disease,
+            stroke or TIA, or peripheral arterial disease register, assessed on the build
+            date.
+
+            Achievement requires the last LDL or non-HDL cholesterol result in the
+            preceding 12 months to be valid and at or below 2.0 mmol/L for LDL or 2.6
+            mmol/L for non-HDL. LDL takes priority when both types occur on the same day.
+
+            Excludes familial hypercholesterolaemia and any haemorrhagic stroke history,
+            including people with another qualifying cardiovascular condition. An invalid
+            last result remains unassessable. Unit review flags identify uncertainty but
+            do not change achievement.
+
+            Personalised care adjustments are not applied.
           is_qof: false
           source_column: is_in_numerator
           usage_contexts:

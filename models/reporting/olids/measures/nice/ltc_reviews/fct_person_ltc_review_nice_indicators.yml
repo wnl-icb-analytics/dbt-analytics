@@ -1,16 +1,19 @@
 models:
   - name: fct_person_asthma_review_ind273
-    description: >
-      NICE IND273 asthma annual review. One row per currently registered,
-      living, non-test person aged 5 and over on the asthma register, assessed
-      on the build date. The numerator requires an asthma review code (PCD
-      REV_COD) in the preceding 12 months. NICE asks that the review covers
-      asthma control, the number of exacerbations and a written action plan;
-      the review code stands for those elements because they are not
-      separately clustered. Children under 5 are excluded as NICE specifies.
-      Personalised care adjustments are not applied. Secondary-use consumers
-      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
-      Out and Type 1 opt-out filtering.
+    description: |
+      NICE IND273: Asthma review. One row per currently registered, living, non-test
+      person aged 5 and over on the asthma register, assessed on the build date.
+
+      Achievement requires an asthma review in the preceding 12 months with a written
+      personalised action plan on the same day. An exacerbation count must be recorded
+      within the month before the review, including the review day but excluding the
+      same date one month earlier. QOF v51 AST015 supplies these timing rules and uses
+      the review code as evidence of asthma control assessment.
+
+      An earlier complete review still qualifies when a later review lacks a required
+      component.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -22,8 +25,22 @@ models:
           category: "REVIEW"
           clinical_domain: "Respiratory"
           name_short: "Asthma review"
-          description_short: "Asthma review recorded in the preceding 12 months for people aged 5 and over on the asthma register"
-          description_long: "NICE IND273 before personalised care adjustments."
+          description_short: "Asthma review with a personalised action plan and exacerbation count in the preceding 12 months"
+          description_long: |
+            Currently registered, living, non-test people aged 5 and over on the asthma
+            register.
+
+            Achievement requires an asthma review in the preceding 12 months with a
+            written personalised action plan on the same day. An exacerbation count must
+            be recorded within the month before the review, including the review day but
+            excluding the same date one month earlier. QOF v51 AST015 supplies these
+            timing rules and uses the review code as evidence of asthma control
+            assessment.
+
+            An earlier complete review still qualifies when a later review lacks a
+            required component.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -68,13 +85,15 @@ models:
 
 
   - name: fct_person_copd_review_ind191
-    description: >
-      NICE IND191 COPD annual review. One row per currently registered,
-      living, non-test person on the COPD register, assessed on the build
-      date. The numerator requires a COPD review code (COPDRVW_COD) in the preceding 12 months. NICE asks that the review include the number of exacerbations and an MRC dyspnoea grade; as in QOF COPD010 the review code stands for those elements, and latest_mrc_dyspnoea_date shows whether a grade was recorded. Personalised care
-      adjustments are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND191: COPD review and assessments. One row per currently registered,
+      living, non-test person on the COPD register, assessed on the build date.
+
+      Achievement requires a COPD review, an exacerbation-count record and an MRC
+      dyspnoea assessment, all in the preceding 12 months. QOF v51 COPD010 confirms the
+      separate records; they do not need to share a date.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -85,9 +104,16 @@ models:
           type: "MEASURE"
           category: "REVIEW"
           clinical_domain: "Respiratory"
-          name_short: "COPD review with MRC"
-          description_short: "COPD review recorded in the preceding 12 months"
-          description_long: "NICE IND191 before personalised care adjustments."
+          name_short: "COPD review and assessments"
+          description_short: "COPD review, exacerbation count and MRC assessment recorded in the preceding 12 months"
+          description_long: |
+            Currently registered, living, non-test people on the COPD register.
+
+            Achievement requires a COPD review, an exacerbation-count record and an MRC
+            dyspnoea assessment, all in the preceding 12 months. QOF v51 COPD010
+            confirms the separate records; they do not need to share a date.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -117,6 +143,8 @@ models:
         description: Name of the current registration practice
       - name: latest_review_date
         description: Date of the latest review, care plan, health check or test record for the indicator; null when none
+      - name: latest_copd_exacerbation_count_date
+        description: Date of the latest record of the number of COPD exacerbations; null when none or not applicable
       - name: latest_mrc_dyspnoea_date
         description: Date of the latest MRC dyspnoea grade; null when none
       - name: latest_record_date
@@ -134,12 +162,16 @@ models:
 
 
   - name: fct_person_heart_failure_review_ind195
-    description: >
-      NICE IND195 heart failure annual review. One row per currently
-      registered, living, non-test person on the heart failure register,
-      assessed on the build date. The numerator requires a heart failure review code (HFRVW_COD) in the preceding 12 months. NICE asks that the review include an NYHA assessment and a medication review; as in QOF HF007 the review code stands for those elements, and latest_nyha_date and latest_medication_review_date show whether they were recorded. Personalised care adjustments are not applied. Secondary-use
-      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
-      Data Opt-Out and Type 1 opt-out filtering.
+    description: |
+      NICE IND195: Heart failure review. One row per currently registered, living,
+      non-test person on the heart failure register, assessed on the build date.
+
+      Achievement requires a heart failure review, an NYHA functional assessment and a
+      medication review, all in the preceding 12 months. General, heart failure and
+      structured medication reviews qualify. QOF v51.2 HF007 resolves the separate
+      medication-review requirement.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -151,8 +183,16 @@ models:
           category: "REVIEW"
           clinical_domain: "Cardiovascular"
           name_short: "Heart failure review"
-          description_short: "Heart failure review recorded in the preceding 12 months"
-          description_long: "NICE IND195 before personalised care adjustments."
+          description_short: "Heart failure review, NYHA assessment and medication review recorded in the preceding 12 months"
+          description_long: |
+            Currently registered, living, non-test people on the heart failure register.
+
+            Achievement requires a heart failure review, an NYHA functional assessment
+            and a medication review, all in the preceding 12 months. General, heart
+            failure and structured medication reviews qualify. QOF v51.2 HF007 resolves
+            the separate medication-review requirement.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -201,17 +241,19 @@ models:
 
 
   - name: fct_person_rheumatoid_arthritis_review_ind110
-    description: >
-      NICE IND110 rheumatoid arthritis annual review. One row per currently
-      registered, living, non-test person on the rheumatoid arthritis
-      register, assessed on the build date. The numerator requires a
-      rheumatoid arthritis annual review code (RARTHRVW_COD) in the preceding
-      15 months. The face-to-face setting is not coded. NICE's exclusions for
-      people who chose not to attend or did not respond to two invitations are
-      personalised care adjustments and are not applied. Personalised care
-      adjustments are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND110: RA annual review. One row per currently registered, living, non-test
+      person on the rheumatoid arthritis register, which starts at age 16, assessed on
+      the build date.
+
+      Achievement requires a rheumatoid arthritis annual review record in the preceding
+      15 months.
+
+      The review code does not establish the face-to-face setting required by NICE.
+      Declined reviews and repeated non-response remain in the denominator before
+      personalised care adjustments.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -224,7 +266,18 @@ models:
           clinical_domain: "Musculoskeletal"
           name_short: "RA annual review"
           description_short: "Rheumatoid arthritis annual review recorded in the preceding 15 months"
-          description_long: "NICE IND110 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people on the rheumatoid arthritis
+            register, which starts at age 16.
+
+            Achievement requires a rheumatoid arthritis annual review record in the
+            preceding 15 months.
+
+            The review code does not establish the face-to-face setting required by
+            NICE. Declined reviews and repeated non-response remain in the denominator
+            before personalised care adjustments.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -269,14 +322,14 @@ models:
 
 
   - name: fct_person_hypothyroidism_tft_ind139
-    description: >
-      NICE IND139 hypothyroidism thyroid function test. One row per currently
-      registered, living, non-test person on the hypothyroidism register,
-      assessed on the build date. The numerator requires a thyroid function
-      test record (TFT_COD) in the preceding 12 months. Personalised care
-      adjustments are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND139: Hypothyroidism TFT. One row per currently registered, living,
+      non-test person on the hypothyroidism register, with no additional age
+      restriction, assessed on the build date.
+
+      Achievement requires a thyroid function test record in the preceding 12 months.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -289,7 +342,14 @@ models:
           clinical_domain: "Endocrine"
           name_short: "Hypothyroidism TFT"
           description_short: "Thyroid function test recorded in the preceding 12 months for people with hypothyroidism"
-          description_long: "NICE IND139 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people on the hypothyroidism
+            register, with no additional age restriction.
+
+            Achievement requires a thyroid function test record in the preceding 12
+            months.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -334,12 +394,16 @@ models:
 
 
   - name: fct_person_learning_disability_health_check_ind265
-    description: >
-      NICE IND265 learning disability health check. One row per currently
-      registered, living, non-test person on the learning disability register, assessed on the build date. NICE dropped the 14-and-over floor of the source NCD indicator when it published IND265, so no age floor is applied. The numerator requires a learning disability health check (HLTHCHK_COD) and a health action plan (HLTHAP_COD) both recorded in the preceding 12 months, with the plan dated on or after the check as the NCD rule requires.
-      Personalised care adjustments are not applied. Secondary-use consumers
-      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
-      Out and Type 1 opt-out filtering.
+    description: |
+      NICE IND265: LD health check and action plan. One row per currently registered,
+      living, non-test person on the learning disability register, with no age
+      restriction, assessed on the build date.
+
+      Achievement requires a learning disability health check and a health action plan
+      in the preceding 12 months. The action plan must be dated on or after the latest
+      health check.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -352,7 +416,15 @@ models:
           clinical_domain: "Learning disability"
           name_short: "LD health check and action plan"
           description_short: "Learning disability health check and health action plan recorded in the preceding 12 months"
-          description_long: "NICE IND265 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people on the learning disability
+            register, with no age restriction.
+
+            Achievement requires a learning disability health check and a health action
+            plan in the preceding 12 months. The action plan must be dated on or after
+            the latest health check.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -399,14 +471,18 @@ models:
 
 
   - name: fct_person_learning_disability_health_check_ind266
-    description: >
-      NICE IND266 learning disability health check with ethnicity. One row per
-      currently registered, living, non-test person on the learning disability register, assessed on the build date, with no age floor as NICE publishes it. The numerator
-      requires a learning disability health check and a health action plan
-      both recorded in the preceding 12 months, the plan dated on or after the check, and an ethnicity category other than Unknown on the demographic record; not-stated codes map to Unknown and so count as not recorded, matching the NCD rule that excludes a not-stated ethnicity. Personalised care adjustments
-      are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND266: LD health check with ethnicity. One row per currently registered,
+      living, non-test person on the learning disability register, with no age
+      restriction, assessed on the build date.
+
+      Achievement requires a learning disability health check and a health action plan
+      in the preceding 12 months, with the plan on or after the latest check. Ethnicity
+      must also be recorded; no recording window applies to ethnicity.
+
+      Unknown and not-stated ethnicity do not qualify.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -418,8 +494,18 @@ models:
           category: "REVIEW"
           clinical_domain: "Learning disability"
           name_short: "LD health check with ethnicity"
-          description_short: "Learning disability health check, health action plan and recorded ethnicity"
-          description_long: "NICE IND266 before personalised care adjustments."
+          description_short: "Learning disability health check and action plan in the preceding 12 months, with ethnicity recorded"
+          description_long: |
+            Currently registered, living, non-test people on the learning disability
+            register, with no age restriction.
+
+            Achievement requires a learning disability health check and a health action
+            plan in the preceding 12 months, with the plan on or after the latest check.
+            Ethnicity must also be recorded; no recording window applies to ethnicity.
+
+            Unknown and not-stated ethnicity do not qualify.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -468,19 +554,19 @@ models:
 
 
   - name: fct_person_cancer_care_review_ind223
-    description: >
-      NICE IND223 cancer care review within 12 months. One row per currently
-      registered, living, non-test person on the cancer register whose
-      latest first-or-new-episode cancer diagnosis falls in the preceding 24
-      months, assessed on the build
-      date. The numerator requires a cancer care review code (MDRV_COD) within
-      12 months of that diagnosis. The cancer register excludes non-
-      melanoma skin cancer as NICE specifies. People diagnosed in the last 12
-      months without a review are not yet outside their window but count as
-      not achieved, as under NICE. Personalised care adjustments are not
-      applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND223: Cancer care review 12m. One row per currently registered, living,
+      non-test person on the cancer register whose latest first or new cancer episode
+      was diagnosed in the preceding 24 months, assessed on the build date.
+
+      Achievement requires a cancer care review on or after that diagnosis and within 12
+      months of it. People still within their review window count as not achieved until
+      a review is recorded.
+
+      Non-melanoma skin cancer is excluded. The review code does not independently
+      establish use of the structured template required by NICE.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -493,7 +579,18 @@ models:
           clinical_domain: "Cancer"
           name_short: "Cancer care review 12m"
           description_short: "Cancer care review within 12 months of diagnosis for people diagnosed in the preceding 24 months"
-          description_long: "NICE IND223 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people on the cancer register whose
+            latest first or new cancer episode was diagnosed in the preceding 24 months.
+
+            Achievement requires a cancer care review on or after that diagnosis and
+            within 12 months of it. People still within their review window count as not
+            achieved until a review is recorded.
+
+            Non-melanoma skin cancer is excluded. The review code does not independently
+            establish use of the structured template required by NICE.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -540,15 +637,18 @@ models:
 
 
   - name: fct_person_dementia_care_plan_ind142
-    description: >
-      NICE IND142 dementia care planning. One row per currently registered,
-      living, non-test person on the dementia register, assessed on the build
-      date. The numerator requires a dementia care plan or care plan review
-      code (DEMCP_COD, DEMCPRVW_COD) in the preceding 12 months. NICE asks for
-      a face-to-face review; the setting is not coded. Personalised care
-      adjustments are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND142: Dementia care plan review. One row per currently registered, living,
+      non-test person on the dementia register, assessed on the build date.
+
+      Achievement requires a dementia care plan or care plan review in the preceding 12
+      months, on or after the first dementia diagnosis. QOF v51 DEM004 permits either
+      record and supplies the diagnosis-date rule.
+
+      The available codes do not establish the face-to-face review setting required by
+      NICE.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -561,7 +661,17 @@ models:
           clinical_domain: "Mental health"
           name_short: "Dementia care plan review"
           description_short: "Dementia care plan or care plan review recorded in the preceding 12 months"
-          description_long: "NICE IND142 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people on the dementia register.
+
+            Achievement requires a dementia care plan or care plan review in the
+            preceding 12 months, on or after the first dementia diagnosis. QOF v51
+            DEM004 permits either record and supplies the diagnosis-date rule.
+
+            The available codes do not establish the face-to-face review setting
+            required by NICE.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -606,18 +716,21 @@ models:
 
 
   - name: fct_person_depression_review_ind104
-    description: >
-      NICE IND104 depression review within 10 to 35 days. One row per
-      currently registered, living, non-test person aged 18 and over whose
-      latest first or new episode depression diagnosis falls in the preceding
-      12 months, assessed on the build date. The numerator requires a
-      depression review code (DEPRVW_COD) dated 10 to 35 days after that
-      diagnosis. The 18-and-over floor comes from the QOF depression register, not the NICE page. Diagnoses with no episodicity are treated as new, as the register does. NICE frames the window as the preceding 1 April to 31 March;
-      a rolling 12 months is used so the figure does not reset each April.
-      People diagnosed in the last 35 days without a review count as not
-      achieved. Personalised care adjustments are not applied. Secondary-use
-      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
-      Data Opt-Out and Type 1 opt-out filtering.
+    description: |
+      NICE IND104: Depression review 10 to 35 days. One row per currently registered,
+      living, non-test person aged 18 and over whose latest first or new depression
+      episode was diagnosed from 1 April of the current financial year to the reporting
+      date, assessed on the build date.
+
+      Achievement requires a depression review 10 to 35 days after that diagnosis,
+      including both boundary days. People still within their review window count as not
+      achieved until a review is recorded.
+
+      QOF v51 supplies the adult population and treats interim annual extracts as
+      cumulative from 1 April. The denominator restarts each April. Diagnoses with
+      missing episodicity are treated as new, following the existing register.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -629,8 +742,21 @@ models:
           category: "REVIEW"
           clinical_domain: "Mental health"
           name_short: "Depression review 10 to 35 days"
-          description_short: "Depression review 10 to 35 days after a new diagnosis in the preceding 12 months"
-          description_long: "NICE IND104 before personalised care adjustments."
+          description_short: "Depression review 10 to 35 days after a first or new episode diagnosed in the current financial year"
+          description_long: |
+            Currently registered, living, non-test people aged 18 and over whose latest
+            first or new depression episode was diagnosed from 1 April of the current
+            financial year to the reporting date.
+
+            Achievement requires a depression review 10 to 35 days after that diagnosis,
+            including both boundary days. People still within their review window count
+            as not achieved until a review is recorded.
+
+            QOF v51 supplies the adult population and treats interim annual extracts as
+            cumulative from 1 April. The denominator restarts each April. Diagnoses with
+            missing episodicity are treated as new, following the existing register.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -677,12 +803,16 @@ models:
 
 
   - name: fct_person_ltc_review_nice_indicators
-    description: >
-      NICE long-term condition review indicators in one long-form table: IND104,
-      IND110, IND139, IND142, IND191, IND195, IND223, IND265, IND266 and IND273.
-      One row per person and indicator on the reporting date, keeping the family's
-      detail columns as typed nulls where a branch does not emit them. Feeds
-      fct_person_nice_indicator_status and the family snapshot.
+    description: |
+      Long-term condition review NICE indicator results. One row per eligible person and
+      indicator on the build date. Covers IND104, IND110, IND139, IND142, IND191,
+      IND195, IND223, IND265, IND266, IND273.
+
+      Each indicator retains its own population, evidence window and exclusions. The
+      individual indicator models define these rules. Results feed the combined NICE
+      indicator table and family history.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -720,6 +850,8 @@ models:
         description: Name of the current registration practice
       - name: latest_review_date
         description: Date of the latest review, care plan, health check or test record for the indicator; null when none; typed null for branches that do not emit it
+      - name: latest_copd_exacerbation_count_date
+        description: Date of the latest record of the number of COPD exacerbations; null when none or not applicable
       - name: latest_mrc_dyspnoea_date
         description: Date of the latest MRC dyspnoea grade; null when none; typed null for branches that do not emit it
       - name: latest_nyha_date
@@ -746,11 +878,13 @@ models:
                 values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
 
   - name: fct_person_ltc_review_nice_indicators_snapshot_input
-    description: >
-      Thin projection of fct_person_ltc_review_nice_indicators for SCD2
-      snapshotting. Drops reporting_date and measurement_period_start, which
-      advance every build, so a version opens only on a new review record, a
-      practice move or a record ageing out of the window.
+    description: |
+      Current ltc reviews NICE indicator evidence for change history. One row per person
+      and indicator. Records the current practice, qualifying evidence and outcome.
+
+      Reporting dates are omitted so a daily build alone does not create a new
+      historical version. Changes to recorded evidence, practice or achievement can
+      create a version in the family snapshot.
     config:
       meta:
         owner:

@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND275: https://www.nice.org.uk/indicators/ind275
--- Lipid-lowering therapy in 6 months for people with diabetes aged 40 and over, no CVD, no moderate or severe frailty; excludes type 2 diabetes with a CVD risk score below 10% recorded in the preceding 3 years.
+-- Lipid-lowering therapy in 6 months for people with diabetes aged 40 and over, no CVD, no moderate or severe frailty; excludes type 2 diabetes with a recent risk score below 10% unless a later score reaches 10%.
 WITH indicator_population AS (
     SELECT
         profile.person_id,
@@ -11,9 +11,15 @@ WITH indicator_population AS (
         ON profile.person_id = age.person_id
     WHERE age.age >= 40
         AND profile.has_diabetes
-        AND NOT profile.has_cvd
+        AND NOT profile.has_cvd_including_haemorrhagic_stroke
         AND COALESCE(profile.latest_frailty_severity, 'None') NOT IN ('Moderate', 'Severe')
-        AND NOT COALESCE(profile.has_type2_diabetes AND profile.min_risk_score_36m < 10, FALSE)
+        -- QOF v51 DM034: a subsequent score of 10% or more supersedes the low-score exclusion.
+        AND NOT (
+            profile.has_type2_diabetes
+            AND profile.latest_low_cvd_risk_score_date_36m IS NOT NULL
+            AND (profile.latest_high_cvd_risk_score_date_36m IS NULL
+                OR profile.latest_high_cvd_risk_score_date_36m <= profile.latest_low_cvd_risk_score_date_36m)
+        )
 ),
 
 assessed AS (

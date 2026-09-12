@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND94: https://www.nice.org.uk/indicators/ind94
--- Antiplatelet order in 15 months on the PAD register, excluding people with an oral anticoagulant order in the same period.
+-- Antiplatelet order or recorded OTC salicylate use in 15 months on the PAD register, excluding people with an oral anticoagulant order in the same period.
 WITH indicator_population AS (
     SELECT
         register.person_id,
@@ -21,7 +21,9 @@ assessed AS (
         therapy.latest_antiplatelet_order_date,
         therapy.latest_anticoagulant_order_date,
         therapy.latest_anticoagulant_type,
-        COALESCE(therapy.latest_antiplatelet_order_date
+        therapy.latest_antiplatelet_record_date,
+        therapy.latest_anticoagulant_record_date,
+        COALESCE(GREATEST_IGNORE_NULLS(therapy.latest_antiplatelet_order_date, therapy.latest_antiplatelet_record_date)
             >= DATEADD(month, -15, CURRENT_DATE()), FALSE) AS is_antiplatelet_in_period,
         COALESCE(therapy.latest_anticoagulant_order_date
             >= DATEADD(month, -15, CURRENT_DATE()), FALSE) AS is_anticoagulant_in_period
@@ -48,13 +50,16 @@ SELECT
     latest_antiplatelet_order_date,
     latest_anticoagulant_order_date,
     latest_anticoagulant_type,
+    latest_antiplatelet_record_date,
+    latest_anticoagulant_record_date,
     is_antiplatelet_in_period,
     is_anticoagulant_in_period,
     TRUE AS is_in_denominator,
     is_antiplatelet_in_period AS is_in_numerator,
     CASE
         WHEN is_antiplatelet_in_period THEN 'ACHIEVED'
-        WHEN latest_antiplatelet_order_date IS NOT NULL THEN 'NOT_TREATED_IN_PERIOD'
+        WHEN latest_antiplatelet_order_date IS NOT NULL
+            OR latest_antiplatelet_record_date IS NOT NULL THEN 'NOT_TREATED_IN_PERIOD'
         ELSE 'NEVER_TREATED'
     END AS indicator_status
 FROM assessed

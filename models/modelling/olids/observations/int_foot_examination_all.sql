@@ -30,6 +30,10 @@ WITH foot_observations AS (
         obs.cluster_id IN ('FOOTEXAM_COD', 'FRC_COD')
             AND NOT LOWER(obs.code_description) LIKE 'refer to %' AS is_examination_code,
 
+        -- NICE IND160 specifies monofilament testing, which is only part of FOOTEXAM_COD.
+        obs.cluster_id = 'FOOTEXAM_COD'
+            AND LOWER(obs.code_description) LIKE '%monofilament%' AS is_monofilament_test,
+
         -- Check if code term contains 'left' or 'right' (case insensitive)
         REGEXP_LIKE(LOWER(obs.code_description), '.*left.*') AS has_left,
         REGEXP_LIKE(LOWER(obs.code_description), '.*right.*') AS has_right,
@@ -96,6 +100,8 @@ check_details_raw AS (
         MAX(CASE WHEN source_cluster_id = 'FEPU_COD' THEN TRUE ELSE FALSE END) AS is_unsuitable,
         MAX(CASE WHEN source_cluster_id = 'FEDEC_COD' THEN TRUE ELSE FALSE END) AS is_declined,
 
+        MAX(is_monofilament_test) AS has_monofilament_test,
+
         -- Left foot checked: explicit left code, Townson, or generic bilateral exam code
         MAX(CASE
             WHEN is_examination_code AND (has_left OR is_townson OR is_bilateral_generic) THEN TRUE
@@ -154,6 +160,7 @@ check_details AS (
         clinical_effective_date,
         is_unsuitable,
         is_declined,
+        has_monofilament_test,
         left_foot_checked,
         right_foot_checked,
         (both_feet_checked_row_level OR (left_foot_checked AND right_foot_checked)) AS both_feet_checked,
@@ -174,6 +181,7 @@ SELECT
     cd.clinical_effective_date,
     cd.is_unsuitable,
     cd.is_declined,
+    cd.has_monofilament_test,
     cd.left_foot_checked,
     cd.right_foot_checked,
     cd.both_feet_checked,

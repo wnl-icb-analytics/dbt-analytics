@@ -11,7 +11,7 @@ WITH indicator_population AS (
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON diabetes.person_id = age.person_id
     WHERE diabetes.is_on_register
-        AND diabetes.earliest_diagnosis_date::DATE >= DATEADD(month, -12, CURRENT_DATE())
+        AND diabetes.earliest_diagnosis_date::DATE BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
 ),
 
 first_referral AS (
@@ -21,6 +21,7 @@ first_referral AS (
     FROM indicator_population AS population
     INNER JOIN {{ ref('int_diabetes_structured_education_all') }} AS education
         ON population.person_id = education.person_id
+        AND education.clinical_effective_date::DATE <= CURRENT_DATE()
         AND education.record_type = 'REFERRED'
         AND education.clinical_effective_date::DATE BETWEEN population.diagnosis_date
             AND DATEADD(month, 9, population.diagnosis_date)

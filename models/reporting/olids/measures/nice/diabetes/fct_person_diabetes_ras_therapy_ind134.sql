@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND134: https://www.nice.org.uk/indicators/ind134
--- ACE inhibitor or ARB order in 6 months for people on the diabetes register with nephropathy, proteinuria or microalbuminuria; excludes people contraindicated to both classes.
+-- ACE inhibitor or ARB order in 6 months for diabetes with proteinuria or microalbuminuria; excludes contraindications to both classes.
 WITH indicator_population AS (
     SELECT
         diabetes.person_id,
@@ -13,6 +13,7 @@ WITH indicator_population AS (
         AND EXISTS (
             SELECT 1 FROM {{ ref('int_proteinuria_all') }} AS kidney
             WHERE kidney.person_id = diabetes.person_id
+                AND kidney.source_cluster_id IN ('PRT_COD', 'MAL_COD')
         )
         -- NICE excludes people contraindicated to both an ACE inhibitor and an ARB: persisting at any time or expiring in 12 months
         AND NOT (
@@ -53,7 +54,7 @@ SELECT
     CURRENT_DATE() AS reporting_date,
     DATEADD(month, -6, CURRENT_DATE()) AS measurement_period_start,
     age,
-    'Diabetes with nephropathy, proteinuria or microalbuminuria' AS condition_name,
+    'Diabetes with proteinuria or microalbuminuria' AS condition_name,
     current_practice_code,
     current_practice_name,
     latest_therapy_order_date,

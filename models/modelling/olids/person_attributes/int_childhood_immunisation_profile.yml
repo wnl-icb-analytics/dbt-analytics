@@ -1,14 +1,18 @@
 models:
   - name: int_childhood_immunisation_profile
-    description: >
-      Per-child immunisation dose counts inside the NICE age windows, one row per
-      currently registered child in the childhood immunisation population.
-      Doses are distinct administration dates by vaccine group (6-in-1, 4-in-1
-      preschool booster, MMR including MMRV, rotavirus, MenB), so schedule
-      variants recorded against one visit count once. Windows are measured from
-      the approximate birth date and include the lower bound but not the upper.
-      Contraindication flags come from contraindicated event codes and are
-      false when nothing is recorded. Consumers apply the milestone-age denominators.
+    description: |
+      Childhood vaccination evidence within NICE age windows. One row per currently
+      registered child under 20 in the childhood immunisation population.
+
+      Counts distinct administration or vaccine order dates for DTP-containing
+      4-, 5- and 6-in-1 vaccines, MMR including MMRV, rotavirus and MenB. Preschool
+      DTaP/IPV boosters require explicit booster coding, as QOF v51 specifies.
+      Declined records do not displace completed administrations.
+
+      Age windows use the approximate birth date, include the lower bound and
+      exclude the upper bound. Duplicate codes on one date count once.
+      Contraindication flags are false when no contraindication is recorded.
+      Individual indicators apply their own milestone-age populations.
     config:
       meta:
         owner:
@@ -22,25 +26,25 @@ models:
       - name: birth_date_approx
         description: Approximate birth date (mid-month).
       - name: dtap_doses_by_8_months
-        description: Distinct 6-in-1 administration dates before 8 months of age.
+        description: Distinct 4-, 5- or 6-in-1 DTP-containing administration or vaccine order dates before 8 months of age.
       - name: mmr_doses_12_to_18_months
-        description: Distinct MMR or MMRV administration dates from 12 months up to but not including 18 months of age.
+        description: Distinct MMR or MMRV administration or vaccine order dates from 12 months up to but not including 18 months of age.
       - name: mmr_doses_1_to_5_years
-        description: Distinct MMR or MMRV administration dates from the first birthday up to but not including the fifth.
+        description: Distinct MMR or MMRV administration or vaccine order dates from the first birthday up to but not including the fifth.
       - name: has_dtap_booster_1_to_5_years
-        description: Whether a 4-in-1 preschool booster was given from the first birthday up to but not including the fifth.
+        description: Whether an explicit DTAPIPVVACBOOST_COD preschool booster was recorded from the first birthday up to but not including the fifth. A generic 4-in-1 vaccine product does not establish booster administration.
       - name: rotavirus_doses_by_24_weeks
-        description: Distinct rotavirus administration dates before 24 weeks of age.
+        description: Distinct rotavirus administration or vaccine order dates before 24 weeks of age.
       - name: menb_doses_by_8_months
-        description: Distinct MenB administration dates before 8 months of age.
+        description: Distinct MenB administration or vaccine order dates before 8 months of age.
       - name: menb_doses_by_18_months
-        description: Distinct MenB administration dates before 18 months of age.
+        description: Distinct MenB administration or vaccine order dates before 18 months of age.
       - name: menb_primary_doses_by_12_months
-        description: Distinct MenB administration dates before 12 months of age, the primary course.
+        description: Distinct MenB administration or vaccine order dates before 12 months of age, the primary course.
       - name: menb_booster_doses_12_to_18_months
-        description: Distinct MenB administration dates from 12 months up to but not including 18 months of age, the booster.
+        description: Distinct MenB administration or vaccine order dates from 12 months up to but not including 18 months of age, the booster.
       - name: has_dtap_contraindication
-        description: Any contraindicated code for the 6-in-1 or 4-in-1 vaccines.
+        description: Any PCD DTPCON_COD or DTAPIPVCON_COD contraindication record.
       - name: has_mmr_contraindication
         description: Any contraindicated code for MMR or MMRV.
       - name: has_rotavirus_contraindication

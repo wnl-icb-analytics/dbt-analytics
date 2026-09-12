@@ -7,8 +7,8 @@
 /*
 Serum or plasma fructosamine measurements from the PCD cluster SERFRUC_COD, one
 row per observation. Fructosamine is measured instead of HbA1c when HbA1c is
-unreliable, so NICE diabetes glycaemic indicators exclude people with a
-fructosamine test in the period. Includes ALL persons (active, inactive,
+unreliable. NICE diabetes glycaemic indicators exclude people with fructosamine
+but no HbA1c test in the period. Includes ALL persons (active, inactive,
 deceased) following intermediate layer principles.
 */
 

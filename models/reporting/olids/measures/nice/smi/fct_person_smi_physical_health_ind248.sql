@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND248: https://www.nice.org.uk/indicators/ind248
--- All six physical health checks (blood pressure, BMI, alcohol consumption, lipid profile, blood glucose or HbA1c, smoking status) recorded in 12 months for people with an active SMI diagnosis.
+-- All six physical health checks in 12 months for people with an SMI diagnosis, before personalised care adjustments including remission.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -9,7 +9,7 @@ WITH indicator_population AS (
     FROM {{ ref('int_ltc_review_profile') }} AS profile
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE profile.has_active_smi_diagnosis
+    WHERE profile.earliest_smi_diagnosis_date IS NOT NULL
 ),
 
 assessed AS (
@@ -50,7 +50,7 @@ SELECT
     CURRENT_DATE() AS reporting_date,
     DATEADD(month, -12, CURRENT_DATE()) AS measurement_period_start,
     age,
-    'Severe mental illness (schizophrenia, bipolar affective disorder or other psychoses, not in remission)' AS condition_name,
+    'Severe mental illness (schizophrenia, bipolar affective disorder or other psychoses), including remission before personalised care adjustments' AS condition_name,
     current_practice_code,
     current_practice_name,
     latest_blood_pressure_date,

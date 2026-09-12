@@ -1,0 +1,31 @@
+models:
+  - name: int_cervix_removal_all
+    description: >
+      Complete removal of the cervix, one row per observation in the PCD
+      NOCX_COD cluster for all people, including inactive and deceased people.
+      Records after the build date are excluded. General cervical screening
+      unsuitability is a separate condition and is not included.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: QOF v51 cervical screening, NOCX_COD and NOCX_DAT
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: NOCX_COD
+            source: PCD
+    columns:
+      - name: id
+        description: Source observation identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the removal record.
+      - name: concept_code
+        description: SNOMED CT concept code.
+      - name: concept_display
+        description: SNOMED CT concept description.
