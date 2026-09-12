@@ -3,11 +3,13 @@
     {#
     Calculates CKD register status at a given reference date.
 
-    Business Logic (QOF v50):
+    Business Logic (QOF v51):
     - Age ≥18 at reference date
     - Has CKD Stage 3-5 diagnosis (CKD_COD)
     - NOT downstaged: no CKD Stage 1-2 code (CKD1AND2_COD) after latest Stage 3-5
     - NOT resolved: no resolved code (CKDRES_COD) after latest Stage 3-5
+    - A same-day Stage 1-2 or resolved code does not remove the diagnosis;
+      comparisons use the date, not the time
 
     Parameters:
         reference_date_expr: SQL expression for reference date (default: CURRENT_DATE())
@@ -58,12 +60,12 @@
                 -- Must not have been downstaged to Stage 1-2 after latest Stage 3-5
                 AND (
                     diag.latest_stage_1_2_date IS NULL
-                    OR diag.latest_diagnosis_date > diag.latest_stage_1_2_date
+                    OR diag.latest_diagnosis_date::DATE >= diag.latest_stage_1_2_date::DATE
                 )
                 -- Must not have been resolved after latest Stage 3-5
                 AND (
                     diag.latest_resolved_date IS NULL
-                    OR diag.latest_diagnosis_date > diag.latest_resolved_date
+                    OR diag.latest_diagnosis_date::DATE >= diag.latest_resolved_date::DATE
                 ),
                 FALSE
             ) AS is_on_register

@@ -5,7 +5,7 @@
 
     Business Logic:
     - Age ≥17 at reference date
-    - Active diabetes diagnosis (latest diagnosis > latest resolution)
+    - Active diabetes diagnosis (no resolution after the latest diagnosis; same-day resolution retains it)
     - Type classification (Type 1 vs Type 2 vs Unknown)
 
     Parameters:
@@ -63,7 +63,7 @@
                 AND diag.earliest_diagnosis_date IS NOT NULL
                 AND (
                     diag.latest_resolved_date IS NULL
-                    OR diag.latest_diagnosis_date > diag.latest_resolved_date
+                    OR diag.latest_diagnosis_date::DATE >= diag.latest_resolved_date::DATE
                 ),
                 FALSE
             ) AS is_on_register,
@@ -73,7 +73,7 @@
                     AND diag.earliest_diagnosis_date IS NOT NULL
                     AND (
                         diag.latest_resolved_date IS NULL
-                        OR diag.latest_diagnosis_date > diag.latest_resolved_date
+                        OR diag.latest_diagnosis_date::DATE >= diag.latest_resolved_date::DATE
                     ),
                     FALSE
                 ) = FALSE THEN NULL

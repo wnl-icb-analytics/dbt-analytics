@@ -8,13 +8,15 @@
 }}
 
 /*
-Chronic Kidney Disease (CKD) Register - QOF v50
+Chronic Kidney Disease (CKD) Register - QOF v51
 
 Business Logic:
 - Age ≥18 years
 - Has CKD Stage 3-5 diagnosis (CKD_COD)
 - NOT downstaged: no CKD Stage 1-2 code (CKD1AND2_COD) after latest Stage 3-5
 - NOT resolved: no resolved code (CKDRES_COD) after latest Stage 3-5
+- A same-day Stage 1-2 or resolved code does not remove the diagnosis;
+  comparisons use the date, not the time
 
 Lab data available separately in intermediate tables for clinical monitoring.
 */
@@ -41,14 +43,14 @@ WITH ckd_diagnoses AS (
             -- Must not have been downstaged to Stage 1-2 after latest Stage 3-5
             AND (
                 MAX(CASE WHEN is_stage_1_2_code THEN clinical_effective_date END) IS NULL
-                OR MAX(CASE WHEN is_stage_3_5_code THEN clinical_effective_date END)
-                    > MAX(CASE WHEN is_stage_1_2_code THEN clinical_effective_date END)
+                OR MAX(CASE WHEN is_stage_3_5_code THEN clinical_effective_date END)::DATE
+                    >= MAX(CASE WHEN is_stage_1_2_code THEN clinical_effective_date END)::DATE
             )
             -- Must not have been resolved after latest Stage 3-5
             AND (
                 MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END) IS NULL
-                OR MAX(CASE WHEN is_stage_3_5_code THEN clinical_effective_date END)
-                    > MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END)
+                OR MAX(CASE WHEN is_stage_3_5_code THEN clinical_effective_date END)::DATE
+                    >= MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END)::DATE
             ),
             FALSE
         ) AS has_active_ckd_diagnosis,
@@ -91,7 +93,7 @@ register_logic AS (
         -- Downstaging flag: TRUE if patient was downstaged to Stage 1-2 after Stage 3-5
         COALESCE(
             diag.latest_stage_1_2_date IS NOT NULL
-            AND diag.latest_stage_1_2_date > diag.latest_diagnosis_date,
+            AND diag.latest_stage_1_2_date::DATE > diag.latest_diagnosis_date::DATE,
             FALSE
         ) AS was_downstaged,
 
