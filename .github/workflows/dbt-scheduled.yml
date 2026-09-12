@@ -7,6 +7,7 @@
 # Europe/London in summer, an hour earlier in winter):
 #   0 4 * * 0,2-6  Daily build            build --select +tag:daily source:olids+
 #                                         resource_type:snapshot+ tag:indicator_definitions+
+#                                         --exclude tag:full_build_only
 #   0 4 * * 1      Weekly build           build --select +staging+ tag:indicator_definitions+
 #                                         (skips the 1st)
 #   0 4 1 * *      Monthly full refresh   build --select +staging+ tag:indicator_definitions+
@@ -129,7 +130,7 @@ jobs:
 
           dbt_target=prod
           case "$run_type" in
-            daily)                dbt_args="build --select +tag:daily source:olids+ resource_type:snapshot+ tag:indicator_definitions+" ;;
+            daily)                dbt_args="build --select +tag:daily source:olids+ resource_type:snapshot+ tag:indicator_definitions+ --exclude tag:full_build_only" ;;
             weekly)               dbt_args="build --select +staging+ tag:indicator_definitions+" ;;
             monthly-full-refresh) dbt_args="build --select +staging+ tag:indicator_definitions+ --full-refresh" ;;
             dev-monthly-full-refresh) dbt_args="build --full-refresh"; dbt_target=dev ;;
