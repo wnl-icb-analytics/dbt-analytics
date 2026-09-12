@@ -4,6 +4,7 @@
         incremental_strategy='delete+insert',
         unique_key='end_date',
         cluster_by=['end_date', 'person_id'],
+        snowflake_warehouse=env_var('EFI2_HISTORY_WAREHOUSE', target.warehouse),
         tags=['efi2', 'monthly-full'])
 }}
 

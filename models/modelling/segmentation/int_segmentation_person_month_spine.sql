@@ -9,8 +9,11 @@
 }}
 
 -- Monthly population and registration state for historical segmentation.
--- Every person in the current segmentation scope is retained for each of the
--- last 60 completed month-ends. Only active rows are segmented downstream.
+-- Every person in the current segmentation scope gets a row for each completed
+-- month-end held. Incremental runs do not remove months that have aged out, so
+-- the spine holds at least the last 60 completed month-ends; the monthly full
+-- refresh rebuilds the rolling 60-month window and trims the extras. Only
+-- active rows are segmented downstream.
 
 WITH month_ends AS (
     SELECT month_end_date
@@ -18,13 +21,7 @@ WITH month_ends AS (
     WHERE month_end_date BETWEEN LAST_DAY(DATEADD('month', -60, CURRENT_DATE))
         AND LAST_DAY(DATEADD('month', -1, CURRENT_DATE))
     {% if is_incremental() %}
-        AND (
-            month_end_date > (
-                SELECT COALESCE(MAX(month_end_date), '1900-01-01'::DATE)
-                FROM {{ this }}
-            )
-            OR month_end_date = LAST_DAY(DATEADD('month', -1, CURRENT_DATE))
-        )
+        AND {{ rebuild_month_window('month_end_date') }}
     {% endif %}
 ),
 

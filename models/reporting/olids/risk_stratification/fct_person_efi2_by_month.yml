@@ -3,7 +3,7 @@ models:
     description: >-
       Reconstructed monthly eFI2 score and frailty category for people aged at
       least 65 who were alive and GP registered in NCL at the scoring date. One
-      row represents one person at one of the last 60 completed month-ends.
+      row represents one person at a retained completed month-end.
       Unlike fct_person_efi2, registration is required and no current dim_person
       link is applied, so the two populations must be aligned before combining
       current and historical results. History uses clinical effective dates in
@@ -12,8 +12,10 @@ models:
       secondary use, join to DIM_PERSON_SECONDARY_USE_ALLOWED on person_id.
       The newest month can be incomplete because OLIDS arrives after the
       reference date. An ad-hoc incremental run can replace the latest
-      completed month atomically. Each scheduled monthly full refresh
-      recalculates all 60 months and incorporates records received since the
+      completed month atomically, but does not remove months that have aged
+      out, so the model holds at least the last 60 completed month-ends. Each
+      scheduled monthly full refresh recalculates the rolling 60-month window,
+      trims the extra months and incorporates records received since the
       previous build.
     config:
       meta:

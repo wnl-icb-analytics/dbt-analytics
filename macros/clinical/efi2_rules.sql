@@ -12,10 +12,7 @@ with
         select *
         from {{ cohort_relation }}
         {% if historical and is_incremental() %}
-        where end_date > (
-            select coalesce(max(end_date), '1900-01-01'::date) from {{ this }}
-        )
-            or end_date = last_day(dateadd('month', -1, current_date))
+        where {{ rebuild_month_window('end_date') }}
         {% endif %}
     ),
 

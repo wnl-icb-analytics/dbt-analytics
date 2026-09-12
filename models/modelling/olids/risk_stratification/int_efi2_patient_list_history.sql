@@ -25,10 +25,5 @@ WHERE is_active
     AND DATEADD('year', 65, DATE_TRUNC('month', birth_date_approx))
         <= month_end_date
 {% if is_incremental() %}
-    AND (
-        month_end_date > (
-            SELECT COALESCE(MAX(end_date), '1900-01-01'::DATE) FROM {{ this }}
-        )
-        OR month_end_date = LAST_DAY(DATEADD('month', -1, CURRENT_DATE))
-    )
+    AND {{ rebuild_month_window('month_end_date', 'end_date') }}
 {% endif %}

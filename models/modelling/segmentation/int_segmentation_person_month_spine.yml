@@ -2,12 +2,14 @@ models:
   - name: int_segmentation_person_month_spine
     description: >-
       Monthly population spine for historical segmentation. One row represents
-      one person in dim_person_demographics at one of the last 60 completed
-      month-ends. Birth, death and NCL GP registration are evaluated at the
-      month-end. Only active rows are eligible for a segment downstream. This
-      model does not classify inactive people as out of area. Incremental runs
-      replace the latest completed month in one transaction and add missing
-      newer months; the monthly full refresh recalculates the 60-month window.
+      one person in dim_person_demographics at a retained completed month-end.
+      Birth, death and NCL GP registration are evaluated at the month-end. Only
+      active rows are eligible for a segment downstream. This model does not
+      classify inactive people as out of area. Incremental runs replace the
+      latest completed month in one transaction and add missing newer months,
+      but do not remove months that have aged out, so the spine holds at least
+      the last 60 completed month-ends. The monthly full refresh rebuilds the
+      rolling 60-month window and trims the extra months.
     config:
       meta:
         owner:
