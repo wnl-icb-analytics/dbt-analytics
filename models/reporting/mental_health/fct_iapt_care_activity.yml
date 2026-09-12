@@ -1,0 +1,128 @@
+version: 2
+models:
+  - name: fct_iapt_care_activity
+    description: >-
+      NHS Talking Therapies (IAPT data set) care activities, one row per referral,
+      care contact, reporting month and activity, from the accepted submission for
+      that month, including orphans. A contact is accepted only in the file for its
+      own month (ETOS v2.1.22 IDS201 row 6), so a contact or activity identifier
+      reused in another month is a separate record; a Refresh replacing the Primary
+      file keeps the same key. An activity carries at most one procedure, finding and
+      observation; several procedures in one contact arrive as several
+      activities. Time comes only from the contact recorded in the same
+      submission when it names the same referral and person. SNOMED CT procedure
+      expressions are kept whole. Only a bare concept, or a concept whose only
+      refinement is procedure context Done, is asserted as a procedure that took
+      place.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: source_record_id
+        description: Hash of referral_id, care_contact_id, unique_month_id and care_activity_id.
+        data_tests: [not_null, unique]
+      - name: source_table
+        description: Always IDS202.
+      - name: contact_source_record_id
+        description: Key of the recorded contact in fct_iapt_care_contact (hash of referral_id, care_contact_id and unique_month_id), kept even when that contact is absent.
+      - name: person_id
+        description: IAPT Person_ID on the activity. IAPT-scoped; use sk_patient_id across datasets.
+      - name: sk_patient_id
+        description: Warehouse patient key from the IAPT bridge; null when unmapped.
+      - name: unique_month_id
+        description: NHS England month number of the activity's reporting month; part of source_record_id.
+      - name: clinical_date
+        description: Date of the same-submission contact. Null unless clinical_date_status is recorded.
+      - name: clinical_time
+        description: Submitted contact time, when the date is recorded and a time was submitted.
+      - name: clinical_at
+        description: Date and time, or midnight on the date when no time was submitted (a sort anchor, not an observed time). Null when unknown.
+      - name: clinical_time_precision
+        description: timestamp, date or unknown.
+      - name: clinical_time_basis
+        description: same_submission_care_contact, or not_recorded.
+      - name: clinical_date_status
+        description: recorded, missing, source_sentinel (contact date before 1901), parent_not_linked (no contact in the submission) or parent_inconsistent (contact names another referral or person).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [recorded, missing, source_sentinel, parent_not_linked, parent_inconsistent]
+      - name: source_derived_activity_date
+        description: dmicActivityDate from the data services processing office. Evidence only; never replaces the contact date.
+      - name: is_source_date_inconsistent
+        description: True when clinical_date and source_derived_activity_date differ; null when either is missing.
+      - name: parent_record_id
+        description: contact_source_record_id when the same-submission contact agrees on referral and person and the published fct_iapt_care_contact row with that key comes from the activity's submission and names the same referral, contact and non-null Person_ID; otherwise null. Missing Person_IDs never establish a parent.
+      - name: parent_record_type
+        description: care_contact when parent_record_id is populated.
+      - name: parent_model_name
+        description: fct_iapt_care_contact when parent_record_id is populated.
+      - name: clinical_activity_duration_minutes
+        description: Submitted duration of the activity in minutes. Zero is kept distinct from null.
+      - name: procedure_expression
+        description: Submitted SNOMED CT expression, for example 304891004:408730004=410527000 (CBT, context offered).
+      - name: procedure_expression_type
+        description: >-
+          bare_concept (one concept, optional term), procedure_context (one concept
+          refined only by 408730004 Procedure context), unrecognised_refinement (a
+          leading concept followed by anything else, such as extra attributes or
+          several focus concepts) or unparsed. Matched against the whole string.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [bare_concept, procedure_context, unrecognised_refinement, unparsed]
+      - name: has_procedure_qualifier
+        description: True for any expression that is not a bare concept.
+      - name: procedure_concept_code
+        description: Leading concept of the expression. It is the focus only for bare_concept and procedure_context; never an assertion that the procedure was done.
+      - name: procedure_name
+        description: Preferred term of the leading concept.
+      - name: procedure_semantic_tag
+        description: Semantic tag of the leading concept, for example regime/therapy or procedure.
+      - name: procedure_context_code
+        description: Procedure context value for the procedure_context form, for example 410527000 Offered or 385658003 Done.
+      - name: procedure_description
+        description: >-
+          Label for analysts: the concept term, with "(context: ...)" for a procedure context and
+          "(unrecognised refinement)" for other expressions. An offered or planned therapy never reads as delivered.
+      - name: asserted_procedure_code
+        description: Concept asserted as performed - the bare concept, or the concept when its only refinement is context 385658003 Done. Null for every other form.
+      - name: procedure_label_status
+        description: labelled, code_missing, unparsed_expression, code_unmatched or refinement_unrecognised.
+      - name: therapy_type_category
+        description: Low Intensity, High Intensity or Employment Support for an asserted national therapy concept
+          in the IAPT terminology mapping guidance v3.4 or explicit ETOS v2.1.22 derivations. NHS England derivations
+          count bare concepts only.
+      - name: legacy_therapy_type_code
+        description: IAPT v1.5 national therapy type code for the asserted concept.
+      - name: finding_scheme_code
+        description: Submitted finding scheme. 01 ICD-10, 04 SNOMED CT.
+      - name: finding_coding_system
+        description: ICD-10 or SNOMED CT; null when the scheme is missing or not valid for IAPT.
+      - name: nhsd_validated_finding_code
+        description: NHSD validated finding code. '-3' means NHSD rejected the code or scheme; three-character ICD-10 codes may be padded with X or 9.
+      - name: finding_snomed_code
+        description: Finding code when the scheme is SNOMED CT.
+      - name: finding_icd10_precision
+        description: Precision of the submitted ICD-10 code - three_character, three_character_filler, four_character, five_character or invalid_format.
+      - name: is_finding_code_extended_by_nhsd
+        description: True when NHSD turned a three-character submission into a four-character code, such as F41 to F41.9 (unspecified). Null for SNOMED CT.
+      - name: finding_icd10_category_code
+        description: Three-character ICD-10 category of the code.
+      - name: finding_description
+        description: Label of the finding. Three-character ICD-10 submissions take the category label, so the label never claims the precision NHSD padding added.
+      - name: finding_label_status
+        description: labelled, code_missing, coding_scheme_missing, coding_scheme_unrecognised, invalid_code_supplied or code_unmatched.
+      - name: is_assessment_observable_in_observation
+        description: True when the observation code is an IAPT outcome measure observable. Guidance p41 says these must flow in IDS606/607.
+      - name: observation_value
+        description: Submitted observation value as text.
+      - name: observation_value_numeric
+        description: Numeric parse of the observation value; null when not numeric.
+      - name: observation_value_parse_status
+        description: value_missing, numeric or not_numeric.
+      - name: unit_of_measurement_code
+        description: Submitted UCUM unit code, matched case-sensitively.
+      - name: unit_of_measurement_label_status
+        description: labelled, code_missing or code_unmatched.

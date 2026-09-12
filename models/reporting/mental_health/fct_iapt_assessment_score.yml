@@ -1,0 +1,110 @@
+version: 2
+models:
+  - name: fct_iapt_assessment_score
+    description: >-
+      NHS Talking Therapies (IAPT data set) scored assessment items, one row per
+      question, dimension or total score per completion: IDS606 (completed
+      outside a contact) and IDS607 (recorded against a care activity). Latest
+      accepted version of each item, keyed on the fields ETOS names for duplicate
+      rejection (IDS606 row 1, IDS607 row 1). IDS607 keys also carry the reporting
+      month, as fct_iapt_care_activity does, because contact and activity
+      identifiers can be reused in another month. Profiling found no repeat of these
+      keys within an accepted submission, so the grain holds on current data; the
+      accepted feed does not guarantee it, and two items sharing every key field
+      would collapse to the latest. Includes history and orphans.
+      A row is not a whole questionnaire; different observables are not
+      interchangeable. Scores are read against the latest published ROM Mapping
+      definition. A value that fits only an earlier published range keeps its
+      source text and number but has no comparable score and is not rescaled.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: source_record_id
+        description: IDS606 - hash of referral, tool, completion date and time. IDS607 - hash of referral, contact, reporting month (unique_month_id), activity and tool.
+        data_tests: [not_null, unique]
+      - name: assessment_source
+        description: referral (IDS606, completed outside a contact) or care_activity (IDS607).
+      - name: person_id
+        description: IAPT Person_ID of the retained version. IAPT-scoped; use sk_patient_id across datasets.
+      - name: has_person_identifier_changed
+        description: True when accepted versions carry different Person_IDs. Always false for IDS607, whose month-qualified key has one accepted version.
+      - name: assessment_tool_code
+        description: SNOMED CT observable submitted as Coded Assessment Tool Type.
+      - name: observable_description
+        description: Published observable name from the ROM Mapping, or the SNOMED CT term for a concept outside the specification.
+      - name: observable_label_status
+        description: labelled, labelled_outside_specification, code_missing or code_unmatched.
+      - name: assessment_definition_version
+        description: Latest ROM Mapping version containing the observable, which supplies the common score semantics. It does not claim which revision the provider used.
+      - name: assessment_published_values
+        description: Published responses and ranges in the latest definition.
+      - name: expected_decimal_places
+        description: Decimal places accepted without a warning in the latest definition. This changed over time; the Diabetes Distress Scale accepted whole numbers only until TOS 2.1.14 (September 2022).
+      - name: score_text
+        description: Submitted Person Score as text.
+      - name: score_numeric_parsed
+        description: Technical numeric parse of the score, including non-score codes and historical formats. Use assessment_score_numeric for comparable scores.
+      - name: score_parse_status
+        description: value_missing, numeric or not_numeric.
+      - name: response_description
+        description: Published meaning of an enumerated response (Yes, No, Not Applicable, Score not available).
+      - name: is_assessment_response_non_score
+        description: True for Not Applicable and Score not available; false for other enumerated responses; null when no enumerated response matched.
+      - name: assessment_response_status
+        description: >-
+          value_missing, known_non_score, enumerated_response, within_published_range
+          (latest definition), historical_published_range (fits only an earlier
+          published range, such as a Diabetes Distress Scale 17-102 total),
+          response_unmatched (outside every published range or an unknown code,
+          accepted at source with a warning) or reference_not_available.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [value_missing, known_non_score, enumerated_response, within_published_range, historical_published_range, response_unmatched, reference_not_available]
+      - name: historical_reference_version
+        description: Earlier specification whose published range the value fits, for historical_published_range only. An interpretation of the value, not proof of the revision the provider implemented.
+      - name: assessment_score_numeric
+        description: Comparable numeric score on the latest definition's scale - an enumerated numeric response or a value within the latest range. Null for non-score, text, historical-format and out-of-range values. Does not derive questionnaire totals.
+      - name: has_excess_score_precision
+        description: True when a within-range score has more significant decimals than the latest definition publishes. A warning, not a comparability rule; such scores are kept.
+      - name: clinical_date
+        description: IDS606 completion date; IDS607 date of the contact in the same submission. Null unless clinical_date_status is recorded.
+      - name: clinical_time
+        description: Submitted completion or contact time, when a date is recorded.
+      - name: clinical_at
+        description: Date and time, or midnight on the date when no time was submitted (a sort anchor). Null when unknown.
+      - name: clinical_time_precision
+        description: timestamp, date or unknown. Some supplied referral-assessment midnight times may be system
+          defaults; timestamp precision means a time was supplied, not that its clinical accuracy is established.
+      - name: clinical_time_basis
+        description: assessment_completion (IDS606), same_submission_care_contact (IDS607) or not_recorded.
+      - name: clinical_date_status
+        description: recorded, missing, source_sentinel (before 1901), parent_not_linked or parent_inconsistent. IDS607 inherits the activity's status when the activity agrees on referral, contact and person.
+      - name: source_derived_date
+        description: IDS607 dmicCompletionDate from the data services processing office. Evidence only.
+      - name: is_source_date_inconsistent
+        description: True when clinical_date and source_derived_date differ; null when either is missing.
+      - name: is_referral_linked
+        description: Whether fct_iapt_referral holds the recorded referral.
+      - name: is_referral_person_consistent
+        description: Whether that referral's latest Person_ID matches this record's. Null when not linked or when either Person_ID is missing.
+      - name: care_activity_source_record_id
+        description: Key of the recorded activity in fct_iapt_care_activity (hash of referral, contact, unique_month_id and activity), kept for IDS607 even when the activity is absent.
+      - name: is_care_activity_linked
+        description: Whether the same submission holds the recorded activity. Null for IDS606.
+      - name: is_care_activity_referral_consistent
+        description: Whether that activity records the same referral. Null when not applicable.
+      - name: is_care_activity_contact_consistent
+        description: Whether that activity records the same contact. Null when not applicable.
+      - name: is_care_activity_person_consistent
+        description: Whether that activity records the same Person_ID. Null when not applicable.
+      - name: parent_record_type
+        description: care_activity when the same-submission activity agrees on every link and the published fct_iapt_care_activity row comes from the same submission and names the same referral, contact, activity and non-null Person_ID; otherwise referral when the published fct_iapt_referral row names the same non-null Person_ID; otherwise null. Missing Person_IDs never establish a parent.
+      - name: parent_record_id
+        description: Key of the parent in parent_model_name.
+      - name: parent_model_name
+        description: fct_iapt_care_activity or fct_iapt_referral.
+      - name: reported_period_count
+        description: Number of accepted reporting periods containing this item. Always 1 for IDS607, whose key includes the month.

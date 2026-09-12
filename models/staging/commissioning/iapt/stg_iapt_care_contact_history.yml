@@ -1,0 +1,34 @@
+version: 2
+models:
+- name: stg_iapt_care_contact_history
+  description: One NHS Talking Therapies care contact as reported in one accepted submission, including cancelled and
+    missed appointments. Contacts normally flow once, in their own month, but a few identifiers repeat across months.
+    Use this history to attach same-submission activities; fct_iapt_care_contact keeps each month's contact separately.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - submission_id
+        - care_contact_id
+  columns:
+  - name: submission_id
+    data_tests:
+    - not_null
+  - name: care_contact_id
+    description: Provider-qualified contact identifier (Unique_CareContactID).
+    data_tests:
+    - not_null
+  - name: local_care_contact_id
+    description: Contact identifier assigned locally by the provider (CareContactId).
+  - name: referral_id
+    description: Provider-qualified referral identifier recorded on the contact.
+  - name: care_cont_time
+    description: Submitted clock time only; the warehouse date part is not kept.
+  - name: cons_mechanism
+    description: Consultation mechanism, submitted from v2.1.
+  - name: cons_medium_used
+    description: Consultation medium used, submitted in v2.0.
