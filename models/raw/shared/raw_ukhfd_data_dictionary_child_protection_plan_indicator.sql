@@ -1,6 +1,6 @@
 {{
     config(
-        description="Raw layer: Child protection plan indicator definitions and their UKHFD history. 1:1 passthrough with cleaned column names."
+        description="Raw layer: Child protection plan indicator definitions and their UKHFD history.. 1:1 passthrough with cleaned column names. \nSource: UKHFD.Data_Dictionary.dim_Child_Protection_Plan_Indication_Code_SCD \ndbt: source(''ukhfd_data_dictionary'', ''child_protection_plan_indicator'') \nColumns:\n  Attr_Name -> attr_name\n  Valid_From -> valid_from\n  Valid_To -> valid_to\n  Main_Code_Text -> main_code_text\n  Sub_Code1_Text -> sub_code1_text\n  Sub_Code2_Text -> sub_code2_text\n  Sub_Code3_Text -> sub_code3_text\n  Major_Category -> major_category\n  Category -> category\n  Main_Description -> main_description\n  Main_Description_60_Chars -> main_description_60_chars\n  Sub1_Description -> sub1_description\n  Sub2_Description -> sub2_description\n  Sub3_Description -> sub3_description\n  Notes -> notes\n  In_Source_Table -> in_source_table\n  Unique_Column -> unique_column\n  Import_Date -> import_date\n  Created_Date -> created_date\n  Is_Latest -> is_latest\n  Effective_From -> effective_from\n  Effective_To -> effective_to"
     )
 }}
 select
