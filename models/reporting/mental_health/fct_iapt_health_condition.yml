@@ -1,0 +1,87 @@
+version: 2
+models:
+  - name: fct_iapt_health_condition
+    description: >-
+      NHS Talking Therapies (IAPT data set) recorded conditions, one row per
+      logical condition: IDS601 previous diagnoses (per patient), IDS602 long
+      term physical health conditions and IDS603 presenting complaints (per
+      referral), matching NHS England's "Mental and Physical Health Conditions"
+      group. Latest accepted version, keyed on the ETOS supersession fields with
+      the code as submitted and without Person_ID. Includes history. Conditions
+      may be stated by the patient or taken from notes. Long term conditions have
+      no date item, so their date is never inferred from a referral or reporting
+      period.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: source_record_id
+        description: Hash of table, provider, parent (provider-qualified local patient id for IDS601, referral otherwise), scheme, submitted code and, for IDS601/603, the submitted date. Codes are not normalised, so punctuation or a dagger/asterisk marker keeps submissions distinct.
+        data_tests: [not_null, unique]
+      - name: condition_record_type
+        description: previous_diagnosis (IDS601), long_term_condition (IDS602) or presenting_complaint (IDS603).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [previous_diagnosis, long_term_condition, presenting_complaint]
+      - name: person_id
+        description: IAPT Person_ID of the retained version. IAPT-scoped; use sk_patient_id across datasets.
+      - name: has_person_identifier_changed
+        description: True when accepted versions carry different Person_IDs.
+      - name: referral_id
+        description: Recorded referral. Null for IDS601, which is patient-level.
+      - name: is_referral_linked
+        description: Whether fct_iapt_referral holds the recorded referral. Null for IDS601.
+      - name: is_referral_person_consistent
+        description: Whether that referral's latest Person_ID matches this record's. Null when not linked or when either Person_ID is missing.
+      - name: parent_record_id
+        description: referral_id when the published fct_iapt_referral row names the same non-null Person_ID; otherwise null (always for IDS601). Missing Person_IDs never establish a parent.
+      - name: parent_record_type
+        description: referral when parent_record_id is populated.
+      - name: parent_model_name
+        description: fct_iapt_referral when parent_record_id is populated.
+      - name: coding_scheme_code
+        description: Submitted scheme. IDS601 02 ICD-10 / 06 SNOMED CT; IDS602/603 01 ICD-10 / 04 SNOMED CT.
+      - name: coding_scheme_description
+        description: UKHFD label for the scheme code.
+      - name: coding_system
+        description: ICD-10 or SNOMED CT; null when the scheme is missing or not valid for the table.
+      - name: submitted_code
+        description: Code as submitted (trimmed).
+      - name: nhsd_validated_code
+        description: NHSD validated code for IDS602/603. '-3' means NHSD rejected the code or scheme; three-character ICD-10 codes may be padded with X or 9.
+      - name: snomed_code
+        description: Submitted code when the coding system is SNOMED CT.
+      - name: icd10_precision
+        description: Precision of the submitted ICD-10 code - three_character, three_character_filler, four_character, five_character or invalid_format.
+      - name: is_code_extended_by_nhsd
+        description: True when NHSD turned a three-character submission into a four-character code, such as F41 to F41.9 (unspecified).
+      - name: icd10_category_code
+        description: Three-character ICD-10 category, the parent of the code.
+      - name: code_description
+        description: Code label. Three-character ICD-10 submissions take the category label, so the label never claims the precision NHSD padding added.
+      - name: code_label_status
+        description: labelled, code_missing, coding_scheme_missing, coding_scheme_unrecognised, invalid_code_supplied or code_unmatched.
+      - name: presenting_complaint_significance_code
+        description: IDS603 coding significance, 1 primary or 2 secondary; null when not submitted or not a complaint.
+      - name: presenting_complaint_significance_description
+        description: UKHFD label for the significance code.
+      - name: clinical_date
+        description: IDS601 diagnosis date or IDS603 recorded date, when clinical_date_status is recorded. Not an onset date.
+      - name: clinical_at
+        description: Midnight on clinical_date, a sort anchor only.
+      - name: clinical_time_precision
+        description: date or unknown.
+      - name: clinical_time_basis
+        description: previous_diagnosis_observed, presenting_complaint_recorded or not_recorded.
+      - name: clinical_date_status
+        description: recorded, missing, source_sentinel (before 1901) or not_collected (IDS602 has no date item).
+      - name: is_superseded_by_dated_record
+        description: IDS603 only. True when an undated complaint is later sent with a date for the same referral, scheme and submitted code. Both rows are kept.
+      - name: first_reported_period_end_date
+        description: First accepted period containing the condition. Reporting evidence, not a clinical date.
+      - name: last_reported_period_end_date
+        description: Last accepted period containing the condition. Not a resolution date.
+      - name: reported_period_count
+        description: Number of accepted periods containing the condition.

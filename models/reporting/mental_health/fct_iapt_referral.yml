@@ -1,0 +1,194 @@
+version: 2
+models:
+- name: fct_iapt_referral
+  description: One NHS Talking Therapies (IAPT data set) referral, taken from its latest accepted submission. Open
+    referrals are resubmitted monthly, so earlier versions are replaced; a referral missing from its provider's latest
+    month keeps its row and no discharge is inferred. No population filter is applied beyond the commissioner filter
+    of the data feed. NHS England pathway derivations come from the selected version and can change until the refresh
+    window for that month closes.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Provider-qualified referral identifier (Unique_ServiceRequestID), stable across versions.
+    data_tests:
+    - unique
+    - not_null
+  - name: source_dataset
+    description: Always IAPT.
+  - name: referral_id
+    description: Same value as source_record_id; used by child facts.
+  - name: local_referral_id
+    description: Referral identifier assigned locally by the provider.
+  - name: pathway_id
+    description: NHS England pathway identifier for a Person_ID and referral pair. Changes when Person_ID changes;
+      do not use as a referral key.
+  - name: source_row_id
+    description: Row identifier of the selected submitted version; changes with every version.
+  - name: person_id
+    description: IAPT Person_ID on the selected version. Only comparable within IAPT.
+  - name: sk_patient_id
+    description: Cross-system pseudonymised NHS number key for person_id; null when the bridge has no value.
+  - name: has_person_identifier_changed
+    description: TRUE when accepted versions of the referral carry more than one Person_ID. Different Person_IDs are
+      not assumed to be the same person.
+  - name: has_patient_key_changed
+    description: TRUE when accepted versions resolve to more than one sk_patient_id. Versions without a key are
+      ignored.
+  - name: referral_received_date
+    description: Date the provider received the referral. No time is submitted.
+  - name: service_discharge_date
+    description: Date of the clinical decision to discharge. Null while open.
+  - name: referral_status
+    description: open when no discharge date is recorded, otherwise discharged.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [open, discharged]
+  - name: age_at_referral
+    description: Source-derived age in years at referral receipt.
+  - name: age_at_discharge
+    description: Source-derived age in years at discharge.
+  - name: source_of_referral_code
+    description: Submitted source of referral. IAPT list from v2.1; mental health list in v2.0.
+  - name: source_of_referral_name
+    description: UKHFD label from the list named in source_of_referral_code_set; null when unmatched.
+  - name: source_of_referral_code_set
+    description: iapt when the v2.1 IAPT item supplied the code, mental_health when the v2.0 item did.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [iapt, mental_health]
+  - name: discharge_reason_code
+    description: Discharge from IAPT service reason (end code).
+  - name: discharge_reason_name
+    description: UKHFD label for discharge_reason_code. Taken from the current discharge reason list. When that list
+      lacks the code, taken from the retired IAPT care spell end code list, valid until March 2020, for example
+      42 completed scheduled treatment. Null when neither list holds the code.
+  - name: discharge_reason_code_set
+    description: Code list supplying discharge_reason_name. discharge_reason means the current list;
+      discharge_reason_legacy means the retired care spell end code list. Null when unlabelled. A retired code has no
+      published equivalent among current codes and must not be counted as one.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [discharge_reason, discharge_reason_legacy]
+  - name: discharge_reason_category
+    description: UKHFD category for a current discharge reason where published, such as seen but not taken on for
+      treatment. Null for retired codes, which have no published grouping.
+  - name: previous_diagnosed_condition_code
+    description: Whether the patient reports a recurrence of a previously diagnosed condition.
+  - name: previous_diagnosed_condition_name
+    description: UKHFD label for previous_diagnosed_condition_code.
+  - name: symptom_onset_month
+    description: Patient-reported year and month of symptom onset as supplied (YYYY-MM).
+  - name: symptom_onset_month_start_date
+    description: First day of symptom_onset_month. Month precision only; null when the value is not YYYY-MM.
+  - name: first_assessment_date
+    description: NHS England derived date of the first attended assessment contact.
+  - name: first_treatment_date
+    description: NHS England derived date of the first attended treatment contact or internet therapy start.
+  - name: second_treatment_date
+    description: NHS England derived date of the second attended treatment contact.
+  - name: last_treatment_date
+    description: NHS England derived date of the last attended treatment contact.
+  - name: attended_contact_count
+    description: NHS England count of attended or unplanned contacts, plus internet therapy logs, between referral and
+      discharge.
+  - name: treatment_contact_count
+    description: NHS England count of attended treatment contacts (appointment types 02, 03, 05, excluding employment
+      support).
+  - name: is_completed_treatment
+    description: Derived state of the NHS England completed-treatment rule, which is the same in v2.0 and v2.1
+      (discharged with at least two treatment contacts). TRUE when the source flag is True. FALSE when either stated
+      criterion fails, either no discharge date as of the selected version or fewer than two treatment contacts. Null
+      when the treatment count is missing, or the criteria look met but the source flag is absent.
+  - name: anxiety_disorder_specific_measure
+    description: NHS England selected anxiety measure used for recovery, such as GAD7 or PTSD.
+  - name: phq9_first_score
+    description: NHS England first valid PHQ-9 score (0-27) in the referral.
+  - name: phq9_last_score
+    description: NHS England last valid PHQ-9 score (0-27); null until discharge.
+  - name: gad7_first_score
+    description: NHS England first valid GAD-7 score (0-21) in the referral.
+  - name: gad7_last_score
+    description: NHS England last valid GAD-7 score (0-21); null until discharge.
+  - name: adsm_first_score
+    description: NHS England first score for anxiety_disorder_specific_measure.
+  - name: adsm_last_score
+    description: NHS England last score for anxiety_disorder_specific_measure; null until discharge.
+  - name: caseness_at_start_status
+    description: For completed treatment only. at_caseness when a first PHQ-9 or anxiety score met its caseness
+      threshold (source Caseness_Flag); not_at_caseness when both were below (source NotCaseness_Flag);
+      not_assessable when neither flag is set and a first PHQ-9 or anxiety score is missing. Null when completed
+      treatment is not shown, or both first scores exist but neither flag is set.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [at_caseness, not_at_caseness, not_assessable]
+  - name: is_recovered
+    description: NHS England Recovery_Flag as supplied. TRUE when the referral completed treatment, started at caseness
+      and ended with PHQ-9 and anxiety-measure scores below caseness. The source never supplies FALSE, so null does not
+      mean not recovered. Null covers treatment not completed, not starting at caseness, missing last scores, a last
+      score at or above its threshold, or no derivation yet. Thresholds differ between data set versions.
+  - name: reliable_change_status
+    description: For completed treatment only. reliable_improvement, reliable_deterioration or no_reliable_change
+      from the source flags, which need first and last PHQ-9 and anxiety scores; not_assessable when no flag is set
+      and any of those four scores is missing. Null when completed treatment is not shown, or all four scores exist
+      but no flag is set.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [reliable_improvement, reliable_deterioration, no_reliable_change, not_assessable]
+  - name: presenting_complaint_higher_category
+    description: NHS England presenting complaint category, such as Depression.
+  - name: presenting_complaint_lower_category
+    description: NHS England presenting complaint subcategory, such as F411 - Generalised Anxiety Disorder.
+  - name: provider_organisation_code
+    description: Submitting provider ODS code.
+  - name: provider_organisation_name
+    description: Latest name from the shared organisation reference.
+  - name: submitted_commissioner_code
+    description: Commissioner submitted by the provider.
+  - name: submitted_commissioner_name
+    description: Latest name from the shared organisation reference.
+  - name: source_icb_commissioner_code
+    description: NHS England derived commissioning ICB.
+  - name: source_icb_commissioner_name
+    description: Latest name from the shared organisation reference.
+  - name: source_sub_icb_commissioner_code
+    description: NHS England derived commissioning sub-ICB location.
+  - name: source_sub_icb_commissioner_name
+    description: Latest name from the shared organisation reference.
+  - name: source_commissioner_derivation_reason
+    description: NHS England reason for the derived commissioner, as supplied.
+  - name: is_wnl_commissioner
+    description: TRUE when the derived ICB, derived sub-ICB or submitted commissioner is in
+      wnl_commissioner_icb_lookup.
+  - name: first_reported_period_end_date
+    description: Earliest accepted reporting month containing the referral.
+  - name: last_reported_period_end_date
+    description: Latest accepted reporting month containing the referral.
+  - name: reported_period_count
+    description: Number of accepted monthly versions.
+  - name: is_in_latest_provider_period
+    description: TRUE when the selected version is from the provider's latest accepted month. FALSE for an open
+      referral means the provider stopped reporting it without a discharge.
+  - name: submission_id
+    description: Accepted submission holding the selected version.
+  - name: unique_month_id
+    description: NHS England month number of the selected version.
+  - name: reporting_period_start_date
+    description: Start of the selected version's reporting month.
+  - name: reporting_period_end_date
+    description: End of the selected version's reporting month.
+  - name: source_file_received_at
+    description: Time the portal received the selected file. Not a clinical time.
+  - name: source_loaded_at
+    description: Time the selected row was added to the warehouse.
+  - name: file_type
+    description: Primary or Refresh. Pathway derivations in Primary files are provisional.
+  - name: dataset_version
+    description: IAPT data set version of the selected file.

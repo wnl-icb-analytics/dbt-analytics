@@ -1,0 +1,42 @@
+version: 2
+models:
+- name: stg_iapt_activesubmission
+  description: One accepted NHS Talking Therapies (IAPT data set) submission, the current Primary or Refresh file for a
+    provider and reporting period, with its header details. Superseded files are excluded; other IAPT staging models
+    join here to keep only accepted rows.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns: [provider_organisation_code, reporting_period_end_date]
+  columns:
+  - name: submission_id
+    description: Unique submission identifier assigned by the submission portal.
+    data_tests:
+    - unique
+    - not_null
+  - name: provider_organisation_code
+    description: Submitting provider ODS code from the file header.
+    data_tests:
+    - not_null
+  - name: reporting_period_start_date
+    description: First day of the reporting month the file covers.
+  - name: reporting_period_end_date
+    description: Last day of the reporting month the file covers.
+    data_tests:
+    - not_null
+  - name: unique_month_id
+    description: NHS England month number for the reporting period, used to order versions.
+  - name: dataset_version
+    description: IAPT data set version of the file, 2.0 or 2.1.
+  - name: file_type
+    description: Primary or Refresh. A Refresh replaces the Primary for the same period.
+  - name: source_file_received_at
+    description: Time the portal received the file. Delivery time, not activity time.
+  - name: source_file_created_at
+    description: Time the provider created the file.
+  - name: source_loaded_at
+    description: Time the row was added to the warehouse.

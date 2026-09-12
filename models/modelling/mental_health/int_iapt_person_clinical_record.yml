@@ -1,0 +1,112 @@
+version: 2
+models:
+- name: int_iapt_person_clinical_record
+  description: NHS Talking Therapies (IAPT data set) clinical items, one row per scored assessment item, recorded
+    condition, and care activity procedure, finding or observation. Selects fct_iapt_clinical_record in the column
+    shape of the other source clinical-record feeds, for the later cross-system longitudinal stream. Undated and
+    unlinked items are kept. Rebuilt in full.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: clinical_record_id
+    description: Stable identifier, a hash of IAPT and the fct_iapt_clinical_record source_record_id.
+    data_tests:
+    - unique
+    - not_null
+  - name: sk_patient_id
+    description: Cross-system pseudonymised NHS number key from the IAPT person bridge. Null when unmatched; the item
+      is still kept.
+  - name: source_person_id
+    description: IAPT Person_ID. Only comparable within the IAPT data set.
+  - name: source_record_type
+    description: assessment_score, health_condition, care_activity_procedure, care_activity_finding or
+      care_activity_observation. Together with source_record_id it identifies one item.
+  - name: source_record_id
+    description: source_record_id in source_model_name. One care activity can supply a procedure, finding and
+      observation item under the same ID.
+  - name: clinical_record_type
+    description: assessment_score, previous_diagnosis, long_term_condition, presenting_complaint, procedure, finding
+      or observation.
+  - name: clinical_record_date
+    description: Recorded clinical date. Care activities and activity-level assessments take the date of their
+      same-submission care contact when it agrees on referral and person; long-term conditions have no date. Referral
+      and delivery dates are never substituted.
+  - name: clinical_record_at
+    description: Sort timestamp. Clinical date and source clock time when clinical_time_precision is timestamp;
+      otherwise midnight on clinical_record_date, which is not an observed time. Null when undated.
+  - name: clinical_time_precision
+    description: timestamp, date or unknown.
+  - name: clinical_time_basis
+    description: Source field or recorded relationship supplying the date; not_recorded when none exists.
+  - name: is_source_date_inconsistent
+    description: TRUE when the processing office's derived date disagrees with the clinical date. Null for conditions
+      and referral-level assessments.
+  - name: source_code
+    description: Submitted code. Procedures keep the full SNOMED CT expression.
+  - name: source_code_name
+    description: Label of the submitted code. Refined procedures name their context, such as offered, so an offered
+      therapy does not read as delivered.
+  - name: result_value
+    description: Submitted score or observation value as text.
+  - name: result_value_name
+    description: Published response label for an enumerated assessment response.
+  - name: result_value_numeric
+    description: Technical numeric parse of result_value. Use assessment_score_numeric for scoring.
+  - name: result_value_parse_status
+    description: value_missing, numeric or not_numeric.
+  - name: assessment_tool_name
+    description: IAPT routine outcome measure tool name. Null for other items.
+  - name: assessment_score_numeric
+    description: Comparable score on the latest published scale. Null for non-score responses (WSAS work 9, PEQ NA),
+      historical-format values such as DDS totals, text and out-of-range values.
+  - name: assessment_response_status
+    description: Interpretation of the score against the IAPT ROM mapping, including historical_published_range for
+      a value that fits only an earlier published scale. Null for other items.
+  - name: is_assessment_response_non_score
+    description: TRUE for a published non-score response. Null for other items.
+  - name: result_unit_code
+    description: UCUM unit code for observations.
+  - name: result_unit_name
+    description: Unit label for result_unit_code.
+  - name: result_unit_symbol
+    description: Unit symbol for result_unit_code.
+  - name: provider_organisation_code
+    description: Submitting provider ODS code.
+  - name: provider_organisation_name
+    description: Current reference name for the provider code.
+  - name: provider_code_authority
+    description: Always ODS.
+  - name: source_submission_period
+    description: Reporting period end of the selected submission. Not the clinical date.
+  - name: source_received_at
+    description: Time the selected source row was loaded into the warehouse. Describes delivery, not clinical activity.
+  - name: source_dataset
+    description: Always IAPT.
+  - name: source_model_name
+    description: IAPT typed fact holding the detailed record.
+  - name: source_coding_system
+    description: Coding system of source_code, SNOMED CT or ICD-10; null when the submitted scheme is missing or
+      invalid.
+  - name: mapped_code
+    description: SNOMED CT concept when the source fact supports a single atomic concept and the NHS Digital reference
+      holds it. Offered, planned or otherwise refined procedures and ICD-10 codes are not mapped.
+  - name: mapped_code_name
+    description: Preferred term for mapped_code.
+  - name: mapped_coding_system
+    description: SNOMED CT when mapped_code is populated.
+  - name: qualifier_code
+    description: SNOMED CT procedure context from a refined procedure expression, such as offered or done. Null for
+      other items.
+  - name: qualifier_name
+    description: Label for qualifier_code.
+  - name: parent_record_id
+    description: Parent key supplied by the source fact, populated only when the parent exists and every recorded link
+      agrees on referral, contact and person.
+  - name: parent_record_type
+    description: care_activity, care_contact or referral.
+  - name: parent_model_name
+    description: Fact holding the parent.
+  - name: relationship_type
+    description: recorded_parent when parent_record_id comes from source identifiers.

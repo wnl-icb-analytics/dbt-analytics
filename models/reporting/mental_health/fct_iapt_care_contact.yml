@@ -1,0 +1,180 @@
+version: 2
+models:
+- name: fct_iapt_care_contact
+  description: One NHS Talking Therapies care contact for a referral, from its latest accepted submission. Includes
+    attended, cancelled, missed and unplanned contacts; use is_attended for recorded attendance and is_nhse_attended_or_unplanned for the NHS England counting rule. A contact whose
+    referral is missing or names a different person stays visible with linkage flags.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Hash of referral_id and care_contact_id, stable across versions of the contact.
+    data_tests:
+    - unique
+    - not_null
+  - name: source_dataset
+    description: Always IAPT.
+  - name: referral_id
+    description: Provider-qualified referral recorded on the contact.
+  - name: care_contact_id
+    description: Provider-qualified contact identifier (Unique_CareContactID).
+  - name: local_care_contact_id
+    description: Contact identifier assigned locally by the provider.
+  - name: pathway_id
+    description: NHS England pathway identifier for the Person_ID and referral pair.
+  - name: source_row_id
+    description: Row identifier of the selected submitted version.
+  - name: person_id
+    description: IAPT Person_ID on this contact, never replaced by the referral's. Only comparable within IAPT.
+  - name: sk_patient_id
+    description: Cross-system pseudonymised NHS number key for person_id.
+  - name: age_at_contact
+    description: Source-derived age in years at the contact date.
+  - name: care_contact_date
+    description: Date the contact took place or, if cancelled, was scheduled.
+  - name: care_contact_time
+    description: Submitted contact time; null when not recorded.
+  - name: care_contact_at
+    description: Date and time for sorting. Date-only contacts use midnight; read care_contact_time_precision.
+  - name: care_contact_time_precision
+    description: timestamp when a time was submitted, date when only a date was, unknown when undated.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [timestamp, date, unknown]
+  - name: appointment_type_code
+    description: IAPT appointment type, such as 01 assessment or 02 treatment.
+  - name: appointment_type_name
+    description: UKHFD label for appointment_type_code.
+  - name: is_treatment_appointment_type
+    description: TRUE for appointment types 02, 03 and 05, which NHS England counts as treatment. Says nothing about
+      attendance.
+  - name: attendance_code
+    description: Attended or did not attend code as submitted. Blank is allowed for unplanned contacts.
+  - name: attendance_name
+    description: UKHFD label for attendance_code.
+  - name: is_attended
+    description: Recorded attendance outcome from attendance_code. TRUE for 5 or 6 (attended); FALSE for 2, 3, 4 or 7
+      (cancelled, did not attend, or arrived late and not seen); null when no recognised code, including unplanned
+      contacts that carry none.
+  - name: is_nhse_attended_or_unplanned
+    description: NHS England contact-count condition (IDS101 CareContact_Count), attendance code 5 or 6 OR planned
+      indicator N. TRUE even where a negative attendance code conflicts with an unplanned contact; otherwise FALSE.
+      The referral-to-discharge date window of the national count is not applied here.
+  - name: planned_care_contact_code
+    description: Whether the contact came from a planned appointment (Y or N).
+  - name: planned_care_contact_name
+    description: UKHFD label for planned_care_contact_code.
+  - name: short_notice_cancellation_code
+    description: For patient cancellations, whether the slot could be reallocated.
+  - name: short_notice_cancellation_name
+    description: UKHFD label for short_notice_cancellation_code.
+  - name: clinical_contact_duration_minutes
+    description: Direct clinical time in minutes. 0 is recorded for a missed telephone contact; null when not recorded.
+  - name: consultation_mechanism_code
+    description: Consultation mechanism as held in the warehouse. Submitted from v2.1. For v2.0 contacts the
+      field can hold the submitted consultation medium code.
+  - name: consultation_mechanism_name
+    description: UKHFD label for consultation_mechanism_code. Taken from the consultation mechanism list. When that
+      list lacks the code and consultation_medium_used_code holds the same code, taken from the older consultation
+      medium used list, for example 06 SMS text messaging or 08 online instant messaging. Null when neither applies,
+      such as CH or Si.
+  - name: consultation_mechanism_code_set
+    description: Code list supplying consultation_mechanism_name. consultation_mechanism means the current list;
+      consultation_medium_used means the older medium list. Null when unlabelled. A medium label does not imply a
+      current mechanism code.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [consultation_mechanism, consultation_medium_used]
+  - name: consultation_medium_used_code
+    description: Consultation medium used, submitted in v2.0. Its codes differ from the mechanism list.
+  - name: consultation_medium_used_name
+    description: UKHFD label for consultation_medium_used_code.
+  - name: patient_therapy_mode_code
+    description: Individual, couple or group therapy.
+  - name: patient_therapy_mode_name
+    description: UKHFD label for patient_therapy_mode_code.
+  - name: group_therapy_participant_count
+    description: Number of patients in a group session; null when absent or not numeric.
+  - name: group_therapy_facilitator_count
+    description: Number of care professionals facilitating a group session; null when absent or not numeric.
+  - name: psychotropic_medication_code
+    description: Patient-reported psychotropic medication use at the contact.
+  - name: psychotropic_medication_name
+    description: UKHFD label for psychotropic_medication_code.
+  - name: integrated_ltc_service_code
+    description: Whether an integrated long term condition service delivered the contact (Y or N).
+  - name: integrated_ltc_service_name
+    description: UKHFD label for integrated_ltc_service_code.
+  - name: activity_location_type_code
+    description: Location type; for remote contacts, the patient's location.
+  - name: activity_location_type_name
+    description: UKHFD label for activity_location_type_code.
+  - name: site_code
+    description: ODS site code of treatment as submitted.
+  - name: site_name
+    description: Latest name from the shared organisation reference; null when unmatched.
+  - name: treatment_language_code
+    description: ISO 639-1 language used for treatment.
+  - name: treatment_language_name
+    description: UKHFD label for treatment_language_code.
+  - name: interpreter_present_code
+    description: Whether and which kind of interpreter was present.
+  - name: interpreter_present_name
+    description: UKHFD label for interpreter_present_code.
+  - name: care_activity_count
+    description: Activities submitted for this contact in the same submission.
+  - name: is_attended_slot_duplicate
+    description: TRUE when another attended contact on the referral has the same date and time. The source warns but
+      accepts these. Null for contacts that are not attended with a recorded time.
+  - name: is_submitted_referral_linked
+    description: TRUE when the contact's submission contains its referral.
+  - name: is_submitted_referral_person_consistent
+    description: Whether the contact's and same-submission referral's Person_IDs match. Null when either is missing.
+  - name: is_referral_linked
+    description: TRUE when referral_id exists in fct_iapt_referral.
+  - name: is_referral_person_consistent
+    description: Whether the contact's and latest referral's Person_IDs match. Null when either is missing or the
+      referral is unlinked.
+  - name: provider_organisation_code
+    description: Submitting provider ODS code.
+  - name: provider_organisation_name
+    description: Latest name from the shared organisation reference.
+  - name: submitted_commissioner_code
+    description: Commissioner submitted on the contact.
+  - name: submitted_commissioner_name
+    description: Latest name from the shared organisation reference.
+  - name: source_icb_commissioner_code
+    description: NHS England derived commissioning ICB.
+  - name: source_icb_commissioner_name
+    description: Latest name from the shared organisation reference.
+  - name: source_sub_icb_commissioner_code
+    description: NHS England derived commissioning sub-ICB location.
+  - name: source_sub_icb_commissioner_name
+    description: Latest name from the shared organisation reference.
+  - name: source_commissioner_derivation_reason
+    description: NHS England reason for the derived commissioner, as supplied.
+  - name: is_wnl_commissioner
+    description: TRUE when the derived ICB, derived sub-ICB or submitted commissioner is in
+      wnl_commissioner_icb_lookup.
+  - name: reported_period_count
+    description: Number of accepted submissions containing this referral and contact; normally 1.
+  - name: submission_id
+    description: Accepted submission holding the selected version.
+  - name: unique_month_id
+    description: NHS England month number of the selected version.
+  - name: reporting_period_start_date
+    description: Start of the selected version's reporting month.
+  - name: reporting_period_end_date
+    description: End of the selected version's reporting month.
+  - name: source_file_received_at
+    description: Time the portal received the selected file. Not a clinical time.
+  - name: source_loaded_at
+    description: Time the selected row was added to the warehouse.
+  - name: file_type
+    description: Primary or Refresh.
+  - name: dataset_version
+    description: IAPT data set version of the selected file.
