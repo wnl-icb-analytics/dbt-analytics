@@ -24,7 +24,11 @@
 -- QUERY 1: cohort by borough.
 -- ===========================================================================
 SELECT
-    COALESCE(d.borough_registered, 'NCL') AS borough,
+    IFF(
+        GROUPING(d.borough_registered) = 1,
+        'NCL',
+        COALESCE(d.borough_registered, 'Unknown')
+    ) AS borough,
     COUNT(*) AS registered_adults,
     COUNT(c.person_id) AS cohort,
     ROUND(COUNT(c.person_id) * 1000.0 / COUNT(*), 1) AS per_1000_adults
@@ -35,7 +39,7 @@ LEFT JOIN {{ ref('fct_person_complex_adults') }} AS c
 WHERE d.is_active AND d.age >= 18
 GROUP BY ROLLUP(d.borough_registered)
 -- NCL last, boroughs by rate
-ORDER BY IFF(d.borough_registered IS NULL, 1, 0), per_1000_adults DESC;
+ORDER BY IFF(GROUPING(d.borough_registered) = 1, 1, 0), per_1000_adults DESC;
 
 
 -- ===========================================================================

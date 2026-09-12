@@ -48,8 +48,10 @@ models:
         (Type 1/2 A&E, UTC, WiC, SDEC).
       - GP appointments are attended clinical appointments; DNAs and admin
         are excluded.
-      - 12-month windows end on the latest activity date in each source, to
-        allow for reporting lag.
+      - Every 12-month activity window ends on reporting_date: the last
+        completed month-end before the build, or the
+        segmentation_reporting_date var when set. Clinical criteria reflect
+        records at build time.
 
       Criteria signed off by K Saravanakumar, 27 July 2026 (v2.0). v2.1 added
       GP activity and outpatient specialty breadth to the utilisation limb;
@@ -125,10 +127,10 @@ models:
         description: Date of the most recent qualifying substance misuse record
       - name: has_high_acute_use_no_gp
         description: Complexity criterion - (>=3 ED attendances OR >=2 NEL
-          admissions in the last 12 months) AND 0 attended GP appointments in
-          the GP 12-month window. The GP side uses the same definition as
-          gp_appointments_12mo (attended clinical appointments only, lag-aware
-          window), so this flags acute service use with no primary care contact.
+          admissions) AND 0 attended GP appointments, all in the 12 months
+          ending on reporting_date. The GP side uses the same definition as
+          gp_appointments_12mo (attended clinical appointments only), so this
+          flags acute service use with no primary care contact.
 
       - name: complexity_criteria_count
         description: How many of the seven complexity criteria the person meets
@@ -142,9 +144,13 @@ models:
                 max_value: 7
 
       - name: nel_admissions_12mo
-        description: Non-elective admissions in last 12 months (SUS APC, admission methods 2x, births excluded)
+        description: Non-elective admissions in the 12 months ending on
+          reporting_date, by admission date (SUS APC, admission method 2x
+          excluding 2C, baby born at home)
       - name: ed_attendances_12mo
-        description: Urgent & emergency care attendances in last 12 months (ECDS, all department types - Type 1/2 A&E, UTC, WiC, SDEC)
+        description: Urgent & emergency care attendances in the 12 months
+          ending on reporting_date (ECDS, all department types - Type 1/2 A&E,
+          UTC, WiC, SDEC)
       - name: gp_appointments_12mo
         description: Activity criterion input - attended clinical GP appointments
           in last 12 months (int_appointment_gp_clinical_recent, any clinical
@@ -155,3 +161,9 @@ models:
           months. Criterion is >=5.
       - name: is_housebound
         description: Latest housebound status is housebound
+      - name: reporting_date
+        description: End date of every 12-month activity window. The last
+          completed month-end before the build unless the
+          segmentation_reporting_date var is set.
+        data_tests:
+          - not_null

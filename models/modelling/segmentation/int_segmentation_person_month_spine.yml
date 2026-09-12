@@ -10,6 +10,14 @@ models:
       but do not remove months that have aged out, so the spine holds at least
       the last 60 completed month-ends. The monthly full refresh rebuilds the
       rolling 60-month window and trims the extra months.
+
+      Membership is point-in-time: a person is active only if alive and
+      registered on the month-end date itself. The two existing person-month
+      spines, fct_person_months_active and person_month_analysis_base, instead
+      include a person in any month their registration overlapped, so someone
+      who died or deregistered mid-month still counts for that month. Monthly
+      population counts from this spine are therefore slightly lower than
+      those models. The difference is the definition, not a data error.
     config:
       meta:
         owner:
@@ -52,7 +60,11 @@ models:
           - not_null
 
       - name: is_active
-        description: Person is alive and registered at month-end.
+        description: >-
+          Person is alive and registered on the month-end date. A death or
+          deregistration during the month makes that month inactive, unlike
+          fct_person_months_active and person_month_analysis_base, which count
+          any registration overlapping the month.
         data_tests:
           - not_null
 
@@ -74,13 +86,25 @@ models:
         description: Gender recorded for the demographic period at month-end.
 
       - name: practice_code
-        description: GP practice code for the demographic period at month-end.
+        description: >-
+          GP practice code for the demographic period at month-end. Where a
+          person has overlapping registrations, dim_person_demographics_historical
+          picks the open current registration ahead of a closed one, so a past
+          month can show the person's current practice rather than the practice
+          they were with at the time.
 
       - name: practice_name
-        description: GP practice name for the demographic period at month-end.
+        description: >-
+          GP practice name for the demographic period at month-end. Subject to
+          the same current-registration tie-break as practice_code.
 
       - name: borough_registered
-        description: Borough of the GP practice at month-end.
+        description: >-
+          Borough of the GP practice at month-end. Derived from practice_code,
+          so it inherits the same current-registration tie-break.
 
       - name: neighbourhood_registered
-        description: Registered practice neighbourhood at month-end.
+        description: >-
+          Registered practice neighbourhood at month-end. Derived from
+          practice_code, so it inherits the same current-registration
+          tie-break.

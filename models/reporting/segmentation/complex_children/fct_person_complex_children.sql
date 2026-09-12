@@ -11,9 +11,11 @@
 --   1+ coded complexity diagnosis (NWL CLDCHN code list)
 --   5+ attended paediatric outpatient appointments in 12 months
 --   attended outpatient care across 2+ main specialties in 12 months
---       (excluding trauma & orthopaedics, ENT, ophthalmology and A&E)
+--       (excluding trauma & orthopaedics, ENT, ophthalmology, A&E,
+--       obstetrics and midwifery)
 --   1+ mental health inpatient stay in 12 months (MHSDS)
---   7+ attended community service contacts in 12 months (CSDS)
+--   7+ attended community service contacts in 12 months, excluding Health
+--       Visiting Service contacts (CSDS)
 --
 -- Reporting companion to fct_person_complex_adults: the same cohort that
 -- fct_person_segment assigns to segment 3, surfaced with demographics and
@@ -47,6 +49,7 @@ SELECT
     cc.has_5plus_paediatric_op_appointments,
 
     cc.outpatient_specialties_12mo,
+    cc.outpatient_specialties_excluding_maternity_12mo,
     cc.has_2plus_outpatient_specialties,
 
     cc.mh_inpatient_stays_12mo,
@@ -54,9 +57,12 @@ SELECT
     cc.has_mh_inpatient_stay,
 
     cc.community_contacts_12mo,
+    cc.community_contacts_excluding_health_visiting_12mo,
     cc.has_7plus_community_contacts,
 
-    cc.complexity_criteria_count
+    cc.complexity_criteria_count,
+
+    {{ segmentation_reporting_date() }} AS reporting_date
 
 FROM {{ ref('int_segmentation_children_complexity') }} AS cc
 INNER JOIN {{ ref('dim_person_demographics') }} AS d

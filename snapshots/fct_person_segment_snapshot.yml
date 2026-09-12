@@ -3,14 +3,28 @@ snapshots:
     relation: ref('fct_person_segment_snapshot_input')
     description: >-
       Prospective SCD2 history of person-level segment assignment, population
-      flags and exposed segment criteria. One row represents one observed
-      version for a person. dbt_valid_from and dbt_valid_to record when that
-      version was observed by the pipeline; they do not reconstruct clinical
-      state before the first snapshot run. Rows leaving the source are closed.
+      state and cohort membership. One row represents one observed version for
+      a person. `check_cols` is the segment assignment, population state and
+      cohort membership; segment drivers such as LTC counts and criterion
+      flags are not tracked here. A new version can open because a rolling
+      12-month activity window moved rather than because new evidence was
+      recorded. dbt_valid_from and dbt_valid_to record when that version was
+      observed by the pipeline; they do not reconstruct clinical state before
+      the first snapshot run. Rows leaving the source are closed.
     config:
       strategy: check
       unique_key: [person_id]
-      check_cols: all
+      check_cols:
+        - segment_number
+        - segment_name
+        - is_active
+        - is_deceased
+        - is_end_of_life
+        - is_complex_adult
+        - has_multiple_ltcs
+        - has_single_ltc
+        - is_complex_child
+        - has_child_health_needs
       hard_deletes: invalidate
     columns:
       - name: person_id
