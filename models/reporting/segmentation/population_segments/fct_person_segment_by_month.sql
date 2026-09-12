@@ -70,7 +70,7 @@ WITH segment_inputs AS (
             NULL
         ) AS child_complexity_criteria_count,
 
-        cv.community_window_end_date,
+        cv.community_latest_activity_date,
         cv.is_community_window_complete,
         cv.community_lag_days
     FROM {{ ref('int_segmentation_person_month_spine') }} AS pm
@@ -152,7 +152,7 @@ SELECT
     adult_complexity_criteria_count,
     child_complexity_criteria_count,
 
-    community_window_end_date,
+    community_latest_activity_date,
     is_community_window_complete,
     community_lag_days
 FROM named
