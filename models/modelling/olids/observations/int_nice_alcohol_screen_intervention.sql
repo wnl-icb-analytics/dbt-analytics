@@ -1,6 +1,6 @@
 {{ config(materialized='table', cluster_by=['person_id', 'screen_date']) }}
 
--- NICE IND197/199/200/202 assess intervention after any qualifying FAST or AUDIT-C screen.
+-- Interpret NICE IND197/199/200/202 as any qualifying pair; NICE does not select the first or latest screen.
 WITH positive_screens AS (
     SELECT
         id AS screening_observation_id,

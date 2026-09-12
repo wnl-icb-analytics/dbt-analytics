@@ -39,6 +39,8 @@ screens = [
     ("wrong_tool", "2026-06-01", "AUDIT", 20),
     ("fast_low", "2026-06-01", "FAST", 2),
     ("auditc_low", "2026-06-01", "AUDIT-C", 4),
+    # An unmatched earliest screen must not hide a later completed pair.
+    ("auditc_ok", "2025-12-01", "AUDIT-C", 5),
     ("auditc_ok", "2026-06-01", "AUDIT-C", 5),
     ("exact_three", "2026-05-31", "FAST", 3),
     ("after_three", "2026-06-01", "FAST", 3),
@@ -165,7 +167,7 @@ assert (
     db.execute("SELECT COUNT(*) FROM int_nice_alcohol_screen_intervention").fetchone()[
         0
     ]
-    == 19
+    == 20
 )
 assert (
     db.execute(
