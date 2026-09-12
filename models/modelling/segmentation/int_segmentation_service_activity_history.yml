@@ -1,0 +1,75 @@
+models:
+  - name: int_segmentation_service_activity_history
+    description: >-
+      Rolling 12-month outpatient, mental-health inpatient and community
+      activity for segmentation. One row represents one active person with at
+      least one qualifying event at one of the last 60 completed month-ends.
+      Every window runs from the exact date 12 months before the reference
+      month-end up to and including that month-end, matching the single
+      reporting date of the current models.
+      Missing rows represent zero activity. CSDS coverage begins in December
+      2022; completeness is exposed by
+      int_segmentation_service_activity_coverage_history. Windows end on the
+      calendar month-end rather than on the latest date each source has
+      reached, so the newest month-ends undercount sources that submit in
+      arrears, CSDS and MHSDS especially. Read the lag columns in the
+      coverage model before interpreting a trend at the trailing edge.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, end_date]
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: sk_patient_id
+        description: Pseudonymised patient key used for commissioning activity.
+      - name: end_date
+        description: Completed month-end at the end of the rolling window.
+        data_tests:
+          - not_null
+      - name: outpatient_treatment_functions_12mo
+        description: Distinct attended outpatient treatment functions.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: paediatric_op_appointments_12mo
+        description: Distinct attended paediatric outpatient appointments.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: outpatient_specialties_12mo
+        description: >-
+          Distinct attended main specialties after the child-complexity
+          exclusions: main specialties 110, 120, 130 and 180, treatment
+          functions 214-216, and obstetrics (501) or midwifery (560) in either
+          main specialty or treatment function.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: mh_inpatient_stays_12mo
+        description: MHSDS hospital spells overlapping the rolling window.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: community_contacts_12mo
+        description: Attended CSDS care contacts in the rolling window,
+          excluding Health Visiting Service contacts (team type 16).
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0

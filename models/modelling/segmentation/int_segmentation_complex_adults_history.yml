@@ -1,0 +1,205 @@
+models:
+  - name: int_segmentation_complex_adults_history
+    description: >-
+      Historical adults-with-complexity cohort. One row represents one active,
+      registered adult meeting at least one complexity criterion and at least
+      one utilisation criterion at one of the last 60 completed month-ends.
+      Clinical state, LTCs, eFI2 and rolling activity are evaluated at that
+      month-end. Missing rows do not meet the cohort definition. Activity
+      windows end on the calendar month-end rather than on the latest date
+      each source has reached, so the newest month-ends undercount sources
+      that submit in arrears and can understate the cohort. Read the lag
+      columns in int_segmentation_service_activity_coverage_history before
+      interpreting a trend at the trailing edge.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, end_date]
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: sk_patient_id
+        description: Pseudonymised patient key used for commissioning activity.
+      - name: end_date
+        description: Completed month-end used as the reference date.
+        data_tests:
+          - not_null
+      - name: age
+        description: Age at the month-end.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 18
+
+      - name: has_af
+        description: On the atrial fibrillation register at the month-end.
+      - name: has_asthma
+        description: On the asthma register at the month-end.
+      - name: has_chd
+        description: On the coronary heart disease register at the month-end.
+      - name: has_ckd
+        description: On the chronic kidney disease register at the month-end.
+      - name: has_copd
+        description: >-
+          On the chronic obstructive pulmonary disease register at the
+          month-end.
+      - name: has_dementia
+        description: On the dementia register at the month-end.
+      - name: has_depression
+        description: On the depression register at the month-end.
+      - name: has_diabetes
+        description: On the diabetes register at the month-end.
+      - name: has_epilepsy
+        description: On the epilepsy register at the month-end.
+      - name: has_heart_failure
+        description: On the heart failure register at the month-end.
+      - name: has_hypertension
+        description: On the hypertension register at the month-end.
+      - name: has_smi
+        description: On the serious mental illness register at the month-end.
+      - name: has_stroke_tia
+        description: On the stroke or TIA register at the month-end.
+      - name: has_parkinsons
+        description: On the Parkinson's disease register at the month-end.
+      - name: has_anxiety
+        description: On the anxiety register at the month-end.
+      - name: has_learning_disability
+        description: >-
+          On the learning disability register and aged 65 or over. Learning
+          disability counts towards ltc_count only from age 65, so this is
+          false for under-65s on the register.
+      - name: ltc_count
+        description: Included LTC count; learning disability counts from age 65.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 16
+
+      - name: efi2_score
+        description: eFI2 score for eligible people aged 65 or over.
+      - name: efi2_category
+        description: eFI2 frailty category for eligible people aged 65 or over.
+      - name: has_efi2_moderate_severe_frailty
+        description: >-
+          eFI2 category at the month-end is MODERATE FRAILTY or SEVERE
+          FRAILTY. False where no eFI2 score exists, including under-65s.
+      - name: has_coded_moderate_severe_frailty
+        description: >-
+          Latest coded frailty severity available by the month-end is moderate
+          or severe.
+      - name: latest_frailty_severity
+        description: Latest qualifying coded frailty severity by the month-end.
+      - name: latest_frailty_date
+        description: Date of the latest qualifying frailty code.
+      - name: has_moderate_severe_frailty
+        description: >-
+          Complexity criterion - eFI2 or the latest coded frailty status is
+          moderate or severe. Additive across the two sources because eFI2
+          scores only living over-65s, while the coded register has no age or
+          death restriction.
+        data_tests:
+          - not_null
+      - name: has_3plus_ltcs
+        description: >-
+          Complexity criterion - at least 3 of the included LTC registers at
+          the month-end.
+        data_tests:
+          - not_null
+
+      - name: is_homeless
+        description: >-
+          Complexity criterion - latest residential status by the month-end is
+          homeless, or the person is registered with Camden Health Improvement
+          Practice.
+      - name: is_on_palliative_care_register
+        description: >-
+          Complexity criterion - on the QOF palliative care register at the
+          month-end.
+      - name: has_alcohol_misuse
+        description: >-
+          Complexity criterion - an alcohol misuse disorder code recorded from
+          age 16 by the month-end. Ever-coded rather than active, because the
+          cluster includes alcohol-caused disease that does not resolve.
+      - name: latest_alcohol_disorder_date
+        description: Date of the latest alcohol misuse disorder code.
+      - name: has_substance_misuse
+        description: >-
+          Complexity criterion - the latest ILLSUB_COD record available by the
+          month-end has qualifying status.
+      - name: latest_substance_misuse_date
+        description: Date of the latest qualifying substance misuse status.
+      - name: is_housebound
+        description: >-
+          Utilisation criterion - latest housebound status by the month-end is
+          housebound.
+      - name: latest_housebound_status_date
+        description: Date of the latest qualifying housebound status.
+
+      - name: gp_appointments_12mo
+        description: >-
+          Attended clinical GP appointments in the rolling 12 months ending at
+          the month-end; DNAs and admin excluded. Criterion is 15 or more.
+      - name: ed_attendances_12mo
+        description: >-
+          Urgent and emergency care attendances in the rolling 12 months, over
+          all ECDS department types (Type 1/2 A&E, UTC, WiC, SDEC). Criterion
+          is 3 or more.
+      - name: nel_admissions_12mo
+        description: >-
+          Non-elective admissions in the rolling 12 months (SUS APC admission
+          methods 2x, births excluded). Criterion is 2 or more.
+      - name: outpatient_treatment_functions_12mo
+        description: >-
+          Distinct treatment functions with an attended outpatient appointment
+          in the rolling 12 months. Criterion is 5 or more.
+
+      - name: has_high_acute_use_no_gp
+        description: >-
+          Complexity criterion - at least 3 ED attendances or 2 non-elective
+          admissions, and no attended GP appointment, in the rolling 12-month
+          window.
+        data_tests:
+          - not_null
+      - name: has_2plus_nel_admissions
+        description: >-
+          Utilisation criterion - at least 2 non-elective admissions in the
+          rolling 12 months.
+      - name: has_3plus_ed_attendances
+        description: >-
+          Utilisation criterion - at least 3 urgent and emergency care
+          attendances in the rolling 12 months.
+      - name: has_15plus_gp_appointments
+        description: >-
+          Utilisation criterion - at least 15 attended clinical GP
+          appointments in the rolling 12 months.
+      - name: has_5plus_outpatient_treatment_functions
+        description: >-
+          Utilisation criterion - attended outpatient care across at least 5
+          treatment functions in the rolling 12 months.
+
+      - name: complexity_criteria_count
+        description: >-
+          Number of the seven complexity criteria met. A value of 1 means the
+          person would leave the cohort if that single criterion were removed.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 7
+      - name: activity_criteria_count
+        description: >-
+          Number of the five utilisation criteria met. A value of 1 means the
+          person would leave the cohort if that single criterion were removed.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 5
