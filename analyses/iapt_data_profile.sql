@@ -59,7 +59,7 @@ with active as (
 )
 
 , contact_history as (
-    select submission_id, referral_id, care_contact_id, person_id
+    select submission_id, unique_month_id, referral_id, care_contact_id, person_id
     from {{ ref('stg_iapt_care_contact_history') }}
 )
 
@@ -68,10 +68,10 @@ with active as (
         , count_if(person_id is null) as missing_person_id
     from referral_history
     union all
-    select 'care_contact', count(*), count(distinct referral_id, care_contact_id), count_if(person_id is null)
+    select 'care_contact', count(*), count(distinct unique_month_id, referral_id, care_contact_id), count_if(person_id is null)
     from contact_history
     union all
-    select 'care_activity', count(*), count(distinct referral_id, care_contact_id, care_activity_id)
+    select 'care_activity', count(*), count(distinct unique_month_id, referral_id, care_contact_id, care_activity_id)
         , count_if(person_id is null)
     from {{ ref('stg_iapt_care_activity_history') }}
 )
@@ -133,6 +133,8 @@ with active as (
         , count_if(has_patient_key_changed) as patient_key_changed
         , count_if(referral_received_date is null) as missing_received_date
         , count_if(service_discharge_date is not null) as discharged
+        , count_if(referral_status = 'open') as open
+        , count_if(referral_end_date_source = 'last_submission') as inferred_closed
         , count_if(discharge_reason_code is not null and discharge_reason_name is null) as unlabelled_discharge_reason
         , count_if(discharge_reason_code_set = 'discharge_reason_legacy') as legacy_labelled_discharge_reason
         , count_if(is_completed_treatment) as completed_treatment
@@ -303,7 +305,7 @@ with active as (
         select code_proc_and_proc_status, code_find, validated_finding_code, code_obs, obs_value
         from {{ ref('stg_iapt_care_activity_history') }}
         qualify row_number() over (
-            partition by referral_id, care_contact_id, care_activity_id
+            partition by referral_id, care_contact_id, unique_month_id, care_activity_id
             order by unique_month_id desc nulls last, source_file_received_at desc nulls last
                 , try_to_number(submission_id) desc nulls last, try_to_number(source_row_id) desc nulls last
                 , submission_id desc, source_row_id desc
@@ -316,7 +318,7 @@ with active as (
     select lower(code_set_name) as code_set_name, code
     from (
         select
-            source_of_referral_iapt as source_of_referral
+            iff(dataset_version = '2.1', source_of_referral_iapt, null) as source_of_referral
             , end_code as discharge_reason
             , prev_diag_cond_ind as previous_diagnosed_condition_indicator
         from {{ ref('stg_iapt_referral_history') }}
@@ -374,28 +376,53 @@ with active as (
     from {{ ref('stg_iapt_referral_history') }} as r
     left join (select distinct code from {{ ref('mhsds_source_of_referral') }}) as l
         on upper(trim(r.source_of_referral_mh)) = l.code
-    where r.source_of_referral_mh is not null
+    where r.dataset_version = '2.0' and r.source_of_referral_mh is not null
     union all
-    -- The medium list labels a mechanism code only when both contact fields carry that code.
+    -- Use the fact's version-aware consultation labels rather than repeat the vocabulary rule.
     select
         'consultation_mechanism'
         , count(*)
-        , count_if(m.code is not null)
-        , count_if(medium.code is not null)
-        , count_if(m.code is null and medium.code is null)
-        , count(distinct iff(m.code is null and medium.code is null, c.cons_mechanism, null))
-    from {{ ref('stg_iapt_care_contact_history') }} as c
-    left join {{ ref('consultation_mechanism') }} as m
-        on upper(c.cons_mechanism) = m.code
-    left join {{ ref('mhsds_care_contact_code_lookup') }} as medium
-        on m.code is null
-        and upper(c.cons_mechanism) = upper(c.cons_medium_used)
-        and medium.code_set_name = 'consultation_medium_used'
-        and upper(c.cons_mechanism) = medium.code
-    where c.cons_mechanism is not null
+        , count_if(consultation_mechanism_code_set = 'consultation_mechanism')
+        , count_if(consultation_mechanism_code_set = 'consultation_medium_used')
+        , count_if(consultation_mechanism_name is null)
+        , count(distinct iff(consultation_mechanism_name is null, consultation_mechanism_code, null))
+    from {{ ref('fct_iapt_care_contact') }}
+    where consultation_mechanism_code is not null
+)
+
+-- Broad provider/year completeness bands avoid publishing small provider cells.
+, completeness_by_provider as (
+    select 'referral_source' as field_name, year(referral_received_date) as record_year
+        , provider_organisation_code, count(*) as records
+        , count_if(source_of_referral_code is null) as missing_records
+    from {{ ref('fct_iapt_referral') }}
+    group by record_year, provider_organisation_code
+    union all
+    select 'discharge_reason', year(service_discharge_date), provider_organisation_code
+        , count(*), count_if(discharge_reason_code is null)
+    from {{ ref('fct_iapt_referral') }}
+    where service_discharge_date is not null
+    group by year(service_discharge_date), provider_organisation_code
+    union all
+    select 'consultation_mechanism', year(care_contact_date), provider_organisation_code
+        , count(*), count_if(consultation_mechanism_code is null)
+    from {{ ref('fct_iapt_care_contact') }}
+    group by year(care_contact_date), provider_organisation_code
+)
+
+, completeness as (
+    select field_name || '_' || coalesce(record_year::varchar, 'undated') as entity
+        , sum(records) as records, sum(missing_records) as missing_records
+        , count(*) as providers
+        , count_if(missing_records >= 0.9 * records) as providers_at_least_90_percent_missing
+        , sum(iff(missing_records >= 0.9 * records, records, 0)) as records_in_those_providers
+    from completeness_by_provider
+    group by field_name, record_year
 )
 
 , results as (
+    select 'completeness' as section, object_construct_keep_null(*) as metrics from completeness
+    union all
     select 'submissions' as section, object_construct_keep_null(*) as metrics from submissions
     union all
     select 'history_submissions' as section, object_construct_keep_null(*) as metrics from history_submissions

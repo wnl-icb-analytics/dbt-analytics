@@ -1,8 +1,11 @@
+-- An activity belongs to a contact, which is accepted only in its own month's file (ETOS v2.1.22 IDS201
+-- row 6), so the month is part of both keys. contact_source_record_id matches fct_iapt_care_contact.
 with versions as (
     select
-        {{ dbt_utils.generate_surrogate_key(['referral_id', 'care_contact_id', 'care_activity_id']) }}
+        {{ dbt_utils.generate_surrogate_key(['referral_id', 'care_contact_id', 'unique_month_id', 'care_activity_id']) }}
             as source_record_id
-        , {{ dbt_utils.generate_surrogate_key(['referral_id', 'care_contact_id']) }} as contact_source_record_id
+        , {{ dbt_utils.generate_surrogate_key(['referral_id', 'care_contact_id', 'unique_month_id']) }}
+            as contact_source_record_id
         , submission_id
         , source_row_id
         , provider_organisation_code
@@ -26,15 +29,9 @@ with versions as (
         , file_type
         , source_file_received_at
         , source_loaded_at
-        , count(distinct reporting_period_end_date) over (
-            partition by referral_id, care_contact_id, care_activity_id
-        ) as reported_period_count
-        , min(person_id) over (partition by referral_id, care_contact_id, care_activity_id)
-            is distinct from max(person_id) over (partition by referral_id, care_contact_id, care_activity_id)
-            as has_person_identifier_changed
     from {{ ref('stg_iapt_care_activity_history') }}
     qualify row_number() over (
-        partition by referral_id, care_contact_id, care_activity_id
+        partition by referral_id, care_contact_id, unique_month_id, care_activity_id
         order by unique_month_id desc nulls last, source_file_received_at desc nulls last,
             try_to_number(submission_id) desc nulls last, try_to_number(source_row_id) desc nulls last,
             submission_id desc, source_row_id desc
@@ -74,7 +71,6 @@ with versions as (
         , p.contact_source_record_id
         , p.person_id
         , b.sk_patient_id
-        , p.has_person_identifier_changed
 
         , t.clinical_date
         , t.clinical_time
@@ -183,7 +179,6 @@ with versions as (
 
         , p.provider_organisation_code
         , provider.organisation_name as provider_organisation_name
-        , p.reported_period_count
         , p.submission_id
         , p.source_row_id
         , p.reporting_period_start_date
@@ -230,10 +225,11 @@ with versions as (
     select
         a.*
         -- A parent is published only when the same-submission contact agrees and the published
-        -- contact row names the same referral, contact and non-null person.
+        -- contact row is that submission's version, naming the same referral, contact and non-null person.
         , iff(
             a.is_submitted_contact_linked and a.is_submitted_contact_referral_consistent
                 and a.is_submitted_contact_person_consistent
+                and a.submission_id = c.submission_id
                 and a.person_id = c.person_id
                 and a.referral_id = c.referral_id
                 and a.care_contact_id = c.care_contact_id

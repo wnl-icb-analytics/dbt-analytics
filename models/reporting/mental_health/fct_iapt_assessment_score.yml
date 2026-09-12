@@ -6,7 +6,9 @@ models:
       question, dimension or total score per completion: IDS606 (completed
       outside a contact) and IDS607 (recorded against a care activity). Latest
       accepted version of each item, keyed on the fields ETOS names for duplicate
-      rejection (IDS606 row 1, IDS607 row 1). Profiling found no repeat of these
+      rejection (IDS606 row 1, IDS607 row 1). IDS607 keys also carry the reporting
+      month, as fct_iapt_care_activity does, because contact and activity
+      identifiers can be reused in another month. Profiling found no repeat of these
       keys within an accepted submission, so the grain holds on current data; the
       accepted feed does not guarantee it, and two items sharing every key field
       would collapse to the latest. Includes history and orphans.
@@ -20,14 +22,14 @@ models:
           name: Eddie Davison
     columns:
       - name: source_record_id
-        description: IDS606 - hash of referral, tool, completion date and time. IDS607 - hash of referral, contact, activity and tool.
+        description: IDS606 - hash of referral, tool, completion date and time. IDS607 - hash of referral, contact, reporting month (unique_month_id), activity and tool.
         data_tests: [not_null, unique]
       - name: assessment_source
         description: referral (IDS606, completed outside a contact) or care_activity (IDS607).
       - name: person_id
         description: IAPT Person_ID of the retained version. IAPT-scoped; use sk_patient_id across datasets.
       - name: has_person_identifier_changed
-        description: True when accepted versions carry different Person_IDs.
+        description: True when accepted versions carry different Person_IDs. Always false for IDS607, whose month-qualified key has one accepted version.
       - name: assessment_tool_code
         description: SNOMED CT observable submitted as Coded Assessment Tool Type.
       - name: observable_description
@@ -74,7 +76,8 @@ models:
       - name: clinical_at
         description: Date and time, or midnight on the date when no time was submitted (a sort anchor). Null when unknown.
       - name: clinical_time_precision
-        description: timestamp, date or unknown.
+        description: timestamp, date or unknown. Some supplied referral-assessment midnight times may be system
+          defaults; timestamp precision means a time was supplied, not that its clinical accuracy is established.
       - name: clinical_time_basis
         description: assessment_completion (IDS606), same_submission_care_contact (IDS607) or not_recorded.
       - name: clinical_date_status
@@ -88,7 +91,7 @@ models:
       - name: is_referral_person_consistent
         description: Whether that referral's latest Person_ID matches this record's. Null when not linked or when either Person_ID is missing.
       - name: care_activity_source_record_id
-        description: Key of the recorded activity in fct_iapt_care_activity, kept for IDS607 even when the activity is absent.
+        description: Key of the recorded activity in fct_iapt_care_activity (hash of referral, contact, unique_month_id and activity), kept for IDS607 even when the activity is absent.
       - name: is_care_activity_linked
         description: Whether the same submission holds the recorded activity. Null for IDS606.
       - name: is_care_activity_referral_consistent
@@ -98,10 +101,10 @@ models:
       - name: is_care_activity_person_consistent
         description: Whether that activity records the same Person_ID. Null when not applicable.
       - name: parent_record_type
-        description: care_activity when the same-submission activity agrees on every link and the published fct_iapt_care_activity row names the same referral, contact, activity and non-null Person_ID; otherwise referral when the published fct_iapt_referral row names the same non-null Person_ID; otherwise null. Missing Person_IDs never establish a parent.
+        description: care_activity when the same-submission activity agrees on every link and the published fct_iapt_care_activity row comes from the same submission and names the same referral, contact, activity and non-null Person_ID; otherwise referral when the published fct_iapt_referral row names the same non-null Person_ID; otherwise null. Missing Person_IDs never establish a parent.
       - name: parent_record_id
         description: Key of the parent in parent_model_name.
       - name: parent_model_name
         description: fct_iapt_care_activity or fct_iapt_referral.
       - name: reported_period_count
-        description: Number of accepted reporting periods containing this item. Items normally flow once.
+        description: Number of accepted reporting periods containing this item. Always 1 for IDS607, whose key includes the month.

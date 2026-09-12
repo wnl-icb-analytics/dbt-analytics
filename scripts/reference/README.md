@@ -32,11 +32,12 @@ Generate the outcome measure seed from the "ROM Mapping" sheets of the
 [v2.0 TOS](https://digital.nhs.uk/binaries/content/assets/website-assets/data-and-information/datasets/iapt/iapt-v2.0-docs/iapt_v2.0_technical_output_specification_v_2.0.26.xlsx)
 and the [v2.1 ETOS](https://digital.nhs.uk/binaries/content/assets/website-assets/data-and-information/datasets/iapt/iapt-v2.1-docs/iapt_v_2.1_enhanced_technical_output_specification_v2.1.22.xlsx),
 and the therapy type seed from the
-[terminology mapping guidance](https://digital.nhs.uk/binaries/content/assets/website-assets/data-and-information/datasets/iapt/iapt-v2.0-docs/iapt_v2_terminology_mapping_guidance_v3.4.xlsx):
+[terminology mapping guidance](https://digital.nhs.uk/binaries/content/assets/website-assets/data-and-information/datasets/iapt/iapt-v2.0-docs/iapt_v2_terminology_mapping_guidance_v3.4.xlsx)
+plus the v2.1 ETOS therapy derivations:
 
 ```powershell
 python scripts/reference/generate_iapt_assessment_seed.py --spec '2.0.26=path/to/iapt_v2.0_tos.xlsx' --spec '2.1.22=path/to/iapt_v2.1_etos.xlsx' --output seeds/iapt_assessment_scale_definitions.csv
-python scripts/reference/generate_iapt_therapy_type_seed.py --workbook path/to/iapt_v2_terminology_mapping_guidance_v3.4.xlsx --output seeds/iapt_therapy_type_definitions.csv
+python scripts/reference/generate_iapt_therapy_type_seed.py --guidance '3.4=path/to/iapt_v2_terminology_mapping_guidance_v3.4.xlsx' --etos '2.1.22=path/to/iapt_v2.1_etos.xlsx' --output seeds/iapt_therapy_type_definitions.csv
 ```
 
 Each row records the specification that published it, not the revision a provider

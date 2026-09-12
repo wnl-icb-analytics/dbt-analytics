@@ -94,6 +94,9 @@ with items as (
         , source_file_received_at
         , source_loaded_at
     from {{ ref('fct_iapt_health_condition') }}
+    -- ETOS v2.1.22 IDS603 row 24: an undated complaint later sent with a date ceases to be valid.
+    -- The typed fact keeps it; the union excludes it so the complaint is not listed twice.
+    where not coalesce(is_superseded_by_dated_record, false)
 
     union all
 

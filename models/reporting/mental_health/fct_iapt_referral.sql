@@ -31,9 +31,26 @@ with versions as (
     ) = 1
 )
 
+-- Latest accepted month in the data set, so referrals from a provider that stops submitting cannot stay open.
+, dataset_period as (
+    select max(reporting_period_end_date) as latest_period_end_date
+    from {{ ref('stg_iapt_activesubmission') }}
+    where reporting_period_end_date is not null
+        and provider_organisation_code is not null
+)
+
 , outcomes as (
     select
-        *
+        l.*
+        -- Open referrals must be resubmitted every month (user guidance v1.6.1 pp15 and 32). Without a discharge
+        -- date, a referral last reported within 2 months of the latest accepted month is open; an older one is
+        -- closed at the end of its last reported month, as in int_mhsds_spell_encounters.
+        , case
+            when l.serv_disch_date is not null then 'discharged'
+            when date_trunc('month', l.last_reported_period_end_date)
+                >= dateadd(month, -2, date_trunc('month', dp.latest_period_end_date)) then 'open'
+            else 'last_submission'
+        end as referral_end_date_source
         , try_to_number(phq9_first_score) as phq9_first_score_value
         , try_to_number(phq9_last_score) as phq9_last_score_value
         , try_to_number(gad_first_score) as gad7_first_score_value
@@ -45,7 +62,8 @@ with versions as (
             when serv_disch_date is null then false
             when treatment_care_contact_count < 2 then false
         end as is_completed_treatment
-    from latest
+    from latest as l
+    cross join dataset_period as dp
 )
 
 -- The mental health list unions current and legacy definitions, so a code can appear twice.
@@ -81,15 +99,26 @@ select
     , o.has_patient_key_changed
     , o.referral_request_received_date as referral_received_date
     , o.serv_disch_date as service_discharge_date
-    , iff(o.serv_disch_date is null, 'open', 'discharged') as referral_status
+    , case o.referral_end_date_source
+        when 'discharged' then 'discharged'
+        when 'open' then 'open'
+        else 'closed'
+    end as referral_status
+    -- An inferred end closes the timeline only; it is never a discharge date.
+    , case o.referral_end_date_source
+        when 'discharged' then o.serv_disch_date
+        when 'last_submission' then o.last_reported_period_end_date
+    end as referral_end_date
+    , o.referral_end_date_source
     , o.age_referral_request_received_date as age_at_referral
     , o.age_service_discharge_date as age_at_discharge
-    , coalesce(o.source_of_referral_iapt, o.source_of_referral_mh) as source_of_referral_code
-    , iff(o.source_of_referral_iapt is not null, source_iapt.description, source_mh.description)
-        as source_of_referral_name
+    -- The warehouse copies the one submitted item into both source columns, so the data set version decides the
+    -- list: v2.0 SourceOfReferralMH, renamed SourceOfReferralIAPT in v2.1 (DARS v2.1.7 PC_FIELDS A109).
+    , iff(o.dataset_version = '2.0', o.source_of_referral_mh, o.source_of_referral_iapt) as source_of_referral_code
+    , coalesce(source_mh.description, source_iapt.description) as source_of_referral_name
     , case
-        when o.source_of_referral_iapt is not null then 'iapt'
-        when o.source_of_referral_mh is not null then 'mental_health'
+        when o.dataset_version = '2.0' and o.source_of_referral_mh is not null then 'mental_health'
+        when o.dataset_version = '2.1' and o.source_of_referral_iapt is not null then 'iapt'
     end as source_of_referral_code_set
     , o.end_code as discharge_reason_code
     , coalesce(discharge.description, discharge_legacy.description) as discharge_reason_name
@@ -167,10 +196,12 @@ from outcomes as o
 left join provider_periods as pp
     on o.provider_organisation_code = pp.provider_organisation_code
 left join {{ ref('iapt_code_lookup') }} as source_iapt
-    on source_iapt.code_set_name = 'source_of_referral'
+    on o.dataset_version = '2.1'
+    and source_iapt.code_set_name = 'source_of_referral'
     and upper(o.source_of_referral_iapt) = source_iapt.code
 left join mental_health_source_of_referral as source_mh
-    on upper(o.source_of_referral_mh) = source_mh.code
+    on o.dataset_version = '2.0'
+    and upper(o.source_of_referral_mh) = source_mh.code
 left join {{ ref('iapt_code_lookup') }} as discharge
     on discharge.code_set_name = 'discharge_reason'
     and upper(o.end_code) = discharge.code

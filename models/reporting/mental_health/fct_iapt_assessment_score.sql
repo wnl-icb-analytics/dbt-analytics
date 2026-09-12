@@ -62,8 +62,9 @@ with referral_assessments as (
 
 , activity_assessments as (
     select
+        -- The month follows the activity key: contact and activity identifiers can be reused in another month.
         {{ dbt_utils.generate_surrogate_key([
-            "'IDS607'", 'referral_id', 'care_contact_id', 'care_activity_id', 'coded_ass_tool_type'
+            "'IDS607'", 'referral_id', 'care_contact_id', 'unique_month_id', 'care_activity_id', 'coded_ass_tool_type'
         ]) }} as source_record_id
         , 'IDS607' as source_table
         , 'care_activity' as assessment_source
@@ -74,7 +75,7 @@ with referral_assessments as (
         , referral_id
         , care_contact_id
         , care_activity_id
-        , {{ dbt_utils.generate_surrogate_key(['referral_id', 'care_contact_id', 'care_activity_id']) }}
+        , {{ dbt_utils.generate_surrogate_key(['referral_id', 'care_contact_id', 'unique_month_id', 'care_activity_id']) }}
             as care_activity_source_record_id
         , pathway_id
         , coded_ass_tool_type as assessment_tool_code
@@ -269,10 +270,11 @@ with referral_assessments as (
             else s.person_id = r.person_id
         end as is_referral_person_consistent
         -- A parent is published only when the published parent row names the same non-null person
-        -- and the same recorded ids; the same-submission activity must also agree.
+        -- and the same recorded ids; the same-submission activity must agree and be the published version.
         , case
             when s.is_care_activity_linked and s.is_care_activity_referral_consistent
                 and s.is_care_activity_contact_consistent and s.is_care_activity_person_consistent
+                and s.submission_id = pa.submission_id
                 and s.person_id = pa.person_id
                 and s.referral_id = pa.referral_id
                 and s.care_contact_id = pa.care_contact_id

@@ -8,7 +8,9 @@ the v2.1 user guidance and the DARS output specification, with the v2.0.26
 specification for older fields and codes. Accepted submissions run from
 September 2020; those up to March 2022 are data set version 2.0. v2.0 submitted
 the mental health source-of-referral list and consultation medium, v2.1 the
-IAPT source-of-referral list and consultation mechanism. Staging keeps both.
+IAPT source-of-referral list and consultation mechanism. The warehouse copies
+each renamed item into both its old and new columns. Staging keeps both; facts
+choose the label list from the data set version.
 
 ## Initial scope
 
@@ -31,24 +33,26 @@ first waiting-time measure.
 
 Providers submit a primary file for the latest month and a refresh file for
 the month before; the refresh is the last chance to correct that month. In
-September 2026 about 7,400 submissions were accepted, one per provider and
-month.
+September 2026 the cumulative accepted history held about 7,400 submissions,
+one per provider and month, covering September 2020 to July 2026.
 
 - `stg_iapt_activesubmission` is a small table rebuilt on each run from the
   accepted-submission list and its header. Every history model and clean-up
   step reads this one snapshot. Its tests fail if it is empty or if a provider
-  and month appear twice.
+  and month appear twice. An unknown data set version fails validation so its
+  code lists and definitions can be reviewed before modelling it.
 - Each `stg_iapt_*_history` model keeps every accepted version of its source
   rows. It is incremental: a run inserts only accepted submissions that have a
   complete header and are not yet retained, replacing by `submission_id`.
 - After each run, rows from submissions no longer accepted are deleted, for
   example a primary file replaced by its refresh. The delete is skipped when the
   snapshot is empty. A partly loaded but non-empty accepted list is an upstream
-  completeness risk; the aggregate profile checks for it.
+  completeness risk. The profile can reconcile the current list to retained
+  history, but cannot detect a truncated list without an earlier baseline.
 - Rows corrected or added inside a submission that is already retained are
   picked up at the monthly full refresh, not the daily run.
-- Initial and full-refresh history builds switch to a larger warehouse only
-  when run by the `DBT_ADMIN` role; other runs use their target warehouse.
+- All builds use the configured target warehouse, including full refreshes.
+  The IAPT histories do not need the Large warehouse used for OLIDS.
 - Facts are full-rebuild tables over the histories, refreshed weekly and at the
   monthly full refresh. Each keeps the newest version of each record, ordered by
   reporting month, file receipt time, submission identifier and submitted row
@@ -60,10 +64,10 @@ source scans are pruned.
 | Record | Fact key | Accepted versions | Records |
 |---|---|---|---|
 | Referral | Provider-qualified service request ID | 3.4 million | 0.92 million |
-| Care contact | Referral and provider-qualified contact ID | 3.5 million | 3.5 million |
-| Care activity | Referral, contact and provider-qualified activity ID | 3.0 million | 3.0 million |
+| Care contact | Reporting month, referral and provider-qualified contact ID | 3.5 million | 3.5 million |
+| Care activity | Reporting month, referral, contact and provider-qualified activity ID | 3.0 million | 3.0 million |
 | Onward referral | Referral, date, time, reason and receiving organisation | about 3,600 | about 3,600 |
-| Activity assessment | Referral, contact, activity and tool | 17.9 million | 17.9 million |
+| Activity assessment | Reporting month, referral, contact, activity and tool | 17.9 million | 17.9 million |
 | Referral assessment | Referral, tool, completion date and time | 1.7 million | 1.7 million |
 
 The specification rejects repeated onward referrals within a submission, yet
@@ -74,8 +78,23 @@ every source row; the fact keeps one milestone per natural key.
 Submitted row identifiers (`UniqueID_IDSnnn`, `RecordNumber`) change with every
 submission and are never fact keys. `PathwayID` changes when the person is
 re-traced. `RecordStartDate` and `RecordEndDate` are final only after the refresh
-window and are not used. A record missing from a later submission is not
-treated as closed; an open referral is the latest state received.
+window and are not used.
+
+Contact and activity identifiers can recur in another month for a different
+dated contact. Their keys include the reporting month, which remains stable
+when a primary submission is replaced by its refresh. Activities and activity
+assessments link only to the matching submission's contact or activity.
+
+An undischarged referral remains open while its last reporting period is within
+two months of the latest accepted period in the data set. After that grace
+period it is closed at its last reporting period end, following the MHSDS spell
+pattern. `referral_end_date_source = 'last_submission'` distinguishes this
+inference from a recorded discharge. It also prevents discontinued provider
+feeds from leaving referrals open indefinitely. `service_discharge_date` stays
+as submitted; inferred closures do not create discharge milestones.
+The rule is relative to the latest accepted month, not today's date. A resumed
+submission can reopen a referral; if the whole data feed stalls, its statuses
+remain relative to that last available month.
 
 ## People
 
@@ -140,16 +159,30 @@ column records which list supplied each label:
   v2.0 specification deleted or replaced them in 2019 and published no
   equivalent current code. `discharge_reason_code_set` marks them, and they have
   no discharge category.
-- Consultation mechanism 06 (SMS text messaging) and 08 (online instant
-  messaging) are consultation medium codes from the list v2.1 replaced. The
-  warehouse holds them in the mechanism field, almost all for v2.0 contacts.
-  They take the medium label only when the contact's consultation medium field
-  holds the same code; `consultation_mechanism_code_set` marks them.
+- Consultation codes use their own version's list: consultation medium for
+  v2.0 and mechanism for v2.1. The other list labels an unmatched code only
+  when both source fields agree. This labels v2.1 codes 06 (SMS text messaging)
+  and 08 (online instant messaging), and v2.0 code 11 (video consultation).
+  `consultation_mechanism_code_set` identifies the list that supplied the label.
 
 Some submitted codes appear in no published list and keep a null label:
 consultation mechanism CH and Si, psychotropic medication 00 and one onward
-referral reason CH. The source accepts invalid codes in these fields with a
+referral reason CH, plus a small number of v2.0 referral-source CH codes.
+The source accepts invalid codes in these fields with a
 warning only.
+
+The contact fact publishes one consultation mechanism code, label and code
+set. The warehouse copies that item into its legacy consultation-medium field;
+staging retains both, but they are not separate analyst fields.
+
+Missing codes are a larger limitation than missing labels. Since 2024 about
+41-43% of recorded discharges lack a reason, concentrated in a few providers.
+About 32% of v2.1 referrals lack a referral source. Consultation mechanism is
+missing for 28-41% of contacts in 2022-2024, falling below 1% in 2026. Accepted
+refresh files have the same gaps as their replaced primary files. Comparisons
+by referral source, discharge reason or delivery mechanism therefore describe
+an incomplete and unevenly recorded population. The aggregate profile reports
+completeness by year and the concentration in providers with mostly blank data.
 
 Site names come from the shared organisation reference. About 660,000 contacts
 use one of about 80 site codes it does not hold, mostly five-character codes, so
@@ -161,6 +194,22 @@ planned or otherwise refined expressions keep the expression and a label that
 names the context. ICD-10 codes keep their ICD-10 label, using the category
 label for three-character codes; no ICD-10 to SNOMED CT map is applied.
 
+Therapy categories use the terminology mapping guide, supplemented by the
+technical output specification's explicit CBT definition for concept 228557008.
+The reference seed records the source of each definition.
+
+Condition types describe the submitted domain, not a positive disease flag.
+Long-term condition rows include explicit absence of a condition and generic
+history codes. Undated presenting complaints explicitly superseded by a later
+dated version remain in the condition fact but are excluded from the clinical
+record output. Other historical conditions remain; omission in a later month
+does not establish clinical resolution. Multiple dated records of the same
+complaint are distinct source items, not necessarily distinct conditions.
+
+The current care activity supply contains procedures and observations, but no
+populated clinical finding codes. The clinical union supports findings when
+they are supplied.
+
 ## Time
 
 A time is combined with its own date, never with the placeholder date stored in
@@ -170,6 +219,11 @@ with `unknown` precision. Almost every contact has a time; about 28% of onward
 referrals do not. IAPT referrals have no receipt or discharge time, and about
 three quarters of accepted referral versions have no discharge date. Most
 previous diagnoses are undated, and long-term conditions have no date item.
+
+Some supplied assessment and onward-referral times are exactly midnight, with
+a distribution consistent with system defaults. No specification rule proves
+which are defaults, so they remain supplied timestamps. `timestamp` precision
+means a time was supplied, not that its clinical accuracy has been established.
 
 ## Models
 
@@ -219,15 +273,21 @@ Once `fct_person_healthcare_event` and `fct_person_clinical_record` are on main:
 ## Validation
 
 DEV profiling on 11-12 September 2026 covered all 7,430 accepted submissions,
-from September 2020 to July 2026. The prepared outputs contain 5,316,409 care
-milestones and 23,155,911 clinical items. Their identifiers are unique, and
+from September 2020 to July 2026. The prepared outputs contain 5,316,427 care
+milestones and 23,150,982 clinical items. Their identifiers are unique, and
 every dated item has a sort timestamp. Missing patient keys and undated
 conditions remain in the outputs.
 
-The published facts contain 920,139 referrals, 3,546,309 contacts, 3,023,174
-care activities, 3,623 onward referrals, 19,587,619 assessment items and
-714,966 recorded conditions. Composite contact and activity keys preserve
-records whose native identifier appears under a different referral or contact.
+The published facts contain 920,139 referrals, 3,546,327 contacts, 3,023,188
+care activities, 3,623 onward referrals, 19,587,698 assessment items and
+714,966 recorded conditions. Month-qualified keys retain contacts, activities
+and assessment responses whose native identifiers are reused in another month.
+The clinical output excludes 5,021 superseded undated complaints, which remain
+in the condition fact.
+
+The referral fact has 846,338 recorded discharges, 33,890 open referrals and
+39,911 inferred closures. Recorded discharge events remain unchanged. No
+inferred end predates its referral receipt.
 
 Validation included initial builds, a repeat incremental build, grain tests,
 procedure-expression examples and published-parent integrity checks. A
@@ -237,6 +297,7 @@ submission, removed the synthetic batch and exactly matched the original
 table's aggregate row count and content hash.
 
 Both reference seeds were regenerated from the official workbooks and matched
-the committed metadata. Query history confirmed that initial history builds
-used the large warehouse and subsequent incremental writes used the target
-warehouse. The source profile and tests return aggregate evidence only.
+the committed metadata. A full refresh of all nine histories on the configured
+Medium warehouse completed with 32 staging tests in 35 seconds overall. Query
+history confirmed all nine table builds used Medium; the slowest took 9.4 seconds.
+The source profile and tests return aggregate evidence only.

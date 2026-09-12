@@ -1,6 +1,7 @@
 -- Every published clinical parent must exist in the fact it names, with the expected type and
--- model, and name the same non-null person and recorded ids as the child. Returns one aggregate
--- row per failing link type; no record identifiers.
+-- model, and name the same non-null person and recorded ids as the child. Contact and activity
+-- parents must also be the version in the child's submission, so a recorded child date is the
+-- parent's date. Returns one aggregate row per failing link type; no record identifiers.
 with activity_contact as (
     select
         'care_activity_to_care_contact' as parent_link
@@ -13,6 +14,9 @@ with activity_contact as (
             or a.person_id is distinct from c.person_id
             or a.referral_id is distinct from c.referral_id
             or a.care_contact_id is distinct from c.care_contact_id
+            or a.submission_id is distinct from c.submission_id
+            or a.unique_month_id is distinct from c.unique_month_id
+            or (a.clinical_date_status = 'recorded' and a.clinical_date is distinct from c.care_contact_date)
         ) as invalid_count
     from {{ ref('fct_iapt_care_activity') }} as a
     left join {{ ref('fct_iapt_care_contact') }} as c
@@ -33,6 +37,9 @@ with activity_contact as (
             or s.referral_id is distinct from pa.referral_id
             or s.care_contact_id is distinct from pa.care_contact_id
             or s.care_activity_id is distinct from pa.care_activity_id
+            or s.submission_id is distinct from pa.submission_id
+            or s.unique_month_id is distinct from pa.unique_month_id
+            or (s.clinical_date_status = 'recorded' and s.clinical_date is distinct from pa.clinical_date)
         ) as invalid_count
     from {{ ref('fct_iapt_assessment_score') }} as s
     left join {{ ref('fct_iapt_care_activity') }} as pa

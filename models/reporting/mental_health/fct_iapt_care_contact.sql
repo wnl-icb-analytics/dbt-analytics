@@ -1,11 +1,20 @@
+-- IDS201 rejects a contact dated outside its file's reporting month (ETOS v2.1.22 IDS201 row 6), so an
+-- identifier reused in another month is another contact. The month keeps a Primary file and the Refresh
+-- that replaces it on one key.
 with contacts as (
     select
         *
         , nullif(ltrim(attend_or_dna_code, '0'), '') as attendance_code_normalised
-        , count(*) over (partition by referral_id, care_contact_id) as reported_period_count
+        -- v2.1 replaced consultation medium used with consultation mechanism under the same item, I201070.
+        -- Take the field the file's data set version names; the warehouse holds the same value in both.
+        , iff(
+            dataset_version = '2.0'
+            , coalesce(cons_medium_used, cons_mechanism)
+            , coalesce(cons_mechanism, cons_medium_used)
+        ) as consultation_code
     from {{ ref('stg_iapt_care_contact_history') }}
     qualify row_number() over (
-        partition by referral_id, care_contact_id
+        partition by referral_id, care_contact_id, unique_month_id
         order by
             unique_month_id desc nulls last
             , source_file_received_at desc nulls last
@@ -50,7 +59,8 @@ with contacts as (
 )
 
 select
-    {{ dbt_utils.generate_surrogate_key(['c.referral_id', 'c.care_contact_id']) }} as source_record_id
+    {{ dbt_utils.generate_surrogate_key(['c.referral_id', 'c.care_contact_id', 'c.unique_month_id']) }}
+        as source_record_id
     , 'IAPT' as source_dataset
     , c.referral_id
     , c.care_contact_id
@@ -84,14 +94,18 @@ select
     , c.cancellation as short_notice_cancellation_code
     , cancellation.description as short_notice_cancellation_name
     , c.clin_cont_dur_of_care_cont as clinical_contact_duration_minutes
-    , c.cons_mechanism as consultation_mechanism_code
-    , coalesce(mechanism.description, mechanism_as_medium.description) as consultation_mechanism_name
+    , c.consultation_code as consultation_mechanism_code
+    -- Each version is labelled from its own list: v2.0 consultation medium used, v2.1 consultation mechanism.
+    -- The other list labels an unmatched code only when both source fields agree, such as 06 or 08 in v2.1.
     , case
+        when c.dataset_version = '2.0' then coalesce(medium.description, mechanism.description)
+        else coalesce(mechanism.description, medium.description)
+    end as consultation_mechanism_name
+    , case
+        when c.dataset_version = '2.0' and medium.code is not null then 'consultation_medium_used'
         when mechanism.code is not null then 'consultation_mechanism'
-        when mechanism_as_medium.code is not null then 'consultation_medium_used'
+        when medium.code is not null then 'consultation_medium_used'
     end as consultation_mechanism_code_set
-    , c.cons_medium_used as consultation_medium_used_code
-    , medium.description as consultation_medium_used_name
     , c.care_cont_patient_ther_mode as patient_therapy_mode_code
     , therapy_mode.description as patient_therapy_mode_name
     , try_to_number(c.num_group_ther_participants) as group_therapy_participant_count
@@ -131,7 +145,6 @@ select
     , c.dm_commissioner_derivation_reason as source_commissioner_derivation_reason
     , coalesce(wnl_icb.commissioner_code, wnl_sub_icb.commissioner_code, wnl_submitted.commissioner_code) is not null
         as is_wnl_commissioner
-    , c.reported_period_count
     , c.submission_id
     , c.unique_month_id
     , c.reporting_period_start_date
@@ -171,7 +184,8 @@ left join {{ ref('mhsds_care_contact_code_lookup') }} as planned
     and upper(c.planned_care_cont_indicator) = planned.code
 left join {{ ref('mhsds_care_contact_code_lookup') }} as medium
     on medium.code_set_name = 'consultation_medium_used'
-    and upper(c.cons_medium_used) = medium.code
+    and upper(c.consultation_code) = medium.code
+    and (c.dataset_version = '2.0' or upper(c.cons_mechanism) = upper(c.cons_medium_used))
 left join {{ ref('mhsds_care_contact_code_lookup') }} as therapy_mode
     on therapy_mode.code_set_name = 'patient_therapy_mode'
     and upper(c.care_cont_patient_ther_mode) = therapy_mode.code
@@ -179,14 +193,8 @@ left join {{ ref('mhsds_care_contact_code_lookup') }} as interpreter
     on interpreter.code_set_name = 'interpreter_present_indicator'
     and upper(c.interpreter_present_ind) = interpreter.code
 left join {{ ref('consultation_mechanism') }} as mechanism
-    on upper(c.cons_mechanism) = mechanism.code
--- The warehouse can hold a v2.0 consultation medium code in the mechanism field. Use the medium list only when
--- the mechanism list has no match and both fields carry the same code.
-left join {{ ref('mhsds_care_contact_code_lookup') }} as mechanism_as_medium
-    on mechanism.code is null
-    and upper(c.cons_mechanism) = upper(c.cons_medium_used)
-    and mechanism_as_medium.code_set_name = 'consultation_medium_used'
-    and upper(c.cons_mechanism) = mechanism_as_medium.code
+    on upper(c.consultation_code) = mechanism.code
+    and (c.dataset_version = '2.1' or upper(c.cons_mechanism) = upper(c.cons_medium_used))
 left join {{ ref('activity_location_type') }} as location
     on upper(c.act_loc_type_code) = location.code
 left join {{ ref('language') }} as treatment_language

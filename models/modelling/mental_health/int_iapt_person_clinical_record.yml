@@ -4,7 +4,9 @@ models:
   description: NHS Talking Therapies (IAPT data set) clinical items, one row per scored assessment item, recorded
     condition, and care activity procedure, finding or observation. Selects fct_iapt_clinical_record in the column
     shape of the other source clinical-record feeds, for the later cross-system longitudinal stream. Undated and
-    unlinked items are kept. Rebuilt in full.
+    unlinked items are kept. Superseded undated complaints remain in the condition fact but are excluded here.
+    Condition categories include explicit absence and generic history codes, so they are not positive disease flags.
+    Rebuilt in full.
   config:
     meta:
       owner:
@@ -37,7 +39,8 @@ models:
     description: Sort timestamp. Clinical date and source clock time when clinical_time_precision is timestamp;
       otherwise midnight on clinical_record_date, which is not an observed time. Null when undated.
   - name: clinical_time_precision
-    description: timestamp, date or unknown.
+    description: timestamp, date or unknown. A supplied time has timestamp precision; some assessment midnight
+      values may be system defaults, so this does not establish clinical accuracy.
   - name: clinical_time_basis
     description: Source field or recorded relationship supplying the date; not_recorded when none exists.
   - name: is_source_date_inconsistent

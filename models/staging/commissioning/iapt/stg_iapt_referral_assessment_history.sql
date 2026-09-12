@@ -1,8 +1,7 @@
 {{ config(
     materialized='incremental', incremental_strategy='delete+insert',
     unique_key='submission_id', on_schema_change='fail',
-    pre_hook="{{ source_history_warehouse() }}",
-    post_hook=["{{ iapt_remove_withdrawn_submissions() }}", "{{ source_history_warehouse(restore=true) }}"]
+    post_hook="{{ iapt_remove_withdrawn_submissions() }}"
 ) }}
 
 -- The warehouse stores the submitted completion time on a placeholder date; only the time is kept.

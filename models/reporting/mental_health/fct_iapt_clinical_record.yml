@@ -10,6 +10,17 @@ models:
       fct_iapt_health_condition and fct_iapt_care_activity; use those facts for
       type-specific detail and provenance. Items are not encounters, and
       assessment rows are not whole questionnaires.
+      Condition items are recorded statements, not positive disease
+      prevalence: they include absence and non-specific history, such as
+      748031000000103 No history of long term condition and 836341000000105
+      H/O long term condition. A presenting complaint repeated with different
+      recorded dates is a set of distinct source items. An undated presenting
+      complaint later sent with a date for the same referral, scheme and code
+      ceases to be valid (ETOS v2.1.22 IDS603 row 24) and is excluded here;
+      fct_iapt_health_condition keeps it with is_superseded_by_dated_record.
+      IDS202 Coded Finding was not populated in the source when profiled in
+      September 2026, so finding items do not currently appear; the branch is
+      kept so they flow when supplied.
     config:
       meta:
         owner:
@@ -25,7 +36,7 @@ models:
       - name: source_table
         description: IAPT table supplying the item (IDS202, IDS601, IDS602, IDS603, IDS606 or IDS607).
       - name: clinical_record_type
-        description: assessment_score, previous_diagnosis, long_term_condition, presenting_complaint, procedure, finding or observation.
+        description: assessment_score, previous_diagnosis, long_term_condition, presenting_complaint, procedure, finding or observation. Finding items are not currently populated in the source.
       - name: person_id
         description: IAPT Person_ID. IAPT-scoped; use sk_patient_id across datasets.
       - name: parent_record_id
@@ -49,7 +60,7 @@ models:
       - name: clinical_code
         description: Submitted code or SNOMED CT expression.
       - name: clinical_description
-        description: Label of the code. Procedures include their context, such as "(context - Offered)", or "(unrecognised refinement)".
+        description: 'Label of the code. Procedures include their context, such as "(context: Offered)", or "(unrecognised refinement)".'
       - name: clinical_label_status
         description: Label status from the source fact.
       - name: clinical_qualifier_code

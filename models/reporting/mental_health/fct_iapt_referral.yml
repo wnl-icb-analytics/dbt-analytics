@@ -2,10 +2,12 @@ version: 2
 models:
 - name: fct_iapt_referral
   description: One NHS Talking Therapies (IAPT data set) referral, taken from its latest accepted submission. Open
-    referrals are resubmitted monthly, so earlier versions are replaced; a referral missing from its provider's latest
-    month keeps its row and no discharge is inferred. No population filter is applied beyond the commissioner filter
-    of the data feed. NHS England pathway derivations come from the selected version and can change until the refresh
-    window for that month closes.
+    referrals must be resubmitted every month, so earlier versions are replaced. A referral with no discharge date
+    stays open only while it was last reported within 2 months of the latest accepted month in the data set; after
+    that it is closed at the end of its last reported month, including when its provider stopped submitting.
+    referral_end_date_source separates these inferred closures from recorded discharges. No population filter is
+    applied beyond the commissioner filter of the data feed. NHS England pathway derivations come from the selected
+    version and can change until the refresh window for that month closes.
   config:
     meta:
       owner:
@@ -40,29 +42,54 @@ models:
   - name: referral_received_date
     description: Date the provider received the referral. No time is submitted.
   - name: service_discharge_date
-    description: Date of the clinical decision to discharge. Null while open.
+    description: Date of the clinical decision to discharge, as submitted. Null when no discharge is recorded; an
+      inferred closure never fills it.
   - name: referral_status
-    description: open when no discharge date is recorded, otherwise discharged.
+    description: discharged when a discharge date is recorded. open when none is recorded and the referral was last
+      reported within 2 months of the latest accepted month in the data set. closed when none is recorded and it was
+      last reported earlier, because the provider stopped reporting the referral or stopped submitting altogether.
     data_tests:
+    - not_null
     - accepted_values:
         arguments:
-          values: [open, discharged]
+          values: [open, discharged, closed]
+  - name: referral_end_date
+    description: End of the referral for timelines and durations. The recorded discharge date for discharged
+      referrals, or the last day of the last reported month for closed referrals. Null while open. An inferred end is
+      not a discharge and implies no discharge reason, discharge event or completed treatment.
+  - name: referral_end_date_source
+    description: Basis for referral_end_date. discharged means a recorded discharge date; open means no end yet;
+      last_submission means the end is inferred from the last reported month.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values: [discharged, open, last_submission]
   - name: age_at_referral
     description: Source-derived age in years at referral receipt.
   - name: age_at_discharge
     description: Source-derived age in years at discharge.
   - name: source_of_referral_code
-    description: Submitted source of referral. IAPT list from v2.1; mental health list in v2.0.
+    description: Submitted source of referral on the selected version. The one submitted item, Source Of Referral For
+      Mental Health in v2.0 and renamed Source Of Referral For IAPT in v2.1, appears in both warehouse source columns.
+      A blank is not filled from an earlier version, although about 30,000 blank referrals have a source on one.
+      Blanks are accepted by the source. About 38% of referrals received in 2024 and 2025 have none, almost all from 6
+      providers that leave at least 90% blank; about 30% in 2022 and 2023, spread more widely; 13% in 2026.
   - name: source_of_referral_name
-    description: UKHFD label from the list named in source_of_referral_code_set; null when unmatched.
+    description: UKHFD label from the list named in source_of_referral_code_set; null when unmatched, such as v2.0
+      code CH.
   - name: source_of_referral_code_set
-    description: iapt when the v2.1 IAPT item supplied the code, mental_health when the v2.0 item did.
+    description: mental_health for v2.0 submissions, iapt for v2.1, following the selected version's data set
+      version. Null when no code is submitted.
     data_tests:
     - accepted_values:
         arguments:
           values: [iapt, mental_health]
   - name: discharge_reason_code
-    description: Discharge from IAPT service reason (end code).
+    description: Submitted discharge from IAPT service reason (end code), never inferred. Some referrals have a
+      reason without a discharge date; the submitted reason is retained without inventing a discharge date or event.
+      Blank for about 41-43% of discharges in 2024-2026, almost all from 6 providers that leave at
+      least 90% blank, and for 16% in 2023; nearly always recorded before 2023.
   - name: discharge_reason_name
     description: UKHFD label for discharge_reason_code. Taken from the current discharge reason list. When that list
       lacks the code, taken from the retired IAPT care spell end code list, valid until March 2020, for example
@@ -174,8 +201,9 @@ models:
   - name: reported_period_count
     description: Number of accepted monthly versions.
   - name: is_in_latest_provider_period
-    description: TRUE when the selected version is from the provider's latest accepted month. FALSE for an open
-      referral means the provider stopped reporting it without a discharge.
+    description: TRUE when the selected version is from the provider's latest accepted month. FALSE without a
+      discharge means the provider stopped reporting the referral while still submitting; such a referral is open
+      or closed by the 2-month rule in referral_status.
   - name: submission_id
     description: Accepted submission holding the selected version.
   - name: unique_month_id

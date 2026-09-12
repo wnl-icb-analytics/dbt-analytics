@@ -1,16 +1,20 @@
 version: 2
 models:
 - name: fct_iapt_care_contact
-  description: One NHS Talking Therapies care contact for a referral, from its latest accepted submission. Includes
-    attended, cancelled, missed and unplanned contacts; use is_attended for recorded attendance and is_nhse_attended_or_unplanned for the NHS England counting rule. A contact whose
-    referral is missing or names a different person stays visible with linkage flags.
+  description: One NHS Talking Therapies care contact for a referral in one reporting month, from the accepted
+    submission for that month (the Refresh file when one replaced the Primary). A contact is accepted only in the file
+    for the month of its date (ETOS v2.1.22 IDS201 row 6), so a contact identifier reused in another month is a
+    separate contact with its own row. Includes attended, cancelled, missed and unplanned contacts; use is_attended for
+    recorded attendance and is_nhse_attended_or_unplanned for the NHS England counting rule. A contact whose referral
+    is missing or names a different person stays visible with linkage flags.
   config:
     meta:
       owner:
         name: Eddie Davison
   columns:
   - name: source_record_id
-    description: Hash of referral_id and care_contact_id, stable across versions of the contact.
+    description: Hash of referral_id, care_contact_id and unique_month_id. Stable when a Refresh replaces the Primary
+      file for the same month.
     data_tests:
     - unique
     - not_null
@@ -74,25 +78,23 @@ models:
   - name: clinical_contact_duration_minutes
     description: Direct clinical time in minutes. 0 is recorded for a missed telephone contact; null when not recorded.
   - name: consultation_mechanism_code
-    description: Consultation mechanism as held in the warehouse. Submitted from v2.1. For v2.0 contacts the
-      field can hold the submitted consultation medium code.
+    description: How the contact was delivered, as submitted in item I201070. v2.0 named it consultation medium used
+      and v2.1 consultation mechanism, with different code lists. Taken from the field the file's data set version
+      names; the warehouse holds the same value in both, and staging keeps both fields.
   - name: consultation_mechanism_name
-    description: UKHFD label for consultation_mechanism_code. Taken from the consultation mechanism list. When that
-      list lacks the code and consultation_medium_used_code holds the same code, taken from the older consultation
-      medium used list, for example 06 SMS text messaging or 08 online instant messaging. Null when neither applies,
-      such as CH or Si.
+    description: UKHFD label for consultation_mechanism_code from the list of the contact's data set version, the
+      consultation medium used list for v2.0 and the consultation mechanism list for v2.1. When that list lacks the
+      code, the other list labels it only when both source fields agree, for example 06 SMS text messaging or 08
+      online instant messaging sent in v2.1,
+      or 11 video consultation sent in v2.0. Null when neither list holds the code, such as CH or Si.
   - name: consultation_mechanism_code_set
-    description: Code list supplying consultation_mechanism_name. consultation_mechanism means the current list;
-      consultation_medium_used means the older medium list. Null when unlabelled. A medium label does not imply a
-      current mechanism code.
+    description: Code list supplying consultation_mechanism_name, consultation_medium_used or consultation_mechanism.
+      It differs from the data set version's own list only for the fallback codes above. Null when unlabelled. A
+      label from one list does not make the code valid in the other.
     data_tests:
     - accepted_values:
         arguments:
           values: [consultation_mechanism, consultation_medium_used]
-  - name: consultation_medium_used_code
-    description: Consultation medium used, submitted in v2.0. Its codes differ from the mechanism list.
-  - name: consultation_medium_used_name
-    description: UKHFD label for consultation_medium_used_code.
   - name: patient_therapy_mode_code
     description: Individual, couple or group therapy.
   - name: patient_therapy_mode_name
@@ -160,12 +162,10 @@ models:
   - name: is_wnl_commissioner
     description: TRUE when the derived ICB, derived sub-ICB or submitted commissioner is in
       wnl_commissioner_icb_lookup.
-  - name: reported_period_count
-    description: Number of accepted submissions containing this referral and contact; normally 1.
   - name: submission_id
-    description: Accepted submission holding the selected version.
+    description: Accepted submission holding the contact.
   - name: unique_month_id
-    description: NHS England month number of the selected version.
+    description: NHS England month number of the contact's reporting month; part of source_record_id.
   - name: reporting_period_start_date
     description: Start of the selected version's reporting month.
   - name: reporting_period_end_date
