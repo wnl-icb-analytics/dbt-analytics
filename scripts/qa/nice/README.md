@@ -1,9 +1,8 @@
 # NICE regression checks
 
 These checks execute repository SQL against synthetic fixtures in DuckDB. They
-cover clinical boundaries and record ordering corrected in the
-[NICE specification review](../../../docs/nice-specification-review.md).
-They do not connect to Snowflake or read patient data.
+cover clinical boundaries and record ordering in the NICE models. They do not
+connect to Snowflake or read patient data.
 
 Run each `validate_*.py` script with its local dependencies:
 
