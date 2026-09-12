@@ -1,0 +1,106 @@
+models:
+  - name: int_segmentation_person_month_spine
+    description: >-
+      Monthly population spine for historical segmentation. One row represents
+      one person in dim_person_demographics at one of the last 60 completed
+      month-ends. Birth, death and NCL GP registration are evaluated at the
+      month-end. Only active rows are eligible for a segment downstream. This
+      model does not classify inactive people as out of area.
+
+      Membership is point-in-time: a person is active only if alive and
+      registered on the month-end date itself. The two existing person-month
+      spines, fct_person_months_active and person_month_analysis_base, instead
+      include a person in any month their registration overlapped, so someone
+      who died or deregistered mid-month still counts for that month. Monthly
+      population counts from this spine are therefore slightly lower than
+      those models. The difference is the definition, not a data error.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        description: Unique person identifier.
+        data_tests:
+          - not_null
+
+      - name: sk_patient_id
+        description: Pseudonymised patient key for linkage to activity data.
+
+      - name: month_end_date
+        description: Completed month-end used as the reference date.
+        data_tests:
+          - not_null
+
+      - name: is_born
+        description: Approximate birth date is on or before the month-end.
+        data_tests:
+          - not_null
+
+      - name: is_alive
+        description: Person is born and has no recorded death by month-end.
+        data_tests:
+          - not_null
+
+      - name: is_registered
+        description: >-
+          GP registration period includes the month-end. An end date before
+          its start date is treated as open, matching int_patient_registrations.
+        data_tests:
+          - not_null
+
+      - name: is_active
+        description: >-
+          Person is alive and registered on the month-end date. A death or
+          deregistration during the month makes that month inactive, unlike
+          fct_person_months_active and person_month_analysis_base, which count
+          any registration overlapping the month.
+        data_tests:
+          - not_null
+
+      - name: is_deceased
+        description: Recorded death date is on or before the month-end.
+        data_tests:
+          - not_null
+
+      - name: age
+        description: Age at month-end, capped at death; null before birth.
+
+      - name: birth_date_approx
+        description: Approximate birth date used for population state and age.
+
+      - name: death_date_approx
+        description: Approximate death date used for population state and age.
+
+      - name: gender
+        description: Gender recorded for the demographic period at month-end.
+
+      - name: practice_code
+        description: >-
+          GP practice code for the demographic period at month-end. Where a
+          person has overlapping registrations, dim_person_demographics_historical
+          picks the open current registration ahead of a closed one, so a past
+          month can show the person's current practice rather than the practice
+          they were with at the time.
+
+      - name: practice_name
+        description: >-
+          GP practice name for the demographic period at month-end. Subject to
+          the same current-registration tie-break as practice_code.
+
+      - name: borough_registered
+        description: >-
+          Borough of the GP practice at month-end. Derived from practice_code,
+          so it inherits the same current-registration tie-break.
+
+      - name: neighbourhood_registered
+        description: >-
+          Registered practice neighbourhood at month-end. Derived from
+          practice_code, so it inherits the same current-registration
+          tie-break.
