@@ -1,0 +1,46 @@
+models:
+  - name: int_hypertensive_disorders_of_pregnancy_all
+    description: 'Hypertensive disorders of pregnancy (HDP) observations for cohort exclusion and maternity-related BP context.
+
+      Key Features:
+
+      • Uses the terminology-managed HYPERTENSIVE_DISORDERS_OF_PREGNANCY cluster (ECL-defined)
+
+      • Covers chronic/gestational/pre-eclamptic hypertension, HELLP, and eclampsia variants
+
+      • Includes historical/inactive SNOMED codes via ECL +HISTORY-MAX and include_history
+
+      Purpose: Provide observation-level HDP data for downstream exclusion-window and registry models.'
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: HYPERTENSIVE_DISORDERS_OF_PREGNANCY
+      - dbt_utils.at_least_one:
+          column_name: id
+    columns:
+      - name: id
+        description: 'Identifier for the clinical observation'
+        tests:
+          - not_null
+      - name: person_id
+        description: 'Unique identifier for the person'
+        tests:
+          - not_null
+      - name: clinical_effective_date
+        description: 'Date when the HDP observation was recorded'
+        tests:
+          - not_null
+      - name: concept_code
+        description: 'SNOMED concept code for the HDP observation'
+      - name: concept_display
+        description: 'Human-readable description of the HDP observation'
+      - name: source_cluster_id
+        description: 'Source cluster identifier, expected to be HYPERTENSIVE_DISORDERS_OF_PREGNANCY'
+      - name: patient_id
+        description: 'Patient identifier from source system'
+      - name: is_hdp_code
+        description: 'Boolean flag indicating HDP code (always TRUE for these observations)'
