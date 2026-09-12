@@ -4,10 +4,13 @@
         cluster_by=['sk_patient_id'])
 }}
 
--- Outpatient activity blocks for segmentation, rolling 12 months ending on
--- the latest attended appointment date (lag-aware). Grain: one row per
--- sk_patient_id with any qualifying attended activity; sk_patient_id '1'
--- is a shared junk key and is excluded.
+-- Outpatient activity blocks for segmentation, 12 months ending on the
+-- segmentation reporting date. Grain: one row per sk_patient_id with any
+-- attended appointment in the window; sk_patient_id '1' is a shared junk key
+-- and is excluded.
+--
+-- outpatient_treatment_functions_12mo counts distinct treatment functions,
+-- for the complex adults outpatient breadth criterion.
 --
 -- paediatric_op_appointments_12mo counts attended appointments under a
 -- paediatric treatment function (paediatric_treatment_function_codes seed).
@@ -31,63 +34,71 @@
 -- treatment function. This adjusted count supports the child complexity
 -- criterion without changing the general outpatient activity measure.
 
-WITH op_max_date AS (
-    SELECT MAX(start_date) AS max_date
+WITH attended AS (
+    SELECT
+        sk_patient_id,
+        visit_occurrence_id,
+        main_specialty_code,
+        treatment_function_code
     FROM {{ ref('int_sus_op_appointment') }}
     WHERE
         appointment_attended_or_dna IN ('5', '6')
-        AND start_date <= CURRENT_DATE()
+        AND start_date BETWEEN DATEADD('month', -12, {{ segmentation_reporting_date() }})
+        AND {{ segmentation_reporting_date() }}
         AND sk_patient_id IS NOT NULL
         AND sk_patient_id != '1'
 ),
 
+treatment_functions AS (
+    SELECT
+        sk_patient_id,
+        COUNT(DISTINCT treatment_function_code)
+            AS outpatient_treatment_functions_12mo
+    FROM attended
+    GROUP BY sk_patient_id
+),
+
 paediatric_op AS (
     SELECT
-        op.sk_patient_id,
-        COUNT(DISTINCT op.visit_occurrence_id) AS paediatric_op_appointments_12mo
-    FROM {{ ref('int_sus_op_appointment') }} AS op
+        a.sk_patient_id,
+        COUNT(DISTINCT a.visit_occurrence_id) AS paediatric_op_appointments_12mo
+    FROM attended AS a
     INNER JOIN {{ ref('paediatric_treatment_function_codes') }} AS tfc
-        ON op.treatment_function_code = tfc.treatment_function_code
-    CROSS JOIN op_max_date AS m
-    WHERE
-        op.appointment_attended_or_dna IN ('5', '6')
-        AND op.start_date BETWEEN DATEADD(MONTH, -12, m.max_date) AND m.max_date
-        AND op.sk_patient_id IS NOT NULL
-        AND op.sk_patient_id != '1'
-    GROUP BY op.sk_patient_id
+        ON a.treatment_function_code = tfc.treatment_function_code
+    GROUP BY a.sk_patient_id
 ),
 
 op_specialties AS (
     SELECT
-        op.sk_patient_id,
-        COUNT(DISTINCT op.main_specialty_code) AS outpatient_specialties_12mo,
+        sk_patient_id,
+        COUNT(DISTINCT main_specialty_code) AS outpatient_specialties_12mo,
         COUNT(DISTINCT CASE
             WHEN
-                COALESCE(op.main_specialty_code, '') NOT IN ('501', '560')
-                AND COALESCE(op.treatment_function_code, '')
+                COALESCE(main_specialty_code, '') NOT IN ('501', '560')
+                AND COALESCE(treatment_function_code, '')
                 NOT IN ('501', '560')
-                THEN op.main_specialty_code
+                THEN main_specialty_code
         END) AS outpatient_specialties_excluding_maternity_12mo
-    FROM {{ ref('int_sus_op_appointment') }} AS op
-    CROSS JOIN op_max_date AS m
+    FROM attended
     WHERE
-        op.appointment_attended_or_dna IN ('5', '6')
-        AND op.start_date BETWEEN DATEADD(MONTH, -12, m.max_date) AND m.max_date
-        AND op.main_specialty_code NOT IN ('110', '120', '130', '180')
-        AND COALESCE(op.treatment_function_code, '')
+        main_specialty_code NOT IN ('110', '120', '130', '180')
+        AND COALESCE(treatment_function_code, '')
         NOT IN ('214', '215', '216')
-        AND op.sk_patient_id IS NOT NULL
-        AND op.sk_patient_id != '1'
-    GROUP BY op.sk_patient_id
+    GROUP BY sk_patient_id
 )
 
+-- Every paediatric and specialty row is an attended appointment, so
+-- treatment_functions holds every key.
 SELECT
-    COALESCE(p.sk_patient_id, s.sk_patient_id) AS sk_patient_id,
+    t.sk_patient_id,
+    t.outpatient_treatment_functions_12mo,
     ZEROIFNULL(p.paediatric_op_appointments_12mo)
         AS paediatric_op_appointments_12mo,
     ZEROIFNULL(s.outpatient_specialties_12mo) AS outpatient_specialties_12mo,
     ZEROIFNULL(s.outpatient_specialties_excluding_maternity_12mo)
         AS outpatient_specialties_excluding_maternity_12mo
-FROM paediatric_op AS p
-FULL OUTER JOIN op_specialties AS s
-    ON p.sk_patient_id = s.sk_patient_id
+FROM treatment_functions AS t
+LEFT JOIN paediatric_op AS p
+    ON t.sk_patient_id = p.sk_patient_id
+LEFT JOIN op_specialties AS s
+    ON t.sk_patient_id = s.sk_patient_id

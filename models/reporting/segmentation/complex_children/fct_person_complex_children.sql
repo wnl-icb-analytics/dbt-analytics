@@ -60,7 +60,9 @@ SELECT
     cc.community_contacts_excluding_health_visiting_12mo,
     cc.has_7plus_community_contacts,
 
-    cc.complexity_criteria_count
+    cc.complexity_criteria_count,
+
+    {{ segmentation_reporting_date() }} AS reporting_date
 
 FROM {{ ref('int_segmentation_children_complexity') }} AS cc
 INNER JOIN {{ ref('dim_person_demographics') }} AS d

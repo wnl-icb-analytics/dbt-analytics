@@ -6,9 +6,10 @@
 -- Usage: compile with dbt, then run the compiled queries in Snowflake.
 --
 -- REFRESH FIRST
---   Dev tables move. The activity windows anchor to CURRENT_DATE (ED, non-
---   elective) or to the latest activity date in the source (GP, outpatients),
---   so figures drift between builds. Rebuild the cohort and its upstreams in
+--   Dev tables move. Every activity window ends on the segmentation reporting
+--   date (last completed month-end unless the segmentation_reporting_date var
+--   is set), but clinical registers reflect the build date and upstream
+--   sources refresh on their own schedules. Rebuild the cohort and its upstreams in
 --   ONE run before quoting anything:
 --     dbt build --select +fct_person_segment +fct_complex_adults_ed_attendances +fct_complex_adults_nel_admissions
 --   That is ~350 models and takes about 10 minutes. Selecting only the

@@ -1,10 +1,13 @@
 models:
   - name: int_segmentation_op_activity
     description: >
-      Outpatient activity blocks for segmentation, rolling 12 months ending
-      on the latest attended appointment date (lag-aware). One row per
-      sk_patient_id with any qualifying attended activity.
+      Outpatient activity blocks for segmentation, 12 months ending on the
+      segmentation reporting date (last completed month-end unless the
+      segmentation_reporting_date var is set). One row per sk_patient_id with
+      any attended appointment in the window.
 
+      outpatient_treatment_functions_12mo counts distinct treatment functions
+      for the complex adults outpatient breadth criterion.
       paediatric_op_appointments_12mo counts attended appointments under a
       paediatric treatment function (paediatric_treatment_function_codes
       seed). outpatient_specialties_12mo counts distinct main specialties,
@@ -23,6 +26,11 @@ models:
         description: Pseudonymised patient key
         data_tests:
           - unique
+          - not_null
+      - name: outpatient_treatment_functions_12mo
+        description: Distinct treatment functions with an attended appointment
+          in the window, no exclusions
+        data_tests:
           - not_null
       - name: paediatric_op_appointments_12mo
         description: Attended paediatric outpatient appointments in the window

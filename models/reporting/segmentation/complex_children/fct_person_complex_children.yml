@@ -32,8 +32,10 @@ models:
         int_segmentation_children_complexity.
       - Children on the palliative care register appear here but segment as
         End of Life (segment 8), which outranks complexity.
-      - 12-month windows end on the latest activity date in each source, to
-        allow for reporting lag.
+      - Every 12-month window ends on reporting_date (last completed
+        month-end unless the segmentation_reporting_date var is set). MHSDS
+        and CSDS are monthly feeds, so their latest month may not have
+        arrived by that date.
       - Community contact counts are a floor: some CSDS records carry no
         patient key.
       - Mental health inpatient stays count spells overlapping the window,
@@ -117,3 +119,7 @@ models:
               arguments:
                 min_value: 1
                 max_value: 6
+      - name: reporting_date
+        description: End date of every 12-month activity window
+        data_tests:
+          - not_null
