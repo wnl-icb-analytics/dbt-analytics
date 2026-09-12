@@ -1,0 +1,77 @@
+models:
+  - name: int_tirzepatide_eligible_population
+    description: >
+      Current tirzepatide candidate population drawn from the QOF v51 OBES2
+      register. One row represents a living adult with a current registration,
+      qualifying BMI evidence in the preceding 12 months and at least four of
+      the five OBES2 comorbidities. The most recent qualifying BMI assigns the
+      rollout cohort: Cohort 1 is BMI at least 40, or 37.5 with the lower
+      ethnicity threshold; Cohort 2 is BMI 35 to below 40, or 32.5 to below
+      37.5 with the lower ethnicity threshold. Evidence without a numeric BMI
+      establishing either band is labelled BMI assessment needed, with both
+      cohort flags false. These are candidates for clinical assessment,
+      not confirmed prescribing eligibility. The hypertension flag does not
+      confirm a need for blood pressure treatment; the sleep apnoea flag does
+      not confirm sleep-clinic assessment or an indication for CPAP or equivalent.
+      BMI evidence is the latest qualifying record, not necessarily the latest
+      BMI overall. This current population does not retain everyone who qualified
+      before treatment. See docs/model_documentation/tirzepatide.md for the
+      national specifications and remaining assessment requirements.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+    columns:
+      - name: person_id
+        description: Person identifier
+        data_tests:
+          - unique
+          - not_null
+      - name: age
+        description: Current age in full years
+      - name: latest_bmi_value
+        description: Numeric value from the most recent qualifying OBES2 BMI evidence, when supplied
+      - name: latest_bmi_date
+        description: Date of the most recent qualifying OBES2 BMI evidence in the preceding 12 months
+      - name: latest_bmi_source_cluster_id
+        description: QOF cluster supplying the most recent qualifying BMI evidence
+      - name: latest_bmi_is_bmi_35_code
+        description: Whether the most recent qualifying BMI evidence is from BMI35_COD
+      - name: bmi_category
+        description: Historical labels for the ethnicity-adjusted rollout band, not a measured WHO obesity classification
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Obese Class II', 'Obese Class III', 'BMI assessment needed']
+      - name: has_lower_bmi_threshold_ethnicity
+        description: Whether the latest QOF ethnicity evidence qualifies for lower BMI thresholds
+      - name: has_unresolved_hypertension
+        description: Whether unresolved hypertension meets the OBES2 definition
+      - name: has_dyslipidaemia
+        description: Whether recent lipid therapy or lipid results meet the OBES2 definition
+      - name: has_obstructive_sleep_apnoea
+        description: Whether an obstructive sleep apnoea diagnosis meets the OBES2 definition
+      - name: has_ascvd
+        description: Whether an ASCVD diagnosis meets the OBES2 definition
+      - name: has_unresolved_type2_diabetes
+        description: Whether unresolved type 2 diabetes meets the OBES2 definition
+      - name: qualifying_comorbidity_count
+        description: Number of the five OBES2 comorbidities met
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 4
+                max_value: 5
+                inclusive: true
+      - name: bmi_meets_cohort_1
+        description: Whether the most recent qualifying BMI meets the Cohort 1 threshold
+      - name: bmi_meets_cohort_2
+        description: Whether numeric BMI establishes the ethnicity-adjusted Cohort 2 band; false when measurement is missing
+      - name: is_eligible_cohort_1
+        description: Whether the person is assigned to Cohort 1
+      - name: is_eligible_cohort_2
+        description: Whether the person is assigned to Cohort 2

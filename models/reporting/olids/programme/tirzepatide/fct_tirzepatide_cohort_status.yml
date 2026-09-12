@@ -1,0 +1,107 @@
+models:
+  - name: fct_tirzepatide_cohort_status
+    description: 'Person-level tirzepatide cohort status for the NCL/WNL GLP-1
+      obesity rollout.
+
+      Combines the eligibility population (int_tirzepatide_eligible_population)
+      with current GLP-1 prescribing (int_glp1_medications_all) and demographic /
+      practice context, so practices can identify candidates for assessment and see
+      whether they are already on a GLP-1 and for which likely indication.
+
+      Candidate selection and comorbidities come from the QOF v51 OBES2 register. Grain:
+      one row per currently registered, living candidate. Cohort 1 is BMI
+      >= 40, or >= 37.5 with the lower ethnicity threshold. Cohort 2 is BMI 35
+      to below 40, or 32.5 to below 37.5 with the lower ethnicity threshold.
+      Candidates whose numeric BMI cannot establish either band remain in the
+      population labelled BMI assessment needed, with both cohort flags false.
+      is_actionable flags candidates without a GLP-1 order
+      in six months. It does not establish prescribing suitability or confirm
+      programme requirements for hypertension treatment and sleep apnoea assessment.
+      This is a current candidate population, not a treatment follow-up register.
+      See docs/model_documentation/tirzepatide.md for the national specifications.'
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+    columns:
+      - name: person_id
+        description: 'Unique identifier for the person'
+        data_tests:
+          - unique
+          - not_null
+      - name: sk_patient_id
+        description: 'Surrogate patient identifier'
+      - name: practice_code
+        description: 'Registered practice ODS code'
+      - name: practice_name
+        description: 'Registered practice name'
+      - name: pcn_code
+        description: 'Primary care network code'
+      - name: pcn_name
+        description: 'Primary care network name'
+      - name: borough_registered
+        description: 'Borough of registered practice'
+      - name: neighbourhood_registered
+        description: 'Neighbourhood of registered practice'
+      - name: age
+        description: 'Current age in years'
+      - name: gender
+        description: 'Gender'
+      - name: age_band_nhs
+        description: 'NHS age band'
+      - name: ethnicity_category
+        description: 'High-level ethnicity category'
+      - name: imd_quintile_19
+        description: 'IMD 2019 deprivation quintile'
+      - name: is_eligible_cohort_1
+        description: 'Numeric BMI establishes the Cohort 1 band; false when measurement is missing, and prescribing suitability still needs assessment'
+      - name: is_eligible_cohort_2
+        description: 'Numeric BMI establishes the Cohort 2 band; false when measurement is missing, and prescribing suitability still needs assessment'
+      - name: cohort
+        description: 'Cohort 1, Cohort 2 or BMI assessment needed when numeric evidence cannot establish either band'
+      - name: latest_bmi_value
+        description: 'Numeric value from the most recent qualifying OBES2 BMI evidence, when supplied'
+      - name: latest_bmi_date
+        description: 'Date of the most recent qualifying OBES2 BMI evidence in the preceding 12 months'
+      - name: latest_bmi_source_cluster_id
+        description: 'QOF cluster supplying the most recent qualifying BMI evidence'
+      - name: latest_bmi_is_bmi_35_code
+        description: 'Whether the most recent qualifying BMI evidence is from BMI35_COD'
+      - name: bmi_category
+        description: 'Historical labels for the ethnicity-adjusted rollout band, not a measured WHO obesity classification'
+      - name: has_lower_bmi_threshold_ethnicity
+        description: 'Whether the latest QOF ethnicity evidence qualifies for lower BMI thresholds'
+      - name: has_unresolved_hypertension
+        description: 'Whether unresolved hypertension meets the OBES2 definition'
+      - name: has_dyslipidaemia
+        description: 'Whether recent lipid therapy or lipid results meet the OBES2 definition'
+      - name: has_obstructive_sleep_apnoea
+        description: 'Whether an obstructive sleep apnoea diagnosis meets the OBES2 definition'
+      - name: has_ascvd
+        description: 'Whether an ASCVD diagnosis meets the OBES2 definition'
+      - name: has_unresolved_type2_diabetes
+        description: 'Whether unresolved type 2 diabetes meets the OBES2 definition'
+      - name: qualifying_comorbidity_count
+        description: 'Count of qualifying comorbidities present (4 or 5 for eligible persons)'
+      - name: ever_on_glp1
+        description: 'Has any GLP-1 receptor agonist order on record'
+      - name: ever_on_tirzepatide
+        description: 'Has any tirzepatide (dual GIP/GLP-1) order on record'
+      - name: is_currently_treated_glp1
+        description: 'Has a GLP-1 order in the last 6 months; dispensing and adherence are not confirmed'
+      - name: latest_glp1_drug
+        description: 'Active ingredient of the most recent GLP-1 order'
+      - name: latest_glp1_indication
+        description: 'Likely indication of the most recent GLP-1 order (Diabetes vs Obesity, from BNF)'
+      - name: latest_glp1_order_date
+        description: 'Date of the most recent GLP-1 order'
+      - name: glp1_orders_12m
+        description: 'Rolling count of GLP-1 orders in the last 12 months'
+      - name: is_actionable
+        description: 'Candidate for review without a GLP-1 order in the last 6 months; prescribing eligibility requires clinical assessment'
+      - name: data_refresh_date
+        description: 'Build date of this fact table'
