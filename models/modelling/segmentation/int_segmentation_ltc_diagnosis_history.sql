@@ -60,23 +60,22 @@ WITH events AS (
 
     UNION ALL
 
-    -- These clinical registers do not currently expose date_recorded.
     SELECT
-        person_id, clinical_effective_date, NULL::TIMESTAMP,
+        person_id, clinical_effective_date, date_recorded,
         'PD', is_diagnosis_code, FALSE, FALSE
     FROM {{ ref('int_parkinsons_diagnoses_all') }}
 
     UNION ALL
 
     SELECT
-        person_id, clinical_effective_date, NULL::TIMESTAMP,
+        person_id, clinical_effective_date, date_recorded,
         'ANX', is_diagnosis_code, is_resolved_code, FALSE
     FROM {{ ref('int_anxiety_diagnoses_all') }}
 
     UNION ALL
 
     SELECT
-        person_id, clinical_effective_date, NULL::TIMESTAMP,
+        person_id, clinical_effective_date, date_recorded,
         'NAFLD', is_diagnosis_code, FALSE, FALSE
     FROM {{ ref('int_nafld_diagnoses_all') }}
 ),
