@@ -105,9 +105,15 @@ residential_latest AS (
             OR CAST(r.date_recorded AS DATE) <= pm.month_end_date
         )
     WHERE pm.is_active
+    -- A homelessness code wins a same-day tie with another residential code
+    -- (UKHSA HOMELESS_DAT >= RESIDE_DAT), matching dim_person_homeless.
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY pm.person_id, pm.month_end_date
-        ORDER BY r.clinical_effective_date DESC, r.id DESC
+        ORDER BY
+            CAST(r.clinical_effective_date AS DATE) DESC,
+            r.is_homeless_status DESC,
+            r.clinical_effective_date DESC,
+            r.id DESC
     ) = 1
 ),
 
