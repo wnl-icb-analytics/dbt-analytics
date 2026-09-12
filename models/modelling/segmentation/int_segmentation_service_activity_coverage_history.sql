@@ -124,7 +124,7 @@ source_reference_dates AS (
     SELECT
         r.end_date,
         MAX(IFF(s.source_name = 'community', s.last_date_in_month, NULL))
-            AS community_window_end_date,
+            AS community_latest_activity_date,
         MAX(IFF(s.source_name = 'gp', s.last_date_in_month, NULL))
             AS gp_latest_activity_date,
         MAX(IFF(s.source_name = 'outpatient', s.last_date_in_month, NULL))
@@ -144,15 +144,12 @@ source_reference_dates AS (
 SELECT
     r.end_date,
     b.source_first_date AS community_source_first_date,
-    r.community_window_end_date,
-    DATEADD('month', -12, r.community_window_end_date)
-        AS community_window_start_date,
     COALESCE(
-        DATEADD('month', -12, r.community_window_end_date)
-            >= b.source_first_date,
+        DATEADD('month', -12, r.end_date) >= b.source_first_date,
         FALSE
     ) AS is_community_window_complete,
-    DATEDIFF('day', r.community_window_end_date, r.end_date)
+    r.community_latest_activity_date,
+    DATEDIFF('day', r.community_latest_activity_date, r.end_date)
         AS community_lag_days,
     r.gp_latest_activity_date,
     DATEDIFF('day', r.gp_latest_activity_date, r.end_date) AS gp_lag_days,

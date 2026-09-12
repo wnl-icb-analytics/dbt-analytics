@@ -6,12 +6,13 @@ models:
       every source feeding int_segmentation_acute_activity_history and
       int_segmentation_service_activity_history it gives the latest activity
       date the source had reached by that month-end and the lag in days behind
-      it. The community window ends on that latest CSDS contact date, and a
-      complete window has 12 months of source history before it. The other
-      windows end on the month-end itself, so their lag shows how far the
-      newest month-ends undercount sources that submit in arrears. Latest
-      dates other than CSDS are read over the date range the rolling windows
-      can reach, and are null when a source has no activity in that range.
+      it, from data held at build time. Every window, community included,
+      ends on the month-end itself, matching the single reporting date of the
+      current models, so the lag shows how far the newest month-ends
+      undercount sources that submit in arrears. A complete community window
+      has CSDS history for the full 12 months. Latest dates other than CSDS
+      are read over the date range the rolling windows can reach, and are
+      null when a source has no activity in that range.
     config:
       meta:
         owner:
@@ -26,16 +27,18 @@ models:
         description: First attended CSDS contact date in the source.
         data_tests:
           - not_null
-      - name: community_window_end_date
-        description: Latest CSDS contact date available by the month-end.
-      - name: community_window_start_date
-        description: Exact date 12 months before the community window end.
       - name: is_community_window_complete
-        description: Source history covers the full community activity window.
+        description: CSDS history covers the full 12 months before the
+          month-end.
         data_tests:
           - not_null
+      - name: community_latest_activity_date
+        description: Latest attended CSDS contact date on or before the
+          month-end (int_csds_contact_currency).
       - name: community_lag_days
-        description: Days between the community window end and reference month-end.
+        description: >-
+          Days between community_latest_activity_date and the month-end.
+          Higher values mean community_contacts_12mo undercounts that month.
       - name: gp_latest_activity_date
         description: >-
           Latest attended clinical GP appointment date on or before the

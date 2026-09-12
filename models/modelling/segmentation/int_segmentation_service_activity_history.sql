@@ -258,14 +258,12 @@ community_full_months AS (
         pm.month_end_date AS end_date,
         SUM(c.contact_count) AS contact_count
     FROM {{ ref('int_segmentation_person_month_spine') }} AS pm
-    INNER JOIN {{ ref('int_segmentation_service_activity_coverage_history') }} AS cv
-        ON pm.month_end_date = cv.end_date
     INNER JOIN community_monthly AS c
         ON pm.sk_patient_id = c.sk_patient_id
         AND c.activity_month
-            > DATE_TRUNC('month', cv.community_window_start_date)
-        AND c.activity_month <= DATE_TRUNC('month', cv.community_window_end_date)
-    WHERE pm.is_active AND cv.community_window_end_date IS NOT NULL
+            > DATE_TRUNC('month', DATEADD('month', -12, pm.month_end_date))
+        AND c.activity_month <= DATE_TRUNC('month', pm.month_end_date)
+    WHERE pm.is_active
     GROUP BY pm.person_id, pm.month_end_date
 ),
 
@@ -275,13 +273,12 @@ community_boundary_partial_month AS (
         pm.month_end_date AS end_date,
         SUM(c.contact_count) AS contact_count
     FROM {{ ref('int_segmentation_person_month_spine') }} AS pm
-    INNER JOIN {{ ref('int_segmentation_service_activity_coverage_history') }} AS cv
-        ON pm.month_end_date = cv.end_date
     INNER JOIN community_activity AS c
         ON pm.sk_patient_id = c.sk_patient_id
-        AND c.activity_date BETWEEN cv.community_window_start_date
-            AND LAST_DAY(cv.community_window_start_date)
-    WHERE pm.is_active AND cv.community_window_end_date IS NOT NULL
+        AND c.activity_date BETWEEN
+            DATEADD('month', -12, pm.month_end_date)
+            AND LAST_DAY(DATEADD('month', -12, pm.month_end_date))
+    WHERE pm.is_active
     GROUP BY pm.person_id, pm.month_end_date
 ),
 
