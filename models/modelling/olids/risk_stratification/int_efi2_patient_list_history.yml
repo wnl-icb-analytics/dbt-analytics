@@ -2,13 +2,15 @@ models:
   - name: int_efi2_patient_list_history
     description: >-
       Monthly eFI2 population. One row represents one person aged at least 65
-      who was alive and GP registered in NCL at one of the last 60 completed
-      month-ends. Age uses the first day of the approximate birth month,
-      matching the current eFI2 eligibility rule. Unlike the current patient
-      list, this population requires an active registration at the scoring
-      date. Incremental runs replace the latest completed month in one
-      transaction and add missing newer months; monthly full refreshes
-      recalculate the rolling 60-month window.
+      who was alive and GP registered in NCL at a retained completed month-end.
+      Age uses the first day of the approximate birth month, matching the
+      current eFI2 eligibility rule. Unlike the current patient list, this
+      population requires an active registration at the scoring date.
+      Incremental runs replace the latest completed month in one transaction
+      and add missing newer months, but do not remove months that have aged
+      out, so the model holds at least the last 60 completed month-ends. The
+      monthly full refresh rebuilds the rolling 60-month window and trims the
+      extra months.
     config:
       meta:
         owner:

@@ -22,12 +22,14 @@
 --   5+ attended paediatric outpatient appointments in 12 months
 --       (int_segmentation_op_activity)
 --   attended outpatient care across 2+ main specialties in 12 months,
---       excluding trauma & orthopaedics, ENT, ophthalmology and A&E
+--       excluding trauma & orthopaedics, ENT, ophthalmology, A&E,
+--       obstetrics and midwifery
 --       (int_segmentation_op_activity, aligned to NWL)
 --   1+ mental health inpatient stay in 12 months
 --       (int_segmentation_mh_inpatient_activity, spells overlapping the
 --       window so long-stay admissions before it still count)
 --   7+ attended community service contacts in 12 months
+--       excluding Health Visiting Service contacts
 --       (int_segmentation_community_activity; counts are a floor)
 
 WITH children AS (
@@ -51,7 +53,9 @@ WITH children AS (
 
         ZEROIFNULL(op.outpatient_specialties_12mo)
             AS outpatient_specialties_12mo,
-        ZEROIFNULL(op.outpatient_specialties_12mo) >= 2
+        ZEROIFNULL(op.outpatient_specialties_excluding_maternity_12mo)
+            AS outpatient_specialties_excluding_maternity_12mo,
+        ZEROIFNULL(op.outpatient_specialties_excluding_maternity_12mo) >= 2
             AS has_2plus_outpatient_specialties,
 
         ZEROIFNULL(mh.mh_inpatient_stays_12mo) AS mh_inpatient_stays_12mo,
@@ -59,7 +63,9 @@ WITH children AS (
         ZEROIFNULL(mh.mh_inpatient_stays_12mo) >= 1 AS has_mh_inpatient_stay,
 
         ZEROIFNULL(cc.community_contacts_12mo) AS community_contacts_12mo,
-        ZEROIFNULL(cc.community_contacts_12mo) >= 7
+        ZEROIFNULL(cc.community_contacts_excluding_health_visiting_12mo)
+            AS community_contacts_excluding_health_visiting_12mo,
+        ZEROIFNULL(cc.community_contacts_excluding_health_visiting_12mo) >= 7
             AS has_7plus_community_contacts
 
     FROM {{ ref('dim_person_demographics') }} AS d

@@ -3,6 +3,7 @@
         materialized='incremental',
         incremental_strategy='delete+insert',
         unique_key='end_date',
+        cluster_by=['end_date', 'person_id'],
         snowflake_warehouse=env_var('EFI2_HISTORY_WAREHOUSE', target.warehouse),
         tags=['efi2', 'monthly-full']
     )
@@ -65,10 +66,7 @@ patient_months_to_build AS (
     SELECT *
     FROM {{ ref('int_efi2_patient_list_history') }}
     {% if is_incremental() %}
-    WHERE end_date > (
-        SELECT COALESCE(MAX(end_date), '1900-01-01'::DATE) FROM {{ this }}
-    )
-        OR end_date = LAST_DAY(DATEADD('month', -1, CURRENT_DATE))
+    WHERE {{ rebuild_month_window('end_date') }}
     {% endif %}
 )
 

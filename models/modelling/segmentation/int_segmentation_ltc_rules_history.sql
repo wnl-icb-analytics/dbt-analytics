@@ -188,10 +188,15 @@ diagnosis_qualified AS (
         END
 ),
 
+-- Orders are bucketed by recorded month as well as order month so the join
+-- below can drop orders recorded after the month-end. Every reference date is
+-- a month-end, so LAST_DAY(date_recorded) <= end_date is the same cut as
+-- date_recorded <= end_date.
 asthma_medication_months AS (
     SELECT
         person_id,
         LAST_DAY(CAST(order_date AS DATE)) AS order_month,
+        LAST_DAY(CAST(date_recorded AS DATE)) AS recorded_month,
         MAX(CAST(order_date AS DATE)) AS latest_order_date
     FROM {{ ref('int_asthma_medications_all') }}
     WHERE
@@ -199,7 +204,10 @@ asthma_medication_months AS (
             'month', -12, (SELECT first_month FROM date_bounds)
         )
         AND CAST(order_date AS DATE) <= (SELECT last_month FROM date_bounds)
-    GROUP BY person_id, LAST_DAY(CAST(order_date AS DATE))
+    GROUP BY
+        person_id,
+        LAST_DAY(CAST(order_date AS DATE)),
+        LAST_DAY(CAST(date_recorded AS DATE))
 ),
 
 asthma_register AS (
@@ -218,6 +226,10 @@ asthma_register AS (
         ON d.person_id = m.person_id
         AND m.latest_order_date >= DATEADD('month', -12, d.end_date)
         AND m.latest_order_date <= d.end_date
+        AND (
+            m.recorded_month IS NULL
+            OR m.recorded_month <= d.end_date
+        )
     WHERE d.condition_code = 'AST'
     GROUP BY ALL
 ),
@@ -226,6 +238,7 @@ epilepsy_medication_months AS (
     SELECT
         person_id,
         LAST_DAY(CAST(order_date AS DATE)) AS order_month,
+        LAST_DAY(CAST(date_recorded AS DATE)) AS recorded_month,
         MAX(CAST(order_date AS DATE)) AS latest_order_date
     FROM {{ ref('int_epilepsy_medications_all') }}
     WHERE
@@ -233,7 +246,10 @@ epilepsy_medication_months AS (
             'month', -6, (SELECT first_month FROM date_bounds)
         )
         AND CAST(order_date AS DATE) <= (SELECT last_month FROM date_bounds)
-    GROUP BY person_id, LAST_DAY(CAST(order_date AS DATE))
+    GROUP BY
+        person_id,
+        LAST_DAY(CAST(order_date AS DATE)),
+        LAST_DAY(CAST(date_recorded AS DATE))
 ),
 
 epilepsy_register AS (
@@ -252,6 +268,10 @@ epilepsy_register AS (
         ON d.person_id = m.person_id
         AND m.latest_order_date >= DATEADD('month', -6, d.end_date)
         AND m.latest_order_date <= d.end_date
+        AND (
+            m.recorded_month IS NULL
+            OR m.recorded_month <= d.end_date
+        )
     WHERE d.condition_code = 'EP'
     GROUP BY ALL
 ),

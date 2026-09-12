@@ -1,12 +1,13 @@
 {{
     config(
-        materialized='table',
-        cluster_by=['end_date', 'person_id'],
+        materialized='view',
         tags=['monthly-full']
     )
 }}
 
--- Shared monthly membership for all 17 segmentation LTCs.
+-- Shared monthly membership for all 17 segmentation LTCs. A view: both parents
+-- are already clustered on end_date and person_id, and both consumers rejoin
+-- the spine, so a physical copy of the union would earn nothing.
 
 SELECT
     person_id,

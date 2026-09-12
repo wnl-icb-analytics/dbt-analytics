@@ -150,5 +150,6 @@ SELECT
     child_has_5plus_paediatric_op_appointments,
     child_has_2plus_outpatient_specialties,
     child_has_mh_inpatient_stay,
-    child_has_7plus_community_contacts
+    child_has_7plus_community_contacts,
+    {{ segmentation_reporting_date() }} AS reporting_date
 FROM named
