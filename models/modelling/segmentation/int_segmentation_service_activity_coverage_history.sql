@@ -21,12 +21,14 @@ date_bounds AS (
 
 community_source_months AS (
     SELECT
-        DATE_TRUNC('month', CAST(start_date AS DATE)) AS activity_month,
-        MIN(CAST(start_date AS DATE)) AS first_date_in_month,
-        MAX(CAST(start_date AS DATE)) AS last_date_in_month
-    FROM {{ ref('int_csds_encounters') }}
-    WHERE start_date IS NOT NULL
-    GROUP BY DATE_TRUNC('month', CAST(start_date AS DATE))
+        DATE_TRUNC('month', CAST(care_contact_date AS DATE)) AS activity_month,
+        MIN(CAST(care_contact_date AS DATE)) AS first_date_in_month,
+        MAX(CAST(care_contact_date AS DATE)) AS last_date_in_month
+    FROM {{ ref('int_csds_contact_currency') }}
+    WHERE
+        care_contact_date IS NOT NULL
+        AND attendance_status IN ('5', '6')
+    GROUP BY DATE_TRUNC('month', CAST(care_contact_date AS DATE))
 ),
 
 community_source_bounds AS (

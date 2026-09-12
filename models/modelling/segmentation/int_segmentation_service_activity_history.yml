@@ -52,7 +52,9 @@ models:
       - name: outpatient_specialties_12mo
         description: >-
           Distinct attended main specialties after the child-complexity
-          exclusions.
+          exclusions: main specialties 110, 120, 130 and 180, treatment
+          functions 214-216, and obstetrics (501) or midwifery (560) in either
+          main specialty or treatment function.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -66,7 +68,8 @@ models:
               arguments:
                 min_value: 0
       - name: community_contacts_12mo
-        description: Attended CSDS care contacts in the rolling window.
+        description: Attended CSDS care contacts in the rolling window,
+          excluding Health Visiting Service contacts (team type 16).
         data_tests:
           - not_null
           - dbt_utils.accepted_range:

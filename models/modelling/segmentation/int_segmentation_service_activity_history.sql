@@ -148,8 +148,9 @@ child_specialty_monthly AS (
         main_specialty_code
     FROM op_activity
     WHERE
-        main_specialty_code NOT IN ('110', '120', '130', '180')
-        AND COALESCE(treatment_function_code, '') NOT IN ('214', '215', '216')
+        main_specialty_code NOT IN ('110', '120', '130', '180', '501', '560')
+        AND COALESCE(treatment_function_code, '')
+            NOT IN ('214', '215', '216', '501', '560')
 ),
 
 child_specialty_presence AS (
@@ -179,9 +180,10 @@ child_specialty_presence AS (
             AND LAST_DAY(DATEADD('month', -12, pm.month_end_date))
     WHERE
         pm.is_active
-        AND o.main_specialty_code NOT IN ('110', '120', '130', '180')
+        AND o.main_specialty_code
+            NOT IN ('110', '120', '130', '180', '501', '560')
         AND COALESCE(o.treatment_function_code, '')
-            NOT IN ('214', '215', '216')
+            NOT IN ('214', '215', '216', '501', '560')
 ),
 
 child_specialties AS (
@@ -220,20 +222,25 @@ mh_inpatient_rolling AS (
     GROUP BY pm.person_id, pm.month_end_date
 ),
 
+-- Attended contacts excluding Health Visiting Service (team type 16), as in
+-- int_segmentation_community_activity.
 community_activity AS (
     SELECT
         sk_patient_id,
-        CAST(start_date AS DATE) AS activity_date,
+        CAST(care_contact_date AS DATE) AS activity_date,
         COUNT(*) AS contact_count
-    FROM {{ ref('int_csds_encounters') }}
+    FROM {{ ref('int_csds_contact_currency') }}
     WHERE
-        sk_patient_id IS NOT NULL
+        attendance_status IN ('5', '6')
+        AND COALESCE(team_type_code, '') != '16'
+        AND sk_patient_id IS NOT NULL
         AND sk_patient_id != '1'
-        AND CAST(start_date AS DATE) >= DATEADD(
+        AND CAST(care_contact_date AS DATE) >= DATEADD(
             'month', -12, (SELECT first_month FROM date_bounds)
         )
-        AND CAST(start_date AS DATE) <= (SELECT last_month FROM date_bounds)
-    GROUP BY sk_patient_id, CAST(start_date AS DATE)
+        AND CAST(care_contact_date AS DATE)
+            <= (SELECT last_month FROM date_bounds)
+    GROUP BY sk_patient_id, CAST(care_contact_date AS DATE)
 ),
 
 community_monthly AS (
