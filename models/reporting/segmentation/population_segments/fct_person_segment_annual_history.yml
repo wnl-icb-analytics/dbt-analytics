@@ -1,0 +1,180 @@
+models:
+  - name: fct_person_segment_annual_history
+    description: >-
+      Five annual population and segment positions for transition analysis.
+      One row represents one person, with columns for 31 July 2022 to 31 July
+      2026. Status is SEG1-SEG8 for active people, DEAD, NOT_BORN or
+      NOT_REGISTERED. NOT_REGISTERED is a factual registration state and does
+      not mean out of area. The 2021 point is omitted because it precedes the
+      60 completed month-ends. The anchor dates are fixed and have to stay
+      inside the rolling 60-month window held by fct_person_segment_by_month:
+      adding a July position needs that window widened first, and the earliest
+      position expires once it ages out of the window. Child segments in 2022
+      and 2023 use incomplete
+      community history; is_community_window_complete on
+      fct_person_segment_by_month identifies the month-ends affected.
+      Community coverage is the only source completeness modelled.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.equal_rowcount:
+          arguments:
+            compare_model: ref('dim_person_demographics')
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: status_2022_07_31
+        description: Population or segment status at 31 July 2022.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - SEG1
+                  - SEG2
+                  - SEG3
+                  - SEG4
+                  - SEG5
+                  - SEG6
+                  - SEG7
+                  - SEG8
+                  - DEAD
+                  - NOT_BORN
+                  - NOT_REGISTERED
+      - name: status_2023_07_31
+        description: Population or segment status at 31 July 2023.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - SEG1
+                  - SEG2
+                  - SEG3
+                  - SEG4
+                  - SEG5
+                  - SEG6
+                  - SEG7
+                  - SEG8
+                  - DEAD
+                  - NOT_BORN
+                  - NOT_REGISTERED
+      - name: status_2024_07_31
+        description: Population or segment status at 31 July 2024.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - SEG1
+                  - SEG2
+                  - SEG3
+                  - SEG4
+                  - SEG5
+                  - SEG6
+                  - SEG7
+                  - SEG8
+                  - DEAD
+                  - NOT_BORN
+                  - NOT_REGISTERED
+      - name: status_2025_07_31
+        description: Population or segment status at 31 July 2025.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - SEG1
+                  - SEG2
+                  - SEG3
+                  - SEG4
+                  - SEG5
+                  - SEG6
+                  - SEG7
+                  - SEG8
+                  - DEAD
+                  - NOT_BORN
+                  - NOT_REGISTERED
+      - name: status_2026_07_31
+        description: Population or segment status at 31 July 2026.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - SEG1
+                  - SEG2
+                  - SEG3
+                  - SEG4
+                  - SEG5
+                  - SEG6
+                  - SEG7
+                  - SEG8
+                  - DEAD
+                  - NOT_BORN
+                  - NOT_REGISTERED
+      - name: segment_number_2022_07_31
+        description: Segment number at 31 July 2022; null when inactive.
+      - name: is_born_2022_07_31
+        description: Born by 31 July 2022.
+      - name: is_alive_2022_07_31
+        description: Alive at 31 July 2022.
+      - name: is_registered_2022_07_31
+        description: GP registration covers 31 July 2022.
+      - name: is_active_2022_07_31
+        description: Alive and registered at 31 July 2022.
+      - name: is_deceased_2022_07_31
+        description: Recorded death is on or before 31 July 2022.
+      - name: segment_number_2023_07_31
+        description: Segment number at 31 July 2023; null when inactive.
+      - name: is_born_2023_07_31
+        description: Born by 31 July 2023.
+      - name: is_alive_2023_07_31
+        description: Alive at 31 July 2023.
+      - name: is_registered_2023_07_31
+        description: GP registration covers 31 July 2023.
+      - name: is_active_2023_07_31
+        description: Alive and registered at 31 July 2023.
+      - name: is_deceased_2023_07_31
+        description: Recorded death is on or before 31 July 2023.
+      - name: segment_number_2024_07_31
+        description: Segment number at 31 July 2024; null when inactive.
+      - name: is_born_2024_07_31
+        description: Born by 31 July 2024.
+      - name: is_alive_2024_07_31
+        description: Alive at 31 July 2024.
+      - name: is_registered_2024_07_31
+        description: GP registration covers 31 July 2024.
+      - name: is_active_2024_07_31
+        description: Alive and registered at 31 July 2024.
+      - name: is_deceased_2024_07_31
+        description: Recorded death is on or before 31 July 2024.
+      - name: segment_number_2025_07_31
+        description: Segment number at 31 July 2025; null when inactive.
+      - name: is_born_2025_07_31
+        description: Born by 31 July 2025.
+      - name: is_alive_2025_07_31
+        description: Alive at 31 July 2025.
+      - name: is_registered_2025_07_31
+        description: GP registration covers 31 July 2025.
+      - name: is_active_2025_07_31
+        description: Alive and registered at 31 July 2025.
+      - name: is_deceased_2025_07_31
+        description: Recorded death is on or before 31 July 2025.
+      - name: segment_number_2026_07_31
+        description: Segment number at 31 July 2026; null when inactive.
+      - name: is_born_2026_07_31
+        description: Born by 31 July 2026.
+      - name: is_alive_2026_07_31
+        description: Alive at 31 July 2026.
+      - name: is_registered_2026_07_31
+        description: GP registration covers 31 July 2026.
+      - name: is_active_2026_07_31
+        description: Alive and registered at 31 July 2026.
+      - name: is_deceased_2026_07_31
+        description: Recorded death is on or before 31 July 2026.
