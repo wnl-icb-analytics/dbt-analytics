@@ -22,17 +22,21 @@ with base as (
     where code_date::date <= current_date()
 ),
 
---ctes to reduce field values into 1 per patient
-gender_event as (
-    select 
-        sk_patient_id, 
-        coalesce(gender_at_event, 'X') as gender_code,
-        coalesce(gender_desc_at_event, 'Not Known') as gender_desc,
-        code_date::date as gender_event_date,
-        
-        --Rank rows for this field to identify which to use
+-- One pass over base for the four independent field rankings. Order by
+-- clauses are copied from the previous per-field windows.
+ranked as (
+    select
+        sk_patient_id,
+        gender_at_event,
+        gender_desc_at_event,
+        ethnicity_at_event,
+        ethnicity_desc_at_event,
+        lsoa_11_at_event,
+        reg_practice_at_event,
+        code_date,
+        visit_occurrence_id,
         row_number() over (
-            partition by sk_patient_id 
+            partition by sk_patient_id
             order by
                 --Prioritise stated gender values over 'Unknown' or invalid codes
                 case
@@ -44,73 +48,9 @@ gender_event as (
                 code_date desc,
                 --Occurrence ID only if a tie-breaker is needed
                 visit_occurrence_id desc
-        ) as gender_field_rank
-        
-    from base
-    qualify gender_field_rank = 1
-),
-
-int_age_gap as (
-    select
-        sk_patient_id,
-        visit_occurrence_id,
-        age_at_event,
-        code_date,
-        max(code_date) over (partition by sk_patient_id, age_at_event) as latest_code_date,
-        datediff(year, code_date, latest_code_date) as gap_to_latest
-        
-    from base
-    where code_date is not null
-    and age_at_event <= 120
-),
-
-age_event as (
-    select 
-        sk_patient_id, 
-        age_at_event,
-        --Estimate dob
-        --Criteria: Assume birthday in the month of the earliest activity at their current age
-        -- excluding activity more than a year earlier than the latest activity at their current age
-        dateadd(year, -1*age_at_event, 
-            date_trunc('month', min(code_date::date) over (
-                partition by sk_patient_id, age_at_event
-            )) 
-        ) as date_of_birth,
-        code_date::date as dob_event_date,
-        
-        --Rank rows for this field to identify which to use
+        ) as gender_field_rank,
         row_number() over (
-            partition by sk_patient_id 
-            order by
-                --Prioritise non-null values
-                case
-                    when age_at_event is not null then 1
-                    else 2
-                end,
-                --Prefer more recent records
-                code_date desc,
-                --Occurrence ID only if a tie-breaker is needed
-                visit_occurrence_id desc
-        ) as age_field_rank
-        
-    from int_age_gap
-    
-    --Filter out records where the current age is used more than a year ago
-    where gap_to_latest = 0
-    
-    qualify age_field_rank = 1
-),
-
-ethnicity_event as (
-    select 
-        sk_patient_id, 
-        ethnicity_at_event as ethnicity_code,
-        ethnicity_desc_at_event,
-        code_date::date as ethnicity_event_date,
-        
-        --Rank rows for this field to identify which to use
-        row_number() over (
-            partition by sk_patient_id 
+            partition by sk_patient_id
             order by
                 --Prioritise ethnicity values that are stated and not null
                 case
@@ -122,19 +62,7 @@ ethnicity_event as (
                 code_date desc,
                 --Occurrence ID only if a tie-breaker is needed
                 visit_occurrence_id desc
-        ) as ethnicity_field_rank
-        
-    from base
-    qualify ethnicity_field_rank = 1
-),
-
-lsoa_event as (
-    select
-        sk_patient_id,
-        lsoa_11_at_event as lsoa_11,
-        code_date::date as lsoa_event_date,
-
-        --Rank rows for this field to identify which to use
+        ) as ethnicity_field_rank,
         row_number() over (
             partition by sk_patient_id
             order by
@@ -147,21 +75,9 @@ lsoa_event as (
                 code_date desc,
                 --Occurrence ID only if a tie-breaker is needed
                 visit_occurrence_id desc
-        ) as lsoa_field_rank
-
-    from base
-    qualify lsoa_field_rank = 1
-),
-
-registered_event as (
-    select 
-        sk_patient_id, 
-        reg_practice_at_event as practice_code,
-        code_date::date as registered_event_date,
-        
-        --Rank rows for this field to identify which to use
+        ) as lsoa_field_rank,
         row_number() over (
-            partition by sk_patient_id 
+            partition by sk_patient_id
             order by
                 --Prioritise practice code values that are not null
                 case
@@ -173,9 +89,97 @@ registered_event as (
                 --Occurrence ID only if a tie-breaker is needed
                 visit_occurrence_id desc
         ) as registered_field_rank
-        
     from base
-    qualify registered_field_rank = 1
+),
+
+--ctes to reduce field values into 1 per patient
+gender_event as (
+    select
+        sk_patient_id,
+        coalesce(gender_at_event, 'X') as gender_code,
+        coalesce(gender_desc_at_event, 'Not Known') as gender_desc,
+        code_date::date as gender_event_date
+    from ranked
+    where gender_field_rank = 1
+),
+
+int_age_gap as (
+    select
+        sk_patient_id,
+        visit_occurrence_id,
+        age_at_event,
+        code_date,
+        max(code_date) over (partition by sk_patient_id, age_at_event) as latest_code_date,
+        datediff(year, code_date, latest_code_date) as gap_to_latest
+
+    from base
+    where code_date is not null
+    and age_at_event <= 120
+),
+
+age_event as (
+    select
+        sk_patient_id,
+        age_at_event,
+        --Estimate dob
+        --Criteria: Assume birthday in the month of the earliest activity at their current age
+        -- excluding activity more than a year earlier than the latest activity at their current age
+        dateadd(year, -1*age_at_event,
+            date_trunc('month', min(code_date::date) over (
+                partition by sk_patient_id, age_at_event
+            ))
+        ) as date_of_birth,
+        code_date::date as dob_event_date,
+
+        --Rank rows for this field to identify which to use
+        row_number() over (
+            partition by sk_patient_id
+            order by
+                --Prioritise non-null values
+                case
+                    when age_at_event is not null then 1
+                    else 2
+                end,
+                --Prefer more recent records
+                code_date desc,
+                --Occurrence ID only if a tie-breaker is needed
+                visit_occurrence_id desc
+        ) as age_field_rank
+
+    from int_age_gap
+
+    --Filter out records where the current age is used more than a year ago
+    where gap_to_latest = 0
+
+    qualify age_field_rank = 1
+),
+
+ethnicity_event as (
+    select
+        sk_patient_id,
+        ethnicity_at_event as ethnicity_code,
+        ethnicity_desc_at_event,
+        code_date::date as ethnicity_event_date
+    from ranked
+    where ethnicity_field_rank = 1
+),
+
+lsoa_event as (
+    select
+        sk_patient_id,
+        lsoa_11_at_event as lsoa_11,
+        code_date::date as lsoa_event_date
+    from ranked
+    where lsoa_field_rank = 1
+),
+
+registered_event as (
+    select
+        sk_patient_id,
+        reg_practice_at_event as practice_code,
+        code_date::date as registered_event_date
+    from ranked
+    where registered_field_rank = 1
 )
 
 select

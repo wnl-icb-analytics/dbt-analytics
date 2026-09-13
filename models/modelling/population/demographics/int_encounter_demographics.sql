@@ -72,12 +72,14 @@ wl_demo as (
 ),
 
 all_demographics as (
+    -- Each branch sets a different visit_occurrence_type, so the rows are
+    -- disjoint and union all matches union without the distinct sort.
     select * from op_demo
-    union 
+    union all
     select * from apc_demo
-    union 
+    union all
     select * from ae_demo
-    union 
+    union all
     select * from wl_demo
 )
 
