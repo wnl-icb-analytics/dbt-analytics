@@ -3,13 +3,21 @@
 -- note: using sk_patient_id as person_id
 
 with
+    episode_codes as (
+        select primarykey_id
+            , code
+            , episodes_id
+            , count(*) as observation_count
+        from {{ ref("stg_sus_apc_spell_episodes_clinical_coding_procedure_opcs") }}
+        where code is not null
+        group by primarykey_id, code, episodes_id
+    ),
     final_opcs4_codes as (
         select primarykey_id
-            , code 
-            , count(*) as observation_count
-            , array_agg(distinct episodes_id) WITHIN GROUP (ORDER BY episodes_id ASC) as episodes_ids
-        from {{ ref("stg_sus_apc_spell_episodes_clinical_coding_procedure_opcs") }}
-        where code is not null 
+            , code
+            , sum(observation_count) as observation_count
+            , array_agg(episodes_id) within group (order by episodes_id asc) as episodes_ids
+        from episode_codes
         group by primarykey_id, code
 )
 

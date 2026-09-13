@@ -5,13 +5,23 @@
 -- standardize the ICD codes to ensure they follow the expected format
 -- `<CHAR><NUM><NUM>` or `<CHAR><NUM><NUM>.<NUM>`
 with
+    -- Distinct episode ids first so the ordered array does not sort inside
+    -- array_agg(distinct). observation_count stays the number of source rows.
+    episode_codes as (
+        select primarykey_id
+            , code
+            , episodes_id
+            , count(*) as observation_count
+        from {{ ref("stg_sus_apc_spell_episodes_clinical_coding_diagnosis_icd") }}
+        where code is not null
+        group by primarykey_id, code, episodes_id
+    ),
     final_icd_codes as (
         select primarykey_id
-            , code 
-            , count(*) as observation_count
-            , array_agg(distinct episodes_id)  WITHIN GROUP (ORDER BY episodes_id ASC) as episodes_ids
-        from {{ ref("stg_sus_apc_spell_episodes_clinical_coding_diagnosis_icd") }}
-        where code is not null 
+            , code
+            , sum(observation_count) as observation_count
+            , array_agg(episodes_id) within group (order by episodes_id asc) as episodes_ids
+        from episode_codes
         group by primarykey_id, code
 )
 
