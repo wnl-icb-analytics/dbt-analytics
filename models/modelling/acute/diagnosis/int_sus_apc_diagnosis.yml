@@ -1,8 +1,12 @@
 
 models:
   - name: int_sus_apc_diagnosis
-    description: "ICD-10 diagnosis codes associated with SUS admitted patient records.
-      For use in secondary care diagnosis table and phenolab"
+    description: >-
+      Distinct ICD-10 diagnosis codes submitted for SUS admitted patient spells.
+      One row represents one distinct diagnosis code per spell and
+      observation_count records repeated submissions of that code. Retains
+      clinical activity when the spell has no linked patient key; patient fields
+      are null in those rows.
     config:
       meta:
         owner:
@@ -21,7 +25,9 @@ models:
 
       - name: sk_patient_id
         data_type: varchar
-        description: "Common commissioning patient identifier"
+        description: >-
+          Common commissioning patient identifier. Null when the spell cannot be
+          linked to a patient; this does not remove the diagnosis activity.
       
       - name: date
         data_type: date
