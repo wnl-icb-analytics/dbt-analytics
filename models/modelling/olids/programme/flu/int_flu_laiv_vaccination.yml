@@ -2,11 +2,7 @@ models:
   - name: int_flu_laiv_vaccination
     description: Persons with LAIV (nasal spray) flu vaccination records. One row per person per campaign with most recent vaccination date.
 
-    config:
-      meta:
-        owner:
-          name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
@@ -15,10 +11,18 @@ models:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: LAIVRX_COD,LAIV_COD
+            source: UKHSA_FLU
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
     columns:
       - name: campaign_id
-        tests:
+        data_tests:
           - not_null
       - name: person_id
-        tests:
+        data_tests:
           - not_null

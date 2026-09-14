@@ -1,8 +1,11 @@
 
 models:
   - name: int_sus_uec_diagnosis
-    description: A&E diagnoses from SUS (ECDS) with SNOMED codes mapped to ICD-10. One 
-      row per diagnosis per A&E attendance.
+    description: >-
+      Distinct diagnosis codes submitted for ECDS attendances, with SNOMED CT
+      descriptions and ICD-10 mappings. One row represents one distinct
+      diagnosis code per attendance. observation_count records how many source
+      diagnosis entries used that code.
     config:
       meta:
         owner:
@@ -13,3 +16,22 @@ models:
             combination_of_columns:
               - visit_occurrence_id
               - source_concept_code
+    columns:
+      - name: diagnosis_id
+        description: Unique identifier for the attendance and diagnosis code.
+        data_tests:
+          - not_null
+      - name: visit_occurrence_id
+        description: ECDS attendance identifier.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('int_sus_uec_encounter')
+                field: visit_occurrence_id
+      - name: source_concept_code
+        description: Distinct SNOMED CT diagnosis code submitted for the attendance.
+        data_tests:
+          - not_null
+      - name: observation_count
+        description: Number of source diagnosis entries for this attendance and code.

@@ -9,16 +9,12 @@ set -uo pipefail  # no -e: log step failures but always finish (never fail conta
 
 git config core.hooksPath .githooks
 
-# Install the dbt Fusion engine (dbt runs on Fusion, not a Python package).
-# Version is pinned in .fusion-version (repo root) to match Snowflake's hosted
-# engine; the installer's target auto-detection is unreliable so pass it explicitly.
-FUSION_FALLBACK_VERSION="2.0.0-preview.175"
+# Install the latest dbt Fusion engine, matching the VS Code extension.
+# The installer's target auto-detection is unreliable, so pass it explicitly.
 case "$(uname -m)" in arm64|aarch64) arch_part="aarch64" ;; *) arch_part="x86_64" ;; esac
 case "$(uname -s)" in Darwin) os_part="apple-darwin" ;; *) os_part="unknown-linux-gnu" ;; esac
 fusion_target="${arch_part}-${os_part}"
-fusion_version="$FUSION_FALLBACK_VERSION"
-[ -f .fusion-version ] && read -r fusion_version < .fusion-version
-curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --version "$fusion_version" --target "$fusion_target" --update \
+curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --target "$fusion_target" --update \
     || echo "[warn] dbt Fusion installer returned non-zero (continuing)"
 export PATH="$HOME/.local/bin:$PATH"
 command -v dbt >/dev/null 2>&1 && echo "[OK] $(dbt --version 2>&1 | head -1)" || echo "[warn] dbt not on PATH after install"

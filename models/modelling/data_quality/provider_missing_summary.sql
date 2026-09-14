@@ -11,7 +11,10 @@
 {{
     config(
         materialized='table',
-        tags='daily'
+        tags='daily',
+        post_hook=[
+            "CALL MODELLING.DATA_QUALITY.SEND_PROVIDER_MISSING_SUMMARY()"
+        ]
     )
 }}
 

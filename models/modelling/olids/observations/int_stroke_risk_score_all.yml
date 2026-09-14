@@ -1,0 +1,47 @@
+models:
+  - name: int_stroke_risk_score_all
+    description: >
+      Atrial fibrillation stroke risk scores from the PCD clusters CHADVASC_COD
+      (CHA2DS2-VASc) and CHAD_COD (CHADS2), one row per observation for all
+      people including inactive and deceased. Observations dated after the build
+      date are excluded. score_value holds integer results within each tool's
+      range; anything else stays in original_result_value with a null score.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: CHADVASC_COD, CHAD_COD
+            source: PCD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - id
+              - source_cluster_id
+    columns:
+      - name: id
+        description: Source observation identifier; one row per observation and cluster.
+        data_tests:
+          - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the assessment.
+      - name: score_type
+        description: CHA2DS2-VASc or CHADS2, from the matching cluster.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['CHA2DS2-VASc', 'CHADS2']
+      - name: score_value
+        description: Integer score within the tool's range; null when missing or out of range.
+      - name: original_result_value
+        description: Result as recorded.
+      - name: concept_code
+        description: SNOMED code of the observation.
+      - name: concept_display
+        description: Description of the observation.
+      - name: source_cluster_id
+        description: CHADVASC_COD or CHAD_COD.

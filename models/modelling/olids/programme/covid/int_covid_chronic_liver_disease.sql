@@ -10,17 +10,17 @@ Simple diagnosis rule - any CLD diagnosis qualifies.
 This condition is NOT eligible in 2025/26 restricted campaigns.
 */
 
-{{ config(materialized='table') }}
+{{ config(
+    materialized='incremental',
+    incremental_strategy='delete+insert',
+    unique_key='campaign_id',
+    tags=['covid_flu']
+) }}
 
 WITH all_campaigns AS (
-    -- Generate data for both current and previous campaigns automatically
-    SELECT * FROM ({{ covid_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_spring_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_spring_config() }})
+    -- Every COVID campaign the models report on
+    -- (campaign list: macros/config/covid_campaign_selection.sql)
+    {{ covid_build_campaigns() }}
 ),
 
 -- Step 1: Find people with chronic liver disease diagnosis (for all campaigns)
@@ -31,12 +31,11 @@ people_with_cld_diagnosis AS (
         MIN(obs.clinical_effective_date) AS first_cld_date,
         cc.audit_end_date,
         cc.campaign_reference_date
-    FROM ({{ get_observations("'CLD_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'CLD_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= cc.audit_end_date
-        -- Only include if this condition is eligible in the campaign
-        AND cc.eligible_chronic_liver_disease = TRUE
     GROUP BY 
         cc.campaign_id, obs.person_id, cc.audit_end_date,
         cc.campaign_reference_date
@@ -48,16 +47,15 @@ people_with_cld_eligible_with_age AS (
         pcld.campaign_id,
         pcld.person_id,
         demo.birth_date_approx,
-        DATEDIFF('year', demo.birth_date_approx, pcld.campaign_reference_date) AS age_years_at_ref_date,
-        DATEDIFF('month', demo.birth_date_approx, pcld.campaign_reference_date) AS age_months_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(pcld.campaign_reference_date, demo.birth_date_approx) / 12) AS age_years_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(pcld.campaign_reference_date, demo.birth_date_approx)) AS age_months_at_ref_date,
         pcld.first_cld_date AS qualifying_event_date,
         pcld.campaign_reference_date
     FROM people_with_cld_diagnosis pcld
     LEFT JOIN {{ ref('dim_person_demographics') }} demo 
         ON pcld.person_id = demo.person_id
-    WHERE demo.is_active = TRUE
-        AND demo.birth_date_approx IS NOT NULL
-        AND DATEDIFF('year', demo.birth_date_approx, pcld.campaign_reference_date) >= 5  -- Minimum age 5
+    WHERE demo.birth_date_approx IS NOT NULL
+        AND demo.birth_date_approx <= DATEADD('year', -5, pcld.campaign_reference_date)  -- Minimum age 5, tested on birth date
 ),
 
 -- Step 3: Format for eligibility table

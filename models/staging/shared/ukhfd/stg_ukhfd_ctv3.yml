@@ -1,0 +1,49 @@
+version: 2
+models:
+  - name: stg_ukhfd_ctv3_term
+    description: >-
+      Latest retained definition of each historical CTV3 term identifier in UKHFD.
+      A term identifier is not a concept identifier. Retired terms remain available.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: code
+        description: Exact-case CTV3 term identifier; dots remain significant.
+        data_tests: [not_null, unique]
+      - name: term
+        description: Longest supplied term text, preferring the 198-character field.
+      - name: term_status
+        description: Retained source term status; no current-status filter is applied.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports the row in its latest source data.
+      - name: source_effective_from_at
+        description: Start of this retained UKHFD definition revision.
+      - name: source_imported_at
+        description: UKHFD ingestion timestamp for the retained revision.
+  - name: stg_ukhfd_ctv3_concept
+    description: >-
+      Latest retained UKHFD status of each historical CTV3 concept identifier.
+      Includes retired concepts. Distinguishes concept codes from term identifiers
+      when interpreting otherwise unmatched submitted CTV3 codes.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: code
+        description: Exact-case CTV3 concept identifier; dots remain significant.
+        data_tests: [not_null, unique]
+      - name: concept_status
+        description: Retained source concept status.
+      - name: linguistic_role
+        description: Retained source linguistic role.
+      - name: subject_type
+        description: Retained source subject type.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports the row in its latest source data.
+      - name: source_effective_from_at
+        description: Start of this retained UKHFD definition revision.
+      - name: source_imported_at
+        description: UKHFD ingestion timestamp for the retained revision.

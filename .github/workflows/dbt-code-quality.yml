@@ -19,9 +19,10 @@ jobs:
     name: No Hardcoded Table References
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Get changed files
         id: changed
         env:
@@ -32,11 +33,18 @@ jobs:
         run: |
           # merge_group has no base_ref; diff against the candidate's base SHA.
           BASE="${MERGE_GROUP_BASE_SHA:-origin/$BASE_REF}"
-          echo "files=$(git diff --name-only "$BASE"...HEAD | grep -E '\.(sql)$' | grep -E '^(models|macros|analyses)/' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+          {
+            echo 'files<<CHANGED_FILES_EOF'
+            git diff --name-only "$BASE"...HEAD | grep -E '\.(sql)$' | grep -E '^(models|macros|analyses)/' || true
+            echo 'CHANGED_FILES_EOF'
+          } >> "$GITHUB_OUTPUT"
       - name: Run check
         if: steps.changed.outputs.files != ''
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
         run: |
-          bash scripts/ci/check_hardcoded_refs.sh ${{ steps.changed.outputs.files }} | tee result.txt
+          mapfile -t files <<< "$CHANGED_FILES"
+          bash scripts/ci/check_hardcoded_refs.sh "${files[@]}" | tee result.txt
           cat result.txt >> $GITHUB_STEP_SUMMARY
           grep -q "^FAILED" result.txt && exit 1 || exit 0
 
@@ -44,9 +52,10 @@ jobs:
     name: Raw/Source References Only in Staging
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Get changed files
         id: changed
         env:
@@ -57,11 +66,18 @@ jobs:
         run: |
           # merge_group has no base_ref; diff against the candidate's base SHA.
           BASE="${MERGE_GROUP_BASE_SHA:-origin/$BASE_REF}"
-          echo "files=$(git diff --name-only "$BASE"...HEAD | grep -E '\.sql$' | grep -E '^models/' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+          {
+            echo 'files<<CHANGED_FILES_EOF'
+            git diff --name-only "$BASE"...HEAD | grep -E '\.sql$' | grep -E '^models/' || true
+            echo 'CHANGED_FILES_EOF'
+          } >> "$GITHUB_OUTPUT"
       - name: Run check
         if: steps.changed.outputs.files != ''
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
         run: |
-          bash scripts/ci/check_staging_refs.sh ${{ steps.changed.outputs.files }} | tee result.txt
+          mapfile -t files <<< "$CHANGED_FILES"
+          bash scripts/ci/check_staging_refs.sh "${files[@]}" | tee result.txt
           cat result.txt >> $GITHUB_STEP_SUMMARY
           grep -q "^FAILED" result.txt && exit 1 || exit 0
 
@@ -69,9 +85,10 @@ jobs:
     name: Model Descriptions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Install Python deps
         run: |
           python3 -m pip install --upgrade pip
@@ -86,11 +103,18 @@ jobs:
         run: |
           # merge_group has no base_ref; diff against the candidate's base SHA.
           BASE="${MERGE_GROUP_BASE_SHA:-origin/$BASE_REF}"
-          echo "files=$(git diff --name-only "$BASE"...HEAD | grep -E '\.sql$' | grep -E '^models/' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+          {
+            echo 'files<<CHANGED_FILES_EOF'
+            git diff --name-only "$BASE"...HEAD | grep -E '\.sql$' | grep -E '^models/' || true
+            echo 'CHANGED_FILES_EOF'
+          } >> "$GITHUB_OUTPUT"
       - name: Run check
         if: steps.changed.outputs.files != ''
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
         run: |
-          python3 scripts/ci/check_model_descriptions.py ${{ steps.changed.outputs.files }} | tee result.txt
+          mapfile -t files <<< "$CHANGED_FILES"
+          python3 scripts/ci/check_model_descriptions.py "${files[@]}" | tee result.txt
           cat result.txt >> $GITHUB_STEP_SUMMARY
           grep -q "^FAILED" result.txt && exit 1 || exit 0
 
@@ -98,9 +122,10 @@ jobs:
     name: Model Test Coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Install yq
         run: |
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
@@ -115,10 +140,17 @@ jobs:
         run: |
           # merge_group has no base_ref; diff against the candidate's base SHA.
           BASE="${MERGE_GROUP_BASE_SHA:-origin/$BASE_REF}"
-          echo "files=$(git diff --name-only "$BASE"...HEAD | grep -E '\.sql$' | grep -E '^models/' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+          {
+            echo 'files<<CHANGED_FILES_EOF'
+            git diff --name-only "$BASE"...HEAD | grep -E '\.sql$' | grep -E '^models/' || true
+            echo 'CHANGED_FILES_EOF'
+          } >> "$GITHUB_OUTPUT"
       - name: Run check
         if: steps.changed.outputs.files != ''
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
         run: |
-          bash scripts/ci/check_model_tests.sh ${{ steps.changed.outputs.files }} | tee result.txt
+          mapfile -t files <<< "$CHANGED_FILES"
+          bash scripts/ci/check_model_tests.sh "${files[@]}" | tee result.txt
           cat result.txt >> $GITHUB_STEP_SUMMARY
           grep -q "^FAILED" result.txt && exit 1 || exit 0

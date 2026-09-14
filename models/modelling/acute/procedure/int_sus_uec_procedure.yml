@@ -1,13 +1,17 @@
 
 models:
   - name: int_sus_uec_procedure
-    description: "Obervations from A&E attendances from SUS data limited to investigations,
-      treatments, comorbidities and coded findings"
+    description: >-
+      Distinct investigation, treatment, comorbidity and Coded Clinical Finding
+      codes submitted for ECDS attendances. One row represents one distinct
+      code per attendance and observation_type. observation_count records how
+      many source entries used that code.
     config:
+      tags: ["daily"]
       meta:
         owner:
           name: Emily Baldwin
-    tests:
+    data_tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
@@ -25,12 +29,17 @@ models:
 
       - name: visit_occurrence_id
         data_type: number
-        description: "Unique identifier for the attendance occurrence"
+        description: "ECDS attendance identifier."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('int_sus_uec_encounter')
+                field: visit_occurrence_id
 
       - name: observation_type
         data_type: varchar
-        description: "Type of observation (e.g., investigation, treatment, comorbidities,
-          findings)"
+        description: "Source list containing the code: investigation, treatment, comorbs or findings. Findings are ECDS Coded Clinical Findings, not diagnoses."
 
       - name: date
         data_type: date
@@ -64,6 +73,12 @@ models:
       - name: snomed_code
         data_type: varchar
         description: "Snomed code of the observation"
+        data_tests:
+          - not_null
+
+      - name: observation_count
+        data_type: number
+        description: "Number of source entries for this attendance, observation type and code."
 
       - name: ecds_description
         data_type: varchar

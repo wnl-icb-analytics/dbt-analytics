@@ -4,7 +4,7 @@
         tags=['adult_imms'])
 }}
 
-select * from (
+select distinct* from (
 select 
 sched.VACCINE_ORDER,
 sched.VACCINE_ID, 

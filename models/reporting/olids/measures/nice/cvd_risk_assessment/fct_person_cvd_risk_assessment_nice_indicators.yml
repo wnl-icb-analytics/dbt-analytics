@@ -1,0 +1,349 @@
+models:
+  - name: fct_person_cvd_risk_assessment_ind269
+    description: |
+      NICE IND269 CVD risk assessment in the general population. One row per currently
+      registered, living, non-test person aged 45 to 84 who meets the primary prevention
+      eligibility criteria, assessed on the build date.
+
+      Achievement requires a valid numeric QRISK, QRISK2 or QRISK3 result in the preceding
+      five years.
+
+      Excludes type 1 diabetes, familial hypercholesterolaemia, stage 3 to 5 chronic
+      kidney disease, lipid-lowering treatment prescribed in six months and any valid
+      QRISK score of at least 20%. Established CVD is also excluded: coronary heart
+      disease, peripheral arterial disease, or stroke or TIA without haemorrhagic stroke
+      history.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind269-cardiovascular-disease-prevention-risk-assessment-general-population
+        indicator:
+          id: "IND269"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CVD risk assessment, general population"
+          description_short: "QRISK recorded in five years for eligible people aged 45 to 84"
+          description_long: |
+            NICE IND269 CVD risk assessment in the general population. One row per
+            currently registered, living, non-test person aged 45 to 84 who meets the
+            primary prevention eligibility criteria, assessed on the build date.
+
+            Achievement requires a valid numeric QRISK, QRISK2 or QRISK3 result in the
+            preceding five years.
+
+            Excludes type 1 diabetes, familial hypercholesterolaemia, stage 3 to 5 chronic
+            kidney disease, lipid-lowering treatment prescribed in six months and any
+            valid QRISK score of at least 20%. Established CVD is also excluded: coronary
+            heart disease, peripheral arterial disease, or stroke or TIA without
+            haemorrhagic stroke history.
+
+            Personalised care adjustments are not applied.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND269"
+    columns: &risk_assessment_columns
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_risk_score
+        description: Latest valid QRISK score in percent; null if none
+      - name: latest_risk_score_date
+        description: Date of the latest valid QRISK score
+      - name: latest_risk_assessment_date
+        description: Date of the latest CVD risk assessment record, scored or not
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether a risk assessment falls in the indicator's window
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+
+  - name: fct_person_cvd_risk_assessment_ind270
+    description: |
+      NICE IND270 CVD risk assessment with a modifiable risk factor. One row per currently
+      registered, living, non-test person aged 43 to 84 who currently smokes, is on the
+      obesity or hypertension register, or has latest total cholesterol above 5 mmol/L,
+      assessed on the build date.
+
+      Achievement requires a valid numeric QRISK, QRISK2 or QRISK3 result in the preceding
+      three years. The cholesterol threshold is a local proxy for hypercholesterolaemia
+      that NICE and QOF do not define.
+
+      Excludes type 1 diabetes, familial hypercholesterolaemia, stage 3 to 5 chronic
+      kidney disease, lipid-lowering treatment prescribed in six months and any valid
+      QRISK score of at least 20%. Established CVD is also excluded: coronary heart
+      disease, peripheral arterial disease, or stroke or TIA without haemorrhagic stroke
+      history.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind270-cardiovascular-disease-prevention-risk-assessment-modifiable-risk-factors
+        indicator:
+          id: "IND270"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CVD risk assessment, modifiable risk factor"
+          description_short: "QRISK recorded in three years for eligible people aged 43 to 84 with a modifiable risk factor"
+          description_long: |
+            NICE IND270 CVD risk assessment with a modifiable risk factor. One row per
+            currently registered, living, non-test person aged 43 to 84 who currently
+            smokes, is on the obesity or hypertension register, or has latest total
+            cholesterol above 5 mmol/L, assessed on the build date.
+
+            Achievement requires a valid numeric QRISK, QRISK2 or QRISK3 result in the
+            preceding three years. The cholesterol threshold is a local proxy for
+            hypercholesterolaemia that NICE and QOF do not define.
+
+            Excludes type 1 diabetes, familial hypercholesterolaemia, stage 3 to 5 chronic
+            kidney disease, lipid-lowering treatment prescribed in six months and any
+            valid QRISK score of at least 20%. Established CVD is also excluded: coronary
+            heart disease, peripheral arterial disease, or stroke or TIA without
+            haemorrhagic stroke history.
+
+            Personalised care adjustments are not applied.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND270"
+    columns: *risk_assessment_columns
+
+  - name: fct_person_cvd_risk_assessment_ind181
+    description: |
+      NICE IND181 CVD risk assessment in type 2 diabetes. One row per currently
+      registered, living, non-test person aged 25 to 84 on the type 2 diabetes register
+      with no moderate or severe coded frailty and no statin prescription in the preceding
+      six months, assessed on the build date.
+
+      Achievement requires a cardiovascular disease (CVD) risk assessment in the preceding
+      three years. A coded assessment can count without a numeric score.
+
+      Excludes established CVD, including haemorrhagic stroke, familial
+      hypercholesterolaemia and stage 3 to 5 chronic kidney disease.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind181-diabetes-cvd-risk-assessment
+        indicator:
+          id: "IND181"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "T2DM CVD risk assessment"
+          description_short: "CVD risk assessment in three years for eligible people aged 25 to 84 with type 2 diabetes and no current statin"
+          description_long: |
+            NICE IND181 CVD risk assessment in type 2 diabetes. One row per currently
+            registered, living, non-test person aged 25 to 84 on the type 2 diabetes
+            register with no moderate or severe coded frailty and no statin prescription
+            in the preceding six months, assessed on the build date.
+
+            Achievement requires a cardiovascular disease (CVD) risk assessment in the
+            preceding three years. A coded assessment can count without a numeric score.
+
+            Excludes established CVD, including haemorrhagic stroke, familial
+            hypercholesterolaemia and stage 3 to 5 chronic kidney disease.
+
+            Personalised care adjustments are not applied.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND181"
+    columns: *risk_assessment_columns
+
+  - name: fct_person_cvd_risk_assessment_ind161
+    description: |
+      NICE IND161 CVD risk assessment at a new diagnosis. One row per currently
+      registered, living, non-test person aged 25 to 84 with newly recorded hypertension
+      or type 2 diabetes in the preceding 12 months, assessed on the build date.
+
+      Achievement requires a cardiovascular disease (CVD) risk assessment within three
+      calendar months before or after the qualifying diagnosis. If both diagnoses are new,
+      the earlier qualifying date is used; NICE and QOF do not settle this local choice.
+
+      Excludes established CVD, including haemorrhagic stroke, stage 3 to 5 chronic kidney
+      disease, familial hypercholesterolaemia and type 1 diabetes. A coded assessment can
+      count without a numeric score.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind161-cardiovascular-disease-prevention-cardiovascular-risk-assessment-for-people-newly-diagnosed-with-hypertension-or-t2-dm
+        indicator:
+          id: "IND161"
+          type: "MEASURE"
+          category: "CARDIOVASCULAR"
+          clinical_domain: "Cardiometabolic"
+          name_short: "New hypertension or T2DM CVD risk assessment"
+          description_short: "CVD risk assessment within three months before or after a new hypertension or type 2 diabetes diagnosis"
+          description_long: |
+            NICE IND161 CVD risk assessment at a new diagnosis. One row per currently
+            registered, living, non-test person aged 25 to 84 with newly recorded
+            hypertension or type 2 diabetes in the preceding 12 months, assessed on the
+            build date.
+
+            Achievement requires a cardiovascular disease (CVD) risk assessment within
+            three calendar months before or after the qualifying diagnosis. If both
+            diagnoses are new, the earlier qualifying date is used; NICE and QOF do not
+            settle this local choice.
+
+            Excludes established CVD, including haemorrhagic stroke, stage 3 to 5 chronic
+            kidney disease, familial hypercholesterolaemia and type 1 diabetes. A coded
+            assessment can count without a numeric score.
+
+            Personalised care adjustments are not applied.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND161"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_risk_score
+        description: Latest valid QRISK score in percent; null if none
+      - name: latest_risk_score_date
+        description: Date of the latest valid QRISK score
+      - name: latest_risk_assessment_date
+        description: Date of the latest CVD risk assessment record, scored or not
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether a risk assessment falls in the indicator's window
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+      - name: new_diagnosis_date
+        description: Earlier of the qualifying hypertension and type 2 diabetes diagnosis dates in the period
+
+  - name: fct_person_cvd_risk_assessment_nice_indicators
+    description: |
+      NICE cardiovascular risk assessment results for IND161, IND181, IND269 and IND270.
+      One row per eligible person and indicator on the build date, with risk scores,
+      assessment dates and achievement.
+
+      Each indicator retains its own population, time window and clinical criteria. A
+      person can appear for several indicators. These results feed the combined NICE
+      indicator status model.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+      - name: indicator_id
+        description: NICE indicator identifier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IND269', 'IND270', 'IND181', 'IND161']
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+      - name: latest_risk_score
+        description: Latest valid QRISK score in percent; null if none
+      - name: latest_risk_assessment_date
+        description: Date of the latest CVD risk assessment record
+      - name: new_diagnosis_date
+        description: Earlier qualifying diagnosis date for IND161; null for other indicators
+
+  - name: fct_person_cvd_risk_assessment_nice_indicators_snapshot_input
+    description: |
+      Current NICE cardiovascular risk assessment results prepared for history tracking.
+      One row per eligible person and indicator for IND161, IND181, IND269 and IND270,
+      with current practice, risk scores, assessment dates and achievement.
+
+      The snapshot records changes to these fields. Rolling reporting dates are omitted so
+      the passage of a day alone does not create a new version.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: latest_risk_score
+        description: Latest valid QRISK score in percent.
+      - name: latest_risk_assessment_date
+        description: Date of the latest CVD risk assessment record.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.

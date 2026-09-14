@@ -1,0 +1,34 @@
+models:
+  - name: int_egfr_test_all
+    description: >
+      Estimated glomerular filtration rate test records, one row per PCD
+      EGFR_COD observation on or before the build date, for all people.
+      Includes tests without a numeric result so that recorded care processes
+      can be counted. Use int_egfr_all for numerical kidney-function assessment.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: EGFR_COD
+            source: PCD
+    columns:
+      - name: id
+        description: Unique identifier for the recorded eGFR test.
+        tests:
+          - unique
+          - not_null
+      - name: is_result_recorded
+        description: Whether a result value is recorded. This does not validate its numerical interpretation.
+      - name: person_id
+        description: Person associated with the test record.
+      - name: clinical_effective_date
+        description: Recorded clinical date and time of the test, on or before the reporting day.
+      - name: concept_code
+        description: SNOMED CT code for the recorded test.
+      - name: concept_display
+        description: Recorded display text for the test code.
+      - name: source_cluster_id
+        description: PCD EGFR_COD cluster identifying an eGFR test.

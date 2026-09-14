@@ -1,0 +1,41 @@
+models:
+  - name: int_lipid_lowering_therapy_latest
+    description: >
+      Latest lipid-lowering therapy order per person, one row per person with any
+      counted order, including inactive and deceased people. Counted classes are
+      statins alone or in combination, ezetimibe, bempedoic acid, PCSK9 inhibitors,
+      inclisiran, fibrates and bile acid sequestrants: products whose purpose is to
+      lower LDL or non-HDL cholesterol, matching the NICE wording "a statin or
+      non-statin lipid-lowering therapy". Nicotinic acid and omega-3 products act
+      mainly on triglycerides and are not counted. Consumers apply their own
+      window to latest_order_date; the NICE indicators use six calendar months
+      before the reporting date.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/guidance/ng238
+    columns:
+      - name: person_id
+        description: Person with at least one counted order.
+        data_tests:
+          - unique
+          - not_null
+      - name: latest_order_date
+        description: Date of the most recent counted order.
+      - name: latest_order_id
+        description: Medication order identifier of the most recent counted order. Same-day ties prefer a statin, then the higher order id.
+      - name: latest_lipid_lowering_class
+        description: Class of the most recent counted order.
+      - name: latest_product_name
+        description: BNF product name of the most recent counted order.
+      - name: is_latest_order_statin
+        description: Whether the most recent counted order contains a statin.
+      - name: latest_statin_intensity
+        description: Statin intensity of the most recent order; null for non-statin products.
+      - name: latest_statin_order_date
+        description: Date of the most recent statin order; null if never on a statin.
+      - name: first_order_date
+        description: Date of the earliest counted order.
+      - name: order_count
+        description: Number of counted orders ever.

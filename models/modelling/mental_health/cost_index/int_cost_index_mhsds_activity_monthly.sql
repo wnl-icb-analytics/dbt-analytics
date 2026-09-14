@@ -55,7 +55,7 @@ with month_spine as (
 , contact_activity as (
     select
         sk_patient_id
-        , date_trunc('month', care_cont_date)::date            as activity_month
+        , date_trunc('month', care_contact_date)::date         as activity_month
         , iff(
             is_crisis_referral
             , 'MH Crisis Contact'

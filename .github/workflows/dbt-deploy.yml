@@ -46,7 +46,7 @@ jobs:
     steps:
       - name: Resolve skip-deploy marker
         id: decision
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0
         with:
           script: |
             if (context.eventName === 'workflow_dispatch') {
@@ -108,6 +108,7 @@ jobs:
     concurrency:
       group: dbt-prod
       cancel-in-progress: false
+      queue: max
     permissions:
       contents: read
       issues: write  # failure issues (report_dbt_failures.py)
@@ -119,7 +120,7 @@ jobs:
       SNOWFLAKE_ROLE: DBT_ADMIN
       SNOWFLAKE_WAREHOUSE: WH_WNL_ENGINEERING_M
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           # Failure attribution compares failed dbt dependency paths with the
@@ -136,9 +137,9 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           "$HOME/.local/bin/dbt" --version
 
-      - uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
-          version: "0.6.x"
+          version: "0.9.x"
 
       - name: Write Snowflake private key
         env:

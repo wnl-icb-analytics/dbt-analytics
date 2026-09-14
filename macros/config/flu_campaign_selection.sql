@@ -1,102 +1,71 @@
 /*
-Flu Campaign Configuration
+Flu Campaign Selection
 
-Usage:
-  WHERE observation_date >= {{ flu_current_campaign_start_date() }}
-    AND observation_date <= {{ flu_current_campaign_end_date() }}
+flu_reported_campaign_ids() is the set of campaigns the flu models build, and
+flu_reported_campaigns() emits them as one CTE:
 
-To change campaign year, update flu_current_campaign() and flu_previous_campaign() below.
+  WITH all_campaigns AS (
+      {{ flu_reported_campaigns() }}
+  )
+
+Every campaign listed there stays in the models for good, so a season that has been
+reported keeps its rows when the next one is added, and its population is resolved as at
+the campaign rather than as at today (int_covid_flu_campaign_population). Clinical
+eligibility is still recomputed on every build, so a code entered retrospectively can
+still move a closed season.
+
+To add a season, define it in flu_campaign_config() first, then append its id here.
+
+flu_current_campaign() and flu_previous_campaign() name the season in flight. They do not
+control which campaigns are built; they exist so a model that needs "this season" can say
+so rather than hardcoding an id.
+
+Dates live in flu_campaign_config() only. This file holds no dates.
 */
 
-{# ===== Campaign ID selectors (edit these to change campaign year) ===== #}
+{# ===== Campaigns the models build (add new campaigns here; never remove) ===== #}
 
-{% macro flu_current_campaign() %}Flu 2025-26{% endmacro %}
-{% macro flu_previous_campaign() %}Flu 2024-25{% endmacro %}
-
-{# ===== Campaign data lookup ===== #}
-
-{% macro _flu_campaign_data(campaign_id, field) %}
-    {%- if campaign_id == 'Flu 2025-26' -%}
-        {%- if field == 'campaign_name' -%}2025-26 Flu Vaccination Campaign
-        {%- elif field == 'campaign_start_date' -%}'2025-09-01'::DATE
-        {%- elif field == 'campaign_end_date' -%}'2026-02-28'::DATE
-        {%- elif field == 'campaign_reference_date' -%}'2026-03-31'::DATE
-        {%- elif field == 'child_reference_date' -%}'2025-08-31'::DATE
-        {%- elif field == 'asthma_medication_lookback_date' -%}'2024-09-01'::DATE
-        {%- elif field == 'immuno_medication_lookback_date' -%}'2025-03-01'::DATE
-        {%- elif field == 'child_preschool_birth_start' -%}'2021-09-01'::DATE
-        {%- elif field == 'child_preschool_birth_end' -%}'2023-08-31'::DATE
-        {%- elif field == 'child_school_age_birth_start' -%}'2009-09-01'::DATE
-        {%- elif field == 'child_school_age_birth_end' -%}'2021-08-31'::DATE
-        {%- elif field == 'flu_vaccination_after_date' -%}'2025-08-31'::DATE
-        {%- elif field == 'laiv_vaccination_after_date' -%}'2025-08-31'::DATE
-        {%- endif -%}
-    {%- elif campaign_id == 'Flu 2024-25' -%}
-        {%- if field == 'campaign_name' -%}2024-25 Flu Vaccination Campaign
-        {%- elif field == 'campaign_start_date' -%}'2024-09-01'::DATE
-        {%- elif field == 'campaign_end_date' -%}'2025-02-28'::DATE
-        {%- elif field == 'campaign_reference_date' -%}'2025-03-31'::DATE
-        {%- elif field == 'child_reference_date' -%}'2024-08-31'::DATE
-        {%- elif field == 'asthma_medication_lookback_date' -%}'2023-09-01'::DATE
-        {%- elif field == 'immuno_medication_lookback_date' -%}'2024-03-01'::DATE
-        {%- elif field == 'child_preschool_birth_start' -%}'2020-09-01'::DATE
-        {%- elif field == 'child_preschool_birth_end' -%}'2022-08-31'::DATE
-        {%- elif field == 'child_school_age_birth_start' -%}'2008-09-01'::DATE
-        {%- elif field == 'child_school_age_birth_end' -%}'2020-08-31'::DATE
-        {%- elif field == 'flu_vaccination_after_date' -%}'2024-08-31'::DATE
-        {%- elif field == 'laiv_vaccination_after_date' -%}'2024-08-31'::DATE
-        {%- endif -%}
-    {%- elif campaign_id == 'Flu 2023-24' -%}
-        {%- if field == 'campaign_name' -%}2023-24 Flu Vaccination Campaign
-        {%- elif field == 'campaign_start_date' -%}'2023-09-01'::DATE
-        {%- elif field == 'campaign_end_date' -%}'2024-03-31'::DATE
-        {%- elif field == 'campaign_reference_date' -%}'2024-03-31'::DATE
-        {%- elif field == 'child_reference_date' -%}'2023-08-31'::DATE
-        {%- elif field == 'asthma_medication_lookback_date' -%}'2022-09-01'::DATE
-        {%- elif field == 'immuno_medication_lookback_date' -%}'2023-03-01'::DATE
-        {%- elif field == 'child_preschool_birth_start' -%}'2019-09-01'::DATE
-        {%- elif field == 'child_preschool_birth_end' -%}'2021-08-31'::DATE
-        {%- elif field == 'child_school_age_birth_start' -%}'2007-09-01'::DATE
-        {%- elif field == 'child_school_age_birth_end' -%}'2019-08-31'::DATE
-        {%- elif field == 'flu_vaccination_after_date' -%}'2023-08-31'::DATE
-        {%- elif field == 'laiv_vaccination_after_date' -%}'2023-08-31'::DATE
-        {%- endif -%}
-    {%- endif -%}
+{% macro flu_reported_campaign_ids() %}
+    {{ return([
+        'Flu 2024-25',
+        'Flu 2025-26',
+        'Flu 2026-27'
+    ]) }}
 {% endmacro %}
 
-{# ===== Current campaign field accessors ===== #}
+{% macro flu_reported_campaigns() %}
+    {%- for campaign_id in flu_reported_campaign_ids() %}
+    {%- if not loop.first %}
+    UNION ALL
+    {% endif %}
+    SELECT * FROM ({{ flu_campaign_config(campaign_id) }})
+    {%- endfor %}
+{% endmacro %}
 
-{% macro flu_current_campaign_name() %}{{ _flu_campaign_data(flu_current_campaign(), 'campaign_name') }}{% endmacro %}
-{% macro flu_current_campaign_start_date() %}{{ _flu_campaign_data(flu_current_campaign(), 'campaign_start_date') }}{% endmacro %}
-{% macro flu_current_campaign_end_date() %}{{ _flu_campaign_data(flu_current_campaign(), 'campaign_end_date') }}{% endmacro %}
-{% macro flu_current_campaign_reference_date() %}{{ _flu_campaign_data(flu_current_campaign(), 'campaign_reference_date') }}{% endmacro %}
-{% macro flu_current_child_reference_date() %}{{ _flu_campaign_data(flu_current_campaign(), 'child_reference_date') }}{% endmacro %}
-{% macro flu_current_asthma_medication_lookback_date() %}{{ _flu_campaign_data(flu_current_campaign(), 'asthma_medication_lookback_date') }}{% endmacro %}
-{% macro flu_current_immuno_medication_lookback_date() %}{{ _flu_campaign_data(flu_current_campaign(), 'immuno_medication_lookback_date') }}{% endmacro %}
-{% macro flu_current_child_preschool_birth_start() %}{{ _flu_campaign_data(flu_current_campaign(), 'child_preschool_birth_start') }}{% endmacro %}
-{% macro flu_current_child_preschool_birth_end() %}{{ _flu_campaign_data(flu_current_campaign(), 'child_preschool_birth_end') }}{% endmacro %}
-{% macro flu_current_child_school_age_birth_start() %}{{ _flu_campaign_data(flu_current_campaign(), 'child_school_age_birth_start') }}{% endmacro %}
-{% macro flu_current_child_school_age_birth_end() %}{{ _flu_campaign_data(flu_current_campaign(), 'child_school_age_birth_end') }}{% endmacro %}
-{% macro flu_current_vaccination_after_date() %}{{ _flu_campaign_data(flu_current_campaign(), 'flu_vaccination_after_date') }}{% endmacro %}
-{% macro flu_current_laiv_vaccination_after_date() %}{{ _flu_campaign_data(flu_current_campaign(), 'laiv_vaccination_after_date') }}{% endmacro %}
+{# ===== Season in flight (roll these forward each year) ===== #}
 
-{# ===== Previous campaign field accessors ===== #}
+{% macro flu_current_campaign() %}Flu 2026-27{% endmacro %}
+{% macro flu_previous_campaign() %}Flu 2025-26{% endmacro %}
 
-{% macro flu_previous_campaign_name() %}{{ _flu_campaign_data(flu_previous_campaign(), 'campaign_name') }}{% endmacro %}
-{% macro flu_previous_campaign_start_date() %}{{ _flu_campaign_data(flu_previous_campaign(), 'campaign_start_date') }}{% endmacro %}
-{% macro flu_previous_campaign_end_date() %}{{ _flu_campaign_data(flu_previous_campaign(), 'campaign_end_date') }}{% endmacro %}
-{% macro flu_previous_campaign_reference_date() %}{{ _flu_campaign_data(flu_previous_campaign(), 'campaign_reference_date') }}{% endmacro %}
-{% macro flu_previous_child_reference_date() %}{{ _flu_campaign_data(flu_previous_campaign(), 'child_reference_date') }}{% endmacro %}
-{% macro flu_previous_asthma_medication_lookback_date() %}{{ _flu_campaign_data(flu_previous_campaign(), 'asthma_medication_lookback_date') }}{% endmacro %}
-{% macro flu_previous_immuno_medication_lookback_date() %}{{ _flu_campaign_data(flu_previous_campaign(), 'immuno_medication_lookback_date') }}{% endmacro %}
-{% macro flu_previous_child_preschool_birth_start() %}{{ _flu_campaign_data(flu_previous_campaign(), 'child_preschool_birth_start') }}{% endmacro %}
-{% macro flu_previous_child_preschool_birth_end() %}{{ _flu_campaign_data(flu_previous_campaign(), 'child_preschool_birth_end') }}{% endmacro %}
-{% macro flu_previous_child_school_age_birth_start() %}{{ _flu_campaign_data(flu_previous_campaign(), 'child_school_age_birth_start') }}{% endmacro %}
-{% macro flu_previous_child_school_age_birth_end() %}{{ _flu_campaign_data(flu_previous_campaign(), 'child_school_age_birth_end') }}{% endmacro %}
-{% macro flu_previous_vaccination_after_date() %}{{ _flu_campaign_data(flu_previous_campaign(), 'flu_vaccination_after_date') }}{% endmacro %}
-{% macro flu_previous_laiv_vaccination_after_date() %}{{ _flu_campaign_data(flu_previous_campaign(), 'laiv_vaccination_after_date') }}{% endmacro %}
-
-{# ===== Legacy CTE-style config (for backward compatibility) ===== #}
+{# ===== Single-campaign config accessors ===== #}
 
 {% macro flu_current_config() %}{{ flu_campaign_config(flu_current_campaign()) }}{% endmacro %}
 {% macro flu_previous_config() %}{{ flu_campaign_config(flu_previous_campaign()) }}{% endmacro %}
+
+{# ===== Campaigns a build recomputes ===== #}
+
+{#- Closed seasons are recomputed monthly, not daily. The cohort intermediates are
+    incremental (delete+insert on campaign_id) and take their all_campaigns CTE from
+    this macro: a routine incremental run rebuilds only the season in flight, so a
+    closed season keeps its rows until a run with --full-refresh, or with
+    --vars '{covid_flu_rebuild_closed: true}', restates every campaign against the
+    current source data and its pinned terminology version. -#}
+
+{% macro flu_build_campaigns() %}
+    {%- if is_incremental() and not var('covid_flu_rebuild_closed', false) -%}
+    SELECT * FROM ({{ flu_reported_campaigns() }})
+    WHERE campaign_id = '{{ flu_current_campaign() }}'
+    {%- else -%}
+    {{ flu_reported_campaigns() }}
+    {%- endif -%}
+{% endmacro %}

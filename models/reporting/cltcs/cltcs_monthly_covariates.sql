@@ -26,7 +26,7 @@ placeholder literals for logic testing; swap in the monthly date_spine (commente
 index_dates CTE) for production.
 */
 
-{%- set index_dates = ['2026-08-31'] -%}
+{%- set index_dates = ['2026-09-01'] -%}
 {#-
     v1: placeholder index dates for the logic test (both fall in the 2026-07 roster month).
     Driven by this Jinja list so the spine and the per-date pregnancy reconstruction below

@@ -6,7 +6,14 @@ models:
       MHSDS mental health profile for people with a referral, care contact, or
       occupancy-ruled inpatient spell. Grain: one row per person_id. Current
       state reflects the active MHSDS feed, which runs about six weeks behind
-      the run date.
+      the run date. Contact recency and Mental Health Act currency both measure
+      back from the latest accepted reporting period end date, so the model uses
+      one clock. Where providers submit different current patient indicators,
+      the newest reporting period and file receipt take precedence. Referral and
+      contact measures use the published MHSDS facts. Detention follows the
+      national Mental Health Act legal status code definitions in the MHSDS
+      Enhanced Technical Output Specification, held in
+      mhsds_mh_act_legal_status_classification.
     config:
       meta:
         owner:
@@ -30,13 +37,25 @@ models:
       - name: latest_contact_date
         description: Latest care contact date.
       - name: has_contact_last_12m
-        description: Whether a contact is recorded in the last 12 months.
+        description: >-
+          Whether a contact is recorded in the 12 months ending at the latest
+          accepted reporting period end date.
       - name: has_contact_last_90d
-        description: Whether a contact is recorded in the last 90 days.
+        description: >-
+          Whether a contact is recorded in the 90 days ending at the latest
+          accepted reporting period end date.
       - name: n_attended_contacts_12m
-        description: Number of attended care contacts in the last 12 months.
+        description: >-
+          Number of attended care contacts in the 12 months ending at the
+          latest accepted reporting period end date.
+      - name: n_contacts_with_missing_attendance_status_12m
+        description: >-
+          Number of contacts without an attendance status in the 12 months
+          ending at the latest accepted reporting period end date.
       - name: has_crisis_contact_12m
-        description: Whether an attended crisis-referral contact is recorded in the last 12 months.
+        description: >-
+          Whether an attended crisis-referral contact is recorded in the 12
+          months ending at the latest accepted reporting period end date.
       - name: is_current_inpatient
         description: Whether the person has an open occupancy-ruled inpatient spell.
       - name: latest_admission_date
@@ -47,21 +66,75 @@ models:
         description: Number of occupancy-ruled inpatient spells.
       - name: ever_inpatient
         description: Whether the person has an occupancy-ruled inpatient spell.
+      - name: has_diagnosis_record
+        description: >-
+          Whether the person has a dated MHS604 primary diagnosis record on a
+          retained referral. Read it with icd10_3: true with a null icd10_3
+          means the latest diagnosis record did not resolve to ICD-10, false
+          means no dated primary diagnosis on a retained referral. Undated
+          diagnoses remain available in fct_mhsds_clinical_record.
       - name: icd10_3
-        description: Latest three-character ICD-10 diagnosis code.
+        description: >-
+          Three-character ICD-10 code of the person's latest dated primary diagnosis,
+          selected by coding timestamp. Null when that record did not resolve
+          to ICD-10, which happens for an ICD-10 code outside F, G, Q and R and
+          for a SNOMED code with no ICD-10 map. This is not the latest ICD-10
+          code available: an earlier coded diagnosis is not substituted.
+      - name: icd10_3_description
+        description: >-
+          Published description for icd10_3. Null when icd10_3 is null or the
+          code is absent from the ICD-10 reference.
       - name: diagnosis_category
-        description: Currency population category for the latest diagnosis.
+        description: >-
+          Currency population category for icd10_3. Null when icd10_3 is null
+          or falls outside the currency ICD-10 ranges, so use
+          has_diagnosis_record and icd10_3 to tell those states apart.
       - name: latest_diagnosis_date
-        description: Latest diagnosis coding timestamp.
-      - name: ever_detained
-        description: Whether a formal Mental Health Act legal status is recorded.
-      - name: latest_detention_start_date
-        description: Latest formal Mental Health Act legal-status start date.
+        description: >-
+          Coding timestamp of the latest diagnosis record, whether or not it
+          resolved to ICD-10.
+      - name: has_ever_been_detained
+        description: >-
+          Whether any Mental Health Act legal-status period carries a code whose
+          national definition is a detention. Guardianship under Sections 7 and
+          37, informal admission, not applicable, not known and the -1 sentinel
+          do not count. The NHS England Learning Disability and Autism measures
+          additionally treat a patient as informal while a concurrent community
+          order is open; that publication-specific rule is not applied here, so
+          this flag counts such patients as detained.
       - name: is_currently_detained
-        description: Whether a formal legal-status period is current in the feed.
-      - name: cpp_status_code
-        description: >
-          Latest child protection plan status code, uninterpreted - the MHSDS
-          code semantics are unverified against the TOS.
+        description: >-
+          Whether an open detention period appeared within the latest three
+          accepted reporting periods and had not expired as at the latest
+          accepted reporting period end date, not the run date. A period is
+          current through and including its expiry date. Uses the same
+          detention definition as has_ever_been_detained, including its
+          treatment of concurrent community orders.
+      - name: latest_detention_start_date
+        description: >-
+          Start date of the person's latest detained period. Null when the
+          person has never been detained, or when the source start date was an
+          Excel-epoch missing-value sentinel.
+      - name: latest_detention_code
+        description: >-
+          NHSD legal-status code of the person's latest detained period, so the
+          flags can be audited and narrowed. Null when the person has never been
+          detained, including someone whose only legal-status periods are
+          guardianship, informal or unknown.
+      - name: latest_detention_description
+        description: >-
+          UKHFD dictionary description for latest_detention_code, taken from the
+          maintained national reference so it tracks national wording updates.
+          Null when the person has never been detained, or when the code is
+          absent from the UKHFD classification. The detention rule is not
+          derived from this text.
+      - name: child_protection_plan_status_code
+        description: Latest submitted child protection plan status code.
+      - name: child_protection_plan_status_description
+        description: Published description for the child protection plan status.
+      - name: looked_after_child_indicator_code
+        description: Latest submitted looked-after-child indicator code.
+      - name: looked_after_child_indicator_description
+        description: Published description for the looked-after-child indicator.
       - name: is_looked_after_child
-        description: Whether the latest patient indicators record looked-after status.
+        description: Whether the latest indicator is yes; null for unknown or missing.

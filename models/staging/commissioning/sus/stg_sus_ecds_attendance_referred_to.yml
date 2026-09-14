@@ -1,0 +1,30 @@
+models:
+  - name: stg_sus_ecds_attendance_referred_to
+    description: Services to which a patient was referred during a SUS ECDS attendance.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - primarykey_id
+              - referred_to_id
+    columns:
+      - name: primarykey_id
+        description: Primary key from the parent emergency care attendance.
+        data_tests:
+          - not_null
+      - name: referred_to_id
+        description: Source sequence identifier for a referred-to service.
+        data_tests:
+          - not_null
+      - name: rownumber_id
+        description: Source row identifier.
+      - name: referred_to_service_code
+        description: SNOMED CT code identifying the service to which the patient was referred.
+      - name: assessment_date
+        description: Date the referred-to service assessed the patient.
+      - name: assessment_time
+        description: Time the referred-to service assessed the patient.

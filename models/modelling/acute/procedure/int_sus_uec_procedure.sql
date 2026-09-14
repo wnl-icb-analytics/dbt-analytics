@@ -1,7 +1,4 @@
 {{ config(materialized="table") }}
-
-
--- note: using sk_patient_id as person_id
 with investigations as (
     select primarykey_id
         ,code
@@ -55,7 +52,7 @@ comorb_dict as(
         from {{ref('stg_dictionary_ecds_comorbidity')}}
 ),
 findings as (
-    select distinct primarykey_id
+    select primarykey_id
         ,code
         , count(*) as observation_count
         , array_agg(distinct coded_findings_id)  WITHIN GROUP (ORDER BY coded_findings_id ASC) as ordered_id_array
@@ -76,15 +73,15 @@ all_obs as(
     select *
     from investigations
     left join inv_dict on inv_dict.snomed_code = investigations.code
-    union 
+    union all
     select *
     from treatments
     left join treat_dict on treat_dict.snomed_code = treatments.code
-    union 
+    union all
     select *
     from comorbs
     left join comorb_dict on comorb_dict.snomed_code = comorbs.code
-    union 
+    union all
     select *
     from findings
     left join find_dict on find_dict.snomed_code = findings.code
@@ -113,6 +110,3 @@ from all_obs as f
 
 /* Diagnosis code for infering reason */
 left join {{ref('int_sus_uec_encounter')}}  as sa on sa.visit_occurrence_id = f.primarykey_id
-
-where sa.sk_patient_id is not null
-and f.code is not null

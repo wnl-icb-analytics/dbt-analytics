@@ -12,12 +12,18 @@ models:
       admission ends any spell still open at that date
       (end_date_source 'superseded'). Time
       semantics: diagnosis is the latest recorded on or before discharge, or
-      today for open spells. MAZ98 codes can arise from referral reason 18 and
-      have no published price; the reporting model uses its price fallback.
+      today for open spells. Cross-cutting crisis spells publish as MAZ99Z:
+      they stay in the nationally published MAZ99 family, and the family's
+      A-D suffixes name crisis service settings rather than bed types.
+      Bed-day pricing is resolved separately.
     config:
       meta:
         owner:
           name: Eddie Davison
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "currency_group <> 'MAZ' or currency_code = 'MAZ99Z'"
     columns:
       - name: uniq_hosp_prov_spell_num
         description: Hospital provider spell identifier.
@@ -41,7 +47,15 @@ models:
       - name: age_hosp_start_date
         description: MHSDS-derived age at admission.
       - name: is_cyp
-        description: Whether age at admission is under 18.
+        description: >-
+          Whether age at admission is under 18. A spell with no recorded age is
+          treated as adult, so read this with has_known_age_at_admission. Most
+          accepted spells carry no recorded age.
+      - name: has_known_age_at_admission
+        description: >-
+          Whether an age at admission was recorded. False means is_cyp and the
+          population-group cascade fell back to the adult branch rather than
+          using a known age.
       - name: icd10_3
         description: Latest three-character ICD-10 code.
       - name: diagnosis_category

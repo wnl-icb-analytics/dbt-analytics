@@ -1,0 +1,29 @@
+snapshots:
+  - name: fct_person_ltc_review_nice_indicators_snapshot
+    relation: ref('fct_person_ltc_review_nice_indicators_snapshot_input')
+    description: >
+      SCD2 history of the NICE long-term condition review indicators (IND104,
+      IND110, IND139, IND142, IND191, IND195, IND223, IND265, IND266, IND273)
+      per person and indicator: current practice, latest qualifying record and
+      outcome. Sources the thin snapshot-input view rather than the measure,
+      because CURRENT_DATE() derived columns change every run. check_cols: all
+      over the thin projection. Rows leaving the population are closed via
+      hard_deletes: invalidate.
+    config:
+      strategy: check
+      unique_key: [person_id, indicator_id]
+      check_cols: all
+      hard_deletes: invalidate
+    columns:
+      - name: person_id
+        description: "Person identifier; part of the snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: "NICE indicator identifier; part of the snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

@@ -1,0 +1,31 @@
+version: 2
+seeds:
+  - name: csds_assessment_scale_definitions
+    description: >-
+      Public CSDS Assessment Tools metadata from CSDS ETOS v1.6.10.
+      One row per concept, published value and specification version. Regenerate with
+      scripts/reference/generate_csds_assessment_seed.py. This is reference
+      metadata, not submitted assessment data or permission to use a licensed tool.
+    config:
+      column_types:
+        concept_code: varchar(18)
+        published_value: varchar(100)
+        response_description: varchar(4000)
+        decimal_places: varchar(20)
+        specification_version: varchar(20)
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [concept_code, published_value, specification_version]
+    columns:
+      - name: concept_code
+        description: Published SNOMED concept ID published for the observable.
+        data_tests: [not_null]
+      - name: published_value
+        description: Enumerated response code or verbatim published numeric range.
+      - name: response_description
+        description: Verbatim published response meaning, null for ranges without a label.
+      - name: decimal_places
+        description: Published number of permitted decimal places, not an inferred clinical threshold.
+      - name: source_row
+        description: One-based row in the CSDS Assessment Tools worksheet of the named specification.

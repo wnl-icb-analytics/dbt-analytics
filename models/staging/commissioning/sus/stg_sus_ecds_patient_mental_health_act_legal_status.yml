@@ -1,0 +1,30 @@
+models:
+  - name: stg_sus_ecds_patient_mental_health_act_legal_status
+    description: Mental Health Act legal statuses recorded for SUS ECDS attendances.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - primarykey_id
+              - mental_health_act_legal_status_id
+    columns:
+      - name: primarykey_id
+        description: Primary key from the parent emergency care attendance.
+        data_tests:
+          - not_null
+      - name: mental_health_act_legal_status_id
+        description: Source sequence identifier for a Mental Health Act legal status.
+        data_tests:
+          - not_null
+      - name: rownumber_id
+        description: Source row identifier.
+      - name: legal_status_code
+        description: Mental Health Act legal status classification code.
+      - name: assigned_at
+        description: Timestamp at which the legal status was assigned.
+      - name: expires_at
+        description: Timestamp at which the legal status expired or is due to expire.

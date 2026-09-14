@@ -111,7 +111,7 @@ with activity as (
 -- ~5% of submitted "2021" LSOAs are retired 2011 codes; bridge them to a
 -- 2021 code (any split member - LAD is stable across splits) and resolve
 , lsoa11_to_lad as (
-    select
+    select distinct
         b.old_lsoa_code as lsoa11_cd
         , l.residence_borough
     from {{ ref('stg_ukhfd_old_lsoa_to_new_lsoa_map') }} as b

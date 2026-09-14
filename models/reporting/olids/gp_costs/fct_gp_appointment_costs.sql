@@ -20,7 +20,7 @@ for the full cost derivation methodology — this model only aggregates,
 it does not transform the underlying cost values.
 
 Two cost totals per group:
-- total_cost_gbp_base_prices  : always in 2023/24 real-terms prices,
+- total_cost_gbp_base_prices  : always in 2024/25 real-terms prices,
                                 use for cross-year comparisons
 - total_cost_gbp_nominal      : in the appointment's own fiscal year
                                 prices (GDP deflator adjusted),
@@ -54,7 +54,7 @@ select
     MAX(fiscal_year_start) as fiscal_year_start,
 
     -- Seed-determined passthroughs (invariant within practitioner_role_group
-    -- because they come from the pssru_unit_costs_2024 seed keyed on
+    -- because they come from the pssru_unit_costs_2025 seed keyed on
     -- practitioner_role_group; ANY_VALUE is safe here)
     ANY_VALUE(cost_is_proxy) as cost_is_proxy,
     ANY_VALUE(cost_proxy_source) as cost_proxy_source,
@@ -69,7 +69,7 @@ select
     SUM(duration_minutes) as total_duration_minutes,
     ROUND(AVG(duration_minutes), 1) as avg_duration_minutes,
 
-    -- Cost in PSSRU 2023/24 real-terms prices (cross-year comparable)
+    -- Cost in PSSRU 2024/25 real-terms prices (cross-year comparable)
     ROUND(SUM(appointment_cost_gbp_base_prices), 2) as total_cost_gbp_base_prices,
     ROUND(AVG(appointment_cost_gbp_base_prices), 2) as avg_cost_per_appointment_gbp_base_prices,
 

@@ -1,19 +1,63 @@
 models:
   - name: int_urine_acr_all
-    description: 'Albumin-to-creatinine ratio measurements for kidney function assessment and diabetic nephropathy screening.
-
-      One row per ACR observation using UACR_TESTING cluster with plausible range filtering (0-1000 mg/mmol) and clinical ACR categorisation.'
+    description: >
+      Urine albumin testing observations, one row per observation, from the PCD
+      cluster NDAALB_COD used by the National Diabetes Audit urine albumin care
+      process. Rows are kept without a numeric result so a recorded test can be
+      counted. albumin_test_type separates ACR, PCR, urine albumin concentration,
+      timed albumin excretion and albuminuria findings; two cluster members that
+      are not albumin tests are OTHER. ACR values in mg/mmol and their categories
+      are populated only for ACR observations with a result between 0 and
+      9999.99; other results remain in original_result_value.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+        clinical_source: https://digital.nhs.uk/data-and-information/publications/statistical/national-diabetes-audit
+    data_tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: UACR_TESTING
+            cluster_ids: NDAALB_COD
+            source: PCD
     columns:
       - name: id
-        description: Unique identifier for each ACR observation
+        description: Observation identifier.
         tests:
           - unique
           - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the observation.
+      - name: concept_code
+        description: SNOMED code of the observation.
+      - name: concept_display
+        description: Description of the observation.
+      - name: source_cluster_id
+        description: Always NDAALB_COD.
+      - name: albumin_test_type
+        description: ACR, PCR, URINE_ALBUMIN, TIMED_ALBUMIN, ALBUMINURIA_FINDING or OTHER, by concept code.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACR', 'PCR', 'URINE_ALBUMIN', 'TIMED_ALBUMIN', 'ALBUMINURIA_FINDING', 'OTHER']
+      - name: is_acr_ratio
+        description: Whether the observation is an albumin:creatinine ratio.
+      - name: is_result_recorded
+        description: Whether a numeric result was recorded.
+      - name: original_result_value
+        description: Result as received, any test type.
+      - name: result_unit_display
+        description: Unit label as received; null when not supplied.
+      - name: acr_value
+        description: ACR in mg/mmol. Null for non-ACR observations, missing results and results outside 0 to 9999.99.
+      - name: is_valid_acr
+        description: Whether acr_value is populated. Kept for existing consumers; it carries no meaning beyond acr_value being non-null.
+      - name: acr_category
+        description: Normal, mildly, moderately or severely increased by ACR band; Invalid for an ACR result outside range; null otherwise.
+      - name: is_acr_elevated
+        description: ACR at or above 3 mg/mmol. False when no valid ACR value.
+      - name: is_microalbuminuria
+        description: ACR from 3 to below 30 mg/mmol. False when no valid ACR value.
+      - name: is_macroalbuminuria
+        description: ACR at or above 30 mg/mmol. False when no valid ACR value.

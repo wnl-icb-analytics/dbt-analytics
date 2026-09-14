@@ -87,9 +87,9 @@ prep as (
             localpatientid
         )                                       as local_patient_id,
         coalesce(
-            sk_patient_id_nhs_number,
-            sk_patient_id_nhsnumber,
-            sk_patient_id_nhs_no
+            {{ consistent_sk_patient_id_format('sk_patient_id_nhs_number') }},
+            {{ consistent_sk_patient_id_format('sk_patient_id_nhsnumber') }},
+            {{ consistent_sk_patient_id_format('sk_patient_id_nhs_no') }}
         )                                       as sk_patient_id,
         dv_partial_post_code                    as partial_postcode,
         -- LSOA (pipeline-derived geography; not a spec field but high-value)

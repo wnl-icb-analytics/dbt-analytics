@@ -1,47 +1,47 @@
 models:
-  - name: stg_csds_cyp201carecontact
-    description: >
-      CSDS CYP care contacts. Grain: one row per
-      unique_service_request_identifier and unique_care_contact_identifier.
-      Population: CYP201 care contact records. Time semantics: the latest
-      submitted record per contact is retained.
-    config:
-      meta:
-        owner:
-          name: Emily Baldwin
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - unique_service_request_identifier
-              - unique_care_contact_identifier
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
-    columns:
-      - name: unique_service_request_identifier
-        description: Service request identifier (FK to referral)
-        tests:
-          - not_null
-      - name: person_id
-        description: CSDS person identifier
-      - name: unique_care_contact_identifier
-        description: unique identifier within a given service request
-        tests:
-          - not_null
-      - name: care_contact_date
-        description: Date of care contact
-      - name: activity_location_type_code
-        description: Code for type of location where activity took place
-      - name: attendance_status
-        description: Attendance status (attended, DNA, etc.)
-      - name: clinical_contact_duration_of_care_contact
-        description: Duration of the care contact.
-      - name: org_id_prov
-        description: Provider organisation code.
-      - name: care_contact_time
-        description: Time of care contact.
-      - name: dm_icb_commissioner
-        description: Derived ICB commissioner code.
-      - name: dm_sub_icb_commissioner
-        description: Derived sub-ICB commissioner code.
+- name: stg_csds_cyp201carecontact
+  description: "CSDS CYP care contacts. Grain: one row per unique_service_request_identifier and unique_care_contact_identifier.\
+    \ Population: CYP201 care contact records. Time semantics: the latest submitted record per contact\
+    \ is retained.\n Selection prioritises reporting month, then receipt timestamp, submission and source\
+    \ row ID. Later absence is not evidence of deletion. Reused identifiers retain the latest reported\
+    \ state, not a complete lifetime history."
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  columns:
+  - name: unique_service_request_identifier
+    description: Service request identifier (FK to referral)
+    data_tests:
+    - not_null
+  - name: person_id
+    description: CSDS person identifier
+  - name: unique_care_contact_identifier
+    description: unique identifier within a given service request
+    data_tests:
+    - not_null
+  - name: care_contact_date
+    description: Date of care contact
+  - name: activity_location_type_code
+    description: Code for type of location where activity took place
+  - name: attendance_status
+    description: Attendance status (attended, DNA, etc.)
+  - name: clinical_contact_duration_of_care_contact
+    description: Duration of the care contact.
+  - name: org_id_prov
+    description: Provider organisation code.
+  - name: care_contact_time
+    description: Time of care contact.
+  - name: dm_icb_commissioner
+    description: Derived ICB commissioner code.
+  - name: dm_sub_icb_commissioner
+    description: Derived sub-ICB commissioner code.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - unique_service_request_identifier
+        - unique_care_contact_identifier
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1

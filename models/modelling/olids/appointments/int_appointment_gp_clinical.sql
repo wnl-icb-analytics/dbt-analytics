@@ -213,12 +213,12 @@ schedules as (
 ),
 
 pssru_base_deflator as (
-    -- GDP deflator for the PSSRU base fiscal year. The 2024 manual reports
-    -- 2023-24 prices, so fiscal_year_start = 2023. Bump this (and the
-    -- pssru_unit_costs_2024 seed) when PSSRU publishes a newer manual.
+    -- GDP deflator for the PSSRU base fiscal year. The 2025 manual reports
+    -- 2024-25 prices, so fiscal_year_start = 2024. Bump this and the
+    -- pssru_unit_costs_2025 seed when PSSRU publishes a newer manual.
     select gdp_deflator as pssru_base_gdp_deflator
     from {{ ref('uk_cost_indices') }}
-    where fiscal_year_start = 2023
+    where fiscal_year_start = 2024
 ),
 
 cleaned as (
@@ -330,9 +330,9 @@ cleaned as (
 select
     c.*,
 
-    -- PSSRU unit cost at PSSRU base year prices (2023-24 for the 2024 manual).
-    -- Sourced from the pssru_unit_costs_2024 seed. Rows flagged cost_is_proxy
-    -- use a band-matched rate from another role (see pssru_unit_costs_2024.yml
+    -- PSSRU unit cost at PSSRU base year prices (2024-25 for the 2025 manual).
+    -- Sourced from the pssru_unit_costs_2025 seed. Rows flagged cost_is_proxy
+    -- use a band-matched rate from another role (see pssru_unit_costs_2025.yml
     -- for methodology and the seed's notes column for per-row rationale).
     -- NULL for non-clinical role groups (Other / Unknown).
     costs.cost_per_minute_gbp as pssru_cost_per_minute_gbp,
@@ -363,7 +363,7 @@ select
 
 from cleaned as c
 cross join pssru_base_deflator as pssru
-left join {{ ref('pssru_unit_costs_2024') }} as costs
+left join {{ ref('pssru_unit_costs_2025') }} as costs
     on c.practitioner_role_group = costs.practitioner_role_group
 left join {{ ref('uk_cost_indices') }} as idx
     on c.fiscal_year_start = idx.fiscal_year_start

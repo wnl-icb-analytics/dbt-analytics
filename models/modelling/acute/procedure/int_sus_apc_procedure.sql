@@ -35,6 +35,4 @@ left join
     {{ ref('stg_common_aicentre_vocab') }} c
     on replace(c.concept_code, '.', '') = f.code
     and c.vocabulary_id = 'OPCS4'
-left join {{ ref("int_sus_apc_encounter") }} se on se.visit_occurrence_id = f.primarykey_id
-
-where se.sk_patient_id is not null
+inner join {{ ref("int_sus_apc_encounter") }} se on se.visit_occurrence_id = f.primarykey_id

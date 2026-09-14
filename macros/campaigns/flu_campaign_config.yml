@@ -5,23 +5,24 @@ macros:
       Single source of truth for flu vaccination campaign dates and parameters.
       Returns a SELECT with all campaign-specific configuration values.
 
+      Dates follow the UKHSA seasonal influenza vaccine uptake reporting specification
+      (PRIMIS v16.0, 23 July 2026) for 2026-27 and the equivalent version for each earlier
+      season. Two parameters vary by season beyond the dates:
+      immuno_admin_lookback_date carries the IMMADM_DAT floor, which v16.0 widened from six
+      months to three years before AUDITEND_DAT, and eligible_long_term_residential_care
+      switches off the long-stay residential care cohort that v15.7 removed from the spec.
 
+      Available campaigns: Flu 2024-25, Flu 2025-26, Flu 2026-27.
 
-
-      Available campaigns: Flu 2023-24, Flu 2024-25, Flu 2025-26
-
-
-      Configure via dbt_project.yml vars: flu_current_campaign, flu_previous_campaign
+      The campaigns the models build come from flu_reported_campaign_ids(), not from a var.
     arguments:
       - name: campaign_id
         type: string
-        description: Campaign identifier. Default 'Flu 2024-25'
+        description: Campaign identifier. Default 'Flu 2026-27'
 
   - name: flu_get_campaign_date
     description: >
       Helper to get a specific date field from campaign config.
-
-
     arguments:
       - name: date_name
         type: string

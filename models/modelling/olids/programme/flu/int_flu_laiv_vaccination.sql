@@ -10,13 +10,17 @@ Combination rule - tracks people with LAIV (nasal spray) vaccination records.
 This is used for tracking/reporting purposes.
 */
 
-{{ config(materialized='table') }}
+{{ config(
+    materialized='incremental',
+    incremental_strategy='delete+insert',
+    unique_key='campaign_id',
+    tags=['covid_flu']
+) }}
 
 WITH all_campaigns AS (
-    -- Generate data for both current and previous campaigns automatically
-    SELECT * FROM ({{ flu_current_config() }})
-    UNION ALL
-    SELECT * FROM ({{ flu_previous_config() }})
+    -- Every flu campaign the models report on
+    -- (campaign list: macros/config/flu_campaign_selection.sql)
+    {{ flu_build_campaigns() }}
 ),
 
 -- Step 1: Find people with LAIV vaccination administration codes (for all campaigns)
@@ -26,11 +30,12 @@ people_with_laiv_vaccination_admin AS (
         obs.person_id,
         MAX(obs.clinical_effective_date) AS latest_laiv_admin_date,
         'LAIV vaccination administration' AS vaccination_type
-    FROM ({{ get_observations("'LAIV_COD'", 'UKHSA_FLU') }}) obs
+    FROM ({{ get_observations("'LAIV_COD'", 'UKHSA_FLU', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date > cc.laiv_vaccination_after_date
-        AND obs.clinical_effective_date <= cc.campaign_end_date
+        AND obs.clinical_effective_date <= cc.audit_end_date
     GROUP BY cc.campaign_id, obs.person_id
 ),
 
@@ -41,11 +46,12 @@ people_with_laiv_vaccination_medication AS (
         med.person_id,
         MAX(med.order_date) AS latest_laiv_medication_date,
         'LAIV vaccination medication' AS vaccination_type
-    FROM ({{ get_medication_orders(cluster_id='LAIVRX_COD', source='UKHSA_FLU') }}) med
+    FROM ({{ get_medication_orders(cluster_id='LAIVRX_COD', source='UKHSA_FLU', versioned=true) }}) med
     CROSS JOIN all_campaigns cc
-    WHERE med.order_date IS NOT NULL
+    WHERE med.spec_version = cc.terminology_version
+        AND med.order_date IS NOT NULL
         AND med.order_date > cc.laiv_vaccination_after_date
-        AND med.order_date <= cc.campaign_end_date
+        AND med.order_date <= cc.audit_end_date
     GROUP BY cc.campaign_id, med.person_id
 ),
 
@@ -83,8 +89,8 @@ final_eligibility AS (
         cc.campaign_reference_date AS reference_date,
         'People with LAIV (nasal spray) vaccination records' AS description,
         demo.birth_date_approx,
-        DATEDIFF('month', demo.birth_date_approx, cc.campaign_reference_date) AS age_months_at_ref_date,
-        DATEDIFF('year', demo.birth_date_approx, cc.campaign_reference_date) AS age_years_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(cc.campaign_reference_date, demo.birth_date_approx)) AS age_months_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(cc.campaign_reference_date, demo.birth_date_approx) / 12) AS age_years_at_ref_date,
         cc.audit_end_date AS created_at
     FROM best_laiv_vaccination_evidence blve
     JOIN all_campaigns cc ON blve.campaign_id = cc.campaign_id

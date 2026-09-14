@@ -1,0 +1,30 @@
+models:
+  - name: organisation_nhs_site
+    description: >-
+      One row per organisation site code, retaining the latest dictionary row.
+      Covers the hospital, urgent-care, walk-in, independent and legacy site
+      organisation types used by ECDS location fields.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: organisation_code
+        description: NHS organisation site identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: organisation_name
+        description: Organisation site name.
+      - name: sk_organisation_type_id
+        description: Organisation type identifier for the retained site record.
+      - name: start_date
+        description: Organisation site start date.
+      - name: end_date
+        description: Organisation site end date, or null if active.
+      - name: status
+        description: Organisation site status.
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

@@ -115,6 +115,10 @@ Grain stays 1:1 with `DATA_LAKE.SDL` — same rows, no joins to other data, no b
 
 The governing rule: invalid values become NULL, never guesses — and derivations are validated, gated and labelled. Originals are retained in a `*_raw` column alongside the `dv_` field, or in DATA_LAKE.SDL.
 
+The `dv_` names are an established interface for this feed family. New model
+families should prefer an unprefixed canonical business name, but enhancements
+should not rename these fields merely to remove the prefix.
+
 Staging does not validate code columns (POD, service, TFC pass through as submitted), join names onto codes, or apply reporting logic.
 
 ## 8. Latest-submission resolution (`_LATEST` views)

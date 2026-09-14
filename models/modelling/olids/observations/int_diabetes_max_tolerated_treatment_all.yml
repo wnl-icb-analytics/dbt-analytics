@@ -1,0 +1,32 @@
+models:
+  - name: int_diabetes_max_tolerated_treatment_all
+    description: >
+      Records that a person is on maximum tolerated treatment for diabetes, from
+      the PCD cluster DMMAX_COD, one row per observation for all people including
+      inactive and deceased. Observations dated after the build date are excluded.
+      Glycaemic target indicators exclude people with this recorded in the period.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: DMMAX_COD
+            source: PCD
+    columns:
+      - name: id
+        description: Source observation identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date the record was made.
+      - name: concept_code
+        description: SNOMED code of the observation.
+      - name: concept_display
+        description: Description of the observation.
+      - name: source_cluster_id
+        description: Always DMMAX_COD.

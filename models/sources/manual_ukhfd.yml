@@ -1,6 +1,64 @@
 version: 2
 
 sources:
+  - name: ukhfd_ecds_data_dictionary
+    database: '"UKHFD"'
+    schema: '"Data_Dictionary"'
+    description: National data dictionary reference dimensions.
+    config:
+      meta:
+        domain: shared
+        raw_prefix: raw_ukhfd
+    tables:
+      - name: emergency_care_department_type
+        identifier: '"dim_Emergency_Care_Department_Type_SCD"'
+        description: Emergency care department type codes and descriptions; Is_Latest marks the current row per code.
+        columns:
+          - name: Main_Code_Text
+            quote: true
+          - name: Main_Description
+            quote: true
+          - name: Is_Latest
+            quote: true
+          - name: Effective_From
+            quote: true
+      - name: emergency_care_attendance_category
+        identifier: '"dim_Emergency_Care_Attendance_Category_SCD"'
+        description: Emergency care attendance category codes and descriptions; Is_Latest marks the current row per code.
+        columns:
+          - name: Main_Code_Text
+            quote: true
+          - name: Main_Description
+            quote: true
+          - name: Is_Latest
+            quote: true
+          - name: Effective_From
+            quote: true
+      - name: uec_activity_type
+        identifier: '"dim_Urgent_And_Emergency_Care_Activity_Type_SCD"'
+        description: Urgent and emergency care activity type codes and descriptions; Is_Latest marks the current row per code.
+        columns:
+          - name: Main_Code_Text
+            quote: true
+          - name: Main_Description
+            quote: true
+          - name: Is_Latest
+            quote: true
+          - name: Effective_From
+            quote: true
+      - name: mental_health_act_legal_status_classification
+        identifier: '"dim_Mental_Health_Act_Legal_Status_Classification_Code_SCD"'
+        description: Mental Health Act legal status classification codes and descriptions; Is_Latest marks the current row per code.
+        columns:
+          - name: Main_Code_Text
+            quote: true
+          - name: Main_Description
+            quote: true
+          - name: Is_Latest
+            quote: true
+          - name: Effective_From
+            quote: true
+
   - name: ukhfd_geo
     database: '"UKHFD"'
     schema: '"Old_LSOA_To_New_LSOA_To_LAD"'
@@ -61,6 +119,79 @@ sources:
           - name: Effective_From
             quote: true
           - name: Effective_To
+            quote: true
+
+      - name: closed_organisations
+        identifier: '"dim_Orgs_Closed_Since_1991_SCD"'
+        description: ODS closed organisation and site archive since 1991, including historical revisions.
+        columns:
+          - name: Organisation_Code
+            quote: true
+          - name: Organisation_Name
+            quote: true
+          - name: National_Grouping_Code
+            quote: true
+          - name: High_Level_Health_Authority_Code
+            quote: true
+          - name: Address_Line_1
+            quote: true
+          - name: Address_Line_2
+            quote: true
+          - name: Address_Line_3
+            quote: true
+          - name: Address_Line_4
+            quote: true
+          - name: Address_Line_5
+            quote: true
+          - name: Postcode
+            quote: true
+          - name: Open_Date
+            quote: true
+          - name: Close_Date
+            quote: true
+          - name: Unused_Field_13
+            quote: true
+          - name: Organisation_Sub_Type_Code
+            quote: true
+          - name: Parent_Organisation_Code
+            quote: true
+          - name: Join_Parent_Date
+            quote: true
+          - name: Left_Parent_Date
+            quote: true
+          - name: Contact_Telephone_Number
+            quote: true
+          - name: Unused_Field_19
+            quote: true
+          - name: Unused_Field_20
+            quote: true
+          - name: Unused_Field_21
+            quote: true
+          - name: Amended_Record_Indicator
+            quote: true
+          - name: Wave_Number
+            quote: true
+          - name: Unused_Field_24
+            quote: true
+          - name: Unused_Field_25
+            quote: true
+          - name: Unused_Field_26
+            quote: true
+          - name: Unused_Field_27
+            quote: true
+          - name: In_Source_Data
+            quote: true
+          - name: Import_Date
+            quote: true
+          - name: Created_Date
+            quote: true
+          - name: Is_Latest
+            quote: true
+          - name: Effective_From
+            quote: true
+          - name: Effective_To
+            quote: true
+          - name: Char_8_ASCII_Index
             quote: true
 
   - name: ukhfd_demography
@@ -132,3 +263,682 @@ sources:
             quote: true
           - name: AuditKey
             quote: true
+
+  - name: ukhfd_pbr
+    database: '"UKHFD"'
+    schema: '"PbR_v2"'
+    description: NHS payment reference data collected by the UK Health Funding Dataset.
+    config:
+      meta:
+        domain: shared
+        raw_prefix: raw_ukhfd
+    tables:
+      - name: market_forces_factor_values
+        identifier: '"dim_MFF_Values"'
+        description: Provider Market Forces Factor values from NHS tariff and payment workbooks.
+        columns:
+          - name: Organisation_Code
+            quote: true
+          - name: Organisation_Name
+            quote: true
+          - name: MFF_Value
+            quote: true
+          - name: MFF_Value_Year_2
+            quote: true
+          - name: MFF_Value_Year_3
+            quote: true
+          - name: MFF_Value_Year_4
+            quote: true
+          - name: MFF_Value_Year_5
+            quote: true
+          - name: Notes
+            quote: true
+          - name: File_Name
+            quote: true
+          - name: Import_Date
+            quote: true
+          - name: Created_Date
+            quote: true
+
+  - name: ukhfd_data_dictionary
+    database: '"UKHFD"'
+    schema: '"Data_Dictionary"'
+    description: NHS Data Model and Dictionary terminology history held in UKHFD.
+    config:
+      meta:
+        domain: shared
+        raw_prefix: raw_ukhfd_data_dictionary
+    tables:
+      - name: attendance_status
+        identifier: '"dim_Attendance_Status_SCD"'
+        description: Attendance status code definitions and their UKHFD history.
+        columns: &ukhfd_data_dictionary_columns
+          - name: Attr_Name
+            quote: true
+          - name: Valid_From
+            quote: true
+          - name: Valid_To
+            quote: true
+          - name: Main_Code_Text
+            quote: true
+          - name: Sub_Code1_Text
+            quote: true
+          - name: Sub_Code2_Text
+            quote: true
+          - name: Sub_Code3_Text
+            quote: true
+          - name: Major_Category
+            quote: true
+          - name: Category
+            quote: true
+          - name: Main_Description
+            quote: true
+          - name: Main_Description_60_Chars
+            quote: true
+          - name: Sub1_Description
+            quote: true
+          - name: Sub2_Description
+            quote: true
+          - name: Sub3_Description
+            quote: true
+          - name: Notes
+            quote: true
+          - name: In_Source_Table
+            quote: true
+          - name: Unique_Column
+            quote: true
+          - name: Import_Date
+            quote: true
+          - name: Created_Date
+            quote: true
+          - name: Is_Latest
+            quote: true
+          - name: Effective_From
+            quote: true
+          - name: Effective_To
+            quote: true
+      - name: activity_location_type
+        identifier: '"dim_Activity_Location_Type_Code_SCD"'
+        description: Activity location type code definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: diagnosis_scheme_in_use
+        identifier: '"dim_Diagnosis_Scheme_In_Use_SCD"'
+        description: Diagnosis coding schemes, including retired definitions.
+        columns: *ukhfd_data_dictionary_columns
+      - name: consultation_mechanism
+        identifier: '"dim_Consultation_Mechanism_SCD"'
+        description: Consultation mechanism code definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_source_of_referral
+        identifier: '"dim_Source_Of_Referral_For_Mental_Health_Services_Data_Set_SCD"'
+        description: MHSDS source-of-referral code definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mental_health_source_of_referral_legacy
+        identifier: '"dim_Source_Of_Referral_For_Mental_Health_SCD"'
+        description: Retired mental-health source-of-referral definitions used by older records.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_service_or_team_type
+        identifier: '"dim_Service_Or_Team_Type_For_Mental_Health_SCD"'
+        description: Mental-health service or team type definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: csds_source_of_referral
+        identifier: '"dim_Source_Of_Referral_For_Community_SCD"'
+        description: Community source-of-referral definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: csds_service_or_team_type
+        identifier: '"dim_Service_Or_Team_Type_Referred_To_For_Community_Care_SCD"'
+        description: Community service or team type definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_care_contact_subject
+        identifier: '"dim_Care_Contact_Subject_SCD"'
+        description: Care contact subject definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_planned_care_contact_indicator
+        identifier: '"dim_Planned_Care_Contact_Indicator_SCD"'
+        description: Planned care contact indicator definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_consultation_type
+        identifier: '"dim_Consultation_Type_SCD"'
+        description: Consultation type definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_consultation_medium_used
+        identifier: '"dim_Consultation_Medium_Used_SCD"'
+        description: Consultation medium definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_care_contact_patient_therapy_mode
+        identifier: '"dim_Care_Contact_Patient_Therapy_Mode_SCD"'
+        description: Care contact patient therapy mode definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_care_contact_cancellation_reason
+        identifier: '"dim_Care_Contact_Cancellation_Reason_SCD"'
+        description: Care contact cancellation reason definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_administrative_category
+        identifier: '"dim_Administrative_Category_Code_SCD"'
+        description: Administrative category definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_place_of_safety_indicator
+        identifier: '"dim_Place_Of_Safety_Indicator_SCD"'
+        description: Place of safety indicator definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_group_therapy_indicator
+        identifier: '"dim_Group_Therapy_Indicator_SCD"'
+        description: Group therapy indicator definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_interpreter_present_indicator
+        identifier: '"dim_Interpreter_Present_At_Care_Contact_Indication_Code_SCD"'
+        description: Care contact interpreter indicator definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_perinatal_partner_assessment_offer_indicator
+        identifier: '"dim_Community_Perinatal_Mental_Health_Partner_Assessment_Offer_Indicator_SCD"'
+        description: Perinatal partner assessment offer indicator definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_reasonable_adjustment_made_indicator
+        identifier: '"dim_Reasonable_Adjustment_Made_Indicator_SCD"'
+        description: Reasonable adjustment made indicator definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_reason_patient_no_imca
+        identifier: '"dim_Reason_Patient_Does_Not_Have_Independent_Mental_Capacity_Advocate_SCD"'
+        description: Reasons a patient does not have an IMCA and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_reason_patient_no_imha
+        identifier: '"dim_Reason_Patient_Does_Not_Have_Independent_Mental_Health_Advocate_SCD"'
+        description: Reasons a patient does not have an IMHA and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_service_or_team_intended_age_group
+        identifier: '"dim_Mental_Health_Service_Or_Team_Intended_Patient_Age_Group_SCD"'
+        description: Mental health service or team intended age group definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_clinical_response_priority
+        identifier: '"dim_Clinical_Response_Priority_Type_SCD"'
+        description: Clinical response priority definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_reason_for_referral
+        identifier: '"dim_Reason_For_Referral_To_Mental_Health_SCD"'
+        description: Mental health referral reason definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_referring_care_professional_type
+        identifier: '"dim_Referring_Care_Professional_Type_Mental_Health_SCD"'
+        description: Referring care professional type definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_referring_care_professional_staff_group
+        identifier: '"dim_Referring_Care_Professional_Staff_Group_For_Mental_Health_SCD"'
+        description: Referring care professional staff group definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_referring_care_professional_staff_group_legacy
+        identifier: '"dim_Referring_Care_Professional_Staff_Group_For_Mental_Health_And_Community_Care_SCD"'
+        description: Retired mental health and community referrer staff group definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_referral_rejection_reason
+        identifier: '"dim_Referral_Rejection_Reason_SCD"'
+        description: Referral rejection reason definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_referral_closure_reason
+        identifier: '"dim_Referral_Closure_Reason_SCD"'
+        description: Referral closure reason definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_out_of_area_referral_reason
+        identifier: '"dim_Reason_For_Out_Of_Area_Referral_For_Adult_Acute_Mental_Health_SCD"'
+        description: Out-of-area referral reason definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: language_code
+        identifier: '"dim_Language_Code_SCD"'
+        description: NHS communication-method language extensions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: child_protection_plan_indicator
+        identifier: '"dim_Child_Protection_Plan_Indication_Code_SCD"'
+        description: Child protection plan indicator definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: looked_after_child_indicator
+        identifier: '"dim_Looked_After_Child_Indicator_SCD"'
+        description: Looked-after-child indicator definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mental_health_admitted_patient_classification_type
+        identifier: '"dim_Mental_Health_Admitted_Patient_Classification_Type_SCD"'
+        description: Mental health admitted patient classification type definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: admission_source
+        identifier: '"dim_Admission_Source_SCD"'
+        description: Admission source definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: source_of_admission_legacy
+        identifier: '"dim_Source_Of_Admission_SCD"'
+        description: Retired source of admission definitions used by historical MHSDS records.
+        columns: *ukhfd_data_dictionary_columns
+      - name: admission_method
+        identifier: '"dim_Admission_Method_SCD"'
+        description: Admission method definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: planned_destination_of_discharge
+        identifier: '"dim_Planned_Destination_Of_Discharge_SCD"'
+        description: Planned discharge destination definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: discharge_method
+        identifier: '"dim_Discharge_Method_SCD"'
+        description: Discharge method definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: destination_of_discharge
+        identifier: '"dim_Destination_Of_Discharge_SCD"'
+        description: Discharge destination definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: discharge_destination_legacy
+        identifier: '"dim_Discharge_Destination_SCD"'
+        description: Retired discharge destination definitions used by historical MHSDS records.
+        columns: *ukhfd_data_dictionary_columns
+      - name: ward_intended_sex_of_patients
+        identifier: '"dim_Ward_Intended_Sex_Of_Patients_SCD"'
+        description: Ward intended sex definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: ward_intended_clinical_care_intensity
+        identifier: '"dim_Ward_Intended_Clinical_Care_Intensity_SCD"'
+        description: Ward intended clinical care intensity definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: ward_intended_age_group_for_mental_health
+        identifier: '"dim_Ward_Intended_Age_Group_For_Mental_Health_SCD"'
+        description: Mental health ward intended age group definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: ward_setting_type_for_mental_health
+        identifier: '"dim_Ward_Setting_Type_For_Mental_Health_SCD"'
+        description: Mental health ward setting definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: ward_security_level
+        identifier: '"dim_Ward_Security_Level_SCD"'
+        description: Ward security level definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: locked_ward_indicator
+        identifier: '"dim_Locked_Ward_Indicator_SCD"'
+        description: Locked ward indicator definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_care_professional_staff_group
+        identifier: '"dim_Care_Professional_Staff_Group_For_Mental_Health_SCD"'
+        description: Mental health care professional staff group definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: main_specialty_code
+        identifier: '"dim_Main_Specialty_Code_SCD"'
+        description: Main specialty code definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: professional_registration_body_code
+        identifier: '"dim_Professional_Registration_Body_Code_SCD"'
+        description: Professional registration body definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: care_professional_job_role_code
+        identifier: '"dim_Job_Role_Code_SCD"'
+        description: Care professional job role definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_finding_scheme_in_use
+        identifier: '"dim_Finding_Scheme_In_Use_SCD"'
+        description: MHSDS finding coding scheme definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: mhsds_observation_scheme_in_use
+        identifier: '"dim_Observation_Scheme_In_Use_SCD"'
+        description: MHSDS observation coding scheme definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+
+      - name: method_of_discharge
+        identifier: '"dim_Method_Of_Discharge_SCD"'
+        description: Discharge method definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: discharge_method_legacy
+        identifier: '"dim_Discharge_Method_SCD"'
+        description: Legacy discharge method definitions, including retired codes.
+        columns: *ukhfd_data_dictionary_columns
+      - name: priority_type
+        identifier: '"dim_Priority_Type_SCD"'
+        description: National priority type definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: csds_reason_for_referral
+        identifier: '"dim_Reason_For_Referral_To_Community_Care_SCD"'
+        description: National csds reason for referral definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: csds_referring_staff_group
+        identifier: '"dim_Care_Professional_Staff_Group_For_Community_Care_SCD"'
+        description: National csds referring staff group definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: procedure_scheme_in_use
+        identifier: '"dim_Procedure_Scheme_In_Use_SCD"'
+        description: National procedure scheme in use definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: csds_community_care_activity_type
+        identifier: '"dim_Community_Care_Activity_Type_SCD"'
+        description: National csds community care activity type definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: csds_community_care_activity_type_legacy
+        identifier: '"dim_Community_Care_Activity_Type_Code_SCD"'
+        description: National csds community care activity type legacy definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+      - name: csds_referral_closure_reason_legacy
+        identifier: '"dim_Referral_Closure_Reason_For_Community_Care_SCD"'
+        description: National csds referral closure reason legacy definitions and their UKHFD history.
+        columns: *ukhfd_data_dictionary_columns
+  - name: ukhfd_other
+    database: '"UKHFD"'
+    schema: '"Other"'
+    description: Shared reference data held in UKHFD.
+    config:
+      meta:
+        domain: shared
+        raw_prefix: raw_ukhfd_other
+    tables:
+      - name: ucum_units
+        identifier: '"dim_Unified_Code_For_Units_Of_Measure_SCD"'
+        description: UCUM expressions and their UKHFD definition history.
+        columns:
+          - name: Code
+            quote: true
+          - name: Descriptive_Name
+            quote: true
+          - name: Code_System
+            quote: true
+          - name: Definition
+            quote: true
+          - name: Date_Created
+            quote: true
+          - name: Synonym
+            quote: true
+          - name: Status
+            quote: true
+          - name: Kind_Of_Quantity
+            quote: true
+          - name: Date_Revised
+            quote: true
+          - name: ConceptID
+            quote: true
+          - name: Dimension
+            quote: true
+          - name: In_Source_Data
+            quote: true
+          - name: Import_Date
+            quote: true
+          - name: Created_Date
+            quote: true
+          - name: Is_Latest
+            quote: true
+          - name: Effective_From
+            quote: true
+          - name: Effective_To
+            quote: true
+      - name: iso_language_codes
+        identifier: '"dim_ISO_Language_Codes_SCD"'
+        description: ISO 639 language codes and their UKHFD history.
+        columns:
+          - name: ISO_639_2_Code
+            quote: true
+          - name: ISO_639_1_Code
+            quote: true
+          - name: English_Name_Of_Language
+            quote: true
+          - name: French_Name_Of_Language
+            quote: true
+          - name: German_Name_Of_Language
+            quote: true
+          - name: In_Source_Data
+            quote: true
+          - name: Import_Date
+            quote: true
+          - name: Created_Date
+            quote: true
+          - name: Is_Latest
+            quote: true
+          - name: Effective_From
+            quote: true
+          - name: Effective_To
+            quote: true
+  - name: ukhfd_ods_api
+    database: '"UKHFD"'
+    schema: '"ODS_API"'
+    description: Organisation Data Service API register and its UKHFD definition history.
+    config:
+      meta:
+        domain: shared
+        raw_prefix: raw_ukhfd
+    tables:
+      - name: organisation
+        identifier: '"dim_Organisation_SCD"'
+        description: Full ODS organisation and site register, including historical definitions
+          and closed organisations.
+        columns:
+          - name: register_id
+            quote: true
+          - name: Name
+            quote: true
+          - name: OrgId_Root
+            quote: true
+          - name: OrgId_assigningAuthorityName
+            quote: true
+          - name: OrgId_extension
+            quote: true
+          - name: OrgRecordClass
+            quote: true
+          - name: Status
+            quote: true
+          - name: AddrLn1
+            quote: true
+          - name: AddrLn2
+            quote: true
+          - name: AddrLn3
+            quote: true
+          - name: Town
+            quote: true
+          - name: County
+            quote: true
+          - name: PostCode
+            quote: true
+          - name: Country
+            quote: true
+          - name: UPRN
+            quote: true
+          - name: In_Source_Data
+            quote: true
+          - name: LastChangeDate
+            quote: true
+          - name: Is_Latest
+            quote: true
+          - name: Effective_From
+            quote: true
+          - name: Effective_To
+            quote: true
+          - name: Char_8_ASCII_Index
+            quote: true
+
+  - name: ukhfd_read_codes
+    database: '"UKHFD"'
+    schema: '"Read_Codes"'
+    description: Historical national Read code terminology definitions.
+    config:
+      meta:
+        domain: shared
+        raw_prefix: raw_ukhfd
+    tables:
+    - name: read_v2_terms
+      identifier: '"dim_KV2_SCD"'
+      description: Read v2 term definitions, including historical revisions
+      columns:
+      - name: Term_Key
+        quote: true
+      - name: Uniquifier
+        quote: true
+      - name: Term_30
+        quote: true
+      - name: Term_60
+        quote: true
+      - name: Term_198
+        quote: true
+      - name: Term_Code
+        quote: true
+      - name: Language_Code
+        quote: true
+      - name: Read_Code
+        quote: true
+      - name: Status_Flag
+        quote: true
+      - name: Source_File_Name
+        quote: true
+      - name: Unique_Column
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: ctv3_terms
+      identifier: '"dim_CV3_Terms_SCD"'
+      description: CTV3 term identifiers and text, including historical revisions
+      columns:
+      - name: Term_ID
+        quote: true
+      - name: Term_Status
+        quote: true
+      - name: Term_30
+        quote: true
+      - name: Term_60
+        quote: true
+      - name: Term_198
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+    - name: ctv3_concepts
+      identifier: '"dim_CV3_Concept_SCD"'
+      description: CTV3 concept identifiers and status, including historical revisions
+      columns:
+      - name: Read_Code
+        quote: true
+      - name: Concept_Status
+        quote: true
+      - name: Linguistic_Role
+        quote: true
+      - name: Subject_Type
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+  - name: ukhfd_pss
+    database: '"UKHFD"'
+    schema: '"Prescribed_Specialised_Services"'
+    description: PSS reference tables including Service Line and National Programme Code
+    config:
+      meta:
+        domain: shared
+        raw_prefix: raw_ukhfd
+    tables:
+    - name: summary_of_id_code_sets
+      identifier: '"dim_Summary_Of_ID_Code_Sets"'
+      description: 
+      columns:
+      - name: ADMIMETH_APC_Only
+        quote: true
+      - name: ATTENDED_NAC_Only
+        quote: true
+      - name: CLASSPAT_APC_Only
+        quote: true
+      - name: CSNum_Use_Of_Equal_Sign_Exclusion_APC_Only
+        quote: true
+      - name: Commissioned_By
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: File_Name
+        quote: true
+      - name: Flag_Number
+        quote: true
+      - name: ICD10_And_OPCS4_Combination_Required
+        quote: true
+      - name: ICD10_Qualifiers
+        quote: true
+      - name: ICD10_Triggering_Position
+        quote: true
+      - name: ICD10_Triggers_Count
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: MAINSPEF_Count
+        quote: true
+      - name: NPoC_Category
+        quote: true
+      - name: New_Service_Lines
+        quote: true
+      - name: No_Of_Identification_Rules
+        quote: true
+      - name: OPCS4_And_OPCS4_Combination_Required
+        quote: true
+      - name: OPCS4_Triggering_Position
+        quote: true
+      - name: OPCS4_Triggers_Count
+        quote: true
+      - name: OPCS_Qualifiers
+        quote: true
+      - name: PS_Flag
+        quote: true
+      - name: Prescribed_Service_Line
+        quote: true
+      - name: Provider_Eligibility_Count
+        quote: true
+      - name: Qualifying_Age
+        quote: true
+      - name: Qualifying_Age_Check
+        quote: true
+      - name: Qualifying_Gender
+        quote: true
+      - name: REFSOURC_NAC_Only
+        quote: true
+      - name: Service_Line_Hierarchy
+        quote: true
+      - name: Setting
+        quote: true
+      - name: Sub_Rule_Number
+        quote: true
+      - name: TRETSPEF_Count
+        quote: true
+      - name: Unique_Column
+        quote: true
+    - name: service_line_hierarchy
+      identifier: '"dim_Service_Line_Hierarchy"'
+      description: Service line hierarchy information.
+      columns:
+      - name: Service_Line
+        quote: true
+      - name: Service_Line_Description
+        quote: true
+      - name: Applicable_In_Setting_1
+        quote: true
+      - name: Applicable_In_Setting_2
+        quote: true
+      - name: APC_Episode_Spell_Hierarchies
+        quote: true
+      - name: APC_Percentage_Top_Up
+        quote: true
+      - name: NAC_Hierarchy
+        quote: true
+      - name: File_Name
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true

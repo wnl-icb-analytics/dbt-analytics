@@ -1,0 +1,208 @@
+version: 2
+models:
+- name: fct_csds_care_contact
+  description: One latest reported CSDS referral and care contact. Includes attended, cancelled, DNA and
+    unknown attendance records from all accepted reporting periods. Contact identifiers are reused across
+    referrals, so the key includes referral. Unlinked contacts and person-conflicting referral links remain
+    visible; parent context is not substituted.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  columns:
+  - name: source_record_id
+    description: Hash of referral and contact identifiers, stable across accepted revisions of that pair.
+    data_tests:
+    - unique
+    - not_null
+  - name: source_dataset
+    description: CSDS.
+  - name: referral_id
+    description: Provider-qualified referral identifier. The same value is exposed as source_record_id
+      on the referral fact.
+  - name: contact_id
+    description: Provider-qualified contact identifier. Use referral_id with this identifier; a contact
+      identifier alone is reused across referrals.
+  - name: local_contact_id
+    description: Contact identifier assigned locally by the provider.
+  - name: source_row_id
+    description: Identifier of the selected submitted row; changes when a replacement source row is selected.
+  - name: age_at_contact
+    description: Source-derived age in years at the contact date. Retains source special values; not recalculated
+      from current demographics.
+  - name: person_id
+    description: CSDS person identifier from this record, never replaced by the parent person.
+  - name: sk_patient_id
+    description: Pseudonymised cross-system patient key from stg_csds_bridging; null when unavailable.
+  - name: care_contact_date
+    description: Source care contact date. Retained as supplied with date precision; not inferred from
+      receipt time.
+  - name: care_contact_time
+    description: Recorded care contact time, without the transport placeholder date. Null when absent.
+  - name: care_contact_at
+    description: Source date combined with the supplied time. Read the matching precision field; date-only
+      values use midnight.
+  - name: care_contact_time_precision
+    description: timestamp when source date and time are both present; date when only the date is supplied;
+      null when the date is absent. Date-only timestamps use midnight and must be read with this field.
+  - name: attendance_code
+    description: Submitted attended-or-did-not-attend code, populated across dataset versions. Null remains
+      unknown; no attendance-based exclusion is applied.
+  - name: attendance_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.
+  - name: source_attendance_status_code
+    description: Later source attendance_status field, retained separately. Earlier submissions often
+      leave this null even when the submitted attendance code is populated.
+  - name: source_attendance_status_name
+    description: Latest UKHFD attendance description for the later source attendance_status field, including
+      retired codes. Null for absent or unmatched codes.
+  - name: consultation_mechanism_code
+    description: Submitted community consultation mechanism. The legacy medium is retained separately
+      without guessing a cross-version mapping.
+  - name: consultation_mechanism_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.
+  - name: legacy_consultation_medium_code
+    description: Submitted consultation medium used, retained for earlier versions.
+  - name: activity_location_type_code
+    description: Submitted activity location type code. Unmatched values remain visible.
+  - name: activity_location_type_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.
+  - name: clinical_contact_duration_minutes
+    description: Recorded clinical contact duration in minutes, excluding administration and travel.
+  - name: site_code
+    description: Submitted site code. Unmatched values remain visible.
+  - name: site_name
+    description: Latest organisation name from the shared organisation reference, including closed organisations.
+      UKHFD ODS API takes precedence, then Dictionary, then the UKHFD closed-organisation archive
+      for codes absent from both. Null when the code is unmatched.
+  - name: site_code_status
+    description: missing for an absent or blank site code; exact_reference_match when the supplied
+      code matches the organisation reference; padded_organisation_code for an otherwise unmatched
+      Rxx00, Txx00 or 5xx00 code whose known three-character organisation has the latest
+      Dictionary NHS trust, care-trust or primary-care-trust role respectively;
+      unrecognised otherwise.
+      An exact match can include a national default code and does not itself confirm a physical site.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values: [missing, exact_reference_match, padded_organisation_code, unrecognised]
+  - name: site_organisation_code
+    description: Three-character NHS trust, care trust or primary care trust code resolved from an
+      unmatched Rxx00, Txx00 or 5xx00 site value with the corresponding latest Dictionary organisation role.
+      Identifies an organisation, not a physical site. Null for exact matches, missing values and
+      unrecognised values. Does not replace provider_organisation_code.
+  - name: site_organisation_name
+    description: Latest available name for site_organisation_code. The original site_name stays null
+      for this organisation-only resolution; no treatment site or parent-site relationship is inferred.
+  - name: site_organisation_name_source
+    description: Shared organisation reference source supplying site_organisation_name; null when
+      no organisation-only interpretation applies.
+  - name: team_id
+    description: Provider-qualified care professional team identifier.
+  - name: local_team_id
+    description: Care professional team identifier assigned locally by the provider.
+  - name: administrative_category_code
+    description: Submitted administrative category code. Unmatched values remain visible.
+  - name: consultation_type_code
+    description: Submitted consultation type code. Unmatched values remain visible.
+  - name: care_contact_subject_code
+    description: Submitted care contact subject code. Unmatched values remain visible.
+  - name: group_therapy_code
+    description: Submitted group therapy code; null is unknown.
+  - name: cancellation_date
+    description: Source cancellation date. Retained as supplied with date precision; not inferred from
+      receipt time.
+  - name: cancellation_reason_code
+    description: Submitted cancellation reason code. Unmatched values remain visible.
+  - name: earliest_reasonable_offer_date
+    description: Source earliest reasonable offer date. Retained as supplied with date precision; not
+      inferred from receipt time.
+  - name: earliest_clinically_appropriate_date
+    description: Source earliest clinically appropriate date. Retained as supplied with date precision;
+      not inferred from receipt time.
+  - name: replacement_appointment_date_offered
+    description: Source replacement appointment date offered.
+  - name: replacement_appointment_booked_date
+    description: Source replacement appointment booked date. Retained as supplied with date precision;
+      not inferred from receipt time.
+  - name: referral_source_row_id
+    description: Delivered CYP101 row identifier of the referral in the contact's own submission.
+      Join to cyp101_unique_id in stg_csds_referral_history with submission_id and referral_id
+      for the historical parent. Null when that submission has no matching referral.
+  - name: is_submitted_referral_linked
+    description: Whether the contact's own submission contains the recorded referral identifier.
+      This differs from linkage to the latest referral fact.
+  - name: is_submitted_referral_person_consistent
+    description: Whether populated contact and same-submission referral person identifiers agree.
+      Null when the submitted parent or either person identifier is absent.
+  - name: is_referral_linked
+    description: Whether the recorded referral key exists in the latest referral fact.
+  - name: is_referral_person_consistent
+    description: Whether populated contact and latest referral fact person identifiers agree. Null for an absent parent
+      or missing person identifier.
+  - name: provider_organisation_code
+    description: Provider organisation code supplied by CSDS.
+  - name: provider_organisation_name
+    description: Latest organisation name from the shared organisation reference, including closed organisations.
+      UKHFD ODS API takes precedence, then Dictionary, then the UKHFD closed-organisation archive
+      for codes absent from both. Null when the code is unmatched.
+  - name: submitted_commissioner_code
+    description: Commissioner supplied with this source record.
+  - name: submitted_commissioner_name
+    description: Latest organisation name from the shared organisation reference, including closed organisations.
+      UKHFD ODS API takes precedence, then Dictionary, then the UKHFD closed-organisation archive
+      for codes absent from both. Null when the code is unmatched.
+  - name: source_icb_commissioner_code
+    description: Source-derived commissioner field. No local attribution fallback or current-footprint
+      remapping is applied.
+  - name: source_icb_commissioner_name
+    description: Latest organisation name from the shared organisation reference, including closed organisations.
+      UKHFD ODS API takes precedence, then Dictionary, then the UKHFD closed-organisation archive
+      for codes absent from both. Null when the code is unmatched.
+  - name: source_sub_icb_commissioner_code
+    description: Source-derived commissioner field. No local attribution fallback or current-footprint
+      remapping is applied.
+  - name: source_sub_icb_commissioner_name
+    description: Latest organisation name from the shared organisation reference, including closed organisations.
+      UKHFD ODS API takes precedence, then Dictionary, then the UKHFD closed-organisation archive
+      for codes absent from both. Null when the code is unmatched.
+  - name: source_commissioner_derivation_reason
+    description: Source-supplied reason for derived commissioner attribution. Retained without a verified
+      code-to-label mapping; no local attribution rule or current-footprint remapping is applied.
+  - name: submission_id
+    description: Identifier of the accepted submission containing the selected source row.
+  - name: reporting_period_start_date
+    description: Source reporting period start date. Retained as supplied with date precision; not inferred
+      from receipt time.
+  - name: reporting_period_end_date
+    description: Source reporting period end date. Retained as supplied with date precision; not inferred
+      from receipt time.
+  - name: source_file_received_at
+    description: Timestamp the submission portal received the file. This is not clinical event time.
+  - name: csds_version
+    description: Dataset version on the accepted submission header.
+  - name: file_type
+    description: Source primary or refresh file marker. ActiveSubmission determines whether the file is
+      accepted.
+  - name: administrative_category_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.
+  - name: consultation_type_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.
+  - name: care_contact_subject_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.
+  - name: cancellation_reason_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.
+  - name: legacy_consultation_medium_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.
+  - name: group_therapy_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.

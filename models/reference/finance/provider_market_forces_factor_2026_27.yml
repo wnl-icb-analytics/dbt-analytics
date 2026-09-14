@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: provider_market_forces_factor_2026_27
+    description: |
+      NHS Payment Scheme Market Forces Factors for 2026/27. One row represents
+      an NHS provider in the 2026/27 Annex A prices workbook. Providers absent
+      from this publication require a downstream fallback.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 205
+            max_value: 205
+    columns:
+      - name: provider_code
+        description: Provider organisation ODS code.
+        data_tests:
+          - not_null
+          - unique
+      - name: provider_name
+        description: Provider name published in Annex A.
+        data_tests:
+          - not_null
+      - name: mff_factor
+        description: Market Forces Factor multiplier for 2026/27.
+        data_tests:
+          - not_null
+      - name: source_file_name
+        description: UKHFD path and Annex A workbook name.
+        data_tests:
+          - not_null
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the workbook.

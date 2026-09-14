@@ -26,6 +26,24 @@ registry as (
 )
 {% endmacro %}
 
+{# Clean the small set of provider codes before joining it to contact/referral
+   rows. The IN lookup otherwise makes Snowflake aggregate the wide feed. #}
+{% macro community_pld_provider_codes(raw_model) %}
+source_provider_codes as (
+    select distinct
+        upper(trim(coalesce(
+            organisation_identifier_code_of_provider, provider_code, meta_provider_code
+        ))) as source_provider_code
+    from {{ ref(raw_model) }}
+),
+provider_codes as (
+    select
+        source_provider_code,
+        {{ clean_organisation_id('source_provider_code') }} as cleaned_provider_code
+    from source_provider_codes
+)
+{% endmacro %}
+
 {# Provider-stated reporting period (DLP cols, else plain financial cols),
    validated. The final select coalesces these with the activity-date and
    file-name fallbacks via community_pld_financial_period. #}

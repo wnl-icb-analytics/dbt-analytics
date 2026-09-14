@@ -11,13 +11,17 @@ The exclusion logic ensures that people whose diabetes is resolved
 are not eligible unless they have a more recent diabetes code.
 */
 
-{{ config(materialized='table') }}
+{{ config(
+    materialized='incremental',
+    incremental_strategy='delete+insert',
+    unique_key='campaign_id',
+    tags=['covid_flu']
+) }}
 
 WITH all_campaigns AS (
-    -- Generate data for both current and previous campaigns automatically
-    SELECT * FROM ({{ flu_current_config() }})
-    UNION ALL
-    SELECT * FROM ({{ flu_previous_config() }})
+    -- Every flu campaign the models report on
+    -- (campaign list: macros/config/flu_campaign_selection.sql)
+    {{ flu_build_campaigns() }}
 ),
 
 -- Step 1: Find people with Addison's disease (always eligible, for all campaigns)
@@ -28,9 +32,10 @@ people_with_addisons AS (
         MIN(obs.clinical_effective_date) AS first_addisons_date,
         'Addisons disease' AS eligibility_reason,
         cc.audit_end_date
-    FROM ({{ get_observations("'ADDIS_COD'", 'UKHSA_FLU') }}) obs
+    FROM ({{ get_observations("'ADDIS_COD'", 'UKHSA_FLU', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= cc.audit_end_date
     GROUP BY cc.campaign_id, obs.person_id, cc.audit_end_date
 ),
@@ -42,9 +47,10 @@ people_with_diabetes_codes AS (
         obs.person_id,
         MAX(obs.clinical_effective_date) AS latest_diabetes_date,
         cc.audit_end_date
-    FROM ({{ get_observations("'DIAB_COD'", 'UKHSA_FLU') }}) obs
+    FROM ({{ get_observations("'DIAB_COD'", 'UKHSA_FLU', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= cc.audit_end_date
     GROUP BY cc.campaign_id, obs.person_id, cc.audit_end_date
 ),
@@ -56,9 +62,10 @@ people_with_diabetes_resolved_codes AS (
         obs.person_id,
         MAX(obs.clinical_effective_date) AS latest_resolved_date,
         cc.audit_end_date
-    FROM ({{ get_observations("'DMRES_COD'", 'UKHSA_FLU') }}) obs
+    FROM ({{ get_observations("'DMRES_COD'", 'UKHSA_FLU', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= cc.audit_end_date
     GROUP BY cc.campaign_id, obs.person_id, cc.audit_end_date
 ),
@@ -135,8 +142,8 @@ final_eligibility AS (
         cc.campaign_reference_date AS reference_date,
         'People with diabetes (type 1, type 2) or Addisons disease' AS description,
         demo.birth_date_approx,
-        DATEDIFF('month', demo.birth_date_approx, cc.campaign_reference_date) AS age_months_at_ref_date,
-        DATEDIFF('year', demo.birth_date_approx, cc.campaign_reference_date) AS age_years_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(cc.campaign_reference_date, demo.birth_date_approx)) AS age_months_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(cc.campaign_reference_date, demo.birth_date_approx) / 12) AS age_years_at_ref_date,
         bde.audit_end_date AS created_at
     FROM best_diabetes_eligibility bde
     JOIN all_campaigns cc
@@ -145,7 +152,7 @@ final_eligibility AS (
         ON bde.person_id = demo.person_id
     WHERE bde.rn = 1  -- Only the best eligibility per person
         -- Apply age restrictions: 6 months or older (minimum age for flu vaccination)
-        AND DATEDIFF('month', demo.birth_date_approx, cc.campaign_reference_date) >= 6
+        AND DATEADD('month', 6, demo.birth_date_approx) <= cc.run_date
 )
 
 SELECT * FROM final_eligibility

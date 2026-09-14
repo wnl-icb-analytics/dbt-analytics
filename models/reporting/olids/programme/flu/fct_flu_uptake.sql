@@ -20,6 +20,7 @@ August 2026 KH adjusted final output to distinct to avoid duplication.
 
 {{ config(
     materialized='table',
+    tags=['covid_flu'],
     cluster_by=['campaign_id', 'person_id']
 ) }}
 
@@ -30,6 +31,7 @@ WITH eligible_people AS (
         person_id,
         campaign_category,
         risk_group,
+        subcohort,
         eligibility_reason,
         rule_type,
         eligibility_priority
@@ -79,7 +81,8 @@ combined_data AS (
             ELSE FALSE 
         END AS is_eligible,
         COALESCE(e.campaign_category, 'Not Eligible') AS campaign_category,
-        COALESCE(e.risk_group, 'Vaccinated Despite Ineligibility') AS risk_group,
+        e.risk_group,
+        e.subcohort,
         e.eligibility_reason,
         e.rule_type,
         
@@ -123,6 +126,7 @@ final_uptake AS (
         cd.is_eligible,
         cd.campaign_category,
         cd.risk_group,
+        cd.subcohort,
         cd.eligibility_reason,
         cd.rule_type,
         
@@ -133,15 +137,31 @@ final_uptake AS (
         cd.laiv_given,
         cd.vaccinated_despite_ineligible,
         
-        -- Uptake flags
-        cd.vaccinated,
-        cd.declined,
+       -- Uptake flags -- make sure vaccinations are after the campaign start date
+        CASE
+        WHEN cd.vaccination_date >= cc.campaign_start_date
+        AND cd.vaccination_status IN ('VACCINATION_ADMINISTERED', 'LAIV_ADMINISTERED')
+        THEN TRUE ELSE FALSE END AS vaccinated,
+        CASE
+        WHEN cd.vaccination_date >= cc.campaign_start_date
+        AND cd.vaccination_status = 'VACCINATION_DECLINED'
+        THEN TRUE ELSE FALSE END AS declined,
         cd.eligible_no_record,
         
-        -- Uptake category
+        -- Uptake category -- make sure vaccinations are after the campaign start date
         CASE
-            WHEN cd.is_eligible AND cd.vaccinated THEN 'Eligible - Vaccinated'
-            WHEN cd.is_eligible AND cd.declined THEN 'Eligible - Declined'
+            WHEN cd.is_eligible
+            AND cd.vaccination_date >= cc.campaign_start_date AND cd.vaccination_status IN ('VACCINATION_ADMINISTERED', 'LAIV_ADMINISTERED')
+            THEN 'Eligible - Vaccinated'
+            WHEN cd.is_eligible
+            AND cd.vaccination_date < cc.campaign_start_date AND cd.vaccination_status IN ('VACCINATION_ADMINISTERED', 'LAIV_ADMINISTERED')
+            THEN 'Eligible - Vaccinated - Pre-Campaign'
+            WHEN cd.is_eligible
+            AND cd.vaccination_date >= cc.campaign_start_date AND cd.vaccination_status = 'VACCINATION_DECLINED'
+            THEN 'Eligible - Declined'
+            WHEN cd.is_eligible
+            AND cd.vaccination_date < cc.campaign_start_date AND cd.vaccination_status = 'VACCINATION_DECLINED'
+            THEN 'Eligible - Declined - Pre-Campaign'
             WHEN cd.is_eligible AND cd.eligible_no_record THEN 'Eligible - No Record'
             WHEN NOT cd.is_eligible AND cd.vaccinated THEN 'Not Eligible - Vaccinated'
             WHEN NOT cd.is_eligible AND cd.declined THEN 'Not Eligible - Declined'
@@ -169,11 +189,10 @@ final_uptake AS (
         
     FROM combined_data cd
     LEFT JOIN (
+        -- Every flu campaign the models report on
+        -- (campaign list: macros/config/flu_campaign_selection.sql)
         SELECT DISTINCT campaign_id, campaign_start_date, campaign_end_date, campaign_reference_date, audit_end_date
-        FROM ({{ flu_current_config() }})
-        UNION ALL
-        SELECT DISTINCT campaign_id, campaign_start_date, campaign_end_date, campaign_reference_date, audit_end_date  
-        FROM ({{ flu_previous_config() }})
+        FROM ({{ flu_reported_campaigns() }})
     ) cc
         ON cd.campaign_id = cc.campaign_id
 )

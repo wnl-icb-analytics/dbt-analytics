@@ -50,6 +50,8 @@ ae_encounter_summary as(
                 and be.start_date between dateadd(month, -1, current_date()) and current_date() 
                 then be.visit_occurrence_id end) as ae_ill_1mo
         , count(distinct be.visit_occurrence_id) as ae_tot_12mo -- all attendances
+        , count(distinct case when be.start_date between dateadd(month, -3, current_date()) and current_date() 
+                then be.visit_occurrence_id end) as ae_tot_3mo
         , count(distinct case when is_injury_related = TRUE-- all injuries
                 then be.visit_occurrence_id end) as ae_inj_12mo
         , count(distinct case when clr.lower_respiratory_encounter = true -- respiratory
@@ -69,6 +71,7 @@ SELECT
     , zeroifnull(a.ae_ill_3mo) as ae_ill_3mo
     , zeroifnull(a.ae_ill_1mo) as ae_ill_1mo
     , zeroifnull(a.ae_tot_12mo) as ae_tot_12mo
+    , zeroifnull(a.ae_tot_3mo) as ae_tot_3mo
     , zeroifnull(a.ae_inj_12mo) as ae_inj_12mo
     , zeroifnull(a.ae_t1_12mo) as ae_t1_12mo
     , zeroifnull(a.ae_respiratory_attendance_12mo) as ae_lower_respiratory_attendance_12mo -- 500k million attendance >= admission

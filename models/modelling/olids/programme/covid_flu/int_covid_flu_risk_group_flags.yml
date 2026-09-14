@@ -1,0 +1,77 @@
+models:
+  - name: int_covid_flu_risk_group_flags
+    description: >
+      Clinical risk group membership per programme, campaign and person, at any age.
+
+      Grain: one row per programme_type, campaign_id and person_id, for people in at
+      least one clinical group.
+
+      The eligibility facts publish clinical groups only where they drive the offer,
+      so a person aged 65 or over with CKD appears there as "Age 65 and Over" only.
+      The UKHSA uptake indicators report each clinical group across every age band.
+      This model reads the clinical intermediates directly, which compute every
+      campaign and every age, and pivots membership to flag columns. The dashboards
+      join it per campaign, so the flags are bounded to that campaign's evidence
+      window and do not carry between seasons or programmes.
+
+      in_clinical_risk_group is the spec ATRISK_GROUP: the eight shared clinical
+      groups, plus learning disability and severe mental illness for COVID only.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - programme_type
+              - campaign_id
+              - person_id
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: programme_type
+        description: 'COVID or FLU'
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['COVID', 'FLU']
+      - name: campaign_id
+        description: 'Campaign identifier, matching covid_reported_campaign_ids() and flu_reported_campaign_ids()'
+        data_tests:
+          - not_null
+      - name: person_id
+        description: 'Person in at least one clinical group for the campaign'
+        data_tests:
+          - not_null
+      - name: has_asthma
+        description: '1 if in the asthma group (AST_GROUP) for the campaign'
+      - name: has_asplenia
+        description: '1 if in the asplenia or spleen dysfunction group'
+      - name: has_chd
+        description: '1 if in the chronic heart disease group'
+      - name: has_ckd
+        description: '1 if in the chronic kidney disease group (CKD_GROUP)'
+      - name: has_cld
+        description: '1 if in the chronic liver disease group'
+      - name: has_cnd
+        description: '1 if in the chronic neurological disease group (CNS_GROUP)'
+      - name: has_crd
+        description: '1 if in the chronic respiratory disease group (RESP_GROUP)'
+      - name: has_diabetes
+        description: '1 if in the diabetes group (DIAB_GROUP)'
+      - name: is_immunosuppressed
+        description: '1 if in the immunosuppression group for the campaign'
+      - name: has_ld
+        description: '1 if in the learning disability group'
+      - name: has_smi
+        description: '1 if in the severe mental illness group (COVID only; always 0 for flu)'
+      - name: in_clinical_risk_group
+        description: '1 if in the spec ATRISK_GROUP for the programme'
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false

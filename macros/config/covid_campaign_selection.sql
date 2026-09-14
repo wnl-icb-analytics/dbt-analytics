@@ -1,109 +1,82 @@
 /*
-COVID Campaign Configuration
+COVID Campaign Selection
 
-Usage:
-  WHERE observation_date >= {{ covid_autumn_campaign_start_date() }}
-    AND observation_date <= {{ covid_autumn_campaign_end_date() }}
+covid_reported_campaign_ids() is the set of campaigns the COVID models build, and
+covid_reported_campaigns() emits them as one CTE:
 
-To change campaign year, update covid_current_autumn() etc below.
+  WITH all_campaigns AS (
+      {{ covid_reported_campaigns() }}
+  )
+
+Every campaign listed there stays in the models for good, so a season that has been
+reported keeps its rows when the next one is added, and its population is resolved as at
+the campaign rather than as at today (int_covid_flu_campaign_population). Clinical
+eligibility is still recomputed on every build, so a code entered retrospectively can
+still move a closed season.
+
+To add a season, define it in covid_campaign_config() first, then append its id here.
+
+covid_current_autumn() and its siblings name the season in flight. They do not control
+which campaigns are built; they exist so a model that needs "this season" can say so
+rather than hardcoding an id. covid_current_spring() names COVID Spring 2027 even though
+that campaign is not published yet, so that it is ready when UKHSA authorises the offer.
+
+Dates live in covid_campaign_config() only. This file holds no dates.
 */
 
-{# ===== Campaign ID selectors (edit these to change campaign year) ===== #}
+{# ===== Campaigns the models build (add new campaigns here; never remove) ===== #}
 
-{% macro covid_current_autumn() %}COVID Autumn 2025{% endmacro %}
-{% macro covid_current_spring() %}COVID Spring 2026{% endmacro %}
-{% macro covid_previous_autumn() %}COVID Autumn 2024{% endmacro %}
-{% macro covid_previous_spring() %}COVID Spring 2025{% endmacro %}
-
-{# ===== Campaign data lookup ===== #}
-
-{% macro _covid_campaign_data(campaign_id, field) %}
-    {%- if campaign_id == 'COVID Autumn 2025' -%}
-        {%- if field == 'campaign_name' -%}Autumn 2025 COVID Vaccination Campaign
-        {%- elif field == 'campaign_start_date' -%}'2025-09-01'::DATE
-        {%- elif field == 'campaign_end_date' -%}'2026-03-31'::DATE
-        {%- elif field == 'campaign_reference_date' -%}'2026-03-31'::DATE
-        {%- elif field == 'vaccination_tracking_start' -%}'2025-09-01'::DATE
-        {%- elif field == 'vaccination_tracking_end' -%}'2026-03-31'::DATE
-        {%- elif field == 'decline_tracking_start' -%}'2025-08-01'::DATE
-        {%- elif field == 'decline_tracking_end' -%}'2026-06-30'::DATE
-        {%- else -%}{{ exceptions.raise_compiler_error("Unknown field '" ~ field ~ "' for campaign '" ~ campaign_id ~ "'") }}
-        {%- endif -%}
-    {%- elif campaign_id == 'COVID Autumn 2024' -%}
-        {%- if field == 'campaign_name' -%}Autumn 2024 COVID Vaccination Campaign
-        {%- elif field == 'campaign_start_date' -%}'2024-09-01'::DATE
-        {%- elif field == 'campaign_end_date' -%}'2025-03-31'::DATE
-        {%- elif field == 'campaign_reference_date' -%}'2025-03-31'::DATE
-        {%- elif field == 'vaccination_tracking_start' -%}'2024-09-01'::DATE
-        {%- elif field == 'vaccination_tracking_end' -%}'2025-03-31'::DATE
-        {%- elif field == 'decline_tracking_start' -%}'2024-08-01'::DATE
-        {%- elif field == 'decline_tracking_end' -%}'2025-06-30'::DATE
-        {%- else -%}{{ exceptions.raise_compiler_error("Unknown field '" ~ field ~ "' for campaign '" ~ campaign_id ~ "'") }}
-        {%- endif -%}
-    {%- elif campaign_id == 'COVID Spring 2025' -%}
-        {%- if field == 'campaign_name' -%}Spring 2025 COVID Vaccination Campaign
-        {%- elif field == 'campaign_start_date' -%}'2025-04-01'::DATE
-        {%- elif field == 'campaign_end_date' -%}'2025-06-30'::DATE
-        {%- elif field == 'campaign_reference_date' -%}'2025-06-30'::DATE
-        {%- elif field == 'vaccination_tracking_start' -%}'2025-04-01'::DATE
-        {%- elif field == 'vaccination_tracking_end' -%}'2025-06-30'::DATE
-        {%- elif field == 'decline_tracking_start' -%}'2025-03-01'::DATE
-        {%- elif field == 'decline_tracking_end' -%}'2025-06-30'::DATE
-        {%- else -%}{{ exceptions.raise_compiler_error("Unknown field '" ~ field ~ "' for campaign '" ~ campaign_id ~ "'") }}
-        {%- endif -%}
-    {%- elif campaign_id == 'COVID Spring 2026' -%}
-        {%- if field == 'campaign_name' -%}Spring 2026 COVID Vaccination Campaign
-        {%- elif field == 'campaign_start_date' -%}'2026-04-01'::DATE
-        {%- elif field == 'campaign_end_date' -%}'2026-06-30'::DATE
-        {%- elif field == 'campaign_reference_date' -%}'2026-06-30'::DATE
-        {%- elif field == 'vaccination_tracking_start' -%}'2026-04-01'::DATE
-        {%- elif field == 'vaccination_tracking_end' -%}'2026-06-30'::DATE
-        {%- elif field == 'decline_tracking_start' -%}'2026-03-01'::DATE
-        {%- elif field == 'decline_tracking_end' -%}'2026-06-30'::DATE
-        {%- else -%}{{ exceptions.raise_compiler_error("Unknown field '" ~ field ~ "' for campaign '" ~ campaign_id ~ "'") }}
-        {%- endif -%}
-    {%- elif campaign_id == 'COVID Spring 2024' -%}
-        {%- if field == 'campaign_name' -%}Spring 2024 COVID Vaccination Campaign
-        {%- elif field == 'campaign_start_date' -%}'2024-04-01'::DATE
-        {%- elif field == 'campaign_end_date' -%}'2024-06-30'::DATE
-        {%- elif field == 'campaign_reference_date' -%}'2024-06-30'::DATE
-        {%- elif field == 'vaccination_tracking_start' -%}'2024-04-01'::DATE
-        {%- elif field == 'vaccination_tracking_end' -%}'2024-06-30'::DATE
-        {%- elif field == 'decline_tracking_start' -%}'2024-03-01'::DATE
-        {%- elif field == 'decline_tracking_end' -%}'2024-06-30'::DATE
-        {%- else -%}{{ exceptions.raise_compiler_error("Unknown field '" ~ field ~ "' for campaign '" ~ campaign_id ~ "'") }}
-        {%- endif -%}
-    {%- else -%}
-        {{ exceptions.raise_compiler_error("Unknown COVID campaign_id: '" ~ campaign_id ~ "'. Valid campaigns: COVID Autumn 2025, COVID Autumn 2024, COVID Spring 2026, COVID Spring 2025, COVID Spring 2024") }}
-    {%- endif -%}
+{% macro covid_reported_campaign_ids() %}
+    {{ return([
+        'COVID Autumn 2024',
+        'COVID Spring 2025',
+        'COVID Autumn 2025',
+        'COVID Spring 2026',
+        'COVID Autumn 2026'
+    ]) }}
+    {#- COVID Spring 2027 is configured in covid_campaign_config() but deliberately not
+        listed. Spec v4.0 supplies the spring dates but defines a call and recall group
+        for Autumn 2026 only, so there is no authorised spring offer to publish an
+        eligible cohort against. Add it here once UKHSA defines one. #}
 {% endmacro %}
 
-{# ===== Current autumn campaign field accessors ===== #}
+{% macro covid_reported_campaigns() %}
+    {%- for campaign_id in covid_reported_campaign_ids() %}
+    {%- if not loop.first %}
+    UNION ALL
+    {% endif %}
+    SELECT * FROM ({{ covid_campaign_config(campaign_id) }})
+    {%- endfor %}
+{% endmacro %}
 
-{% macro covid_autumn_campaign_name() %}{{ _covid_campaign_data(covid_current_autumn(), 'campaign_name') }}{% endmacro %}
-{% macro covid_autumn_campaign_start_date() %}{{ _covid_campaign_data(covid_current_autumn(), 'campaign_start_date') }}{% endmacro %}
-{% macro covid_autumn_campaign_end_date() %}{{ _covid_campaign_data(covid_current_autumn(), 'campaign_end_date') }}{% endmacro %}
-{% macro covid_autumn_campaign_reference_date() %}{{ _covid_campaign_data(covid_current_autumn(), 'campaign_reference_date') }}{% endmacro %}
-{% macro covid_autumn_vaccination_tracking_start() %}{{ _covid_campaign_data(covid_current_autumn(), 'vaccination_tracking_start') }}{% endmacro %}
-{% macro covid_autumn_vaccination_tracking_end() %}{{ _covid_campaign_data(covid_current_autumn(), 'vaccination_tracking_end') }}{% endmacro %}
+{# ===== Season in flight (roll these forward each year) ===== #}
 
-{# ===== Current spring campaign field accessors ===== #}
+{% macro covid_current_autumn() %}COVID Autumn 2026{% endmacro %}
+{% macro covid_current_spring() %}COVID Spring 2027{% endmacro %}
+{% macro covid_previous_autumn() %}COVID Autumn 2025{% endmacro %}
+{% macro covid_previous_spring() %}COVID Spring 2026{% endmacro %}
 
-{% macro covid_spring_campaign_name() %}{{ _covid_campaign_data(covid_current_spring(), 'campaign_name') }}{% endmacro %}
-{% macro covid_spring_campaign_start_date() %}{{ _covid_campaign_data(covid_current_spring(), 'campaign_start_date') }}{% endmacro %}
-{% macro covid_spring_campaign_end_date() %}{{ _covid_campaign_data(covid_current_spring(), 'campaign_end_date') }}{% endmacro %}
-{% macro covid_spring_campaign_reference_date() %}{{ _covid_campaign_data(covid_current_spring(), 'campaign_reference_date') }}{% endmacro %}
-
-{# ===== Previous autumn campaign field accessors ===== #}
-
-{% macro covid_previous_autumn_campaign_name() %}{{ _covid_campaign_data(covid_previous_autumn(), 'campaign_name') }}{% endmacro %}
-{% macro covid_previous_autumn_campaign_start_date() %}{{ _covid_campaign_data(covid_previous_autumn(), 'campaign_start_date') }}{% endmacro %}
-{% macro covid_previous_autumn_campaign_end_date() %}{{ _covid_campaign_data(covid_previous_autumn(), 'campaign_end_date') }}{% endmacro %}
-{% macro covid_previous_autumn_campaign_reference_date() %}{{ _covid_campaign_data(covid_previous_autumn(), 'campaign_reference_date') }}{% endmacro %}
-
-{# ===== Legacy CTE-style config (for backward compatibility) ===== #}
+{# ===== Single-campaign config accessors ===== #}
 
 {% macro covid_autumn_config() %}{{ covid_campaign_config(covid_current_autumn()) }}{% endmacro %}
 {% macro covid_spring_config() %}{{ covid_campaign_config(covid_current_spring()) }}{% endmacro %}
 {% macro covid_previous_autumn_config() %}{{ covid_campaign_config(covid_previous_autumn()) }}{% endmacro %}
 {% macro covid_previous_spring_config() %}{{ covid_campaign_config(covid_previous_spring()) }}{% endmacro %}
+
+{# ===== Campaigns a build recomputes ===== #}
+
+{#- Closed seasons are recomputed monthly, not daily. The cohort intermediates are
+    incremental (delete+insert on campaign_id) and take their all_campaigns CTE from
+    this macro: a routine incremental run rebuilds only the seasons in flight, so a
+    closed season keeps its rows until a run with --full-refresh, or with
+    --vars '{covid_flu_rebuild_closed: true}', restates every campaign against the
+    current source data and its pinned terminology version. -#}
+
+{% macro covid_build_campaigns() %}
+    {%- if is_incremental() and not var('covid_flu_rebuild_closed', false) -%}
+    SELECT * FROM ({{ covid_reported_campaigns() }})
+    WHERE campaign_id IN ('{{ covid_current_autumn() }}', '{{ covid_current_spring() }}')
+    {%- else -%}
+    {{ covid_reported_campaigns() }}
+    {%- endif -%}
+{% endmacro %}

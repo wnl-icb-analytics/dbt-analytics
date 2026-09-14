@@ -8,13 +8,17 @@ This is the simplest possible rule - pure age-based eligibility.
 No clinical codes, no complex logic, just age calculation.
 */
 
-{{ config(materialized='table') }}
+{{ config(
+    materialized='incremental',
+    incremental_strategy='delete+insert',
+    unique_key='campaign_id',
+    tags=['covid_flu']
+) }}
 
 WITH all_campaigns AS (
-    -- Generate data for both current and previous campaigns automatically
-    SELECT * FROM ({{ flu_current_config() }})
-    UNION ALL
-    SELECT * FROM ({{ flu_previous_config() }})
+    -- Every flu campaign the models report on
+    -- (campaign list: macros/config/flu_campaign_selection.sql)
+    {{ flu_build_campaigns() }}
 ),
 
 -- Step 1: Find people aged 65+ at reference date (for all campaigns)
@@ -23,8 +27,8 @@ people_over_65 AS (
         cc.campaign_id,
         demo.person_id,
         demo.birth_date_approx,
-        DATEDIFF('year', demo.birth_date_approx, cc.campaign_reference_date) AS age_years_at_ref_date,
-        DATEDIFF('month', demo.birth_date_approx, cc.campaign_reference_date) AS age_months_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(cc.campaign_reference_date, demo.birth_date_approx) / 12) AS age_years_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(cc.campaign_reference_date, demo.birth_date_approx)) AS age_months_at_ref_date,
         cc.campaign_reference_date,
         cc.audit_end_date
     FROM {{ ref('dim_person_demographics') }} demo

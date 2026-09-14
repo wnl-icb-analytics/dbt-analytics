@@ -1,6 +1,17 @@
-{% macro get_observations(cluster_ids, source=none, include_history=false) %}
+{% macro get_observations(cluster_ids, source=none, include_history=false, versioned=false) %}
+    {#- versioned=true reads every published version of the UKHSA cluster from
+        stg_reference_ukhsa_codecluster_versions instead of the current one in
+        COMBINED_CODESETS, and adds spec_version to the output so the caller can pin
+        each campaign to the version it was reported under. Only valid with a UKHSA
+        source. include_history is not supported with versioned. -#}
     {%- if cluster_ids is none or cluster_ids|trim == '' -%}
         {{ exceptions.raise_compiler_error("Must provide a non-empty cluster_ids parameter to get_observations macro") }}
+    {%- endif -%}
+    {%- if versioned and (source is none or not source.startswith('UKHSA_')) -%}
+        {{ exceptions.raise_compiler_error("get_observations(versioned=true) needs a UKHSA source") }}
+    {%- endif -%}
+    {%- if versioned and include_history -%}
+        {{ exceptions.raise_compiler_error("get_observations does not support include_history with versioned=true") }}
     {%- endif -%}
     -- Join pre-mapped observations with cluster definitions for flexibility
     WITH cluster_codes AS (
@@ -8,8 +19,9 @@
             code as mapped_concept_code,
             cluster_id,
             cluster_description,
-            code_description
-        FROM {{ ref('stg_reference_combined_codesets') }}
+            code_description{% if versioned %},
+            spec_version{% endif %}
+        FROM {% if versioned %}{{ ref('stg_reference_ukhsa_codecluster_versions') }}{% else %}{{ ref('stg_reference_combined_codesets') }}{% endif %}
         WHERE UPPER(cluster_id) IN ({{ cluster_ids|upper }})
         {% if source %}
           AND source = '{{ source }}'
@@ -54,6 +66,7 @@
         o.result_unit_code,
         o.result_unit_display,
         o.result_text,
+        o.allergy_medication_name,
         o.is_problem,
         o.is_review,
         o.problem_end_date,
@@ -65,13 +78,14 @@
         o.lds_transform_datetime,
         cc.cluster_id,
         cc.cluster_description,
-        cc.code_description
+        cc.code_description{% if versioned %},
+        cc.spec_version{% endif %}
     FROM {{ ref('stg_olids_observation') }} o
     INNER JOIN {% if include_history %}expanded_codes{% else %}cluster_codes{% endif %} cc
         ON o.mapped_concept_code = cc.mapped_concept_code
     -- Deduplicate: preserve legitimate cross-cluster duplicates but remove within-cluster duplicates
     QUALIFY ROW_NUMBER() OVER (
-        PARTITION BY o.id, cc.cluster_id
+        PARTITION BY o.id, cc.cluster_id{% if versioned %}, cc.spec_version{% endif %}
         ORDER BY o.mapped_concept_code
     ) = 1
 

@@ -1,90 +1,92 @@
-# Contributing to WNL ICB Analytics dbt Project
+# Contributing to WNL ICB Analytics dbt
 
-Welcome! This guide will help you get set up to contribute to this project.
+This guide covers local setup and the pull request workflow.
 
-## Before You Start
+Use the [dbt onboarding handbook](https://dbt-onboarding.vercel.app/) to learn
+the project, then keep [Project conventions](PROJECT_CONVENTIONS.md) beside
+you while changing models.
 
-Make sure you have these prerequisites installed and configured on your Windows machine:
+## Set up locally
 
-### 1. Install Required Software
+Prerequisites (Windows):
 
-- **dbt Fusion engine** - runs all dbt commands. `start_dbt.ps1` installs and keeps
-  it up to date automatically (to `%USERPROFILE%\.local\bin`), so you normally don't
-  install it by hand. To install manually:
-  ```powershell
-  irm https://public.cdn.getdbt.com/fs/install/install.ps1 | iex
-  ```
-  dbt is **not** a Python package in this project - it is the Fusion binary.
-- **Git for Windows** - [Download from git-scm.com](https://git-scm.com/download/win)
-  - Minimum version 2.34 required for SSH commit signing
-- **A text editor** - We recommend [VS Code](https://code.visualstudio.com/)
-- **Access to Snowflake** with the ANALYST role
-- **uv** *(optional)* - only needed to run the Python helper scripts in `scripts/`:
-  ```powershell
-  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-  ```
+- **Git for Windows:** [Download from git-scm.com](https://git-scm.com/download/win).
+  Version 2.34 or later is needed for SSH commit signing.
+- **Access to Snowflake** with the ANALYST role. You will need your account
+  identifier, username, role (`ANALYST`) and warehouse (usually `NCL_ANALYTICS_XS`).
+  To find them, log in to Snowflake, select your name in the bottom-left corner,
+  then "Connect a tool to Snowflake". Ask your team lead if you don't have access.
+- **A text editor:** We recommend [VS Code](https://code.visualstudio.com/).
 
-### 2. Enable PowerShell Script Execution
-
-Open PowerShell and run:
+### Step 1: Allow PowerShell to run scripts
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 ```
 
-This allows the project's setup script (`start_dbt.ps1`) to run.
+### Step 2: Clone the repository
 
-### 3. Get Your Snowflake Connection Details
-
-You'll need the following information from Snowflake (ask your team lead if you don't have access):
-
-**To find your connection details in Snowflake:**
-1. Log in to Snowflake web interface
-2. Click your user/role name in the bottom-left corner
-3. Select "Connect a tool to Snowflake"
-4. You'll see your account identifier and other connection details
-
-**You'll need:**
-- **Account identifier** - Shown in the connection dialog
-- **Username** - Your Snowflake username (usually your email prefix)
-- **Warehouse** - Usually `NCL_ANALYTICS_XS`
-- **Role** - `ANALYST`
-
-## Getting Started
-
-### Step 1: Clone the Repository
-
-```bash
+```powershell
 git clone https://github.com/wnl-icb-analytics/dbt-analytics
 cd dbt-analytics
 ```
 
-### Step 2: Install dbt + Python tooling
-
-Just run the setup script (Step 4) - it installs the dbt Fusion engine and syncs
-the Python tooling for you. To do it by hand:
+### Step 3: Run the setup script
 
 ```powershell
-# dbt Fusion engine (runs all dbt commands)
-irm https://public.cdn.getdbt.com/fs/install/install.ps1 | iex
-
-# Python tooling for scripts/ (optional)
-uv sync
-.venv\Scripts\activate
+.\start_dbt.ps1
 ```
 
-dbt runs on the Fusion engine, not from the Python venv. The `.venv` exists only
-for the helper scripts in `scripts/`.
+The script does the rest:
 
-### Step 3: Configure Snowflake Connection
+- configures git hooks and checks commit signing
+- installs the dbt Fusion engine if it is missing
+- installs `uv` and syncs the Python tooling for `scripts/`
+- asks for your Snowflake account, user, role, warehouse and auth method, then
+  writes `.env` (first run only)
+- installs dbt packages
 
-The first time you open a terminal with no `.env`, `start_dbt.ps1` walks you through
-setup interactively: it asks for your account, user, role and warehouse, then your
-auth method (browser SSO by default, or PAT / password+MFA), and writes `.env` for you.
+The VS Code workspace runs it every time you open a terminal, so you rarely need
+to run it by hand after this.
 
-To configure it by hand instead:
+### Step 4: Verify
 
-```bash
+```powershell
+dbt debug
+```
+
+With browser SSO (the default), your browser opens for Snowflake authentication.
+Look for "All checks passed!" in the output.
+
+## Set up manually
+
+Use this only if the setup script cannot run on your machine. It reproduces what
+`start_dbt.ps1` does.
+
+**1. Install the dbt Fusion engine.** dbt is not a Python package in this
+project; it is the Fusion binary, installed to `%USERPROFILE%\.local\bin`:
+
+```powershell
+irm https://public.cdn.getdbt.com/fs/install/install.ps1 | iex
+```
+
+**2. Install uv** *(optional)*. Only needed for the Python helper scripts in
+`scripts/`:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+uv sync
+```
+
+**3. Configure git hooks:**
+
+```powershell
+git config core.hooksPath .githooks
+```
+
+**4. Configure the Snowflake connection:**
+
+```powershell
 cp env.example .env
 ```
 
@@ -97,48 +99,33 @@ SNOWFLAKE_WAREHOUSE=your-warehouse
 SNOWFLAKE_ROLE=your-role
 ```
 
-Auth: leave it there for **browser SSO** (the default). For a **PAT**, set `SNOWFLAKE_PAT`
-(Fusion authenticates via `programmatic_access_token`). For an **account password**, set
-`SNOWFLAKE_PASSWORD` (used with MFA). `profiles.yml` picks the authenticator from whichever
-you set.
+Leave it there for **browser SSO** (the default). For a **PAT**, set
+`SNOWFLAKE_PAT` (Fusion authenticates via `programmatic_access_token`). For an
+**account password**, set `SNOWFLAKE_PASSWORD` (used with MFA). `profiles.yml`
+picks the authenticator from whichever you set. Fusion loads `.env` itself.
 
-### Step 4: Initialise Your Development Environment
-
-Run the setup script:
+**5. Install packages and verify:**
 
 ```powershell
-.\start_dbt.ps1
+dbt deps
+dbt debug
 ```
 
-The VS Code workspace runs this automatically when you open a terminal, so you
-rarely need to run it by hand. It installs/updates the dbt Fusion engine, configures
-git hooks, and syncs the Python tooling. (Fusion loads `.env` itself, so dbt works
-even if the script hasn't run.)
-
-### Step 5: Verify Installation
-
-```bash
-dbt deps    # Install dbt packages
-dbt debug   # Test connection
-```
-
-If you are using `externalbrowser`, your browser will open for Snowflake authentication. Look for "All checks passed!" in the output.
-
-## GitHub Codespaces
+## Use GitHub Codespaces
 
 Codespaces installs everything on creation (Fusion, Python tooling, packages) and
-authenticates with your Codespaces secrets - no local install, no `.env`. See
+authenticates with your Codespaces secrets. It needs no local install or `.env`. See
 **[Developing in GitHub Codespaces](docs/codespaces.md)** for the walkthrough:
 which secrets to add, scoping them to the repo, and how auth works.
 
-## Helper Scripts
+## Use the helper scripts
 
 Two scripts in the project root make development easier:
 
 | Script | Description |
 |--------|-------------|
-| `.\start_dbt.ps1` | Installs/updates dbt Fusion, configures git hooks, loads `.env`, syncs Python tooling (auto-runs on terminal open) |
-| `.\build_changed` | Builds only models changed on your branch |
+| `.\start_dbt.ps1` | Installs dbt Fusion, configures git hooks, sets up and loads `.env`, syncs Python tooling, installs dbt packages (auto-runs on terminal open) |
+| `.\build_changed.ps1` | Builds only models changed on your branch |
 
 **build_changed flags:**
 - `-u` include upstream dependencies
@@ -146,17 +133,47 @@ Two scripts in the project root make development easier:
 - `-r` run only (skip tests)
 - `-t` test only (skip run)
 
-Example: `.\build_changed -u -d` builds changed models with all dependencies.
+Example: `.\build_changed.ps1 -u -d` builds changed models with upstream and
+downstream dependencies.
+
+## Change a model
+
+Read [Project conventions](PROJECT_CONVENTIONS.md) before editing SQL. It defines
+model design, layer boundaries, ownership, documentation, tests and data safety.
+Check downstream impact with `dbt ls -s model_name+`, then change the SQL and
+related YAML together.
+
+Validate as you work:
+
+```powershell
+dbt compile -s model_name
+dbt build -s model_name
+# When the change can affect consumers:
+dbt build -s model_name+
+```
+
+`dbt show` executes SQL and returns its result. Use it sparingly through a coding
+agent, and only when the query is designed to return a high-level,
+non-identifying aggregate. Do not use it to preview model rows. When validation
+needs row-level inspection, give the user a ready-to-run Snowflake-native query
+for an approved human-controlled tool and ask only for the non-identifying
+aggregate or confirmation needed. Apply the same rule to ad hoc queries and
+failing-test SQL.
+
+Build downstream only where the change can affect consumers. If the full
+selection is too large, build direct children and state the limit in the pull
+request. For changed models across a branch, use `.\build_changed.ps1`; add `-d`
+to include downstream consumers.
 
 ## Setting Up Commit Signing
 
 This repository requires all commits to be cryptographically signed.
 
-### Why Sign Commits?
+### Why commits are signed
 
 Commit signing proves that commits actually came from you, not someone impersonating you. GitHub will show a "Verified" badge on signed commits.
 
-### Setup Process
+### Configure signing
 
 **1. Generate an SSH key:**
 
@@ -194,7 +211,7 @@ Get-Content ~/.ssh/id_ed25519.pub | Set-Clipboard
 ```
 
 Then:
-1. Go to [GitHub Settings → SSH and GPG keys](https://github.com/settings/keys)
+1. Go to [GitHub Settings, SSH and GPG keys](https://github.com/settings/keys)
 2. Click "New SSH key"
 3. **Important**: Select "Signing Key" as the key type (not "Authentication Key")
    - There's a dropdown that defaults to "Authentication Key"
@@ -202,7 +219,7 @@ Then:
 4. Paste your public key and give it a descriptive title (e.g., "Work Laptop Signing Key")
 5. Click "Add SSH key"
 
-### Verify Your Setup
+### Verify the setup
 
 Create a test commit:
 
@@ -210,7 +227,8 @@ Create a test commit:
 git commit --allow-empty -m "test: verify signed commits"
 ```
 
-Fix line-endings using this command (thx Kate)
+If local signature verification reports a line-ending error, convert the file
+to LF:
 
 ```bash
 $file = "$env:USERPROFILE\.ssh\allowed_signers"; $content = [System.IO.File]::ReadAllText($file); [System.IO.File]::WriteAllText($file, $content.Replace("`r`n", "`n"), [System.Text.Encoding]::UTF8); Write-Host "Line endings converted from CRLF to LF"
@@ -224,16 +242,16 @@ git log --show-signature -1
 
 You should see "Good signature" in the output.
 
-## Development Workflow
+## Follow the development workflow
 
-### Branch Protection Rules
+### Branch protection rules
 
 The `main` branch is protected:
-- **No direct commits** - All changes must go through a pull request
-- **Signed commits required** - All commits must be signed
-- **No force pushes** - History cannot be rewritten
+- **No direct commits:** All changes must go through a pull request
+- **Signed commits required:** All commits must be signed
+- **No force pushes:** History cannot be rewritten
 
-### Creating a Feature Branch
+### Create a branch
 
 Never work directly on main. Always create a new branch:
 
@@ -248,7 +266,7 @@ git switch -c fix/your-bug-fix
 git switch -c docs/your-doc-update
 ```
 
-### Commit Message Format
+### Write the commit message
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/):
 
@@ -273,7 +291,7 @@ git commit -m "fix: correct join logic in int_appointments"
 git commit -m "docs: update setup instructions in CONTRIBUTING"
 ```
 
-### Creating a Pull Request
+### Create a pull request
 
 1. **Push your branch:**
    ```bash
@@ -284,17 +302,35 @@ git commit -m "docs: update setup instructions in CONTRIBUTING"
 
 2. **Create PR on GitHub:**
    - Go to the repository on GitHub
-   - Click "Pull requests" → "New pull request"
+   - Select **Pull requests**, then **New pull request**.
    - Select your branch
-   - Fill in the PR description
+   - Explain why the change exists. One clear sentence can be enough for a small
+     change; add changed behaviour, checks or review questions when they help
    - Reference any related issues (e.g., "Fixes #123")
 
-3. **Wait for review:**
-   - Pre-commit hooks will automatically run
-   - Address any feedback from reviewers
-   - Once approved, the PR can be merged
+   This repository is public. Do not include credentials, patient- or
+   person-level data, identifying values, row-level output or screenshots of
+   real data. Suspected disclosure is a critical blocking finding. Use aggregate
+   or non-identifying validation evidence. High-level counts, rates,
+   distributions and validation totals are not person-level data when they
+   cannot identify an individual. A data-safety finding must be resolved before
+   merge even though CodeRabbit does not submit a formal request-changes review.
 
-### Keeping Your Branch Up to Date
+3. **Wait for review:**
+   - Fast checks compile the project and check references, descriptions,
+     declared test coverage and ownership
+   - CodeRabbit reviews the change against the project conventions
+   - Address any feedback from reviewers
+   - Once approved, select **Merge when ready**. The merge queue builds changed
+     models and runs their data tests in Snowflake development before merge
+
+Reviews focus on changed behaviour and its effect on the existing model
+contract. Pre-existing design debt is not a merge condition unless the change
+worsens it, depends on it, or cannot be safe without resolving it. Wider
+redesign may be recorded as `follow-up (non-blocking):` without expanding the
+scope of the pull request.
+
+### Keep the branch up to date
 
 ```bash
 # Switch to main and pull latest changes
@@ -315,7 +351,7 @@ git add <resolved-files>
 git commit
 ```
 
-### Using Git Stash
+### Use Git stash
 
 If you need to switch branches but have uncommitted changes:
 
@@ -334,7 +370,7 @@ git switch feat/your-feature-name
 git stash pop
 ```
 
-## Pre-commit Hooks
+## Use the pre-commit hooks
 
 Pre-commit hooks run automatically when you commit and will:
 - Validate commit message format
@@ -344,11 +380,11 @@ Pre-commit hooks run automatically when you commit and will:
 
 If a hook fails, fix the reported issue and commit again.
 
-## Working with dbt Packages
+## Work with dbt packages
 
 This repository commits `dbt_packages/` to ensure consistent package versions. When `dbt deps` shows changes in `dbt_packages/`, only commit if you're intentionally updating packages.
 
-## Common Issues
+## Fix common issues
 
 **SSH signing fails:**
 - Check Git version: `git --version` (need 2.34+)
@@ -357,7 +393,7 @@ This repository commits `dbt_packages/` to ensure consistent package versions. W
 
 **Python command not found:**
 - Use `py` instead of `python`
-- Or add Python to PATH (see README)
+- Or install Python 3.11 and select it in your terminal or editor
 
 **PowerShell won't run scripts:**
 - Run `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`
@@ -366,17 +402,9 @@ This repository commits `dbt_packages/` to ensure consistent package versions. W
 - Check your `.env` file has correct values
 - Try running `dbt debug` to see detailed error
 
-## Getting Help
+## Get help
 
 - Check existing [GitHub Issues](https://github.com/wnl-icb-analytics/dbt-analytics/issues)
 - Work through the courses and handbook at [dbt-onboarding.vercel.app](https://dbt-onboarding.vercel.app/)
+- Read [Working with Sources](docs/working-with-sources.md) for the source generation pipeline
 - Create a new issue with details about your problem
-
-## Next Steps
-
-Once you're set up, learn how dbt and this project work at
-**[dbt-onboarding.vercel.app](https://dbt-onboarding.vercel.app/)** — the canonical
-source for dbt learning here. It covers the layers, naming conventions, building and
-testing models, materialisations, and the full branch-to-merge workflow.
-
-For this project's source generation pipeline, see [Working with Sources](docs/working-with-sources.md).

@@ -3,13 +3,31 @@ models:
   - name: stg_epd_pc_meds
     description: |
       English Prescribing Dataset (EPD) primary care dispensed medications.
-      One row per dispensed prescription item per patient per processing
-      period. Faithful passthrough of raw_epd_pc_meds with the patient key
+      One row per source prescription-item record, retaining historical
+      submissions for each processing period. Faithful passthrough of
+      raw_epd_pc_medsv1 with the patient key
       renamed to sk_patient_id and cost/quantity/date columns typed.
 
       All rows retained, including out-of-area patients who won't match NCL
       person dimensions. Cost columns are in source units (NHSBSA reports
       pence) — conversion to £ happens in the modelling layer.
+
+      Incremental builds replace complete processing months whose projected
+      row counts or aggregate content hashes differ from the source. This
+      includes corrections and late submissions to older months, and updates
+      the latest-submission flag on their earlier rows. The processing period
+      is the replacement unit, not a unique row key. Hash comparison is
+      probabilistic; monthly full refreshes reconcile the complete source.
+      A changed period that has disappeared from the source, or that has a
+      null processed_period, stops the incremental build and requires a full
+      refresh. Column changes also require a full refresh.
+
+      The source carries no unique row identifier: a small share of rows
+      repeat the same prescription, item, product, quantity and submission
+      values, and the model preserves those source rows. The grain guard is
+      the singular test epd_period_row_counts_match_raw, which checks that
+      every processing period holds exactly the rows held by
+      raw_epd_pc_medsv1.
     config:
       meta:
         owner:

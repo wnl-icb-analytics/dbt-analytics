@@ -11,17 +11,17 @@ Pregnancy-specific diabetes that occurs during pregnancy.
 This condition is NOT eligible in 2025/26 restricted campaigns.
 */
 
-{{ config(materialized='table') }}
+{{ config(
+    materialized='incremental',
+    incremental_strategy='delete+insert',
+    unique_key='campaign_id',
+    tags=['covid_flu']
+) }}
 
 WITH all_campaigns AS (
-    -- Generate data for both current and previous campaigns automatically
-    SELECT * FROM ({{ covid_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_spring_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_spring_config() }})
+    -- Every COVID campaign the models report on
+    -- (campaign list: macros/config/covid_campaign_selection.sql)
+    {{ covid_build_campaigns() }}
 ),
 
 -- Step 1: Find people with gestational diabetes diagnosis (for all campaigns)
@@ -32,9 +32,10 @@ people_with_gdm_diagnosis AS (
         obs.clinical_effective_date AS gdm_date,
         cc.audit_end_date,
         cc.campaign_reference_date
-    FROM ({{ get_observations("'GDIAB_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'GDIAB_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= cc.audit_end_date
         -- Only include if this condition is eligible in the campaign
         AND cc.eligible_gestational_diabetes = TRUE

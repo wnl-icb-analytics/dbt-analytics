@@ -1,0 +1,351 @@
+version: 2
+
+models:
+  - name: fct_mhsds_hospital_provider_spell
+    description: >-
+      Recorded MHSDS hospital provider spells from accepted provider
+      submissions. One row represents the newest submitted version of one
+      spell across the available history. Missing discharge means no discharge
+      was recorded; it does not mean current occupancy. The model does not
+      apply inferred closure, overlap removal, currency or costing rules.
+      Provider reuse of a spell identifier means the earlier source state is
+      treated as a revision rather than a separate spell.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: source_record_id
+        description: Stable spell join key; the MHSDS provider-qualified hospital provider spell identifier.
+        data_tests: [not_null, unique]
+      - name: source_dataset
+        description: Source data set; always MHSDS.
+      - name: mhs501_uniq_id
+        description: Submitted MHS501 row selected as the newest version of the spell.
+      - name: hosp_prov_spell_id
+        description: Provider-local hospital provider spell identifier.
+      - name: service_request_id
+        description: Provider-local service request identifier linked to the spell.
+      - name: referral_source_record_id
+        description: MHSDS unique service request identifier linked to the spell.
+      - name: has_matching_referral
+        description: Whether the recorded referral exists in fct_mhsds_referral.
+      - name: referral_service_or_team_id
+        description: Primary referral service or team identifier; this is not a ward team.
+      - name: referral_service_or_team_type_code
+        description: Primary referral service or team type code.
+      - name: referral_service_or_team_type_description
+        description: Published description of the primary referral service or team type.
+      - name: referral_service_or_team_name
+        description: Service or team name supplied with the referral.
+      - name: person_id
+        description: MHSDS person identifier.
+      - name: sk_patient_id
+        description: Pseudonymised cross-system patient key; null where bridging is unavailable.
+      - name: admission_date
+        description: Recorded hospital provider spell start date; source dates before 1901 are null.
+      - name: admission_time
+        description: Recorded hospital provider spell start time.
+      - name: admitted_at
+        description: Recorded admission timestamp; date-only records use midnight.
+      - name: admission_time_precision
+        description: Precision of admitted_at.
+        data_tests: &time_precision
+          - accepted_values:
+              arguments:
+                values: [date, timestamp]
+      - name: decided_to_admit_date
+        description: Recorded date of the decision to admit.
+      - name: decided_to_admit_time
+        description: Recorded time of the decision to admit.
+      - name: decided_to_admit_at
+        description: Recorded decision-to-admit timestamp; date-only records use midnight.
+      - name: decided_to_admit_time_precision
+        description: Precision of decided_to_admit_at.
+        data_tests: *time_precision
+      - name: admission_source_code
+        description: Version-defined MHS501 admission source code recorded by the provider.
+      - name: admission_source_description
+        description: Published NHS Data Model and Dictionary description for the admission source.
+      - name: admission_method_code
+        description: Version-defined MHS501 admission method code recorded by the provider.
+      - name: admission_method_description
+        description: Published NHS Data Model and Dictionary description for the admission method.
+      - name: estimated_discharge_date
+        description: Estimated discharge date recorded by the provider; it is not used to close the spell.
+      - name: planned_discharge_date
+        description: Planned discharge date recorded by the provider; it is not used to close the spell.
+      - name: planned_discharge_destination_code
+        description: Version-defined MHS501 planned discharge destination code recorded by the provider.
+      - name: planned_discharge_destination_description
+        description: Published description for the planned discharge destination.
+      - name: discharge_date
+        description: Recorded discharge date; source dates before 1901 are null.
+      - name: discharge_time
+        description: Recorded discharge time.
+      - name: discharged_at
+        description: Recorded discharge timestamp; date-only records use midnight.
+      - name: discharge_time_precision
+        description: Precision of discharged_at.
+        data_tests: *time_precision
+      - name: discharge_method_code
+        description: Version-defined MHS501 discharge method code recorded by the provider.
+      - name: discharge_method_description
+        description: Published NHS Data Model and Dictionary description for the discharge method.
+      - name: discharge_destination_code
+        description: Version-defined MHS501 discharge destination code recorded by the provider.
+      - name: discharge_destination_description
+        description: Published NHS Data Model and Dictionary description for the discharge destination.
+      - name: has_recorded_discharge
+        description: Whether the retained source version contains a discharge date.
+      - name: source_spell_status
+        description: Discharged or no recorded discharge, based only on retained source state.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [discharged, no_recorded_discharge]
+      - name: recorded_length_of_stay_days
+        description: Calendar days from recorded admission to recorded discharge; negative values identify source errors.
+      - name: has_invalid_recorded_date_order
+        description: Whether the recorded discharge date is before the admission date.
+      - name: has_invalid_recorded_time_order
+        description: Whether complete recorded discharge and admission timestamps are in reverse order.
+      - name: has_decision_to_admit_after_admission
+        description: Whether the recorded decision-to-admit date is after admission.
+      - name: has_decision_to_admit_after_admission_time
+        description: Whether complete recorded decision-to-admit and admission timestamps are in reverse clinical order.
+      - name: has_estimated_discharge_before_admission
+        description: Whether the recorded estimated discharge date predates admission.
+      - name: has_planned_discharge_before_admission
+        description: Whether the recorded planned discharge date predates admission.
+      - name: age_at_admission
+        description: Age at admission derived in the MHSDS feed.
+      - name: age_at_discharge
+        description: Age at discharge derived in the MHSDS feed.
+      - name: provider_organisation_code
+        description: Organisation code of the provider submitting the spell.
+      - name: provider_organisation_name
+        description: Current organisation name for the provider code.
+      - name: source_derived_icb_commissioner_code
+        description: ICB commissioner assigned by the source pipeline.
+      - name: source_derived_icb_commissioner_name
+        description: Current organisation name for the source-derived ICB commissioner.
+      - name: is_wnl_commissioner
+        description: Whether the source-derived commissioner belongs to current WNL or a predecessor commissioner.
+      - name: record_start_date
+        description: Source record start date where supplied.
+      - name: record_end_date
+        description: Source record end date where supplied.
+      - name: uniq_submission_id
+        description: Accepted submission containing the retained MHS501 row.
+      - name: uniq_month_id
+        description: MHSDS reporting month number, where April 1900 is month 1.
+      - name: reporting_period_start_date
+        description: Start date of the retained submission period.
+      - name: reporting_period_end_date
+        description: End date of the newest accepted reporting period containing the spell.
+      - name: mhsds_specification_version
+        description: >-
+          MHSDS specification version declared in the retained submission
+          header. Null means the retained submission has no usable declared
+          version, so version-dependent fields report unknown provenance.
+      - name: source_pipeline_dataset
+        description: MHSDS dataset family assigned by the source pipeline.
+      - name: source_file_received_at
+        description: Timestamp when the selected source file was received by the submission portal.
+      - name: source_loaded_at
+        description: Timestamp when the source pipeline loaded the selected row.
+
+  - name: fct_mhsds_ward_stay
+    description: >-
+      Recorded MHSDS ward stays from accepted provider submissions. One row
+      represents the newest submitted version of one MHSDS unique ward-stay
+      identifier. The fact provides ward movement and classification context;
+      it does not repeat ward capacity or infer inpatient occupancy. Provider
+      reuse of a ward-stay identifier means the earlier source state is treated
+      as a revision rather than a separate stay.
+    config: *owner
+    columns:
+      - name: source_record_id
+        description: Stable ward-stay join key; the MHSDS provider-qualified unique ward-stay identifier.
+        data_tests: [not_null, unique]
+      - name: source_dataset
+        description: Source data set; always MHSDS.
+      - name: uniq_ward_stay_id
+        description: MHSDS provider-qualified unique ward-stay identifier.
+      - name: mhs502_uniq_id
+        description: Submitted MHS502 row selected as the newest version of the ward stay.
+      - name: ward_stay_id
+        description: Provider-local ward-stay identifier.
+      - name: recorded_hospital_provider_spell_id
+        description: MHSDS provider-qualified parent spell identifier recorded on the ward stay.
+      - name: hospital_provider_spell_source_record_id
+        description: Matching source_record_id in fct_mhsds_hospital_provider_spell; null when no retained parent matches.
+      - name: has_matching_hospital_provider_spell
+        description: Whether the recorded parent spell exists in the spell fact.
+      - name: referral_source_record_id
+        description: MHSDS unique service request identifier linked to the ward stay.
+      - name: has_matching_referral
+        description: Whether the recorded referral exists in fct_mhsds_referral.
+      - name: person_id
+        description: MHSDS person identifier.
+      - name: sk_patient_id
+        description: Pseudonymised cross-system patient key; null where bridging is unavailable.
+      - name: ward_stay_start_date
+        description: Recorded ward-stay start date; source dates before 1901 are null.
+      - name: ward_stay_start_time
+        description: Recorded ward-stay start time.
+      - name: ward_stay_started_at
+        description: Recorded ward-stay start timestamp; date-only records use midnight.
+      - name: ward_stay_start_time_precision
+        description: Precision of ward_stay_started_at.
+        data_tests: *time_precision
+      - name: ward_stay_end_date
+        description: Recorded ward-stay end date; source dates before 1901 are null.
+      - name: ward_stay_end_time
+        description: Recorded ward-stay end time.
+      - name: ward_stay_ended_at
+        description: Recorded ward-stay end timestamp; date-only records use midnight.
+      - name: ward_stay_end_time_precision
+        description: Precision of ward_stay_ended_at.
+        data_tests: *time_precision
+      - name: trial_leave_end_date
+        description: >-
+          Recorded end date for mental health trial leave. The receiving
+          organisation reports this when a ward stay that began on trial has
+          ended its trial period.
+      - name: has_trial_leave_end_before_ward_start
+        description: Whether the recorded trial-leave end predates the ward-stay start.
+      - name: has_trial_leave_end_after_ward_end
+        description: Whether the recorded trial-leave end follows the ward-stay end.
+      - name: has_recorded_end
+        description: Whether the retained source version contains a ward-stay end date.
+      - name: source_ward_stay_status
+        description: Ended or no recorded end, based only on retained source state.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [ended, no_recorded_end]
+      - name: recorded_length_of_stay_days
+        description: Calendar days from recorded ward-stay start to end; negative values identify source errors.
+      - name: has_invalid_recorded_date_order
+        description: Whether the recorded ward-stay end date is before its start date.
+      - name: has_invalid_recorded_time_order
+        description: Whether complete recorded ward-stay end and start timestamps are in reverse order.
+      - name: has_ward_start_before_spell_admission
+        description: Whether the ward stay starts before its matched spell's recorded admission date.
+      - name: has_ward_end_after_spell_discharge
+        description: Whether the ward stay ends after its matched spell's recorded discharge date.
+      - name: has_open_ward_stay_in_discharged_spell
+        description: Whether the ward stay has no recorded end while its matched spell has a recorded discharge.
+      - name: is_outside_recorded_spell_dates
+        description: >-
+          Whether a recorded ward date falls outside the matched spell's
+          recorded admission and discharge dates. Null means the check was not
+          complete because a required record or date was unavailable and no
+          known boundary was breached.
+      - name: admitted_patient_classification_code
+        description: MHSDS mental health admitted patient classification code.
+      - name: admitted_patient_classification_description
+        description: Published description for the mental health admitted patient classification.
+      - name: legacy_hospital_bed_type_code
+        description: Historical mental health hospital bed type code; it is not mapped to the version 6 classification.
+      - name: source_derived_hospital_bed_type_name
+        description: Historical hospital bed type name derived in the source feed.
+      - name: specialised_mental_health_service_category_code
+        description: NHS England specialised mental health service category code.
+      - name: source_derived_specialised_mental_health_service_category_name
+        description: Specialised service category name derived in the source feed; UKHFD does not hold this list.
+      - name: ward_code
+        description: Provider-local ward identifier.
+      - name: uniq_ward_code
+        description: MHSDS provider-qualified ward identifier.
+      - name: ward_site_code
+        description: Version-led ward site, from MHS502 before version 6 and the same-submission MHS903 record in version 6.
+      - name: ward_site_name
+        description: Current organisation name for the ward site code.
+      - name: ward_site_source
+        description: >-
+          Specification-defined source used for ward_site_code. Unavailable
+          means the submitted site or same-submission MHS903 context was absent.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [mhs903_retained_submission, mhs502_ward_stay, unavailable, unknown_specification_version]
+      - name: reported_ward_context_link_status
+        description: >-
+          Whether a version 6 stay matched MHS903 in its retained submission.
+          Earlier versions are not applicable.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [matched, not_matched, not_applicable, unknown_specification_version]
+      - name: ward_attribute_source
+        description: >-
+          Specification-defined source used for ward characteristics.
+          Unavailable means required MHS903 context did not match.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [mhs502_ward_stay, mhs903_retained_submission, unavailable, unknown_specification_version]
+      - name: ward_setting_code
+        description: Mental health ward setting from MHS502 before version 6 and MHS903 from version 6.
+      - name: ward_setting_description
+        description: Published description for the mental health ward setting.
+      - name: ward_intended_age_group_code
+        description: Intended ward age group from MHS502 before version 6 and MHS903 from version 6.
+      - name: ward_intended_age_group_description
+        description: Published description for the ward's intended age group.
+      - name: ward_intended_sex_code
+        description: Intended ward sex from MHS502 before version 6 and MHS903 from version 6.
+      - name: ward_intended_sex_description
+        description: Published description for the ward's intended patient sex.
+      - name: ward_clinical_care_intensity_code
+        description: Intended ward clinical care intensity from MHS502 before version 6 and MHS903 from version 6.
+      - name: ward_clinical_care_intensity_description
+        description: Published description for the ward's intended clinical care intensity.
+      - name: ward_security_level_code
+        description: Ward security level from MHS502 before version 6 and MHS903 from version 6.
+      - name: ward_security_level_description
+        description: Published description for the ward security level.
+      - name: locked_ward_indicator_code
+        description: >-
+          Locked ward indicator from MHS502 before version 6 and MHS903 from
+          version 6, normalised to Y or N. Unexpected source values are retained.
+      - name: locked_ward_indicator_description
+        description: Published description for valid locked ward indicator codes.
+      - name: distance_from_home_km
+        description: Source-derived straight-line distance in kilometres from home to the ward.
+      - name: provider_organisation_code
+        description: Organisation code of the provider submitting the ward stay.
+      - name: provider_organisation_name
+        description: Current organisation name for the provider code.
+      - name: source_derived_icb_commissioner_code
+        description: ICB commissioner assigned by the source pipeline.
+      - name: source_derived_icb_commissioner_name
+        description: Current organisation name for the source-derived ICB commissioner.
+      - name: is_wnl_commissioner
+        description: Whether the source-derived commissioner belongs to current WNL or a predecessor commissioner.
+      - name: record_start_date
+        description: Source record start date where supplied.
+      - name: record_end_date
+        description: Source record end date where supplied.
+      - name: uniq_submission_id
+        description: Accepted submission containing the retained MHS502 row.
+      - name: uniq_month_id
+        description: MHSDS reporting month number, where April 1900 is month 1.
+      - name: reporting_period_start_date
+        description: Start date of the retained submission period.
+      - name: reporting_period_end_date
+        description: End date of the newest accepted reporting period containing the ward stay.
+      - name: mhsds_specification_version
+        description: >-
+          MHSDS specification version declared in the retained submission
+          header. Null means the retained submission has no usable declared
+          version, so version-dependent fields report unknown provenance.
+      - name: source_pipeline_dataset
+        description: MHSDS dataset family assigned by the source pipeline.
+      - name: source_file_received_at
+        description: Timestamp when the selected source file was received by the submission portal.
+      - name: source_loaded_at
+        description: Timestamp when the source pipeline loaded the selected row.

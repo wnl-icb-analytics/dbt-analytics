@@ -7,7 +7,7 @@ models:
       and uniq_care_cont_id (providers reuse local contact ids across
       referrals). Population: classified care contacts outside inpatient spells.
       Time semantics: each contact is allocated to the fiscal year containing
-      care_cont_date.
+      care_contact_date.
     config:
       meta:
         owner:
@@ -31,14 +31,28 @@ models:
         description: Pseudonymised patient identifier.
       - name: person_id
         description: MHSDS person identifier.
-      - name: org_id_prov
+      - name: provider_organisation_code
         description: Provider organisation code.
-      - name: care_cont_date
+      - name: provider_organisation_name
+        description: Current organisation name for the provider code.
+      - name: source_derived_icb_commissioner_code
+        description: ICB commissioner code derived in the source feed.
+      - name: source_derived_icb_commissioner_name
+        description: Current organisation name for the derived ICB commissioner code.
+      - name: commissioner_icb_code
+        description: Commissioner ICB code resolved for currency reporting.
+      - name: commissioner_icb_name
+        description: Current organisation name for the currency commissioner code.
+      - name: is_wnl_commissioner
+        description: TRUE for a recognised current or predecessor WNL commissioner; otherwise FALSE.
+      - name: care_contact_date
         description: Care contact date.
       - name: fiscal_year_start
         description: Fiscal year containing the contact date.
-      - name: attend_status
-        description: Care contact attendance status.
+      - name: attendance_status_code
+        description: Care contact attendance status code.
+      - name: attendance_status_description
+        description: Published description for the attendance status.
       - name: is_costed_attendance
         description: Whether the attendance is priced.
       - name: currency_group
@@ -61,7 +75,14 @@ models:
       - name: proxy_cost
         description: Price multiplied by MFF and GDP deflator ratio, or zero for uncosted attendance.
       - name: is_cyp
-        description: Whether age at contact is under 18.
+        description: >-
+          Whether age at contact is under 18. A contact with no recorded age is
+          classified as adult, so read this with has_known_age_at_contact.
+      - name: has_known_age_at_contact
+        description: >-
+          Whether an age at the contact date was recorded. False identifies the
+          contacts classified as adult through the fallback rather than a known
+          age.
       - name: is_crisis_referral
         description: Resolved crisis referral flag.
       - name: winning_tier

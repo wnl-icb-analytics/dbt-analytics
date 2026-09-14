@@ -1,0 +1,45 @@
+version: 2
+
+seeds:
+  - name: mhsds_mh_act_legal_status_classification
+    description: >
+      National Mental Health Act legal status codes and their definitions, from
+      the MHSDS v6.0.7.1 Enhanced Technical Output Specification, tab
+      MHS401MHActPeriod, data item M401090 MENTAL HEALTH ACT LEGAL STATUS
+      CLASSIFICATION CODE. The seed keys on nhsd_legal_status because data item
+      M401D10 NHSDLegalStatus is the cleaned form of the same code: it repairs
+      structurally valid submissions that miss the valid code list, such as a
+      submitted 1 becoming 01. Retired codes 33 and 34 are excluded, as is the
+      -1 sentinel, which is not a national code. The specification defines no
+      national detained or informal derivation, so is_detained follows the
+      national code definitions themselves. A publication such as the NHS
+      England Learning Disability and Autism Mental Health Act measures may
+      apply a narrower rule for its own purposes; this seed is not that rule.
+      Grain: one row per legal status code.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+      column_types:
+        nhsd_legal_status: varchar(10)
+        legal_status_definition: varchar(200)
+        is_detained: boolean
+    columns:
+      - name: nhsd_legal_status
+        description: >-
+          National Mental Health Act legal status classification code, in the
+          cleaned M401D10 form used by MHS401.
+        data_tests:
+          - not_null
+          - unique
+      - name: legal_status_definition
+        description: >-
+          Specification definition of the code, quoted verbatim. Held so
+          is_detained can be reviewed against the source text. It is a
+          static snapshot and is not published: consumers get the label
+          from the maintained UKHFD reference instead.
+      - name: is_detained
+        description: >-
+          Whether the code's national definition is a detention. True for the
+          22 codes defined as formally detained under an Act, false for
+          informal admission, guardianship, not applicable and not known.

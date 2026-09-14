@@ -15,9 +15,10 @@ Use COUNT(DISTINCT person_id) for headcounts, not SUM(vaccinated).
 
 Multi-Campaign Support:
 - COVID Autumn 2024: September 2024 - March 2025 (broader eligibility)
-- COVID Spring 2025: April 2025 - June 2025 (broader eligibility)
+- COVID Spring 2025: April 2025 - June 2025 (restricted eligibility)
 - COVID Autumn 2025: September 2025 - March 2026 (restricted eligibility)
 - COVID Spring 2026: April 2026 - June 2026 (restricted eligibility)
+- COVID Autumn 2026: September 2026 - March 2027 (restricted eligibility)
 
 Usage:
 - Filter by campaign_id to analyze specific campaigns
@@ -25,11 +26,13 @@ Usage:
 - Join with dim_person_demographics for demographic analysis
 
 August 2026 KH adjusted final output to distinct to avoid duplication.
+September 2026 KH added campaign start dates to exclude vaccinations/declines outside campaign window.
 
 */
 
 {{ config(
     materialized='table',
+    tags=['covid_flu'],
     cluster_by=['campaign_id', 'person_id']
 ) }}
 
@@ -40,6 +43,7 @@ WITH eligible_people AS (
         person_id,
         campaign_category,
         risk_group,
+        subcohort,
         eligibility_reason,
         rule_type,
         eligibility_priority
@@ -86,7 +90,8 @@ combined_data AS (
             ELSE FALSE 
         END AS is_eligible,
         COALESCE(e.campaign_category, 'Not Eligible') AS campaign_category,
-        COALESCE(e.risk_group, 'Vaccinated Despite Ineligibility') AS risk_group,
+        e.risk_group,
+        e.subcohort,
         e.eligibility_reason,
         e.rule_type,
         
@@ -129,6 +134,7 @@ final_uptake AS (
         cd.is_eligible,
         cd.campaign_category,
         cd.risk_group,
+        cd.subcohort,
         cd.eligibility_reason,
         cd.rule_type,
         
@@ -138,15 +144,31 @@ final_uptake AS (
         cd.vaccination_status_reason,
         cd.vaccinated_despite_ineligible,
         
-        -- Uptake flags
-        cd.vaccinated,
-        cd.declined,
+        -- Uptake flags -- make sure vaccinations are after the campaign start date
+        CASE
+        WHEN cd.vaccination_date >= cc.campaign_start_date
+        AND cd.vaccination_status = 'VACCINATION_ADMINISTERED'
+        THEN TRUE ELSE FALSE END AS vaccinated,
+        CASE
+        WHEN cd.vaccination_date >= cc.campaign_start_date
+        AND cd.vaccination_status = 'VACCINATION_DECLINED'
+        THEN TRUE ELSE FALSE END AS declined,
         cd.eligible_no_record,
         
-        -- Uptake category
+        -- Uptake category -- make sure vaccinations are after the campaign start date
         CASE
-            WHEN cd.is_eligible AND cd.vaccinated THEN 'Eligible - Vaccinated'
-            WHEN cd.is_eligible AND cd.declined THEN 'Eligible - Declined'
+            WHEN cd.is_eligible
+            AND cd.vaccination_date >= cc.campaign_start_date AND cd.vaccination_status = 'VACCINATION_ADMINISTERED'
+            THEN 'Eligible - Vaccinated'
+            WHEN cd.is_eligible
+            AND cd.vaccination_date < cc.campaign_start_date AND cd.vaccination_status = 'VACCINATION_ADMINISTERED'
+            THEN 'Eligible - Vaccinated - Pre-Campaign'
+            WHEN cd.is_eligible
+            AND cd.vaccination_date >= cc.campaign_start_date AND cd.vaccination_status = 'VACCINATION_DECLINED'
+            THEN 'Eligible - Declined'
+            WHEN cd.is_eligible
+            AND cd.vaccination_date < cc.campaign_start_date AND cd.vaccination_status = 'VACCINATION_DECLINED'
+            THEN 'Eligible - Declined - Pre-Campaign'
             WHEN cd.is_eligible AND cd.eligible_no_record THEN 'Eligible - No Record'
             WHEN NOT cd.is_eligible AND cd.vaccinated THEN 'Not Eligible - Vaccinated'
             WHEN NOT cd.is_eligible AND cd.declined THEN 'Not Eligible - Declined'
@@ -174,18 +196,10 @@ final_uptake AS (
         
     FROM combined_data cd
     LEFT JOIN (
-        -- Include all defined COVID campaigns using variables like flu models
+        -- Every COVID campaign the models report on
+        -- (campaign list: macros/config/covid_campaign_selection.sql)
         SELECT DISTINCT campaign_id, campaign_start_date, campaign_end_date, campaign_reference_date, audit_end_date
-        FROM ({{ covid_autumn_config() }})
-        UNION ALL
-        SELECT DISTINCT campaign_id, campaign_start_date, campaign_end_date, campaign_reference_date, audit_end_date
-        FROM ({{ covid_spring_config() }})
-        UNION ALL
-        SELECT DISTINCT campaign_id, campaign_start_date, campaign_end_date, campaign_reference_date, audit_end_date
-        FROM ({{ covid_previous_autumn_config() }})
-        UNION ALL
-        SELECT DISTINCT campaign_id, campaign_start_date, campaign_end_date, campaign_reference_date, audit_end_date
-        FROM ({{ covid_previous_spring_config() }})
+        FROM ({{ covid_reported_campaigns() }})
     ) cc
         ON cd.campaign_id = cc.campaign_id
 )

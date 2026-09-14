@@ -1,0 +1,26 @@
+models:
+  - name: stg_sus_ecds_clinical_injury_alcohol_drug_involvements
+    description: Alcohol or drug involvement codes recorded for injuries in SUS ECDS.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - primarykey_id
+              - alcohol_drug_involvements_id
+    columns:
+      - name: primarykey_id
+        description: Primary key from the parent emergency care attendance.
+        data_tests:
+          - not_null
+      - name: alcohol_drug_involvements_id
+        description: Source sequence identifier for an alcohol or drug involvement entry.
+        data_tests:
+          - not_null
+      - name: rownumber_id
+        description: Source row identifier.
+      - name: code
+        description: SNOMED CT code describing alcohol or drug involvement in the injury.

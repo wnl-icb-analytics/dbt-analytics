@@ -12,9 +12,23 @@ models:
 
       • Includes all severities of learning disability
 
-      • Generates data for current and previous flu campaigns automatically
+      • Generates data for every campaign in flu_reported_campaign_ids()
 
       Purpose: Identify people eligible for flu vaccination due to learning disability conditions.'
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - campaign_id
+              - person_id
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: LEARNDIS_COD
+            source: UKHSA_FLU
+            versioned: true
     config:
       meta:
         indicator:
@@ -55,19 +69,10 @@ models:
 
         owner:
           name: EddieDavison92
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - campaign_id
-              - person_id
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
     columns:
       - name: campaign_id
-        description: 'Flu campaign identifier (e.g., flu_2024_25, flu_2023_24)'
-        tests:
+        description: 'Flu campaign identifier, for example Flu 2025-26 or Flu 2026-27'
+        data_tests:
           - not_null
       - name: campaign_category
         description: 'Category of eligibility criteria (always "Clinical Condition")'
@@ -75,7 +80,7 @@ models:
         description: 'Risk group classification (always "Learning Disability")'
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
       - name: qualifying_event_date
         description: 'Date of qualifying diagnosis (earliest learning disability diagnosis)'

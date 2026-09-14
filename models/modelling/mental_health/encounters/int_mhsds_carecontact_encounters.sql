@@ -1,55 +1,42 @@
-/*
-Mental Health Services encounters (care contacts) from MHSDS
-
-Clinical Purpose:
-- Establishing use of mental health services
-- Understanding patient service preference
-- Care coordination management across providers
-
-Includes ALL persons (active, inactive, deceased) within 5 years following intermediate layer principles.
-Includes any attendance status in MHSDS care contacts.
-There maybe >1 encounters on the same date for a patient.
-
-*/
-
-select 
-    c.uniq_care_cont_id as encounter_id
+select
+    {{ dbt_utils.generate_surrogate_key([
+        'c.uniq_serv_req_id',
+        'c.uniq_care_cont_id'
+    ]) }} as encounter_id
     , b.sk_patient_id
     , c.org_id_prov
     , c.attend_status
-    ,CASE 
-    WHEN c.attend_status in ('5','6') THEN 'Attended' 
-    WHEN c.attend_status in ('3','7') THEN 'DNA/Late' 
-    WHEN c.attend_status in ('2') THEN 'Cancelled by Patient' 
-    WHEN c.attend_status in ('4') THEN 'Cancelled by Provider'
-    ELSE 'Unknown' END AS attendance_status
-    ,org.organisation_name as provider_name
-    ,CASE 
-    WHEN c.ORG_ID_PROV = 'G6V2S' THEN 'NLFT'
-    WHEN c.ORG_ID_PROV = 'TAF' THEN 'C&I'
-    WHEN c.ORG_ID_PROV = 'RNK' THEN 'T&P'
-    WHEN c.ORG_ID_PROV = 'RRP' THEN 'BEH'
-    WHEN c.ORG_ID_PROV = 'RAT' THEN 'NELFT'
-    WHEN c.ORG_ID_PROV = 'RWK' THEN 'ELFT'
-    WHEN c.ORG_ID_PROV = 'RAL' THEN 'RFL'
-    WHEN c.ORG_ID_PROV = 'RKE' THEN 'WHIT'
-    WHEN c.ORG_ID_PROV = 'RKL' THEN 'WLT'
-    WHEN c.ORG_ID_PROV = 'RV5' THEN 'SLAM'
-    WHEN c.ORG_ID_PROV = 'RV3' THEN 'CNWL'
-    WHEN c.ORG_ID_PROV = 'RQY' THEN 'SWLSTG'
-    ELSE 'Other' END as provider_short_name
+    , case
+        when c.attend_status in ('5', '6') then 'Attended'
+        when c.attend_status in ('3', '7') then 'DNA/Late'
+        when c.attend_status = '2' then 'Cancelled by Patient'
+        when c.attend_status = '4' then 'Cancelled by Provider'
+        else 'Unknown'
+    end as attendance_status
+    , org.organisation_name as provider_name
+    , case
+        when c.org_id_prov = 'G6V2S' then 'NLFT'
+        when c.org_id_prov = 'TAF' then 'C&I'
+        when c.org_id_prov = 'RNK' then 'T&P'
+        when c.org_id_prov = 'RRP' then 'BEH'
+        when c.org_id_prov = 'RAT' then 'NELFT'
+        when c.org_id_prov = 'RWK' then 'ELFT'
+        when c.org_id_prov = 'RAL' then 'RFL'
+        when c.org_id_prov = 'RKE' then 'WHIT'
+        when c.org_id_prov = 'RKL' then 'WLT'
+        when c.org_id_prov = 'RV5' then 'SLAM'
+        when c.org_id_prov = 'RV3' then 'CNWL'
+        when c.org_id_prov = 'RQY' then 'SWLSTG'
+        else 'Other'
+    end as provider_short_name
     , c.care_cont_date as start_date
-    , clin_cont_dur_of_care_cont as duration
-    , dm_icb_commissioner
-    -- Use average cost per day for mental health care contact according to National Cost Collection (£302 average cost per day, adjusted by 15.7% uplift for NCL)
-    -- Source: https://www.england.nhs.uk/costing-in-the-nhs/national-cost-collection/
+    , c.clin_cont_dur_of_care_cont as duration
+    , c.dm_icb_commissioner
+    -- £302 National Cost Collection average, adjusted by the 15.7% NCL uplift.
     , 302 * 1.157 as proxy_cost
     , 'MHSDS' as source
-from 
-    {{ ref('stg_mhsds_carecontact')}} as c 
-left join 
-    {{ ref('stg_dictionary_dbo_organisation')}} as org
-     on c.ORG_ID_PROV = org.ORGANISATION_CODE
-left join 
-    {{ ref('stg_mhsds_bridging')}} as b
-    on c.person_id = b.person_id 
+from {{ ref('int_mhsds_latest_care_contact') }} as c
+left join {{ ref('stg_dictionary_dbo_organisation') }} as org
+    on c.org_id_prov = org.organisation_code
+left join {{ ref('stg_mhsds_bridging') }} as b
+    on c.person_id = b.person_id

@@ -3,67 +3,96 @@ version: 2
 models:
   - name: fct_mhsds_referral_episodes
     description: >
-      MHSDS referral episodes for access analysis. Grain: one row per
-      uniq_serv_req_id. Population: all staged MHSDS referrals. Time
-      semantics: episode status uses the latest active MHSDS submission.
-      Open means no recorded closure; the active feed runs about six weeks
-      behind and orphaned referrals are not distinguished.
+      MHSDS referral summaries for access and currency analysis. Grain: one row
+      per referral. Population: referrals in the latest active submissions.
+      Contact, indirect-activity and inpatient measures cover records linked to
+      the referral. Open means no rejection or discharge is recorded.
     config:
       meta:
         owner:
           name: Eddie Davison
     columns:
-      - name: uniq_serv_req_id
-        description: Unique service request identifier.
+      - name: source_record_id
+        description: Referral identifier used to join to fct_mhsds_referral.
         data_tests:
           - unique
           - not_null
+      - name: source_dataset
+        description: Source dataset. Always MHSDS.
+      - name: uniq_serv_req_id
+        description: MHSDS unique service request identifier.
       - name: person_id
         description: MHSDS person identifier.
       - name: sk_patient_id
         description: Pseudonymised patient identifier.
-      - name: org_id_prov
+      - name: provider_organisation_code
         description: Provider organisation code.
-      - name: dm_icb_commissioner
-        description: Commissioner ICB code.
-      - name: referral_request_received_date
-        description: Referral request received date.
-        data_tests:
-          - not_null
-      - name: age_serv_refer_rec_date
+      - name: provider_organisation_name
+        description: Current organisation name for the provider code.
+      - name: derived_icb_commissioner_code
+        description: ICB commissioner code resolved by the referral fact.
+      - name: derived_icb_commissioner_name
+        description: Current organisation name for the derived ICB commissioner code.
+      - name: is_wnl_commissioner
+        description: Whether the commissioner belongs to current WNL or a predecessor commissioner.
+      - name: referral_received_date
+        description: >
+          Date the referral request was received; null when the source contains
+          an Excel-epoch sentinel date.
+      - name: age_at_referral
         description: Age on the referral request received date.
       - name: is_cyp_at_referral
         description: Whether age at referral is under 18.
-      - name: source_of_referral_mh
-        description: Mental health referral source.
-      - name: referring_care_professional_type
+      - name: source_of_referral_code
+        description: Source of referral code.
+      - name: source_of_referral_description
+        description: Published description for the source of referral.
+      - name: referring_care_professional_type_code
         description: Type of referring care professional.
-      - name: clin_resp_priority_type
+      - name: referring_care_professional_type_description
+        description: Published description for the referring care professional type.
+      - name: referring_care_professional_staff_group_code
+        description: Staff group of the referring care professional.
+      - name: referring_care_professional_staff_group_description
+        description: Published description for the referring care professional staff group.
+      - name: clinical_response_priority_code
         description: Clinical response priority code.
-      - name: prim_reason_referral_mh
+      - name: clinical_response_priority_description
+        description: Published description for the clinical response priority.
+      - name: primary_reason_for_referral_code
         description: Primary mental health referral reason code.
+      - name: primary_reason_for_referral_description
+        description: Published description for the primary referral reason.
       - name: referral_reason_category
         description: Currency population category from the referral reason.
-      - name: serv_team_type_ref_to_mh
-        description: Referred-to mental health service team type.
-      - name: team_type_name
-        description: Referred-to service team name.
+      - name: service_or_team_type_code
+        description: Referred-to mental health service or team type code.
+      - name: service_or_team_type_description
+        description: Published description for the service or team type.
+      - name: source_service_or_team_type_name
+        description: Service or team type name supplied by the provider.
+      - name: service_or_team_intended_age_group_code
+        description: Intended patient age group recorded for the service or team.
+      - name: service_or_team_intended_age_group_description
+        description: Published description for the intended age group.
       - name: team_type_category
-        description: Currency population category from the service team type.
+        description: Currency population category from the service or team type.
       - name: setting_group
-        description: Team contact setting group.
+        description: Currency contact setting group.
       - name: setting_name
-        description: Team contact setting name.
+        description: Currency contact setting description.
       - name: is_crisis_referral
         description: Whether the referral meets the currency crisis rule.
       - name: n_contacts
-        description: Number of care contacts linked to the referral.
+        description: Care contacts linked to the referral.
       - name: n_attended_contacts
-        description: Number of attended or missing-status care contacts.
+        description: Attended care contacts.
+      - name: n_contacts_with_missing_attendance_status
+        description: Care contacts without a submitted attendance status.
       - name: n_dna_contacts
-        description: Number of did-not-attend care contacts.
+        description: Did-not-attend care contacts.
       - name: n_cancelled_contacts
-        description: Number of cancelled care contacts.
+        description: Cancelled care contacts.
       - name: first_contact_date
         description: First linked care contact date.
       - name: first_attended_contact_date
@@ -73,22 +102,26 @@ models:
       - name: has_pre_referral_contact
         description: Whether the first attended contact predates referral receipt.
       - name: n_indirect_activities
-        description: Number of indirect activities linked to the referral.
+        description: Indirect activities linked to the referral.
       - name: n_spells
-        description: Number of occupancy-ruled inpatient spells linked to the referral.
+        description: Occupancy-ruled inpatient spells linked to the referral.
       - name: has_inpatient_spell
-        description: Whether the referral has an occupancy-ruled inpatient spell.
-      - name: refer_rejection_date
+        description: Whether an occupancy-ruled inpatient spell is linked.
+      - name: referral_rejection_date
         description: Referral rejection date.
-      - name: refer_reject_reason
-        description: Referral rejection reason.
+      - name: rejection_reason_code
+        description: Referral rejection reason code.
+      - name: rejection_reason_description
+        description: Published description for the referral rejection reason.
       - name: is_rejected
-        description: Whether a referral rejection date is recorded.
-      - name: serv_disch_date
-        description: Service discharge date.
-      - name: refer_clos_reason
-        description: Referral closure reason.
-      - name: episode_status
+        description: Whether the referral is rejected.
+      - name: referral_discharge_date
+        description: Referral discharge date.
+      - name: closure_reason_code
+        description: Referral closure reason code.
+      - name: closure_reason_description
+        description: Published description for the referral closure reason.
+      - name: referral_status
         description: 'Referral status: rejected, closed, or open.'
         data_tests:
           - accepted_values:

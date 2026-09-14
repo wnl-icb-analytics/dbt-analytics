@@ -2,6 +2,7 @@ import yaml
 import os
 import sys
 import re
+from pathlib import Path
 
 # Path configuration
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -10,6 +11,87 @@ PROJECT_DIR = os.path.dirname(SCRIPTS_DIR)  # actual project root
 SOURCES_DIR = os.path.join(PROJECT_DIR, 'models', 'sources')
 # Note: Raw directory will be determined based on source mapping
 MAPPINGS_FILE = os.path.join(CURRENT_DIR, 'source_mappings.yml')
+
+SOURCE_CALL = re.compile(
+    r"\{\{-?\s*source\s*\(\s*(['\"])(.*?)\1\s*,\s*(['\"])(.*?)\3\s*\)\s*-?\}\}",
+    re.DOTALL,
+)
+REF_CALL = re.compile(
+    r"\bref\s*\(\s*(['\"])([^'\"]+)\1"
+    r"(?:\s*,\s*(['\"])([^'\"]+)\3)?\s*(?=,|\))",
+    re.DOTALL,
+)
+
+
+def raw_model_inventory(project_dir):
+    """Read generated model paths and their source() identities."""
+    project_dir = Path(project_dir)
+    inventory = {}
+    for path in sorted((project_dir / 'models' / 'raw').rglob('*.sql')):
+        match = SOURCE_CALL.search(path.read_text(encoding='utf-8'))
+        source = (match[2], match[4]) if match else None
+        inventory[path.relative_to(project_dir).as_posix()] = source
+    return inventory
+
+
+def staging_refs(project_dir, model_names):
+    """Find literal refs in staging SQL and YAML, including dependency hints."""
+    project_dir = Path(project_dir)
+    references = {name: set() for name in model_names}
+    for path in sorted((project_dir / 'models' / 'staging').rglob('*')):
+        if not path.is_file() or path.suffix not in ('.sql', '.yml', '.yaml'):
+            continue
+        text = path.read_text(encoding='utf-8')
+        # Preserve line numbers while excluding disabled Jinja comments.
+        text = re.sub(r'\{#.*?#\}', lambda m: '\n' * m[0].count('\n'), text,
+                      flags=re.DOTALL)
+        for block in re.finditer(r'\{\{.*?\}\}|\{%.*?%\}', text, re.DOTALL):
+            for match in REF_CALL.finditer(block[0]):
+                name = match[4] or match[2]
+                if name in references:
+                    line = text.count('\n', 0, block.start() + match.start()) + 1
+                    references[name].add(f'{path.relative_to(project_dir).as_posix()}:{line}')
+    return references
+
+
+def warn_raw_model_changes(before, after, project_dir):
+    """Report disappeared paths and the staging refs that need review."""
+    changed_paths = sorted(before.keys() - after.keys())
+    if not changed_paths:
+        return
+
+    references = staging_refs(project_dir, {Path(path).stem for path in changed_paths})
+    print('\nWARNING: Raw model names or locations changed. Review before building staging.')
+    for old_path in changed_paths:
+        name = Path(old_path).stem
+        source = before[old_path]
+        same_name = [path for path in after if Path(path).stem == name]
+        replacements = [path for path, identity in after.items()
+                        if source is not None and identity == source]
+        reused_name = same_name and (source is None or any(after[path] != source for path in same_name))
+        if reused_name:
+            print(f'  Reused name: {old_path} -> {", ".join(same_name)} '
+                  '(source identity changed or unrecognised)')
+            print(f'    Previous source: {".".join(source) if source else "unrecognised"}')
+            for path in same_name:
+                identity = after[path]
+                print(f'    New source: {".".join(identity) if identity else "unrecognised"} ({path})')
+        elif same_name:
+            print(f'  Moved: {old_path} -> {", ".join(same_name)} (ref name unchanged)')
+        elif replacements:
+            print(f'  Renamed: {old_path} -> {", ".join(replacements)}')
+        else:
+            print(f'  Removed: {old_path} (no generated model with the same source() identity)')
+        if source and not reused_name:
+            print(f'    Source: {source[0]}.{source[1]}')
+        if references[name]:
+            status = 'Review staging refs' if same_name else 'Broken staging refs'
+            print(f'    {status}:')
+            for location in sorted(references[name]):
+                print(f'      {location}')
+        else:
+            print('    No literal staging refs found; check indirect and external consumers.')
+    print('  Update affected refs or restore source routing, then run dbt parse.')
 
 def load_source_mappings():
     """Load source mappings from YAML file"""
@@ -151,6 +233,7 @@ def sanitise_column_name(col_name, apply_transformations=True, used_names=None):
 def main():
     # Load source mappings
     mappings = load_source_mappings()
+    previous_models = raw_model_inventory(PROJECT_DIR)
 
     # Delete existing raw files
     raw_files_path = os.path.join(PROJECT_DIR, 'models', 'raw')
@@ -173,7 +256,8 @@ def main():
     # over auto-generated (auto_*.yml) definitions for the same source name.
     all_sources = []
     source_files = {}  # Track which file each source came from
-    manual_sources = {}  # Track manual sources by name
+    manual_sources = []  # Preserve source blocks and their separate raw routing
+    manual_source_names = set()
     auto_sources = {}  # Track auto-generated sources by name
 
     def _is_manual_file(name):
@@ -190,7 +274,7 @@ def main():
         if sources_data and 'sources' in sources_data:
             for source in sources_data['sources']:
                 source_name = source['name']
-                if source_name in manual_sources:
+                if source_name in source_files and source_files[source_name] != filename:
                     existing_file = source_files[source_name]
                     print(
                         f"Error: source '{source_name}' is declared in both "
@@ -199,8 +283,9 @@ def main():
                         file=sys.stderr,
                     )
                     sys.exit(1)
-                manual_sources[source_name] = source
-                source_files[source_name] = filename
+                manual_sources.append(source)
+                manual_source_names.add(source_name)
+                source_files.setdefault(source_name, filename)
 
     # Then load auto-generated files, but skip if already in a manual file
     for filename in sorted(os.listdir(SOURCES_DIR)):
@@ -212,13 +297,12 @@ def main():
         if sources_data and 'sources' in sources_data:
             for source in sources_data['sources']:
                 source_name = source['name']
-                if source_name not in manual_sources:
+                if source_name not in manual_source_names:
                     auto_sources[source_name] = source
                     source_files[source_name] = filename
     
     # Combine all sources: manual sources (from sources.yml) take precedence, then auto-generated
-    for source_name, source in manual_sources.items():
-        all_sources.append(source)
+    all_sources.extend(manual_sources)
     for source_name, source in auto_sources.items():
         all_sources.append(source)
 
@@ -354,6 +438,7 @@ from {{{{ source('{source_ref_name}', '{table_name}') }}}}"""
     print(f"  1. Review generated raw models in models/raw/<domain>/")
     print(f"  2. Update dbt_project.yml to configure raw layer")
     print(f"  3. Build manually crafted staging models that reference these raw models")
+    warn_raw_model_changes(previous_models, raw_model_inventory(PROJECT_DIR), PROJECT_DIR)
 
 if __name__ == '__main__':
     main()

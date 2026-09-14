@@ -34,12 +34,17 @@ select
     , p.uniq_serv_req_id
     , p.sk_patient_id
     , p.person_id
-    , p.org_id_prov
-    , p.dm_icb_commissioner
+    , p.org_id_prov as provider_organisation_code
+    , provider.organisation_name as provider_organisation_name
+    , p.dm_icb_commissioner as source_derived_icb_commissioner_code
+    , derived_icb.organisation_name as source_derived_icb_commissioner_name
     , p.commissioner_icb_code
-    , p.care_cont_date
+    , currency_commissioner.organisation_name as commissioner_icb_name
+    , coalesce(currency_commissioner.is_wnl_commissioner, false) as is_wnl_commissioner
+    , p.care_cont_date as care_contact_date
     , fy.fiscal_year_start
-    , p.attend_status
+    , p.attend_status as attendance_status_code
+    , attendance.description as attendance_status_description
     -- lpad guards against zero-padded codes ('05'/'06') appearing in a
     -- future feed; nulls costed per national guidance
     , lpad(p.attend_status, 2, '0') in ('05', '06') or p.attend_status is null as is_costed_attendance
@@ -54,11 +59,20 @@ select
         , 0
     ) as proxy_cost
     , p.is_cyp
+    , p.has_known_age_at_contact
     , p.is_crisis_referral
     , p.winning_tier
 from priced as p
 cross join price_base_deflator as pb
 left join fiscal_years as fy
     on p.care_cont_date between fy.fy_range_start and fy.fy_range_end
-left join {{ ref('nhse_provider_mff_2627') }} as mff
+left join {{ ref('provider_market_forces_factor_2026_27') }} as mff
     on p.org_id_prov = mff.provider_code
+left join {{ ref('int_mhsds_organisation') }} as provider
+    on upper(p.org_id_prov) = upper(provider.organisation_code)
+left join {{ ref('int_mhsds_organisation') }} as derived_icb
+    on upper(p.dm_icb_commissioner) = upper(derived_icb.organisation_code)
+left join {{ ref('int_mhsds_organisation') }} as currency_commissioner
+    on upper(p.commissioner_icb_code) = upper(currency_commissioner.organisation_code)
+left join {{ ref('attendance_status') }} as attendance
+    on upper(trim(p.attend_status)) = attendance.code

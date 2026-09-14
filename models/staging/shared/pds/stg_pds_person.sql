@@ -1,6 +1,6 @@
 select 
     row_id, 
-    pseudo_nhs_number as sk_patient_id, 
+    {{ consistent_sk_patient_id_format('pseudo_nhs_number')}} as sk_patient_id,
     to_date(year_month_of_birth, 'YYYYMM') as year_month_of_birth, 
     gender as gender_code, 
     to_date(date_of_death) as date_of_death, 

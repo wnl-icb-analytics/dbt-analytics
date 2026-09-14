@@ -2,11 +2,7 @@ models:
   - name: int_flu_vaccination_declined
     description: Persons who declined flu vaccination and have not been vaccinated. One row per person per campaign with most recent decline date.
 
-    config:
-      meta:
-        owner:
-          name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
@@ -15,10 +11,18 @@ models:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: DECL_COD,NOCONS_COD
+            source: UKHSA_FLU
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
     columns:
       - name: campaign_id
-        tests:
+        data_tests:
           - not_null
       - name: person_id
-        tests:
+        data_tests:
           - not_null

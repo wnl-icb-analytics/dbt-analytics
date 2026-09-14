@@ -4,13 +4,22 @@ models:
 
       Grain: One row per person per campaign who meets immunosuppression criteria
 
-      Identifies people: • Diagnosed with immunosuppression (any time) • Recent immunosuppressant medication (6 months) • Recent chemotherapy/radiotherapy (6 months) • Age varies by campaign (any age 2024/25, 6 months-74 years 2025/26)
+      Identifies people: • Diagnosed with immunosuppression (any time) • Recent immunosuppressant medication (6 months before RUN_DAT) • Recent immunosuppression admin code (3 years before RUN_DAT) • Recent chemotherapy/radiotherapy (6 months before RUN_DAT) • Aged 6 months or over, any upper age. Computed for every campaign.
 
-      Used by: Mart models for eligibility determination'
-    tests:
+      The offer''s under-75 cap (immuno_max_age_years, Spring 2025 onward) is applied by fct_covid_eligibility, tested on birth date, so this model can also feed int_covid_flu_risk_group_flags with immunosuppression status at any age.
+
+      Used by: fct_covid_eligibility, int_covid_under_65_at_risk, int_covid_flu_risk_group_flags, adult immunisation population models'
+    data_tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: IMMDX_COV_COD,IMMRX_COD,IMM_ADM_COD,DXT_CHEMO_COD
+            cluster_ids: DXT_CHEMO_COD,IMMDX_COV_COD,IMMRX_COD,IMM_ADM_COD
+            source: UKHSA_COVID
+            versioned: true
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - campaign_id
+              - person_id
     config:
       meta:
         indicator:
@@ -60,14 +69,14 @@ models:
               threshold_value: "6"
               threshold_operator: "AT_OR_ABOVE"
               threshold_unit: "months"
-              description: "Minimum age for 2025/26 campaigns"
+              description: "Minimum age from Spring 2025 campaigns"
               sort_order: 2
             - population_group: "RESTRICTED_ELIGIBILITY"
               threshold_type: "AGE_ELIGIBILITY"
-              threshold_value: "74"
+              threshold_value: "75"
               threshold_operator: "BELOW"
               threshold_unit: "years"
-              description: "Maximum age for 2025/26 campaigns"
+              description: "Upper age bound of the offer from Spring 2025, applied in fct_covid_eligibility; people aged 75 and over are covered by the age-based cohort"
               sort_order: 3
             - population_group: "MEDICATION_TREATMENT"
               threshold_type: "RECENCY_PERIOD"
@@ -89,7 +98,7 @@ models:
     columns:
       - name: campaign_id
         description: 'COVID campaign identifier (e.g., covid_2025_autumn, covid_2024_autumn)'
-        tests:
+        data_tests:
           - not_null
       - name: campaign_category
         description: 'Category of eligibility criteria (always "CLINICAL_CONDITION")'
@@ -97,7 +106,7 @@ models:
         description: 'Risk group classification (always "Immunosuppression")'
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
       - name: qualifying_event_date
         description: 'Date of qualifying immunosuppression event (diagnosis, medication, admin, or treatment)'
@@ -108,8 +117,10 @@ models:
       - name: birth_date_approx
         description: 'Approximate birth date used for age calculation'
       - name: age_months_at_ref_date
-        description: 'Age in months at campaign reference date'
+        description: 'Completed months of age at the campaign reference date, consistent with the
+          six-month lower bound applied to the cohort.'
       - name: age_years_at_ref_date
-        description: 'Age in years at campaign reference date (eligibility varies by campaign)'
+        description: 'Completed years of age at the campaign reference date. No upper bound is
+          applied in this model; fct_covid_eligibility applies the offer cap on birth date.'
       - name: created_at
         description: 'Audit timestamp for record creation (campaign audit end date)'

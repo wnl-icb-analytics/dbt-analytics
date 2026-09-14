@@ -79,9 +79,21 @@ ELSE dem.MAIN_LANGUAGE END AS MAIN_LANGUAGE
 ,dem.PCN_NAME AS PRIMARY_CARE_NETWORK
 ,dem.PRACTICE_NAME AS GP_NAME
 ,dem.PRACTICE_CODE
-,COALESCE(la.LAD25_NM,'Unknown') as RESIDENTIAL_BOROUGH
+,COALESCE(dem.local_authority_name,'Unknown') as RESIDENTIAL_BOROUGH
 ,COALESCE(dem.NEIGHBOURHOOD_RESIDENT,'Unknown') as RESIDENTIAL_NEIGHBOURHOOD
-,COALESCE(la.RESIDENT_FLAG,'Unknown') as RESIDENTIAL_LOC
+,case
+    -- all NCL Boroughs
+    when dem.local_authority_code in ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019') then 'NCL'
+    -- all NWL Boroughs
+    when dem.local_authority_code in ('E09000005','E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033') then 'NWL'
+    --all NEL Boroughs
+    when dem.local_authority_code in ('E09000002','E09000001','E09000012','E09000016','E09000025','E09000026','E09000030','E09000031') then 'NEL'
+    when dem.local_authority_code like 'E09%' and dem.local_authority_code not in ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019','E09000005', 
+        'E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033','E09000002','E09000001','E09000012',
+        'E09000016','E09000025','E09000026','E09000030','E09000031') then 'Other London'
+    when dem.local_authority_code is null then 'Unknown'
+    else 'Outside London'
+    end as residential_loc
 ,dem.WARD_CODE
 ,dem.WARD_NAME
 ,dem.LSOA_CODE_21
@@ -91,7 +103,7 @@ ELSE dem.MAIN_LANGUAGE END AS MAIN_LANGUAGE
 FROM {{ ref('dim_person_demographics') }} dem
 LEFT JOIN {{ ref('dim_person_age') }} age on age.PERSON_ID = dem.PERSON_ID
 LEFT JOIN {{ ref('dim_looked_after_child') }}  l on l.PERSON_ID = dem.PERSON_ID
-LEFT JOIN {{ ref('stg_reference_lsoa21_ward25_lad25') }} la on la.LSOA21_CD = dem.LSOA_CODE_21
+-- LEFT JOIN {{ ref('stg_reference_lsoa21_ward25_lad25') }} la on la.LSOA21_CD = dem.LSOA_CODE_21
 WHERE dem.is_active  
 AND dem.IS_DECEASED = FALSE
 AND dem.age < 20

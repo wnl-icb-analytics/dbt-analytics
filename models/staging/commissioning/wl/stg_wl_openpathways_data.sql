@@ -26,7 +26,7 @@ SELECT
         WHEN DAYOFWEEKISO(a.week_ending_date) = 7 THEN a.week_ending_date  -- Already Sunday
         ELSE DATEADD('day', -DAYOFWEEK(a.week_ending_date), a.week_ending_date)  -- Move to previous Sunday
     END AS week_ending_date,
-    a.pseudo_nhs_number as sk_patient_id,
+    {{ consistent_sk_patient_id_format('a.pseudo_nhs_number') }} as sk_patient_id,
     a.local_patient_identifier,
     a.person_stated_gender_code,
     a.ethnic_category,

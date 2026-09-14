@@ -1,6 +1,9 @@
 models:
   - name: organisation_nhs_provider
-    description: Organisation reference data for providers
+    description: >-
+      One row per provider organisation code. Includes NHS providers and trusts,
+      current trust records held under the generic organisation type, and
+      independent providers that submit urgent and emergency care activity.
     config:
       meta:
         owner:
@@ -8,7 +11,7 @@ models:
     columns:
       - name: organisation_code
         description: Organisation code
-        tests:
+        data_tests:
           - not_null
           - unique
       - name: organisation_name
@@ -21,7 +24,7 @@ models:
         description: Organisation end date (null if active)
       - name: status
         description: Organisation status
-    tests:
+    data_tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1

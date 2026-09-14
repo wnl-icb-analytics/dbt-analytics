@@ -8,7 +8,7 @@ base_encounters_raw as (
     and spell_admission_method not in ('2C', '82', '31') -- birth of a baby
 ),
 
-base_population as ( -- all GP registered patients
+base_population as ( -- all people in PDS (includes dead and not, registered and not)
     select distinct sk_patient_id
     from {{ref('dim_person_demographics_basic')}}
     where sk_patient_id is not null and sk_patient_id != '1'

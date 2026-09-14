@@ -12,17 +12,17 @@ Business Rule: Person is eligible if they have:
 This implements the complex UKHSA steroid window logic with 3 overlapping 2-year periods.
 */
 
-{{ config(materialized='table') }}
+{{ config(
+    materialized='incremental',
+    incremental_strategy='delete+insert',
+    unique_key='campaign_id',
+    tags=['covid_flu']
+) }}
 
 WITH all_campaigns AS (
-    -- Generate data for both current and previous campaigns automatically
-    SELECT * FROM ({{ covid_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_spring_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_spring_config() }})
+    -- Every COVID campaign the models report on
+    -- (campaign list: macros/config/covid_campaign_selection.sql)
+    {{ covid_build_campaigns() }}
 ),
 
 -- Step 1: Find people with asthma diagnosis (for all campaigns)
@@ -32,11 +32,11 @@ people_with_asthma_diagnosis AS (
         obs.person_id,
         MIN(obs.clinical_effective_date) AS first_asthma_date,
         cc.audit_end_date
-    FROM ({{ get_observations("'AST_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'AST_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= cc.audit_end_date
-        AND cc.eligible_asthma = TRUE
     GROUP BY cc.campaign_id, obs.person_id, cc.audit_end_date
 ),
 
@@ -47,12 +47,12 @@ people_with_asthma_admissions AS (
         obs.person_id,
         MAX(obs.clinical_effective_date) AS latest_admission_date,
         cc.audit_end_date
-    FROM ({{ get_observations("'ASTADM_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'ASTADM_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date >= cc.asthma_admission_lookback_date  -- 2 years before campaign
         AND obs.clinical_effective_date <= cc.audit_end_date
-        AND cc.eligible_asthma = TRUE
     GROUP BY cc.campaign_id, obs.person_id, cc.audit_end_date
 ),
 
@@ -63,12 +63,12 @@ people_with_recent_asthma_inhalers AS (
         med.person_id,
         MAX(med.order_date) AS latest_inhaler_date,
         cc.audit_end_date
-    FROM ({{ get_medication_orders(cluster_id='ASTRXM1_COD', source='UKHSA_COVID') }}) med
+    FROM ({{ get_medication_orders(cluster_id='ASTRXM1_COD', source='UKHSA_COVID', versioned=true) }}) med
     CROSS JOIN all_campaigns cc
-    WHERE med.order_date IS NOT NULL
+    WHERE med.spec_version = cc.terminology_version
+        AND med.order_date IS NOT NULL
         AND med.order_date >= cc.asthma_medication_lookback_date  -- 12 months before campaign
         AND med.order_date <= cc.audit_end_date
-        AND cc.eligible_asthma = TRUE
     GROUP BY cc.campaign_id, med.person_id, cc.audit_end_date
 ),
 
@@ -81,12 +81,12 @@ oral_steroids_window_1 AS (
         MIN(med.order_date) AS earliest_steroid_w1,
         MAX(med.order_date) AS latest_steroid_w1,
         COUNT(*) AS steroid_count_w1
-    FROM ({{ get_medication_orders(cluster_id='ASTRXM2_COD', source='UKHSA_COVID') }}) med
+    FROM ({{ get_medication_orders(cluster_id='ASTRXM2_COD', source='UKHSA_COVID', versioned=true) }}) med
     CROSS JOIN all_campaigns cc
-    WHERE med.order_date IS NOT NULL
+    WHERE med.spec_version = cc.terminology_version
+        AND med.order_date IS NOT NULL
         AND med.order_date >= cc.asthma_steroid_window_1_start
         AND med.order_date <= cc.asthma_steroid_window_1_end
-        AND cc.eligible_asthma = TRUE
     GROUP BY cc.campaign_id, med.person_id
 ),
 
@@ -98,12 +98,12 @@ oral_steroids_window_2 AS (
         MIN(med.order_date) AS earliest_steroid_w2,
         MAX(med.order_date) AS latest_steroid_w2,
         COUNT(*) AS steroid_count_w2
-    FROM ({{ get_medication_orders(cluster_id='ASTRXM2_COD', source='UKHSA_COVID') }}) med
+    FROM ({{ get_medication_orders(cluster_id='ASTRXM2_COD', source='UKHSA_COVID', versioned=true) }}) med
     CROSS JOIN all_campaigns cc
-    WHERE med.order_date IS NOT NULL
+    WHERE med.spec_version = cc.terminology_version
+        AND med.order_date IS NOT NULL
         AND med.order_date >= cc.asthma_steroid_window_2_start
         AND med.order_date <= cc.asthma_steroid_window_2_end
-        AND cc.eligible_asthma = TRUE
     GROUP BY cc.campaign_id, med.person_id
 ),
 
@@ -115,12 +115,12 @@ oral_steroids_window_3 AS (
         MIN(med.order_date) AS earliest_steroid_w3,
         MAX(med.order_date) AS latest_steroid_w3,
         COUNT(*) AS steroid_count_w3
-    FROM ({{ get_medication_orders(cluster_id='ASTRXM2_COD', source='UKHSA_COVID') }}) med
+    FROM ({{ get_medication_orders(cluster_id='ASTRXM2_COD', source='UKHSA_COVID', versioned=true) }}) med
     CROSS JOIN all_campaigns cc
-    WHERE med.order_date IS NOT NULL
+    WHERE med.spec_version = cc.terminology_version
+        AND med.order_date IS NOT NULL
         AND med.order_date >= cc.asthma_steroid_window_3_start
         AND med.order_date <= cc.asthma_steroid_window_3_end
-        AND cc.eligible_asthma = TRUE
     GROUP BY cc.campaign_id, med.person_id
 ),
 
@@ -201,18 +201,17 @@ people_with_asthma_eligible_with_age AS (
         pwae.campaign_id,
         pwae.person_id,
         demo.birth_date_approx,
-        DATEDIFF('year', demo.birth_date_approx, pwae.campaign_reference_date) AS age_years_at_ref_date,
-        DATEDIFF('month', demo.birth_date_approx, pwae.campaign_reference_date) AS age_months_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(pwae.campaign_reference_date, demo.birth_date_approx) / 12) AS age_years_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(pwae.campaign_reference_date, demo.birth_date_approx)) AS age_months_at_ref_date,
         COALESCE(pwae.latest_admission_date, pwae.latest_steroid_date, pwae.first_asthma_date) AS qualifying_event_date,
         pwae.campaign_reference_date,
         pwae.eligibility_reason
     FROM people_with_asthma_eligibility pwae
     LEFT JOIN {{ ref('dim_person_demographics') }} demo 
         ON pwae.person_id = demo.person_id
-    WHERE demo.is_active = TRUE
-        AND demo.birth_date_approx IS NOT NULL
+    WHERE demo.birth_date_approx IS NOT NULL
         AND pwae.is_eligible = TRUE
-        AND DATEDIFF('year', demo.birth_date_approx, pwae.campaign_reference_date) >= 5  -- Minimum age 5
+        AND demo.birth_date_approx <= DATEADD('year', -5, pwae.campaign_reference_date)  -- Minimum age 5, tested on birth date
 ),
 
 -- Step 8: Format for eligibility table

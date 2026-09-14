@@ -1,0 +1,91 @@
+version: 2
+models:
+- name: fct_csds_referral_service
+  description: One latest reported CSDS service/team relationship per service request and nullable local
+    team identifier. Selects newest reporting period, then file receipt, submission and source-row identifiers.
+    Retains all teams, closure/rejection fields and the selected row's person. Parent context comes from
+    the same submission; current referral demographics are not copied. Missing closure is not proof of
+    an active referral. Historical service deliveries remain in stg_csds_service_type_history.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  columns:
+  - name: source_record_id
+    description: Surrogate key of service request and nullable local team identifier.
+    data_tests:
+    - unique
+    - not_null
+  - name: source_dataset
+    description: CSDS.
+  - name: source_row_id
+    description: Identifier of the delivered source row. Changes when another submission occurrence is
+      selected.
+  - name: referral_id
+    description: Supplied provider-qualified service request identifier. Joins to source_record_id in
+      fct_csds_referral; the latest parent can have a different person or submission.
+  - name: local_referral_id
+    description: Local service request identifier as supplied by the provider.
+  - name: local_team_id
+    description: Local team identifier. Null is a legitimate unspecified team key and is retained.
+  - name: team_id
+    description: Source-derived provider-qualified team identifier; the local team identifier defines
+      the documented relationship key.
+  - name: person_id
+    description: CSDS person identifier supplied on this row. It is not replaced by the parent person.
+  - name: sk_patient_id
+    description: Pseudonymised cross-system patient key from the CSDS bridge; null when unavailable.
+  - name: service_type_code
+    description: Supplied service type code. Unmatched values remain visible.
+  - name: service_type_name
+    description: Latest available dictionary description for the corresponding supplied code; null for
+      missing or unmatched codes. Not a point-in-time clinical interpretation.
+  - name: referral_closure_date
+    description: Date this service/team closed its referral. Other teams can remain open under the overarching
+      referral.
+  - name: referral_rejection_date
+    description: Date this service/team rejected its referral; null when not supplied.
+  - name: referral_closure_reason_code
+    description: Supplied referral closure reason code. Unmatched values remain visible.
+  - name: referral_closure_reason_name
+    description: Latest available dictionary description for the corresponding supplied code; null for
+      missing or unmatched codes. Not a point-in-time clinical interpretation.
+  - name: referral_rejection_reason_code
+    description: Supplied referral rejection reason code. Unmatched values remain visible.
+  - name: referral_rejection_reason_name
+    description: Latest available dictionary description for the corresponding supplied code; null for
+      missing or unmatched codes. Not a point-in-time clinical interpretation.
+  - name: referral_source_row_id
+    description: Delivered CYP101 row identifier of the same-submission parent referral.
+  - name: is_submitted_referral_linked
+    description: Whether the same-submission parent referral exists.
+  - name: is_submitted_referral_person_consistent
+    description: Whether the relationship and same-submission referral persons agree; null when either
+      person or parent is absent.
+  - name: provider_organisation_code
+    description: Supplied provider organisation code.
+  - name: submission_id
+    description: Accepted submission identifier of this source occurrence.
+  - name: reporting_period_start_date
+    description: First date of the source reporting period; delivery context, not clinical event time.
+  - name: reporting_period_end_date
+    description: Last date of the source reporting period; delivery context, not clinical event time.
+  - name: source_file_received_at
+    description: Date and time the submission portal received the file; not the time of care.
+  - name: csds_version
+    description: Dataset version from the submission header.
+  - name: file_type
+    description: Supplied submission file type.
+  - name: is_referral_linked
+    description: Whether the corresponding latest referral fact exists. This differs from same-submission
+      parent linkage.
+  - name: is_referral_person_consistent
+    description: Whether this row and the latest referral have the same populated person identifier; null
+      when the parent or either person is absent.
+  - name: is_referral_occurrence_consistent
+    description: Whether the latest referral is the exact same delivered source row as the historical
+      parent; null when either occurrence is absent. False can mean a legitimate newer
+      parent revision; it does not itself indicate a source error.
+  - name: provider_organisation_name
+    description: Latest available provider name, preferring UKHFD ODS API and retaining closed organisations.
+      Dictionary supplies names absent from the API; the UKHFD closed archive supplies codes absent from both.

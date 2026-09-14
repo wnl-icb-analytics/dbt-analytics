@@ -7,23 +7,43 @@
 {{
     config(
         materialized='incremental',
-        unique_key=['person_id', 'analysis_month'],
+        incremental_strategy='delete+insert',
+        unique_key='analysis_month',
         on_schema_change='append_new_columns',
         cluster_by=['analysis_month'],
-        tags=['daily', 'monthly-full']
+        tags=['daily']
     )
 }}
 
--- Person Month Analysis Base
--- Incremental table combining active person-months with demographics and conditions
--- Pre-applies temporal joins for fast analysis queries
--- 
--- Incremental Strategy:
--- - Processes only new months since last run
--- - Use `dbt run --full-refresh` to rebuild entire table
--- - Schedule periodic full refresh for late-arriving clinical data
-
-WITH active_person_months AS (
+-- Replace the latest completed month, including people removed by corrections.
+-- The monthly full refresh captures older corrections and trims the history.
+WITH months_to_build AS (
+    SELECT
+        month_start_date,
+        month_end_date,
+        year_number,
+        month_number,
+        quarter_number,
+        month_year_label,
+        financial_year_label,
+        financial_year_start,
+        financial_quarter_label,
+        financial_quarter_number
+    FROM {{ ref('int_date_spine') }}
+    WHERE month_end_date >= DATEADD('month', -60, CURRENT_DATE)
+        AND month_end_date < DATE_TRUNC('month', CURRENT_DATE)
+    {% if is_incremental() %}
+        AND (
+            month_end_date = LAST_DAY(DATEADD('month', -1, CURRENT_DATE))
+            -- Catch up missed months after an interruption in daily builds.
+            OR month_end_date > (
+                SELECT COALESCE(MAX(analysis_month), '1900-01-01'::DATE)
+                FROM {{ this }}
+            )
+        )
+    {% endif %}
+),
+active_person_months AS (
     -- Generate person-months for registered patients
     -- Uses effective_end_date (accounts for death and deregistration) and registration
     -- date ranges to determine temporal activity, not the point-in-time registration_status
@@ -31,11 +51,9 @@ WITH active_person_months AS (
         ds.month_end_date as analysis_month,
         hr.person_id
     FROM {{ ref('dim_person_historical_practice') }} hr
-    INNER JOIN {{ ref('int_date_spine') }} ds
+    INNER JOIN months_to_build ds
         ON hr.registration_start_date <= ds.month_end_date
         AND (hr.effective_end_date IS NULL OR hr.effective_end_date >= ds.month_start_date)
-        AND ds.month_end_date >= DATEADD('month', -60, CURRENT_DATE)  -- 5 year limit
-        AND ds.month_end_date <= LAST_DAY(CURRENT_DATE)    -- Don't create future months
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY ds.month_end_date, hr.person_id
         ORDER BY hr.is_current_registration DESC, hr.registration_start_date DESC
@@ -203,7 +221,7 @@ SELECT
 FROM active_person_months apm
 
 -- Join date spine for all date dimensions
-INNER JOIN {{ ref('int_date_spine') }} ds
+INNER JOIN months_to_build ds
     ON apm.analysis_month = ds.month_end_date
 
 -- Join demographics (temporal SCD-2 join)
@@ -294,14 +312,7 @@ LEFT JOIN (
             (episode_start_date >= ds.month_start_date
                 AND episode_start_date <= ds.month_end_date)::BOOLEAN as has_new_episode
         FROM {{ ref('fct_person_condition_episodes') }} ep
-        CROSS JOIN {{ ref('int_date_spine') }} ds
-        WHERE ds.month_end_date >= DATEADD('month', -60, CURRENT_DATE)  -- 5 years: limit based on complete left/died history
-            AND ds.month_end_date <= LAST_DAY(CURRENT_DATE)
+        CROSS JOIN months_to_build ds
     ) episode_flags
     GROUP BY person_id, analysis_month
 ) c ON apm.person_id = c.person_id AND apm.analysis_month = c.analysis_month
-
-{% if is_incremental() %}
-    -- Only process new months since last run
-    WHERE apm.analysis_month > (SELECT COALESCE(MAX(analysis_month), '1900-01-01') FROM {{ this }})
-{% endif %}

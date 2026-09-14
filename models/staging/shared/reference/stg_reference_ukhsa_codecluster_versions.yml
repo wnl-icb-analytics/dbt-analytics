@@ -1,0 +1,58 @@
+models:
+  - name: stg_reference_ukhsa_codecluster_versions
+    description: >
+      Every published version of the UKHSA (PRIMIS) COVID and flu SCT code cluster
+      workbooks. Grain: one row per programme, spec version, cluster and code.
+
+      COMBINED_CODESETS carries only the current version of each programme's clusters,
+      so a rebuild recomputes every closed campaign against this year's codes. The COVID
+      and flu uptake models read this table instead, through
+      get_observations(..., versioned=true) and get_medication_orders(..., versioned=true),
+      and filter on the spec_version each campaign carries in its config
+      (terminology_version). A closed season is therefore reproduced with the clusters
+      it was reported under, and the current season with the current ones.
+
+      source matches the COMBINED_CODESETS naming (UKHSA_COVID, UKHSA_FLU).
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - programme
+              - spec_version
+              - cluster_id
+              - code
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: source
+        description: 'UKHSA_COVID or UKHSA_FLU, matching the COMBINED_CODESETS source value'
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['UKHSA_COVID', 'UKHSA_FLU']
+      - name: programme
+        description: 'COVID or FLU'
+      - name: spec_version
+        description: 'PRIMIS codeclusters workbook version, such as 3.7.1 or 7.0'
+        tests:
+          - not_null
+      - name: release_date
+        description: 'Workbook release date from the file name'
+      - name: cluster_id
+        description: 'Cluster identifier, upper case'
+        tests:
+          - not_null
+      - name: cluster_description
+        description: 'Cluster description'
+      - name: code
+        description: 'SNOMED CT or dm+d code'
+        tests:
+          - not_null
+      - name: code_description
+        description: 'Code description'

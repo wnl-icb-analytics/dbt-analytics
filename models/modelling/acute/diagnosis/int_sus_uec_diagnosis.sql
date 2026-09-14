@@ -1,7 +1,5 @@
 {{ config(materialized="table") }}
 
--- note: using sk_patient_id as person_id
-
 -- standardize the ICD codes to ensure they follow the expected format
 -- `<CHAR><NUM><NUM>` or `<CHAR><NUM><NUM>.<NUM>`
 with
@@ -50,10 +48,3 @@ from diag_codes as f
 left join {{ref('int_sus_uec_encounter')}} as sa on sa.visit_occurrence_id = f.primarykey_id
 
 left join final_icd_codes as d on d.code = f.code
-
-left join
-    {{ ref('stg_common_aicentre_vocab') }} c
-    on c.concept_code = d.concept_code
-    and c.vocabulary_id = 'ICD10'
-
-where sa.sk_patient_id is not null

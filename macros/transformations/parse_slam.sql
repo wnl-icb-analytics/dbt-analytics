@@ -373,7 +373,8 @@ join {{ ref('stg_slam_latest_submission') }} as l
 {# Patient identifiers/demographics for the patient-level feeds
    (LSPLCM, LSDrPLCM, LSDePLCM; LSACM is aggregate). #}
 {% macro slam_patient_columns() %}
-        s.sk_patient_id_nhs_number              as sk_patient_id,
+         {{ consistent_sk_patient_id_format('s.sk_patient_id_nhs_number') }}
+                                                as sk_patient_id, 
         s.local_patient_identifier_extended     as local_patient_identifier,
         try_to_number(s.age_at_activity_date_contract_monitoring)
                                                 as age_at_activity_date,
