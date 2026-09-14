@@ -31,11 +31,11 @@ event_ethnicity as (
 ),
 
 combined_ethnicity as (
-    -- GP rows are tagged EMIS; event rows use visit_occurrence_type. The
-    -- branches are disjoint, so union all matches union without a distinct.
+    -- GP rows are already distinct and tagged EMIS. Deduplicate the event
+    -- projection separately before combining the different source types.
     select * from gp_ethnicity
     union all
-    select * from event_ethnicity
+    select distinct * from event_ethnicity
 )
 
 select

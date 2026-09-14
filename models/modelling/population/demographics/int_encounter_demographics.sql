@@ -72,15 +72,15 @@ wl_demo as (
 ),
 
 all_demographics as (
-    -- Each branch sets a different visit_occurrence_type, so the rows are
-    -- disjoint and union all matches union without the distinct sort.
-    select * from op_demo
+    -- Different visit types prevent cross-branch duplicates. Deduplicate each
+    -- projection too: separate referrals can have identical demographics.
+    select distinct * from op_demo
     union all
-    select * from apc_demo
+    select distinct * from apc_demo
     union all
-    select * from ae_demo
+    select distinct * from ae_demo
     union all
-    select * from wl_demo
+    select distinct * from wl_demo
 )
 
 select primarykey_id as visit_occurrence_id
