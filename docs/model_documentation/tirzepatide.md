@@ -30,6 +30,10 @@ backgrounds, and at least four of five comorbidities. OBES005 explicitly refers
 to the NICE TA1026 funding variation cohorts. The obesity rules in this release
 are version 51.3, dated 4 June 2026.
 
+The shared live register differs from national QOF timing. It accepts
+future-dated records and measures lipid results (12 months) and lipid therapy
+(6 months) back from the build date rather than the reporting year.
+
 The [NHS England commissioning guidance](https://www.england.nhs.uk/long-read/interim-commissioning-guidance-nice-ta1026-tirzepatide/)
 sets these primary care rollout groups:
 
@@ -61,14 +65,27 @@ treatment is indicated. The QOF diagnosis flags do not establish those facts.
 Clinical assessment must confirm programme eligibility and prescribing
 suitability, including current BMI and the required support programme.
 
+The models do not check pregnancy or plans for pregnancy, contraindications
+and cautions, medication interactions, psychological assessment, previous
+weight-management treatment or willingness to engage with support. Lipid
+results do not confirm fasting status or a need for lipid treatment.
+
+This is not the QOF OB005 indicator. Its denominator exclusions (such as
+previous bariatric surgery), suitability and decline codes and invitation rules
+are payment rules and are not applied here.
+
 The OBES2 implementation uses journal ethnicity. The national patient-table
 ethnicity fallback is unavailable in the OLIDS source, so some people who
 qualify for lower BMI thresholds may be missed. Cohort banding uses the shared
 NICE BMI class, whose ethnicity adjustment comes from
 `int_ethnicity_cardiometabolic_risk`. That can differ from the QOF journal flag
-on the register. The outputs carry both: `requires_lower_bmi_thresholds`
-explains the cohort band and `has_lower_bmi_threshold_ethnicity` explains
-register entry.
+on the register. The QOF flag uses the latest ethnicity record; the shared flag
+is true if any recorded ethnicity qualifies, and a person with no shared
+ethnicity record is banded on standard thresholds. So someone with BMI 32.5 to
+below 35 can meet the shared class but miss OBES2, and someone with BMI 37.5 to
+below 40 can fall in either cohort depending on which record applies. The
+outputs carry both: `requires_lower_bmi_thresholds` explains the cohort band
+and `has_lower_bmi_threshold_ethnicity` explains register entry.
 
 ## BMI evidence and prescribing status
 
@@ -78,6 +95,10 @@ cohorts. It uses the latest valid numeric BMI from `int_bmi_latest` when that
 date is in the preceding 12 months. That value can be a recorded `BMIVAL_COD`
 or a BMI calculated from height and weight. It can differ from the BMI that
 placed the person on OBES2.
+
+Only OBES2 members are candidates. Someone whose only qualifying BMI is
+calculated from height and weight, with no `BMIVAL_COD` or `BMI35_COD` record,
+is not on OBES2 and does not appear, even with four comorbidities.
 
 Candidates without a recent Class II or Class III numeric BMI remain in the
 population with `cohort` and `bmi_category` set to `BMI assessment needed` and

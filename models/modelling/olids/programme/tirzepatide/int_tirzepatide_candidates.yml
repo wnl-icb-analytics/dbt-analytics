@@ -32,7 +32,7 @@ models:
           - unique
           - not_null
       - name: age
-        description: Current age in full years
+        description: Current age in years from dim_person_age; approximate because only birth year and month are held
       - name: latest_bmi_value
         description: Latest valid numeric BMI from int_bmi_latest when dated in the preceding 12 months
       - name: latest_bmi_date
@@ -48,8 +48,10 @@ models:
       - name: requires_lower_bmi_thresholds
         description: >
           Whether the cohort band used ethnicity-adjusted thresholds (2.5 lower),
-          from int_ethnicity_cardiometabolic_risk via int_bmi_latest. Null when
-          there is no valid numeric BMI in the preceding 12 months.
+          from int_ethnicity_cardiometabolic_risk via int_bmi_latest. True when
+          any recorded ethnicity qualifies. Null when there is no ethnicity
+          record (standard thresholds applied) or no valid numeric BMI in the
+          preceding 12 months.
       - name: has_lower_bmi_threshold_ethnicity
         description: >
           Whether the latest QOF journal ethnicity qualifies for the lower OBES2
