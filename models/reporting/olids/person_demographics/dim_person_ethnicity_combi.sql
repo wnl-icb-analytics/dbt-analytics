@@ -31,11 +31,9 @@ event_ethnicity as (
 ),
 
 combined_ethnicity as (
-    -- GP rows are already distinct and tagged EMIS. Deduplicate the event
-    -- projection separately before combining the different source types.
     select * from gp_ethnicity
-    union all
-    select distinct * from event_ethnicity
+    union
+    select * from event_ethnicity
 )
 
 select

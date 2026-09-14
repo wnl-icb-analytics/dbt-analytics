@@ -72,15 +72,13 @@ wl_demo as (
 ),
 
 all_demographics as (
-    -- Different visit types prevent cross-branch duplicates. Deduplicate each
-    -- projection too: separate referrals can have identical demographics.
-    select distinct * from op_demo
-    union all
-    select distinct * from apc_demo
-    union all
-    select distinct * from ae_demo
-    union all
-    select distinct * from wl_demo
+    select * from op_demo
+    union 
+    select * from apc_demo
+    union 
+    select * from ae_demo
+    union 
+    select * from wl_demo
 )
 
 select primarykey_id as visit_occurrence_id
