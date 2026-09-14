@@ -3,14 +3,15 @@ models:
     description: 'Person-level tirzepatide cohort status for the NCL/WNL GLP-1
       obesity rollout.
 
-      Combines the eligibility population (int_tirzepatide_eligible_population)
+      Combines the candidate population (int_tirzepatide_candidates)
       with current GLP-1 prescribing (int_glp1_medications_all) and demographic /
       practice context, so practices can identify candidates for assessment and see
       whether they are already on a GLP-1 and for which likely indication.
 
       Candidate selection and comorbidities come from the QOF v51 OBES2
       register. Numeric BMI and NICE NG246 class come from int_bmi_latest.
-      Grain: one row per currently registered, living candidate. Cohort 1 is
+      Grain: one row per candidate in dim_person_active_patients (currently
+      registered, living, not a test patient). Cohort 1 is
       the shared Obese Class III band. Cohort 2 is the shared Obese Class II
       band, when that latest valid BMI is in the preceding 12 months.
       Candidates whose numeric BMI cannot establish either band remain in the
@@ -58,9 +59,9 @@ models:
         description: 'High-level ethnicity category'
       - name: imd_quintile_19
         description: 'IMD 2019 deprivation quintile'
-      - name: is_eligible_cohort_1
+      - name: is_cohort_1
         description: 'Latest valid numeric BMI in 12 months is NICE Obese Class III; prescribing suitability still needs assessment'
-      - name: is_eligible_cohort_2
+      - name: is_cohort_2
         description: 'Latest valid numeric BMI in 12 months is NICE Obese Class II; prescribing suitability still needs assessment'
       - name: cohort
         description: 'Cohort 1, Cohort 2 or BMI assessment needed when the shared numeric BMI cannot establish either band'
@@ -72,8 +73,10 @@ models:
         description: 'Shared BMI cluster or calculated-BMI marker from int_bmi_latest'
       - name: bmi_category
         description: 'Programme rollout band mapped from the shared NICE NG246 class, or BMI assessment needed'
+      - name: requires_lower_bmi_thresholds
+        description: 'Whether the cohort band used ethnicity-adjusted thresholds (2.5 lower), from int_ethnicity_cardiometabolic_risk. Null without a valid numeric BMI in 12 months'
       - name: has_lower_bmi_threshold_ethnicity
-        description: 'Whether the latest QOF ethnicity evidence qualifies for lower BMI thresholds'
+        description: 'Whether the latest QOF journal ethnicity qualifies for the lower OBES2 register threshold. Governs register entry only; can differ from requires_lower_bmi_thresholds'
       - name: has_unresolved_hypertension
         description: 'Whether unresolved hypertension meets the OBES2 definition'
       - name: has_dyslipidaemia
@@ -86,20 +89,24 @@ models:
         description: 'Whether unresolved type 2 diabetes meets the OBES2 definition'
       - name: qualifying_comorbidity_count
         description: 'Count of qualifying comorbidities present (4 or 5 for eligible persons)'
-      - name: ever_on_glp1
+      - name: has_glp1_order
         description: 'Has any GLP-1 receptor agonist order on record'
-      - name: ever_on_tirzepatide
+      - name: has_tirzepatide_order
         description: 'Has any tirzepatide (dual GIP/GLP-1) order on record'
       - name: is_currently_treated_glp1
         description: 'Has a GLP-1 order in the last 6 months; dispensing and adherence are not confirmed'
       - name: latest_glp1_drug
         description: 'Active ingredient of the most recent GLP-1 order'
       - name: latest_glp1_indication
-        description: 'Likely indication of the most recent GLP-1 order (Diabetes vs Obesity, from BNF)'
+        description: 'Likely indication of the most recent GLP-1 order from its BNF code: Diabetes (6.1), Obesity (4.5) or Unknown'
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Diabetes', 'Obesity', 'Unknown']
       - name: latest_glp1_order_date
         description: 'Date of the most recent GLP-1 order'
       - name: glp1_orders_12m
-        description: 'Rolling count of GLP-1 orders in the last 12 months'
+        description: 'Number of GLP-1 orders in the last 12 months'
       - name: is_actionable
         description: 'Candidate for review without a GLP-1 order in the last 6 months; prescribing eligibility requires clinical assessment'
       - name: data_refresh_date

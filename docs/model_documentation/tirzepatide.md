@@ -8,9 +8,9 @@ observations.
 | --- | --- |
 | Candidate population, age, QOF ethnicity flag and the five comorbidities | `fct_person_obesity2_register` (QOF v51 OBES2, including later #1184 corrections) |
 | Numeric BMI and NICE NG246 class | `int_bmi_latest` |
-| Current registration and living status | `dim_person_current_practice`, `dim_person_age` |
+| Current registration, living and non-test status | `dim_person_active_patients` |
 | GLP-1 order history | `int_glp1_medications_all` |
-| Cohort 1 / Cohort 2 / BMI assessment needed | Programme mapping in `int_tirzepatide_eligible_population` |
+| Cohort 1 / Cohort 2 / BMI assessment needed | Programme mapping in `int_tirzepatide_candidates` |
 
 `int_dyslipidaemia_diagnoses_all` and `int_obstructive_sleep_apnoea_diagnoses_all`
 are the shared diagnosis observations. OBES2 already consumes the QOF clusters
@@ -66,7 +66,9 @@ ethnicity fallback is unavailable in the OLIDS source, so some people who
 qualify for lower BMI thresholds may be missed. Cohort banding uses the shared
 NICE BMI class, whose ethnicity adjustment comes from
 `int_ethnicity_cardiometabolic_risk`. That can differ from the QOF journal flag
-on the register.
+on the register. The outputs carry both: `requires_lower_bmi_thresholds`
+explains the cohort band and `has_lower_bmi_threshold_ethnicity` explains
+register entry.
 
 ## BMI evidence and prescribing status
 
@@ -84,7 +86,8 @@ both cohort flags false. They remain candidates for review through
 
 `is_currently_treated_glp1` means a GLP-1 order exists within six months. It does
 not confirm dispensing or adherence. `latest_glp1_indication` is inferred from
-BNF coding, not a recorded prescribing decision. `is_actionable` identifies
+BNF coding (6.1 diabetes, 4.5 obesity, otherwise Unknown), not a recorded
+prescribing decision. `is_actionable` identifies
 candidates without a recent GLP-1 order for review; it does not authorise
 treatment. Obesity commissioning and prescribing for type 2 diabetes have
 different eligibility rules.

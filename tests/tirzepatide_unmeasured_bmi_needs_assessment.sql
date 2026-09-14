@@ -3,8 +3,8 @@ SELECT COUNT(*) AS invalid_assignments
 FROM {{ ref('fct_tirzepatide_cohort_status') }}
 WHERE latest_bmi_value IS NULL
   AND (
-      is_eligible_cohort_1 IS DISTINCT FROM FALSE
-      OR is_eligible_cohort_2 IS DISTINCT FROM FALSE
+      is_cohort_1 IS DISTINCT FROM FALSE
+      OR is_cohort_2 IS DISTINCT FROM FALSE
       OR cohort IS DISTINCT FROM 'BMI assessment needed'
       OR bmi_category IS DISTINCT FROM 'BMI assessment needed'
   )

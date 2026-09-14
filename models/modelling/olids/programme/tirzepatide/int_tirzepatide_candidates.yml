@@ -1,22 +1,22 @@
 models:
-  - name: int_tirzepatide_eligible_population
+  - name: int_tirzepatide_candidates
     description: >
       Current tirzepatide candidate population drawn from the QOF v51 OBES2
-      register. One row represents a living adult with a current registration
-      and at least four of the five OBES2 comorbidities. Membership,
-      comorbidities and QOF journal ethnicity come from
-      fct_person_obesity2_register. Numeric BMI and NICE NG246 class come from
-      int_bmi_latest. The programme maps Obese Class III to Cohort 1 and Obese
-      Class II to Cohort 2 when that latest valid BMI is in the preceding 12
-      months. Missing, older or out-of-band numeric BMI is labelled BMI
-      assessment needed, with both cohort flags false. These are candidates
-      for clinical assessment, not confirmed prescribing eligibility. The
-      hypertension flag does not confirm a need for blood pressure treatment;
-      the sleep apnoea flag does not confirm sleep-clinic assessment or an
-      indication for CPAP or equivalent. This current population does not
-      retain everyone who qualified before treatment. See
-      docs/model_documentation/tirzepatide.md for the national specifications
-      and remaining assessment requirements.
+      register. One row represents an adult in dim_person_active_patients
+      (currently registered, living, not a test patient) with at least four
+      of the five OBES2 comorbidities. Membership, comorbidities and QOF
+      journal ethnicity come from fct_person_obesity2_register. Numeric BMI
+      and NICE NG246 class come from int_bmi_latest. The programme maps Obese
+      Class III to Cohort 1 and Obese Class II to Cohort 2 when that latest
+      valid BMI is in the preceding 12 months. Missing, older or out-of-band
+      numeric BMI is labelled BMI assessment needed, with both cohort flags
+      false. These are candidates for clinical assessment, not confirmed
+      prescribing eligibility. The hypertension flag does not confirm a need
+      for blood pressure treatment; the sleep apnoea flag does not confirm
+      sleep-clinic assessment or an indication for CPAP or equivalent. This
+      current population does not retain everyone who qualified before
+      treatment. See docs/model_documentation/tirzepatide.md for the national
+      specifications and remaining assessment requirements.
     config:
       meta:
         owner:
@@ -45,8 +45,16 @@ models:
           - accepted_values:
               arguments:
                 values: ['Obese Class II', 'Obese Class III', 'BMI assessment needed']
+      - name: requires_lower_bmi_thresholds
+        description: >
+          Whether the cohort band used ethnicity-adjusted thresholds (2.5 lower),
+          from int_ethnicity_cardiometabolic_risk via int_bmi_latest. Null when
+          there is no valid numeric BMI in the preceding 12 months.
       - name: has_lower_bmi_threshold_ethnicity
-        description: Whether the latest QOF ethnicity evidence qualifies for lower BMI thresholds
+        description: >
+          Whether the latest QOF journal ethnicity qualifies for the lower OBES2
+          register threshold. Governs register entry only; can differ from
+          requires_lower_bmi_thresholds.
       - name: has_unresolved_hypertension
         description: Whether unresolved hypertension meets the OBES2 definition
       - name: has_dyslipidaemia
@@ -65,11 +73,7 @@ models:
                 min_value: 4
                 max_value: 5
                 inclusive: true
-      - name: bmi_meets_cohort_1
-        description: Whether the latest valid numeric BMI in 12 months is NICE Obese Class III
-      - name: bmi_meets_cohort_2
-        description: Whether the latest valid numeric BMI in 12 months is NICE Obese Class II
-      - name: is_eligible_cohort_1
-        description: Whether the person is assigned to Cohort 1
-      - name: is_eligible_cohort_2
-        description: Whether the person is assigned to Cohort 2
+      - name: is_cohort_1
+        description: Latest valid numeric BMI in 12 months is NICE Obese Class III (at least 40, or 37.5 with lower thresholds)
+      - name: is_cohort_2
+        description: Latest valid numeric BMI in 12 months is NICE Obese Class II (35 to below 40, or 32.5 to below 37.5 with lower thresholds)
