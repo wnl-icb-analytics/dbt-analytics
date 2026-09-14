@@ -165,10 +165,21 @@ SELECT
         d.lsoa_name_21 as lsoa_name,
         d.ward_code,
         d.ward_name,
-        COALESCE(la.LAD25_NM,'Unknown') AS borough_resident,
-        CASE WHEN la.RESIDENT_FLAG IS NULL THEN 'Unknown'
-        ELSE la.RESIDENT_FLAG END as residential_loc,
+        COALESCE(d.local_authority_name,'Unknown') as borough_resident,
         d.neighbourhood_resident,
+        case
+        -- all NCL Boroughs
+        when d.local_authority_code in ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019') then 'NCL'
+        -- all NWL Boroughs
+        when d.local_authority_code in ('E09000005','E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033') then 'NWL'
+        --all NEL Boroughs
+        when d.local_authority_code in ('E09000002','E09000001','E09000012','E09000016','E09000025','E09000026','E09000030','E09000031') then 'NEL'
+        when d.local_authority_code like 'E09%' and d.local_authority_code not in ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019','E09000005', 
+            'E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033','E09000002','E09000001','E09000012',
+            'E09000016','E09000025','E09000026','E09000030','E09000031') then 'Other London'
+        when d.local_authority_code is null then 'Unknown'
+        else 'Outside London'
+        end as residential_loc,
         -- d.icb_code_resident,
         -- d.icb_resident,
 
@@ -202,7 +213,7 @@ LEFT JOIN {{ ref('dim_person_housebound_status') }} hs ON d.person_id = hs.perso
 --LEFT JOIN REPORTING.OLIDS_DISEASE_REGISTERS.FCT_PERSON_SMI_REGISTER smi on d.person_id = smi.person_id
 LEFT JOIN {{ ref('fct_person_smi_register') }} smi on d.person_id = smi.person_id
 --LEFT JOIN STAGING.REFERENCE.STG_REFERENCE_LSOA21_WARD25_LAD25 la on la.LSOA21_CD = d.LSOA_CODE_21
-LEFT JOIN {{ ref('stg_reference_lsoa21_ward25_lad25') }} la on la.LSOA21_CD = d.LSOA_CODE_21
+-- LEFT JOIN {{ ref('stg_reference_lsoa21_ward25_lad25') }} la on la.LSOA21_CD = d.LSOA_CODE_21
 WHERE v.campaign_start_date >= '2025-09-01'::DATE
 AND d.person_id IS NOT NULL
 
