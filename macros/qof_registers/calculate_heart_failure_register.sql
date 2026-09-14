@@ -4,7 +4,7 @@
     Calculates Heart Failure register status at a given reference date.
 
     Business Logic:
-    - Active heart failure diagnosis (latest diagnosis > latest resolution OR no resolution)
+    - Heart failure diagnosis with no resolution on a later date
     - HF3 additionally requires a reduced ejection fraction code
     - No age restrictions
 
@@ -41,12 +41,13 @@
             'Heart Failure' AS register_name,
             COALESCE(
                 diag.latest_diagnosis_date IS NOT NULL
-                AND (diag.latest_resolved_date IS NULL OR diag.latest_diagnosis_date > diag.latest_resolved_date),
+                -- HFRES_DAT only considers resolutions after HFLAT_DAT.
+                AND (diag.latest_resolved_date IS NULL OR diag.latest_diagnosis_date::DATE >= diag.latest_resolved_date::DATE),
                 FALSE
             ) AS is_on_register,
             COALESCE(
                 diag.latest_diagnosis_date IS NOT NULL
-                AND (diag.latest_resolved_date IS NULL OR diag.latest_diagnosis_date > diag.latest_resolved_date)
+                AND (diag.latest_resolved_date IS NULL OR diag.latest_diagnosis_date::DATE >= diag.latest_resolved_date::DATE)
                 AND diag.earliest_reduced_ef_diagnosis_date IS NOT NULL,
                 FALSE
             ) AS is_on_hfref_register

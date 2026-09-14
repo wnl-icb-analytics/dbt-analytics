@@ -64,14 +64,15 @@ WITH heart_failure_diagnoses AS (
                         is_diagnosis_code
                         THEN clinical_effective_date
                 END
-            )
-            > MAX(
+            )::DATE
+            -- HFRES_DAT only considers resolutions after HFLAT_DAT.
+            >= MAX(
                 CASE
                     WHEN
                         is_resolved_code
                         THEN clinical_effective_date
                 END
-            )
+            )::DATE
         ), FALSE) AS has_active_hf_diagnosis,
 
         COALESCE(MAX(
