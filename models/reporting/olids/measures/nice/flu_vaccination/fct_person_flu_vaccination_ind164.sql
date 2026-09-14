@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND164: https://www.nice.org.uk/indicators/ind164
--- Flu vaccination in the most recently completed season (1 August to 31 March) for people on the stroke/TIA register; excludes a persisting contraindication or one recorded in 12 months.
+-- Flu vaccination in the most recently completed season (1 August to 31 March) for people on the stroke/TIA register, before personalised care adjustments.
 WITH register AS (
     SELECT person_id FROM {{ ref('fct_person_stroke_tia_register') }} WHERE is_on_register
 ),
@@ -13,10 +13,6 @@ indicator_population AS (
     FROM register
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON register.person_id = age.person_id
-    LEFT JOIN {{ ref('int_flu_vaccination_contraindication_all') }} AS contra
-        ON register.person_id = contra.person_id
-        AND (contra.is_persisting OR contra.clinical_effective_date::DATE >= DATEADD(month, -12, CURRENT_DATE()))
-    WHERE contra.person_id IS NULL
 ),
 
 assessed AS (

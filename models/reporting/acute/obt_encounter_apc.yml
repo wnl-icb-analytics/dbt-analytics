@@ -56,11 +56,34 @@ models:
 
       - name: end_date
         data_type: date
-        description: "Spell end date"
+        description: "Submitted spell discharge date. Null when SUS+ supplied no spell discharge date."
 
       - name: end_time
         data_type: time
         description: "Spell end time"
+
+      - name: estimated_discharge_date
+        data_type: date
+        description: >-
+          Estimated discharge date for a closed spell with no submitted discharge
+          date. Uses the latest non-null submitted episode end date first, then
+          admission date plus the SUS+ grouper length of stay. Null for open
+          spells and where neither estimate can be calculated. This does not
+          replace end_date and does not drive point of delivery.
+
+      - name: has_estimated_discharge_date
+        data_type: boolean
+        description: >-
+          True when estimated_discharge_date is populated. False does not mean a
+          submitted discharge date exists; inspect end_date separately.
+
+      - name: estimated_discharge_date_method
+        data_type: varchar
+        description: >-
+          Method used for estimated_discharge_date: EPISODE_END_DATE for the
+          latest non-null submitted episode end date, or
+          ADMISSION_PLUS_GROUPER_LOS for admission date plus the SUS+ grouper
+          length of stay. Null when no estimate is present.
 
       - name: duration
         data_type: number
@@ -89,7 +112,11 @@ models:
 
       - name: duration_to_date
         data_type: number
-        description: "Length of stay in days, including ongoing stays calculated to current date"
+        description: >-
+          Calendar days from admission to the submitted discharge date. For a
+          spell explicitly marked open, calendar days from admission to the
+          model build date. Null for a closed spell without a submitted discharge
+          date and where admission date is missing.
 
       - name: spell_admission_method
         data_type: varchar
@@ -109,7 +136,12 @@ models:
 
       - name: pod
         data_type: varchar
-        description: "Point of delivery, based on admission method, patient classification and length of stay"
+        description: >-
+          Point of delivery based on admission method, patient classification and
+          submitted spell dates. Emergency spells are NEL-ZLOS for same-day
+          discharge and NEL-LOS+1 for later discharge; the value is null when no
+          submitted discharge date exists. Other admission-based groups do not
+          depend on discharge date.
 
       - name: discharge_destination_code
         data_type: varchar

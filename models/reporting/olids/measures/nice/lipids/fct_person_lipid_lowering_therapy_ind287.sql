@@ -14,8 +14,8 @@ WITH indicator_population AS (
             profile.earliest_hypertension_date >= DATEADD(month, -12, CURRENT_DATE())
             OR profile.earliest_type2_diabetes_date >= DATEADD(month, -12, CURRENT_DATE())
         )
-        AND profile.max_risk_score_12m >= 10
-        AND NOT profile.has_cvd
+        AND profile.max_cvd_risk_score_12m >= 10
+        AND NOT profile.has_cvd_including_haemorrhagic_stroke
         AND NOT profile.has_ckd
         AND NOT profile.has_familial_hypercholesterolaemia
         AND NOT profile.has_type1_diabetes

@@ -73,15 +73,15 @@ with labelled as (
     left join {{ ref('mhsds_diagnosis_scheme') }} as scheme
         on r.coding_scheme_kind = 'diagnosis'
         and upper(trim(r.coding_scheme_code)) = scheme.code
-    left join {{ ref('stg_dictionary_snomed_concept') }} as snomed
+    left join {{ ref('snomed_concept') }} as snomed
         on trim(r.clinical_code) = snomed.snomed_code
         and r.source_table <> 'MHS202'
         and (r.coding_scheme_kind = 'fixed_snomed' or r.coding_scheme_code = '06')
-    left join {{ ref('stg_dictionary_dbo_diagnosis') }} as icd
-        on {{ clean_icd10_code('upper(trim(r.clinical_code))') }} = upper(icd.code)
+    left join {{ ref('icd10_code') }} as icd
+        on replace({{ clean_icd10_code('upper(trim(r.clinical_code))') }}, '.', '') = icd.code
         and r.coding_scheme_kind = 'diagnosis'
         and r.coding_scheme_code = '02'
-    left join {{ ref('stg_dictionary_snomed_concept') }} as mapped
+    left join {{ ref('snomed_concept') }} as mapped
         on trim(r.standardised_snomed_code) = mapped.snomed_code
         and r.source_table <> 'MHS202'
     left join {{ ref('stg_mhsds_bridging') }} as b

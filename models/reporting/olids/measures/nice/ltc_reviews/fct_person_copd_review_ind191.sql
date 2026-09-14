@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND191: https://www.nice.org.uk/indicators/ind191
--- COPD review code in 12 months for people on the COPD register; the MRC dyspnoea date is carried as detail.
+-- COPD review, exacerbation count and MRC dyspnoea assessment in 12 months for people on the COPD register.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -20,8 +20,11 @@ assessed AS (
         active.current_practice_name,
         population.latest_copd_review_date AS latest_review_date,
         population.latest_mrc_dyspnoea_date AS latest_mrc_dyspnoea_date,
+        population.latest_copd_exacerbation_count_date,
         CASE WHEN population.latest_copd_review_date >= DATEADD(month, -12, CURRENT_DATE()) THEN population.latest_copd_review_date END AS latest_record_date,
-        COALESCE(population.latest_copd_review_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
+        COALESCE(population.latest_copd_review_date >= DATEADD(month, -12, CURRENT_DATE())
+            AND population.latest_mrc_dyspnoea_date >= DATEADD(month, -12, CURRENT_DATE())
+            AND population.latest_copd_exacerbation_count_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
@@ -39,6 +42,7 @@ SELECT
     current_practice_name,
     latest_review_date,
     latest_mrc_dyspnoea_date,
+    latest_copd_exacerbation_count_date,
     latest_record_date,
     TRUE AS is_in_denominator,
     is_in_numerator,

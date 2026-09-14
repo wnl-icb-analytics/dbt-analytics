@@ -1,11 +1,13 @@
 models:
   - name: int_ltc_review_all
-    description: >
-      Long-term condition review, care plan and health check records from the
-      PCD review clusters, one row per observation and cluster, for all people
-      including inactive and deceased. review_type names the record from its
-      cluster. Observations dated after the build date are excluded. Feeds the
-      NICE review indicators through int_ltc_review_profile.
+    description: |
+      Long-term condition reviews, care plans, health checks and respiratory
+      exacerbation-count records. One row per observation and matching PCD code
+      cluster, for all people including inactive and deceased people.
+
+      review_type identifies the clinical record type. Records after the build
+      date are excluded. The NICE review profile combines these dated records;
+      each indicator applies its own population and evidence window.
     config:
       meta:
         owner:
@@ -13,7 +15,7 @@ models:
     data_tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: REV_COD, COPDRVW_COD, HFRVW_COD, HFMEDRVW_COD, MEDRVW_COD, RARTHRVW_COD, HLTHCHK_COD, HLTHAP_COD, MDRV_COD, DEMCP_COD, DEMCPRVW_COD, DEPRVW_COD
+            cluster_ids: REV_COD, WRITPASTP_COD, ASTEXACB_COD, COPDEXACB_COD, COPDRVW_COD, HFRVW_COD, HFMEDRVW_COD, MEDRVW_COD, RARTHRVW_COD, HLTHCHK_COD, HLTHAP_COD, MDRV_COD, DEMCP_COD, DEMCPRVW_COD, DEPRVW_COD
             source: PCD
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -30,7 +32,7 @@ models:
       - name: clinical_effective_date
         description: Date of the record.
       - name: review_type
-        description: "Record type from the cluster: ASTHMA_REVIEW, COPD_REVIEW, HEART_FAILURE_REVIEW, HEART_FAILURE_MEDICATION_REVIEW, MEDICATION_REVIEW, RHEUMATOID_ARTHRITIS_REVIEW, LEARNING_DISABILITY_HEALTH_CHECK, LEARNING_DISABILITY_HEALTH_ACTION_PLAN, CANCER_CARE_REVIEW, DEMENTIA_CARE_PLAN, DEMENTIA_CARE_PLAN_REVIEW, DEPRESSION_REVIEW."
+        description: "Record type from the cluster: ASTHMA_REVIEW, ASTHMA_ACTION_PLAN, ASTHMA_EXACERBATION_COUNT, COPD_EXACERBATION_COUNT, COPD_REVIEW, HEART_FAILURE_REVIEW, HEART_FAILURE_MEDICATION_REVIEW, MEDICATION_REVIEW, RHEUMATOID_ARTHRITIS_REVIEW, LEARNING_DISABILITY_HEALTH_CHECK, LEARNING_DISABILITY_HEALTH_ACTION_PLAN, CANCER_CARE_REVIEW, DEMENTIA_CARE_PLAN, DEMENTIA_CARE_PLAN_REVIEW, DEPRESSION_REVIEW."
         data_tests:
           - not_null
       - name: concept_code

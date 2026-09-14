@@ -8,7 +8,8 @@ models:
       the register, frailty, lipid-therapy, smoking, obesity and cholesterol
       facts the indicators use for denominators and exclusions. Established CVD
       follows NICE: CHD or PAD register, or stroke/TIA register without
-      haemorrhagic stroke history. Consumers apply their own windows and join
+      haemorrhagic stroke history for IND269 and IND270. A separate flag includes
+      all stroke types for primary-prevention exclusions. Consumers apply their own windows and join
       dim_person_active_patients.
     config:
       meta:
@@ -34,8 +35,20 @@ models:
         description: Lowest valid QRISK score in the 36 months to the build date; null if none.
       - name: latest_risk_assessment_date
         description: Date of the latest CVD risk assessment record, scored or not.
+      - name: latest_cvd_risk_score
+        description: Last recorded numeric CVD risk assessment value in percent across coded tools; null when absent or outside 0 to 100. An invalid last result does not fall back to an older score.
+      - name: latest_cvd_risk_score_date
+        description: Date of the last CVD risk assessment with a recorded result, including invalid results.
+      - name: max_cvd_risk_score_12m
+        description: Highest valid coded CVD risk score in percent in the preceding 12 months across permitted assessment tools.
+      - name: latest_low_cvd_risk_score_date_36m
+        description: Most recent CVD risk score below 10% in the preceding three years; null if none.
+      - name: latest_high_cvd_risk_score_date_36m
+        description: Most recent CVD risk score of at least 10% in the preceding three years; a date after the latest low score cancels the IND275 low-score exclusion, following QOF v51 DM034.
       - name: has_cvd
         description: On the CHD or PAD register, or the stroke/TIA register without haemorrhagic stroke history.
+      - name: has_cvd_including_haemorrhagic_stroke
+        description: On the CHD, PAD or stroke/TIA register, including haemorrhagic stroke; used where NICE defines CVD as any stroke or TIA.
       - name: has_familial_hypercholesterolaemia
         description: On the familial hypercholesterolaemia register.
       - name: has_ckd

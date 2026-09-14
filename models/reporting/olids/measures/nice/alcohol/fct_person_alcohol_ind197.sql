@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND197: https://www.nice.org.uk/indicators/ind197
--- Brief intervention within 3 months of the latest positive screen (FAST 3 or more, AUDIT-C 5 or more) for people with a first hypertension diagnosis and a positive screen in the preceding 12 months; excludes alcohol-related disorders.
+-- Brief intervention within 3 months of any qualifying positive screen (FAST 3 or more, AUDIT-C 5 or more) for people with a first hypertension diagnosis in the preceding 12 months and any recorded positive screen; excludes alcohol-related disorders.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -9,9 +9,15 @@ WITH indicator_population AS (
     FROM {{ ref('int_ltc_review_profile') }} AS profile
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE profile.earliest_hypertension_date >= DATEADD(month, -12, CURRENT_DATE())
-        AND profile.latest_positive_alcohol_screen_date >= DATEADD(month, -12, CURRENT_DATE())
+    WHERE profile.earliest_hypertension_date BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+        AND profile.latest_positive_alcohol_screen_date IS NOT NULL
         AND NOT profile.has_alcohol_disorder
+),
+
+qualifying_interventions AS (
+    SELECT person_id, MAX(latest_intervention_date) AS latest_record_date
+    FROM {{ ref('int_nice_alcohol_screen_intervention') }}
+    GROUP BY person_id
 ),
 
 assessed AS (
@@ -26,11 +32,13 @@ assessed AS (
         population.latest_positive_alcohol_screen_date,
         population.latest_intervention_after_positive_screen_date,
         population.earliest_hypertension_date AS new_diagnosis_date,
-        population.latest_intervention_after_positive_screen_date AS latest_record_date,
-        population.latest_intervention_after_positive_screen_date IS NOT NULL AS is_in_numerator
+        interventions.latest_record_date,
+        interventions.latest_record_date IS NOT NULL AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
+    LEFT JOIN qualifying_interventions AS interventions
+        ON population.person_id = interventions.person_id
 )
 
 SELECT

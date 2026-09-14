@@ -2,19 +2,59 @@
 
 -- NICE IND320: https://www.nice.org.uk/indicators/ind320
 -- BMI recorded in 12 months for people with CHD, stroke/TIA, diabetes, non-diabetic hyperglycaemia, hypertension, PAD, heart failure, COPD, dyslipidaemia, learning disability, obstructive sleep apnoea or SMI.
-WITH indicator_population AS (
+WITH dyslipidaemia AS (
+    -- NICE's HDL definition is incomplete. QOF v51.3 DYSLIP_FLG supplies the
+    -- sex-specific HDL limits, triglyceride limit and treatment/result windows.
+    SELECT person_id
+    FROM {{ ref('int_lipid_lowering_therapy_latest') }}
+    WHERE latest_order_date BETWEEN DATEADD(month, -6, CURRENT_DATE()) AND CURRENT_DATE()
+
+    UNION
+
+    SELECT person_id
+    FROM {{ ref('int_cholesterol_ldl_latest') }}
+    WHERE clinical_effective_date::DATE
+        BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+        AND NOT has_later_unassessable_result
+        AND cholesterol_value >= 4.1
+
+    UNION
+
+    SELECT person_id
+    FROM {{ ref('int_triglycerides_latest') }}
+    WHERE clinical_effective_date::DATE
+        BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+        AND NOT has_later_unassessable_result
+        AND triglycerides_value >= 1.7
+
+    UNION
+
+    SELECT hdl.person_id
+    FROM {{ ref('int_cholesterol_hdl_latest') }} AS hdl
+    INNER JOIN {{ ref('dim_person_gender') }} AS gender
+        ON hdl.person_id = gender.person_id
+    WHERE hdl.clinical_effective_date::DATE
+        BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+        AND NOT hdl.has_later_unassessable_result
+        AND ((gender.gender = 'Male' AND hdl.cholesterol_value < 1.0)
+            OR (gender.gender = 'Female' AND hdl.cholesterol_value < 1.3))
+),
+
+indicator_population AS (
     SELECT
         profile.*,
         age.age
     FROM {{ ref('int_ltc_review_profile') }} AS profile
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
+    LEFT JOIN dyslipidaemia
+        ON profile.person_id = dyslipidaemia.person_id
     -- BMI values are modelled for adults only, so the denominator is 18 and over
     WHERE age.age >= 18
         AND (
             profile.has_chd OR profile.has_stroke_tia OR profile.has_diabetes OR profile.has_ndh
             OR profile.has_hypertension OR profile.has_pad OR profile.has_heart_failure OR profile.has_copd
-            OR profile.has_dyslipidaemia OR profile.has_learning_disability
+            OR dyslipidaemia.person_id IS NOT NULL OR profile.has_learning_disability
             OR profile.has_obstructive_sleep_apnoea OR profile.has_smi
         )
 ),

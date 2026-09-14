@@ -11,7 +11,7 @@ WITH indicator_population AS (
     INNER JOIN {{ ref('dim_person_age') }} AS age
         ON ndh.person_id = age.person_id
     WHERE ndh.is_on_register
-        AND ndh.earliest_diagnosis_date::DATE >= DATEADD(month, -12, CURRENT_DATE())
+        AND ndh.earliest_diagnosis_date::DATE BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
         AND age.age >= 18
         AND NOT COALESCE(ndh.has_diabetes_diagnosis AND NOT ndh.is_diabetes_resolved, FALSE)
 ),
@@ -23,7 +23,7 @@ referral AS (
     FROM indicator_population AS population
     INNER JOIN {{ ref('int_referral_ndpp_all') }} AS dpp
         ON population.person_id = dpp.person_id
-        AND dpp.clinical_effective_date::DATE >= population.diagnosis_date
+        AND dpp.clinical_effective_date::DATE BETWEEN population.diagnosis_date AND CURRENT_DATE()
         -- Referral made or declined counts, as NICE includes declined referrals; an invitation does not
         AND dpp.concept_code IN ('1025321000000109', '1025301000000100')
     GROUP BY population.person_id

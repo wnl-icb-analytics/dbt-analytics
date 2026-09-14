@@ -26,7 +26,6 @@ qualifying_examination AS (
     INNER JOIN indicator_population AS population
         ON obs.person_id = population.person_id
     WHERE obs.clinical_effective_date::DATE BETWEEN DATEADD(month, -15, CURRENT_DATE()) AND CURRENT_DATE()
-        AND NOT obs.is_declined AND NOT obs.is_unsuitable
         AND obs.has_risk_classification
         AND (
             obs.both_feet_checked

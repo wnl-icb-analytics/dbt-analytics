@@ -54,6 +54,7 @@ WITH conditions AS (
         BOOLOR_AGG(condition_code = 'CAN') AS has_cancer,
         MAX(CASE WHEN condition_code = 'CAN' THEN latest_diagnosis_date::DATE END) AS latest_cancer_diagnosis_date,
         MIN(CASE WHEN condition_code = 'SMI' THEN earliest_diagnosis_date::DATE END) AS earliest_smi_diagnosis_date,
+        MIN(CASE WHEN condition_code = 'DEM' THEN earliest_diagnosis_date::DATE END) AS earliest_dementia_diagnosis_date,
         MIN(CASE WHEN condition_code = 'DM' THEN earliest_diagnosis_date::DATE END) AS earliest_diabetes_diagnosis_date,
         COUNT(DISTINCT CASE
             WHEN condition_code = 'CAN' THEN 'CANCER'
@@ -61,7 +62,8 @@ WITH conditions AS (
             WHEN condition_code = 'DM' THEN 'DIABETES'
             WHEN condition_code = 'CLD' THEN 'DIGESTIVE'
             WHEN condition_code IN ('LD', 'LD_U14') THEN 'LEARNING_DISABILITY'
-            WHEN condition_code IN ('ANX', 'DEP', 'DEM', 'SMI') THEN 'MENTAL_HEALTH'
+            WHEN condition_code IN ('ANX', 'DEP', 'DEM')
+                OR (condition_code = 'SMI' AND earliest_diagnosis_date IS NOT NULL) THEN 'MENTAL_HEALTH'
             WHEN condition_code = 'RA' THEN 'MUSCULOSKELETAL'
             WHEN condition_code IN ('EP', 'MS', 'PD') THEN 'NEUROLOGICAL'
             WHEN condition_code = 'CKD' THEN 'RENAL'
@@ -76,6 +78,25 @@ WITH conditions AS (
     FROM {{ ref('fct_person_ltc_summary') }}
     WHERE is_on_register
     GROUP BY person_id
+),
+
+child_depression AS (
+    -- NICE IND198/199 includes ages 10 to 17, outside the adult depression register.
+    SELECT
+        diagnosis.person_id,
+        MIN(CASE WHEN diagnosis.is_diagnosis_code AND diagnosis.is_first_or_new_episode
+            THEN diagnosis.clinical_effective_date::DATE END) AS earliest_diagnosis_date
+    FROM {{ ref('int_depression_diagnoses_all') }} AS diagnosis
+    INNER JOIN {{ ref('dim_person_age') }} AS age
+        ON diagnosis.person_id = age.person_id
+        AND age.age BETWEEN 10 AND 17
+    WHERE diagnosis.clinical_effective_date::DATE <= CURRENT_DATE()
+    GROUP BY diagnosis.person_id
+    -- Preserve the existing register's diagnosis and resolution ordering.
+    HAVING MAX(CASE WHEN diagnosis.is_diagnosis_code AND diagnosis.is_first_or_new_episode
+        THEN diagnosis.clinical_effective_date END)
+        > COALESCE(MAX(CASE WHEN diagnosis.is_resolved_code
+            THEN diagnosis.clinical_effective_date END), '1900-01-01')
 ),
 
 smoking AS (
@@ -95,9 +116,47 @@ never_smoked AS (
     GROUP BY person_id
 ),
 
+smoking_pharmacotherapy_codes AS (
+    -- QOF v51 PHARMDRUG_COD is the smoking pharmacotherapy drug refset.
+    SELECT DISTINCT referenced_component_id::VARCHAR AS mapped_concept_code
+    FROM {{ ref('stg_nhsd_snomed_sct_refset_simple') }}
+    WHERE ref_set_id = 12465801000001106 AND active
+),
+
+smoking_support AS (
+    -- QOF v51 SMOK004 defines support as referral or pharmacotherapy, including prescriptions.
+    SELECT person_id, clinical_effective_date::DATE AS support_date
+    FROM ({{ get_observations("'REFERSSSA_COD', 'PHARM_COD'", source='PCD') }}) AS observation
+    WHERE clinical_effective_date::DATE <= CURRENT_DATE()
+
+    UNION ALL
+
+    SELECT
+        observation.person_id,
+        -- Match the observation date correction used by get_observations.
+        CASE WHEN observation.clinical_effective_date > observation.date_recorded
+            THEN observation.date_recorded
+            ELSE COALESCE(observation.clinical_effective_date, '1900-01-01')
+        END::DATE AS support_date
+    FROM {{ ref('stg_olids_observation') }} AS observation
+    INNER JOIN smoking_pharmacotherapy_codes AS codes
+        ON observation.mapped_concept_code = codes.mapped_concept_code
+    WHERE support_date <= CURRENT_DATE()
+
+    UNION ALL
+
+    SELECT person.person_id, medication.clinical_effective_date::DATE AS support_date
+    FROM {{ ref('stg_olids_medication_order') }} AS medication
+    INNER JOIN {{ ref('int_patient_person_unique') }} AS person
+        ON medication.patient_id = person.patient_id
+    INNER JOIN smoking_pharmacotherapy_codes AS codes
+        ON medication.mapped_concept_code = codes.mapped_concept_code
+    WHERE medication.clinical_effective_date::DATE <= CURRENT_DATE()
+),
+
 smoking_intervention AS (
-    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_smoking_intervention_date
-    FROM {{ ref('int_smoking_intervention') }}
+    SELECT person_id, MAX(support_date) AS latest_smoking_intervention_date
+    FROM smoking_support
     GROUP BY person_id
 ),
 
@@ -139,6 +198,7 @@ latest_positive AS (
         MAX(clinical_effective_date::DATE) AS latest_positive_alcohol_screen_date
     FROM {{ ref('int_alcohol_screening_all') }}
     WHERE is_positive_screen
+        AND screening_tool IN ('FAST', 'AUDIT-C')
     GROUP BY person_id
 ),
 
@@ -170,6 +230,7 @@ reviews AS (
         person_id,
         MAX(CASE WHEN review_type = 'ASTHMA_REVIEW' THEN clinical_effective_date::DATE END) AS latest_asthma_review_date,
         MAX(CASE WHEN review_type = 'COPD_REVIEW' THEN clinical_effective_date::DATE END) AS latest_copd_review_date,
+        MAX(CASE WHEN review_type = 'COPD_EXACERBATION_COUNT' THEN clinical_effective_date::DATE END) AS latest_copd_exacerbation_count_date,
         MAX(CASE WHEN review_type = 'HEART_FAILURE_REVIEW' THEN clinical_effective_date::DATE END) AS latest_heart_failure_review_date,
         MAX(CASE WHEN review_type IN ('MEDICATION_REVIEW', 'HEART_FAILURE_MEDICATION_REVIEW')
             THEN clinical_effective_date::DATE END) AS latest_coded_medication_review_date,
@@ -180,6 +241,33 @@ reviews AS (
             THEN clinical_effective_date::DATE END) AS latest_dementia_care_plan_date
     FROM {{ ref('int_ltc_review_all') }}
     GROUP BY person_id
+),
+
+asthma_review_dates AS (
+    SELECT
+        person_id,
+        clinical_effective_date::DATE AS record_date,
+        BOOLOR_AGG(review_type = 'ASTHMA_REVIEW') AS has_review,
+        BOOLOR_AGG(review_type = 'ASTHMA_ACTION_PLAN') AS has_action_plan,
+        BOOLOR_AGG(review_type = 'ASTHMA_EXACERBATION_COUNT') AS has_exacerbation_count
+    FROM {{ ref('int_ltc_review_all') }}
+    WHERE review_type IN ('ASTHMA_REVIEW', 'ASTHMA_ACTION_PLAN', 'ASTHMA_EXACERBATION_COUNT')
+    GROUP BY person_id, clinical_effective_date::DATE
+),
+
+complete_asthma_review AS (
+    -- QOF v51 AST015 requires a same-day plan and an exacerbation count in the preceding month.
+    SELECT
+        review.person_id,
+        MAX(review.record_date) AS latest_complete_asthma_review_date
+    FROM asthma_review_dates AS review
+    INNER JOIN asthma_review_dates AS exacerbations
+        ON review.person_id = exacerbations.person_id
+        AND exacerbations.has_exacerbation_count
+        AND exacerbations.record_date > DATEADD(month, -1, review.record_date)
+        AND exacerbations.record_date <= review.record_date
+    WHERE review.has_review AND review.has_action_plan
+    GROUP BY review.person_id
 ),
 
 mrc AS (
@@ -331,7 +419,8 @@ SELECT
     -- Alcohol problems form part of the mental health cluster
     COALESCE(c.register_cluster_count, 0)
         + IFF(alcohol_disorder.person_id IS NOT NULL
-              AND NOT COALESCE(c.has_anxiety OR c.has_depression OR c.has_dementia OR c.has_smi, FALSE), 1, 0)
+              AND NOT COALESCE(c.has_anxiety OR c.has_depression OR c.has_dementia
+                  OR c.earliest_smi_diagnosis_date IS NOT NULL, FALSE), 1, 0)
         AS multimorbidity_cluster_count,
     COALESCE(c.has_chd, FALSE) AS has_chd,
     COALESCE(c.has_pad, FALSE) AS has_pad,
@@ -354,6 +443,7 @@ SELECT
     COALESCE(c.has_cancer, FALSE) AS has_cancer,
     c.latest_cancer_diagnosis_date,
     c.earliest_smi_diagnosis_date,
+    c.earliest_dementia_diagnosis_date,
     c.earliest_diabetes_diagnosis_date,
     cvd.earliest_cvd_diagnosis_date,
     COALESCE(smi_register.has_active_smi_diagnosis, FALSE) AS has_active_smi_diagnosis,
@@ -365,7 +455,8 @@ SELECT
     c.earliest_smoking_ltc_diagnosis_date,
     c.earliest_smoking_smi_ltc_diagnosis_date,
     c.earliest_hypertension_date,
-    c.earliest_depression_anxiety_date,
+    LEAST_IGNORE_NULLS(c.earliest_depression_anxiety_date,
+        child_depression.earliest_diagnosis_date) AS earliest_depression_anxiety_date,
     frailty.latest_frailty_severity,
     smoking.latest_smoking_status,
     smoking.latest_smoking_status_date,
@@ -382,7 +473,9 @@ SELECT
     intervention_after_positive.latest_intervention_after_positive_screen_date,
     alcohol_disorder.person_id IS NOT NULL AS has_alcohol_disorder,
     reviews.latest_asthma_review_date,
+    complete_asthma_review.latest_complete_asthma_review_date,
     reviews.latest_copd_review_date,
+    reviews.latest_copd_exacerbation_count_date,
     mrc.latest_mrc_dyspnoea_date,
     reviews.latest_heart_failure_review_date,
     nyha.latest_nyha_date,
@@ -415,6 +508,7 @@ SELECT
 FROM {{ ref('dim_person') }} AS person
 LEFT JOIN {{ ref('dim_person_age') }} AS age ON person.person_id = age.person_id
 LEFT JOIN conditions AS c ON person.person_id = c.person_id
+LEFT JOIN child_depression ON person.person_id = child_depression.person_id
 LEFT JOIN {{ ref('fct_person_frailty_register') }} AS frailty ON person.person_id = frailty.person_id
 LEFT JOIN smoking ON person.person_id = smoking.person_id
 LEFT JOIN never_smoked ON person.person_id = never_smoked.person_id
@@ -429,6 +523,7 @@ LEFT JOIN alcohol_disorder ON person.person_id = alcohol_disorder.person_id
 LEFT JOIN dyslipidaemia ON person.person_id = dyslipidaemia.person_id
 LEFT JOIN sleep_apnoea ON person.person_id = sleep_apnoea.person_id
 LEFT JOIN reviews ON person.person_id = reviews.person_id
+LEFT JOIN complete_asthma_review ON person.person_id = complete_asthma_review.person_id
 LEFT JOIN mrc ON person.person_id = mrc.person_id
 LEFT JOIN nyha ON person.person_id = nyha.person_id
 LEFT JOIN thyroid ON person.person_id = thyroid.person_id

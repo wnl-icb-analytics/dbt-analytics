@@ -9,7 +9,9 @@ indicators use as denominators and exclusions, so each measure applies only its
 own window and age rule.
 
 Established CVD follows the NICE definition: CHD or PAD register, or stroke/TIA
-register without a history of haemorrhagic stroke. No registration, living or
+register without a history of haemorrhagic stroke for IND269 and IND270. The
+separate all-stroke flag includes haemorrhagic stroke for primary-prevention
+exclusions. No registration, living or
 test-patient filter; consumers join dim_person_active_patients.
 */
 
@@ -41,10 +43,32 @@ score_history AS (
     GROUP BY person_id
 ),
 
+latest_cvd_score AS (
+    SELECT
+        person_id,
+        clinical_effective_date::DATE AS latest_cvd_risk_score_date,
+        CASE WHEN risk_score_value BETWEEN 0 AND 100 THEN risk_score_value END AS latest_cvd_risk_score
+    FROM {{ ref('int_cvd_risk_assessment_all') }}
+    WHERE is_cvd_risk_score_code
+        AND original_result_value IS NOT NULL
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY person_id ORDER BY clinical_effective_date DESC, id DESC
+    ) = 1
+),
+
 assessment_history AS (
     SELECT
         person_id,
-        MAX(clinical_effective_date::DATE) AS latest_risk_assessment_date
+        MAX(clinical_effective_date::DATE) AS latest_risk_assessment_date,
+        MAX(CASE WHEN is_cvd_risk_score_code AND risk_score_value BETWEEN 0 AND 100
+            AND clinical_effective_date::DATE >= DATEADD(month, -12, CURRENT_DATE())
+            THEN risk_score_value END) AS max_cvd_risk_score_12m,
+        MAX(CASE WHEN is_cvd_risk_score_code AND risk_score_value >= 0 AND risk_score_value < 10
+            AND clinical_effective_date::DATE >= DATEADD(month, -36, CURRENT_DATE())
+            THEN clinical_effective_date::DATE END) AS latest_low_cvd_risk_score_date_36m,
+        MAX(CASE WHEN is_cvd_risk_score_code AND risk_score_value BETWEEN 10 AND 100
+            AND clinical_effective_date::DATE >= DATEADD(month, -36, CURRENT_DATE())
+            THEN clinical_effective_date::DATE END) AS latest_high_cvd_risk_score_date_36m
     FROM {{ ref('int_cvd_risk_assessment_all') }}
     GROUP BY person_id
 )
@@ -58,11 +82,17 @@ SELECT
     history.max_risk_score_12m,
     history.min_risk_score_36m,
     assessment.latest_risk_assessment_date,
+    cvd_score.latest_cvd_risk_score,
+    cvd_score.latest_cvd_risk_score_date,
+    assessment.max_cvd_risk_score_12m,
+    assessment.latest_low_cvd_risk_score_date_36m,
+    assessment.latest_high_cvd_risk_score_date_36m,
     COALESCE(
         cvd.has_chd OR cvd.has_pad
         OR (cvd.has_stroke_tia AND NOT cvd.has_haemorrhagic_stroke),
         FALSE
     ) AS has_cvd,
+    COALESCE(cvd.has_chd OR cvd.has_pad OR cvd.has_stroke_tia, FALSE) AS has_cvd_including_haemorrhagic_stroke,
     COALESCE(fh.is_on_register, FALSE) AS has_familial_hypercholesterolaemia,
     COALESCE(ckd.is_on_register, FALSE) AS has_ckd,
     COALESCE(diabetes.is_on_register, FALSE) AS has_diabetes,
@@ -82,6 +112,7 @@ FROM {{ ref('dim_person') }} AS person
 LEFT JOIN latest_score AS score ON person.person_id = score.person_id
 LEFT JOIN score_history AS history ON person.person_id = history.person_id
 LEFT JOIN assessment_history AS assessment ON person.person_id = assessment.person_id
+LEFT JOIN latest_cvd_score AS cvd_score ON person.person_id = cvd_score.person_id
 LEFT JOIN {{ ref('int_cvd_secondary_prevention_population') }} AS cvd ON person.person_id = cvd.person_id
 LEFT JOIN {{ ref('fct_person_familial_hypercholesterolaemia_register') }} AS fh ON person.person_id = fh.person_id
 LEFT JOIN {{ ref('fct_person_ckd_register') }} AS ckd ON person.person_id = ckd.person_id

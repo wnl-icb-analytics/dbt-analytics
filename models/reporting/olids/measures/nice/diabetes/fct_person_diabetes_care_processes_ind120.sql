@@ -1,12 +1,35 @@
 {{ config(materialized='view') }}
 
 -- NICE IND120: https://www.nice.org.uk/indicators/ind120
--- All eight care processes (BMI, BP, HbA1c, cholesterol, smoking status, foot examination, ACR, eGFR or creatinine) in 12 months on the diabetes register, from fct_person_diabetes_8_care_processes with eGFR accepted for the renal process.
--- The care process model reads serum creatinine for the renal process; NICE names eGFR, so either counts here
+-- NICE corrected the renal process to eGFR creatinine measurement in February 2026.
+-- Count performed foot and ACR tests anywhere in the period, even if a later
+-- foot record is declined or the ACR test has no numeric result.
 WITH egfr AS (
-    SELECT person_id, clinical_effective_date::DATE AS latest_egfr_date
-    FROM {{ ref('int_egfr_latest') }}
-    WHERE egfr_value IS NOT NULL
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_egfr_date
+    FROM {{ ref('int_egfr_test_all') }}
+    WHERE clinical_effective_date::DATE
+        BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+    GROUP BY person_id
+),
+
+foot AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_foot_date
+    FROM {{ ref('int_foot_examination_all') }}
+    WHERE clinical_effective_date::DATE
+        BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+        AND (both_feet_checked
+            OR (left_foot_checked AND (right_foot_absent OR right_foot_amputated))
+            OR (right_foot_checked AND (left_foot_absent OR left_foot_amputated)))
+    GROUP BY person_id
+),
+
+acr AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_acr_date
+    FROM {{ ref('int_urine_acr_all') }}
+    WHERE is_acr_ratio
+        AND clinical_effective_date::DATE
+            BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+    GROUP BY person_id
 ),
 
 assessed AS (
@@ -17,11 +40,14 @@ assessed AS (
         active.current_practice_name,
         processes.care_processes_completed
             - IFF(COALESCE(processes.creatinine_completed_in_last_12m, FALSE), 1, 0)
-            + IFF(COALESCE(egfr.latest_egfr_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
-                  OR COALESCE(processes.creatinine_completed_in_last_12m, FALSE), 1, 0) AS care_processes_completed_count,
+            - IFF(COALESCE(processes.foot_check_completed_in_last_12m, FALSE), 1, 0)
+            - IFF(COALESCE(processes.acr_completed_in_last_12m, FALSE), 1, 0)
+            + IFF(foot.latest_foot_date IS NOT NULL, 1, 0)
+            + IFF(acr.latest_acr_date IS NOT NULL, 1, 0)
+            + IFF(egfr.latest_egfr_date IS NOT NULL, 1, 0) AS care_processes_completed_count,
         GREATEST_IGNORE_NULLS(
             processes.latest_bmi_date, processes.latest_bp_date, processes.latest_hba1c_date, processes.latest_cholesterol_date,
-            processes.latest_smoking_date, processes.latest_foot_check_date, processes.latest_acr_date, processes.latest_creatinine_date,
+            processes.latest_smoking_date, foot.latest_foot_date, acr.latest_acr_date,
             egfr.latest_egfr_date
         )::DATE AS latest_process_date
     FROM {{ ref('fct_person_diabetes_8_care_processes') }} AS processes
@@ -31,6 +57,10 @@ assessed AS (
         ON processes.person_id = age.person_id
     LEFT JOIN egfr
         ON processes.person_id = egfr.person_id
+    LEFT JOIN foot
+        ON processes.person_id = foot.person_id
+    LEFT JOIN acr
+        ON processes.person_id = acr.person_id
 ),
 
 status AS (

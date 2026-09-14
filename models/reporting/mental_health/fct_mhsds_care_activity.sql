@@ -143,25 +143,25 @@ left join {{ ref('stg_mhsds_carecontact') }} as c
     and a.uniq_care_cont_id = c.uniq_care_cont_id
 left join {{ ref('stg_mhsds_bridging') }} as b
     on a.person_id = b.person_id
-left join {{ ref('stg_dictionary_snomed_concept') }} as procedure
+left join {{ ref('snomed_concept') }} as procedure
     on trim(a.procedure_code) = procedure.snomed_code
 left join {{ ref('mhsds_care_activity_code_lookup') }} as finding_scheme
     on upper(trim(a.finding_scheme_code)) = finding_scheme.code
     and finding_scheme.code_set_name = 'finding_scheme'
-left join {{ ref('stg_dictionary_dbo_diagnosis') }} as icd10_finding
-    on {{ clean_icd10_code('upper(trim(a.finding_code))') }} = upper(icd10_finding.code)
+left join {{ ref('icd10_code') }} as icd10_finding
+    on replace({{ clean_icd10_code('upper(trim(a.finding_code))') }}, '.', '') = icd10_finding.code
     and a.finding_scheme_code = '01'
-left join {{ ref('stg_dictionary_snomed_concept') }} as snomed_finding
+left join {{ ref('snomed_concept') }} as snomed_finding
     on trim(a.finding_code) = snomed_finding.snomed_code
     and a.finding_scheme_code = '04'
-left join {{ ref('stg_dictionary_snomed_concept') }} as mapped_snomed_finding
+left join {{ ref('snomed_concept') }} as mapped_snomed_finding
     on trim(a.standardised_snomed_finding_code) = mapped_snomed_finding.snomed_code
 left join {{ ref('mhsds_care_activity_code_lookup') }} as observation_scheme
     on upper(trim(a.observation_scheme_code)) = observation_scheme.code
     and observation_scheme.code_set_name = 'observation_scheme'
-left join {{ ref('stg_dictionary_snomed_concept') }} as observation
+left join {{ ref('snomed_concept') }} as observation
     on trim(a.observation_code) = observation.snomed_code
-left join {{ ref('stg_dictionary_snomed_concept') }} as mapped_snomed_observation
+left join {{ ref('snomed_concept') }} as mapped_snomed_observation
     on trim(a.standardised_snomed_observation_code)
         = mapped_snomed_observation.snomed_code
 left join {{ ref('clinical_unit_of_measurement') }} as unit_of_measurement

@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND104: https://www.nice.org.uk/indicators/ind104
--- Depression review 10 to 35 days after a new depression diagnosis for adults diagnosed in the preceding 12 months.
+-- Depression review 10 to 35 days after a new diagnosis for adults diagnosed since 1 April, using QOF's interim annual reporting period.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -9,7 +9,9 @@ WITH indicator_population AS (
     FROM {{ ref('int_ltc_review_profile') }} AS profile
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE profile.latest_new_depression_diagnosis_date >= DATEADD(month, -12, CURRENT_DATE()) AND age.age >= 18
+    WHERE profile.latest_new_depression_diagnosis_date
+        >= DATE_FROM_PARTS(YEAR(CURRENT_DATE()) - IFF(MONTH(CURRENT_DATE()) < 4, 1, 0), 4, 1)
+        AND age.age >= 18
 ),
 
 assessed AS (
@@ -32,9 +34,9 @@ SELECT
     'IND104' AS indicator_id,
     'Depression and anxiety: review within 10 to 35 days' AS indicator_name,
     CURRENT_DATE() AS reporting_date,
-    DATEADD(month, -12, CURRENT_DATE()) AS measurement_period_start,
+    DATE_FROM_PARTS(YEAR(CURRENT_DATE()) - IFF(MONTH(CURRENT_DATE()) < 4, 1, 0), 4, 1) AS measurement_period_start,
     age,
-    'New depression diagnosis in the preceding 12 months (aged 18 and over)' AS condition_name,
+    'New depression diagnosis since 1 April (aged 18 and over)' AS condition_name,
     current_practice_code,
     current_practice_name,
     diagnosis_date,

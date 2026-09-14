@@ -1,14 +1,18 @@
 models:
   - name: fct_person_ckd_ras_therapy_ind263
-    description: >
-      NICE IND263 ACE inhibitor or ARB therapy in CKD with heavy albuminuria.
+    description: |
+      NICE IND263. ACE inhibitor or ARB treatment in CKD with heavy albuminuria.
       One row per currently registered, living, non-test person on the CKD
-      register whose latest urine ACR ratio is 70 mg/mmol or more and who is
-      not on the diabetes register, assessed on the build date. The numerator
-      requires an ACE inhibitor or ARB order in the preceding 6 calendar
-      months. Personalised care adjustments are not applied. Secondary-use
-      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
-      Data Opt-Out and Type 1 opt-out filtering.
+      register with a latest ACR of at least 70 mg/mmol and no diabetes, assessed
+      on the build date.
+
+      Achievement requires an ACE inhibitor or angiotensin receptor blocker (ARB)
+      prescription in the preceding six calendar months.
+
+      Missing or invalid latest ACR values do not establish eligibility. An
+      invalid latest ACR is not replaced by an older result.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -21,7 +25,18 @@ models:
           clinical_domain: "Cardiometabolic"
           name_short: "CKD ACR 70 on ACEi or ARB"
           description_short: "ACE inhibitor or ARB order in the preceding 6 months for people with CKD, ACR 70 or more and no diabetes"
-          description_long: "NICE IND263 before personalised care adjustments."
+          description_long: |
+            NICE IND263. One row per currently registered, living, non-test person on the
+            CKD register with a latest ACR of at least 70 mg/mmol and no diabetes,
+            assessed on the build date.
+
+            Achievement requires an ACE inhibitor or angiotensin receptor blocker (ARB)
+            prescription in the preceding six calendar months.
+
+            Missing or invalid latest ACR values do not establish eligibility. An invalid
+            latest ACR is not replaced by an older result.
+
+            Measured before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -70,16 +85,21 @@ models:
 
 
   - name: fct_person_ckd_ras_therapy_ind130
-    description: >
-      NICE IND130 renin-angiotensin system antagonists in CKD with
-      hypertension and proteinuria. One row per currently registered, living,
-      non-test person on the CKD and hypertension registers with any
-      proteinuria code, assessed on the build date. People contraindicated to both an ACE inhibitor and an ARB are excluded: a persisting contraindication at any time or an expiring one in the preceding 12 months, per class. The IND130 page lists the two contraindications separately; the both-classes reading follows IND134 and QOF. The CKD exception code exclusion is a personalised
-      care adjustment and is not applied. The numerator requires an ACE
-      inhibitor or ARB order in the preceding 6 calendar months. Personalised
-      care adjustments are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND130. ACE inhibitor or ARB treatment in CKD with hypertension and
+      proteinuria. One row per currently registered, living, non-test person on
+      the CKD and hypertension registers with a proteinuria record, assessed on
+      the build date.
+
+      Achievement requires an ACE inhibitor or angiotensin receptor blocker (ARB)
+      prescription in the preceding six calendar months.
+
+      People contraindicated to both drug classes are excluded. Each class
+      requires a persisting contraindication at any time or an expiring
+      contraindication in the preceding 12 months. The both-class interpretation
+      follows NICE IND134 and QOF.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -92,7 +112,20 @@ models:
           clinical_domain: "Cardiometabolic"
           name_short: "CKD hypertension proteinuria on RAS"
           description_short: "ACE inhibitor or ARB order in the preceding 6 months for people with CKD, hypertension and proteinuria"
-          description_long: "NICE IND130 before personalised care adjustments; contraindication exclusions applied."
+          description_long: |
+            NICE IND130. One row per currently registered, living, non-test person on the
+            CKD and hypertension registers with a proteinuria record, assessed on the
+            build date.
+
+            Achievement requires an ACE inhibitor or angiotensin receptor blocker (ARB)
+            prescription in the preceding six calendar months.
+
+            People contraindicated to both drug classes are excluded. Each class requires
+            a persisting contraindication at any time or an expiring contraindication in
+            the preceding 12 months. The both-class interpretation follows NICE IND134 and
+            QOF.
+
+            Measured before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -141,17 +174,25 @@ models:
 
 
   - name: fct_person_ckd_sglt2_therapy_ind324
-    description: >
-      NICE IND324 SGLT2 inhibitors in CKD. One row per currently registered,
-      living, non-test person on the CKD register with a latest eGFR of 20 or
-      more (or none recorded) who either has type 2 diabetes, or has no type 2
-      diabetes and is on ACE inhibitor or ARB therapy in the preceding 6
-      months (or contraindicated to both) with a latest eGFR of 20 to 44, or
-      of 45 to 59 with a latest urine ACR of 22.6 mg/mmol or more, assessed on
-      the build date. The numerator requires an SGLT2 inhibitor order in the preceding 6 calendar months. Outside type 2 diabetes, NICE also asks that the renin-angiotensin treatment precede the last SGLT2 prescription: the numerator requires an ACE inhibitor or ARB order in the preceding 6 months dated on or before the latest SGLT2 order, or a contraindication to both. An unknown diabetes type follows the non-type-2 branch. Personalised care adjustments are not
-      applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND324. SGLT2 inhibitor treatment in eligible people with CKD. One row
+      per currently registered, living, non-test person on the CKD register who
+      has type 2 diabetes or meets the specified renal and treatment criteria,
+      assessed on the build date.
+
+      Achievement requires an SGLT2 inhibitor prescription in the preceding six
+      calendar months. Outside type 2 diabetes, an ACE inhibitor or ARB
+      prescription in those six months must be on or before the last SGLT2
+      prescription, unless both classes are contraindicated.
+
+      Outside type 2 diabetes, eligibility requires current ACE inhibitor or ARB
+      treatment or contraindication to both, and eGFR 20-44 mL/min/1.73m2 or eGFR
+      45-59 with ACR at least 22.6 mg/mmol. An unknown diabetes type follows this
+      branch. A latest eGFR below 20 excludes everyone; an unknown eGFR does not
+      exclude the type 2 diabetes branch. The published integer ranges and
+      existing same-day prescription ordering are retained.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -164,7 +205,24 @@ models:
           clinical_domain: "Cardiometabolic"
           name_short: "CKD on SGLT2 inhibitor"
           description_short: "SGLT2 inhibitor order in the preceding 6 months for eligible people with CKD"
-          description_long: "NICE IND324 before personalised care adjustments."
+          description_long: |
+            NICE IND324. One row per currently registered, living, non-test person on the
+            CKD register who has type 2 diabetes or meets the specified renal and
+            treatment criteria, assessed on the build date.
+
+            Achievement requires an SGLT2 inhibitor prescription in the preceding six
+            calendar months. Outside type 2 diabetes, an ACE inhibitor or ARB prescription
+            in those six months must be on or before the last SGLT2 prescription, unless
+            both classes are contraindicated.
+
+            Outside type 2 diabetes, eligibility requires current ACE inhibitor or ARB
+            treatment or contraindication to both, and eGFR 20-44 mL/min/1.73m2 or eGFR
+            45-59 with ACR at least 22.6 mg/mmol. An unknown diabetes type follows this
+            branch. A latest eGFR below 20 excludes everyone; an unknown eGFR does not
+            exclude the type 2 diabetes branch. The published integer ranges and existing
+            same-day prescription ordering are retained.
+
+            Measured before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -215,17 +273,20 @@ models:
 
 
   - name: fct_person_ckd_bp_ind264
-    description: >
-      NICE IND264 blood pressure in CKD with heavy albuminuria. One row per
-      currently registered, living, non-test person on the CKD register whose
-      latest urine ACR ratio is 70 mg/mmol or more, without moderate or severe
-      coded frailty, assessed on the build date. The numerator requires the
-      latest blood pressure to fall in the preceding 12 months and to be below
-      130/80 mmHg in clinic or 125/75 mmHg by home or ambulatory monitoring,
-      both readings strictly below the threshold. Personalised care
-      adjustments are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND264. Blood pressure control in CKD with heavy albuminuria. One row
+      per currently registered, living, non-test person on the CKD register with a
+      latest ACR of at least 70 mg/mmol and without moderate or severe frailty,
+      assessed on the build date.
+
+      Achievement requires the latest blood pressure in the preceding 12 months to
+      be below 130/80 mmHg in clinic or 125/75 mmHg at home or by ambulatory
+      monitoring. Both components must be strictly below their thresholds.
+
+      Missing or invalid latest ACR values do not establish eligibility. An
+      invalid latest ACR is not replaced by an older result.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -238,7 +299,19 @@ models:
           clinical_domain: "Cardiometabolic"
           name_short: "CKD ACR 70 BP target"
           description_short: "Latest BP in the preceding 12 months below 130/80 clinic or 125/75 home for people with CKD and ACR 70 or more"
-          description_long: "NICE IND264 before personalised care adjustments."
+          description_long: |
+            NICE IND264. One row per currently registered, living, non-test person on the
+            CKD register with a latest ACR of at least 70 mg/mmol and without moderate or
+            severe frailty, assessed on the build date.
+
+            Achievement requires the latest blood pressure in the preceding 12 months to
+            be below 130/80 mmHg in clinic or 125/75 mmHg at home or by ambulatory
+            monitoring. Both components must be strictly below their thresholds.
+
+            Missing or invalid latest ACR values do not establish eligibility. An invalid
+            latest ACR is not replaced by an older result.
+
+            Measured before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -297,18 +370,20 @@ models:
 
 
   - name: fct_person_ckd_bp_ind235
-    description: >
-      NICE IND235 blood pressure in CKD with ACR below 70. One row per
-      currently registered, living, non-test person on the CKD register whose
-      latest urine ACR ratio is below 70 mg/mmol or who has no ACR ratio
-      recorded, without moderate or severe coded frailty, assessed on the
-      build date. People with no ACR are read as below 70 so the two CKD blood
-      pressure indicators partition the register. The numerator requires the
-      latest blood pressure to fall in the preceding 12 months and to be below
-      140/90 mmHg in clinic or 135/85 mmHg by home or ambulatory monitoring.
-      Personalised care adjustments are not applied. Secondary-use consumers
-      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
-      Out and Type 1 opt-out filtering.
+    description: |
+      NICE IND235. Blood pressure control in CKD with ACR below 70 mg/mmol. One
+      row per currently registered, living, non-test person on the CKD register
+      with a latest ACR below 70 mg/mmol and without moderate or severe frailty,
+      assessed on the build date.
+
+      Achievement requires the latest blood pressure in the preceding 12 months to
+      be below 140/90 mmHg in clinic or 135/85 mmHg at home or by ambulatory
+      monitoring. Both components must be strictly below their thresholds.
+
+      Missing or invalid latest ACR values do not establish eligibility. An
+      invalid latest ACR is not replaced by an older result.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -321,7 +396,19 @@ models:
           clinical_domain: "Cardiometabolic"
           name_short: "CKD ACR under 70 BP target"
           description_short: "Latest BP in the preceding 12 months below 140/90 clinic or 135/85 home for people with CKD and ACR below 70"
-          description_long: "NICE IND235 before personalised care adjustments."
+          description_long: |
+            NICE IND235. One row per currently registered, living, non-test person on the
+            CKD register with a latest ACR below 70 mg/mmol and without moderate or severe
+            frailty, assessed on the build date.
+
+            Achievement requires the latest blood pressure in the preceding 12 months to
+            be below 140/90 mmHg in clinic or 135/85 mmHg at home or by ambulatory
+            monitoring. Both components must be strictly below their thresholds.
+
+            Missing or invalid latest ACR values do not establish eligibility. An invalid
+            latest ACR is not replaced by an older result.
+
+            Measured before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -380,14 +467,20 @@ models:
 
 
   - name: fct_person_ckd_new_diagnosis_egfr_ind233
-    description: >
-      NICE IND233 eGFR confirmation of new CKD. One row per currently
-      registered, living, non-test person whose earliest CKD stage 3 to 5
-      register diagnosis falls in the preceding 12 months, assessed on the
-      build date. The numerator requires a valued eGFR within 90 days before the diagnosis date with the person's first valued eGFR at least 90 days earlier, the persistence test NICE NG203 uses to confirm CKD; latest_record_date is the qualifying eGFR. Personalised
-      care adjustments are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND233. eGFR confirmation before a new CKD diagnosis. One row per
+      currently registered, living, non-test person whose first coded CKD stage 3
+      to 5 diagnosis was in the preceding 12 months, assessed on the build date.
+
+      Achievement requires two eGFR measurements at least 90 days apart. The
+      second must be within 90 days before the diagnosis. Future-dated tests
+      cannot count.
+
+      The current measurement input requires recorded numeric results. It cannot
+      reliably distinguish tests from acute secondary-care episodes, which NICE
+      says should be excluded.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -399,8 +492,20 @@ models:
           category: "KIDNEY"
           clinical_domain: "Cardiometabolic"
           name_short: "New CKD confirmed by eGFR"
-          description_short: "Two eGFRs at least 90 days apart before a new CKD diagnosis in the preceding 12 months"
-          description_long: "NICE IND233 before personalised care adjustments."
+          description_short: "Two eGFR measurements at least 90 days apart, the second within 90 days before a new CKD diagnosis"
+          description_long: |
+            NICE IND233. One row per currently registered, living, non-test person whose
+            first coded CKD stage 3 to 5 diagnosis was in the preceding 12 months,
+            assessed on the build date.
+
+            Achievement requires two eGFR measurements at least 90 days apart. The second
+            must be within 90 days before the diagnosis. Future-dated tests cannot count.
+
+            The current measurement input requires recorded numeric results. It cannot
+            reliably distinguish tests from acute secondary-care episodes, which NICE says
+            should be excluded.
+
+            Measured before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -449,14 +554,18 @@ models:
 
 
   - name: fct_person_ckd_new_diagnosis_tests_ind234
-    description: >
-      NICE IND234 eGFR and ACR around new CKD. One row per currently
-      registered, living, non-test person whose earliest CKD stage 3 to 5
-      register diagnosis falls in the preceding 12 months, assessed on the
-      build date. The numerator requires a valued eGFR and a urine ACR ratio both recorded within 90 days before or after the diagnosis date; latest_record_date is the later of the two. Personalised
-      care adjustments are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND234. eGFR and ACR testing around a new CKD diagnosis. One row per
+      currently registered, living, non-test person whose first coded CKD stage 3
+      to 5 diagnosis was in the preceding 12 months, assessed on the build date.
+
+      Achievement requires an eGFR measurement and urine ACR test within 90 days
+      before or after diagnosis, with neither test after the build date.
+
+      The eGFR input requires a recorded numeric result. The ACR test does not
+      require a numeric result.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -469,7 +578,18 @@ models:
           clinical_domain: "Cardiometabolic"
           name_short: "New CKD eGFR and ACR"
           description_short: "eGFR and urine ACR within 90 days of a new CKD diagnosis in the preceding 12 months"
-          description_long: "NICE IND234 before personalised care adjustments."
+          description_long: |
+            NICE IND234. One row per currently registered, living, non-test person whose
+            first coded CKD stage 3 to 5 diagnosis was in the preceding 12 months,
+            assessed on the build date.
+
+            Achievement requires an eGFR measurement and urine ACR test within 90 days
+            before or after diagnosis, with neither test after the build date.
+
+            The eGFR input requires a recorded numeric result. The ACR test does not
+            require a numeric result.
+
+            Measured before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -518,12 +638,15 @@ models:
 
 
   - name: fct_person_ckd_nice_indicators
-    description: >
-      NICE chronic kidney disease indicators in one long-form table: IND130,
-      IND144, IND233, IND234, IND235, IND263, IND264 and IND324. One row per
-      person and indicator on the reporting date, keeping the family's detail
-      columns as typed nulls where a branch does not emit them. Feeds
-      fct_person_nice_indicator_status and the family snapshot.
+    description: |
+      Current NICE chronic kidney disease indicator outcomes. One row per eligible
+      person and indicator on the reporting date.
+
+      Each indicator retains its own denominator, achievement rules and
+      measurement period. The table includes clinical detail for the family;
+      fields that do not apply to an indicator are null.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -595,11 +718,13 @@ models:
                 values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD', 'ABOVE_TARGET', 'NOT_TREATED_IN_PERIOD', 'NEVER_TREATED']
 
   - name: fct_person_ckd_nice_indicators_snapshot_input
-    description: >
-      Thin projection of fct_person_ckd_nice_indicators for SCD2 snapshotting.
-      Drops reporting_date and measurement_period_start, which advance every
-      build, so a version opens only on a new record or result, a practice
-      move or a record ageing out of the window.
+    description: |
+      Current NICE ckd indicators outcomes used to record changes over time. One
+      row per person and indicator in the current indicator denominator.
+
+      Keeps the current practice, qualifying evidence date and outcome. Build-date
+      fields are excluded so a new snapshot version records a changed outcome or
+      practice rather than the daily date change.
     config:
       meta:
         owner:

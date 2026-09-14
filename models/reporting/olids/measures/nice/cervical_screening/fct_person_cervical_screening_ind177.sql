@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND177: https://www.nice.org.uk/indicators/ind177
--- Cervical screening recorded in 5.5 years for women aged 50 to 64; excludes unsuitable (no cervix), non-response to invitations in 12 months and pregnancy.
+-- Cervical screening recorded in 5.5 years for women aged 50 to 64; excludes people without a cervix, non-response to three invitations in the screening interval and pregnancy.
 WITH indicator_population AS (
     SELECT
         demographics.person_id,
@@ -16,20 +16,24 @@ WITH indicator_population AS (
         ON demographics.person_id = screening.person_id
     WHERE demographics.gender = 'Female'
         AND age.age BETWEEN 50 AND 64
-        -- No cervix or otherwise unsuitable: any unsuitable screening record
-        AND NOT COALESCE(screening.total_unsuitable_records > 0, FALSE)
-        -- NICE exclusions: non-response to invitations recorded in 12 months, current pregnancy
         AND NOT EXISTS (
-            SELECT 1 FROM {{ ref('int_cervical_screening_all') }} AS invite
-            WHERE invite.person_id = demographics.person_id
-                AND invite.screening_observation_type = 'Non-response to Invitations'
-                AND invite.clinical_effective_date::DATE >= DATEADD(month, -12, CURRENT_DATE())
+            SELECT 1 FROM {{ ref('int_cervix_removal_all') }} AS removal
+            WHERE removal.person_id = demographics.person_id
+        )
+        -- QOF CS005/CS006 counts completed screening before considering non-response.
+        AND (
+            screening.latest_completed_date >= DATEADD(month, -66, CURRENT_DATE())
+            OR NOT EXISTS (
+                SELECT 1 FROM {{ ref('int_cervical_screening_all') }} AS invite
+                WHERE invite.person_id = demographics.person_id
+                    AND invite.screening_observation_type = 'Non-response to Invitations'
+                    AND invite.clinical_effective_date::DATE > DATEADD(month, -66, CURRENT_DATE())
+            )
         )
         AND NOT EXISTS (
-            SELECT 1 FROM {{ ref('int_pregnancy_observations_all') }} AS pregnancy
+            SELECT 1 FROM {{ ref('fct_person_pregnancy_status') }} AS pregnancy
             WHERE pregnancy.person_id = demographics.person_id
-                AND pregnancy.is_pregnancy_code
-                AND pregnancy.clinical_effective_date::DATE >= DATEADD(month, -9, CURRENT_DATE())
+                AND pregnancy.is_currently_pregnant
         )
 ),
 

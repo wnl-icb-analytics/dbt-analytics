@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND196: https://www.nice.org.uk/indicators/ind196
--- FAST, AUDIT-C or AUDIT screen within 3 months either side of a first hypertension diagnosis in the preceding 12 months; excludes alcohol-related disorders.
+-- FAST or AUDIT-C screen within 3 months either side of a first hypertension diagnosis in the preceding 12 months; excludes alcohol-related disorders.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -29,6 +29,7 @@ assessed AS (
             SELECT MAX(screen.clinical_effective_date::DATE)
             FROM {{ ref('int_alcohol_screening_all') }} AS screen
             WHERE screen.person_id = population.person_id
+                AND screen.screening_tool IN ('FAST', 'AUDIT-C')
                 AND screen.clinical_effective_date::DATE
                     BETWEEN DATEADD(month, -3, population.earliest_hypertension_date)
                     AND DATEADD(month, 3, population.earliest_hypertension_date)

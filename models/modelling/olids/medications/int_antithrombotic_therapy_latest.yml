@@ -2,18 +2,27 @@ models:
   - name: int_antithrombotic_therapy_latest
     description: >
       Latest antiplatelet (BNF 2.9) and oral anticoagulant (BNF 2.8.2) order per
-      person, one row per person with either class ever ordered, including
+      person, with recorded OTC salicylate use (OSAL_COD) and oral anticoagulant
+      prophylaxis (ORANTICOAG_COD). One row per person with an order or treatment
+      record, including
       inactive and deceased people. Orders dated before 1990 or after the build
-      date are ignored. Parenteral anticoagulants are not included. Consumers
+      date are ignored. Treatment records use the same date bounds. Recorded use
+      can satisfy NICE antithrombotic measures, but cannot replace a prescription
+      for the AF measures. Parenteral anticoagulants are not included. Consumers
       apply their own recency window; the NICE antithrombotic indicators use 12
       or 15 months.
     config:
       meta:
         owner:
           name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: OSAL_COD, ORANTICOAG_COD
+            source: PCD
     columns:
       - name: person_id
-        description: Person with at least one antiplatelet or oral anticoagulant order.
+        description: Person with an antiplatelet or oral anticoagulant order or a qualifying treatment record.
         data_tests:
           - unique
           - not_null
@@ -31,3 +40,7 @@ models:
         description: Date of the most recent DOAC order; null if never ordered.
       - name: latest_vka_order_date
         description: Date of the most recent vitamin K antagonist order; null if never ordered.
+      - name: latest_antiplatelet_record_date
+        description: Latest dated OTC salicylate use record from OSAL_COD; null if none.
+      - name: latest_anticoagulant_record_date
+        description: Latest dated oral anticoagulant prophylaxis record from ORANTICOAG_COD; null if none.

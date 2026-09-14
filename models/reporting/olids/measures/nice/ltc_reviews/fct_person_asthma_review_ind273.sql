@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND273: https://www.nice.org.uk/indicators/ind273
--- Asthma review recorded in 12 months for people aged 5 and over on the asthma register; the review code stands for the control, exacerbation and action plan elements.
+-- Asthma review in 12 months with a same-day written plan and an exacerbation count in the preceding month, for people aged 5 and over.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -19,8 +19,8 @@ assessed AS (
         active.current_practice_code,
         active.current_practice_name,
         population.latest_asthma_review_date AS latest_review_date,
-        CASE WHEN population.latest_asthma_review_date >= DATEADD(month, -12, CURRENT_DATE()) THEN population.latest_asthma_review_date END AS latest_record_date,
-        COALESCE(population.latest_asthma_review_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
+        CASE WHEN population.latest_complete_asthma_review_date >= DATEADD(month, -12, CURRENT_DATE()) THEN population.latest_complete_asthma_review_date END AS latest_record_date,
+        COALESCE(population.latest_complete_asthma_review_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
