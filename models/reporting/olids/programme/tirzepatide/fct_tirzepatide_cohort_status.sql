@@ -33,6 +33,8 @@ glp1_orders AS (
     FROM {{ ref('int_glp1_medications_all') }} AS glp1
     INNER JOIN candidates AS cand
         ON glp1.person_id = cand.person_id
+    -- Upstream recency flags have no upper bound; future-dated orders are not treatment
+    WHERE glp1.order_date <= CURRENT_DATE()
 ),
 
 -- Person-level prescribing summary (BOOLOR_AGG: Snowflake MAX rejects booleans)
