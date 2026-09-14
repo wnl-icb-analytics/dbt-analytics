@@ -175,6 +175,3 @@ left join ethnicity_codes as eth
 
 left join gender_codes as gen
     on core.appointment_patient_identity_gender = gen.gender_code
-
-where
-    core.appointment_identifier is not null

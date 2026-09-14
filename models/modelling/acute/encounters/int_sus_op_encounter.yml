@@ -1,7 +1,11 @@
 
 models:
   - name: int_sus_op_encounter
-    description: "Event history for attended outpatient appointments from SUS data"
+    description: >
+      One row per latest SUS outpatient appointment recorded as attended with
+      attendance code 5 or 6. Includes attended activity without a submitted
+      appointment identifier or linked patient key; visit_occurrence_id is the
+      SUS primarykey_id.
     config:
       meta:
         owner:
@@ -20,7 +24,9 @@ models:
 
       - name: sk_patient_id
         data_type: varchar
-        description: "Common commissioning patient identifier"
+        description: >
+          Common commissioning patient identifier. Null when the appointment
+          cannot be linked to a person; the attended activity remains included.
 
       - name: local_patient_identifier
         data_type: varchar

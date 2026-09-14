@@ -52,8 +52,7 @@ select
     hg.hrg_subchapter
 from flattened hgl
 
-left join {{ ref("int_sus_op_appointment") }} sa on hgl.primarykey_id = sa.visit_occurrence_id
+inner join {{ ref("int_sus_op_appointment") }} sa
+    on hgl.primarykey_id = sa.visit_occurrence_id
 
 left join {{ ref("stg_dictionary_dbo_hrg") }} hg on hgl.code = hg.hrg_code
-
-where sa.sk_patient_id is not null
