@@ -1,6 +1,9 @@
 models:
   - name: stg_mhsds_indirectactivity
-    description: 'Mental Health Services Data Set (MHSDS) indirect activities (MHS204): clinical activity on behalf of a patient without the patient present, deduplicated to the latest record per activity within active submissions'
+    description: >
+      MHSDS indirect activity performed for a patient without the patient
+      present. One row per MHS204 activity from the accepted file for its
+      activity reporting period.
     config:
       meta:
         owner:
@@ -9,20 +12,34 @@ models:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: >-
+              indirect_act_date is null or indirect_act_date between
+              reporting_period_start_date and reporting_period_end_date
     columns:
       - name: mhs204_uniq_id
-        description: MHSDS indirect activity identifier
+        description: Identifier of the submitted activity row.
         data_tests:
+          - not_null
           - unique
       - name: uniq_serv_req_id
         description: unique service request identifier of the referral the activity belongs to
       - name: person_id
         description: MHSDS person identifier
       - name: indirect_act_date
-        description: date of the indirect activity
+        description: Date of the indirect activity; null where not submitted.
       - name: duration_indirect_act
         description: duration of the indirect activity in minutes
       - name: care_prof_team_local_id
         description: local identifier of the care professional team
       - name: other_care_prof_team_local_id
         description: local team identifier used by some providers in place of care_prof_team_local_id
+      - name: uniq_submission_id
+        description: Accepted submission containing the activity.
+      - name: reporting_period_start_date
+        description: Start of the reporting period containing the activity.
+      - name: reporting_period_end_date
+        description: End of the reporting period containing the activity.
+      - name: effective_from
+        description: Time the source file was received.

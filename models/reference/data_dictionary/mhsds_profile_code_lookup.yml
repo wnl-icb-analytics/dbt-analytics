@@ -1,0 +1,88 @@
+version: 2
+
+models:
+  - name: mhsds_profile_code_lookup
+    description: Newest UKHFD definitions for coded MHSDS person-profile fields.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [code_set_name, code]
+    columns:
+      - name: code_set_name
+        description: Code set represented by the row.
+        data_tests: [not_null]
+      - name: code
+        description: National code.
+        data_tests: [not_null]
+      - name: description
+        description: Newest published description for the code.
+      - name: short_description
+        description: Newest published description limited to 60 characters.
+      - name: category
+        description: Newest published category where supplied.
+      - name: notes
+        description: Newest published notes where supplied.
+      - name: valid_from_date
+        description: Date from which the selected definition is valid.
+      - name: valid_to_date
+        description: Last date on which the selected definition is valid; null when open-ended.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute used for the definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: definition_updated_at
+        description: Timestamp from which the selected UKHFD definition revision applies.
+
+  - name: mhsds_profile_code_lookup_history
+    description: UKHFD revisions for coded MHSDS person-profile fields.
+    config: *owner
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - code_set_name
+              - source_code_set_name
+              - code
+              - source_effective_from_at
+    columns:
+      - name: code_set_name
+        description: Code set represented by the row.
+        data_tests: [not_null]
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute name.
+        data_tests: [not_null]
+      - name: code
+        description: National code.
+        data_tests: [not_null]
+      - name: description
+        description: Description in this definition revision.
+      - name: short_description
+        description: Description in this revision limited to 60 characters.
+      - name: category
+        description: Published category in this revision where supplied.
+      - name: notes
+        description: Published notes in this revision where supplied.
+      - name: valid_from_date
+        description: Date from which the definition is valid.
+      - name: valid_to_date
+        description: Last date on which the definition is valid; null when open-ended.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_unique_key
+        description: UKHFD key for the code definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: source_created_at
+        description: Timestamp when UKHFD created the source row.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code, including retired codes.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition revision applies.
+      - name: source_effective_to_at
+        description: Timestamp until which the revision applies; null for its newest revision.

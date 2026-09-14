@@ -1,0 +1,53 @@
+version: 2
+
+macros:
+  - name: get_lipid_observations
+    description: >
+      Lipid observations from one PCD cluster, one row per source observation
+      across all people. Excludes missing or future original clinical dates and
+      future corrected dates. Returns id, person_id, clinical_effective_date,
+      clinical_effective_date_raw, date_recorded, the named standardised value,
+      result_unit_display, original_result_value, original_result_unit_code,
+      original_result_unit_display, unit_status, concept_code, concept_display,
+      source_cluster_id and sampling_context.
+
+      Concentrations use mmol/L and ratios are dimensionless. Original unit
+      fields prefer observation units and fall back to source concept units;
+      blank values are null. The mapped unit takes precedence; an unknown-unit
+      placeholder in the mapped field falls through to the source unit concept.
+      A concentration with no recorded unit is kept as mmol/L and flagged for
+      review. Labels whose recorded values profile as mmol/L in OLIDS (mg/100ml,
+      g, mmo1/l, nmol/l, (calculated)) are read as mmol/L with unit_status
+      Mislabelled standard unit and flagged for review. Only an unsupported unit
+      produces a null standardised value. The ratio observable is dimensionless:
+      missing units are inferred and any other recorded label is ignored and
+      flagged. Values are not rounded.
+      Also returns recorded_value, converted_value_mmol_l for concentrations,
+      source_result_unit_code, source_result_unit_display, mapped_result_unit_code,
+      mapped_result_unit_display, conversion_unit_basis, conversion_factor,
+      is_unit_metadata_conflict, plausibility_status and is_lipid_review_required. Legacy value and combined
+      unit fields remain for existing consumers.
+
+      Inclusive validity ranges are total cholesterol 0.5-20, LDL and non-HDL
+      0.1-20, HDL 0.1-5 and triglycerides 0.1-50 mmol/L; total:HDL ratio 1-20.
+      plausibility_status is Within valid range only inside them; calling models
+      use it as their validity rule, so out-of-range results cannot be selected as
+      a latest result. Every
+      non-standard conversion requires review even if the result is plausible,
+      because source labels may not describe the received number correctly. Conflicting
+      source and mapped unit metadata also triggers review after alias normalisation.
+      Calling models retain their clinical categories.
+      No observation is removed because of a review flag.
+    arguments:
+      - name: cluster_id
+        type: string
+        description: Single PCD lipid cluster identifier, without SQL quotes or a comma-separated list.
+      - name: value_column
+        type: string
+        description: Unquoted snake_case SQL identifier for the returned standardised numeric value.
+      - name: triglycerides
+        type: boolean
+        description: Defaults to false. True uses triglyceride mass-conversion factors instead of cholesterol factors. Ignored when ratio is true.
+      - name: ratio
+        type: boolean
+        description: Defaults to false. True returns a dimensionless ratio, reads every recorded unit as dimensionless and infers absent or explicitly unknown units from the PCD observable. No concentration conversion is applied.

@@ -12,13 +12,14 @@ models:
 
       • Includes Type 1 and Type 2 diabetes mellitus
 
-      • Generates data for current and previous COVID campaigns automatically
+      • Generates data for every campaign in covid_reported_campaign_ids()
 
       Purpose: Identify people eligible for COVID vaccination due to diabetes mellitus requiring immunisation.'
     tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: DIAB_COD,DMRES_COD,ADDIS_COD
+            cluster_ids: ADDIS_COD,DIAB_COD,DMRES_COD
+            source: UKHSA_COVID
     config:
       meta:
         indicator:
@@ -62,7 +63,7 @@ models:
     columns:
       - name: campaign_id
         description: 'COVID campaign identifier (e.g., covid_2025_autumn, covid_2024_autumn)'
-        tests:
+        data_tests:
           - not_null
       - name: campaign_category
         description: 'Category of eligibility criteria (always "CLINICAL_CONDITION")'
@@ -70,7 +71,7 @@ models:
         description: 'Risk group classification (always "Diabetes")'
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
       - name: qualifying_event_date
         description: 'Date of qualifying diagnosis (earliest diabetes diagnosis)'

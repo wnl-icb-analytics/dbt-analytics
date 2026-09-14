@@ -1,15 +1,20 @@
 {{ config(materialized="table") }}
-
-
--- note: using sk_patient_id as person_id
-with investigations as (
+with investigation_codes as (
     select primarykey_id
         ,code
-        , count(*) as observation_count
-        , array_agg(distinct snomed_id)  WITHIN GROUP (ORDER BY snomed_id ASC) as ordered_id_array
-        ,'investigation' as observation_type
+        ,snomed_id
+        ,count(*) as observation_count
     from {{ref('stg_sus_ecds_clinical_investigations_snomed')}}
-    where code is not null 
+    where code is not null
+    group by primarykey_id, code, snomed_id
+),
+investigations as (
+    select primarykey_id
+        ,code
+        ,sum(observation_count) as observation_count
+        ,array_agg(snomed_id) within group (order by snomed_id asc) as ordered_id_array
+        ,'investigation' as observation_type
+    from investigation_codes
     group by primarykey_id, code
 ),
 inv_dict as(
@@ -19,14 +24,22 @@ inv_dict as(
         ecds_group1,
         from {{ref('stg_dictionary_ecds_investigation')}}
 ),
+treatment_codes as (
+    select primarykey_id
+        ,code
+        ,snomed_id
+        ,count(*) as observation_count
+    from {{ref('stg_sus_ecds_clinical_treatments_snomed')}}
+    where code is not null
+    group by primarykey_id, code, snomed_id
+),
 treatments as (
     select primarykey_id
         ,code
-        , count(*) as observation_count
-        , array_agg(distinct snomed_id)  WITHIN GROUP (ORDER BY snomed_id ASC) as ordered_id_array
+        ,sum(observation_count) as observation_count
+        ,array_agg(snomed_id) within group (order by snomed_id asc) as ordered_id_array
         ,'treatment' as observation_type
-    from {{ref('stg_sus_ecds_clinical_treatments_snomed')}}
-    where code is not null 
+    from treatment_codes
     group by primarykey_id, code
 ),
 treat_dict as(
@@ -36,14 +49,22 @@ treat_dict as(
         ecds_group1,
         from {{ref('stg_dictionary_ecds_treatment')}}
 ),
+comorb_codes as (
+    select primarykey_id
+        ,code
+        ,comorbidities_id
+        ,count(*) as observation_count
+    from {{ref('stg_sus_ecds_clinical_comorbidities')}}
+    where code is not null
+    group by primarykey_id, code, comorbidities_id
+),
 comorbs as (
     select primarykey_id
         ,code
-        , count(*) as observation_count
-        , array_agg(distinct comorbidities_id)  WITHIN GROUP (ORDER BY comorbidities_id ASC) as ordered_id_array
+        ,sum(observation_count) as observation_count
+        ,array_agg(comorbidities_id) within group (order by comorbidities_id asc) as ordered_id_array
         ,'comorbs' as observation_type
-    from {{ref('stg_sus_ecds_clinical_comorbidities')}}
-    where code is not null 
+    from comorb_codes
     group by primarykey_id, code
 ),
 comorb_dict as(
@@ -54,14 +75,22 @@ comorb_dict as(
         -- null as cds_investigation_mapping_that_is_used_for_hrg_grouping,
         from {{ref('stg_dictionary_ecds_comorbidity')}}
 ),
-findings as (
-    select distinct primarykey_id
+finding_codes as (
+    select primarykey_id
         ,code
-        , count(*) as observation_count
-        , array_agg(distinct coded_findings_id)  WITHIN GROUP (ORDER BY coded_findings_id ASC) as ordered_id_array
-        ,'findings' as observation_type
+        ,coded_findings_id
+        ,count(*) as observation_count
     from {{ref('stg_sus_ecds_clinical_coded_findings')}}
-    where code is not null 
+    where code is not null
+    group by primarykey_id, code, coded_findings_id
+),
+findings as (
+    select primarykey_id
+        ,code
+        ,sum(observation_count) as observation_count
+        ,array_agg(coded_findings_id) within group (order by coded_findings_id asc) as ordered_id_array
+        ,'findings' as observation_type
+    from finding_codes
     group by primarykey_id, code
 ), 
 find_dict as(
@@ -76,15 +105,15 @@ all_obs as(
     select *
     from investigations
     left join inv_dict on inv_dict.snomed_code = investigations.code
-    union 
+    union all
     select *
     from treatments
     left join treat_dict on treat_dict.snomed_code = treatments.code
-    union 
+    union all
     select *
     from comorbs
     left join comorb_dict on comorb_dict.snomed_code = comorbs.code
-    union 
+    union all
     select *
     from findings
     left join find_dict on find_dict.snomed_code = findings.code
@@ -113,6 +142,3 @@ from all_obs as f
 
 /* Diagnosis code for infering reason */
 left join {{ref('int_sus_uec_encounter')}}  as sa on sa.visit_occurrence_id = f.primarykey_id
-
-where sa.sk_patient_id is not null
-and f.code is not null

@@ -1,0 +1,64 @@
+models:
+  - name: stg_mhsds_mpi_history
+    description: >
+      Accepted MHS001 monthly patient snapshots. Grain: one row per MHS001
+      source record. A person or local patient can appear in many reporting
+      periods. Some accepted submissions contain conflicting rows for the same
+      local patient identifier; these are retained because the submitted person
+      and patient identifiers can differ. Use stg_mhsds_bridging for
+      person-to-patient linkage and dim_person_mh_profile for person-level
+      analysis.
+    config:
+      meta:
+        owner:
+          name: Kate Homer
+    columns:
+      - name: sk
+        description: >
+          Source row identifier. Row uniqueness is asserted on mhs001_uniq_id.
+        data_tests:
+          - not_null
+
+      - name: mhs001_uniq_id
+        description: Unique identifier for the submitted MHS001 row.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: unique_local_patient_id
+        description: Derived identifier for a provider-local patient.
+        data_tests:
+          - not_null
+
+      - name: uniq_submission_id
+        description: Accepted submission containing the patient snapshot.
+        data_tests:
+          - not_null
+
+      - name: reporting_period_end_date
+        description: End of the monthly snapshot reporting period.
+
+      - name: source_pseudonymised_nhs_number
+        description: >
+          Pseudonymised NHS number supplied on the MHS001 row. Use the person
+          bridge for cross-system linkage.
+
+      - name: pers_death_date
+        description: Submitted date of death.
+
+      - name: person_id
+        description: MHSDS person identifier.
+
+      - name: local_patient_id
+        description: Provider-local patient identifier.
+
+      - name: org_id_prov
+        description: Provider organisation code.
+
+      - name: dmic_ccg_code
+        description: Commissioner code derived by the source pipeline.
+
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

@@ -10,17 +10,17 @@ This is used for tracking/reporting vaccination uptake, not eligibility determin
 Tracks vaccinations by campaign period (autumn vs spring).
 */
 
-{{ config(materialized='table') }}
+{{ config(
+    materialized='incremental',
+    incremental_strategy='delete+insert',
+    unique_key='campaign_id',
+    tags=['covid_flu']
+) }}
 
 WITH all_campaigns AS (
-    -- Generate data for both current and previous campaigns automatically
-    SELECT * FROM ({{ covid_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_spring_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_spring_config() }})
+    -- Every COVID campaign the models report on
+    -- (campaign list: macros/config/covid_campaign_selection.sql)
+    {{ covid_build_campaigns() }}
 ),
 
 -- Step 1: Find people with COVID vaccination administration codes (for all campaigns)
@@ -30,9 +30,10 @@ people_with_covid_vaccination_admin AS (
         obs.person_id,
         MAX(obs.clinical_effective_date) AS latest_vaccination_admin_date,
         'COVID vaccination administration' AS vaccination_type
-    FROM ({{ get_observations("'COVADM_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'COVADM_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date >= cc.vaccination_tracking_start
         AND obs.clinical_effective_date <= cc.vaccination_tracking_end
     GROUP BY cc.campaign_id, obs.person_id
@@ -45,9 +46,10 @@ people_with_covid_vaccination_medication AS (
         med.person_id,
         MAX(med.order_date) AS latest_vaccination_medication_date,
         'COVID vaccination medication' AS vaccination_type
-    FROM ({{ get_medication_orders(cluster_id='COVRX_COD', source='UKHSA_COVID') }}) med
+    FROM ({{ get_medication_orders(cluster_id='COVRX_COD', source='UKHSA_COVID', versioned=true) }}) med
     CROSS JOIN all_campaigns cc
-    WHERE med.order_date IS NOT NULL
+    WHERE med.spec_version = cc.terminology_version
+        AND med.order_date IS NOT NULL
         AND med.order_date >= cc.vaccination_tracking_start
         AND med.order_date <= cc.vaccination_tracking_end
     GROUP BY cc.campaign_id, med.person_id
@@ -89,16 +91,15 @@ people_vaccinated_with_age AS (
         pcv.campaign_id,
         pcv.person_id,
         demo.birth_date_approx,
-        DATEDIFF('year', demo.birth_date_approx, pcv.campaign_reference_date) AS age_years_at_ref_date,
-        DATEDIFF('month', demo.birth_date_approx, pcv.campaign_reference_date) AS age_months_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(pcv.campaign_reference_date, demo.birth_date_approx) / 12) AS age_years_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(pcv.campaign_reference_date, demo.birth_date_approx)) AS age_months_at_ref_date,
         pcv.latest_vaccination_date AS qualifying_event_date,
         pcv.campaign_reference_date,
         pcv.vaccination_types
     FROM people_with_covid_vaccination pcv
     LEFT JOIN {{ ref('dim_person_demographics') }} demo 
         ON pcv.person_id = demo.person_id
-    WHERE demo.is_active = TRUE
-        AND demo.birth_date_approx IS NOT NULL
+    WHERE demo.birth_date_approx IS NOT NULL
 ),
 
 -- Step 6: Format for status table

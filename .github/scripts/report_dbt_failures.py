@@ -46,6 +46,7 @@ ATTRIBUTION_LOOKBACK_DAYS = {
     "daily": 3,
     "weekly": 10,
     "monthly-full-refresh": 40,
+    "dev-monthly-full-refresh": 40,
     "snapshots": 10,
 }
 COMMIT_MARKER = "__DBT_FAILURE_COMMIT__"

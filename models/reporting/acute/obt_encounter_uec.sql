@@ -9,22 +9,55 @@ select
     , sk_patient_id
     , source
     , local_patient_identifier
+    , cds_unique_identifier
+    , provider_reference_number
     , organisation_id
     , organisation_name
     , site_id
     , site_name
     , pod
     , department_type
+    , department_type_desc
+    , uec_activity_type_code
+    , uec_activity_type_desc
+    , uec_site_label
     , start_date
     , start_time
+    , financial_year
+    , financial_month
+    , financial_month_name
+    , week_end_date
     , end_date
     , end_time
     , duration
+    , initial_assessment_date
+    , initial_assessment_time
+    , initial_assessment_time_since_arrival
+    , seen_for_treatment_date
+    , seen_for_treatment_time
+    , seen_for_treatment_time_since_arrival
+    , decided_to_admit_date
+    , decided_to_admit_time
+    , decided_to_admit_time_since_arrival
+    , clinically_ready_to_proceed_at
+    , clinically_ready_to_proceed_time_since_arrival
+    , expected_treatment_at
     , chief_complaint_code
     , chief_complaint_desc
     , chief_complaint_ecds_group1
     , is_injury_related
     , acuity
+    , acuity_desc
+    , injury_intent_code
+    , injury_intent_desc
+    , injury_mechanism_code
+    , injury_mechanism_desc
+    , place_of_injury_code
+    , place_of_injury_desc
+    , injury_date
+    , injury_time
+    , disease_notification_code
+    , disease_notification_desc
     , primary_diagnosis_code_snomed
     , primary_diagnosis_desc_snomed
     , primary_diagnosis_code_icd10
@@ -38,8 +71,29 @@ select
     , primary_investigation_desc_ecds_group1
     , arrival_mode_code
     , arrival_mode_desc
+    , attendance_category_code
+    , attendance_category_desc
+    , is_arrival_planned
+    , ambulance_incident_number
+    , conveying_ambulance_trust_code
+    , conveying_ambulance_trust_name
+    , ambulance_care_contact_identifier
+    , attendance_source_code
+    , attendance_source_desc
+    , attendance_source_organisation_site_identifier
+    , attendance_source_organisation_name
     , discharge_destination_code
     , discharge_destination_desc
+    , discharge_status_code
+    , discharge_status_desc
+    , discharge_follow_up_code
+    , discharge_follow_up_desc
+    , discharge_information_given_code
+    , discharge_information_given_desc
+    , decided_to_admit_treatment_function_code
+    , decided_to_admit_treatment_function_desc
+    , receiving_site_id
+    , receiving_organisation_name
     , main_specialty_code
     , main_specialty_name
     , hrg_code
@@ -47,15 +101,33 @@ select
     , core_hrg_chapter
     , core_hrg_chapter_desc
     , cost
+    , applicable_costing_period
+    , is_national_tariff_excluded
+    , national_tariff
+    , national_tariff_final_price
+    , mff_factor
+    , mff_adjustment
+
+    , residence_area_code_at_event
+    , residence_area_name_at_event
+    , assigned_commissioner_code_at_event
+    , assigned_commissioner_name_at_event
     , age_at_event
+    , patient_type_code_at_event
+    , patient_type_desc_at_event
     , gender_at_event
     , gender_desc_at_event
     , ethnicity_at_event
     , ethnicity_desc_at_event
+    , postcode_id
     , postcode_district_at_event
     , lsoa_11_at_event
     , lad_at_event
     , imd_at_event
+    , deprivation_decile_at_event
     , reg_practice_at_event
+    , reg_practice_name_latest
+    , general_practitioner_code
+    , general_practitioner_name
     , visit_occurrence_type
 from {{ ref('int_sus_uec_encounter') }}

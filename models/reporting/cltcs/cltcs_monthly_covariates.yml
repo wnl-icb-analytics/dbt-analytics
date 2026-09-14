@@ -34,6 +34,17 @@ models:
         description: "C-LTCS local neighbourhood tag, carried from the population roster for that month; may be null."
       - name: area_code
         description: "Same value as neighbourhood_code, under the name cltcs_cohort_data uses (area_code is a legacy alias of the nh_gp-mapping neighbourhood_code). Emitted for definitional parity with the treated arm."
+      - name: imd_quintile_25
+        description: >
+          Resident IMD 2025 quintile (text label, e.g. Most Deprived .. Least Deprived) as-at
+          index_date, from int_person_geography_snapshot. NULL when residence is unknown (not
+          coalesced -- unknown must not fall into a band). Net-new covariate: not a cltcs_cohort_data
+          column, so it is matched as a separate stratum: both arms read this value as-at from
+          int_person_geography_snapshot (controls at index_date here, the treated arm at their enrolment
+          date at matching time). Caveats: forward-only (NULL before the
+          snapshot's first run); and int_person_geography holds a single, mostly-undated address per
+          person, so the value is most-recently-known residence tracked forward, NOT period-accurate
+          deprivation.
       - name: age
         description: "Age in whole years as-at index_date, computed from live (immutable) date of birth via floor(datediff(month, dob, index_date)/12) -- same definition as dim_person_demographics.age, anchored on index_date. NULL when DOB is unavailable. Not snapshotted (DOB never changes), so it has no forward-only floor."
       - name: practice_name

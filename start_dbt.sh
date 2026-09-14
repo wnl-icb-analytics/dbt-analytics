@@ -7,12 +7,8 @@
 # dbt runs on the Fusion engine (installed to ~/.local/bin), NOT a Python
 # package. The .venv exists only for the Python tooling in scripts/.
 
-# Fusion engine version. Pinned (via .fusion-version at repo root) to the version
-# Snowflake hosts, so local, CI, and the 5am native build run the same engine.
-# Bump .fusion-version when Snowflake's hosted 2.0.0-preview moves.
-# Set FUSION_VERSION_PIN to override locally; fallback is used only if the file is missing.
-FUSION_VERSION_PIN=""
-FUSION_FALLBACK_VERSION="2.0.0-preview.186"
+# Fusion is unpinned. CI installs latest and the VS Code extension manages the
+# local version. This script installs latest only when dbt is missing.
 
 actions=()
 install_dir="$HOME/.local/bin"
@@ -66,43 +62,21 @@ echo ""
 # 3. dbt Fusion engine
 # ---------------------------------------------------------------------------
 echo "Checking dbt Fusion engine..."
-resolve_fusion_version() {
-    if [ -n "$FUSION_VERSION_PIN" ]; then echo "$FUSION_VERSION_PIN"; return; fi
-    local pin_file v
-    pin_file="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.fusion-version"
-    if [ -f "$pin_file" ]; then
-        read -r v < "$pin_file"
-        if [ -n "$v" ]; then echo "$v"; return; fi
-    fi
-    echo "$FUSION_FALLBACK_VERSION"
-}
-
 install_fusion() {
-    local version="$1" mode="$2"
-    if [ "$mode" = "update" ]; then
-        curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --version "$version" --target "$fusion_target" --update
-    else
-        curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --version "$version" --target "$fusion_target"
-    fi
+    curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --target "$fusion_target"
 }
 
-dbt_present=false
-command -v dbt &> /dev/null && dbt_present=true
-# Resolution is a local file read, so check every launch and (re)install only on mismatch.
-desired=$(resolve_fusion_version)
-current=""
-[ "$dbt_present" = true ] && current=$(dbt --version 2>&1 | head -1)
-if ! echo "$current" | grep -q "$desired"; then
-    echo "[INFO] Installing dbt Fusion $desired..."
-    if [ "$dbt_present" = true ]; then install_fusion "$desired" update; else install_fusion "$desired" install; fi
+if ! command -v dbt &> /dev/null; then
+    echo "[INFO] Installing dbt Fusion (latest)..."
+    install_fusion
     export PATH="$install_dir:$PATH"
 else
-    echo "[OK] dbt Fusion $desired"
+    echo "[OK] dbt Fusion available; the VS Code extension manages updates"
 fi
 
 if ! command -v dbt &> /dev/null; then
     echo "[WARNING] dbt Fusion not available - install manually:"
-    echo "  curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --version $FUSION_FALLBACK_VERSION --target $fusion_target"
+    echo "  curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --target $fusion_target"
     actions+=("Install dbt Fusion (see CONTRIBUTING.md)")
 else
     echo "  $(dbt --version 2>&1 | head -1)"

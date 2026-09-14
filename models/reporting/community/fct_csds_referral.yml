@@ -1,0 +1,119 @@
+version: 2
+models:
+- name: fct_csds_referral
+  description: One latest reported CSDS service request across all accepted reporting periods. Includes
+    open and discharged referrals, with no 2021 cutoff or attendance filter. Referrals without a person
+    bridge remain. One-to-many teams are separate. Missing discharge does not establish current activity.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  columns:
+  - name: source_record_id
+    description: National provider-qualified referral identifier, stable across accepted revisions.
+    data_tests:
+    - unique
+    - not_null
+  - name: source_dataset
+    description: CSDS.
+  - name: referral_id
+    description: Provider-qualified referral identifier. The same value is exposed as source_record_id
+      on the referral fact.
+  - name: local_referral_id
+    description: Referral identifier assigned locally by the provider.
+  - name: source_row_id
+    description: Identifier of the selected submitted row; changes when a replacement source row is selected.
+  - name: person_id
+    description: CSDS person identifier from this record, never replaced by the parent person.
+  - name: sk_patient_id
+    description: Pseudonymised cross-system patient key from stg_csds_bridging; null when unavailable.
+  - name: age_at_referral
+    description: Source-derived age in years at the referral received date. Retains source special values;
+      not recalculated from current demographics.
+  - name: referral_received_date
+    description: Source referral received date. Retained as supplied with date precision; not inferred
+      from receipt time.
+  - name: referral_received_time
+    description: Recorded referral received time, without the transport placeholder date. Null when absent.
+  - name: referral_received_at
+    description: Source date combined with the supplied time. Read the matching precision field; date-only
+      values use midnight.
+  - name: referral_received_time_precision
+    description: timestamp when source date and time are both present; date when only the date is supplied;
+      null when the date is absent. Date-only timestamps use midnight and must be read with this field.
+  - name: service_discharge_date
+    description: Source service discharge date. Retained as supplied with date precision; not inferred
+      from receipt time.
+  - name: source_of_referral_code
+    description: Submitted source of referral code. Unmatched values remain visible.
+  - name: source_of_referral_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.
+  - name: primary_reason_for_referral_code
+    description: Submitted primary reason for referral code. Unmatched values remain visible.
+  - name: primary_reason_for_referral_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.
+  - name: priority_type_code
+    description: Submitted priority type code. Unmatched values remain visible.
+  - name: priority_type_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.
+  - name: referring_professional_staff_group_name
+    description: Newest authoritative reference description of the accompanying code, including retired
+      definitions. Null when the supplied code is unmatched.
+  - name: referring_organisation_code
+    description: Submitted referring organisation code. Unmatched values remain visible.
+  - name: referring_organisation_name
+    description: Latest organisation name from the shared organisation reference, including closed organisations.
+      UKHFD ODS API takes precedence, then Dictionary, then the UKHFD closed-organisation archive
+      for codes absent from both. Null when the code is unmatched.
+  - name: referring_professional_staff_group_code
+    description: Submitted referring professional staff group code. Unmatched values remain visible.
+  - name: discharge_letter_issued_date
+    description: Source discharge letter issued date. Retained as supplied with date precision; not inferred
+      from receipt time.
+  - name: provider_organisation_code
+    description: Provider organisation code supplied by CSDS.
+  - name: provider_organisation_name
+    description: Latest organisation name from the shared organisation reference, including closed organisations.
+      UKHFD ODS API takes precedence, then Dictionary, then the UKHFD closed-organisation archive
+      for codes absent from both. Null when the code is unmatched.
+  - name: submitted_commissioner_code
+    description: Commissioner supplied with this source record.
+  - name: submitted_commissioner_name
+    description: Latest organisation name from the shared organisation reference, including closed organisations.
+      UKHFD ODS API takes precedence, then Dictionary, then the UKHFD closed-organisation archive
+      for codes absent from both. Null when the code is unmatched.
+  - name: source_icb_commissioner_code
+    description: Source-derived commissioner field. No local attribution fallback or current-footprint
+      remapping is applied.
+  - name: source_icb_commissioner_name
+    description: Latest organisation name from the shared organisation reference, including closed organisations.
+      UKHFD ODS API takes precedence, then Dictionary, then the UKHFD closed-organisation archive
+      for codes absent from both. Null when the code is unmatched.
+  - name: source_sub_icb_commissioner_code
+    description: Source-derived commissioner field. No local attribution fallback or current-footprint
+      remapping is applied.
+  - name: source_sub_icb_commissioner_name
+    description: Latest organisation name from the shared organisation reference, including closed organisations.
+      UKHFD ODS API takes precedence, then Dictionary, then the UKHFD closed-organisation archive
+      for codes absent from both. Null when the code is unmatched.
+  - name: source_commissioner_derivation_reason
+    description: Source-supplied reason for derived commissioner attribution. Retained without a verified
+      code-to-label mapping; no local attribution rule or current-footprint remapping is applied.
+  - name: submission_id
+    description: Identifier of the accepted submission containing the selected source row.
+  - name: reporting_period_start_date
+    description: Source reporting period start date. Retained as supplied with date precision; not inferred
+      from receipt time.
+  - name: reporting_period_end_date
+    description: Source reporting period end date. Retained as supplied with date precision; not inferred
+      from receipt time.
+  - name: source_file_received_at
+    description: Timestamp the submission portal received the file. This is not clinical event time.
+  - name: csds_version
+    description: Dataset version on the accepted submission header.
+  - name: file_type
+    description: Source primary or refresh file marker. ActiveSubmission determines whether the file is
+      accepted.

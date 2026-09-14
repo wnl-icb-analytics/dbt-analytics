@@ -1,7 +1,9 @@
 models:
   - name: stg_ukhfd_old_lsoa_to_new_lsoa_map
     description: >
-      2011 LSOA to 2021 LSOA bridge from UKHFD, one row per 2011 code.
+      Complete 2011 LSOA to 2021 LSOA bridge from UKHFD. One row represents
+      one current relationship between a 2011 LSOA and a 2021 LSOA. A 2011
+      LSOA can have several rows where boundaries split.
 
       Source: UKHFD.Old_LSOA_To_New_LSOA_To_LAD.dim_Map_SCD
       (source 'ukhfd_geo' in models/sources/manual_ukhfd.yml)
@@ -14,11 +16,17 @@ models:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - old_lsoa_code
+              - new_lsoa_code
     columns:
       - name: old_lsoa_code
         description: 2011 LSOA code
         data_tests:
-          - unique
           - not_null
       - name: new_lsoa_code
         description: 2021 LSOA code the old code maps to
+        data_tests:
+          - not_null

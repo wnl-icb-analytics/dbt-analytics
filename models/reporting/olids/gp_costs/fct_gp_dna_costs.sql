@@ -44,7 +44,7 @@ select
         1
     ) as dna_rate_pct,
 
-    -- Total cost (in-scope appointments) in 2023/24 real terms
+    -- Total cost (in-scope appointments) in 2024/25 real terms
     ROUND(
         SUM(CASE WHEN is_attended OR is_dna THEN appointment_cost_gbp_base_prices END),
         2

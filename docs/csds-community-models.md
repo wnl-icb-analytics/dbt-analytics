@@ -28,7 +28,11 @@ CSDS is a monthly resubmission feed like MHSDS. Every staging model runs [`dedup
 - [`stg_csds_gp_registration.sql`](../models/staging/commissioning/csds/stg_csds_gp_registration.sql) — dated GP registrations per person. Practice codes are uppercased here (~19% arrive lowercase, which broke downstream joins) and case variants of the same registration collapse in dedup.
 - [`stg_csds_bridging.sql`](../models/staging/commissioning/csds/stg_csds_bridging.sql) — person → pseudonymised patient id.
 
-## 2. The mapping rules as data (seeds)
+## 2. The mappings as data (seeds)
+
+These seeds contain lookup mappings and prices. The executable classification
+and fallback rules remain visible in SQL; the seeds do not encode branching,
+expressions or precedence.
 
 - [`nhse_community_currency_team_types_2526.csv`](../seeds/nhse_community_currency_team_types_2526.csv) — (age category, team type) → currency; reason-split teams flagged with their fallback code.
 - [`nhse_community_currency_referral_reasons_2526.csv`](../seeds/nhse_community_currency_referral_reasons_2526.csv) — (age category, team type, referral reason) → currency for the split teams.
@@ -54,9 +58,9 @@ One row per currency code with the unit price resolved once through the fallback
 
 ## 5. Costing — [`fct_csds_currency_contacts.sql`](../models/reporting/community/fct_csds_currency_contacts.sql)
 
-One row per (referral, contact), everything above carried through, plus money: the 26/27 unit price rebased to the contact's fiscal year with the GDP deflator ([`uk_cost_indices`](../seeds/uk_cost_indices.csv)) and adjusted by the provider MFF ([`nhse_provider_mff_2627`](../seeds/nhse_provider_mff_2627.csv)). Attended contacts (5/6/null) are costed; DNAs and cancellations stay at zero cost so activity counts remain complete.
+One row per (referral, contact), everything above carried through, plus money: the 26/27 unit price rebased to the contact's fiscal year with the GDP deflator ([`uk_cost_indices`](../seeds/uk_cost_indices.csv)) and adjusted by the provider MFF ([`provider_market_forces_factor_2026_27`](../models/reference/finance/provider_market_forces_factor_2026_27.sql)). Attended contacts (5/6/null) are costed; DNAs and cancellations stay at zero cost so activity counts remain complete.
 
-## 6. Cost-index roll-up — [`int_cost_index_csds_activity_monthly.sql`](../models/modelling/cross_system/cost_index/int_cost_index_csds_activity_monthly.sql)
+## 6. Cost-index roll-up — [`int_cost_index_csds_activity_monthly.sql`](../models/modelling/community/cost_index/int_cost_index_csds_activity_monthly.sql)
 
 Person × month aggregation of the priced contacts, feeding [`fct_person_cost_index_monthly`](../models/reporting/cross_system/cost_index/fct_person_cost_index_monthly.sql) as the `CSDS` proxy-cost source alongside SLAM, EPD and MHSDS.
 

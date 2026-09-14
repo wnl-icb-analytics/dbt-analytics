@@ -1,24 +1,23 @@
 models:
   - name: int_covid_morbid_obesity
-    description: 'COVID vaccination eligibility for people with morbid obesity.
+    description: 'COVID vaccination eligibility for people with morbid obesity using their latest BMI and BMI stage evidence.
 
       Key Features:
 
-      • Single diagnosis pathway using MOBESE_COV_COD codes
+      • BMI threshold: latest BMI ≥40 when not superseded by a later BMI stage
 
-      • Earliest occurrence in medical history qualifies
+      • Severe obesity codes qualify only when they are the latest BMI stage
 
-      • Age restriction: minimum 5 years for COVID vaccination
+      • Age restriction: minimum 18 years
 
-      • Includes severe obesity and BMI-related conditions
+      • Applies only to campaigns configured to include morbid obesity
 
-      • Generates data for current and previous COVID campaigns automatically
-
-      Purpose: Identify people eligible for COVID vaccination due to morbid obesity requiring immunisation.'
+      Purpose: Identify adults eligible for COVID vaccination due to morbid obesity.'
     tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: BMI_COD,BMI_STAGE_COD,SEV_OBESITY_COD
+            source: UKHSA_COVID
     config:
       meta:
         indicator:
@@ -29,10 +28,10 @@ models:
           name_short: "COVID Eligible Morbid Obesity"
           description_short: "People with morbid obesity eligible for COVID vaccination"
           description_long: >
-            COVID vaccination eligibility for people with morbid obesity using MOBESE_COV_COD
-            cluster codes with earliest occurrence qualifying. Includes severe obesity
-            and BMI-related conditions that increase COVID risk requiring immunisation
-            protection. Minimum age requirement of 5 years for COVID vaccination.
+            COVID vaccination eligibility for people with morbid obesity. Uses the latest
+            BMI value and latest BMI stage. A severe obesity code qualifies only when
+            it is the latest BMI stage and is later than the latest BMI value. The
+            minimum age is 18 years.
           is_qof: false
           source_column: "person_id"
           sort_order: "COVID_3_MORBID_OBESITY"
@@ -49,10 +48,10 @@ models:
           thresholds:
             - population_group: "ALL"
               threshold_type: "AGE_ELIGIBILITY"
-              threshold_value: "5"
+              threshold_value: "18"
               threshold_operator: "AT_OR_ABOVE"
               threshold_unit: "years"
-              description: "Minimum age for COVID vaccination"
+              description: "Minimum age for morbid obesity eligibility"
               sort_order: 1
 
         owner:
@@ -60,7 +59,7 @@ models:
     columns:
       - name: campaign_id
         description: 'COVID campaign identifier (e.g., covid_2025_autumn, covid_2024_autumn)'
-        tests:
+        data_tests:
           - not_null
       - name: campaign_category
         description: 'Category of eligibility criteria (always "CLINICAL_CONDITION")'
@@ -68,10 +67,10 @@ models:
         description: 'Risk group classification (always "Morbid Obesity")'
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying diagnosis (earliest morbid obesity diagnosis)'
+        description: 'Date of the qualifying BMI value or severe obesity stage'
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description
@@ -81,6 +80,6 @@ models:
       - name: age_months_at_ref_date
         description: 'Age in months at campaign reference date'
       - name: age_years_at_ref_date
-        description: 'Age in years at campaign reference date (minimum 5 years required)'
+        description: 'Age in years at campaign reference date (minimum 18 years required)'
       - name: created_at
-        description: 'Audit timestamp for record creation (campaign audit end date)'
+        description: 'Record creation timestamp'

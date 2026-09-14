@@ -1,0 +1,97 @@
+models:
+  - name: stg_reference_pcd_refset_latest
+    description: >-
+      Current active Primary Care Domain refset membership from UKHFD. One row
+      represents one SNOMED code in one cluster. Release fields identify the
+      terminology release used by current QOF builds.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - cluster_id
+              - snomed_code
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: cluster_id
+        description: Primary Care Domain cluster identifier
+        data_tests:
+          - not_null
+      - name: cluster_description
+        description: Primary Care Domain cluster description
+      - name: snomed_code
+        description: SNOMED CT concept identifier stored as text
+        data_tests:
+          - not_null
+      - name: snomed_code_description
+        description: SNOMED CT concept description supplied in the release
+      - name: pcd_refset_id
+        description: Primary Care Domain refset identifier
+      - name: service_and_ruleset
+        description: Service and ruleset supplied in the Primary Care Domain release
+      - name: snapshot_date
+        description: Effective date of the UKHFD release used for this membership
+        data_tests:
+          - not_null
+      - name: release_version
+        description: UKHFD source release version
+        data_tests:
+          - not_null
+      - name: source_file
+        description: UKHFD source file for the release
+        data_tests:
+          - not_null
+
+  - name: stg_reference_pcd_refset_snapshots
+    description: >-
+      Historical Primary Care Domain refset membership from UKHFD. One row
+      represents one SNOMED code in one cluster for one release snapshot, for
+      reproducible terminology comparisons.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - snapshot_date
+              - cluster_id
+              - snomed_code
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: snapshot_date
+        description: Effective date of the UKHFD release represented by the row
+        data_tests:
+          - not_null
+      - name: release_version
+        description: UKHFD source release version
+        data_tests:
+          - not_null
+      - name: source_file
+        description: UKHFD source file for the release
+        data_tests:
+          - not_null
+      - name: cluster_id
+        description: Primary Care Domain cluster identifier
+        data_tests:
+          - not_null
+      - name: cluster_description
+        description: Primary Care Domain cluster description at this release
+      - name: snomed_code
+        description: SNOMED CT concept identifier stored as text
+        data_tests:
+          - not_null
+      - name: snomed_code_description
+        description: SNOMED CT concept description supplied in the release
+      - name: pcd_refset_id
+        description: Primary Care Domain refset identifier
+      - name: service_and_ruleset
+        description: Service and ruleset supplied in the Primary Care Domain release

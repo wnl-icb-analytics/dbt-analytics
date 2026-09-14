@@ -1,0 +1,52 @@
+models:
+  - name: int_alcohol_screening_all
+    description: >
+      Alcohol screening records from the PCD clusters FAST_COD, AUDITC_COD and
+      AUDIT_COD, one row per observation for all people including inactive and
+      deceased. Observations dated after the build date are excluded. score_value
+      holds a numeric result within the tool's range. is_positive_screen applies
+      the NICE hazardous-drinking thresholds, FAST 3 or more and AUDIT-C 5 or
+      more, plus full AUDIT 8 or more as a local extension. An assessment code
+      without a score is a screen but not a positive one. int_alcohol_audit_scores
+      remains the risk-banded AUDIT model used by the SMI programme.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: FAST_COD, AUDITC_COD, AUDIT_COD
+            source: PCD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - id
+              - source_cluster_id
+    columns:
+      - name: id
+        description: Source observation identifier; one row per observation and cluster.
+        data_tests:
+          - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the screen.
+      - name: screening_tool
+        description: FAST, AUDIT-C or AUDIT.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['FAST', 'AUDIT-C', 'AUDIT']
+      - name: score_value
+        description: Score within the tool's range; null when missing or out of range.
+      - name: original_result_value
+        description: Result as recorded.
+      - name: is_positive_screen
+        description: Whether the score meets the hazardous-drinking threshold for its tool. False when no valid score.
+      - name: concept_code
+        description: SNOMED code of the record.
+      - name: concept_display
+        description: Description of the record.
+      - name: source_cluster_id
+        description: Cluster that matched the code.

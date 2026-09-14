@@ -1,0 +1,89 @@
+models:
+  - name: int_cholesterol_hdl_ratio_all
+    description: Total cholesterol to HDL ratio for all people, including inactive and deceased people.
+      One row per observation in the PCD TCHOLHDL_COD cluster. Missing or future original clinical dates
+      are excluded. Invalid values and unsupported units remain available for audit. Valid means a ratio of 1 to 20 inclusive. The observable is dimensionless, so blank, unknown and
+      mislabelled units are all read as a ratio, and mislabelled units are flagged for review. Dimensionless total cholesterol divided by HDL as recorded. The model does not calculate
+      a ratio from separately dated results or assign a universal treatment target.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.heartuk.org.uk/cholesterol/understanding-your-cholesterol-test-results-
+        code_source: PCD
+    columns:
+      - name: id
+        description: Source observation identifier. Used to break ties deterministically; it does not
+          imply clinical priority.
+        data_tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Person identifier. No active-registration or age restriction is applied.
+      - name: clinical_effective_date
+        description: Observation date after the shared OLIDS correction for events dated after their recording
+          date.
+      - name: clinical_effective_date_raw
+        description: Original clinical effective date before the shared date correction.
+      - name: date_recorded
+        description: Date the observation was recorded in the source.
+      - name: cholesterol_hdl_ratio
+        description: Recorded ratio after unit validation; null for an unsupported unit.
+      - name: result_unit_display
+        description: 'Standard unit: ratio.'
+      - name: recorded_value
+        description: Numeric value received from OLIDS, unchanged by this model. Not guaranteed to be the original laboratory value.
+      - name: source_result_unit_code
+        description: Unit code from the source concept, without mapped-unit substitution. Null if unavailable.
+      - name: source_result_unit_display
+        description: Unit label from the source concept, without mapped-unit substitution. Null if unavailable.
+      - name: mapped_result_unit_code
+        description: Mapped unit code supplied by OLIDS. Null if unavailable.
+      - name: mapped_result_unit_display
+        description: Mapped unit label supplied by OLIDS. Null if unavailable.
+      - name: conversion_unit_basis
+        description: Whether the calculation selected the mapped unit, source unit or no recorded unit. An unknown-unit placeholder in the mapped field falls through to the source unit. Missing ratio units are inferred from the PCD observable; missing concentration units are assumed to be mmol/L.
+      - name: conversion_factor
+        description: Multiplier applied to recorded_value. One for recognised standard units, missing or mislabelled units read as the standard unit, and inferred dimensionless ratios. Null when the unit cannot be converted.
+      - name: is_unit_metadata_conflict
+        description: True when populated source and mapped unit labels disagree after recognised aliases are normalised. Unknown labels are treated as absent. Does not identify which unit is correct.
+      - name: plausibility_status
+        description: >
+          Validity check after conversion against the inclusive range of 1 to 20. Within valid range
+          is the validity rule. Other values name why the result is invalid: unit cannot be converted,
+          missing numeric result, non-positive or non-finite, below or above the range. Rare genuine
+          results can lie outside the range and are excluded.
+      - name: is_lipid_review_required
+        description: >
+          True for conflicting unit metadata, every non-standard unit conversion, missing, mislabelled or
+          unsupported units, or any invalid result. False means no issue detected by these checks, not
+          verified accuracy. Inferred dimensionless ratio units do not alone trigger review. Does not
+          change validity, clinical categories or latest-valid selection.
+      - name: original_result_value
+        description: Compatibility alias of recorded_value, the unchanged numeric value received from OLIDS.
+      - name: original_result_unit_code
+        description: Legacy combined unit field. Mapped unit code where supplied, otherwise the source unit concept code. Null if
+          neither is available.
+      - name: original_result_unit_display
+        description: Legacy combined unit field. Mapped unit label where supplied, otherwise the source unit concept label. Null if
+          neither is available.
+      - name: unit_status
+        description: Recorded standard unit, Inferred from ratio observable or Mislabelled standard unit. The
+          observable is dimensionless, so any other recorded label is ignored, read as a ratio and
+          flagged for review.
+      - name: concept_code
+        description: Recorded mapped clinical concept code matched to the PCD cluster.
+      - name: concept_display
+        description: Recorded mapped clinical concept label.
+      - name: source_cluster_id
+        description: 'Authoritative PCD observation cluster: TCHOLHDL_COD.'
+      - name: sampling_context
+        description: Fasting, non-fasting or random only when specified in the PCD code description. Otherwise
+          Not specified; no sampling status is inferred from the numeric value.
+      - name: is_valid_cholesterol_hdl_ratio
+        description: True when plausibility_status is Within valid range. False includes missing values,
+          unsupported units and values outside the range.
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: TCHOLHDL_COD

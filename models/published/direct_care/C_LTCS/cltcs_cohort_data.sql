@@ -231,8 +231,8 @@ select il.patient_id
 from inclusion_list il
 left join {{ref('dim_person_demographics')}} pd
     on il.olids_id = pd.person_id
-left join {{ ref('trajectories') }} tr
-    on il.patient_id = tr.patient_id
+left join {{ ref('fct_person_recent_activity_trajectories') }} tr
+    on il.patient_id = tr.sk_patient_id
 left join {{ ref('dim_person_conditions')}} pc
     on il.olids_id = pc.person_id
 left join {{ref('fct_person_polypharmacy_current')}} polyp

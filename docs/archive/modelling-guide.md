@@ -328,8 +328,6 @@ inner join {{ ref('dim_person_secondary_use_allowed') }} allowed
     on base.person_id = allowed.person_id
 ```
 
-Snowflake governance tags are automatically applied to published secondary use models via post-hooks. Tag the model `secondary_use_opt_out` to drive opt-out filtering governance and stamp `DATA_CATEGORY = PRIMARY_CARE_SECONDARY_USE`.
-
 #### Section 251 exempt dashboards
 
 A small number of secondary use dashboards are published under a **Section 251 exemption** as HealtheIntent replacement dashboards (population health needs, childhood immunisations, COVID/flu, LTC LCS case finding and risk stratification, valproate). These are still secondary use, but opt-out filtering is **intentionally not applied** — so they do **not** join to `dim_person_secondary_use_allowed`. They are passthroughs of the direct care base:
@@ -339,7 +337,7 @@ select *
 from {{ ref('population_health_needs_base') }}
 ```
 
-Tag these models `secondary_use_s251_exempt` instead of `secondary_use_opt_out`. The post-hooks keep `DATA_CATEGORY = PRIMARY_CARE_SECONDARY_USE` and additionally stamp `S251_EXEMPT = TRUE`. Each exempt model also overrides its `meta.custom_message` so the table comment states the exemption rather than claiming opt-outs were applied.
+Each exempt model overrides its `meta.custom_message` so the table comment states the exemption rather than claiming opt-outs were applied.
 
 ## Naming Conventions Summary
 

@@ -1,0 +1,23 @@
+version: 2
+
+macros:
+  - name: mhsds_is_crisis_referral
+    description: >-
+      Renders the NHSE mental health currency crisis-referral rule as a boolean
+      expression. A referral is crisis when its team type is flagged as a crisis
+      team, or when the team type is crisis only under an urgent clinical
+      response priority (1, 2 or 4). Team-type flags come from
+      nhse_mh_currency_team_types_2627. Used by fct_mhsds_referral_episodes and
+      int_mhsds_contact_currency, which sit at different grains and layers but
+      must resolve crisis the same way.
+    arguments:
+      - name: team_type_alias
+        type: string
+        description: >-
+          Alias of the joined nhse_mh_currency_team_types_2627 relation, which
+          supplies is_crisis_referral and crisis_requires_urgent_priority.
+      - name: priority_column
+        type: string
+        description: >-
+          Qualified clinical response priority column, such as
+          r.clinical_response_priority_code or r.clin_resp_priority_type.

@@ -11,7 +11,6 @@ flags:
   require_generic_test_arguments_property: true
 on-run-start:
   - "{% if execute %}{{ log('🔗 DBT CONNECTION: Role=' ~ target.role ~ ', Warehouse=' ~ target.warehouse ~ ', Database=' ~ target.database ~ ', Schema=' ~ target.schema ~ ', Target=' ~ target.name, info=True) }}{% endif %}"
-  - "{% if flags.WHICH in ['run', 'build'] %}{{ ensure_governance_tags() }}{% endif %}"
   - "{% if flags.WHICH in ['run', 'build'] %}{{ create_row_count_log_table() }}{% endif %}"
 
 on-run-end:
@@ -152,7 +151,7 @@ models:
       +schema: "SEMANTIC"
       +tags: ["semantic"]
       +meta:
-        custom_message: "Snowflake Semantic View - Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering. Query via SEMANTIC_VIEW() function."
+        custom_message: "Snowflake semantic view for aggregate analysis. Use the view definition for available dimensions, facts and metrics."
 
     # Partner layer - production-ready datasets for partner users
     partner:
@@ -175,16 +174,6 @@ models:
           {%- else -%}
           DEV__PUBLISHED_REPORTING__PARTNER.SECURITY.PARTNER_POLICY on (sk_patient_id)
           {%- endif -%}
-        olids:
-          +meta:
-            custom_message: "Includes OLIDS data already filtered via REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED (National Data Opt-Out and Type 1 opt-outs excluded). Safe to use for secondary purposes."
-          # Schema names automatically derived from subdomain folder names via generate_schema_name macro
-          +post-hook:
-            - "{{ add_model_comment() }}"
-            - "{{ apply_snowflake_tag_if_tagged('secondary_use_opt_out', 'DATA_CATEGORY', 'PRIMARY_CARE_SECONDARY_USE') }}"
-            - "{{ apply_snowflake_tag_if_tagged('secondary_use_s251_exempt', 'DATA_CATEGORY', 'PRIMARY_CARE_SECONDARY_USE') }}"
-            - "{{ apply_snowflake_tag_if_tagged('secondary_use_s251_exempt', 'S251_EXEMPT', 'TRUE') }}"
-            - "{{ log_row_count() }}"
 
     # Published layer - production-ready datasets for end users
     published:
@@ -212,9 +201,6 @@ models:
           # Schema names automatically derived from subdomain folder names via generate_schema_name macro
           +post-hook:
             - "{{ add_model_comment() }}"
-            - "{{ apply_snowflake_tag_if_tagged('secondary_use_opt_out', 'DATA_CATEGORY', 'PRIMARY_CARE_SECONDARY_USE') }}"
-            - "{{ apply_snowflake_tag_if_tagged('secondary_use_s251_exempt', 'DATA_CATEGORY', 'PRIMARY_CARE_SECONDARY_USE') }}"
-            - "{{ apply_snowflake_tag_if_tagged('secondary_use_s251_exempt', 'S251_EXEMPT', 'TRUE') }}"
             - "{{ log_row_count() }}"
 
   # Elementary observability configuration
@@ -229,6 +215,17 @@ seeds:
     +schema: "DBT_SEEDS"
     +quote_columns: false
     +post-hook: ["{{ add_model_comment() }}"]
+
+    uec_site_label:
+      +column_types:
+        site_code: varchar(10)
+        department_type: varchar(2)
+        uec_site_label: varchar(50)
+        provider_code: varchar(10)
+        icb_footprint: varchar(3)
+        effective_from: date
+        effective_to: date
+        note: varchar(200)
 
     practice_merges:
       +column_types:

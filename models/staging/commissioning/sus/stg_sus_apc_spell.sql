@@ -7,13 +7,21 @@ with core_data as(
     from {{ ref('raw_sus_apc_spell') }} as core
     qualify row_number() over (
         partition by primarykey_id
-        order by system_transaction_cds_activity_date desc
+        order by
+            system_transaction_cds_activity_date desc nulls last
+            , try_to_number(system_record_version) desc nulls last
+            , system_interchange_received_date desc nulls last
+            , system_interchange_received_time desc nulls last
+            , rownumber_id desc
         ) = 1
 )
 
 select core.primarykey_id
-    , core.spell_patient_identity_nhs_number_value_pseudo as sk_patient_id
+    , {{ consistent_sk_patient_id_format('core.spell_patient_identity_nhs_number_value_pseudo') }} as sk_patient_id
     , spell_patient_identity_local_patient_identifier_value as local_patient_identifier
+
+    , core.spell_referral_to_treatment_ubrn_value_pseudo as unique_booking_reference_number
+    , core.spell_referral_to_treatment_ubrn_issuer as booking_reference_issuer
 
     /* spell details */
     -- location
@@ -25,8 +33,11 @@ select core.primarykey_id
     , core.spell_admission_time::time as spell_admission_time
     , core.spell_discharge_date::date as spell_discharge_date
     , core.spell_discharge_time::time as spell_discharge_time
+    , core.spell_open_spell_indicator
     , core.spell_discharge_length_of_hospital_stay
+    , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_unadjusted_days
     , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_critical_care_days as spell_length_of_stay_critical_care_days
+    , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_excess_bed_days
     , core.spell_discharge_destination
     , core.spell_discharge_method
 

@@ -1,0 +1,106 @@
+models:
+  - name: fct_person_obesity2_register
+    description: >
+      QOF v51 OBES2 register for people aged 18 or over with BMI at least 35 in
+      the preceding 12 months, or BMI at least 32.5 when their most recent
+      journal ethnicity code is in a lower-threshold group, and at least four
+      of ASCVD, unresolved hypertension, dyslipidaemia, obstructive sleep
+      apnoea and unresolved type 2 diabetes. One row represents a qualifying
+      person. The OLIDS patient contract does not expose the patient-table
+      ethnicity fallback in the national rules.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier
+        data_tests:
+          - not_null
+          - unique
+      - name: age
+        description: Current age in full years
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 18
+                inclusive: true
+      - name: gender
+        description: Recorded gender used for the sex-specific HDL threshold
+      - name: is_on_register
+        description: Whether the person meets the OBES2 rules
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true]
+      - name: meets_age_criteria
+        description: Whether the person is aged at least 18
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true]
+      - name: meets_bmi_criteria
+        description: Whether a qualifying BMI was recorded in the preceding 12 months
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true]
+      - name: latest_bmi_35_date
+        description: Latest date in the 12-month window with BMI at least 35
+      - name: latest_bmi_32_5_date
+        description: Latest date in the 12-month window with numeric BMI at least 32.5
+      - name: has_lower_bmi_threshold_ethnicity
+        description: Whether the most recent journal ethnicity code qualifies for the 32.5 threshold
+        data_tests:
+          - not_null
+      - name: latest_ethnicity_date
+        description: Date of the most recent QOF ethnicity journal code
+      - name: latest_lower_threshold_ethnicity_date
+        description: Date of the most recent lower-threshold ethnicity journal code
+      - name: comorbidity_count
+        description: Number of the five OBES2 comorbidities met
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 4
+                max_value: 5
+                inclusive: true
+      - name: has_ascvd
+        description: Whether an ASCVD diagnosis has been recorded
+      - name: earliest_ascvd_date
+        description: Earliest ASCVD diagnosis date
+      - name: has_unresolved_hypertension
+        description: Whether the latest hypertension diagnosis is unresolved
+      - name: latest_hypertension_date
+        description: Latest hypertension diagnosis date
+      - name: latest_hypertension_resolved_date
+        description: Latest hypertension resolved date
+      - name: has_dyslipidaemia
+        description: Whether drug or lipid-value evidence meets the dyslipidaemia rule
+      - name: latest_lipid_therapy_date
+        description: Latest qualifying lipid-lowering order date in the six-month window
+      - name: latest_ldl_date
+        description: Date of the latest numeric LDL result in the 12-month window
+      - name: latest_ldl_value
+        description: Latest LDL result in mmol/L
+      - name: latest_triglycerides_date
+        description: Date of the latest numeric triglycerides result in the 12-month window
+      - name: latest_triglycerides_value
+        description: Latest triglycerides result in mmol/L
+      - name: latest_hdl_date
+        description: Date of the latest numeric HDL result in the 12-month window
+      - name: latest_hdl_value
+        description: Latest HDL result in mmol/L
+      - name: has_obstructive_sleep_apnoea
+        description: Whether an obstructive sleep apnoea diagnosis has been recorded
+      - name: earliest_obstructive_sleep_apnoea_date
+        description: Earliest obstructive sleep apnoea diagnosis date
+      - name: has_unresolved_type2_diabetes
+        description: Whether the latest type 2 diabetes diagnosis is unresolved
+      - name: latest_type2_diabetes_date
+        description: Latest type 2 diabetes diagnosis date
+      - name: latest_diabetes_resolved_date
+        description: Latest diabetes resolved date

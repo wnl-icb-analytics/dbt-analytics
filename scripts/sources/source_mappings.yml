@@ -88,6 +88,22 @@ sources:
     raw_prefix: raw_mhsds
     domain: commissioning
 
+  # CWT schema in DATA_LAKE
+  - source_name: cwt_pathway
+    database: DATA_LAKE
+    schema: CWT
+    description: Cancer waiting times data, pathway level version.
+    raw_prefix: raw_cwt_pathway
+    domain: commissioning
+
+  # CWT schema in DATA_LAKE
+  - source_name: rcrd
+    database: DATA_LAKE
+    schema: RCRD
+    description: Rapid Cancer Registration Dataset (RCRD)
+    raw_prefix: raw_rcrd
+    domain: commissioning
+
   # Registry Data (Births/Deaths)
   - source_name: registries_deaths
     database: DATA_LAKE
@@ -300,6 +316,14 @@ sources:
       - LSOA_WIDER_LOOKUP
       - LSOA21_SICBL26_ICB26_NHSER26_LAD26
 
+  - source_name: reference_terminology_curated
+    database: REFERENCE
+    schema: TERMINOLOGY
+    description: Curated Primary Care Domain terminology releases
+    raw_prefix: raw_reference_terminology
+    domain: shared
+    manual: true
+
   # ========================================
   # MESH IN-FLOW Via PID Environment
   # ========================================
@@ -349,22 +373,10 @@ sources:
   # tagged `manual: true` are skipped by the metadata query and source YAML
   # generation steps; their column lists come from the manual YAML instead.
 
-  # ServicesDataLocal remapped feeds (CNWL et al. spreadsheet submissions)
-  # See https://github.com/.../servicesdatalocal-remapping
-  # Many tables in this schema; only MHCORL is currently consumed downstream
-  # so we declare it manually to avoid auto-pulling 30+ unused feeds.
-  - source_name: sdl
-    database: DATA_LAKE__NCL
-    schema: SDL
-    description: ServicesDataLocal canonical-named feeds (mental health, community, 111, etc.)
-    raw_prefix: raw_sdl
-    domain: commissioning
-    manual: true
-
-  # ServicesDataLocal WNL-footprint feeds (permanent home; DATA_LAKE__NCL.SDL
-  # and WNL_SDL copies will be retired). Only the SLAM contract-monitoring
-  # feeds + the pipeline META observability objects are pulled; the schema
-  # holds 20+ other feeds (CONTROL_* tables stay in DATA_LAKE only).
+  # ServicesDataLocal feeds (permanent home; the DATA_LAKE__NCL.SDL copy was
+  # dropped 2026-09). Only the SLAM contract-monitoring feeds, MHCORL and the
+  # pipeline META observability objects are pulled; the schema holds 20+
+  # other feeds (CONTROL_* tables stay in DATA_LAKE only).
   - source_name: sdl_wnl
     database: DATA_LAKE
     schema: SDL
@@ -379,6 +391,7 @@ sources:
       - COMOPL
       - REF
       - MH
+      - MHCORL
       - META_FILE_REGISTRY
       - META_SCHEMA_VERSIONS
       - META_FILE_VERSIONS

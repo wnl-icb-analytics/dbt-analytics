@@ -50,7 +50,7 @@ select
     , scaled_score_clinical_frailty
     , scaled_score_medicines_management
     , scaled_score_emergency_use
-    , scaled_score_residential_social_factors
+    , null as scaled_score_residential_social_factors
     , scaled_score_wider_care_engagement
     , scaled_score_asc_indicators
     -- care-home exclusion component (drives the final-score penalty)

@@ -4,14 +4,17 @@ models:
   - name: stg_mhsds_mhactperiod
     description: >
       MHSDS Mental Health Act legal-status periods. Grain: one row per
-      uniq_mh_act_episode_id. Legal-status codes are NHSD codes: 01 is an
-      informal admission, 98 and 99 are not applicable or unknown, and other
-      codes indicate a formal Mental Health Act legal status.
+      uniq_mh_act_episode_id, using the newest reporting period and then the
+      latest received submission within that period. Legal-status codes are
+      NHSD codes: 01 is an informal admission, 98 and 99 are not applicable or
+      unknown, and other codes indicate a formal Mental Health Act legal status.
     config:
       meta:
         owner:
           name: Eddie Davison
     columns:
+      - name: mhs401_uniq_id
+        description: Identifier of the retained source row; changes on resubmission.
       - name: uniq_mh_act_episode_id
         description: Unique Mental Health Act episode identifier.
         data_tests:
@@ -22,12 +25,27 @@ models:
       - name: nhsd_legal_status
         description: NHSD legal-status code.
       - name: start_date_mh_act_legal_status_class
-        description: Legal-status period start date.
+        description: >-
+          Legal-status period start date, as a date. Source values before 1901
+          are Excel-epoch missing-value sentinels and are null here.
       - name: end_date_mh_act_legal_status_class
-        description: Legal-status period end date.
+        description: >-
+          Legal-status period end date, as a date. Null while the period is
+          open. Source values before 1901 are Excel-epoch missing-value
+          sentinels and are null here.
       - name: expiry_date_mh_act_legal_status_class
-        description: Legal-status period expiry date.
+        description: >-
+          Legal-status period expiry date, as a date. Source values before 1901
+          are Excel-epoch missing-value sentinels and are null here.
       - name: org_id_prov
         description: Provider organisation code.
       - name: unique_local_patient_id
         description: Provider-local patient identifier.
+      - name: uniq_submission_id
+        description: Accepted submission containing the retained period version.
+      - name: reporting_period_end_date
+        description: >
+          Reporting period recorded on the retained legal-status record, which
+          is the one from the newest accepted submission containing the period.
+      - name: effective_from
+        description: Time the retained source file was received.

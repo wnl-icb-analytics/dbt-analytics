@@ -1,0 +1,75 @@
+models:
+  - name: stg_olids_episode_of_care_v2
+    description: Active Episode of Care V2 records at lds_source_record_id grain. Kept parallel to V1 and not adopted downstream.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: lds_source_record_id
+        description: LDS identifier for the source record and row grain of this model
+        data_tests:
+          - unique
+          - not_null
+      - name: id
+        description: Episode identifier. It can repeat across source records and is not the row grain.
+      - name: publisher_organisation_id
+        description: Identifier for the organisation that published the record
+      - name: patient_id
+        description: Source patient identifier
+      - name: person_id
+        description: Person identifier used by the analytics model
+        data_tests:
+          - not_null
+      - name: episode_type_source_concept_id
+        description: Source concept identifier for the episode type
+      - name: episode_type_code
+        description: Mapped episode type code
+      - name: episode_type_display
+        description: Mapped episode type display value
+      - name: episode_type_source_code
+        description: Source episode type code
+      - name: episode_type_source_display
+        description: Source episode type display value
+      - name: episode_status_source_concept_id
+        description: Source concept identifier for the episode status
+      - name: episode_status_code
+        description: Mapped episode status code
+      - name: episode_status_display
+        description: Mapped episode status display value
+      - name: episode_status_source_code
+        description: Source episode status code
+      - name: episode_status_source_display
+        description: Source episode status display value
+      - name: episode_of_care_start_date
+        description: Episode start date
+      - name: episode_of_care_end_date
+        description: Episode end date. Source rows where this precedes the start date are retained.
+      - name: care_manager_practitioner_in_role_id
+        description: Identifier for the practitioner responsible for the episode
+      - name: care_manager_organisation_id
+        description: Identifier for the organisation responsible for managing care
+      - name: care_manager_organisation_code
+        description: ODS code for the organisation responsible for managing care
+      - name: author_organisation_id
+        description: Identifier for the organisation that authored the record
+      - name: publisher_organisation_code
+        description: ODS code for the organisation that published the record
+      - name: type
+        description: Source episode type value
+      - name: status
+        description: Source episode status value
+      - name: clinical_system
+        description: Clinical system that supplied the record
+      - name: source_extraction_date
+        description: Date the record was extracted from the source
+      - name: lds_transform_datetime
+        description: Datetime the record was transformed by LDS
+      - name: lds_is_deleted
+        description: Source deletion flag. Deleted records are excluded from this model.
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          config:
+            severity: warn
+          arguments:
+            min_value: 1

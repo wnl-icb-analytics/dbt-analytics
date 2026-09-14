@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: int_mhsds_latest_care_contact
+    description: >-
+      Newest accepted MHS201 state for each care contact. One row represents
+      one unique service request and care contact. Existing contact facts,
+      encounter logic and currencies use this current-state view.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [uniq_serv_req_id, uniq_care_cont_id]
+    columns:
+      - name: mhs201_uniq_id
+        description: Identifier of the newest accepted MHS201 source row.
+        data_tests: [not_null, unique]
+      - name: uniq_serv_req_id
+        description: MHSDS unique service request identifier.
+        data_tests: [not_null]
+      - name: uniq_care_cont_id
+        description: MHSDS unique care contact identifier within the referral.
+        data_tests: [not_null]

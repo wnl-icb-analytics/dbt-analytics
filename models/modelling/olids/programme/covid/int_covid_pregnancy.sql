@@ -9,17 +9,17 @@ Simplified rule aligned with flu pregnancy logic.
 Eligible in 2024/25 campaigns; not eligible in 2025/26.
 */
 
-{{ config(materialized='table') }}
+{{ config(
+    materialized='incremental',
+    incremental_strategy='delete+insert',
+    unique_key='campaign_id',
+    tags=['covid_flu']
+) }}
 
 WITH all_campaigns AS (
-    -- Generate data for both current and previous campaigns automatically
-    SELECT * FROM ({{ covid_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_spring_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_spring_config() }})
+    -- Every COVID campaign the models report on
+    -- (campaign list: macros/config/covid_campaign_selection.sql)
+    {{ covid_build_campaigns() }}
 ),
 
 -- Step 1: Find pregnancy/delivery codes during campaign periods (for all campaigns)  
@@ -30,9 +30,10 @@ pregnancy_during_campaign_periods AS (
         MAX(obs.clinical_effective_date) AS latest_pregnancy_date,
         'Pregnant/delivered during COVID campaign periods' AS eligibility_reason,
         cc.campaign_reference_date
-    FROM ({{ get_observations("'PREGDEL_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'PREGDEL_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date >= cc.pregnancy_current_start
         AND obs.clinical_effective_date <= cc.pregnancy_current_end
         AND cc.eligible_pregnancy = TRUE
@@ -49,9 +50,10 @@ pregnancy_before_campaign AS (
         cc.pregnancy_lookback_start,
         cc.pregnancy_current_start,
         cc.campaign_reference_date
-    FROM ({{ get_observations("'PREG_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'PREG_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date >= cc.pregnancy_lookback_start
         AND obs.clinical_effective_date < cc.pregnancy_current_start
         AND cc.eligible_pregnancy = TRUE
@@ -62,8 +64,8 @@ pregnancy_before_campaign AS (
 
 -- Step 3: Create lookup of pregnancy-only codes (to identify delivery codes)
 pregnancy_only_codes AS (
-    SELECT DISTINCT mapped_concept_code
-    FROM ({{ get_observations("'PREG_COD'", 'UKHSA_COVID') }})
+    SELECT DISTINCT spec_version, mapped_concept_code
+    FROM ({{ get_observations("'PREG_COD'", 'UKHSA_COVID', versioned=true) }})
 ),
 
 -- Step 4: Check for delivery codes after pregnancy but before campaign start
@@ -72,10 +74,14 @@ pregnancy_with_delivery_before_campaign AS (
         pb.campaign_id,
         pb.person_id
     FROM pregnancy_before_campaign pb
-    JOIN ({{ get_observations("'PREGDEL_COD'", 'UKHSA_COVID') }}) del_obs
+    JOIN all_campaigns cc
+        ON pb.campaign_id = cc.campaign_id
+    JOIN ({{ get_observations("'PREGDEL_COD'", 'UKHSA_COVID', versioned=true) }}) del_obs
         ON pb.person_id = del_obs.person_id
+        AND del_obs.spec_version = cc.terminology_version
     LEFT JOIN pregnancy_only_codes poc
         ON del_obs.mapped_concept_code = poc.mapped_concept_code
+        AND poc.spec_version = cc.terminology_version
     WHERE del_obs.clinical_effective_date > pb.pregnancy_date
         AND del_obs.clinical_effective_date < pb.pregnancy_current_start
         -- Delivery codes are in PREGDEL_COD but NOT in PREG_COD
@@ -130,18 +136,17 @@ people_pregnant_with_age AS (
         bpe.campaign_id,
         bpe.person_id,
         demo.birth_date_approx,
-        DATEDIFF('year', demo.birth_date_approx, bpe.campaign_reference_date) AS age_years_at_ref_date,
-        DATEDIFF('month', demo.birth_date_approx, bpe.campaign_reference_date) AS age_months_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(bpe.campaign_reference_date, demo.birth_date_approx) / 12) AS age_years_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(bpe.campaign_reference_date, demo.birth_date_approx)) AS age_months_at_ref_date,
         bpe.qualifying_event_date,
         bpe.campaign_reference_date,
         bpe.eligibility_reason
     FROM best_pregnancy_eligibility bpe
     LEFT JOIN {{ ref('dim_person_demographics') }} demo 
         ON bpe.person_id = demo.person_id
-    WHERE demo.is_active = TRUE
-        AND demo.birth_date_approx IS NOT NULL
+    WHERE demo.birth_date_approx IS NOT NULL
         AND bpe.rn = 1  -- Only best eligibility per person
-        AND DATEDIFF('year', demo.birth_date_approx, bpe.campaign_reference_date) >= 12  -- Minimum age 12 (as per flu)
+        AND demo.birth_date_approx <= DATEADD('year', -12, bpe.campaign_reference_date)  -- Minimum age 12 (as per flu), tested on birth date
 ),
 
 -- Step 9: Format for eligibility table

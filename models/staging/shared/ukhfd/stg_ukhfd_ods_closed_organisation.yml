@@ -1,0 +1,25 @@
+version: 2
+models:
+- name: stg_ukhfd_ods_closed_organisation
+  description: Latest archived closed organisation or site, one row per normalised ODS code.
+    Reads the full closed-since-1991 archive, retaining codes absent from the current delivery.
+    Tied UKHFD revisions prefer the most recent closure and opening dates, then import and
+    creation timestamps and name. Dates describe the selected archived organisation.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: organisation_code
+    description: Archived ODS organisation or site code, trimmed and upper case.
+    data_tests:
+    - unique
+    - not_null
+  - name: organisation_name
+    description: Name in the selected archive revision.
+  - name: organisation_open_date
+    description: Recorded opening date; null when absent from the archive.
+  - name: organisation_close_date
+    description: Recorded closure date; null when absent from the archive.
+  - name: source_effective_from_at
+    description: Start of the selected UKHFD archive revision, not the closure date.

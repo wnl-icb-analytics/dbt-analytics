@@ -1,3 +1,6 @@
+-- Pair: macros/qof_registers/calculate_dementia_register.sql.
+-- This live fact includes future-dated records; its PIT pair is strict as-of.
+
 {{
     config(
         materialized='table',
@@ -80,8 +83,8 @@ SELECT
     dd.all_dementia_concept_displays
 
 FROM dementia_diagnoses AS dd
-INNER JOIN {{ ref('dim_person') }} AS p
+LEFT JOIN {{ ref('dim_person') }} AS p
     ON dd.person_id = p.person_id
-INNER JOIN {{ ref('dim_person_age') }} AS age
+LEFT JOIN {{ ref('dim_person_age') }} AS age
     ON dd.person_id = age.person_id
 WHERE dd.has_active_dementia_diagnosis = TRUE  -- Only include persons with active dementia diagnosis

@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: sem_olids_bp_indicators
+    description: |
+      OLIDS NICE blood pressure indicators semantic view. One row represents
+      one person in one NICE indicator on the reporting date.
+
+      Covers IND239 to IND246 for hypertension, coronary heart disease,
+      stroke/TIA and peripheral arterial disease. Provides denominator,
+      numerator and care-gap metrics with practice, geography, ethnicity and
+      deprivation dimensions. Personalised care adjustments are not applied.
+
+      Filter indicator_id before using metrics because a person can appear in
+      more than one indicator.
+
+      dbt grain tests are not defined on this semantic_view because semantic
+      views are not standard queryable relations. The person_id and indicator_id
+      grain is tested on fct_person_bp_control_nice_indicators.
+    config:
+      materialized: semantic_view
+      schema: SEMANTIC
+      meta:
+        owner:
+          name: Eddie Davison

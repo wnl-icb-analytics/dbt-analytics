@@ -1,22 +1,22 @@
 
 models:
   - name: int_mhsds_carecontact_encounters
-    description: "Event history for Mental Health care contacts from MHSDS data"
+    description: >-
+      MHSDS care contacts prepared for the existing cross-system monthly
+      activity model. One row per deduplicated service request and care contact.
     config:
       meta:
         owner:
           name: Jessica Roberts
     columns:
       - name: encounter_id
-        description: "Surrogate key - unique identifier for the care contact encounter"
-        tests:
-#          - unique comment out for now - need to figure our correct unique keys 12/02/2026 TS
-          - not_null
+        description: Stable key generated from the service request and care contact identifiers.
+        data_tests: [not_null, unique]
       - name: sk_patient_id
         description: pseudo NHS number
       - name: org_id_prov
         description: Provider organisation ID
-      - name: attend_or_dna_code
+      - name: attend_status
         description: Attendance or Did Not Attend code for the care contact
       - name: attendance_status
         description: Description of the attendance status for the care contact

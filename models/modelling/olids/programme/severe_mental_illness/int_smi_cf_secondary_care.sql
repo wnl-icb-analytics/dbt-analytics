@@ -9,27 +9,35 @@
 This includes number of checks missed and vulnerabilities. The MHSDS active submission is 6 weeks behind current date.
 */
 
---find local patient ids for active submission. One sk_patient_id and one person_id can have multiple local patient ids. MPI_PERSON_ID is the unique identifier in the MHSD record set.
-with LOCAL_ID as (
-select distinct 
-mpi.sk_patient_id 
-,mpi.PERSON_ID as mpi_person_id 
-,local_patient_id  
+-- Find the latest provider-local identifier for each MHSDS person and provider.
+-- MHS001 is monthly history; the bridge supplies the cross-system patient key.
+with mpi_latest as (
+    select *
+    from {{ ref('stg_mhsds_mpi_history') }}
+    -- restrict to NLFT before ranking: org_id_prov is part of the partition,
+    -- so other providers form separate partitions this model never uses
+    where org_id_prov in ('G6V2S')
+    qualify row_number() over (
+        partition by person_id, org_id_prov
+        order by reporting_period_end_date desc, mhs001_uniq_id desc
+    ) = 1
+)
+
+, LOCAL_ID as (
+select distinct
+b.sk_patient_id
+,mpi.PERSON_ID as mpi_person_id
+,local_patient_id
 ,org_id_prov
 ,'NLFT' as provider
-,max(date(a.reporting_period_end_date)) as latest_reporting_date
-FROM {{ ref('stg_mhsds_mpi') }} mpi
---FROM MODELLING.DBT_STAGING.STG_MHSDS_MPI mpi
-INNER JOIN {{ ref('stg_mhsds_activesubmission') }} a ON mpi.uniq_submission_id = a.uniq_submission_id
---inner join MODELLING.DBT_STAGING.STG_MHSDS_ACTIVESUBMISSION a  on mpi.uniq_submission_id = a.uniq_submission_id
---convert STG_MHSDS_MPI sk_patient_id to number for more effective joins until changed upstream.
-INNER JOIN {{ ref('int_smi_population_base') }} smi on smi.sk_patient_id = TO_NUMBER(mpi.sk_patient_id)
---INNER JOIN MODELLING.OLIDS_PROGRAMME.INT_SMI_POPULATION_BASE smi on TO_VARCHAR(smi.sk_patient_id) = mpi.sk_patient_id
+,mpi.reporting_period_end_date as latest_reporting_date
+FROM mpi_latest mpi
+INNER JOIN {{ ref('stg_mhsds_bridging') }} b ON mpi.person_id = b.person_id
+INNER JOIN {{ ref('int_smi_population_base') }} smi on smi.sk_patient_id = TO_NUMBER(b.sk_patient_id)
 where ORG_ID_PROV in ('G6V2S') --,'TAF') use NLFT code only C&I legacy patients are not found in the NLFT EPR system
 and mpi.DMIC_CCG_CODE = '93C'
 and smi.HAS_ACTIVE_SMI_DIAGNOSIS
 and mpi.pers_death_date is null -- extra check to exclude people who have died as they will not be in the EPR system and therefore will not have case finding data. This is in addition to the death date check in the population base definition.
-group by all
 )
 --ward code look up
 ,WARD_DETAILS AS (
@@ -163,7 +171,7 @@ where last_6mths_flag = 'Yes' OR is_current_spell
 ,latest_spell as (
 select *
 from spell_6m sp
-QUALIFY ROW_NUMBER() OVER (PARTITION BY sp.mpi_person_id ORDER BY spell_start_date DESC, start_date_ward_stay DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY sp.sk_patient_id ORDER BY spell_start_date DESC, start_date_ward_stay DESC) = 1
 )
 --final add back in population characteristics and health check flags and local patient id for NFLT.
 select 

@@ -14,6 +14,8 @@ v.PERSON_ID
 ,v.ethnicity_category
 ,v.ethcat_order
 ,v.BOROUGH_REGISTERED
+,v.borough_resident
+,v.residential_loc
 ,v.practice_code
 ,sixin1_dose1_label
 ,sixin1_dose1_fiscal
@@ -66,7 +68,6 @@ v.PERSON_ID
 ,mmrv_dose2_label
 ,mmrv_dose2_fiscal
 ,mmrv_dose2_sort
---6-in-1 dose 4 no records yet
 FROM {{ ref('int_childhood_imms_dose_base_child') }} v
 --from DEV__MODELLING.OLIDS_PROGRAMME.INT_CHILDHOOD_IMMS_DOSE_BASE_CHILD v
 LEFT JOIN {{ ref('int_childhood_imms_historical_sixin1_dose1') }} s1 using (PERSON_ID)

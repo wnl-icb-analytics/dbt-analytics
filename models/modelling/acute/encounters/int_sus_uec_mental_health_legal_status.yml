@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: int_sus_uec_mental_health_legal_status
+    description: >
+      Mental Health Act legal status recorded during A&E attendances (ECDS).
+      One row per legal-status record; an attendance can have more than one
+      when the status changes during the attendance. Join to
+      int_sus_uec_encounter on visit_occurrence_id. Recorded on around 5% of
+      attendances, and 96% of those are 98 (not applicable) or 99 (not known).
+    config:
+      tags: ["daily"]
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: legal_status_id
+        description: Surrogate key of attendance and source sequence. Grain of the model.
+        data_tests:
+          - unique
+          - not_null
+      - name: visit_occurrence_id
+        description: ECDS attendance identifier; join key to int_sus_uec_encounter.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('int_sus_uec_encounter')
+                field: visit_occurrence_id
+      - name: sk_patient_id
+        description: Pseudonymised patient key from the attendance.
+      - name: attendance_date
+        description: Arrival date of the attendance.
+      - name: legal_status_sequence
+        description: Source sequence of the record within the attendance (1 = first).
+      - name: legal_status_code
+        description: >
+          Mental Health Act legal status classification code (NHS Data
+          Dictionary). 01 informal; 02 Section 2; 03 Section 3; 20 Section 136;
+          98 not applicable; 99 not known.
+      - name: legal_status_desc
+        description: Description from the UKHFD data dictionary dimension.
+      - name: assigned_at
+        description: When the legal status was assigned.
+      - name: expires_at
+        description: When the legal status expired, where recorded.

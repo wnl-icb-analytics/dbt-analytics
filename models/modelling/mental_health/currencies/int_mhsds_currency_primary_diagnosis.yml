@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: int_mhsds_currency_primary_diagnosis
+    description: >
+      MHSDS primary diagnosis history for currency grouping. Grain: one row per
+      uniq_serv_req_id and coded_diag_timestamp. Population: MHS604 primary
+      diagnoses with a recorded timestamp. A corrected code at the same
+      referral and timestamp supersedes the earlier value. Equal timestamps use
+      the NHS England grouper ordering.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: mhs604_uniq_id
+        description: Identifier of the retained source row; changes on resubmission.
+        data_tests:
+          - not_null
+      - name: uniq_serv_req_id
+        description: Unique service request identifier.
+        data_tests:
+          - not_null
+      - name: person_id
+        description: MHSDS person identifier.
+      - name: coded_diag_timestamp
+        description: Diagnosis coding timestamp.
+        data_tests:
+          - not_null
+      - name: diag_scheme_in_use
+        description: Diagnosis coding scheme.
+      - name: prim_diag
+        description: Primary diagnosis code as submitted.
+      - name: icd10_code
+        description: Resolved ICD-10 code before normalisation.
+      - name: icd10_3
+        description: Three-character normalised ICD-10 code.
+      - name: org_id_prov
+        description: Provider organisation code.
+      - name: source_record_number
+        description: MHSDS record number used to resolve equal diagnosis timestamps.
+      - name: source_row_number
+        description: MHSDS row number used to resolve equal diagnosis timestamps.
+      - name: uniq_submission_id
+        description: Submission containing the retained diagnosis.
+      - name: reporting_period_end_date
+        description: End of the reporting period containing the retained diagnosis.
+      - name: effective_from
+        description: Time the retained source file was received.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - uniq_serv_req_id
+              - coded_diag_timestamp

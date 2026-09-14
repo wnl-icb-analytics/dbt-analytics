@@ -26,7 +26,7 @@ placeholder literals for logic testing; swap in the monthly date_spine (commente
 index_dates CTE) for production.
 */
 
-{%- set index_dates = ['2026-08-03'] -%}
+{%- set index_dates = ['2026-09-01'] -%}
 {#-
     v1: placeholder index dates for the logic test (both fall in the 2026-07 roster month).
     Driven by this Jinja list so the spine and the per-date pregnancy reconstruction below
@@ -307,6 +307,18 @@ meds as (
     left join {{ ref('cltcs_medications_monthly_capture') }} m
       on  m.person_id = s.person_id
       and m.snapshot_month = date_trunc('month', s.index_date)
+),
+
+-- Resident IMD 2025 quintile (as-at index_date), from the int_person_geography snapshot. Net-new
+-- covariate (not in cltcs_cohort_data): matched as a separate stratum (controls here, treated read
+-- live at matching time). int_person_geography collapses each person to a single, ~94%-undated
+-- address, so this tracks residence forward from the snapshot's first run, not true past residence
+-- (the value is "most-recently-known residence", not period-accurate deprivation).
+geography as (
+    select f.sk_patient_id, f.index_date, d.imd_quintile_25
+    from {{ temporal_join('spine', 'index_date', ref('int_person_geography_snapshot'),
+                          join_key='person_id', join_type='left',
+                          valid_from_col='dbt_valid_from', valid_to_col='dbt_valid_to') }}
 )
 
 select
@@ -318,6 +330,9 @@ select
     , s.neighbourhood_code
     -- cltcs_cohort_data's area_code is the same nh_gp-mapping neighbourhood_code (legacy name); alias it
     , s.neighbourhood_code as area_code
+    -- resident IMD 2025 quintile (text label) as-at index_date; NULL when residence unknown. Net-new
+    -- covariate (not in cltcs_cohort_data), matched as a separate stratum -- see the geography CTE.
+    , geo.imd_quintile_25
     -- demographics (as-at)
     , coalesce(dem.practice_code, 'Unknown') as practice_code
     -- practice_name resolved from the as-at practice_code via dim_practice (current canonical name)
@@ -547,3 +562,4 @@ left join qrisk            qr  on qr.sk_patient_id = s.sk_patient_id and qr.inde
 left join asthma           am  on am.person_id = s.person_id and am.index_date = s.index_date
 left join asc_service      asc_c on asc_c.sk_patient_id = s.sk_patient_id and asc_c.index_date = s.index_date
 left join meds             med on med.person_id = s.person_id and med.index_date = s.index_date
+left join geography        geo on geo.sk_patient_id = s.sk_patient_id and geo.index_date = s.index_date

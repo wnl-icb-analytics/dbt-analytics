@@ -1,3 +1,7 @@
+-- Pair: macros/qof_registers/calculate_obesity_register.sql.
+-- This live fact includes future-dated records. Its PIT pair is strict as-of
+-- and derives age at the reference date rather than using current age.
+
 {{
     config(
         materialized='table',
@@ -62,8 +66,11 @@ register_logic AS (
 
         -- Person demographics
         coalesce(age.age >= 18 AND (
-            bmi.is_bmi_30_plus = TRUE
-            OR (eth.is_bame = TRUE AND bmi.is_bmi_27_5_plus = TRUE)
+            bmi.latest_valid_bmi_date IS NOT NULL
+            AND (
+                bmi.is_bmi_30_plus = TRUE
+                OR (eth.is_bame = TRUE AND bmi.is_bmi_27_5_plus = TRUE)
+            )
         ), FALSE) AS is_on_register
     FROM {{ ref('dim_person') }} AS p
     INNER JOIN {{ ref('dim_person_age') }} AS age ON p.person_id = age.person_id

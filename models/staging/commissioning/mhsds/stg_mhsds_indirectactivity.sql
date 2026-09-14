@@ -1,15 +1,14 @@
 {{
      config(
-        materialized = 'table',
+        materialized = 'view',
         tags=['mhsds']
         )
 }}
 
-with deduplicated as (
+with accepted_records as (
 {{
-    deduplicate_mhsds(
-        mhsds_table = ref('raw_mhsds_mhs204indirectactivity'),
-        partition_cols = ['mhs204_uniq_id']
+    select_accepted_mhsds_period_records(
+        mhsds_table = ref('raw_mhsds_mhs204indirectactivity')
     )
 }} )
 
@@ -21,4 +20,8 @@ select
     , duration_indirect_act
     , care_prof_team_local_id
     , other_care_prof_team_local_id
-from deduplicated
+    , uniq_submission_id
+    , reporting_period_start_date::date as reporting_period_start_date
+    , reporting_period_end_date::date as reporting_period_end_date
+    , effective_from
+from accepted_records

@@ -10,7 +10,7 @@ models:
 
       • No clinical codes required - demographics only
 
-      • Generates data for current and previous flu campaigns automatically
+      • Generates data for every campaign in flu_reported_campaign_ids()
 
       Purpose: Identify school-aged children eligible for flu vaccination within campaign-defined age parameters.'
     config:
@@ -62,8 +62,8 @@ models:
             min_value: 1
     columns:
       - name: campaign_id
-        description: 'Flu campaign identifier (e.g., flu_2024_25, flu_2023_24)'
-        tests:
+        description: 'Flu campaign identifier, for example Flu 2025-26 or Flu 2026-27'
+        data_tests:
           - not_null
       - name: campaign_category
         description: 'Category of eligibility criteria (always "Age-Based")'
@@ -71,7 +71,7 @@ models:
         description: 'Risk group classification (always "Children School Age")'
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
       - name: qualifying_event_date
         description: 'Date of qualifying event (NULL for age-based rules as no event)'

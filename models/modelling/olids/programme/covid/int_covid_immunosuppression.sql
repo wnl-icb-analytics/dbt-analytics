@@ -1,29 +1,39 @@
 /*
 COVID Immunosuppression Eligibility Rule
 
+This implements RECALL_IMMUNO_GROUP, the group the campaign offer selects (spec 5.1.1
+Group M and its predecessors), not IMMUNO_GROUP, which is the uptake monitoring variant.
+The two differ only in where the medication, chemotherapy and admin lookbacks are anchored:
+the recall group measures them from RUN_DAT, the uptake group from START_DAT.
+
 Business Rule: Person is eligible if they have:
 1. ANY of the following evidence of immunosuppression:
-   - Immunosuppression diagnosis (IMMDX_COV_COD) - latest occurrence
-   - Immunosuppression medication (IMMRX_COD) since lookback date (6 months)
-   - Immunosuppression administration (IMM_ADM_COD) since lookback date (3 years)  
-   - Chemotherapy/radiotherapy (DXT_CHEMO_COD) since lookback date (6 months)
-2. AND aged 6 months to <75 years (for 2025/26 via immuno_max_age_years) or any age (for 2024/25)
+   - Immunosuppression diagnosis (IMMDX_COV_COD) - ever
+   - Immunosuppression medication (IMMRX_COD) in the 6 months before RUN_DAT
+   - Immunosuppression administration (IMM_ADM_COD) in the 3 years before RUN_DAT
+   - Chemotherapy/radiotherapy (DXT_CHEMO_COD) in the 6 months before RUN_DAT
+2. AND aged 6 months or over at the reference date
+
+No upper age bound is applied here. The offer's under-75 cap (immuno_max_age_years,
+Spring 2025 onward) is applied by fct_covid_eligibility, so this model can also feed
+int_covid_flu_risk_group_flags with immunosuppression status at any age, and it is
+computed for every campaign whether or not that campaign offers the cohort.
 
 Combination rule - multiple evidence sources with OR logic.
 KEY ELIGIBILITY GROUP for restricted 2025/26 campaigns.
 */
 
-{{ config(materialized='table') }}
+{{ config(
+    materialized='incremental',
+    incremental_strategy='delete+insert',
+    unique_key='campaign_id',
+    tags=['covid_flu']
+) }}
 
 WITH all_campaigns AS (
-    -- Generate data for both current and previous campaigns automatically
-    SELECT * FROM ({{ covid_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_spring_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_spring_config() }})
+    -- Every COVID campaign the models report on
+    -- (campaign list: macros/config/covid_campaign_selection.sql)
+    {{ covid_build_campaigns() }}
 ),
 
 -- Step 1: Find people with immunosuppression diagnosis (for all campaigns)
@@ -33,11 +43,11 @@ people_with_immuno_diagnosis AS (
         obs.person_id,
         MAX(obs.clinical_effective_date) AS latest_diagnosis_date,
         'Immunosuppression diagnosis' AS evidence_type
-    FROM ({{ get_observations("'IMMDX_COV_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'IMMDX_COV_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= cc.audit_end_date
-        AND cc.eligible_immunosuppression = TRUE
     GROUP BY cc.campaign_id, obs.person_id
 ),
 
@@ -48,12 +58,12 @@ people_with_recent_immuno_medications AS (
         med.person_id,
         MAX(med.order_date) AS latest_medication_date,
         'Recent immunosuppression medication' AS evidence_type
-    FROM ({{ get_medication_orders(cluster_id='IMMRX_COD', source='UKHSA_COVID') }}) med
+    FROM ({{ get_medication_orders(cluster_id='IMMRX_COD', source='UKHSA_COVID', versioned=true) }}) med
     CROSS JOIN all_campaigns cc
-    WHERE med.order_date IS NOT NULL
-        AND med.order_date >= cc.immuno_medication_lookback_date
+    WHERE med.spec_version = cc.terminology_version
+        AND med.order_date IS NOT NULL
+        AND med.order_date >= cc.recall_immuno_medication_lookback_date
         AND med.order_date <= cc.audit_end_date
-        AND cc.eligible_immunosuppression = TRUE
     GROUP BY cc.campaign_id, med.person_id
 ),
 
@@ -64,12 +74,12 @@ people_with_recent_immuno_admin AS (
         obs.person_id,
         MAX(obs.clinical_effective_date) AS latest_admin_date,
         'Recent immunosuppression administration' AS evidence_type
-    FROM ({{ get_observations("'IMM_ADM_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'IMM_ADM_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
-        AND obs.clinical_effective_date >= cc.immuno_admin_lookback_date
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
+        AND obs.clinical_effective_date >= cc.recall_immuno_admin_lookback_date
         AND obs.clinical_effective_date <= cc.audit_end_date
-        AND cc.eligible_immunosuppression = TRUE
     GROUP BY cc.campaign_id, obs.person_id
 ),
 
@@ -80,12 +90,12 @@ people_with_recent_chemo AS (
         obs.person_id,
         MAX(obs.clinical_effective_date) AS latest_chemo_date,
         'Recent chemotherapy/radiotherapy' AS evidence_type
-    FROM ({{ get_observations("'DXT_CHEMO_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'DXT_CHEMO_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
-        AND obs.clinical_effective_date >= cc.immuno_medication_lookback_date  -- Same 6-month lookback
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
+        AND obs.clinical_effective_date >= cc.recall_immuno_medication_lookback_date  -- same 6-month recall window
         AND obs.clinical_effective_date <= cc.audit_end_date
-        AND cc.eligible_immunosuppression = TRUE
     GROUP BY cc.campaign_id, obs.person_id
 ),
 
@@ -122,38 +132,33 @@ people_with_immunosuppression AS (
         MAX(aie.evidence_date) AS latest_evidence_date,
         LISTAGG(DISTINCT aie.evidence_type, '; ') AS evidence_types,
         cc.campaign_reference_date,
-        cc.immuno_max_age_years,
         cc.audit_end_date
     FROM all_immuno_evidence aie
     LEFT JOIN all_campaigns cc ON aie.campaign_id = cc.campaign_id
     GROUP BY
-        aie.campaign_id, aie.person_id, cc.campaign_reference_date,
-        cc.immuno_max_age_years, cc.audit_end_date
+        aie.campaign_id, aie.person_id, cc.campaign_reference_date, cc.audit_end_date
 ),
 
--- Step 7: Add age information and apply campaign-specific age restrictions
--- Minimum age: 6 months (all campaigns)
--- Maximum age: immuno_max_age_years from config (NULL = no cap, 75 = <75 for 2025/26)
+-- Step 7: Add age information and apply the 6-month floor (all campaigns)
 people_immunosuppressed_with_age AS (
     SELECT
         pwi.campaign_id,
         pwi.person_id,
         demo.birth_date_approx,
-        DATEDIFF('year', demo.birth_date_approx, pwi.campaign_reference_date) AS age_years_at_ref_date,
-        DATEDIFF('month', demo.birth_date_approx, pwi.campaign_reference_date) AS age_months_at_ref_date,
+        -- Completed years and months, not Snowflake's calendar-part subtraction, so the
+        -- published age agrees with the age bounds tested on birth date downstream.
+        FLOOR(MONTHS_BETWEEN(pwi.campaign_reference_date, demo.birth_date_approx) / 12) AS age_years_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(pwi.campaign_reference_date, demo.birth_date_approx)) AS age_months_at_ref_date,
         pwi.latest_evidence_date,
         pwi.evidence_types,
         pwi.campaign_reference_date
     FROM people_with_immunosuppression pwi
     LEFT JOIN {{ ref('dim_person_demographics') }} demo
         ON pwi.person_id = demo.person_id
-    WHERE demo.is_active = TRUE
-        AND demo.birth_date_approx IS NOT NULL
-        AND DATEDIFF('month', demo.birth_date_approx, pwi.campaign_reference_date) >= 6  -- Minimum age 6 months
-        AND (
-            pwi.immuno_max_age_years IS NULL
-            OR DATEDIFF('year', demo.birth_date_approx, pwi.campaign_reference_date) < pwi.immuno_max_age_years
-        )
+    WHERE demo.birth_date_approx IS NOT NULL
+        -- Tested on birth date because Snowflake DATEDIFF subtracts calendar parts
+        -- rather than counting completed months.
+        AND demo.birth_date_approx <= DATEADD('month', -6, pwi.campaign_reference_date)
 ),
 
 -- Step 8: Format for eligibility table

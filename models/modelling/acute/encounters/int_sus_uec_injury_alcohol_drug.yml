@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: int_sus_uec_injury_alcohol_drug
+    description: >
+      Alcohol or drug involvement recorded against injuries presenting to A&E
+      (ECDS). One row per involvement record; an attendance can have more than
+      one. Join to int_sus_uec_encounter on visit_occurrence_id. Recorded on a
+      small share of attendances (around 27,000 across the table).
+    config:
+      tags: ["daily"]
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: involvement_id
+        description: Surrogate key of attendance and source sequence. Grain of the model.
+        data_tests:
+          - unique
+          - not_null
+      - name: visit_occurrence_id
+        description: ECDS attendance identifier; join key to int_sus_uec_encounter.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('int_sus_uec_encounter')
+                field: visit_occurrence_id
+      - name: sk_patient_id
+        description: Pseudonymised patient key from the attendance.
+      - name: attendance_date
+        description: Arrival date of the attendance.
+      - name: involvement_sequence
+        description: Source sequence of the record within the attendance (1 = first).
+      - name: involvement_code
+        description: SNOMED CT code for the alcohol or drug involvement.
+      - name: involvement_desc
+        description: SNOMED UK preferred term.
+      - name: involvement_ecds_group1
+        description: ECDS group 1 for the code.

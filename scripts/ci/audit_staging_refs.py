@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Audit entire project for raw/source references outside staging.
+"""Audit the project for raw/source references that cross layer boundaries.
 
-Scans all .sql files in models/ (excluding staging/ and raw/).
+Scans all .sql files in models/ except generated raw models.
 Use this to identify existing issues at scale.
 """
 
@@ -13,12 +13,12 @@ RAW_REF_PATTERN = r"{{\s*ref\s*\(\s*['\"]raw_"
 SOURCE_PATTERN = r"{{\s*source\s*\("
 
 
-def check_file(filepath: Path) -> list[str]:
+def check_file(filepath: Path, *, is_staging: bool) -> list[str]:
     """Check a single file for raw/source references."""
     issues = []
     content = filepath.read_text(encoding='utf-8', errors='ignore')
 
-    if re.search(RAW_REF_PATTERN, content):
+    if not is_staging and re.search(RAW_REF_PATTERN, content):
         issues.append("References raw_* model directly")
 
     if re.search(SOURCE_PATTERN, content):
@@ -42,15 +42,15 @@ def main() -> int:
             continue
 
         path_str = str(sql_file).replace('\\', '/')
-        if '/staging/' in path_str or '/raw/' in path_str:
+        if '/raw/' in path_str:
             continue
 
         files_checked += 1
-        issues = check_file(sql_file)
+        issues = check_file(sql_file, is_staging='/staging/' in path_str)
         if issues:
             all_issues[str(sql_file)] = issues
 
-    print(f"Scanned {files_checked} model files (excluding staging/ and raw/)\n")
+    print(f"Scanned {files_checked} model files (excluding raw/)\n")
 
     if all_issues:
         print(f"FOUND {len(all_issues)} files with raw/source references:\n")
@@ -59,12 +59,12 @@ def main() -> int:
             for issue in issues:
                 print(f"  - {issue}")
             print()
-        print("Only models in staging/ should reference raw models or sources.")
-        print("Other models should reference staging models instead.")
+        print("Staging models must ref() generated raw models, not use source().")
+        print("Other models must reference staging-or-later models.")
         print("See: https://docs.getdbt.com/best-practices/how-we-structure/2-staging")
         return 1
 
-    print("No raw/source references found outside staging.")
+    print("All raw/source references follow the layer boundary.")
     return 0
 
 

@@ -10,7 +10,7 @@ models:
       2 reporting periods of the latest — orphaned undischarged spells are
       excluded. Time semantics: current as of the active
       MHSDS feed, which runs ~6 weeks behind the run date
-      (last_submission_period_end shows each spell's evidence date) - very
+      (last_submission_period_end_date shows each spell's evidence date) - very
       recent admissions and discharges are not yet visible; days_in_bed
       accrues to the run date.
     config:
@@ -32,36 +32,57 @@ models:
           - unique
       - name: sk_patient_id
         description: Pseudonymised patient identifier.
-      - name: org_id_prov
+      - name: provider_organisation_code
         description: Provider organisation code.
         data_tests:
           - not_null
-      - name: provider_name
+      - name: provider_organisation_name
         description: Provider organisation name.
-      - name: admission_date
-        description: Spell admission date.
+      - name: source_derived_icb_commissioner_code
+        description: ICB commissioner code derived in the source feed.
+      - name: source_derived_icb_commissioner_name
+        description: Current organisation name for the source-derived ICB commissioner code.
+      - name: commissioner_icb_code
+        description: Commissioner ICB code resolved for currency reporting.
+      - name: commissioner_icb_name
+        description: Current organisation name for the currency commissioner code.
+      - name: is_wnl_commissioner
+        description: TRUE for a recognised current or predecessor WNL commissioner; otherwise FALSE.
+      - name: hospital_provider_spell_start_date
+        description: Hospital provider spell start date.
         data_tests:
           - not_null
       - name: days_in_bed
         description: Days from admission to the run date.
       - name: months_in_bed
         description: Whole calendar months from admission to the run date.
-      - name: last_submission_period_end
+      - name: last_submission_period_end_date
         description: >
           End of the last active reporting period carrying the spell; the
           active feed runs about 6 weeks behind the run date.
       - name: age_at_admission
         description: MHSDS-derived age at admission.
       - name: is_cyp
-        description: Whether age at admission is under 18.
-      - name: mh_admitted_patient_class
-        description: Latest ward-stay admitted patient class.
+        description: >-
+          Whether age at admission is under 18. A spell with no recorded age is
+          classified as adult, so read this with has_known_age_at_admission.
+      - name: has_known_age_at_admission
+        description: >-
+          Whether an age at admission was recorded. False identifies the spells
+          classified as adult through the fallback rather than a known age.
+          Most accepted spells carry no recorded age.
+      - name: mental_health_admitted_patient_classification_type_code
+        description: Latest ward-stay mental health admitted patient classification type code.
+      - name: mental_health_admitted_patient_classification_type_description
+        description: Published description for the admitted patient classification type.
       - name: setting_code
         description: Inpatient setting suffix.
       - name: setting_name
         description: Inpatient setting name.
       - name: icd10_3
         description: Latest three-character ICD-10 code.
+      - name: icd10_3_description
+        description: Published description for the ICD-10 code.
       - name: diagnosis_category
         description: Diagnosis population category.
       - name: winning_tier

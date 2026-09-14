@@ -1,17 +1,28 @@
 models:
   - name: stg_mhsds_activesubmission
-    description: Table containing active submissions in MHSDS data
+    description: One accepted MHSDS submission per provider and reporting period.
     config:
       meta:
         owner:
           name: Jessica Roberts
     columns:
       - name: uniq_submission_id
-        description: MHSDS unique submission identifier
-        tests:
+        description: MHSDS submission identifier.
+        data_tests:
           - unique
           - not_null
-    tests:
+      - name: org_id_provider
+        description: Provider organisation code.
+      - name: reporting_period_end_date
+        description: End date of the accepted submission period.
+      - name: dat_set_ver
+        description: MHSDS specification version declared in the submission header.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - org_id_provider
+              - reporting_period_end_date
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1

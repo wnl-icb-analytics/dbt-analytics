@@ -13,13 +13,17 @@ Exclusion rule - tracks people with vaccination declination records.
 This is used for reporting/exclusion purposes.
 */
 
-{{ config(materialized='table') }}
+{{ config(
+    materialized='incremental',
+    incremental_strategy='delete+insert',
+    unique_key='campaign_id',
+    tags=['covid_flu']
+) }}
 
 WITH all_campaigns AS (
-    -- Generate data for both current and previous campaigns automatically
-    SELECT * FROM ({{ flu_current_config() }})
-    UNION ALL
-    SELECT * FROM ({{ flu_previous_config() }})
+    -- Every flu campaign the models report on
+    -- (campaign list: macros/config/flu_campaign_selection.sql)
+    {{ flu_build_campaigns() }}
 ),
 
 -- Step 1: Find people with vaccination declined codes (for all campaigns)
@@ -29,12 +33,13 @@ people_with_declined_codes AS (
         obs.person_id,
         MAX(obs.clinical_effective_date) AS latest_declined_date,
         'Vaccination declined' AS decline_type
-    FROM ({{ get_observations("'DECL_COD'", 'UKHSA_FLU') }}) obs
+    FROM ({{ get_observations("'DECL_COD'", 'UKHSA_FLU', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         -- Restrict to current campaign period (after previous campaign's vaccination tracking date)
         AND obs.clinical_effective_date > cc.flu_vaccination_after_date
-        AND obs.clinical_effective_date <= cc.campaign_end_date
+        AND obs.clinical_effective_date <= cc.audit_end_date
     GROUP BY cc.campaign_id, obs.person_id
 ),
 
@@ -45,12 +50,13 @@ people_with_no_consent_codes AS (
         obs.person_id,
         MAX(obs.clinical_effective_date) AS latest_no_consent_date,
         'No consent for vaccination' AS decline_type
-    FROM ({{ get_observations("'NOCONS_COD'", 'UKHSA_FLU') }}) obs
+    FROM ({{ get_observations("'NOCONS_COD'", 'UKHSA_FLU', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         -- Restrict to current campaign period (after previous campaign's vaccination tracking date)
         AND obs.clinical_effective_date > cc.flu_vaccination_after_date
-        AND obs.clinical_effective_date <= cc.campaign_end_date
+        AND obs.clinical_effective_date <= cc.audit_end_date
     GROUP BY cc.campaign_id, obs.person_id
 ),
 
@@ -105,8 +111,8 @@ final_eligibility AS (
         cc.campaign_reference_date AS reference_date,
         'People with flu vaccination declination records' AS description,
         demo.birth_date_approx,
-        DATEDIFF('month', demo.birth_date_approx, cc.campaign_reference_date) AS age_months_at_ref_date,
-        DATEDIFF('year', demo.birth_date_approx, cc.campaign_reference_date) AS age_years_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(cc.campaign_reference_date, demo.birth_date_approx)) AS age_months_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(cc.campaign_reference_date, demo.birth_date_approx) / 12) AS age_years_at_ref_date,
         cc.audit_end_date AS created_at
     FROM people_who_declined_and_not_vaccinated pwdnv
     JOIN all_campaigns cc ON pwdnv.campaign_id = cc.campaign_id

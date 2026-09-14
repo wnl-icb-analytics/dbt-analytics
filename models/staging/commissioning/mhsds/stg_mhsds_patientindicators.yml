@@ -3,17 +3,28 @@ version: 2
 models:
   - name: stg_mhsds_patientindicators
     description: >
-      MHSDS patient indicators, including child-protection and looked-after
-      status. Grain: one row per mhs005_uniq_id.
+      Accepted MHSDS patient indicator records (MHS005), including
+      child-protection and looked-after status. Grain: one row per MHS005
+      source record. MHS005 carries no record start or end date, so the
+      reporting period is its only time reference: a person or local patient
+      appears once in every period a provider submits them. Consumers wanting
+      current status should select the latest reporting period for the person
+      or local patient, as dim_person_mh_profile does.
     config:
       meta:
         owner:
           name: Eddie Davison
     columns:
       - name: mhs005_uniq_id
-        description: Unique patient-indicator record identifier.
+        description: Unique identifier for the submitted MHS005 row.
         data_tests:
           - unique
+          - not_null
+      - name: unique_local_patient_id
+        description: >
+          Derived identifier for a provider-local patient. Repeats across
+          reporting periods.
+        data_tests:
           - not_null
       - name: person_id
         description: MHSDS person identifier.
@@ -25,5 +36,9 @@ models:
         description: Looked-after child legal status.
       - name: org_id_prov
         description: Provider organisation code.
+      - name: uniq_submission_id
+        description: Accepted submission containing the patient status row.
       - name: reporting_period_end_date
-        description: MHSDS reporting period end date.
+        description: End of the reporting period recorded on the row.
+      - name: effective_from
+        description: Time the source file was received.

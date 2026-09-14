@@ -1,0 +1,25 @@
+snapshots:
+  - name: source_content_freshness_history
+    relation: ref('source_content_freshness_snapshot_input')
+    description: >
+      SCD2 history of the content date reported for each profiled DATA_LAKE
+      schema. A new version opens only when content_date changes. The snapshot
+      excludes cadence, SLA, status, and observation metadata.
+    config:
+      strategy: check
+      unique_key: [source_schema]
+      check_cols: [content_date]
+      hard_deletes: invalidate
+    columns:
+      - name: source_schema
+        description: DATA_LAKE source schema; snapshot unique key.
+        data_tests:
+          - not_null
+      - name: content_date
+        description: Content date active during this snapshot version.
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: When this content-date version became active.
+        data_tests:
+          - not_null

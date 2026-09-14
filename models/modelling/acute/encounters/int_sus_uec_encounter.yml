@@ -26,6 +26,18 @@ models:
         data_type: varchar
         description: "Trust-provided patient id."
 
+      - name: cds_unique_identifier
+        data_type: varchar
+        description: "Identifier assigned to the submitted CDS transaction; retained for source traceability and reconciliation, not as the encounter grain."
+
+      - name: provider_reference_number
+        data_type: varchar
+        description: >-
+          Reference agreed locally between the provider and commissioner (NHS Data
+          Dictionary: Provider Reference Number). Whether populated, and what it
+          holds -- clinic code, constant, or per-attendance number -- depends on
+          the provider. Not comparable across providers; not the ODS code.
+
       - name: organisation_id
         data_type: varchar
         description: "Organisation ID (type 41) of the provider, if invalid code trimmed to 3 characters"
@@ -44,11 +56,20 @@ models:
 
       - name: pod
         data_type: varchar
-        description: "Point of delivery category of the provider e.g. A&E, SDEC etc."
+        description: >-
+          Point-of-delivery grouping derived from ECDS emergency care department
+          type: 01 = AE-T1 (24-hour consultant-led emergency department),
+          02 = AE-Other (other or single-specialty emergency department),
+          03 = UCC (urgent treatment centre), 04 = WiC (walk-in centre),
+          05 = SDEC (same day emergency care), and all other values = Others.
 
       - name: department_type
         data_type: varchar
-        description: "Point of delivery code of the provider e.g. A&E, SDEC etc."
+        description: "Submitted ECDS Emergency Care Department Type code. This is separate from Attendance Category."
+
+      - name: department_type_desc
+        data_type: varchar
+        description: "Current UKHFD description of the submitted Emergency Care Department Type code."
 
       - name: start_date
         data_type: date
@@ -70,6 +91,53 @@ models:
         data_type: number
         description: "Time to urgent care department discharge from arrival, in minutes"
 
+      - name: initial_assessment_date
+        data_type: date
+        description: "Date of the first formal clinical assessment in the emergency care attendance."
+
+      - name: initial_assessment_time
+        data_type: time
+        description: "Time of the first formal clinical assessment in the emergency care attendance."
+
+      - name: initial_assessment_time_since_arrival
+        data_type: number
+        description: "Source-reported elapsed time from arrival to initial assessment, in minutes."
+
+      - name: seen_for_treatment_date
+        data_type: date
+        description: "Date the patient was first seen by a clinical professional for treatment."
+
+      - name: seen_for_treatment_time
+        data_type: time
+        description: "Time the patient was first seen by a clinical professional for treatment."
+
+      - name: seen_for_treatment_time_since_arrival
+        data_type: number
+        description: "Source-reported elapsed time from arrival until first seen for treatment, in minutes."
+
+      - name: decided_to_admit_date
+        data_type: date
+        description: "Date the decision was made to admit the patient from emergency care."
+
+      - name: decided_to_admit_time
+        data_type: time
+        description: "Time the decision was made to admit the patient from emergency care."
+
+      - name: decided_to_admit_time_since_arrival
+        data_type: number
+        description: "Source-reported elapsed time from arrival to the decision to admit, in minutes."
+
+      - name: clinically_ready_to_proceed_at
+        data_type: timestamp_tz
+        description: >-
+          First time a clinician decided the patient no longer needed care in the
+          emergency department (ECDS v4 Clinically Ready To Proceed). Populated
+          for approximately 27% of attendances since FY2022/23.
+
+      - name: clinically_ready_to_proceed_time_since_arrival
+        data_type: number
+        description: "Source-reported elapsed time from arrival until clinically ready to proceed, in minutes."
+
       - name: chief_complaint_code
         data_type: varchar
         description: "Chief complaint code of patient for the encounter"
@@ -89,6 +157,48 @@ models:
       - name: acuity
         data_type: varchar
         description: "Clinical acuity code of the encounter"
+
+      - name: acuity_desc
+        data_type: varchar
+        description: "Human-readable SNOMED CT UK preferred term for the clinical acuity code."
+
+      - name: injury_intent_code
+        data_type: varchar
+        description: "SNOMED CT code describing the intent associated with the injury."
+
+      - name: injury_intent_desc
+        data_type: varchar
+        description: "Human-readable UK preferred term for the injury intent code."
+
+      - name: injury_mechanism_code
+        data_type: varchar
+        description: "SNOMED CT code describing the mechanism that caused the injury."
+
+      - name: injury_mechanism_desc
+        data_type: varchar
+        description: "Human-readable UK preferred term for the injury mechanism code."
+
+      - name: place_of_injury_code
+        data_type: varchar
+        description: "SNOMED CT code describing the type of place where the injury occurred."
+
+      - name: place_of_injury_desc
+        data_type: varchar
+        description: "Human-readable UK preferred term for the place-of-injury code."
+
+      - name: injury_date
+        data_type: date
+        description: >-
+          Date on which the injury occurred. Null means the injury date was not
+          recorded; the source placeholder 1900-01-01 is normalised to null.
+
+      - name: injury_time
+        data_type: time
+        description: "Time at which the injury occurred, as recorded for the attendance."
+
+      - name: disease_notification_code
+        data_type: varchar
+        description: "ECDS disease-notification code recorded for the attendance."
 
       - name: primary_diagnosis_code_snomed
         data_type: varchar
@@ -142,6 +252,50 @@ models:
         data_type: varchar
         description: "Arrival mode SNOMED description"
 
+      - name: attendance_category_code
+        data_type: varchar
+        description: "ECDS attendance category: 1 unplanned first; 2 unplanned follow-up at this service; 3 unplanned follow-up at another service; 4 planned follow-up at this service; X dead on arrival."
+
+      - name: attendance_category_desc
+        data_type: varchar
+        description: "Human-readable description of the ECDS attendance category code."
+
+      - name: is_arrival_planned
+        data_type: boolean
+        description: "Whether arrival at the emergency care department was planned."
+
+      - name: ambulance_incident_number
+        data_type: varchar
+        description: "Ambulance-service incident number associated with the attendance; linkage depends on the supplying ambulance dataset and identifier coverage."
+
+      - name: conveying_ambulance_trust_code
+        data_type: varchar
+        description: "Cleaned organisation code of the ambulance trust that conveyed the patient."
+
+      - name: conveying_ambulance_trust_name
+        data_type: varchar
+        description: "Human-readable name of the conveying ambulance trust."
+
+      - name: ambulance_care_contact_identifier
+        data_type: varchar
+        description: "Ambulance care-contact identifier associated with the attendance; linkage depends on the supplying ambulance dataset and identifier coverage."
+
+      - name: attendance_source_code
+        data_type: varchar
+        description: "SNOMED CT code identifying the source that referred or directed the patient to emergency care."
+
+      - name: attendance_source_desc
+        data_type: varchar
+        description: "Human-readable UK preferred term for the attendance source code."
+
+      - name: attendance_source_organisation_site_identifier
+        data_type: varchar
+        description: "Normalised organisation-site identifier for the source of the attendance, where supplied."
+
+      - name: attendance_source_organisation_name
+        data_type: varchar
+        description: "Human-readable site or provider name for the source organisation, using a provider fallback where required."
+
       - name: discharge_destination_code
         data_type: varchar
         description: "Discharge destination SNOMED code"
@@ -149,6 +303,42 @@ models:
       - name: discharge_destination_desc
         data_type: varchar
         description: "Discharge destination SNOMED description"
+
+      - name: discharge_status_code
+        data_type: varchar
+        description: "SNOMED CT code describing the patient's status at discharge from emergency care."
+
+      - name: discharge_status_desc
+        data_type: varchar
+        description: "Human-readable UK preferred term for the discharge status code."
+
+      - name: discharge_follow_up_code
+        data_type: varchar
+        description: "SNOMED CT code describing follow-up arranged following discharge from emergency care."
+
+      - name: discharge_follow_up_desc
+        data_type: varchar
+        description: "Human-readable UK preferred term for the discharge follow-up code."
+
+      - name: discharge_information_given_code
+        data_type: varchar
+        description: "ECDS code describing the discharge information provided to the patient."
+
+      - name: decided_to_admit_treatment_function_code
+        data_type: varchar
+        description: "Treatment function code associated with the decision to admit."
+
+      - name: decided_to_admit_treatment_function_desc
+        data_type: varchar
+        description: "Human-readable description of the treatment function associated with the decision to admit."
+
+      - name: receiving_site_id
+        data_type: varchar
+        description: "Normalised identifier of the site expected to receive the patient following the decision to admit."
+
+      - name: receiving_organisation_name
+        data_type: varchar
+        description: "Human-readable site or provider name of the organisation expected to receive the patient following the decision to admit."
 
       - name: main_specialty_code
         data_type: varchar
@@ -176,11 +366,42 @@ models:
 
       - name: cost
         data_type: number
-        description: "SUS listed cost associated with the encounter"
+        description: >-
+          National-pricing final price reported by SUS for the emergency care
+          attendance. This is a submitted tariff/pricing value, not an accounting
+          measure of the provider's actual cost of delivering care.
+
+      - name: applicable_costing_period
+        data_type: varchar
+        description: "National-pricing costing period supplied for the attendance."
+
+      - name: residence_area_code_at_event
+        data_type: varchar
+        description: "CCG code before July 2022 or sub-ICB location code afterwards for the patient's residence postcode; this is residence geography, not assigned payment responsibility."
+
+      - name: residence_area_name_at_event
+        data_type: varchar
+        description: "Human-readable name of the residence geography at the time of attendance."
+
+      - name: assigned_commissioner_code_at_event
+        data_type: varchar
+        description: "Service-agreement commissioner code submitted for the attendance. This is not the ECDS Commissioner Assignment Method field."
+
+      - name: assigned_commissioner_name_at_event
+        data_type: varchar
+        description: "Latest dictionary name for the submitted service-agreement commissioner code."
 
       - name: age_at_event
         data_type: number
         description: "Patient age at arrival"
+
+      - name: patient_type_code_at_event
+        data_type: varchar
+        description: "Source ECDS patient-type code recorded at the attendance, such as ADU or CHI."
+
+      - name: patient_type_desc_at_event
+        data_type: varchar
+        description: "Human-readable patient type at the attendance, with ADU represented as Adult and CHI as Child."
 
       - name: gender_at_event
         data_type: varchar
@@ -198,6 +419,10 @@ models:
         data_type: varchar
         description: "Patient ethnicity description at time of event"
 
+      - name: postcode_id
+        data_type: varchar
+        description: "Pseudonymised postcode value supplied by SUS. It is usually partial and can contain a special pseudo postcode; it is not a postcode dictionary key."
+
       - name: postcode_district_at_event
         data_type: varchar
         description: "Patient postcode district at time of event"
@@ -212,12 +437,97 @@ models:
 
       - name: imd_at_event
         data_type: varchar
-        description: "Patient index of multiple deprivation decile at time of event"
+        description: "Deprivation decile supplied on the ECDS attendance. The source IMD release is not documented."
+
+      - name: deprivation_decile_at_event
+        data_type: number
+        description: >-
+          Numeric deprivation decile for reporting, where 1 is most deprived
+          and 10 is least deprived. Uses IMD 2025 where every 2021 successor
+          of the attendance LSOA 2011 has the same decile, then falls back to a
+          valid decile supplied on the ECDS attendance. A fallback value is not
+          necessarily from IMD 2025.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                quote: false
 
       - name: reg_practice_at_event
         data_type: varchar
-        description: "Patient registered GP practice at time of event"
+        description: "Registered GP practice code recorded on the attendance."
+
+      - name: reg_practice_name_latest
+        data_type: varchar
+        description: "Latest national UKHFD name for reg_practice_at_event. The name is not effective-dated to the attendance."
+
+      - name: general_practitioner_code
+        data_type: varchar
+        description: "Code of the individual general practitioner recorded for the patient; distinct from reg_practice_at_event, which identifies the GP practice."
 
       - name: visit_occurrence_type
         data_type: varchar
         description: "Type of visit occurrence"
+
+      - name: financial_year
+        data_type: varchar
+        description: "NHS financial year derived from start_date in YYYYYY format, for example 202526."
+
+      - name: financial_month
+        data_type: number
+        description: "NHS financial month derived from start_date, where April is 1 and March is 12."
+
+      - name: financial_month_name
+        data_type: varchar
+        description: "Calendar month name for start_date, paired with the NHS financial month number."
+
+      - name: week_end_date
+        data_type: date
+        description: "Sunday at the end of the ISO week containing start_date."
+
+      - name: expected_treatment_at
+        data_type: timestamp_tz
+        description: "Expected treatment timestamp from the first source-sequenced expected-treatment record for the attendance."
+
+      - name: is_national_tariff_excluded
+        data_type: boolean
+        description: "Whether the attendance was excluded from national tariff pricing, as reported by SUS."
+
+      - name: national_tariff
+        data_type: number
+        description: "National tariff amount reported for the attendance before market-forces adjustment."
+
+      - name: national_tariff_final_price
+        data_type: number
+        description: "Final national-pricing amount reported by SUS; retained with its explicit source meaning and also exposed as cost for compatibility."
+
+      - name: mff_factor
+        data_type: number
+        description: "Market Forces Factor reported for the attendance."
+
+      - name: mff_adjustment
+        data_type: number
+        description: "Market Forces Factor monetary adjustment reported for the attendance."
+
+      - name: uec_activity_type_code
+        data_type: varchar
+        description: "Source ECDS activity type code identifying the urgent and emergency care setting; distinct from the derived pod category and department_type."
+
+      - name: uec_activity_type_desc
+        data_type: varchar
+        description: "Current UKHFD description of the urgent and emergency care activity type code."
+
+      - name: uec_site_label
+        data_type: varchar
+        description: "Operational label for urgent treatment centres, walk-in centres and minor injuries units (for example UTC_NP), from organisation_uec_site joined on site, department type and arrival date. Null for emergency departments and sites not in the reference."
+      - name: disease_notification_desc
+        data_type: varchar
+        description: "Human-readable SNOMED CT preferred term for the disease-notification code."
+
+      - name: discharge_information_given_desc
+        data_type: varchar
+        description: "Human-readable SNOMED CT preferred term describing the discharge information given to the patient."
+
+      - name: general_practitioner_name
+        data_type: varchar
+        description: "Human-readable name for general_practitioner_code; remains null when the submitted code is absent from the governed GP reference."

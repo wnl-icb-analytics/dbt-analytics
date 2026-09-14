@@ -3,9 +3,10 @@
 # Runs dbt (Fusion) directly on the runner against Snowflake PROD - no dbt
 # project object, no ADD VERSION, no 20k file limit.
 #
-# Selection: state:modified+ against the latest deploy-state manifest in the
-# DBT_ARTIFACTS stage. Falls back to a full build when no state manifest exists
-# or on manual dispatch.
+# Selection: state:modified+ plus tag:indicator_definitions+ against the latest
+# deploy-state manifest in the DBT_ARTIFACTS stage. Metadata-derived definitions
+# have no ref() dependencies, so state selection can miss their YAML changes.
+# Falls back to a full build when no state manifest exists or on manual dispatch.
 #
 # Runs that pass Fusion compile publish target/manifest.json + run_results.json
 # + meta.json as the next baseline, even if execution later fails. This prevents
@@ -34,6 +35,7 @@ on:
       - 'snapshots/**'
       - 'packages.yml'
       - 'dbt_project.yml'
+      - '.github/workflows/dbt-deploy.yml'
 
 jobs:
   deploy-decision:
@@ -47,7 +49,7 @@ jobs:
     steps:
       - name: Resolve skip-deploy marker
         id: decision
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0
         with:
           script: |
             if (context.eventName === 'workflow_dispatch') {
@@ -109,6 +111,7 @@ jobs:
     concurrency:
       group: dbt-prod
       cancel-in-progress: false
+      queue: max
     permissions:
       contents: read
       issues: write  # failure issues (report_dbt_failures.py)
@@ -125,7 +128,7 @@ jobs:
       # monthly refresh in dbt-scheduled.yml.
       EFI2_HISTORY_WAREHOUSE: WH_WNL_OLIDS_L
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           # Failure attribution compares failed dbt dependency paths with the
@@ -142,9 +145,9 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           "$HOME/.local/bin/dbt" --version
 
-      - uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
-          version: "0.6.x"
+          version: "0.9.x"
 
       - name: Write Snowflake private key
         env:
@@ -174,8 +177,8 @@ jobs:
             args=(build --target prod)
             echo "Full build (manual trigger or no state manifest)"
           else
-            args=(build --target prod --select "state:modified+" --state state)
-            echo "State-based build: modified + downstream"
+            args=(build --target prod --select "state:modified+" "tag:indicator_definitions+" --state state)
+            echo "State-based build: modified + downstream and indicator definitions + downstream"
           fi
           echo "dbt_command=dbt ${args[*]}" >> "$GITHUB_OUTPUT"
           dbt "${args[@]}" --profiles-dir .

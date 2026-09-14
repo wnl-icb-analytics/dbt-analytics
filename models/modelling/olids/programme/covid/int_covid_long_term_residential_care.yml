@@ -2,23 +2,31 @@ models:
   - name: int_covid_long_term_residential_care
     description: 'COVID vaccination eligibility for people in long-term residential care.
 
+      Grain: one row per person per campaign.
+
       Key Features:
 
-      • Single diagnosis pathway using LTRC_COV_COD codes
+      • Residential status logic: the latest residence code (RESIDE_COD) must be from the long-term care cluster (LONGRES_COD)
 
-      • Recent occurrence qualifying (lookback period from campaign)
+      • Minimum age is campaign driven: 18 for the Autumn 2024 offer, 65 from Spring 2025 onward (spec 5.1.1 Group M denominator)
 
-      • Age restriction: minimum 5 years for COVID vaccination
+      • Age is tested on birth date rather than DATEDIFF, which subtracts calendar years rather than counting completed years
 
-      • Includes residential care and nursing home status
+      • Captures current residential status, not historical
 
-      • Generates data for current and previous COVID campaigns automatically
+      • Generates data for every campaign in covid_reported_campaign_ids()
 
-      Purpose: Identify people eligible for COVID vaccination due to residential care status requiring immunisation.'
-    tests:
+      Purpose: Identify care home residents eligible for COVID vaccination because of communal living infection risk.'
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: LONGRES_COD,RESIDE_COD
+            source: UKHSA_COVID
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - campaign_id
+              - person_id
     config:
       meta:
         indicator:
@@ -29,12 +37,12 @@ models:
           name_short: "COVID Eligible Residential Care"
           description_short: "People in long-term residential care eligible for COVID vaccination"
           description_long: >
-            COVID vaccination eligibility for people in long-term residential care
-            using LTRC_COV_COD
-            cluster codes with recent occurrence qualifying. Includes residential
-            care and
-            nursing home status that increase COVID risk requiring immunisation
-            protection. Minimum age requirement of 5 years for COVID vaccination.
+            COVID vaccination eligibility for people in long-term residential care.
+            A person qualifies when their latest residence code (RESIDE_COD) is from the
+            long-term care cluster (LONGRES_COD), so a later address change removes them
+            from the cohort. The minimum age is campaign driven: the Autumn 2024 offer
+            covered adult residents and every offer from Spring 2025 onward covers
+            residents aged 65 and over.
           is_qof: false
           source_column: "person_id"
           sort_order: "COVID_12_RESIDENTIAL_CARE"
@@ -47,31 +55,38 @@ models:
             - cluster_id: "RESIDE_COD"
               category: "INCLUSION"
           thresholds:
-            - population_group: "ALL"
+            - population_group: "COVID Autumn 2024"
               threshold_type: "AGE_ELIGIBILITY"
-              threshold_value: "5"
+              threshold_value: "18"
               threshold_operator: "AT_OR_ABOVE"
               threshold_unit: "years"
-              description: "Minimum age for COVID vaccination"
+              description: "Minimum age for the Autumn 2024 care home offer"
               sort_order: 1
+            - population_group: "COVID Spring 2025 onwards"
+              threshold_type: "AGE_ELIGIBILITY"
+              threshold_value: "65"
+              threshold_operator: "AT_OR_ABOVE"
+              threshold_unit: "years"
+              description: "Minimum age for the care home offer from Spring 2025"
+              sort_order: 2
 
         owner:
           name: EddieDavison92
     columns:
       - name: campaign_id
         description: 'COVID campaign identifier (e.g., covid_2025_autumn, covid_2024_autumn)'
-        tests:
+        data_tests:
           - not_null
       - name: campaign_category
-        description: 'Category of eligibility criteria (always "CLINICAL_CONDITION")'
+        description: 'Category of eligibility criteria (always "SPECIAL_POPULATION")'
       - name: risk_group
         description: 'Risk group classification (always "Long-term Residential Care")'
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying diagnosis (recent residential care record)'
+        description: 'Date of the latest residence code, which is the qualifying long-term care code'
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description
@@ -81,6 +96,6 @@ models:
       - name: age_months_at_ref_date
         description: 'Age in months at campaign reference date'
       - name: age_years_at_ref_date
-        description: 'Age in years at campaign reference date (minimum 5 years required)'
+        description: 'Age in years at campaign reference date. The minimum is 18 for Autumn 2024 and 65 from Spring 2025'
       - name: created_at
         description: 'Audit timestamp for record creation (campaign audit end date)'

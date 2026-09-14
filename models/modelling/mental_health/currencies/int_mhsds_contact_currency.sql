@@ -1,7 +1,7 @@
 with eligible_contacts as (
     select
         c.*
-    from {{ ref('stg_mhsds_carecontact') }} as c
+    from {{ ref('int_mhsds_latest_care_contact') }} as c
     where not exists (
         select 1
         from {{ ref('stg_mhsds_spell') }} as s
@@ -20,7 +20,7 @@ with eligible_contacts as (
         , c.uniq_care_cont_id
         , d.icd10_3
     from eligible_contacts as c
-    left join {{ ref('stg_mhsds_primdiag') }} as d
+    left join {{ ref('int_mhsds_currency_primary_diagnosis') }} as d
         on c.uniq_serv_req_id = d.uniq_serv_req_id
         and d.coded_diag_timestamp <= c.care_cont_date
     qualify row_number() over (
@@ -38,7 +38,11 @@ with eligible_contacts as (
         , c.org_id_prov
         , c.care_cont_date
         , c.age_care_cont_date
+        -- A missing age falls to adult, which the cascade below then uses to
+        -- pick the population group. has_known_age_at_contact keeps that
+        -- default visible.
         , coalesce(c.age_care_cont_date < 18, false) as is_cyp
+        , c.age_care_cont_date is not null as has_known_age_at_contact
         , c.dm_icb_commissioner
         , c.attend_status
         , c.cons_mechanism_mh
@@ -55,11 +59,8 @@ with eligible_contacts as (
         , r.prim_reason_referral_mh
         , rr.population_category as referral_reason_category
         , rg.available_to_cyp as referral_reason_available_to_cyp
-        , coalesce(
-            coalesce(tt.is_crisis_referral, false)
-            or (coalesce(tt.crisis_requires_urgent_priority, false)
-                and r.clin_resp_priority_type in ('1', '2', '4'))
-            , false) as is_crisis_referral
+        , {{ mhsds_is_crisis_referral('tt', 'r.clin_resp_priority_type') }}
+            as is_crisis_referral
     from eligible_contacts as c
     left join {{ ref('stg_mhsds_bridging') }} as b
         on c.person_id = b.person_id
@@ -134,6 +135,7 @@ select
     , c.care_cont_date
     , c.age_care_cont_date
     , c.is_cyp
+    , c.has_known_age_at_contact
     , c.dm_icb_commissioner
     , coalesce(comm.icb_code, iff(left(c.dm_icb_commissioner, 1) = 'Q', c.dm_icb_commissioner, null)) as commissioner_icb_code
     , c.attend_status

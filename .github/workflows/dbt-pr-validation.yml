@@ -13,7 +13,8 @@
 #      in-flight deploy) stay selected on every candidate until a deploy
 #      publishes them, exactly as the next deploy will build them. It also
 #      means config-only changes (dbt_project.yml etc.) get a real DEV build,
-#      not just a compile.
+#      not just a compile. UEC code changes also rebuild their encounter parent
+#      so relationship tests do not compare fresh codes with older encounters.
 #
 # Queue runs NEVER publish the manifest - only production deploys advance
 # deploy state. When no state manifest exists, falls back to building the
@@ -70,11 +71,15 @@ jobs:
           echo "Runtime dbt validation is deferred to GitHub's merge queue."
           echo "No models are materialised for this pull-request event."
 
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: github.event_name != 'pull_request'
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Check validation selection
+        if: github.event_name != 'pull_request'
+        run: python -m unittest discover -s .github/scripts -p test_validate_dbt_models.py
 
       # Fallback selection (no state manifest) and diagnostics: lets a failed
       # candidate see at a glance whether a failing node came from this PR's
@@ -173,10 +178,10 @@ jobs:
         if: github.event_name != 'pull_request'
         run: dbt compile --target ci-prod --profiles-dir .
 
-      - uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         if: github.event_name != 'pull_request'
         with:
-          version: "0.6.x"
+          version: "0.9.x"
 
       - name: Fetch state manifest
         id: state
@@ -200,53 +205,13 @@ jobs:
             fi
             echo "No state manifest - falling back to $NODE_COUNT directly changed nodes: $PR_SELECT"
             read -r -a pr_select_args <<< "$PR_SELECT"
-            dbt build --target dev --select "${pr_select_args[@]}" --profiles-dir .
+            python .github/scripts/validate_dbt_models.py --select "${pr_select_args[@]}"
             exit 0
           fi
 
-          # Rehearse the deploy: build exactly what state:modified selects
-          # against the deployed baseline (the post-merge deploy runs the same
-          # selection, plus downstream). Pre-count so an empty selection -
-          # e.g. a workflow-only PR in steady state - skips cleanly.
-          set +e
-          RAW_LS=$(dbt ls --target dev --select state:modified --state state --output name --profiles-dir .)
-          LS_EXIT=$?
-          set -e
-          # Keep only bare node names (sources print dotted); drops any log
-          # lines mixed into stdout.
-          SELECTED=$(echo "$RAW_LS" | grep -E '^[A-Za-z0-9_.]+$' | sort -u || true)
-          if [ "$LS_EXIT" -ne 0 ]; then
-            # Never let a listing hiccup skip validation - build and let dbt
-            # report the real problem.
-            echo "dbt ls failed (exit $LS_EXIT) - proceeding to build state:modified"
-          elif [ -z "$SELECTED" ] && [ "$NODE_COUNT" = "0" ]; then
-            # Only trust an empty listing when this PR changed no dbt files;
-            # skipping is then correct regardless of how ls formats output.
-            echo "Nothing modified versus deployed state - skipping DEV build"
-            exit 0
-          elif [ -z "$SELECTED" ]; then
-            # This PR changed dbt files, so an empty listing means the output
-            # parsing failed, not that nothing changed - distrust it and build.
-            echo "dbt ls returned no parseable nodes but this PR changed $NODE_COUNT dbt nodes - proceeding to build state:modified"
-          else
-            SELECTED_COUNT=$(echo "$SELECTED" | wc -w)
-            OWN=""; OTHER=""
-            for node in $SELECTED; do
-              case " $PR_SELECT " in
-                *" $node "*) OWN="$OWN $node" ;;
-                *) OTHER="$OTHER $node" ;;
-              esac
-            done
-            echo "state:modified selected $SELECTED_COUNT nodes"
-            [ -n "$OWN" ] && echo "  from this PR's changed files:$OWN"
-            # Approximate: includes un-deployed changes from earlier merges,
-            # plus nodes this PR affects indirectly (configs, renamed tests).
-            [ -n "$OTHER" ] && echo "  not directly from this PR's files (inherited un-deployed state or indirect):$OTHER"
-          fi
-          # Unselected parents resolve to prod relations from the deployed
-          # manifest; --favor-state stops stale DEV__ leftovers winning. The
-          # single --state flag serves both the selector and the defer.
-          dbt build --target dev --select state:modified --defer --state state --favor-state --profiles-dir .
+          # Preserve the state selection and its tests; add the UEC encounter
+          # parent when its code models need it. Other parents stay deferred.
+          python .github/scripts/validate_dbt_models.py --state state --select state:modified
 
       - name: Cleanup credentials
         if: always() && github.event_name != 'pull_request'

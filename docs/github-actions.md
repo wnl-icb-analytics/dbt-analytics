@@ -1,169 +1,82 @@
-# GitHub Actions Automations
+# GitHub Actions
 
-This project uses GitHub Actions to automate code quality checks, deployment, test coverage reporting, and project management. This document describes each workflow and how they fit together.
+GitHub Actions provides static checks, compilation, merge-queue validation,
+production deployment and project-board updates.
 
-## Overview
+## Pull request checks
 
-```
-PR opened/updated
-  ├── auto-author-assign      Assigns PR author
-  ├── dbt-code-quality         Linting and standards checks
-  ├── dbt-pr-validation        Builds changed models in Snowflake DEV
-  └── model-ownership          Suggests ownership metadata
+Every pull request receives fast feedback:
 
-Push to non-main branch
-  └── project-status-in-progress   Marks referenced issues "In Progress"
+| Workflow | What it does |
+|----------|--------------|
+| `auto-author-assign.yml` | Assigns the pull request author |
+| `dbt-code-quality.yml` | Checks hardcoded relations, raw/source layer boundaries, model descriptions and test coverage |
+| `dbt-compile.yml` | Runs Fusion compile against development metadata |
+| `model-ownership.yml` | Comments when changed models lack ownership metadata |
+| `dbt-pr-validation.yml` | Reports that runtime validation will run in the merge queue |
 
-Merge to main
-  ├── dbt-deploy               Deploys changed models to Snowflake PROD
-  └── test-coverage            Updates the test coverage badge
+The staging-reference check enforces the raw boundary in changed models. Staging
+may use `ref()` to a generated raw model but not `source()`; every other
+hand-written layer may use neither. Unrelated legacy models remain outside the
+pull request.
 
-Issue labeled "Blocked"
-  └── project-status-blocked   Sets project status to "Blocked"
+CodeRabbit also reviews draft and ready pull requests against
+`.coderabbit.yaml` and `PROJECT_CONVENTIONS.md`. It comments but does not
+submit a formal request-changes review. Human reviewers decide whether findings
+are resolved and must not merge a pull request with an unresolved data-safety
+finding.
 
-Reviewer requested on PR
-  └── project-status-review    Sets project status to "Code Review"
-```
+## Merge-queue validation
 
-## Pull Request Workflows
+Selecting **Merge when ready** creates a merge-queue candidate. Required checks
+then validate the exact commit GitHub would merge:
 
-### Auto Author Assign
+- `dbt-compile.yml` compiles against production metadata.
+- `dbt-pr-validation.yml` compiles against production metadata, fetches the last
+  deployed manifest and builds `state:modified` nodes in Snowflake development.
+- Unselected parents defer to production relations.
+- When no deployed manifest exists, validation builds the directly changed dbt
+  nodes rather than the full project.
 
-**File:** `.github/workflows/auto-author-assign.yml`
-**Triggers:** Pull request opened or reopened
+Merge-queue runtime builds are serial because candidates share development
+relations. They do not publish deployment state.
 
-Automatically assigns the PR author as an assignee on the pull request. Uses the [`toshimaru/auto-author-assign`](https://github.com/toshimaru/auto-author-assign) action.
+## Production deployment
 
-### dbt Code Quality
+`dbt-deploy.yml` runs after dbt changes merge to `main`, or on manual dispatch.
+It:
 
-**File:** `.github/workflows/dbt-code-quality.yml`
-**Triggers:** Pull request targeting `main`
+1. compiles the project with Fusion;
+2. fetches the last deployed manifest;
+3. builds `state:modified+` in production, including downstream consumers;
+4. falls back to a full build for a manual run or when no state exists;
+5. publishes dbt artifacts as the next deployment baseline; and
+6. reports failures through a GitHub issue.
 
-Runs four parallel code quality checks on changed dbt files:
+A commit or pull-request title containing `[skip deploy]` or `[skip-deploy]`
+skips the automatic production deployment. Scheduled runs do not advance the
+deployment-state manifest.
 
-| Job | What it checks | Script |
-|-----|---------------|--------|
-| **hardcoded-references** | No hardcoded table/database references in SQL | `scripts/ci/check_hardcoded_refs.sh` |
-| **staging-references** | Raw/source references only appear in staging models | `scripts/ci/check_staging_refs.sh` |
-| **model-descriptions** | All changed models have descriptions in YAML | `scripts/ci/check_model_descriptions.sh` |
-| **model-tests** | All changed models have associated tests | `scripts/ci/check_model_tests.sh` |
+## Other workflows
 
-Each job only runs if relevant files (`.sql` in `models/`, `macros/`, or `analyses/`) were changed. Results are posted to the GitHub Actions step summary.
+| Workflow | Trigger and purpose |
+|----------|---------------------|
+| `dbt-scheduled.yml` | Runs configured dbt selections on a schedule or manual dispatch |
+| `test-coverage.yml` | Updates the model test-coverage badge after model changes on `main` |
+| `project-status-in-progress.yml` | Moves referenced issues to In Progress after branch pushes |
+| `project-status-blocked.yml` | Moves issues labelled Blocked to Blocked |
+| `project-status-review.yml` | Moves ready pull requests with reviewers to Code Review |
 
-### dbt PR Validation
+## Credentials
 
-**File:** `.github/workflows/dbt-pr-validation.yml`
-**Triggers:** Pull request targeting `main` (on review requested, synchronize, or labeled), or manual dispatch
+Runtime dbt workflows use the Snowflake service account through repository
+secrets:
 
-Builds changed dbt models in the Snowflake **DEV** environment to validate they compile and run before merging. This workflow has specific activation requirements -- it only runs when:
+- `SNOWFLAKE_ACCOUNT`
+- `SNOWFLAKE__USERNAME`
+- `SNOWFLAKE__PRIVATE_KEY`
+- `SNOWFLAKE__PASSPHRASE`
 
-- A reviewer is assigned to the PR, or
-- The `snowflake-ci` label is added, or
-- A new commit is pushed while one of the above conditions is already met
-
-**How it works:**
-
-1. Detects changed `.sql` files in `models/` and `macros/`
-2. For changed YAML files, finds the corresponding SQL models
-3. For changed macros, finds all models that reference the macro
-4. Queues behind other PR validations using [Turnstyle](https://github.com/softprops/turnstyle) (only one validation runs at a time due to Snowflake project constraints)
-5. Connects to Snowflake and runs `EXECUTE DBT PROJECT` against the CI project
-6. If more than 100 files changed, runs a full build; otherwise builds only the changed models
-
-**Concurrency:** Cancels in-progress runs when new commits are pushed to the same PR.
-
-### Model Ownership
-
-**File:** `.github/workflows/model-ownership.yml`
-**Triggers:** Pull request targeting `main` when `models/**/*.sql` files change
-
-Checks whether changed models have ownership metadata (e.g. `meta.owner`) and posts inline review comments suggesting additions. Uses `scripts/ownership/check_model_ownership.py` to generate suggestions and avoids posting duplicate comments.
-
-## Deployment Workflows
-
-### dbt Deploy
-
-**File:** `.github/workflows/dbt-deploy.yml`
-**Triggers:** Push to `main` (when `models/` or `macros/` change), or manual dispatch
-
-Deploys changed dbt models and their downstream dependents to Snowflake **PROD**.
-
-**How it works:**
-
-1. Detects changed files using the same logic as PR validation
-2. Writes Snowflake credentials (RSA private key) to a temporary file
-3. Connects to Snowflake and executes the dbt project:
-   - **0 or 50+ files changed:** Full build
-   - **1-49 files changed:** Builds each changed model plus its downstream dependents (`--select model+`)
-4. Cleans up credentials (runs even on failure)
-
-**Concurrency:** Queued -- deploys run sequentially, never cancelled.
-
-**Secrets used:** `SNOWFLAKE_ACCOUNT`, `SNOWFLAKE__USERNAME`, `SNOWFLAKE__PRIVATE_KEY`, `SNOWFLAKE__PASSPHRASE`
-
-### Test Coverage
-
-**File:** `.github/workflows/test-coverage.yml`
-**Triggers:** Push to `main` (when `models/` change), or manual dispatch
-
-Scans all dbt models and checks whether each has at least one test defined (model-level or column-level) in its YAML configuration. Updates a [shields.io](https://shields.io/) badge via a GitHub Gist with the coverage percentage.
-
-**Coverage thresholds:**
-
-| Coverage | Badge colour |
-|----------|-------------|
-| >= 80% | Bright green |
-| >= 60% | Green |
-| >= 40% | Yellow |
-| < 40% | Red |
-
-**Secrets used:** `GIST_TOKEN`
-
-## Project Management Workflows
-
-These workflows keep the GitHub Projects board in sync with development activity.
-
-### Project Status: In Progress
-
-**File:** `.github/workflows/project-status-in-progress.yml`
-**Triggers:** Push to any branch except `main`
-
-Scans commit messages and branch names for issue references (e.g. `#123`, `fixes #45`) and for each referenced issue:
-
-- Assigns the pusher to the issue
-- Adds the issue to the project board
-- Sets status to "In Progress" (only if currently "Todo", "Backlog", or unset)
-- Sets the start date to today (if not already set)
-
-### Project Status: Blocked
-
-**File:** `.github/workflows/project-status-blocked.yml`
-**Triggers:** Issue labeled with "Blocked"
-
-Adds the issue to the project board and sets its status to "Blocked".
-
-### Project Status: Code Review
-
-**File:** `.github/workflows/project-status-review.yml`
-**Triggers:** Review requested on a PR, or PR marked ready for review (with reviewers assigned)
-
-Adds the PR to the project board and sets its status to "Code Review". Skips draft PRs.
-
-## Utility Scripts
-
-### analyse-dbt-changes.sh
-
-**File:** `.github/scripts/analyse-dbt-changes.sh`
-
-A utility script for impact analysis of dbt model changes. Compares changes between git tags and categorises affected files by layer (Raw, Staging, Modelling, Reporting, Published) and target database. Outputs a markdown summary table.
-
-## Secrets Reference
-
-| Secret | Used by | Purpose |
-|--------|---------|---------|
-| `SNOWFLAKE_ACCOUNT` | deploy, pr-validation | Snowflake account identifier |
-| `SNOWFLAKE__USERNAME` | deploy, pr-validation | Snowflake service account username |
-| `SNOWFLAKE__PRIVATE_KEY` | deploy, pr-validation | RSA private key for Snowflake authentication |
-| `SNOWFLAKE__PASSPHRASE` | deploy, pr-validation | Passphrase for the RSA private key |
-| `PROJECT_TOKEN` | project-status-* | GitHub token with project write access |
-| `GIST_TOKEN` | test-coverage | GitHub token for updating the coverage badge gist |
+Project-board automation uses `PROJECT_TOKEN`; the coverage badge uses
+`GIST_TOKEN`. Workflows write private keys only for the current job and remove
+them in an `always()` cleanup step.

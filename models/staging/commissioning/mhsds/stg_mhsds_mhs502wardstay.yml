@@ -1,39 +1,92 @@
 models:
   - name: stg_mhsds_mhs502wardstay
-    description: 'Mental Health Services Data Set (MHSDS) ward stays'
+    description: >-
+      One row per MHSDS unique ward-stay identifier from the newest accepted
+      submission in which it appears. Identifier reuse across spells is kept
+      as a reported source-quality issue rather than split into inferred stays.
     config:
       meta:
         owner:
           name: Kate Homer
     columns:
-      - name: uniq_serv_req_id
-        description: Primary key - unique service request identifier. One request may have more than one ward stay.
-        tests:
-         - not_null
-
-      - name: person_id
-        description: MHSDS person identifier
-
-      - name: org_id_prov
-        description: The organisation identifier for the provider
-
-      - name: site_id_of_treat
-        description: Provider site where the ward stay took place.
-
       - name: uniq_ward_stay_id
-        description: Unique identifier (prefixed by ORG_ID) allocated for each Ward Stay during a  Hospital Provider Spell
-
-      - name: hospital_bed_type_name
-        description: The ward where the activity took place during a hospital provider spell.
-
+        description: MHSDS ward-stay identifier made from provider and submitted ward-stay identifier.
+        data_tests: [not_null, unique]
+      - name: mhs502_uniq_id
+        description: Identifier of the retained submitted MHS502 row.
+        data_tests: [not_null]
+      - name: ward_stay_id
+        description: Provider-local ward-stay identifier.
+      - name: ward_code
+        description: Provider-local ward identifier.
+      - name: uniq_ward_code
+        description: Provider-qualified ward identifier used to link version 6 stays to MHS903 in the same submission.
+      - name: uniq_hosp_prov_spell_id
+        description: MHSDS derived identifier of the recorded parent spell.
+        data_tests: [not_null]
       - name: uniq_hosp_prov_spell_num
-        description: unique identifier for each Hospital Provider Spell for a Health Care Provider
-        
-      - name: dmic_ccg_code
-        description: The ICB (Integrated Care Board) that commissioned the spell.
-
-
-    tests:
+        description: Existing source-derived parent spell identifier used by current downstream models.
+        data_tests: [not_null]
+      - name: uniq_serv_req_id
+        description: MHSDS unique service request linked to the ward stay.
+        data_tests: [not_null]
+      - name: person_id
+        description: MHSDS person identifier.
+      - name: org_id_prov
+        description: Organisation identifier for the provider.
+      - name: start_date_ward_stay
+        description: Recorded ward-stay start date; source dates before 1901 are null.
+      - name: start_time_ward_stay
+        description: Recorded ward-stay start time.
+      - name: end_date_ward_stay
+        description: Recorded ward-stay end date; source dates before 1901 are null.
+      - name: end_time_ward_stay
+        description: Recorded ward-stay end time.
+      - name: mh_admitted_patient_class
+        description: Mental health admitted patient classification code.
+      - name: hospital_bed_type_mh
+        description: Historical mental health hospital bed type code.
+      - name: hospital_bed_type_name
+        description: Hospital bed type name derived in the source feed.
+      - name: specialised_mh_service_code
+        description: NHS England specialised mental health service category code.
+      - name: specialised_mh_service_name
+        description: Specialised service category name derived in the source feed.
+      - name: site_id_of_treat
+        description: Historical treatment site recorded for the ward stay.
+      - name: ward_type
+        description: Ward setting submitted in earlier versions and derived from MHS903 in version 6.
+      - name: ward_age
+        description: Ward intended age group submitted in earlier versions and derived from MHS903 in version 6.
+      - name: ward_intended_sex
+        description: >-
+          Source-pipeline ward intended sex field. It mirrors the submitted
+          MHS502 field before version 6 and is derived from MHS903 in version 6.
+          The reporting fact uses the specification-defined source fields.
+      - name: ward_intended_clin_care_mh
+        description: >-
+          Source-pipeline ward clinical care intensity field. It mirrors the
+          submitted MHS502 field before version 6 and is derived from MHS903 in
+          version 6. The reporting fact uses the specification-defined fields.
+      - name: ward_sex_type_code
+        description: MHS502 sex-of-patients field submitted before version 6.
+      - name: intend_clin_care_inten_code_mh
+        description: MHS502 intended clinical care intensity field submitted before version 6.
+      - name: ward_sec_level
+        description: Ward security level submitted in earlier versions and derived from MHS903 in version 6.
+      - name: locked_ward_ind
+        description: Locked ward indicator submitted in earlier versions and derived from MHS903 in version 6.
+      - name: uniq_submission_id
+        description: Accepted submission supplying the retained ward-stay version.
+        data_tests: [not_null]
+      - name: reporting_period_end_date
+        description: End of the newest accepted reporting period containing the ward stay.
+        data_tests: [not_null]
+      - name: dat_set_ver
+        description: MHSDS specification version declared in the retained submission header.
+      - name: dmic_dataset
+        description: MHSDS dataset family assigned by the source pipeline.
+    data_tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1

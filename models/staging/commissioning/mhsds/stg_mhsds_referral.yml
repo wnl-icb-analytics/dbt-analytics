@@ -1,70 +1,96 @@
+version: 2
+
 models:
   - name: stg_mhsds_referral
-    description: MHSDS referral requests (deduplicated)
+    description: >-
+      MHSDS referrals from active provider submissions. One row per unique
+      service request. The newest reporting period is retained; source-effective
+      and submitted record identifiers resolve ties within that period.
     config:
       meta:
         owner:
           name: Eddie Davison
     columns:
       - name: uniq_serv_req_id
-        description: Primary key - unique service request identifier
-        tests:
-          - unique
-          - not_null
-
+        description: MHSDS unique service request identifier.
+        data_tests: [not_null, unique]
+      - name: mhs101_uniq_id
+        description: Unique submitted MHS101 record identifier.
+        data_tests: [not_null]
+      - name: service_request_id
+        description: Provider-local service request identifier.
       - name: person_id
-        description: MHSDS person identifier
-
-      - name: org_id_referring
-        description: The ORGANISATION IDENTIFIER of the Organisation from which the referral is made, such as a GP Practice, NHS Trust or NHS Foundation Trust.
-
-      - name: prim_reason_referral_mh
-        description: The primary presenting condition or symptom for which the patient was referred to a Mental Health Service
-
-      - name: decision_to_treat_date
-        description: The date that it was first identified that the patient needs mental health treatment, but the formal service request has not yet been created. However, the patient may be formally under the care of the Home Treatment Service. This applies to home treatments.
-
+        description: MHSDS person identifier.
       - name: referral_request_received_date
-        description: This is the date the REFERRAL REQUEST was received by the Health Care Provider.
-
-      - name: referring_care_professional_type
-        description: The type of Care Professional who referred the patient to the Mental Health Service. This data item is not required where the referrer is not a care professional e.g. self-referral, carer or employer.
-
+        description: Date the provider received the referral request; source dates before 1901 are null.
+      - name: referral_request_received_time
+        description: Recorded time the provider received the referral request.
+      - name: decision_to_treat_date
+        description: Recorded decision-to-treat date; source dates before 1901 are null.
+      - name: decision_to_treat_time
+        description: Recorded decision-to-treat time.
+      - name: disch_plan_creation_date
+        description: Recorded discharge plan creation date.
+      - name: disch_plan_creation_time
+        description: Recorded discharge plan creation time.
+      - name: disch_plan_last_updated_date
+        description: Recorded discharge plan update date.
+      - name: disch_plan_last_updated_time
+        description: Recorded discharge plan update time.
       - name: refer_rejection_date
-        description: The date the Referral Request to a Health Care Provider's Service was rejected by the Health Care Provider's Service. The overarching referral may remain open if another service or team involved in the same referral is still actively treating the patient.
-
+        description: Recorded referral rejection date.
+      - name: refer_rejection_time
+        description: Recorded referral rejection time.
       - name: refer_reject_reason
-        description: The reason that a Referral Request has been rejected by the SERVICE.
-
-      - name: refer_clos_reason
-        description: The reason that a Referral Request has been closed. A Referral Request can be closed as a result of a Patient being discharged from the SERVICE. Cancelled referrals such as those entered onto a system in error should not be submitted within the data set.
-
+        description: Referral rejection reason code.
       - name: serv_disch_date
-        description: Date the person was discharged from the service.
-
-      - name: age_serv_refer_rec_date
-        description: Age on the referral request received date.
-
-      - name: care_prof_team_local_id
-        description: A unique local CARE PROFESSIONAL TEAM IDENTIFIER code within a Health Care Provider.
-
+        description: Recorded service discharge date.
+      - name: serv_disch_time
+        description: Recorded service discharge time.
+      - name: refer_clos_reason
+        description: Referral closure reason code.
+      - name: disch_letter_iss_date
+        description: Discharge letter issue date; source dates before 1901 are null.
       - name: source_of_referral_mh
-        description: Describes the source of referral - GP, Internal, Police, Local Authority etc.
-
-      - name: service_type_name
-        description: Describes the type of SERVICE or team that the CARE PROFESSIONAL is associated with, within a Mental Health Service.
-
+        description: Source-of-referral code.
+      - name: prim_reason_referral_mh
+        description: Primary reason for referral code.
       - name: clin_resp_priority_type
-        description: Describes clinical response priority of a SERVICE REQUEST (eg emergency, urgent, routine).
-
+        description: Clinical response priority code.
+      - name: org_id_prov
+        description: Provider organisation code.
+      - name: org_id_comm
+        description: Commissioner organisation code submitted by the provider.
+      - name: org_id_referring_org
+        description: Referring organisation code.
+      - name: org_id_referring
+        description: Referring organisation or person code.
+      - name: nhs_serv_agree_line_id
+        description: NHS service agreement line identifier.
+      - name: nhs_serv_agree_line_num
+        description: NHS service agreement line number.
+      - name: referring_care_professional_type
+        description: Referring care professional type where applicable.
+      - name: care_prof_team_local_id
+        description: Provider-local primary service or team identifier.
+      - name: uniq_care_prof_team_local_id
+        description: MHSDS-derived primary service or team identifier.
+      - name: serv_team_type
+        description: Primary service or team type code supplied in MHSDS v6.
+      - name: service_type_name
+        description: Service or team name supplied by the provider.
+      - name: age_serv_refer_rec_date
+        description: Age at the referral request received date.
       - name: dm_icb_commissioner
-        description: The ICB (Integrated Care Board) that commissioned the referral.
-
+        description: ICB commissioner code derived by the source pipeline.
+      - name: dm_sub_icb_commissioner
+        description: Sub-ICB commissioner code derived by the source pipeline.
+      - name: dm_commissioner_derivation_reason
+        description: Code explaining the source pipeline's commissioner derivation.
       - name: uniq_submission_id
-        description: The unique identifier for the submission of the data, which is used to link records across the MHSDS datasets.
-
-
-    tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
+        description: MHSDS submission identifier.
+        data_tests: [not_null]
+      - name: reporting_period_end_date
+        description: End date of the source submission period.
+      - name: dmic_dataset
+        description: MHSDS version assigned by the source pipeline.

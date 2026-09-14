@@ -1,0 +1,36 @@
+version: 2
+
+macros:
+  - name: select_latest_mhsds_record
+    description: >-
+      Selects the newest reported version of each MHSDS logical record from
+      accepted submissions. Rows are ordered by the submission's reporting
+      period, then file receipt time, then submission identifier, then source
+      row number descending, then any caller-supplied tie-breakers. Source row
+      order is descending because within one file a later row for the same key
+      is treated as the later correction. int_mhsds_currency_primary_diagnosis cannot use this
+      macro and deliberately reads source rows ascending, following the NHS
+      England grouper order. Ranking uses the submission's reporting period,
+      but every column of the input relation is returned, so callers publish
+      the reporting period recorded on the record rather than the submission's.
+    arguments:
+      - name: mhsds_table
+        type: relation
+        description: >-
+          Relation containing uniq_submission_id, effective_from, row_number
+          and every partition and tie-breaker column.
+      - name: partition_cols
+        type: list
+        description: Non-empty list of columns defining the longitudinal record.
+      - name: tie_breaker_cols
+        type: list
+        description: Descending source columns that make any remaining ties deterministic.
+
+  - name: select_accepted_mhsds_period_records
+    description: >-
+      Filters rows to the accepted file for each provider and reporting period.
+      The calling staging model must resolve and test its published grain.
+    arguments:
+      - name: mhsds_table
+        type: relation
+        description: MHSDS relation containing uniq_submission_id.

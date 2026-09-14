@@ -15,9 +15,9 @@ models:
       * sds_role_group — official NHS Digital 4-group taxonomy for
         alignment with NHS Digital Appointments in General Practice
 
-      Two cost columns (sourced from pssru_unit_costs_2024 seed,
+      Two cost columns (sourced from pssru_unit_costs_2025 seed,
       adjusted via uk_cost_indices seed):
-      * appointment_cost_gbp_base_prices — always in PSSRU 2023/24
+      * appointment_cost_gbp_base_prices — always in PSSRU 2024/25
         real-terms prices, use for cross-year comparisons
       * appointment_cost_gbp_nominal — in the appointment's own fiscal
         year prices (GDP deflator adjusted), use for contemporaneous
@@ -30,7 +30,7 @@ models:
       PSSRU figures only.
 
       For full cost methodology and per-role rationale see the
-      pssru_unit_costs_2024 and uk_cost_indices seed descriptions.
+      pssru_unit_costs_2025 and uk_cost_indices seed descriptions.
 
       All reporting models (fct_gp_* and sem_olids_appointments) build
       from int_appointment_gp_clinical_recent rather than this model
@@ -66,8 +66,6 @@ models:
           - not_null
       - name: patient_id
         description: Patient identifier
-      - name: organisation_id
-        description: Practice organisation identifier
       - name: schedule_id
         description: Parent schedule identifier (appointment book session)
       - name: start_date
@@ -204,34 +202,34 @@ models:
           Used for costing and any financial-year rollups.
       - name: pssru_cost_per_minute_gbp
         description: >
-          PSSRU 2024 unit cost per minute (2023/24 prices) for the
-          practitioner_role_group, sourced from pssru_unit_costs_2024.
+          PSSRU 2025 unit cost per minute (2024/25 prices) for the
+          practitioner_role_group, sourced from pssru_unit_costs_2025.
           NULL for non-clinical role groups.
       - name: cost_is_proxy
         description: >
           TRUE when pssru_cost_per_minute_gbp is borrowed from another
           role's rate (e.g. Paramedic proxied from Physician Associate).
-          FALSE for roles with a direct PSSRU 2024 figure — GP, Nurse,
+          FALSE for roles with a direct PSSRU 2025 figure: GP, Nurse,
           Pharmacist, HCA, Physician Associate, Physiotherapist,
           Counsellor, Other Clinical. Because GP / Nurse / HCA dominate
           real-world appointment volume, this flag will be FALSE for the
           vast majority of rows; TRUE appointments are typically ARRS
           roles (Paramedic, Pharmacy Technician, Care Navigator, etc.).
-          See seeds/pssru_unit_costs_2024 for methodology.
+          See seeds/pssru_unit_costs_2025 for methodology.
       - name: cost_proxy_source
         description: >
           When cost_is_proxy is TRUE, names the practitioner_role_group
-          whose PSSRU rate was borrowed. NULL when cost_is_proxy is FALSE
-          — which is expected for the majority of appointments (those
+          whose PSSRU rate was borrowed. NULL when cost_is_proxy is FALSE,
+          which is expected for the majority of appointments (those
           staffed by GP / Nurse / HCA / Pharmacist etc. where the cost
           is a direct PSSRU figure). Filter WHERE cost_is_proxy = TRUE
           to see only imputed rows.
       - name: appointment_cost_gbp_base_prices
         description: >
           Estimated appointment cost in PSSRU base year prices
-          (2023/24), calculated as duration_minutes *
+          (2024/25), calculated as duration_minutes *
           pssru_cost_per_minute_gbp. Use this for real-terms comparisons
-          across fiscal years — the value is in 2023/24 money regardless
+          across fiscal years. The value is in 2024/25 money regardless
           of when the appointment happened.
 
           NULL only when duration_minutes or the role's unit cost is
@@ -243,7 +241,7 @@ models:
           Estimated appointment cost in the appointment's own fiscal
           year prices (contemporaneous / nominal), computed by applying
           the GDP deflator ratio between the appointment year and the
-          PSSRU base year (2023/24) from uk_cost_indices. Use for
+          PSSRU base year (2024/25) from uk_cost_indices. Use for
           reporting costs "as they would have been at the time".
 
           NULL when:

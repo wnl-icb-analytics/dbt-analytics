@@ -5,23 +5,24 @@ macros:
       Single source of truth for COVID vaccination campaign dates and eligibility parameters.
       Returns a SELECT with all campaign-specific configuration values.
 
+      Dates follow the UKHSA COVID-19 vaccine uptake reporting specification (PRIMIS v4.0,
+      7 August 2026) for 2026/27 and the equivalent version for each earlier season.
 
+      Available campaigns: COVID Autumn 2024, COVID Spring 2025, COVID Autumn 2025,
+      COVID Spring 2026, COVID Autumn 2026, COVID Spring 2027.
 
-
-      Available campaigns: COVID Autumn 2024, COVID Spring 2025, COVID Autumn 2025
-
-
-      Configure via dbt_project.yml vars: covid_current_campaign, covid_previous_campaign
+      The campaigns the models build come from covid_reported_campaign_ids(), not from a
+      var. COVID Spring 2027 is defined here but not listed there: spec v4.0 gives the
+      spring dates and defines call and recall for the autumn period only, so its cohorts
+      are a placeholder until UKHSA authorises a spring offer.
     arguments:
       - name: campaign_id
         type: string
-        description: Campaign identifier. Default 'COVID Autumn 2025'
+        description: Campaign identifier. Default 'COVID Autumn 2026'
 
   - name: covid_get_campaign_date
     description: >
       Helper to get a specific date field from campaign config.
-
-
     arguments:
       - name: date_name
         type: string

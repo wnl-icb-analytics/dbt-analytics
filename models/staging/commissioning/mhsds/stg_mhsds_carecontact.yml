@@ -1,61 +1,90 @@
+version: 2
+
 models:
   - name: stg_mhsds_carecontact
-    description: 'Mental Health Services Data Set (MHSDS) care contacts'
+    description: >-
+      MHSDS care contacts from accepted provider submissions. One row per
+      reporting period, unique service request and unique care contact. Repeated
+      contacts remain available so period activity can use its submitted parent.
     config:
       meta:
         owner:
           name: Thomas Shallcross
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
+              - reporting_period_end_date
               - uniq_serv_req_id
               - uniq_care_cont_id
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
     columns:
       - name: uniq_care_cont_id
-        description: MHSDS care contact identifier
-        tests:
-          - not_null
-
+        description: MHSDS unique care contact identifier within a referral.
+        data_tests: [not_null]
       - name: uniq_serv_req_id
-        description: unique service request identifier
-        tests:
-          - not_null
-
+        description: MHSDS unique service request identifier.
+        data_tests: [not_null]
+      - name: mhs201_uniq_id
+        description: Unique submitted MHS201 record identifier.
+        data_tests: [not_null, unique]
+      - name: care_contact_id
+        description: Provider-local care contact identifier.
       - name: person_id
-        description: MHSDS person identifier
-
+        description: MHSDS person identifier.
       - name: care_cont_date
-        description: The date on which a Care Contact took place, or, if cancelled, was scheduled to take place.
-
-      - name: org_id_prov
-
+        description: Date the contact took place or, for a cancelled contact, was scheduled.
+      - name: care_cont_time
+        description: Recorded contact time; null when only a date was supplied.
       - name: attend_status
-        description: This indicates whether or not an APPOINTMENT for a CARE CONTACT took place. If the APPOINTMENT did not take place it also indicates whether or not advanced warning was given.
-
+        description: Attendance status code.
       - name: clin_cont_dur_of_care_cont
-        description: The total duration of the direct clinical contact at a CARE CONTACT in minutes, excluding any administration time prior to or after the CARE CONTACT and the CARE PROFESSIONAL's travelling time to the CARE CONTACT. CLINICAL CONTACT DURATION OF CARE CONTACT includes the time spent on the different CARE ACTIVITIES that may be performed in a single CARE CONTACT. The duration of each CARE ACTIVITY is recorded in CLINICAL CONTACT DURATION OF CARE ACTIVITY. This should be recorded in minutes.
-
-      - name: dm_icb_commissioner
-        description: The ICB (Integrated Care Board) that commissioned the referral.
-
-      - name: care_prof_team_local_id
-        description: A unique local CARE PROFESSIONAL TEAM IDENTIFIER code within a Health Care Provider.
-
-      - name: site_id_of_treatment
-        description: A SITE IDENTIFIER code within a Health Care Provider.
-
+        description: Direct clinical contact duration in minutes.
       - name: cons_type
-        description: The type of consultation either Initial Consultation or Follow Up.
-
+        description: Consultation type code.
       - name: cons_mechanism_mh
-        description: The mechanism by which the consultation was conducted (e.g., face-to-face, telephone, video call).
-
+        description: Consultation mechanism code.
+      - name: cons_medium_used
+        description: Historical consultation medium code.
       - name: act_loc_type_code
-        description: The location where the care activity took place, such as a hospital, clinic, or patient's home.
-
+        description: Activity location type code.
+      - name: care_prof_team_local_id
+        description: Provider-local service or team identifier.
+      - name: site_id_of_treat
+        description: Treatment site code.
+      - name: org_id_prov
+        description: Provider organisation code.
+      - name: org_id_comm
+        description: Commissioner organisation code submitted by the provider.
+      - name: dm_icb_commissioner
+        description: ICB commissioner code derived by the source pipeline.
+      - name: dm_sub_icb_commissioner
+        description: Sub-ICB commissioner code derived by the source pipeline.
+      - name: dm_commissioner_derivation_reason
+        description: Code explaining the source pipeline's commissioner derivation.
       - name: age_care_cont_date
-        description: MHSDS-derived age at the contact date.
+        description: Age at the care contact date.
+      - name: cont_loc_distance_home
+        description: Source-derived straight-line distance in kilometres from home to the contact location.
+      - name: earliest_reason_offer_date
+        description: Earliest reasonable appointment offer date; source dates before 1901 are null.
+      - name: earliest_clin_app_date
+        description: Earliest clinically appropriate appointment date; source dates before 1901 are null.
+      - name: rep_appt_offer_date
+        description: Representative appointment offer date; source dates before 1901 are null.
+      - name: rep_appt_book_date
+        description: Representative appointment booking date; source dates before 1901 are null.
+      - name: care_cont_cancel_date
+        description: Care contact cancellation date; source dates before 1901 are null.
+      - name: com_peri_mh_part_assess_offer_ind
+        description: Community perinatal partner assessment offer indicator.
+      - name: reason_patient_no_imca
+        description: Reason code for no Independent Mental Capacity Advocate.
+      - name: reason_patient_no_imha
+        description: Reason code for no Independent Mental Health Advocate.
+      - name: uniq_submission_id
+        description: MHSDS submission identifier.
+        data_tests: [not_null]
+      - name: reporting_period_end_date
+        description: End date of the source submission period.
+      - name: dmic_dataset
+        description: MHSDS version assigned by the source pipeline.

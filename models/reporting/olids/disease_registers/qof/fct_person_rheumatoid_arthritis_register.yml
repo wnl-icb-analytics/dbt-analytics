@@ -1,9 +1,9 @@
 models:
   - name: fct_person_rheumatoid_arthritis_register
-    description: 'QOF rheumatoid arthritis register for patients with rheumatoid arthritis
-      diagnosis.
-
-      One row per person with RA_COD present (RA is lifelong condition).'
+    description: >
+      Disease Registers (QOF v51) rheumatoid arthritis register. One row per
+      person aged 16 or over with RARTH_COD. RA001 is retired; register extraction
+      continues through the Disease Registers service.
 
     tests:
       - dbt_utils.at_least_one:
@@ -26,11 +26,8 @@ models:
           name_short: "Rheumatoid Arthritis"
           description_short: "QOF rheumatoid arthritis register"
           description_long: >
-            Rheumatoid arthritis diagnosed using QOF criteria: Any RA diagnosis code
-            qualifies  for register inclusion. RA is considered a lifelong condition
-            with no resolution  codes. Used for rheumatology care monitoring and disease-modifying
-            therapy  management. Maps to QOF indicator RA002 (RA Register). Uses RA_COD
-            for diagnosis codes.
+            Disease Registers (QOF v51) rheumatoid arthritis register. Requires
+            age 16 or over and RARTH_COD. RA001 is retired, but extraction continues.
           is_qof: true
           qof_indicator: "RA002"
           source_column: "is_on_register"
@@ -38,7 +35,7 @@ models:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
             - "QOF"
           code_clusters:
-            - cluster_id: "RA_COD"
+            - cluster_id: "RARTH_COD"
               category: "INCLUSION"
         owner:
           name: EddieDavison92

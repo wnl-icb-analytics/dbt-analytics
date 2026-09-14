@@ -35,17 +35,43 @@ left join {{ ref('dim_person_demographics') }} reg
     on pp.person_id = reg.person_id
 left join {{ ref('stg_cltcs_emis_cltcs_local_mapping_nh_gp') }} nh
     on db.practice_code = nh.practice_code
-where db.date_of_death is null -- living patients only
+where (reg.is_deceased = false or reg.is_deceased is null or db.date_of_death is null) -- living patients only
     and db.date_of_birth < date_trunc('month', dateadd(year, -18, current_date)) -- adults only
-    and db.sk_patient_id is not null 
+    and db.sk_patient_id is not null
+    and db.sk_patient_id != '1'
     and pp.person_id is not null
     and nh.neighbourhood_code is not null
+    and (reg.is_active=true and flag_current_registered = true) -- must be active registrant
 -- Latest-record tiebreak when an sk_patient_id maps to >1 person_id: keep the most
 -- recently registered person record (person_id as a stable final tiebreak).
 qualify row_number() over (
     partition by db.sk_patient_id
     order by reg.registration_start_date desc nulls last, pp.person_id
-) = 1 )
+) = 1 ),
+
+potentially_fragmented_sk_patient_ids as (
+    SELECT
+    p.sk_patient_id,
+    COUNT(DISTINCT pp.person_id) as person_count,
+    ARRAY_AGG(DISTINCT pp.person_id::VARCHAR) as person_ids
+    FROM {{ ref('stg_olids_patient') }} p
+    JOIN {{ ref('stg_olids_patient_person') }} pp ON p.id = pp.patient_id
+    GROUP BY p.sk_patient_id
+    HAVING COUNT(DISTINCT pp.person_id) > 1
+    ORDER BY person_count DESC
+),
+
+potentially_fragmented_person_ids as (
+    SELECT
+        pp.person_id,
+        COUNT(DISTINCT p.sk_patient_id) as patient_count,
+        ARRAY_AGG(DISTINCT p.sk_patient_id::VARCHAR) as sk_patient_ids
+    FROM {{ ref('stg_olids_patient') }} p
+    JOIN {{ ref('stg_olids_patient_person') }} pp ON p.id = pp.patient_id
+    GROUP BY pp.person_id
+    HAVING COUNT(DISTINCT p.sk_patient_id) > 1
+    ORDER BY patient_count DESC
+)
 
 select erl.sk_patient_id
     , erl.neighbourhood_code
@@ -58,6 +84,8 @@ select erl.sk_patient_id
     , lcs.overall_risk_group
     , rm.unique_active_ingredient_count_12mo
     , frr.latest_frailty_severity
+    ,case when erl.sk_patient_id in (select sk_patient_id from potentially_fragmented_sk_patient_ids) then 1 else 0 end as fragmented_sk_patient_id_flag -- poor mapping of multiple person_ids to one sk_patient_id
+    ,case when erl.person_id in (select person_id from potentially_fragmented_person_ids) then 1 else 0 end as fragmented_person_id_flag -- poor mapping of multiple sk_patient_ids to one person_id
 from source_pop erl
 left join {{ ref('dim_person_conditions')}} pc
     on erl.person_id = pc.person_id

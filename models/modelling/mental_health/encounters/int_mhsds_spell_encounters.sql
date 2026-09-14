@@ -218,7 +218,7 @@ with spells as (
         on c.uniq_hosp_prov_spell_num = ws.uniq_hosp_prov_spell_num
     left join {{ ref('nhse_mh_bed_day_prices_2627') }} as p
         on coalesce(ws.setting_key, 'unclassified') = p.setting_key
-    left join {{ ref('nhse_provider_mff_2627') }} as mff
+    left join {{ ref('provider_market_forces_factor_2026_27') }} as mff
         on c.org_id_prov = mff.provider_code
     group by 1
 )

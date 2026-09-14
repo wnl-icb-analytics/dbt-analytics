@@ -1,12 +1,13 @@
 {{
     config(
         materialized='table',
+        tags=['covid_flu'],
         cluster_by=['programme_type', 'campaign_id', 'practice_code', 'person_id']
     )
 }}
 
 /*
-COVID and Flu Dashboard Base Table
+COVID and Flu Dashboard Base Table - LEGACY VIEW - TO BE REPLACED WITH A WIDE FORMAT
 
 This model provides dashboard-ready data by combining the pure uptake facts
 with demographics and practice information for the COVID and Flu Dashboard.
@@ -19,10 +20,11 @@ Key features:
 
 Multi-Programme Support:
 COVID Campaigns:
-- COVID Autumn 2024, COVID Spring 2025, COVID Autumn 2025, COVID Spring 2026
+- COVID Autumn 2024, COVID Spring 2025, COVID Autumn 2025, COVID Spring 2026,
+  COVID Autumn 2026
 
 Flu Campaigns: 
-- Flu 2023-24, Flu 2024-25, Flu 2025-26
+- Flu 2024-25, Flu 2025-26, Flu 2026-27
 
 Usage:
 - Primary table for COVID and Flu Dashboard in PowerBI/Tableau
@@ -42,6 +44,8 @@ WITH uptake_with_demographics AS (
          WHEN u.campaign_id = 'COVID Spring 2025' THEN 'CV Spring 2025'
          WHEN u.campaign_id = 'COVID Autumn 2025' THEN 'CV Autumn 2025'
          WHEN u.campaign_id = 'COVID Spring 2026' THEN 'CV Spring 2026'
+         WHEN u.campaign_id = 'COVID Autumn 2026' THEN 'CV Autumn 2026'
+         WHEN u.campaign_id = 'COVID Spring 2027' THEN 'CV Spring 2027'
          ELSE u.campaign_id END AS campaign_id,
         CASE 
         WHEN u.campaign_id = 'Flu 2024-25' THEN 1
@@ -50,6 +54,9 @@ WITH uptake_with_demographics AS (
         WHEN u.campaign_id = 'Flu 2025-26' THEN 4
         WHEN u.campaign_id = 'COVID Autumn 2025' THEN 5
         WHEN u.campaign_id = 'COVID Spring 2026' THEN 6
+        WHEN u.campaign_id = 'Flu 2026-27' THEN 7
+        WHEN u.campaign_id = 'COVID Autumn 2026' THEN 8
+        WHEN u.campaign_id = 'COVID Spring 2027' THEN 9
         END AS campaign_sort,
         u.campaign_year,
         u.campaign_season,
@@ -151,8 +158,25 @@ WITH uptake_with_demographics AS (
         u.is_eligible,
         u.campaign_category,
         u.risk_group,
+        u.subcohort,
         --u.eligibility_reason,
         --u.rule_type,
+
+        -- Clinical risk group flags, any age, bounded to the campaign
+        -- (int_covid_flu_risk_group_flags). A person aged 65 or over with CKD carries
+        -- has_ckd = 1 on their age-based row.
+        COALESCE(f.has_asthma, 0) AS has_asthma,
+        COALESCE(f.has_asplenia, 0) AS has_asplenia,
+        COALESCE(f.has_chd, 0) AS has_chd,
+        COALESCE(f.has_ckd, 0) AS has_ckd,
+        COALESCE(f.has_cld, 0) AS has_cld,
+        COALESCE(f.has_cnd, 0) AS has_cnd,
+        COALESCE(f.has_crd, 0) AS has_crd,
+        COALESCE(f.has_diabetes, 0) AS has_diabetes,
+        COALESCE(f.is_immunosuppressed, 0) AS is_immunosuppressed,
+        COALESCE(f.has_ld, 0) AS has_ld,
+        COALESCE(f.has_smi, 0) AS has_smi,
+        COALESCE(f.in_clinical_risk_group, 0) AS in_clinical_risk_group,
         
         -- Vaccination information from uptake facts
         u.vaccination_status,
@@ -179,6 +203,10 @@ WITH uptake_with_demographics AS (
         u.created_at
         
     FROM {{ ref('fct_covid_flu_uptake') }} u
+    LEFT JOIN {{ ref('int_covid_flu_risk_group_flags') }} f
+        ON f.programme_type = u.programme_type
+        AND f.campaign_id = u.campaign_id
+        AND f.person_id = u.person_id
     LEFT JOIN {{ ref('dim_person_demographics') }} d
         ON u.person_id = d.person_id
     LEFT JOIN {{ ref('person_pseudo') }} id  
@@ -189,6 +217,10 @@ WITH uptake_with_demographics AS (
         ON u.person_id = hs.person_id
     LEFT JOIN {{ ref('stg_reference_lsoa21_ward25_lad25') }} la 
         on la.LSOA21_CD = d.LSOA_CODE_21
+    -- Only campaigns that had closed by the 2026-06-30 population snapshot. Measuring a
+    -- later campaign against a June 2026 population would understate its uptake, and this
+    -- predicate keeps that true without an edit each time a season is added.
+    WHERE u.campaign_reference_date <= '2026-06-30'::DATE
 )
 
 SELECT distinct * FROM uptake_with_demographics

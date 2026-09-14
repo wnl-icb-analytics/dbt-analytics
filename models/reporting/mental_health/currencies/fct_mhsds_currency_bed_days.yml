@@ -26,24 +26,40 @@ models:
         description: Pseudonymised patient identifier.
       - name: person_id
         description: MHSDS person identifier.
-      - name: org_id_prov
+      - name: provider_organisation_code
         description: Provider organisation code.
         data_tests:
           - not_null
+      - name: provider_organisation_name
+        description: Current organisation name for the provider code.
+      - name: source_derived_icb_commissioner_code
+        description: ICB commissioner code derived in the source feed.
+      - name: source_derived_icb_commissioner_name
+        description: Current organisation name for the derived ICB commissioner code.
+      - name: commissioner_icb_code
+        description: Commissioner ICB code resolved for currency reporting.
+      - name: commissioner_icb_name
+        description: Current organisation name for the currency commissioner code.
+      - name: is_wnl_commissioner
+        description: TRUE for a recognised current or predecessor WNL commissioner; otherwise FALSE.
       - name: currency_group
         description: Currency population group.
         data_tests:
           - not_null
       - name: currency_code
-        description: Inpatient currency code.
+        description: NHSE inpatient currency code.
         data_tests:
           - not_null
-      - name: spell_start_date
-        description: Spell admission date.
+      - name: pricing_currency_code
+        description: >-
+          Code used to resolve a bed-day price. MAZ99 spells use the matching
+          MBU98 setting because MAZ99 has no published bed-day price.
+      - name: hospital_provider_spell_start_date
+        description: Hospital provider spell start date.
         data_tests:
           - not_null
-      - name: spell_end_date
-        description: Derived spell end date; null while the spell is open.
+      - name: hospital_provider_spell_end_date
+        description: Derived hospital provider spell end date; null while open.
       - name: bed_days_from_date
         description: First night counted in this row's bed_days.
         data_tests:
@@ -63,7 +79,7 @@ models:
         data_tests:
           - not_null
       - name: price_source
-        description: Price resolution attempt that supplied the price.
+        description: Price fallback that supplied the bed-day price.
         data_tests:
           - not_null
           - accepted_values:
@@ -81,8 +97,8 @@ models:
         description: Price multiplied by bed days, MFF, and GDP deflator ratio.
         data_tests:
           - not_null
-      - name: end_date_source
-        description: Source of the spell end date.
+      - name: hospital_provider_spell_end_date_source
+        description: Source of the hospital provider spell end date.
       - name: is_cyp
         description: Whether age at admission is under 18.
       - name: winning_tier

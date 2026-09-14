@@ -4,23 +4,25 @@ COVID Long-term Residential Care Eligibility Rule
 Business Rule: Person is eligible if they are:
 1. Currently residing in long-term residential care (care home)
 2. Latest residence code is from LONGRES_COD cluster
-3. AND aged 65+ at campaign reference date (for care home specific eligibility)
+3. AND at least care_home_min_age at the campaign reference date
 
 Hierarchical rule - latest residence status determines eligibility.
-This is a key eligibility group for COVID campaigns.
+This is a key eligibility group for COVID campaigns. The minimum age is campaign
+driven: the Autumn 2024 offer covered adult residents, and every offer from Spring
+2025 onward covers residents aged 65 and over (spec 5.1.1 Group M denominator).
 */
 
-{{ config(materialized='table') }}
+{{ config(
+    materialized='incremental',
+    incremental_strategy='delete+insert',
+    unique_key='campaign_id',
+    tags=['covid_flu']
+) }}
 
 WITH all_campaigns AS (
-    -- Generate data for both current and previous campaigns automatically
-    SELECT * FROM ({{ covid_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_spring_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_spring_config() }})
+    -- Every COVID campaign the models report on
+    -- (campaign list: macros/config/covid_campaign_selection.sql)
+    {{ covid_build_campaigns() }}
 ),
 
 -- Step 1: Find people with any residence codes (for all campaigns)
@@ -31,9 +33,10 @@ people_with_residence_codes AS (
         obs.clinical_effective_date AS residence_date,
         obs.mapped_concept_code AS residence_code,
         cc.audit_end_date
-    FROM ({{ get_observations("'RESIDE_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'RESIDE_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= cc.audit_end_date
         AND cc.eligible_care_home = TRUE
 ),
@@ -46,9 +49,10 @@ people_with_longterm_care_codes AS (
         obs.clinical_effective_date AS longterm_care_date,
         obs.mapped_concept_code AS longterm_care_code,
         cc.audit_end_date
-    FROM ({{ get_observations("'LONGRES_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'LONGRES_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= cc.audit_end_date
         AND cc.eligible_care_home = TRUE
 ),
@@ -91,6 +95,7 @@ people_in_longterm_care AS (
         ltcs.latest_longterm_care_date,
         cc.campaign_reference_date,
         cc.audit_end_date,
+        cc.care_home_min_age,
         -- Person is in long-term care if their latest residence code is a long-term care code
         CASE 
             WHEN ltcs.latest_longterm_care_date = lrs.latest_residence_date 
@@ -114,18 +119,20 @@ people_in_longterm_care_with_age AS (
         pltc.campaign_id,
         pltc.person_id,
         demo.birth_date_approx,
-        DATEDIFF('year', demo.birth_date_approx, pltc.campaign_reference_date) AS age_years_at_ref_date,
-        DATEDIFF('month', demo.birth_date_approx, pltc.campaign_reference_date) AS age_months_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(pltc.campaign_reference_date, demo.birth_date_approx) / 12) AS age_years_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(pltc.campaign_reference_date, demo.birth_date_approx)) AS age_months_at_ref_date,
         pltc.latest_residence_date AS qualifying_event_date,
         pltc.campaign_reference_date,
+        pltc.care_home_min_age,
         pltc.is_in_longterm_care
     FROM people_in_longterm_care pltc
     LEFT JOIN {{ ref('dim_person_demographics') }} demo 
         ON pltc.person_id = demo.person_id
-    WHERE demo.is_active = TRUE
-        AND demo.birth_date_approx IS NOT NULL
+    WHERE demo.birth_date_approx IS NOT NULL
         AND pltc.is_in_longterm_care = TRUE
-        AND DATEDIFF('year', demo.birth_date_approx, pltc.campaign_reference_date) >= 65  -- Care home eligibility is 65+
+        -- Tested on birth date because Snowflake DATEDIFF('year', ...) subtracts
+        -- calendar years rather than counting completed years.
+        AND demo.birth_date_approx <= DATEADD('year', -pltc.care_home_min_age, pltc.campaign_reference_date)
 ),
 
 -- Step 7: Format for eligibility table
@@ -137,7 +144,7 @@ final_eligible AS (
         person_id,
         qualifying_event_date,
         campaign_reference_date AS reference_date,
-        'Resident in long-term residential care home (aged 65+)' AS description,
+        'Resident in long-term residential care home (aged ' || care_home_min_age || '+)' AS description,
         birth_date_approx,
         age_months_at_ref_date,
         age_years_at_ref_date,

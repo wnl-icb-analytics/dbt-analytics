@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: stg_mhsds_provisional_diagnosis
+    description: >-
+      Accepted MHS603 clinical source records. One row per submitted record
+      across accepted provider reporting periods. Repeated clinical items
+      remain here; cross-period revision selection belongs in modelling.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: mhs603_uniq_id
+        description: Unique accepted source-row identifier; changes on resubmission.
+        data_tests: [not_null, unique]
+      - name: uniq_serv_req_id
+        description: Recorded provider-qualified service request identifier.
+      - name: diag_scheme_in_use
+        description: Submitted diagnosis scheme; 02 is ICD-10 and 06 is SNOMED CT.
+      - name: prov_diag
+        description: Diagnosis code as submitted.
+      - name: coded_prov_diag_timestamp
+        description: Stored provisional-diagnosis timestamp; original offset and precision are unavailable.
+      - name: prov_diag_date
+        description: Separate source-pipeline provisional-diagnosis date.
+      - name: master_snomed_ct_prov_diag_code
+        description: Source-pipeline SNOMED CT mapping of the submitted diagnosis.
+      - name: org_id_prov
+        description: Provider organisation code.
+      - name: person_id
+        description: MHSDS national person identifier; may change between submissions.
+      - name: uniq_submission_id
+        description: Accepted submission containing the source row.
+      - name: uniq_month_id
+        description: Source reporting-month identifier.
+      - name: record_number
+        description: Source record number, retained for tracing and deterministic selection.
+      - name: row_number
+        description: Source row position, retained for deterministic selection.
+      - name: reporting_period_start_date
+        description: Start of the accepted reporting period.
+      - name: reporting_period_end_date
+        description: End of the accepted reporting period.
+      - name: effective_from
+        description: Time the source file was received.
+      - name: dmic_date_added
+        description: Time the source row was loaded.
+      - name: dmic_dataset
+        description: Source MHSDS specification version.

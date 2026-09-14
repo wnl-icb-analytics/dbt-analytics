@@ -3,110 +3,170 @@ version: 2
 models:
   - name: stg_mhcorl
     description: |
-      Cleaned MHCORL — the MHCORL feed in ServicesDataLocal (provider monthly
-      mental-health activity submissions, originally spreadsheet uploads,
-      remapped via the SDL pipeline). Single source, row-level cleanup (typing,
-      normalisation, sibling-coalesce, gender/ethnicity reference mapping).
+      MHCORL SDL feed (provider monthly mental-health activity submissions,
+      originally spreadsheet uploads remapped by the SDL pipeline), cleaned.
+      Grain: one row per source row. Scope: FY2022/23 onwards.
 
-      Heavier than typical staging in this repo because the source is too
-      inconsistent to expose to downstream int_/reporting layers as-is. Grain
-      stays 1:1 with source. Materialised as table for query performance over
-      the inline CASE/regex/coalesce chains.
+      MHCORL carries several datasets with different grains; dv_dataset labels
+      each row:
+        * community: contacts / appointments (RRP00 NONIP files, RKL00
+          APPOINTMENTS, RV300 NON_IP outpatient and community files, RNK00
+          appointment-level MHCO dataset, RAT00 spell-level currency rows).
+        * inpatient: ward stays and occupied bed days (RRP00 IP files, RKL00
+          INPATIENTS, RV300 IP / APC files, RAT00 OBD currency rows).
+        * liaison: liaison-psychiatry referrals (RKL00 LPS year-to-date files,
+          RV300 LIAISON PSYCHIATRY files).
+      Filter on dv_dataset before counting or summing.
 
-      Scope: meta_partition_date >= 2022-04-01. See model SQL for the cutoff
-      rationale. Raw values for gender / ethnicity etc. live in source.
+      Providers: RRP00 (BEH, now NLFT; ~40% of rows), RV300 (CNWL, to
+      September 2023), RKL00 (West London, to November 2023), RNK00 (Tavistock
+      and Portman), RAT00 (NELFT). Only RRP00, RNK00 and RAT00 still submit.
 
-      Coverage caveats:
-        * RRP00 (Barnet, Enfield & Haringey MH Trust, ~93% volume), RNK00
-          (Tavistock & Portman), RAT00 (NELFT) are the only providers still
-          submitting from 2024-04 onwards.
-        * RV300 (CNWL) stopped 2023-09. RKL00 (West London NHS Trust) and other
-          smaller historic providers stopped earlier.
+      Cleaning: best-populated provider sibling column picked per field; dates
+      parsed across the provider formats; gender and ethnicity mapped to the
+      project's label sets and the NHS ethnic category code; GP practice
+      validated to a 6-character ODS code; financial period from the stated
+      DLP or reporting value, else the stated activity month or the contact
+      date, else the file name.
+
+      Cumulative restatement feed (RAT00 Flex/Freeze resubmissions, RKL00 LPS
+      year-to-date files, per-commissioner RNK00 / RV300 files): summing
+      across files double-counts. Report from stg_mhcorl_latest for the
+      current statement per (dataset, provider, commissioner, FY, month).
+
+      Incremental (pure append of new files); full-refresh after an upstream
+      SDL rebuild.
     config:
       meta:
         owner:
           name: Eddie Davison
+    # Provenance convention: "Pipeline" = added by the SDL ingest (reliable);
+    # "Derived" = computed/parsed/mapped here; "As supplied" = provider value
+    # passed through unchanged (sometimes coalesced across sibling columns, but
+    # the value itself is not altered).
     columns:
+      # -- SDL pipeline keys --------------------------------------------------
       - name: meta_sk_row_id
-        description: Surrogate row key from the SDL pipeline.
+        description: Pipeline. Surrogate row key (1:1 with source).
         data_tests:
           - not_null
           - unique
       - name: meta_file_id
-        description: SDL source file id. Trace back to Log_ProcessingEvent.
+        description: Pipeline. Source file id; joins to META_FILE_REGISTRY with meta_batch_id.
         data_tests:
           - not_null
       - name: meta_row_id
+        description: Pipeline. Row id within the source file.
       - name: meta_batch_id
+        description: Pipeline. Load batch id.
       - name: meta_partition_date
-        description: Activity month (first day) from the SDL meta layer. Use this for time-series rollups.
+        description: |
+          Pipeline. DSCRO submission period encoded as a date: the year is the
+          financial-year start year and the month is the financial month
+          (1 = April), so 2024-01-01 is FY2024/25 month 1 (April 2024). Not a
+          calendar month; use dv_financial_year / dv_financial_month for
+          time series.
         data_tests:
           - not_null
       - name: meta_provider_code
-        description: ODS provider code populated by the SDL pipeline.
+        description: Pipeline. Provider ODS code assigned by the SDL ingest (5-character site form, e.g. RRP00).
         data_tests:
           - not_null
           - accepted_values:
               arguments:
-                values: ['RRP00', 'RNK00', 'RV300', 'RAT00', 'RKL00', 'RWK00', 'RV500', 'TAF00']
+                values: ['RRP00', 'RNK00', 'RV300', 'RAT00', 'RKL00']
       - name: meta_recipient_code
-        description: ODS recipient code (commissioner / DSCRO).
+        description: Pipeline. Recipient (commissioner / DSCRO) code the file was submitted to.
       - name: meta_version_id
-        description: Schema-version id (md5 of source column headers) — identifies the file layout.
+        description: Pipeline. Source layout version hash (md5 of the file's column headers).
+      - name: dv_recipient_code
+        description: Pipeline. Responsible commissioner (sub-ICB / CCG) code derived by the SDL pipeline for the row.
 
-      - name: sk_patient_id
-        description: |
-          Pseudonymised NHS-number-derived patient hash. Matches sk_patient_id in
-          stg_csds_*, stg_mhsds_*, stg_sus_*. Use for cross-dataset joins.
-          Sourced from MHCORL.SK_PATIENT_ID_NHS_NUMBER.
-        data_tests:
-          - not_null:
-              config:
-                severity: warn
-      - name: sk_patient_id_local_hash
-        description: |
-          DIFFERENT identifier — locally-derived hash (likely from hospital number).
-          Zero overlap with sk_patient_id — DO NOT JOIN on this. Useful only for
-          within-provider linking on RRP00/RNK00/RKL00.
-
-      - name: reporting_month
-        description: Month number 1-12.
+      # -- Reporting period (derived) ----------------------------------------
+      - name: dv_financial_year
+        description: Derived. Financial year as 'YYYYYY' (e.g. 202526 = FY2025/26), matching the other SDL feeds. Stated DLP or provider value, else derived from the activity month or contact date, else the file name.
+      - name: dv_financial_month
+        description: Derived. Financial month 1 (April) - 12 (March). Same precedence as dv_financial_year.
         data_tests:
           - dbt_utils.accepted_range:
               arguments:
                 min_value: 1
                 max_value: 12
                 inclusive: true
-      - name: financial_year_start
-        description: Calendar year the financial year starts (e.g. 2024 for FY24/25).
-      - name: financial_year_canonical
-        description: Financial year as 'YYYY-YY' (e.g. '2024-25').
-      - name: financial_year_raw
-        description: Original FY string from the most-populated sibling column. 7+ source formats observed.
+      - name: dv_financial_period_source
+        description: Derived. Which source resolved the period - 'stated', 'derived_from_activity_date' (stated activity month or contact date) or 'derived_from_file_name'. NULL where none could.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['stated', 'derived_from_activity_date', 'derived_from_file_name']
+          # Nulls are expected (a few blank rows); warn so the count is
+          # surfaced, not failed.
+          - not_null:
+              config:
+                severity: warn
 
-      - name: referral_date
-        description: Coalesced from referral_date / date_of_referral / dateofreferral, multi-format parsed.
-      - name: contact_date
-        description: |
-          Coalesced from contact_date / contactdate / col_1_stf2_fcontactdatetime
-          (RV300) / col_1st_f2_fcontact_date_time (RKL00). Multi-format parsed.
-          NB RAT00 and RNK00 do not supply a contact date for 2022+.
+      # -- DLP standard submission fields ------------------------------------
+      - name: dlp_flex_or_freeze
+        description: Derived. Submission flag standardised to 'Flex' or 'Freeze' from DLP_FLEXOR_FREEZE, the pre-DLP FLEX_OR_FREEZE column or RAT00's DV_IS_FREEZE; other values -> NULL. Empty for RKL00 and RV300, which never sent the flag.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Flex', 'Freeze']
+      - name: dlp_commissioner_code
+        description: As supplied. DLP header commissioner code (RRP00, RNK00 and RAT00 from 2024).
+      - name: dlp_baseline_financial_month
+        description: As supplied. DLP baseline financial month.
 
+      # -- Dataset and organisation ------------------------------------------
+      - name: dv_dataset
+        description: Derived. Which MHCORL dataset the row belongs to - 'community', 'inpatient' or 'liaison' - from the submission file name, the provider's dataset column and RAT00's OBD currency. See the model description for what each provider sends under each label.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['community', 'inpatient', 'liaison']
+      - name: provider_code
+        description: Derived. Provider ODS trust code (e.g. RRP) from the pipeline provider code, cleaned as in the other SDL staging models. The supplied PROVIDER_CODE is not used - it is empty or a non-trust code in several layouts.
+        data_tests:
+          - not_null
+      - name: commissioner_code
+        description: As supplied. Row-level commissioner code (COMMISSIONER_CODE, else the CCG column the liaison layouts use). Mostly 3-character CCG / sub-ICB codes.
+      - name: commissioner_name
+        description: As supplied. Commissioner name for commissioner_code. RRP00 only; empty for the other providers.
+      - name: site_code
+        description: As supplied. Treatment site code (RKL00, RNK00, RAT00 only).
+
+      # -- Patient ------------------------------------------------------------
+      - name: local_patient_id
+        description: As supplied. Provider-local patient identifier (HOSPITAL_NUMBER for RNK00 / RAT00, PATIENT_KEY for RKL00 liaison). Not sent by RRP00 or RV300.
+      - name: sk_patient_id
+        description: Pipeline. Pseudonymised NHS-number-derived key (SK_PATIENT_ID_NHS_NUMBER); matches sk_patient_id in the other staging models. ~99% populated.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: sk_patient_id_local_hash
+        description: Pipeline. A different, locally derived hash (the bare SK_PATIENT_ID column) with no overlap with sk_patient_id. Do not join on it across datasets; only useful for within-provider linking.
+      - name: dv_year_of_birth
+        description: Derived. Year of birth (pipeline-pseudonymised DV_YEAROF_BIRTH cast to number). RAT00 and RKL00 only.
+      - name: partial_postcode
+        description: Pipeline. Partial (pseudonymised) postcode.
+      - name: lsoa
+        description: Pipeline. LSOA of residence.
       - name: gender
-        description: |
-          Canonicalised: Male / Female / Not specified / Not known / Indeterminate / Other.
-          Source has 25+ raw variants per provider (1/2/M/F/Male/Female/...).
+        description: Derived. Male / Female / Not specified / Not known / Indeterminate / Other, mapped from 25+ provider variants of GENDER (SEX for RV300 liaison). Unrecognised local codes (RAT00 sends 3, 4, 6, 7) map to 'Not known'; blanks and header text to NULL.
         data_tests:
           - accepted_values:
               arguments:
                 values: ['Male', 'Female', 'Not specified', 'Not known', 'Indeterminate', 'Other']
+      - name: ethnic_category_code
+        description: Derived. NHS ethnic category national code (A-S, Z, 99) from the code columns or free-text ethnicity via nhs_ethnicity_category_code. RV300's BME / NON BME aggregations cannot be mapped and are NULL.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['A','B','C','D','E','F','G','H','J','K','L','M','N','P','R','S','Z','99','0']
       - name: ethnicity_17
-        description: |
-          NHS 17+1 ethnic category. Maps:
-            * letter codes (A-Z, 99, 0) — used by RNK00, RAT00, RWK00
-            * 'White - X' / 'Asian or Asian British - X' etc. prefixed forms — RRP00
-            * bare names (British, Indian, Caribbean, ...) — RV300
-          Aggregations that don't fit a single bucket (BME, NON BME) → NULL.
+        description: Derived. NHS 17+1 ethnic category label for ethnic_category_code.
         data_tests:
           - accepted_values:
               arguments:
@@ -130,10 +190,7 @@ models:
                   - 'Not stated'
                   - 'Not known'
       - name: ethnicity_6
-        description: |
-          NHS 6 broad ethnicity grouping derived from the same letter code as
-          ethnicity_17: White / Mixed / Asian or Asian British /
-          Black or Black British / Other Ethnic Groups / Unknown.
+        description: Derived. Broad ethnic group for ethnic_category_code - White / Mixed / Asian or Asian British / Black or Black British / Other Ethnic Groups / Unknown.
         data_tests:
           - accepted_values:
               arguments:
@@ -144,48 +201,104 @@ models:
                   - 'Black or Black British'
                   - 'Other Ethnic Groups'
                   - 'Unknown'
-      - name: lsoa
-        description: Pseudo LSOA (DV_LSOA from source).
-      - name: partial_post_code
-        description: Partial post code (DV_PARTIAL_POST_CODE from source).
-
-      - name: provider_code
-      - name: commissioner_code
-      - name: commissioner_name
       - name: gp_practice_code
-        description: Coalesced from gp_practice_code / general_practice_code / gppct_code.
+        description: Derived. Registered GP practice ODS code, validated to 1 letter + 5 digits (a 3-digit branch suffix is stripped; '999' and other values -> NULL). Coalesced from GP_PRACTICE_CODE, GENERAL_PRACTICE_CODE and REGISTERED_GP.
       - name: gp_code
-      - name: team_name
-        description: Coalesced from team_name / lps_team_name / lpsteamname / team.
+        description: As supplied. GP (practitioner) code, 8 characters (RRP00, RKL00, RAT00).
+
+      # -- Service / team / contract -----------------------------------------
       - name: team_code
-        description: Coalesced from team_code / lps_team_code.
-
-      - name: flex_or_freeze
-        description: |
-          DLP submission flag, coalesced from flex_or_freeze / dlp_flexor_freeze
-          and standardised to 'Flex' or 'Freeze' (case variants, 'Frozen' and the
-          DLP PRIMARY/REFRESH terms folded in; '1'/'0' and other values -> NULL).
-        data_tests:
-          - accepted_values:
-              arguments:
-                values: ['Flex', 'Freeze']
+        description: As supplied. Team code (TEAM_CODE, else LPS_TEAM_CODE). RRP00 and RKL00 liaison only.
+      - name: team_name
+        description: As supplied. Team name, coalesced from TEAM_NAME / LPS_TEAM_NAME / LPSTEAMNAME / TEAM.
+      - name: service_group
+        description: As supplied. Provider service grouping (e.g. Adult, CAMHS, Older Adult). Not sent by RRP00.
+      - name: service_line
+        description: As supplied. Service line or description (SERVICE_LINE for RAT00 / RNK00, SERVICE_DESCRIPTION for RKL00 / RV300).
+      - name: pod_code
+        description: As supplied. Point-of-delivery code (RAT00, RNK00).
+      - name: pod_description
+        description: As supplied. Point-of-delivery description (POD_DESCRIPTION, else POD_NAME).
+      - name: contract_type
+        description: As supplied. Contract type or line (RKL00 block / CPC, RNK00 per-borough contract lines).
       - name: finance_category
+        description: As supplied. RRP00 finance category (Adult Community, CAMHS, Older People Community, IAPT, Adults Inpatients, MH Liaison, Others).
       - name: costing_code_description
+        description: As supplied. RRP00 costing code description.
+      - name: currency
+        description: As supplied. RAT00 / RNK00 activity currency (Treatment, Assessment, Contact, Waiting, OBD).
 
+      # -- Referral -------------------------------------------------------------
+      - name: referral_id
+        description: As supplied. Referral identifier (RKL00 REFERRAL_UNIQUE_ID, RV300 REFERRAL_SSID, else REFERRAL_REFERENCE). Liaison layouts only.
+      - name: referral_date
+        description: Derived. Referral date, parsed from REFERRAL_DATE / DATE_OF_REFERRAL / DATEOFREFERRAL / the liaison referral datetimes.
       - name: source_of_referral
-        description: Coalesced from source_of_referral / referral_source / referralsource.
-      - name: consultation_medium
-      - name: contact_type
-        description: Coalesced from consultation_type / contact_type.
-      - name: duration_of_contact_minutes
-      - name: appointment_sequence_id
-      - name: in_month_activity_actual
+        description: As supplied. Source of referral text or local code, coalesced from SOURCE_OF_REFERRAL / REFERRAL_SOURCE / REFERRALSOURCE.
+      - name: referral_priority
+        description: As supplied. Liaison referral priority (Emergency / Urgent / Routine and RKL00's timed variants).
+
+      # -- Contact / appointment ------------------------------------------------
+      - name: appointment_id
+        description: As supplied. RNK00 appointment identifier.
+      - name: contact_date
         description: |
-          Provider-reported in-month activity count (IN_MONTH_ACTIVITY_ACTUAL),
-          cast to numeric (can be fractional). Effectively Tavistock & Portman-only:
-          RNK00 populates it 100%, all other providers 0% (~5% of rows overall).
+          Derived. Care contact / appointment date, parsed from CONTACT_DATE /
+          CONTACTDATE / the liaison first-contact datetimes. Handles UK, ISO,
+          DD-Mon-YY, SQL Server AM/PM and Excel serial forms; Excel time
+          artefacts ('00:00.0') yield NULL. RNK00 and RAT00 do not supply a
+          contact date (their START_DATE is a spell date, not the in-month
+          activity date).
+      - name: contact_type
+        description: As supplied. Contact / consultation type (First, Follow-up, Assessment, Treatment ...), coalesced from CONSULTATION_TYPE / CONTACT_TYPE / FIRST_FOLLOW_UP.
+      - name: consultation_medium
+        description: As supplied. Consultation medium text (Face to face, Telephone, Video ...). RRP00 community only.
+      - name: contact_setting
+        description: As supplied. Contact setting, coalesced from CONTACTSETTING and the liaison first-contact setting columns (RKL00, RV300).
+      - name: appointment_type
+        description: As supplied. Appointment type (Outpatient / Community / Follow-up consultation ... or provider codes). Not sent by RRP00.
+      - name: appointment_outcome
+        description: As supplied. Appointment outcome code (RNK00, RAT00).
+      - name: patient_seen
+        description: As supplied. Liaison 'patient seen' flag (Yes / No).
+      - name: duration_of_contact_minutes
+        description: Derived. Contact duration in minutes, cast to number. RRP00 community only.
+      - name: appointment_sequence_id
+        description: As supplied. RRP00 appointment sequence id.
+      - name: in_month_activity_actual
+        description: Derived. RNK00's provider-reported in-month activity count (can be fractional), cast to number. RNK00 only.
+      - name: total_activity
+        description: Derived. RKL00 / RV300 total activity count for the row, cast to number.
+
+      # -- Inpatient / spell ----------------------------------------------------
+      - name: spell_id
+        description: As supplied. Spell identifier (SPELL_ID for RNK00 / RAT00, CARE_SPELL_ID for RKL00).
+      - name: ward_code
+        description: As supplied. Ward code (RRP00 inpatient).
+      - name: ward_name
+        description: As supplied. Ward name (WARD_NAME, else WARD).
+      - name: episode_start_date
+        description: Derived. Ward stay / episode start date, parsed from EPISODE_START_DATE / WARD_START_DATE / ADMISSION_DATE. Inpatient rows only.
+      - name: episode_end_date
+        description: Derived. Ward stay / episode end date (NULL while open), parsed from EPISODE_END_DATE / WARD_END_DATE.
+      - name: occupied_bed_days
+        description: Derived. Occupied bed days for the row's month (OCCUPIED_BED_DAYS for RRP00, OBD for RKL00), cast to number. Provider counting conventions differ.
+      - name: leave_days
+        description: Derived. Leave days in the month (RKL00 inpatient), cast to number.
+      - name: discharge_date
+        description: Derived. Discharge date, parsed from DISCHARGE_DATE / DISCHARGE_DATE_TIME.
+      - name: discharge_reason
+        description: As supplied. Discharge reason (RAT00).
+      - name: activity_month
+        description: Derived. Provider-stated activity month (first day) where the layout has one (RKL00 and RV300); NULL for the DLP-header layouts, which state the period as financial year and month instead.
+
+      # -- Raw period (traceability) -------------------------------------------
+      - name: financial_year_raw
+        description: As supplied. Financial year string before parsing (DLP_FINANCIAL_YEAR, else FINANCIAL_YEAR, else FIN_YEAR) in the provider's own format ('2023', '2023/2024', '2023-2024' or '2023_24').
+      - name: financial_month_raw
+        description: As supplied. Financial month string before parsing (DLP_FINANCIAL_MONTH, else REPORTING_MONTH).
 
     data_tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
-            min_value: 1000000
+            min_value: 5000000

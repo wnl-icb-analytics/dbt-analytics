@@ -23,12 +23,10 @@ SELECT
     is_macroalbuminuria,
     original_result_value
 
-FROM (
-    {{ get_latest_events(
-        ref('int_urine_acr_all'),
-        partition_by=['person_id'],
-        order_by='clinical_effective_date'
-    ) }}
-) latest_acr
+FROM {{ ref('int_urine_acr_all') }}
 
 WHERE is_valid_acr = TRUE
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY person_id
+    ORDER BY clinical_effective_date DESC, id DESC
+) = 1

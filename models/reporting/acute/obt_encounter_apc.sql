@@ -17,8 +17,14 @@ select
     , start_time
     , end_date
     , end_time
+    , estimated_discharge_date
+    , has_estimated_discharge_date
+    , estimated_discharge_date_method
+    , is_open_spell
     , duration
     , duration_to_date
+    , unadjusted_length_of_stay_days
+    , excess_bed_days
     , spell_admission_method
     , admission_method_name
     , admission_method_group
@@ -51,4 +57,9 @@ select
     , imd_at_event
     , reg_practice_at_event
     , visit_occurrence_type
+    , discharge_destination_code
+    , discharge_destination_name
+    , discharge_method_code
+    , discharge_method_name
+    , critical_care_days_for_length_of_stay
 from {{ ref('int_sus_apc_encounter') }}

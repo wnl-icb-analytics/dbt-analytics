@@ -1,0 +1,71 @@
+models:
+  - name: fct_person_nice_indicator_status
+    description: |
+      Current NICE indicator results. One row per eligible person and indicator,
+      assessed on the build date. People must be currently registered, living and
+      non-test, and meet the individual indicator's population rules.
+
+      Includes achieved and unachieved results. indicator_status gives the reason
+      when the achievement rule is not met. Family tables and individual measures
+      provide the clinical readings, thresholds and supporting evidence.
+
+      Join def_indicator on indicator_id for names, categories and clinical
+      definitions. Measures count people meeting a rule; separate reports that
+      count individual care processes are outside this table.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier, matching def_indicator. tests/nice_indicator_status_ids_defined.sql checks every id has a definition.
+        data_tests:
+          - not_null
+      - name: indicator_name
+        description: Published NICE indicator name.
+      - name: reporting_date
+        description: Build date on which eligibility and the measurement period are assessed.
+      - name: measurement_period_start
+        description: Inclusive start of the indicator's measurement period; the length depends on the indicator.
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded.
+      - name: current_practice_code
+        description: ODS code of the current registration practice.
+      - name: current_practice_name
+        description: Name of the current registration practice.
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments.
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date.
+      - name: indicator_status
+        description: >
+          ACHIEVED when in the numerator; otherwise the reason: ABOVE_TARGET,
+          NOT_RECORDED_IN_PERIOD, NOT_ASSESSABLE, NOT_TREATED_IN_PERIOD,
+          NEVER_TREATED, VKA_WITHOUT_DOAC_EXCEPTION, DOAC_WHERE_VKA_INDICATED or
+          OUT_OF_RANGE (latest result in the period outside the target range).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - ACHIEVED
+                  - ABOVE_TARGET
+                  - NOT_RECORDED_IN_PERIOD
+                  - NOT_ASSESSABLE
+                  - NOT_TREATED_IN_PERIOD
+                  - NEVER_TREATED
+                  - VKA_WITHOUT_DOAC_EXCEPTION
+                  - DOAC_WHERE_VKA_INDICATED
+                  - OUT_OF_RANGE

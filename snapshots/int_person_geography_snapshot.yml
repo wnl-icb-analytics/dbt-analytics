@@ -1,0 +1,32 @@
+snapshots:
+  - name: int_person_geography_snapshot
+    relation: ref('int_person_geography')
+    description: >
+      SCD2 history of each person's resident geography (postcode-derived LSOA, IMD deciles /
+      quintiles, resident borough / local authority / ward / neighbourhood), so resident
+      deprivation can be read as-at an index date for control-cohort matching. Snapshots
+      int_person_geography directly (no thin input needed): it has no CURRENT_DATE() columns --
+      is_current_address derives from end_date IS NULL, stable per record -- so check_cols: all is
+      churn-free, opening a version only when a genuine change (a reload flipping the single
+      selected address, or a new address arriving) changes the row. Rows leaving
+      int_person_geography are closed via hard_deletes: invalidate.
+
+      Consumed by cltcs_monthly_covariates, which reads only imd_quintile_25. Note the source
+      limitation: int_person_geography collapses each person to a single address (most home-address
+      records are undated), so this snapshot tracks residence forward from its first run and does NOT
+      reconstruct true past residence -- the as-at value is "most-recently-known residence", not
+      period-accurate deprivation.
+    config:
+      strategy: check
+      unique_key: [person_id]
+      check_cols: all
+      hard_deletes: invalidate
+    columns:
+      - name: person_id
+        description: "Person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

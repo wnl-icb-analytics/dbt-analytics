@@ -1,0 +1,87 @@
+models:
+  - name: int_covid_under_65_at_risk
+    description: >
+      The ten UKHSA clinical at-risk groups for people under 65 at the COVID campaign
+      reference date, limited to the campaigns whose offer included each group. The
+      offer gate is the eligible_* flag in covid_campaign_config(), applied here per
+      group, because the clinical intermediates compute every campaign so that
+      int_covid_flu_risk_group_flags can report membership at any age. Immunosuppression
+      is included only where the offer has no separate under-75 immunosuppressed cohort
+      (Autumn 2024). Grain: one row per campaign, person and clinical risk group. The
+      model does not emit an Under 65 At Risk parent row.
+    config:
+      meta:
+        indicator:
+          id: "COVID_UNDER_65_AT_RISK"
+          type: "PROGRAMME"
+          category: "COVID"
+          clinical_domain: "Programme Management"
+          name_short: "Covid Under-65 Clinical Risk Groups"
+          description_short: "Clinical at-risk groups for people under 65"
+          description_long: >
+            Covid clinical at-risk group membership for people under 65. Retains
+            heart, liver, neurological, asplenia, kidney, diabetes,
+            immunosuppression, respiratory, SMI and LD group rows for reporting.
+          is_qof: false
+          source_column: "person_id"
+          sort_order: "COVID_0_UNDER_65_AT_RISK"
+          usage_contexts:
+            - "COVID_AND_COVID_DASHBOARD"
+            - "COVID_REPORTING"
+        owner:
+          name: KateHomer55
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - campaign_id
+              - person_id
+              - risk_group
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: campaign_id
+        description: 'Covid campaign identifier'
+        data_tests:
+          - not_null
+      - name: campaign_category
+        description: 'Source clinical eligibility category'
+        data_tests:
+          - not_null
+      - name: risk_group
+        description: 'Source clinical risk group'
+        data_tests:
+          - not_null
+      - name: person_id
+        description: 'Unique person identifier'
+        data_tests:
+          - not_null
+      - name: qualifying_event_date
+        description: 'Date of the qualifying clinical evidence'
+        data_tests:
+          - not_null
+      - name: reference_date
+        description: 'Campaign reference date used for the under-65 filter'
+        data_tests:
+          - not_null
+      - name: description
+        description: 'Source clinical eligibility reason'
+        data_tests:
+          - not_null
+      - name: birth_date_approx
+        description: 'Approximate birth date used for age eligibility'
+        data_tests:
+          - not_null
+      - name: age_months_at_ref_date
+        description: 'Age in months at the campaign reference date'
+        data_tests:
+          - not_null
+      - name: age_years_at_ref_date
+        description: 'Age in years at the campaign reference date'
+        data_tests:
+          - not_null
+      - name: created_at
+        description: 'Source model creation timestamp or campaign audit end date'
+        data_tests:
+          - not_null

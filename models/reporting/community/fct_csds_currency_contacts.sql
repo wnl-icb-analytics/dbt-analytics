@@ -74,5 +74,5 @@ from priced as p
 cross join price_base_deflator as pb
 left join fiscal_years as fy
     on p.care_contact_date between fy.fy_range_start and fy.fy_range_end
-left join {{ ref('nhse_provider_mff_2627') }} as mff
+left join {{ ref('provider_market_forces_factor_2026_27') }} as mff
     on p.org_id_prov = mff.provider_code

@@ -2,19 +2,35 @@ version: 2
 models:
   - name: practice_weighted_population
     description: |
-      Practice need-weighted population by allocation base year, from the NHS
-      England revenue allocations practice-level workbooks (Core WP.xlsx) via
-      UKHFD. NHS England weights each practice's projected registered
-      population for need using the allocation formulae (technical guide
-      PRN01601 and successors); base years present are 2025/26 and 2028/29.
-      All values, including registered population, are modelled projections
-      for the allocation base year rather than actual list counts, which is
-      why they carry decimals - use practice_registered_patients for actual
-      monthly headcounts. weighted_patients is the mean of the General and
-      Acute, Community, Mental Health, Maternity, Prescribing and Primary
-      Medical Care weighted populations, matching the Average weighted pop
-      (excl. HI) formula in Core WP.xlsx. Health inequalities and Core
-      Services are excluded from the mean.
+      Practice need-weighted populations by allocation base year, from the NHS
+      England revenue allocations practice-level workbooks via UKHFD. One row
+      per practice and base year. NHS England weights each practice's
+      registered population for need using the allocation formulae (technical
+      guide PRN01601 and successors). Practice-years without a positive
+      registered population are excluded.
+
+      Every value is modelled for the base year rather than an actual list
+      count, which is why values carry decimals. A base year that has not
+      started yet (is_projection) rolls the list forward with population
+      growth and should not be used as a current denominator. Use
+      is_current_base_year, or practice_weighted_population_current, for the
+      latest loaded base year that has started. Use
+      practice_registered_patients for actual monthly headcounts.
+
+      Flags are evaluated against the build date. A base year stays current
+      until a newer one starts, so 2025/26 remains current after 1 April 2026
+      until a 2026/27 round is loaded, and the 2028/29 rows flip to current
+      on 1 April 2028 even though they were projected in 2025.
+
+      The practice list is fixed at each allocation round, so closed and
+      merged practices keep their own rows. Join to the practice reference
+      to restrict to open practices.
+
+      weighted_patients_core is NHS England's Core Services weighted
+      population, which combines the service-specific populations by their
+      share of spend, and is the headline figure. The service-specific
+      populations are carried as separate columns for consumers that need
+      one service, such as a community denominator.
     config:
       meta:
         owner:
@@ -31,13 +47,23 @@ models:
       - name: financial_year
         description: Allocation base financial year label, e.g. 2025/26.
       - name: financial_year_start
-        description: 1 April of the financial year.
+        description: 1 April of the base financial year.
+      - name: is_current_base_year
+        description: TRUE for the practice's latest loaded base year that has started. Never a projection. FALSE for every row of a practice with only projection years.
+        data_tests:
+          - not_null
+      - name: is_projection
+        description: TRUE when the base year starts after the build date.
+        data_tests:
+          - not_null
       - name: registered_patients
-        description: Projected registered population for the allocation base year (modelled, carries decimals).
-      - name: weighted_patients
-        description: Mean of the six service-specific UKHFD weighted populations.
+        description: Modelled registered population for the base year. Always positive.
+      - name: weighted_patients_core
+        description: NHS England Core Services weighted population. Headline figure.
+        data_tests:
+          - not_null
       - name: weighted_to_registered_ratio
-        description: Mean weighted population divided by registered population.
+        description: weighted_patients_core divided by registered_patients.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -46,13 +72,79 @@ models:
                 max_value: 5
               config:
                 severity: warn
-      - name: weighted_component_count
-        description: Number of service-specific weighted populations in the mean; expected to be six.
+      - name: weighted_patients_general_acute
+        description: General and Acute weighted population.
         data_tests:
-          - accepted_values:
-              arguments:
-                values: [6]
+          - not_null
+      - name: weighted_patients_community
+        description: Community Services weighted population.
+        data_tests:
+          - not_null
+      - name: weighted_patients_mental_health
+        description: Mental Health weighted population.
+        data_tests:
+          - not_null
+      - name: weighted_patients_maternity
+        description: Maternity weighted population.
+        data_tests:
+          - not_null
+      - name: weighted_patients_prescribing
+        description: Prescribing weighted population.
+        data_tests:
+          - not_null
+      - name: weighted_patients_primary_medical_care
+        description: Primary Medical Care weighted population.
+        data_tests:
+          - not_null
+      - name: weighted_patients_health_inequalities
+        description: Health inequalities weighted population. Not part of the core figure.
+        data_tests:
+          - not_null
+      - name: source_file_version
+        description: UKHFD source-file version for the allocation snapshot. One file per base year is assumed; the highest version is kept if that changes.
+
+  - name: practice_weighted_population_current
+    description: |
+      One row per practice for the latest loaded allocation base year that
+      has started, from practice_weighted_population where
+      is_current_base_year. Default source for a practice-level need-weighted
+      denominator; never a future projection. Closed and merged practices are
+      still present; join to the practice reference to restrict to open
+      practices.
+    config:
+      materialized: view
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: practice_code
+        description: GP practice ODS code (national coverage; filter to WNL downstream).
+        data_tests:
+          - not_null
+          - unique
+      - name: financial_year
+        description: Allocation base financial year used, e.g. 2025/26.
+      - name: financial_year_start
+        description: 1 April of the base financial year.
+      - name: registered_patients
+        description: Modelled registered population for the base year.
+      - name: weighted_patients_core
+        description: NHS England Core Services weighted population. Headline figure.
+      - name: weighted_to_registered_ratio
+        description: weighted_patients_core divided by registered_patients.
+      - name: weighted_patients_general_acute
+        description: General and Acute weighted population.
+      - name: weighted_patients_community
+        description: Community Services weighted population.
+      - name: weighted_patients_mental_health
+        description: Mental Health weighted population.
+      - name: weighted_patients_maternity
+        description: Maternity weighted population.
+      - name: weighted_patients_prescribing
+        description: Prescribing weighted population.
+      - name: weighted_patients_primary_medical_care
+        description: Primary Medical Care weighted population.
+      - name: weighted_patients_health_inequalities
+        description: Health inequalities weighted population. Not part of the core figure.
       - name: source_file_version
         description: UKHFD source-file version for the allocation snapshot.
-      - name: is_latest
-        description: TRUE for the practice's newest UKHFD allocation base year.

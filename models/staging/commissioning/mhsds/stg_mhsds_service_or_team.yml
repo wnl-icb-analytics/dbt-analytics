@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: stg_mhsds_other_service_or_team_type
+    description: >-
+      Latest MHS102 relationship records. One row per referral and available
+      service or team identifier. Before MHSDS v6 these identify referred-to
+      services or teams; from v6 they identify additional services or teams.
+      Rows without any service or team identifier are excluded.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [uniq_serv_req_id, service_or_team_id]
+    columns:
+      - name: mhs102_uniq_id
+        description: Unique submitted MHS102 record identifier.
+        data_tests: [not_null]
+      - name: uniq_serv_req_id
+        description: MHSDS unique service request identifier.
+        data_tests: [not_null]
+      - name: care_prof_team_local_id
+        description: Provider-local service or team identifier.
+      - name: other_care_prof_team_local_id
+        description: Provider-local additional service or team identifier in MHSDS v6.
+      - name: service_or_team_id
+        description: Best available MHSDS-derived or provider-local team identifier.
+      - name: serv_team_type_ref_to_mh
+        description: Submitted service or team type code.
+      - name: refer_rejection_date
+        description: Recorded service or team referral rejection date.
+      - name: refer_rejection_time
+        description: Recorded service or team referral rejection time.
+      - name: refer_closure_date
+        description: Recorded service or team referral closure date.
+      - name: refer_closure_time
+        description: Recorded service or team referral closure time.
+      - name: uniq_submission_id
+        description: MHSDS submission identifier.
+        data_tests: [not_null]
+      - name: reporting_period_end_date
+        description: End date of the source submission period.
+      - name: dmic_dataset
+        description: MHSDS version assigned by the source pipeline.
+
+  - name: stg_mhsds_service_or_team_details
+    description: >-
+      Active-submission MHS902 service or team lookup records. One row per
+      submitted MHS902 record and one row per team within a submission.
+    config: *owner
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [uniq_submission_id, care_prof_team_local_id]
+    columns:
+      - name: mhs902_uniq_id
+        description: Unique submitted MHS902 record identifier.
+        data_tests: [not_null, unique]
+      - name: care_prof_team_local_id
+        description: Provider-local service or team identifier.
+        data_tests: [not_null]
+      - name: uniq_care_prof_team_local_id
+        description: MHSDS-derived service or team identifier.
+      - name: serv_team_type_mh
+        description: Service or team type code.
+      - name: uniq_submission_id
+        description: MHSDS submission identifier.
+        data_tests: [not_null]
+      - name: reporting_period_end_date
+        description: End date of the source submission period.
