@@ -3,9 +3,10 @@
 # Runs dbt (Fusion) directly on the runner against Snowflake PROD - no dbt
 # project object, no ADD VERSION, no 20k file limit.
 #
-# Selection: state:modified+ against the latest deploy-state manifest in the
-# DBT_ARTIFACTS stage. Falls back to a full build when no state manifest exists
-# or on manual dispatch.
+# Selection: state:modified+ plus tag:indicator_definitions+ against the latest
+# deploy-state manifest in the DBT_ARTIFACTS stage. Metadata-derived definitions
+# have no ref() dependencies, so state selection can miss their YAML changes.
+# Falls back to a full build when no state manifest exists or on manual dispatch.
 #
 # Runs that pass Fusion compile publish target/manifest.json + run_results.json
 # + meta.json as the next baseline, even if execution later fails. This prevents
@@ -33,6 +34,7 @@ on:
       - 'snapshots/**'
       - 'packages.yml'
       - 'dbt_project.yml'
+      - '.github/workflows/dbt-deploy.yml'
 
 jobs:
   deploy-decision:
@@ -169,8 +171,8 @@ jobs:
             args=(build --target prod)
             echo "Full build (manual trigger or no state manifest)"
           else
-            args=(build --target prod --select "state:modified+" --state state)
-            echo "State-based build: modified + downstream"
+            args=(build --target prod --select "state:modified+" "tag:indicator_definitions+" --state state)
+            echo "State-based build: modified + downstream and indicator definitions + downstream"
           fi
           echo "dbt_command=dbt ${args[*]}" >> "$GITHUB_OUTPUT"
           dbt "${args[@]}" --profiles-dir .
