@@ -11,7 +11,7 @@ current GLP-1 prescribing (int_glp1_medications_all) and demographic / practice
 context, so practices can identify candidates for assessment and see
 whether they are already on a GLP-1 (and for which likely indication).
 
-Grain: one row per currently-registered, living OBES2 member.
+Grain: one row per currently registered, living OBES2 member.
 */
 
 WITH eligible AS (
@@ -101,11 +101,10 @@ SELECT
         ELSE 'BMI assessment needed'
     END AS cohort,
 
-    -- BMI
+    -- BMI from int_bmi_latest, mapped to programme cohorts upstream
     elig.latest_bmi_value,
     elig.latest_bmi_date,
     elig.latest_bmi_source_cluster_id,
-    elig.latest_bmi_is_bmi_35_code,
     elig.bmi_category,
     elig.has_lower_bmi_threshold_ethnicity,
 

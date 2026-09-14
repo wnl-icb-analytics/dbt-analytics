@@ -1,4 +1,4 @@
--- A BMI35 code without a measurement cannot distinguish the rollout cohorts.
+-- Missing numeric BMI from int_bmi_latest cannot distinguish the rollout cohorts.
 SELECT COUNT(*) AS invalid_assignments
 FROM {{ ref('fct_tirzepatide_cohort_status') }}
 WHERE latest_bmi_value IS NULL

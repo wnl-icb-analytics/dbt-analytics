@@ -8,10 +8,11 @@ models:
       practice context, so practices can identify candidates for assessment and see
       whether they are already on a GLP-1 and for which likely indication.
 
-      Candidate selection and comorbidities come from the QOF v51 OBES2 register. Grain:
-      one row per currently registered, living candidate. Cohort 1 is BMI
-      >= 40, or >= 37.5 with the lower ethnicity threshold. Cohort 2 is BMI 35
-      to below 40, or 32.5 to below 37.5 with the lower ethnicity threshold.
+      Candidate selection and comorbidities come from the QOF v51 OBES2
+      register. Numeric BMI and NICE NG246 class come from int_bmi_latest.
+      Grain: one row per currently registered, living candidate. Cohort 1 is
+      the shared Obese Class III band. Cohort 2 is the shared Obese Class II
+      band, when that latest valid BMI is in the preceding 12 months.
       Candidates whose numeric BMI cannot establish either band remain in the
       population labelled BMI assessment needed, with both cohort flags false.
       is_actionable flags candidates without a GLP-1 order
@@ -58,21 +59,19 @@ models:
       - name: imd_quintile_19
         description: 'IMD 2019 deprivation quintile'
       - name: is_eligible_cohort_1
-        description: 'Numeric BMI establishes the Cohort 1 band; false when measurement is missing, and prescribing suitability still needs assessment'
+        description: 'Latest valid numeric BMI in 12 months is NICE Obese Class III; prescribing suitability still needs assessment'
       - name: is_eligible_cohort_2
-        description: 'Numeric BMI establishes the Cohort 2 band; false when measurement is missing, and prescribing suitability still needs assessment'
+        description: 'Latest valid numeric BMI in 12 months is NICE Obese Class II; prescribing suitability still needs assessment'
       - name: cohort
-        description: 'Cohort 1, Cohort 2 or BMI assessment needed when numeric evidence cannot establish either band'
+        description: 'Cohort 1, Cohort 2 or BMI assessment needed when the shared numeric BMI cannot establish either band'
       - name: latest_bmi_value
-        description: 'Numeric value from the most recent qualifying OBES2 BMI evidence, when supplied'
+        description: 'Latest valid numeric BMI from int_bmi_latest when dated in the preceding 12 months'
       - name: latest_bmi_date
-        description: 'Date of the most recent qualifying OBES2 BMI evidence in the preceding 12 months'
+        description: 'Date of that latest valid numeric BMI'
       - name: latest_bmi_source_cluster_id
-        description: 'QOF cluster supplying the most recent qualifying BMI evidence'
-      - name: latest_bmi_is_bmi_35_code
-        description: 'Whether the most recent qualifying BMI evidence is from BMI35_COD'
+        description: 'Shared BMI cluster or calculated-BMI marker from int_bmi_latest'
       - name: bmi_category
-        description: 'Historical labels for the ethnicity-adjusted rollout band, not a measured WHO obesity classification'
+        description: 'Programme rollout band mapped from the shared NICE NG246 class, or BMI assessment needed'
       - name: has_lower_bmi_threshold_ethnicity
         description: 'Whether the latest QOF ethnicity evidence qualifies for lower BMI thresholds'
       - name: has_unresolved_hypertension
