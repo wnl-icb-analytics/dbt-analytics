@@ -1,0 +1,387 @@
+#!/usr/bin/env bash
+# Drive WNL ICB dbt-analytics verification from the CLI.
+# Run from any directory. Never prints secret values. Never drops warehouse objects.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+repo_root() {
+    git -C "$SKILL_DIR" rev-parse --show-toplevel 2>/dev/null
+}
+
+ROOT="$(repo_root)"
+if [[ -z "$ROOT" ]]; then
+    echo "error: could not find the git repository root" >&2
+    exit 2
+fi
+
+export PATH="${HOME}/.local/bin:${PATH}"
+
+RUN_ID="${VERIFY_DBT_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
+if [[ -n "${VERIFY_DBT_EVIDENCE_DIR:-}" ]]; then
+    EVIDENCE_DIR="$VERIFY_DBT_EVIDENCE_DIR"
+elif [[ -d /opt/cursor/artifacts ]]; then
+    EVIDENCE_DIR="/opt/cursor/artifacts/verify-dbt-analytics/${RUN_ID}"
+else
+    EVIDENCE_DIR="${TMPDIR:-/tmp}/verify-dbt-analytics-evidence/${RUN_ID}"
+fi
+SCRATCH_DIR="${VERIFY_DBT_SCRATCH_DIR:-${TMPDIR:-/tmp}/verify-dbt-analytics-${RUN_ID}}"
+
+mkdir -p "$EVIDENCE_DIR" "$SCRATCH_DIR"
+
+usage() {
+    cat <<EOF
+control-dbt-analytics — drive dbt-analytics verification
+
+Usage:
+  control-dbt-analytics doctor
+  control-dbt-analytics launch
+  control-dbt-analytics ci-static [--base <ref>] [--files <sql> ...]
+  control-dbt-analytics compile -- <dbt args>
+  control-dbt-analytics build -- <dbt args>
+  control-dbt-analytics test -- <dbt args>
+  control-dbt-analytics ls -- <dbt args>
+  control-dbt-analytics capture -- <command>
+  control-dbt-analytics cleanup
+
+Environment:
+  VERIFY_DBT_RUN_ID         run label (default: UTC timestamp plus pid)
+  VERIFY_DBT_EVIDENCE_DIR   proof directory (survives cleanup)
+  VERIFY_DBT_SCRATCH_DIR    disposable scratch directory
+EOF
+}
+
+redact_stream() {
+    sed -E \
+        -e 's/(SNOWFLAKE_(PASSWORD|PAT|PRIVATE_KEY|PRIVATE_KEY_PASSPHRASE|TOKEN)=)[^[:space:]]+/\1[redacted]/g' \
+        -e 's/((password|passwd|token|passphrase|secret|private_key)["[:space:]]*[:=][[:space:]]*)[^[:space:]]+/\1[redacted]/Ig'
+}
+
+present_or_absent() {
+    local name="$1"
+    local value="${2:-}"
+    if [[ -n "$value" ]]; then
+        echo "${name}: present"
+    else
+        echo "${name}: absent"
+    fi
+}
+
+warehouse_noninteractive() {
+    [[ -n "${SNOWFLAKE_PRIVATE_KEY_PATH:-}" || -n "${SNOWFLAKE_PAT:-}" ]]
+}
+
+forbidden_dbt_args() {
+    local arg
+    for arg in "$@"; do
+        case "$arg" in
+            show)
+                echo "error: dbt show is forbidden in this harness (row preview is not safe here)" >&2
+                return 1
+                ;;
+            --target)
+                ;;
+            prod|snowflake-prod|ci-prod)
+                echo "error: refusing warehouse target '$arg' (use dev or ci-dev)" >&2
+                return 1
+                ;;
+            --target=prod|--target=snowflake-prod|--target=ci-prod)
+                echo "error: refusing warehouse target '$arg' (use --target dev or ci-dev)" >&2
+                return 1
+                ;;
+        esac
+    done
+    local prev=""
+    for arg in "$@"; do
+        if [[ "$prev" == "--target" ]]; then
+            case "$arg" in
+                prod|snowflake-prod|ci-prod)
+                    echo "error: refusing warehouse target '$arg' (use dev or ci-dev)" >&2
+                    return 1
+                    ;;
+            esac
+        fi
+        prev="$arg"
+    done
+}
+
+capture_cmd() {
+    local name="$1"
+    shift
+    local stdout_log="${EVIDENCE_DIR}/${name}.stdout.log"
+    local stderr_log="${EVIDENCE_DIR}/${name}.stderr.log"
+    local cmd_log="${EVIDENCE_DIR}/${name}.command.txt"
+    {
+        echo "cwd: $ROOT"
+        printf 'command:'
+        printf ' %q' "$@"
+        echo
+    } >"$cmd_log"
+
+    local tmp_out tmp_err
+    tmp_out="$(mktemp "$SCRATCH_DIR/${name}.out.XXXXXX")"
+    tmp_err="$(mktemp "$SCRATCH_DIR/${name}.err.XXXXXX")"
+    local ec=0
+    set +e
+    (cd "$ROOT" && "$@") >"$tmp_out" 2>"$tmp_err"
+    ec=$?
+    set -e
+    redact_stream <"$tmp_out" >"$stdout_log"
+    redact_stream <"$tmp_err" >"$stderr_log"
+    echo "$ec" >"${EVIDENCE_DIR}/${name}.exit_code.txt"
+    return "$ec"
+}
+
+cmd_launch() {
+    if ! command -v dbt >/dev/null 2>&1; then
+        local os_part arch_part
+        case "$(uname -s)" in
+            Darwin) os_part="apple-darwin" ;;
+            *) os_part="unknown-linux-gnu" ;;
+        esac
+        case "$(uname -m)" in
+            arm64|aarch64) arch_part="aarch64" ;;
+            *) arch_part="x86_64" ;;
+        esac
+        echo "installing dbt Fusion (${arch_part}-${os_part})"
+        curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --target "${arch_part}-${os_part}" --update
+        export PATH="${HOME}/.local/bin:${PATH}"
+    fi
+    if ! command -v dbt >/dev/null 2>&1; then
+        echo "error: dbt Fusion is not on PATH after launch" >&2
+        exit 1
+    fi
+    if [[ ! -d "$ROOT/dbt_packages/dbt_utils" ]]; then
+        echo "installing dbt packages"
+        (cd "$ROOT" && dbt deps --profiles-dir .)
+    fi
+    echo "launch: ready"
+    echo "fusion: $(dbt --version 2>/dev/null | head -1)"
+    echo "packages: $ROOT/dbt_packages"
+    echo "evidence: $EVIDENCE_DIR"
+}
+
+cmd_doctor() {
+    local result="ready-static"
+    local fusion_ok=0 packages_ok=0 yaml_ok=0 yq_ok=0 scripts_ok=0
+
+    echo "repo: $ROOT"
+    echo "run_id: $RUN_ID"
+    echo "evidence_dir: $EVIDENCE_DIR"
+    echo "scratch_dir: $SCRATCH_DIR"
+
+    if command -v dbt >/dev/null 2>&1 && dbt --version 2>/dev/null | grep -qi 'fusion'; then
+        echo "fusion: ok ($(dbt --version 2>/dev/null | head -1))"
+        fusion_ok=1
+    else
+        echo "fusion: missing"
+    fi
+
+    if [[ -d "$ROOT/dbt_packages/dbt_utils" && -d "$ROOT/dbt_packages/dbt_expectations" ]]; then
+        echo "packages: ok"
+        packages_ok=1
+    else
+        echo "packages: missing (run launch, which calls dbt deps)"
+    fi
+
+    if python3 -c 'import yaml' >/dev/null 2>&1; then
+        echo "python_yaml: ok"
+        yaml_ok=1
+    else
+        echo "python_yaml: missing (pip install pyyaml, or uv run --with pyyaml)"
+    fi
+
+    if command -v yq >/dev/null 2>&1; then
+        echo "yq: ok"
+        yq_ok=1
+    else
+        echo "yq: missing"
+    fi
+
+    local required
+    required=(
+        "$ROOT/scripts/ci/check_hardcoded_refs.sh"
+        "$ROOT/scripts/ci/check_staging_refs.sh"
+        "$ROOT/scripts/ci/check_model_descriptions.py"
+        "$ROOT/scripts/ci/check_model_tests.sh"
+        "$ROOT/scripts/ownership/check_model_ownership.py"
+        "$ROOT/profiles.yml"
+    )
+    scripts_ok=1
+    for f in "${required[@]}"; do
+        if [[ ! -f "$f" ]]; then
+            echo "script: missing $f"
+            scripts_ok=0
+        fi
+    done
+    if [[ "$scripts_ok" -eq 1 ]]; then
+        echo "ci_scripts: ok"
+    fi
+
+    present_or_absent "warehouse_account" "${SNOWFLAKE_ACCOUNT:-}"
+    present_or_absent "warehouse_user" "${SNOWFLAKE_USER:-}"
+    present_or_absent "warehouse_pat" "${SNOWFLAKE_PAT:-}"
+    present_or_absent "warehouse_key" "${SNOWFLAKE_PRIVATE_KEY_PATH:-}"
+    present_or_absent "warehouse_password" "${SNOWFLAKE_PASSWORD:-}"
+    if warehouse_noninteractive; then
+        echo "warehouse_noninteractive: yes"
+        result="ready-warehouse"
+    else
+        echo "warehouse_noninteractive: no"
+        echo "warehouse_note: skip dbt debug/compile/build/test/ls unless a PAT or key path is set; password/SSO may prompt"
+    fi
+
+    if grep -q 'target: dev' "$ROOT/profiles.yml"; then
+        echo "default_target: dev"
+    else
+        echo "default_target: unexpected"
+    fi
+    echo "shared_dev: yes (do not create extra databases or schema prefixes)"
+
+    if [[ "$fusion_ok" -eq 1 && "$packages_ok" -eq 1 && "$yaml_ok" -eq 1 && "$yq_ok" -eq 1 && "$scripts_ok" -eq 1 ]]; then
+        echo "result: $result"
+        return 0
+    fi
+    echo "result: not-ready"
+    return 1
+}
+
+changed_sql_files() {
+    local base="${1:-origin/main}"
+    git -C "$ROOT" diff --name-only "${base}...HEAD" -- 'models/**/*.sql' 'macros/**/*.sql' 'analyses/**/*.sql' \
+        | grep -E '\.sql$' || true
+}
+
+cmd_ci_static() {
+    local base="origin/main"
+    local files=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --base)
+                base="$2"
+                shift 2
+                ;;
+            --files)
+                shift
+                while [[ $# -gt 0 && "$1" != --* ]]; do
+                    files+=("$1")
+                    shift
+                done
+                ;;
+            *)
+                echo "error: unknown ci-static argument: $1" >&2
+                exit 2
+                ;;
+        esac
+    done
+
+    if [[ ${#files[@]} -eq 0 ]]; then
+        mapfile -t files < <(changed_sql_files "$base")
+    fi
+
+    local list_file="${EVIDENCE_DIR}/ci-static.files.txt"
+    if [[ ${#files[@]} -eq 0 ]]; then
+        echo "no SQL files selected" | tee "$list_file"
+        echo "ci-static: skip (no files). This is not proof of the checkers."
+        echo "pass --files models/reference/data_dictionary/nhs_ethnicity_2001.sql to exercise the scripts"
+        echo "0" >"${EVIDENCE_DIR}/ci-static.exit_code.txt"
+        return 0
+    fi
+    printf '%s\n' "${files[@]}" | tee "$list_file"
+
+    local failed=0
+    capture_cmd ci-hardcoded bash "$ROOT/scripts/ci/check_hardcoded_refs.sh" "${files[@]}" || failed=1
+    capture_cmd ci-staging bash "$ROOT/scripts/ci/check_staging_refs.sh" "${files[@]}" || failed=1
+    capture_cmd ci-descriptions python3 "$ROOT/scripts/ci/check_model_descriptions.py" "${files[@]}" || failed=1
+    capture_cmd ci-tests bash "$ROOT/scripts/ci/check_model_tests.sh" "${files[@]}" || failed=1
+
+    {
+        echo "feature: static-pr-checks"
+        echo "files:"
+        printf '  %s\n' "${files[@]}"
+        echo "hardcoded_exit: $(cat "${EVIDENCE_DIR}/ci-hardcoded.exit_code.txt")"
+        echo "staging_exit: $(cat "${EVIDENCE_DIR}/ci-staging.exit_code.txt")"
+        echo "descriptions_exit: $(cat "${EVIDENCE_DIR}/ci-descriptions.exit_code.txt")"
+        echo "tests_exit: $(cat "${EVIDENCE_DIR}/ci-tests.exit_code.txt")"
+        echo "result: $([[ "$failed" -eq 0 ]] && echo PASSED || echo FAILED)"
+    } | tee "${EVIDENCE_DIR}/ci-static.summary.txt"
+
+    return "$failed"
+}
+
+cmd_dbt() {
+    local verb="$1"
+    shift
+    if [[ "${1:-}" == "--" ]]; then
+        shift
+    fi
+    forbidden_dbt_args "$verb" "$@"
+    if ! warehouse_noninteractive; then
+        echo "error: warehouse commands need a PAT or private key path; doctor reports warehouse_noninteractive: no" >&2
+        echo "skip rather than hanging on SSO or password MFA" >&2
+        exit 3
+    fi
+    local args=("$@")
+    local has_target=0
+    local arg
+    for arg in "${args[@]}"; do
+        if [[ "$arg" == --target || "$arg" == --target=* ]]; then
+            has_target=1
+        fi
+    done
+    if [[ "$has_target" -eq 0 ]]; then
+        args+=(--target dev --profiles-dir .)
+    elif [[ " ${args[*]} " != *" --profiles-dir "* && " ${args[*]} " != *" --profiles-dir="* ]]; then
+        args+=(--profiles-dir .)
+    fi
+    capture_cmd "dbt-${verb}" dbt "$verb" "${args[@]}"
+}
+
+cmd_capture() {
+    if [[ "${1:-}" == "--" ]]; then
+        shift
+    fi
+    if [[ $# -eq 0 ]]; then
+        echo "error: capture needs a command" >&2
+        exit 2
+    fi
+    forbidden_dbt_args "$@"
+    capture_cmd capture "$@"
+}
+
+cmd_cleanup() {
+    if [[ -d "$SCRATCH_DIR" ]]; then
+        rm -rf "$SCRATCH_DIR"
+        echo "removed scratch: $SCRATCH_DIR"
+    else
+        echo "no scratch directory to remove"
+    fi
+    echo "evidence retained: $EVIDENCE_DIR"
+    if [[ ! -d "$EVIDENCE_DIR" ]]; then
+        echo "error: evidence directory missing after cleanup" >&2
+        exit 1
+    fi
+}
+
+main() {
+    local cmd="${1:-}"
+    shift || true
+    case "$cmd" in
+        doctor) cmd_doctor "$@" ;;
+        launch) cmd_launch "$@" ;;
+        ci-static) cmd_ci_static "$@" ;;
+        compile|build|test|ls) cmd_dbt "$cmd" "$@" ;;
+        capture) cmd_capture "$@" ;;
+        cleanup) cmd_cleanup "$@" ;;
+        -h|--help|help|"") usage ;;
+        *)
+            echo "error: unknown command: $cmd" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
+}
+
+main "$@"
