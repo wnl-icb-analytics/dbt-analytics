@@ -1,0 +1,60 @@
+version: 2
+
+models:
+  - name: sem_olids_nice_indicators
+    description: |
+      Current NICE indicator results. One row represents one eligible
+      person and one NICE indicator, assessed on the build date.
+
+      People must be currently registered, living and non-test, and
+      meet the individual indicator's population rules. Every emitted
+      row is already in the denominator, so is_in_denominator is not
+      a dimension or filter. denominator_count is a distinct person
+      count after selecting the indicator.
+
+      indicator_status is ACHIEVED when the person meets the
+      achievement rule; otherwise it is one of ABOVE_TARGET,
+      NOT_RECORDED_IN_PERIOD, NOT_ASSESSABLE, NOT_TREATED_IN_PERIOD,
+      NEVER_TREATED, VKA_WITHOUT_DOAC_EXCEPTION,
+      DOAC_WHERE_VKA_INDICATED or OUT_OF_RANGE. Do not invent tokens.
+      An invalid latest result in the measurement window is
+      NOT_ASSESSABLE and is not replaced by an older result. How each
+      indicator selects a valid latest result stays on the family
+      measure.
+
+      Each indicator keeps its own population, time window and
+      clinical criteria. Filter or group by indicator_id before using
+      metrics because a person can appear in more than one indicator.
+
+      Family tables and individual measures hold readings, thresholds
+      and supporting evidence. Blood pressure readings and targets
+      for IND239 to IND246 are on sem_olids_bp_indicators. Diabetes
+      care-process completion and triple targets are on
+      sem_olids_diabetes_care, which is outside this person-level
+      status view. Join def_indicator on indicator_id for names,
+      categories and clinical definitions.
+
+      Personalised care adjustments are not applied. Do not describe
+      these rates as final QOF performance.
+
+      The upstream status population is already currently registered,
+      living and non-test. Filtering is_active = TRUE on the
+      demographics join is belt-and-braces, not a second eligibility
+      rule.
+
+      Secondary-use consumers must apply National Data Opt-Out and
+      Type 1 opt-out filtering themselves. This view does not join
+      opt-out models.
+
+      Never return person_id or sk_patient_id in final results.
+
+      dbt grain tests are not defined on this semantic_view because
+      semantic views are not standard queryable relations. The
+      person_id and indicator_id grain is tested on
+      fct_person_nice_indicator_status.
+    config:
+      materialized: semantic_view
+      schema: SEMANTIC
+      meta:
+        owner:
+          name: Eddie Davison
