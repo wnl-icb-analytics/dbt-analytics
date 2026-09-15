@@ -283,6 +283,15 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `refactor`: Code change that neither fixes a bug nor adds a feature
 - `test`: Adding or correcting tests
 - `chore`: Changes to build process or tools
+- `perf`: Performance improvement
+- `ci`: Workflow or GitHub Actions change
+
+Pull request titles use the same form and may include a scope for the domain,
+for example `feat(olids):` or `fix(sus):`. CI checks the title. Add an optional
+`Changelog:` line in the pull request body when the title would not make sense
+to an analyst. The onboarding [changelog](https://dbt-onboarding.vercel.app/changelog)
+uses that line instead of the title. Add the `skip-changelog` label to hide
+internal-only work.
 
 **Examples:**
 ```bash
@@ -307,6 +316,8 @@ git commit -m "docs: update setup instructions in CONTRIBUTING"
    - Explain why the change exists. One clear sentence can be enough for a small
      change; add changed behaviour, checks or review questions when they help
    - Reference any related issues (e.g., "Fixes #123")
+   - If the title is written for developers, add a `Changelog:` sentence for
+     analysts, or the `skip-changelog` label when the change should not appear
 
    This repository is public. Do not include credentials, patient- or
    person-level data, identifying values, row-level output or screenshots of

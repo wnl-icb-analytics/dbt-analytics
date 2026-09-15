@@ -1,0 +1,32 @@
+# Ask the onboarding site to refresh its changelog after a merge to main.
+# Failure here must not fail production deploys, so the job is isolated and
+# continue-on-error. The site also refreshes the cache daily if this is skipped.
+
+name: Changelog refresh
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    name: Refresh onboarding changelog
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Call changelog revalidate route
+        env:
+          CHANGELOG_REVALIDATE_SECRET: ${{ secrets.CHANGELOG_REVALIDATE_SECRET }}
+          CHANGELOG_SITE_URL: ${{ vars.CHANGELOG_SITE_URL }}
+        run: |
+          if [ -z "$CHANGELOG_REVALIDATE_SECRET" ]; then
+            echo "CHANGELOG_REVALIDATE_SECRET is not set; skipping."
+            exit 0
+          fi
+          site="${CHANGELOG_SITE_URL:-https://dbt-onboarding.vercel.app}"
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${CHANGELOG_REVALIDATE_SECRET}" \
+            "${site}/api/revalidate"
