@@ -1,0 +1,84 @@
+models:
+  - name: int_substance_misuse_status
+    description: >
+      Person-level substance (illicit drug) misuse status from the NHS England
+      Primary Care Domain refset ILLSUB_COD, applying latest-record-wins against
+      the QUALIFYING/RESOLVING classification held in the
+      substance_misuse_illsub_status seed.
+
+      One row per person with any ILLSUB_COD record. has_substance_misuse is TRUE
+      when the person's most recent record is QUALIFYING, so a later negation,
+      abstinence or remission code takes the person out. Same-date ties resolve
+      to QUALIFYING.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: ILLSUB_COD
+    columns:
+      - name: person_id
+        description: Unique identifier for the person.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: has_substance_misuse
+        description: >
+          TRUE when the person's most recent ILLSUB_COD record is QUALIFYING,
+          i.e. current substance misuse or dependence.
+        data_tests:
+          - not_null
+
+      - name: latest_record_date
+        description: Clinical effective date of the most recent ILLSUB_COD record.
+        data_tests:
+          - not_null
+
+      - name: latest_concept_code
+        description: SNOMED concept code of the most recent ILLSUB_COD record.
+        data_tests:
+          - not_null
+
+      - name: latest_concept_display
+        description: Display term of the most recent ILLSUB_COD record.
+
+      - name: latest_status
+        description: >
+          QUALIFYING or RESOLVING status of the most recent record. Drives
+          has_substance_misuse.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['QUALIFYING', 'RESOLVING']
+
+      - name: latest_category
+        description: >
+          Finer-grained classification of the most recent record. NULL when the
+          concept is in the cluster but absent from the seed (defaulted to
+          QUALIFYING); the substance_misuse_illsub_seed_coverage test fails if
+          that happens.
+
+      - name: earliest_qualifying_date
+        description: Earliest date of any QUALIFYING record. NULL if the person has none.
+
+      - name: latest_qualifying_date
+        description: Latest date of any QUALIFYING record. NULL if the person has none.
+
+      - name: qualifying_record_count
+        description: Count of QUALIFYING records held for the person.
+        data_tests:
+          - not_null
+
+      - name: resolving_record_count
+        description: Count of RESOLVING records held for the person.
+        data_tests:
+          - not_null
+
+      - name: total_record_count
+        description: Count of all ILLSUB_COD records held for the person.
+        data_tests:
+          - not_null

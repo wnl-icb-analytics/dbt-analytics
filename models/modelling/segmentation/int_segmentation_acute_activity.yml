@@ -1,0 +1,29 @@
+models:
+  - name: int_segmentation_acute_activity
+    description: >
+      Acute activity block for segmentation. One row per sk_patient_id with
+      any ECDS attendance or non-elective admission in the 12 months ending on
+      the segmentation reporting date (last completed month-end unless the
+      segmentation_reporting_date var is set). ED attendances cover every
+      urgent and emergency care setting by arrival date. Non-elective
+      admissions are spells with admission method 2x, excluding 2C (baby born
+      at home), by admission date.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: sk_patient_id
+        description: Pseudonymised patient key
+        data_tests:
+          - unique
+          - not_null
+      - name: ed_attendances_12mo
+        description: ECDS attendances in the window, all department types
+        data_tests:
+          - not_null
+      - name: nel_admissions_12mo
+        description: Non-elective admission spells in the window (admission
+          method 2x excluding 2C)
+        data_tests:
+          - not_null
