@@ -24,17 +24,32 @@ with sld as (
     qualify file_period = max(file_period) over (partition by service_line)
     --To prevent 1 to many mapping, add a default case in situations when a service line maps to multiple desc in the latest year
     and service_line_description = min(service_line_description) over (partition by service_line, file_period)
+),
+
+cs as (
+    select distinct
+    split_part(ps_flag, ' - ', 1) as service_line_number_code,
+    initcap(split_part(npo_c_category, ' - ', 1))  as spec_comm_code
+    
+    from {{ ref('stg_ukhfd_pss_summary_of_id_code_sets') }}
+
+    qualify created_date = max(created_date) over (partition by service_line_number_code)
 )
+
 select
-    service_line as service_line_number_code,
-    service_line_description as service_line_number_desc,
+    cs.service_line_number_code,
+    sld.service_line_description as service_line_number_desc,
+    cs.spec_comm_code,
     case 
-        when file_period > 0 
-        then cast(file_period as string) || '/' || right(cast(file_period + 1 as string), 2) 
-        when file_period = 0 
+        when sld.file_period > 0 
+        then cast(sld.file_period as string) || '/' || right(cast(sld.file_period + 1 as string), 2) 
+        when sld.file_period = 0 
         then 'Prior to 2019-20'
         else null 
     end as source_period
 from sld
+
+left join cs
+on sld.service_line = cs.service_line_number_code
 
 order by service_line, file_period desc, service_line_description
