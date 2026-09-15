@@ -1,0 +1,144 @@
+models:
+  - name: fct_person_segment_by_month
+    description: >-
+      Monthly population state and segmentation for the last 60 completed
+      month-ends. One row represents one person in the scoped GP population at
+      one month-end. A segment is assigned only when the person is born, alive
+      and registered. Inactive rows retain their population flags and have a
+      null segment. Non-registration is not classified as out of area.
+      Children before December 2023 may be understated because the community
+      activity window is incomplete; is_community_window_complete identifies
+      the month-ends affected. Community coverage is the only source
+      completeness modelled, so a complete community window says nothing about
+      the other activity sources feeding a segment.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, end_date]
+      - dbt_utils.equal_rowcount:
+          arguments:
+            compare_model: ref('int_segmentation_person_month_spine')
+      - dbt_utils.expression_is_true:
+          name: historical_segment_only_for_active_people
+          arguments:
+            expression: "is_active = (segment_number IS NOT NULL)"
+      - dbt_utils.expression_is_true:
+          name: historical_adult_segments_are_adults
+          arguments:
+            expression: "segment_number NOT IN (4, 5, 6, 7) OR age >= 18"
+      - dbt_utils.expression_is_true:
+          name: historical_child_segments_are_children
+          arguments:
+            expression: "segment_number NOT IN (1, 2, 3) OR age < 18"
+      - dbt_utils.expression_is_true:
+          name: historical_segment_name_matches_number
+          arguments:
+            expression: >-
+              (segment_number IS NULL AND segment_name IS NULL)
+              OR segment_name = CASE segment_number
+              WHEN 8 THEN 'End of Life'
+              WHEN 7 THEN 'Adults with Complexity'
+              WHEN 6 THEN 'Adults with Multiple LTCs'
+              WHEN 5 THEN 'Adults with a Single LTC'
+              WHEN 4 THEN 'Mostly Healthy Adults'
+              WHEN 3 THEN 'Children with Complexity'
+              WHEN 2 THEN 'Children with Health Needs'
+              WHEN 1 THEN 'Mostly Healthy Children'
+              END
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: sk_patient_id
+        description: Pseudonymised patient key for joining to SUS/MHSDS/CSDS
+          activity.
+      - name: end_date
+        description: Completed month-end used as the reference date.
+        data_tests:
+          - not_null
+      - name: segment_number
+        description: Segment 1-8; null when the person is inactive.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5, 6, 7, 8]
+                quote: false
+      - name: segment_name
+        description: Segment name; null when the person is inactive.
+      - name: is_born
+        description: Approximate birth date is on or before the month-end.
+        data_tests:
+          - not_null
+      - name: is_alive
+        description: Born with no recorded death by the month-end.
+        data_tests:
+          - not_null
+      - name: is_registered
+        description: NCL GP registration covers the month-end.
+        data_tests:
+          - not_null
+      - name: is_active
+        description: Alive and registered at the month-end.
+        data_tests:
+          - not_null
+      - name: is_deceased
+        description: Recorded death date is on or before the month-end.
+        data_tests:
+          - not_null
+      - name: age
+        description: Age at month-end, capped at death and null before birth.
+      - name: gender
+        description: Gender recorded for the demographic period covering the
+          month-end.
+      - name: practice_code
+        description: GP practice code for the demographic period covering the
+          month-end.
+      - name: practice_name
+        description: GP practice name for the demographic period covering the
+          month-end.
+      - name: borough_registered
+        description: Borough of the registered GP practice at the month-end.
+      - name: neighbourhood_registered
+        description: Neighbourhood of the registered GP practice at the
+          month-end.
+      - name: is_end_of_life
+        description: Active person on the palliative care register.
+      - name: is_complex_adult
+        description: Active person meeting the adults-with-complexity definition.
+      - name: has_multiple_ltcs
+        description: Cohort flag - active person aged 18+ with 2+ qualifying
+          LTCs (segment 6); null when inactive.
+      - name: has_single_ltc
+        description: Cohort flag - active person aged 18+ with exactly 1
+          qualifying LTC (segment 5); null when inactive.
+      - name: is_complex_child
+        description: Active child meeting at least one complexity criterion.
+      - name: has_child_health_needs
+        description: Cohort flag - active person aged under 18 with 1+
+          qualifying LTC (segment 2); null when inactive.
+      - name: ltc_count
+        description: Qualifying segmentation LTC count; null when inactive.
+      - name: adult_complexity_criteria_count
+        description: Complexity criteria met in the complex adults cohort at
+          the month-end; null when the person is not in that cohort, matching
+          fct_person_segment.
+      - name: child_complexity_criteria_count
+        description: Children complexity criteria met, 0-6, for active people
+          aged under 18; 0 where a child meets none. Null for adults and for
+          inactive rows.
+      - name: community_latest_activity_date
+        description: Latest attended CSDS contact date on or before the
+          month-end. Every activity window, community included, ends on the
+          month-end.
+      - name: is_community_window_complete
+        description: CSDS history covers the full 12 months before this
+          month-end.
+      - name: community_lag_days
+        description: Days between community_latest_activity_date and the
+          month-end. Higher values mean community contacts undercount that
+          month.
