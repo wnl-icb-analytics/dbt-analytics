@@ -1,0 +1,41 @@
+version: 2
+models:
+  - name: int_iapt_care_activity_timing
+    description: >-
+      One row per accepted NHS Talking Therapies (IAPT data set) care activity
+      version, with the date and time of the contact recorded in the same
+      submission. The contact supplies time only when it records the same
+      referral and person; otherwise the activity keeps a null date and a status
+      explaining why. Shared by fct_iapt_care_activity and IDS607 assessments so
+      the rule has one home.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [submission_id, care_activity_id]
+    columns:
+      - name: is_submitted_contact_linked
+        description: True when the same submission contains the activity's recorded contact.
+      - name: is_submitted_contact_referral_consistent
+        description: Whether that contact records the activity's referral. Null when the contact is absent.
+      - name: is_submitted_contact_person_consistent
+        description: Whether that contact records the activity's Person_ID. Null when the contact is absent.
+      - name: clinical_date_status
+        description: recorded, missing, source_sentinel (contact date before 1901), parent_not_linked or parent_inconsistent.
+      - name: clinical_date
+        description: Contact date when the status is recorded; otherwise null.
+      - name: clinical_time
+        description: Submitted contact time when a recorded date exists and the time is populated.
+      - name: clinical_at
+        description: Date and time, or midnight on the date when no time was submitted. Null when the date is unknown.
+      - name: clinical_time_precision
+        description: timestamp, date or unknown.
+      - name: clinical_time_basis
+        description: same_submission_care_contact, or not_recorded when no usable date exists.
+      - name: source_derived_date
+        description: dmicActivityDate from the data services processing office. Evidence only.
+      - name: is_source_date_inconsistent
+        description: True when the clinical date and dmicActivityDate differ. Null when either is missing.

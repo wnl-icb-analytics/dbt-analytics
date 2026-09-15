@@ -1,0 +1,98 @@
+version: 2
+models:
+- name: int_iapt_healthcare_event
+  description: NHS Talking Therapies (IAPT data set) recorded healthcare milestones, one row per source record and
+    milestone type. Referral received, care contact and onward referral rows remain when undated; referral discharge
+    needs a recorded date. Contacts include cancelled and missed appointments and do not imply attendance. Built from
+    the latest accepted versions in the IAPT facts and rebuilt in full; prepared in the column shape of the other source
+    event feeds for the later cross-system longitudinal stream.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: event_id
+    description: Stable identifier for one milestone, a hash of IAPT, source record type, source record ID and
+      milestone type. A date correction keeps the same ID.
+    data_tests:
+    - unique
+    - not_null
+  - name: sk_patient_id
+    description: Cross-system pseudonymised NHS number key from the IAPT person bridge. Null when the source person has
+      no bridge match; the record is still kept.
+  - name: source_person_id
+    description: IAPT Person_ID. Only comparable within the IAPT data set; never join it to another dataset's person
+      identifier.
+  - name: source_dataset
+    description: Always IAPT.
+  - name: source_record_type
+    description: referral, care_contact or onward_referral.
+  - name: source_record_id
+    description: source_record_id in source_model_name.
+  - name: source_model_name
+    description: IAPT fact holding the detailed record, including fields with no column here such as the onward
+      referral's receiving organisation.
+  - name: event_date
+    description: Recorded milestone date. Null only for retained undated referral receipts, contacts or onward
+      referrals.
+  - name: event_at
+    description: Sort timestamp. Recorded date and clock time when event_time_precision is timestamp; otherwise
+      midnight on event_date, which is not an observed time. Null when undated.
+  - name: event_time_precision
+    description: timestamp when a source time was supplied, date when only a date was supplied, unknown when undated.
+  - name: event_time_basis
+    description: Source field supplying the milestone date. Delivery timestamps are never used as event dates.
+  - name: event_type
+    description: referral_received, referral_discharged, care_contact or onward_referral.
+  - name: event_name
+    description: Readable milestone label.
+  - name: event_code
+    description: IAPT appointment type code for care contacts, such as assessment or treatment. Null for other record
+      types.
+  - name: event_code_name
+    description: UKHFD label for event_code.
+  - name: event_coding_system
+    description: IAPT appointment type when event_code is populated.
+  - name: care_setting
+    description: Always mental_health.
+  - name: attendance_code
+    description: Attended or did not attend code for care contacts; null for other record types.
+  - name: attendance_name
+    description: UKHFD label for attendance_code.
+  - name: outcome_code
+    description: Discharge from IAPT service reason on referral_discharged rows, or onward referral reason on
+      onward_referral rows. Null for other milestones.
+  - name: outcome_name
+    description: UKHFD label for outcome_code.
+  - name: consultation_mechanism_code
+    description: Consultation mechanism code for care contacts (submitted from IAPT v2.1).
+  - name: consultation_mechanism_name
+    description: UKHFD label for consultation_mechanism_code.
+  - name: activity_location_type_code
+    description: Activity location type code for care contacts.
+  - name: activity_location_type_name
+    description: UKHFD label for activity_location_type_code.
+  - name: provider_organisation_code
+    description: Submitting provider ODS code.
+  - name: provider_organisation_name
+    description: Current reference name for the provider code.
+  - name: provider_code_authority
+    description: Always ODS.
+  - name: site_code
+    description: Recorded treatment site code for care contacts.
+  - name: site_name
+    description: Reference name for site_code; null when the code has no supported label.
+  - name: parent_record_type
+    description: referral when a contact or onward referral records a referral that exists and names the same person.
+  - name: parent_record_id
+    description: Recorded parent referral ID in fct_iapt_referral. Null when the referral is absent or names a
+      different or unknown person; linkage flags remain on the source fact.
+  - name: parent_model_name
+    description: Model holding the recorded parent.
+  - name: relationship_type
+    description: recorded_parent when parent_record_id comes from source identifiers.
+  - name: source_submission_period
+    description: Reporting period end of the selected submission. Not the event date.
+  - name: source_received_at
+    description: Time the selected source row was loaded into the warehouse. Describes delivery, not clinical activity;
+      load time rather than portal receipt, because files can reach the warehouse weeks after receipt.

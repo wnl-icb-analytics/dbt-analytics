@@ -1,0 +1,82 @@
+version: 2
+models:
+- name: fct_iapt_onward_referral
+  description: One NHS Talking Therapies onward referral, including steps up or down between IAPT services and
+    referrals to other organisations, from its latest accepted submission. Onward referrals flow only in the month they
+    happen. A few accepted submissions repeat the same onward referral despite the ETOS duplicate rule; repeats
+    collapse to one row, keeping the highest source row. An onward referral whose referral or person does not match
+    the latest referral stays visible with flags.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Hash of referral, onward referral date, time, reason and receiving organisation. The source has no
+      identifier; a correction to any of these creates a new record.
+    data_tests:
+    - unique
+    - not_null
+  - name: source_dataset
+    description: Always IAPT.
+  - name: referral_id
+    description: Provider-qualified referral the onward referral was made from.
+  - name: local_referral_id
+    description: Referral identifier assigned locally by the provider.
+  - name: pathway_id
+    description: NHS England pathway identifier for the Person_ID and referral pair.
+  - name: source_row_id
+    description: Row identifier of the selected submitted version.
+  - name: person_id
+    description: IAPT Person_ID on this record. Only comparable within IAPT.
+  - name: sk_patient_id
+    description: Cross-system pseudonymised NHS number key for person_id.
+  - name: onward_referral_date
+    description: Date the patient was referred on.
+  - name: onward_referral_time
+    description: Submitted time of the onward referral; null when not recorded.
+  - name: onward_referral_at
+    description: Date and time for sorting. Date-only records use midnight; read onward_referral_time_precision.
+  - name: onward_referral_time_precision
+    description: timestamp when a time was submitted, date when only a date was, unknown when undated.
+      Supplied midnight values may be system defaults; timestamp does not establish clinical accuracy.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [timestamp, date, unknown]
+  - name: onward_referral_reason_code
+    description: Onward referral reason; 05 stepped up from low intensity, 06 stepped down from high intensity.
+  - name: onward_referral_reason_name
+    description: UKHFD label for onward_referral_reason_code.
+  - name: receiving_organisation_code
+    description: ODS code of the receiving organisation where recorded.
+  - name: receiving_organisation_name
+    description: Latest name from the shared organisation reference.
+  - name: is_referral_linked
+    description: TRUE when referral_id exists in fct_iapt_referral.
+  - name: is_referral_person_consistent
+    description: Whether this record's Person_ID matches the latest referral's. Null when either is missing or the
+      referral is unlinked.
+  - name: provider_organisation_code
+    description: Submitting provider ODS code.
+  - name: provider_organisation_name
+    description: Latest name from the shared organisation reference.
+  - name: reported_period_count
+    description: Number of distinct accepted reporting months containing this onward referral; normally 1. Repeated
+      rows within one submission count once.
+  - name: submission_id
+    description: Accepted submission holding the selected version.
+  - name: unique_month_id
+    description: NHS England month number of the selected version.
+  - name: reporting_period_start_date
+    description: Start of the selected version's reporting month.
+  - name: reporting_period_end_date
+    description: End of the selected version's reporting month.
+  - name: source_file_received_at
+    description: Time the portal received the selected file. Not a clinical time.
+  - name: source_loaded_at
+    description: Time the selected row was added to the warehouse.
+  - name: file_type
+    description: Primary or Refresh.
+  - name: dataset_version
+    description: IAPT data set version of the selected file.
