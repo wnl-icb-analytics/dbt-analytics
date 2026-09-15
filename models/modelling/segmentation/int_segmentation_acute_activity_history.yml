@@ -1,0 +1,64 @@
+models:
+  - name: int_segmentation_acute_activity_history
+    description: >-
+      Rolling 12-month GP, urgent and emergency care, and non-elective
+      inpatient activity for segmentation. One row represents one active
+      person with at least one qualifying event at one of the last 60
+      completed month-ends. Each window runs from the exact date 12 months
+      before the reference month-end up to and including that month-end.
+      Missing rows represent zero activity.
+      Non-elective admissions use the full-history APC encounter model because
+      the imputed-spells input to the current mart emits only two years.
+      Windows end on the calendar month-end rather than on the latest date
+      each source has reached, so the newest month-ends undercount sources
+      that submit in arrears. Read the lag columns in
+      int_segmentation_service_activity_coverage_history before interpreting a
+      trend at the trailing edge.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, end_date]
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: sk_patient_id
+        description: Pseudonymised patient key used for commissioning activity.
+      - name: end_date
+        description: Completed month-end at the end of the rolling window.
+        data_tests:
+          - not_null
+      - name: gp_appointments_12mo
+        description: Attended clinical GP appointments in the window.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: ed_attendances_12mo
+        description: Distinct urgent and emergency care attendances in the window.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: nel_admissions_12mo
+        description: >-
+          Distinct non-elective admissions in the window. Built from the APC
+          encounter model with the same admission-method exclusions and spell
+          deduplication key as fct_person_sus_apc_recent, but without that
+          mart's admission and discharge date imputation. Spells with no
+          admission date are therefore excluded here, and same-day spells with
+          no discharge date can deduplicate differently. Together this affects
+          under 0.1% of in-scope spells and can move the count in either
+          direction against apc_nel_12mo.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
