@@ -58,6 +58,7 @@ select core.primarykey_id
     , core.spell_commissioning_grouping_core_hrg
     , core.spell_commissioning_tariff_calculation_final_price
     , core.spell_commissioning_pss_grouping_national_programme_code -- spec comm
+    , core.spell_commissioning_pss_grouping_prescribed_service_line_code
 
     /* patient info at time of event  */
     , core.spell_patient_residence_derived_postcode_district
