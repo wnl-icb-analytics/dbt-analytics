@@ -1,8 +1,8 @@
 models:
   - name: fct_person_copd_register
-    description: 'QOF COPD register per v50 business rules specification.
+    description: 'QOF COPD register v107 per v51 business rules.
 
-      One row per person on the COPD register. Inclusion rules:
+      One row per person on the COPD register. Disorder codes count at any date; administrative codes count only when recorded in the preceding two years. This breaks count comparability with v50. The register rules remain:
       
       Rule 1: Pre-April 2023 diagnosis - automatic inclusion
       
@@ -10,7 +10,7 @@ models:
       
       Rule 3: Post-April 2023 + newly registered + spirometry <0.7 within -93 to +186 days of registration
       
-      Rule 4: Post-April 2023 remaining - all included per QOF v50 spec (no spirometry required)'
+      Rule 4: Post-April 2023 remaining - all included (no spirometry required)'
 
     tests:
       - dbt_utils.at_least_one:
@@ -23,6 +23,30 @@ models:
           - unique
           - not_null
 
+      - name: earliest_unresolved_diagnosis_date
+        description: Earliest unresolved eligible COPD evidence date (EUNRESCOPD_DAT)
+
+      - name: earliest_diagnosis_date
+        description: Earliest eligible disorder or two-year administrative evidence date (COPDEAR_DAT)
+
+      - name: latest_diagnosis_date
+        description: Latest eligible disorder or two-year administrative evidence date
+
+      - name: earliest_diagnosis_after_latest_resolved
+        description: Earliest eligible COPD evidence after the latest resolved code (COPDLAT_DAT)
+
+      - name: latest_resolved_date
+        description: Latest COPD resolved code date up to the achievement date (COPDRES_DAT)
+
+      - name: copd_disorder_code_count
+        description: Count of disorder-code observations used as current register evidence
+
+      - name: copd_admin_code_count
+        description: Count of administrative-code observations in the preceding two years used as current register evidence
+
+      - name: copd_diagnosis_count
+        description: Total disorder and in-window administrative observations used as current register evidence
+
     config:
       meta:
         indicator:
@@ -33,12 +57,14 @@ models:
           name_short: "COPD"
           description_short: "QOF COPD register"
           description_long: >
-            COPD register per QOF v50 business rules. Rule 1: Automatic inclusion for
+            COPD register v107 per QOF v51 business rules. Rule 1: Automatic inclusion for
             diagnoses before 01/04/2023. Rule 2: Post-April 2023 with spirometry FEV1/FVC
             <0.7 within -93 to +186 days of diagnosis. Rule 3: Newly registered (last 12
             months) with spirometry within -93 to +186 days of registration. Rule 4: All
-            remaining post-April 2023 diagnoses included per spec (no spirometry required).
-            Uses COPD_COD for diagnosis and COPDRES_COD for resolution codes.
+            remaining post-April 2023 diagnoses are included. COPDDIAG_COD disorder
+            codes count at any date. COPDPROC_COD administrative codes count only in
+            the preceding two years. COPDRES_COD supplies resolved codes, and the
+            change means counts are not comparable with v50.
           is_qof: true
           qof_indicator: "COPD007"
           source_column: "is_on_register"
@@ -46,7 +72,9 @@ models:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
             - "QOF"
           code_clusters:
-            - cluster_id: "COPD_COD"
+            - cluster_id: "COPDDIAG_COD"
+              category: "INCLUSION"
+            - cluster_id: "COPDPROC_COD"
               category: "INCLUSION"
             - cluster_id: "COPDRES_COD"
               category: "RESOLUTION"

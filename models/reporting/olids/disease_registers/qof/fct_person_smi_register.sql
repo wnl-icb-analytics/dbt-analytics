@@ -1,3 +1,7 @@
+-- Pair: macros/qof_registers/calculate_smi_register.sql.
+-- This live fact includes future-dated records. Its PIT pair is strict as-of
+-- and derives age at the reference date where age is used.
+
 {{
     config(
         materialized='table',
@@ -7,9 +11,9 @@
 /*
 **Serious Mental Illness (SMI) Register - QOF Mental Health Quality Measures**
 
-Business Logic (QOF v50 MH001, aligned with the calculate_smi_register macro at reference = today):
+Business Logic (QOF v51 MH1_REG, aligned with the calculate_smi_register macro at reference = today):
 - MH1_REG: has an MH_COD diagnosis (resolved or not — remission does not exclude from the register)
-- MH2_REG: LIT_COD lithium in the last 6 months, not subsequently stopped (LITSTP_COD)
+- MH2_REG is retired: lithium therapy does not qualify a person without an MH_COD diagnosis
 - No age restrictions for SMI register
 - Based on legacy fct_person_dx_smi.sql
 - Amended 8.4.26 KH Include 'Has_resolved_code' flag for use in SMI health checks
@@ -24,7 +28,7 @@ Used for serious mental illness quality measures including:
 */
 
 WITH smi_diagnoses AS (
-    -- Per QOF MH001: MH1_REG is "ever diagnosed" — no remission exclusion. HAS_MH_DIAGNOSIS = TRUE
+    -- QOF v51 MH1_REG is "ever diagnosed"; remission does not exclude
     SELECT
         person_id,
         MIN(
@@ -81,12 +85,10 @@ WITH smi_diagnoses AS (
         ARRAY_AGG(DISTINCT CASE WHEN is_resolved_code THEN concept_code END) AS all_resolved_concept_codes,
         ARRAY_AGG(DISTINCT CASE WHEN is_resolved_code THEN concept_display END) AS all_resolved_concept_displays
     FROM {{ ref('int_smi_diagnoses_all') }}
-    WHERE clinical_effective_date <= CURRENT_DATE()
-        AND (date_recorded IS NULL OR CAST(date_recorded AS DATE) <= CURRENT_DATE())
     GROUP BY person_id
 ),
 
--- MH2_REG: latest LITSTP_COD stop code, used to exclude stopped lithium
+-- Informational lithium stop date for diagnosis-qualified people
 lithium_stops AS (
     SELECT
         person_id,
@@ -149,25 +151,20 @@ combined_smi_eligibility AS (
         smi.all_resolved_concept_codes,
         smi.all_resolved_concept_displays,
         
-        -- SMI Register Logic: Any SMI diagnosis (active or not) OR recent lithium therapy
+        -- QOF v51 register membership is diagnosis-based; lithium is informational
        
-        COALESCE(smi.person_id, lith.person_id) AS person_id,
-        (
-            -- MH1_REG: has an MH_COD diagnosis (resolved or not). MH2_REG: recent lithium, not stopped.
-            smi.latest_diagnosis_date IS NOT NULL
-            OR
-            (lith.recent_lithium_orders_count > 0)
-        ) AS is_on_register,
+        smi.person_id,
+        smi.latest_diagnosis_date IS NOT NULL AS is_on_register,
         smi.latest_diagnosis_date IS NOT NULL OR smi.latest_resolved_date IS NOT NULL AS has_mh_diagnosis,
         lith.recent_lithium_orders_count > 0 AS is_on_lithium
 
     FROM smi_diagnoses AS smi
-    FULL OUTER JOIN lithium_medications AS lith
+    LEFT JOIN lithium_medications AS lith
         ON smi.person_id = lith.person_id
-    INNER JOIN {{ ref('dim_person') }} AS p
-        ON COALESCE(smi.person_id, lith.person_id) = p.person_id
-    INNER JOIN {{ ref('dim_person_age') }} AS age
-        ON COALESCE(smi.person_id, lith.person_id) = age.person_id
+    LEFT JOIN {{ ref('dim_person') }} AS p
+        ON smi.person_id = p.person_id
+    LEFT JOIN {{ ref('dim_person_age') }} AS age
+        ON smi.person_id = age.person_id
 )
 
 -- Final selection: Only include patients on the SMI register

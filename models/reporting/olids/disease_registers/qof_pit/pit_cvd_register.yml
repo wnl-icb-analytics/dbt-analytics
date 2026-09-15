@@ -1,0 +1,33 @@
+models:
+  - name: pit_cvd_register
+    description: >
+      QOF v51 CD_REG version 100 (CQRS CD) evaluated at qof_reference_date as
+      the union of the strict point-in-time CHD and stroke/TIA register
+      populations. One row represents a qualifying person at that date.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier
+        data_tests:
+          - not_null
+          - unique
+      - name: register_name
+        description: Register name, Cardiovascular Disease
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [Cardiovascular Disease]
+      - name: is_on_register
+        description: Whether the person qualifies at the reference date
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true]
+      - name: reference_date
+        description: Date at which register membership was evaluated
+        data_tests:
+          - not_null

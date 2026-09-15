@@ -13,5 +13,6 @@ SELECT
     person_id,
     register_name,
     is_on_register,
+    is_on_hfref_register,
     {{ get_reference_date() }} AS reference_date
 FROM register_data

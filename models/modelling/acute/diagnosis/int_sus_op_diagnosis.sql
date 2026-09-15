@@ -5,13 +5,21 @@
 -- standardize the ICD codes to ensure they follow the expected format
 -- `<CHAR><NUM><NUM>` or `<CHAR><NUM><NUM>.<NUM>`
 with
+    appointment_codes as (
+        select primarykey_id
+            , code
+            , icd_id
+            , count(*) as observation_count
+        from {{ ref("stg_sus_op_appointment_clinical_coding_diagnosis_icd") }}
+        where code is not null
+        group by primarykey_id, code, icd_id
+    ),
     final_icd_codes as (
         select primarykey_id
-            , code 
-            , count(*) as observation_count
-            , array_agg(distinct icd_id)  WITHIN GROUP (ORDER BY icd_id ASC) as icd_ids
-        from {{ ref("stg_sus_op_appointment_clinical_coding_diagnosis_icd") }}
-        where code is not null 
+            , code
+            , sum(observation_count) as observation_count
+            , array_agg(icd_id) within group (order by icd_id asc) as icd_ids
+        from appointment_codes
         group by primarykey_id, code
 )    
 select
@@ -38,6 +46,5 @@ left join
     on c.concept_code = f.code
     and c.vocabulary_id = 'ICD10'
 
-left join {{ ref("int_sus_op_appointment") }} sa on sa.visit_occurrence_id = f.primarykey_id
-
-where sa.sk_patient_id is not null
+inner join {{ ref("int_sus_op_appointment") }} sa
+    on sa.visit_occurrence_id = f.primarykey_id

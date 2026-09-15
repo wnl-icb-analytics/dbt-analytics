@@ -1,0 +1,33 @@
+models:
+  - name: int_obesity2_diagnoses_all
+    description: >
+      ASCVD and obstructive sleep apnoea observations used by QOF OBES2. One
+      row represents an observation matched to ASCVD_COD or OBSLPAPNOEA_COD.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [id, source_cluster_id]
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: ASCVD_COD, OBSLPAPNOEA_COD
+    columns:
+      - name: id
+        description: Clinical observation identifier
+        data_tests:
+          - not_null
+      - name: person_id
+        description: Person identifier
+        data_tests:
+          - not_null
+      - name: clinical_effective_date
+        description: Clinical effective date
+        data_tests:
+          - not_null
+      - name: date_recorded
+        description: Date recorded in the source system
+      - name: source_cluster_id
+        description: ASCVD_COD or OBSLPAPNOEA_COD
