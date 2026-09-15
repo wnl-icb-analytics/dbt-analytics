@@ -87,10 +87,10 @@ glp1_enhanced AS (
         -- BNF chapter indicates likely indication: 06 = diabetes, 04 = obesity/CNS
         CASE WHEN gob.bnf_code LIKE '0601%' THEN TRUE ELSE FALSE END AS is_diabetes_indication,
 
-        -- Order recency flags (GLP-1 RAs are typically long-term therapy)
-        gob.order_date >= CURRENT_DATE() - INTERVAL '3 months' AS is_recent_3m,
-        gob.order_date >= CURRENT_DATE() - INTERVAL '6 months' AS is_recent_6m,
-        gob.order_date >= CURRENT_DATE() - INTERVAL '12 months' AS is_recent_12m
+        -- Order recency flags (GLP-1 RAs are typically long-term therapy); future-dated orders are not recent
+        gob.order_date BETWEEN CURRENT_DATE() - INTERVAL '3 months' AND CURRENT_DATE() AS is_recent_3m,
+        gob.order_date BETWEEN CURRENT_DATE() - INTERVAL '6 months' AND CURRENT_DATE() AS is_recent_6m,
+        gob.order_date BETWEEN CURRENT_DATE() - INTERVAL '12 months' AND CURRENT_DATE() AS is_recent_12m
     FROM glp1_orders_base gob
     LEFT JOIN drug_clusters dc
         ON gob.mapped_concept_code = dc.mapped_concept_code
