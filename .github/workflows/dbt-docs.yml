@@ -43,12 +43,8 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-    env:
-      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE__USERNAME }}
-      SNOWFLAKE_ROLE: DBT_ADMIN
-      SNOWFLAKE_WAREHOUSE: WH_NCL_ENGINEERING_XS
-      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
+    # Snowflake settings are set per step, so the installer and package
+    # steps never see credentials.
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -73,6 +69,12 @@ jobs:
         run: dbt deps
 
       - name: Compile the docs index
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE__USERNAME }}
+          SNOWFLAKE_ROLE: DBT_ADMIN
+          SNOWFLAKE_WAREHOUSE: WH_NCL_ENGINEERING_XS
+          SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
         run: |
           # Strict static analysis adds column-level lineage. Fall back to a
           # plain index if any model cannot be analysed, rather than publish nothing.
@@ -80,8 +82,29 @@ jobs:
             || dbt compile --target ci-prod --profiles-dir . --write-index
 
       - name: Generate docs site
-        # --output-dir keeps compiled SQL and target/data out of the published site
+        # --output-dir keeps compiled SQL and target/data out of the published site.
+        # No --write-catalog, so no warehouse catalog is written.
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE__USERNAME }}
+          SNOWFLAKE_ROLE: DBT_ADMIN
+          SNOWFLAKE_WAREHOUSE: WH_NCL_ENGINEERING_XS
+          SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
         run: dbt docs generate --no-compile --target ci-prod --profiles-dir . --output-dir site
+
+      - name: Empty run-time tables
+        # dbt_rt.* holds invocation, relation (row counts, owners) and adapter
+        # query metadata from this CI run. The docs need none of it, and compile
+        # times would show as "last executed". Schemas are kept so the app loads.
+        run: |
+          pip install --quiet 'duckdb>=1,<2'
+          python - <<'EOF'
+          import glob, os, duckdb
+          for path in glob.glob("site/info_schema/v1/dbt_rt.*.parquet"):
+              duckdb.sql(f"COPY (SELECT * FROM read_parquet('{path}') LIMIT 0) TO '{path}.tmp' (FORMAT parquet)")
+              os.replace(f"{path}.tmp", path)
+              print(f"emptied {path}")
+          EOF
 
       - name: Cleanup credentials
         if: always()
