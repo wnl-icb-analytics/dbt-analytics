@@ -1,0 +1,106 @@
+# dbt Docs
+#
+# Publishes the dbt docs v2 site for main to GitHub Pages. The onboarding site
+# (wnl-icb-analytics/dbt-onboarding) serves it at /models through a same-origin
+# rewrite, so analysts see model docs next to the handbook and changelog.
+#
+# Read-only: compiles against PROD metadata (ci-prod target), like the merge
+# queue compile gate. No catalog is written, so row counts and live column
+# types stay out of the public site. Descriptions, SQL, columns, tests and
+# lineage are published; the SQL is already public in this repository.
+#
+# Separate from dbt-deploy.yml so a docs failure never blocks a deploy.
+#
+# Prerequisites:
+#   - Settings > Pages > Build and deployment > Source: GitHub Actions
+#   - Snowflake secrets shared with dbt-compile.yml
+
+name: dbt Docs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'models/**'
+      - 'macros/**'
+      - 'seeds/**'
+      - 'snapshots/**'
+      - 'analyses/**'
+      - 'packages.yml'
+      - 'dbt_project.yml'
+      - '.github/workflows/dbt-docs.yml'
+
+# Only the newest main matters; a queued older build would publish stale docs.
+concurrency:
+  group: dbt-docs
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build docs site
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE__USERNAME }}
+      SNOWFLAKE_ROLE: DBT_ADMIN
+      SNOWFLAKE_WAREHOUSE: WH_NCL_ENGINEERING_XS
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install dbt Fusion
+        run: |
+          curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --target x86_64-unknown-linux-gnu --update
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/dbt" --version
+
+      - name: Write Snowflake private key
+        env:
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE__PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.snowflake
+          printf '%s\n' "$SNOWFLAKE_PRIVATE_KEY" > ~/.snowflake/rsa_key.p8
+          chmod 600 ~/.snowflake/rsa_key.p8
+          echo "SNOWFLAKE_PRIVATE_KEY_PATH=$HOME/.snowflake/rsa_key.p8" >> "$GITHUB_ENV"
+
+      - name: Install dbt packages
+        run: dbt deps
+
+      - name: Compile the docs index
+        run: |
+          # Strict static analysis adds column-level lineage. Fall back to a
+          # plain index if any model cannot be analysed, rather than publish nothing.
+          dbt compile --target ci-prod --profiles-dir . --write-index --static-analysis strict \
+            || dbt compile --target ci-prod --profiles-dir . --write-index
+
+      - name: Generate docs site
+        # --output-dir keeps compiled SQL and target/data out of the published site
+        run: dbt docs generate --no-compile --target ci-prod --profiles-dir . --output-dir site
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f ~/.snowflake/rsa_key.p8
+
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+
+  publish:
+    name: Publish to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
