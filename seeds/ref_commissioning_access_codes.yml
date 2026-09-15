@@ -1,0 +1,36 @@
+version: 2
+
+seeds:
+  - name: ref_commissioning_access_codes
+    description: >
+      Commissioner organisation codes that count as in-area for the
+      zCommissioningAccess flag. Migrated from the hardcoded IN list in the
+      SUS AE sandpit view. Both the 3-character and 5-character forms of each
+      organisation are listed because SUS submissions use both.
+    config:
+      column_types:
+        commissioner_code: varchar(10)
+        code_format: varchar(10)
+        organisation_name: varchar(255)
+        is_active: boolean
+        notes: varchar(1000)
+    columns:
+      - name: commissioner_code
+        description: Organisation code as it appears in SUS.
+        tests:
+          - unique
+          - not_null
+      - name: code_format
+        description: Whether this row is the 3-char or 5-char form of the code.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['3-char', '5-char']
+      - name: organisation_name
+        description: Human-readable name. TO POPULATE.
+      - name: is_active
+        description: >
+          Set false to retire a code without deleting the row, so the history
+          of what was in scope is preserved.
+        tests:
+          - not_null

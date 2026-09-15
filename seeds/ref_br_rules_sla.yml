@@ -1,0 +1,44 @@
+version: 2
+
+seeds:
+  - name: ref_br_rules_sla
+    description: >
+      Commissioner / provider / financial year combinations that have a service
+      level agreement in place. Migrated from dbo.br_rules_sla.
+
+      Used only to resolve the business rule contract type sentinel: an
+      attendance that matched no business rule is contract type 99, which
+      becomes 1 where a matching SLA row exists and 2 where it does not.
+
+      The legacy table carried a seqno column which was never read by
+      processBusinessRules; it has been dropped. Duplicate combinations were
+      removed at the same time.
+
+      Financial year is held in the same yyNN form as z_financial_year, e.g.
+      1718 for 2017/18. Coverage stops at 1718 -- attendances after that year
+      can never match an SLA row, so they resolve to contract type 2.
+    config:
+      column_types:
+        ccg: varchar(10)
+        provider: varchar(10)
+        z_financial_year: varchar(4)
+    columns:
+      - name: ccg
+        description: Commissioner organisation code, first three characters.
+        tests:
+          - not_null
+      - name: provider
+        description: Provider organisation code, first three characters.
+        tests:
+          - not_null
+      - name: z_financial_year
+        description: Financial year in yyNN form, e.g. 1718.
+        tests:
+          - not_null
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - ccg
+              - provider
+              - z_financial_year

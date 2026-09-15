@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: stg_sus_commissioner_practice
+    description: >
+      Date-effective practice-to-commissioner attribution.
+
+      Grain: one row per practice / commissioner / effective period. Rows whose
+      start date falls after their end date are excluded upstream in the model.
+    config:
+      meta:
+        owner:
+          name: Poya Khalaj
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - practice_code
+              - commissioner_code
+              - effective_from
+              - effective_to
+          config:
+            severity: warn
+    columns:
+      - name: practice_code
+        data_tests: [not_null]
+      - name: commissioner_code
+        data_tests: [not_null]
+
+  - name: stg_sus_commissioner_lsoa
+    description: Date-effective LSOA-to-commissioner attribution.
+    columns:
+      - name: lsoa_code
+        data_tests: [not_null]
+      - name: commissioner_code
+        data_tests: [not_null]
+
+  - name: stg_sus_commissioner_provider
+    description: Date-effective hosted-provider-to-commissioner attribution.
+    columns:
+      - name: provider_code
+        data_tests: [not_null]
+      - name: commissioner_code
+        data_tests: [not_null]
+
+  - name: stg_sus_commissioner_provider_postcode
+    description: Date-effective provider-postcode-to-commissioner fallback attribution.
+    columns:
+      - name: provider_code
+        data_tests: [not_null]
+      - name: commissioner_code
+        data_tests: [not_null]

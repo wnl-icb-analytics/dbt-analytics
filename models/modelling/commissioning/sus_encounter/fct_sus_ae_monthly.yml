@@ -1,0 +1,211 @@
+version: 2
+
+models:
+  - name: fct_sus_ae_monthly
+    description: >
+      SUS A&E monthly attendances with post-processing applied.
+
+      Migrated from the SQL Server stored procedure ETL.postProcess_AE_Current,
+      which ran a series of UPDATE statements against Staging.fact_ae_current
+      after load. Each of those updates is a column expression here, so the row
+      is built correct once rather than rewritten repeatedly.
+
+      Grain: one row per attendance (sk_encounter_id).
+
+      KNOWN PARITY ISSUES -- these reproduce defects in the legacy stored
+      procedure deliberately, so that migrated output matches the legacy table.
+      Each needs sign-off from the SUS reporting owner before being corrected:
+        * z_em_duration_datetime adds minutes as days (see column description)
+        * z_pod_level_4 misses em_department_type = '3' (see column description)
+        * z_commissioning_access is recomputed, where legacy was historical
+
+      RECONCILIATION STATUS (2019 sample, vs Staging.fact_ae_current):
+        * in-area commissioners match to within 0.7%
+        * out-of-area commissioners are ~3.9x overrepresented here -- the legacy
+          load appears to apply a filter that has not yet been identified
+        * 2012-2014 activity is absent from the Snowflake source entirely
+    config:
+      meta:
+        owner:
+          name: Poya Khalaj
+    columns:
+
+      # ---------------------------------------------------------------
+      # Grain / keys
+      # ---------------------------------------------------------------
+      - name: sk_encounter_id
+        description: >
+          Surrogate key for the attendance. One row per value -- this is the
+          model's grain, and the tests below are the fan-out guard for the
+          care home join.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        description: >
+          Surrogate patient key. Note the value 1 is a sentinel, not a real
+          patient: those rows are excluded from duplicate detection (see
+          z_commissioning_access).
+
+      # ---------------------------------------------------------------
+      # Derived: event timestamps (SP step 1)
+      # ---------------------------------------------------------------
+      - name: z_arrival_datetime
+        description: Arrival date and arrival time combined into one timestamp.
+
+      - name: z_em_attendance_conclusion_datetime
+        description: >
+          Attendance conclusion time resolved to a full timestamp. Where the
+          conclusion time falls earlier in the day than arrival, the event is
+          taken to be after midnight and dated to the following day.
+
+      - name: z_em_datetime_seen_for_treatment
+        description: >
+          Time seen for treatment resolved to a full timestamp, with the same
+          midnight rollover handling as z_em_attendance_conclusion_datetime.
+
+      - name: z_em_departure_datetime
+        description: >
+          Departure time resolved to a full timestamp, with the same midnight
+          rollover handling as z_em_attendance_conclusion_datetime.
+
+      - name: z_em_initial_assessment_datetime
+        description: >
+          Initial assessment time resolved to a full timestamp, with the same
+          midnight rollover handling as z_em_attendance_conclusion_datetime.
+
+      - name: z_em_duration_datetime
+        description: >
+          em_duration_time is a duration in MINUTES (values cluster at 239/240,
+          i.e. the four-hour A&E target). The legacy stored procedure treated it
+          as a 1900-anchored datetime and used T-SQL datetime addition, which
+          adds the DAY count -- so a 240-minute attendance was recorded as 240
+          days after arrival. Reproduced here for parity.
+
+          The correct expression is arrival plus em_duration_time minutes.
+          Nothing downstream can be relying on the real duration, because it has
+          never been populated. Raise with the SUS reporting owner.
+
+      - name: z_em_assessment_waiting_datetime
+        description: >
+          Always NULL: em_assessment_waiting_time is not present in the source
+          and is a NULL stub in int_sus_ae_monthly. The derivation is live and
+          will populate itself if that column is ever sourced.
+
+      - name: z_em_treatment_wait_datetime
+        description: >
+          Always NULL: em_treatment_wait_time is not present in the source and
+          is a NULL stub in int_sus_ae_monthly. The derivation is live and will
+          populate itself if that column is ever sourced.
+
+      # ---------------------------------------------------------------
+      # Derived: flags and codes
+      # ---------------------------------------------------------------
+      - name: z_commissioning_access
+        description: >
+          Commissioning access flag.
+            0 = commissioner is out of area
+            1 = commissioner is in area, first occurrence of the attendance
+            2 = duplicate attendance (same patient, provider and arrival
+                timestamp as an earlier row)
+
+          Per the 2021-09-24 note in the stored procedure, only rows flagged 2
+          are excluded from the consolidated dataset.
+
+          Rows with sk_patient_id = 1 are excluded from duplicate detection
+          entirely and keep their original 0 or 1.
+
+          DIFFERENCE FROM LEGACY: the legacy column appears to have been set at
+          load time from whatever commissioner list was current then, so the
+          same code can carry different flags in different years. This model
+          recomputes every row against the current seed, which is internally
+          consistent but will not match legacy row for row.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2]
+
+      - name: z_provider_site_code
+        description: >
+          Provider site code, resolved through a precedence ladder of
+          provider-specific rules. Falls back to the first five characters of
+          provider_site_code where no rule matches.
+
+      - name: z_pod_level_4
+        description: >
+          A&E point of delivery band, derived from HRG, patient group and
+          department type. The banding scheme changed at the start of 2011/12:
+          earlier activity is banded NO-PAY / HIGH / STANDARD / MINOR, later
+          activity NO-PAY / BAND 1 to BAND 5.
+
+          [PARITY BUG] The legacy function tests em_department_type = '03' only,
+          but the column also holds '3' at volume. Those attendances fall
+          through to UNKNOWN instead of BAND 5. Reproduced here for parity;
+          raise with the SUS reporting owner, as POD bands drive payment.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - 'NO-PAY'
+                  - 'HIGH'
+                  - 'STANDARD'
+                  - 'MINOR'
+                  - 'BAND 1'
+                  - 'BAND 2'
+                  - 'BAND 3'
+                  - 'BAND 4'
+                  - 'BAND 5'
+                  - 'UNKNOWN'
+              config:
+                severity: warn
+
+      - name: z_ccg_code
+        description: >
+          Responsible commissioner, assigned by waterfall lookup on GP practice,
+          LSOA, provider and activity date.
+
+      - name: z_care_home
+        description: >
+          ODS code of the care home the patient was resident in at the time of
+          the attendance, where applicable. Sourced from int_sus_ae_care_home.
+
+      - name: z_imd_2015_london_quintile
+        description: >
+          [NOT YET IMPLEMENTED] Always NULL. Requires
+          Index_of_Multiple_Deprivation_2015 to be loaded into Snowflake and
+          registered as a source.
+
+      - name: z_imd_2015_national_decile
+        description: >
+          [NOT YET IMPLEMENTED] Always NULL. Requires
+          Index_of_Multiple_Deprivation_2015 to be loaded into Snowflake and
+          registered as a source.
+
+      # ---------------------------------------------------------------
+      # Source columns worth calling out
+      # ---------------------------------------------------------------
+      - name: arrival_date
+        description: Date the patient arrived at the A&E department.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+
+      - name: em_duration_time
+        description: >
+          Attendance duration in MINUTES, despite the column name suggesting a
+          time of day. See z_em_duration_datetime for the consequences of the
+          legacy misreading.
+
+      - name: em_department_type
+        description: >
+          A&E department type. Holds both zero-padded and unpadded forms ('03'
+          and '3') for the same department type -- see z_pod_level_4.
+
+      - name: organisation_code_code_of_provider
+        description: >
+          Provider organisation code, truncated to three characters upstream in
+          int_sus_ae_monthly. The untruncated value is available as
+          provider_code_original_data.

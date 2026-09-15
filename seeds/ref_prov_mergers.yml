@@ -1,0 +1,37 @@
+version: 2
+
+seeds:
+  - name: ref_prov_mergers
+    description: >
+      Provider organisation mergers: maps a superseded provider code to the
+      code that replaced it. Migrated from dbo.dim_prov_mergers, which was read
+      by the scalar function dbo.getProvMerge.
+
+      NOTE: the legacy function had date-aware logic (apply a merger only from
+      the financial period it took effect) but it was commented out. The lookup
+      is therefore retroactive -- a merged provider is renamed across its entire
+      history, including activity that predates the merger. Reproduced as-is;
+      the legacy fromFinperiodNo column is retained here so the behaviour can be
+      corrected later without re-migrating the table.
+    config:
+      column_types:
+        provfrom: varchar(10)
+        provto: varchar(10)
+        fromfinperiodno: number(38,0)
+    columns:
+      - name: provfrom
+        description: >
+          Superseded provider code. Must be unique -- the legacy scalar function
+          assigned from a single-row select, so a duplicate would have returned
+          an arbitrary result.
+        tests:
+          - unique
+          - not_null
+      - name: provto
+        description: Provider code that replaced it.
+        tests:
+          - not_null
+      - name: fromfinperiodno
+        description: >
+          Financial period the merger took effect. NOT currently used -- see the
+          note on the seed above.
