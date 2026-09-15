@@ -54,9 +54,11 @@ EOF
 }
 
 redact_stream() {
+    # Keep doctor booleans (present/absent). Redact env assignments and long secret-shaped values.
     sed -E \
-        -e 's/(SNOWFLAKE_(PASSWORD|PAT|PRIVATE_KEY|PRIVATE_KEY_PASSPHRASE|TOKEN)=)[^[:space:]]+/\1[redacted]/g' \
-        -e 's/((password|passwd|token|passphrase|secret|private_key)["[:space:]]*[:=][[:space:]]*)[^[:space:]]+/\1[redacted]/Ig'
+        -e 's/(SNOWFLAKE_[A-Z0-9_]+=)[^[:space:]]+/\1[redacted]/g' \
+        -e '/BEGIN (RSA )?PRIVATE KEY/,/END (RSA )?PRIVATE KEY/d' \
+        -e 's/(("?(password|passwd|token|passphrase|secret|private_key)"?)[[:space:]]*[:=][[:space:]]*)([^[:space:]"]{8,})/\1[redacted]/Ig'
 }
 
 present_or_absent() {
