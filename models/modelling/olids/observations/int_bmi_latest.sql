@@ -45,5 +45,5 @@ FROM {{ ref('int_bmi_all') }}
 WHERE is_valid_bmi = TRUE
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id
-    ORDER BY clinical_effective_date DESC, date_recorded DESC, bmi_value DESC, ID DESC
+    ORDER BY clinical_effective_date DESC, date_recorded DESC NULLS LAST, bmi_value DESC, ID DESC
 ) = 1
