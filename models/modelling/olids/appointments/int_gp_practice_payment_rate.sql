@@ -172,8 +172,9 @@ imputed_rate as (
 ),
 
 -- Registered list for imputation: the base year at or before the fiscal
--- year, else the next one, and never more than a year old, so a closed
--- code is not imputed from a list it no longer has.
+-- year, else the next one, and only within a year either side, so a closed
+-- code is not imputed from a list it no longer has and a new code is not
+-- imputed from a distant projection.
 imputed_list as (
     select
         py.practice_code,
@@ -182,7 +183,8 @@ imputed_list as (
     from practice_years as py
     join {{ ref('practice_weighted_population') }} as w
         on w.practice_code = py.practice_code
-       and year(w.financial_year_start) >= py.fiscal_year_start - 1
+       and year(w.financial_year_start) between py.fiscal_year_start - 1
+                                             and py.fiscal_year_start + 1
     qualify row_number() over (
         partition by py.practice_code, py.fiscal_year_start
         order by iff(year(w.financial_year_start) <= py.fiscal_year_start, 0, 1),
