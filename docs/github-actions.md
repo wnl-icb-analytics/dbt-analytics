@@ -10,7 +10,7 @@ Every pull request receives fast feedback:
 | Workflow | What it does |
 |----------|--------------|
 | `auto-author-assign.yml` | Assigns the pull request author |
-| `pr-title.yml` | Checks the title against Conventional Commits (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `ci`). Source-sync pull requests skip the check |
+| `pr-title.yml` | Checks the title against Conventional Commits (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `ci`). Source-sync pull requests (`chore/source-sync-*` branches or the `source-sync` label) skip the check |
 | `dbt-code-quality.yml` | Checks hardcoded relations, raw/source layer boundaries, model descriptions and test coverage |
 | `dbt-compile.yml` | Runs Fusion compile against development metadata |
 | `model-ownership.yml` | Comments when changed models lack ownership metadata |
@@ -80,6 +80,10 @@ secrets:
 - `SNOWFLAKE__PASSPHRASE`
 
 Project-board automation uses `PROJECT_TOKEN`; the coverage badge uses
-`GIST_TOKEN`. The changelog refresh uses `CHANGELOG_REVALIDATE_SECRET`.
+`GIST_TOKEN`. The changelog refresh uses the `CHANGELOG_REVALIDATE_SECRET`
+secret, which must match the onboarding site's Vercel variable of the same
+name. The optional `CHANGELOG_SITE_URL` repository variable points it at
+another deployment; it defaults to `https://dbt-onboarding.vercel.app` and
+must use `https://`, because the secret is sent as a bearer token.
 Workflows write private keys only for the current job and remove them in an
 `always()` cleanup step.

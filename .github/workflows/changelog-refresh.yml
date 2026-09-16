@@ -1,6 +1,7 @@
 # Ask the onboarding site to refresh its changelog after a merge to main.
 # Failure here must not fail production deploys, so the job is isolated and
-# continue-on-error. The site also refreshes the cache daily if this is skipped.
+# continue-on-error. If this is skipped, the site still refreshes the current
+# month within an hour.
 
 name: Changelog refresh
 
@@ -27,6 +28,15 @@ jobs:
             exit 0
           fi
           site="${CHANGELOG_SITE_URL:-https://dbt-onboarding.vercel.app}"
-          curl -fsS -X POST \
+          site="${site%/}"
+          # The secret is a bearer token: never send it without TLS.
+          case "$site" in
+            https://*) ;;
+            *)
+              echo "::error::CHANGELOG_SITE_URL must start with https://"
+              exit 1
+              ;;
+          esac
+          curl -fsS --proto '=https' --proto-redir '=https' -X POST \
             -H "Authorization: Bearer ${CHANGELOG_REVALIDATE_SECRET}" \
             "${site}/api/revalidate"
