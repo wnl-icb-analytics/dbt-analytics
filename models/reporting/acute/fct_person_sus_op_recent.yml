@@ -45,3 +45,47 @@ models:
       - name: op_num_spec_2_prov_12mo
         data_type: number
         description: "Number of outpatient specialties where more than one provider was attended in the last 12 months"
+
+      - name: op_dna_opportunities_12mo
+        data_type: number
+        description: >
+          Appointments in the last 12 months the patient was expected at and
+          either attended or missed (attendance codes 3, 5, 6). The
+          denominator for every DNA rate below. Note this is NOT
+          op_app_tot_12mo, which counts all booked appointments including
+          those cancelled by the patient or the provider and so overstates
+          non-attendance roughly fourfold.
+
+      - name: op_dna_tot_12mo
+        data_type: number
+        description: >
+          Appointments in the last 12 months the patient did not attend with
+          no advance warning (attendance code 3). Excludes appointments the
+          patient cancelled.
+
+      - name: op_dna_rate_12mo
+        data_type: float
+        description: >
+          Observed DNA rate as a proportion between 0 and 1. Null where the
+          patient had no DNA opportunity. Unreliable at low opportunity
+          counts; prefer op_dna_rate_shrunk_12mo when comparing patients.
+
+      - name: op_dna_rate_shrunk_12mo
+        data_type: float
+        description: >
+          Estimate of the patient's underlying DNA rate (emperical bayes),
+          shrunk towards the population rate for their age band. Null where
+          the patient had no DNA opportunity. The recommended rate for
+          comparing patients, but a best estimate rather than a confidence
+          measure to adjust for low appointments. Read it with 
+          op_dna_evidence_weight_12mo. See int_person_sus_op_dna_rate for 
+          the prior parameters applied.
+
+      - name: op_dna_evidence_weight_12mo
+        data_type: float
+        description: >
+          Proportion of op_dna_rate_shrunk_12mo coming from the patient's
+          own appointments rather than the prior. Reads directly as how much
+          of the score is the patient: around 0.22 at one opportunity and
+          around 0.69 at eight. The clearest single indicator of whether a
+          patient's rate is well evidenced.
