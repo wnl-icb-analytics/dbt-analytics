@@ -20,8 +20,10 @@ payment_per_attended_appointment_gbp is total_nhs_payments_gbp divided by
 the practice's attended clinical appointments in the same year, with the
 current partial year annualised by days elapsed. It is the budget-based
 alternative to the PSSRU per-minute costs on int_appointment_gp_clinical,
-which stay as they are: everything the practice was paid lands on attended
-appointments, so it answers "what did the NHS pay per appointment
+which stay as they are: everything the practice was paid (global sum, QOF,
+enhanced services, premises; prescribing costs are outside the file and
+dispensing fees are negligible in London) lands on attended appointments,
+so it answers "what did the NHS pay per appointment
 delivered", not "what does this type of appointment cost". Use it where GP
 cost must be a budget spread over activity, for example beside a partner
 whose GP cost is built that way. NWL practices have payments but no OLIDS
