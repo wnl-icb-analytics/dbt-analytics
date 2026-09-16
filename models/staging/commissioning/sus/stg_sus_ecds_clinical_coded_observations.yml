@@ -1,0 +1,40 @@
+version: 2
+models:
+- name: stg_sus_ecds_clinical_coded_observations
+  description: All delivered ECDS coded observations. One row per attendance and source sequence; no date,
+    code approval or value filter.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - visit_occurrence_id
+        - source_sequence
+  columns:
+  - name: visit_occurrence_id
+    description: Source ECDS attendance key.
+    data_tests:
+    - not_null
+  - name: source_sequence
+    description: Source record sequence within the attendance. Distinct sequences are retained even when
+      values and times match.
+    data_tests:
+    - not_null
+  - name: source_row_id
+    description: Source delivery row identifier; not the clinical record key.
+  - name: observation_code
+    description: Reported SNOMED CT observation code.
+  - name: is_code_approved
+    description: Source approval flag; independent of reference matching. Null means not supplied.
+  - name: observation_value
+    description: Unmodified reported value, including categorical text.
+  - name: ucum_unit_code
+    description: Reported case-sensitive UCUM unit. No unit is inferred when absent.
+  - name: observed_at
+    description: Source timestamp when the observation was made or verified. Received without a timezone;
+      no offset is inferred.
+  - name: dmic_import_log_id
+    description: Source import batch identifier.

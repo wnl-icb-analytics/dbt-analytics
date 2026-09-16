@@ -235,7 +235,7 @@ Recorded clinical result as text, including numeric results and enumerated respo
 {% enddocs %}
 
 {% docs navigation_result_value_name %}
-Published response label where a clinical assessment has an enumerated response. Null does not imply an invalid numeric value.
+Published response label for an enumerated assessment response or categorical observation. Null does not imply an invalid numeric value.
 {% enddocs %}
 
 {% docs navigation_result_value_numeric %}
@@ -255,7 +255,7 @@ Recorded measurement-unit code or source unit token. Interpret with its label an
 {% enddocs %}
 
 {% docs navigation_result_unit_name %}
-Supported unit label. CSDS historical aliases apply only to their documented matching measurement codes; the source fact retains definition provenance.
+Supported unit label. CSDS historical aliases apply only to their documented matching measurement codes; the source fact retains definition provenance. ECDS unit labels resolve the reported token without checking its compatibility with the observation. No unit or conversion is inferred.
 {% enddocs %}
 
 {% docs navigation_result_unit_symbol %}

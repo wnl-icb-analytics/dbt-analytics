@@ -1,0 +1,38 @@
+version: 2
+models:
+- name: stg_sus_ecds_clinical_coded_scored_assessments
+  description: All delivered ECDS coded scored assessments. One row per attendance and source sequence;
+    no date, code approval or value filter.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - visit_occurrence_id
+        - source_sequence
+  columns:
+  - name: visit_occurrence_id
+    description: Source ECDS attendance key.
+    data_tests:
+    - not_null
+  - name: source_sequence
+    description: Source record sequence within the attendance. Distinct sequences are retained even when
+      values and times match.
+    data_tests:
+    - not_null
+  - name: source_row_id
+    description: Source delivery row identifier; not the clinical record key.
+  - name: assessment_tool_code
+    description: Reported SNOMED CT assessment tool or component code.
+  - name: is_code_approved
+    description: Source approval flag; independent of reference matching. Null means not supplied.
+  - name: person_score
+    description: Unmodified reported score.
+  - name: validated_at
+    description: Source timestamp when the care professional validated the score, not necessarily when
+      the assessment began. Received without a timezone.
+  - name: dmic_import_log_id
+    description: Source import batch identifier.

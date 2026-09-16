@@ -2,7 +2,9 @@ version: 2
 models:
 - name: int_ecds_person_clinical_record
   description: ECDS clinical records, one row per source clinical item. Retains missing linkage and unsupported
-    dates. Prepared source facts retain domain-specific interpretation and all additional relationships. Incremental
+    dates. Includes observations and scored assessments at their separate source grains, with submitted
+    values, units, tool codes and clinical timestamps. Numeric parsing does not validate scores or unit compatibility.
+    Prepared source facts retain domain-specific interpretation and all additional relationships. Incremental
     loads process newly received deliveries and replay the boundary delivery. Withdrawn source keys are removed
     on each run. Monthly full refreshes reconcile earlier corrections and reference changes.
   config:
@@ -81,3 +83,22 @@ models:
   - name: parent_end_date
     description: End date of the recorded episode or emergency attendance. Retained as context without replacing
       a missing clinical date. Null for parents without a supplied end date.
+  - name: result_value
+    description: '{{ doc(''navigation_result_value'') }}'
+  - name: result_value_name
+    description: '{{ doc(''navigation_result_value_name'') }}'
+  - name: result_value_numeric
+    description: '{{ doc(''navigation_result_value_numeric'') }}'
+  - name: result_value_parse_status
+    description: '{{ doc(''navigation_result_value_parse_status'') }}'
+  - name: result_unit_code
+    description: '{{ doc(''navigation_result_unit_code'') }}'
+  - name: result_unit_name
+    description: '{{ doc(''navigation_result_unit_name'') }}'
+  - name: result_unit_symbol
+    description: '{{ doc(''navigation_result_unit_symbol'') }}'
+  - name: assessment_tool_name
+    description: ECDS assessment tool label from ETOS or SNOMED CT. Null for observations and other clinical items.
+  - name: assessment_response_status
+    description: ECDS scored assessments are not_validated when a value is present or value_missing when absent.
+      Numeric parse success does not establish a valid tool-specific score. Null for other clinical items.
