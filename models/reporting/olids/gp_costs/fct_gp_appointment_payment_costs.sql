@@ -16,9 +16,9 @@ side by side.
 Cost is attended appointments x the practice's
 payment_per_attended_appointment_gbp for the fiscal year, from
 int_gp_practice_payment_rate. DNAs carry no cost. total_payment_cost_gbp is
-null where the practice has no NHS Payments record. is_carried_forward marks
-months priced on an uplifted earlier year because NHS Payments has not
-published the fiscal year yet.
+null where the practice has no payments on any basis. payments_basis says
+whether the year's money is the practice's published figure, an uplifted
+earlier year, or imputed from the sub-ICB rate and the practice's list.
 */
 
 select
@@ -31,7 +31,7 @@ select
     max(a.fiscal_year_start) as fiscal_year_start,
 
     -- One rate per practice and fiscal year, so any_value is safe.
-    any_value(r.is_carried_forward) as is_carried_forward,
+    any_value(r.payments_basis) as payments_basis,
     any_value(r.payment_per_attended_appointment_gbp) as payment_per_attended_appointment_gbp,
 
     count(*) as appointment_count,

@@ -179,9 +179,11 @@ models:
       differ because it includes everything the practice was paid, not
       clinician contact time alone.
 
-      total_payment_cost_gbp is null where the practice has no NHS Payments
-      record. is_carried_forward marks months priced on an uplifted earlier
-      year because NHS Payments has not published the fiscal year yet.
+      total_payment_cost_gbp is null where the practice has no payments on
+      any basis. payments_basis says whether the year's money is the
+      practice's published figure, an uplifted earlier year, or imputed from
+      the sub-ICB rate and the practice's list (see
+      int_gp_practice_payment_rate).
     config:
       meta:
         owner:
@@ -211,13 +213,13 @@ models:
           - not_null
       - name: sds_role_group
         description: Official NHS Digital SDS role group passed through from int_appointment_gp_clinical.
-      - name: is_carried_forward
-        description: TRUE when the rate for this fiscal year is the practice's latest published NHS Payments year uplifted by the GDP deflator.
+      - name: payments_basis
+        description: published, carried_forward or imputed, as int_gp_practice_payment_rate. Null when no basis exists.
       - name: payment_per_attended_appointment_gbp
-        description: The practice's NHS payments per attended appointment for the fiscal year, £. Null when the practice has no payments record.
+        description: The practice's NHS payments per attended appointment for the fiscal year, £. Null when the practice has no payments on any basis.
       - name: appointment_count
         description: All appointments in the group, attended or not.
       - name: attended_count
         description: Attended appointments in the group; the only ones that carry cost.
       - name: total_payment_cost_gbp
-        description: attended_count x payment_per_attended_appointment_gbp, £, rounded to 2 decimal places. Null when the practice has no payments record.
+        description: attended_count x payment_per_attended_appointment_gbp, £, rounded to 2 decimal places. Null when the practice has no payments on any basis.

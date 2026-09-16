@@ -2,26 +2,42 @@ version: 2
 models:
   - name: int_gp_practice_payment_rate
     description: |
-      NHS Payments to General Practice spread over attended clinical
-      appointments. One row per practice per fiscal year that has
-      appointments in int_appointment_gp_clinical.
+      NHS Payments to General Practice per practice and fiscal year, and the
+      rate per attended clinical appointment it implies. One row per WNL
+      practice per fiscal year in scope, plus any other practice with OLIDS
+      appointments in those years. Scope is the fiscal years overlapping the
+      latest 60 months of appointments, matching fct_gp_appointment_costs.
 
       The rate is the practice's total NHS payments for the year divided by
-      its attended clinical appointments in the same year. It is a budget
-      basis: everything the practice was paid, including premises, QOF,
-      enhanced services and dispensing, is attributed to attended
-      appointments. It does not replace the PSSRU per-minute costs on
-      int_appointment_gp_clinical, which price clinician contact time by
-      role; the two answer different questions and give different totals.
-      Use this rate when a comparison needs GP cost on a budget-over-activity
-      basis.
+      its attended clinical appointments in the same year, with the year in
+      progress annualised by days elapsed. It is a budget basis: everything
+      the practice was paid, including premises, QOF, enhanced services and
+      dispensing, is attributed to attended appointments. It does not replace
+      the PSSRU per-minute costs on int_appointment_gp_clinical, which price
+      clinician contact time by role; the two answer different questions and
+      give different totals. Use this rate when GP cost has to be a budget
+      spread over activity. NWL practices have payments but no OLIDS
+      appointments here, so their rate is null; a consumer divides the
+      payments by its own activity.
 
-      NHS Payments publishes after each year ends, so the latest one or two
-      fiscal years carry the practice's latest published rate forward,
-      uplifted by the GDP deflator in uk_cost_indices, and are flagged
-      is_carried_forward. A practice with no published payments, or a year
-      before its first published year, has no rate and downstream cost is
-      null.
+      payments_basis records where the money comes from. Published means the
+      practice's own row for that year, used once the appointment feed covers
+      the year through 31 March and the row pays at least £20 per registered
+      patient (below that it is a partial or misattributed record and is
+      ignored). Carried forward means the latest usable earlier year, uplifted
+      by the GDP deflator in uk_cost_indices, provided it is one of the two
+      most recent published years; NHS Payments publishes about a year after
+      the year ends, and a code absent for longer has closed or merged. Imputed means no usable year at or before
+      this one, as for new or merged codes: the sub-ICB's £ per registered
+      patient for the latest published year, uplifted, times the practice's
+      list from practice_weighted_population. A practice with no basis at
+      all has null payments and rate.
+
+      From 2023/24 NHS Payments no longer attributes PCN categories
+      (workforce, enhanced access, IIF) to practices, so this basis leaves
+      out most ARRS funding from that year. Practices with few recorded
+      appointments per registered patient read high; see
+      attended_per_registered_patient.
     config:
       meta:
         owner:
@@ -34,22 +50,30 @@ models:
               - fiscal_year_start
     columns:
       - name: practice_code
-        description: GP practice ODS code (publisher_organisation_code from the appointment).
+        description: GP practice ODS code.
         data_tests:
           - not_null
       - name: fiscal_year_start
         description: UK fiscal year start (calendar year in which 1 April falls).
         data_tests:
           - not_null
-      - name: attended_appointments
-        description: Attended clinical appointments at the practice in the fiscal year, from int_appointment_gp_clinical.
-      - name: is_carried_forward
-        description: TRUE when the rate is the practice's latest published year uplifted by the GDP deflator because NHS Payments has not published this year yet.
+      - name: sub_icb_code
+        description: Sub-ICB from int_organisation_borough_mapping (93C NCL, W2U3Z NWL). Null for a practice outside the mapping that still has appointments.
+      - name: payments_basis
+        description: Where total_nhs_payments_gbp comes from. Null when the practice has no usable payments year, no earlier year to carry forward and no list to impute from.
         data_tests:
-          - not_null
+          - accepted_values:
+              arguments:
+                values: ['published', 'carried_forward', 'imputed']
       - name: payments_fiscal_year_start
-        description: Fiscal year of the NHS Payments record the rate is based on. Equals fiscal_year_start unless carried forward. Null when the practice has no usable payments record.
+        description: Fiscal year of the payments record or sub-ICB rate the row is based on. Equals fiscal_year_start for published and imputed rows.
       - name: total_nhs_payments_gbp
-        description: Total NHS payments to the practice for the year, £. Published figure, or the latest published figure uplifted by the GDP deflator when carried forward.
+        description: Total NHS payments to the practice for the year, £, on the stated basis.
+      - name: registered_patients
+        description: Average registered patients behind the payments figure (from NHS Payments, or from practice_weighted_population when imputed).
+      - name: attended_appointments
+        description: Attended clinical appointments at the practice in the fiscal year, from int_appointment_gp_clinical. Null for practices without OLIDS appointments.
+      - name: attended_per_registered_patient
+        description: attended_appointments divided by registered_patients. Values well below the NCL norm of about 3 suggest incomplete appointment data and a rate that reads high.
       - name: payment_per_attended_appointment_gbp
-        description: total_nhs_payments_gbp divided by attended appointments in the payments year, £. Null when the practice has no payments record or no attended appointments in that year.
+        description: total_nhs_payments_gbp divided by attended appointments in the year, annualised for the year in progress, £. Null without payments or appointments.
