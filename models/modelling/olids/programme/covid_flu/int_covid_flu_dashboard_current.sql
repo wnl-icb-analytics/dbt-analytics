@@ -164,7 +164,10 @@ SELECT
         d.lsoa_code_21 as lsoa_code,
         d.lsoa_name_21 as lsoa_name,
         d.ward_code,
-        d.ward_name,
+        CASE 
+        WHEN d.local_authority_name = 'Haringey' AND d.ward_name = 'Highgate' THEN 'Highgate (Haringey)' 
+        WHEN d.local_authority_name = 'Camden' AND d.ward_name = 'Highgate' THEN 'Highgate (Camden)'
+        ELSE d.ward_name END AS ward_name,
         COALESCE(d.local_authority_name,'Unknown') as borough_resident,
         d.neighbourhood_resident,
         case
