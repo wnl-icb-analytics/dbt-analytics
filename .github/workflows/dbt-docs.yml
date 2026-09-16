@@ -30,6 +30,7 @@ on:
       - 'packages.yml'
       - 'dbt_project.yml'
       - '.github/workflows/dbt-docs.yml'
+      - '.github/requirements/dbt-docs.txt'
 
 # Only the newest main matters; a queued older build would publish stale docs.
 concurrency:
@@ -101,9 +102,12 @@ jobs:
         # dbt_rt.* holds invocation, relation (row counts, owners) and adapter
         # query metadata from this CI run. The docs need none of it, and compile
         # times would show as "last executed". Schemas are kept so the app loads.
+        # DuckDB is pinned by hash, so only the reviewed wheel can touch site/.
         run: |
-          pip install --quiet 'duckdb>=1,<2'
-          python - <<'EOF'
+          python3 -m venv "$RUNNER_TEMP/docs-venv"
+          "$RUNNER_TEMP/docs-venv/bin/pip" install --quiet --require-hashes --only-binary=:all: \
+            -r .github/requirements/dbt-docs.txt
+          "$RUNNER_TEMP/docs-venv/bin/python" - <<'EOF'
           import glob, os, duckdb
           for path in glob.glob("site/info_schema/v1/dbt_rt.*.parquet"):
               duckdb.sql(f"COPY (SELECT * FROM read_parquet('{path}') LIMIT 0) TO '{path}.tmp' (FORMAT parquet)")
