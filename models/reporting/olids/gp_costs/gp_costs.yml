@@ -163,3 +163,61 @@ models:
           DNA cost as a percentage of total in-scope cost. Same value
           regardless of whether computed from base or nominal because
           the GDP deflator is constant within a (practice, month) group.
+
+  - name: fct_gp_appointment_payment_costs
+    description: |
+      GP appointment cost on the NHS Payments basis, at practice / month /
+      role grain. Same grain and rolling 60-month scope as
+      fct_gp_appointment_costs, so the two costings can be read side by
+      side.
+
+      Cost is attended appointments x the practice's payment per attended
+      appointment for the fiscal year (int_gp_practice_payment_rate): the
+      practice's total NHS payments spread evenly over the appointments it
+      delivered. DNAs carry no cost. This is a budget basis and does not
+      replace the PSSRU per-minute costs in fct_gp_appointment_costs; totals
+      differ because it includes everything the practice was paid, not
+      clinician contact time alone.
+
+      total_payment_cost_gbp is null where the practice has no NHS Payments
+      record. is_carried_forward marks months priced on an uplifted earlier
+      year because NHS Payments has not published the fiscal year yet.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - practice_code
+              - report_month
+              - practitioner_role_group
+              - sds_role_group
+    columns:
+      - name: practice_code
+        description: GP practice ODS code (publisher_organisation_code from the appointment).
+        data_tests:
+          - not_null
+      - name: report_month
+        description: First day of the calendar month the appointment occurred in.
+        data_tests:
+          - not_null
+      - name: fiscal_year_start
+        description: UK fiscal year start (calendar year in which 1 April falls). Functionally determined by report_month.
+      - name: practitioner_role_group
+        description: Analytical practitioner grouping from sds_role_groups seed.
+        data_tests:
+          - not_null
+      - name: sds_role_group
+        description: Official NHS Digital SDS role group passed through from int_appointment_gp_clinical.
+      - name: is_carried_forward
+        description: TRUE when the rate for this fiscal year is the practice's latest published NHS Payments year uplifted by the GDP deflator.
+      - name: payment_per_attended_appointment_gbp
+        description: The practice's NHS payments per attended appointment for the fiscal year, £. Null when the practice has no payments record.
+      - name: appointment_count
+        description: All appointments in the group, attended or not.
+      - name: attended_count
+        description: Attended appointments in the group; the only ones that carry cost.
+      - name: total_payment_cost_gbp
+        description: attended_count x payment_per_attended_appointment_gbp, £, rounded to 2 decimal places. Null when the practice has no payments record.

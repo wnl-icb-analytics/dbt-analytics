@@ -1,0 +1,55 @@
+version: 2
+models:
+  - name: int_gp_practice_payment_rate
+    description: |
+      NHS Payments to General Practice spread over attended clinical
+      appointments. One row per practice per fiscal year that has
+      appointments in int_appointment_gp_clinical.
+
+      The rate is the practice's total NHS payments for the year divided by
+      its attended clinical appointments in the same year. It is a budget
+      basis: everything the practice was paid, including premises, QOF,
+      enhanced services and dispensing, is attributed to attended
+      appointments. It does not replace the PSSRU per-minute costs on
+      int_appointment_gp_clinical, which price clinician contact time by
+      role; the two answer different questions and give different totals.
+      Use this rate when a comparison needs GP cost on a budget-over-activity
+      basis.
+
+      NHS Payments publishes after each year ends, so the latest one or two
+      fiscal years carry the practice's latest published rate forward,
+      uplifted by the GDP deflator in uk_cost_indices, and are flagged
+      is_carried_forward. A practice with no published payments, or a year
+      before its first published year, has no rate and downstream cost is
+      null.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - practice_code
+              - fiscal_year_start
+    columns:
+      - name: practice_code
+        description: GP practice ODS code (publisher_organisation_code from the appointment).
+        data_tests:
+          - not_null
+      - name: fiscal_year_start
+        description: UK fiscal year start (calendar year in which 1 April falls).
+        data_tests:
+          - not_null
+      - name: attended_appointments
+        description: Attended clinical appointments at the practice in the fiscal year, from int_appointment_gp_clinical.
+      - name: is_carried_forward
+        description: TRUE when the rate is the practice's latest published year uplifted by the GDP deflator because NHS Payments has not published this year yet.
+        data_tests:
+          - not_null
+      - name: payments_fiscal_year_start
+        description: Fiscal year of the NHS Payments record the rate is based on. Equals fiscal_year_start unless carried forward. Null when the practice has no usable payments record.
+      - name: total_nhs_payments_gbp
+        description: Total NHS payments to the practice for the year, £. Published figure, or the latest published figure uplifted by the GDP deflator when carried forward.
+      - name: payment_per_attended_appointment_gbp
+        description: total_nhs_payments_gbp divided by attended appointments in the payments year, £. Null when the practice has no payments record or no attended appointments in that year.
