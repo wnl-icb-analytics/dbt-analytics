@@ -1,23 +1,11 @@
 /*
-Staging for the English Prescribing Dataset (EPD) primary care meds feed.
+Primary care dispensed prescription items, including historical submissions.
+MedsV2 replaces MedsV1 for every processing period present in V2. Earlier
+periods remain on V1; overlapping months are never added together.
 
-One row per source prescription-item record, retaining historical submissions
-for each processing period.
-Faithful passthrough of raw_epd_pc_medsv1: renames the patient key and types
-the cost/quantity/date columns. No rows are dropped (out-of-area patients
-are retained and simply won't match WNL person dimensions downstream).
-
-Source is WNL-wide: DATA_LAKE.EPD_PRIMARY_CARE was repointed to
-Data_Store_Prescribing (NCL + NWL) on 2026-06-26, so this staging covers both
-ICBs (NWL ~1.4M + NCL ~0.9M patients).
-
-Patient key: dmic_pseudo_nhs_number is the DMIC pseudonymised NHS number and
-is the same domain as sk_patient_id elsewhere (validated 2026-06-26). Renamed
-to sk_patient_id so it joins dim_person_pseudo / dim_person_demographics_basic.
-
-Cost units: item_actual_cost and item_nic are carried in source units. NHSBSA
-EPD reports cost in pence; conversion to £ is deferred to the modelling layer
-where prescribing cost is combined with the other PODs.
+V1 uses dmic_pseudo_nhs_number; V2 uses dmic_pseudo_person_id. Both carry
+sk_patient_id values. Missing keys and out-of-area records are retained.
+Costs remain in source pence; the cost model converts them to pounds.
 */
 
 {{ config(
@@ -29,17 +17,107 @@ where prescribing cost is combined with the other PODs.
 ) }}
 
 {% set complete_query %}
-with latest_submissions as (
+with v2_periods as (
+    select distinct processed_period from {{ ref('raw_epd_pc_medsv2') }}
+), meds_input as (
+    select
+        dmic_pseudo_nhs_number as source_patient_key,
+        processed_period,
+        processing_period_date::date as processing_period_date,
+        paid_bnf_code,
+        paid_bnf_name,
+        paiddmd_code,
+        prescribed_bnf_code,
+        prescribed_bnf_name,
+        prescribeddmd_code,
+        paid_formulation,
+        paid_drug_strength,
+        item_actual_cost::number(18,4) as item_actual_cost,
+        item_nic,
+        item_count::number(18,4) as item_count,
+        paid_quantity,
+        prescribed_quantity,
+        paid_indicator,
+        not_dispensed_indicator,
+        private_prescription_indicator,
+        charge_status,
+        exemption_code,
+        out_of_hours_indicator,
+        paid_acbs_indicator,
+        paid_cd_indicator,
+        prescriber_id,
+        prescriber_type,
+        patient_gpods,
+        patient_gpccg,
+        patient_ccg,
+        patient_la,
+        patient_lsoa,
+        patient_gplsoa,
+        patient_age,
+        patient_gender,
+        age_bands,
+        item_id,
+        bsa_prescription_id,
+        eps_prescription_id,
+        uniq_submission_id
+    from {{ ref('raw_epd_pc_medsv1') }} as source_rows
+    where not exists (
+        select 1 from v2_periods
+        where equal_null(v2_periods.processed_period, source_rows.processed_period)
+    )
+    union all
+    select
+        dmic_pseudo_person_id as source_patient_key,
+        processed_period,
+        processing_period_date::date as processing_period_date,
+        paid_bnf_code,
+        paid_bnf_name,
+        paiddmd_code,
+        prescribed_bnf_code,
+        prescribed_bnf_name,
+        prescribeddmd_code,
+        paid_formulation,
+        paid_drug_strength,
+        item_actual_cost::number(18,4) as item_actual_cost,
+        item_nic,
+        item_count::number(18,4) as item_count,
+        paid_quantity,
+        prescribed_quantity,
+        paid_indicator,
+        not_dispensed_indicator,
+        private_prescription_indicator,
+        charge_status,
+        exemption_code,
+        out_of_hours_indicator,
+        paid_acbs_indicator,
+        paid_cd_indicator,
+        prescriber_id,
+        prescriber_type,
+        patient_gpods,
+        patient_gpccg,
+        patient_ccg,
+        patient_la,
+        patient_lsoa,
+        patient_gplsoa,
+        patient_age,
+        patient_gender,
+        age_bands,
+        item_id,
+        bsa_prescription_id,
+        eps_prescription_id,
+        uniq_submission_id
+    from {{ ref('raw_epd_pc_medsv2') }} as source_rows
+), latest_submissions as (
     select
         processed_period as submission_period,
         max(uniq_submission_id) as latest_submission_id
-    from {{ ref('raw_epd_pc_medsv1') }}
+    from meds_input
     group by processed_period
 )
 
 select
-    -- patient key (renamed from dmic_pseudo_nhs_number)
-    {{consistent_sk_patient_id_format('dmic_pseudo_nhs_number')}}      as sk_patient_id
+    -- Standard patient key across the two delivery versions.
+    {{consistent_sk_patient_id_format('source_patient_key')}}      as sk_patient_id
 
     -- period
     , processed_period                          as processed_period
@@ -105,7 +183,7 @@ select
         = latest_submissions.latest_submission_id
                                                 as is_latest_submission
 
-from {{ ref('raw_epd_pc_medsv1') }} as meds
+from meds_input as meds
 left join latest_submissions
     on equal_null(meds.processed_period, latest_submissions.submission_period)
 {% endset %}
