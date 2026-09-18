@@ -23,7 +23,8 @@ events AS (
         'AST' AS condition_code,
         is_diagnosis_code AS is_qualifying_diagnosis,
         is_resolved_code,
-        FALSE AS is_other_state
+        FALSE AS is_other_state,
+        FALSE AS is_two_year_evidence
     FROM {{ ref('int_asthma_diagnoses_all') }}
 
     UNION ALL
@@ -35,19 +36,23 @@ events AS (
         'CKD',
         is_stage_3_5_code,
         is_resolved_code,
-        is_stage_1_2_code
+        is_stage_1_2_code,
+        FALSE
     FROM {{ ref('int_ckd_diagnoses_all') }}
 
     UNION ALL
 
+    -- QOF v51: disorder codes count at any date; administrative codes only
+    -- in the two years before each month-end.
     SELECT
         person_id,
         clinical_effective_date,
         date_recorded,
         'COPD',
-        is_diagnosis_code,
+        is_disorder_code OR is_admin_code,
         is_resolved_code,
-        FALSE
+        FALSE,
+        is_admin_code
     FROM {{ ref('int_copd_diagnoses_all') }}
 
     UNION ALL
@@ -59,6 +64,7 @@ events AS (
         'DEP',
         is_diagnosis_code AND is_first_or_new_episode,
         is_resolved_code,
+        FALSE,
         FALSE
     FROM {{ ref('int_depression_diagnoses_all') }}
 
@@ -71,6 +77,7 @@ events AS (
         'DM',
         is_general_diabetes_code,
         is_diabetes_resolved_code,
+        FALSE,
         FALSE
     FROM {{ ref('int_diabetes_diagnoses_all') }}
 
@@ -83,6 +90,7 @@ events AS (
         'EP',
         is_diagnosis_code,
         is_resolved_code,
+        FALSE,
         FALSE
     FROM {{ ref('int_epilepsy_diagnoses_all') }}
 
@@ -95,6 +103,7 @@ events AS (
         'SMI',
         is_diagnosis_code,
         FALSE,
+        FALSE,
         FALSE
     FROM {{ ref('int_smi_diagnoses_all') }}
 ),
@@ -105,10 +114,26 @@ diagnosis_state AS (
         pm.month_end_date AS end_date,
         pm.age,
         e.condition_code,
-        MIN(IFF(e.is_qualifying_diagnosis, e.clinical_effective_date, NULL))
-            AS earliest_diagnosis_date,
-        MAX(IFF(e.is_qualifying_diagnosis, e.clinical_effective_date, NULL))
-            AS latest_diagnosis_date,
+        MIN(IFF(
+            e.is_qualifying_diagnosis
+            AND (
+                NOT e.is_two_year_evidence
+                OR e.clinical_effective_date
+                > DATEADD('year', -2, pm.month_end_date)
+            ),
+            e.clinical_effective_date,
+            NULL
+        )) AS earliest_diagnosis_date,
+        MAX(IFF(
+            e.is_qualifying_diagnosis
+            AND (
+                NOT e.is_two_year_evidence
+                OR e.clinical_effective_date
+                > DATEADD('year', -2, pm.month_end_date)
+            ),
+            e.clinical_effective_date,
+            NULL
+        )) AS latest_diagnosis_date,
         MAX(IFF(e.is_resolved_code, e.clinical_effective_date, NULL))
             AS latest_resolved_date,
         MAX(IFF(e.is_other_state, e.clinical_effective_date, NULL))
@@ -150,7 +175,7 @@ diagnosis_qualified AS (
                         OR latest_diagnosis_date > latest_resolved_date
                     )
             -- Spirometry affects COPD indicator fields but does not gate the
-            -- current QOF v50 register. A lone diagnosis and resolution on the
+            -- QOF v51 register. A lone diagnosis and resolution on the
             -- same date follows the existing EUNRESCOPD rule and remains in.
             WHEN condition_code = 'COPD'
                 THEN latest_diagnosis_date IS NOT NULL

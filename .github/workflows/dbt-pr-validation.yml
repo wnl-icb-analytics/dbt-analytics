@@ -47,10 +47,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     concurrency:
-      # Merge candidates share DEV relations, so validate them serially. PR
-      # status-only runs remain independent and cancel when superseded.
+      # Merge candidates share DEV relations, so validate them serially.
+      # queue: max holds up to 100 pending runs FIFO instead of cancelling all
+      # but one, so the queue can build every entry of a stack. It cannot be
+      # combined with cancel-in-progress, so PR status-only runs queue too.
       group: ${{ github.event_name == 'merge_group' && 'dbt-pr-validation-merge-queue' || format('dbt-pr-validation-{0}', github.event.pull_request.number || github.ref_name) }}
-      cancel-in-progress: ${{ github.event_name != 'merge_group' }}
+      cancel-in-progress: false
+      queue: max
     permissions:
       contents: read
     env:
