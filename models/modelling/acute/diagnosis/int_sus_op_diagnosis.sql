@@ -46,6 +46,5 @@ left join
     on c.concept_code = f.code
     and c.vocabulary_id = 'ICD10'
 
-left join {{ ref("int_sus_op_appointment") }} sa on sa.visit_occurrence_id = f.primarykey_id
-
-where sa.sk_patient_id is not null
+inner join {{ ref("int_sus_op_appointment") }} sa
+    on sa.visit_occurrence_id = f.primarykey_id

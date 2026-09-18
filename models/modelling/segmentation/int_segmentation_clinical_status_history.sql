@@ -207,11 +207,15 @@ substance_latest AS (
             OR CAST(s.date_recorded AS DATE) <= pm.month_end_date
         )
     WHERE pm.is_active
+    -- A qualifying code wins a same-day tie with a resolving code, matching
+    -- int_substance_misuse_status. get_observations can emit a timestamp when
+    -- it falls back to date_recorded, so order by calendar date first.
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY pm.person_id, pm.month_end_date
         ORDER BY
-            s.clinical_effective_date DESC,
+            CAST(s.clinical_effective_date AS DATE) DESC,
             IFF(s.status = 'QUALIFYING', 0, 1),
+            s.clinical_effective_date DESC,
             s.id DESC
     ) = 1
 ),

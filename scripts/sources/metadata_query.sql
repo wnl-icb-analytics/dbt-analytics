@@ -503,6 +503,21 @@ WITH schema_metadata AS (
   
   UNION ALL
   
+    -- reference_terminology_curated: Curated Primary Care Domain terminology releases
+  SELECT 
+    'REFERENCE' as database_name,
+    'TERMINOLOGY' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "REFERENCE".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'TERMINOLOGY'
+  
+  UNION ALL
+  
     -- local_provider_flows: Providers submissions from PID environment via MESH
   SELECT 
     'DATA_LAKE' as database_name,

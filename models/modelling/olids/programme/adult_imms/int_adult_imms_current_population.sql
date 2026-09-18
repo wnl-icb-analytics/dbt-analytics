@@ -26,6 +26,17 @@ FROM {{ ref('int_csf_leak_latest')}}
 --FROM MODELLING.OLIDS_OBSERVATIONS.INT_CSF_LEAK_LATEST
 ) a
 )
+,RSV_clinical_risk_groups AS (
+select distinct person_id
+FROM (
+SELECT person_id, subcohort as risk_group, reference_date
+    --from REPORTING.OLIDS_PROGRAMME.FCT_FLU_ELIGIBILITY
+    FROM {{ ref('fct_flu_eligibility') }}
+   WHERE subcohort 
+   in ('Chronic Respiratory Disease','Immunosuppression')
+   QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, RISK_GROUP ORDER BY REFERENCE_DATE DESC) = 1
+   ) a
+)
 
 SELECT DISTINCT
 dem.PERSON_ID
@@ -55,6 +66,8 @@ END AS TURN_65_AFTER_SEP_2023
 ,CASE WHEN imm.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_IMMUNOSUPPRESSED
 --PPV clinical risk group flag which includes immunosuppression but also other risk groups eligible for PPV
 ,CASE WHEN ppv.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IN_PPV_CLINICAL_RISK_GROUP
+--RSV clinical risk group flag which includes immunosuppression and chronic lung disease. 
+,CASE WHEN rsv.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IN_RSV_CLINICAL_RISK_GROUP
 ,CASE WHEN preg.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_PREGNANT
 ,dem.GENDER
 ,CASE
@@ -130,9 +143,21 @@ ELSE dem.MAIN_LANGUAGE END AS MAIN_LANGUAGE
 ,dem.PCN_NAME AS PRIMARY_CARE_NETWORK
 ,dem.PRACTICE_NAME AS GP_NAME
 ,dem.PRACTICE_CODE
-,COALESCE(la.LAD25_NM,'Unknown') as RESIDENTIAL_BOROUGH
+,COALESCE(dem.local_authority_name,'Unknown') as RESIDENTIAL_BOROUGH
 ,COALESCE(dem.NEIGHBOURHOOD_RESIDENT,'Unknown') as RESIDENTIAL_NEIGHBOURHOOD
-,COALESCE(la.RESIDENT_FLAG,'Unknown') as RESIDENTIAL_LOC
+,case
+    -- all NCL Boroughs
+    when dem.local_authority_code in ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019') then 'NCL'
+    -- all NWL Boroughs
+    when dem.local_authority_code in ('E09000005','E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033') then 'NWL'
+    --all NEL Boroughs
+    when dem.local_authority_code in ('E09000002','E09000001','E09000012','E09000016','E09000025','E09000026','E09000030','E09000031') then 'NEL'
+    when dem.local_authority_code like 'E09%' and dem.local_authority_code not in ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019','E09000005', 
+        'E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033','E09000002','E09000001','E09000012',
+        'E09000016','E09000025','E09000026','E09000030','E09000031') then 'Other London'
+    when dem.local_authority_code is null then 'Unknown'
+    else 'Outside London'
+    end as residential_loc
 ,dem.WARD_CODE
 ,dem.WARD_NAME
 ,dem.LSOA_CODE_21
@@ -140,12 +165,12 @@ ELSE dem.MAIN_LANGUAGE END AS MAIN_LANGUAGE
 ,dem.is_deceased
 FROM {{ ref('dim_person_demographics') }} dem
 LEFT JOIN {{ ref('dim_person_age') }} age using (PERSON_ID)
-LEFT JOIN {{ ref('stg_reference_lsoa21_ward25_lad25') }} la on la.LSOA21_CD = dem.LSOA_CODE_21
 --LEFT JOIN REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_CARE_HOME
 LEFT JOIN {{ ref('dim_person_care_home') }} ch using (PERSON_ID)
 LEFT JOIN (SELECT DISTINCT PERSON_ID FROM {{ ref('int_covid_immunosuppression') }}) imm on imm.person_id = dem.person_id
 --LEFT JOIN (SELECT DISTINCT PERSON_ID FROM MODELLING.OLIDS_PROGRAMME.INT_COVID_IMMUNOSUPPRESSION) imm on imm.person_id = dem.person_id
 LEFT JOIN PPV_clinical_risk_groups ppv on ppv.person_id = dem.person_id
+LEFT JOIN RSV_clinical_risk_groups rsv on rsv.person_id = dem.person_id
 LEFT JOIN (select person_id from {{ ref('fct_person_pregnancy_status') }} where is_child_bearing_age_12_55) preg on preg.person_id = dem.person_id
 --LEFT JOIN (select person_id from REPORTING.OLIDS_PERSON_STATUS.fct_person_pregnancy_status where is_child_bearing_age_12_55) preg on preg.person_id = dem.person_id
 WHERE dem.is_active 

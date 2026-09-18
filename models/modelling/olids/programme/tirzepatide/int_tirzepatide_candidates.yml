@@ -1,0 +1,81 @@
+models:
+  - name: int_tirzepatide_candidates
+    description: >
+      Current tirzepatide candidate population drawn from the QOF v51 OBES2
+      register. One row represents an adult in dim_person_active_patients
+      (currently registered, living, not a test patient) with at least four
+      of the five OBES2 comorbidities. Membership, comorbidities and QOF
+      journal ethnicity come from fct_person_obesity2_register. Numeric BMI
+      and NICE NG246 class come from int_bmi_latest. The programme maps Obese
+      Class III to Cohort 1 and Obese Class II to Cohort 2 when that latest
+      valid BMI is in the preceding 12 months. Missing, older or out-of-band
+      numeric BMI is labelled BMI assessment needed, with both cohort flags
+      false. These are candidates for clinical assessment, not confirmed
+      prescribing eligibility. The hypertension flag does not confirm a need
+      for blood pressure treatment; the sleep apnoea flag does not confirm
+      sleep-clinic assessment or an indication for CPAP or equivalent. This
+      current population does not retain everyone who qualified before
+      treatment. See docs/model_documentation/tirzepatide.md for the national
+      specifications and remaining assessment requirements.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+    columns:
+      - name: person_id
+        description: Person identifier
+        data_tests:
+          - unique
+          - not_null
+      - name: age
+        description: Current age in years from dim_person_age; approximate because only birth year and month are held
+      - name: latest_bmi_value
+        description: Latest valid numeric BMI from int_bmi_latest when dated in the preceding 12 months
+      - name: latest_bmi_date
+        description: Date of that latest valid numeric BMI
+      - name: latest_bmi_source_cluster_id
+        description: Shared BMI cluster or calculated-BMI marker from int_bmi_latest
+      - name: bmi_category
+        description: Programme rollout band mapped from the shared NICE NG246 class, or BMI assessment needed
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Obese Class II', 'Obese Class III', 'BMI assessment needed']
+      - name: requires_lower_bmi_thresholds
+        description: >
+          Whether the cohort band used ethnicity-adjusted thresholds (2.5 lower),
+          from int_ethnicity_cardiometabolic_risk via int_bmi_latest. True when
+          any recorded ethnicity qualifies. Null when there is no ethnicity
+          record (standard thresholds applied) or no valid numeric BMI in the
+          preceding 12 months.
+      - name: has_lower_bmi_threshold_ethnicity
+        description: >
+          Whether the latest QOF journal ethnicity qualifies for the lower OBES2
+          register threshold. Governs register entry only; can differ from
+          requires_lower_bmi_thresholds.
+      - name: has_unresolved_hypertension
+        description: Whether unresolved hypertension meets the OBES2 definition
+      - name: has_dyslipidaemia
+        description: Whether recent lipid therapy or lipid results meet the OBES2 definition
+      - name: has_obstructive_sleep_apnoea
+        description: Whether an obstructive sleep apnoea diagnosis meets the OBES2 definition
+      - name: has_ascvd
+        description: Whether an ASCVD diagnosis meets the OBES2 definition
+      - name: has_unresolved_type2_diabetes
+        description: Whether unresolved type 2 diabetes meets the OBES2 definition
+      - name: qualifying_comorbidity_count
+        description: Number of the five OBES2 comorbidities met
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 4
+                max_value: 5
+                inclusive: true
+      - name: is_cohort_1
+        description: Latest valid numeric BMI in 12 months is NICE Obese Class III (at least 40, or 37.5 with lower thresholds)
+      - name: is_cohort_2
+        description: Latest valid numeric BMI in 12 months is NICE Obese Class II (35 to below 40, or 32.5 to below 37.5 with lower thresholds)

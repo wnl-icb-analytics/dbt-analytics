@@ -1,24 +1,12 @@
 models:
   - name: dim_person_ethnicity
-    description: 'Latest recorded ethnicity for all persons with three-level classification
-      hierarchy.
-
-      Key Features:
-
-      • One row per person with most recent ethnicity recording
-
-      • Three-tier classification: Category > Subcategory > Granular detail
-
-      • Prioritisation logic: non-deprioritised records, higher specificity, then
-      most recent
-
-      • Defaults to "Not Recorded" for persons without ethnicity data
-
-      • Includes sorting helpers for consistent display ordering
-
-      Purpose: Supports ethnicity analysis, health equity monitoring, and demographic
-      profiling.'
-
+    description: >-
+      Selected ethnicity for every person in dim_person, with one row per person.
+      Prefers non-deprioritised and more specific observations, then the latest
+      clinical date and observation identifier. The existing three-level
+      classification and the NHS Census 2001 fields use the same observation.
+      Existing text fields default to Not Recorded when no observation exists;
+      the 2001 fields are null and mapping status is no_ethnicity_record.
     config:
       meta:
         indicator:
@@ -113,6 +101,34 @@ models:
         description: 'Most detailed ethnicity classification available'
         tests:
           - not_null
+
+      - name: ethnicity_2001_code
+        description: >-
+          NHS Census 2001 code for the same selected observation as the existing
+          ethnicity fields. Uses the locally maintained SNOMED bridge, with code
+          validity checked against the warehouse dictionary. Z means Not stated
+          or Refused; 99 means recorded unknown or missing ethnicity. Null means
+          no selected observation, no valid mapping, or conflicting mappings.
+          Use ethnicity_2001_mapping_status to distinguish these cases.
+      - name: ethnicity_2001_detailed_description
+        description: 'Detailed NHS Census 2001 description from `snomed_ethnicity_2001_bridge` and `nhs_ethnicity_2001`. Z is Not stated and 99 is Not known. NULL when ethnicity_2001_code is NULL.'
+
+      - name: ethnicity_2001_broad_group
+        description: >-
+          NHS Census 2001 broad group. Chinese maps to Other Ethnic Groups.
+          Not stated and Not known are separate recording statuses. Null when
+          ethnicity_2001_code is null.
+      - name: ethnicity_2001_mapping_status
+        description: 'Mapping provenance for the 2001 fields. `mapped` means one unambiguous SNOMED-to-2001 code mapping in `snomed_ethnicity_2001_bridge`. `ambiguous_seed_mapping` means conflicting candidate mappings exist for the selected SNOMED code. `unmapped_seed_code` means no valid 2001 code was available for the selected SNOMED code. `no_ethnicity_record` means no selected ethnicity observation for the person.'
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - mapped
+                  - ambiguous_seed_mapping
+                  - unmapped_seed_code
+                  - no_ethnicity_record
 
       - name: deprioritise_flag
         description: 'Flag indicating if this ethnicity record should be deprioritised

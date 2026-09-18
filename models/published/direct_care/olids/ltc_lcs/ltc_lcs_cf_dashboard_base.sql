@@ -15,6 +15,7 @@ Key features:
 - One row per person-indicator combination (only triggered indicators)
 - Joins dim_ltc_lcs_cf_summary with dim_person_demographics
 - Enriches with indicator metadata from def_indicator
+- Requires a definition for each emitted LTC_LCS_CF_* indicator ID
 - Optimised for PowerBI/Tableau dashboard consumption with dynamic filtering
 - Single source of truth for case finding programme monitoring
 

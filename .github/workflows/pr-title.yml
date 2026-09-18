@@ -1,0 +1,38 @@
+# Check pull request titles against Conventional Commits.
+#
+# Scopes are optional. When present they are not restricted, so a new domain
+# does not need a workflow edit. Source-sync pull requests skip the check, by
+# branch name or by the source-sync label, whichever GitHub sees first.
+# The skip-changelog label only hides a change from the onboarding changelog.
+# It does not skip this check: the title becomes the squash commit on main.
+
+name: Pull request title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  title:
+    name: Conventional title
+    if: ${{ !startsWith(github.head_ref, 'chore/source-sync-') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            refactor
+            test
+            chore
+            perf
+            ci
+          ignoreLabels: |
+            source-sync

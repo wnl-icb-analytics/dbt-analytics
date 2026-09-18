@@ -109,6 +109,9 @@ CURRENT_DATE AS RUN_DATE
 ,p.ward_code
 ,p.ward_name
 ,p.lsoa_code_21
+--extra vulnerabilities
+,IFF(smi.person_id IS NOT NULL, 'Yes', 'No') AS has_smi
+,IFF(hs.person_id IS NOT NULL, 'Yes', 'No') AS is_housebound
 ,v.ppv_status_dose_1 
 ,v.ppv_date_dose_1
 ,v.ppv_age_event_dose_1
@@ -123,3 +126,7 @@ CURRENT_DATE AS RUN_DATE
 ,v.rsv_age_event_dose_1
 FROM vacc_status_adult v
 INNER JOIN {{ ref('int_adult_imms_current_population') }} p using (person_id)
+--LEFT JOIN REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_HOUSEBOUND_STATUS hs ON p.person_id = hs.person_id
+LEFT JOIN {{ ref('dim_person_housebound_status') }} hs ON p.person_id = hs.person_id
+--LEFT JOIN REPORTING.OLIDS_DISEASE_REGISTERS.FCT_PERSON_SMI_REGISTER smi on p.person_id = smi.person_id
+LEFT JOIN {{ ref('fct_person_smi_register') }} smi on p.person_id = smi.person_id

@@ -1,7 +1,12 @@
 
 models:
   - name: int_sus_op_appointment
-    description: "Event history for outpatient encounters from SUS data"
+    description: >
+      One row per latest SUS outpatient appointment. Includes attended and
+      non-attended activity, appointments without a submitted appointment
+      identifier, and appointments without a linked patient key. The SUS
+      primarykey_id provides visit_occurrence_id and links clinical child
+      records to the appointment.
     config:
       meta:
         owner:
@@ -20,7 +25,9 @@ models:
 
       - name: sk_patient_id
         data_type: varchar
-        description: "Common commissioning patient identifier"
+        description: >
+          Common commissioning patient identifier. Null when the appointment
+          cannot be linked to a person; the appointment remains valid activity.
 
       - name: local_patient_identifier
         data_type: varchar
