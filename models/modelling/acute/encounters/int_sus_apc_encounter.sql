@@ -141,7 +141,11 @@ select
     , dict_hrg.hrg_chapter_key as core_hrg_chapter
     , dict_hrg.hrg_chapter as core_hrg_chapter_desc
     , iff(core.spell_commissioning_pss_grouping_national_programme_code is null, 'N','Y') as spec_comm_flag
-    , core.spell_commissioning_pss_grouping_national_programme_code as spec_comm
+    , core.spell_commissioning_pss_grouping_national_programme_code as spec_comm_code
+    , dict_pss_sc.spec_comm_desc
+    , core.spell_commissioning_pss_grouping_prescribed_service_line_code as pss_service_line_code
+    , dict_pss_sl.service_line_number_desc as pss_service_line_desc
+
     , iff(core.spell_admission_admission_sub_type = 'NON', core.spell_admission_admission_type, core.spell_admission_admission_sub_type) as type
     , core.spell_commissioning_tariff_calculation_final_price as cost
     
@@ -205,3 +209,11 @@ left join {{ref('stg_dictionary_dbo_specialties')}} as dict_treat
 left join
     {{ ref('stg_dictionary_dbo_hrg') }} as dict_hrg 
     on core.spell_commissioning_grouping_core_hrg = dict_hrg.hrg_code
+
+left join
+    {{ ref('pss_spec_comm')}} as dict_pss_sc
+    on core.spell_commissioning_pss_grouping_national_programme_code = dict_pss_sc.spec_comm_code
+
+left join
+    {{ ref('pss_service_line')}} as dict_pss_sl
+    on core.spell_commissioning_pss_grouping_prescribed_service_line_code = dict_pss_sl.service_line_number_code
