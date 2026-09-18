@@ -1,0 +1,37 @@
+version: 2
+models:
+- name: stg_iapt_referral_history
+  description: One NHS Talking Therapies referral as reported in one accepted submission. Open referrals are
+    resubmitted every month, so a referral has one row per reported month. Dates are kept as submitted; NHS England
+    pathway derivations are those supplied with that submission. Latest-version selection happens in
+    fct_iapt_referral.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - submission_id
+        - referral_id
+  columns:
+  - name: submission_id
+    data_tests:
+    - not_null
+  - name: referral_id
+    description: Provider-qualified referral identifier (Unique_ServiceRequestID).
+    data_tests:
+    - not_null
+  - name: person_id
+    description: IAPT Person_ID on this version. Can differ between versions of the same referral.
+  - name: source_of_referral_iapt
+    description: Source of referral for IAPT, submitted from v2.1.
+  - name: source_of_referral_mh
+    description: Source of referral for mental health, submitted in v2.0.
+  - name: onset_date
+    description: Year and month of symptom onset as supplied, format YYYY-MM.
+  - name: primary_presenting_complaint
+    description: Earlier name of the NHS England presenting complaint higher-category derivation, not a code.
+  - name: secondary_presenting_complaint
+    description: Earlier name of the NHS England presenting complaint lower-category derivation, not a code.

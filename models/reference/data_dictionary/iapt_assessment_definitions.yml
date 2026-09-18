@@ -1,0 +1,62 @@
+version: 2
+models:
+  - name: iapt_assessment_scale
+    description: >-
+      One row per NHS Talking Therapies (IAPT data set) outcome measure
+      observable and published specification version, from the TOS v2.0.26 and
+      ETOS v2.1.22 ROM Mapping sheets. The latest definition supplies common
+      score semantics. Earlier definitions identify historical formats only:
+      revisions changed definitions inside data set version 2.0 (the Diabetes
+      Distress Scale moved from a 17-102 total to a 1-6 mean in TOS 2.0.27), so a
+      submission's data set version does not identify its definition. This is a
+      label and range reference, not a questionnaire total or submission
+      validation.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [concept_code, specification_version]
+    columns:
+      - name: concept_code
+        description: SNOMED CT observable concept ID.
+      - name: specification_version
+        description: Specification version publishing the definition. Only 2.0.26 and 2.1.22 are extracted; 2.0.27 is not public.
+      - name: assessment_tool_name
+        description: Named tool the observable belongs to. Different observables are not interchangeable scores.
+      - name: assessment_description
+        description: Published SNOMED CT preferred term of the observable.
+      - name: published_values
+        description: Enumerated responses and numeric ranges, separated by semicolons.
+      - name: decimal_places
+        description: Decimal places accepted without a warning in this version. Values with more decimals are still accepted by NHS England.
+      - name: numeric_range_count
+        description: Number of numeric ranges. Only a single range is interpreted automatically.
+      - name: minimum_numeric_value
+        description: Lower bound of the published range. Use only when numeric_range_count is one.
+      - name: maximum_numeric_value
+        description: Upper bound of the published range. The WSAS work range 0-9 includes 9, which means "not available"; the response reference marks it as a non-score.
+      - name: is_latest_definition
+        description: True for the newest specification version containing the concept. Use it for common score semantics.
+
+  - name: iapt_assessment_response
+    description: >-
+      One row per NHS Talking Therapies (IAPT data set) outcome measure
+      observable, specification version and enumerated response (Y, N, NA and the
+      WSAS work value 9). Numeric ranges stay in iapt_assessment_scale.
+    config: *owner
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [concept_code, specification_version, response_code]
+    columns:
+      - name: response_code
+        description: Published response code.
+      - name: response_description
+        description: Published meaning of this concept and response.
+      - name: numeric_response_value
+        description: Numeric form of the response code where it has one. Not proof that it is a score.
+      - name: is_non_score_response
+        description: True for "Not Applicable" and "Score not available". Never inferred from a number alone.

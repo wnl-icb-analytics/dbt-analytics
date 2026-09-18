@@ -1,0 +1,35 @@
+version: 2
+models:
+- name: stg_iapt_care_activity_history
+  description: One NHS Talking Therapies care activity as reported in one accepted submission. Activities belong to
+    the care contact with the same care_contact_id in the same submission. Procedures, findings and observations are
+    kept as submitted; clinical interpretation happens in fct_iapt_care_activity.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - submission_id
+        - care_activity_id
+  columns:
+  - name: submission_id
+    data_tests:
+    - not_null
+  - name: care_activity_id
+    description: Provider-qualified activity identifier (Unique_CareActivityID).
+    data_tests:
+    - not_null
+  - name: care_contact_id
+    description: Provider-qualified parent contact identifier.
+  - name: local_care_contact_id
+    description: Parent contact identifier assigned locally by the provider (CareContactId).
+  - name: code_proc_and_proc_status
+    description: SNOMED CT procedure expression as submitted; may be post-coordinated, for example with a context
+      such as offered.
+  - name: validated_finding_code
+    description: NHS England cleaned finding code; -3 marks an invalid submission.
+  - name: dmic_activity_date
+    description: Warehouse-added activity date. Not a submitted clinical date.
