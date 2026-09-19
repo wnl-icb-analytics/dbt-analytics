@@ -23,7 +23,7 @@ For a short introduction to the layers and where to start, see
 | What admissions and discharges did providers record? | `fct_mhsds_hospital_provider_spell` | Latest recorded provider-qualified spell |
 | How did a person move between wards? | `fct_mhsds_ward_stay` | Latest recorded ward stay |
 | What occupancy intervals do the agreed overlap and recency rules retain? | `fct_mhsds_inpatient_occupancy` | Retained inferred interval |
-| Who has evidence of a current inpatient stay? | `fct_mhsds_current_inpatients` | Person with a retained open interval |
+| Who has evidence of a current inpatient stay? | `fct_mhsds_current_inpatients` | Retained open interval, including unidentified people |
 | What diagnoses were recorded? | `fct_mhsds_diagnosis` | Retained diagnosis evidence item |
 | What assessment responses were recorded? | `fct_mhsds_assessment_observation` | Accepted assessment question, dimension or score occurrence |
 | What legal-status periods were recorded? | `fct_mhsds_mental_health_act_period` | Latest recorded legal-status period |

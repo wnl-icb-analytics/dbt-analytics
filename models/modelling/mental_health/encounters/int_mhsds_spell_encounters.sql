@@ -11,8 +11,8 @@ Includes ALL persons (active, inactive, deceased) within 5 years following inter
 End-date derivation (end_date_source):
 - 'discharged'      - a real discharge date was recorded.
 - 'open'            - no discharge date, but the spell appears in an active
-                      submission within 2 reporting periods of the latest period
-                      in the dataset, so it is treated as genuinely open and
+                      submission within two calendar months of the latest staged
+                      spell period, so it is treated as open and
                       accrues to current_date. MHSDS requires providers to
                       resubmit every active spell each period.
 - 'last_submission' - no discharge date and the spell stopped appearing in

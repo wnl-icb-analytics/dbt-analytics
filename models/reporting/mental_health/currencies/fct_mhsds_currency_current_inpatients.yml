@@ -2,8 +2,9 @@ version: 2
 models:
 - name: fct_mhsds_currency_current_inpatients
   description: >-
-    People with current inpatient evidence under the shared occupancy rules, with costing
-    classifications. Each row is one person with a retained undischarged spell reported within two
+    Current inpatient evidence under the shared occupancy rules, with costing classifications.
+    Each row is one retained open spell, including spells without a recorded person ID.
+    Identified people have at most one retained open spell. Undischarged spells must be reported within two
     calendar months of the latest staged spell period. Overlaps and later admissions determine the
     retained spell. This reflects a delayed monthly feed, not live bed occupancy;
     last_submission_period_end_date shows the spell's evidence date. Days in bed accrue to the run
@@ -21,9 +22,8 @@ models:
   - name: uniq_serv_req_id
     description: Unique service request identifier.
   - name: person_id
-    description: MHSDS person identifier.
+    description: Recorded MHSDS person. Null when unidentified; uniq_hosp_prov_spell_num still identifies the spell.
     data_tests:
-    - not_null
     - unique
   - name: sk_patient_id
     description: Pseudonymised patient identifier.
