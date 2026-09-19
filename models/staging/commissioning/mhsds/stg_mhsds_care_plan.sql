@@ -11,7 +11,8 @@ select
     , iff(care_plan_creat_date::date >= '1901-01-01'::date, care_plan_creat_date::date, null) as care_plan_creat_date
     , care_plan_creation_time::time as care_plan_creation_time
     , iff(care_plan_last_update_date::date >= '1901-01-01'::date, care_plan_last_update_date::date, null) as care_plan_last_update_date
-    , iff(care_plan_last_update_time::date >= '1901-01-01'::date, care_plan_last_update_time::date, null) as care_plan_last_update_time
+    -- Source time fields use a 1970 date anchor; retain their time of day.
+    , care_plan_last_update_time::time as care_plan_last_update_time
     , iff(care_plan_implement_date::date >= '1901-01-01'::date, care_plan_implement_date::date, null) as care_plan_implement_date
     , org_id_prov
     , uniq_submission_id
