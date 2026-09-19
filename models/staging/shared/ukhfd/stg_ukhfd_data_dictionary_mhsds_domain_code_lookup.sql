@@ -5,6 +5,7 @@
     ('employment_status', 'raw_ukhfd_data_dictionary_mhsds_employment_status'),
     ('employment_status', 'raw_ukhfd_data_dictionary_mhsds_employment_status_general'),
     ('employment_contract_type', 'raw_ukhfd_data_dictionary_mhsds_employment_contract_type'),
+    ('weekly_hours_worked', 'raw_ukhfd_data_dictionary_mhsds_weekly_hours_worked'),
     ('disability', 'raw_ukhfd_data_dictionary_mhsds_disability'),
     ('disability_impact', 'raw_ukhfd_data_dictionary_mhsds_disability_impact'),
     ('care_plan_type', 'raw_ukhfd_data_dictionary_mhsds_care_plan_type'),

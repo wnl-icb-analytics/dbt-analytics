@@ -374,7 +374,13 @@ describes order and recall recording.
 ## Code labels and source ambiguity
 
 Employment combines the general employment status list with the mental-health
-extension. Accommodation can contain legacy status codes in the newer type field;
+extension. `weekly_hours_worked_code` and `weekly_hours_worked_description` give
+the recorded hours band or stated-status category. These are not exact hours and
+cannot be summed or averaged. The description distinguishes declined responses,
+not applicable and unknown hours, as defined in the
+[national weekly hours code list](https://archive.datadictionary.nhs.uk/DD%20Release%20March%202025/data_elements/weekly_hours_worked.html).
+
+Accommodation can contain legacy status codes in the newer type field;
 `accommodation_type_label_basis` identifies the reference used without converting
 those codes to a modern category. Missing and unmatched codes remain distinct.
 

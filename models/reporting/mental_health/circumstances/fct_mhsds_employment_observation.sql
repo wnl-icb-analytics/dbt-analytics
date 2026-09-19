@@ -9,7 +9,8 @@ select
     , s.employ_status_end_date as employment_status_end_date
     , s.employ_status_rec_date as employment_status_recorded_date
     , s.pat_prim_emp_cont_type_mh as employment_contract_type_code
-    , s.week_hours_worked as weekly_hours_worked
+    , s.week_hours_worked as weekly_hours_worked_code
+    , hours_label.description as weekly_hours_worked_description
     , status_label.description as employment_status_description
     , case when nullif(trim(s.employ_status), '') is null then 'code_missing'
         when status_label.description is not null then 'labelled' else 'code_unmatched' end as employment_status_label_status
@@ -28,3 +29,5 @@ left join {{ ref('mhsds_domain_code_lookup') }} as status_label
     on upper(trim(s.employ_status::varchar)) = status_label.code and status_label.code_set_name = 'employment_status'
 left join {{ ref('mhsds_domain_code_lookup') }} as contract_label
     on upper(trim(s.pat_prim_emp_cont_type_mh::varchar)) = contract_label.code and contract_label.code_set_name = 'employment_contract_type'
+left join {{ ref('mhsds_domain_code_lookup') }} as hours_label
+    on upper(trim(s.week_hours_worked::varchar)) = hours_label.code and hours_label.code_set_name = 'weekly_hours_worked'

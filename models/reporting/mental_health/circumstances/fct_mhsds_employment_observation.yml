@@ -4,9 +4,9 @@ models:
   description: >-
     Employment circumstances reported for patients. Each row is one accepted MHS004 record in a
     provider reporting period. Includes employment status, its effective and recorded dates,
-    contract type and weekly hours worked. Repeated submissions do not establish new jobs or changes
-    in employment. Status descriptions use the general employment list and the mental-health
-    extension; unmatched codes remain visible through the label-status field.
+    contract type and weekly working-hours band, not an exact number of hours. Repeated submissions
+    do not establish new jobs or changes in employment. Status descriptions use the general employment
+    list and the mental-health extension; unmatched codes remain visible through the label-status field.
   config:
     meta:
       owner:
@@ -27,8 +27,13 @@ models:
     description: Submitted employment status recorded date.
   - name: employment_contract_type_code
     description: Submitted employment contract type code.
-  - name: weekly_hours_worked
-    description: Submitted weekly hours worked.
+  - name: weekly_hours_worked_code
+    description: National category code, not a numeric duration. 01 means 30+ hours, 02 means 16-29,
+      03 means 5-15 and 04 means 1-4 hours per week. 97 means declined to answer, 98 not applicable
+      and 99 hours not known. Missing is no submitted code. Do not sum or average these codes.
+  - name: weekly_hours_worked_description
+    description: National description of the recorded weekly working-hours band or stated-status
+      code. Missing or unrecognised codes have no description. Bands do not give exact hours.
   - name: employment_status_description
     description: National label, including historical codes; null when no definition matches.
   - name: employment_contract_type_description
