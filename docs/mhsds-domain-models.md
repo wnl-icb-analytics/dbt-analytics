@@ -5,8 +5,8 @@ summaries. Models are grouped into `referrals`, `activity`, `inpatient`,
 `clinical`, `circumstances`, `person`, `quality` and `currencies` folders. These folders retain the
 same warehouse schema. Development uses `DEV__REPORTING.MENTAL_HEALTH`.
 
-For the complete table inventory and the source-to-business progression, see
-[MHSDS: from source evidence to business-conformed reporting](mhsds-source-to-business-arc.md).
+For a short introduction to the layers and where to start, see
+[MHSDS: from submissions to useful reporting](mhsds-source-to-business-arc.md).
 
 ## Choose a model for the question
 
