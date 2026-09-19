@@ -154,3 +154,41 @@ jobs:
           bash scripts/ci/check_model_tests.sh "${files[@]}" | tee result.txt
           cat result.txt >> $GITHUB_STEP_SUMMARY
           grep -q "^FAILED" result.txt && exit 1 || exit 0
+
+  cluster-tests:
+    name: Cluster Existence Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install Python deps
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pyyaml
+      - name: Get changed files
+        id: changed
+        env:
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          # Via env, not inline template expansion: a branch name can contain
+          # shell metacharacters.
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          # merge_group has no base_ref; diff against the candidate's base SHA.
+          # YAML changes are included so removing a test from a model is caught.
+          BASE="${MERGE_GROUP_BASE_SHA:-origin/$BASE_REF}"
+          {
+            echo 'files<<CHANGED_FILES_EOF'
+            git diff --name-only "$BASE"...HEAD | grep -E '\.(sql|yml|yaml)$' | grep -E '^models/' || true
+            echo 'CHANGED_FILES_EOF'
+          } >> "$GITHUB_OUTPUT"
+      - name: Run check
+        if: steps.changed.outputs.files != ''
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
+        run: |
+          mapfile -t files <<< "$CHANGED_FILES"
+          python3 scripts/ci/check_cluster_tests.py "${files[@]}" | tee result.txt
+          cat result.txt >> $GITHUB_STEP_SUMMARY
+          grep -q "^FAILED" result.txt && exit 1 || exit 0
