@@ -1,12 +1,14 @@
 version: 2
 models:
 - name: int_mhsds_inpatient_occupancy
-  description: Inferred inpatient occupancy intervals, one row per retained hospital spell. Preserves
-    the established latest-evidence selection for equal person/admission dates, containment removal and
-    truncation at a later admission. Undischarged spells within two calendar months of the latest staged
-    spell period remain open; older spells end at the later of their last submission period and admission
-    plus one day. Selection uses the run date for open interval comparisons. No currency classification
-    or costing.
+  description: >-
+    Inpatient intervals inferred from recorded hospital spells. Each row is one retained spell. For
+    the same person and admission date, the latest submission evidence wins. Contained spells are
+    removed and a later admission ends an overlapping spell. Undischarged spells reported within two
+    calendar months of the latest staged spell period remain open. Older spells end at the later of
+    their last reporting period and admission plus one day. The run date is used when comparing open
+    intervals. Reporting, encounters and costing reuse this selection; this table itself adds no
+    costing classification.
   config:
     meta:
       owner:

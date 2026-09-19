@@ -1,14 +1,14 @@
 version: 2
 models:
 - name: int_mhsds_diagnosis
-  description: 'Recorded MHSDS diagnoses, one row per source table, provider-local patient or referral, person,
-    scheme, code and clinical time/precision. Retains the latest accepted row for each fully identified diagnosis.
-    Missing parent, scheme, code or time retains individual source rows. A missing national person identifier
-    does not disable revision selection within a complete provider-local key. Different codes and person identifiers
-    survive; this does not decide which diagnosis is clinically current. First/last periods record submission
-    evidence.
-
-    '
+  description: >-
+    Recorded diagnoses with repeated versions resolved. Each row identifies a diagnosis by source,
+    provider-local patient or referral, person, coding scheme, code and clinical date/time
+    precision. Fully identified diagnoses use the latest accepted version. Missing related records,
+    scheme, code or time leave separate source rows. A missing national person ID does not prevent
+    version selection when the provider-local identifiers are complete. Different codes and person
+    IDs remain separate. First and last reporting periods describe submission evidence, not clinical
+    onset or current diagnosis.
   config: &id001
     meta:
       owner:
@@ -26,13 +26,14 @@ models:
   - name: has_person_identifier_changed
     description: TRUE when different national person identifiers occur for the source diagnosis key.
 - name: int_mhsds_clinical_record
-  description: "Long clinical-item assembly before shared patient and terminology joins. One row per source\
-    \ occurrence and clinical record type. Expands the established care-activity fact without staff joins.\
-    \ MHS606 and MHS607 retain every accepted source row, including repeated assessment scores. Only a same-submission\
-    \ activity without conflicting person or referral identifiers supplies MHS607 time. Both person identifiers\
-    \ may be missing when the recorded activity and referral links agree.\n Historical MHS802 uses the latest\
-    \ source-identified response and a same-submission completion parent. MHS609 complaints are distinct evidence,\
-    \ not diagnoses."
+  description: >-
+    Clinical evidence brought together before shared patient and terminology enrichment. Each row is
+    one source occurrence and clinical record type. Referral and activity assessment responses
+    remain separate, including repeated scores. Activity-assessment time is taken only from a
+    matching activity in the same submission with no conflicting person or referral ID; both person
+    IDs can be missing when the other links agree. Historical clustering responses use the latest
+    source-identified version and a same-submission completion record. Presenting complaints remain
+    separate from diagnoses. Staff links are not expanded into extra clinical rows.
   config: *id001
   data_tests:
   - dbt_utils.unique_combination_of_columns:

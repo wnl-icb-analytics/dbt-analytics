@@ -30,7 +30,7 @@ A currency code has three parts: `MAA98A` = population group (`MAA`) + family (`
 
 ## 1. Select accepted records
 
-MHSDS is a monthly resubmission feed. [`stg_mhsds_activesubmission`](../models/staging/commissioning/mhsds/stg_mhsds_activesubmission.sql) identifies the accepted file for each provider and reporting period. This is an input filter, not a published grain. Versioned models use [`select_latest_mhsds_record`](../macros/transformations/select_latest_mhsds_record.sql) to retain the newest reported version of each logical record. Period snapshots use [`select_accepted_mhsds_period_records`](../macros/transformations/select_accepted_mhsds_period_records.sql), then resolve and test their own grain. MHS204 activity is restricted to its activity month, so the accepted file is authoritative for that period.
+MHSDS is a monthly resubmission feed. [`stg_mhsds_activesubmission`](../models/staging/commissioning/mhsds/stg_mhsds_activesubmission.sql) identifies the accepted file for each provider and reporting period. This is an input filter, not a published grain. Versioned models use [`select_latest_mhsds_record`](../macros/transformations/select_latest_mhsds_record.sql) to retain the newest reported version of each logical record. Period snapshots use [`select_accepted_mhsds_period_records`](../macros/transformations/select_accepted_mhsds_period_records.sql), then resolve records within their stated row meaning. MHS204 activity is restricted to its activity month, so the accepted file is authoritative for that period.
 
 Two data facts shape everything downstream:
 
@@ -80,7 +80,7 @@ One row per (referral, contact), excluding contacts inside an inpatient spell wi
 
 ## 5. Price resolution — [`int_nhse_currency_price_resolution.sql`](../models/modelling/contracting/int_nhse_currency_price_resolution.sql)
 
-One row per currency code any classifier can emit, with the fallback chain resolved once: exact code → the population's `Z` price → MBU for the setting → MBU `Z`. Needed because specialised settings are out of NCC scope (NULL prices) and some derivable codes have no published price. Its `not_null` test guarantees no fact row can be unpriced. `MAZ99` has a contact price but no bed-day price, so the bed-day fact records the published code and uses the matching `MBU98` setting as `pricing_currency_code`.
+One row per currency code any classifier can emit, with the fallback chain resolved once: exact code → the population's `Z` price → MBU for the setting → MBU `Z`. Needed because specialised settings are out of NCC scope (NULL prices) and some derivable codes have no published price. `MAZ99` has a contact price but no bed-day price, so the bed-day fact records the published code and uses the matching `MBU98` setting as `pricing_currency_code`.
 
 ## 6. Costing — the reporting facts
 
@@ -110,9 +110,6 @@ Person × month: bed days apportioned from the spell × fiscal-year fact to cale
 ## Caveats analysts should know
 
 - **These are proxy costs** — indicative national prices on activity, for comparative and distributional analysis, not contract reconciliation.
-- **~27% of spells and ~25% of contacts are unclassified** (`MBU`), consistent with national MHSDS completeness; they still cost at MBU prices.
-- **Provider-submitted currencies can't validate this**: MHS013 is empty in our feed.
-- **NHSE provider totals expose source differences.** Against the rounded April–May 2026 national extracts, total contacts are about 2% lower for North London and CNWL and 8–9% lower for West London; inpatient episodes are within 0–3%. The accepted West London source files contain fewer contacts than the national provider totals. About 12,000 CNWL contacts per month have no resolvable team type in this extract, so community/crisis splits differ even where the total is close.
+- Source coverage and missing team details can affect comparisons with national provider totals and community/crisis splits.
 - **Legacy long-stay spells** (admissions back to the 1970s) accrue decades of bed days; filter on dates if they distort a cut.
 - The FY2022/23 contact-volume dip is a source completeness artefact (two providers' submissions), not a real activity change.
-- Recorded referral rejections (~1%) look under-reported against national rates — a data finding, not corrected.

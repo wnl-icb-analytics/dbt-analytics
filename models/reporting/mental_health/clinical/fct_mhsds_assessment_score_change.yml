@@ -1,13 +1,14 @@
 version: 2
 models:
 - name: fct_mhsds_assessment_score_change
-  description: Descriptive score changes between adjacent eligible numeric observations for the same person,
-    provider, referral, assessment context, concept and recorded assessor. Each row ends at one current observation.
-    Missing dates, conflicting same-time observations, unrecognised/non-score responses and historical clustering
-    responses with changing person identifiers are excluded before pairing. Gaps can span excluded observations.
-    Missing assessor values form a separate unknown-assessor series, not proof of the same clinician. Changes
-    are current minus previous and do not establish improvement, deterioration, reliable change or treatment
-    effect.
+  description: >-
+    Changes between successive usable scores for the same person, provider, referral, assessment
+    context, concept and recorded assessor. Each row pairs a current observation with its previous
+    eligible observation. Records with missing dates, ambiguous same-time observations, invalid or
+    non-score responses, or changed historical clustering person IDs are excluded before pairing; a
+    pair can span those excluded records. Missing assessors form a separate group and do not prove
+    the same clinician. Change is current score minus previous score. Its clinical direction depends
+    on the instrument; it does not establish improvement or treatment effect.
   config:
     meta:
       owner:

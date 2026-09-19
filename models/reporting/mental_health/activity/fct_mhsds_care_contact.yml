@@ -1,12 +1,13 @@
 version: 2
 models:
 - name: fct_mhsds_care_contact
-  description: MHSDS contacts with a patient from active provider submissions. One row per unique service
-    request and care contact across the available history. The newest reporting period is retained. The
-    referral identifier is source-recorded and can point to a referral absent from the active referral
-    fact. Cancelled contacts remain present at their scheduled date. Source missing-date sentinels before
-    1901 are null. Team attribution uses the same-submission referral primary team for v6 contacts
-    without an explicit contact team. Later referral identity changes remain visible and do not remap contacts.
+  description: >-
+    Recorded patient contacts, including attended appointments, non-attendance and cancellations.
+    Each row is one referral/contact pair using its latest accepted version. Cancelled contacts
+    retain their scheduled date; pre-1901 missing-date markers are null. Contacts remain when their
+    referral is absent. Team details come from the contact's submission: an explicit contact team
+    takes precedence, with the primary referral team used for version 6 records without one. Later
+    changes to a referral's person ID do not reassign the contact.
   config:
     meta:
       owner:

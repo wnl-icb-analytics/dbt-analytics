@@ -1,13 +1,14 @@
 version: 2
 models:
 - name: fct_mhsds_latest_provider_caseload_referral
-  description: 'Latest provider caseload evidence, one open referral in each provider''s latest accepted reporting
-    period. Receipt must be on or before period end, with no rejection or discharge by that date. Includes
-    referrals with no attended contact and people outside inpatient care. Provider periods can be old. Use
-    fct_mhsds_current_caseload_referral for the dataset latest reporting month. Older referrals absent from
-    the latest submission are not carried forward or declared discharged. Provider lag and contact recency
-    remain visible; no inactivity cut-off is imposed. Join team relationships on submission_id/uniq_submission_id
-    and referral_source_record_id, retaining their one-to-many grain. Definition owner: Eddie Davison.'
+  description: >-
+    Open referrals from each provider's latest accepted reporting period. Each row is one referral
+    received by period end with no rejection or discharge by that date. Includes referrals without
+    an attended contact, with no inactivity cut-off. Provider periods can differ or be old; use the
+    lag fields when comparing providers. Use fct_mhsds_current_caseload_referral for a common
+    dataset-latest month. Referrals absent from a provider's latest submission are neither carried
+    forward nor declared discharged. Join team relationships using both submission and referral;
+    several teams may match. Eddie Davison owns the definition.
   config:
     meta:
       owner:

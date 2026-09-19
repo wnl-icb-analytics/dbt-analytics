@@ -6,7 +6,7 @@ summaries. Models are grouped into `referrals`, `activity`, `inpatient`,
 same warehouse schema. Development uses `DEV__REPORTING.MENTAL_HEALTH`.
 
 For a short introduction to the layers and where to start, see
-[MHSDS: from submissions to useful reporting](mhsds-source-to-business-arc.md).
+[MHSDS: from submissions to useful reporting](mhsds-domain-overview.md).
 
 ## Choose a model for the question
 
@@ -185,7 +185,7 @@ population members.
 The grain is a recorded MHSDS person identifier. National identity changes can
 split one individual's history across identifiers. Distinct-person measures
 count those recorded IDs; they do not promise a reconciled longitudinal patient
-population. See the [coverage review](mhsds-domain-review.md) for useful source
+population. See the [domain overview](mhsds-domain-overview.md) for useful source
 sections still outside these reporting families.
 
 Counts describe available recorded history, not lifetime care. In particular:
@@ -248,10 +248,6 @@ group by 1
 order by 1;
 ```
 
-The semantic test reconciles entity counts to the domain and checks that
-contact and diagnosis breakdowns by person state preserve their totals.
-Domain models test the primary keys used by the relationships.
-
 ## Interface changes
 
 | Previous interface | Replacement |
@@ -277,7 +273,7 @@ warehouse cleanup should remove `REPORTING.MENTAL_HEALTH.DIM_PERSON_MH_PROFILE`,
 those copies are stale and unsupported. Deploy the replacements before cleanup.
 
 For the source clinical interpretation and its limits, see the
-[clinical-record design](mhsds-clinical-record-plan.md).
+[clinical evidence guide](mhsds-clinical-records.md).
 
 ## Current caseload and historical access
 

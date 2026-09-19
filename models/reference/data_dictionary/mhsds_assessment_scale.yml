@@ -2,10 +2,11 @@ version: 2
 models:
   - name: mhsds_assessment_scale
     description: >-
-      One row per current or historical assessment observable concept. Uses the
-      latest available ETOS v4.1, v5 or v6 definition, including tool grouping and
-      published response domains. This is a label and interpretation reference,
-      not retrospective submission validation or a whole-questionnaire score.
+      Assessment question and score definitions, with one row per current or historical SNOMED
+      concept. Gives the assessment tool, allowed responses and numeric ranges from the newest
+      available ETOS v4.1, v5 or v6 definition. A concept can describe an individual question;
+      it does not necessarily represent a whole-questionnaire score. Definitions are not matched
+      to the specification in force when a response was submitted.
     config: &owner
       meta:
         owner:
@@ -32,10 +33,10 @@ models:
         description: Latest available specification supplying the observable definition.
   - name: mhsds_assessment_response
     description: >-
-      Latest available definition for each assessment concept and enumerated
-      response code across ETOS v4.1, v5 and v6. Includes historical concept IDs and
-      responses, with explicit missing, unknown and not-applicable meanings.
-      Numeric ranges remain in mhsds_assessment_scale rather than being expanded.
+      Meanings of coded assessment responses, with one row per assessment concept and response
+      code. Uses the newest available ETOS v4.1, v5 or v6 definition, including historical codes
+      and responses meaning missing, unknown or not applicable. Numeric response ranges are
+      described in mhsds_assessment_scale; this table lists individually defined response codes.
     config: *owner
     data_tests:
       - dbt_utils.unique_combination_of_columns:

@@ -1,13 +1,13 @@
 version: 2
 models:
 - name: fct_mhsds_currency_current_inpatients
-  description: "People currently occupying a mental health bed. Grain: one row per person (single occupancy\
-    \ is enforced upstream: a later admission supersedes any spell still open at that date). Population:\
-    \ spells with no discharge date that appear in an active submission within 2 reporting periods of\
-    \ the latest \xE2\u20AC\u201D orphaned undischarged spells are excluded. Time semantics: current as\
-    \ of the active MHSDS feed, which runs ~6 weeks behind the run date (last_submission_period_end_date\
-    \ shows each spell's evidence date) - very recent admissions and discharges are not yet visible; days_in_bed\
-    \ accrues to the run date.\n"
+  description: >-
+    People with current inpatient evidence under the shared occupancy rules, with costing
+    classifications. Each row is one person with a retained undischarged spell reported within two
+    calendar months of the latest staged spell period. Overlaps and later admissions determine the
+    retained spell. This reflects a delayed monthly feed, not live bed occupancy;
+    last_submission_period_end_date shows the spell's evidence date. Days in bed accrue to the run
+    date. Use fct_mhsds_current_inpatients for the general census without currency classifications.
   config:
     meta:
       owner:

@@ -1,19 +1,14 @@
 
 models:
   - name: int_mhsds_spell_encounters
-    description: >
-      Event history for Mental Health encounters (spells) from MHSDS data.
-      Undischarged spells that stopped appearing in active submissions are
-      closed at their last reporting period (end_date_source = 'last_submission')
-      rather than treated as ongoing; see model header for the full derivation.
-      Single-occupancy rules remove duplicate spell records for the same
-      admission (merger re-registrations, NHS/independent-sector dual
-      submissions, shifted-date overlaps): one spell per person and admission
-      date, contained spells dropped, and later admissions superseding spells
-      still open at that date.
-      Proxy costs use NHSE 26/27 indicative bed-day prices (MBU98 family) by
-      care setting, provider MFF, and GDP-deflator rebasing to each bed day's
-      fiscal year.
+    description: >-
+      Inferred inpatient spells prepared for cross-system activity reporting. Each row is one
+      interval retained by the shared occupancy rules, which handle stale undischarged spells,
+      duplicate admissions, contained spells and later overlapping admissions. The end-date reason
+      distinguishes recorded discharge from inferred closure. Proxy costs use 2026/27 NHS England
+      bed-day prices from the MBU98 family, the provider's market forces factor and GDP-deflator
+      adjustment to each bed day's fiscal year. They are estimates rather than actual provider
+      costs.
     config:
       meta:
         owner:
