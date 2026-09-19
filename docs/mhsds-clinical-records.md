@@ -54,7 +54,11 @@ is case-sensitive; a similar-looking unit is not enough to establish equivalence
 Diagnosis rows describe recorded evidence, not a decision about the clinically
 current diagnosis. Assessment rows can be individual questions or dimensions.
 `fct_mhsds_assessment_instance` groups related responses without claiming a
-completed questionnaire. `fct_mhsds_assessment_score_change` compares successive
+completed questionnaire. Historical clustering definitions include the SARN
+items from the specification's separate "Cluster Tools for MH" worksheet.
+HoNOS and SARN responses form separate tool groups within a source assessment.
+`assessment_tool_group` falls back to a concept code only when the tool is unmatched.
+`fct_mhsds_assessment_score_change` compares successive
 eligible scores within the same concept and context; current minus previous has
 no universal clinical direction.
 

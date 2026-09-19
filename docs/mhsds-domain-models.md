@@ -291,6 +291,18 @@ Accepted refreshes can revise history, so these are not archived publication-day
 snapshots. First attendance, active treatment and national waiting-list eligibility
 are different questions. RTT facts retain the submitted clocks and status labels.
 
+An RTT start date can repeat in several monthly records. Counting populated start
+and end dates therefore counts submitted evidence, not distinct clocks starting
+and ending. The MHS104 specification allows an earlier start date but requires a
+submitted end date to fall within the reporting month. Starts and ends therefore
+have different reporting patterns. Missing end dates or unknown statuses do not prove ongoing waiting.
+Check completeness by provider and period before comparing starts with ends.
+The period-end open flag uses the submitted dates only, without resolving status
+conflicts or inferring a missing stop date.
+
+See the MHS104RTT worksheet in the
+[MHSDS technical specification](https://digital.nhs.uk/data-and-information/data-collections-and-data-sets/data-sets/mental-health-services-data-set/tools-and-guidance).
+
 Period demographics use the same person/provider/reporting-period key as referral
 periods, indirect activity and care-plan snapshots. Missing demographics do not
 remove the fact. IMD 2019 and IMD 2025 are fixed reference editions; applying the

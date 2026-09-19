@@ -23,8 +23,11 @@ select
     , assessor_id
     , assessor_local_id
     , case
+        when source_assessment_id is not null and assessment_tool_name is null
+            then 'source_clustering_assessment_and_concept'
         when source_assessment_id is not null then 'source_clustering_assessment_and_tool'
         when assessment_recorded_at is null then 'undated_source_observation'
+        when assessment_tool_name is null then 'shared_concept_context_time_and_assessor'
         else 'shared_tool_context_time_and_assessor'
     end as instance_identity_basis
     , count(*) as n_observations

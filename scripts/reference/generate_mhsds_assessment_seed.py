@@ -1,4 +1,4 @@
-"""Extract public assessment definitions from MHSDS ETOS v4.1/v5/v6 workbooks.
+"""Extract public assessment and clustering definitions from MHSDS ETOS v4.1/v5/v6.
 
 Run with the bundled openpyxl runtime. Inputs are VERSION=PATH pairs, oldest
 first. This reads specification metadata only, never warehouse clinical data.
@@ -23,26 +23,29 @@ def text(value):
     return '' if value is None else ' '.join(str(value).split())
 
 
-def extract(version, path):
-    if not version.startswith(('4.1', '5.', '6.')):
-        raise ValueError('Only ETOS v4.1, v5 and v6 worksheet layouts are supported')
-    book = openpyxl.load_workbook(path, data_only=True)
-    sheet = book['MH Assessment Scales']
-    # Older ETOS sheets merge tool, concept and precision cells across responses.
+def merged_cell_reader(sheet):
     merged = {}
     for area in sheet.merged_cells.ranges:
         value = sheet.cell(area.min_row, area.min_col).value
         for row in range(area.min_row, area.max_row + 1):
             for col in range(area.min_col, area.max_col + 1):
                 merged[row, col] = value
+    return lambda row, col: merged.get((row, col), sheet.cell(row, col).value)
 
-    def cell(row, col):
-        return merged.get((row, col), sheet.cell(row, col).value)
+
+def extract(version, path):
+    if not version.startswith(('4.1', '5.', '6.')):
+        raise ValueError('Only ETOS v4.1, v5 and v6 worksheet layouts are supported')
+    book = openpyxl.load_workbook(path, data_only=True)
+    sheet = book['MH Assessment Scales']
+    # Older ETOS sheets merge tool, concept and precision cells across responses.
+    cell = merged_cell_reader(sheet)
 
     tool, description, active, inactive, value, label, decimals, start = (
         (2, 3, 4, 11, 5, 6, 7, 10) if version.startswith('6')
         else (1, 2, 3, 4, 5, 6, 12, 13)
     )
+    assessment_codes = set()
     for row in range(1, sheet.max_row + 1):
         active_code = text(cell(row, active))
         if not re.fullmatch(r'[0-9]{6,18}', active_code):
@@ -53,10 +56,37 @@ def extract(version, path):
             continue
         start_date = cell(row, start)
         for code in sorted(codes):
+            assessment_codes.add(code)
             yield dict(zip(FIELDS, [
                 code, text(cell(row, tool)), text(cell(row, description)),
                 published_value, text(cell(row, label)), text(cell(row, decimals)),
                 start_date.date().isoformat() if hasattr(start_date, 'date') else '',
+                version, row,
+            ]))
+
+    # Historical SARN items are deliberately listed only on the clustering sheet.
+    # Keep the main sheet's definitions for shared concepts such as HoNOS.
+    if 'Cluster Tools for MH' in book.sheetnames:
+        sheet = book['Cluster Tools for MH']
+        cell = merged_cell_reader(sheet)
+        for row in range(1, sheet.max_row + 1):
+            code = text(cell(row, 2))
+            if not re.fullmatch(r'[0-9]{6,18}', code) or code in assessment_codes:
+                continue
+            description = text(cell(row, 1))
+            tool = re.fullmatch(
+                r'((?:Forensic )?Mental Health Clustering Tool Summary Assessments of Risk and Need) rating .+',
+                description,
+            )
+            if not tool:
+                raise ValueError(f'Unrecognised clustering-only measure: {description}')
+            published_value = text(cell(row, 3))
+            if not published_value:
+                continue
+            start_date = cell(row, 6)
+            yield dict(zip(FIELDS, [
+                code, tool.group(1), description, published_value, text(cell(row, 4)),
+                '', start_date.date().isoformat() if hasattr(start_date, 'date') else '',
                 version, row,
             ]))
     book.close()
