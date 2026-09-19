@@ -1,15 +1,14 @@
 models:
   - name: int_covid_flu_historic_dashboard
     description: >
-      Historical COVID and flu uptake with demographics for the legacy dashboard. One row
-      per person, programme, campaign, risk group and subcohort from fct_covid_flu_uptake,
-      limited to campaigns with a reference date on or before 30 June 2026 (Flu 2024-25
-      and 2025-26, COVID Autumn 2024 to Spring 2026); COVID campaign IDs are relabelled
-      with a CV prefix. Adds per-campaign clinical risk group flags from
-      int_covid_flu_risk_group_flags and demographics, practice, school stage and
-      housebound status from the person's current record, including people no longer
-      registered. Rows without a match in dim_person_demographics are removed. The model
-      is rebuilt on each run; it is not a fixed snapshot.
+      Historical COVID and flu uptake with demographics for the legacy dashboard, rebuilt
+      each run rather than a fixed snapshot. One row per person, programme, campaign, risk
+      group and subcohort from fct_covid_flu_uptake. Keeps campaigns with a reference date
+      on or before 30 June 2026: Flu 2024-25 and 2025-26, and COVID Autumn 2024 to Spring
+      2026. COVID campaign IDs get a CV prefix. Demographics, practice, school stage and
+      housebound status come from the person's current record, including people no longer
+      registered. Rows with no match in dim_person_demographics are dropped. Adds
+      per-campaign clinical risk group flags from int_covid_flu_risk_group_flags.
     config:
       meta:
         owner:

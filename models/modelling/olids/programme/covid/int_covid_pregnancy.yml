@@ -1,14 +1,13 @@
 models:
   - name: int_covid_pregnancy
     description: >
-      COVID special population: pregnancy. One row per person and campaign, for campaigns
-      with eligible_pregnancy set (currently COVID Autumn 2024 only). A person qualifies
-      with a PREGDEL_COD (pregnancy or delivery) record within the campaign's pregnancy
-      period (pregnancy_current_start to pregnancy_current_end), or a PREG_COD record in
-      the lookback period before it (from pregnancy_lookback_start) with no later delivery
-      code (in PREGDEL_COD but not PREG_COD) before the period starts. The person must be
-      aged 12 or over at the campaign reference date. Where both pathways apply, the
-      latest qualifying record is kept.
+      Pregnant people aged 12+ in COVID campaigns offering pregnancy, currently COVID Autumn
+      2024 only. One row per person and campaign. Campaigns must have eligible_pregnancy
+      set. A person qualifies with a PREGDEL_COD pregnancy or delivery record between
+      pregnancy_current_start and pregnancy_current_end. A PREG_COD record from
+      pregnancy_lookback_start up to the period start also qualifies when no later delivery
+      code is recorded before the period starts. Delivery codes are those in PREGDEL_COD but
+      not PREG_COD. Age is tested at the campaign reference date.
     data_tests:
       - cluster_ids_exist:
           arguments:
@@ -75,6 +74,6 @@ models:
       - name: age_months_at_ref_date
         description: 'Age in months at campaign reference date'
       - name: age_years_at_ref_date
-        description: 'Age in years at campaign reference date (minimum 12)'
+        description: 'Age in years at campaign reference date. Minimum 12'
       - name: created_at
         description: 'Audit timestamp for record creation (campaign audit end date)'
