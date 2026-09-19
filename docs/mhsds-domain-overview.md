@@ -66,18 +66,20 @@ clinical improvement or the general person-summary population.
 
 ## What remains in modelling
 
-`MODELLING.MENTAL_HEALTH` owns the interpretation that several outputs reuse.
-Analysts normally use the reporting tables built from these rules.
+`MODELLING.MENTAL_HEALTH` contains rules reused by several outputs and preparation
+steps for specific reporting tables. The distinction is the table's purpose,
+not just how many models use it. Analysts normally start with the reporting output.
 
-| Shared responsibility | Models | Why it remains here |
+| Responsibility | Models | Reason for modelling placement |
 |---|---|---|
-| Contact versions and team context | `int_mhsds_latest_care_contact`, `int_mhsds_care_contact_context` | Reporting, encounters and currencies use the same contact selection and submission-specific team attribution. |
-| Clinical evidence selection and assembly | `int_mhsds_diagnosis`, `int_mhsds_presenting_complaint`, `int_mhsds_clustering_assessment_response`, `int_mhsds_clinical_record` | Resolve repeated versions and assemble evidence before the reporting tables add shared labels and expose focused clinical subjects. |
-| Inpatient interpretation | `int_mhsds_inpatient_occupancy`, `int_mhsds_ward_stay_period` | Own the shared occupancy rules and period-specific recorded stay calculations. |
-| Person population | `int_mhsds_person_evidence` | Includes identifiable people across all modelled evidence, even without a cross-system patient match. |
-| Common dates and organisation names | `int_mhsds_reporting_date`, `int_mhsds_organisation` | Keep the observation date and organisation lookup consistent across outputs. |
-| Currency classifications | `int_mhsds_contact_currency`, `int_mhsds_spell_currency`, `int_mhsds_currency_primary_diagnosis`, `int_mhsds_currency_referral_service_type` | Apply the diagnosis, service and eligibility choices needed for costing. |
-| Cross-system activity and costs | `int_mhsds_carecontact_encounters`, `int_mhsds_spell_encounters`, `int_cost_index_mhsds_activity_monthly` | Adapt MHSDS care for shared encounter and estimated-cost models. `int_cost_index_slam_activity_monthly` uses a separate source. |
+| Contact versions and team context | `int_mhsds_latest_care_contact`, `int_mhsds_care_contact_context` | Selecting contact versions once keeps reporting, encounters and currencies on the same records. Resolving team context once keeps contact and care-activity reporting consistent. |
+| Clinical evidence selection and assembly | `int_mhsds_diagnosis`, `int_mhsds_presenting_complaint`, `int_mhsds_clustering_assessment_response`, `int_mhsds_clinical_record` | Separates decisions about which submitted items represent distinct clinical evidence from their reporting labels and measures. Diagnosis, complaint and assessment reporting all use the assembled evidence. |
+| Inferred inpatient occupancy | `int_mhsds_inpatient_occupancy` | Reporting, encounters and costing need the same overlap and recency decisions. A shared model prevents each output from deciding independently which stays count. |
+| Ward stays within a reporting period | `int_mhsds_ward_stay_period` | Capacity reporting needs stay lengths calculated within each submission period. That differs from both latest ward-stay reporting and inferred hospital occupancy, so it has a separate calculation. |
+| Person population | `int_mhsds_person_evidence` | Establishes who has evidence, and of what kind, before the summary reduces this to one row per person. Keeps population inclusion explicit and independent of whether a cross-system patient match exists. |
+| Common dates and organisation names | `int_mhsds_reporting_date`, `int_mhsds_organisation` | Reports need a consistent observation date and one organisation row per code. Separate lookups prevent each report from choosing its own date or resolving duplicate organisation entries differently. |
+| Currency classifications | `int_mhsds_contact_currency`, `int_mhsds_spell_currency`, `int_mhsds_currency_primary_diagnosis`, `int_mhsds_currency_referral_service_type` | Costing needs narrower diagnosis, service and eligibility choices than general care reporting. These models make those choices for the currency outputs without restricting the wider care evidence. |
+| Cross-system activity and costs | `int_mhsds_carecontact_encounters`, `int_mhsds_spell_encounters`, `int_cost_index_mhsds_activity_monthly` | Convert MHSDS records into inputs for combined activity and cost reports. The combined reporting models provide the analyst interface across sources. `int_cost_index_slam_activity_monthly` supplies costs from a separate source. |
 
 ## Boundaries that matter to analysts
 
