@@ -97,5 +97,4 @@ group contacts have no shared session identifier.
 
 Some source sections still need separate analytical work, including self-harm,
 assaults, police assistance and digital interventions. Population access rates
-also need external denominators. Eddie Davison owns the agreed recorded-state
-and descriptive measure definitions.
+also need external denominators.
