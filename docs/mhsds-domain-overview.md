@@ -2,17 +2,44 @@
 
 ## Goal of the layer
 
-Give analysts a consistent way to ask about people, demand, care and outcomes
-recorded in MHSDS. Provider submissions become reporting tables with clear row
-meanings, dates, labels and measures. Analysts should not need to reconstruct
-monthly submissions or use costing classifications to describe ordinary care.
+Make MHSDS simple to query for questions about people, demand, care and recorded
+outcomes. Analysts should be able to choose a reporting table, filter the dates
+and use its measures without writing their own submission-selection,
+deduplication or code-lookup logic. Costing classifications are separate from
+ordinary care reporting.
 
 Start in `REPORTING.MENTAL_HEALTH`. The person summary is an entry point for
 cohorts; detailed and period tables answer questions it cannot answer alone.
 
+## Why the source tables need preparation
+
+MHSDS source tables describe submissions, not a ready-to-count set of referrals,
+contacts or people. A referral can appear in several months and be corrected in
+a later submission. Counting source rows can count it repeatedly; choosing an
+older version can leave its status out of date. Joins also need the right
+submission context because some identifiers apply only within a reporting period.
+
+## What staging does for analysts
+
+`STAGING.MHSDS` handles source record selection once for downstream users. It
+selects accepted submissions, resolves duplicate source versions and standardises
+types and missing dates. Analysts do not need to repeat those decisions in each
+report.
+
+Latest-record tables such as `stg_mhsds_referral` select the newest accepted
+version of each record. This is different from selecting only the latest month:
+an older referral still has a latest known version. History tables such as
+`stg_mhsds_referral_history` retain accepted periods for questions about what was
+recorded at an earlier date.
+
+Staging makes source records usable. Modelling and reporting turn them into
+questions analysts can query directly, such as which referrals were open at
+month end or what care followed a referral. A latest referral record alone does
+not establish current caseload.
+
 ```mermaid
 flowchart TD
-    S["Provider submissions"] --> T["Staging: accepted and cleaned source evidence"]
+    S["Provider submissions: repeated and revised records"] --> T["Staging: accepted submissions, source version selection and cleaning"]
     T --> M["Modelling: shared interpretation and rules"]
     M --> R["Reporting: care entities, period state and summaries"]
     T --> R
@@ -40,7 +67,7 @@ need it.
 | What circumstances were recorded? | `fct_mhsds_employment_observation`, `fct_mhsds_accommodation_observation`, `fct_mhsds_disability_observation`, `fct_mhsds_social_circumstance_observation` | Employment, accommodation, disability and social circumstances as submitted. |
 | What care plans and agreements were recorded? | `fct_mhsds_care_plan_period`, `fct_mhsds_care_plan_agreement` | Plan snapshots and recorded agreements. |
 | How did recorded assessment scores change? | `fct_mhsds_assessment_observation`, `fct_mhsds_assessment_instance`, `fct_mhsds_assessment_score_change` | Individual responses, possible assessment groups and changes between comparable numeric observations. |
-| What inpatient care and capacity were recorded? | `fct_mhsds_hospital_provider_spell`, `fct_mhsds_ward_stay`, `fct_mhsds_inpatient_occupancy`, `fct_mhsds_current_inpatients`, `fct_mhsds_ward_capacity_period` | Recorded admissions and ward stays, inferred occupancy intervals and current inpatient evidence, and monthly reported capacity. |
+| What inpatient care and capacity were recorded? | `fct_mhsds_hospital_provider_spell`, `fct_mhsds_ward_stay`, `fct_mhsds_inpatient_occupancy`, `fct_mhsds_current_inpatients`, `fct_mhsds_ward_capacity_period` | Recorded admissions and ward stays, inferred occupancy and current inpatient evidence, ward details, and monthly average available beds and bed base including temporary closures. |
 | What leave or absence was recorded? | `fct_mhsds_home_leave`, `fct_mhsds_leave_of_absence`, `fct_mhsds_absence_without_leave` | Recorded leave and absence periods during inpatient care. |
 | What delayed discharge, and who commissioned the stay? | `fct_mhsds_discharge_readiness_period`, `fct_mhsds_spell_commissioner_period` | Readiness and delay-reason periods, and commissioner assignments during admissions. |
 | What legal status and community restrictions were recorded? | `fct_mhsds_mental_health_act_period`, `fct_mhsds_community_treatment_order`, `fct_mhsds_community_treatment_order_recall` | Legal-status periods, community treatment orders and hospital recalls. |
@@ -51,18 +78,6 @@ need it.
 The [reporting guide](mhsds-domain-models.md) explains each table's row meaning
 and definitions. `REPORTING.SEMANTIC.SEM_MHSDS` provides named measures and
 supported relationships over the care entities.
-
-## The role of staging
-
-`STAGING.MHSDS` is the common interface to the source sections. It selects
-accepted submissions, applies source types and missing-date rules, and preserves
-the history needed for period analysis. A repeated monthly row is still source
-evidence, not automatically a new referral, assessment or change in circumstances.
-
-History tables such as `stg_mhsds_referral_history` retain accepted periods.
-Established latest interfaces, such as `stg_mhsds_referral`, select a record's
-newest version. Staging does not decide national waiting-list eligibility,
-clinical improvement or the general person-summary population.
 
 ## What remains in modelling
 
