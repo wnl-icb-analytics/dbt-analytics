@@ -31,19 +31,26 @@ need it.
 |---|---|---|
 | What do we know about each person? | `fct_mhsds_person_summary`, `dim_mhsds_person_provider_period` | Current evidence by person, and demographics by person, provider and period. |
 | Who is on the current recorded caseload? | `fct_mhsds_current_caseload_referral`, `fct_mhsds_current_caseload_person` | Open referrals in the dataset's latest month, including waiting, community and inpatient care. |
-| What demand and access were recorded over time? | `fct_mhsds_referral_period`, `fct_mhsds_referral_summary`, `fct_mhsds_referral_to_treatment_period` | Monthly referral state, care following each referral and submitted waiting-time clocks. |
-| What care took place, and who delivered it? | `fct_mhsds_care_contact`, `fct_mhsds_care_activity`, `fct_mhsds_indirect_activity` | Contacts with attendance states, clinical activities within contacts and work without the patient present. Staff and team relationship tables provide detail. |
+| What demand and access were recorded over time? | `fct_mhsds_referral`, `fct_mhsds_referral_period`, `fct_mhsds_referral_summary`, `fct_mhsds_referral_to_treatment_period` | Latest referrals, monthly referral state, care following each referral and submitted waiting-time clocks. |
+| Which teams were involved? | `rel_mhsds_referral_service_team`, `rel_mhsds_referral_service_team_period` | Latest and period-specific team relationships, including their roles. |
+| What care took place? | `fct_mhsds_care_contact`, `fct_mhsds_care_activity`, `fct_mhsds_indirect_activity`, `fct_mhsds_contact_activity_monthly` | Contacts with attendance states, activities within contacts, work without the patient present and monthly contact totals. |
+| Who delivered the care? | `rel_mhsds_care_activity_staff`, `dim_mhsds_care_professional_period` | Staff linked to activities and their attributes in each submission period. |
 | What group activity was recorded? | `fct_mhsds_group_session`, `fct_mhsds_group_therapy_contact`, `fct_mhsds_drop_in_contact` | Anonymous sessions and drop-ins, plus identifiable group-therapy contacts already included in contact totals. |
-| What needs, circumstances and plans were recorded? | Clinical and circumstances families | Diagnoses, presenting complaints, employment, accommodation, disability, social circumstances, care plans and agreements. |
+| What clinical needs were recorded? | `fct_mhsds_diagnosis`, `fct_mhsds_presenting_complaint`, `fct_mhsds_clinical_record` | Recorded diagnoses and complaints, plus the combined clinical-item history. |
+| What circumstances were recorded? | `fct_mhsds_employment_observation`, `fct_mhsds_accommodation_observation`, `fct_mhsds_disability_observation`, `fct_mhsds_social_circumstance_observation` | Employment, accommodation, disability and social circumstances as submitted. |
+| What care plans and agreements were recorded? | `fct_mhsds_care_plan_period`, `fct_mhsds_care_plan_agreement` | Plan snapshots and recorded agreements. |
 | How did recorded assessment scores change? | `fct_mhsds_assessment_observation`, `fct_mhsds_assessment_instance`, `fct_mhsds_assessment_score_change` | Individual responses, possible assessment groups and changes between comparable numeric observations. |
-| What inpatient care and capacity were recorded? | `fct_mhsds_hospital_provider_spell`, `fct_mhsds_ward_stay`, `fct_mhsds_current_inpatients`, `fct_mhsds_ward_capacity_period` | Recorded admissions and ward stays, inferred current inpatient evidence and monthly reported capacity. |
-| What affected a patient's stay or legal status? | Inpatient and clinical families | Discharge readiness and delays, leave, commissioner assignments, legal-status periods, community treatment orders, recalls and restrictive interventions. |
+| What inpatient care and capacity were recorded? | `fct_mhsds_hospital_provider_spell`, `fct_mhsds_ward_stay`, `fct_mhsds_inpatient_occupancy`, `fct_mhsds_current_inpatients`, `fct_mhsds_ward_capacity_period` | Recorded admissions and ward stays, inferred occupancy intervals and current inpatient evidence, and monthly reported capacity. |
+| What leave or absence was recorded? | `fct_mhsds_home_leave`, `fct_mhsds_leave_of_absence`, `fct_mhsds_absence_without_leave` | Recorded leave and absence periods during inpatient care. |
+| What delayed discharge, and who commissioned the stay? | `fct_mhsds_discharge_readiness_period`, `fct_mhsds_spell_commissioner_period` | Readiness and delay-reason periods, and commissioner assignments during admissions. |
+| What legal status and community restrictions were recorded? | `fct_mhsds_mental_health_act_period`, `fct_mhsds_community_treatment_order`, `fct_mhsds_community_treatment_order_recall` | Legal-status periods, community treatment orders and hospital recalls. |
+| What restrictive interventions were recorded? | `fct_mhsds_restrictive_intervention_incident`, `fct_mhsds_restrictive_intervention_type` | Incidents and the intervention types recorded within them. |
 | How recent is the evidence? | `dq_mhsds_provider_submission`, `fct_mhsds_latest_provider_caseload_referral` | Provider reporting dates and older caseload evidence that is excluded from the common current-month view. |
+| What currency classifications and estimated costs apply? | `fct_mhsds_currency_contacts`, `fct_mhsds_currency_bed_days`, `fct_mhsds_currency_current_inpatients`, `fct_mhsds_currency_referral_summary` | Costing classifications and estimates for contacts, bed days, current inpatients and referrals. |
 
-The [reporting guide](mhsds-domain-models.md) lists every reporting table and its
-row meaning. `REPORTING.SEMANTIC.SEM_MHSDS` provides named measures and supported
-relationships over these entities. Currency tables add costing classifications
-and estimates separately.
+The [reporting guide](mhsds-domain-models.md) explains each table's row meaning
+and definitions. `REPORTING.SEMANTIC.SEM_MHSDS` provides named measures and
+supported relationships over the care entities.
 
 ## The role of staging
 
