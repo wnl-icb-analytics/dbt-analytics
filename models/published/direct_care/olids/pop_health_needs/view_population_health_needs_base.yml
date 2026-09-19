@@ -1,7 +1,14 @@
 models:
   - name: view_population_health_needs_base
-    description: |
-      Population health needs person level view for both LTC and non-LTC patients.
+    description: >
+      Population health needs view of actively registered people with and without
+      long-term conditions. People repeat once per practice weighted list size value.
+      Weighted list size comes from the quarterly stg_reference_gp_weighted_list_size,
+      joined on practice code only. condition_name is 'LTC patients' when the person has
+      at least one condition and 'Non-LTC patients' otherwise. risk_factor is 'Patients
+      with risk factor' for current smokers, increasing or higher risk drinkers, and
+      people with possible alcohol dependence, an active or historical alcohol misuse
+      disorder or an overweight or obese BMI category. is_patient_19_and_over is 'Yes' for age over 18.
 
     config:
       meta:
@@ -84,7 +91,7 @@ models:
         description: 'LTC patients or Non-LTC patients'
 
       - name: is_active
-        description: 'Active registration flag (Yes/No)'
+        description: 'Active registration flag. Always Yes, as the view keeps active registrations only.'
 
       - name: practice_normalised_weighted_list_size
         description: 'Weighted list size for practice'
