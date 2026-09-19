@@ -1,7 +1,13 @@
 ﻿models:
   - name: int_adult_imms_code_dose
-    description: Intermediate table to match vaccines from the schedule with 
-      code clusters and doses
+    description: >
+      Lookup of adult immunisation codes matched to adult schedule doses. One row per
+      distinct schedule vaccine ID, code, code cluster and matched dose. Codes from
+      stg_reference_adult_imms_codes join to stg_reference_imms_schedule_adult_latest
+      where the code cluster is the schedule's administered, drug, declined or
+      contraindicated cluster. A row is kept only when the code's vaccine and dose match
+      the schedule vaccine name and dose number; shingles codes recorded for dose '1,2'
+      match both schedule doses 1 and 2.
     config:
       meta:
         owner:

@@ -1,7 +1,18 @@
 ﻿models:
   - name: int_childhood_imms_vaccs_historical_age_2
-    description: Intermediate table for historical population aged 2 years old at each analysis month and who have complete or outofschedule vaccinations
-      (declined, contraindicated and overdue excluded). Multiple lines per person
+    description: >
+      Historical vaccination completion flags for children aged 2, by analysis month. One
+      row per person and analysis month in int_childhood_imms_historical_population where
+      the child was aged 2 (registered in the month, not deceased, last 48 months), with
+      practice, ethnicity, IMD and residence fields. Flags count administered events in
+      int_childhood_imms_vaccination_events_historical with age-at-event and interval
+      rules by birth cohort: born before 1 July 2024 needs 6-in-1 doses 1 to 3, Hib/MenC
+      and MMR dose 1 by age 2; born on or after 1 July 2024 needs 6-in-1 dose 4 at 18 to
+      24 months and MMRV, with MMRV dose 2 at 18 to 24 months for those born on or after 1
+      January 2025; MenB (3 doses) and PCV dose 2 on or after the first birthday apply to
+      all. Children without qualifying administrations stay in the output with 0 flags,
+      declined and contraindicated records do not count, and flags use all events recorded
+      to date, not only those before the analysis month.
     config:
       meta:
         owner:

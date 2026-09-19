@@ -1,20 +1,14 @@
 models:
   - name: int_covid_chronic_kidney_disease
-    description: 'COVID vaccination eligibility for people with chronic kidney disease.
-
-      Key Features:
-
-      • Single diagnosis pathway using CKD_COV_COD codes
-
-      • Earliest occurrence in medical history qualifies
-
-      • Age restriction: minimum 5 years for COVID vaccination
-
-      • Includes chronic renal conditions and kidney dysfunction
-
-      • Generates data for every campaign in covid_reported_campaign_ids()
-
-      Purpose: Identify people eligible for COVID vaccination due to chronic kidney disease requiring immunisation.'
+    description: >
+      COVID clinical risk group: chronic kidney disease. One row per person and campaign
+      for every campaign in covid_reported_campaign_ids(). A person qualifies with any
+      CKD_COV_COD record, or where their latest CKD15_COD (any stage) record is also a
+      CKD35_COD (stage 3 to 5) record. Only records on or before the campaign audit end
+      date count, using the terminology version pinned for the campaign, and the person
+      must be aged 5 or over at the campaign reference date. Rows are built for every
+      campaign whether or not it offered this group; the offer is applied in
+      int_covid_under_65_at_risk (currently COVID Autumn 2024 only).
     data_tests:
       - cluster_ids_exist:
           arguments:
@@ -75,7 +69,7 @@ models:
         data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying diagnosis (earliest chronic kidney disease diagnosis)'
+        description: 'Latest CKD stage 3 to 5 record date if any, otherwise latest CKD stage record date, otherwise earliest CKD_COV_COD date'
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description

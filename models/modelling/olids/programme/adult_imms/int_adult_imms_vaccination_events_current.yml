@@ -1,7 +1,19 @@
 ﻿models:
   - name: int_adult_imms_vaccination_events_current
-    description: Intermediate table holding vaccination events for currently 
-      registered adult imms population. Multiple lines per person
+    description: >
+      Adult immunisation events for the current adult immunisation population. One row per
+      person and schedule vaccine ID. Events are GP observation and medication order
+      records dated on or before today whose code maps to the vaccine and dose through
+      int_adult_imms_code_dose; a medication record is added only where no observation
+      exists for the same person, vaccine ID, date and dose. Events must match one of the
+      person's schedule rows in int_adult_imms_currently_eligible (whether or not
+      currently eligible) and be dated after the first day of the birth month.
+      Administration outranks contraindication, which outranks decline, both on the same
+      day and when the higher-ranked event comes later; for dose 2 the second dated event
+      is used. Each row has an event type, an out-of-schedule flag (more than 15 days
+      outside the schedule age window) and a status: Completed, OutofSchedule, Declined,
+      Contraindicated, or Not applicable where the vaccine ID belongs to a different
+      cohort (for example RSV_1B for someone not in a care home).
 
     config:
       meta:

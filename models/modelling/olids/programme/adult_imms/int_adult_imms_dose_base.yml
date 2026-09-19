@@ -1,6 +1,17 @@
 models:
   - name: int_adult_imms_dose_base
-    description: Intermediate table holding historical imms population by practice over the age of 60 and any vaccinations associated with 
+    description: >
+      Adult immunisation history base for time-series counts. One row per person and
+      recorded event from int_adult_imms_vaccination_events_historical (at most one event
+      per person and vaccine ID, any date), with people who have no event kept once with
+      empty vaccine fields. The population is everyone in dim_person_demographics
+      currently aged 18 or over, with no registration or deceased filter; practice_code is
+      the current or last registered practice. Adds age 65+ and 75+ flags, care home,
+      immunosuppression, current pregnancy, ethnicity, IMD 2025 quintile and the
+      April-to-March fiscal year of the event. The PPV clinical risk group flag filters
+      fct_covid_eligibility on risk_group values that model does not produce (it holds
+      condition names in subcohort), so the flag currently reflects cochlear implant and
+      CSF leak records only.
 
     config:
       meta:

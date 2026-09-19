@@ -1,7 +1,16 @@
 ﻿models:
   - name: int_childhood_imms_vaccs_historical_age_5
-    description: Intermediate table for historical population aged 5 years old at each analysis month and who have complete or outofschedule vaccinations
-      (declined, contraindicated and overdue excluded). Multiple lines per person
+    description: >
+      Historical vaccination completion flags for children aged 5, by analysis month. One
+      row per person and analysis month in int_childhood_imms_historical_population where
+      the child was aged 5 (registered in the month, not deceased, last 48 months), with
+      practice, ethnicity, IMD and residence fields. Flags are 1 when administered events
+      in int_childhood_imms_vaccination_events_historical were given by age 5: 6-in-1
+      doses 1 to 3, 4-in-1 pre-school booster, Hib/MenC, MMR dose 1 (aged 1 or 2 and on or
+      after the first birthday) and MMR dose 2 (on or after dose 1); all_comp_by_5 is 1
+      when all five are met. Children without qualifying administrations stay in the
+      output with 0 flags, declined and contraindicated records do not count, and flags
+      use all events recorded to date, not only those before the analysis month.
     config:
       meta:
         owner:

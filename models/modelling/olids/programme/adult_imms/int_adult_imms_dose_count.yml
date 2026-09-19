@@ -1,7 +1,14 @@
 models:
   - name: int_adult_imms_dose_count
-    description: Intermediate table holding historical imms population aged 60+ and any vaccinations associated with 
-      them and the practice they were registered.
+    description: >
+      Latest administered adult immunisation doses by person, formatted for monthly
+      counts. One row per person in int_adult_imms_dose_base (currently aged 18 or over,
+      registered or not), with current practice and the demographic and risk flags from
+      that model. For PPV dose 1 (PPV_1), shingles dose 1 (SHING_1, SHING_1B), shingles
+      dose 2 (SHING_2, SHING_2B) and RSV dose 1 (RSV_1) it adds the month label, YYYYMM
+      sort key and fiscal year of the latest administered dose from the
+      int_adult_imms_historical_* models; these fields are null when no such dose is
+      recorded. No age 60+ or date-window filter is applied.
 
     config:
       meta:

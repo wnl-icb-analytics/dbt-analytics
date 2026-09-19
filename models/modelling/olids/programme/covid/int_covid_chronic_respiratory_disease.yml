@@ -1,20 +1,14 @@
 models:
   - name: int_covid_chronic_respiratory_disease
-    description: 'COVID vaccination eligibility for people with chronic respiratory disease.
-
-      Key Features:
-
-      • Single diagnosis pathway using CRD_COV_COD codes
-
-      • Earliest occurrence in medical history qualifies
-
-      • Age restriction: minimum 5 years for COVID vaccination
-
-      • Includes chronic pulmonary conditions and respiratory dysfunction
-
-      • Generates data for every campaign in covid_reported_campaign_ids()
-
-      Purpose: Identify people eligible for COVID vaccination due to chronic respiratory disease requiring immunisation.'
+    description: >
+      COVID clinical risk group: chronic respiratory disease. One row per person and
+      campaign for every campaign in covid_reported_campaign_ids(). A person qualifies if
+      they are in int_covid_asthma for the campaign, or have any RESP_COV_COD record on or
+      before the campaign audit end date (terminology version pinned per campaign) and are
+      aged 5 or over at the campaign reference date. Asthma takes precedence; the
+      description column shows which pathway applied. Rows are built for every campaign
+      whether or not it offered this group; the offer is applied in
+      int_covid_under_65_at_risk (currently COVID Autumn 2024 only).
     data_tests:
       - cluster_ids_exist:
           arguments:
@@ -71,7 +65,7 @@ models:
         data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying diagnosis (earliest chronic respiratory disease diagnosis)'
+        description: 'Asthma qualifying date from int_covid_asthma, otherwise earliest RESP_COV_COD record date'
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description

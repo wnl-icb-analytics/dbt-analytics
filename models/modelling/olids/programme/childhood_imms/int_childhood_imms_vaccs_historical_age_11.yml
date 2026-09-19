@@ -1,8 +1,16 @@
 ﻿models:
   - name: int_childhood_imms_vaccs_historical_age_11
-    description: Intermediate table for historical population aged 11 years old 
-      at each analysis month and who have complete or outofschedule vaccinations
-       (declined, contraindicated and overdue excluded). Multiple lines per person
+    description: >
+      Historical vaccination completion flags for children aged 11, by analysis month. One
+      row per person and analysis month in int_childhood_imms_historical_population where
+      the child was aged 11 (registered in the month, not deceased, last 48 months), with
+      practice, ethnicity, IMD and residence fields. Flags are 1 when administered events
+      in int_childhood_imms_vaccination_events_historical were given by age 11: 6-in-1
+      doses 1 to 3, 4-in-1 pre-school booster, Hib/MenC, and MMR dose 1 (aged 1 or 2 and
+      on or after the first birthday) with dose 2 at least 3 months later; all_comp_by_11
+      is 1 when all four are met. Children without qualifying administrations stay in the
+      output with 0 flags, declined and contraindicated records do not count, and flags
+      use all events recorded to date, not only those before the analysis month.
 
     config:
       meta:

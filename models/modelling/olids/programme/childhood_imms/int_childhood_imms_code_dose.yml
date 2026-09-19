@@ -1,6 +1,14 @@
 models:
   - name: int_childhood_imms_code_dose
-    description: Intermediate table to match vaccines from the schedule with code clusters and doses
+    description: >
+      Lookup of childhood immunisation codes matched to childhood schedule doses. One row
+      per schedule vaccine ID, code, code cluster and matched dose. Codes from
+      stg_reference_childhood_imms_codes join to stg_reference_imms_schedule_child_latest
+      where the code cluster is the schedule's administered, drug, declined or
+      contraindicated cluster. A row is kept only when the code's dose matches the
+      schedule dose. Codes not tied to one dose match each schedule dose they cover:
+      6-in-1 '1,2,3,4', MenB '1,2,3', HPV '1,2,3' (doses 1 and 2), MMR, MMRV, PCV and
+      rotavirus '1,2'; Hib/MenC '1,2' codes match dose 1 only.
     config:
       meta:
         owner:
