@@ -1,20 +1,13 @@
 models:
   - name: int_covid_pregnancy
-    description: 'COVID vaccination eligibility for people who are pregnant.
-
-      Key Features:
-
-      • Single diagnosis pathway using PREG_COV_COD codes
-
-      • Recent occurrence qualifying (lookback period from campaign)
-
-      • Age restriction: minimum 5 years for COVID vaccination
-
-      • Includes pregnancy status and antenatal care codes
-
-      • Generates data for every campaign in covid_reported_campaign_ids()
-
-      Purpose: Identify people eligible for COVID vaccination due to pregnancy requiring immunisation.'
+    description: >
+      Pregnant people aged 12+ in COVID campaigns offering pregnancy, currently COVID Autumn
+      2024 only. One row per person and campaign. Campaigns must have eligible_pregnancy
+      set. A person qualifies with a PREGDEL_COD pregnancy or delivery record between
+      pregnancy_current_start and pregnancy_current_end. A PREG_COD record from
+      pregnancy_lookback_start up to the period start also qualifies when no later delivery
+      code is recorded before the period starts. Delivery codes are those in PREGDEL_COD but
+      not PREG_COD. Age is tested at the campaign reference date.
     tests:
       - cluster_ids_exist:
           arguments:
@@ -70,7 +63,7 @@ models:
         data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying diagnosis (recent pregnancy record)'
+        description: 'Date of the latest qualifying pregnancy or delivery record'
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description
@@ -80,6 +73,6 @@ models:
       - name: age_months_at_ref_date
         description: 'Age in months at campaign reference date'
       - name: age_years_at_ref_date
-        description: 'Age in years at campaign reference date (minimum 5 years required)'
+        description: 'Age in years at campaign reference date. Minimum 12'
       - name: created_at
         description: 'Audit timestamp for record creation (campaign audit end date)'
