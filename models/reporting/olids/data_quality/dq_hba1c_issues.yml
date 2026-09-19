@@ -1,16 +1,15 @@
 models:
   - name: dq_hba1c_issues
-    description: 'Data quality issues in HbA1c measurements across dual measurement scales.
-
-      Scale Standards:
-
-      • IFCC scale: 10-200 mmol/mol (modern international standard)
-
-      • DCCT scale: 3-20% (legacy US standard)
-
-      • Scale ambiguity detection for values that could be either scale
-
-      Purpose: Supports HbA1c data validation and scale standardisation for diabetes monitoring.'
+    description: >
+      HbA1c observations failing plausibility checks, one row per observation: IFCC outside
+      20-200 mmol/mol, DCCT outside 3-20%, unknown type or invalid upstream. Source is
+      int_hba1c_all, clusters IFCCHBAM_COD and DCCTHBA1C_COD. Invalid upstream includes
+      values capped to null because they were negative or above 1000. int_hba1c_all assigns
+      the scale mainly by value: above 25 is IFCC, below 20 is DCCT, 20-25 falls back to
+      cluster and unit. An IFCC-coded value below 20 is therefore treated as DCCT.
+      is_date_missing and is_future_date are always false because upstream removes those
+      rows. is_extreme_outlier marks IFCC values above 150 mmol/mol or DCCT values above
+      15%.
     config:
       meta:
         owner:
