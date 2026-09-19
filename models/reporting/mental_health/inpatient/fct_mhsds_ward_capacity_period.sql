@@ -25,6 +25,8 @@ select
     , w.avail_bed_days is not null as has_reported_available_capacity
     , w.avail_bed_days / nullif(days_in_reporting_period, 0) as average_available_beds
     , w.closed_bed_days / nullif(days_in_reporting_period, 0) as average_temporarily_closed_beds
+    , w.avail_bed_days + w.closed_bed_days as reported_bed_base_days
+    , reported_bed_base_days / nullif(days_in_reporting_period, 0) as average_reported_bed_base
     , coalesce(s.n_ward_stay_records, 0) as n_ward_stay_records
     , s.n_ward_stay_records is not null as has_matching_ward_stay_evidence
     , coalesce(s.n_stays_with_invalid_dates, 0) as n_stays_with_invalid_dates
@@ -44,6 +46,8 @@ select
     , security.description as ward_security_level_description
     , w.ward_intended_clin_care_mh as ward_clinical_care_intensity_code
     , intensity.description as ward_clinical_care_intensity_description
+    , case when w.locked_ward_ind then 'Y' when not w.locked_ward_ind then 'N' end as locked_ward_indicator_code
+    , locked_ward.description as locked_ward_indicator_description
     , w.uniq_submission_id as submission_id
     , w.mhs903_uniq_id as source_row_id
 from {{ ref('stg_mhsds_mhs903warddetails') }} as w
@@ -60,3 +64,5 @@ left join {{ ref('mhsds_inpatient_code_lookup') }} as security
     on w.ward_sec_level = security.code and security.code_set_name = 'ward_security_level'
 left join {{ ref('mhsds_inpatient_code_lookup') }} as intensity
     on w.ward_intended_clin_care_mh = intensity.code and intensity.code_set_name = 'ward_clinical_care_intensity'
+left join {{ ref('mhsds_inpatient_code_lookup') }} as locked_ward
+    on locked_ward_indicator_code = locked_ward.code and locked_ward.code_set_name = 'locked_ward_indicator'

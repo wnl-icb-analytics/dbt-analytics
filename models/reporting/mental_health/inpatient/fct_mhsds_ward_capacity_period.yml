@@ -4,8 +4,10 @@ models:
   description: >-
     Reported ward capacity alongside recorded ward-stay evidence. Each row is one ward in an
     accepted submission. Available bed days include staffed beds whether occupied or unoccupied;
-    temporarily closed bed days are separate. Dividing by the days in the period gives average beds,
-    not availability at month end or now. Recorded stay midnights use ward stays from the same
+    temporarily closed bed days are separate. Their sum gives the reported bed base only when both
+    are supplied. Dividing by the days in the period gives average beds, not physical bed stock or
+    availability at month end or now. Capacity fields were introduced in MHSDS version 6 from April
+    2024; earlier ward details do not report capacity. Recorded stay midnights use ward stays from the same
     submission and include leave, with missing-date and overlap flags. Their ratio to available bed
     days is descriptive, not a validated occupancy rate. This commissioning extract may cover fewer
     patients than the whole ward's capacity.
@@ -25,8 +27,32 @@ models:
     description: Reported monthly staffed bed days temporarily closed to admission and unoccupied. Permanently
       closed beds are outside this measure.
   - name: average_available_beds
-    description: Available bed days divided by inclusive reporting-period days. Sum wards only within a common
-      period.
+    description: Average staffed beds available during the reporting period, including occupied beds.
+      Available bed days divided by inclusive period days. Sum wards only within a common period.
+  - name: average_temporarily_closed_beds
+    description: Temporarily closed bed days divided by inclusive reporting-period days. Missing is
+      unknown. Sum wards only within a common period.
+  - name: reported_bed_base_days
+    description: Available plus temporarily closed bed days, only when both are reported. NHS guidance
+      defines this as usually staffed bed days for non-specialised beds and commissioned bed days for
+      specialised beds. Excludes permanently closed beds and unallocated independent-sector beds.
+      Missing either component gives null, not a partial total.
+  - name: average_reported_bed_base
+    description: Reported bed base days divided by inclusive reporting-period days. Average beds
+      including temporary closures, not a physical inventory or month-end count. Null if either bed-day
+      component is missing. Sum wards only within a common period.
+  - name: ward_id
+    description: Source ward identifier qualified by provider and reporting period. Use with submission_id
+      for same-submission joins. It is not a stable ward identifier across months.
+  - name: ward_local_id
+    description: Provider's local ward code. Use with provider and site when comparing reported ward
+      history; code reuse or changes can prevent continuity.
+  - name: locked_ward_indicator_code
+    description: Recorded Y or N indicator for whether a general, non-secure ward is locked to prevent
+      unauthorised entry or exit. Missing is unknown. This is separate from the ward security level.
+  - name: locked_ward_indicator_description
+    description: Published description for the recorded locked ward indicator. Missing or unrecognised
+      codes have no description.
   - name: recorded_ward_stay_midnights
     description: Sum of recorded ward-stay intervals for this submission and ward. Includes leave; no matched
       stays gives zero recorded evidence, not proof of an empty ward.

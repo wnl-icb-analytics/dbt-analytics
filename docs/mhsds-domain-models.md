@@ -345,6 +345,18 @@ includes staffed beds whether occupied or empty; permanently closed beds are
 outside these counts. Monthly bed days divided by period days give average beds,
 not live availability. Missing capacity remains unknown.
 
+`reported_bed_base_days` adds available and temporarily closed bed days only
+when both are reported. `average_reported_bed_base` divides that total by period
+days. This describes the usually staffed bed base, or commissioned bed base for
+specialised beds, including temporary closures. It is not a physical inventory.
+These capacity fields began with MHSDS version 6 in April 2024.
+
+Ward details include setting, intended age and sex, care intensity, security
+level and the recorded locked ward indicator. The locked indicator concerns
+general, non-secure wards and is separate from security level. `ward_id` is
+period-specific; compare provider, local ward code and site for ward history,
+allowing for code changes or reuse.
+
 The same-submission ward-stay comparison counts recorded midnight intervals,
 clipped to the reporting period. It includes leave and can contain overlaps.
 The descriptive ratio is omitted where dates or overlaps make it inconsistent.
