@@ -1,0 +1,156 @@
+version: 2
+models:
+- name: fct_mhsds_person_summary
+  description: >-
+    Summary of the MHSDS evidence available for each identifiable person. Each row is one MHSDS
+    person ID, including people recorded only in clinical, legal-status or other modelled evidence.
+    Use it to select cohorts and compare recorded referrals, contacts, diagnoses, current caseload
+    and inpatient evidence. The as_of_date is the latest accepted dataset period; individual
+    providers can be older. Recent-contact measures exclude dates after that date. Diagnosis counts
+    count records, not clinically current conditions. No qualifying evidence gives zero or false;
+    missing clinical values and patient indicators remain null. National ID changes can split one
+    person's history across rows.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: person_id
+    description: Non-null MHSDS person identifier from any documented evidence family. National matching changes
+      can assign different IDs to the same individual over time.
+    data_tests:
+    - not_null
+    - unique
+  - name: sk_patient_id
+    description: Cross-system patient key; null when bridging is unavailable.
+  - name: as_of_date
+    description: 'Dataset observation date: latest accepted reporting-period end. Provider-specific evidence
+      can be older.'
+  - name: calculation_date
+    description: Build date, exposed separately from source observation dates.
+  - name: first_evidence_reporting_period_end_date
+    description: Earliest period attached to any retained evidence for the person; not clinical onset or complete
+      first submission history.
+  - name: last_evidence_reporting_period_end_date
+    description: Latest period attached to the person's retained evidence.
+  - name: n_evidence_types
+    description: Number of modelled evidence families containing this person.
+  - name: n_recorded_referrals
+    description: Latest recorded referral entities across available accepted history, not lifetime care.
+  - name: n_referrals_without_recorded_end
+    description: Referrals with no recorded rejection or discharge. This does not establish an active caseload.
+  - name: n_recorded_contacts
+    description: Latest recorded referral/contact pairs across available accepted history.
+  - name: latest_contact_date
+    description: Latest recorded contact on or before as_of_date, including cancelled, DNA and unknown attendance.
+  - name: latest_attended_contact_date
+    description: Latest contact with attendance 05 or 06 on or before as_of_date.
+  - name: n_contacts_12m
+    description: All recorded attendance states within the inclusive 12-month window ending at as_of_date.
+  - name: n_contacts_90d
+    description: All recorded attendance states within the inclusive 90-day window ending at as_of_date.
+  - name: n_attended_contacts_12m
+    description: Contacts with attendance 05 or 06 within the inclusive 12-month window.
+  - name: n_dna_contacts_12m
+    description: Contacts with attendance 03 or 07 within the inclusive 12-month window.
+  - name: n_cancelled_contacts_12m
+    description: Contacts with attendance 02 or 04 within the inclusive 12-month window.
+  - name: n_contacts_with_missing_attendance_status_12m
+    description: Contacts with null attendance within the inclusive 12-month window.
+  - name: n_contacts_after_as_of_date
+    description: Recorded contacts dated after the dataset observation date, excluded from recency measures.
+  - name: n_recorded_hospital_spells
+    description: Recorded provider spells before occupancy selection.
+  - name: n_occupancy_intervals
+    description: Intervals retained after the established overlap and recency rules. Different from recorded
+      spell counts.
+  - name: is_current_inpatient
+    description: Whether any occupancy interval is retained as open under the unchanged occupancy rules. False
+      means no qualifying evidence.
+  - name: occupancy_evidence_as_of_date
+    description: Latest staged spell reporting period used by the occupancy model. Can differ from as_of_date.
+  - name: last_inpatient_evidence_date
+    description: Latest reporting-period end attached to a retained occupancy interval for the person.
+  - name: latest_occupancy_discharge_date
+    description: Latest end of a retained interval whose final end reason is discharged, excluding superseded
+      discharges.
+  - name: n_diagnosis_records
+    description: Retained diagnosis evidence items of any role, including undated and unlabelled items. Not
+      a condition count.
+  - name: n_primary_diagnosis_records
+    description: Retained primary-diagnosis evidence items, including undated or unlabelled records and absent
+      referrals.
+  - name: n_undated_primary_diagnosis_records
+    description: Primary diagnosis items without a supported recorded time.
+  - name: latest_primary_diagnosis_recorded_at
+    description: Latest supported time on recorded primary diagnosis evidence. Does not establish clinical
+      currency.
+  - name: n_latest_primary_diagnosis_records
+    description: Primary diagnosis items tied at the latest non-null recorded time. Zero when all primary diagnoses
+      are undated. No single code is chosen from ties.
+  - name: n_assessment_observations
+    description: Accepted assessment questions, dimensions or score occurrences. Not completed questionnaires
+      or paired outcomes.
+  - name: latest_assessment_recorded_at
+    description: Latest supported clinical time of an assessment observation. Referral assessments use completion
+      time; activity assessments inherit activity timing.
+  - name: n_legal_status_periods
+    description: Recorded legal-status periods, including non-detention and unknown statuses.
+  - name: has_recorded_detention
+    description: Any period classified as detention under the existing project definition. False means no qualifying
+      evidence.
+  - name: is_currently_detained
+    description: Any detention period satisfying the unchanged open, unexpired and recent-submission rule at
+      as_of_date.
+  - name: patient_indicator_reporting_period_end_date
+    description: Evidence period of the selected latest patient indicators; age is visible independently of
+      their values.
+  - name: is_looked_after_child
+    description: True for Y, false for N, null for unknown or missing submitted indicators.
+  - name: first_referral_date
+    description: First referral request received date.
+  - name: latest_referral_date
+    description: Latest referral request received date.
+  - name: latest_detention_start_date
+    description: Start date of the person's latest detained period. Null when the person has never been detained,
+      or when the source start date was an Excel-epoch missing-value sentinel.
+  - name: latest_detention_code
+    description: NHSD legal-status code of the person's latest detained period, so the flags can be audited
+      and narrowed. Null when the person has never been detained, including someone whose only legal-status
+      periods are guardianship, informal or unknown.
+  - name: latest_detention_description
+    description: UKHFD dictionary description for latest_detention_code, taken from the maintained national
+      reference so it tracks national wording updates. Null when the person has never been detained, or when
+      the code is absent from the UKHFD classification. The detention rule is not derived from this text.
+  - name: child_protection_plan_status_code
+    description: Latest submitted child protection plan status code.
+  - name: child_protection_plan_status_description
+    description: Published description for the child protection plan status.
+  - name: looked_after_child_indicator_code
+    description: Latest submitted looked-after-child indicator code.
+  - name: looked_after_child_indicator_description
+    description: Published description for the looked-after-child indicator.
+  - name: latest_recorded_admission_date
+    description: Latest submitted admission date across all recorded provider spells, before occupancy selection.
+  - name: latest_recorded_discharge_date
+    description: Latest submitted discharge date across all recorded provider spells, before occupancy selection.
+  - name: latest_occupancy_admission_date
+    description: Latest admission date among retained occupancy intervals.
+  - name: has_current_recorded_caseload
+    description: At least one open referral in a provider dataset latest reporting month. Includes referrals
+      awaiting first attendance and community care. This does not assert active treatment today.
+  - name: n_current_caseload_providers
+    description: Providers with at least one current recorded open referral for this person.
+  - name: n_current_caseload_referrals
+    description: Open referrals across the dataset latest reporting month.
+  - name: n_current_caseload_referrals_without_attendance
+    description: Current recorded open referrals without attended contact evidence by the provider period end.
+  - name: current_caseload_evidence_date
+    description: Dataset latest accepted reporting-period end when this person has current recorded caseload
+      evidence; null otherwise.
+  - name: n_indirect_activity_occurrences
+    description: All accepted MHS204 source occurrences, not a deduplicated lifetime activity count.
+  - name: n_care_plan_snapshots
+    description: Accepted MHS008 plan-period snapshots; repeat submissions of the same plan count separately.
+  - name: n_recorded_community_treatment_orders
+    description: Retained provider/MHA-period/start-date CTO evidence items, including orders no longer open.

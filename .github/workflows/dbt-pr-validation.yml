@@ -27,7 +27,8 @@
 # Prerequisites:
 #   - Snowflake secrets: SNOWFLAKE_ACCOUNT, SNOWFLAKE__USERNAME,
 #     SNOWFLAKE__PRIVATE_KEY, SNOWFLAKE__PASSPHRASE
-#   - DBT_ADMIN role with USAGE on WH_WNL_ENGINEERING_M
+#   - DBT_ADMIN role with USAGE on WH_WNL_ENGINEERING_M and WH_WNL_OLIDS_L
+#     (eFI2 history models)
 
 name: dbt PR Validation
 
@@ -46,10 +47,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     concurrency:
-      # Merge candidates share DEV relations, so validate them serially. PR
-      # status-only runs remain independent and cancel when superseded.
+      # Merge candidates share DEV relations, so validate them serially.
+      # queue: max holds up to 100 pending runs FIFO instead of cancelling all
+      # but one, so the queue can build every entry of a stack. It cannot be
+      # combined with cancel-in-progress, so PR status-only runs queue too.
       group: ${{ github.event_name == 'merge_group' && 'dbt-pr-validation-merge-queue' || format('dbt-pr-validation-{0}', github.event.pull_request.number || github.ref_name) }}
-      cancel-in-progress: ${{ github.event_name != 'merge_group' }}
+      cancel-in-progress: false
+      queue: max
     permissions:
       contents: read
     env:
@@ -58,6 +62,11 @@ jobs:
       SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
       SNOWFLAKE_ROLE: DBT_ADMIN
       SNOWFLAKE_WAREHOUSE: WH_WNL_ENGINEERING_M
+      # The eFI2 history models expand observations across 60 month-ends. A
+      # merge candidate builds them into DEV from empty, so route them off the
+      # Medium warehouse here as well as on the monthly refresh in
+      # dbt-scheduled.yml.
+      EFI2_HISTORY_WAREHOUSE: WH_WNL_OLIDS_L
     steps:
       - name: Report PR-side queue gate
         if: github.event_name == 'pull_request'

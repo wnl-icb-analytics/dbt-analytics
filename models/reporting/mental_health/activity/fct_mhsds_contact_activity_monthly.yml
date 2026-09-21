@@ -1,0 +1,38 @@
+version: 2
+models:
+- name: fct_mhsds_contact_activity_monthly
+  description: >-
+    Monthly contact totals by provider, team identifiers and team type. Each row is one such
+    combination and calendar month of the contact date. Counts use the latest version of each
+    contact and retain attended, non-attended and cancelled appointments. Future dates remain
+    included; missing dates form an unknown-month group. Teams reflect the contact's own submission.
+    These are contact totals only. Distinct-person counts cannot be added across teams or months.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: service_activity_month_id
+    data_tests:
+    - not_null
+    - unique
+  - name: activity_month
+    description: First day of the contact calendar month; null for undated contacts.
+  - name: n_contacts
+    description: Recorded contacts across all attendance states.
+  - name: n_people_with_recorded_identity
+    description: Distinct non-null MHSDS people within this row only. Not additive across rows.
+  - name: recorded_attended_duration_minutes
+    description: Sum of submitted duration for attended contacts. Null when no attended duration is supplied;
+      not staff time, capacity or whole-treatment duration.
+  - name: n_attended_contacts_with_missing_duration
+    description: Attended contacts without a recorded duration, to interpret incomplete duration totals.
+  - name: n_contacts_attributed_to_referral_primary_team
+    description: >-
+      Contacts attributed to the same-submission v6 primary referral team because no explicit contact team was recorded.
+  - name: n_contacts_without_resolved_team
+    description: >-
+      Contacts with no supported team pointer, including pre-v6 contacts without a legacy team. An explicit unmatched pointer is retained and is not counted here.
+  - name: n_contacts_without_team_type
+    description: >-
+      Contacts whose selected team has no resolved service type, whether or not a team pointer is present.

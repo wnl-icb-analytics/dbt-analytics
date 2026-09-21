@@ -1,0 +1,59 @@
+version: 2
+models:
+- name: fct_mhsds_restrictive_intervention_type
+  description: >-
+    Types of restrictive intervention recorded during incidents. Each row is one provider-qualified
+    intervention occurrence using its latest accepted version. Several occurrences can belong to the
+    same incident. Injury fields describe submitted evidence; a missing value does not mean there
+    was no injury. Records with incomplete identifying details remain separate. Count incidents from
+    the incident table, not from this table.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: restrictive_intervention_type_id
+    description: Unique identifier at the documented model grain.
+    data_tests:
+    - not_null
+    - unique
+  - name: intervention_type_source_id
+    description: Submitted intervention type source id.
+  - name: incident_source_id
+    description: Submitted incident source id.
+  - name: hospital_provider_spell_source_record_id
+    description: Submitted hospital provider spell source record id.
+  - name: intervention_type_code
+    description: Submitted intervention type code.
+  - name: intervention_start_date
+    description: Submitted intervention start date.
+  - name: intervention_start_time
+    description: Submitted intervention start time.
+  - name: intervention_end_date
+    description: Submitted intervention end date.
+  - name: intervention_end_time
+    description: Submitted intervention end time.
+  - name: patient_injury_code
+    description: Submitted patient injury code.
+  - name: staff_injury_code
+    description: Submitted staff injury code.
+  - name: other_person_injury_code
+    description: Submitted other person injury code.
+  - name: intervention_type_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: patient_injury_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: staff_injury_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: other_person_injury_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: n_accepted_source_records
+    description: Accepted submitted versions of this identity across all periods, including repeats.
+  - name: is_identity_incomplete
+    description: A required identity component is missing; the source row is retained separately.
+  - name: first_submission_period_end_date
+    description: First accepted reporting period containing this identity, not the clinical start date.
+  - name: reporting_period_end_date
+    description: Period of the accepted source evidence; may be later than the clinical event.
+  - name: source_file_received_at
+    description: Source file receipt timestamp, not a clinical time.

@@ -1,0 +1,113 @@
+version: 2
+models:
+- name: rel_mhsds_care_activity_staff
+  description: >-
+    Professionals linked to recorded care activities. Each row is one activity/professional
+    relationship, taken directly from MHS202 before version 6 or from MHS206 in version 6.
+    Relationships remain when the activity or professional record is missing, with flags showing
+    which link is absent. Several professionals can belong to an activity, so count activities
+    before joining if an activity total is needed.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: care_activity_staff_relationship_id
+    description: Stable identifier for the source relationship row.
+    data_tests:
+    - not_null
+    - unique
+  - name: care_activity_source_record_id
+    description: Expected fct_mhsds_care_activity identifier, retained for orphan relationships.
+    data_tests:
+    - not_null
+  - name: care_professional_period_id
+    description: Expected dim_mhsds_care_professional_period identifier.
+    data_tests:
+    - not_null
+  - name: source_dataset
+    description: Source dataset, always MHSDS.
+    data_tests:
+    - not_null
+  - name: source_relationship_id
+    description: MHS202 or MHS206 unique source row identifier.
+    data_tests:
+    - not_null
+  - name: source_table
+    description: MHS202 for legacy direct relationships or MHS206 for v6 relationships.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - MHS202
+          - MHS206
+  - name: relationship_source
+    description: Whether the professional was held directly on MHS202 or in MHS206.
+  - name: uniq_care_act_id
+    description: MHSDS-derived care activity identifier.
+    data_tests:
+    - not_null
+  - name: uniq_care_prof_local_id
+    description: MHSDS-derived care professional identifier.
+    data_tests:
+    - not_null
+  - name: referral_source_record_id
+    description: MHSDS unique service request identifier where supplied.
+  - name: uniq_care_cont_id
+    description: MHSDS-derived care contact identifier where supplied.
+  - name: person_id
+    description: MHSDS person identifier where supplied.
+  - name: staff_group_code
+    description: Staff group from the same accepted professional snapshot.
+  - name: staff_group_description
+    description: Published staff group description, including retired codes.
+  - name: staff_group_label_status
+    description: Whether the staff group code is missing, unmatched or labelled.
+  - name: main_specialty_code
+    description: Main specialty from the same accepted professional snapshot.
+  - name: main_specialty_description
+    description: Published main specialty description, including retired codes.
+  - name: main_specialty_label_status
+    description: Whether the main specialty code is missing, unmatched or labelled.
+  - name: occupation_code
+    description: NHS Occupation Code from the same accepted professional snapshot.
+  - name: occupation_description
+    description: NHS Occupation Code Manual v22.1 description, including retired codes.
+  - name: occupation_label_status
+    description: Whether the occupation code is missing, unmatched, current or retired.
+  - name: job_role_code
+    description: Job role from the same accepted professional snapshot.
+  - name: job_role_description
+    description: Published job role description, including retired codes.
+  - name: job_role_label_status
+    description: Whether the job role code is missing, unmatched or labelled.
+  - name: provider_organisation_code
+    description: Organisation code of the provider submitting the relationship.
+  - name: provider_organisation_name
+    description: Current organisation name for the provider.
+  - name: is_care_activity_linked
+    description: TRUE when the relationship resolves to fct_mhsds_care_activity.
+    data_tests:
+    - not_null
+  - name: is_professional_detail_linked
+    description: TRUE when it resolves to the same submission's professional snapshot.
+    data_tests:
+    - not_null
+  - name: uniq_submission_id
+    description: Accepted submission containing the relationship.
+    data_tests:
+    - not_null
+  - name: uniq_month_id
+    description: MHSDS reporting month number, where April 1900 is month 1.
+  - name: reporting_period_start_date
+    description: Start date of the accepted reporting period.
+  - name: reporting_period_end_date
+    description: End date of the accepted reporting period.
+    data_tests:
+    - not_null
+  - name: mhsds_version
+    description: MHSDS version assigned by the source pipeline.
+  - name: source_file_received_at
+    description: Timestamp when the source file was received.
+  - name: source_loaded_at
+    description: Timestamp when the source row was loaded.

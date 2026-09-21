@@ -1,0 +1,31 @@
+version: 2
+models:
+- name: fct_mhsds_current_caseload_referral
+  description: >-
+    Open referrals recorded in the dataset's latest accepted month. Each row is one referral,
+    including referrals awaiting first attendance and those receiving community or inpatient care.
+    Providers whose latest submission is older are excluded here; their evidence remains in
+    fct_mhsds_latest_provider_caseload_referral. Exclusion does not mean discharge. This is a
+    monthly view of recorded open referrals, not a live list or a clinical judgement of active
+    treatment. Eddie Davison owns the recorded-state definition.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: referral_period_id
+    description: Unique open referral-period key.
+    data_tests:
+    - unique
+    - not_null
+  - name: recorded_caseload_contact_state
+    description: No attendance recorded, attended in the latest provider period, or attendance only in an earlier
+      period. This does not prove an active treatment plan.
+  - name: days_since_last_attended_contact
+    description: Calendar days from the latest evidenced attended contact to the provider period end. Null
+      when no attendance is evidenced.
+  - name: provider_months_behind_dataset
+    description: Difference in calendar months from this provider evidence date to the dataset latest period.
+      Zero is aligned; larger values show older evidence.
+  - name: days_since_referral_received
+    description: Calendar days since receipt at the provider evidence date.

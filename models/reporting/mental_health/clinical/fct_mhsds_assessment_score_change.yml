@@ -1,0 +1,34 @@
+version: 2
+models:
+- name: fct_mhsds_assessment_score_change
+  description: >-
+    Changes between successive usable scores for the same person, provider, referral, assessment
+    context, concept and recorded assessor. Each row pairs a current observation with its previous
+    eligible observation. Records with missing dates, ambiguous same-time observations, invalid or
+    non-score responses, or changed historical clustering person IDs are excluded before pairing; a
+    pair can span those excluded records. Missing assessors form a separate group and do not prove
+    the same clinician. Change is current score minus previous score. Its clinical direction depends
+    on the instrument; it does not establish improvement or treatment effect.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: assessment_score_change_id
+    description: Current observation key, unique within this descriptive pair fact.
+    data_tests:
+    - not_null
+    - unique
+  - name: score_change
+    description: Current minus previous score in this concept's units. Direction has no universal clinical
+      meaning. Never pool across different concepts or instruments.
+  - name: calendar_days_between_scores
+    description: Calendar-day difference between eligible recorded observations; same-day different-time observations
+      can have zero days.
+  - name: has_recorded_assessor
+    description: At least one assessor identifier is supplied. False means clinician consistency cannot be
+      established.
+  - name: previous_score
+    description: Previous eligible numeric response for the same series, not necessarily a baseline.
+  - name: current_score
+    description: Current eligible numeric response, not necessarily a discharge or follow-up outcome.

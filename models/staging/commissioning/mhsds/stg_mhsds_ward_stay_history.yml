@@ -1,0 +1,18 @@
+version: 2
+models:
+- name: stg_mhsds_ward_stay_history
+  description: One accepted MHS502 source row across provider reporting periods. Preserves ward-stay versions
+    for period-matched analysis. Dates before 1901 are missing; a separate established latest interface selects
+    the newest ward-stay version.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: mhs502_uniq_id
+    description: Unique key at the documented grain.
+    data_tests:
+    - not_null
+    - unique
+  - name: row_number
+    description: Source order within the submission, used to select repeated corrections.

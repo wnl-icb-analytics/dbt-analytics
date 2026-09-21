@@ -1,0 +1,60 @@
+models:
+  - name: int_segmentation_ltc_rules_history
+    description: >-
+      Monthly membership of seven segmentation LTC registers with age,
+      medication or condition-specific rules. One row represents one active
+      person on one register at one of the last 60 completed month-ends. Asthma
+      combines the QOF and under-18 registers used by segmentation. SMI includes
+      an SMI diagnosis or recent lithium not followed by a stop code.
+
+      Diagnosis and medication events count towards a month-end only when their
+      recorded date is on or before it. Medication windows follow the QOF
+      register macros: asthma (12 months) and epilepsy (6 months) include their
+      lower bound, lithium (6 months) excludes it.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, end_date, condition_code]
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: LITSTP_COD
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: end_date
+        description: Completed month-end used as the register reference date.
+        data_tests:
+          - not_null
+      - name: condition_code
+        description: Segmentation condition code.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [AST, CKD, COPD, DEP, DM, EP, SMI]
+      - name: is_on_register
+        description: Person meets the register definition at the month-end.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true]
+                quote: false
+      - name: earliest_diagnosis_date
+        description: Earliest qualifying diagnosis date by the month-end.
+      - name: latest_diagnosis_date
+        description: Latest qualifying diagnosis date by the month-end.
+      - name: latest_resolved_date
+        description: Latest qualifying resolution date by the month-end.
+      - name: latest_other_state_date
+        description: Latest CKD Stage 1-2 date by the month-end.
+      - name: latest_medication_date
+        description: Latest qualifying asthma, epilepsy or lithium order date.
+      - name: latest_stop_date
+        description: Latest lithium stop date by the month-end.

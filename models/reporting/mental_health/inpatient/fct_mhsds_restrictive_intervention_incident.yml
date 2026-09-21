@@ -1,0 +1,59 @@
+version: 2
+models:
+- name: fct_mhsds_restrictive_intervention_incident
+  description: >-
+    Recorded incidents involving restrictive interventions. Each row is one incident identified
+    within its provider, using its latest accepted version. An incident can have several
+    intervention types in fct_mhsds_restrictive_intervention_type, so count incidents before joining
+    those details. The table uses the version 6 MHS505 incident source and does not combine the
+    retired intervention source. Records with incomplete identifying details remain separate.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: restrictive_intervention_incident_id
+    description: Unique identifier at the documented model grain.
+    data_tests:
+    - not_null
+    - unique
+  - name: incident_source_id
+    description: Submitted incident source id.
+  - name: referral_source_record_id
+    description: Submitted referral source record id.
+  - name: hospital_provider_spell_source_record_id
+    description: Submitted hospital provider spell source record id.
+  - name: incident_start_date
+    description: Submitted incident start date.
+  - name: incident_start_time
+    description: Submitted incident start time.
+  - name: incident_end_date
+    description: Submitted incident end date.
+  - name: incident_end_time
+    description: Submitted incident end time.
+  - name: incident_reason_code
+    description: Submitted incident reason code.
+  - name: patient_review_held_code
+    description: Submitted patient review held code.
+  - name: patient_review_not_held_reason_code
+    description: Submitted patient review not held reason code.
+  - name: staff_review_held_code
+    description: Submitted staff review held code.
+  - name: incident_reason_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: patient_review_held_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: patient_review_not_held_reason_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: staff_review_held_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: n_accepted_source_records
+    description: Accepted submitted versions of this identity across all periods, including repeats.
+  - name: is_identity_incomplete
+    description: A required identity component is missing; the source row is retained separately.
+  - name: first_submission_period_end_date
+    description: First accepted reporting period containing this identity, not the clinical start date.
+  - name: reporting_period_end_date
+    description: Period of the accepted source evidence; may be later than the clinical event.
+  - name: source_file_received_at
+    description: Source file receipt timestamp, not a clinical time.

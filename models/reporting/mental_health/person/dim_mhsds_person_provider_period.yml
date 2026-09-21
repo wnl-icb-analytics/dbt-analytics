@@ -1,0 +1,56 @@
+version: 2
+models:
+- name: dim_mhsds_person_provider_period
+  description: >-
+    Demographic details recorded for a person by a provider in a reporting period. Each row is one
+    identifiable person, provider and accepted period. Use this table for historical breakdowns by
+    age, ethnicity, gender or deprivation. The newest submitted record is used within each provider
+    period, with conflicting records flagged. Differences between providers remain separate, and
+    current cross-system demographics do not replace submitted history. IMD 2019 and IMD 2025 use
+    fixed reference editions. Population access rates need an external population denominator.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - provider_organisation_code
+        - reporting_period_end_date
+  columns:
+  - name: person_provider_period_id
+    description: Key for the person, provider and reporting period.
+    data_tests:
+    - unique
+    - not_null
+  - name: person_id
+    description: Recorded MHSDS identifier; identity changes can split an individual across IDs.
+  - name: source_age_at_period_start
+    description: Source age in years at period start, including any source special values.
+  - name: source_age_at_period_end
+    description: Source age in years at period end, including any source special values.
+  - name: residence_imd_2019_decile
+    description: 2019 IMD decile for the recorded 2011 LSOA. 1 is most deprived and 10 least deprived. A fixed
+      reference edition, not deprivation measured in the submission month.
+  - name: residence_imd_2025_decile
+    description: 2025 IMD decile for the recorded 2021 LSOA. 1 is most deprived and 10 least deprived. This
+      is retrospective area context for earlier submissions, not historical deprivation state.
+  - name: legacy_person_stated_gender_code
+    description: Legacy recorded person-stated gender, kept separate from the newer gender-identity field.
+  - name: gender_identity_code
+    description: Recorded gender identity; missing values are not filled from legacy gender.
+  - name: n_source_patient_records
+    description: Accepted MPI rows contributing to this person/provider/period.
+  - name: has_conflicting_demographic_records
+    description: Source rows disagree on at least one retained ethnicity, gender, age or LSOA field.
+  - name: ethnicity_2001_code
+    description: Submitted 2001 ethnic category; missing or unknown values remain visible. The 2021 source
+      field is unpopulated and omitted.
+  - name: residence_sub_icb_name
+    description: Authoritative organisation name for the corresponding source code; null when the code is missing
+      or unmatched.
+  - name: registration_sub_icb_name
+    description: Authoritative organisation name for the corresponding source code; null when the code is missing
+      or unmatched.

@@ -6,6 +6,7 @@
 # Selection: state:modified+ plus tag:indicator_definitions+ against the latest
 # deploy-state manifest in the DBT_ARTIFACTS stage. Metadata-derived definitions
 # have no ref() dependencies, so state selection can miss their YAML changes.
+# UEC diagnosis/procedure builds also refresh their encounter parent, as in DEV.
 # Falls back to a full build when no state manifest exists or on manual dispatch.
 #
 # Runs that pass Fusion compile publish target/manifest.json + run_results.json
@@ -17,7 +18,8 @@
 # Prerequisites:
 #   - Snowflake secrets: SNOWFLAKE_ACCOUNT, SNOWFLAKE__USERNAME,
 #     SNOWFLAKE__PRIVATE_KEY, SNOWFLAKE__PASSPHRASE
-#   - DBT_ADMIN role with USAGE on WH_WNL_ENGINEERING_M / WH_NCL_ENGINEERING_XS
+#   - DBT_ADMIN role with USAGE on WH_WNL_ENGINEERING_M,
+#     WH_NCL_ENGINEERING_XS and WH_WNL_OLIDS_L (eFI2 history models)
 #   - Stage DATA_LAKE__NCL.DBT_OBSERVABILITY.STG_DBT_ARTIFACTS
 #     (Snowflake-Deployment: dbt Admin/dbt GitHub Actions Runs/setup.sql)
 
@@ -35,6 +37,7 @@ on:
       - 'packages.yml'
       - 'dbt_project.yml'
       - '.github/workflows/dbt-deploy.yml'
+      - '.github/scripts/validate_dbt_models.py'
 
 jobs:
   deploy-decision:
@@ -121,6 +124,11 @@ jobs:
       SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
       SNOWFLAKE_ROLE: DBT_ADMIN
       SNOWFLAKE_WAREHOUSE: WH_WNL_ENGINEERING_M
+      # The eFI2 history models expand observations across 60 month-ends. The
+      # first build after they merge is a full build (the tables do not exist
+      # yet), so route them off the Medium warehouse here as well as on the
+      # monthly refresh in dbt-scheduled.yml.
+      EFI2_HISTORY_WAREHOUSE: WH_WNL_OLIDS_L
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -128,6 +136,9 @@ jobs:
           # Failure attribution compares failed dbt dependency paths with the
           # commit being deployed.
           fetch-depth: 0
+
+      - name: Check build selection
+        run: python3 -m unittest discover -s .github/scripts -p test_validate_dbt_models.py
 
       - name: Install dbt Fusion
         run: |
@@ -168,14 +179,14 @@ jobs:
         id: build
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ steps.state.outputs.has_state }}" != "true" ]; then
-            args=(build --target prod)
+            command=(dbt build --target prod --profiles-dir .)
             echo "Full build (manual trigger or no state manifest)"
           else
-            args=(build --target prod --select "state:modified+" "tag:indicator_definitions+" --state state)
+            command=(python3 .github/scripts/validate_dbt_models.py --target prod --state state --select "state:modified+" "tag:indicator_definitions+")
             echo "State-based build: modified + downstream and indicator definitions + downstream"
           fi
-          echo "dbt_command=dbt ${args[*]}" >> "$GITHUB_OUTPUT"
-          dbt "${args[@]}" --profiles-dir .
+          echo "dbt_command=${command[*]}" >> "$GITHUB_OUTPUT"
+          "${command[@]}"
 
       # Execution failures advance state so later PRs remain isolated. Compile
       # failures are archived without replacing the prior baseline.

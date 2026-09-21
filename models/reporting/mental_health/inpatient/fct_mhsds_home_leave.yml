@@ -1,0 +1,41 @@
+version: 2
+models:
+- name: fct_mhsds_home_leave
+  description: >-
+    Recorded periods of home leave. Each row is one provider, ward stay and leave start date/time,
+    using the latest accepted version. Records with incomplete identifying details remain separate.
+    These are recorded leave periods, not a statement of current whereabouts. Different leave types
+    are kept in separate tables and are not automatically deducted from inferred occupancy or
+    bed-day counts.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: home_leave_id
+    description: Unique identifier at the documented model grain.
+    data_tests:
+    - not_null
+    - unique
+  - name: hospital_provider_spell_source_record_id
+    description: Submitted hospital provider spell source record id.
+  - name: ward_stay_source_record_id
+    description: Submitted ward stay source record id.
+  - name: leave_start_date
+    description: Submitted leave start date.
+  - name: leave_end_date
+    description: Submitted leave end date.
+  - name: leave_start_time
+    description: Submitted leave start time.
+  - name: leave_end_time
+    description: Submitted leave end time.
+  - name: n_accepted_source_records
+    description: Accepted submitted versions of this identity across all periods, including repeats.
+  - name: is_identity_incomplete
+    description: A required identity component is missing; the source row is retained separately.
+  - name: first_submission_period_end_date
+    description: First accepted reporting period containing this identity, not the clinical start date.
+  - name: reporting_period_end_date
+    description: Period of the accepted source evidence; may be later than the clinical event.
+  - name: source_file_received_at
+    description: Source file receipt timestamp, not a clinical time.

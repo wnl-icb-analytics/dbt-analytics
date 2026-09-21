@@ -1,0 +1,41 @@
+version: 2
+models:
+- name: fct_mhsds_care_plan_period
+  description: >-
+    Care plans reported by providers in each accepted period. Each row is one MHS008 plan record in
+    a reporting period. Creation, revision and implementation dates are kept separate. A plan record
+    does not by itself confirm implementation or patient agreement; agreements are available in
+    fct_mhsds_care_plan_agreement.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: care_plan_period_id
+    description: Unique identifier at the documented model grain.
+    data_tests:
+    - not_null
+    - unique
+  - name: care_plan_source_id
+    description: Submitted care plan source id.
+  - name: care_plan_type_code
+    description: Submitted care plan type code.
+  - name: creation_date
+    description: Submitted creation date.
+  - name: creation_time
+    description: Reported time of day when the plan was created. Use with creation_date; null means
+      no reported time.
+  - name: last_update_date
+    description: Submitted last update date.
+  - name: last_update_time
+    description: Reported time of day of the plan's last update. Use with last_update_date; the
+      source timestamp's 1970 date anchor is removed. Midnight is retained; null means no reported
+      time. Under MHSDS guidance, an unchanged plan repeats its creation time here.
+  - name: implementation_date
+    description: Submitted implementation date.
+  - name: care_plan_type_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: reporting_period_end_date
+    description: Period of the accepted source evidence; may be later than the clinical event.
+  - name: source_file_received_at
+    description: Source file receipt timestamp, not a clinical time.

@@ -4,11 +4,9 @@ with eligible_contacts as (
     from {{ ref('int_mhsds_latest_care_contact') }} as c
     where not exists (
         select 1
-        from {{ ref('stg_mhsds_spell') }} as s
-        inner join {{ ref('int_mhsds_spell_encounters') }} as e
-            on s.uniq_hosp_prov_spell_num = e.encounter_id
+        from {{ ref('int_mhsds_inpatient_occupancy') }} as s
         where c.uniq_serv_req_id = s.uniq_serv_req_id
-            and c.care_cont_date between s.start_date_hosp_prov_spell and coalesce(e.end_date, current_date)
+            and c.care_cont_date between s.start_date_hosp_prov_spell and coalesce(s.end_date, current_date)
     )
 )
 
@@ -71,7 +69,7 @@ with eligible_contacts as (
         on d.icd10_3 between ig.icd10_range_start and ig.icd10_range_end
     left join {{ ref('nhse_mh_currency_population_groups_2627') }} as dg
         on ig.population_category = dg.population_category
-    left join {{ ref('stg_mhsds_servicetype') }} as st
+    left join {{ ref('int_mhsds_currency_referral_service_type') }} as st
         on c.uniq_serv_req_id = st.uniq_serv_req_id
     left join {{ ref('nhse_mh_currency_team_types_2627') }} as tt
         on st.serv_team_type_ref_to_mh = tt.serv_team_type

@@ -1,0 +1,25 @@
+version: 2
+models:
+- name: int_mhsds_ward_stay_period
+  description: >-
+    Ward-stay evidence for each accepted submission. Each row is one ward stay using its last
+    correction within the submission. Recorded midnights count from the start date inclusive to the
+    end date exclusive, limited to the reporting period. An open stay stops at period end for this
+    count. Leave is not deducted and inferred hospital-spell occupancy is not substituted.
+    Overlapping stays for the same person are flagged because they can overstate bed use.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: ward_stay_period_id
+    description: Unique key at the documented grain.
+    data_tests:
+    - not_null
+    - unique
+  - name: recorded_ward_stay_midnights
+    description: Calendar midnights represented by the recorded interval within this provider period, not confirmed
+      physical bed occupancy. Same-day stays contribute zero.
+  - name: has_overlapping_person_stay_in_submission
+    description: The recorded person interval overlaps another ward stay in this submission, including stays
+      in other wards.

@@ -1,0 +1,47 @@
+version: 2
+models:
+- name: fct_mhsds_inpatient_occupancy
+  description: >-
+    Hospital spells interpreted as periods of inpatient occupancy under the shared overlap and
+    recency rules. Each row is one retained interval, including records without a person or
+    cross-system patient match. Recorded discharge and inferred end dates remain separate, with the
+    reason for the inferred end and the dates of supporting evidence. Overlapping and stale spells
+    are handled upstream, so counts can differ from the recorded hospital-spell table.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: occupancy_interval_id
+    description: Established spell number used by encounter and currency models; one retained occupancy
+      interval.
+    data_tests:
+    - not_null
+    - unique
+  - name: hospital_provider_spell_source_record_id
+    description: Provider-qualified key joining to source_record_id in the recorded hospital-spell fact.
+  - name: person_id
+    description: Recorded MHSDS person. Null when unidentified; occupancy_interval_id still identifies the interval.
+  - name: admission_date
+    description: Recorded admission date of the retained occupancy interval.
+  - name: recorded_discharge_date
+    description: Submitted discharge date before occupancy truncation.
+  - name: occupancy_end_date
+    description: Recorded or inferred exclusive interval end for bed-day analysis. Null for a retained
+      open interval.
+  - name: occupancy_end_reason
+    description: discharged, open, last_submission or superseded. A later admission can truncate a recorded
+      discharge.
+  - name: is_current_inpatient
+    description: True for intervals retained as open under the established submission-recency and overlap
+      rules. This is inferred from the feed, not a real-time census.
+  - name: occupancy_evidence_as_of_date
+    description: Maximum reporting-period end among staged spells, preserving the existing occupancy freshness
+      anchor.
+  - name: last_submission_period_end_date
+    description: Last submission evidence for the retained spell.
+  - name: calculation_date
+    description: Date on which open-interval comparisons were evaluated.
+  - name: occupancy_days_to_last_evidence
+    description: Elapsed calendar days to the derived end, or last submission evidence for an open interval.
+      No minimum-day adjustment or extension to today; negative source chronology remains visible.

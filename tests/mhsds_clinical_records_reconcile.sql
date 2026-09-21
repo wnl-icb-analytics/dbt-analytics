@@ -7,6 +7,10 @@ with expected as (
     select 'referral_assessment', count(*) from {{ ref('stg_mhsds_referral_assessment') }}
     union all
     select 'activity_assessment', count(*) from {{ ref('stg_mhsds_activity_assessment') }}
+    union all
+    select 'clustering_assessment', count(*) from {{ ref('int_mhsds_clustering_assessment_response') }}
+    union all
+    select 'presenting_complaint', count(*) from {{ ref('int_mhsds_presenting_complaint') }}
     {% for component in ['procedure', 'finding', 'observation'] %}
     union all
     select '{{ component }}', count_if(has_{{ component }})

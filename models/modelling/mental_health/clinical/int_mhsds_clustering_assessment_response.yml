@@ -1,0 +1,23 @@
+version: 2
+models:
+- name: int_mhsds_clustering_assessment_response
+  description: >-
+    Historical clustering-assessment responses with repeated submissions resolved. Each row is the
+    latest accepted response for a provider, source assessment and concept. Repeated monthly reports
+    are versions of that response. Incomplete identifying details retain separate source rows.
+    Completion date and time come only from the matching MHS801 record in the same submission with
+    consistent person evidence.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Unique retained evidence key.
+    data_tests:
+    - unique
+    - not_null
+  - name: accepted_source_record_count
+    description: Accepted response rows represented by the retained version.
+  - name: has_person_identifier_changed
+    description: More than one non-null person identifier was supplied across response versions.

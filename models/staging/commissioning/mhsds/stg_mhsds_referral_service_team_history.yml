@@ -1,0 +1,20 @@
+version: 2
+models:
+- name: stg_mhsds_referral_service_team_history
+  description: Accepted MHS102 service/team relationship records, one row per submitted MHS102 record.
+    Retains all accepted periods and rows without a team identifier. Latest relationships are selected
+    by stg_mhsds_other_service_or_team_type.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: mhs102_uniq_id
+    description: Submitted relationship row identifier.
+    data_tests:
+    - not_null
+    - unique
+  - name: service_or_team_id
+    description: Best available derived or local team identifier; nullable.
+  - name: row_number
+    description: Source row ordering used to choose a revision within a submission.

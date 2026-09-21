@@ -1,71 +1,18 @@
--- A person occupies at most one MH bed per night, but spell ids are
--- provider-scoped, so one admission can carry several records: trust mergers
--- re-register long-stay patients under new ids with the original admission
--- date (BEH/C&I -> NLFT), NHS and independent-sector providers both submit
--- the same placement, and shifted-date copies partially overlap. Three rules
--- restore single occupancy:
---   1. one spell per person and admission date (latest submission evidence wins)
---   2. drop spells wholly contained inside a longer spell
---   3. discharge-forward: a later admission ends any spell still open at
---      that date (end_date_source 'superseded')
-with deduplicated as (
+with base as (
     select
-        s.uniq_hosp_prov_spell_num
-        , s.uniq_serv_req_id
-        , s.person_id
-        , e.sk_patient_id
-        , s.org_id_prov
-        , s.start_date_hosp_prov_spell
-        , e.end_date
-        , e.end_date_source
-        , s.disch_date_hosp_prov_spell
-        , s.age_hosp_start_date
-        , s.reporting_period_end_date as last_submission_period_end
-        , s.dm_icb_commissioner
-    from {{ ref('stg_mhsds_spell') }} as s
-    -- inner: every staged spell has an encounters row today, and if the
-    -- encounters model ever drops duplicate spells this model must follow
-    inner join {{ ref('int_mhsds_spell_encounters') }} as e
-        on s.uniq_hosp_prov_spell_num = e.encounter_id
-    qualify row_number() over (
-        partition by coalesce(s.person_id, s.uniq_hosp_prov_spell_num)
-            , s.start_date_hosp_prov_spell
-        order by s.reporting_period_end_date desc nulls last
-            , s.uniq_hosp_prov_spell_num
-    ) = 1
-)
-
-, uncontained as (
-    select d.*
-    from deduplicated as d
-    where not exists (
-        select 1
-        from deduplicated as o
-        where o.person_id = d.person_id
-            and o.uniq_hosp_prov_spell_num != d.uniq_hosp_prov_spell_num
-            and o.start_date_hosp_prov_spell <= d.start_date_hosp_prov_spell
-            and coalesce(o.end_date, current_date) >= coalesce(d.end_date, current_date)
-            and (o.start_date_hosp_prov_spell < d.start_date_hosp_prov_spell
-                or coalesce(o.end_date, current_date) > coalesce(d.end_date, current_date))
-    )
-)
-
-, base as (
-    select
-        * exclude (end_date, end_date_source, next_start_date)
-        , iff(next_start_date < coalesce(end_date, current_date)
-            , next_start_date, end_date) as end_date
-        , iff(next_start_date < coalesce(end_date, current_date)
-            , 'superseded', end_date_source) as end_date_source
-    from (
-        select
-            u.*
-            , lead(start_date_hosp_prov_spell) over (
-                partition by coalesce(person_id, uniq_hosp_prov_spell_num)
-                order by start_date_hosp_prov_spell, uniq_hosp_prov_spell_num
-            ) as next_start_date
-        from uncontained as u
-    )
+        uniq_hosp_prov_spell_num
+        , uniq_serv_req_id
+        , person_id
+        , sk_patient_id
+        , org_id_prov
+        , start_date_hosp_prov_spell
+        , end_date
+        , end_date_source
+        , disch_date_hosp_prov_spell
+        , age_hosp_start_date
+        , reporting_period_end_date as last_submission_period_end
+        , dm_icb_commissioner
+    from {{ ref('int_mhsds_inpatient_occupancy') }}
 )
 
 , latest_ward_stay as (
@@ -77,6 +24,11 @@ with deduplicated as (
         partition by uniq_hosp_prov_spell_num
         order by coalesce(end_date_ward_stay, '9999-12-31'::date) desc
             , start_date_ward_stay desc
+            -- Equal clinical dates must not let the query plan choose the currency.
+            , reporting_period_end_date desc nulls last
+            , effective_from desc nulls last
+            , uniq_submission_id desc
+            , uniq_ward_stay_id desc
     ) = 1
 )
 
@@ -136,7 +88,7 @@ with deduplicated as (
         on r.prim_reason_referral_mh = rr.prim_reason_referral_mh
     left join {{ ref('nhse_mh_currency_population_groups_2627') }} as rg
         on rr.population_category = rg.population_category
-    left join {{ ref('stg_mhsds_servicetype') }} as st
+    left join {{ ref('int_mhsds_currency_referral_service_type') }} as st
         on b.uniq_serv_req_id = st.uniq_serv_req_id
     left join {{ ref('nhse_mh_currency_team_types_2627') }} as tt
         on st.serv_team_type_ref_to_mh = tt.serv_team_type
