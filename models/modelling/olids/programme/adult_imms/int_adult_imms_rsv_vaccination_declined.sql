@@ -12,6 +12,7 @@
 SELECT 
          PERSON_ID 
        ,AGE AS CURRENT_AGE
+       ,GENDER
         ,IS_CARE_HOME_RESIDENT
         ,IN_RSV_CLINICAL_RISK_GROUP
         ,IS_PREGNANT
