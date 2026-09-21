@@ -53,20 +53,26 @@ SELECT
 ) AS shing_status_dose_2
 ,MAX(CASE WHEN vaccine_id in ('SHING_2','SHING_2B','SHING_2C') THEN cv.vaccination_date END) as shing_date_dose_2
 ,MAX(CASE WHEN vaccine_id in ('SHING_2','SHING_2B','SHING_2C') THEN cv.AGE_AT_EVENT END) as shing_age_event_dose_2
--- RSV -----------------------SELECT CORRECT STATUS
+--- RSV -----------------------SELECT CORRECT STATUS
   ,COALESCE(
-    -- Rule 1 ROUTINE for those AGED 75 or OLDER starting 1st April 2026 (not pregnant or in a care home) prefer RSV_1
-    MAX(CASE WHEN IS_CARE_HOME_RESIDENT = FALSE AND IS_PREGNANT = FALSE AND vaccine_id = 'RSV_1' THEN vaccination_status END),
-    MAX(CASE WHEN IS_CARE_HOME_RESIDENT = FALSE AND IS_PREGNANT = FALSE AND vaccine_id in ('RSV_1B','RSV_1C') THEN vaccination_status END),
- -- Rule 2 for those IN A CARE HOME FOR OLDER PEOPLE but NOT PREGNANT prefer RSV_1B
-    MAX(CASE WHEN IS_CARE_HOME_RESIDENT AND IS_PREGNANT = FALSE AND vaccine_id = 'RSV_1B' THEN vaccination_status END),
-    MAX(CASE WHEN IS_CARE_HOME_RESIDENT AND IS_PREGNANT = FALSE AND vaccine_id in ('RSV_1','RSV_1C') THEN vaccination_status END),    
--- Rule 3 for those NOT IN A CARE HOME FOR OLDER PEOPLE but ARE PREGNANT prefer RSV_1C
-    MAX(CASE WHEN IS_CARE_HOME_RESIDENT = FALSE AND IS_PREGNANT AND vaccine_id = 'RSV_1C' THEN vaccination_status END),
-    MAX(CASE WHEN IS_CARE_HOME_RESIDENT = FALSE AND IS_PREGNANT AND vaccine_id in ('RSV_1','RSV_1B') THEN vaccination_status END),
--- Rule 4 for those IN A CARE HOME FOR OLDER PEOPLE BUT ARE UNDER 50 AND ARE PREGNANT prefer RSV_1C 
-    MAX(CASE WHEN IS_CARE_HOME_RESIDENT AND IS_PREGNANT AND vaccine_id = 'RSV_1C' THEN vaccination_status END),
-    MAX(CASE WHEN IS_CARE_HOME_RESIDENT AND IS_PREGNANT AND vaccine_id in ('RSV_1B','RSV_1C') THEN vaccination_status END)
+    --RULE 1 WHEN IS_PREGNANT TRUMPS all 
+    MAX(CASE WHEN IS_PREGNANT AND vaccine_id = 'RSV_1C' THEN vaccination_status END),
+    MAX(CASE WHEN IS_PREGNANT AND vaccine_id in ('RSV_1','RSV_1B','RSV_1D') THEN vaccination_status END),
+    -- Rule 2 ROUTINE for those AGED 75 or OLDER starting 1st April 2026 (not pregnant or in a care home or in a clinical risk group) prefer RSV_1
+    MAX(CASE WHEN IS_CARE_HOME_RESIDENT = FALSE AND IS_PREGNANT = FALSE AND IN_RSV_CLINICAL_RISK_GROUP = FALSE AND vaccine_id = 'RSV_1' THEN vaccination_status END),
+    MAX(CASE WHEN IS_CARE_HOME_RESIDENT = FALSE AND IS_PREGNANT = FALSE AND IN_RSV_CLINICAL_RISK_GROUP = FALSE AND vaccine_id in ('RSV_1B','RSV_1C','RSV_1D') THEN vaccination_status END),
+ -- Rule 3 for those IN A CARE HOME FOR OLDER PEOPLE but NOT PREGNANT AND NOT in a clinical risk group prefer RSV_1B
+    MAX(CASE WHEN IS_CARE_HOME_RESIDENT AND IS_PREGNANT = FALSE AND IN_RSV_CLINICAL_RISK_GROUP = FALSE AND vaccine_id = 'RSV_1B' THEN vaccination_status END),
+    MAX(CASE WHEN IS_CARE_HOME_RESIDENT AND IS_PREGNANT = FALSE AND IN_RSV_CLINICAL_RISK_GROUP = FALSE AND vaccine_id in ('RSV_1','RSV_1C','RSV_1D') THEN vaccination_status END),    
+-- Rule 4 for those NOT IN A CARE HOME FOR OLDER PEOPLE but ARE PREGNANT and not in a clinical risk group prefer RSV_1C
+    MAX(CASE WHEN IS_CARE_HOME_RESIDENT = FALSE AND IS_PREGNANT AND IN_RSV_CLINICAL_RISK_GROUP = FALSE AND vaccine_id = 'RSV_1C' THEN vaccination_status END),
+    MAX(CASE WHEN IS_CARE_HOME_RESIDENT = FALSE AND IS_PREGNANT AND IN_RSV_CLINICAL_RISK_GROUP = FALSE AND vaccine_id in ('RSV_1','RSV_1B','RSV_1D') THEN vaccination_status END),
+-- Rule 5: those in an RSV clinical risk group and not in a care home and not pregant. Prefer RSV_1D.
+    MAX(CASE WHEN IN_RSV_CLINICAL_RISK_GROUP = TRUE AND IS_PREGNANT = FALSE AND IS_CARE_HOME_RESIDENT = FALSE AND vaccine_id = 'RSV_1D' THEN vaccination_status END),
+    MAX(CASE WHEN IN_RSV_CLINICAL_RISK_GROUP = TRUE AND IS_PREGNANT = FALSE AND IS_CARE_HOME_RESIDENT = FALSE AND vaccine_id IN ('RSV_1', 'RSV_1B', 'RSV_1C') THEN vaccination_status END),
+-- Rule 6: those in an RSV clinical risk group under 65 and in a care home and not pregant. Prefer RSV_1B.
+    MAX(CASE WHEN IN_RSV_CLINICAL_RISK_GROUP = TRUE AND IS_PREGNANT = FALSE AND IS_CARE_HOME_RESIDENT AND vaccine_id = 'RSV_1B' THEN vaccination_status END),
+    MAX(CASE WHEN IN_RSV_CLINICAL_RISK_GROUP = TRUE AND IS_PREGNANT = FALSE AND IS_CARE_HOME_RESIDENT AND vaccine_id IN ('RSV_1', 'RSV_1D', 'RSV_1C') THEN vaccination_status END)
 ) AS rsv_status_dose_1
 ,MAX(CASE WHEN vaccine_id in ('RSV_1','RSV_1B','RSV_1C') THEN cv.vaccination_date END) as rsv_date_dose_1
 ,MAX(CASE WHEN vaccine_id in ('RSV_1','RSV_1B','RSV_1C') THEN cv.AGE_AT_EVENT END) as rsv_age_event_dose_1
@@ -86,9 +92,7 @@ CURRENT_DATE AS RUN_DATE
 ,p.IS_PREGNANT
 ,p.IS_IMMUNOSUPPRESSED
 ,p.IN_PPV_CLINICAL_RISK_GROUP
-,p.TURN_65_AFTER_SEP_2023
--- ,p.TURN_75_AFTER_SEP_2024
--- ,p.TURN_80_AFTER_SEP_2024
+,p.IN_RSV_CLINICAL_RISK_GROUP
 ,p.ethnicity_category
 ,p.ethcat_order
 ,p.ethnicity_subcategory

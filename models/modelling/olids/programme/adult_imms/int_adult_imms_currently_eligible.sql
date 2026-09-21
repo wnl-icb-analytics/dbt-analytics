@@ -18,8 +18,8 @@ p.IN_PPV_CLINICAL_RISK_GROUP,
 p.IN_RSV_CLINICAL_RISK_GROUP,
 p.IS_PREGNANT,
 p.TURN_65_AFTER_SEP_2023,
-p.TURN_75_AFTER_SEP_2024,
-p.TURN_80_AFTER_SEP_2024,
+-- p.TURN_75_AFTER_SEP_2024,
+-- p.TURN_80_AFTER_SEP_2024,
 sched.VACCINE_ORDER,
 sched.VACCINE_ID,
 sched.VACCINE_NAME,
@@ -51,6 +51,9 @@ WHEN sched.VACCINE_ID = 'RSV_1' AND AGE_DAYS_APPROX >= sched.eligible_age_from_d
 WHEN sched.VACCINE_ID = 'RSV_1B' AND IS_CARE_HOME_RESIDENT AND AGE_DAYS_APPROX >= sched.eligible_age_from_days 
 AND AGE_DAYS_APPROX <= sched.eligible_age_to_days THEN TRUE
 WHEN sched.VACCINE_ID = 'RSV_1C' AND IS_PREGNANT AND AGE_DAYS_APPROX >= sched.eligible_age_from_days 
+AND AGE_DAYS_APPROX <= sched.eligible_age_to_days THEN TRUE
+--add in RSV new clinical risk group from 1st September 2026
+WHEN sched.VACCINE_ID = 'RSV_1D' AND IN_RSV_CLINICAL_RISK_GROUP AND AGE_DAYS_APPROX >= sched.eligible_age_from_days 
 AND AGE_DAYS_APPROX <= sched.eligible_age_to_days THEN TRUE
 --PPV add in PPV clinical risk groups (includes immunosuppression) from age 2 +
 WHEN sched.VACCINE_ID = 'PPV_1' AND AGE_DAYS_APPROX >= sched.eligible_age_from_days 
