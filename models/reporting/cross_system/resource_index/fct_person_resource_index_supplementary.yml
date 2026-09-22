@@ -1,0 +1,105 @@
+version: 2
+
+models:
+  - name: fct_person_resource_index_supplementary
+    description: >
+      Person-level cost and factor profile for supplementary resource-to-need
+      analysis. One row per person with WNL registration exposure in
+      the latest 12-month SLAM window. Costs combine patient-attributable SLAM
+      actuals with MHSDS and CSDS proxy costs. EPD is excluded because its
+      coverage does not reach the window. Aggregate rates must divide summed
+      cost by summed person-years or weighted person-years; do not average the
+      person-level rate columns. LTC fields are populated for NCL patients
+      linked to OLIDS and remain null otherwise.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: sk_patient_id
+        description: DMIC pseudonymised NHS number; primary key.
+        data_tests:
+          - not_null
+          - unique
+      - name: factor_age_group
+        description: Under 65, 65+, or Not recorded grouping used by the workbook.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['<65', '65+', 'Not recorded']
+      - name: gender
+        description: Female, Male, or Not recorded.
+      - name: ethnicity_group
+        description: Broad ethnicity group used for descriptive output.
+      - name: factor_ethnicity_group
+        description: White, Non-White, or Not recorded grouping used by factor cells.
+      - name: ethnicity_detail
+        description: Broad and detailed ethnicity label for the ethnicity-by-gender output.
+      - name: factor_deprivation_group
+        description: Most deprived national quintile, Q2-Q5, or Not recorded.
+      - name: person_years
+        description: Registration exposure months divided by 12; additive denominator.
+        data_tests:
+          - not_null
+      - name: weighted_person_years
+        description: Core need-weighted registration months divided by 12; additive denominator.
+        data_tests:
+          - not_null
+      - name: has_olids_record
+        description: TRUE when the NCL patient has an OLIDS profile.
+        data_tests:
+          - not_null
+      - name: ltc_count
+        description: Distinct LTC register count for OLIDS-covered patients; null otherwise.
+      - name: has_one_or_more_ltcs
+        description: TRUE for at least one LTC, FALSE for none, and null outside OLIDS coverage.
+      - name: total_cost_12m
+        description: SLAM actual plus MHSDS and CSDS proxy cost in the analysis window, GBP.
+        data_tests:
+          - not_null
+      - name: slam_cost_12m
+        description: Patient-attributable SLAM actual cost, GBP.
+      - name: mhsds_proxy_cost_12m
+        description: MHSDS currency proxy cost, GBP.
+      - name: csds_proxy_cost_12m
+        description: CSDS currency proxy cost, GBP.
+      - name: cost_percentile
+        description: Cost rank percentile across the WNL exposure population; 1 is costliest.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 100
+                inclusive: true
+      - name: cost_cohort
+        description: Top 1% or Other 99%, assigned from cost_percentile.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Top 1%', 'Other 99%']
+      - name: cost_per_head
+        description: Person cost divided by registration exposure; do not average across people.
+      - name: cost_per_weighted_head
+        description: Person cost divided by weighted exposure; do not average across people.
+      - name: log_cost_per_head
+        description: Natural log of one plus non-negative cost per head for modelling.
+      - name: is_complete_factor_case
+        description: TRUE when age group, gender, ethnicity group and deprivation are recorded.
+      - name: factor_cell
+        description: Combined age, ethnicity, gender and deprivation label for workbook grouping.
+      - name: window_start_month
+        description: First month of the 12-month analysis window.
+        data_tests:
+          - not_null
+      - name: window_end_month
+        description: Last month of the 12-month analysis window, anchored to SLAM completeness.
+        data_tests:
+          - not_null
+      - name: cost_scope
+        description: Human-readable description of included cost sources and bases.
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: >-
+              abs(total_cost_12m - slam_cost_12m - mhsds_proxy_cost_12m
+              - csds_proxy_cost_12m) < 0.01

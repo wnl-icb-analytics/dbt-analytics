@@ -1,0 +1,70 @@
+version: 2
+
+models:
+  - name: fct_resource_index_top_1_percent
+    description: >
+      Output-ready comparison of the costliest 1% with the other 99% by
+      gender, ethnicity, residence borough, deprivation, emergency care use
+      and LTC status. One row per breakdown dimension and category. Patient
+      shares and cost shares are both provided. Resource indices compare each
+      cohort-category cost per Core need-weighted head with the WNL mean.
+      LTC rows use NCL OLIDS-covered patients only.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: dimension_order
+        description: Display order for workbook sections.
+        data_tests:
+          - not_null
+      - name: dimension
+        description: Breakdown dimension.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Overall
+                  - Gender
+                  - Ethnicity
+                  - Residence borough
+                  - Deprivation
+                  - Emergency care use
+                  - Long-term conditions
+      - name: category
+        description: Category within the breakdown dimension.
+        data_tests:
+          - not_null
+      - name: top_1_patients
+        description: Patients in the costliest 1% for the category.
+        data_tests:
+          - not_null
+      - name: other_99_patients
+        description: Patients in the other 99% for the category.
+        data_tests:
+          - not_null
+      - name: top_1_patient_share
+        description: Category share of people within the top-1% cohort.
+      - name: other_99_patient_share
+        description: Category share of people within the other-99% cohort.
+      - name: top_1_cost_share
+        description: Category share of cost within the top-1% cohort.
+      - name: other_99_cost_share
+        description: Category share of cost within the other-99% cohort.
+      - name: top_1_share_of_category_patients
+        description: Share of the category's patients who are in the costliest 1%.
+      - name: top_1_share_of_category_cost
+        description: Share of the category's combined cost held by the costliest 1%.
+      - name: top_1_resource_index
+        description: Top-1% category cost per weighted head divided by the WNL mean.
+      - name: other_99_resource_index
+        description: Other-99% category cost per weighted head divided by the WNL mean.
+      - name: denominator_note
+        description: Population qualification where a row does not cover all WNL patients.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - dimension
+              - category
