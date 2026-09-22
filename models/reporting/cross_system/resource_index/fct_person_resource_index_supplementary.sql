@@ -6,6 +6,12 @@ Grain: one person with WNL registration exposure in the latest 12-month SLAM
 window. Costs include patient-attributable SLAM actuals and MHSDS/CSDS proxy
 costs. EPD is excluded because its coverage does not reach the current window.
 
+Two complete splits of total_cost_12m, each summing back to it:
+  by feed    - slam_cost_12m + mhsds_proxy_cost_12m + csds_proxy_cost_12m
+  by service - crisis + planned + community + mental_health + unmapped
+The mh_* and csds_* columns break the mental health and community lines down
+further and are not additive with the five service lines.
+
 Use additive cost and exposure columns for aggregate rates:
 sum(total_cost_12m) / sum(weighted_person_years). Do not average person rates.
 */
@@ -34,16 +40,19 @@ cost_12m as (
         sum(iff(c.cost_source = 'SLAM', c.total_cost, 0)) as slam_cost_12m,
         sum(iff(c.cost_source = 'MHSDS', c.total_cost, 0)) as mhsds_proxy_cost_12m,
         sum(iff(c.cost_source = 'CSDS', c.total_cost, 0)) as csds_proxy_cost_12m,
+        sum(iff(c.service_grouping = 'Crisis', c.total_cost, 0)) as crisis_cost_12m,
+        sum(iff(c.service_grouping = 'Planned', c.total_cost, 0)) as planned_cost_12m,
+        sum(iff(c.service_grouping = 'Community', c.total_cost, 0)) as community_cost_12m,
         sum(iff(
-            c.cost_source = 'SLAM' and c.service_grouping = 'Crisis',
+            c.service_grouping = 'Mental Health',
             c.total_cost,
             0
-        )) as acute_emergency_cost_12m,
+        )) as mental_health_cost_12m,
         sum(iff(
-            c.cost_source = 'SLAM' and c.service_grouping = 'Planned',
+            coalesce(c.service_grouping, 'Unmapped') = 'Unmapped',
             c.total_cost,
             0
-        )) as acute_planned_cost_12m,
+        )) as unmapped_cost_12m,
         sum(iff(
             c.cost_source = 'MHSDS' and c.service = 'MH Inpatient',
             c.total_cost,
@@ -63,7 +72,7 @@ cost_12m as (
             c.cost_source = 'SLAM' and c.service_grouping = 'Crisis',
             c.total_activity,
             0
-        )) as acute_emergency_activity_12m,
+        )) as crisis_activity_12m,
         sum(iff(
             c.cost_source = 'MHSDS' and c.activity_unit = 'bed_day',
             c.total_activity,
@@ -160,17 +169,20 @@ profile as (
         coalesce(c.slam_cost_12m, 0) as slam_cost_12m,
         coalesce(c.mhsds_proxy_cost_12m, 0) as mhsds_proxy_cost_12m,
         coalesce(c.csds_proxy_cost_12m, 0) as csds_proxy_cost_12m,
-        coalesce(c.acute_emergency_cost_12m, 0) as acute_emergency_cost_12m,
-        coalesce(c.acute_planned_cost_12m, 0) as acute_planned_cost_12m,
+        coalesce(c.crisis_cost_12m, 0) as crisis_cost_12m,
+        coalesce(c.planned_cost_12m, 0) as planned_cost_12m,
+        coalesce(c.community_cost_12m, 0) as community_cost_12m,
+        coalesce(c.mental_health_cost_12m, 0) as mental_health_cost_12m,
+        coalesce(c.unmapped_cost_12m, 0) as unmapped_cost_12m,
         coalesce(c.mh_inpatient_cost_12m, 0) as mh_inpatient_cost_12m,
         coalesce(c.mh_crisis_cost_12m, 0) as mh_crisis_cost_12m,
         coalesce(c.mh_community_cost_12m, 0) as mh_community_cost_12m,
-        coalesce(c.acute_emergency_activity_12m, 0) as acute_emergency_activity_12m,
+        coalesce(c.crisis_activity_12m, 0) as crisis_activity_12m,
         coalesce(c.mh_bed_days_12m, 0) as mh_bed_days_12m,
         coalesce(c.mh_crisis_contacts_12m, 0) as mh_crisis_contacts_12m,
         coalesce(c.mh_community_contacts_12m, 0) as mh_community_contacts_12m,
         coalesce(c.csds_contacts_12m, 0) as csds_contacts_12m,
-        coalesce(c.acute_emergency_activity_12m, 0) > 0 as had_emergency_care,
+        coalesce(c.crisis_activity_12m, 0) > 0 as had_emergency_care,
         coalesce(c.mh_crisis_contacts_12m, 0) > 0 as had_mh_crisis_contact,
         coalesce(c.mh_bed_days_12m, 0) > 0 as had_mh_inpatient_stay,
         b.window_start_month,

@@ -10,7 +10,9 @@ models:
       coverage does not reach the window. Aggregate rates must divide summed
       cost by summed person-years or weighted person-years; do not average the
       person-level rate columns. LTC fields are populated for NCL patients
-      linked to OLIDS and remain null otherwise.
+      linked to OLIDS and remain null otherwise. Cost is split two ways, each
+      summing back to total_cost_12m: by feed (SLAM, MHSDS, CSDS) and by
+      service grouping (Crisis, Planned, Community, Mental Health, Unmapped).
     config:
       meta:
         owner:
@@ -63,6 +65,23 @@ models:
         description: MHSDS currency proxy cost, GBP.
       - name: csds_proxy_cost_12m
         description: CSDS currency proxy cost, GBP.
+      - name: crisis_cost_12m
+        description: >
+          Crisis service grouping, GBP. SLAM A&E, non-elective, same day
+          emergency care, ambulatory care and critical care - wider than
+          emergency attendances alone.
+      - name: planned_cost_12m
+        description: >
+          Planned service grouping, GBP. SLAM outpatients, elective,
+          diagnostics, maternity, chemo, drugs and devices.
+      - name: community_cost_12m
+        description: Community service grouping, GBP. SLAM community and therapies plus CSDS proxy cost.
+      - name: mental_health_cost_12m
+        description: Mental Health service grouping, GBP. All MHSDS proxy cost; equals mhsds_proxy_cost_12m.
+      - name: unmapped_cost_12m
+        description: >
+          SLAM cost whose POD has no resolved service grouping, GBP. Kept so
+          the service split reconciles to total_cost_12m.
       - name: cost_percentile
         description: Cost rank percentile across the WNL exposure population; 1 is costliest.
         data_tests:
@@ -103,3 +122,11 @@ models:
             expression: >-
               abs(total_cost_12m - slam_cost_12m - mhsds_proxy_cost_12m
               - csds_proxy_cost_12m) < 0.01
+      # The service split must stay exhaustive: a new service_grouping that no
+      # line claims would silently drop cost out of the split.
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: >-
+              abs(total_cost_12m - crisis_cost_12m - planned_cost_12m
+              - community_cost_12m - mental_health_cost_12m
+              - unmapped_cost_12m) < 0.01

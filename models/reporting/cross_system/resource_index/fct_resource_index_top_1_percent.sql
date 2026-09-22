@@ -5,6 +5,13 @@ tables.
 Grain: breakdown dimension x category. The cohort is assigned once in
 fct_person_resource_index_supplementary. Both patient and cost shares are exposed because
 the workbook uses both concepts. LTC rows use NCL OLIDS-covered patients only.
+
+The service split reports the warehouse service groupings (Crisis, Planned,
+Community, Mental Health, Unmapped), which sum to each cohort's total cost.
+The *_cost_share columns give each line's share of its own cohort-category
+cost, so the Top 1% and Other 99% service mixes compare directly. The pack
+folds Mental Health into Crisis for its four reporting lines; that is a
+presentation choice and is not applied here.
 */
 
 {{ config(materialized = 'table') }}
@@ -66,6 +73,11 @@ aggregated as (
         sum(slam_cost_12m) as slam_cost_12m,
         sum(mhsds_proxy_cost_12m) as mhsds_proxy_cost_12m,
         sum(csds_proxy_cost_12m) as csds_proxy_cost_12m,
+        sum(crisis_cost_12m) as crisis_cost_12m,
+        sum(planned_cost_12m) as planned_cost_12m,
+        sum(community_cost_12m) as community_cost_12m,
+        sum(mental_health_cost_12m) as mental_health_cost_12m,
+        sum(unmapped_cost_12m) as unmapped_cost_12m,
         any_value(window_start_month) as window_start_month,
         any_value(window_end_month) as window_end_month,
         any_value(cost_scope) as cost_scope
@@ -85,7 +97,13 @@ rates as (
             sum(a.total_cost_12m) over (partition by a.cost_cohort, a.dimension)
         ) as cost_share,
         div0(a.total_cost_12m, a.person_years) as cost_per_head,
-        div0(a.total_cost_12m, a.weighted_person_years) as cost_per_weighted_head
+        div0(a.total_cost_12m, a.weighted_person_years) as cost_per_weighted_head,
+        -- Service mix: each line's share of this cohort-category's own cost.
+        div0(a.crisis_cost_12m, a.total_cost_12m) as crisis_cost_share,
+        div0(a.planned_cost_12m, a.total_cost_12m) as planned_cost_share,
+        div0(a.community_cost_12m, a.total_cost_12m) as community_cost_share,
+        div0(a.mental_health_cost_12m, a.total_cost_12m) as mental_health_cost_share,
+        div0(a.unmapped_cost_12m, a.total_cost_12m) as unmapped_cost_share
     from aggregated as a
 ),
 
@@ -129,6 +147,62 @@ pivoted as (
         max(iff(cost_cohort = 'Other 99%', mhsds_proxy_cost_12m, null)) as other_99_mhsds_proxy_cost,
         max(iff(cost_cohort = 'Top 1%', csds_proxy_cost_12m, null)) as top_1_csds_proxy_cost,
         max(iff(cost_cohort = 'Other 99%', csds_proxy_cost_12m, null)) as other_99_csds_proxy_cost,
+        max(iff(cost_cohort = 'Top 1%', crisis_cost_12m, null)) as top_1_crisis_cost,
+        max(iff(cost_cohort = 'Other 99%', crisis_cost_12m, null)) as other_99_crisis_cost,
+        max(iff(cost_cohort = 'Top 1%', planned_cost_12m, null)) as top_1_planned_cost,
+        max(iff(cost_cohort = 'Other 99%', planned_cost_12m, null)) as other_99_planned_cost,
+        max(iff(cost_cohort = 'Top 1%', community_cost_12m, null)) as top_1_community_cost,
+        max(iff(cost_cohort = 'Other 99%', community_cost_12m, null)) as other_99_community_cost,
+        max(iff(
+            cost_cohort = 'Top 1%',
+            mental_health_cost_12m,
+            null
+        )) as top_1_mental_health_cost,
+        max(iff(
+            cost_cohort = 'Other 99%',
+            mental_health_cost_12m,
+            null
+        )) as other_99_mental_health_cost,
+        max(iff(cost_cohort = 'Top 1%', unmapped_cost_12m, null)) as top_1_unmapped_cost,
+        max(iff(cost_cohort = 'Other 99%', unmapped_cost_12m, null)) as other_99_unmapped_cost,
+        max(iff(cost_cohort = 'Top 1%', crisis_cost_share, null)) as top_1_crisis_cost_share,
+        max(iff(
+            cost_cohort = 'Other 99%',
+            crisis_cost_share,
+            null
+        )) as other_99_crisis_cost_share,
+        max(iff(cost_cohort = 'Top 1%', planned_cost_share, null)) as top_1_planned_cost_share,
+        max(iff(
+            cost_cohort = 'Other 99%',
+            planned_cost_share,
+            null
+        )) as other_99_planned_cost_share,
+        max(iff(
+            cost_cohort = 'Top 1%',
+            community_cost_share,
+            null
+        )) as top_1_community_cost_share,
+        max(iff(
+            cost_cohort = 'Other 99%',
+            community_cost_share,
+            null
+        )) as other_99_community_cost_share,
+        max(iff(
+            cost_cohort = 'Top 1%',
+            mental_health_cost_share,
+            null
+        )) as top_1_mental_health_cost_share,
+        max(iff(
+            cost_cohort = 'Other 99%',
+            mental_health_cost_share,
+            null
+        )) as other_99_mental_health_cost_share,
+        max(iff(cost_cohort = 'Top 1%', unmapped_cost_share, null)) as top_1_unmapped_cost_share,
+        max(iff(
+            cost_cohort = 'Other 99%',
+            unmapped_cost_share,
+            null
+        )) as other_99_unmapped_cost_share,
         any_value(window_start_month) as window_start_month,
         any_value(window_end_month) as window_end_month,
         any_value(cost_scope) as cost_scope
