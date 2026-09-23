@@ -3,7 +3,7 @@
 -- EMIS source: [ICS_HTN_21 v3_NICE] [*OC] % of people on HTN register with good controlled (2),
 -- with parent searches B/C/E/H/I and B/C/E/H/I_EXFr.
 --
--- Denominator: currently registered people on the hypertension register, excluding:
+-- Denominator: people on the hypertension register, excluding:
 --   - age >= 90
 --   - end of life care code, ever (htn_reg_without_outcome_exclusions_vs1)
 --   - lives in care home code, ever (htn_reg_without_outcome_exclusions_vs2)
@@ -19,16 +19,17 @@
 -- The EMIS linked-record chain (latest CLINBP_COD or HOMEAMBBP_COD event, then its same-date
 -- systolic and diastolic) is represented by int_blood_pressure_all's paired readings.
 --
+-- The EMIS search also requires current registration. That is left to consumers, which
+-- filter on is_active (e.g. the LTC LCS dashboard via ltc_lcs_risk_stratification_base).
+--
 -- window_start / window_end are inclusive SQL date expressions, so the same logic serves the
 -- rolling and FY variants.
 with hypertension_register as (
     select
-        hr.person_id,
-        hr.age
-    from {{ ref('fct_person_hypertension_register') }} as hr
-    inner join {{ ref('dim_person_active_patients') }} as ap
-        on hr.person_id = ap.person_id
-    where hr.is_on_register = true
+        person_id,
+        age
+    from {{ ref('fct_person_hypertension_register') }}
+    where is_on_register = true
 ),
 
 end_of_life_care as (
