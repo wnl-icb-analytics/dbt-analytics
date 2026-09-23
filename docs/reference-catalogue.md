@@ -19,6 +19,14 @@ measurement terminology and clinical code sets. SNOMED, Read, UCUM and the
 patient-referral code set remain here. The general clinical unit lookup stays
 with UCUM; the CSDS-specific aliases sit in the data dictionary.
 
+## ECDS measurement definitions
+
+`DATA_DICTIONARY.ECDS_MEASUREMENT_CODE` holds the latest available ETOS
+definition per observation or scored assessment SNOMED code. It retains
+historical codes, readable assessment categories and the source release filename.
+See [ECDS observations and scored assessments](ecds-observations-and-assessments.md)
+for record grains, national guidance and matching limits.
+
 ## Analyst-facing terminology names
 
 | Object | One row represents |
