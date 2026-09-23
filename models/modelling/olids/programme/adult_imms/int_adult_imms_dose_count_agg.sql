@@ -71,5 +71,12 @@ where rsv_dose1_sort is not null
 group by all
 
 ) p
-
+WHERE TO_NUMBER(SPLIT_PART(p.fiscal_year, '/', 1))
+      >= (
+            CASE
+                WHEN MONTH(CURRENT_DATE()) >= 4
+                    THEN YEAR(CURRENT_DATE())
+                ELSE YEAR(CURRENT_DATE()) - 1
+            END
+         ) - 4
 
