@@ -363,21 +363,21 @@ models:
       # Outcome: hypertension BP control
       # ============================================================
       - name: htn_bp_controlled_rolling
-        description: "Current position: true if the HTN register member's last known BP in the trailing 12 months is well controlled (<= 140/90 if age <= 80, <= 150/90 if age > 80). Null for non-HTN-register persons. False if on register but no qualifying reading in window."
+        description: "Current position (ICS_HTN_21): true if the last BP in the last 12 months is below the NICE target (clinic < 140/90, home/ABPM < 135/85; aged 80+ clinic < 150/90, home/ABPM < 145/85). Null outside the denominator: not on the HTN register, or excluded for age 90+, end of life care, care home or moderate/severe frailty. False if in the denominator with no reading in the window."
       - name: htn_bp_control_rolling_has_reading
-        description: True if the person has a qualifying paired BP reading in the trailing 12 months. Null for non-HTN-register persons.
+        description: True if the person has a paired BP reading in the last 12 months. Null outside the ICS_HTN_21 denominator.
       - name: htn_bp_control_rolling_bp_date
-        description: Date of the last known paired BP reading in the trailing 12 months (null if none / not on register)
+        description: Date of the last known paired BP reading in the trailing 12 months (null if none / outside the ICS_HTN_21 denominator)
       - name: htn_bp_control_rolling_systolic
         description: Systolic value (mmHg) of the last known reading in the trailing 12 months
       - name: htn_bp_control_rolling_diastolic
         description: Diastolic value (mmHg) of the last known reading in the trailing 12 months
       - name: htn_bp_controlled_fy
-        description: "Current financial year: true if the HTN register member's last known BP since 1 April (current FY) is well controlled (<= 140/90 if age <= 80, <= 150/90 if age > 80). Null for non-HTN-register persons. False if on register but no qualifying reading in window."
+        description: "Current financial year (ICS_HTN_21): true if the last BP since 1 April is below the NICE target (as htn_bp_controlled_rolling). Null outside the denominator. False if in the denominator with no reading in the window."
       - name: htn_bp_control_fy_has_reading
-        description: True if the person has a qualifying paired BP reading in the current FY. Null for non-HTN-register persons.
+        description: True if the person has a paired BP reading in the current FY. Null outside the ICS_HTN_21 denominator.
       - name: htn_bp_control_fy_bp_date
-        description: Date of the last known paired BP reading in the current FY (null if none / not on register)
+        description: Date of the last known paired BP reading in the current FY (null if none / outside the ICS_HTN_21 denominator)
       - name: htn_bp_control_fy_systolic
         description: Systolic value (mmHg) of the last known reading in the current FY
       - name: htn_bp_control_fy_diastolic

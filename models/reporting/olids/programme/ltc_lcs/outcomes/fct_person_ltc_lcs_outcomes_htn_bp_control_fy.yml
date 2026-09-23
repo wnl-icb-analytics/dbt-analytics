@@ -5,11 +5,12 @@ models:
     description: |
       LTC LCS outcome: hypertension good blood pressure control - CURRENT FINANCIAL YEAR.
 
-      Same strict good-control logic as fct_person_ltc_lcs_outcomes_htn_bp_control (see that
-      model for full threshold detail), but the last-known-BP window is the current in-progress
+      Same ICS_HTN_21 denominator and NICE targets as fct_person_ltc_lcs_outcomes_htn_bp_control
+      (see that model for exclusions and thresholds), but the last-known-BP window is the current in-progress
       financial year: since 1 April of this FY, pinned to the FY end (31 March of next year).
       Matches the QOF-style "FY year-to-date since 1st April" denominator; the numerator is
       effectively YTD since no future readings exist.
+      Exclusions are assessed on the build date.
     config:
       meta:
         indicator:
@@ -18,7 +19,7 @@ models:
           category: "OUTCOMES"
           clinical_domain: "Cardiovascular"
           name_short: "HTN BP control (current FY)"
-          description_short: "Hypertension register members with well-controlled BP (last known reading, current FY year-to-date)"
+          description_short: "Hypertension register members with BP below NICE target (last known reading, current FY year-to-date)"
           is_qof: false
           source_column: "is_bp_controlled"
           sort_order: "LTC_LCS_OUTCOME_002"
@@ -32,12 +33,12 @@ models:
             column_name: person_id
     columns:
       - name: person_id
-        description: Unique person identifier (one row per hypertension register member)
+        description: Unique person identifier (one row per person in the ICS_HTN_21 denominator)
         data_tests:
           - not_null
           - unique
       - name: age
-        description: Current age in years (from the hypertension register / dim_person_age)
+        description: Current age in years (from the hypertension register / dim_person_age); sets the age band for the targets
       - name: latest_bp_date
         description: Date of the last known paired BP reading within the current FY (null if none)
       - name: latest_systolic_value
@@ -45,18 +46,18 @@ models:
       - name: latest_diastolic_value
         description: Diastolic value (mmHg) of the last known paired reading in the current FY (null if none)
       - name: is_home_bp_event
-        description: True if the representative reading was a home BP measurement (traceability only)
+        description: True if the reading was a home BP measurement; home/ABPM targets apply
       - name: is_abpm_bp_event
-        description: True if the representative reading was an ABPM measurement (traceability only)
+        description: True if the reading was an ABPM measurement; home/ABPM targets apply
       - name: systolic_threshold
-        description: Applied systolic good-control threshold (140 if age <= 80, else 150)
+        description: Systolic value (mmHg) the reading must be below. Under 80 - clinic 140, home/ABPM 135; 80 and over - clinic 150, home/ABPM 145. Clinic targets apply when there is no reading.
       - name: diastolic_threshold
-        description: Applied diastolic good-control threshold (always 90)
+        description: Diastolic value (mmHg) the reading must be below. Clinic 90, home/ABPM 85. Clinic target applies when there is no reading.
       - name: has_bp_in_window
         description: True if the person has at least one qualifying paired BP reading in the current FY
         data_tests:
           - not_null
       - name: is_bp_controlled
-        description: True if the last known reading in the current FY is at/below both targets. False (not null) for register members with no reading in window.
+        description: True if the last reading in the current FY is below both thresholds. False (not null) for people with no reading in the window.
         data_tests:
           - not_null

@@ -1,23 +1,71 @@
 {% macro get_ltc_lcs_htn_bp_control(window_start, window_end) %}
--- LTC LCS Outcomes: Hypertension good blood pressure control (window-parameterised).
+-- LTC LCS Outcomes: hypertension good blood pressure control (window-parameterised).
+-- EMIS source: [ICS_HTN_21 v3_NICE] [*OC] % of people on HTN register with good controlled (2),
+-- with parent searches B/C/E/H/I and B/C/E/H/I_EXFr.
 --
--- One row per person on the hypertension register, flagged for whether their LAST KNOWN
--- paired BP reading WITHIN the supplied window meets the strict good-control thresholds:
---   - age <= 80: systolic <= 140 AND diastolic <= 90
---   - age >  80: systolic <= 150 AND diastolic <= 90
+-- Denominator: currently registered people on the hypertension register, excluding:
+--   - age >= 90
+--   - end of life care code, ever (htn_reg_without_outcome_exclusions_vs1)
+--   - lives in care home code, ever (htn_reg_without_outcome_exclusions_vs2)
+--   - latest MILDFRAIL/MODFRAIL/SEVFRAIL record is the "Moderate frailty" or "Severe frailty"
+--     finding. EMIS tests only these two codes, so a latest Clinical Frailty Scale code does
+--     not exclude.
+-- EMIS library item ea06414e-6bec-4593-837f-5b854c54a8c7 (OR'd with end of life care) is not
+-- in the XML export and is omitted pending EMIS verification.
 --
--- Deliberately simplified vs NICE/NG136: NO clinic-vs-home/ABPM split and NO ACR/CKD/diabetes
--- target tightening. Every reading is scored on the same clinic thresholds. (fct_person_bp_control
--- does the full NG136 logic — this outcome is intentionally the simpler QOF-style good-control rule.)
+-- Numerator: last known paired BP in the window is below the NICE target for its context:
+--   - age < 80:  clinic < 140/90, home/ABPM < 135/85
+--   - age >= 80: clinic < 150/90, home/ABPM < 145/85
+-- The EMIS linked-record chain (latest CLINBP_COD or HOMEAMBBP_COD event, then its same-date
+-- systolic and diastolic) is represented by int_blood_pressure_all's paired readings.
 --
--- window_start / window_end are SQL date expressions injected into the BP date filter, so the
--- same logic serves the rolling and FY variants. The macro itself stays window-agnostic.
+-- window_start / window_end are inclusive SQL date expressions, so the same logic serves the
+-- rolling and FY variants.
 with hypertension_register as (
     select
+        hr.person_id,
+        hr.age
+    from {{ ref('fct_person_hypertension_register') }} as hr
+    inner join {{ ref('dim_person_active_patients') }} as ap
+        on hr.person_id = ap.person_id
+    where hr.is_on_register = true
+),
+
+end_of_life_care as (
+    select distinct person_id
+    from ({{ get_ltc_lcs_observations("htn_reg_without_outcome_exclusions_vs1") }})
+),
+
+care_home as (
+    select distinct person_id
+    from ({{ get_ltc_lcs_observations("htn_reg_without_outcome_exclusions_vs2") }})
+),
+
+-- Latest coded frailty record; a same-date moderate/severe finding wins the tie.
+latest_frailty as (
+    select
         person_id,
-        age
-    from {{ ref('fct_person_hypertension_register') }}
-    where is_on_register = true
+        concept_code in (
+            '925831000000107', -- Moderate frailty
+            '925861000000102'  -- Severe frailty
+        ) as is_moderate_or_severe_finding
+    from {{ ref('int_frailty_diagnoses_all') }}
+    where clinical_effective_date <= current_date()
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc, is_moderate_or_severe_finding desc, id desc
+    ) = 1
+),
+
+denominator as (
+    select hr.*
+    from hypertension_register as hr
+    left join latest_frailty as lf
+        on hr.person_id = lf.person_id
+    where hr.age < 90
+        and hr.person_id not in (select person_id from end_of_life_care)
+        and hr.person_id not in (select person_id from care_home)
+        and not coalesce(lf.is_moderate_or_severe_finding, false)
 ),
 
 -- Last known paired reading within the window. Tie-break mirrors int_blood_pressure_latest
@@ -43,20 +91,18 @@ bp_in_window as (
 
 control as (
     select
-        hr.person_id,
-        hr.age,
+        d.person_id,
+        d.age,
         bp.latest_bp_date,
         bp.latest_systolic_value,
         bp.latest_diastolic_value,
         bp.is_home_bp_event,
         bp.is_abpm_bp_event,
-        -- Strict, age-based thresholds; diastolic target is 90 for both age bands.
-        case when hr.age > 80 then 150 else 140 end as systolic_threshold,
-        90 as diastolic_threshold,
+        coalesce(bp.is_home_bp_event or bp.is_abpm_bp_event, false) as is_home_or_abpm,
         (bp.person_id is not null) as has_bp_in_window
-    from hypertension_register hr
-    left join bp_in_window bp
-        on hr.person_id = bp.person_id
+    from denominator as d
+    left join bp_in_window as bp
+        on d.person_id = bp.person_id
 )
 
 select
@@ -67,14 +113,19 @@ select
     latest_diastolic_value,
     is_home_bp_event,
     is_abpm_bp_event,
-    systolic_threshold,
-    diastolic_threshold,
+    case
+        when age >= 80 and is_home_or_abpm then 145
+        when age >= 80 then 150
+        when is_home_or_abpm then 135
+        else 140
+    end as systolic_threshold,
+    case when is_home_or_abpm then 85 else 90 end as diastolic_threshold,
     has_bp_in_window,
-    -- Good control: both systolic AND diastolic at/below target (QOF <= semantics).
-    -- Register members with no reading in window are uncontrolled (false), flagged via has_bp_in_window.
+    -- Good control: both values strictly below target. People with no reading in the window
+    -- are uncontrolled (false), flagged via has_bp_in_window.
     coalesce(
-        latest_systolic_value <= systolic_threshold
-        and latest_diastolic_value <= diastolic_threshold,
+        latest_systolic_value < systolic_threshold
+        and latest_diastolic_value < diastolic_threshold,
         false
     ) as is_bp_controlled
 from control
