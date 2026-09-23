@@ -26,6 +26,7 @@ FROM {{ ref('int_csf_leak_latest')}}
 --FROM MODELLING.OLIDS_OBSERVATIONS.INT_CSF_LEAK_LATEST
 ) a
 )
+--September 2026 add new group for RSV clinical risk groups which includes immunosuppression and chronic lung disease.
 ,RSV_clinical_risk_groups AS (
 select distinct person_id
 FROM (

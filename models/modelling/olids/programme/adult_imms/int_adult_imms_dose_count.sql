@@ -14,6 +14,8 @@ v.PERSON_ID
 ,v.is_care_home_resident
 ,v.is_immunosuppressed
 ,v.in_ppv_clinical_risk_group
+,v.in_rsv_clinical_risk_group
+,v.turn_65_after_Sep_2023
 ,v.is_pregnant
 ,v.ethnicity_category
 ,v.ethcat_order
