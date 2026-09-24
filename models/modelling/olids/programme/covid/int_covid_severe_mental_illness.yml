@@ -1,20 +1,13 @@
 models:
   - name: int_covid_severe_mental_illness
-    description: 'COVID vaccination eligibility for people with severe mental illness.
-
-      Key Features:
-
-      • Single diagnosis pathway using SMI_COV_COD codes
-
-      • Earliest occurrence in medical history qualifies
-
-      • Age restriction: minimum 5 years for COVID vaccination
-
-      • Includes severe mental illness and psychiatric conditions
-
-      • Generates data for every campaign in covid_reported_campaign_ids()
-
-      Purpose: Identify people eligible for COVID vaccination due to severe mental illness requiring immunisation.'
+    description: >
+      COVID severe mental illness risk group, one row per person and campaign, built for
+      every reported campaign whether or not it offered this group. A person qualifies where
+      their latest SEV_MENTAL_COD record is later than their latest SMHRES_COD resolved
+      record, or no resolved record exists. Records must be on or before the campaign audit
+      end date, using the campaign's pinned terminology version. Minimum age is 5 at the
+      campaign reference date. int_covid_under_65_at_risk applies the campaign offer,
+      currently COVID Autumn 2024 only.
     tests:
       - cluster_ids_exist:
           arguments:
@@ -72,7 +65,7 @@ models:
         data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying diagnosis (earliest severe mental illness diagnosis)'
+        description: 'Latest SEV_MENTAL_COD record date'
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description

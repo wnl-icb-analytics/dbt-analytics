@@ -1,20 +1,12 @@
 models:
   - name: int_covid_gestational_diabetes
-    description: 'COVID vaccination eligibility for people with gestational diabetes.
-
-      Key Features:
-
-      • Single diagnosis pathway using GDIAB_COD codes
-
-      • Earliest occurrence in medical history qualifies
-
-      • Age restriction: minimum 5 years for COVID vaccination
-
-      • Includes gestational diabetes mellitus diagnoses
-
-      • Generates data for every campaign in covid_reported_campaign_ids()
-
-      Purpose: Identify people eligible for COVID vaccination due to gestational diabetes requiring immunisation.'
+    description: >
+      Pregnant people with gestational diabetes in COVID campaigns offering this group,
+      currently COVID Autumn 2024 only. One row per GDIAB_COD record, not per person.
+      Campaigns must have eligible_gestational_diabetes set. The person must be in
+      int_covid_pregnancy for the same campaign, so aged 12 or over. The GDIAB_COD record
+      must be on or before the campaign audit end date and no more than 90 days before the
+      qualifying pregnancy record date from int_covid_pregnancy.
     tests:
       - cluster_ids_exist:
           arguments:
@@ -70,7 +62,7 @@ models:
         data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying diagnosis (earliest gestational diabetes diagnosis)'
+        description: 'Date of the GDIAB_COD record'
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description
@@ -80,6 +72,6 @@ models:
       - name: age_months_at_ref_date
         description: 'Age in months at campaign reference date'
       - name: age_years_at_ref_date
-        description: 'Age in years at campaign reference date (minimum 5 years required)'
+        description: 'Age in years at campaign reference date. Minimum 12, inherited from int_covid_pregnancy'
       - name: created_at
         description: 'Audit timestamp for record creation (campaign audit end date)'
