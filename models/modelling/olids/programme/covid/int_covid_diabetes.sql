@@ -5,7 +5,8 @@ Business Rule: Person is eligible if they have:
 1. Diabetes diagnosis (DIAB_COD) - latest occurrence
 2. AND NOT resolved diabetes (DMRES_COD more recent than diagnosis), OR
 3. Addison's disease/pan-hypopituitarism (ADDIS_COD) - any time, OR  
-4. Gestational diabetes (via separate int_covid_gestational_diabetes model)
+4. Gestational diabetes while pregnant (int_covid_gestational_diabetes, GDIAB_GROUP),
+   which DIAB_GROUP selects after Addison's and before the diagnosis check (spec 2.2)
 5. AND aged 5+ years (minimum age for COVID vaccination)
 6. Only eligible in 2024/25 campaigns (broader eligibility)
 
@@ -109,26 +110,58 @@ people_with_diabetes_eligible AS (
     WHERE (pdd.person_id IS NOT NULL OR pwa.person_id IS NOT NULL)
 ),
 
--- Step 5: Add age information and apply age restrictions
+-- Step 5: Add gestational diabetes (GDIAB_GROUP), keeping one row per person in spec
+-- order: Addison's, then gestational diabetes, then active diabetes
+diabetes_group AS (
+    SELECT
+        campaign_id,
+        person_id,
+        COALESCE(latest_addisons_date, latest_diabetes_date) AS qualifying_event_date,
+        campaign_reference_date,
+        eligibility_reason,
+        IFF(latest_addisons_date IS NOT NULL, 1, 3) AS spec_order
+    FROM people_with_diabetes_eligible
+    WHERE is_diabetes_eligible = TRUE
+
+    UNION ALL
+
+    SELECT
+        campaign_id,
+        person_id,
+        qualifying_event_date,
+        reference_date AS campaign_reference_date,
+        'Gestational diabetes during pregnancy' AS eligibility_reason,
+        2 AS spec_order
+    FROM {{ ref('int_covid_gestational_diabetes') }}
+    -- Same campaigns as this build, so an incremental run replaces only those
+    WHERE campaign_id IN (SELECT campaign_id FROM all_campaigns)
+),
+
+diabetes_group_person AS (
+    SELECT *
+    FROM diabetes_group
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id, person_id ORDER BY spec_order) = 1
+),
+
+-- Step 6: Add age information and apply age restrictions
 people_with_diabetes_eligible_with_age AS (
-    SELECT 
+    SELECT
         pde.campaign_id,
         pde.person_id,
         demo.birth_date_approx,
         FLOOR(MONTHS_BETWEEN(pde.campaign_reference_date, demo.birth_date_approx) / 12) AS age_years_at_ref_date,
         FLOOR(MONTHS_BETWEEN(pde.campaign_reference_date, demo.birth_date_approx)) AS age_months_at_ref_date,
-        COALESCE(pde.latest_addisons_date, pde.latest_diabetes_date) AS qualifying_event_date,
+        pde.qualifying_event_date,
         pde.campaign_reference_date,
         pde.eligibility_reason
-    FROM people_with_diabetes_eligible pde
-    LEFT JOIN {{ ref('dim_person_demographics') }} demo 
+    FROM diabetes_group_person pde
+    LEFT JOIN {{ ref('dim_person_demographics') }} demo
         ON pde.person_id = demo.person_id
     WHERE demo.birth_date_approx IS NOT NULL
-        AND pde.is_diabetes_eligible = TRUE
         AND demo.birth_date_approx <= DATEADD('year', -5, pde.campaign_reference_date)  -- Minimum age 5, tested on birth date
 ),
 
--- Step 6: Format for eligibility table
+-- Step 7: Format for eligibility table
 final_eligible AS (
     SELECT 
         campaign_id,

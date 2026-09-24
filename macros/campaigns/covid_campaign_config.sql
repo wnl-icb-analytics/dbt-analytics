@@ -42,11 +42,11 @@ IMMUNOSUPPRESSION LOOKBACKS:
 The spec defines two immunosuppression groups and this config carries both.
 IMMUNO_GROUP, for uptake monitoring, anchors its medication and admin lookbacks on
 START_DAT: immuno_medication_lookback_date and immuno_admin_lookback_date.
-RECALL_IMMUNO_GROUP, which the campaign offer selects (5.1.1 Group M), anchors them on
-RUN_DAT: recall_immuno_medication_lookback_date and recall_immuno_admin_lookback_date.
-int_covid_immunosuppression implements the recall group, because its consumer is the
-eligible cohort. RUN_DAT is a fixed audit date per period, not the build date, so this is
-just as stable across rebuilds as the START_DAT anchor.
+RECALL_IMMUNO_GROUP, which the campaign offer selects (5.1.1 Group M), measures them
+back from the search run date (spec section 5). int_covid_immunosuppression implements the
+recall group and takes the search run date as the earlier of the build date and
+audit_end_date (RUN_DAT), so a season in flight selects people treated in the last 6
+months and a closed season keeps the windows it was reported with.
 
 COMPLEX ASTHMA STEROID WINDOWS:
 Three overlapping 2-year windows to capture repeated steroid use across campaign periods.
@@ -125,17 +125,12 @@ the autumn and spring periods share one set.
             -- Minimum age for the care home resident cohort
             18 AS care_home_min_age,                                    -- Autumn 2024 offer covered adult residents
 
-            -- RUN_DAT for this period (spec 2.1). Caps how late an observation can be
-            -- and still count toward this campaign.
-            -- RECALL_IMMUNO_GROUP lookbacks, measured from RUN_DAT (spec table 10).
-            -- Group M and its predecessors select the recall group, not IMMUNO_GROUP.
-            '2024-09-30'::DATE AS recall_immuno_medication_lookback_date,   -- RUN_DAT - 6 months
-            '2022-03-31'::DATE AS recall_immuno_admin_lookback_date,        -- RUN_DAT - 3 years
-
             -- UKHSA COVID SCT codeclusters version this season is reported under (last release
             -- on or before RUN_DAT); see stg_reference_ukhsa_codecluster_versions
             '3.4' AS terminology_version,
 
+            -- RUN_DAT for this period (spec 2.1). Caps how late an observation can be
+            -- and still count toward this campaign.
             '2025-03-31'::DATE AS audit_end_date
 
     {%- elif campaign_id == 'COVID Spring 2025' -%}
@@ -207,17 +202,12 @@ the autumn and spring periods share one set.
             -- Minimum age for the care home resident cohort
             65 AS care_home_min_age,
 
-            -- RUN_DAT for this period (spec 2.1). Caps how late an observation can be
-            -- and still count toward this campaign.
-            -- RECALL_IMMUNO_GROUP lookbacks, measured from RUN_DAT (spec table 10).
-            -- Group M and its predecessors select the recall group, not IMMUNO_GROUP.
-            '2024-12-30'::DATE AS recall_immuno_medication_lookback_date,   -- RUN_DAT - 6 months
-            '2022-06-30'::DATE AS recall_immuno_admin_lookback_date,        -- RUN_DAT - 3 years
-
             -- UKHSA COVID SCT codeclusters version this season is reported under (last release
             -- on or before RUN_DAT); see stg_reference_ukhsa_codecluster_versions
             '3.4' AS terminology_version,
 
+            -- RUN_DAT for this period (spec 2.1). Caps how late an observation can be
+            -- and still count toward this campaign.
             '2025-06-30'::DATE AS audit_end_date
 
     {%- elif campaign_id == 'COVID Spring 2026' -%}
@@ -287,17 +277,12 @@ the autumn and spring periods share one set.
             -- Minimum age for the care home resident cohort
             65 AS care_home_min_age,
 
-            -- RUN_DAT for this period (spec 2.1). Caps how late an observation can be
-            -- and still count toward this campaign.
-            -- RECALL_IMMUNO_GROUP lookbacks, measured from RUN_DAT (spec table 10).
-            -- Group M and its predecessors select the recall group, not IMMUNO_GROUP.
-            '2025-12-30'::DATE AS recall_immuno_medication_lookback_date,   -- RUN_DAT - 6 months
-            '2023-06-30'::DATE AS recall_immuno_admin_lookback_date,        -- RUN_DAT - 3 years
-
             -- UKHSA COVID SCT codeclusters version this season is reported under (last release
             -- on or before RUN_DAT); see stg_reference_ukhsa_codecluster_versions
             '3.7.2' AS terminology_version,
 
+            -- RUN_DAT for this period (spec 2.1). Caps how late an observation can be
+            -- and still count toward this campaign.
             '2026-06-30'::DATE AS audit_end_date
 
     {%- elif campaign_id == 'COVID Autumn 2025' -%}
@@ -369,17 +354,12 @@ the autumn and spring periods share one set.
             -- or more", which contradicts that table; the denominator table is followed.
             65 AS care_home_min_age,
 
-            -- RUN_DAT for this period (spec 2.1). Caps how late an observation can be
-            -- and still count toward this campaign.
-            -- RECALL_IMMUNO_GROUP lookbacks, measured from RUN_DAT (spec table 10).
-            -- Group M and its predecessors select the recall group, not IMMUNO_GROUP.
-            '2025-09-30'::DATE AS recall_immuno_medication_lookback_date,   -- RUN_DAT - 6 months
-            '2023-03-31'::DATE AS recall_immuno_admin_lookback_date,        -- RUN_DAT - 3 years
-
             -- UKHSA COVID SCT codeclusters version this season is reported under (last release
             -- on or before RUN_DAT); see stg_reference_ukhsa_codecluster_versions
             '3.7.1' AS terminology_version,
 
+            -- RUN_DAT for this period (spec 2.1). Caps how late an observation can be
+            -- and still count toward this campaign.
             '2026-03-31'::DATE AS audit_end_date
 
     {%- elif campaign_id == 'COVID Autumn 2026' -%}
@@ -452,17 +432,12 @@ the autumn and spring periods share one set.
             -- Minimum age for the care home resident cohort (spec Group M denominator)
             65 AS care_home_min_age,
 
-            -- RUN_DAT for this period (spec 2.1). Caps how late an observation can be
-            -- and still count toward this campaign.
-            -- RECALL_IMMUNO_GROUP lookbacks, measured from RUN_DAT (spec table 10).
-            -- Group M and its predecessors select the recall group, not IMMUNO_GROUP.
-            '2026-09-30'::DATE AS recall_immuno_medication_lookback_date,   -- RUN_DAT - 6 months
-            '2024-03-31'::DATE AS recall_immuno_admin_lookback_date,        -- RUN_DAT - 3 years
-
             -- UKHSA COVID SCT codeclusters version this season is reported under (last release
             -- on or before RUN_DAT); see stg_reference_ukhsa_codecluster_versions
             '4.1' AS terminology_version,
 
+            -- RUN_DAT for this period (spec 2.1). Caps how late an observation can be
+            -- and still count toward this campaign.
             '2027-03-31'::DATE AS audit_end_date
 
     {%- elif campaign_id == 'COVID Spring 2027' -%}
@@ -545,17 +520,12 @@ the autumn and spring periods share one set.
             -- Minimum age for the care home resident cohort
             65 AS care_home_min_age,
 
-            -- RUN_DAT for this period (spec 2.1). Caps how late an observation can be
-            -- and still count toward this campaign.
-            -- RECALL_IMMUNO_GROUP lookbacks, measured from RUN_DAT (spec table 10).
-            -- Group M and its predecessors select the recall group, not IMMUNO_GROUP.
-            '2026-12-30'::DATE AS recall_immuno_medication_lookback_date,   -- RUN_DAT - 6 months
-            '2024-06-30'::DATE AS recall_immuno_admin_lookback_date,        -- RUN_DAT - 3 years
-
             -- UKHSA COVID SCT codeclusters version this season is reported under (last release
             -- on or before RUN_DAT); see stg_reference_ukhsa_codecluster_versions
             '4.1' AS terminology_version,
 
+            -- RUN_DAT for this period (spec 2.1). Caps how late an observation can be
+            -- and still count toward this campaign.
             '2027-06-30'::DATE AS audit_end_date
 
     {%- else -%}

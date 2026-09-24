@@ -5,8 +5,10 @@ Business Rule: Person is eligible if they have:
 1. An asthma diagnosis (AST_COD) - any time in history
 2. AND recent evidence of active asthma management:
    - Asthma inhaled medication (ASTRXM1_COD) since lookback date (12 months), AND
-   - 2+ oral steroid prescriptions (ASTRXM2_COD) within any 2-year window, OR
-3. OR asthma hospital admission (ASTADM_COD) in last 2 years (sufficient alone)
+   - 2+ oral steroid prescriptions (ASTRXM2_COD) on different dates less than 731 days
+     apart, within one window or across adjacent windows, OR
+3. OR asthma hospital admission (ASTADM_COD) in last 2 years (sufficient alone, with or
+   without a diagnosis)
 4. AND aged 5+ years (minimum age for COVID vaccination)
 
 This implements the complex UKHSA steroid window logic with 3 overlapping 2-year periods.
@@ -80,7 +82,7 @@ oral_steroids_window_1 AS (
         med.person_id,
         MIN(med.order_date) AS earliest_steroid_w1,
         MAX(med.order_date) AS latest_steroid_w1,
-        COUNT(*) AS steroid_count_w1
+        COUNT(DISTINCT med.order_date) AS steroid_dates_w1
     FROM ({{ get_medication_orders(cluster_id='ASTRXM2_COD', source='UKHSA_COVID', versioned=true) }}) med
     CROSS JOIN all_campaigns cc
     WHERE med.spec_version = cc.terminology_version
@@ -97,7 +99,7 @@ oral_steroids_window_2 AS (
         med.person_id,
         MIN(med.order_date) AS earliest_steroid_w2,
         MAX(med.order_date) AS latest_steroid_w2,
-        COUNT(*) AS steroid_count_w2
+        COUNT(DISTINCT med.order_date) AS steroid_dates_w2
     FROM ({{ get_medication_orders(cluster_id='ASTRXM2_COD', source='UKHSA_COVID', versioned=true) }}) med
     CROSS JOIN all_campaigns cc
     WHERE med.spec_version = cc.terminology_version
@@ -114,7 +116,7 @@ oral_steroids_window_3 AS (
         med.person_id,
         MIN(med.order_date) AS earliest_steroid_w3,
         MAX(med.order_date) AS latest_steroid_w3,
-        COUNT(*) AS steroid_count_w3
+        COUNT(DISTINCT med.order_date) AS steroid_dates_w3
     FROM ({{ get_medication_orders(cluster_id='ASTRXM2_COD', source='UKHSA_COVID', versioned=true) }}) med
     CROSS JOIN all_campaigns cc
     WHERE med.spec_version = cc.terminology_version
@@ -134,17 +136,24 @@ people_with_qualifying_steroids AS (
             COALESCE(w2.latest_steroid_w2, '1900-01-01'),
             COALESCE(w3.latest_steroid_w3, '1900-01-01')
         ) AS latest_steroid_date,
-        -- UKHSA logic: 2+ prescriptions within any window OR prescriptions spanning windows within 731 days
-        CASE 
-            WHEN COALESCE(w1.steroid_count_w1, 0) >= 2 
-                OR COALESCE(w2.steroid_count_w2, 0) >= 2 
-                OR COALESCE(w3.steroid_count_w3, 0) >= 2
+        -- AST_GROUP (spec 2.2): two prescriptions on different dates less than 731 days
+        -- apart, within one window (earliest <> latest) or across adjacent windows
+        -- (latest of one <> earliest of the next)
+        CASE
+            WHEN COALESCE(w1.steroid_dates_w1, 0) >= 2
+                AND DATEDIFF('day', w1.earliest_steroid_w1, w1.latest_steroid_w1) < 731
             THEN TRUE
-            WHEN w1.earliest_steroid_w1 IS NOT NULL AND w2.earliest_steroid_w2 IS NOT NULL
-                AND DATEDIFF('day', w1.latest_steroid_w1, w2.earliest_steroid_w2) <= 731
-            THEN TRUE  
-            WHEN w2.earliest_steroid_w2 IS NOT NULL AND w3.earliest_steroid_w3 IS NOT NULL
-                AND DATEDIFF('day', w2.latest_steroid_w2, w3.earliest_steroid_w3) <= 731
+            WHEN COALESCE(w2.steroid_dates_w2, 0) >= 2
+                AND DATEDIFF('day', w2.earliest_steroid_w2, w2.latest_steroid_w2) < 731
+            THEN TRUE
+            WHEN COALESCE(w3.steroid_dates_w3, 0) >= 2
+                AND DATEDIFF('day', w3.earliest_steroid_w3, w3.latest_steroid_w3) < 731
+            THEN TRUE
+            WHEN w1.latest_steroid_w1 <> w2.earliest_steroid_w2
+                AND DATEDIFF('day', w1.latest_steroid_w1, w2.earliest_steroid_w2) < 731
+            THEN TRUE
+            WHEN w2.latest_steroid_w2 <> w3.earliest_steroid_w3
+                AND DATEDIFF('day', w2.latest_steroid_w2, w3.earliest_steroid_w3) < 731
             THEN TRUE
             ELSE FALSE
         END AS has_qualifying_steroids
@@ -156,11 +165,18 @@ people_with_qualifying_steroids AS (
         AND COALESCE(w1.person_id, w2.person_id) = w3.person_id
 ),
 
--- Step 6: Combine all asthma eligibility criteria
+-- Step 6: Combine all asthma eligibility criteria. An emergency admission qualifies
+-- regardless of a diagnosis (spec 2.2 AST_GROUP), so the spine is everyone with either.
+asthma_people AS (
+    SELECT campaign_id, person_id FROM people_with_asthma_diagnosis
+    UNION
+    SELECT campaign_id, person_id FROM people_with_asthma_admissions
+),
+
 people_with_asthma_eligibility AS (
-    SELECT 
-        pad.campaign_id,
-        pad.person_id,
+    SELECT
+        ap.campaign_id,
+        ap.person_id,
         pad.first_asthma_date,
         pwaa.latest_admission_date,
         prai.latest_inhaler_date,
@@ -184,15 +200,16 @@ people_with_asthma_eligibility AS (
                 AND pws.has_qualifying_steroids = TRUE THEN 'Active asthma with repeated steroid use'
             ELSE 'Not eligible'
         END AS eligibility_reason
-    FROM people_with_asthma_diagnosis pad
-    LEFT JOIN people_with_asthma_admissions pwaa 
-        ON pad.campaign_id = pwaa.campaign_id AND pad.person_id = pwaa.person_id
+    FROM asthma_people ap
+    LEFT JOIN people_with_asthma_diagnosis pad
+        ON ap.campaign_id = pad.campaign_id AND ap.person_id = pad.person_id
+    LEFT JOIN people_with_asthma_admissions pwaa
+        ON ap.campaign_id = pwaa.campaign_id AND ap.person_id = pwaa.person_id
     LEFT JOIN people_with_recent_asthma_inhalers prai
-        ON pad.campaign_id = prai.campaign_id AND pad.person_id = prai.person_id  
+        ON ap.campaign_id = prai.campaign_id AND ap.person_id = prai.person_id
     LEFT JOIN people_with_qualifying_steroids pws
-        ON pad.campaign_id = pws.campaign_id AND pad.person_id = pws.person_id
-    LEFT JOIN all_campaigns cc ON pad.campaign_id = cc.campaign_id
-    WHERE pad.first_asthma_date IS NOT NULL
+        ON ap.campaign_id = pws.campaign_id AND ap.person_id = pws.person_id
+    LEFT JOIN all_campaigns cc ON ap.campaign_id = cc.campaign_id
 ),
 
 -- Step 7: Add age information and apply age restrictions
