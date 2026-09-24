@@ -5,6 +5,8 @@ A model that calls get_observations, get_medication_orders, get_medication_state
 or get_lipid_observations with a cluster ID must list that ID in a cluster_ids_exist
 test, passing the same source and versioned arguments as the call. A model that calls
 a get_ltc_lcs_* macro must list each value set token in a valuesets_have_codes test.
+A model that reads a codeset table directly and filters it on cluster_id literals
+(cluster_id = 'X' or cluster_id IN (...)) must list those IDs in a cluster_ids_exist test.
 
 Checks the models passed as arguments (changed .sql or .yml files under models/).
 With --all, checks every model. Calls whose cluster argument is not a string literal
@@ -31,9 +33,15 @@ VALUESET_MACROS = {
     'get_ltc_lcs_medication_statements',
     'get_ltc_lcs_medication_statements_latest',
 }
+CODESET_REFS = ('stg_reference_combined_codesets', 'stg_reference_ukhsa_codecluster_versions')
 CALL_PATTERN = re.compile(r'\b(get_[a-z_]+)\s*\(')
 JINJA_BLOCK_PATTERN = re.compile(r'{{.*?}}|{%.*?%}', re.DOTALL)
 TOKEN_PATTERN = re.compile(r'[A-Za-z0-9_\-]+')
+QUOTED_PATTERN = re.compile(r"'([^']*)'")
+# cluster_id = 'X', UPPER(cc.cluster_id) = 'X', cluster_id IN ('X', 'Y')
+DIRECT_EQ_PATTERN = re.compile(r"\bcluster_id\s*\)?\s*=\s*'([^']+)'", re.IGNORECASE)
+DIRECT_IN_PATTERN = re.compile(r"\bcluster_id\s*\)?\s+IN\s*\(([^)]*)\)", re.IGNORECASE)
+DIRECT_LIKE_PATTERN = re.compile(r"\bcluster_id\s*\)?\s+I?LIKE\s*'([^']+)'", re.IGNORECASE)
 
 
 def read_call_args(text: str, start: int) -> str:
@@ -97,6 +105,20 @@ def string_literal(value: str | None) -> str | None:
     return match.group(1) if match.group(1) is not None else match.group(2)
 
 
+def list_literal(value: str | None) -> str | None:
+    """Return the comma-joined items of a list of string literals, or None if not one."""
+    if value is None:
+        return None
+    match = re.fullmatch(r'\[(.*)\]', value.strip(), re.DOTALL)
+    if not match:
+        return None
+    items = [i.strip() for i in match.group(1).split(',') if i.strip()]
+    literals = [string_literal(i) for i in items]
+    if not items or any(lit is None for lit in literals):
+        return None
+    return ','.join(literals)
+
+
 def tokens(literal: str) -> list[str]:
     return [t.upper() for t in TOKEN_PATTERN.findall(literal)]
 
@@ -131,14 +153,14 @@ def find_usages(sql: str) -> tuple[set[tuple[str, str | None, bool]], set[str], 
             source = keyword.get('source', positional[1] if len(positional) > 1 else None)
         elif macro == 'get_lipid_observations':
             raw = keyword.get('cluster_id', positional[0] if positional else None)
-            source = None
+            source = "'PCD'"  # get_lipid_observations calls get_observations(..., source='PCD')
         else:
             raw = keyword.get('cluster_id', positional[1] if len(positional) > 1 else None)
             source = keyword.get('source', positional[2] if len(positional) > 2 else None)
             if raw is None or raw.strip().lower() == 'none':
                 continue  # BNF-only call
 
-        literal = string_literal(raw)
+        literal = string_literal(raw) or list_literal(raw)
         source_literal = string_literal(source) if source and source.strip().lower() != 'none' else None
         if literal is None or (source and source.strip().lower() != 'none' and source_literal is None):
             dynamic.append(f'{macro}({args.strip()[:60]})')
@@ -148,6 +170,20 @@ def find_usages(sql: str) -> tuple[set[tuple[str, str | None, bool]], set[str], 
             clusters.add((cluster, source_literal, versioned))
 
     return clusters, valuesets, dynamic
+
+
+def find_direct_usages(sql: str) -> tuple[set[str], list[str]]:
+    """Return cluster IDs a model filters a codeset table on directly, and LIKE patterns."""
+    sql = re.sub(r'{#.*?#}', '', sql, flags=re.DOTALL)
+    sql = re.sub(r'/\*.*?\*/', '', sql, flags=re.DOTALL)
+    sql = re.sub(r'--[^\n]*', '', sql)
+    if not any(ref in sql for ref in CODESET_REFS):
+        return set(), []
+    clusters = {m.group(1).strip().upper() for m in DIRECT_EQ_PATTERN.finditer(sql)}
+    for match in DIRECT_IN_PATTERN.finditer(sql):
+        clusters.update(q.strip().upper() for q in QUOTED_PATTERN.findall(match.group(1)))
+    patterns = [m.group(1) for m in DIRECT_LIKE_PATTERN.finditer(sql)]
+    return clusters, patterns
 
 
 def find_yaml_files(model_path: Path) -> list[Path]:
@@ -197,8 +233,13 @@ def as_tokens(value) -> set[str]:
 
 def check_model(sql_path: Path) -> tuple[list[str], list[str]]:
     """Return (failures, notices) for one model."""
-    clusters, valuesets, dynamic = find_usages(sql_path.read_text(encoding='utf-8', errors='ignore'))
+    sql = sql_path.read_text(encoding='utf-8', errors='ignore')
+    clusters, valuesets, dynamic = find_usages(sql)
+    direct, patterns = find_direct_usages(sql)
+    # A direct read is covered by any unversioned test listing the cluster
+    clusters |= {(cluster, None, False) for cluster in direct}
     notices = [f'{sql_path}: cannot check dynamic call {call}' for call in dynamic]
+    notices += [f"{sql_path}: cannot check cluster_id LIKE '{pattern}'" for pattern in patterns]
     if not clusters and not valuesets:
         return [], notices
 
