@@ -1,25 +1,17 @@
 models:
   - name: stg_olids_patient_uprn
-    description: Patient address matching to Unique Property Reference Numbers (UPRNs) for geographical analysis. Deduplicated by id and filtered to exclude deleted records.
+    description: >
+      OLIDS patient address matches to Unique Property Reference Numbers, one
+      row per source row, linked to patient_address by patient_address_id. The
+      source has no deletion flag or record metadata, so rows are not
+      deduplicated or filtered for deletion.
     config:
       meta:
         owner:
           name: EddieDavison92
     columns:
-      - name: lds_registrar_event_id
-        description: Registrar event identifier
-      - name: masked_uprn
-        description: Masked Unique Property Reference Number
-      - name: masked_usrn
-        description: Masked Unique Street Reference Number
-      - name: masked_postcode
-        description: Masked postcode
-      - name: address_format_quality
-        description: Quality indicator for address format
       - name: postcode_quality
         description: Quality indicator for postcode
-      - name: matched_with_assign
-        description: Boolean or indicator for matching with assignment
       - name: qualifier
         description: Qualifier for the address match
       - name: classification
@@ -28,18 +20,8 @@ models:
         description: Algorithm used for address matching
       - name: match_pattern
         description: Pattern used for the address match
-      - name: lds_id
-        description: LDS system identifier
       - name: publisher_organisation_code
         description: "ODS code of the publisher organisation (post-2026 OLIDS rename — was record_owner_organisation_code)"
-      - name: lds_datetime_update_acquired
-        description: "Datetime when an update for this record was acquired by LDS. patient_uprn does not carry the first-acquired counterpart in the new schema."
-      - name: lds_start_datetime
-        description: LDS datetime stamp from which the record version was correct - used for deduplication to get the latest record
-      - name: lds_is_deleted
-        description: Deletion flag - records with TRUE are filtered out in this staging layer
-      - name: lds_source_record_id
-        description: LDS assigned unique identifier for the source record version
       - name: patient_address_id
         description: "Foreign key to patient_address.id — links this UPRN match to the patient_address record it was matched against. New in the 2026 OLIDS schema realignment (issue #747)."
     tests:
