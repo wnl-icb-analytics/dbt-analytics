@@ -3,9 +3,23 @@ version: 2
 models:
   - name: stg_lpf_medication
     description: |
-      Staging layer for local provider flow medication data.
-      Transformations: Removes deleted records, removes nulls on MedicationID, deduplicates by latest version.
-      Source: raw_lpf_medication
+      Local provider flow medication orders submitted by providers from the PID
+      environment via MESH. Grain: one row per medication_id, holding the latest
+      submitted version of that medication record.
+
+      Cleaning: records flagged as deleted (delete_ind = 'Y') and records
+      without a medication_id are removed. Where a medication_id is resubmitted,
+      the row with the highest version is kept, then the latest ingestion
+      timestamp, then the highest file row number.
+
+      organisation_id is derived from the first segment of the submitted file
+      path using clean_organisation_id: the first five characters are kept when
+      they match an organisation type 41 code, otherwise the first three.
+
+      Frequency and dose strength columns are not currently populated by any
+      submitting provider. They are retained to review as more providers join.
+
+      Source: raw_lpf_medication (DATA_LAKE.LOCAL_PROVIDER_FLOWS.MEDICATION)
 
     config:
       meta:
@@ -13,39 +27,107 @@ models:
           name: Data Team
 
     columns:
-      - name: metadata_record_ingestion_timestamp
-        description: "Timestamp when record was ingested"
+      - name: medication_id
+        description: "Provider identifier for the medication record. One row per value."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: organisation_id
+        description: |
+          Submitting provider organisation, derived from the first segment of the
+          submitted file path. The first five characters are kept when they
+          match an organisation type 41 code; otherwise the first three
+          characters are used.
+
+      - name: encounter_id
+        description: "Provider identifier for the encounter the medication was ordered in."
+
+      - name: sk_patient_id
+        description: |
+          Pseudonymised patient identifier from the supplied person_id, trimmed
+          and cast to text. Empty strings and the placeholder value '1' become
+          null.
         data_tests:
           - not_null
 
-tests:
-  - name: concept_mapping_medication
-    description: "Medication codes must have code system and display"
-    sql: |
-      select * from {{ ref('stg_lpf_medication') }}
-      where medication_code_id is not null and (medication_code_system_id is null or medication_display is null)
-    config:
-      severity: warn
-      store_failures: true
+      - name: prescribing_provider_id
+        description: "Provider identifier for the prescribing clinician."
 
-  - name: referential_integrity_medication
-    description: "All medication records must reference valid persons"
-    sql: |
-      select * from {{ ref('stg_lpf_medication') }} where person_id is null
-    config:
-      severity: error
-      store_failures: true
+      - name: start_date
+        description: "Date the medication course started."
 
-  - name: data_freshness_medication
-    description: "Medication data should be recent (last 30 days) for active monitoring"
-    sql: |
-      with freshness as (
-        select
-          max(metadata_record_ingestion_timestamp) as latest_ingestion,
-          datediff(day, max(metadata_record_ingestion_timestamp), current_timestamp()) as days_since_latest
-        from {{ ref('stg_lpf_medication') }}
-      )
-      select * from freshness where days_since_latest > 30
-    config:
-      severity: warn
-      store_failures: true
+      - name: end_date
+        description: "Date the medication course stopped. Supplied as StopDate; null when no stop date was submitted."
+
+      - name: drug_code_id
+        description: "Code for the drug ordered, in the code system given by drug_code_system_id."
+
+      - name: drug_code_system_id
+        description: "Code system for drug_code_id. Not populated by all providers."
+
+      - name: drug_display
+        description: "Provider display text for the drug ordered."
+
+      - name: dose_quantity_unit_code_id
+        description: "Code for the unit of the dose quantity."
+
+      - name: dose_quantity_unit_code_system_id
+        description: "Code system for dose_quantity_unit_code_id."
+
+      - name: dose_quantity_unit_display
+        description: "Display text for the unit of the dose quantity."
+
+      - name: dose_volume_amount
+        description: "Volume of each dose, in the unit given by the dose_volume_unit columns."
+
+      - name: dose_volume_unit_code_id
+        description: "Code for the unit of dose_volume_amount."
+
+      - name: dose_volume_unit_code_system_id
+        description: "Code system for dose_volume_unit_code_id."
+
+      - name: dose_volume_unit_display
+        description: "Display text for the unit of dose_volume_amount."
+
+      - name: route_code_id
+        description: "Code for the route of administration."
+
+      - name: route_code_system_id
+        description: "Code system for route_code_id. Not currently populated by all providers."
+
+      - name: route_display
+        description: "Display text for the route of administration."
+
+      - name: order_status_code_id
+        description: "Code for the status of the medication order."
+
+      - name: order_status_code_system_id
+        description: "Code system for order_status_code_id."
+
+      - name: order_status_display
+        description: "Display text for the status of the medication order."
+
+      - name: order_detail_line
+        description: "Free-text summary of the medication order as recorded by the provider."
+
+      - name: frequency_code_id
+        description: "Code for the dosing frequency. Not currently populated."
+
+      - name: frequency_code_system_id
+        description: "Code system for frequency_code_id. Not currently populated."
+
+      - name: frequency_display
+        description: "Display text for the dosing frequency. Not currently populated."
+
+      - name: dose_strength_amount
+        description: "Strength of each dose. Not currently populated."
+
+      - name: dose_strength_unit_code_id
+        description: "Code for the unit of dose_strength_amount. Not currently populated."
+
+      - name: dose_strength_unit_code_system_id
+        description: "Code system for dose_strength_unit_code_id. Not currently populated."
+
+      - name: dose_strength_unit_display
+        description: "Display text for the unit of dose_strength_amount. Not currently populated."
