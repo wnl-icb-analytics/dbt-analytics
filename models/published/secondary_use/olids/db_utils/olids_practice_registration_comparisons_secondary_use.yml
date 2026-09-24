@@ -1,17 +1,20 @@
 models:
   - name: pds_olids_reg_pass_secondary_use
-    description: |
-      Practices passing PDS registration count validation (Secondary Use).
-
-      Use this for inner joins to filter datasets to practices with validated registration data.
-      PDS models support opt-out filtering via sk_patient_id.
-
-      Validation: <2% variance OR <5 persons difference (same threshold as EMIS)
-      Methodology: PDS All Registration Types Comparison
-      Includes: validation_methodology column describing the test
+    description: >
+      Practices passing the PDS versus OLIDS registration count check. Counts cover all
+      registered patients with no opt-outs applied; there is no patient key. A practice
+      passes when its OLIDS count is within 2% of PDS or differs by fewer than 5 people.
+      Use for inner joins to keep practices with validated registration data. Practices
+      with no PDS count never pass. PDS counts are current registrations at open practices
+      with ICB parent code 93C, for people with no death record or removal reason, after
+      NHS number merger handling. OLIDS counts are current registrations from
+      int_patient_registrations. match_quality is 'Excellent Match (<1%)' below 1%
+      difference and 'Meets Criteria' otherwise. National Data Opt-out and Type 1 opt-outs
+      are not applied.
 
     config:
       meta:
+        custom_message: "Practice-level PDS and OLIDS registration counts; no patient key. National Data Opt-out and Type 1 opt-outs are NOT applied: counts include all registered patients."
         owner:
           name: Eddie Davison
     tests:
@@ -21,18 +24,21 @@ models:
           arguments:
             min_value: 1
   - name: pds_olids_reg_fail_secondary_use
-    description: |
-      Practices failing PDS registration count validation (Secondary Use).
-
-      These practices require investigation before use in analyses.
-      PDS models support opt-out filtering via sk_patient_id.
-
-      Validation: ≥2% variance AND ≥5 persons difference
-      Methodology: PDS All Registration Types Comparison
-      Includes: validation_methodology column and issue_category (2-5%, 5-20%, 20%+)
+    description: >
+      Practices failing the PDS versus OLIDS registration count check. Counts cover all
+      registered patients with no opt-outs applied; there is no patient key. A practice
+      fails when its OLIDS count differs from PDS by at least 2% and at least 5 people, or
+      it has no PDS count. Investigate before use. No PDS count means zero or missing,
+      including OLIDS practices outside the PDS practice list. PDS counts are current
+      registrations at open practices with ICB parent code 93C, for people with no death
+      record or removal reason, after NHS number merger handling. OLIDS counts are current
+      registrations from int_patient_registrations. issue_category is '20%+ Variance',
+      '5-20% Variance' or '2-5% Variance' by absolute_percent_difference. Practices with
+      no PDS count have absolute_percent_difference 0 and are labelled '2-5% Variance'.
 
     config:
       meta:
+        custom_message: "Practice-level PDS and OLIDS registration counts; no patient key. National Data Opt-out and Type 1 opt-outs are NOT applied: counts include all registered patients."
         owner:
           name: Eddie Davison
     tests:
@@ -44,7 +50,7 @@ models:
       Complete PDS registration comparison for all practices with categorisation (Secondary Use).
 
       Categories: Major Difference (≥20%), Minor Difference (5-20%), Good Match (<5%), No Data
-      PDS models support opt-out filtering via sk_patient_id.
+      Counts cover all registered patients with no opt-outs applied; there is no patient key.
 
       Methodology: PDS All Registration Types Comparison using merged NHS numbers
 
@@ -53,6 +59,7 @@ models:
 
     config:
       meta:
+        custom_message: "Practice-level PDS and OLIDS registration counts; no patient key. National Data Opt-out and Type 1 opt-outs are NOT applied: counts include all registered patients."
         owner:
           name: Eddie Davison
     tests:
