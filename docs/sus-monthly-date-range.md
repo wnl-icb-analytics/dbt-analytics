@@ -28,7 +28,7 @@ No `z` fields are implemented. Ten PBR fields that were entirely null in the ins
 - `specialised_service_code_4`
 - `specialised_service_code_5`
 
-The remaining comparison with the legacy consolidated outputs is deliberately separate. Discovery found the following non-`z` legacy fields which were not direct date-range matches:
+The remaining comparison with the legacy consolidated outputs is deliberately separate. See [SUS monthly legacy field assessment](sus-monthly-legacy-field-assessment.md) for the classification and evidence needed. Discovery found the following non-`z` legacy fields which were not direct date-range matches:
 
 | Dataset | Direct source matches | Candidate fields in another source | Ambiguous candidates | Operational omissions | Not found in date-range source |
 |---|---:|---:|---:|---:|---:|
