@@ -1,6 +1,10 @@
 models:
   - name: stg_pds_person
-    description: Personal Demographics Service person demographics
+    description: >
+      PDS person demographics for pseudonymised patients, one row per source row
+      with no filtering or deduplication. A patient can have several rows
+      covering different business-effective periods, from event_from_date to
+      event_to_date.
     config:
       meta:
         owner:
@@ -21,18 +25,18 @@ models:
         tests:
           - not_null
       - name: year_month_of_birth
-        description: Year and month of birth
-      - name: gender
-        description: Gender
+        description: Month of birth, stored as the first day of that month
+      - name: gender_code
+        description: Gender code as supplied by PDS
       - name: date_of_death
         description: Date of death
       - name: death_status
         description: Death status indicator
-      - name: preferred_language
-        description: Preferred language
+      - name: preferred_language_code
+        description: Preferred language code as supplied by PDS
       - name: interpreter_required
         description: Interpreter required indicator
-      - name: person_business_effective_from_date
-        description: Business effective from date
-      - name: person_business_effective_to_date
-        description: Business effective to date
+      - name: event_from_date
+        description: Start of the PDS business-effective period for this record version
+      - name: event_to_date
+        description: End of the PDS business-effective period for this record version
