@@ -79,6 +79,9 @@ The [reporting guide](mhsds-domain-models.md) explains each table's row meaning
 and definitions. `REPORTING.SEMANTIC.SEM_MHSDS` provides named measures and
 supported relationships over the care entities.
 
+Use the [assurance and testing guide](mhsds-assurance-testing.md) for the recorded
+validation evidence, automated checks and analyst acceptance questions.
+
 ## What remains in modelling
 
 `MODELLING.MENTAL_HEALTH` contains rules reused by several outputs and preparation
