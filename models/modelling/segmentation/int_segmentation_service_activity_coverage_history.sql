@@ -24,10 +24,10 @@ community_source_months AS (
         DATE_TRUNC('month', CAST(care_contact_date AS DATE)) AS activity_month,
         MIN(CAST(care_contact_date AS DATE)) AS first_date_in_month,
         MAX(CAST(care_contact_date AS DATE)) AS last_date_in_month
-    FROM {{ ref('int_csds_contact_currency') }}
+    FROM {{ ref('fct_csds_care_contact') }}
     WHERE
         care_contact_date IS NOT NULL
-        AND attendance_status IN ('5', '6')
+        AND source_attendance_status_code IN ('5', '6')
     GROUP BY DATE_TRUNC('month', CAST(care_contact_date AS DATE))
 ),
 
