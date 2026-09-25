@@ -3,7 +3,8 @@ select
     , s.cyp104_unique_id as source_row_id
     , s.person_id
     , b.sk_patient_id
-    , {{ dbt_utils.generate_surrogate_key(['s.person_id', 's.organisation_code_provider', 's.reporting_period_end_date::date']) }}
+    , iff(s.person_id is null, null,
+        {{ dbt_utils.generate_surrogate_key(['s.person_id', 's.organisation_code_provider', 's.reporting_period_end_date::date']) }})
         as person_provider_period_id
     , s.unique_service_request_identifier as referral_source_record_id
     , s.waiting_time_measurement_type_community_care as waiting_time_measurement_type_code
@@ -17,18 +18,21 @@ select
     , status.rtt_period_status_category as rtt_status_category
     , s.derived_waiting_time as source_waiting_time_minutes
     , s.derived_waiting_time_night as source_waiting_time_overnight_days
-    , case upper(trim(s.response_standard_met))
-        when 'Y' then true
-        when 'N' then false
-    end as is_response_standard_met
+    , s.referral_to_treatment_period_end_date is not null as is_clock_stopped
+    -- Negative derived waits are invalid; national reporting excludes them.
+    , s.derived_waiting_time >= 0 as is_valid_wait
+    -- The source flag reads false for clocks never stopped, so assess stopped clocks only.
+    , iff(is_clock_stopped,
+        case upper(trim(s.response_standard_met)) when 'Y' then true when 'N' then false end,
+        null) as is_response_standard_met
     -- 05 is the two-hour urgent community response; 06 is the two-day standard.
     , trim(s.waiting_time_measurement_type_community_care) = '05' as is_two_hour_response_clock
-    -- A clock is the referral, measurement type and start; it repeats monthly and
-    -- gains an end or status later. The newest report describes it.
+    -- A clock is the referral and start date; it repeats monthly and gains an end,
+    -- status or corrected type later. The newest report describes it.
     , row_number() over (
-        partition by s.unique_service_request_identifier, s.waiting_time_measurement_type_community_care,
-            s.referral_to_treatment_period_start_date::date, s.referral_to_treatment_period_start_time::time
-        order by s.reporting_period_end_date desc nulls last, s.effective_from desc nulls last, s.cyp104_unique_id desc
+        partition by s.unique_service_request_identifier, s.referral_to_treatment_period_start_date::date
+        order by s.reporting_period_end_date desc nulls last, s.effective_from desc nulls last,
+            s.cyp104_unique_id::number desc
     ) = 1 as is_latest_clock_record
     , iff(rtt_end_date >= rtt_start_date, datediff(day, rtt_start_date, rtt_end_date), null)
         as recorded_rtt_interval_days

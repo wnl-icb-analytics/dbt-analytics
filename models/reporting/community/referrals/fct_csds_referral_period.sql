@@ -28,8 +28,8 @@ with contact_evidence as (
 )
 
 -- Team relationships in the same submission. Closure and rejection belong to a
--- team; the referral stays open while any submitted team remains open. A team
--- no longer submitted is treated as ended, as is a referral no longer submitted.
+-- team; the referral stays open while any team in the submission is open. Team
+-- sections can be missing or partial, so absent teams are not treated as ended.
 , submission_teams as (
     select
         unique_submission_id
@@ -43,12 +43,6 @@ with contact_evidence as (
         , min(service_or_team_type_referred_to_community_care) as any_service_team_type_code
     from {{ ref('stg_csds_service_type_history') }}
     group by 1, 2
-)
-
-, first_team_period as (
-    select unique_service_request_identifier, min(reporting_period_end_date::date) as first_team_period_end_date
-    from {{ ref('stg_csds_service_type_history') }}
-    group by 1
 )
 
 , periods as (
@@ -68,7 +62,8 @@ select
     , r.cyp101_unique_id as source_row_id
     , r.person_id
     , b.sk_patient_id
-    , {{ dbt_utils.generate_surrogate_key(['r.person_id', 'r.organisation_code_provider', 'r.period_end_date']) }}
+    , iff(r.person_id is null, null,
+        {{ dbt_utils.generate_surrogate_key(['r.person_id', 'r.organisation_code_provider', 'r.period_end_date']) }})
         as person_provider_period_id
     , r.organisation_code_provider as provider_organisation_code
     , provider.organisation_name as provider_organisation_name
@@ -96,20 +91,14 @@ select
     , a.evidence_usable_from_date as attendance_evidence_available_by_date
     , r.referral_received_date <= r.period_end_date
         and (r.referral_discharge_date is null or r.referral_discharge_date > r.period_end_date)
-        and (
-            t.n_service_teams_ended < t.n_service_teams
-            or (t.n_service_teams is null and not coalesce(ft.first_team_period_end_date <= r.period_end_date, false))
-        )
+        and (t.n_service_teams is null or t.n_service_teams_ended < t.n_service_teams)
         as is_recorded_open_at_period_end
-    , t.n_service_teams is null and not coalesce(ft.first_team_period_end_date <= r.period_end_date, false)
-        as has_no_team_recorded
+    , t.n_service_teams is null as has_no_team_in_submission
     , case
         when r.referral_received_date is null then 'referral_date_missing'
         when r.referral_received_date > r.period_end_date then 'not_started'
         when r.referral_discharge_date <= r.period_end_date then 'discharged'
-        when t.n_service_teams_ended = t.n_service_teams
-            or (t.n_service_teams is null and ft.first_team_period_end_date <= r.period_end_date)
-            then 'all_teams_ended'
+        when t.n_service_teams_ended = t.n_service_teams then 'all_teams_ended'
         when a.first_recorded_attended_contact_date is not null then 'attended_contact_recorded'
         else 'no_attended_contact_recorded'
     end as recorded_access_state
@@ -133,7 +122,6 @@ asof join attendance_history as a
 left join submission_teams as t
     on r.unique_submission_id = t.unique_submission_id
     and r.unique_service_request_identifier = t.unique_service_request_identifier
-left join first_team_period as ft on r.unique_service_request_identifier = ft.unique_service_request_identifier
 left join {{ ref('stg_csds_bridging') }} as b on r.person_id = b.person_id
 left join {{ ref('organisation') }} as provider
     on upper(trim(r.organisation_code_provider)) = provider.organisation_code
