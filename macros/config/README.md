@@ -34,17 +34,11 @@ only the current version and is untouched.
 
 ## Rebuilding closed seasons
 
-Closed seasons are recomputed monthly, not daily. The cohort intermediates are incremental
-(`delete+insert` on `campaign_id`) and take their `all_campaigns` CTE from
-`covid_build_campaigns()` and `flu_build_campaigns()`, which return only the seasons in
-flight on a routine run. A monthly run restates every campaign against the current source
-data and its pinned terminology:
-
-`sh
-dbt build --select tag:covid_flu+ --full-refresh
-# or, without dropping the tables
-dbt build --select tag:covid_flu+ --vars '{covid_flu_rebuild_closed: true}'
-`
+Every build restates every reported campaign. The cohort intermediates are tables built from
+`covid_reported_campaigns()` and `flu_reported_campaigns()`, so late-arriving and corrected
+records reach closed seasons on the next run, each season still using its pinned
+terminology version. Closed-season figures can therefore move after publication; take a
+snapshot where a figure must stay fixed.
 
 ## QOF
 
