@@ -1,0 +1,451 @@
+models:
+  - name: ptr_person_month_analysis_base_v2
+    description: 'Analysis foundation table providing person-months with demographics and condition flags for population health analytics.'
+
+    config:
+      meta:
+        owner:
+          name: SusieRahman
+    columns:
+      - name: analysis_month
+        description: 'Month end date for this analysis period'
+        tests:
+          - not_null
+
+      - name: person_id
+        description: 'Unique person identifier'
+        tests:
+          - not_null
+          - unique
+
+      - name: sk_patient_id
+        description: 'Surrogate key for patient record'
+ 
+      - name: practice_name
+        description: 'Current or latest practice name'
+       
+      - name: year_number
+        description: 'Year as integer'
+        tests:
+          - not_null
+
+      - name: month_number
+        description: 'Month as integer (1-12)'
+        tests:
+          - not_null
+
+      - name: quarter_number
+        description: 'Calendar quarter as integer (1-4)'
+        tests:
+          - not_null
+
+      - name: month_year_label
+        description: 'Readable month-year label'
+        tests:
+          - not_null
+
+      - name: financial_year
+        description: 'UK financial year label'
+        tests:
+          - not_null
+
+      - name: financial_year_start
+        description: 'Starting year of financial year as integer '
+        tests:
+          - not_null
+
+      - name: financial_quarter
+        description: 'UK financial quarter label'
+        tests:
+          - not_null
+
+      - name: financial_quarter_number
+        description: 'UK financial quarter as integer'
+        tests:
+          - not_null
+
+      - name: birth_year
+        description: 'Birth year'
+
+      - name: birth_date_approx
+        description: 'Conservative age calculation using end of birth month'
+        tests:
+          - not_null
+          
+      - name: birth_date_approx_end_of_month
+        description: 'Birth date approximated to end of birth month'
+
+      - name: death_year
+        description: 'Death year if deceased'
+
+      - name: death_month
+        description: 'Death month if deceased'
+
+      - name: death_date_approx
+        description: 'Approximate death date if deceased'
+
+      - name: is_deceased
+        description: 'Death status flag'
+        tests:
+         - not_null
+
+      - name: gender
+         description: 'Gender'
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Male', 'Female', 'Indeterminate sex', 'Unknown']
+
+      - name: ethnicity_category
+        description: 'Ethnicity category from latest recording'
+        tests:
+          - not_null
+
+      - name: ethnicity_subcategory
+        description: 'Ethnicity subcategory from latest recording'
+        tests:
+          - not_null
+
+      - name: ethnicity_granular
+        description: 'Detailed ethnicity from latest recording'
+        tests:
+          - not_null
+
+      - name: ethnicity_category_sort
+        description: 'Sort order for ethnicity category'
+
+      - name: ethnicity_display_sort_key
+        description: 'Display sort key for ethnicity'
+
+      - name: main_language
+        description: 'Main language'
+
+      - name: language_type
+        description: 'Language type classification'
+
+      - name: interpreter_type
+        description: 'Type of interpreter needed'
+
+      - name: interpreter_needed
+        description: 'Interpreter needed flag'
+        tests:
+          - not_null
+
+      - name: is_active
+        description: 'Current registration status'
+        tests:
+          - not_null
+
+      - name: inactive_reason
+        description: 'Reason for inactive status (Deceased, Registration ended, No registration history, or NULL)'
+
+      - name: age
+        description: 'Current age in years (or age at death)'
+
+      - name: age_at_least
+        description: 'Conservative age calculation using end of birth month'
+
+      - name: age_band_5y
+        description: '5-year age bands (0-4, 5-9, 10-14, ..., 80-84, 85+)'
+
+      - name: age_band_10y
+        description: '10-year age bands (0-9, 10-19, 20-29, ..., 70-79, 80+)'
+
+      - name: age_band_nhs
+        description: 'NHS Digital age bands (0-4, 5-14, 15-24, 25-34, 35-44, 45-54, 55-64, 65-74, 75-84, 85+)'
+
+      - name: age_band_ons
+        description: 'ONS age bands (0-4, 5-9, 10-14, 15-19, 20-24, 25-29, ..., 80-84, 85+)'
+
+      - name: age_band_esp
+        description: ''
+
+      - name: age_life_stage
+        description: 'Life stage categories (Infant, Toddler, Child, Adolescent, Young Adult, Adult, Senior, Elderly, Very Elderly)'
+
+      - name: is_early_years_age
+        description: 'Flag indicating age between birth and age 5'
+       
+      - name: is_primary_school_age
+        description: 'Flag indicating primary school age (Reception to Year 6)'
+        tests:
+          - not_null
+
+      - name: is_secondary_school_age
+        description: 'Flag indicating secondary school age (Year 7 to Year 13)'
+        tests:
+          - not_null
+
+      - name: practice_code
+        description: 'Current or latest practice code'
+        tests:
+          - not_null
+
+      - name: borough_registered
+        description: 'Practice borough where patient is registered'
+
+      - name: sub_icb_code
+        description: 'Integrated Care Board (ICB) code where patient is registered (practice-based)'
+
+      - name: sub_icb_name
+        description: 'Integrated Care Board (ICB) name where patient is registered (practice-based)'
+
+      - name: practice_postcode
+        description: 'Practice postcode'
+
+      - name: practice_lsoa
+        description: 'Practice LSOA'
+
+      - name: practice_msoa
+        description: 'Practice MSOA'
+
+      - name: practice_latitude
+        description: 'Practice latitude coordinate'
+
+      - name: practice_longitude
+        description: 'Practice longitude coordinate'
+
+      - name: neighbourhood_registered
+        description: 'Practice neighbourhood classification'
+
+      - name: postcode_hash
+        description: 'Patient residential address postcode hash for privacy protection'
+
+      - name: uprn_hash
+        description: 'Patient address Unique Property Reference Number hash (placeholder for future use)'
+
+      - name: household_id
+        description: 'Household identifier linking persons at same address (placeholder for future use)'
+
+      - name: icb_code_resident
+        description: 'Integrated Care Board (ICB) code where patient resides (from postcode lookup)'
+
+      - name: icb_resident
+        description: 'Integrated Care Board (ICB) name where patient resides (distinct from registration ICB)'
+
+      - name: local_authority_code
+        description: 'Local Authority District 2025 code (LAD25CD) where patient resides'
+
+      - name: local_authority_name
+        description: 'Local Authority District 2025 name (LAD25NM) where patient resides'
+
+      - name: borough_resident
+        description: 'London borough where patient resides (NULL for non-London residents)'
+
+      - name: is_london_resident
+        description: 'Flag indicating if patient resides in Greater London area'
+
+      - name: london_classification
+        description: 'London area classification (NCL, Other London, Outside London)'
+
+      - name: lsoa_code_21
+        description: 'Lower Layer Super Output Area 2021 census code where patient resides'
+
+      - name: lsoa_name_21
+        description: 'Lower Layer Super Output Area 2021 census name where patient resides'
+
+      - name: ward_code
+        description: 'Electoral Ward 2025 code (WD25CD) where patient resides'
+
+      - name: ward_name
+        description: 'Electoral Ward 2025 name (WD25NM) where patient resides'
+
+      - name: imd_decile_19
+        description: 'Index of Multiple Deprivation 2019 decile (1=most deprived, 10=least deprived)'
+
+      - name: imd_quintile_19
+        description: 'Index of Multiple Deprivation 2019 quintile text labels (Most Deprived to Least Deprived)'
+
+      - name: imd_quintile_numeric_19
+        description: 'Index of Multiple Deprivation 2019 numeric quintile (1=most deprived, 5=least deprived)'
+
+      - name: imd_decile_25
+        description: 'Index of Multiple Deprivation 2025 decile (1=most deprived, 10=least deprived)'
+
+      - name: imd_quintile_25
+        description: 'Index of Multiple Deprivation 2025 quintile text labels (Most Deprived to Least Deprived)'
+
+      - name: imd_quintile_numeric_25
+        description: 'Index of Multiple Deprivation 2025 numeric quintile (1=most deprived, 5=least deprived)'
+
+      - name: neighbourhood_resident
+        description: 'NCL neighbourhood classification where patient resides (based on 2021 LSOA)'
+      - name: sub_icb_name
+        description: 'Integrated Care Board (ICB) name where patient is registered (practice-based)'
+
+      - name: effective_start_date
+        description: 'Start date of this demographics record'
+
+      - name: effective_end_date
+        description: 'End date of this demographics record'
+
+      - name: period_sequence
+        description: 'Sequence number for SCD2 periods'
+
+      - name: is_current
+        description: ''
+
+      - name: has_ast
+        description: 'Had active asthma this month'
+
+      - name: has_copd
+        description: 'Had active COPD this month'
+
+      - name: has_htn
+        description: 'Had active hypertension this month'
+
+      - name: has_chd
+        description: 'Had active coronary heart disease this month'
+
+      - name: has_af
+        description: 'Had active atrial fibrillation this month'
+
+      - name: has_hf
+        description: 'Had active heart failure this month'
+
+      - name: has_pad
+        description: 'Had active peripheral arterial disease this month'
+
+      - name: has_dm
+        description: 'Had active diabetes this month'
+
+      - name: has_gestdiab
+        description: 'Had active gestational diabetes this month'
+
+      - name: has_ndh
+        description: 'Had active non-diabetic hyperglycaemia this month'
+
+      - name: has_dep
+        description: 'Had active depression this month'
+
+      - name: has_smi
+        description: 'Had active severe mental illness this month'
+
+      - name: has_ckd
+        description: 'Had active chronic kidney disease this month'
+
+      - name: has_dem
+        description: 'Had active dementia this month'
+
+      - name: has_ep
+        description: 'Had active epilepsy this month'
+
+      - name: has_stia
+        description: 'Had active stroke/TIA this month'
+
+      - name: has_can
+        description: 'Had active cancer this month'
+
+      - name: has_pc
+        description: 'Had active palliative care this month'
+
+      - name: has_ld
+        description: 'Had active learning disability this month'
+
+      - name: has_frail
+        description: 'Had active frailty this month'
+
+      - name: has_ra
+        description: 'Had active rheumatoid arthritis this month'
+
+      - name: has_ost
+        description: 'Had active osteoporosis this month'
+
+      - name: has_oa
+        description: 'Had active ostearthritis this month'
+
+      - name: has_nafld
+        description: 'Had active NAFLD this month'
+
+      - name: has_fh
+        description: 'Had active familial hypercholesterolaemia this month'
+
+      - name: new_ast
+        description: 'New asthma episode started this month'
+
+      - name: new_copd
+        description: 'New COPD episode started this month'
+
+      - name: new_htn
+        description: 'New hypertension episode started this month'
+
+      - name: new_chd
+        description: 'New coronary heart disease episode started this month'
+
+      - name: new_af
+        description: 'New atrial fibrillation episode started this month'
+
+      - name: new_hf
+        description: 'New heart failure episode started this month'
+
+      - name: new_pad
+        description: 'New peripheral arterial disease episode started this month'
+
+      - name: new_dm
+        description: 'New diabetes episode started this month'
+
+      - name: new_gestdiab
+        description: 'New gestational diabetes episode started this month'
+
+      - name: new_ndh
+        description: 'New non-diabetic hyperglycaemia episode started this month'
+
+      - name: new_dep
+        description: 'New depression episode started this month'
+
+      - name: new_smi
+        description: 'New severe mental illness episode started this month'
+
+      - name: new_ckd
+        description: 'New chronic kidney disease episode started this month'
+
+      - name: new_dem
+        description: 'New dementia episode started this month'
+
+      - name: new_ep
+        description: 'New epilepsy episode started this month'
+
+      - name: new_stia
+        description: 'New stroke/TIA episode started this month'
+
+      - name: new_can
+        description: 'New cancer episode started this month'
+
+      - name: new_pc
+        description: 'New palliative care episode started this month'
+
+      - name: new_ld
+        description: 'New learning disability episode started this month'
+
+      - name: new_frail
+        description: 'New frailty episode started this month'
+
+      - name: new_ra
+        description: 'New rheumatoid arthritis episode started this month'
+
+      - name: new_ost
+        description: 'New osteoporosis episode started this month'
+
+      - name: new_oa
+        description: 'New ostearthritis episode started this month'
+
+      - name: new_nafld
+        description: 'New NAFLD episode started this month'
+
+      - name: new_fh
+        description: 'New familial hypercholesterolaemia episode started this month'
+
+      - name: total_active_conditions
+        description: 'Total number of active conditions this month'
+
+      - name: total_new_episodes_this_month
+        description: 'Total number of new episodes this month'
+
+      - name: has_any_conditions
+        description: 'Whether person has any active condition this month'
+
+      - name: has_any_new_episode
+        description: 'Whether person has any new episode this month'
+
+     
