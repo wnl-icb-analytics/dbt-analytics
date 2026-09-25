@@ -32,16 +32,14 @@ KEY ELIGIBILITY GROUP for restricted 2025/26 campaigns.
 */
 
 {{ config(
-    materialized='incremental',
-    incremental_strategy='delete+insert',
-    unique_key='campaign_id',
+    materialized='table',
     tags=['covid_flu']
 ) }}
 
 WITH campaigns AS (
     -- Every COVID campaign the models report on
     -- (campaign list: macros/config/covid_campaign_selection.sql)
-    {{ covid_build_campaigns() }}
+    {{ covid_reported_campaigns() }}
 ),
 
 all_campaigns AS (

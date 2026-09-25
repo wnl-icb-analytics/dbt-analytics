@@ -17,8 +17,12 @@ SELECT
     obs.mapped_concept_code AS concept_code,
     obs.mapped_concept_display AS concept_display,
     obs.result_value,
-    obs.result_unit_display,
+    -- UCUM display where OLIDS maps the unit, else the recorded unit text. OLIDS leaves
+    -- alcohol units per week unmapped (UCUM has no alcohol unit).
+    COALESCE(obs.result_unit_display, NULLIF(TRIM(units.display), '')) AS result_unit_display
     FROM ({{ get_observations("'ALC_COD'") }}) obs
+    LEFT JOIN {{ ref('stg_olids_concept') }} units
+        ON obs.result_units_source_concept_id = units.concept_id
 WHERE obs.clinical_effective_date IS NOT NULL 
 AND obs.clinical_effective_date <= CURRENT_DATE() -- No future dates
 ),
