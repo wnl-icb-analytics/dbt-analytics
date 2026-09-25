@@ -1,13 +1,14 @@
 models:
   - name: int_ltc_lcs_cf_base_population
     description: >
-      Base population for metabolic/cardiovascular LTC case finding indicators.
-
-      One row per eligible person excluding patients already in metabolic/CV LTC programmes
-      (ICS_METABOLIC_LTC equivalent: AF, CKD, CHD, HTN, HF, Stroke/TIA, PAD, NAFLD,
-      Diabetes (all types), Hyperlipidaemia) and those with NHS health checks in last
-      24 months. Does NOT exclude respiratory conditions (COPD, Asthma) — those use
-      ICS_RESP_LTC separately for the CYP Asthma pathway.
+      Currently registered, living people with age and exclusion flags for LTC LCS case
+      finding, one row per person. No condition or health-check exclusions are applied here.
+      Each case-finding base applies the flags its EMIS search requires.
+      has_metabolic_excluding_condition flags the ICS_METABOLIC_LTC conditions: AF, CKD,
+      CHD, hypertension, heart failure, stroke/TIA, PAD, NAFLD, diabetes of any type and
+      familial hypercholesterolaemia. has_respiratory_excluding_condition flags the
+      ICS_RESP_LTC conditions: COPD, asthma and CYP asthma. had_nhs_health_check_24m flags a
+      completed NHS Health Check, HEALTH_CHECK_COMP, in the last 24 months.
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id

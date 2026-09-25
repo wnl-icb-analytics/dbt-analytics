@@ -19,7 +19,8 @@ with base as (
         and has_metabolic_excluding_condition = false
 ),
 
--- Require an eGFR code recorded in the last 1 year (canon: Value > 0 within 1y OR any record within 1y)
+-- eGFR codes recorded in the last 1 year; anti-joined below to exclude recently tested people
+-- (canon: Value > 0 within 1y OR any record within 1y)
 recent_egfr as (
     select person_id
     from ({{ get_ltc_lcs_observations("ckd_case_finding_vs1") }})

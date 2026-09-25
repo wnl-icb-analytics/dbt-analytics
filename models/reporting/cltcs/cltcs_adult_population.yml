@@ -1,11 +1,20 @@
 models:
   - name: cltcs_adult_population
     description: >
-      Shared living-adult registrant population for the C-LTCS sub-score models.
-      One row per sk_patient_id, with the OLIDS person_id (latest-registered-record
-      tiebreak) and the C-LTCS neighbourhood_code. The sk_patient_id <-> person_id
-      resolution is a local stopgap and does not handle fragmented records well
-      (see the model header).
+      C-LTCS complex adult cohort, one row per sk_patient_id, of living adults registered in
+      C-LTCS neighbourhoods with over 2 conditions and a complexity marker. Feeds
+      cltcs_patient_list and the C-LTCS sub-score models. People must map to an OLIDS
+      person_id, be active current registrants at a practice in the C-LTCS neighbourhood
+      mapping and have turned 18 before the start of the current month. A person is excluded
+      as deceased only when OLIDS marks them deceased and PDS also records a date of death.
+      Conditions are counted from dim_person_conditions. Complexity markers are: Cambridge
+      comorbidity score above 1.5, LTC LCS overall risk group HRC or HR, moderate or severe
+      frailty by eFI2 category or frailty register, more than 3 A&E attendances in the last
+      12 months, or more than 1 non-elective admission for an ambulatory care sensitive
+      condition in the last 12 months. The sk_patient_id to person_id mapping is a local
+      stopgap, see the model header. fragmented_sk_patient_id_flag and
+      fragmented_person_id_flag mark identifiers that map to more than one OLIDS person or
+      patient.
     config:
       meta:
         owner:

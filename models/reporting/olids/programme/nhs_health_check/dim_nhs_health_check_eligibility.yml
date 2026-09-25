@@ -1,10 +1,15 @@
 models:
   - name: dim_nhs_health_check_eligibility
-    description: 'NHS Health Check programme eligibility for patients aged 40-74 without
-      excluding chronic conditions.
-
-      One row per person with eligibility flags, due status (>5 years or never checked)
-      and latest health check date.'
+    description: >
+      NHS Health Check eligibility and due status for everyone in dim_person with an age,
+      one row per person, including deceased and deregistered people.
+      is_eligible_for_nhs_health_check is true for people aged 40 to 74 on none of the CHD,
+      diabetes, stroke/TIA, CKD, atrial fibrillation, heart failure or familial
+      hypercholesterolaemia registers. Everyone else stays with the flag false.
+      Hypertension, PAD, statin prescribing and a previous 10-year CVD risk of 20% or more
+      are not used as exclusions. due_nhs_health_check is true for eligible people with no
+      completed check, HEALTH_CHECK_COMP, or whose latest check is more than 1,825 days, 5
+      years, before today. Deceased people carry their age at death.
     config:
       meta:
         owner:
