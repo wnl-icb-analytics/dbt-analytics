@@ -10,6 +10,7 @@ with activity as (
         , coalesce(c.dm_icb_commissioner, r.dm_icb_commissioner) as dm_icb_commissioner
         , coalesce(c.dm_sub_icb_commissioner, r.dm_sub_icb_commissioner) as dm_sub_icb_commissioner
         , c.attendance_status
+        , {{ csds_attendance_code('c.attended_or_did_not_attend_code', 'c.attendance_status') }} as attendance_code
         , nullif(trim(st.team_type_code), '') as team_type_code
         , nullif(trim(r.primary_reason_for_referral_community_care), '') as primary_referral_reason
     from {{ ref('stg_csds_care_contact') }} as c
@@ -56,7 +57,7 @@ with activity as (
     qualify row_number() over (
         partition by person_id
         order by reporting_period_end_date desc nulls last, effective_from desc nulls last,
-            unique_submission_id desc, cyp001_unique_id desc
+            unique_submission_id::number desc, cyp001_unique_id::number desc
     ) = 1
 )
 
@@ -119,9 +120,9 @@ with activity as (
             when ic_age_at_service_referral_received_date between 0 and 17 then 'CYP'
             else 'Adult'
         end as age_category
-        -- lpad guards against zero-padded codes; nulls (~54% of contacts,
-        -- structural across providers) costed per NHSE v1.1 guidance
-        , lpad(attendance_status, 2, '0') in ('05', '06') or attendance_status is null as is_costed_attendance
+        -- NHSE v1.1 costs attended contacts and those with no attendance code.
+        -- Both attendance fields are read: the newer status is empty before v1.6.
+        , attendance_code in ('5', '6') or attendance_code is null as is_costed_attendance
     from enriched
 )
 

@@ -18,7 +18,8 @@ select
     , r.cyp201_unique_id as source_row_id
     , r.person_id
     , b.sk_patient_id
-    , {{ dbt_utils.generate_surrogate_key(['r.person_id', 'r.organisation_code_provider', 'r.reporting_period_end_date::date']) }}
+    , iff(r.person_id is null, null,
+        {{ dbt_utils.generate_surrogate_key(['r.person_id', 'r.organisation_code_provider', 'r.reporting_period_end_date::date']) }})
         as person_provider_period_id
     , r.ic_age_at_care_contact_date as age_at_contact
     , r.care_contact_date::date as care_contact_date

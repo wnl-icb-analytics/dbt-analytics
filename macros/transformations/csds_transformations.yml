@@ -5,7 +5,8 @@ macros:
     description: >-
       CSDS contact attendance code with zero padding removed. Uses the original attended-or-did-not-attend
       field and falls back to the newer attendance status, which is absent from version 1.0 submissions.
-      Attended is 5 or 6, did not attend 3 or 7, cancelled 2 (patient) or 4 (provider).
+      Code 0 (appointment in the future) is kept. Attended is 5 or 6, did not attend 3 or 7, cancelled 2
+      (patient) or 4 (provider).
     arguments:
       - name: attended_or_did_not_attend_code
         type: string
@@ -16,7 +17,8 @@ macros:
   - name: is_wnl_icb_code
     description: >-
       True when any of the supplied organisation codes appears in wnl_commissioner_icb_lookup (WNL ICB,
-      its sub-ICB locations and legacy borough CCGs); false otherwise, including when all are null.
+      its sub-ICB locations and legacy borough CCGs); false when codes are present but none match; null when
+      every input is null. The lookup is read at compile time and emitted as a literal list.
     arguments:
       - name: code_columns
         type: list

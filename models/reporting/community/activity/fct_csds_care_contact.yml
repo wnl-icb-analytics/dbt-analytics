@@ -107,7 +107,7 @@ models:
     description: Care professional team identifier assigned locally by the provider.
   - name: service_or_team_type_code
     description: Community service or team type of the delivering team, from int_csds_care_contact_context.
-      Read with service_or_team_type_basis; unmatched codes remain visible.
+      Read with service_or_team_attribution_basis; unmatched codes remain visible.
   - name: service_or_team_type_name
     description: Newest dictionary description of the service or team type; null when the code is missing
       or unmatched.
@@ -122,13 +122,14 @@ models:
   - name: practice_attribution
     description: at_contact or latest_known, showing which registration supplied the practice.
   - name: person_provider_period_id
-    description: Key for the person, provider and reporting period of the selected contact row; joins dim_csds_person_provider_period.
+    description: Key for the person, provider and reporting period of the selected contact row; joins dim_csds_person_provider_period. Null without a person.
   - name: is_wnl_commissioner
     description: The source-derived ICB or sub-ICB commissioner, or the submitted commissioner, is West and North London
-      (current ICB, its sub-ICB locations or legacy borough CCGs). Use it for WNL-commissioned activity.
+      (current ICB, its sub-ICB locations or legacy borough CCGs); null when no commissioner is recorded. Use it for
+      WNL-commissioned activity. Before mid-2019 some providers recorded themselves as commissioner, so use practice too.
   - name: is_attended
     description: Attendance code 5 or 6, from the attended-or-did-not-attend field or else the newer attendance status.
-      Null when both are missing.
+      Null when both are missing; false for code 0 (appointment in the future).
   - name: is_dna
     description: Attendance code 3 (did not attend) or 7 (arrived late, not seen). Null when both fields are missing.
   - name: is_cancelled
