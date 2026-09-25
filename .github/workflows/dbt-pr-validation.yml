@@ -20,6 +20,10 @@
 # deploy state. When no state manifest exists, falls back to building the
 # candidate's directly changed nodes (bounded; never a full project build).
 #
+# Adding the ❄️snowflake-ci label runs the same DEV build once for the PR's
+# merge commit, then removes the label. Later commits do not rebuild; re-add
+# the label to validate again.
+#
 # Uses --defer --favor-state against the last deployed manifest (from the
 # DBT_ARTIFACTS stage): unselected parents resolve to prod relations, so
 # validation does not depend on the DEV__ mirror being complete or fresh.
@@ -35,7 +39,7 @@ name: dbt PR Validation
 on:
   workflow_dispatch:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches: [main]
   # Required checks must handle merge_group or queued PRs cannot merge.
   merge_group:
@@ -47,16 +51,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     concurrency:
-      # Merge candidates share DEV relations, so validate them serially.
+      # DEV builds (merge candidates, label and manual runs) share DEV
+      # relations, so validate them serially.
       # queue: max holds up to 100 pending runs FIFO instead of cancelling all
       # but one, so the queue can build every entry of a stack. It cannot be
       # combined with cancel-in-progress, so PR status-only runs queue too.
-      group: ${{ github.event_name == 'merge_group' && 'dbt-pr-validation-merge-queue' || format('dbt-pr-validation-{0}', github.event.pull_request.number || github.ref_name) }}
+      group: ${{ (github.event_name != 'pull_request' || (github.event.action == 'labeled' && github.event.label.name == '❄️snowflake-ci')) && 'dbt-pr-validation-merge-queue' || format('dbt-pr-validation-{0}', github.event.pull_request.number || github.ref_name) }}
       cancel-in-progress: false
       queue: max
     permissions:
       contents: read
+      # Removes the snowflake-ci label after a label-triggered build.
+      pull-requests: write
     env:
+      RUNTIME_BUILD: ${{ github.event_name != 'pull_request' || (github.event.action == 'labeled' && github.event.label.name == '❄️snowflake-ci') }}
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
       SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE__USERNAME }}
       SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
@@ -69,19 +77,20 @@ jobs:
       EFI2_HISTORY_WAREHOUSE: WH_WNL_OLIDS_L
     steps:
       - name: Report PR-side queue gate
-        if: github.event_name == 'pull_request'
+        if: env.RUNTIME_BUILD != 'true'
         run: |
           echo "Runtime dbt validation is deferred to GitHub's merge queue."
           echo "No models are materialised for this pull-request event."
+          echo "Add the ❄️snowflake-ci label for a one-off DEV build."
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: github.event_name != 'pull_request'
+        if: env.RUNTIME_BUILD == 'true'
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Check validation selection
-        if: github.event_name != 'pull_request'
+        if: env.RUNTIME_BUILD == 'true'
         run: python -m unittest discover -s .github/scripts -p test_validate_dbt_models.py
 
       # Fallback selection (no state manifest) and diagnostics: lets a failed
@@ -89,14 +98,15 @@ jobs:
       # own files or was inherited un-deployed state.
       - name: Map changed files to nodes
         id: changes
-        if: github.event_name != 'pull_request'
+        if: env.RUNTIME_BUILD == 'true'
         env:
           MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
         run: |
           if [ "${{ github.event_name }}" = "merge_group" ]; then
             BASE_SHA="$MERGE_GROUP_BASE_SHA"
           else
-            # A manual run may target any branch; compare that branch with main.
+            # A manual or label run compares its branch or PR merge commit
+            # with main.
             BASE_SHA=$(git merge-base origin/main HEAD)
           fi
           echo "Comparing $BASE_SHA...HEAD"
@@ -156,7 +166,7 @@ jobs:
           [ -n "$MACRO_FILES" ] && echo "Macro changes detected - included models that use them" || true
 
       - name: Install dbt Fusion
-        if: github.event_name != 'pull_request'
+        if: env.RUNTIME_BUILD == 'true'
         run: |
           # Latest Fusion, unpinned - matches the VS Code extension.
           curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --target x86_64-unknown-linux-gnu --update
@@ -164,7 +174,7 @@ jobs:
           "$HOME/.local/bin/dbt" --version
 
       - name: Write Snowflake private key
-        if: github.event_name != 'pull_request'
+        if: env.RUNTIME_BUILD == 'true'
         env:
           SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE__PRIVATE_KEY }}
         run: |
@@ -174,25 +184,25 @@ jobs:
           echo "SNOWFLAKE_PRIVATE_KEY_PATH=$HOME/.snowflake/rsa_key.p8" >> "$GITHUB_ENV"
 
       - name: Install dbt packages
-        if: github.event_name != 'pull_request'
+        if: env.RUNTIME_BUILD == 'true'
         run: dbt deps
 
       - name: Compile against production metadata
-        if: github.event_name != 'pull_request'
+        if: env.RUNTIME_BUILD == 'true'
         run: dbt compile --target ci-prod --profiles-dir .
 
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-        if: github.event_name != 'pull_request'
+        if: env.RUNTIME_BUILD == 'true'
         with:
           version: "0.9.x"
 
       - name: Fetch state manifest
         id: state
-        if: github.event_name != 'pull_request'
+        if: env.RUNTIME_BUILD == 'true'
         run: uv run --with snowflake-connector-python python .github/scripts/fetch_dbt_state.py
 
       - name: Validate in Snowflake DEV
-        if: github.event_name != 'pull_request'
+        if: env.RUNTIME_BUILD == 'true'
         env:
           NODE_COUNT: ${{ steps.changes.outputs.node_count }}
           PR_SELECT: ${{ steps.changes.outputs.select }}
@@ -217,5 +227,14 @@ jobs:
           python .github/scripts/validate_dbt_models.py --state state --select state:modified
 
       - name: Cleanup credentials
-        if: always() && github.event_name != 'pull_request'
+        if: always() && env.RUNTIME_BUILD == 'true'
         run: rm -f ~/.snowflake/rsa_key.p8
+
+      # One-off trigger: clear the label so later commits don't look validated
+      # and re-adding it starts a new build.
+      - name: Remove snowflake-ci label
+        if: always() && env.RUNTIME_BUILD == 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --remove-label "❄️snowflake-ci"
