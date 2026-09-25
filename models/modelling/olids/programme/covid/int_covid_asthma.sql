@@ -13,16 +13,14 @@ This implements the complex UKHSA steroid window logic with 3 overlapping 2-year
 */
 
 {{ config(
-    materialized='incremental',
-    incremental_strategy='delete+insert',
-    unique_key='campaign_id',
+    materialized='table',
     tags=['covid_flu']
 ) }}
 
 WITH all_campaigns AS (
     -- Every COVID campaign the models report on
     -- (campaign list: macros/config/covid_campaign_selection.sql)
-    {{ covid_build_campaigns() }}
+    {{ covid_reported_campaigns() }}
 ),
 
 -- Step 1: Find people with asthma diagnosis (for all campaigns)
