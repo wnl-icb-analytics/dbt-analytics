@@ -13,7 +13,7 @@ select
     pod_group_overview_master                                    as pod_group,
     notes,
     updated_at
-from {{ ref('raw_pod_group_mapping') }}
+from {{ ref('raw_pod_group_manager_pod_group_mapping') }}
 qualify row_number() over (
     partition by pod_code, local_pod_code, local_pod_description
     order by updated_at desc nulls last, created_at desc nulls last
