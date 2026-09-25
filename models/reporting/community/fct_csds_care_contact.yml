@@ -111,11 +111,28 @@ models:
   - name: service_or_team_type_name
     description: Newest dictionary description of the service or team type; null when the code is missing
       or unmatched.
-  - name: service_or_team_type_basis
-    description: contact_team when the contact's own team has a same-submission CYP102 row; referral_team_contact_team_missing
-      or referral_team_contact_team_unmatched when the referral's single team type is used; unresolved otherwise.
+  - name: service_or_team_attribution_basis
+    description: How the delivering team type was resolved; see int_csds_care_contact_context. contact_team,
+      contact_team_other_submission and contact_team_submission_map describe the contact's own team; referral_team_*
+      use the referral's single team type; unresolved otherwise.
     data_tests:
     - not_null
+  - name: practice_code
+    description: GP practice registered on the contact date, else the person's latest known practice.
+  - name: practice_attribution
+    description: at_contact or latest_known, showing which registration supplied the practice.
+  - name: person_provider_period_id
+    description: Key for the person, provider and reporting period of the selected contact row; joins dim_csds_person_provider_period.
+  - name: is_wnl_commissioner
+    description: The source-derived ICB or sub-ICB commissioner, or the submitted commissioner, is West and North London
+      (current ICB, its sub-ICB locations or legacy borough CCGs). Use it for WNL-commissioned activity.
+  - name: is_attended
+    description: Attendance code 5 or 6, from the attended-or-did-not-attend field or else the newer attendance status.
+      Null when both are missing.
+  - name: is_dna
+    description: Attendance code 3 (did not attend) or 7 (arrived late, not seen). Null when both fields are missing.
+  - name: is_cancelled
+    description: Attendance code 2 (patient cancelled) or 4 (provider cancelled or postponed). Null when both fields are missing.
   - name: administrative_category_code
     description: Submitted administrative category code. Unmatched values remain visible.
   - name: consultation_type_code
