@@ -19,7 +19,7 @@ select
     , 'CSDS' as source
 
 
-from {{ ref('stg_csds_cyp201carecontact')}} as core 
+from {{ ref('stg_csds_care_contact')}} as core
 
 left join {{ ref('stg_csds_bridging')}} as bridge
 on core.person_id = bridge.person_id 

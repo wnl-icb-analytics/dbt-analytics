@@ -4,7 +4,7 @@ with activity as (
         , c.unique_care_contact_identifier
         , c.person_id
         , b.sk_patient_id
-        , c.org_id_prov
+        , c.organisation_code_provider as org_id_prov
         , c.care_contact_date
         , r.ic_age_at_service_referral_received_date
         , coalesce(c.dm_icb_commissioner, r.dm_icb_commissioner) as dm_icb_commissioner
@@ -12,10 +12,10 @@ with activity as (
         , c.attendance_status
         , nullif(trim(st.team_type_code), '') as team_type_code
         , nullif(trim(r.primary_reason_for_referral_community_care), '') as primary_referral_reason
-    from {{ ref('stg_csds_cyp201carecontact') }} as c
-    left join {{ ref('stg_csds_cyp101referral') }} as r
+    from {{ ref('stg_csds_care_contact') }} as c
+    left join {{ ref('stg_csds_referral') }} as r
         on c.unique_service_request_identifier = r.unique_service_request_identifier
-    left join {{ ref('stg_csds_servicetype') }} as st
+    left join {{ ref('int_csds_currency_referral_service_type') }} as st
         on c.unique_service_request_identifier = st.unique_service_request_identifier
     left join {{ ref('stg_csds_bridging') }} as b
         on c.person_id = b.person_id
@@ -25,29 +25,32 @@ with activity as (
     select
         a.unique_service_request_identifier
         , a.unique_care_contact_identifier
-        , gp.practice_code
+        , gp.general_medical_practice_code_patient_registration as practice_code
     from activity as a
     inner join {{ ref('stg_csds_gp_registration') }} as gp
         on a.person_id = gp.person_id
-        and a.care_contact_date >= gp.registration_start_date
+        and a.care_contact_date >= gp.start_date_gmp_patient_registration
         and (
-            gp.registration_end_date is null
-            or a.care_contact_date < gp.registration_end_date
+            gp.end_date_gmp_patient_registration is null
+            or a.care_contact_date < gp.end_date_gmp_patient_registration
         )
     qualify row_number() over (
         partition by a.unique_service_request_identifier, a.unique_care_contact_identifier
-        order by gp.registration_start_date desc nulls last, gp.practice_code
+        -- providers can report the same period differently; newest report wins
+        order by gp.start_date_gmp_patient_registration desc nulls last, gp.reporting_period_end_date desc nulls last,
+            gp.effective_from desc nulls last, gp.unique_submission_id::number desc, gp.cyp002_unique_id::number desc
     ) = 1
 )
 
 , latest_gp_registration as (
     select
         person_id
-        , practice_code
+        , general_medical_practice_code_patient_registration as practice_code
     from {{ ref('stg_csds_gp_registration') }}
     qualify row_number() over (
         partition by person_id
-        order by registration_start_date desc nulls last, practice_code
+        order by start_date_gmp_patient_registration desc nulls last, reporting_period_end_date desc nulls last,
+            effective_from desc nulls last, unique_submission_id::number desc, cyp002_unique_id::number desc
     ) = 1
 )
 
@@ -93,12 +96,18 @@ with activity as (
     from {{ ref('stg_ukhfd_all_gp_and_gdp_practices') }}
 )
 
+-- one residence per person: the newest reported MPI record across providers
 , residence as (
     select
         person_id
-        , lsoa21_residence
-        , sub_icb_of_residence
+        , lower_super_output_area_residence as lsoa21_residence
+        , organisation_identifier_sub_icb_location_of_residence as sub_icb_of_residence
     from {{ ref('stg_csds_mpi') }}
+    qualify row_number() over (
+        partition by person_id
+        order by reporting_period_end_date desc nulls last, effective_from desc nulls last,
+            unique_submission_id::number desc, cyp001_unique_id::number desc
+    ) = 1
 )
 
 , lsoa_to_lad as (

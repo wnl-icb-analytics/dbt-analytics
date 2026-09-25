@@ -41,10 +41,9 @@ select
     , reporting_period_end_date
     , file_type
     , csds_version
-    , organisation_code_provider as org_id_prov
 from {{ ref('stg_csds_care_contact_history') }}
 qualify row_number() over (
     partition by unique_service_request_identifier, unique_care_contact_identifier
     order by reporting_period_end_date desc nulls last, effective_from desc nulls last,
-        unique_submission_id desc, cyp201_unique_id desc
+        unique_submission_id::number desc, cyp201_unique_id::number desc
 ) = 1

@@ -1,0 +1,57 @@
+version: 2
+models:
+- name: stg_csds_referral_to_treatment_history
+  description: One CYP104 referral-to-treatment row from an accepted CSDS submission, including repeated
+    monthly occurrences of the same clock. The ETOS record key is the referral with the clock start date,
+    end date and status, so a clock reappears with a new end date or status when it closes. A referral
+    can carry several clocks. Roughly half of rows have no end date and about one row in thirty has no
+    start date. Waiting time measurement type 09 (other) dominates; the two-hour urgent community
+    response standard is the response_standard_met flag.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  data_tests:
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1
+  columns:
+  - name: cyp104_unique_id
+    description: Identifier of one delivered CYP104 source row.
+    data_tests:
+    - unique
+    - not_null
+  - name: unique_service_request_identifier
+    description: Provider-qualified service request identifier of the referral the clock belongs to.
+    data_tests:
+    - not_null
+  - name: person_id
+    description: CSDS person identifier supplied on this row.
+  - name: waiting_time_measurement_type_community_care
+    description: Supplied waiting time measurement type code. The legacy alias without the community-care suffix agrees wherever populated and is not repeated.
+  - name: referral_to_treatment_period_start_date
+    description: Supplied clock start date.
+  - name: referral_to_treatment_period_start_time
+    description: Supplied clock start time; null for about a third of rows.
+  - name: referral_to_treatment_period_end_date
+    description: Supplied clock end date. Null means no end was reported in this period, not that the person is still waiting.
+  - name: referral_to_treatment_period_end_time
+    description: Supplied clock end time.
+  - name: referral_to_treatment_period_status
+    description: Supplied referral-to-treatment period status code.
+  - name: derived_waiting_time
+    description: Source-derived waiting time in minutes.
+  - name: derived_waiting_time_night
+    description: Source-derived waiting time in overnight days.
+  - name: response_standard_met
+    description: Source-derived indicator that the crisis response or other response standard was met. Populated for a small minority of rows.
+  - name: unique_submission_id
+    description: Accepted submission containing this row.
+    data_tests:
+    - not_null
+  - name: organisation_code_provider
+    description: Supplied provider organisation code.
+  - name: effective_from
+    description: Date and time the submission portal received the file; not the time of care.
+  - name: reporting_period_end_date
+    description: Last date of the source reporting period.

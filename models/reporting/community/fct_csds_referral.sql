@@ -46,7 +46,7 @@ select
     , r.effective_from as source_file_received_at
     , r.csds_version
     , r.file_type
-from {{ ref('stg_csds_cyp101referral') }} as r
+from {{ ref('stg_csds_referral') }} as r
 left join {{ ref('stg_csds_bridging') }} as b on r.person_id = b.person_id
 left join {{ ref('csds_source_of_referral') }} as s on trim(r.source_of_referral_for_community) = s.code
 left join {{ ref('csds_referral_code_lookup') }} as reason

@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: int_csds_currency_referral_service_type
+    description: >-
+      The service/team type selected for each referral's community currency classification.
+      Each row is one CYP102 service request. Where several teams were submitted, the newest
+      reporting period and then latest received submission wins, with submission and source-row
+      identifiers as tie-breakers. About one referral in seven has more than one team and about
+      one in sixty has more than one team type, so this selected costing category can differ
+      from the full set of recorded referral teams in fct_csds_referral_service.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: unique_service_request_identifier
+        description: Provider-qualified service request identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: person_id
+        description: CSDS person identifier on the selected team row.
+      - name: care_professional_team_local_identifier
+        description: Local team identifier of the selected relationship. Null is a legitimate unspecified team.
+      - name: team_type_code
+        description: Supplied community service or team type code used by the currency grouping.
+        data_tests:
+          - not_null
+      - name: organisation_code_provider
+        description: Provider organisation code.
+      - name: unique_submission_id
+        description: Accepted submission the selected row came from.
+      - name: reporting_period_end_date
+        description: Reporting period of the selected row.
