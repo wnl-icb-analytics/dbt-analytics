@@ -40,9 +40,11 @@ then validate the exact commit GitHub would merge:
   nodes rather than the full project.
 
 To validate a pull request in development before queueing it, add the
-`❄️snowflake-ci` label. The workflow builds the pull request's merge commit the
-same way, then removes the label. Later commits are not rebuilt; add the label
-again to repeat the build.
+`❄️snowflake-ci` label. The workflow merges current `main` into the pull request
+head, builds it the same way and removes the label. The result appears as a
+separate `DEV build (snowflake-ci)` check that does not block merging. Later
+commits are not rebuilt; add the label again to repeat the build. Fork pull
+requests are excluded.
 
 Merge-queue, label and manual runtime builds run one at a time because they
 share development relations. They do not publish deployment state.
