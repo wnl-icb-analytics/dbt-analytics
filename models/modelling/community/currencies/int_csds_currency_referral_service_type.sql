@@ -16,5 +16,5 @@ from {{ ref('stg_csds_service_type_history') }}
 qualify row_number() over (
     partition by unique_service_request_identifier
     order by reporting_period_end_date desc nulls last, effective_from desc nulls last,
-        unique_submission_id desc, cyp102_unique_id desc
+        unique_submission_id::number desc, cyp102_unique_id::number desc
 ) = 1
