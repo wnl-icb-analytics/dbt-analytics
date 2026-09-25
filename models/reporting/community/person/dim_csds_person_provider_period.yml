@@ -1,0 +1,84 @@
+version: 2
+models:
+- name: dim_csds_person_provider_period
+  description: >-
+    Demographics and residence recorded for a person by a CSDS provider in a reporting period. Each
+    row is one identifiable person, provider and accepted period, using the newest submitted record
+    in that period and flagging conflicting records. Use it for historical breakdowns by age,
+    gender, ethnicity, residence or deprivation; join on person_provider_period_id from the referral
+    period and caseload facts. Residence local authority resolves 2011 LSOA codes supplied in the
+    2021 field. Differences between providers stay separate. Rows without a person ID are excluded.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: person_provider_period_id
+    description: Key for the person, provider and reporting period end.
+    data_tests:
+    - unique
+    - not_null
+  - name: person_id
+    description: CSDS person identifier.
+    data_tests:
+    - not_null
+  - name: sk_patient_id
+    description: Pseudonymised cross-system patient key; null when the person has no bridge.
+  - name: provider_organisation_code
+    description: Provider organisation code.
+  - name: reporting_period_end_date
+    description: Last date of the reporting month.
+  - name: source_age_at_period_end
+    description: Source-derived age in years at the period end.
+  - name: person_stated_gender_code
+    description: Submitted person stated gender code.
+  - name: person_stated_gender_name
+    description: National description of the gender code; null when unmatched.
+  - name: ethnicity_2001_code
+    description: Submitted ethnic category.
+  - name: ethnicity_2001_description
+    description: National description of the ethnic category; null when unmatched.
+  - name: residence_lsoa_2021_code
+    description: Submitted 2021 LSOA of residence. Some providers supply retired 2011 codes here.
+  - name: residence_lsoa_2021_resolved_code
+    description: 2021 LSOA as supplied when valid, else the UKHFD best-fit 2021 successor of a 2011 code found in the 2021 field; null for the few codes with several successors and for unknown codes.
+  - name: residence_lsoa_2021_resolution
+    description: as_supplied or bridged_from_2011; null when no single 2021 LSOA applies.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [as_supplied, bridged_from_2011]
+  - name: residence_lsoa_2011_code
+    description: Submitted 2011 LSOA of residence.
+  - name: residence_local_authority_code
+    description: ONS code of the local authority of residence, resolved as for the name.
+  - name: residence_local_authority_name
+    description: Local authority of residence resolved from the 2021 LSOA field, bridging 2011 codes found there.
+  - name: residence_local_authority_basis
+    description: lsoa_2021 or lsoa_2011_in_2021_field, showing how the local authority was resolved; null when unresolved.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [lsoa_2021, lsoa_2011_in_2021_field]
+  - name: residence_imd_2019_decile
+    description: IMD 2019 decile of the 2011 LSOA; 1 is most deprived.
+  - name: residence_imd_2025_decile
+    description: IMD 2025 decile of the resolved 2021 LSOA; 1 is most deprived.
+  - name: residence_icb_code
+    description: Source-derived ICB of residence.
+  - name: residence_sub_icb_code
+    description: Source-derived sub-ICB location of residence.
+  - name: is_wnl_resident
+    description: The ICB or sub-ICB of residence is West and North London (current ICB, its sub-ICB locations or legacy codes), using the derived residence fields from July 2022 and the submitted sub-ICB before. Null when no residence code is recorded.
+  - name: person_death_date
+    description: Submitted date of death.
+  - name: is_looked_after_child
+    description: Submitted looked-after child indicator; null when not Y or N.
+  - name: has_safeguarding_vulnerability_factors
+    description: Submitted safeguarding vulnerability factors indicator; null when not Y or N.
+  - name: n_source_patient_records
+    description: Accepted CYP001 rows for this person, provider and period.
+  - name: has_conflicting_demographic_records
+    description: Those rows disagree on age, gender, ethnicity, residence or death date.
+  - name: source_row_id
+    description: Selected CYP001 row.

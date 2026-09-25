@@ -1,0 +1,57 @@
+version: 2
+models:
+- name: fct_csds_person_summary
+  description: >-
+    Summary of the CSDS evidence available for each identifiable person. Each row is one CSDS
+    person ID found in any modelled evidence, including people recorded only in clinical or
+    registration records. Use it to select cohorts and compare referrals, current caseload,
+    contacts and clinical records. Demographics come from the newest period record across
+    providers. The as_of_date is the latest accepted dataset period; individual providers can be
+    older. Twelve-month contact counts end on that date. No qualifying evidence gives zero or false.
+    National ID changes can split one person's history across rows.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: person_id
+    description: CSDS person identifier.
+    data_tests:
+    - unique
+    - not_null
+  - name: sk_patient_id
+    description: Pseudonymised cross-system patient key; null when the person has no bridge.
+  - name: as_of_date
+    description: Latest accepted reporting period in the dataset.
+  - name: first_evidence_reporting_period_end_date
+    description: Earliest reporting period with any evidence for this person.
+  - name: last_evidence_reporting_period_end_date
+    description: Latest reporting period with any evidence for this person.
+  - name: n_evidence_types
+    description: Distinct evidence families from int_csds_person_evidence.
+  - name: demographics_reporting_period_end_date
+    description: Period of the patient record supplying the demographics; null when no patient record exists.
+  - name: source_age_at_demographics_period_end
+    description: Source-derived age at that period end, not current age.
+  - name: residence_local_authority_name
+    description: Local authority of residence in the demographics record.
+  - name: n_open_referrals
+    description: Referrals open in their provider's latest submission. Referrals no longer submitted count as closed.
+  - name: has_current_recorded_caseload
+    description: Has an open referral in the dataset's latest month.
+  - name: is_wnl_resident
+    description: The latest period record places residence in West and North London.
+  - name: residence_local_authority_code
+    description: ONS code of the local authority of residence in the demographics record.
+  - name: n_attended_contacts_12m
+    description: Attended contacts (codes 5 or 6, see fct_csds_care_contact.is_attended) in the 12 months to as_of_date.
+  - name: n_dna_contacts_12m
+    description: Did-not-attend contacts (codes 3 or 7) in the 12 months to as_of_date.
+  - name: n_cancelled_contacts_12m
+    description: Patient or provider cancelled contacts (codes 2 or 4) in the 12 months to as_of_date.
+  - name: person_death_date
+    description: Latest date of death recorded by any provider; null when none is recorded.
+  - name: n_immunisation_records
+    description: Retained coded immunisation records.
+  - name: n_assessment_records
+    description: Referral or activity assessment responses, not completed questionnaires.
