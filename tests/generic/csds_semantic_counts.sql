@@ -24,7 +24,7 @@ union all
 select 'contacts_by_person_caseload' as entity, s.semantic_count, d.row_count as domain_count
 from (
     select sum(contact_count) as semantic_count
-    from semantic_view({{ model }} metrics contacts.contact_count dimensions people.is_on_current_caseload)
+    from semantic_view({{ model }} metrics contacts.contact_count dimensions people.has_current_recorded_caseload)
 ) as s
 cross join (select count(*) as row_count from {{ ref('fct_csds_care_contact') }}) as d
 where s.semantic_count <> d.row_count
@@ -38,6 +38,17 @@ from (
     from semantic_view({{ model }} metrics referral_periods.referral_period_count dimensions demographics.demographics_gender)
 ) as s
 cross join (select count(*) as row_count from {{ ref('fct_csds_referral_period') }}) as d
+where s.semantic_count <> d.row_count
+
+union all
+
+-- Contact period demographics must not drop or multiply contacts.
+select 'contacts_by_demographics' as entity, s.semantic_count, d.row_count as domain_count
+from (
+    select sum(contact_count) as semantic_count
+    from semantic_view({{ model }} metrics contacts.contact_count dimensions demographics.demographics_is_wnl_resident)
+) as s
+cross join (select count(*) as row_count from {{ ref('fct_csds_care_contact') }}) as d
 where s.semantic_count <> d.row_count
 
 {% endtest %}
