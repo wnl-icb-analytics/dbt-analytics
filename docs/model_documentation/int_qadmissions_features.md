@@ -88,7 +88,7 @@ Sources for the 1× ULN values are noted as ["3x normal as per sps nhs resource"
 
 ### Medication "current prescription" definition
 
-The paper says "Current prescribed medication" but doesn't quantify it. The reference C implementation at `/c_pipeline/c/Q78_qadmissions_4_1.c` takes booleans, so the threshold has to be applied upstream by the caller. We use **≥2 prescriptions in the prior 6 months** via the `is_recent_6m` flag on the `int_<med>_medications_all` intermediates. The paper does not state this threshold; it's a project decision.
+The paper says "Current prescribed medication" but doesn't quantify it. The reference C implementation at `/c_pipeline/c/Q78_qadmissions_4_1.c` takes booleans, so the threshold has to be applied upstream by the caller. We use **≥1 prescription in the prior 6 months** via the `is_recent_6m` flag on the `int_<med>_medications_all` intermediates. The paper does not state this threshold; it's a project decision.
 
 ### Townsend score vintage
 
