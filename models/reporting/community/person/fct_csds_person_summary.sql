@@ -8,6 +8,14 @@ with population as (
     group by person_id
 )
 
+-- Any provider's recorded death applies to the person.
+, deaths as (
+    select person_id, max(person_death_date) as person_death_date
+    from {{ ref('dim_csds_person_provider_period') }}
+    where person_death_date is not null
+    group by person_id
+)
+
 -- Newest period record across providers.
 , demographics as (
     select *
@@ -15,7 +23,7 @@ with population as (
     qualify row_number() over (
         partition by person_id
         order by reporting_period_end_date desc nulls last, source_file_received_at desc nulls last,
-            submission_id desc, source_row_id desc
+            submission_id::number desc, source_row_id::number desc
     ) = 1
 )
 
@@ -55,7 +63,6 @@ with population as (
             and c.care_contact_date between dateadd(month, -12, d.as_of_date) and d.as_of_date) as n_dna_contacts_12m
         , count_if(c.is_cancelled
             and c.care_contact_date between dateadd(month, -12, d.as_of_date) and d.as_of_date) as n_cancelled_contacts_12m
-        , count_if(c.care_contact_date > d.as_of_date) as n_contacts_after_as_of_date
     from {{ ref('fct_csds_care_contact') }} as c
     cross join {{ ref('int_csds_reporting_date') }} as d
     where c.person_id is not null
@@ -92,7 +99,7 @@ select
     , demo.residence_local_authority_name
     , demo.is_wnl_resident
     , demo.residence_imd_2025_decile
-    , demo.person_death_date
+    , deaths.person_death_date
     , demo.is_looked_after_child
     , demo.has_safeguarding_vulnerability_factors
     , coalesce(r.n_recorded_referrals, 0) as n_recorded_referrals
@@ -110,7 +117,6 @@ select
     , coalesce(c.n_attended_contacts_12m, 0) as n_attended_contacts_12m
     , coalesce(c.n_dna_contacts_12m, 0) as n_dna_contacts_12m
     , coalesce(c.n_cancelled_contacts_12m, 0) as n_cancelled_contacts_12m
-    , coalesce(c.n_contacts_after_as_of_date, 0) as n_contacts_after_as_of_date
     , coalesce(cr.n_clinical_records, 0) as n_clinical_records
     , coalesce(cr.n_immunisation_records, 0) as n_immunisation_records
     , coalesce(cr.n_assessment_records, 0) as n_assessment_records
@@ -118,6 +124,7 @@ from population as p
 cross join {{ ref('int_csds_reporting_date') }} as d
 left join {{ ref('stg_csds_bridging') }} as b on p.person_id = b.person_id
 left join demographics as demo on p.person_id = demo.person_id
+left join deaths on p.person_id = deaths.person_id
 left join referrals as r on p.person_id = r.person_id
 left join caseload as cl on p.person_id = cl.person_id
 left join contact_measures as c on p.person_id = c.person_id

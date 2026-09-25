@@ -62,5 +62,5 @@ where person_id is not null
 qualify row_number() over (
     partition by person_id, organisation_code_provider
     order by reporting_period_end_date desc nulls last, effective_from desc nulls last,
-        unique_submission_id desc, cyp001_unique_id desc
+        unique_submission_id::number desc, cyp001_unique_id::number desc
 ) = 1

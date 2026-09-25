@@ -4,9 +4,9 @@ models:
   description: >-
     CSDS referral state in each accepted submission. Each row is one referral and submission. A
     referral is open at period end when it appears in that month's submission, was received by that
-    date, has no service discharge by then, and at least one team in the same submission is neither
-    closed nor rejected. A referral or team that stops being submitted counts as closed. A referral
-    that has never had a team submitted stays open and is flagged.
+    date, has no service discharge by then, and its teams in that submission are not all closed or
+    rejected. A referral that stops being submitted counts as closed. Teams close only on a closure or
+    rejection date, because some submissions omit or truncate the team section.
     Attendance uses contacts whose date and reporting period are both no later than the period end.
     Later corrections can revise historical results. Community referrals such as health visiting
     and school nursing legitimately stay open for years. An open referral without attendance is
@@ -32,7 +32,7 @@ models:
   - name: sk_patient_id
     description: Pseudonymised cross-system patient key; null when the person has no bridge.
   - name: person_provider_period_id
-    description: Key for the person, provider and reporting period, for joining period demographics.
+    description: Key for the person, provider and reporting period, for joining period demographics. Null without a person.
   - name: provider_organisation_code
     description: Provider organisation code.
   - name: provider_organisation_name
@@ -66,13 +66,13 @@ models:
   - name: attendance_evidence_available_by_date
     description: Date by which the attendance evidence used here had been both delivered and reported.
   - name: is_recorded_open_at_period_end
-    description: Received by period end, not discharged by then, and at least one submitted team still open, or no team ever submitted. Null when the receipt date is missing.
-  - name: has_no_team_recorded
-    description: No CYP102 team has been submitted for this referral up to this period. The referral still counts as open; the guidance expects at least one team.
+    description: Received by period end, not discharged by then, and not every same-submission team closed or rejected. Null when the receipt date is missing.
+  - name: has_no_team_in_submission
+    description: No CYP102 team row for this referral in the submission. The referral can still be open; the guidance expects at least one team, and some submissions omit the team section.
   - name: is_wnl_commissioner
     description: The referral's source-derived or submitted commissioner is West and North London.
   - name: recorded_access_state
-    description: Receipt date missing, not started, discharged, all teams ended (closed, rejected or no longer submitted), attended contact recorded, or no attended contact recorded, at period end.
+    description: Receipt date missing, not started, discharged, all teams ended (closed or rejected), attended contact recorded, or no attended contact recorded, at period end.
     data_tests:
     - not_null
     - accepted_values:

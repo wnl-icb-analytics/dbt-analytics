@@ -3,11 +3,12 @@ models:
 - name: fct_csds_referral_to_treatment_period
   description: >-
     Referral-to-treatment and response-time clocks reported by CSDS providers. Each row is one
-    accepted CYP104 record in a reporting period. A clock (referral, measurement type and start)
-    repeats each month it is reported, so filter is_latest_clock_record to count clocks. For the
-    two-hour urgent community response standard use is_two_hour_response_clock (type 05; type 06 is
-    the two-day standard) with the latest record of each clock, grouped by start month. A missing
-    end date does not prove the person is still waiting. The table does not decide target compliance.
+    accepted CYP104 record in a reporting period. A clock (referral and start date) repeats each
+    month it is reported, so filter is_latest_clock_record to count clocks. For the two-hour urgent
+    community response use is_two_hour_response_clock (type 05; type 06 is the two-day standard),
+    the latest record of each stopped clock with a valid wait, grouped by end month as nationally.
+    National figures also exclude rejected and acute-origin referrals, which this table keeps. A
+    missing end date does not prove the person is still waiting.
   config:
     meta:
       owner:
@@ -37,17 +38,21 @@ models:
   - name: is_two_hour_response_clock
     description: Measurement type 05, crisis response intermediate care within two hours. Type 06 is the two-day standard.
   - name: is_latest_clock_record
-    description: Newest report of this clock (referral, measurement type, start date and time). Filter to count clocks once.
+    description: Newest report of this clock (referral and start date). Filter to count clocks once.
   - name: is_wnl_commissioner
     description: The same-submission referral's source-derived or submitted commissioner is West and North London.
   - name: person_provider_period_id
-    description: Key for the person, provider and reporting period; joins dim_csds_person_provider_period.
+    description: Key for the person, provider and reporting period; joins dim_csds_person_provider_period. Null without a person.
   - name: source_waiting_time_minutes
     description: Waiting time in minutes derived by the national pipeline.
   - name: source_waiting_time_overnight_days
     description: Waiting time in overnight days derived by the national pipeline.
   - name: is_response_standard_met
-    description: Source-derived flag that the crisis response or other response standard was met; null when not assessed.
+    description: Source-derived flag that the response standard was met, for stopped clocks only; null for clocks without an end date or when not assessed.
+  - name: is_clock_stopped
+    description: The clock has an end date in this record.
+  - name: is_valid_wait
+    description: The source-derived waiting time is zero or more minutes; negative waits are invalid and excluded nationally.
   - name: recorded_rtt_interval_days
     description: Days from start to end when both are present and ordered; null otherwise.
   - name: is_recorded_open_at_period_end

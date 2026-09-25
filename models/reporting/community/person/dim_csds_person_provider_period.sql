@@ -15,7 +15,7 @@ with ranked as (
     where person_id is not null
     qualify row_number() over (
         partition by person_id, organisation_code_provider, reporting_period_end_date
-        order by effective_from desc nulls last, unique_submission_id desc, cyp001_unique_id desc
+        order by effective_from desc nulls last, unique_submission_id::number desc, cyp001_unique_id::number desc
     ) = 1
 )
 
@@ -25,8 +25,8 @@ with ranked as (
 )
 
 -- Some providers put retired 2011 codes in the 2021 LSOA field. Bridge each to
--- 2021: a unique successor gives the 2021 LSOA; split codes keep only the local
--- authority, which is stable across splits.
+-- its 2021 successor. The UKHFD map gives one best-fit successor for almost every
+-- code; the few with several keep only the local authority, stable across splits.
 , lsoa_2011_bridge as (
     select
         b.old_lsoa_code as lsoa11_cd
@@ -86,7 +86,8 @@ select
     , m.organisation_identifier_icb_of_residence as residence_icb_code
     , residence_icb.organisation_name as residence_icb_name
     , m.organisation_identifier_sub_icb_location_of_residence as residence_sub_icb_code
-    , {{ is_wnl_icb_code(['m.organisation_identifier_icb_of_residence', 'm.organisation_identifier_sub_icb_location_of_residence']) }}
+    -- the derived residence fields start in July 2022; the submitted sub-ICB covers all years
+    , {{ is_wnl_icb_code(['m.organisation_identifier_icb_of_residence', 'm.organisation_identifier_sub_icb_location_of_residence', 'm.dm_icb_residence_submitted', 'm.dm_sub_icb_residence_submitted']) }}
         as is_wnl_resident
     , residence_sub_icb.organisation_name as residence_sub_icb_name
     , m.person_death_date::date as person_death_date
@@ -104,7 +105,7 @@ left join {{ ref('stg_csds_bridging') }} as b on m.person_id = b.person_id
 left join {{ ref('organisation') }} as provider
     on upper(trim(m.organisation_code_provider)) = provider.organisation_code
 left join {{ ref('mhsds_domain_code_lookup') }} as gender
-    on gender.code_set_name = 'person_stated_gender' and trim(m.person_stated_gender_code) = gender.code
+    on gender.code_set_name = 'person_stated_gender' and upper(trim(m.person_stated_gender_code)) = upper(gender.code)
 left join {{ ref('nhs_ethnicity_2001') }} as ethnic on trim(m.ethnic_category) = ethnic.ethnicity_2001_code
 left join {{ ref('stg_reference_imd2019') }} as imd19 on m.lower_super_output_area_residence_2011 = imd19.lsoacode
 left join {{ ref('stg_reference_imd2025') }} as imd25 on m.resolved_lsoa21_cd = imd25.lsoa_code_2021

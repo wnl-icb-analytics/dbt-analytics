@@ -31,7 +31,7 @@ with contact as (
     qualify row_number() over (
         partition by unique_submission_id, unique_service_request_identifier,
             care_professional_team_local_identifier
-        order by cyp102_unique_id desc
+        order by cyp102_unique_id::number desc
     ) = 1
 )
 
@@ -43,7 +43,7 @@ with contact as (
     qualify row_number() over (
         partition by unique_service_request_identifier, care_professional_team_local_identifier,
             reporting_period_end_date
-        order by unique_submission_id desc
+        order by unique_submission_id::number desc
     ) = 1
 )
 
@@ -139,7 +139,8 @@ with contact as (
     from contact as c
     inner join {{ ref('stg_csds_gp_registration') }} as gp
         on c.person_id = gp.person_id
-        and c.care_contact_date >= gp.start_date_gmp_patient_registration
+        -- a registration without a start date covers any date up to its end
+        and (gp.start_date_gmp_patient_registration is null or c.care_contact_date >= gp.start_date_gmp_patient_registration)
         and (
             gp.end_date_gmp_patient_registration is null
             or c.care_contact_date < gp.end_date_gmp_patient_registration
@@ -147,7 +148,7 @@ with contact as (
     qualify row_number() over (
         partition by c.unique_service_request_identifier, c.unique_care_contact_identifier
         order by gp.start_date_gmp_patient_registration desc nulls last, gp.reporting_period_end_date desc nulls last,
-            gp.effective_from desc nulls last, gp.unique_submission_id desc, gp.cyp002_unique_id desc
+            gp.effective_from desc nulls last, gp.unique_submission_id::number desc, gp.cyp002_unique_id::number desc
     ) = 1
 )
 
@@ -159,7 +160,7 @@ with contact as (
     qualify row_number() over (
         partition by person_id
         order by start_date_gmp_patient_registration desc nulls last, reporting_period_end_date desc nulls last,
-            effective_from desc nulls last, unique_submission_id desc, cyp002_unique_id desc
+            effective_from desc nulls last, unique_submission_id::number desc, cyp002_unique_id::number desc
     ) = 1
 )
 

@@ -2,7 +2,7 @@ version: 2
 models:
 - name: dq_csds_provider_submission
   description: >-
-    Submission dates and record counts for each CSDS provider and accepted reporting period. Use it to
+    Submission dates, record counts and volume changes for each CSDS provider and accepted reporting period. Use it to
     check how recent a provider's evidence is before comparing activity or caseload. Counts describe
     submitted rows before the latest version of each record is selected. A missing period has no row;
     a zero count in one section does not by itself mean the submission failed.
@@ -33,6 +33,16 @@ models:
     description: Accepted CYP101 rows in the period, not newly received referrals.
   - name: n_contact_source_records
     description: Accepted CYP201 rows in the period, not contacts occurring in the period.
+  - name: n_team_source_records
+    description: Accepted CYP102 service/team rows in the period.
+  - name: referral_records_ratio_to_previous_period
+    description: Referral rows divided by the provider's previous accepted period. Far from 1 suggests a partial file or a recording change.
+  - name: contact_records_ratio_to_previous_period
+    description: Contact rows divided by the provider's previous accepted period.
+  - name: team_records_ratio_to_previous_period
+    description: Team rows divided by the provider's previous accepted period. Some submissions omit or truncate the team section.
+  - name: has_missing_section
+    description: The accepted file has no referral, contact or team rows. Treat that provider-month's caseload and activity as incomplete.
   - name: n_patient_source_records
     description: Accepted CYP001 rows in the period, not distinct people.
   - name: provider_latest_reporting_period_end_date
