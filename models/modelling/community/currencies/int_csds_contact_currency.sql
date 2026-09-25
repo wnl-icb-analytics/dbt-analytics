@@ -38,7 +38,7 @@ with activity as (
         partition by a.unique_service_request_identifier, a.unique_care_contact_identifier
         -- providers can report the same period differently; newest report wins
         order by gp.start_date_gmp_patient_registration desc nulls last, gp.reporting_period_end_date desc nulls last,
-            gp.effective_from desc nulls last, gp.unique_submission_id desc, gp.cyp002_unique_id desc
+            gp.effective_from desc nulls last, gp.unique_submission_id::number desc, gp.cyp002_unique_id::number desc
     ) = 1
 )
 
@@ -50,7 +50,7 @@ with activity as (
     qualify row_number() over (
         partition by person_id
         order by start_date_gmp_patient_registration desc nulls last, reporting_period_end_date desc nulls last,
-            effective_from desc nulls last, unique_submission_id desc, cyp002_unique_id desc
+            effective_from desc nulls last, unique_submission_id::number desc, cyp002_unique_id::number desc
     ) = 1
 )
 
@@ -106,7 +106,7 @@ with activity as (
     qualify row_number() over (
         partition by person_id
         order by reporting_period_end_date desc nulls last, effective_from desc nulls last,
-            unique_submission_id desc, cyp001_unique_id desc
+            unique_submission_id::number desc, cyp001_unique_id::number desc
     ) = 1
 )
 
