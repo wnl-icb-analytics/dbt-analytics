@@ -22,14 +22,18 @@ models:
     description: Latest accepted reporting period in the dataset.
   - name: provider_latest_reporting_period_end_date
     description: The provider's latest accepted reporting period.
+  - name: provider_months_behind_dataset
+    description: Months between the provider's latest accepted period and the dataset's latest period.
+  - name: is_provider_no_longer_submitting
+    description: The provider's latest period is more than three months behind the dataset, so its referrals count as closed.
   - name: is_no_longer_submitted
     description: The referral is absent from its provider's latest submission, so it is treated as closed.
   - name: is_recorded_open
-    description: Open in the provider's latest submission. False for referrals no longer submitted.
+    description: Open in the provider's latest submission, with the provider still submitting. False for referrals or providers no longer submitted.
   - name: latest_recorded_access_state
-    description: no_longer_submitted, or the state in the provider's latest submission (see fct_csds_referral_period).
-  - name: has_no_team_recorded
-    description: No team has been submitted for this referral; it can still be open.
+    description: provider_no_longer_submitting, no_longer_submitted, or the state in the provider's latest submission (see fct_csds_referral_period).
+  - name: has_no_team_in_submission
+    description: No team row for this referral in its latest submission; it can still be open.
   - name: service_or_team_type_code
     description: Team type when all the referral's teams in its latest submission share one; null otherwise.
   - name: service_or_team_type_name
@@ -51,7 +55,9 @@ models:
   - name: first_attended_contact_date
     description: Earliest attended contact date under this referral.
   - name: days_to_first_attended_contact
-    description: Days from receipt to first attended contact; null when missing or before receipt.
+    description: Days from receipt to first attended contact; null when missing, before receipt, or when the referral predates the provider's CSDS feed.
+  - name: is_received_before_provider_feed
+    description: Received before the provider's first CSDS reporting month, so earlier contacts are not in the feed.
   - name: n_care_activities
     description: CYP202 activities submitted with the referral's latest contact rows.
   - name: n_service_team_relationships

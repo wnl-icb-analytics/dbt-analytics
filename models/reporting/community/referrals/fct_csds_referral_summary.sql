@@ -45,21 +45,36 @@ with contact_measures as (
     group by referral_source_record_id
 )
 
-, provider_latest as (
-    select provider_organisation_code, reporting_period_end_date as provider_latest_reporting_period_end_date
+-- Providers more than three months behind the dataset are treated as no longer
+-- submitting, which closes their referrals.
+, provider_feed as (
+    select
+        provider_organisation_code
+        , max(iff(is_latest_provider_period, reporting_period_end_date, null)) as provider_latest_reporting_period_end_date
+        , max(iff(is_latest_provider_period, provider_months_behind_dataset, null)) as provider_months_behind_dataset
+        , date_trunc(month, min(reporting_period_end_date)) as provider_first_reporting_period_start_date
     from {{ ref('dq_csds_provider_submission') }}
-    where is_latest_provider_period
+    group by provider_organisation_code
 )
 
 select
     r.*
     , d.as_of_date
     , pl.provider_latest_reporting_period_end_date
+    , pl.provider_months_behind_dataset
+    , coalesce(pl.provider_months_behind_dataset > 3, false) as is_provider_no_longer_submitting
     -- A referral absent from its provider's latest submission is treated as closed.
     , r.reporting_period_end_date < pl.provider_latest_reporting_period_end_date as is_no_longer_submitted
-    , coalesce(p.is_recorded_open_at_period_end and not is_no_longer_submitted, false) as is_recorded_open
-    , iff(is_no_longer_submitted, 'no_longer_submitted', p.recorded_access_state) as latest_recorded_access_state
-    , p.has_no_team_recorded
+    , coalesce(
+        p.is_recorded_open_at_period_end and not is_no_longer_submitted and not is_provider_no_longer_submitting
+        , false
+    ) as is_recorded_open
+    , case
+        when is_provider_no_longer_submitting then 'provider_no_longer_submitting'
+        when is_no_longer_submitted then 'no_longer_submitted'
+        else p.recorded_access_state
+    end as latest_recorded_access_state
+    , p.has_no_team_in_submission
     , p.service_or_team_type_code
     , p.service_or_team_type_name
     , coalesce(c.n_contacts, 0) as n_contacts
@@ -73,7 +88,9 @@ select
     , c.latest_contact_date
     , c.first_attended_contact_date
     , c.latest_attended_contact_date
-    , iff(c.first_attended_contact_date < r.referral_received_date, null,
+    -- Contacts before the provider's first CSDS month are not in the feed.
+    , r.referral_received_date < pl.provider_first_reporting_period_start_date as is_received_before_provider_feed
+    , iff(c.first_attended_contact_date < r.referral_received_date or is_received_before_provider_feed, null,
         datediff(day, r.referral_received_date, c.first_attended_contact_date))
         as days_to_first_attended_contact
     , coalesce(c.first_attended_contact_date < r.referral_received_date, false)
@@ -85,7 +102,7 @@ select
     , coalesce(rtt.n_rtt_clocks, 0) as n_rtt_clocks
 from {{ ref('fct_csds_referral') }} as r
 cross join {{ ref('int_csds_reporting_date') }} as d
-left join provider_latest as pl on r.provider_organisation_code = pl.provider_organisation_code
+left join provider_feed as pl on r.provider_organisation_code = pl.provider_organisation_code
 left join {{ ref('fct_csds_referral_period') }} as p
     on r.source_row_id = p.source_row_id
     and r.submission_id = p.submission_id
