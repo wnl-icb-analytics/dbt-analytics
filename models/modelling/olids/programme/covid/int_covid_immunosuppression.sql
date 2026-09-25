@@ -65,7 +65,7 @@ people_with_immuno_diagnosis AS (
     CROSS JOIN all_campaigns cc
     WHERE obs.spec_version = cc.terminology_version
         AND obs.clinical_effective_date IS NOT NULL
-        AND obs.clinical_effective_date <= cc.audit_end_date
+        AND obs.clinical_effective_date <= cc.recall_run_date
     GROUP BY cc.campaign_id, obs.person_id
 ),
 
