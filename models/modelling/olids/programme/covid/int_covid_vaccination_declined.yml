@@ -4,7 +4,7 @@ models:
 
       Grain: One row per person per campaign who declined vaccination
 
-      Identifies people: • Vaccination decline codes (COVDECL_COD) • Within campaign tracking period • All ages eligible
+      Identifies people: • Vaccination decline codes (COVDECL_COD) • Within the decline tracking period (from 1 August for an autumn campaign) • No COVID vaccination in the same campaign • All ages
 
       Used by: Mart models for uptake and status determination'
     data_tests:
@@ -13,6 +13,11 @@ models:
             cluster_ids: COVDECL_COD
             source: UKHSA_COVID
             versioned: true
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - campaign_id
+              - person_id
     config:
       meta:
         indicator:
@@ -23,11 +28,10 @@ models:
           name_short: "COVID Vaccination Declined"
           description_short: "People who declined COVID vaccination"
           description_long: >
-            COVID vaccination decline tracking for people who refused vaccination
-            using COVDEC_COD
-            cluster codes within campaign tracking period. Used for monitoring vaccination
-            uptake and identifying populations requiring outreach. No age restrictions
-            as refusal can occur at any age. Tracks by campaign period for reporting.
+            COVID vaccination declines (COVDECL_COD) recorded within the campaign's
+            decline tracking period (from 1 August for an autumn campaign), for
+            people with no COVID vaccination in the same campaign. No age
+            restriction.
           is_qof: false
           source_column: "person_id"
           sort_order: "COVID_20_VACCINATION_DECLINED"

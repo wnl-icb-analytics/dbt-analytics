@@ -4,7 +4,7 @@ models:
 
       Grain: One row per person per campaign who meets immunosuppression criteria
 
-      Identifies people: • Diagnosed with immunosuppression (any time) • Recent immunosuppressant medication (6 months before RUN_DAT) • Recent immunosuppression admin code (3 years before RUN_DAT) • Recent chemotherapy/radiotherapy (6 months before RUN_DAT) • Aged 6 months or over, any upper age. Computed for every campaign.
+      Identifies people: • Diagnosed with immunosuppression (any time) • Recent immunosuppressant medication (6 months before the search run date) • Recent immunosuppression admin code (3 years before the search run date) • Recent chemotherapy/radiotherapy (6 months before the search run date) • Aged 6 months or over, any upper age. Computed for every campaign. The search run date is the earlier of the build date and RUN_DAT, so a season in flight uses the last 6 months and a closed season keeps its reported windows.
 
       The offer''s under-75 cap (immuno_max_age_years, Spring 2025 onward) is applied by fct_covid_eligibility, tested on birth date, so this model can also feed int_covid_flu_risk_group_flags with immunosuppression status at any age.
 
@@ -59,10 +59,10 @@ models:
           thresholds:
             - population_group: "BROADER_ELIGIBILITY"
               threshold_type: "AGE_ELIGIBILITY"
-              threshold_value: "0"
+              threshold_value: "6"
               threshold_operator: "AT_OR_ABOVE"
-              threshold_unit: "years"
-              description: "Any age eligible for 2024/25 campaigns"
+              threshold_unit: "months"
+              description: "Minimum age 6 months for 2024/25 campaigns, no upper bound"
               sort_order: 1
             - population_group: "RESTRICTED_ELIGIBILITY"
               threshold_type: "AGE_ELIGIBILITY"

@@ -1,21 +1,12 @@
 models:
   - name: int_covid_gestational_diabetes
-    description: 'COVID vaccination eligibility for people with gestational diabetes.
-
-      Key Features:
-
-      • Single diagnosis pathway using GDIAB_COD codes
-
-      • Earliest occurrence in medical history qualifies
-
-      • Age restriction: minimum 5 years for COVID vaccination
-
-      • Includes gestational diabetes mellitus diagnoses
-
-      • Generates data for every campaign in covid_reported_campaign_ids()
-
-      Purpose: Identify people eligible for COVID vaccination due to gestational diabetes requiring immunisation.'
+    description: 'COVID GDIAB_GROUP: people in the campaign pregnancy group (int_covid_pregnancy) with a gestational diabetes code (GDIAB_COD) between gestational_diabetes_start (14 January of the campaign year) and RUN_DAT. One row per person per campaign; qualifying_event_date is the latest gestational diabetes code. Only computed for campaigns with eligible_gestational_diabetes. Feeds int_covid_diabetes, because DIAB_GROUP selects this group.'
     data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - campaign_id
+              - person_id
       - cluster_ids_exist:
           arguments:
             cluster_ids: GDIAB_COD
@@ -31,12 +22,11 @@ models:
           name_short: "COVID Eligible Gestational Diabetes"
           description_short: "People with gestational diabetes eligible for COVID vaccination"
           description_long: >
-            COVID vaccination eligibility for people with gestational diabetes using
-            GDIAB_COD
-            cluster codes with earliest occurrence qualifying. Includes gestational
-            diabetes
-            mellitus that increases COVID risk during pregnancy requiring immunisation
-            protection. Minimum age requirement of 5 years for COVID vaccination.
+            COVID gestational diabetes group (UKHSA GDIAB_GROUP): a gestational
+            diabetes code (GDIAB_COD) between 14 January of the campaign year and
+            RUN_DAT, in someone in the campaign pregnancy group. The latest code is
+            the qualifying event. Minimum age 12 years, inherited from the pregnancy
+            group.
           is_qof: false
           source_column: "person_id"
           sort_order: "COVID_18_GESTATIONAL_DIABETES"
@@ -49,10 +39,10 @@ models:
           thresholds:
             - population_group: "ALL"
               threshold_type: "AGE_ELIGIBILITY"
-              threshold_value: "5"
+              threshold_value: "12"
               threshold_operator: "AT_OR_ABOVE"
               threshold_unit: "years"
-              description: "Minimum age for COVID vaccination"
+              description: "Minimum age, inherited from the pregnancy group"
               sort_order: 1
 
         owner:
@@ -71,7 +61,7 @@ models:
         data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying diagnosis (earliest gestational diabetes diagnosis)'
+        description: 'Latest GDIAB_COD record date in the window'
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description
@@ -81,6 +71,6 @@ models:
       - name: age_months_at_ref_date
         description: 'Age in months at campaign reference date'
       - name: age_years_at_ref_date
-        description: 'Age in years at campaign reference date (minimum 5 years required)'
+        description: 'Age in years at campaign reference date. Minimum 12, inherited from int_covid_pregnancy'
       - name: created_at
         description: 'Audit timestamp for record creation (campaign audit end date)'

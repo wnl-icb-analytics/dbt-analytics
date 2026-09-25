@@ -4,14 +4,22 @@ COVID Immunosuppression Eligibility Rule
 This implements RECALL_IMMUNO_GROUP, the group the campaign offer selects (spec 5.1.1
 Group M and its predecessors), not IMMUNO_GROUP, which is the uptake monitoring variant.
 The two differ only in where the medication, chemotherapy and admin lookbacks are anchored:
-the recall group measures them from RUN_DAT, the uptake group from START_DAT.
+the recall group measures them back from the search run date, the uptake group from
+START_DAT.
+
+The search run date is the earlier of the build date and audit_end_date (RUN_DAT, spec
+2.1). A season in flight therefore selects people treated in the 6 months before today,
+as a practice running the recall search today would; RUN_DAT itself lies at the end of
+the season, so a window measured back from it would exclude current treatment. A closed
+season keeps the windows it was reported with. Evidence dated after the search run date
+does not count.
 
 Business Rule: Person is eligible if they have:
 1. ANY of the following evidence of immunosuppression:
    - Immunosuppression diagnosis (IMMDX_COV_COD) - ever
-   - Immunosuppression medication (IMMRX_COD) in the 6 months before RUN_DAT
-   - Immunosuppression administration (IMM_ADM_COD) in the 3 years before RUN_DAT
-   - Chemotherapy/radiotherapy (DXT_CHEMO_COD) in the 6 months before RUN_DAT
+   - Immunosuppression medication (IMMRX_COD) in the 6 months before the search run date
+   - Immunosuppression administration (IMM_ADM_COD) in the 3 years before the search run date
+   - Chemotherapy/radiotherapy (DXT_CHEMO_COD) in the 6 months before the search run date
 2. AND aged 6 months or over at the reference date
 
 No upper age bound is applied here. The offer's under-75 cap (immuno_max_age_years,
@@ -28,10 +36,20 @@ KEY ELIGIBILITY GROUP for restricted 2025/26 campaigns.
     tags=['covid_flu']
 ) }}
 
-WITH all_campaigns AS (
+WITH campaigns AS (
     -- Every COVID campaign the models report on
     -- (campaign list: macros/config/covid_campaign_selection.sql)
     {{ covid_reported_campaigns() }}
+),
+
+all_campaigns AS (
+    -- Recall lookbacks measured back from the search run date (spec section 5)
+    SELECT
+        c.*,
+        LEAST(CURRENT_DATE(), c.audit_end_date) AS recall_run_date,
+        DATEADD('month', -6, LEAST(CURRENT_DATE(), c.audit_end_date)) AS recall_immuno_medication_lookback_date,
+        DATEADD('year', -3, LEAST(CURRENT_DATE(), c.audit_end_date)) AS recall_immuno_admin_lookback_date
+    FROM campaigns c
 ),
 
 -- Step 1: Find people with immunosuppression diagnosis (for all campaigns)
@@ -45,7 +63,7 @@ people_with_immuno_diagnosis AS (
     CROSS JOIN all_campaigns cc
     WHERE obs.spec_version = cc.terminology_version
         AND obs.clinical_effective_date IS NOT NULL
-        AND obs.clinical_effective_date <= cc.audit_end_date
+        AND obs.clinical_effective_date <= cc.recall_run_date
     GROUP BY cc.campaign_id, obs.person_id
 ),
 
@@ -61,7 +79,7 @@ people_with_recent_immuno_medications AS (
     WHERE med.spec_version = cc.terminology_version
         AND med.order_date IS NOT NULL
         AND med.order_date >= cc.recall_immuno_medication_lookback_date
-        AND med.order_date <= cc.audit_end_date
+        AND med.order_date <= cc.recall_run_date
     GROUP BY cc.campaign_id, med.person_id
 ),
 
@@ -77,7 +95,7 @@ people_with_recent_immuno_admin AS (
     WHERE obs.spec_version = cc.terminology_version
         AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date >= cc.recall_immuno_admin_lookback_date
-        AND obs.clinical_effective_date <= cc.audit_end_date
+        AND obs.clinical_effective_date <= cc.recall_run_date
     GROUP BY cc.campaign_id, obs.person_id
 ),
 
@@ -93,7 +111,7 @@ people_with_recent_chemo AS (
     WHERE obs.spec_version = cc.terminology_version
         AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date >= cc.recall_immuno_medication_lookback_date  -- same 6-month recall window
-        AND obs.clinical_effective_date <= cc.audit_end_date
+        AND obs.clinical_effective_date <= cc.recall_run_date
     GROUP BY cc.campaign_id, obs.person_id
 ),
 
