@@ -3,12 +3,11 @@ models:
 - name: fct_csds_referral_to_treatment_period
   description: >-
     Referral-to-treatment and response-time clocks reported by CSDS providers. Each row is one
-    accepted CYP104 record in a reporting period, with the clock's dates, times, measurement type,
-    status and the source-derived waiting time and response-standard flag. The same clock repeats
-    each month it is reported and reappears when it gains an end date or status, so counts of rows
-    are counts of submitted evidence, not distinct clocks. A missing end date does not prove the
-    person is still waiting. The response-standard flag underpins the two-hour urgent community
-    response measure; the table does not decide target compliance.
+    accepted CYP104 record in a reporting period. A clock (referral, measurement type and start)
+    repeats each month it is reported, so filter is_latest_clock_record to count clocks. For the
+    two-hour urgent community response standard use is_two_hour_response_clock (type 05; type 06 is
+    the two-day standard) with the latest record of each clock, grouped by start month. A missing
+    end date does not prove the person is still waiting. The table does not decide target compliance.
   config:
     meta:
       owner:
@@ -35,6 +34,14 @@ models:
     description: Supplied referral-to-treatment period status.
   - name: rtt_status_name
     description: National status description; null when unmatched.
+  - name: is_two_hour_response_clock
+    description: Measurement type 05, crisis response intermediate care within two hours. Type 06 is the two-day standard.
+  - name: is_latest_clock_record
+    description: Newest report of this clock (referral, measurement type, start date and time). Filter to count clocks once.
+  - name: is_wnl_commissioner
+    description: The same-submission referral's source-derived or submitted commissioner is West and North London.
+  - name: person_provider_period_id
+    description: Key for the person, provider and reporting period; joins dim_csds_person_provider_period.
   - name: source_waiting_time_minutes
     description: Waiting time in minutes derived by the national pipeline.
   - name: source_waiting_time_overnight_days

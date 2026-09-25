@@ -40,6 +40,7 @@ select
     , latest_parent.source_record_id is not null as is_referral_linked
     , case when latest_parent.source_record_id is null or t.person_id is null or latest_parent.person_id is null then null
         else t.person_id = latest_parent.person_id end as is_referral_person_consistent
+    , t.unique_submission_id = latest_parent.submission_id as is_in_latest_referral_submission
     , case when latest_parent.source_record_id is null or r.cyp101_unique_id is null then null
         else r.cyp101_unique_id = latest_parent.source_row_id end as is_referral_occurrence_consistent
 from latest as t

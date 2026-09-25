@@ -3,8 +3,10 @@ models:
 - name: fct_csds_referral_period
   description: >-
     CSDS referral state in each accepted submission. Each row is one referral and submission. A
-    referral is open at period end when it was received by that date, has no service discharge by
-    that date, and at least one of its same-submission teams is neither closed nor rejected by then.
+    referral is open at period end when it appears in that month's submission, was received by that
+    date, has no service discharge by then, and at least one team in the same submission is neither
+    closed nor rejected. A referral or team that stops being submitted counts as closed. A referral
+    that has never had a team submitted stays open and is flagged.
     Attendance uses contacts whose date and reporting period are both no later than the period end.
     Later corrections can revise historical results. Community referrals such as health visiting
     and school nursing legitimately stay open for years. An open referral without attendance is
@@ -64,14 +66,18 @@ models:
   - name: attendance_evidence_available_by_date
     description: Date by which the attendance evidence used here had been both delivered and reported.
   - name: is_recorded_open_at_period_end
-    description: Received by period end, not discharged by then, and at least one team still open. Null when the receipt date is missing.
+    description: Received by period end, not discharged by then, and at least one submitted team still open, or no team ever submitted. Null when the receipt date is missing.
+  - name: has_no_team_recorded
+    description: No CYP102 team has been submitted for this referral up to this period. The referral still counts as open; the guidance expects at least one team.
+  - name: is_wnl_commissioner
+    description: The referral's source-derived or submitted commissioner is West and North London.
   - name: recorded_access_state
-    description: Receipt date missing, not started, discharged, all teams closed or rejected, attended contact recorded, or no attended contact recorded, at period end.
+    description: Receipt date missing, not started, discharged, all teams ended (closed, rejected or no longer submitted), attended contact recorded, or no attended contact recorded, at period end.
     data_tests:
     - not_null
     - accepted_values:
         arguments:
-          values: [referral_date_missing, not_started, discharged, all_teams_closed_or_rejected, attended_contact_recorded, no_attended_contact_recorded]
+          values: [referral_date_missing, not_started, discharged, all_teams_ended, attended_contact_recorded, no_attended_contact_recorded]
   - name: is_open_without_recorded_attendance
     description: Open at period end with no attended contact evidenced by then.
   - name: days_open_without_recorded_attendance

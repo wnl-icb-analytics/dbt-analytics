@@ -3,7 +3,7 @@ models:
 - name: fct_csds_referral_summary
   description: >-
     Care and access measures for each recorded CSDS referral. Each row is one latest referral from
-    fct_csds_referral, with its state at the latest reported period and counts of contacts by
+    fct_csds_referral, with its state in the provider's latest submission and counts of contacts by
     attendance, care activities, service teams and referral-to-treatment clocks. Each measure is
     aggregated before joining, so several contacts and teams do not multiply each other. Referrals
     without a person bridge remain. Time to first attendance describes recorded evidence, not a
@@ -20,20 +20,28 @@ models:
     - not_null
   - name: as_of_date
     description: Latest accepted reporting period in the dataset.
-  - name: is_recorded_open_at_latest_period
-    description: Open state at the referral's latest reported period end; see fct_csds_referral_period.
+  - name: provider_latest_reporting_period_end_date
+    description: The provider's latest accepted reporting period.
+  - name: is_no_longer_submitted
+    description: The referral is absent from its provider's latest submission, so it is treated as closed.
+  - name: is_recorded_open
+    description: Open in the provider's latest submission. False for referrals no longer submitted.
   - name: latest_recorded_access_state
-    description: Access state at the referral's latest reported period end.
+    description: no_longer_submitted, or the state in the provider's latest submission (see fct_csds_referral_period).
+  - name: has_no_team_recorded
+    description: No team has been submitted for this referral; it can still be open.
+  - name: service_or_team_type_code
+    description: Team type when all the referral's teams in its latest submission share one; null otherwise.
+  - name: service_or_team_type_name
+    description: Description of that team type.
   - name: n_contacts
     description: Latest referral/contact pairs under this referral, all attendance states.
   - name: n_attended_contacts
     description: Contacts with attendance code 5 or 6.
   - name: n_dna_contacts
-    description: Contacts with attendance code 3 (did not attend) or 7 (arrived late, not seen).
-  - name: n_patient_cancelled_contacts
-    description: Contacts cancelled by the patient (code 2).
-  - name: n_provider_cancelled_contacts
-    description: Contacts cancelled or postponed by the provider (code 4).
+    description: Contacts with code 3 (did not attend) or 7 (arrived late, not seen).
+  - name: n_cancelled_contacts
+    description: Contacts cancelled by the patient (2) or provider (4).
   - name: n_contacts_with_missing_attendance
     description: Contacts with no attendance code in either supplied field.
   - name: n_contacts_with_different_referral_person
@@ -50,7 +58,5 @@ models:
     description: Latest service/team relationships under this referral.
   - name: n_service_team_types
     description: Distinct team types across those relationships.
-  - name: n_rtt_clock_start_dates
-    description: Distinct submitted clock start dates, a proxy for distinct clocks.
-  - name: n_rtt_records_response_standard_met
-    description: Submitted clock records flagged as meeting the response standard; repeated monthly records are counted each time.
+  - name: n_rtt_clocks
+    description: Distinct referral-to-treatment or response clocks (latest record of each).

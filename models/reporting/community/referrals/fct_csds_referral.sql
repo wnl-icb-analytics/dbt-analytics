@@ -40,6 +40,8 @@ select
     , r.dm_sub_icb_commissioner as source_sub_icb_commissioner_code
     , sub_icb.organisation_name as source_sub_icb_commissioner_name
     , r.dm_commissioner_derivation_reason as source_commissioner_derivation_reason
+    , {{ is_wnl_icb_code(['r.dm_icb_commissioner', 'r.dm_sub_icb_commissioner', 'r.organisation_code_code_of_commissioner']) }}
+        as is_wnl_commissioner
     , r.unique_submission_id as submission_id
     , r.reporting_period_start_date::date as reporting_period_start_date
     , r.reporting_period_end_date::date as reporting_period_end_date

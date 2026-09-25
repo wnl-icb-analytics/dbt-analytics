@@ -13,6 +13,7 @@ select
     , icb26_cd
     , icb26_cdh
     , icb26_nm
+    , lad26_cd
     , lad26_nm
 from {{ ref('raw_reference_geo_lsoa21_sicbl26_icb26_nhser26_lad26') }}
 where lsoa21_cd is not null
