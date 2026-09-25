@@ -40,8 +40,18 @@ models:
     description: National description of the ethnic category; null when unmatched.
   - name: residence_lsoa_2021_code
     description: Submitted 2021 LSOA of residence. Some providers supply retired 2011 codes here.
+  - name: residence_lsoa_2021_resolved_code
+    description: 2021 LSOA as supplied when valid, else the unique 2021 successor of a 2011 code found in the 2021 field; null for split or unknown codes.
+  - name: residence_lsoa_2021_resolution
+    description: as_supplied or bridged_from_2011; null when no single 2021 LSOA applies.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [as_supplied, bridged_from_2011]
   - name: residence_lsoa_2011_code
     description: Submitted 2011 LSOA of residence.
+  - name: residence_local_authority_code
+    description: ONS code of the local authority of residence, resolved as for the name.
   - name: residence_local_authority_name
     description: Local authority of residence resolved from the 2021 LSOA field, bridging 2011 codes found there.
   - name: residence_local_authority_basis
@@ -53,11 +63,13 @@ models:
   - name: residence_imd_2019_decile
     description: IMD 2019 decile of the 2011 LSOA; 1 is most deprived.
   - name: residence_imd_2025_decile
-    description: IMD 2025 decile of the 2021 LSOA field; 1 is most deprived.
+    description: IMD 2025 decile of the resolved 2021 LSOA; 1 is most deprived.
   - name: residence_icb_code
     description: Source-derived ICB of residence.
   - name: residence_sub_icb_code
     description: Source-derived sub-ICB location of residence.
+  - name: is_wnl_resident
+    description: The source-derived ICB or sub-ICB of residence is West and North London (current ICB, its sub-ICB locations or legacy codes).
   - name: person_death_date
     description: Submitted date of death.
   - name: is_looked_after_child

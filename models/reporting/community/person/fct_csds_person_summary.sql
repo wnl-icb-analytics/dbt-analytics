@@ -23,7 +23,7 @@ with population as (
     select
         person_id
         , count(*) as n_recorded_referrals
-        , count_if(is_recorded_open_at_latest_period) as n_referrals_open_at_latest_period
+        , count_if(is_recorded_open) as n_open_referrals
         , min(referral_received_date) as first_referral_date
         , max(referral_received_date) as latest_referral_date
     from {{ ref('fct_csds_referral_summary') }}
@@ -42,34 +42,24 @@ with population as (
     group by person_id
 )
 
--- Attended 5/6, did not attend 3/7, cancelled 2/4.
-, contacts as (
+, contact_measures as (
     select
         c.person_id
-        , nullif(ltrim(trim(coalesce(c.attendance_code, c.source_attendance_status_code)), '0'), '') as attendance
-        , c.care_contact_date
-        , d.as_of_date
+        , count(*) as n_recorded_contacts
+        , max(iff(c.care_contact_date <= d.as_of_date, c.care_contact_date, null)) as latest_contact_date
+        , max(iff(c.care_contact_date <= d.as_of_date and c.is_attended, c.care_contact_date, null))
+            as latest_attended_contact_date
+        , count_if(c.is_attended
+            and c.care_contact_date between dateadd(month, -12, d.as_of_date) and d.as_of_date) as n_attended_contacts_12m
+        , count_if(c.is_dna
+            and c.care_contact_date between dateadd(month, -12, d.as_of_date) and d.as_of_date) as n_dna_contacts_12m
+        , count_if(c.is_cancelled
+            and c.care_contact_date between dateadd(month, -12, d.as_of_date) and d.as_of_date) as n_cancelled_contacts_12m
+        , count_if(c.care_contact_date > d.as_of_date) as n_contacts_after_as_of_date
     from {{ ref('fct_csds_care_contact') }} as c
     cross join {{ ref('int_csds_reporting_date') }} as d
     where c.person_id is not null
-)
-
-, contact_measures as (
-    select
-        person_id
-        , count(*) as n_recorded_contacts
-        , max(iff(care_contact_date <= as_of_date, care_contact_date, null)) as latest_contact_date
-        , max(iff(care_contact_date <= as_of_date and attendance in ('5', '6'), care_contact_date, null))
-            as latest_attended_contact_date
-        , count_if(attendance in ('5', '6')
-            and care_contact_date between dateadd(month, -12, as_of_date) and as_of_date) as n_attended_contacts_12m
-        , count_if(attendance in ('3', '7')
-            and care_contact_date between dateadd(month, -12, as_of_date) and as_of_date) as n_dna_contacts_12m
-        , count_if(attendance in ('2', '4')
-            and care_contact_date between dateadd(month, -12, as_of_date) and as_of_date) as n_cancelled_contacts_12m
-        , count_if(care_contact_date > as_of_date) as n_contacts_after_as_of_date
-    from contacts
-    group by person_id
+    group by c.person_id
 )
 
 , clinical as (
@@ -98,20 +88,22 @@ select
     , demo.ethnicity_2001_code
     , demo.ethnicity_2001_description
     , demo.ethnicity_2001_broad_group
+    , demo.residence_local_authority_code
     , demo.residence_local_authority_name
+    , demo.is_wnl_resident
     , demo.residence_imd_2025_decile
     , demo.person_death_date
     , demo.is_looked_after_child
     , demo.has_safeguarding_vulnerability_factors
     , coalesce(r.n_recorded_referrals, 0) as n_recorded_referrals
-    , coalesce(r.n_referrals_open_at_latest_period, 0) as n_referrals_open_at_latest_period
+    , coalesce(r.n_open_referrals, 0) as n_open_referrals
     , r.first_referral_date
     , r.latest_referral_date
     , coalesce(cl.n_current_caseload_providers, 0) as n_current_caseload_providers
     , coalesce(cl.n_current_caseload_referrals, 0) as n_current_caseload_referrals
     , coalesce(cl.n_current_caseload_referrals_without_attendance, 0)
         as n_current_caseload_referrals_without_attendance
-    , coalesce(cl.n_current_caseload_referrals, 0) > 0 as is_on_current_caseload
+    , coalesce(cl.n_current_caseload_referrals, 0) > 0 as has_current_recorded_caseload
     , coalesce(c.n_recorded_contacts, 0) as n_recorded_contacts
     , c.latest_contact_date
     , c.latest_attended_contact_date
