@@ -1,10 +1,11 @@
 models:
   - name: fct_person_hypertension_register
-    description: 'QOF hypertension register for patients aged 18+ with active hypertension
-      diagnosis.
+    description: 'QOF v50 hypertension register (HYP_REG) for people of any age with
+      an unresolved hypertension diagnosis.
 
-      One row per person with latest HTN_COD > latest HTNRES_COD, including clinical
-      staging based on NICE-aligned BP thresholds.'
+      One row per person whose latest HTN_COD is on or after their latest HTNRES_COD,
+      so a same-day resolution does not remove them. Includes clinical staging based
+      on NICE-aligned BP thresholds.'
 
     tests:
       - dbt_utils.at_least_one:
@@ -20,8 +21,8 @@ models:
           name_short: "Hypertension"
           description_short: "QOF hypertension register"
           description_long: >
-            Hypertension diagnosed using QOF criteria: Age ≥18 years with active hypertension  diagnosis
-            where latest HTN code is more recent than any resolution code. Includes  clinical
+            Hypertension diagnosed using QOF v50 criteria: unresolved hypertension diagnosis at
+            any age, where the latest HTN code is on or after the latest resolution code. Includes  clinical
             staging based on NICE-aligned BP thresholds with context-specific measurement  criteria
             (Home/ABPM vs Clinic readings). Maps to QOF indicator HTN005 (Hypertension  Register).
             Uses HTN_COD for diagnosis codes and HTNRES_COD for resolution codes.
@@ -68,8 +69,9 @@ models:
         description: 'Array of all hypertension concept displays for this patient'
 
       - name: meets_age_criteria
-        description: 'Flag indicating patient meets age criteria (≥18 years for hypertension
-          register)'
+        description: 'Age 18 or over. Informational only; the register has no age restriction.'
 
       - name: has_active_htn_diagnosis
-        description: 'Flag indicating patient has an active hypertension diagnosis'
+        description: 'Latest diagnosis strictly after the latest resolution. FALSE for people
+          whose latest resolution is on the same day as their latest diagnosis; they stay on
+          the register.'
