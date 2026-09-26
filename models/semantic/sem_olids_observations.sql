@@ -204,7 +204,7 @@ DIMENSIONS(
     demographics.age_band_nhs AS age_band_nhs COMMENT = 'NHS Digital standard age bands (0-4, 5-14, 15-24, ..., 75-84, 85+)',
     demographics.age_band_esp AS age_band_esp COMMENT = 'ESP 2013 age bands (<1, 1-4, 5-9, ..., 80-84, 85-89, 90-94, 95+). Join to esp_weight for standardised rates.',
     demographics.age_life_stage AS age_life_stage COMMENT = 'Life stage (Infant, Toddler, Child, Adolescent, Young Adult, Adult, Older Adult, Elderly, Very Elderly, Unknown)',
-    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category (Asian or Asian British, Black or Black British, Mixed, Other, White, Unknown)',
+    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category: Asian, Black, Mixed, Other, White, or Unknown',
     demographics.ethnicity_subcategory AS ethnicity_subcategory COMMENT = 'Ethnicity subcategory (White: British, White: Irish, White: Roma, White: Traveller, White: Other White, Mixed: White and Black Caribbean, Mixed: White and Black African, Mixed: White and Asian, Mixed: Other Mixed, Asian: Indian, Asian: Pakistani, Asian: Bangladeshi, Asian: Chinese, Asian: Other Asian, Black: African, Black: Caribbean, Black: Other Black, Other: Arab, Other: Other, Unknown, Not Stated, Not Recorded, Recorded Not Known, Refused)',
     demographics.ethnicity_granular AS ethnicity_granular COMMENT = 'Detailed ethnicity classification (Unknown if not recorded)',
     demographics.main_language AS main_language COMMENT = 'Main spoken language (Not Recorded if unknown)',
@@ -233,9 +233,9 @@ DIMENSIONS(
 
     -- Deprivation
     demographics.imd_decile_19 AS imd_decile_19 COMMENT = 'IMD 2019 decile (1=most deprived, 10=least). NULL if LSOA not mapped.',
-    demographics.imd_quintile_19 AS imd_quintile_19 COMMENT = 'IMD 2019 quintile (1 - Most Deprived to 5 - Least Deprived, Unknown)',
+    demographics.imd_quintile_19 AS imd_quintile_19 COMMENT = 'IMD 2019 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown''',
     demographics.imd_decile_25 AS imd_decile_25 COMMENT = 'IMD 2025 decile (1=most deprived, 10=least). Preferred over 2019.',
-    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile (1 - Most Deprived to 5 - Least Deprived, Unknown)',
+    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown''',
 
     -- Blood Pressure (raw)
     bp.is_home_bp_event AS is_home_bp_event WITH SYNONYMS = ('HBPM', 'home monitoring', 'home BP') COMMENT = 'TRUE when the representative latest paired BP reading is home monitored. This flag exists only in this latest-reading view, not sem_olids_observations_history.',
@@ -243,7 +243,7 @@ DIMENSIONS(
     bp.is_hypertensive_range AS is_hypertensive_range COMMENT = 'TRUE when any paired reading on the latest BP date was hypertensive: >=140/90 clinic or >=135/85 home/ABPM. It need not describe the representative lowest-of-day reading.',
 
     -- Blood Pressure Control
-    bp_control.is_overall_bp_controlled AS is_overall_bp_controlled WITH SYNONYMS = ('BP at target', 'BP controlled', 'controlled') COMMENT = 'BP controlled per NICE NG136 — measurement-aware (HBPM/ABPM targets are clinic -5 mmHg)',
+    bp_control.is_overall_bp_controlled AS is_overall_bp_controlled WITH SYNONYMS = ('BP at target', 'BP controlled', 'controlled') COMMENT = 'Latest BP below the NICE NG136 target (both systolic and diastolic strictly below). Clinic targets: 140/90 under 80 (also T2DM and CKD under 80); 150/90 at 80+; 130/80 for CKD with ACR >= 70 mg/mmol under 80. Home/ABPM targets are 5 mmHg lower (e.g. 135/85). FALSE when not controlled; NULL for people with no BP reading.',
     bp_control.is_systolic_controlled AS is_systolic_controlled COMMENT = 'Systolic BP below NG136 target (HBPM/ABPM target is clinic -5 mmHg)',
     bp_control.is_diastolic_controlled AS is_diastolic_controlled COMMENT = 'Diastolic BP below NG136 target (HBPM/ABPM target is clinic -5 mmHg)',
     bp_control.hypertension_stage AS hypertension_stage COMMENT = 'NICE NG136 stage from the higher systolic/diastolic stage: Normal, Stage 1, Stage 2, or Stage 3 (Severe). Home/ABPM uses lower Stage 1/2 thresholds.',
@@ -252,8 +252,8 @@ DIMENSIONS(
     bp_control.applied_measurement_context AS applied_measurement_context WITH SYNONYMS = ('BP threshold context', 'clinic vs home') COMMENT = 'CLINIC or HBPM_ABPM — which NG136 variant was used to score control, matching the latest reading source',
     bp_control.is_case_finding_candidate AS is_case_finding_candidate WITH SYNONYMS = ('BP case finding') COMMENT = 'Elevated BP but not on HTN register',
     bp_control.is_latest_bp_within_recommended_interval AS is_latest_bp_within_recommended_interval WITH SYNONYMS = ('BP timely', 'timely BP') COMMENT = 'BP within recommended interval',
-    bp_control.has_t2dm AS has_t2dm COMMENT = 'Has Type 2 diabetes (affects BP threshold)',
-    bp_control.has_ckd AS has_ckd COMMENT = 'Has CKD (affects BP threshold)',
+    bp_control.has_t2dm AS has_t2dm COMMENT = 'On diabetes register with Type 2 diabetes, used to pick the BP target. Populated only for people with a BP reading (the BP control cohort); NULL for everyone else. For T2DM cohorts use sem_olids_population diabetes_type = ''Type 2'' joined on person_id.',
+    bp_control.has_ckd AS has_ckd COMMENT = 'On CKD register, used to pick the BP target. Populated only for people with a BP reading; NULL for everyone else. For CKD cohorts use sem_olids_population has_chronic_kidney_disease.',
     bp_control.is_diagnosed_htn AS is_diagnosed_htn WITH SYNONYMS = ('on HTN register', 'diagnosed hypertension') COMMENT = 'On hypertension register',
 
     -- HbA1c Categories
