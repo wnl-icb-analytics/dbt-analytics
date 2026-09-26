@@ -40,8 +40,10 @@ models:
 
       appointment_count and patient_count include every retained appointment
       status. Use attended_count or filter is_attended for delivered activity.
-      The DNA rate denominator is all retained appointment records, including
-      cancelled and other statuses.
+      Every retained record is attended or DNA: OLIDS carries no cancelled
+      status, and available and future slots are excluded upstream. The DNA
+      rate denominator is therefore attended + DNA, which also excludes
+      cancellations as national GP appointment statistics do.
 
       national_slot_category_name is the recorded national category and the
       preferred category field. local_slot_type is practice-defined free text.
@@ -55,9 +57,9 @@ models:
       guidance](https://www.england.nhs.uk/long-read/recording-same-day-appointments-for-all-clinically-urgent-patients/)
       and [GP appointments national category mapping guide](https://digital.nhs.uk/dashboards/gp-appointments-data-dashboard/national-category-mapping-guide).
 
-      The source excludes available slots, but future booked appointments can
-      remain. Filter start_date at the current timestamp for observed past
-      activity.
+      Rolling windows should end at the latest past date (start_date <=
+      CURRENT_DATE). If the data lags, anchor them to the latest past
+      appointment date.
 
     config:
       materialized: semantic_view

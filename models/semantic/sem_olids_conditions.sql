@@ -82,7 +82,7 @@ DIMENSIONS(
     demographics.age_band_10y AS age_band_10y COMMENT = '10-year age bands (0-9, 10-19, ..., 70-79, 80+, Unknown)',
     demographics.age_band_nhs AS age_band_nhs COMMENT = 'NHS Digital standard age bands (0-4, 5-14, 15-24, ..., 75-84, 85+)',
     demographics.age_band_esp AS age_band_esp COMMENT = 'ESP 2013 age bands. This view exposes esp_weight and esp_proportion as facts, so age-standardised rates can be built here directly; take ANY_VALUE(esp_proportion) per age band.',
-    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category (Asian or Asian British, Black or Black British, Mixed, Other, White, Unknown)',
+    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category: Asian, Black, Mixed, Other, White, or Unknown',
     demographics.ethnicity_subcategory AS ethnicity_subcategory COMMENT = 'Ethnicity subcategory (detailed groupings; Unknown/Not Stated/Not Recorded/Refused where missing)',
     demographics.main_language AS main_language COMMENT = 'Main spoken language (Not Recorded if unknown)',
     demographics.interpreter_needed AS interpreter_needed COMMENT = 'Whether interpreter is required',
@@ -107,7 +107,7 @@ DIMENSIONS(
 
     -- Deprivation
     demographics.imd_decile_25 AS imd_decile_25 COMMENT = 'IMD 2025 decile (1=most deprived, 10=least). NULL if LSOA not mapped.',
-    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile (1 - Most Deprived to 5 - Least Deprived, Unknown)'
+    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown'''
 )
 
 METRICS(

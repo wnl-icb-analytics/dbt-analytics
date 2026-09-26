@@ -96,7 +96,7 @@ DIMENSIONS(
     demographics.age_life_stage AS age_life_stage COMMENT = 'Life stage (Infant, Toddler, Child, Adolescent, Young Adult, Adult, Older Adult, Elderly, Very Elderly, Unknown)',
 
     -- Ethnicity
-    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category (Asian or Asian British, Black or Black British, Mixed, Other, White, Unknown)',
+    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category: Asian, Black, Mixed, Other, White, or Unknown',
     demographics.ethnicity_subcategory AS ethnicity_subcategory COMMENT = 'Ethnicity subcategory (White: British, White: Irish, White: Roma, White: Traveller, White: Other White, Mixed: White and Black Caribbean, Mixed: White and Black African, Mixed: White and Asian, Mixed: Other Mixed, Asian: Indian, Asian: Pakistani, Asian: Bangladeshi, Asian: Chinese, Asian: Other Asian, Black: African, Black: Caribbean, Black: Other Black, Other: Arab, Other: Other, Unknown, Not Stated, Not Recorded, Recorded Not Known, Refused)',
     demographics.ethnicity_granular AS ethnicity_granular COMMENT = 'Detailed ethnicity classification (Unknown if not recorded)',
 
@@ -129,15 +129,15 @@ DIMENSIONS(
 
     -- Deprivation
     demographics.imd_decile_19 AS imd_decile_19 COMMENT = 'IMD 2019 decile (1=most deprived, 10=least). NULL if LSOA not mapped.',
-    demographics.imd_quintile_19 AS imd_quintile_19 COMMENT = 'IMD 2019 quintile (1 - Most Deprived to 5 - Least Deprived, Unknown)',
+    demographics.imd_quintile_19 AS imd_quintile_19 COMMENT = 'IMD 2019 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown''',
     demographics.imd_decile_25 AS imd_decile_25 COMMENT = 'IMD 2025 decile (1=most deprived, 10=least). Preferred over 2019.',
-    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile (1 - Most Deprived to 5 - Least Deprived, Unknown)',
+    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown''',
 
     -- Diabetes Type
     conditions.diabetes_type AS diabetes_type COMMENT = 'Diabetes type classification (Type 1, Type 2, Unknown, Not Diabetic). Type 1 takes precedence if both coded on same date.',
 
     -- Cardiovascular Conditions (QOF)
-    conditions.has_hypertension AS has_hypertension WITH SYNONYMS = ('HTN', 'high blood pressure') COMMENT = 'On hypertension register (QOF, age >=18)',
+    conditions.has_hypertension AS has_hypertension WITH SYNONYMS = ('HTN', 'high blood pressure') COMMENT = 'On hypertension register (QOF v50 HYP_REG, all ages): unresolved diagnosis, where a resolution on the same day as the latest diagnosis does not remove the person',
     conditions.has_coronary_heart_disease AS has_coronary_heart_disease WITH SYNONYMS = ('CHD', 'IHD', 'ischaemic heart disease') COMMENT = 'On CHD register (QOF)',
     conditions.has_heart_failure AS has_heart_failure WITH SYNONYMS = ('HF') COMMENT = 'On heart failure register (QOF)',
     conditions.has_atrial_fibrillation AS has_atrial_fibrillation WITH SYNONYMS = ('AF', 'AFib') COMMENT = 'On AF register (QOF)',
@@ -154,7 +154,7 @@ DIMENSIONS(
 
     -- Respiratory Conditions
     conditions.has_copd AS has_copd WITH SYNONYMS = ('COPD', 'emphysema', 'chronic bronchitis') COMMENT = 'On COPD register (QOF)',
-    conditions.has_asthma AS has_asthma COMMENT = 'On asthma register (QOF, age >=6)',
+    conditions.has_asthma AS has_asthma COMMENT = 'On asthma register (QOF, age >=5)',
     conditions.has_cyp_asthma AS has_cyp_asthma WITH SYNONYMS = ('children asthma', 'paediatric asthma') COMMENT = 'Children and young people asthma (non-QOF, age 0-17)',
 
     -- Mental Health Conditions
@@ -212,7 +212,7 @@ DIMENSIONS(
     status.has_vulnerability_flag AS has_vulnerability_flag COMMENT = 'Has any vulnerability indicator (care home, homeless, housebound, or LAC)',
 
     -- Smoking & Alcohol
-    status.smoking_status AS smoking_status COMMENT = 'Smoking status (Never Smoked, Ex-Smoker, Current Smoker, Unknown)',
+    status.smoking_status AS smoking_status COMMENT = 'Smoking status (Never Smoked, Ex-Smoker, Current Smoker, Unknown). For prevalence use active people aged 15+ as the denominator; about 98% of under-15s are Unknown.',
     status.alcohol_status AS alcohol_status COMMENT = 'Alcohol status (Non-Drinker, Lower Risk, Increasing Risk, Higher Risk, Dependent, Unknown)',
     status.alcohol_requires_intervention AS alcohol_requires_intervention COMMENT = 'Requires alcohol intervention (AUDIT score >=5)',
 
@@ -304,7 +304,7 @@ METRICS(
     ccms.patients_with_ccms AS COUNT(DISTINCT ccms.person_id) COMMENT = 'Patients with a CCMS (aged 16+)',
 
     -- Smoking
-    status.current_smoker_count AS COUNT(DISTINCT CASE WHEN status.smoking_status = 'Current Smoker' THEN status.person_id END) COMMENT = 'Current smokers',
+    status.current_smoker_count AS COUNT(DISTINCT CASE WHEN status.smoking_status = 'Current Smoker' THEN status.person_id END) COMMENT = 'Current smokers. Prevalence denominator: active people aged 15+ (filter is_active = TRUE AND age >= 15).',
     status.ex_smoker_count AS COUNT(DISTINCT CASE WHEN status.smoking_status = 'Ex-Smoker' THEN status.person_id END) COMMENT = 'Ex-smokers',
 
     -- Vulnerability
