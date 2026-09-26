@@ -145,6 +145,22 @@ The winning file per slice is published in `STAGING.SLAM.STG_SLAM_LATEST_SUBMISS
 3. **Backloaded history ordering**: for ~340 provider-months (none in 26/27, concentrated 20/21–23/24), load order and the provider-stated creation date disagree about which file is latest. The views follow load order.
 4. **Upstream rebuilds rewrite history**: if the platform pipeline rebuilds a feed (schema drift), the staging tables are rebuilt from it and figures can change. Nightly tests flag grain breaks.
 5. **Unmapped files**: anything in `META_UNMAPPED_FILES` is absent from all downstream layers. Currently 3 SLAM files, all missing their data upstream rather than awaiting mapping.
+6. **Rows that do not follow their layout**: some provider rows carry an extra field (an unquoted `3,470.00`, an inserted value), so the rest of the row sits one column late and its last data field is lost. The platform pipeline finds these with `audit_rows.py`, repairs reviewed cases in `lib/row_repairs.py` and quarantines files that follow no single edit (`META_REJECTED_FILES`). Around 150 rows across all SDL feeds were affected by 2026-09; the audit is re-run to catch new ones.
+
+### Provider coding issues
+
+These are values a provider consistently sends in its own convention, not parsing or alignment faults. Staging passes them through as submitted; handle them in reporting where they matter.
+
+| Provider | Feed | Issue | Scale |
+|---|---|---|---|
+| R1K00 | ACM, PLD, Drugs | Local code `598` as commissioner / residence responsibility | ~4M ACM, ~9M PLD rows |
+| RKE00 | ACM, PLD | Site of treatment as `Q4` / `RKERKEQ4` rather than an ODS site code | ~7M ACM, ~6M PLD rows |
+| RF400 | ACM | Site of treatment as a two-letter suffix | ~1.3M rows |
+| DF904, DF900 | PLD | Age sent as a band (`18-64`), so age is NULL | ~1.2M rows |
+| 8HH48 | PLD | Activity start dates sent as time-only Excel artefacts (`mm:ss.s`); unrecoverable, so the period falls back to the file name | ~3.5M rows |
+| RP400 | Drugs | Drug quantity and unit of measure swapped; dose text stays in `drug_quantity_raw` and `dv_drug_quantity` is NULL | ~60k rows |
+| RP600 | Drugs | One file with financial year as a five-digit number | ~55k rows |
+| Several | ACM | Actual market forces factor holds price-sized values (tens of thousands) rather than a factor near 1 | ~25k rows |
 
 ## Verification queries
 
