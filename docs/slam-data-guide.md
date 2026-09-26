@@ -158,6 +158,7 @@ These are values a provider consistently sends in its own convention, not parsin
 | RF400 | ACM | Site of treatment as a two-letter suffix | ~1.3M rows |
 | DF904, DF900 | PLD | Age sent as a band (`18-64`), so age is NULL | ~1.2M rows |
 | 8HH48 | PLD | Activity start dates sent as time-only Excel artefacts (`mm:ss.s`); unrecoverable, so the period falls back to the file name | ~3.5M rows |
+| RHW00 | ACM | Dataset creation time sent as a time-only artefact in some 2024/25 files, so `dv_dataset_created_at` is NULL (latest-submission selection uses the load time, so it is unaffected) | ~14k rows |
 | RP400 | Drugs | Drug quantity and unit of measure swapped; dose text stays in `drug_quantity_raw` and `dv_drug_quantity` is NULL | ~60k rows |
 | RP600 | Drugs | One file with financial year as a five-digit number | ~55k rows |
 | Several | ACM | Actual market forces factor holds price-sized values (tens of thousands) rather than a factor near 1 | ~25k rows |
