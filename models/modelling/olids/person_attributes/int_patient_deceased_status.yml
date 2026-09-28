@@ -1,7 +1,12 @@
 models:
   - name: int_patient_deceased_status
-    description: Patient-level deceased status with approximate death date.
-      Uses midpoint of death month, or July 1st if only death year is known.
+    description: >
+      Deceased status and approximate death date for each OLIDS patient_id, including
+      patients with no death record, from OLIDS, PDS and registry deaths.
+      final_date_of_death takes the registry date, then the PDS date, then the midpoint of
+      the OLIDS death month. An OLIDS death with a year but no month gets no date and does
+      not set is_deceased. OLIDS death month and year are shared across patient records
+      with the same sk_patient_id.
 
     config:
       meta:
@@ -17,23 +22,26 @@ models:
       - name: sk_patient_id
         description: Person identifier
       - name: is_deceased
-        description: TRUE if death_year is populated from all sources combined.
+        description: >
+          TRUE when a PDS date of death, a registry date of death or an OLIDS
+          month-level approximate death date exists.
       - name: death_source_flag
         description: > 
-          Flag indicating the source of the final death date,
-          'OLIDS' if final date of death is from OLIDS, 'PDS' if from PDS, 'REGISTRY' if from registry feed. Can be a combination of sources.
+          Sources holding a death record for the patient: 'OLIDS', 'PDS Informal',
+          'PDS Formal', 'Registry', 'PDS OLIDS', 'PDS Registry', 'Registry OLIDS' or
+          'PDS Registry OLIDS'. NULL when not deceased, or when PDS is the only source
+          and its death status is not 1 or 2.
       - name: death_month
         description: Month of death (NULL if alive or unknown) from all sources combined.
       - name: death_year
         description: Year of death (NULL if alive) from all sources combined.
       - name: death_date_approx
         description: >
-          Approximate death date from all sources combined. Midpoint of death month if month known,
-          July 1st of death year if only year known, NULL if alive.
+          Midpoint of the month of final_date_of_death. NULL when final_date_of_death
+          is NULL.
       - name: olids_death_date_approx
         description: >
-          Approximate death date from OLIDS. Midpoint of death month if month known,
-          July 1st of death year if only year known, NULL if alive.
+          Midpoint of the OLIDS death month. NULL when OLIDS has no death month, including year-only deaths.
       - name: pds_death_status
         description: Death status from PDS (NULL if alive) 1 Informal, 2 Formal
       - name: pds_date_of_death
@@ -42,5 +50,6 @@ models:
         description: Date of death from registry feed (NULL if alive)
       - name: final_date_of_death
         description: > 
-          Final date of death derived from all sources. Uses OLIDS date if PDS and registry dates do not match and OLIDS date is the only one available, otherwise uses PDS date if available, otherwise uses registry date.
+          Registry date of death where present, otherwise the PDS date, otherwise
+          the OLIDS approximate date.
      

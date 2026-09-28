@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: unit_of_measurement
+    description: >-
+      Warehouse unit names keyed by canonical symbols and known aliases. One
+      row represents one case-insensitive unit label for safe analytical joins.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: code
+        description: Upper-cased canonical symbol or known alias.
+        data_tests: [not_null, unique]
+      - name: unit_symbol
+        description: Canonical symbol for the matched unit.
+        data_tests: [not_null]
+      - name: unit_name
+        description: Unit name.
+      - name: quantity_name
+        description: Quantity measured by the unit where available.
+      - name: si_power
+        description: SI power recorded in the warehouse dictionary.
+      - name: is_standard_unit
+        description: Whether the warehouse dictionary marks this as a standard unit.
+      - name: is_derived_unit
+        description: Whether the warehouse dictionary marks this as a derived unit.
+      - name: match_type
+        description: Whether code is the canonical symbol or a known alias.

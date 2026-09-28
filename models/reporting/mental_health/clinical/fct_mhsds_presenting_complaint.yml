@@ -1,0 +1,37 @@
+version: 2
+models:
+- name: fct_mhsds_presenting_complaint
+  description: >-
+    Symptoms and complaints recorded when people presented for care. Each row is one retained
+    combination of provider, referral, person, coding scheme, code and recorded date. Records with
+    incomplete identifying details remain separate. Descriptions use the submitted finding scheme,
+    with case-sensitive Read v2 and CTV3 matches. Alternative-label fields show possible use of
+    diagnosis-scheme numbering, but do not establish which interpretation is correct. A presenting
+    complaint does not establish a formal or clinically current diagnosis.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: presenting_complaint_id
+    description: Unique retained evidence key.
+    data_tests:
+    - unique
+    - not_null
+  - name: complaint_recorded_date
+    description: Recorded complaint date; null for missing or pre-1901 sentinel dates.
+  - name: clinical_label_status
+    description: Whether the original code has an authoritative local label; unsupported coding systems remain
+      explicit.
+  - name: complaint_description
+    description: Authoritative code label under the declared finding scheme. A label does not establish that
+      the provider selected the right coding scheme.
+  - name: alternative_diagnosis_scheme_code_description
+    description: Candidate ICD-10 label for declared scheme 02 or SNOMED label for declared 06, if the source
+      has used diagnosis-scheme numbering instead of finding-scheme numbering. This is unconfirmed and must
+      not replace the submitted interpretation automatically.
+  - name: alternative_diagnosis_coding_scheme
+    description: Candidate diagnosis-scheme namespace. Null when no exact alternative code match exists.
+  - name: has_alternative_diagnosis_scheme_match
+    description: The same submitted scheme/code pair matches a different diagnosis-scheme interpretation. Lexical
+      overlap alone does not prove a source error.

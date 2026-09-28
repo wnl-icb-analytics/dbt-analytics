@@ -1,7 +1,20 @@
 
 models:
   - name: fct_person_sus_apc_recent
-    description: "Recent (up to 1 year) inpatient spell counts and length of stay per patient (rolling window). One row per patient. Note: likely needs window shift to account for reporting delay.  Warning:needs expert analyst review."
+    description: >
+      SUS admitted patient care spell counts and length of stay over the last 1, 3 and 12
+      months. One row per patient key, zero where there is no activity. Windows end today
+      and do not allow for SUS reporting delay. Needs expert analyst review. Patient keys
+      are all of dim_person_demographics_basic, described in the SQL as everyone in PDS
+      whether living, dead, registered or not, plus any other key with qualifying
+      activity. Spells come from int_sus_apc_imputed_spells, excluding null or '1' patient
+      keys and admission methods 2C, 82 and 31. apc_1mo, apc_3mo and apc_12mo count spells
+      starting in each window; apc_nel_12mo counts those in 12 months with an admission
+      method starting 2. apc_los_12mo is non-overlapping length of stay from
+      int_sus_apc_merged_spells. acs_nel_12mo counts ambulatory care sensitive
+      non-elective admissions starting in the last 12 months. dq_ columns count spells
+      with a missing source start date, end date or duration among spells starting or
+      ending in the last 12 months.
     config:
       meta:
         owner:

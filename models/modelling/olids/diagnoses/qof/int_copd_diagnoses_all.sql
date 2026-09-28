@@ -5,10 +5,11 @@
 }}
 
 /*
-All COPD diagnosis observations from clinical records.
-Uses QOF COPD cluster IDs:
-- COPD_COD: COPD diagnoses
-- COPDRES_COD: COPD resolved/remission codes
+All COPD disorder, administrative and resolved observations from clinical records.
+Uses QOF v51 COPD cluster IDs:
+- COPDDIAG_COD: codes indicating the presence of COPD disorder
+- COPDPROC_COD: administrative codes indicating the presence of COPD disorder
+- COPDRES_COD: COPD resolved codes
 
 Clinical Purpose:
 - QOF COPD register data collection
@@ -16,10 +17,9 @@ Clinical Purpose:
 - Respiratory management monitoring
 - Resolution status tracking
 
-Key QOF Requirements:
-- Register is diagnosis-based: any unresolved COPD diagnosis qualifies (v50 Rule 4 catch-all).
-- Spirometry (FEV1/FVC <0.7) within the diagnosis/registration window populates the
-  FEV1FVCDIAG/FEV1FVCREG dates used by downstream indicators, not register inclusion.
+The QOF register applies a two-year window to administrative codes downstream.
+This observation-level model retains all history so clinical episode consumers can
+use older administrative evidence without inheriting the register restriction.
 
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 This is OBSERVATION-LEVEL data - one row per COPD observation.
@@ -36,16 +36,18 @@ SELECT
     obs.cluster_id AS source_cluster_id,
 
     -- COPD-specific flags (observation-level only)
-    CASE WHEN obs.cluster_id = 'COPD_COD' THEN TRUE ELSE FALSE END AS is_diagnosis_code,
+    CASE WHEN obs.cluster_id = 'COPDDIAG_COD' THEN TRUE ELSE FALSE END AS is_disorder_code,
+    CASE WHEN obs.cluster_id = 'COPDPROC_COD' THEN TRUE ELSE FALSE END AS is_admin_code,
     CASE WHEN obs.cluster_id = 'COPDRES_COD' THEN TRUE ELSE FALSE END AS is_resolved_code,
 
     -- COPD observation type determination
     CASE
-        WHEN obs.cluster_id = 'COPD_COD' THEN 'COPD Diagnosis'
+        WHEN obs.cluster_id = 'COPDDIAG_COD' THEN 'COPD Disorder'
+        WHEN obs.cluster_id = 'COPDPROC_COD' THEN 'COPD Administrative'
         WHEN obs.cluster_id = 'COPDRES_COD' THEN 'COPD Resolved'
         ELSE 'Unknown'
     END AS copd_observation_type
 
-FROM ({{ get_observations("'COPD_COD', 'COPDRES_COD'", source='PCD') }}) obs
+FROM ({{ get_observations("'COPDDIAG_COD', 'COPDPROC_COD', 'COPDRES_COD'", source='PCD') }}) obs
 
 ORDER BY person_id, clinical_effective_date, id

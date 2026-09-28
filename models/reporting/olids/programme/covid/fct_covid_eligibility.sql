@@ -73,7 +73,7 @@ clinical_condition_eligibility AS (
     -- immuno_max_age_years; in Autumn 2024 immunosuppression sat inside the under-65
     -- clinical groups above. The cap is tested on birth date.
     SELECT
-        i.campaign_id, 'clinical_condition' AS campaign_category, 'Immunosuppressed under 75' AS risk_group, NULL AS subcohort, i.person_id, i.qualifying_event_date, i.reference_date,
+        i.campaign_id, 'clinical_condition' AS campaign_category, 'Immunosuppressed under 75' AS risk_group, 'Immunosuppression' AS subcohort, i.person_id, i.qualifying_event_date, i.reference_date,
         i.description, i.birth_date_approx, i.age_months_at_ref_date, i.age_years_at_ref_date,
         'CLINICAL_CONDITION' AS rule_type, 2 AS eligibility_priority, i.created_at
     FROM {{ ref('int_covid_immunosuppression') }} i

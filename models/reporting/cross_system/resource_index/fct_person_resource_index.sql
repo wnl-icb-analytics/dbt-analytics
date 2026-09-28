@@ -11,16 +11,16 @@ dropped (~17% of in-patch patient-keyed spend). One row per patient.
     (rolled from int_person_cost_index_actual_monthly)
   * expected_cost_12m - WNL age-sex cost-per-month rate for the patient's
     band x their months registered
-  * weighted_months_12m - Core need basis: the practice's UKHFD average
-    weighted/registered ratio (practice_weighted_population) x months
-    registered. sum(weighted_months_12m)/12 = weighted person-years, the
+  * weighted_months_12m - Core need basis: the practice's UKHFD Core
+    Services weighted/registered ratio (practice_weighted_population) x
+    months registered. sum(weighted_months_12m)/12 = weighted person-years, the
     denominator for spend-per-weighted-patient in any cut.
 
 Two index bases:
   age-sex:   resource_index = sum(actual) / sum(expected) — own-data curve.
   Core need: spend per weighted person-year vs the WNL mean. The practice
-    denominator averages six UKHFD service-specific weighted populations,
-    excluding the health-inequalities component. The latest allocation base
+    denominator is NHS England's Core Services weighted population, which
+    excludes the health-inequalities component. The latest allocation base
     year not later than the cost window is used. The practice ratio is spread
     uniformly across its patients; practices with no ratio get the WNL
     exposure-weighted mean (flagged).

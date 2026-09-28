@@ -1,0 +1,34 @@
+models:
+  - name: int_renin_angiotensin_therapy_latest
+    description: >
+      Latest renin-angiotensin system therapy order per person, one row per
+      person with any ACE inhibitor (BNF 2.5.5.1) or angiotensin II receptor
+      blocker (BNF 2.5.5.2) order between 1990 and the build date. Consumers
+      apply their own window to latest_order_date; the NICE indicators treat
+      an order in the preceding six calendar months as current treatment.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person with at least one order.
+        data_tests:
+          - unique
+          - not_null
+      - name: latest_order_date
+        description: Date of the latest order of either class.
+      - name: latest_order_id
+        description: Medication order identifier of the latest order.
+      - name: latest_ras_class
+        description: ACE_INHIBITOR or ARB for the latest order.
+      - name: latest_product_name
+        description: BNF name of the latest product.
+      - name: latest_ace_inhibitor_order_date
+        description: Latest ACE inhibitor order date; null if none.
+      - name: latest_arb_order_date
+        description: Latest ARB order date; null if none.
+      - name: first_order_date
+        description: Earliest order of either class.
+      - name: order_count
+        description: Orders of either class since 1990.

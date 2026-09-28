@@ -20,7 +20,7 @@ with invalid_residence_rows as (
 
 select
     row_id,
-    pseudo_nhs_number as sk_patient_id, 
+    {{ consistent_sk_patient_id_format('pseudo_nhs_number')}} as sk_patient_id, 
     der_postcode_sector as postcode_sector, 
     der_currentyr2021_lsoa_of_residence_from_postcode as lsoa_21, 
     to_date(usual_address_business_effective_from_date) as event_from_date, 

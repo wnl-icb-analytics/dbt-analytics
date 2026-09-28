@@ -1,37 +1,37 @@
 models:
-  - name: stg_csds_cyp101referral
-    description: >
-      CSDS CYP referral requests. Grain: one row per
-      unique_service_request_identifier. Population: CYP101 referral records.
-      Time semantics: the latest submitted record per service request is
-      retained.
-    config:
-      meta:
-        owner:
-          name: Emily Baldwin
-    columns:
-      - name: unique_service_request_identifier
-        description: Primary key - unique service request identifier
-        tests:
-          - unique
-          - not_null
-      - name: person_id
-        description: CSDS person identifier
-      - name: referral_request_received_date
-        description: Date referral request was received
-      - name: primary_reason_for_referral_community_care
-        description: Primary reason for community care referral.
-      - name: service_discharge_date
-        description: Service discharge date.
-      - name: priority_type_code
-        description: Referral priority type code.
-      - name: ic_age_at_service_referral_received_date
-        description: CSDS-derived age in years at referral received.
-      - name: dm_icb_commissioner
-        description: Derived ICB commissioner code.
-      - name: dm_sub_icb_commissioner
-        description: Derived sub-ICB commissioner code.
-    tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
+- name: stg_csds_cyp101referral
+  description: "CSDS CYP referral requests. Grain: one row per unique_service_request_identifier. Population:\
+    \ CYP101 referral records. Time semantics: the latest submitted record per service request is retained.\n\
+    \ Selection prioritises reporting month, then receipt timestamp, submission and source row ID. Later\
+    \ absence is not evidence of deletion. Reused identifiers retain the latest reported state, not a\
+    \ complete lifetime history."
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  columns:
+  - name: unique_service_request_identifier
+    description: Primary key - unique service request identifier
+    data_tests:
+    - unique
+    - not_null
+  - name: person_id
+    description: CSDS person identifier
+  - name: referral_request_received_date
+    description: Date referral request was received
+  - name: primary_reason_for_referral_community_care
+    description: Primary reason for community care referral.
+  - name: service_discharge_date
+    description: Service discharge date.
+  - name: priority_type_code
+    description: Referral priority type code.
+  - name: ic_age_at_service_referral_received_date
+    description: CSDS-derived age in years at referral received.
+  - name: dm_icb_commissioner
+    description: Derived ICB commissioner code.
+  - name: dm_sub_icb_commissioner
+    description: Derived sub-ICB commissioner code.
+  data_tests:
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1

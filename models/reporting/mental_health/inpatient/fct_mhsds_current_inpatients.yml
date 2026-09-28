@@ -1,0 +1,46 @@
+version: 2
+models:
+- name: fct_mhsds_current_inpatients
+  description: >-
+    Current inpatient evidence under the shared occupancy rules. Each row is one retained open
+    interval, including intervals without a recorded person ID. Identified people have at most one
+    retained open interval. Undischarged spells remain open only when last
+    reported within two calendar months of the latest staged spell period; later admissions and
+    overlaps can change the retained interval. This describes the available feed, not live ward
+    occupancy. Evidence dates and duration calculation dates are separate. Currency classifications
+    are available in fct_mhsds_currency_current_inpatients.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: occupancy_interval_id
+    description: Established spell number used by encounter and currency models; one retained occupancy
+      interval.
+    data_tests:
+    - not_null
+    - unique
+  - name: hospital_provider_spell_source_record_id
+    description: Provider-qualified key joining to source_record_id in the recorded hospital-spell fact.
+  - name: person_id
+    description: Recorded MHSDS person. Null when unidentified; occupancy_interval_id still identifies the interval.
+    data_tests:
+    - unique
+  - name: admission_date
+    description: Recorded admission date of the retained occupancy interval.
+  - name: occupancy_evidence_as_of_date
+    description: Maximum reporting-period end among staged spells, preserving the existing occupancy freshness
+      anchor.
+  - name: last_submission_period_end_date
+    description: Last submission evidence for the retained spell.
+  - name: calculation_date
+    description: Date on which open-interval comparisons were evaluated.
+  - name: occupancy_days_to_last_evidence
+    description: Elapsed calendar days to the derived end, or last submission evidence for an open interval.
+      No minimum-day adjustment or extension to today; negative source chronology remains visible.
+  - name: days_since_admission
+    description: Elapsed calendar days from admission to duration_calculation_date. Extrapolates beyond
+      submission evidence; not evidenced bed days.
+  - name: duration_calculation_date
+    description: Build date of this census, used only for elapsed time since admission. Occupancy decisions
+      retain their own calculation_date.

@@ -46,6 +46,7 @@
 -- the SLAM feeds' YYYYYY — so dv_financial_year is the validated 4-digit year.
 
 with {{ community_pld_registry('COMOPL') }},
+{{ community_pld_provider_codes('raw_sdl_wnl_comopl') }},
 
 prep as (
     select
@@ -72,7 +73,7 @@ prep as (
         )                                       as local_patient_id,
 
         -- 7-9: Patient identifiers (pseudonymised)
-        sk_patient_id_nhs_number                as sk_patient_id,
+        {{ consistent_sk_patient_id_format('sk_patient_id_nhs_number')}}                 as sk_patient_id,
         try_to_number(dv_yearof_birth)          as dv_year_of_birth,
         dv_partial_post_code                    as partial_postcode,
 
@@ -151,8 +152,7 @@ prep as (
                                                 as discharge_date,
 
         -- 25: Provider (cleaned ODS code; provider col sparse, fall back to meta)
-        {{ clean_organisation_id('upper(trim(coalesce(organisation_identifier_code_of_provider, provider_code, meta_provider_code)))') }}
-                                                as provider_code,
+        provider_codes.cleaned_provider_code    as provider_code,
         -- 26: Service reporting line (coalesce siblings)
         nullif(trim(coalesce(service_reporting_line, service_report_line)), '')
                                                 as service_reporting_line,
@@ -183,6 +183,11 @@ prep as (
         coalesce(dlp_financial_month, financial_month)  as financial_month_raw
 
     from {{ ref('raw_sdl_wnl_comopl') }}
+    left join provider_codes
+        on equal_null(
+            upper(trim(coalesce(organisation_identifier_code_of_provider, provider_code, meta_provider_code))),
+            provider_codes.source_provider_code
+        )
     left join registry
         on registry.file_id = meta_file_id
        and registry.batch_id = meta_batch_id

@@ -1,0 +1,29 @@
+version: 2
+models:
+- name: fct_mhsds_currency_referral_summary
+  description: >-
+    Referral care measures with the 2026/27 NHS England costing classifications. Each row is one
+    recorded referral. General care and access measures come from fct_mhsds_referral_summary; this
+    table adds currency service, setting and population groups. The service type chosen for costing
+    can differ from the recorded primary or additional teams.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Referral key shared with the general referral summary.
+    data_tests:
+    - not_null
+    - unique
+  - name: is_currency_crisis_referral
+    description: Existing NHSE currency crisis classification based on resolved referral team and urgency.
+      Not a general clinical definition of a crisis.
+  - name: currency_service_or_team_type_code
+    description: Single service type selected for currency classification.
+  - name: currency_service_or_team_type_description
+    description: Authoritative description of the selected type.
+  - name: currency_referral_reason_category
+    description: 2026/27 currency population category of the referral reason.
+  - name: currency_team_type_category
+    description: 2026/27 currency population category of the selected service type.

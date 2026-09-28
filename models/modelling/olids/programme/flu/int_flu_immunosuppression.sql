@@ -14,16 +14,14 @@ Combination rule - multiple evidence sources with OR logic.
 */
 
 {{ config(
-    materialized='incremental',
-    incremental_strategy='delete+insert',
-    unique_key='campaign_id',
+    materialized='table',
     tags=['covid_flu']
 ) }}
 
 WITH all_campaigns AS (
     -- Every flu campaign the models report on
     -- (campaign list: macros/config/flu_campaign_selection.sql)
-    {{ flu_build_campaigns() }}
+    {{ flu_reported_campaigns() }}
 ),
 
 -- Step 1: Find people with immunosuppression diagnosis (for all campaigns)

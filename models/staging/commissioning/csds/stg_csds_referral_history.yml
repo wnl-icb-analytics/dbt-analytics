@@ -1,0 +1,23 @@
+version: 2
+models:
+- name: stg_csds_referral_history
+  description: One referral occurrence from an accepted CSDS submission. Retains reporting-period history
+    and source identity before selecting the latest referral state. A repeated referral is not a new referral
+    event.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - unique_submission_id
+        - unique_service_request_identifier
+  columns:
+  - name: unique_submission_id
+    data_tests:
+    - not_null
+  - name: unique_service_request_identifier
+    data_tests:
+    - not_null

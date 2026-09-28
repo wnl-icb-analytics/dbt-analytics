@@ -75,7 +75,7 @@ prep as (
 
         -- 14-16: Patient identifiers (pseudonymised)
         local_patient_identifier                as local_patient_id,
-        sk_patient_id_nhs_number                as sk_patient_id,
+        {{ consistent_sk_patient_id_format('sk_patient_id_nhs_number')}} as sk_patient_id, 
         dv_partial_post_code                    as partial_postcode,
         -- LSOA (pipeline-derived geography; not a spec field but high-value)
         nullif(trim(dv_lsoa), '')               as lsoa,

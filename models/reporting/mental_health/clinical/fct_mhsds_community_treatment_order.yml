@@ -1,0 +1,47 @@
+version: 2
+models:
+- name: fct_mhsds_community_treatment_order
+  description: >-
+    Recorded community treatment orders (CTOs). A CTO under section 17A of the Mental Health Act
+    allows an eligible detained patient to leave hospital for treatment in the community under
+    conditions, with a power of recall. Each row is one provider, legal-status period and order
+    start date, using the latest accepted version. Renewals update expiry rather than create a new
+    order. Recalls are recorded separately. An order is not an ordinary community referral or proof
+    of continuous inpatient detention. A missing end date or future expiry alone does not establish
+    current legal status. Incomplete identifying details retain separate source records.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+      definition_source: https://digital.nhs.uk/data-and-information/data-collections-and-data-sets/data-sets/mental-health-services-data-set/submit-data/quick-guide-to-submitting-mental-health-act-data
+  columns:
+  - name: community_treatment_order_id
+    description: Unique identifier at the documented model grain.
+    data_tests:
+    - not_null
+    - unique
+  - name: mental_health_act_period_id
+    description: Source MHS401 legal-status period associated with the order; links to the recorded legal-status
+      fact.
+  - name: order_start_date
+    description: Submitted order start date.
+  - name: order_end_date
+    description: Recorded end of the CTO period. A temporary hospital recall is recorded separately and
+      is not automatically the end of the order.
+  - name: order_expiry_date
+    description: Recorded expiry date, updated when an order is renewed. Does not alone prove the order
+      is currently in force.
+  - name: order_end_reason_code
+    description: Submitted order end reason code.
+  - name: order_end_reason_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: n_accepted_source_records
+    description: Accepted submitted versions of this identity across all periods, including repeats.
+  - name: is_identity_incomplete
+    description: A required identity component is missing; the source row is retained separately.
+  - name: first_submission_period_end_date
+    description: First accepted reporting period containing this identity, not the clinical start date.
+  - name: reporting_period_end_date
+    description: Period of the accepted source evidence; may be later than the clinical event.
+  - name: source_file_received_at
+    description: Source file receipt timestamp, not a clinical time.

@@ -1,0 +1,36 @@
+models:
+  - name: int_thyroid_function_test_all
+    description: >
+      Thyroid function test records from the PCD TFT_COD cluster (TSH, free
+      T4, free T3 and related tests), one row per observation, for all people
+      including inactive and deceased, with the result value and unit where
+      recorded. Observations dated after the build date are excluded.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: TFT_COD
+            source: PCD
+    columns:
+      - name: id
+        description: Source observation identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the test.
+      - name: concept_code
+        description: SNOMED code of the test.
+      - name: concept_display
+        description: Description of the test.
+      - name: result_value
+        description: Result value as recorded; null for coded-only records.
+      - name: result_unit_display
+        description: Unit of the result; null when none.
+      - name: source_cluster_id
+        description: Cluster that matched the code.

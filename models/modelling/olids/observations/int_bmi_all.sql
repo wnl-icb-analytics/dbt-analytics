@@ -18,6 +18,7 @@ WITH recorded_bmi AS (
         obs.id,
         obs.person_id,
         obs.clinical_effective_date,
+        obs.date_recorded,
         TRY_CAST(obs.result_value AS FLOAT) AS bmi_value,
         obs.result_unit_display,
         obs.mapped_concept_code AS concept_code,
@@ -63,6 +64,7 @@ weight_measurements AS (
         obs.person_id,
         obs.clinical_effective_date,
         obs.id,
+        obs.date_recorded,
         TRY_CAST(obs.result_value AS FLOAT) AS weight_kg,
         obs.result_unit_display AS weight_unit
     FROM ({{ get_observations("'WEIGHT'") }}) obs
@@ -82,6 +84,7 @@ calculated_bmi AS (
         w.id AS ID,
         w.person_id,
         w.clinical_effective_date,
+        w.date_recorded,
         ROUND(w.weight_kg / ((h.height_cm / 100.0) * (h.height_cm / 100.0)), 2) AS bmi_value,
         'kg/m²' AS result_unit_display,
         'CALCULATED_BMI' AS concept_code,
@@ -129,6 +132,7 @@ SELECT
     person_id,
     ID,
     clinical_effective_date,
+    date_recorded,
     bmi_value,
     result_unit_display,
     concept_code,

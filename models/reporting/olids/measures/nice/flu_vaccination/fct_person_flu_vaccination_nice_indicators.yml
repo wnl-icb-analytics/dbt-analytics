@@ -1,0 +1,329 @@
+models:
+  - name: fct_person_flu_vaccination_ind131
+    description: |
+      NICE IND131 flu vaccination in coronary heart disease. One row per currently
+      registered, living, non-test person with coronary heart disease, assessed on the
+      build date.
+
+      Achieved when influenza vaccination is recorded in the most recently completed 1
+      August to 31 March season. The measure uses that completed season throughout the
+      following year. NICE and QOF v51 do not settle the off-season rollover.
+
+      Excludes persisting flu vaccine contraindications recorded at any time and expiring
+      contraindications recorded in the preceding 12 months.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind131
+        indicator:
+          id: "IND131"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "CHD flu vaccination"
+          description_short: "Flu vaccination in the most recent completed season for people with coronary heart disease"
+          description_long: |
+            NICE IND131 flu vaccination in coronary heart disease. One row per currently
+            registered, living, non-test person with coronary heart disease, assessed on
+            the build date.
+
+            Achieved when influenza vaccination is recorded in the most recently completed
+            1 August to 31 March season. The measure uses that completed season throughout
+            the following year. NICE and QOF v51 do not settle the off-season rollover.
+
+            Excludes persisting flu vaccine contraindications recorded at any time and
+            expiring contraindications recorded in the preceding 12 months.
+
+            Personalised care adjustments are not applied.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND131"
+    columns: &flu_columns
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_vaccination_date
+        description: Latest vaccination date in the season window; null when none
+      - name: is_laiv
+        description: Whether a vaccination in the window was the live attenuated nasal vaccine; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+
+  - name: fct_person_flu_vaccination_ind141
+    description: |
+      NICE IND141 flu vaccination in COPD. One row per currently registered, living,
+      non-test person with COPD, assessed on the build date.
+
+      Achieved when influenza vaccination is recorded in the most recently completed 1
+      August to 31 March season. The measure uses that completed season throughout the
+      following year. NICE and QOF v51 do not settle the off-season rollover.
+
+      Excludes persisting flu vaccine contraindications recorded at any time and expiring
+      contraindications recorded in the preceding 12 months. NICE IND141 gives no expiry
+      period, so this follows the IND131 and IND163 interpretation.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind141
+        indicator:
+          id: "IND141"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "COPD flu vaccination"
+          description_short: "Flu vaccination in the most recent completed season for people with COPD"
+          description_long: |
+            NICE IND141 flu vaccination in COPD. One row per currently registered, living,
+            non-test person with COPD, assessed on the build date.
+
+            Achieved when influenza vaccination is recorded in the most recently completed
+            1 August to 31 March season. The measure uses that completed season throughout
+            the following year. NICE and QOF v51 do not settle the off-season rollover.
+
+            Excludes persisting flu vaccine contraindications recorded at any time and
+            expiring contraindications recorded in the preceding 12 months. NICE IND141
+            gives no expiry period, so this follows the IND131 and IND163 interpretation.
+
+            Personalised care adjustments are not applied.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND141"
+    columns: *flu_columns
+
+  - name: fct_person_flu_vaccination_ind152
+    description: |
+      NICE IND152 flu vaccination in coronary heart disease, stroke or TIA, diabetes, or
+      COPD. One row per currently registered, living, non-test person with coronary heart
+      disease, stroke or TIA, diabetes, or COPD, assessed on the build date.
+
+      Achieved when influenza vaccination is recorded in the most recently completed 1
+      August to 31 March season. The measure uses that completed season throughout the
+      following year. NICE and QOF v51 do not settle the off-season rollover. Diabetes register membership starts at age 17.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind152
+        indicator:
+          id: "IND152"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "LTC flu vaccination"
+          description_short: "Flu vaccination in the most recent completed season for people with CHD, stroke/TIA, diabetes or COPD"
+          description_long: |
+            NICE IND152 flu vaccination in coronary heart disease, stroke or TIA,
+            diabetes, or COPD. One row per currently registered, living, non-test person
+            with coronary heart disease, stroke or TIA, diabetes, or COPD, assessed on the
+            build date.
+
+            Achieved when influenza vaccination is recorded in the most recently completed
+            1 August to 31 March season. The measure uses that completed season throughout
+            the following year. NICE and QOF v51 do not settle the off-season rollover. Diabetes register membership starts at age 17.
+
+            Personalised care adjustments are not applied.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND152"
+    columns: *flu_columns
+
+  - name: fct_person_flu_vaccination_ind163
+    description: |
+      NICE IND163 flu vaccination in diabetes. One row per currently registered, living,
+      non-test person aged 17 or older with diabetes, assessed on the build date.
+
+      Achieved when influenza vaccination is recorded in the most recently completed 1
+      August to 31 March season. The measure uses that completed season throughout the
+      following year. NICE and QOF v51 do not settle the off-season rollover.
+
+      Excludes persisting flu vaccine contraindications recorded at any time and expiring
+      contraindications recorded in the preceding 12 months.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind163
+        indicator:
+          id: "IND163"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "Diabetes flu vaccination"
+          description_short: "Flu vaccination in the most recent completed season for people with diabetes"
+          description_long: |
+            NICE IND163 flu vaccination in diabetes. One row per currently registered,
+            living, non-test person aged 17 or older with diabetes, assessed on the build date.
+
+            Achieved when influenza vaccination is recorded in the most recently completed
+            1 August to 31 March season. The measure uses that completed season throughout
+            the following year. NICE and QOF v51 do not settle the off-season rollover.
+
+            Excludes persisting flu vaccine contraindications recorded at any time and
+            expiring contraindications recorded in the preceding 12 months.
+
+            Personalised care adjustments are not applied.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND163"
+    columns: *flu_columns
+
+  - name: fct_person_flu_vaccination_ind164
+    description: |
+      NICE IND164 flu vaccination in stroke or TIA. One row per currently registered,
+      living, non-test person with stroke or TIA, assessed on the build date.
+
+      Achieved when influenza vaccination is recorded in the most recently completed 1
+      August to 31 March season. The measure uses that completed season throughout the
+      following year. NICE and QOF v51 do not settle the off-season rollover.
+
+      Contraindications remain in the denominator because NICE treats them as personalised
+      care adjustments.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind164
+        indicator:
+          id: "IND164"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "Stroke/TIA flu vaccination"
+          description_short: "Flu vaccination in the most recent completed season for people with stroke or TIA"
+          description_long: |
+            NICE IND164 flu vaccination in stroke or TIA. One row per currently
+            registered, living, non-test person with stroke or TIA, assessed on the build
+            date.
+
+            Achieved when influenza vaccination is recorded in the most recently completed
+            1 August to 31 March season. The measure uses that completed season throughout
+            the following year. NICE and QOF v51 do not settle the off-season rollover.
+
+            Contraindications remain in the denominator because NICE treats them as
+            personalised care adjustments.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND164"
+    columns: *flu_columns
+
+  - name: fct_person_flu_vaccination_nice_indicators
+    description: |
+      Current NICE flu vaccination results. One row per eligible person and indicator,
+      with eligibility assessed on the build date.
+
+      Includes the family-specific evidence alongside the shared achievement status. Each
+      indicator defines its own population, time window and exclusions.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+      - name: indicator_id
+        description: NICE indicator identifier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IND131', 'IND141', 'IND152', 'IND163', 'IND164']
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+      - name: latest_vaccination_date
+        description: Latest vaccination date in the season window; null when none
+      - name: is_laiv
+        description: Whether a vaccination in the window was the nasal vaccine
+      - name: latest_record_date
+        description: Date of the latest vaccination in the season; null when none
+
+  - name: fct_person_flu_vaccination_nice_indicators_snapshot_input
+    description: |
+      NICE flu vaccination results used for change history. One row per eligible person
+      and indicator.
+
+      Excludes build-date fields so a new reporting date alone does not create a history
+      version. Clinical results and evidence retain the family definitions.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier; part of the snapshot unique_key.
+        data_tests:
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.
+      - name: latest_vaccination_date
+        description: Latest vaccination date in the season at the build.

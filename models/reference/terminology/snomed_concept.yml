@@ -1,0 +1,21 @@
+models:
+  - name: snomed_concept
+    description: One recognised SNOMED CT concept with its latest retained preferred term and current status from the NHS Digital reporting model. Includes inactive historical concepts without substituting successor codes. A recognised concept need not be appropriate for every clinical use.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: snomed_code
+        description: SNOMED CT concept identifier as text, including historical concepts.
+        data_tests: [unique, not_null]
+      - name: preferred_term
+        description: Latest retained active preferred term, falling back to the fully specified name if unavailable.
+      - name: fully_specified_name
+        description: Latest retained active fully specified name, including its semantic tag.
+      - name: is_active
+        description: Current concept status. False does not invalidate historical use.
+      - name: effective_time
+        description: Effective time of the retained concept definition.
+      - name: definition_source
+        description: Authoritative source of the concept and terms.

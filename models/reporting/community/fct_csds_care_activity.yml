@@ -1,0 +1,173 @@
+version: 2
+models:
+- name: fct_csds_care_activity
+  description: One accepted CSDS CYP202 activity occurrence per submission and activity identifier. Preserves
+    all source activities, including unbridged people and unmatched parent identifiers. Contact context
+    comes from the same submission, never from an unrelated latest occurrence. Activities are child detail
+    and do not emit separate healthcare events. Delivery timestamps are not clinical activity dates. Native
+    clinical codes, schemes, values and units remain together. Clinical labels use the supplied coding
+    scheme; source codes and values are not rewritten.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  columns:
+  - name: source_record_id
+    description: Surrogate key of submission and activity identifier.
+    data_tests:
+    - unique
+    - not_null
+  - name: source_dataset
+    description: CSDS.
+  - name: source_row_id
+    description: Identifier of the delivered source row. Changes when another submission occurrence is
+      selected.
+  - name: activity_id
+    description: Supplied provider-qualified activity identifier. Reused across contacts, people and periods
+      in the loaded feed; not a global event key.
+  - name: local_activity_id
+    description: Local activity identifier as supplied by the provider.
+  - name: contact_id
+    description: Supplied provider-qualified contact identifier. Use submission context to locate the
+      historical parent.
+  - name: local_contact_id
+    description: Local contact identifier as supplied by the provider.
+  - name: referral_id
+    description: Supplied provider-qualified service request identifier. Joins to source_record_id in
+      fct_csds_referral; the latest parent can have a different person or submission.
+  - name: contact_source_record_id
+    description: Key used by the latest contact fact for the parent referral/contact pair. Use contact_source_row_id
+      and submission for the historical occurrence.
+  - name: contact_source_row_id
+    description: Delivered CYP201 row identifier for the same-submission parent contact.
+  - name: person_id
+    description: CSDS person identifier supplied on this row. It is not replaced by the parent person.
+  - name: sk_patient_id
+    description: Pseudonymised cross-system patient key from the CSDS bridge; null when unavailable.
+  - name: care_contact_date
+    description: Date from the same-submission parent contact. This is contact context, not an independently
+      recorded activity date.
+  - name: care_contact_time
+    description: Time from the same-submission parent contact; null when absent.
+  - name: care_contact_at
+    description: Parent contact date and supplied time. Date-only values use midnight and must be read
+      with care_contact_time_precision.
+  - name: care_contact_time_precision
+    description: timestamp when the parent contact supplies date and time; date when only date exists;
+      null when no parent date exists.
+  - name: activity_location_type_code
+    description: Location code from the same-submission parent contact.
+  - name: activity_location_type_name
+    description: Latest available dictionary description for the corresponding supplied code; null for
+      missing or unmatched codes. Not a point-in-time clinical interpretation.
+  - name: activity_type_code
+    description: Supplied activity type code. Unmatched values remain visible.
+  - name: activity_type_name
+    description: Latest available dictionary description for the corresponding supplied code; null for
+      missing or unmatched codes. Not a point-in-time clinical interpretation.
+  - name: clinical_contact_duration_minutes
+    description: Supplied clinical contact duration of the activity in minutes, excluding administrative
+      time.
+  - name: local_lead_professional_id
+    description: Supplied local identifier of the lead care professional. Several professionals do not
+      create extra activity rows.
+  - name: lead_professional_id
+    description: Source-derived provider-qualified lead care professional identifier; null when absent.
+  - name: procedure_scheme_code
+    description: Original procedure coding-system code. The duplicate older source alias is omitted after
+      equality validation.
+  - name: procedure_scheme_name
+    description: Latest available dictionary description for the corresponding supplied code; null for
+      missing or unmatched codes. Not a point-in-time clinical interpretation.
+  - name: procedure_code
+    description: Original procedure code interpreted using procedure_scheme_code. Null means not supplied.
+  - name: finding_scheme_code
+    description: Original finding coding-system code. The duplicate older source alias is omitted after
+      equality validation.
+  - name: finding_scheme_name
+    description: Latest available dictionary description for the corresponding supplied code; null for
+      missing or unmatched codes. Not a point-in-time clinical interpretation.
+  - name: finding_code
+    description: Original finding code interpreted using finding_scheme_code. Null means not supplied.
+  - name: observation_scheme_code
+    description: Original observation coding-system code. The duplicate older source alias is omitted
+      after equality validation.
+  - name: observation_scheme_name
+    description: Latest available dictionary description for the corresponding supplied code; null for
+      missing or unmatched codes. Not a point-in-time clinical interpretation.
+  - name: observation_code
+    description: Original observation code interpreted using observation_scheme_code. Null means not supplied.
+  - name: observation_value
+    description: Supplied value on this activity observation, kept with its code and unit. Null means
+      no supplied value.
+  - name: observation_unit_code
+    description: Supplied UCUM unit for the observation value; null does not imply a unit.
+  - name: is_submitted_contact_linked
+    description: Whether exactly one parent contact was found in the same submission; grain tests guard
+      join multiplication.
+  - name: is_submitted_contact_person_consistent
+    description: Whether the source activity and same-submission contact persons agree; null when either
+      person or parent is absent.
+  - name: provider_organisation_code
+    description: Supplied provider organisation code.
+  - name: submission_id
+    description: Accepted submission identifier of this source occurrence.
+  - name: reporting_period_start_date
+    description: First date of the source reporting period; delivery context, not clinical event time.
+  - name: reporting_period_end_date
+    description: Last date of the source reporting period; delivery context, not clinical event time.
+  - name: source_file_received_at
+    description: Date and time the submission portal received the file; not the time of care.
+  - name: csds_version
+    description: Dataset version from the submission header.
+  - name: file_type
+    description: Supplied submission file type.
+  - name: age_at_contact
+    description: Supplied age in years from the same-submission parent contact. Null when absent; no age
+      is calculated from a latest patient snapshot.
+  - name: is_contact_linked
+    description: Whether the corresponding latest contact fact exists. This differs from same-submission
+      parent linkage.
+  - name: is_contact_person_consistent
+    description: Whether this row and the latest contact have the same populated person identifier; null
+      when the parent or either person is absent.
+  - name: is_contact_occurrence_consistent
+    description: Whether the latest contact is the exact same delivered source row as the historical parent;
+      null when either occurrence is absent. False can mean a legitimate newer
+      parent revision; it does not itself indicate a source error.
+  - name: observation_unit_name
+    description: Readable unit description from the shared reference, with a historical CSDS alias fallback
+      restricted to the named weight, height or BMI concept. Null for absent or unmatched units.
+  - name: observation_unit_symbol
+    description: Matched canonical symbol. Original source unit remains in observation_unit_code; values
+      are not converted.
+  - name: observation_unit_definition_source
+    description: Reference used to label the unit, including CSDS ETOS historical unit alias for context-qualified
+      historical spellings. Null when unmatched; not proof of current submission validity.
+  - name: provider_organisation_name
+    description: Latest available provider name, preferring UKHFD ODS API and retaining closed organisations.
+      Dictionary supplies names absent from the API; the UKHFD closed archive supplies codes absent from both.
+  - name: procedure_name
+    description: Authoritative description matched using the supplied procedure code and coding scheme.
+      SNOMED CT and Read dictionaries supply terms. Null means the code
+      is absent or no supported authoritative match exists. Original code remains unchanged.
+  - name: finding_name
+    description: Authoritative description matched using the supplied finding code and coding scheme.
+      SNOMED CT and Read dictionaries supply terms; findings also support ICD-10. Null means the code
+      is absent or no supported authoritative match exists. Original code remains unchanged.
+  - name: observation_name
+    description: Authoritative description matched using the supplied observation code and coding scheme.
+      SNOMED CT and Read dictionaries supply terms. Null means the code
+      is absent or no supported authoritative match exists. Original code remains unchanged.
+  - name: observation_unit_match_type
+    description: Exact reference match type or csds_etos_alias for a historical context-qualified spelling.
+      Null when unmatched. Source unit and observation value are unchanged.
+  - name: procedure_name_definition_source
+    description: Reference supplying procedure_name, including UKHFD historical Read v2 term definitions.
+      Null when no name resolves; a label does not itself establish a SNOMED mapping.
+  - name: finding_name_definition_source
+    description: Reference supplying finding_name, including UKHFD historical Read v2 term definitions.
+      Null when no name resolves; a label does not itself establish a SNOMED mapping.
+  - name: observation_name_definition_source
+    description: Reference supplying observation_name, including UKHFD historical Read v2 term definitions.
+      Null when no name resolves; a label does not itself establish a SNOMED mapping.

@@ -92,7 +92,7 @@ select
     , core.commissioning_service_agreement_provider_reference_number as provider_reference_number
 
     /* Location */
-    ,  {{ clean_organisation_id('attendance_location_hes_provider_3') }} as organisation_id
+    , core.attendance_location_hes_provider_3 as organisation_id
     , dict_org.organisation_name as organisation_name
     , core.attendance_location_site as site_id
     , dict_site.organisation_name as site_name

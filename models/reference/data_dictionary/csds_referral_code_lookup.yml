@@ -1,0 +1,28 @@
+version: 2
+models:
+- name: csds_referral_code_lookup_history
+  description: UKHFD definition revisions, one row per code set, code and effective timestamp.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - code_set_name
+        - code
+        - source_effective_from_at
+- name: csds_referral_code_lookup
+  description: One newest definition per CSDS referral code set and code, including retired codes. Covers
+    referral reason, priority and referring professional group.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - code_set_name
+        - code

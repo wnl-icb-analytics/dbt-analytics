@@ -1,0 +1,107 @@
+version: 2
+models:
+- name: dim_mhsds_care_professional_period
+  description: >-
+    Professional details recorded in each accepted provider submission. Each row is one MHS901
+    professional snapshot. Use the snapshot from the activity's own submission when describing the
+    staff involved, so later changes to staff details are not applied to earlier care. Code
+    descriptions are supplied where the reference contains a matching code.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: care_professional_period_id
+    description: Stable identifier for the provider, reporting period and professional.
+    data_tests:
+    - not_null
+    - unique
+  - name: source_dataset
+    description: Source dataset, always MHSDS.
+    data_tests:
+    - not_null
+  - name: mhs901_uniq_id
+    description: Identifier of the retained MHS901 source row.
+    data_tests:
+    - not_null
+    - unique
+  - name: uniq_care_prof_local_id
+    description: MHSDS-derived care professional identifier.
+    data_tests:
+    - not_null
+  - name: care_prof_local_id
+    description: Provider-local care professional identifier.
+  - name: professional_identifier_organisation_code
+    description: Organisation that issued the local professional identifier, mandatory from v6.
+  - name: professional_identifier_organisation_name
+    description: Current organisation name for the identifier-issuing organisation.
+  - name: professional_registration_body_code
+    description: Submitted professional registration body code.
+  - name: professional_registration_body_description
+    description: Published registration body description, including retired codes.
+  - name: professional_registration_body_label_status
+    description: Whether the registration body code is missing, unmatched or labelled.
+  - name: staff_group_code
+    description: Submitted mental health care professional staff group code.
+  - name: staff_group_description
+    description: Published mental health staff group description, including retired codes.
+  - name: staff_group_label_status
+    description: Whether the staff group code is missing, unmatched or labelled.
+  - name: main_specialty_code
+    description: Submitted main specialty code.
+  - name: main_specialty_description
+    description: Published main specialty description, including retired codes.
+  - name: main_specialty_label_status
+    description: Whether the main specialty code is missing, unmatched or labelled.
+  - name: occupation_code
+    description: Submitted NHS Occupation Code.
+  - name: occupation_description
+    description: Description from NHS Occupation Code Manual v22.1, including retired codes.
+  - name: occupation_main_staff_group
+    description: Main staff group from the NHS Occupation Code Manual.
+  - name: occupation_broad_staff_group
+    description: Broad staff group from the NHS Occupation Code Manual.
+  - name: occupation_detailed_staff_group
+    description: Detailed staff group from the NHS Occupation Code Manual.
+  - name: occupation_level
+    description: Occupation level from the NHS Occupation Code Manual.
+  - name: occupation_care_setting_or_specialty
+    description: Care setting or specialty from the NHS Occupation Code Manual.
+  - name: is_occupation_code_currently_valid
+    description: TRUE when v22.1 marks the occupation code as valid; null when unmatched.
+  - name: occupation_label_status
+    description: Whether the occupation code is missing, unmatched, current or retired.
+  - name: job_role_code
+    description: Submitted care professional job role code.
+  - name: job_role_description
+    description: Published job role description, including retired codes.
+  - name: job_role_label_status
+    description: Whether the job role code is missing, unmatched or labelled.
+  - name: provider_organisation_code
+    description: Organisation code of the provider submitting the snapshot.
+  - name: provider_organisation_name
+    description: Current organisation name for the provider.
+  - name: source_record_count
+    description: Number of MHS901 rows in the accepted submission for the professional.
+  - name: has_duplicate_source_records
+    description: TRUE when several MHS901 rows were submitted for the professional.
+    data_tests:
+    - not_null
+  - name: uniq_submission_id
+    description: Accepted submission containing the professional snapshot.
+    data_tests:
+    - not_null
+  - name: uniq_month_id
+    description: MHSDS reporting month number, where April 1900 is month 1.
+  - name: reporting_period_start_date
+    description: Start date of the accepted reporting period.
+  - name: reporting_period_end_date
+    description: End date of the accepted reporting period.
+    data_tests:
+    - not_null
+  - name: mhsds_version
+    description: MHSDS version assigned by the source pipeline.
+  - name: source_file_received_at
+    description: Timestamp when the source file was received.
+  - name: source_loaded_at
+    description: Timestamp when the source row was loaded.

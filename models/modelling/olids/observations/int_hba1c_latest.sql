@@ -28,12 +28,10 @@ SELECT
     meets_qof_target,
     original_result_value
 
-FROM (
-    {{ get_latest_events(
-        ref('int_hba1c_all'),
-        partition_by=['person_id'],
-        order_by='clinical_effective_date'
-    ) }}
-) latest_hba1c
+FROM {{ ref('int_hba1c_all') }}
 
 WHERE is_valid_hba1c = TRUE
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY person_id
+    ORDER BY clinical_effective_date DESC, id DESC
+) = 1

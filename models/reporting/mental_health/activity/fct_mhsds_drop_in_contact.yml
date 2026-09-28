@@ -1,0 +1,42 @@
+version: 2
+models:
+- name: fct_mhsds_drop_in_contact
+  description: >-
+    Anonymous drop-in contacts reported by providers. Each row is one accepted MHS302 contact record
+    in a reporting period. Demographic and outcome fields describe that contact. There is no
+    national person ID or referral link, so this table cannot count distinct patients or link
+    contacts into a person's history.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: drop_in_contact_id
+    description: Unique identifier at the documented model grain.
+    data_tests:
+    - not_null
+    - unique
+  - name: drop_in_contact_source_id
+    description: Submitted drop in contact source id.
+  - name: contact_date
+    description: Submitted contact date.
+  - name: contact_start_time
+    description: Submitted contact start time.
+  - name: contact_outcome_code
+    description: Submitted contact outcome code.
+  - name: gender_identity_code
+    description: Submitted gender identity code.
+  - name: consultation_mechanism_code
+    description: Submitted consultation mechanism code.
+  - name: age_at_period_end
+    description: Submitted age at period end.
+  - name: ethnicity_2001_code
+    description: Submitted ethnicity 2001 code.
+  - name: contact_outcome_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: gender_identity_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: reporting_period_end_date
+    description: Period of the accepted source evidence; may be later than the clinical event.
+  - name: source_file_received_at
+    description: Source file receipt timestamp, not a clinical time.

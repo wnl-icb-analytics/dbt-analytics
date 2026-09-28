@@ -1,0 +1,49 @@
+version: 2
+models:
+  - name: snomed_ethnicity_2001_bridge
+    description: >-
+      Locally maintained SNOMED to NHS Census 2001 ethnicity bridge from the
+      `ethnicity_snomed_ONS_NHS` seed. One row per non-empty source code. The seed
+      also contains legacy Read codes and placeholder values. This is a local
+      crosswalk, not an official national SNOMED mapping. Not stated and Refused
+      map to Z; unknown or missing entries map to 99. Conflicting candidates
+      produce a null code and an explicit mapping status. Existing mappings for
+      known ethnicities are retained, including where the local ONS-style group
+      differs from the NHS 2001 group. Code labels come from `nhs_ethnicity_2001`.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "mapping_status <> 'ambiguous_seed_mapping' or ethnicity_2001_code is null"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "mapping_status <> 'mapped' or ethnicity_2001_code is not null"
+    columns:
+      - name: snomed_code
+        description: Source code from the maintained seed, usually SNOMED CT; also includes legacy Read codes and placeholders.
+        data_tests: [not_null, unique]
+      - name: ethnicity_2001_code
+        description: NHS Census 2001 code when the seed supplies one distinct valid candidate. Null for absent, invalid or conflicting candidates.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('nhs_ethnicity_2001')
+                field: ethnicity_2001_code
+              config:
+                where: "ethnicity_2001_code is not null"
+      - name: ethnicity_2001_detailed_description
+        description: National detailed description from the authoritative NHS code list.
+      - name: ethnicity_2001_broad_group
+        description: National broad group from the authoritative NHS code list.
+      - name: distinct_ethnicity_2001_code_count
+        description: Number of distinct candidate NHS 2001 codes found for the SNOMED code in the local seed.
+      - name: mapping_status
+        description: mapped, ambiguous_seed_mapping, or unmapped_seed_code.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [mapped, ambiguous_seed_mapping, unmapped_seed_code]

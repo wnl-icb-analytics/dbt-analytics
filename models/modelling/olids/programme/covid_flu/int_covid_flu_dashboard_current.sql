@@ -86,18 +86,16 @@ SELECT
    cf.risk_group,
    cf.subcohort,
    -- Clinical risk group flags for dashboard filtering, any age, per campaign
-   COALESCE(f.has_asthma, 0) AS has_asthma,
-   COALESCE(f.has_asplenia, 0) AS has_asplenia,
-   COALESCE(f.has_chd, 0) AS has_chd,
-   COALESCE(f.has_ckd, 0) AS has_ckd,
-   COALESCE(f.has_cld, 0) AS has_cld,
-   COALESCE(f.has_cnd, 0) AS has_cnd,
-   COALESCE(f.has_crd, 0) AS has_crd,
-   COALESCE(f.has_diabetes, 0) AS has_diabetes,
-   COALESCE(f.is_immunosuppressed, 0) AS is_immunosuppressed,
-   COALESCE(f.has_ld, 0) AS has_ld,
-   COALESCE(f.has_smi, 0) AS has_smi,
-   --COALESCE(f.in_clinical_risk_group, 0) AS in_clinical_risk_group
+   COALESCE(f.has_asthma = 1, FALSE) AS has_asthma,
+   COALESCE(f.has_asplenia = 1, FALSE) AS has_asplenia,
+   COALESCE(f.has_chd = 1, FALSE) AS has_chd,
+   COALESCE(f.has_ckd = 1, FALSE) AS has_ckd,
+   COALESCE(f.has_cld = 1, FALSE) AS has_cld,
+   COALESCE(f.has_cnd = 1, FALSE) AS has_cnd,
+   COALESCE(f.has_crd = 1, FALSE) AS has_crd,
+   COALESCE(f.has_diabetes = 1, FALSE) AS has_diabetes,
+   COALESCE(f.is_immunosuppressed = 1, FALSE) AS is_immunosuppressed,
+   IFF(f.has_ld = 1, 'Yes', 'No') AS has_ld,
    COALESCE(f.in_clinical_risk_group = 1, FALSE) AS in_clinical_risk_group
 
 FROM {{ ref('fct_covid_flu_uptake') }} cf
@@ -166,11 +164,25 @@ SELECT
         d.lsoa_code_21 as lsoa_code,
         d.lsoa_name_21 as lsoa_name,
         d.ward_code,
-        d.ward_name,
-        COALESCE(la.LAD25_NM,'Unknown') AS borough_resident,
-        CASE WHEN la.RESIDENT_FLAG IS NULL THEN 'Unknown'
-        ELSE la.RESIDENT_FLAG END as residential_loc,
+        CASE 
+        WHEN d.local_authority_name = 'Haringey' AND d.ward_name = 'Highgate' THEN 'Highgate (Haringey)' 
+        WHEN d.local_authority_name = 'Camden' AND d.ward_name = 'Highgate' THEN 'Highgate (Camden)'
+        ELSE d.ward_name END AS ward_name,
+        COALESCE(d.local_authority_name,'Unknown') as borough_resident,
         d.neighbourhood_resident,
+        case
+        -- all NCL Boroughs
+        when d.local_authority_code in ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019') then 'NCL'
+        -- all NWL Boroughs
+        when d.local_authority_code in ('E09000005','E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033') then 'NWL'
+        --all NEL Boroughs
+        when d.local_authority_code in ('E09000002','E09000001','E09000012','E09000016','E09000025','E09000026','E09000030','E09000031') then 'NEL'
+        when d.local_authority_code like 'E09%' and d.local_authority_code not in ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019','E09000005', 
+            'E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033','E09000002','E09000001','E09000012',
+            'E09000016','E09000025','E09000026','E09000030','E09000031') then 'Other London'
+        when d.local_authority_code is null then 'Unknown'
+        else 'Outside London'
+        end as residential_loc,
         -- d.icb_code_resident,
         -- d.icb_resident,
 
@@ -187,9 +199,11 @@ SELECT
         pa.is_early_years_age,
         pa.is_primary_school_age,
         pa.is_secondary_school_age,
-    
+        --extra vulnerabilities
+        --use SMI register as SMI is not collected for Covid or Flu as a Risk Flag.
+        IFF(smi.person_id IS NOT NULL, 'Yes', 'No') AS has_smi,
         -- Housebound status from dim_person_housebound_status
-        COALESCE(hs.is_housebound, FALSE) AS is_housebound
+        IFF(hs.person_id IS NOT NULL, 'Yes', 'No') AS is_housebound
 FROM vacc_pop v
 --LEFT JOIN REPORTING.OLIDS_PERSON_DEMOGRAPHICS.DIM_PERSON_DEMOGRAPHICS d ON d.person_id = v.person_id
 LEFT JOIN {{ ref('dim_person_demographics') }} d ON d.person_id = v.person_id
@@ -199,7 +213,10 @@ LEFT JOIN {{ ref('person_pseudo') }} id  ON d.person_id = id.person_id
 LEFT JOIN {{ ref('dim_person_age') }} pa ON d.person_id = pa.person_id
 --LEFT JOIN REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_HOUSEBOUND_STATUS hs ON d.person_id = hs.person_id
 LEFT JOIN {{ ref('dim_person_housebound_status') }} hs ON d.person_id = hs.person_id
+--LEFT JOIN REPORTING.OLIDS_DISEASE_REGISTERS.FCT_PERSON_SMI_REGISTER smi on d.person_id = smi.person_id
+LEFT JOIN {{ ref('fct_person_smi_register') }} smi on d.person_id = smi.person_id
 --LEFT JOIN STAGING.REFERENCE.STG_REFERENCE_LSOA21_WARD25_LAD25 la on la.LSOA21_CD = d.LSOA_CODE_21
-LEFT JOIN {{ ref('stg_reference_lsoa21_ward25_lad25') }} la on la.LSOA21_CD = d.LSOA_CODE_21
+-- LEFT JOIN {{ ref('stg_reference_lsoa21_ward25_lad25') }} la on la.LSOA21_CD = d.LSOA_CODE_21
 WHERE v.campaign_start_date >= '2025-09-01'::DATE
+AND d.person_id IS NOT NULL
 

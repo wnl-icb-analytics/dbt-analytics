@@ -3,7 +3,7 @@ select
     id,
 
     -- Business columns
-    sk_patient_id,
+    {{ consistent_sk_patient_id_format('sk_patient_id')}} as sk_patient_id,
     title,
     gender_source_concept_id,
     gender_code,

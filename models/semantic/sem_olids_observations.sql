@@ -263,7 +263,7 @@ DIMENSIONS(
 
     -- Cholesterol Categories
     cholesterol.cholesterol_category AS cholesterol_category COMMENT = 'Cholesterol category (Desirable, Borderline, High)',
-    ldl.LDL_CVD_Target_Met AS LDL_CVD_Target_Met COMMENT = 'LDL at CVD target (Met, Not Met)',
+    ldl.LDL_CVD_Target_Met AS LDL_CVD_Target_Met COMMENT = 'Valid LDL <=2 mmol/L (Met, Not Met); no CVD eligibility or reporting period applied',
 
     -- BMI Categories
     bmi.bmi_category AS bmi_category COMMENT = 'BMI category (Underweight, Normal, Overweight, Obese Class I, Obese Class II, Obese Class III). Uses ethnicity-adjusted thresholds per NICE NG246.',
@@ -347,7 +347,7 @@ METRICS(
     cholesterol.cholesterol_desirable_count AS COUNT(DISTINCT CASE WHEN cholesterol.cholesterol_category = 'Desirable' THEN cholesterol.person_id END) COMMENT = 'Patients with desirable cholesterol',
     cholesterol.cholesterol_high_count AS COUNT(DISTINCT CASE WHEN cholesterol.cholesterol_category = 'High' THEN cholesterol.person_id END) COMMENT = 'Patients with high cholesterol',
     ldl.patients_with_ldl AS COUNT(DISTINCT ldl.person_id) COMMENT = 'Patients with LDL',
-    ldl.ldl_at_target_count AS COUNT(DISTINCT CASE WHEN ldl.LDL_CVD_Target_Met = 'Met' THEN ldl.person_id END) COMMENT = 'Patients with LDL at target',
+    ldl.ldl_at_target_count AS COUNT(DISTINCT CASE WHEN ldl.LDL_CVD_Target_Met = 'Met' THEN ldl.person_id END) COMMENT = 'People with latest valid LDL <=2 mmol/L; no CVD eligibility or reporting period applied',
 
     -- BMI
     bmi.patients_with_bmi AS COUNT(DISTINCT bmi.person_id) COMMENT = 'Patients with BMI',
