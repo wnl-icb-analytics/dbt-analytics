@@ -11,10 +11,12 @@
      3. UK DD/MM/YYYY (with optional time suffix; ambiguous dates read as UK)
      4. UK DD-MM-YYYY
      5. DD-Mon-YYYY  (Excel 4-digit year)
-     6. DD-Mon-YY    (Excel default; RR infers century: 00-49 → 20xx, 50-99 → 19xx)
-     7. UK DD/MM/YY or DD-MM-YY (century from TWO_DIGIT_CENTURY_START)
+     6. DD-Mon-YY    (Excel default)
+     7. UK DD/MM/YY or DD-MM-YY
+        Two-digit years are expanded before parsing, 00-49 → 20xx and 50-99 → 19xx,
+        rather than left to Snowflake's YY token and TWO_DIGIT_CENTURY_START.
      8. Excel serial day number, accepted only for 2000-01-01 to 2030-12-31
-        (36526-47848) so other integers are not read as dates.
+        (day 36526-47848, time fraction ignored) so other integers are not read as dates.
    Excel time-only artefacts (e.g. '00:00.0') match no branch → NULL.
 #}
 {# NB: Snowflake RLIKE treats \d literally — use POSIX [0-9] / [A-Za-z]. #}
@@ -31,11 +33,11 @@
         when {{ col }} rlike '^[0-9]{1,2}-[A-Za-z]{3}-[0-9]{4}.*'
             then try_to_date({{ col }}, 'DD-MON-YYYY')
         when {{ col }} rlike '^[0-9]{1,2}-[A-Za-z]{3}-[0-9]{2}'
-            then try_to_date({{ col }}, 'DD-MON-YY')
+            then try_to_date({{ expand_two_digit_year(col, '-') }}, 'DD-MON-YYYY')
         when {{ col }} rlike '^[0-9]{1,2}[/-][0-9]{1,2}[/-][0-9]{2}$'
-            then try_to_date(replace({{ col }}, '-', '/'), 'DD/MM/YY')
+            then try_to_date({{ expand_two_digit_year("replace(" ~ col ~ ", '-', '/')", '/') }}, 'DD/MM/YYYY')
         when {{ col }} rlike '^[34][0-9]{4}([.][0-9]+)?$'
-            and try_to_number({{ col }}, 18, 6) between 36526 and 47848
+            and floor(try_to_number({{ col }}, 18, 6)) between 36526 and 47848
             then dateadd('day', floor(try_to_number({{ col }}, 18, 6)), '1899-12-30'::date)
     end
 {% endmacro %}
@@ -45,7 +47,8 @@
         when {{ col }} rlike '^[0-9]{4}-[0-9]{2}-[0-9]{2}.*'
             then try_to_timestamp({{ col }})
         when upper({{ col }}) rlike '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4} [0-9]{1,2}:[0-9]{2}.* ?(AM|PM)$'
-            then try_to_timestamp({{ col }}, 'MM/DD/YYYY HH12:MI:SS AM')
+            then coalesce(try_to_timestamp({{ col }}, 'MM/DD/YYYY HH12:MI:SS AM'),
+                          try_to_timestamp({{ col }}, 'MM/DD/YYYY HH12:MI AM'))
         when {{ col }} rlike '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4} [0-9]{1,2}:[0-9]{2}.*'
             then try_to_timestamp({{ col }}, 'DD/MM/YYYY HH24:MI:SS')
         when {{ col }} rlike '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}'
@@ -53,6 +56,14 @@
         when {{ col }} rlike '^[0-9]{1,2}-[A-Za-z]{3}-[0-9]{4}.*'
             then try_to_timestamp({{ col }}, 'DD-MON-YYYY')
         when {{ col }} rlike '^[0-9]{1,2}-[A-Za-z]{3}-[0-9]{2}'
-            then try_to_timestamp({{ col }}, 'DD-MON-YY')
+            then try_to_timestamp({{ expand_two_digit_year(col, '-') }}, 'DD-MON-YYYY')
     end
+{% endmacro %}
+
+{# 'DD<sep>MM<sep>YY...' -> 'DD<sep>MM<sep>YYYY', 00-49 → 20xx, 50-99 → 19xx.
+   Only called after a regex has confirmed two digits in the third part. #}
+{% macro expand_two_digit_year(col, sep) %}
+    split_part({{ col }}, '{{ sep }}', 1) || '{{ sep }}' || split_part({{ col }}, '{{ sep }}', 2) || '{{ sep }}'
+        || iff(left(split_part({{ col }}, '{{ sep }}', 3), 2)::int < 50, '20', '19')
+        || left(split_part({{ col }}, '{{ sep }}', 3), 2)
 {% endmacro %}
