@@ -97,8 +97,8 @@ pmab.ethnicity_category,
     pmab.financial_year as fiscal_year_label,
     'CLINICAL RISK 18-64' AS cohort,
      'PPV' AS VACCINE
---FROM {{ ref('person_month_analysis_base') }} pmab
-FROM REPORTING.OLIDS_PERSON_ANALYTICS.PERSON_MONTH_ANALYSIS_BASE pmab
+FROM {{ ref('person_month_analysis_base') }} pmab
+--FROM REPORTING.OLIDS_PERSON_ANALYTICS.PERSON_MONTH_ANALYSIS_BASE pmab
 INNER JOIN risk_flags rf
     ON pmab.person_id = rf.person_id
    AND pmab.analysis_month >= rf.valid_from
