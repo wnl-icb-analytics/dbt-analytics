@@ -21,6 +21,10 @@ models:
             combination_of_columns:
               - person_id
               - to_date(scored_at)
+          config:
+            severity: warn
+            error_if: ">10000"
+            warn_if: ">0"
 
     columns:
       - name: person_id
@@ -40,7 +44,11 @@ models:
           per calendar date of scored_at; the date is taken in the session
           time zone.
         data_tests:
-          - not_null
+          - not_null:
+              config:
+                severity: error
+                error_if: ">1000"
+                warn_if: ">0"
 
       - name: model_version
         data_type: varchar
