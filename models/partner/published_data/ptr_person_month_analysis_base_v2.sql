@@ -2,8 +2,12 @@
     config(
         materialized='table',
         tags=['person', 'population-health'],
-        cluster_by=['sk_patient_id'],)
+        cluster_by=['sk_patient_id'],  
+          )
 }}
+
+
+
 
 /*
 Analysis foundation table providing person-months with demographics and condition flags for population health analytics.
@@ -26,6 +30,9 @@ Inclusion Criteria:
 
 Known Limitations:
 • Address/geographic fields use current address for all historical months (address SCD dates not yet populated)
+
+   post_hook="GRANT OWNERSHIP ON TABLE {{this}} TO ROLE DATA_PLATFORM_MANAGER 
+                REVOKE CURRENT GRANTS"
 
 */
 SELECT * FROM {{ref('person_month_analysis_base')}}
