@@ -3,11 +3,19 @@ version: 2
 models:
   - name: int_csds_contact_currency
     description: >
-      CSDS community contact currency classification. Grain: one row per
-      unique_service_request_identifier and unique_care_contact_identifier;
-      providers reuse local contact identifiers across referrals. Population:
-      all contacts in CYP201. Time semantics: age is derived at referral
-      received date; the latest submitted CYP102 service type is used.
+      CSDS care contacts classified to NHSE 2025/26 community contact currencies. One row
+      per service request and care contact, for all latest submitted CYP201 contacts. The
+      key is unique_service_request_identifier with unique_care_contact_identifier,
+      because providers reuse contact identifiers across referrals. Age category is CYP
+      for ages 0-17 at referral received date and Adult otherwise, including missing or
+      negative ages. Team type is the latest submitted CYP102 service type. currency_code
+      comes from the nhse_community_currency_team_types_2526 seed, or from
+      nhse_community_currency_referral_reasons_2526 for reason-split teams, falling back
+      to the team currency. Unmapped teams get CCO99Z for CYP or CAO99Z for Adult.
+      currency_source records which rule applied. is_costed_attendance is true for
+      attendance status 05 or 06, attended, and for a missing status. Practice is the
+      registration active on the contact date, else the latest known registration;
+      practice_attribution records which applied.
     config:
       meta:
         owner:

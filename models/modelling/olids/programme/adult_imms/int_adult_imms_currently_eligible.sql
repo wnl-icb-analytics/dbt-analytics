@@ -6,6 +6,7 @@
 
 --April 2026 amend rsv eligibilty for new rules starting 1st April 2026, RSV for pregnant women and also new shingles vaccine eligibility aged 18+ immunosupressed.
 --Add in PPV Clinical Risk Groups which are similar to COVID but also with Cochlear Implant and CSF leak.
+WITH POPULATION AS (
 SELECT 
 p.PERSON_ID,
 p.BIRTH_DATE_APPROX,
@@ -69,3 +70,5 @@ CROSS JOIN {{ ref('stg_reference_imms_schedule_adult_latest') }} sched
 WHERE 
 AGE_DAYS_APPROX >= (select min(ELIGIBLE_AGE_FROM_DAYS) from {{ ref('stg_reference_imms_schedule_adult_latest') }}) 
 --AGE_DAYS_APPROX >= (select min(ELIGIBLE_AGE_FROM_DAYS) from MODELLING.DBT_STAGING.STG_REFERENCE_IMMS_SCHEDULE_ADULT_LATEST) 
+)
+SELECT * FROM POPULATION WHERE CURRENTLY_ELIGIBLE

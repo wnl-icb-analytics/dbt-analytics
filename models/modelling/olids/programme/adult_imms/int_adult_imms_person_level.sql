@@ -117,6 +117,7 @@ CURRENT_DATE AS RUN_DATE
 --extra vulnerabilities
 ,IFF(smi.person_id IS NOT NULL, 'Yes', 'No') AS has_smi
 ,IFF(hs.person_id IS NOT NULL, 'Yes', 'No') AS is_housebound
+,IFF(dementi.person_id IS NOT NULL, 'Yes', 'No') AS has_dementia
 ,v.ppv_status_dose_1 
 ,v.ppv_date_dose_1
 ,v.ppv_age_event_dose_1
@@ -135,3 +136,5 @@ INNER JOIN {{ ref('int_adult_imms_current_population') }} p using (person_id)
 LEFT JOIN {{ ref('dim_person_housebound_status') }} hs ON p.person_id = hs.person_id
 --LEFT JOIN REPORTING.OLIDS_DISEASE_REGISTERS.FCT_PERSON_SMI_REGISTER smi on p.person_id = smi.person_id
 LEFT JOIN {{ ref('fct_person_smi_register') }} smi on p.person_id = smi.person_id
+--LEFT JOIN REPORTING.OLIDS_DISEASE_REGISTERS.FCT_PERSON_DEMENTIA_REGISTER dementi on p.person_id = dementi.person_id
+LEFT JOIN {{ ref('fct_person_dementia_register') }} dementi on p.person_id = dementi.person_id

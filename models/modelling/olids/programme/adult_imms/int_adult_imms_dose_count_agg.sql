@@ -8,10 +8,10 @@ SELECT
 p.fiscal_year
 ,p.vaccination_dose
 ,CASE
-WHEN p.vaccination_dose = 'PPV (dose 1)' THEN 1
-WHEN p.vaccination_dose = 'Shingles (dose 1)' THEN 2
-WHEN p.vaccination_dose = 'Shingles (dose 2)' THEN 3
-WHEN p.vaccination_dose = 'RSV (dose 1)' THEN 4
+WHEN p.vaccination_dose = 'PPV Dose 1' THEN 1
+WHEN p.vaccination_dose = 'Shingles Dose 1' THEN 2
+WHEN p.vaccination_dose = 'Shingles Dose 2' THEN 3
+WHEN p.vaccination_dose = 'RSV Dose 1' THEN 4
 END As VACC_ORDER 
 ,p.practice_code
 ,p.month_year
@@ -71,5 +71,12 @@ where rsv_dose1_sort is not null
 group by all
 
 ) p
-
+WHERE TO_NUMBER(SPLIT_PART(p.fiscal_year, '/', 1))
+      >= (
+            CASE
+                WHEN MONTH(CURRENT_DATE()) >= 4
+                    THEN YEAR(CURRENT_DATE())
+                ELSE YEAR(CURRENT_DATE()) - 1
+            END
+         ) - 4
 

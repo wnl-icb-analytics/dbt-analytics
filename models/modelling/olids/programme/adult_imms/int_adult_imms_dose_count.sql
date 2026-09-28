@@ -5,7 +5,7 @@
 }}
 
 
---This table creates dose count and date labels for adult immunisations for adults aged 60+ using a base table
+--This table creates dose count and date labels for adult immunisations for adults aged 18+ using a base table
 SELECT DISTINCT
 v.PERSON_ID 
 ,v.age_65_plus
