@@ -31,8 +31,5 @@ Inclusion Criteria:
 Known Limitations:
 • Address/geographic fields use current address for all historical months (address SCD dates not yet populated)
 
-   post_hook="GRANT OWNERSHIP ON TABLE {{this}} TO ROLE DATA_PLATFORM_MANAGER 
-                REVOKE CURRENT GRANTS"
-
 */
 SELECT * FROM {{ref('person_month_analysis_base')}}
