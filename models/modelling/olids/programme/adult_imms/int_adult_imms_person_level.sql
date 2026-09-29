@@ -94,24 +94,6 @@ CURRENT_DATE AS RUN_DATE
 ,p.TURN_65_AFTER_SEP_2023
 ,p.IN_PPV_CLINICAL_RISK_GROUP
 ,p.IN_RSV_CLINICAL_RISK_GROUP
-,CASE
-WHEN p.IN_RSV_CLINICAL_RISK_GROUP AND p.AGE BETWEEN 65 AND 74 THEN 'Clinical Risk 64-74'
-WHEN p.IS_CARE_HOME_RESIDENT THEN 'Care Home Resident'
-WHEN p.IS_PREGNANT THEN 'Currently pregnant'
-WHEN p.AGE >= 75 THEN 'Aged 75+ Routine'
-ELSE 'Not eligible'
-END as RSV_Cohort
-,CASE
-WHEN p.IN_PPV_CLINICAL_RISK_GROUP AND p.AGE BETWEEN 18 AND 64 THEN 'Clinical Risk 18-64'
-WHEN p.AGE >= 65 THEN 'Aged 65+ Routine'
-ELSE 'Not eligible'
-END as PPV_Cohort
-,CASE
-WHEN p.TURN_65_AFTER_SEP_2023 THEN 'Aged 65+ Routine'
-WHEN p.AGE BETWEEN 70 AND 79 THEN 'Age 70-79 Catch up'
-WHEN p.IS_IMMUNOSUPPRESSED THEN 'Immunocompromised 18+'
-ELSE 'Not eligible'
-END as Shingles_Cohort
 ,p.ethnicity_category
 ,p.ethcat_order
 ,p.ethnicity_subcategory
@@ -135,6 +117,7 @@ END as Shingles_Cohort
 --extra vulnerabilities
 ,IFF(smi.person_id IS NOT NULL, 'Yes', 'No') AS has_smi
 ,IFF(hs.person_id IS NOT NULL, 'Yes', 'No') AS is_housebound
+,IFF(dementi.person_id IS NOT NULL, 'Yes', 'No') AS has_dementia
 ,v.ppv_status_dose_1 
 ,v.ppv_date_dose_1
 ,v.ppv_age_event_dose_1
@@ -153,3 +136,5 @@ INNER JOIN {{ ref('int_adult_imms_current_population') }} p using (person_id)
 LEFT JOIN {{ ref('dim_person_housebound_status') }} hs ON p.person_id = hs.person_id
 --LEFT JOIN REPORTING.OLIDS_DISEASE_REGISTERS.FCT_PERSON_SMI_REGISTER smi on p.person_id = smi.person_id
 LEFT JOIN {{ ref('fct_person_smi_register') }} smi on p.person_id = smi.person_id
+--LEFT JOIN REPORTING.OLIDS_DISEASE_REGISTERS.FCT_PERSON_DEMENTIA_REGISTER dementi on p.person_id = dementi.person_id
+LEFT JOIN {{ ref('fct_person_dementia_register') }} dementi on p.person_id = dementi.person_id
