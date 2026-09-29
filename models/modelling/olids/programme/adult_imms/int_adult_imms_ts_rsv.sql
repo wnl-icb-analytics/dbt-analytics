@@ -11,8 +11,8 @@ p.vaccine
 ,p.analysis_month
 ,p.fiscal_year_label
 ,CASE
-WHEN p.cohort ='AGE 75+' THEN 7
-WHEN p.cohort ='CLINICAL RISK 65-74' THEN 8
+WHEN p.cohort ='Aged 75+' THEN 7
+WHEN p.cohort ='Clinical Risk 65-74' THEN 8
 END As VACC_ORDER 
 ,p.practice_code
 ,p.age_band_5y
@@ -42,7 +42,7 @@ select
 vaccine, cohort, analysis_month, fiscal_year_label, practice_code, age_band_5y, ethnicity_category, imd_quintile, 
 sum(vaccinated) as numerator, count(*) as denominator 
 FROM {{ ref('int_adult_imms_ts_historical_rsv') }}
-where cohort = 'AGE 75+'
+where cohort = 'Aged 75+'
 group by all
 
 UNION
@@ -51,7 +51,7 @@ select
 vaccine, cohort, analysis_month, fiscal_year_label, practice_code, age_band_5y, ethnicity_category, imd_quintile,  
 sum(vaccinated) as numerator, count(*) as denominator 
 FROM {{ ref('int_adult_imms_ts_historical_rsv') }}
-where cohort = 'CLINICAL RISK 65-74'
+where cohort = 'Clinical Risk 65-74'
 group by all
 ) p
 
