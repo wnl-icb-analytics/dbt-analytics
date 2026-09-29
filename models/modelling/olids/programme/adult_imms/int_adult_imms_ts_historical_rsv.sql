@@ -61,7 +61,7 @@ pmab.practice_code,
 pmab.analysis_month, 
 pmab.financial_year as fiscal_year_label,
 'CLINICAL RISK 65-74' AS cohort,
-'RSV' AS VACCINE
+'RSV Dose 1' AS VACCINE
 FROM {{ ref('person_month_analysis_base') }} pmab
 --FROM REPORTING.OLIDS_PERSON_ANALYTICS.PERSON_MONTH_ANALYSIS_BASE pmab
 INNER JOIN risk_flags rf
