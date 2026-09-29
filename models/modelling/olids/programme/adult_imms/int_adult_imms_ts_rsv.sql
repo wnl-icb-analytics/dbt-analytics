@@ -11,8 +11,8 @@ p.vaccine
 ,p.analysis_month
 ,p.fiscal_year_label
 ,CASE
-WHEN p.cohort ='Aged 75+' THEN 7
-WHEN p.cohort ='Clinical Risk 65-74' THEN 8
+WHEN p.cohort ='Aged 75+' THEN 9
+WHEN p.cohort ='Clinical Risk 65-74' THEN 10
 END As VACC_ORDER 
 ,p.practice_code
 ,p.age_band_5y
