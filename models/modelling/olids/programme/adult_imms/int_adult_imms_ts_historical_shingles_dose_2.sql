@@ -69,7 +69,7 @@ pmab.practice_code,
 pmab.analysis_month, 
 pmab.financial_year as fiscal_year_label,
 'Immunocompromised' AS cohort,
- 'Shingles Dose 1' AS VACCINE
+ 'Shingles Dose 2' AS VACCINE
 FROM {{ ref('person_month_analysis_base') }} pmab
 --FROM REPORTING.OLIDS_PERSON_ANALYTICS.PERSON_MONTH_ANALYSIS_BASE pmab
 INNER JOIN risk_flags rf
