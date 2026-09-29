@@ -62,6 +62,7 @@ base_data AS (
         cf.in_cyp_ast_61,
         -- Demographics
         d.sk_patient_id,
+        pseudo.hx_flake,
         d.is_active,
         d.gender,
         d.age,
@@ -100,6 +101,7 @@ base_data AS (
         COALESCE(preg.is_currently_pregnant, FALSE) AS is_currently_pregnant
     FROM {{ ref('dim_ltc_lcs_cf_summary') }} cf
     INNER JOIN {{ ref('dim_person_demographics') }} d ON cf.person_id = d.person_id
+    LEFT JOIN {{ ref('dim_person_pseudo') }} pseudo ON cf.person_id = pseudo.person_id
     LEFT JOIN {{ ref('dim_person_conditions') }} cond ON cf.person_id = cond.person_id
     LEFT JOIN {{ ref('fct_person_pregnancy_status') }} preg ON cf.person_id = preg.person_id
 ),
@@ -109,7 +111,8 @@ final_dashboard AS (
     SELECT 
         -- Person identifiers
         person_id,
-        sk_patient_id, 
+        sk_patient_id,
+        hx_flake,
         is_active,
         
         -- LTC/LCS case finding indicators  
