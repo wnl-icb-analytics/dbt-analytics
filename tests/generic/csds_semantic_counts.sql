@@ -10,6 +10,7 @@
     ('caseload_referrals', 'caseload_referrals.current_caseload_referral_count', 'current_caseload_referral_count', 'fct_csds_current_caseload_referral'),
     ('rtt', 'rtt.rtt_evidence_count', 'rtt_evidence_count', 'fct_csds_referral_to_treatment_period'),
     ('demographics', 'demographics.person_provider_period_count', 'person_provider_period_count', 'dim_csds_person_provider_period'),
+    ('caseload_people', 'caseload_people.current_caseload_person_provider_count', 'current_caseload_person_provider_count', 'fct_csds_current_caseload_person'),
 ] %}
 
 {% for entity, metric, column, domain_model in entities %}
@@ -49,6 +50,36 @@ from (
     from semantic_view({{ model }} metrics contacts.contact_count dimensions demographics.demographics_is_wnl_resident)
 ) as s
 cross join (select count(*) as row_count from {{ ref('fct_csds_care_contact') }}) as d
+where s.semantic_count <> d.row_count
+
+union all
+
+-- People on the current caseload, counted once across providers.
+select 'current_caseload_people' as entity, s.current_caseload_person_count as semantic_count, d.row_count as domain_count
+from semantic_view({{ model }} metrics people.current_caseload_person_count) as s
+cross join (select count(distinct person_id) as row_count from {{ ref('fct_csds_current_caseload_person') }}) as d
+where s.current_caseload_person_count <> d.row_count
+
+union all
+
+-- Caseload period demographics must not drop or multiply referrals.
+select 'caseload_referrals_by_demographics' as entity, s.semantic_count, d.row_count as domain_count
+from (
+    select sum(current_caseload_referral_count) as semantic_count
+    from semantic_view({{ model }} metrics caseload_referrals.current_caseload_referral_count dimensions demographics.demographics_is_wnl_resident)
+) as s
+cross join (select count(*) as row_count from {{ ref('fct_csds_current_caseload_referral') }}) as d
+where s.semantic_count <> d.row_count
+
+union all
+
+-- Activities reach people through contacts without dropping or multiplying rows.
+select 'activities_by_person_caseload' as entity, s.semantic_count, d.row_count as domain_count
+from (
+    select sum(care_activity_count) as semantic_count
+    from semantic_view({{ model }} metrics activities.care_activity_count dimensions contacts.contacts_is_wnl_commissioner)
+) as s
+cross join (select count(*) as row_count from {{ ref('fct_csds_care_activity') }}) as d
 where s.semantic_count <> d.row_count
 
 {% endtest %}
