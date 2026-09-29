@@ -12,24 +12,8 @@ pmab.person_id,
 pmab.age_band_5y,
 -- Ethnicity
 pmab.ethnicity_category,
-    CASE
-        WHEN pmab.ethnicity_category = 'Asian' THEN 1
-        WHEN pmab.ethnicity_category = 'Black' THEN 2
-        WHEN pmab.ethnicity_category = 'Mixed' THEN 3
-        WHEN pmab.ethnicity_category = 'Other' THEN 4
-        WHEN pmab.ethnicity_category = 'White' THEN 5
-        WHEN pmab.ethnicity_category = 'Unknown' THEN 6
-    END AS ethcat_order,
     -- IMD
-        COALESCE(pmab.imd_quintile_25, 'Unknown') AS imd_quintile,
-        CASE
-        WHEN pmab.imd_quintile_25 = 'Most Deprived' THEN 1
-        WHEN pmab.imd_quintile_25 = 'Second Most Deprived' THEN 2
-        WHEN pmab.imd_quintile_25 = 'Third Most Deprived' THEN 3
-        WHEN pmab.imd_quintile_25 = 'Second Least Deprived' THEN 4
-        WHEN pmab.imd_quintile_25 = 'Least Deprived' THEN 5
-        ELSE 6
-    END AS imdquintile_order,
+COALESCE(pmab.imd_quintile_25, 'Unknown') AS imd_quintile,
     -- Practice
     pmab.practice_code,
     pmab.analysis_month, 
