@@ -1,26 +1,25 @@
 models:
   - name: int_covid_diabetes
-    description: 'COVID vaccination eligibility for people with diabetes mellitus.
-
-      Key Features:
-
-      • Single diagnosis pathway using DIAB_COD and DMRES_COD codes
-
-      • Earliest occurrence in medical history qualifies
-
-      • Age restriction: minimum 5 years for COVID vaccination
-
-      • Includes Type 1 and Type 2 diabetes mellitus
-
-      • Generates data for every campaign in covid_reported_campaign_ids()
-
-      Purpose: Identify people eligible for COVID vaccination due to diabetes mellitus requiring immunisation.'
+    description: >
+      COVID diabetes risk group (DIAB_GROUP), one row per person and campaign, built for
+      every reported campaign whether or not it offered this group. A person qualifies with
+      any ADDIS_COD Addison disease or pan-hypopituitarism record, or membership of
+      int_covid_gestational_diabetes (GDIAB_GROUP), or where their latest DIAB_COD record is
+      later than their latest DMRES_COD resolved record or no resolved record exists.
+      Records must be on or before the campaign audit end date, using the campaign's pinned
+      terminology version. Minimum age is 5 at the campaign reference date.
+      int_covid_under_65_at_risk applies the campaign offer.
     data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: ADDIS_COD,DIAB_COD,DMRES_COD
             source: UKHSA_COVID
             versioned: true
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - campaign_id
+              - person_id
     config:
       meta:
         indicator:
@@ -31,12 +30,11 @@ models:
           name_short: "COVID Eligible Diabetes"
           description_short: "People with diabetes mellitus eligible for COVID vaccination"
           description_long: >
-            COVID vaccination eligibility for people with diabetes mellitus using
-            DIAB_COD and DMRES_COD
-            cluster codes with earliest occurrence qualifying. Includes Type 1 and
-            Type 2
-            diabetes that increase COVID risk requiring immunisation
-            protection. Minimum age requirement of 5 years for COVID vaccination.
+            COVID diabetes risk group (UKHSA DIAB_GROUP). Qualifies with an Addison
+            disease or pan-hypopituitarism code (ADDIS_COD), membership of the
+            gestational diabetes group (GDIAB_GROUP), or a latest diabetes code
+            (DIAB_COD) later than any diabetes resolved code (DMRES_COD). Minimum age
+            5 years.
           is_qof: false
           source_column: "person_id"
           sort_order: "COVID_4_DIABETES"
@@ -75,7 +73,7 @@ models:
         data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying diagnosis (earliest diabetes diagnosis)'
+        description: 'Latest ADDIS_COD record date if any, otherwise latest gestational diabetes code date for GDIAB_GROUP members, otherwise latest DIAB_COD record date'
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description

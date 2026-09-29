@@ -1,11 +1,13 @@
 /*
 COVID Gestational Diabetes Eligibility Rule
 
-Business Rule: Person is eligible if they have:
-1. Gestational diabetes diagnosis (GDM_COD) during pregnancy
-2. AND currently pregnant (pregnancy logic)
-3. AND aged 16+ years (pregnancy eligibility age)
-4. Only eligible in 2024/25 campaigns (broader eligibility)
+Business Rule (spec 2.2 GDIAB_GROUP): Person is eligible if they have:
+1. A gestational diabetes code (GDIAB_COD) on or after gestational_diabetes_start and on
+   or before RUN_DAT (GDIAB_DAT, spec 2.4)
+2. AND are in the pregnancy group for the campaign (int_covid_pregnancy)
+3. Only computed for campaigns with eligible_gestational_diabetes (2024/25)
+
+Feeds int_covid_diabetes, because DIAB_GROUP selects GDIAB_GROUP.
 
 Pregnancy-specific diabetes that occurs during pregnancy.
 This condition is NOT eligible in 2025/26 restricted campaigns.
@@ -27,16 +29,16 @@ people_with_gdm_diagnosis AS (
     SELECT 
         cc.campaign_id,
         obs.person_id,
-        obs.clinical_effective_date AS gdm_date,
-        cc.audit_end_date,
-        cc.campaign_reference_date
+        MAX(obs.clinical_effective_date) AS gdm_date
     FROM ({{ get_observations("'GDIAB_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
     WHERE obs.spec_version = cc.terminology_version
         AND obs.clinical_effective_date IS NOT NULL
+        AND obs.clinical_effective_date >= cc.gestational_diabetes_start
         AND obs.clinical_effective_date <= cc.audit_end_date
         -- Only include if this condition is eligible in the campaign
         AND cc.eligible_gestational_diabetes = TRUE
+    GROUP BY cc.campaign_id, obs.person_id
 ),
 
 -- Step 2: Get pregnancy information (reuse COVID pregnancy logic)
@@ -62,14 +64,7 @@ people_with_gdm_and_pregnancy AS (
         pe.birth_date_approx,
         pe.age_months_at_ref_date,
         pe.age_years_at_ref_date,
-        pe.reference_date AS campaign_reference_date,
-        -- GDM must be within pregnancy period or close to it
-        CASE 
-            WHEN pgdm.gdm_date >= pe.pregnancy_start_date 
-                OR DATEDIFF('day', pgdm.gdm_date, pe.pregnancy_start_date) <= 90  -- GDM within 3 months before pregnancy
-            THEN TRUE 
-            ELSE FALSE 
-        END AS is_gdm_during_pregnancy
+        pe.reference_date AS campaign_reference_date
     FROM people_with_gdm_diagnosis pgdm
     INNER JOIN pregnancy_eligible pe 
         ON pgdm.campaign_id = pe.campaign_id AND pgdm.person_id = pe.person_id
@@ -90,7 +85,6 @@ final_eligible AS (
         age_years_at_ref_date,
         CURRENT_TIMESTAMP() AS created_at
     FROM people_with_gdm_and_pregnancy
-    WHERE is_gdm_during_pregnancy = TRUE
 )
 
 SELECT * FROM final_eligible
