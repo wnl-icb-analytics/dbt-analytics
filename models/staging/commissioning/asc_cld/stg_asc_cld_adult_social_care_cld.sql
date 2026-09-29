@@ -7,7 +7,7 @@
 
 select
     la_code,
-    pseudo_nhs_number as sk_patient_id,
+    {{ consistent_sk_patient_id_format('pseudo_nhs_number')}}  as sk_patient_id,
     reporting_period_start_date,
     reporting_period_end_date,
     la_person_unique_identifier,

@@ -1,0 +1,45 @@
+version: 2
+models:
+  - name: csds_observation_unit_alias
+    description: >-
+      Six historical CSDS measurement-unit aliases, one row per SNOMED CT
+      observation concept and upper-case source unit. ETOS v1.6.10 Change Control
+      entries 395, 399 and 401 retain the pre-amendment case-insensitive rules
+      for BMI, height and weight dated 8 September 2022 (v1.6.3).
+      These label supplied units only; they do not derive measurements, convert
+      values or claim to reproduce the current NHS internal derivations.
+      Existing exact unit-reference matches take precedence. A Read observation
+      may use the rule only through its positive authoritative SNOMED mapping.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [snomed_code, source_unit_upper]
+    columns:
+      - name: snomed_code
+        description: Exact measurement concept named by the historical ETOS rule.
+        data_tests: [not_null]
+      - name: source_unit_upper
+        description: Supplied unit alias after trimming and upper-casing, valid only with the named concept.
+        data_tests: [not_null]
+      - name: canonical_unit_code
+        description: Exact-case code used to obtain the shared canonical unit definition. Values are not converted.
+      - name: unit_symbol
+        description: Canonical symbol from clinical_unit_of_measurement.
+        data_tests: [not_null]
+      - name: description
+        description: Canonical unit description from the shared reference.
+        data_tests: [not_null]
+      - name: quantity_name
+        description: Physical quantity from the shared unit reference.
+      - name: definition_source
+        description: Historical CSDS rule provenance, distinct from the canonical unit definition source.
+      - name: unit_definition_source
+        description: Reference supplying the canonical unit's description and physical quantity.
+      - name: source_data_item
+        description: Derived data item whose historical ETOS rule documents the alias.
+      - name: source_change_date
+        description: Date the ETOS change log recorded the published rule's move into downstream derivation documentation.

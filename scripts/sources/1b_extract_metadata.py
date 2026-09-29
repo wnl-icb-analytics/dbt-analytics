@@ -32,16 +32,29 @@ if __name__ == "__main__":
             print(f"Removed stale {output_file}", file=sys.stderr)
 
     conn = None
+
     try:
-        conn = snowflake.connector.connect(
-            account=os.getenv('SNOWFLAKE_ACCOUNT'),
-            user=os.getenv('SNOWFLAKE_USER'),
-            authenticator="externalbrowser",
-            warehouse=os.getenv('SNOWFLAKE_WAREHOUSE'),
-            role=os.getenv('SNOWFLAKE_ROLE'),
-            database="MODELLING",
-            schema="DBT_DEV",
-        )
+        #Determine authentication used
+        if os.getenv('SNOWFLAKE_PAT') is not None:
+            conn = snowflake.connector.connect(
+                account=os.getenv('SNOWFLAKE_ACCOUNT'),
+                user=os.getenv('SNOWFLAKE_USER'),
+                password=os.getenv('SNOWFLAKE_PAT'), 
+                warehouse=os.getenv('SNOWFLAKE_WAREHOUSE'),
+                role=os.getenv('SNOWFLAKE_ROLE'),
+                database="MODELLING",
+                schema="DBT_DEV",
+            )
+        else:
+            conn = snowflake.connector.connect(
+                account=os.getenv('SNOWFLAKE_ACCOUNT'),
+                user=os.getenv('SNOWFLAKE_USER'),
+                authenticator="externalbrowser",
+                warehouse=os.getenv('SNOWFLAKE_WAREHOUSE'),
+                role=os.getenv('SNOWFLAKE_ROLE'),
+                database="MODELLING",
+                schema="DBT_DEV",
+            )
         cur = conn.cursor()
         cur.execute(sql_query)
         df = cur.fetch_pandas_all()

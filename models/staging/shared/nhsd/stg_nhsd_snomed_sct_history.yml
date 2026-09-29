@@ -1,0 +1,21 @@
+models:
+  - name: stg_nhsd_snomed_sct_history
+    description: >-
+      SNOMED CT historical concept mappings from the NHS Digital reporting model.
+      One row per old concept and new concept pair. An old concept can map to
+      several new concepts; these alternatives are retained for code-set expansion.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - old_concept_id
+              - new_concept_id
+    columns:
+      - name: old_concept_id
+        description: Historical SNOMED CT concept identifier.
+      - name: new_concept_id
+        description: SNOMED CT concept identifier linked to the historical concept.
+      - name: path
+        description: Mapping path supplied by the source, when available.
+      - name: is_ambiguous
+        description: Source flag for an ambiguous historical mapping.

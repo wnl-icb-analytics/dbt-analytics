@@ -1,9 +1,9 @@
 models:
   - name: fct_person_palliative_care_register
-    description: 'QOF palliative care register for patients receiving end-of-life
-      care.
-
-      One row per person with PALLCARE_COD present (palliative care status maintained).'
+    description: >
+      Disease Registers (QOF v51) palliative care register. One row per person
+      with PALCARE_COD from 1 April 2008 and no later PALCARENI_COD. PC001 is
+      retired; register extraction continues through the Disease Registers service.
 
     tests:
       - dbt_utils.at_least_one:
@@ -26,11 +26,9 @@ models:
           name_short: "Palliative Care"
           description_short: "QOF palliative care register"
           description_long: >
-            Palliative care diagnosed using QOF criteria: Patients receiving end-of-life
-            care  with palliative care status codes present. Palliative care status
-            is maintained  for care coordination and quality monitoring. Maps to QOF
-            indicator PC001  (Palliative Care Register). Uses PALLCARE_COD for diagnosis
-            codes.
+            Disease Registers (QOF v51) palliative care register. Requires
+            PALCARE_COD from 1 April 2008 with no later PALCARENI_COD. PC001 is
+            retired, but extraction continues.
           is_qof: true
           qof_indicator: "PC001"
           source_column: "is_on_register"
@@ -38,7 +36,9 @@ models:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
             - "QOF"
           code_clusters:
-            - cluster_id: "PALLCARE_COD"
+            - cluster_id: "PALCARE_COD"
               category: "INCLUSION"
+            - cluster_id: "PALCARENI_COD"
+              category: "EXCLUSION"
         owner:
           name: EddieDavison92

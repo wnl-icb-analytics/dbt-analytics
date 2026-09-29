@@ -1,9 +1,6 @@
-{{
-    config(
-        materialized = 'table',
-        tags=['ers']
-        )
-    }}select
+{{ config(materialized='view', tags=['ers']) }}
+
+select
     ubrn_action.sk,
     ubrn_action.seqno,
     ubrn_action.ubrn_id,
@@ -131,11 +128,8 @@
 
 from {{ ref('raw_ers_pc_ebsx02ubrnaction') }} as ubrn_action
 
--- deduplication logic probably not needed as downstream tables currently surface all submitted activity....
---inner join {{ ref('raw_ers_pc_activesubmission') }} as active
---    on ubrn_action.uniq_submission_id = active.uniq_submission_id
-
---qualify row_number() over (
---    partition by ubrn_action.action_id
---    order by ubrn_action.dmic_date_added desc, ubrn_action.seqno desc  -- deterministic tie-breaker for multiple records with the same action_id and dmic_date_added
---) = 1
+where exists (
+    select 1
+    from {{ ref('raw_ers_pc_activesubmission') }} as active
+    where ubrn_action.uniq_submission_id = active.uniq_submission_id
+)

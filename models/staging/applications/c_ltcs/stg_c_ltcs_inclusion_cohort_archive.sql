@@ -1,4 +1,4 @@
-select cast(patient_id as varchar) as patient_id
+select {{ consistent_sk_patient_id_format('patient_id')}} as patient_id
     , area_code
     , practice_code
     , cohort_event

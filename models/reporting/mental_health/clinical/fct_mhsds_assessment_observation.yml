@@ -1,0 +1,54 @@
+version: 2
+models:
+- name: fct_mhsds_assessment_observation
+  description: >-
+    Responses and scores recorded in referral, activity and historical clustering assessments. Each
+    row is an accepted MHS606 or MHS607 response occurrence, or the latest MHS802 response for a
+    provider, source assessment and concept. Repeated monthly clustering submissions are treated as
+    versions, with their source counts retained. Missing links and unknown responses remain visible.
+    A row can be one question or dimension rather than a whole questionnaire. Use the instance and
+    score-change tables for response groups and comparisons over time.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: assessment_observation_id
+    description: Unique clinical-item key of the accepted assessment occurrence.
+    data_tests:
+    - not_null
+    - unique
+  - name: assessment_context
+    description: referral_assessment, activity_assessment or historical clustering_assessment.
+  - name: assessment_concept_code
+    description: Submitted SNOMED assessment observable or tool code.
+  - name: assessment_concept_description
+    description: Authoritative label where available.
+  - name: assessment_recorded_at
+    description: Referral completion, supported activity time, or the same-submission clustering parent completion.
+      Null when no supported clinical time exists.
+  - name: submitted_response
+    description: Unmodified source response text.
+  - name: assessment_score_numeric
+    description: Numeric score only for a recognised enumerated or in-range response. Null for non-score, unmatched
+      or missing responses.
+  - name: assessment_response_status
+    description: Existing response interpretation, including known_non_score, enumerated_response, within_published_range
+      and unmatched states.
+  - name: assessor_id
+    description: Source-derived assessor identifier where supplied. No inference from activity staff links.
+  - name: submission_id
+    description: Accepted submission containing this observation.
+  - name: source_assessment_id
+    description: Historical clustering assessment identifier; null when the source does not supply an instance
+      identifier.
+  - name: is_assessment_parent_linked
+    description: Historical MHS802 has a same-submission MHS801 parent; null for other contexts.
+  - name: is_assessment_parent_person_consistent
+    description: Historical response and same-submission parent person identifiers agree; null when not comparable.
+  - name: has_person_identifier_changed
+    description: Historical response versions include more than one non-null national person identifier. These
+      observations are excluded from descriptive score pairing.
+  - name: accepted_source_record_count
+    description: Number of accepted source rows represented by this observation. Historical clustering can
+      represent repeated monthly versions.

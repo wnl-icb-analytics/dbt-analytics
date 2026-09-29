@@ -1,0 +1,20 @@
+macros:
+  - name: rebuild_month_window
+    description: >
+      Incremental month selection for the monthly history models. Matches every
+      month later than the newest month already stored, plus the latest
+      completed month, which is replaced on each run so late-arriving records
+      are picked up. Callers supply their own is_incremental() guard.
+
+    arguments:
+      - name: month_column
+        type: string
+        description: >
+          Month-end column being filtered, qualified with a table alias where
+          the query uses one.
+
+      - name: stored_month_column
+        type: string
+        description: >
+          Month-end column in the model's own table, where it is named
+          differently from month_column. Defaults to month_column.

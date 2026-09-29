@@ -77,6 +77,7 @@ where not exists (
         el.IS_CARE_HOME_RESIDENT,
         el.IS_IMMUNOSUPPRESSED,
         el.IN_PPV_CLINICAL_RISK_GROUP,
+        el.IN_RSV_CLINICAL_RISK_GROUP,
         el.IS_PREGNANT,
         el.TURN_65_AFTER_SEP_2023,
         el.AGE_DAYS_APPROX,
@@ -91,7 +92,7 @@ where not exists (
        clut.EVENT_DATE,
             CASE 
             WHEN clut.codeclusterid LIKE '%_ADM' THEN 'Administration'
-            WHEN clut.codeclusterid LIKE '%_DRUG' THEN 'Administration_drug'
+            WHEN clut.codeclusterid LIKE '%_DRUG' THEN 'Administration'
             WHEN clut.codeclusterid LIKE '%_CONTRA' THEN 'Contraindicated'
             WHEN clut.codeclusterid LIKE '%_DEC' THEN 'Declined'
             ELSE NULL
@@ -125,6 +126,7 @@ SELECT
     IS_CARE_HOME_RESIDENT,
     IS_IMMUNOSUPPRESSED,
     IN_PPV_CLINICAL_RISK_GROUP,
+    IN_RSV_CLINICAL_RISK_GROUP,
     IS_PREGNANT,
     TURN_65_AFTER_SEP_2023,
     AGE,
@@ -168,49 +170,35 @@ QUALIFY
 -- keep only rows that are not beaten by a future better priority
     AND priority = best_future_priority
 )
-/*
-Keep all SHING_1 / 1B / 1C rows (even duplicates on same day)
-Remove SHING_2 / 2B / 2C ONLY when they occur on the same EVENT_DATE as a dose 1
-Keep SHING_2 if it’s on a different date (valid second dose)
-Leave all other vaccines untouched
-*/
+--IDENTIFY DUPLICATE ROWS WHERE SAME CODE CAN BE USED FOR DIFFERENT DOSES (SHINGLES)
 ,IMM_ADM_DOSE_DEDUP as (
-	SELECT 
+SELECT 
 	PERSON_ID,
     BIRTH_DATE_APPROX,
     IS_CARE_HOME_RESIDENT,
     IS_IMMUNOSUPPRESSED,
     IN_PPV_CLINICAL_RISK_GROUP,
+    IN_RSV_CLINICAL_RISK_GROUP,
     IS_PREGNANT,
     TURN_65_AFTER_SEP_2023,
-    AGE_DAYS_APPROX,
     AGE,
-    AGE_AT_EVENT,
     AGE_BAND_5Y,
+    AGE_DAYS_APPROX,
+    AGE_AT_EVENT,
     VACCINE_ORDER,
-	VACCINE_ID,
-	VACCINE_NAME,
-	DOSE_NUMBER,
+    VACCINE_ID,
+    VACCINE_NAME,
+    DOSE_NUMBER,
     ELIGIBLE_FROM_DATE,
     ELIGIBLE_TO_DATE,
     MAXIMUM_AGE_DAYS,
+    EVENT_DATE,
     EVENT_TYPE,
-	EVENT_DATE,
-	OUT_OF_SCHEDULE,
-   --  ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID ORDER BY EVENT_DATE ASC) AS row_num, 
-   -- COUNT(*) OVER (PARTITION BY PERSON_ID, VACCINE_ID, EVENT_TYPE) AS TOTAL_EVENTS
-    --COUNT(*) OVER (PARTITION BY PERSON_ID, VACCINE_NAME, DOSE_NUMBER) AS TOTAL_EVENTS 
-    FROM IMM_ADM_DECLINED_CONFLICT  
-     QUALIFY NOT (
-    -- Identify SHING dose 2 records
-    VACCINE_ID LIKE 'SHING_2%'
-    -- Check if a dose 1 exists on same day for same person
-    AND COUNT_IF(
-        VACCINE_ID LIKE 'SHING_1%'
-    ) OVER (
-        PARTITION BY PERSON_ID, EVENT_DATE
-    ) > 0
-          ) )
+    OUT_OF_SCHEDULE,
+    --do not partiton by event_type 
+       ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID ORDER BY EVENT_DATE ASC) AS row_num
+    FROM IMM_ADM_DECLINED_CONFLICT   
+      ) 
 --in some cases someone has been vaccinated and then had a subsequent contraindicated code added. Choose earlier Admin
 ,ADMIN_CONTRA_CONFLICT as (
 select *,
@@ -223,10 +211,13 @@ ROW_NUMBER() OVER (
                     ELSE 3
                 END,
                 event_date DESC
-        ) AS rownum
+        ) AS rownum_contra
 FROM IMM_ADM_DOSE_DEDUP
+WHERE 
+--deduplicate where codes are non dose specific 
+(dose_number = 1 AND row_num = 1)
+OR (dose_number = 2 AND row_num = 2) 
 )
-
 --ADD VACCINATION STATUS FOR EVENTS.
 select *
 ,CASE 
@@ -246,12 +237,18 @@ WHEN IS_IMMUNOSUPPRESSED AND TURN_65_AFTER_SEP_2023 = FALSE AND VACCINE_ID in ('
 WHEN IS_IMMUNOSUPPRESSED AND TURN_65_AFTER_SEP_2023 AND VACCINE_ID in ('SHING_1B','SHING_2B') THEN 'Not applicable'
 --RSV---------------------------------------------------------------------WHEN VACCINATIONS EXIST
 --Routine aged 75+ RSV_1
-WHEN IS_CARE_HOME_RESIDENT = FALSE AND IS_PREGNANT = FALSE AND VACCINE_ID in ('RSV_1B','RSV_1C') THEN 'Not applicable'
+WHEN IS_CARE_HOME_RESIDENT = FALSE AND IS_PREGNANT = FALSE AND IN_RSV_CLINICAL_RISK_GROUP = FALSE AND VACCINE_ID in ('RSV_1B','RSV_1C','RSV_1D') THEN 'Not applicable'
 --1st April 2026 introduce RSV_1B for older adult care home residents 
-WHEN IS_CARE_HOME_RESIDENT AND IS_PREGNANT = FALSE AND VACCINE_ID in ('RSV_1','RSV_1C') THEN 'Not applicable'
+WHEN IS_CARE_HOME_RESIDENT AND IS_PREGNANT = FALSE AND IN_RSV_CLINICAL_RISK_GROUP = FALSE AND VACCINE_ID in ('RSV_1','RSV_1C','RSV_1D') THEN 'Not applicable'
 --RSV for pregnant women RSV_1C
-WHEN IS_PREGNANT AND IS_CARE_HOME_RESIDENT = FALSE AND VACCINE_ID in ('RSV_1','RSV_1B') THEN 'Not applicable'
-WHEN IS_PREGNANT AND IS_CARE_HOME_RESIDENT AND VACCINE_ID in ('RSV_1') THEN 'Not applicable'
+WHEN IS_PREGNANT AND IS_CARE_HOME_RESIDENT = FALSE AND IN_RSV_CLINICAL_RISK_GROUP = FALSE AND VACCINE_ID in ('RSV_1','RSV_1B','RSV_1D') THEN 'Not applicable'
+--1st September 2026 introduce RSV for clinically vulnerable people RSV_1D
+WHEN IN_RSV_CLINICAL_RISK_GROUP AND IS_CARE_HOME_RESIDENT = FALSE AND IS_PREGNANT = FALSE AND VACCINE_ID in ('RSV_1B','RSV_1C','RSV_1') THEN 'Not applicable'
+--Care home + clinical risk prioritise care home as likely to have it earlier
+WHEN IN_RSV_CLINICAL_RISK_GROUP AND IS_CARE_HOME_RESIDENT AND IS_PREGNANT = FALSE AND VACCINE_ID in ('RSV_1C','RSV_1','RSV_1D') THEN 'Not applicable'
+--Pregnant + clinical risk
+WHEN IN_RSV_CLINICAL_RISK_GROUP AND IS_CARE_HOME_RESIDENT = FALSE AND IS_PREGNANT AND VACCINE_ID in ('RSV_1B','RSV_1') THEN 'Not applicable'
+WHEN IS_PREGNANT AND IS_CARE_HOME_RESIDENT AND IN_RSV_CLINICAL_RISK_GROUP AND VACCINE_ID in ('RSV_1') THEN 'Not applicable'
 ---ALL vaccs----------------------------------------------------------------------
 WHEN EVENT_DATE IS NULL AND ELIGIBLE_FROM_DATE >= CURRENT_DATE() THEN 'Not due yet'
 WHEN EVENT_DATE IS NULL AND ELIGIBLE_FROM_DATE < CURRENT_DATE() AND AGE_DAYS_APPROX < maximum_age_days THEN 'Overdue'
@@ -263,4 +260,4 @@ WHEN EVENT_TYPE = 'Contraindicated' THEN 'Contraindicated'
 END as VACCINATION_STATUS
 --,ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID ORDER BY EVENT_DATE DESC) as rownum
 from ADMIN_CONTRA_CONFLICT
-where rownum = 1
+where rownum_contra = 1

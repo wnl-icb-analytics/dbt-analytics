@@ -20,6 +20,10 @@
     {%- set github_base_url = "https://github.com/wnl-icb-analytics/dbt-analytics/blob/main/" -%}
     {%- set model_file_path = model.original_file_path | replace("\\", "/") -%}
     {%- set github_file_url = github_base_url + model_file_path -%}
+    {%- set model_source_line = '' -%}
+    {%- if target_name in ['prod', 'snowflake-prod', 'ci-prod'] -%}
+      {%- set model_source_line = "\n📄 Model source: " + github_file_url -%}
+    {%- endif -%}
 
     {#- Check for custom message in meta config -#}
     {%- set model_meta = config.get('meta', {}) -%}
@@ -40,14 +44,12 @@
     {%- if model_description or custom_message -%}
       {%- set clean_description = (custom_message + model_description) | replace("'", "''") -%}
       {%- set footer = owner_line + "
-🤖 Last ran on " + run_timestamp + " by " + current_user + " (target: " + target_name + ")
-📄 Model source: " + github_file_url + "
+🤖 Last ran on " + run_timestamp + " by " + current_user + " (target: " + target_name + ")" + model_source_line + "
 📖 Documentation: https://github.com/wnl-icb-analytics/dbt-analytics" -%}
       {{- clean_description + footer | replace("'", "''") -}}
     {%- else -%}
 {{- owner_line -}}
-🤖 Last ran on {{ run_timestamp }} by {{ current_user }} (target: {{ target_name }})
-📄 Model source: {{ github_file_url }}
+🤖 Last ran on {{ run_timestamp }} by {{ current_user }} (target: {{ target_name }}){{ model_source_line }}
 📖 Documentation: https://github.com/wnl-icb-analytics/dbt-analytics
     {%- endif -%}
   {%- endif -%}

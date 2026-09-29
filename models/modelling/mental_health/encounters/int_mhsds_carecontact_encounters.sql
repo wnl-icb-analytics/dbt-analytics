@@ -35,7 +35,7 @@ select
     -- £302 National Cost Collection average, adjusted by the 15.7% NCL uplift.
     , 302 * 1.157 as proxy_cost
     , 'MHSDS' as source
-from {{ ref('stg_mhsds_carecontact') }} as c
+from {{ ref('int_mhsds_latest_care_contact') }} as c
 left join {{ ref('stg_dictionary_dbo_organisation') }} as org
     on c.org_id_prov = org.organisation_code
 left join {{ ref('stg_mhsds_bridging') }} as b

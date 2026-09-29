@@ -1,0 +1,53 @@
+version: 2
+models:
+- name: stg_ukhfd_data_dictionary_csds_activity_code_lookup
+  description: UKHFD CSDS activity, coding-scheme and referral-outcome definitions. One row per code category,
+    original dictionary, code and definition revision. Includes current dictionaries and their retired
+    predecessors.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - code_set_name
+        - source_code_set_name
+        - code
+        - source_effective_from_at
+  columns:
+  - name: code_set_name
+    description: Code category used to join activity, service and clinical records to this lookup.
+  - name: source_code_set_name
+    description: Original UKHFD dictionary name. Distinguishes current dictionaries from their predecessors.
+  - name: code
+    description: National code as text, retaining leading zeros.
+  - name: description
+    description: UKHFD description for this definition.
+  - name: short_description
+    description: Short UKHFD description, where supplied.
+  - name: category
+    description: UKHFD category, where supplied.
+  - name: notes
+    description: Additional UKHFD notes, where supplied.
+  - name: valid_from_date
+    description: First date on which the code definition applies, where recorded.
+  - name: valid_to_date
+    description: Last date on which the code definition applies, where recorded. Null means no end date
+      is supplied.
+  - name: is_currently_valid
+    description: Whether UKHFD marks this code as present in its source dictionary. Retired definitions
+      remain available.
+  - name: source_unique_key
+    description: UKHFD identifier for the source definition.
+  - name: source_imported_at
+    description: Timestamp UKHFD imported this definition.
+  - name: source_created_at
+    description: Timestamp UKHFD created this definition.
+  - name: is_latest_definition
+    description: Whether this is the latest revision within its original UKHFD dictionary.
+  - name: source_effective_from_at
+    description: Start timestamp of this UKHFD definition revision.
+  - name: source_effective_to_at
+    description: End timestamp of this UKHFD definition revision, where supplied.

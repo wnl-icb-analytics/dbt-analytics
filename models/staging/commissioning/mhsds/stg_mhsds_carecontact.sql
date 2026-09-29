@@ -80,14 +80,6 @@ with active_contacts as (
     from {{ ref('raw_mhsds_mhs201carecontact') }} as c
     inner join {{ ref('stg_mhsds_activesubmission') }} as a
         on c.uniq_submission_id = a.uniq_submission_id
-    qualify row_number() over (
-        partition by c.uniq_serv_req_id, c.uniq_care_cont_id
-        order by
-            c.reporting_period_end_date desc
-            , c.effective_from desc
-            , c.uniq_submission_id desc
-            , c.mhs201_uniq_id desc
-    ) = 1
 )
 
 select

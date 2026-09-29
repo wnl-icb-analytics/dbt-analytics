@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: stg_dictionary_dbo_unit
+    description: Warehouse unit definitions. One row represents one unit.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: sk_unit_id
+        description: Warehouse unit identifier.
+        data_tests: [not_null, unique]
+      - name: unit_symbol
+        description: Canonical unit symbol.
+        data_tests: [not_null, unique]
+      - name: unit_name
+        description: Unit name.
+  - name: stg_dictionary_dbo_unit_mapping
+    description: Warehouse aliases for units. One row represents one submitted unit label.
+    config: *owner
+    columns:
+      - name: sk_unit_id
+        description: Warehouse unit identifier.
+        data_tests: [not_null]
+      - name: unit_label
+        description: Alternative label for the unit.
+        data_tests: [not_null, unique]

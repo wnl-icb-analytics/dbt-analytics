@@ -5,7 +5,8 @@
 }}
 
 
---Historical View of Vaccination events. Not linked to Currently eligible population. Follows same logic as current (~ 900,000 rows)
+--Historical View of Vaccination events. Keeping the same logic as current vaccinations but not linked to Currently eligible population. 
+
 WITH IMMS_CODE_OBS as (
     SELECT
         dem.PERSON_ID, 
@@ -30,7 +31,7 @@ WITH IMMS_CODE_OBS as (
     --JOIN MODELLING.OLIDS_PROGRAMME.INT_ADULT_IMMS_CODE_DOSE clut on o.mapped_concept_code  = clut.CODE 
         WHERE o.clinical_effective_date <= CURRENT_DATE
     --look for events across the historical population by age at event in OBS table rather than age of person.
-        --AND o.age_at_event >= 60
+        
      )
 --FIND all vaccination events coded as drugs by joining the mapped concept codes in the medication orders table (~100,000 rows)
 ,IMMS_CODE_MED as (
@@ -55,7 +56,7 @@ SELECT DISTINCT
     JOIN {{ ref('int_adult_imms_code_dose') }} clut on m.mapped_concept_code  = clut.CODE
     --JOIN MODELLING.OLIDS_PROGRAMME.INT_ADULT_IMMS_CODE_DOSE clut on m.mapped_concept_code  = clut.CODE
     WHERE m.clinical_effective_date <= CURRENT_DATE
-    --AND m.age_at_event >= 60
+    
 )
 --UNION OBSERVATIONS AND MEDICATIONS. Only add drug events if they do not already exist as an admin code
 ,VACCS_COMBINED AS (
@@ -73,7 +74,7 @@ where not exists (
     and o.dose_match = m.dose_match
 )
 )
-----Define Vaccination Events by codecluster - do not bother with out of schedule.
+----Define Vaccination Events by codecluster - do not bother with out of schedule. 
 ,IMM_ADM as ( 
      SELECT distinct
         clut.PERSON_ID,
@@ -84,7 +85,7 @@ where not exists (
         clut.EVENT_DATE,
             CASE 
             WHEN clut.codeclusterid LIKE '%_ADM' THEN 'Administration'
-            WHEN clut.codeclusterid LIKE '%_DRUG' THEN 'Administration_drug'
+            WHEN clut.codeclusterid LIKE '%_DRUG' THEN 'Administration'
             WHEN clut.codeclusterid LIKE '%_CONTRA' THEN 'Contraindicated'
             WHEN clut.codeclusterid LIKE '%_DEC' THEN 'Declined'
             ELSE NULL
@@ -144,10 +145,32 @@ QUALIFY
 	DOSE_NUMBER,
     EVENT_TYPE,
 	EVENT_DATE,
-	ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID, EVENT_TYPE ORDER BY EVENT_DATE ASC) AS row_num, 
-    COUNT(*) OVER (PARTITION BY PERSON_ID, VACCINE_ID, EVENT_TYPE) AS TOTAL_EVENTS 
+	--ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID ORDER BY EVENT_DATE ASC) AS row_num 
+    --keep event-type in.
+   ROW_NUMBER() OVER (PARTITION BY PERSON_ID, VACCINE_ID, EVENT_TYPE ORDER BY EVENT_DATE ASC) AS row_num
     FROM IMM_ADM_DECLINED_CONFLICT     
           ) 
+--in some cases someone has been vaccinated and then had a subsequent contraindicated code added. Choose earlier Admin
+,ADMIN_CONTRA_CONFLICT as (
+select *,
+ROW_NUMBER() OVER (
+            PARTITION BY person_id, vaccine_id
+            ORDER BY
+                CASE
+                    WHEN EVENT_TYPE LIKE 'Admin%' THEN 1
+                    WHEN EVENT_TYPE = 'Contraindicated' THEN 2
+                    ELSE 3
+                END,
+                event_date DESC
+        ) AS rownum_contra
+FROM IMM_ADM_DOSE_DEDUP
+WHERE 
+--deduplicate where codes are non dose specific 
+(dose_number = 1 AND row_num = 1)
+OR (dose_number = 2 AND row_num = 2) 
+)
+
+
 --SELECT FINAL VACCINATIONS DATASET DE-DUPLICATION BY EVENT_DATE and DOSE 
  SELECT 
 	PERSON_ID,
@@ -157,10 +180,5 @@ QUALIFY
 	DOSE_NUMBER,
     EVENT_TYPE,
 	EVENT_DATE
-	FROM IMM_ADM_DOSE_DEDUP
-WHERE 
---deduplicate where codes are non dose specific RSV, PPV, SHINGLES
-(dose_number = 1 AND row_num = 1)
-OR (dose_number = 2 AND row_num = 2)
---allow for single code for second dose of Shingles
-OR (VACCINE_ID in ('SHING_2','SHING_2B') AND total_events = 1)
+FROM ADMIN_CONTRA_CONFLICT
+where rownum_contra = 1

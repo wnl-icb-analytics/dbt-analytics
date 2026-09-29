@@ -5,15 +5,19 @@
    models. Models supply only feed-specific columns; aliases are fixed:
    `s` = source table, `sl` = submission_slices_ranked. #}
 
-{# Money/activity string -> NUMBER(38,6).
-   Handles thousands commas, currency symbols (incl. mojibake bytes), spaces,
-   and accounting-style "(1,234.56)" negatives. 'TBC' and other non-numeric
-   text -> NULL. #}
+{# Money/activity string -> NUMBER(38,6). The whole value must be a number:
+   pound signs and spaces are removed, commas only when they form thousands
+   groups, '(1,234.56)' is negative and exponents ('4.97E-13') parse. Text,
+   decimal commas ('1,5'), '(-12.50)', Excel errors ('#DIV/0!', '#REF!') and
+   free text ('100mg + 200mg') -> NULL rather than digits stripped out of it.
+   Mirrors cast_expr in the SDL pipeline (services_data_local). #}
 {% macro parse_slam_number(col) %}
+    {%- set v = "replace(replace(trim(" ~ col ~ "), chr(163), ''), ' ', '')" -%}
+    {%- set n = "iff(contains(" ~ v ~ ", ','), iff(" ~ v ~ " rlike '^[(]?-?[0-9]{1,3}(,[0-9]{3})+([.][0-9]*)?[)]?$', replace(" ~ v ~ ", ',', ''), null), " ~ v ~ ")" -%}
     case
-        when trim({{ col }}) rlike '^\\(.*\\)$'
-            then -1 * try_to_number(regexp_replace({{ col }}, '[^0-9.]', ''), 38, 6)
-        else try_to_number(regexp_replace({{ col }}, '[^0-9.-]', ''), 38, 6)
+        when {{ n }} like '(-%' then null
+        when {{ n }} like '(%)' then -1 * try_cast(trim({{ n }}, '()') as number(38, 6))
+        else try_cast({{ n }} as number(38, 6))
     end
 {% endmacro %}
 
@@ -373,7 +377,8 @@ join {{ ref('stg_slam_latest_submission') }} as l
 {# Patient identifiers/demographics for the patient-level feeds
    (LSPLCM, LSDrPLCM, LSDePLCM; LSACM is aggregate). #}
 {% macro slam_patient_columns() %}
-        s.sk_patient_id_nhs_number              as sk_patient_id,
+         {{ consistent_sk_patient_id_format('s.sk_patient_id_nhs_number') }}
+                                                as sk_patient_id, 
         s.local_patient_identifier_extended     as local_patient_identifier,
         try_to_number(s.age_at_activity_date_contract_monitoring)
                                                 as age_at_activity_date,

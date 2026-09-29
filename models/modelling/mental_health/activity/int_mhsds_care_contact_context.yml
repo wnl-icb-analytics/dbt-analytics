@@ -1,0 +1,46 @@
+version: 2
+models:
+  - name: int_mhsds_care_contact_context
+    description: >-
+      Referral and delivering-team details from each contact's own submission. Each row is one
+      accepted MHS201 source record. An explicit additional or older-style contact team takes
+      precedence. For version 6 contacts with no explicit team, the primary referral team is used.
+      An explicit team without a matching reference is not replaced by the referral team. Contacts
+      remain when related records are missing. Person IDs are compared to show differences, not
+      reassigned.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: mhs201_uniq_id
+        description: Accepted MHS201 row whose original submission supplies the context.
+        data_tests: [not_null, unique]
+      - name: same_submission_referral_record_id
+        description: MHS101 source row in the same submission; null when absent.
+      - name: same_submission_referral_person_id
+        description: Referral person identifier in the contact submission, before later revisions.
+      - name: same_submission_referral_received_date
+        description: Referral receipt date recorded in the contact submission; null if absent.
+      - name: is_same_submission_referral_linked
+        description: Whether the contact has an MHS101 parent in its own submission.
+      - name: is_same_submission_referral_person_consistent
+        description: Whether both recorded person IDs agree; null when either is missing.
+      - name: service_or_team_attribution_basis
+        description: Source of the selected team pointer, even if its team details are missing.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [contact_additional_team, contact_legacy_team, referral_primary_team, unresolved]
+      - name: service_or_team_id
+        description: Provider-qualified identifier paired with the selected local team pointer.
+          Source-derived IDs without a submitted local pointer do not establish a delivering team.
+      - name: service_or_team_local_id
+        description: Selected local team identifier within the contact submission; null if unresolved.
+      - name: service_or_team_type_code
+        description: Type from same-submission team details, or the v6 referral's derived primary type.
+      - name: source_service_or_team_type_name
+        description: Source-derived name of the selected service type; not a distinct local team name.
+      - name: service_or_team_intended_age_group_code
+        description: Intended age group of the selected team; null if unavailable.

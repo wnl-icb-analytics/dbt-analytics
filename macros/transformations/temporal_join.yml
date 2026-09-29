@@ -4,10 +4,14 @@ macros:
     description: >
       Generates a temporal (point-in-time) join between a fact table and a slowly changing
       dimension. Matches each fact row to the dimension version whose validity window
-      contains the fact date. Works with effective_start_date/effective_end_date dimensions
-      (defaults) or dbt snapshots (pass valid_from_col/valid_to_col = dbt_valid_from/
-      dbt_valid_to). Use join_type='inner' for an eligibility gate and 'left' for covariate
-      enrichment.
+      contains the fact date. Comparison is at DATE granularity (the fact date and both
+      validity bounds are cast to DATE), so a version that becomes valid at any time on day D
+      is the one returned for an anchor of day D -- the state as at the end of that day --
+      even when the validity columns are timestamps (e.g. dbt snapshots stamped with the run
+      time). The half-open window keeps this to at most one version per key (no fan-out).
+      Works with effective_start_date/effective_end_date dimensions (defaults) or dbt
+      snapshots (pass valid_from_col/valid_to_col = dbt_valid_from/dbt_valid_to). Use
+      join_type='inner' for an eligibility gate and 'left' for covariate enrichment.
 
 
     arguments:

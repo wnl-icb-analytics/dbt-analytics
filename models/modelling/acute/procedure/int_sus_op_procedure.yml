@@ -1,7 +1,11 @@
 
 models:
   - name: int_sus_op_procedure
-    description: "All OP procedures from SUS data"
+    description: >
+      One row per outpatient appointment and non-null OPCS-4 procedure code.
+      Repeated occurrences of the same code are represented by
+      observation_count. Includes activity without a linked patient key; use
+      visit_occurrence_id to join to the appointment.
     config:
       meta:
         owner:
@@ -27,21 +31,11 @@ models:
         description: "Source of the visit occurrence (e.g., OP_ATTENDANCE = outpatient
           attendance)"
 
-      - name: episodes_id
-        data_type: number
-        description: ""
-
-      - name: problem_order
-        data_type: number
-        description: "Order of the procedure within the episode or visit"
-
-      - name: rownumber_id
-        data_type: number
-        description: ""
-
       - name: sk_patient_id
         data_type: varchar
-        description: "Unique identifier for the patient (pseudonymised NHS number)"
+        description: >
+          Common commissioning patient identifier. Null when the appointment
+          cannot be linked to a person; the procedure remains valid activity.
 
       - name: organisation_id
         data_type: varchar

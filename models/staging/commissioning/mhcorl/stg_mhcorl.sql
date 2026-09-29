@@ -1,314 +1,375 @@
 {{
     config(
-        materialized = 'table',
+        materialized = 'incremental',
+        incremental_strategy = 'append',
+        on_schema_change = 'append_new_columns',
         tags = ['mhcorl', 'sdl', 'mh']
     )
 }}
 
--- Staging model for the SDL MHCORL feed (provider monthly mental-health
--- activity submissions, originally spreadsheet uploads, remapped via the
--- servicesdatalocal-remapping pipeline).
--- Source: DATA_LAKE__NCL.SDL.MHCORL — 228 cols all TEXT, ~5M rows, 8 providers.
+-- Staging model for the SDL MHCORL feed: provider monthly mental-health
+-- activity submissions (spreadsheet uploads remapped by the SDL pipeline).
+-- Source: DATA_LAKE.SDL.MHCORL, 228 TEXT columns that are the superset of
+-- every provider layout ever submitted. Grain 1:1 with source.
 --
--- This stg_ does materially more than typical staging in this repo
--- (gender/ethnicity normalisation, sibling-coalesce across spelling variants,
--- NHS17 mapping, multi-format date parsing, scope filter) because the source
--- is too inconsistent to expose to downstream int_/reporting layers as-is.
--- Materialised as table for query performance over the inline CASE chains.
--- Grain stays 1:1 with source.
+-- MHCORL is not one dataset. Each provider sends its own layout, and several
+-- send more than one dataset through the same feed (profiled 2026-09,
+-- FY2022/23 onwards):
+--   * RRP00 (BEH / NLFT): community contacts (NONIP files) and inpatient
+--     ward stays (IP files). New DLP-header layout from January 2024.
+--   * RNK00 (Tavistock & Portman): appointment-level 'MHCO' dataset. New
+--     DLP-header layout from January 2024.
+--   * RAT00 (NELFT): spell-level currency rows (treatment / assessment /
+--     contact / waiting / OBD).
+--   * RKL00 (West London): APPOINTMENTS, INPATIENTS and liaison-psychiatry
+--     (LPS, year-to-date) files, to November 2023.
+--   * RV300 (CNWL): outpatient / community contacts, APC episodes and LPS
+--     files, to September 2023.
+-- dv_dataset labels each row inpatient / liaison / community from the
+-- submission file name and the provider's own dataset column, so consumers
+-- can pick the grain they need. Dataset-specific detail columns that only one
+-- layout carries (LPS follow-up contact counts, RNK00 pricing, etc.) stay in
+-- the raw model.
 --
--- What's done:
---   * Header-text rows ('Financial Year' etc.) filtered out.
---   * Scope: meta_partition_date >= 2022-04-01 (cutoff rationale at WHERE clause).
---   * sk_patient_id = NHS-number-derived hash (matches stg_csds_*, stg_mhsds_*,
---     stg_sus_* convention). The bare SK_PATIENT_ID column is a different
---     identifier — kept as sk_patient_id_local_hash with do-not-join warning.
---   * Sibling spelling-variants coalesced (CONTACT_DATE/CONTACTDATE,
---     team_name/lps_team_name/team, etc.) including provider-specific aliases
---     for FY (financial_year/dlp_financial_year/fin_year) and contact date
---     (col_1_stf2_fcontactdatetime for RV300, col_1st_f2_fcontact_date_time
---     for RKL00).
---   * Multi-format date parsing (UK DD/MM/YYYY, DD-Mon-YY Excel default, ISO,
---     SQL-Server US MM/DD/YYYY HH12:MI:SS AM) via parse_uk_date macro.
---   * Gender canonicalised across 25+ source values (1/2/M/F/Male/Female/...).
---   * Ethnicity_code mapped to NHS Census 2001 17-category labels inline.
---     Free-text ethnicity passed through; RRP00 (90% of volume) supplies only
---     free text so ethnicity_category_nhs17 is NULL there — bucket downstream.
---   * Financial year regex-parsed across 7+ source formats; emitted as both
---     start year and canonical 'YYYY-YY'.
+-- Cleaning follows the other SDL staging models (stg_comopl, stg_mh_apc):
+-- best-populated sibling column per field, dates parsed across the provider
+-- formats (ISO, UK, DD-Mon-YY, SQL Server AM/PM, Excel serials), coded
+-- fields mapped through the shared macros, financial period from the stated
+-- DLP / reporting value, else the activity month or contact date, else the
+-- file name.
 --
--- What's dropped (vs source's 228 cols):
---   * 122 cols >=99% null in source.
---   * Demographics with <10% fill: age, age_of_patient, year_of_birth, age_band,
---     marital_status_code/desc, language.
---   * Provider/site/ward/consultant cols that only one small provider (RNK00,
---     5.5% of volume) populates — analytically unusable for cross-provider
---     rollups; re-derive in a provider-specific intermediate if needed.
---   * Sparse cost/activity cols (cost, unit_cost, in_month_price_actual).
---     (in_month_activity_actual is retained — surfaced on request despite sparse fill.)
---   * Sparse clinical cols (primary_diagnosis 0.8%, cluster 0.1%, etc.).
---   * mhsds_person_id (0.12% — only RWK00 2018 + RRP00 2017).
---   * RNK00/RAT00-only date cols (start_date, date_accepted, etc.) — 0% for
---     the dominant RRP00 feed, so cross-provider use is impossible.
+-- Cumulative Flex/Freeze restatement feed (RAT00 resubmissions, RKL00 LPS
+-- year-to-date files, per-commissioner RNK00 / RV300 files): summing across
+-- files double-counts. Report from stg_mhcorl_latest, which keeps the winning
+-- file per (dataset, provider, commissioner, FY, month) slice via
+-- stg_mhcorl_latest_submission.
 --
--- Coverage caveats (cannot be fixed in this model):
---   * RRP00 (Barnet, Enfield & Haringey MH Trust, ~93% volume), RNK00
---     (Tavistock & Portman), RAT00 (NELFT) are the only providers still
---     submitting from 2024-04 onwards.
---   * RV300 (CNWL) stopped 2023-09; RKL00 (West London NHS Trust) and other
---     smaller providers stopped earlier.
---   * 2021 is missing RRP00 entirely — dq_tier='transitional' flags this.
+-- Incremental, pure append: new (file, batch) pairs only, mirroring the
+-- upstream SDL loader's NOT EXISTS mechanics (meta_file_id is not monotonic
+-- with load time, so a high-water mark would miss back-dated files). Nothing
+-- here is mutable; latest-submission resolution is rebuilt fully each run in
+-- stg_mhcorl_latest_submission. Full-refresh after an upstream SDL rebuild.
+--
+-- Scope: FY2022/23 onwards. Earlier submissions have major DQ gaps (2017 has
+-- no contact dates, 2020-21 is COVID-degraded, 2021 has no RRP00) and every
+-- key field is consistently populated from here on. meta_partition_date is
+-- not a calendar month: the SDL pipeline sets it to <FY start year>-<financial
+-- month>-01 (checked against DLP_FINANCIAL_YEAR / _MONTH and contact dates,
+-- 2026-09), so FY2022/23 month 1 is partition 2022-01-01. The previous
+-- cutoff of 2022-04-01 silently dropped April-June 2022.
 
-with src as (
+with {{ community_pld_registry('MHCORL') }},
+
+{% if is_incremental() %}
+-- (file, batch) pairs in the raw feed but not yet in this table
+new_files as (
+    select meta_file_id, meta_batch_id
+    from {{ ref('raw_sdl_wnl_mhcorl') }}
+    group by all
+    minus
+    select distinct meta_file_id, meta_batch_id
+    from {{ this }}
+),
+{% endif %}
+
+-- Sibling columns coalesced once so the parsers below are applied to a single
+-- expression per field.
+src as (
     select
         *,
-        coalesce(financial_year, dlp_financial_year, fin_year)  as financial_year_any,
-        coalesce(
-            contact_date,
-            contactdate,
-            col_1_stf2_fcontactdatetime,
-            col_1st_f2_fcontact_date_time
-        )                                                       as contact_date_any,
-
-        -- Resolve a clean NHS Census 2001 EthnicCategoryCode from whatever the
-        -- provider supplied: code column, code-in-text, or free-text variant.
-        case
-            -- code columns (RNK00, RAT00, RWK00 supply these directly)
-            when upper(trim(coalesce(ethnicity_code, ethnic_code))) in
-                ('A','B','C','D','E','F','G','H','J','K','L','M','N','P','R','S','Z','99','0')
-                then upper(trim(coalesce(ethnicity_code, ethnic_code)))
-
-            -- the ethnicity column itself sometimes contains a bare letter code
-            when upper(trim(ethnicity)) in
-                ('A','B','C','D','E','F','G','H','J','K','L','M','N','P','R','S','Z','99','0')
-                then upper(trim(ethnicity))
-
-            -- explicit unknown / not stated
-            when upper(trim(ethnicity)) like 'NOT KNOWN%'                          then '99'
-            when upper(trim(ethnicity)) in ('UNKNOWN', 'INFORMATION NOT YET OBTAINED') then '99'
-            when upper(trim(ethnicity)) like 'NOT STATED%'                         then 'Z'
-            when upper(trim(ethnicity)) in ('REFUSED', 'NOT STATED')               then 'Z'
-
-            -- White: British (incl. UK home nations + bare 'British')
-            when upper(trim(ethnicity)) in (
-                'WHITE - BRITISH', 'WHITE BRITISH', 'BRITISH',
-                'WHITE - ENGLISH', 'WHITE - WELSH', 'WHITE - SCOTTISH',
-                'WHITE - NORTHERN IRISH', 'WHITE - CORNISH'
-            ) then 'A'
-
-            -- White: Irish
-            when upper(trim(ethnicity)) in ('WHITE - IRISH', 'WHITE IRISH', 'IRISH') then 'B'
-
-            -- White: Other (Cypriot, Polish, Turkish, Italian, Albanian, Croatian, Serbian,
-            -- Kosovan, Greek, Greek/Turkish Cypriot, Other European, former USSR/Yugoslavia,
-            -- Gypsy/Roma/Traveller, unspecified White, etc.)
-            when upper(trim(ethnicity)) like 'WHITE%'
-              or upper(trim(ethnicity)) like 'ANY OTHER WHITE%'
-              or upper(trim(ethnicity)) = 'WHITE'
-            then 'C'
-
-            -- Mixed: White and Black Caribbean
-            when upper(trim(ethnicity)) in (
-                'MIXED - WHITE & BLACK CARIBBEAN',
-                'MIXED - WHITE AND BLACK CARIBBEAN',
-                'WHITE AND BLACK CARIBBEAN',
-                'MIXED WHITE AND BLACK CARIBBEAN'
-            ) then 'D'
-
-            -- Mixed: White and Black African
-            when upper(trim(ethnicity)) in (
-                'MIXED - WHITE & BLACK AFRICAN',
-                'MIXED - WHITE AND BLACK AFRICAN',
-                'WHITE AND BLACK AFRICAN',
-                'MIXED WHITE AND BLACK AFRICAN'
-            ) then 'E'
-
-            -- Mixed: White and Asian
-            when upper(trim(ethnicity)) in (
-                'MIXED - WHITE & ASIAN', 'MIXED - WHITE AND ASIAN',
-                'WHITE AND ASIAN', 'MIXED WHITE AND ASIAN'
-            ) then 'F'
-
-            -- Mixed: Other (catch-all)
-            when upper(trim(ethnicity)) like 'MIXED%'
-              or upper(trim(ethnicity)) = 'MIXED'
-              or upper(trim(ethnicity)) like 'ANY OTHER MIXED%'
-            then 'G'
-
-            -- Asian subgroups
-            when upper(trim(ethnicity)) in (
-                'ASIAN OR ASIAN BRITISH - INDIAN', 'ASIAN/ASIAN BRITISH INDIAN', 'INDIAN'
-            ) then 'H'
-            when upper(trim(ethnicity)) in (
-                'ASIAN OR ASIAN BRITISH - PAKISTANI', 'ASIAN/ASIAN BRITISH PAKISTANI', 'PAKISTANI'
-            ) then 'J'
-            when upper(trim(ethnicity)) in (
-                'ASIAN OR ASIAN BRITISH - BANGLADESHI', 'ASIAN/ASIAN BRITISH BANGLADESHI', 'BANGLADESHI'
-            ) then 'K'
-            -- Asian: Other (Sri Lankan, Tamil, Punjabi, Kashmiri, Mixed Asian, etc.)
-            when upper(trim(ethnicity)) like 'ASIAN%'
-              or upper(trim(ethnicity)) = 'ASIAN'
-              or upper(trim(ethnicity)) like 'ANY OTHER ASIAN%'
-            then 'L'
-
-            -- Black subgroups
-            when upper(trim(ethnicity)) in (
-                'BLACK OR BLACK BRITISH - CARIBBEAN', 'BLACK/BLACK BRITISH CARIBBEAN', 'CARIBBEAN'
-            ) then 'M'
-            -- Black: African (incl. Somali, Nigerian — common subgroups treated as African)
-            when upper(trim(ethnicity)) in (
-                'BLACK OR BLACK BRITISH - AFRICAN', 'BLACK/BLACK BRITISH AFRICAN',
-                'BLACK OR BLACK BRITISH - SOMALI', 'BLACK OR BLACK BRITISH - NIGERIAN',
-                'AFRICAN'
-            ) then 'N'
-            -- Black: Other
-            when upper(trim(ethnicity)) like 'BLACK%'
-              or upper(trim(ethnicity)) = 'BLACK'
-              or upper(trim(ethnicity)) like 'ANY OTHER BLACK%'
-            then 'P'
-
-            -- Chinese (its own NHS17 bucket)
-            when upper(trim(ethnicity)) in ('OTHER ETHNIC GROUPS - CHINESE', 'CHINESE') then 'R'
-
-            -- Other ethnic groups (Iranian, Arab, Kurdish, Latin American, North African,
-            -- Filipino, Japanese, Vietnamese, Moroccan, Israeli, Malaysian, etc.)
-            when upper(trim(ethnicity)) like 'OTHER%'
-              or upper(trim(ethnicity)) = 'OTHER'
-              or upper(trim(ethnicity)) like 'ANY OTHER%'
-            then 'S'
-        end                                                     as eth_letter_code
-    from {{ source('sdl', 'MHCORL') }}
-    where coalesce(financial_year, '') not in ('Financial Year', '')
-       or financial_year is null
+        coalesce(referral_date, date_of_referral, dateofreferral,
+                 lps_referral_date_time, lpsreferraldatetime)
+                                                as referral_date_any,
+        coalesce(contact_date, contactdate,
+                 col_1_stf2_fcontactdatetime, col_1_st_f2_fcontact_date_time)
+                                                as contact_date_any,
+        coalesce(episode_start_date, ward_start_date, admission_date)
+                                                as episode_start_any,
+        coalesce(episode_end_date, ward_end_date)
+                                                as episode_end_any,
+        coalesce(discharge_date, discharge_date_time)
+                                                as discharge_date_any,
+        coalesce(gp_practice_code, general_practice_code, registered_gp)
+                                                as gp_practice_code_any,
+        coalesce(ethnicity_code, ethnic_code)   as ethnicity_code_any
+    from {{ ref('raw_sdl_wnl_mhcorl') }} as r
+    where meta_partition_date >= '2022-01-01'
+      -- a spreadsheet header row re-ingested as data
+      and coalesce(upper(trim(financial_year)), '') <> 'FINANCIAL YEAR'
+{% if is_incremental() %}
+      and exists (
+          select 1
+          from new_files as nf
+          where nf.meta_file_id = r.meta_file_id
+            and nf.meta_batch_id = r.meta_batch_id
+      )
+{% endif %}
 ),
 
-normalised as (
+prep as (
     select
         -- META keys (from SDL pipeline, fully reliable)
-        meta_sk_row_id::number(38,0)            as meta_sk_row_id,
-        meta_file_id::number(38,0)              as meta_file_id,
-        meta_row_id::number(38,0)               as meta_row_id,
-        meta_batch_id::number(38,0)             as meta_batch_id,
-        meta_partition_date::date               as meta_partition_date,
-        meta_provider_code                      as meta_provider_code,
-        meta_recipient_code                     as meta_recipient_code,
-        meta_version_id                         as meta_version_id,
+        {{ community_pld_meta_columns() }},
+        dv_recipient_code                       as dv_recipient_code,
 
-        -- Patient identifiers
-        sk_patient_id_nhs_number                as sk_patient_id,
-        sk_patient_id                           as sk_patient_id_local_hash,
-
-        -- Period
-        try_to_number(reporting_month)          as reporting_month,
+        -- Which dataset the row belongs to, from the submission file name
+        -- (RRP00 IP / NONIP, RKL00 INPATIENTS / APPOINTMENTS / LPS, RV300 IP /
+        -- NON_IP / LIAISON PSYCHIATRY), then the provider's own dataset column
+        -- (RKL00 INPATIENT, RV300 APC) and RAT00's OBD currency rows. The
+        -- non-inpatient tokens are tested before the inpatient ones because
+        -- 'NONINPATIENT' and '_NON_IP' contain them. Everything else is
+        -- contact-level.
         case
-            when financial_year_any is null or financial_year_any = 'Financial Year'
-                then null
-            when regexp_substr(financial_year_any, '\\d{4}') is not null
-                then try_to_number(regexp_substr(financial_year_any, '\\d{4}'))
-        end                                     as financial_year_start,
-        case
-            when financial_year_any is null or financial_year_any = 'Financial Year'
-                then null
-            when regexp_substr(financial_year_any, '\\d{4}') is not null
-                then regexp_substr(financial_year_any, '\\d{4}')
-                  || '-'
-                  || lpad((try_to_number(regexp_substr(financial_year_any, '\\d{4}')) + 1) % 100, 2, '0')
-        end                                     as financial_year_canonical,
-        financial_year_any                      as financial_year_raw,
+            when upper(registry.original_file_name) rlike '.*(LPS|LIAISON).*'
+                then 'liaison'
+            when upper(registry.original_file_name) rlike '.*(NONIP|NON_IP|NON-IP|NONINPATIENT|NON INPATIENT).*'
+                then 'community'
+            when upper(registry.original_file_name) rlike '.*(_IP_|_IP[.]CSV|_IP - |INPATIENT).*'
+              or upper(trim(coalesce(data_set, dataset))) in ('INPATIENT', 'APC')
+              or upper(trim(currency)) = 'OBD'
+                then 'inpatient'
+            else 'community'
+        end                                     as dv_dataset,
 
-        -- Activity dates (only the two reliable cross-provider dates retained)
-        {{ parse_uk_date('coalesce(referral_date, date_of_referral, dateofreferral)') }}
-                                                as referral_date,
+        -- DLP standard submission fields. The Flex/Freeze flag also appears in
+        -- the pre-DLP RRP00 layout (FLEX_OR_FREEZE) and as RAT00's derived
+        -- DV_IS_FREEZE boolean.
         coalesce(
-            {{ parse_uk_date('contact_date_any') }},
-            {{ parse_uk_timestamp('contact_date_any') }}::date
-        )                                       as contact_date,
+            {{ clean_flex_or_freeze('dlp_flexor_freeze') }},
+            {{ clean_flex_or_freeze('flex_or_freeze') }},
+            case trim(dv_is_freeze) when '1' then 'Freeze' when '0' then 'Flex' end
+        )                                       as dlp_flex_or_freeze,
+        dlp_commissioner_code                   as dlp_commissioner_code,
+        dlp_baseline_financial_month            as dlp_baseline_financial_month,
 
-        -- Demographics
+        -- Provider-stated reporting period. REPORTING_MONTH is the financial
+        -- month (it equals DLP_FINANCIAL_MONTH wherever both are present).
+        -- Each candidate is validated before coalescing so junk cannot mask a
+        -- valid sibling. Financial year formats seen: '2023', '2023/2024',
+        -- '2023-2024', '2023_24' (bare year = FY start year, as in the DLP
+        -- spec).
+        coalesce(
+            {{ parse_slam_financial_month('dlp_financial_month') }},
+            {{ parse_slam_financial_month('reporting_month') }}
+        )                                       as dv_financial_month_stated,
+        coalesce(
+            {{ parse_slam_financial_year('dlp_financial_year', allow_bare_year=true) }},
+            {{ parse_slam_financial_year('financial_year', allow_bare_year=true) }},
+            {{ parse_slam_financial_year('fin_year', allow_bare_year=true) }}
+        )                                       as dv_financial_year_stated,
+
+        -- Activity month as stated by RKL00 / RV300 (a date, or 'YYYYMM' in
+        -- the LPS layouts); the period fallback for rows with no DLP header.
+        coalesce(
+            {{ parse_uk_date('activity_month') }},
+            case
+                when coalesce(activitymonth, acivity_month) rlike '^20[0-9]{4}$'
+                    then try_to_date(coalesce(activitymonth, acivity_month) || '01', 'YYYYMMDD')
+            end
+        )                                       as activity_month,
+
+        -- Organisation. The pipeline-assigned META_PROVIDER_CODE is the
+        -- provider: the supplied PROVIDER_CODE is empty in two RV300 layouts
+        -- and holds a non-trust code in the current RRP00 layout, and equals
+        -- the pipeline value everywhere else. Cleaned to the ODS trust code as
+        -- in the other SDL staging models. COMMISSIONER_CODE is empty in the
+        -- LPS layouts, which carry the commissioner as CCG.
+        {{ clean_organisation_id('upper(trim(meta_provider_code))') }}
+                                                as provider_code,
+        upper(trim(coalesce(commissioner_code, ccg)))
+                                                as commissioner_code,
+        nullif(trim(commissioner_name), '')     as commissioner_name,
+        nullif(trim(site_code), '')             as site_code,
+
+        -- Patient identifiers (pseudonymised). SK_PATIENT_ID_NHS_NUMBER is the
+        -- cross-dataset key; the bare SK_PATIENT_ID is a locally derived hash
+        -- with no overlap, kept only for within-provider linking.
+        coalesce(hospital_number, patient_key)  as local_patient_id,
+        {{ consistent_sk_patient_id_format('sk_patient_id_nhs_number') }}
+                                                as sk_patient_id,
+        sk_patient_id                           as sk_patient_id_local_hash,
+        try_to_number(dv_yearof_birth)          as dv_year_of_birth,
+        dv_partial_post_code                    as partial_postcode,
+        nullif(trim(dv_lsoa), '')               as lsoa,
+
+        -- Demographics. Gender keeps the label set the model has always
+        -- exposed; RV300 LPS supplies it as SEX.
         case
-            when upper(trim(gender)) in ('1', 'M', 'MALE')                  then 'Male'
-            when upper(trim(gender)) in ('2', 'F', 'FEMALE')                then 'Female'
-            when upper(trim(gender)) in ('9', 'NOT SPECIFIED', 'NOT STATED')
-                                                                            then 'Not specified'
-            when upper(trim(gender)) in ('0', 'U', 'X', 'NOT KNOWN', 'UNKNOWN', 'NOT KNOWN (PERSON STATED GENDER CODE NOT RECORDED)')
-                                                                            then 'Not known'
-            when upper(trim(gender)) like 'INDETERMINATE%'                  then 'Indeterminate'
-            when upper(trim(gender)) in ('NON-BINARY', 'OTHER')             then 'Other'
-            when gender is null                                             then null
-            when upper(trim(gender)) in ('REMOVEDA', 'GENDER')              then null
+            when upper(trim(coalesce(gender, sex))) in ('1', 'M', 'MALE')      then 'Male'
+            when upper(trim(coalesce(gender, sex))) in ('2', 'F', 'FEMALE')    then 'Female'
+            when upper(trim(coalesce(gender, sex))) in ('9', 'NOT SPECIFIED', 'NOT STATED')
+                                                                                then 'Not specified'
+            when upper(trim(coalesce(gender, sex))) in ('0', 'U', 'X', 'NOT KNOWN', 'UNKNOWN')
+              or upper(trim(coalesce(gender, sex))) like 'NOT KNOWN (%'
+                                                                                then 'Not known'
+            when upper(trim(coalesce(gender, sex))) like 'INDETERMINATE%'      then 'Indeterminate'
+            when upper(trim(coalesce(gender, sex))) in ('NON-BINARY', 'OTHER') then 'Other'
+            when nullif(trim(coalesce(gender, sex)), '') is null                then null
+            when upper(trim(coalesce(gender, sex))) in ('REMOVEDA', 'GENDER')  then null
             else 'Not known'
         end                                     as gender,
-
-        -- Resolve a clean NHS letter code, then look up the 17-cat label via macro.
-        -- Provider-specific cleaning lives here; the dictionary lookup is reusable.
-        --
-        -- Source forms handled:
-        --   * letter codes already supplied (RNK00, RAT00, RWK00)
-        --   * 'White - X' / 'Asian or Asian British - X' / etc. prefixed (RRP00)
-        --   * bare names (British, Indian, Caribbean, ...) — RV300
-        -- Aggregations that don't fit a single bucket (BME, NON BME) → no code → NULL.
-        {{ nhs_ethnicity_17_label('eth_letter_code') }}
-                                                as ethnicity_17,
-        case
-            when upper(trim(eth_letter_code)) in ('A', 'B', 'C')           then 'White'
-            when upper(trim(eth_letter_code)) in ('D', 'E', 'F', 'G')      then 'Mixed'
-            when upper(trim(eth_letter_code)) in ('H', 'J', 'K', 'L')      then 'Asian or Asian British'
-            when upper(trim(eth_letter_code)) in ('M', 'N', 'P')           then 'Black or Black British'
-            when upper(trim(eth_letter_code)) in ('R', 'S')                then 'Other Ethnic Groups'
-            when upper(trim(eth_letter_code)) in ('Z', '99', '0')          then 'Unknown'
-        end                                     as ethnicity_6,
-        dv_lsoa                                 as lsoa,
-        dv_partial_post_code                    as partial_post_code,
-
-        -- Organisation (only the cross-provider-reliable cols)
-        provider_code                           as provider_code,
-        commissioner_code                       as commissioner_code,
-        commissioner_name                       as commissioner_name,
-        -- ODS GP practice code is 6 chars (1 letter + 5 digits). Source has:
-        --   * valid 6-char codes (~99.4%)
-        --   * 9-char codes with 3-digit sub-practice/branch suffix (e.g. E83018001) — strip
-        --   * '999' placeholder (unknown), 5-char garbage, literal 'entry' — NULL
-        case
-            when coalesce(gp_practice_code, general_practice_code, gppct_code)
-                rlike '^[A-Za-z][0-9]{5}'
-            then upper(left(coalesce(gp_practice_code, general_practice_code, gppct_code), 6))
-        end                                     as gp_practice_code,
-        gp_code                                 as gp_code,
-        coalesce(team_name, lps_team_name, lpsteamname, team)
-                                                as team_name,
-        coalesce(team_code, lps_team_code)      as team_code,
-
-        -- Service / financial categorisation
-        -- Standardised to exactly 'Flex' / 'Freeze' (case variants, 'Frozen' and
-        -- the DLP PRIMARY/REFRESH terms folded in; '1'/'0' and other values -> NULL).
+        -- Each ethnicity candidate is mapped before coalescing so a junk code
+        -- column cannot mask a mappable free-text sibling.
         coalesce(
-            {{ clean_flex_or_freeze('flex_or_freeze') }},
-            {{ clean_flex_or_freeze('dlp_flexor_freeze') }}
-        )                                       as flex_or_freeze,
-        finance_category                        as finance_category,
-        costing_code_description                as costing_code_description,
+            {{ nhs_ethnicity_category_code('ethnicity_code_any') }},
+            {{ nhs_ethnicity_category_code('ethnicity') }}
+        )                                       as ethnic_category_code,
+        {{ clean_gp_practice_code('upper(trim(gp_practice_code_any))') }}
+                                                as gp_practice_code,
+        nullif(trim(gp_code), '')               as gp_code,
 
-        -- Activity
-        coalesce(source_of_referral, referral_source, referralsource)
+        -- Service / team / contract categorisation (as supplied, siblings
+        -- coalesced; local vocabularies differ per provider)
+        nullif(trim(coalesce(team_code, lps_team_code)), '')
+                                                as team_code,
+        nullif(trim(coalesce(team_name, lps_team_name, lpsteamname, team)), '')
+                                                as team_name,
+        nullif(trim(service_group), '')         as service_group,
+        nullif(trim(coalesce(service_line, service_description)), '')
+                                                as service_line,
+        nullif(trim(pod_code), '')              as pod_code,
+        nullif(trim(coalesce(pod_description, pod_name)), '')
+                                                as pod_description,
+        nullif(trim(contract_type), '')         as contract_type,
+        nullif(trim(finance_category), '')      as finance_category,
+        nullif(trim(costing_code_description), '')
+                                                as costing_code_description,
+        nullif(trim(currency), '')              as currency,
+
+        -- Referral
+        coalesce(referral_unique_id, referral_ssid, referral_reference)
+                                                as referral_id,
+        coalesce(
+            {{ parse_uk_date('referral_date_any') }},
+            {{ parse_slam_timestamp('referral_date_any') }}::date
+        )                                       as referral_date,
+        nullif(trim(coalesce(source_of_referral, referral_source, referralsource)), '')
                                                 as source_of_referral,
-        consultation_medium                     as consultation_medium,
-        coalesce(consultation_type, contact_type)
+        nullif(trim(coalesce(referral_priority, referralpriority)), '')
+                                                as referral_priority,
+
+        -- Contact / appointment. RRP00 exports contact dates in four forms
+        -- (UK, ISO timestamp, Excel serial, Excel time artefacts); the SLAM
+        -- timestamp parser recovers the serials, the artefacts yield NULL.
+        appointment_id                          as appointment_id,
+        coalesce(
+            {{ parse_uk_date('contact_date_any') }},
+            {{ parse_slam_timestamp('contact_date_any') }}::date
+        )                                       as contact_date,
+        nullif(trim(coalesce(consultation_type, contact_type, first_follow_up)), '')
                                                 as contact_type,
+        nullif(trim(consultation_medium), '')   as consultation_medium,
+        nullif(trim(coalesce(contactsetting, col_1_st_f2_fcontact_setting, col_1_stf2_fcontactsetting)), '')
+                                                as contact_setting,
+        nullif(trim(appointment_type), '')      as appointment_type,
+        nullif(trim(appointment_outcome), '')   as appointment_outcome,
+        nullif(trim(coalesce(patient_seen, patientseen)), '')
+                                                as patient_seen,
         try_to_number(duration_of_contact_minutes)
                                                 as duration_of_contact_minutes,
         appointment_sequence_id                 as appointment_sequence_id,
-        -- Provider-reported in-month activity count. Sparse (only some providers
-        -- populate it) but surfaced on request; cast to numeric, decimals retained.
-        try_to_double(in_month_activity_actual) as in_month_activity_actual
+        -- Provider-reported activity counts: RNK00's in-month actual (can be
+        -- fractional), RKL00 / RV300's total activity. Different provider
+        -- definitions, so kept as separate columns.
+        try_to_double(in_month_activity_actual) as in_month_activity_actual,
+        try_to_number(total_activity)           as total_activity,
+
+        -- Inpatient / spell block (RRP00 IP, RKL00 INPATIENTS, RV300 APC,
+        -- RAT00 spells)
+        coalesce(spell_id, care_spell_id)       as spell_id,
+        nullif(trim(ward_code), '')             as ward_code,
+        nullif(trim(coalesce(ward_name, ward)), '')
+                                                as ward_name,
+        coalesce(
+            {{ parse_uk_date('episode_start_any') }},
+            {{ parse_slam_timestamp('episode_start_any') }}::date
+        )                                       as episode_start_date,
+        coalesce(
+            {{ parse_uk_date('episode_end_any') }},
+            {{ parse_slam_timestamp('episode_end_any') }}::date
+        )                                       as episode_end_date,
+        try_to_number(coalesce(occupied_bed_days, obd))
+                                                as occupied_bed_days,
+        try_to_number(leave_days)               as leave_days,
+        coalesce(
+            {{ parse_uk_date('discharge_date_any') }},
+            {{ parse_slam_timestamp('discharge_date_any') }}::date
+        )                                       as discharge_date,
+        nullif(trim(discharge_reason), '')      as discharge_reason,
+
+        -- Reporting month parsed from the submission file name (last-resort
+        -- period source; few MHCORL file names carry one)
+        {{ period_from_file_name('registry.original_file_name') }}
+                                                as file_name_period,
+
+        -- Raw period values retained for traceability
+        coalesce(dlp_financial_year, financial_year, fin_year)
+                                                as financial_year_raw,
+        coalesce(dlp_financial_month, reporting_month)
+                                                as financial_month_raw
 
     from src
+    left join registry
+        on registry.file_id = meta_file_id
+       and registry.batch_id = meta_batch_id
+),
+
+-- Period fallback date: the provider-stated activity month where the layout
+-- has one, else the contact date.
+with_period_date as (
+    select
+        *,
+        coalesce(activity_month, contact_date)  as period_activity_date
+    from prep
 )
 
-select *
-from normalised
--- Scope cutoff: FY22/23 onwards. Earlier years have major DQ issues:
---   * 2017 has only 9k rows with no contact_date
---   * 2020-21 is COVID-era with degraded gender/ethnicity/date fill
---   * 2021 is missing RRP00 entirely (90% of normal volume)
--- From 2022-04 onwards every key field is consistently >=87% populated.
-where meta_partition_date >= '2022-04-01'
+select
+    -- META keys
+    meta_sk_row_id, meta_file_id, meta_row_id, meta_batch_id,
+    meta_partition_date, meta_provider_code, meta_recipient_code, meta_version_id,
+    dv_recipient_code,
+
+    -- Reporting period (derived: stated -> activity month / contact date -> file name)
+    {{ community_pld_financial_period('period_activity_date', 'activity_date') }},
+
+    -- DLP standard fields
+    dlp_flex_or_freeze, dlp_commissioner_code, dlp_baseline_financial_month,
+
+    -- Dataset and organisation
+    dv_dataset, provider_code, commissioner_code, commissioner_name, site_code,
+
+    -- Patient
+    local_patient_id, sk_patient_id, sk_patient_id_local_hash, dv_year_of_birth,
+    partial_postcode, lsoa, gender, ethnic_category_code,
+    {{ nhs_ethnicity_17_label('ethnic_category_code') }}
+                                                as ethnicity_17,
+    case
+        when ethnic_category_code in ('A', 'B', 'C')       then 'White'
+        when ethnic_category_code in ('D', 'E', 'F', 'G')  then 'Mixed'
+        when ethnic_category_code in ('H', 'J', 'K', 'L')  then 'Asian or Asian British'
+        when ethnic_category_code in ('M', 'N', 'P')       then 'Black or Black British'
+        when ethnic_category_code in ('R', 'S')            then 'Other Ethnic Groups'
+        when ethnic_category_code in ('Z', '99', '0')      then 'Unknown'
+    end                                         as ethnicity_6,
+    gp_practice_code, gp_code,
+
+    -- Service / team / contract
+    team_code, team_name, service_group, service_line, pod_code, pod_description,
+    contract_type, finance_category, costing_code_description, currency,
+
+    -- Referral
+    referral_id, referral_date, source_of_referral, referral_priority,
+
+    -- Contact / appointment
+    appointment_id, contact_date, contact_type, consultation_medium, contact_setting,
+    appointment_type, appointment_outcome, patient_seen, duration_of_contact_minutes,
+    appointment_sequence_id, in_month_activity_actual, total_activity,
+
+    -- Inpatient / spell
+    spell_id, ward_code, ward_name, episode_start_date, episode_end_date,
+    occupied_bed_days, leave_days, discharge_date, discharge_reason,
+    activity_month,
+
+    -- Raw period (traceability)
+    financial_year_raw, financial_month_raw
+from with_period_date

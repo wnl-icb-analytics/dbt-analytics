@@ -3,13 +3,33 @@ models:
   - name: stg_epd_pc_meds
     description: |
       English Prescribing Dataset (EPD) primary care dispensed medications.
-      One row per dispensed prescription item per patient per processing
-      period. Faithful passthrough of raw_epd_pc_meds with the patient key
-      renamed to sk_patient_id and cost/quantity/date columns typed.
+      One row per source prescription-item record, retaining historical
+      submissions for each processing period. MedsV2 replaces MedsV1 for every
+      processing period present in V2; earlier periods use V1. An overlapping
+      month is represented once, using the V2 delivery. Actual cost and item count
+      retain the established four decimal places; processing dates are dates.
 
-      All rows retained, including out-of-area patients who won't match NCL
-      person dimensions. Cost columns are in source units (NHSBSA reports
-      pence) — conversion to £ happens in the modelling layer.
+      All rows from the selected delivery version are retained, including missing
+      patient keys and out-of-area records that will not match WNL dimensions.
+      Cost columns remain in source pence. Conversion to pounds happens in
+      the modelling layer.
+
+      Incremental builds replace complete processing months whose projected
+      row counts or aggregate content hashes differ from the source. This
+      includes corrections and late submissions to older months, and updates
+      the latest-submission flag on their earlier rows. The processing period
+      is the replacement unit, not a unique row key. Hash comparison is
+      probabilistic; monthly full refreshes reconcile the complete source.
+      A changed period that has disappeared from the source, or that has a
+      null processed_period, stops the incremental build and requires a full
+      refresh. Column changes also require a full refresh.
+
+      The source carries no unique row identifier: a small share of rows
+      repeat the same prescription, item, product, quantity and submission
+      values, and the model preserves those source rows. The grain guard is
+      the singular test epd_period_row_counts_match_raw, which checks that
+      every processing period holds exactly the rows in its selected raw delivery
+      version. Both sources cover NCL and NWL.
     config:
       meta:
         owner:
@@ -17,9 +37,10 @@ models:
     columns:
       - name: sk_patient_id
         description: >
-          DMIC pseudonymised NHS number (renamed from dmic_pseudo_nhs_number).
-          Same domain as sk_patient_id elsewhere; NULL where the source value
-          is non-numeric. Joins dim_person_pseudo / commissioning person dims.
+          DMIC patient key, from dmic_pseudo_nhs_number in V1 and
+          dmic_pseudo_person_id in V2. Same domain as sk_patient_id elsewhere.
+          Whitespace is trimmed; blank values and the sentinel 1 become NULL.
+          Joins the cross-system person dimensions.
       - name: processed_period
         description: NHSBSA processing period as YYYYMM string.
         data_tests:

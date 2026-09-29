@@ -1,0 +1,96 @@
+version: 2
+
+models:
+  - name: stg_mhsds_care_activity
+    description: >-
+      Accepted MHS202 care activities. Each row represents one care activity in one provider
+      reporting period. Activity identifiers are reused across periods, so reporting_period_end_date
+      is part of the grain. Clinical fields select the column defined by the applicable ETOS
+      version.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [reporting_period_end_date, uniq_care_act_id]
+    columns:
+      - name: mhs202_uniq_id
+        description: Identifier of the accepted MHS202 source row.
+        data_tests: [not_null, unique]
+      - name: uniq_care_act_id
+        description: MHSDS-derived care activity identifier, unique within a reporting period.
+        data_tests: [not_null]
+      - name: reporting_period_end_date
+        description: End of the accepted provider reporting period.
+        data_tests: [not_null]
+      - name: source_derived_activity_date
+        description: Warehouse-derived dmicActivityDate from the selected activity row. No clock time is implied.
+      - name: procedure_code
+        description: Procedure code from CodeProcAndProcStatus before v6 and Procedure from v6.
+      - name: finding_code
+        description: Finding code from CodeFind before v6 and Finding from v6.
+      - name: standardised_snomed_finding_code
+        description: Source-pipeline SNOMED CT code derived from the submitted finding where available.
+      - name: is_observation_scheme_inferred
+        description: TRUE when 03 is supplied from the SNOMED-only specification rule rather than a submitted scheme field.
+      - name: observation_scheme_code
+        description: >-
+          Submitted observation scheme through v4.0; 03 (SNOMED CT) for a
+          populated observation code from v4.1, where the specification fixes
+          the coding system and removes the field.
+      - name: observation_code
+        description: Observation code from CodeObs before v6 and Observation from v6.
+      - name: standardised_snomed_observation_code
+        description: Source-pipeline standardised SNOMED CT observation code where available.
+      - name: unit_of_measurement_code
+        description: UnitMeasure before v6 and UnitOfMeasurement_UCUM from v6.
+
+  - name: stg_mhsds_staff_activity
+    description: >-
+      Accepted MHS206 care activity to professional relationships. Each row represents one
+      professional linked to one v6 care activity in a provider reporting period. Relationships
+      remain present when their MHS202 or MHS901 parent was not submitted.
+    config: *owner
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - uniq_submission_id
+              - uniq_care_act_id
+              - uniq_care_prof_local_id
+    columns:
+      - name: mhs206_uniq_id
+        description: Identifier of the accepted MHS206 source row.
+        data_tests: [not_null, unique]
+      - name: uniq_care_act_id
+        description: MHSDS-derived care activity identifier.
+        data_tests: [not_null]
+      - name: uniq_care_prof_local_id
+        description: MHSDS-derived care professional identifier.
+        data_tests: [not_null]
+
+  - name: stg_mhsds_staff_details
+    description: >-
+      Accepted MHS901 professional snapshots. Each row represents one care professional in one
+      accepted provider submission. Seven known duplicate source groups are resolved by the last
+      source row and remain flagged.
+    config: *owner
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [uniq_submission_id, uniq_care_prof_local_id]
+    columns:
+      - name: mhs901_uniq_id
+        description: Identifier of the retained MHS901 source row.
+        data_tests: [not_null, unique]
+      - name: uniq_care_prof_local_id
+        description: MHSDS-derived care professional identifier.
+        data_tests: [not_null]
+      - name: source_record_count
+        description: Number of accepted MHS901 rows submitted for this professional.
+        data_tests: [not_null]
+      - name: has_duplicate_source_records
+        description: TRUE when several MHS901 rows were submitted for the professional.
+        data_tests: [not_null]

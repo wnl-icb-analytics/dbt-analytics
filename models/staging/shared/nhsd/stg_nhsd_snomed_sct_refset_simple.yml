@@ -1,0 +1,28 @@
+models:
+  - name: stg_nhsd_snomed_sct_refset_simple
+    description: |
+      SNOMED CT simple reference set membership from the NHS Digital reporting
+      model. One row per reference set member identifier, retaining its current
+      definition and inactive memberships.
+
+      Active membership defines the current reference set. Inactive rows remain
+      available for historical interpretation; this source does not contain
+      every previous version of each membership.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: id
+        description: Unique reference set member identifier, distinct from the referenced concept identifier.
+        data_tests: [unique, not_null]
+      - name: effective_time
+        description: Effective time of the retained membership definition.
+      - name: active
+        description: Whether this membership is active in the current reference set definition.
+      - name: module_id
+        description: SNOMED CT module identifier for the membership definition.
+      - name: ref_set_id
+        description: SNOMED CT reference set identifier.
+      - name: referenced_component_id
+        description: SNOMED CT identifier of the component included in the reference set.

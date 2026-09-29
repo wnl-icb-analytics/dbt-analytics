@@ -1,0 +1,111 @@
+version: 2
+models:
+  - name: fct_gp_appointment
+    description: >-
+      One current patient-associated appointment from the filtered NCL OLIDS
+      patient spine, with a scheduled time and person ID. Excludes deleted
+      records. Retains blocked slots, future appointments, administrative contexts
+      and unknown statuses so analysts can select their population explicitly.
+      This population is broader than int_appointment_gp_clinical, which supplies
+      clinical access and costing measures. Booking time and scheduled time are
+      separate; neither establishes attendance. Status codes and names describe
+      the current source record, not a status history. The source's Slot Available
+      status can occur on past slots. Supplied durations are not consultation cost
+      estimates and can represent a whole session on untimed schedules.
+      No cancellation history can be reconstructed after slot reassignment.
+      Patient-left time is appointment detail, not a discharge milestone.
+      Provider and publisher organisations have separate meanings.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: appointment_id
+        description: Unique current appointment ID. A slot can be reassigned, so this is not a booking-history key.
+        data_tests: [unique, not_null]
+      - name: person_id
+        description: Consistent person ID across practice registrations.
+      - name: sk_patient_id
+        description: NHS number hash produced with a salt and pepper, obtained from the established person mapping. Null when that mapping has no key.
+      - name: patient_id
+        description: Practice-level patient ID on the appointment. A person has different patient IDs at different practices.
+      - name: booked_at
+        description: Supplied booking timestamp for the current appointment. Null when absent; can be later than scheduled_at after retrospective entry.
+      - name: scheduled_at
+        description: Supplied appointment slot start timestamp, including future appointments. Not evidence of attendance.
+      - name: patient_sent_in_at
+        description: Supplied time the patient was sent in. Null when not recorded.
+      - name: patient_left_at
+        description: Supplied time the patient left the appointment. Null when not recorded; not a discharge event.
+      - name: planned_duration_minutes
+        description: Supplied planned duration in minutes. Untimed schedules can carry the whole session duration; no default or cap is applied.
+      - name: actual_duration_minutes
+        description: Supplied actual duration in minutes. Null when not recorded; no estimate or cap is applied.
+      - name: patient_wait_minutes
+        description: Supplied patient waiting time in minutes. Null when not recorded.
+      - name: patient_delay_minutes
+        description: Supplied patient delay in minutes. Null when not recorded.
+      - name: source_status_code
+        description: Current status code from the source concept lookup.
+      - name: source_status_name
+        description: Current source status label, including distinctions such as telephone completion and did not attend.
+      - name: status_code
+        description: Mapped appointment status code supplied by the upstream concept lookup. Retain source status for its finer distinctions.
+      - name: status_name
+        description: Upstream label for status_code. A future-slot label does not establish that scheduled_at is in the future.
+      - name: source_booking_method_code
+        description: Booking method code from the source concept lookup.
+      - name: source_booking_method_name
+        description: Label for the source booking method.
+      - name: booking_method_code
+        description: Mapped booking method code from the upstream concept lookup.
+      - name: booking_method_name
+        description: Label for the mapped booking method.
+      - name: source_contact_mode_code
+        description: Contact mode code from the source concept lookup.
+      - name: source_contact_mode_name
+        description: Label for the source contact mode.
+      - name: contact_mode_code
+        description: Mapped contact mode code from the upstream concept lookup.
+      - name: contact_mode_name
+        description: Label for the mapped contact mode.
+      - name: is_blocked
+        description: Supplied blocked-slot flag. Patient-associated blocked slots remain included; null means not supplied.
+      - name: local_slot_type
+        description: Local appointment type name supplied by the source.
+      - name: national_slot_category_name
+        description: Supplied national slot category name. Null when not recorded.
+      - name: national_slot_category_description
+        description: Supplied description of the national slot category. Null when not recorded.
+      - name: context_type
+        description: Supplied appointment context, including care encounters, care activity and administration. Null when not recorded.
+      - name: service_setting
+        description: Supplied service setting label. Null when not recorded.
+      - name: age_at_event
+        description: Supplied patient age in completed years at the appointment. Null when not recorded.
+      - name: schedule_id
+        description: Recorded parent schedule ID for drill-down to stg_olids_schedule, including its timed or untimed type.
+      - name: schedule_type
+        description: Supplied schedule type, including Untimed Appointments and List. Null when no retained schedule matches; use this when interpreting supplied durations.
+      - name: practitioner_in_role_id
+        description: Principal practitioner role recorded on the appointment. Other recorded practitioners remain in stg_olids_appointment_practitioner.
+      - name: practitioner_id
+        description: Practitioner from the principal role relationship. Null when no non-deleted role record matches.
+      - name: practitioner_role_code
+        description: Role code supplied by the principal practitioner-in-role record.
+      - name: practitioner_role_name
+        description: Supplied label for the principal practitioner role. Null when the role is unavailable.
+      - name: provider_organisation_id
+        description: Organisation ID recorded as the appointment provider.
+      - name: provider_organisation_code
+        description: Provider organisation code from the OLIDS organisation lookup.
+      - name: provider_organisation_code_authority
+        description: Assigning authority for the provider organisation code.
+      - name: provider_organisation_name
+        description: Provider organisation name. Null when no non-deleted organisation record matches.
+      - name: publisher_organisation_id
+        description: Organisation ID of the data publisher, which need not be the provider.
+      - name: publisher_organisation_code
+        description: Publisher practice ODS code supplied on the appointment.
+      - name: publisher_organisation_name
+        description: Publisher organisation name from the OLIDS organisation lookup. Null when unavailable.

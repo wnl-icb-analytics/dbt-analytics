@@ -1,0 +1,29 @@
+version: 2
+models:
+- name: mhsds_domain_code_lookup
+  description: >-
+    Latest available national labels, including retired codes for MHSDS demographics, circumstances,
+    activity, discharge readiness and restrictive care. Each row is one code_set_name, code. Codes
+    remain visible when no definition matches. Labels do not establish clinical eligibility or code
+    validity at a historical event date.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - code_set_name
+        - code
+  columns:
+  - name: code_set_name
+    description: Named national code set.
+    data_tests:
+    - not_null
+  - name: code
+    description: National code, including retired values.
+    data_tests:
+    - not_null
+  - name: description
+    description: UKHFD national definition.

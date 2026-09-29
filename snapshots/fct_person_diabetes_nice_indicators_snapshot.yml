@@ -1,0 +1,28 @@
+snapshots:
+  - name: fct_person_diabetes_nice_indicators_snapshot
+    relation: ref('fct_person_diabetes_nice_indicators_snapshot_input')
+    description: >
+      SCD2 history of the NICE diabetes, NDH and gestational diabetes indicators
+      per person and indicator: current practice, the latest qualifying record
+      and the outcome. Sources the thin snapshot-input view rather than the union,
+      because the union's CURRENT_DATE() derived columns change every run.
+      check_cols: all over the thin projection. Rows leaving an indicator
+      population are closed via hard_deletes: invalidate.
+    config:
+      strategy: check
+      unique_key: [person_id, indicator_id]
+      check_cols: all
+      hard_deletes: invalidate
+    columns:
+      - name: person_id
+        description: "Person identifier; part of the snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: "NICE indicator identifier; part of the snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

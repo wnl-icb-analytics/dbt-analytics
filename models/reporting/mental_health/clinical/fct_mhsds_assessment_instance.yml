@@ -1,0 +1,41 @@
+version: 2
+models:
+- name: fct_mhsds_assessment_instance
+  description: >-
+    Groups of responses that may belong to the same assessment. Each row groups a person, provider,
+    tool, assessment context, recorded time and assessor, with referral, activity or source
+    assessment identifiers where available. Referral and activity responses have no general
+    questionnaire identifier, so responses recorded together can still be ambiguous. Undated
+    responses without a source assessment ID stay separate. Counts and repeated-concept flags
+    describe the recorded responses; they do not confirm questionnaire completion. Unmatched tools
+    fall back to separate concept groups. HoNOS and SARN responses within one source clustering
+    assessment form separate tool groups.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: assessment_instance_id
+    description: Key for the documented response group.
+    data_tests:
+    - not_null
+    - unique
+  - name: instance_identity_basis
+    description: Source clustering identity and matched tool or unmatched concept; otherwise shared tool or concept, context, time and assessor, or an undated individual observation.
+  - name: assessment_tool_name
+    description: Tool or component named by the published assessment or clustering definitions. Null when the concept is unmatched.
+  - name: assessment_tool_group
+    description: Grouping value, using the matched tool name or the submitted concept code when no tool matches. A code fallback does not identify a named tool.
+  - name: n_observations
+    description: Number of retained response observations, including repeated concepts.
+  - name: n_distinct_concepts
+    description: Distinct submitted question, dimension or total-score concepts. This is not an expected item
+      count.
+  - name: n_numeric_scores
+    description: Responses accepted by the maintained scale/response definitions. No scores are added across
+      concepts.
+  - name: has_repeated_or_missing_concepts
+    description: More observations than non-null distinct concepts. The group may contain duplicated submissions
+      or multiple coincident administrations.
+  - name: assessment_recorded_at
+    description: Completion or linked activity time; null when no usable date is available.

@@ -1,0 +1,110 @@
+models:
+  - name: fct_person_shingles_vaccination_ind219
+    description: |
+      NICE IND219 shingles vaccination by age 75. One row per currently registered,
+      living, non-test person whose 75th birthday falls in the preceding 12 months,
+      assessed on the build date.
+
+      Achieved when shingles vaccination is recorded between the 70th and 75th birthdays,
+      including both dates. An earlier qualifying dose still counts when a later dose
+      falls outside this window. Age windows use the approximate birth date.
+
+      Excludes people flagged as immunosuppressed by the adult immunisation population.
+      The specified anaphylaxis exclusion is not implemented: a generic shingles
+      contraindication code does not identify anaphylaxis. The 75th-birthday upper bound
+      remains a local interpretation.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind219
+        indicator:
+          id: "IND219"
+          type: "MEASURE"
+          category: "IMMUNISATION"
+          clinical_domain: "Prevention"
+          name_short: "Shingles vaccination by 75"
+          description_short: "Shingles vaccination between 70 and 75 for people who reached 75 in the preceding 12 months"
+          description_long: |
+            NICE IND219 shingles vaccination by age 75. One row per currently registered,
+            living, non-test person whose 75th birthday falls in the preceding 12 months,
+            assessed on the build date.
+
+            Achieved when shingles vaccination is recorded between the 70th and 75th
+            birthdays, including both dates. An earlier qualifying dose still counts when
+            a later dose falls outside this window. Age windows use the approximate birth
+            date.
+
+            Excludes people flagged as immunosuppressed by the adult immunisation
+            population. The specified anaphylaxis exclusion is not implemented: a generic
+            shingles contraindication code does not identify anaphylaxis. The
+            75th-birthday upper bound remains a local interpretation.
+
+            Personalised care adjustments are not applied.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND219"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: seventy_fifth_birthday
+        description: Approximate 75th birthday, which falls in the preceding 12 months
+      - name: first_dose_70_to_75_date
+        description: Earliest shingles vaccination between the 70th and 75th birthdays; null if none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+
+  - name: fct_person_shingles_vaccination_ind219_snapshot_input
+    description: |
+      NICE shingles vaccination results used for change history. One row per eligible
+      person and indicator.
+
+      Excludes build-date fields so a new reporting date alone does not create a history
+      version. Clinical results and evidence retain the family definitions.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier; snapshot unique_key.
+        data_tests:
+          - unique
+          - not_null
+      - name: current_practice_code
+        description: ODS code of the current registration practice at the build.
+      - name: is_in_numerator
+        description: Whether the person met the indicator at the build.
+      - name: indicator_status
+        description: Outcome label at the build.
+      - name: first_dose_70_to_75_date
+        description: Earliest qualifying shingles vaccination date at the build.

@@ -5,61 +5,75 @@
         cluster_by=['person_id'])
 }}
 
--- Get all residential status codes for each person using COVID and FLU CODE SETS
+-- Homeless persons. Grain: one row per person whose latest residential
+-- status code (RESIDE_COD or HOMELESS_COD) is a homelessness code, or who is
+-- currently registered with the Camden Health Improvement Practice (Y02674).
+--
+-- HOMELESS_COD codes are also in RESIDE_COD. When a homelessness code and
+-- another residential code share the latest date, homelessness wins, as in
+-- the UKHSA rule HOMELESS_DAT >= RESIDE_DAT. Remaining same-day ties break
+-- on concept code so the result is stable between builds.
 
-With homeless_codes as (
-select distinct 
-CLUSTER_ID
-,CODE  
-,replace(CODE_DESCRIPTION, ' (finding)','') as CODE_DESCRIPTION
-FROM {{ ref('stg_reference_combined_codesets') }}
---from MODELLING.DBT_STAGING.STG_REFERENCE_COMBINED_CODESETS
-WHERE cluster_id in ('RESIDE_COD', 'HOMELESS_COD')
-)
---Get residential (latest) codes (including homeless) for either FLU OR COVID
-,all_residential_codes AS (
+WITH homeless_codes AS (
     SELECT DISTINCT
+        cluster_id,
+        code
+    FROM {{ ref('stg_reference_combined_codesets') }}
+    WHERE cluster_id IN ('RESIDE_COD', 'HOMELESS_COD')
+),
+
+residential_records AS (
+    SELECT
         obs.person_id,
-        DATE(obs.clinical_effective_date) AS latest_residential_date,
-        obs.mapped_concept_code as concept_code,
-        obs.mapped_concept_display as code_description,
-        cc.cluster_id as code_type,
-        ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date DESC ) as rn
-       --FROM MODELLING.DBT_STAGING.STG_OLIDS_OBSERVATION obs
-       FROM {{ ref('stg_olids_observation') }} obs
-       INNER JOIN homeless_codes cc ON obs.mapped_concept_code = cc.code
-       WHERE obs.clinical_effective_date IS NOT NULL
+        DATE(obs.clinical_effective_date) AS residential_date,
+        obs.mapped_concept_code AS concept_code,
+        MIN(obs.mapped_concept_display) AS code_description,
+        BOOLOR_AGG(cc.cluster_id = 'HOMELESS_COD') AS is_homeless_code
+    FROM {{ ref('stg_olids_observation') }} AS obs
+    INNER JOIN homeless_codes AS cc
+        ON obs.mapped_concept_code = cc.code
+    WHERE
+        obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= CURRENT_DATE
-        AND cc.cluster_id IN ('RESIDE_COD', 'HOMELESS_COD')
-       QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date DESC ) = 1
+    GROUP BY
+        obs.person_id,
+        DATE(obs.clinical_effective_date),
+        obs.mapped_concept_code
+),
+
+latest_residential AS (
+    SELECT *
+    FROM residential_records
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY person_id
+        ORDER BY residential_date DESC, is_homeless_code DESC, concept_code
+    ) = 1
+),
+
+currently_homeless AS (
+    SELECT
+        person_id,
+        residential_date AS latest_residential_date,
+        concept_code,
+        code_description
+    FROM latest_residential
+    WHERE is_homeless_code
+),
+
+registered_chip AS (
+    SELECT
+        person_id,
+        TRUE AS registered_chip
+    FROM {{ ref('dim_person_demographics') }}
+    WHERE is_active AND NOT is_deceased AND practice_code = 'Y02674'
 )
--- Identify people currently homeless by checking if the latest code is in HOMELESS_COD cluster
-,currently_homeless as (
-    SELECT 
-    res.person_id,
-    res.latest_residential_date,
-    res.concept_code,
-    res.code_description
-    FROM all_residential_codes res
-    INNER JOIN homeless_codes cc ON res.concept_code = cc.code
-    AND cc.cluster_id = 'HOMELESS_COD'
-) 
---identify people registered with the CAMDEN HEALTH IMPROVEMENT PRACTICE
-,registered_CHIP as (
-select person_id,
-TRUE AS REGISTERED_CHIP
-FROM {{ ref('dim_person_demographics') }}
-where IS_ACTIVE = TRUE AND IS_DECEASED = FALSE AND PRACTICE_CODE = 'Y02674'
-)
 
--- JOIN all people with homeless codes to be and/or registered with CHIP
-select 
-NVL(hom.person_id,reg.person_id) as person_id
-,hom.latest_residential_date
-,hom.concept_code
-,hom.code_description
-,reg.registered_chip
-from currently_homeless hom
-FULL OUTER JOIN registered_CHIP reg using (person_id)
-
-
+SELECT
+    COALESCE(hom.person_id, reg.person_id) AS person_id,
+    hom.latest_residential_date,
+    hom.concept_code,
+    hom.code_description,
+    reg.registered_chip
+FROM currently_homeless AS hom
+FULL OUTER JOIN registered_chip AS reg
+    ON hom.person_id = reg.person_id

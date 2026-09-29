@@ -2,15 +2,12 @@ version: 2
 
 models:
   - name: int_mhsds_contact_currency
-    description: >
-      MHSDS care contact currency classification. Grain: one row per
-      uniq_serv_req_id and uniq_care_cont_id (providers reuse local contact ids
-      across referrals, so the contact id alone is not unique). Population: care
-      contacts outside an inpatient spell for the same service request. Time
-      semantics: diagnosis is the latest recorded on or before the contact date.
-      Inpatient contacts are excluded by contact date between spell admission
-      and derived spell end date, rather than the NHSE notebook's
-      same-submission-month method.
+    description: >-
+      NHS England costing classifications for patient contacts outside inpatient care. Each row is
+      one referral/contact pair. The diagnosis used is the latest recorded on or before the contact
+      date. A contact is excluded when its date falls between admission and the derived end of an
+      inpatient spell for the same referral. This date-based rule differs from the NHS England
+      notebook's submission-month rule. Contact identifiers alone are not unique across referrals.
     config:
       meta:
         owner:

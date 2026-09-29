@@ -42,6 +42,7 @@
 -- Financial year here is a bare 4-digit year (e.g. 2019 = FY2019/20).
 
 with {{ community_pld_registry('REF') }},
+{{ community_pld_provider_codes('raw_sdl_wnl_ref') }},
 
 prep as (
     select
@@ -75,9 +76,9 @@ prep as (
         )                                       as local_patient_id,
         -- 8-10: Patient identifiers (pseudonymised)
         coalesce(
-            sk_patient_id_nhs_number,
-            sk_patient_id_nhsnumber,
-            sk_patient_id_nhs_no
+            {{ consistent_sk_patient_id_format('sk_patient_id_nhs_number') }},
+            {{ consistent_sk_patient_id_format('sk_patient_id_nhsnumber') }},
+            {{ consistent_sk_patient_id_format('sk_patient_id_nhs_no') }}
         )                                       as sk_patient_id,
         try_to_number(dv_yearof_birth)          as dv_year_of_birth,
         dv_partial_post_code                    as partial_postcode,
@@ -131,8 +132,7 @@ prep as (
         -- 19: Service reporting line
         service_reporting_line                  as service_reporting_line,
         -- 20: Provider (cleaned ODS code)
-        {{ clean_organisation_id('upper(trim(coalesce(organisation_identifier_code_of_provider, provider_code, meta_provider_code)))') }}
-                                                as provider_code,
+        provider_codes.cleaned_provider_code    as provider_code,
 
         -- Reporting month parsed from the submission file name (last-resort
         -- period source when neither stated nor referral date is available)
@@ -144,6 +144,11 @@ prep as (
         coalesce(dlp_financial_month, financial_month)  as financial_month_raw
 
     from {{ ref('raw_sdl_wnl_ref') }}
+    left join provider_codes
+        on equal_null(
+            upper(trim(coalesce(organisation_identifier_code_of_provider, provider_code, meta_provider_code))),
+            provider_codes.source_provider_code
+        )
     left join registry
         on registry.file_id = meta_file_id
        and registry.batch_id = meta_batch_id
