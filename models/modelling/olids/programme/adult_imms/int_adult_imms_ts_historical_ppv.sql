@@ -18,7 +18,7 @@ pmab.ethnicity_category,
     pmab.analysis_month, 
     pmab.financial_year as fiscal_year_label,
  CASE WHEN AGE >=65 THEN 'AGE 65+' END AS cohort,
- 'PPV' AS VACCINE
+ 'PPV Dose 1' AS VACCINE
 FROM {{ ref('person_month_analysis_base') }} pmab
 --FROM REPORTING.OLIDS_PERSON_ANALYTICS.PERSON_MONTH_ANALYSIS_BASE pmab
 -- Limit to last 24 months (2 years)
