@@ -32,4 +32,5 @@ Known Limitations:
 • Address/geographic fields use current address for all historical months (address SCD dates not yet populated)
 
 */
-SELECT * FROM {{ref('person_month_analysis_base')}}
+SELECT * REPLACE (sk_patient_id::VARCHAR AS sk_patient_id)
+FROM {{ref('person_month_analysis_base')}}
