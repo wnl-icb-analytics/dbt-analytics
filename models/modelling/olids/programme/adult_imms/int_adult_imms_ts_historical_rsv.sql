@@ -6,7 +6,7 @@
 /* unaggregated model 2.8 million rows */
 //ELIGIBLE RSV FIRST (2.3 million rows)
 with eligible_rsv_age as (
---PPV - AGE COHORT
+--RSV - AGE COHORT age 75+.
 select 
 pmab.person_id, 
 pmab.age_band_5y,
@@ -18,8 +18,8 @@ COALESCE(pmab.imd_quintile_25, 'Unknown') AS imd_quintile,
     pmab.practice_code,
     pmab.analysis_month, 
     pmab.financial_year as fiscal_year_label,
- CASE WHEN AGE >=65 THEN 'AGE 75+' END AS cohort,
- 'RSV' AS VACCINE
+ 'Aged 75+' AS cohort,
+ 'RSV Dose 1' AS VACCINE
 FROM {{ ref('person_month_analysis_base') }} pmab
 --FROM REPORTING.OLIDS_PERSON_ANALYTICS.PERSON_MONTH_ANALYSIS_BASE pmab
 -- Limit to last 24 months (2 years)
@@ -60,7 +60,7 @@ COALESCE(pmab.imd_quintile_25, 'Unknown') AS imd_quintile,
 pmab.practice_code,
 pmab.analysis_month, 
 pmab.financial_year as fiscal_year_label,
-'CLINICAL RISK 65-74' AS cohort,
+'Clinical Risk 65-74' AS cohort,
 'RSV Dose 1' AS VACCINE
 FROM {{ ref('person_month_analysis_base') }} pmab
 --FROM REPORTING.OLIDS_PERSON_ANALYTICS.PERSON_MONTH_ANALYSIS_BASE pmab
