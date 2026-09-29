@@ -4,7 +4,7 @@
         tags=['adult_imms'])
 }}
 /* unaggregated model 9.6 million rows */
-//ELIGIBLE PPV AGE COHORT(5.1 million rows)
+//ELIGIBLE PPV AGE COHORT(5.1 million rows) aged 65+
 with eligible_ppv_age as (
 select 
 pmab.person_id, 
@@ -17,7 +17,7 @@ pmab.ethnicity_category,
     pmab.practice_code,
     pmab.analysis_month, 
     pmab.financial_year as fiscal_year_label,
- CASE WHEN AGE >=65 THEN 'AGE 65+' END AS cohort,
+ 'Aged 65+'  AS cohort,
  'PPV Dose 1' AS VACCINE
 FROM {{ ref('person_month_analysis_base') }} pmab
 --FROM REPORTING.OLIDS_PERSON_ANALYTICS.PERSON_MONTH_ANALYSIS_BASE pmab
@@ -64,8 +64,8 @@ COALESCE(pmab.imd_quintile_25, 'Unknown') AS imd_quintile,
 pmab.practice_code,
 pmab.analysis_month, 
 pmab.financial_year as fiscal_year_label,
-'CLINICAL RISK 18-64' AS cohort,
- 'PPV' AS VACCINE
+'Clinical Risk 18-64' AS cohort,
+ 'PPV Dose 1' AS VACCINE
 FROM {{ ref('person_month_analysis_base') }} pmab
 --FROM REPORTING.OLIDS_PERSON_ANALYTICS.PERSON_MONTH_ANALYSIS_BASE pmab
 INNER JOIN risk_flags rf

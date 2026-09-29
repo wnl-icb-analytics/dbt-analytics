@@ -36,8 +36,8 @@ pmab.ethnicity_category,
     pmab.financial_year as fiscal_year_label,
     CASE
     WHEN BIRTH_DATE_APPROX > '1957-09-01' AND BIRTH_DATE_APPROX <= '1958-09-01'
-    THEN 'TURN_65_AFTER_SEP_2023' 
-    WHEN AGE BETWEEN 70 AND 79 THEN '70-79 CATCH UP' END AS cohort,
+    THEN 'Aged 65 from Sep 2023' 
+    WHEN AGE BETWEEN 70 AND 79 THEN 'Aged 70-79 Catch Up' END AS cohort,
     'Shingles Dose 1' AS VACCINE
 FROM {{ ref('person_month_analysis_base') }} pmab
 --FROM REPORTING.OLIDS_PERSON_ANALYTICS.PERSON_MONTH_ANALYSIS_BASE pmab
