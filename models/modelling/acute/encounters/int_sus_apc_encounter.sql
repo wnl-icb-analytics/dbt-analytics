@@ -153,6 +153,7 @@ select
     , eth.ethnicity_desc as ethnicity_desc_at_event 
     , core.spell_patient_residence_derived_postcode_district as postcode_district_at_event
     , core.spell_patient_residence_derived_lsoa_11 as lsoa_11_at_event
+    , core.spell_patient_residence_derived_lsoa_21 as lsoa_21_at_event
     , core.spell_patient_residence_derived_local_authority_district as lad_at_event
     , core.spell_patient_residence_derived_index_of_multiple_deprivation_decile as imd_at_event
     , core.spell_patient_registration_general_practice as reg_practice_at_event
