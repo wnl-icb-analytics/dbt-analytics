@@ -9,10 +9,11 @@
         v.PERSON_ID
          ,v.AGE_65_PLUS
         ,v.AGE_75_PLUS
-       ,v.AGE_BAND_5Y
+        ,v.AGE_BAND_5Y
         ,v.IS_CARE_HOME_RESIDENT
         ,v.IS_IMMUNOSUPPRESSED
         ,v.IN_PPV_CLINICAL_RISK_GROUP
+        ,v.IN_RSV_CLINICAL_RISK_GROUP
         ,v.IS_PREGNANT
         ,v.ETHNICITY_CATEGORY
         ,v.ETHCAT_ORDER
