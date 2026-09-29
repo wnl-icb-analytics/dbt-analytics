@@ -76,8 +76,8 @@ flowchart TD
    `reporting_period_end_date`; every referral repeats each month.
 5. **Attendance.** Codes 5 and 6 are attended, 3 and 7 did not attend, 2 and 4
    cancelled by patient or provider. `is_attended`, `is_dna` and `is_cancelled`
-   on the contact fact apply this rule. Costing reads only the newer attendance
-   status, so before 2023 its attended counts differ by about 8%.
+   on the contact fact apply this rule. Costing uses the same attendance code but also
+   prices contacts with no attendance code, following the NHSE grouper.
 6. **Team type is the delivering team.** `service_or_team_type_code` on a contact
    is the team the contact names, looked up in the same submission, earlier
    submissions of the referral, or other referrals' use of the same team
