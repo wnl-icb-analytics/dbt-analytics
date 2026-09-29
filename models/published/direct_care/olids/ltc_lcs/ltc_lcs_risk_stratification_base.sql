@@ -91,6 +91,8 @@ select
     cond.has_learning_disability,
     cond.has_severe_mental_illness,
     coalesce(preg.is_currently_pregnant, false) as is_currently_pregnant,
+    ca.person_id is not null as is_complex_adult,
+    coalesce(hb.is_housebound, false) as is_housebound,
 
     -- ============================================================
     -- Risk stratification: per-condition
@@ -233,6 +235,10 @@ left join {{ ref('dim_person_conditions') }} cond
     on rs.person_id = cond.person_id
 left join {{ ref('fct_person_pregnancy_status') }} preg
     on rs.person_id = preg.person_id
+left join {{ ref('fct_person_complex_adults') }} ca
+    on rs.person_id = ca.person_id
+left join {{ ref('dim_person_housebound_status') }} hb
+    on rs.person_id = hb.person_id
 left join {{ ref('fct_person_ltc_lcs_outcomes_htn_bp_control') }} htn_roll
     on rs.person_id = htn_roll.person_id
 left join {{ ref('fct_person_ltc_lcs_outcomes_htn_bp_control_fy') }} htn_fy
