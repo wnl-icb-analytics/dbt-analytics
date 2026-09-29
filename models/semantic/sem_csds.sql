@@ -94,7 +94,7 @@ DIMENSIONS(
     referral_periods.referral_periods_is_wnl_commissioner AS is_wnl_commissioner COMMENT = 'The referral is commissioned by West and North London in this period.',
     referral_periods.referral_periods_period_end AS reporting_period_end_date COMMENT = 'Reporting period the state is evaluated at. Filter to one period for a snapshot.',
     referral_periods.referral_periods_access_state AS recorded_access_state COMMENT = 'Access state at period end.',
-    referral_periods.referral_periods_open_at_period_end AS is_recorded_open_at_period_end COMMENT = 'Open at period end: submitted, received, not discharged, and at least one submitted team still open.',
+    referral_periods.referral_periods_open_at_period_end AS is_recorded_open_at_period_end COMMENT = 'Open at period end: submitted that month, received, not discharged, and its submitted teams not all closed or rejected. A referral with no submitted team can be open.',
     referral_periods.referral_periods_waiting_for_first_attendance AS is_open_without_recorded_attendance COMMENT = 'Open at period end with no attended contact evidenced by then. Evidence of waiting, not waiting-list eligibility.',
     referral_periods.referral_periods_team_type AS service_or_team_type_name COMMENT = 'Team type when all the referral''s teams in that submission share one; null otherwise.',
     caseload_referrals.caseload_referrals_provider_code AS provider_organisation_code COMMENT = 'Provider reporting the open referral.',
