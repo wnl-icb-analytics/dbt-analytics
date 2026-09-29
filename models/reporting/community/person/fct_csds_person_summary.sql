@@ -8,11 +8,12 @@ with population as (
     group by person_id
 )
 
--- Any provider's recorded death applies to the person.
+-- Any submitted patient record's death date applies to the person, read before
+-- the demographics dimension selects one record per provider and month.
 , deaths as (
-    select person_id, max(person_death_date) as person_death_date
-    from {{ ref('dim_csds_person_provider_period') }}
-    where person_death_date is not null
+    select person_id, max(person_death_date::date) as person_death_date
+    from {{ ref('stg_csds_mpi_history') }}
+    where person_id is not null and person_death_date is not null
     group by person_id
 )
 
