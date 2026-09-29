@@ -11,8 +11,8 @@ p.vaccine
 ,p.analysis_month
 ,p.fiscal_year_label
 ,CASE
-WHEN p.cohort ='TURN_65_AFTER_SEP_2023' THEN 5
-WHEN p.cohort = '70-79 CATCH UP' THEN 6
+WHEN p.cohort ='Aged 65 from Sep 2023' THEN 5
+WHEN p.cohort = 'Aged 70-79 Catch Up' THEN 6
 END As VACC_ORDER 
 ,p.practice_code
 ,p.age_band_5y
@@ -42,7 +42,7 @@ select
 vaccine, cohort, analysis_month, fiscal_year_label, practice_code, age_band_5y, ethnicity_category,  imd_quintile, 
 sum(vaccinated) as numerator, count(*) as denominator 
 FROM {{ ref('int_adult_imms_ts_historical_shingles_dose_2') }}
-where cohort = 'TURN_65_AFTER_SEP_2023'
+where cohort = 'Aged 65 from Sep 2023'
 group by all
 
 UNION
@@ -51,6 +51,6 @@ select
 vaccine, cohort, analysis_month, fiscal_year_label, practice_code, age_band_5y, ethnicity_category,  imd_quintile, 
 sum(vaccinated) as numerator, count(*) as denominator 
 FROM {{ ref('int_adult_imms_ts_historical_shingles_dose_2') }}
-where cohort = '70-79 CATCH UP'
+where cohort = 'Aged 70-79 Catch Up'
 group by all
 ) p
