@@ -1,28 +1,20 @@
--- Referral closure rules in fct_iapt_referral. The 2-month grace is recomputed here with month-boundary
+-- As-of status rules in fct_iapt_referral_summary. The 2-month grace is recomputed here with month-boundary
 -- datediff, independently of the model expression. Returns one aggregate row per failing rule; no record
 -- identifiers.
-with latest as (
-    select max(reporting_period_end_date) as latest_period_end_date
-    from {{ ref('stg_iapt_activesubmission') }}
-    where reporting_period_end_date is not null
-        and provider_organisation_code is not null
-)
-
-, expected as (
+with expected as (
     select
-        r.service_discharge_date
-        , r.referral_received_date
-        , r.last_reported_period_end_date
-        , r.referral_status
-        , r.referral_end_date
-        , r.referral_end_date_source
+        service_discharge_date
+        , referral_received_date
+        , last_reported_period_end_date
+        , as_of_referral_status
+        , referral_end_date
+        , referral_end_date_source
         , case
-            when r.service_discharge_date is not null then 'discharged'
-            when datediff(month, r.last_reported_period_end_date, l.latest_period_end_date) <= 2 then 'open'
-            else 'last_submission'
-        end as expected_source
-    from {{ ref('fct_iapt_referral') }} as r
-    cross join latest as l
+            when service_discharge_date is not null then 'discharged'
+            when datediff(month, last_reported_period_end_date, as_of_date) <= 2 then 'open'
+            else 'no_longer_submitted'
+        end as expected_status
+    from {{ ref('fct_iapt_referral_summary') }}
 )
 
 , failures as (
@@ -30,7 +22,7 @@ with latest as (
     select
         'actual_discharge_precedence' as rule_name
         , count_if(
-            referral_status is distinct from 'discharged'
+            as_of_referral_status is distinct from 'discharged'
             or referral_end_date_source is distinct from 'discharged'
             or referral_end_date is distinct from service_discharge_date
         ) as failing_count
@@ -39,13 +31,13 @@ with latest as (
 
     union all
 
-    -- Open inside the grace with no end date; closed outside it at the last reported month end.
+    -- Open inside the grace with no end date; ended outside it at the last reported month end.
     select
         'grace_boundary'
         , count_if(
-            referral_end_date_source is distinct from expected_source
-            or referral_status is distinct from iff(expected_source = 'open', 'open', 'closed')
-            or referral_end_date is distinct from iff(expected_source = 'open', null, last_reported_period_end_date)
+            as_of_referral_status is distinct from expected_status
+            or referral_end_date_source is distinct from iff(expected_status = 'open', 'open', 'last_submission')
+            or referral_end_date is distinct from iff(expected_status = 'open', null, last_reported_period_end_date)
         )
     from expected
     where service_discharge_date is null

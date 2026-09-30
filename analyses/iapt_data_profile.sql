@@ -133,14 +133,14 @@ with active as (
         , count_if(has_patient_key_changed) as patient_key_changed
         , count_if(referral_received_date is null) as missing_received_date
         , count_if(service_discharge_date is not null) as discharged
-        , count_if(referral_status = 'open') as open
+        , count_if(as_of_referral_status = 'open') as open
         , count_if(referral_end_date_source = 'last_submission') as inferred_closed
         , count_if(discharge_reason_code is not null and discharge_reason_name is null) as unlabelled_discharge_reason
         , count_if(discharge_reason_code_set = 'discharge_reason_legacy') as legacy_labelled_discharge_reason
         , count_if(is_completed_treatment) as completed_treatment
         , count_if(not is_completed_treatment) as not_completed_treatment
         , count_if(provider_organisation_name is null) as missing_provider_name
-    from {{ ref('fct_iapt_referral') }}
+    from {{ ref('fct_iapt_referral_summary') }}
 )
 
 , contact_fact as (

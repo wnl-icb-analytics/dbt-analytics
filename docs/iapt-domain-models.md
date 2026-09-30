@@ -85,16 +85,22 @@ dated contact. Their keys include the reporting month, which remains stable
 when a primary submission is replaced by its refresh. Activities and activity
 assessments link only to the matching submission's contact or activity.
 
-An undischarged referral remains open while its last reporting period is within
-two months of the latest accepted period in the data set. After that grace
-period it is closed at its last reporting period end, following the MHSDS spell
-pattern. `referral_end_date_source = 'last_submission'` distinguishes this
-inference from a recorded discharge. It also prevents discontinued provider
-feeds from leaving referrals open indefinitely. `service_discharge_date` stays
-as submitted; inferred closures do not create discharge milestones.
-The rule is relative to the latest accepted month, not today's date. A resumed
-submission can reopen a referral; if the whole data feed stalls, its statuses
-remain relative to that last available month.
+`fct_iapt_referral` holds recorded values only. Its `referral_status` is
+`closed` when a discharge date is recorded and otherwise `open`, as in
+`fct_mhsds_referral`. `fct_iapt_referral_summary` adds the status as of the
+latest accepted month (`as_of_date`), following the MHSDS and CSDS summaries.
+
+An undischarged referral is `open` while its last reporting period is within
+two months of `as_of_date`. After that it is `no_longer_submitted` and ends at
+its last reporting period end. `referral_end_date_source = 'last_submission'`
+marks the inferred end. This stops discontinued provider feeds leaving
+referrals open indefinitely. `service_discharge_date` stays as submitted;
+inferred ends create no discharge milestone. The rule is relative to the latest
+accepted month, not today's date. A resumed submission can reopen a referral;
+if the whole data feed stalls, statuses stay relative to that last month.
+`provider_months_behind_dataset` and `is_in_latest_provider_period` show
+whether a late provider, not the referral, explains a `no_longer_submitted`
+status.
 
 ## People
 
@@ -230,6 +236,7 @@ means a time was supplied, not that its clinical accuracy has been established.
 | Model | One row represents |
 |---|---|
 | [`fct_iapt_referral`](../models/reporting/mental_health/referrals/fct_iapt_referral.sql) | One referral, latest accepted version |
+| [`fct_iapt_referral_summary`](../models/reporting/mental_health/referrals/fct_iapt_referral_summary.sql) | One referral with its status as of the latest accepted month |
 | [`fct_iapt_care_contact`](../models/reporting/mental_health/activity/fct_iapt_care_contact.sql) | One care contact within its referral |
 | [`fct_iapt_onward_referral`](../models/reporting/mental_health/referrals/fct_iapt_onward_referral.sql) | One onward referral milestone |
 | [`fct_iapt_care_activity`](../models/reporting/mental_health/activity/fct_iapt_care_activity.sql) | One care activity with its procedure, finding and observation |
@@ -285,8 +292,8 @@ and assessment responses whose native identifiers are reused in another month.
 The clinical output excludes 5,021 superseded undated complaints, which remain
 in the condition fact.
 
-The referral fact has 846,338 recorded discharges, 33,890 open referrals and
-39,911 inferred closures. Recorded discharge events remain unchanged. No
+The referral summary has 846,338 recorded discharges, 33,890 open referrals and
+39,911 referrals no longer submitted. Recorded discharge events remain unchanged. No
 inferred end predates its referral receipt.
 
 Validation included initial builds, a repeat incremental build, grain tests,

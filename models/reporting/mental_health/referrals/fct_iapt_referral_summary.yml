@@ -1,12 +1,12 @@
 version: 2
 models:
-- name: fct_iapt_referral
-  description: One NHS Talking Therapies (IAPT data set) referral, taken from its latest accepted submission. Open
-    referrals must be resubmitted every month, so earlier versions are replaced. Holds recorded values only. A
-    referral with no discharge date may no longer be submitted; fct_iapt_referral_summary gives the status as of the
-    latest accepted month. No population filter is applied beyond the commissioner filter of the data feed. NHS
-    England pathway derivations come from the selected version and can change until the refresh window for that
-    month closes.
+- name: fct_iapt_referral_summary
+  description: Status of each NHS Talking Therapies (IAPT data set) referral as of the latest accepted month, one
+    row per referral. Adds to the recorded values in fct_iapt_referral. A referral with no discharge date is open
+    while it was last reported within 2 months of as_of_date; after that it is no_longer_submitted and ends at the
+    end of its last reported month, including when its provider stopped submitting. The rule is relative to the
+    latest accepted month in the data set, not the build date, so a resumed submission can reopen a referral.
+    provider_months_behind_dataset shows where a provider's delay, not the referral, explains the status.
   config:
     meta:
       owner:
@@ -46,11 +46,6 @@ models:
     description: closed when a discharge date is recorded, otherwise open, as in fct_mhsds_referral. Recorded
       evidence only. An open referral may no longer be submitted; use as_of_referral_status in
       fct_iapt_referral_summary for caseload.
-    data_tests:
-    - not_null
-    - accepted_values:
-        arguments:
-          values: [open, closed]
   - name: age_at_referral
     description: Source-derived age in years at referral receipt.
   - name: age_at_discharge
@@ -67,10 +62,6 @@ models:
   - name: source_of_referral_code_set
     description: mental_health for v2.0 submissions, iapt for v2.1, following the selected version's data set
       version. Null when no code is submitted.
-    data_tests:
-    - accepted_values:
-        arguments:
-          values: [iapt, mental_health]
   - name: discharge_reason_code
     description: Submitted discharge from IAPT service reason (end code), never inferred. Some referrals have a
       reason without a discharge date; the submitted reason is retained without inventing a discharge date or event.
@@ -84,10 +75,6 @@ models:
     description: Code list supplying discharge_reason_name. discharge_reason means the current list;
       discharge_reason_legacy means the retired care spell end code list. Null when unlabelled. A retired code has no
       published equivalent among current codes and must not be counted as one.
-    data_tests:
-    - accepted_values:
-        arguments:
-          values: [discharge_reason, discharge_reason_legacy]
   - name: discharge_reason_category
     description: UKHFD category for a current discharge reason where published, such as seen but not taken on for
       treatment. Null for retired codes, which have no published grouping.
@@ -137,10 +124,6 @@ models:
       threshold (source Caseness_Flag); not_at_caseness when both were below (source NotCaseness_Flag);
       not_assessable when neither flag is set and a first PHQ-9 or anxiety score is missing. Null when completed
       treatment is not shown, or both first scores exist but neither flag is set.
-    data_tests:
-    - accepted_values:
-        arguments:
-          values: [at_caseness, not_at_caseness, not_assessable]
   - name: is_recovered
     description: NHS England Recovery_Flag as supplied. TRUE when the referral completed treatment, started at caseness
       and ended with PHQ-9 and anxiety-measure scores below caseness. The source never supplies FALSE, so null does not
@@ -151,10 +134,6 @@ models:
       from the source flags, which need first and last PHQ-9 and anxiety scores; not_assessable when no flag is set
       and any of those four scores is missing. Null when completed treatment is not shown, or all four scores exist
       but no flag is set.
-    data_tests:
-    - accepted_values:
-        arguments:
-          values: [reliable_improvement, reliable_deterioration, no_reliable_change, not_assessable]
   - name: presenting_complaint_higher_category
     description: NHS England presenting complaint category, such as Depression.
   - name: presenting_complaint_lower_category
@@ -202,3 +181,39 @@ models:
     description: Primary or Refresh. Pathway derivations in Primary files are provisional.
   - name: dataset_version
     description: IAPT data set version of the selected file.
+  - name: as_of_date
+    description: Latest accepted reporting month end in the data set. Not the build date; not every provider has
+      submitted through it.
+    data_tests:
+    - not_null
+  - name: provider_latest_reporting_period_end_date
+    description: The provider's latest accepted reporting month end.
+  - name: provider_months_behind_dataset
+    description: Months between the provider's latest accepted month and as_of_date. 0 when the provider is up to
+      date. Above 2, every undischarged referral of the provider is no_longer_submitted because the provider's
+      submissions stopped or are late, not because each referral ended.
+  - name: is_in_latest_provider_period
+    description: TRUE when the selected version is from the provider's latest accepted month. FALSE without a
+      discharge means the provider dropped the referral while still submitting. TRUE with
+      no_longer_submitted means the provider itself is more than 2 months behind the data set.
+  - name: as_of_referral_status
+    description: Status at as_of_date. discharged when a discharge date is recorded. open when none is recorded
+      and the referral was last reported within 2 months of as_of_date. no_longer_submitted when none is recorded
+      and it was last reported earlier; an inference, not a discharge.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values: [open, discharged, no_longer_submitted]
+  - name: referral_end_date
+    description: End of the referral for timelines and durations. The recorded discharge date for discharged
+      referrals, or the last day of the last reported month when no_longer_submitted. Null while open. An inferred
+      end is not a discharge and implies no discharge reason, discharge event or completed treatment.
+  - name: referral_end_date_source
+    description: Basis for referral_end_date. discharged means a recorded discharge date; open means no end yet;
+      last_submission means the end is inferred from the last reported month.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values: [discharged, open, last_submission]

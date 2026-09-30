@@ -31,26 +31,9 @@ with versions as (
     ) = 1
 )
 
--- Latest accepted month in the data set, so referrals from a provider that stops submitting cannot stay open.
-, dataset_period as (
-    select max(reporting_period_end_date) as latest_period_end_date
-    from {{ ref('stg_iapt_activesubmission') }}
-    where reporting_period_end_date is not null
-        and provider_organisation_code is not null
-)
-
 , outcomes as (
     select
         l.*
-        -- Open referrals must be resubmitted every month (user guidance v1.6.1 pp15 and 32). Without a discharge
-        -- date, a referral last reported within 2 months of the latest accepted month is open; an older one is
-        -- closed at the end of its last reported month, as in int_mhsds_spell_encounters.
-        , case
-            when l.serv_disch_date is not null then 'discharged'
-            when date_trunc('month', l.last_reported_period_end_date)
-                >= dateadd(month, -2, date_trunc('month', dp.latest_period_end_date)) then 'open'
-            else 'last_submission'
-        end as referral_end_date_source
         , try_to_number(phq9_first_score) as phq9_first_score_value
         , try_to_number(phq9_last_score) as phq9_last_score_value
         , try_to_number(gad_first_score) as gad7_first_score_value
@@ -63,7 +46,6 @@ with versions as (
             when treatment_care_contact_count < 2 then false
         end as is_completed_treatment
     from latest as l
-    cross join dataset_period as dp
 )
 
 -- The mental health list unions current and legacy definitions, so a code can appear twice.
@@ -76,14 +58,6 @@ with versions as (
         partition by code
         order by is_currently_valid desc, definition_updated_at desc
     ) = 1
-)
-
-, provider_periods as (
-    select
-        provider_organisation_code
-        , max(reporting_period_end_date) as latest_provider_period_end_date
-    from {{ ref('stg_iapt_activesubmission') }}
-    group by provider_organisation_code
 )
 
 select
@@ -99,17 +73,8 @@ select
     , o.has_patient_key_changed
     , o.referral_request_received_date as referral_received_date
     , o.serv_disch_date as service_discharge_date
-    , case o.referral_end_date_source
-        when 'discharged' then 'discharged'
-        when 'open' then 'open'
-        else 'closed'
-    end as referral_status
-    -- An inferred end closes the timeline only; it is never a discharge date.
-    , case o.referral_end_date_source
-        when 'discharged' then o.serv_disch_date
-        when 'last_submission' then o.last_reported_period_end_date
-    end as referral_end_date
-    , o.referral_end_date_source
+    -- Recorded discharge only, as in fct_mhsds_referral; fct_iapt_referral_summary infers the as-of status.
+    , iff(o.serv_disch_date is not null, 'closed', 'open') as referral_status
     , o.age_referral_request_received_date as age_at_referral
     , o.age_service_discharge_date as age_at_discharge
     -- The warehouse copies the one submitted item into both source columns, so the data set version decides the
@@ -183,7 +148,6 @@ select
     , o.first_reported_period_end_date
     , o.last_reported_period_end_date
     , o.reported_period_count
-    , o.reporting_period_end_date = pp.latest_provider_period_end_date as is_in_latest_provider_period
     , o.submission_id
     , o.unique_month_id
     , o.reporting_period_start_date
@@ -193,8 +157,6 @@ select
     , o.file_type
     , o.dataset_version
 from outcomes as o
-left join provider_periods as pp
-    on o.provider_organisation_code = pp.provider_organisation_code
 left join {{ ref('iapt_code_lookup') }} as source_iapt
     on o.dataset_version = '2.1'
     and source_iapt.code_set_name = 'source_of_referral'
