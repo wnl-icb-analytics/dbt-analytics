@@ -163,7 +163,13 @@ models:
 
       - name: c_hb
         data_type: boolean
-        description: "Low-haemoglobin flag. TRUE if latest haemoglobin value is below the threshold from qadmissions_lab_thresholds seed, FALSE otherwise (including NULL haemoglobin)."
+        description: >
+          Low-haemoglobin flag. TRUE if latest haemoglobin value is below the
+          threshold from qadmissions_lab_thresholds seed, FALSE otherwise
+          (including NULL haemoglobin). The latest value comes from
+          int_haemoglobin_latest, which excludes negative values and extreme
+          outliers; int_qadmissions_features_history keeps extreme outliers,
+          so the two models can differ.
         data_tests:
           - not_null
           - accepted_values:
@@ -172,7 +178,12 @@ models:
 
       - name: high_lft
         data_type: boolean
-        description: "High liver-function-test flag. TRUE if any of ALT, GGT, or bilirubin exceeds its threshold from qadmissions_lab_thresholds seed, FALSE otherwise."
+        description: >
+          High liver-function-test flag. TRUE if any of ALT, GGT, or bilirubin
+          exceeds its threshold from qadmissions_lab_thresholds seed, FALSE
+          otherwise. The latest values come from int_lft_latest, which excludes
+          negative values and extreme outliers; int_qadmissions_features_history
+          keeps extreme outliers, so the two models can differ.
         data_tests:
           - not_null
           - accepted_values:
@@ -181,7 +192,13 @@ models:
 
       - name: high_platelet
         data_type: boolean
-        description: "High platelet flag. TRUE if latest platelet count exceeds the threshold from qadmissions_lab_thresholds seed, FALSE otherwise (including NULL platelets)."
+        description: >
+          High platelet flag. TRUE if latest platelet count exceeds the
+          threshold from qadmissions_lab_thresholds seed, FALSE otherwise
+          (including NULL platelets). The latest value comes from
+          int_platelets_latest, which excludes negative values and extreme
+          outliers; int_qadmissions_features_history keeps extreme outliers,
+          so the two models can differ.
         data_tests:
           - not_null
           - accepted_values:
@@ -242,12 +259,12 @@ models:
           Moderate, Heavy, VeryHeavy). Sourced from int_qadmissions_alcohol_category,
           which derives cat6 from int_alcohol_audit_scores filtered to
           Full AUDIT and takes the highest cat6 ever recorded per person.
+          0 (NonDrinker) when the person has no valid Full AUDIT score.
         data_tests:
+          - not_null
           - accepted_values:
               arguments:
                 values: [0, 1, 2, 3, 4, 5]
-              config:
-                where: "alcohol_cat6 IS NOT NULL"
 
       - name: ethrisk
         data_type: number

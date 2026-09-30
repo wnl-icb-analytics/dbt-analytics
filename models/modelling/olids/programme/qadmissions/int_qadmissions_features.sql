@@ -142,6 +142,10 @@ emergency_admissions AS (
     FROM {{ ref('fct_person_sus_apc_recent') }}
 ),
 
+-- Lab features use the int_*_latest models, which exclude negative values and
+-- extreme outliers. int_qadmissions_features_history keeps extreme outliers,
+-- so c_hb, high_platelet and high_lft can differ between the two models.
+
 -- Lab thresholds from the qadmissions_lab_thresholds seed, pivoted to one row.
 lab_thresholds AS (
     SELECT
