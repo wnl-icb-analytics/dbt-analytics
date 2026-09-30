@@ -1,8 +1,11 @@
 
 models:
   - name: int_sus_op_diagnosis
-    description: "ICD-10 diagnosis codes associated with SUS outpatient records. For
-      use in secondary care diagnosis table and phenolab"
+    description: >
+      One row per outpatient appointment and non-null ICD-10 diagnosis code.
+      Repeated occurrences of the same code are represented by
+      observation_count. Includes activity without a linked patient key; use
+      visit_occurrence_id to join to the appointment.
     config:
       meta:
         owner:
@@ -21,7 +24,9 @@ models:
 
       - name: sk_patient_id
         data_type: varchar
-        description: "Common commissioning patient identifier"
+        description: >
+          Common commissioning patient identifier. Null when the appointment
+          cannot be linked to a person; the diagnosis remains valid activity.
 
       - name: visit_occurrence_id
         data_type: number

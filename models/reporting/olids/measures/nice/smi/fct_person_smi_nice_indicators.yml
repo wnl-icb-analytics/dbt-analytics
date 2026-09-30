@@ -1,18 +1,21 @@
 models:
   - name: fct_person_smi_physical_health_ind248
-    description: >
-      NICE IND248 six physical health checks. One row per currently
-      registered, living, non-test person on the SMI register with a
-      schizophrenia, bipolar affective disorder or other psychosis diagnosis
-      not in remission (lithium-only and remitted people are excluded),
-      assessed on the build date. The numerator requires all six checks in the
-      preceding 12 months: blood pressure, BMI, alcohol consumption (units,
-      usage status or screening tool), lipid profile (total cholesterol or
-      cholesterol to HDL ratio), blood glucose or HbA1c, and smoking status. Lab checks count only records with a value. The SMI programme's own six-check model also accepts a QRISK score as the lipid check and counts only AUDIT scores and units for alcohol, so the two differ by a few hundred people each way.
-      checks_met_count shows how many are recorded. Personalised care
-      adjustments are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND248: SMI six health checks. One row per currently registered, living,
+      non-test person with schizophrenia, bipolar affective disorder or another
+      psychosis on the SMI register, including remission, assessed on the build date.
+
+      Achievement requires all six checks in the preceding 12 months: blood pressure,
+      BMI, alcohol consumption, lipid profile, blood glucose or HbA1c, and smoking
+      status. Alcohol units, usage status or a screening tool qualify. Lipid evidence is
+      a total cholesterol or cholesterol to HDL ratio result. Laboratory checks require
+      a recorded value. checks_met_count ranges from 0 to 6.
+
+      Lithium therapy without an SMI diagnosis does not qualify. NICE treats remission
+      as a personalised care adjustment for IND248, so remitted people remain in this
+      denominator.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -25,7 +28,23 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI six health checks"
           description_short: "All six SMI physical health checks recorded in the preceding 12 months"
-          description_long: "NICE IND248 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people with schizophrenia, bipolar
+            affective disorder or another psychosis on the SMI register, including
+            remission.
+
+            Achievement requires all six checks in the preceding 12 months: blood
+            pressure, BMI, alcohol consumption, lipid profile, blood glucose or HbA1c,
+            and smoking status. Alcohol units, usage status or a screening tool qualify.
+            Lipid evidence is a total cholesterol or cholesterol to HDL ratio result.
+            Laboratory checks require a recorded value. checks_met_count ranges from 0
+            to 6.
+
+            Lithium therapy without an SMI diagnosis does not qualify. NICE treats
+            remission as a personalised care adjustment for IND248, so remitted people
+            remain in this denominator.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -82,16 +101,17 @@ models:
 
 
   - name: fct_person_smi_alcohol_ind82
-    description: >
-      NICE IND82 SMI alcohol consumption. One row per currently registered,
-      living, non-test person on the SMI register with a schizophrenia,
-      bipolar affective disorder or other psychosis diagnosis not in remission
-      (lithium-only and remitted people are excluded), assessed on the build
-      date. The numerator requires an alcohol consumption record (units per
-      week, usage status or a FAST, AUDIT-C or AUDIT screen) in the preceding
-      15 months. Personalised care adjustments are not applied. Secondary-use
-      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
-      Data Opt-Out and Type 1 opt-out filtering.
+    description: |
+      NICE IND82: SMI alcohol record. One row per currently registered, living, non-test
+      person with schizophrenia, bipolar affective disorder or another psychosis on the
+      SMI register, excluding remission and lithium therapy without an SMI diagnosis,
+      assessed on the build date.
+
+      Achievement requires an alcohol consumption record in the preceding 15 months.
+      Units per week, alcohol usage status and FAST, AUDIT-C or AUDIT screening records
+      qualify.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -104,7 +124,16 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI alcohol record"
           description_short: "Alcohol consumption recorded in the preceding 15 months for people with SMI"
-          description_long: "NICE IND82 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people with schizophrenia, bipolar
+            affective disorder or another psychosis on the SMI register, excluding
+            remission and lithium therapy without an SMI diagnosis.
+
+            Achievement requires an alcohol consumption record in the preceding 15
+            months. Units per week, alcohol usage status and FAST, AUDIT-C or AUDIT
+            screening records qualify.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -149,15 +178,15 @@ models:
 
 
   - name: fct_person_smi_bmi_ind83
-    description: >
-      NICE IND83 SMI BMI recording. One row per currently registered, living,
-      non-test person on the SMI register with a schizophrenia, bipolar
-      affective disorder or other psychosis diagnosis not in remission
-      (lithium-only and remitted people are excluded), assessed on the build
-      date. The numerator requires a BMI with a value in the preceding 15
-      months. Personalised care adjustments are not applied. Secondary-use
-      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
-      Data Opt-Out and Type 1 opt-out filtering.
+    description: |
+      NICE IND83: SMI BMI record. One row per currently registered, living, non-test
+      person with schizophrenia, bipolar affective disorder or another psychosis on the
+      SMI register, excluding remission and lithium therapy without an SMI diagnosis,
+      assessed on the build date.
+
+      Achievement requires a BMI record with a numeric value in the preceding 15 months.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -170,7 +199,15 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI BMI record"
           description_short: "BMI recorded in the preceding 15 months for people with SMI"
-          description_long: "NICE IND83 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people with schizophrenia, bipolar
+            affective disorder or another psychosis on the SMI register, excluding
+            remission and lithium therapy without an SMI diagnosis.
+
+            Achievement requires a BMI record with a numeric value in the preceding 15
+            months.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -215,15 +252,15 @@ models:
 
 
   - name: fct_person_smi_blood_pressure_ind84
-    description: >
-      NICE IND84 SMI blood pressure. One row per currently registered, living,
-      non-test person on the SMI register with a schizophrenia, bipolar
-      affective disorder or other psychosis diagnosis not in remission
-      (lithium-only and remitted people are excluded), assessed on the build
-      date. The numerator requires a blood pressure reading in the preceding
-      15 months. Personalised care adjustments are not applied. Secondary-use
-      consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National
-      Data Opt-Out and Type 1 opt-out filtering.
+    description: |
+      NICE IND84: SMI blood pressure record. One row per currently registered, living,
+      non-test person with schizophrenia, bipolar affective disorder or another
+      psychosis on the SMI register, excluding remission and lithium therapy without an
+      SMI diagnosis, assessed on the build date.
+
+      Achievement requires a blood pressure reading in the preceding 15 months.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -236,7 +273,14 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI blood pressure record"
           description_short: "Blood pressure recorded in the preceding 15 months for people with SMI"
-          description_long: "NICE IND84 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people with schizophrenia, bipolar
+            affective disorder or another psychosis on the SMI register, excluding
+            remission and lithium therapy without an SMI diagnosis.
+
+            Achievement requires a blood pressure reading in the preceding 15 months.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -281,18 +325,19 @@ models:
 
 
   - name: fct_person_smi_cholesterol_ind158
-    description: >
-      NICE IND158 SMI cholesterol. One row per currently registered, living,
-      non-test person on the SMI register with a schizophrenia, bipolar
-      affective disorder or other psychosis diagnosis not in remission
-      (lithium-only and remitted people are excluded), aged 18 and over and
-      without cardiovascular disease (CHD, stroke/TIA or PAD register)
-      diagnosed more than 12 months before the build date, assessed on the
-      build date. The numerator requires a total cholesterol to HDL ratio with
-      a value in the preceding 12 months. Personalised care adjustments are
-      not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND158: SMI cholesterol ratio. One row per currently registered, living,
+      non-test person aged 18 and over with schizophrenia, bipolar affective disorder or
+      another psychosis on the SMI register, excluding remission and lithium therapy
+      without an SMI diagnosis, assessed on the build date.
+
+      Achievement requires a total cholesterol to HDL ratio with a numeric value in the
+      preceding 12 months.
+
+      People with coronary heart disease, stroke, TIA or peripheral arterial disease
+      first diagnosed more than 12 months before the reporting date are excluded.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -305,7 +350,19 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI cholesterol ratio"
           description_short: "Total cholesterol to HDL ratio recorded in the preceding 12 months for adults with SMI"
-          description_long: "NICE IND158 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people aged 18 and over with
+            schizophrenia, bipolar affective disorder or another psychosis on the SMI
+            register, excluding remission and lithium therapy without an SMI diagnosis.
+
+            Achievement requires a total cholesterol to HDL ratio with a numeric value
+            in the preceding 12 months.
+
+            People with coronary heart disease, stroke, TIA or peripheral arterial
+            disease first diagnosed more than 12 months before the reporting date are
+            excluded.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -350,17 +407,19 @@ models:
 
 
   - name: fct_person_smi_glucose_ind159
-    description: >
-      NICE IND159 SMI blood glucose or HbA1c. One row per currently
-      registered, living, non-test person on the SMI register with a
-      schizophrenia, bipolar affective disorder or other psychosis diagnosis
-      not in remission (lithium-only and remitted people are excluded), aged
-      18 and over and without diabetes diagnosed more than 12 months before
-      the build date, assessed on the build date. The numerator requires an
-      HbA1c or blood glucose record in the preceding 12 months. Personalised
-      care adjustments are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND159: SMI glucose or HbA1c. One row per currently registered, living,
+      non-test person aged 18 and over with schizophrenia, bipolar affective disorder or
+      another psychosis on the SMI register, excluding remission and lithium therapy
+      without an SMI diagnosis, assessed on the build date.
+
+      Achievement requires a blood glucose or HbA1c result with a numeric value in the
+      preceding 12 months.
+
+      People with diabetes first diagnosed more than 12 months before the reporting date
+      are excluded.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -373,7 +432,18 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI glucose or HbA1c"
           description_short: "Blood glucose or HbA1c recorded in the preceding 12 months for adults with SMI"
-          description_long: "NICE IND159 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people aged 18 and over with
+            schizophrenia, bipolar affective disorder or another psychosis on the SMI
+            register, excluding remission and lithium therapy without an SMI diagnosis.
+
+            Achievement requires a blood glucose or HbA1c result with a numeric value in
+            the preceding 12 months.
+
+            People with diabetes first diagnosed more than 12 months before the
+            reporting date are excluded.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -418,17 +488,23 @@ models:
 
 
   - name: fct_person_smi_smoking_ind154
-    description: >
-      NICE IND154 SMI smoking status. One row per currently registered,
-      living, non-test person on the SMI register with a schizophrenia,
-      bipolar affective disorder or other psychosis diagnosis not in remission
-      (lithium-only and remitted people are excluded), assessed on the build
-      date. The numerator requires a smoking status recorded in the preceding
-      12 months, or for a never smoker reaching 26 by the end of the financial
-      year, a never-smoked record made after the 25th birthday and after the
-      earliest SMI diagnosis. Personalised care adjustments are not applied.
-      Secondary-use consumers must join DIM_PERSON_SECONDARY_USE_ALLOWED to
-      apply National Data Opt-Out and Type 1 opt-out filtering.
+    description: |
+      NICE IND154: SMI smoking status. One row per currently registered, living,
+      non-test person with schizophrenia, bipolar affective disorder or another
+      psychosis on the SMI register, excluding remission and lithium therapy without an
+      SMI diagnosis, assessed on the build date.
+
+      Achievement requires a smoking status record in the preceding 12 months. A person
+      whose latest status is never smoked also qualifies without a recent record if they
+      reach 26 by the current financial year end. Their never-smoked record must be
+      after their 25th birthday and after their earliest qualifying diagnosis. The
+      optional three-year ex-smoker exception is not applied.
+
+      The qualifying diagnosis for the never-smoker exception is the earliest SMI
+      diagnosis. The active-diagnosis population follows the existing QOF mental health
+      interpretation; NICE does not explicitly exclude remission here.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -441,7 +517,23 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI smoking status"
           description_short: "Smoking status recorded in the preceding 12 months for people with SMI"
-          description_long: "NICE IND154 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people with schizophrenia, bipolar
+            affective disorder or another psychosis on the SMI register, excluding
+            remission and lithium therapy without an SMI diagnosis.
+
+            Achievement requires a smoking status record in the preceding 12 months. A
+            person whose latest status is never smoked also qualifies without a recent
+            record if they reach 26 by the current financial year end. Their
+            never-smoked record must be after their 25th birthday and after their
+            earliest qualifying diagnosis. The optional three-year ex-smoker exception
+            is not applied.
+
+            The qualifying diagnosis for the never-smoker exception is the earliest SMI
+            diagnosis. The active-diagnosis population follows the existing QOF mental
+            health interpretation; NICE does not explicitly exclude remission here.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -488,17 +580,22 @@ models:
 
 
   - name: fct_person_smi_smoking_support_ind155
-    description: >
-      NICE IND155 SMI smoking cessation support. One row per currently
-      registered, living, non-test person on the SMI register with a
-      schizophrenia, bipolar affective disorder or other psychosis diagnosis
-      not in remission (lithium-only and remitted people are excluded) whose
-      latest recorded smoking status is current smoker, assessed on the build
-      date. The numerator requires an offer of support and treatment (smoking
-      cessation intervention code) in the preceding 12 months. Personalised
-      care adjustments are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND155: SMI smokers offered support. One row per currently registered,
+      living, non-test person with schizophrenia, bipolar affective disorder or another
+      psychosis on the SMI register, excluding remission and lithium therapy without an
+      SMI diagnosis, whose latest smoking status is current smoker, assessed on the
+      build date.
+
+      Achievement requires a stop-smoking referral, a pharmacotherapy record or a
+      pharmacotherapy prescription in the preceding 12 months. QOF v51 SMOK004 defines
+      this evidence through REFERSSSA_COD, PHARM_COD and PHARMDRUG_COD. Generic advice
+      and declined-care codes alone do not qualify.
+
+      The active-diagnosis population follows the existing QOF mental health
+      interpretation; NICE does not explicitly exclude remission here.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -511,7 +608,21 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI smokers offered support"
           description_short: "Smoking cessation support offered in the preceding 12 months to current smokers with SMI"
-          description_long: "NICE IND155 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people with schizophrenia, bipolar
+            affective disorder or another psychosis on the SMI register, excluding
+            remission and lithium therapy without an SMI diagnosis, whose latest smoking
+            status is current smoker.
+
+            Achievement requires a stop-smoking referral, a pharmacotherapy record or a
+            pharmacotherapy prescription in the preceding 12 months. QOF v51 SMOK004
+            defines this evidence through REFERSSSA_COD, PHARM_COD and PHARMDRUG_COD.
+            Generic advice and declined-care codes alone do not qualify.
+
+            The active-diagnosis population follows the existing QOF mental health
+            interpretation; NICE does not explicitly exclude remission here.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -558,16 +669,18 @@ models:
 
 
   - name: fct_person_smi_care_plan_ind143
-    description: >
-      NICE IND143 SMI care planning. One row per currently registered, living,
-      non-test person on the SMI register with a schizophrenia, bipolar
-      affective disorder or other psychosis diagnosis not in remission
-      (lithium-only and remitted people are excluded), assessed on the build
-      date. The numerator requires a mental health care plan code (MHP_COD) in
-      the preceding 12 months. NICE asks that plans dated before a relapse are not counted: as QOF MH002 reads it, the plan must be dated on or after the latest diagnosis code where a remission code exists, otherwise on or after the first diagnosis (plan_anchor_date).
-      Personalised care adjustments are not applied. Secondary-use consumers
-      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
-      Out and Type 1 opt-out filtering.
+    description: |
+      NICE IND143: SMI care plan. One row per currently registered, living, non-test
+      person with schizophrenia, bipolar affective disorder or another psychosis on the
+      SMI register, excluding remission and lithium therapy without an SMI diagnosis,
+      assessed on the build date.
+
+      Achievement requires a mental health care plan in the preceding 12 months. Where a
+      remission code exists, the plan must be on or after the latest diagnosis;
+      otherwise it must be on or after the first diagnosis. This implements the relapse
+      rule using QOF v51 MH002.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -580,7 +693,17 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI care plan"
           description_short: "Mental health care plan recorded in the preceding 12 months for people with SMI"
-          description_long: "NICE IND143 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people with schizophrenia, bipolar
+            affective disorder or another psychosis on the SMI register, excluding
+            remission and lithium therapy without an SMI diagnosis.
+
+            Achievement requires a mental health care plan in the preceding 12 months.
+            Where a remission code exists, the plan must be on or after the latest
+            diagnosis; otherwise it must be on or after the first diagnosis. This
+            implements the relapse rule using QOF v51 MH002.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -625,18 +748,20 @@ models:
 
 
   - name: fct_person_smi_cvd_risk_assessment_ind150
-    description: >
-      NICE IND150 SMI cardiovascular risk assessment. One row per currently
-      registered, living, non-test person on the SMI register with a
-      schizophrenia, bipolar affective disorder or other psychosis diagnosis
-      not in remission (lithium-only and remitted people are excluded), aged
-      25 to 84 and without existing cardiovascular disease, chronic kidney
-      disease, familial hypercholesterolaemia or type 1 diabetes per
-      int_cvd_risk_profile, assessed on the build date. The numerator requires
-      a CVD risk assessment or QRISK score in the preceding 12 months.
-      Personalised care adjustments are not applied. Secondary-use consumers
-      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
-      Out and Type 1 opt-out filtering.
+    description: |
+      NICE IND150: SMI CVD risk assessment. One row per currently registered, living,
+      non-test person aged 25 to 84 with schizophrenia, bipolar affective disorder or
+      another psychosis on the SMI register, excluding remission and lithium therapy
+      without an SMI diagnosis, assessed on the build date.
+
+      Achievement requires a formal cardiovascular risk assessment or QRISK score in the
+      preceding 12 months. NICE permits assessment tools beyond QRISK3.
+
+      Existing cardiovascular disease, chronic kidney disease, familial
+      hypercholesterolaemia and type 1 diabetes exclude the person. The active-SMI
+      restriction follows the existing QOF mental health interpretation.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -649,7 +774,19 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI CVD risk assessment"
           description_short: "CVD risk assessment in the preceding 12 months for people aged 25 to 84 with SMI"
-          description_long: "NICE IND150 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people aged 25 to 84 with
+            schizophrenia, bipolar affective disorder or another psychosis on the SMI
+            register, excluding remission and lithium therapy without an SMI diagnosis.
+
+            Achievement requires a formal cardiovascular risk assessment or QRISK score
+            in the preceding 12 months. NICE permits assessment tools beyond QRISK3.
+
+            Existing cardiovascular disease, chronic kidney disease, familial
+            hypercholesterolaemia and type 1 diabetes exclude the person. The active-SMI
+            restriction follows the existing QOF mental health interpretation.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -692,17 +829,21 @@ models:
 
 
   - name: fct_person_smi_cervical_screening_ind85
-    description: >
-      NICE IND85 SMI cervical screening. One row per currently registered,
-      living, non-test person on the SMI register with a schizophrenia,
-      bipolar affective disorder or other psychosis diagnosis not in remission
-      (lithium-only and remitted people are excluded), women aged 25 to 64,
-      assessed on the build date. The numerator requires a completed cervical
-      screening record in the preceding 5 years. NICE lists no exclusions, so
-      unsuitable and non-response records are not applied. Personalised care
-      adjustments are not applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND85: SMI cervical screening 25 to 64. One row per currently registered,
+      living, non-test person recorded as female, aged 25 to 64, with schizophrenia,
+      bipolar affective disorder or another psychosis on the SMI register, excluding
+      remission and lithium therapy without an SMI diagnosis, assessed on the build
+      date.
+
+      Achievement requires completed cervical screening in the preceding 5 years.
+
+      NICE lists no cervical screening exclusions for this indicator. Unsuitable-care
+      and non-response records do not remove women from the denominator. The active-SMI
+      restriction follows the existing QOF mental health interpretation; NICE does not
+      explicitly exclude remission here.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -715,7 +856,20 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI cervical screening 25 to 64"
           description_short: "Cervical screening completed in the preceding 5 years for women aged 25 to 64 with SMI"
-          description_long: "NICE IND85 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people recorded as female, aged 25 to
+            64, with schizophrenia, bipolar affective disorder or another psychosis on
+            the SMI register, excluding remission and lithium therapy without an SMI
+            diagnosis.
+
+            Achievement requires completed cervical screening in the preceding 5 years.
+
+            NICE lists no cervical screening exclusions for this indicator.
+            Unsuitable-care and non-response records do not remove women from the
+            denominator. The active-SMI restriction follows the existing QOF mental
+            health interpretation; NICE does not explicitly exclude remission here.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -758,17 +912,21 @@ models:
 
 
   - name: fct_person_smi_cervical_screening_ind213
-    description: >
-      NICE IND213 SMI cervical screening 25 to 49. One row per currently
-      registered, living, non-test person on the SMI register with a
-      schizophrenia, bipolar affective disorder or other psychosis diagnosis
-      not in remission (lithium-only and remitted people are excluded), women
-      aged 25 to 49, assessed on the build date. The numerator requires a
-      completed cervical screening record in the preceding 3 years and 6
-      months. NICE lists no exclusions. Personalised care adjustments are not
-      applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND213: SMI cervical screening 25 to 49. One row per currently registered,
+      living, non-test person recorded as female, aged 25 to 49, with schizophrenia,
+      bipolar affective disorder or another psychosis on the SMI register, excluding
+      remission and lithium therapy without an SMI diagnosis, assessed on the build
+      date.
+
+      Achievement requires completed cervical screening in the preceding 3 years and 6
+      months.
+
+      NICE lists no cervical screening exclusions for this indicator. The active-SMI
+      restriction follows the existing QOF mental health interpretation; NICE does not
+      explicitly exclude remission here.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -781,7 +939,20 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI cervical screening 25 to 49"
           description_short: "Cervical screening completed in the preceding 3.5 years for women aged 25 to 49 with SMI"
-          description_long: "NICE IND213 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people recorded as female, aged 25 to
+            49, with schizophrenia, bipolar affective disorder or another psychosis on
+            the SMI register, excluding remission and lithium therapy without an SMI
+            diagnosis.
+
+            Achievement requires completed cervical screening in the preceding 3 years
+            and 6 months.
+
+            NICE lists no cervical screening exclusions for this indicator. The
+            active-SMI restriction follows the existing QOF mental health
+            interpretation; NICE does not explicitly exclude remission here.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -824,17 +995,21 @@ models:
 
 
   - name: fct_person_smi_cervical_screening_ind214
-    description: >
-      NICE IND214 SMI cervical screening 50 to 64. One row per currently
-      registered, living, non-test person on the SMI register with a
-      schizophrenia, bipolar affective disorder or other psychosis diagnosis
-      not in remission (lithium-only and remitted people are excluded), women
-      aged 50 to 64, assessed on the build date. The numerator requires a
-      completed cervical screening record in the preceding 5 years and 6
-      months. NICE lists no exclusions. Personalised care adjustments are not
-      applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND214: SMI cervical screening 50 to 64. One row per currently registered,
+      living, non-test person recorded as female, aged 50 to 64, with schizophrenia,
+      bipolar affective disorder or another psychosis on the SMI register, excluding
+      remission and lithium therapy without an SMI diagnosis, assessed on the build
+      date.
+
+      Achievement requires completed cervical screening in the preceding 5 years and 6
+      months.
+
+      NICE lists no cervical screening exclusions for this indicator. The active-SMI
+      restriction follows the existing QOF mental health interpretation; NICE does not
+      explicitly exclude remission here.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -847,7 +1022,20 @@ models:
           clinical_domain: "Mental health"
           name_short: "SMI cervical screening 50 to 64"
           description_short: "Cervical screening completed in the preceding 5.5 years for women aged 50 to 64 with SMI"
-          description_long: "NICE IND214 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people recorded as female, aged 50 to
+            64, with schizophrenia, bipolar affective disorder or another psychosis on
+            the SMI register, excluding remission and lithium therapy without an SMI
+            diagnosis.
+
+            Achievement requires completed cervical screening in the preceding 5 years
+            and 6 months.
+
+            NICE lists no cervical screening exclusions for this indicator. The
+            active-SMI restriction follows the existing QOF mental health
+            interpretation; NICE does not explicitly exclude remission here.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -890,19 +1078,22 @@ models:
 
 
   - name: fct_person_lithium_monitoring_ind87
-    description: >
-      NICE IND87 lithium levels in therapeutic range. One row per currently
-      registered, living, non-test person on lithium therapy per the SMI
-      register (lithium prescribed in the preceding 6 months without a stopped
-      code), assessed on the build date. The numerator requires the latest
-      serum lithium record to fall in the preceding 4 months and to be between
-      0.4 and 1.0 mmol/L, the range from NICE CG185 and the BNF. NICE counts
-      any in-range result in the window; the latest result is used, as for
-      IND278, so a toxic latest level is not covered by an earlier in-range
-      one. A latest record without a numeric value is NOT_ASSESSABLE.
-      Personalised care adjustments are not applied. Secondary-use consumers
-      must join DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-
-      Out and Type 1 opt-out filtering.
+    description: |
+      NICE IND87: Lithium level in range. One row per currently registered, living,
+      non-test person on lithium therapy according to the SMI register, based on
+      prescriptions in the preceding 6 months and lithium-stopped records, assessed on
+      the build date.
+
+      Achievement requires the latest serum lithium record in the preceding 4 months to
+      have a value between 0.4 and 1.0 mmol/L inclusive. A latest record without a
+      numeric value is NOT_ASSESSABLE; a value outside the range is OUT_OF_RANGE.
+
+      The numerical range and use of the latest result are existing local
+      interpretations. NICE IND87 does not define a numerical range or clearly settle
+      latest versus any qualifying result. The retired QOF MH010 rule is absent from
+      v51, so v51 cannot resolve these choices.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -915,7 +1106,22 @@ models:
           clinical_domain: "Mental health"
           name_short: "Lithium level in range"
           description_short: "Latest serum lithium in the preceding 4 months in the 0.4 to 1.0 mmol/L range"
-          description_long: "NICE IND87 before personalised care adjustments."
+          description_long: |
+            Currently registered, living, non-test people on lithium therapy according
+            to the SMI register, based on prescriptions in the preceding 6 months and
+            lithium-stopped records.
+
+            Achievement requires the latest serum lithium record in the preceding 4
+            months to have a value between 0.4 and 1.0 mmol/L inclusive. A latest record
+            without a numeric value is NOT_ASSESSABLE; a value outside the range is
+            OUT_OF_RANGE.
+
+            The numerical range and use of the latest result are existing local
+            interpretations. NICE IND87 does not define a numerical range or clearly
+            settle latest versus any qualifying result. The retired QOF MH010 rule is
+            absent from v51, so v51 cannot resolve these choices.
+
+            Assessed on the reporting date before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -962,16 +1168,19 @@ models:
 
 
   - name: fct_person_smi_nice_indicators
-    description: >
-      NICE severe mental illness indicators in one long-form table: IND82,
-      IND83, IND84, IND85, IND87, IND143, IND150, IND154, IND155, IND158,
-      IND159, IND213, IND214 and IND248. One row per person and indicator on
-      the reporting date, keeping the family's detail columns as typed nulls
-      where a branch does not emit them. Every member except IND87 uses the
-      SMI register with an active diagnosis (remitted and lithium-only people
-      excluded) for consistency, including IND85, IND143, IND150, IND154,
-      IND155, IND213 and IND214 where NICE lists no remission exclusion. Feeds
-      fct_person_nice_indicator_status and the family snapshot.
+    description: |
+      Severe mental illness NICE indicator results. One row per eligible person and
+      indicator on the build date. Covers IND82, IND83, IND84, IND85, IND87, IND143,
+      IND150, IND154, IND155, IND158, IND159, IND213, IND214, IND248.
+
+      Each indicator retains its own population, evidence window and exclusions. The
+      individual indicator models define these rules. Results feed the combined NICE
+      indicator table and family history.
+
+      IND248 includes SMI remission before personalised care adjustments. IND87 covers
+      lithium therapy. The other indicators use diagnosed SMI outside remission.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -1043,11 +1252,13 @@ models:
                 values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD', 'NOT_ASSESSABLE', 'OUT_OF_RANGE']
 
   - name: fct_person_smi_nice_indicators_snapshot_input
-    description: >
-      Thin projection of fct_person_smi_nice_indicators for SCD2 snapshotting.
-      Drops reporting_date and measurement_period_start, which advance every
-      build, so a version opens only on a new record, a practice move or a
-      record ageing out of the window.
+    description: |
+      Current smi NICE indicator evidence for change history. One row per person and
+      indicator. Records the current practice, qualifying evidence and outcome.
+
+      Reporting dates are omitted so a daily build alone does not create a new
+      historical version. Changes to recorded evidence, practice or achievement can
+      create a version in the family snapshot.
     config:
       meta:
         owner:

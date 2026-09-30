@@ -9,8 +9,9 @@ WITH indicator_population AS (
     FROM {{ ref('int_cvd_risk_profile') }} AS profile
     INNER JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE profile.latest_risk_score >= 10
-        AND NOT profile.has_cvd
+    WHERE age.age BETWEEN 25 AND 84
+        AND profile.latest_cvd_risk_score >= 10
+        AND NOT profile.has_cvd_including_haemorrhagic_stroke
 ),
 
 assessed AS (

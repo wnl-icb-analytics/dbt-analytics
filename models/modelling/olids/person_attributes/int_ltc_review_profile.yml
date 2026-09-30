@@ -1,28 +1,34 @@
 models:
   - name: int_ltc_review_profile
-    description: >
-      Per-person profile for the NICE long-term condition review indicators:
-      smoking, BMI recording, multimorbidity, alcohol and the condition reviews
-      (asthma, COPD, heart failure, rheumatoid arthritis, hypothyroidism,
-      learning disability, cancer, dementia and depression) and the severe
-      mental illness physical health checks. One row per person
-      in dim_person, including inactive and deceased people. Holds register
-      membership from the LTC summary, earliest diagnosis dates for the
-      populations those indicators define, frailty severity, the latest
-      smoking, BMI, medication review, falls discussion, alcohol screening and
-      brief intervention records, the latest review, care plan, health check,
-      MRC, NYHA and thyroid function test records, the latest new depression
-      diagnosis with its 10-to-35-day review, the first cancer care review
-      after the latest new cancer diagnosis, whether ethnicity is recorded, the
-      latest blood pressure, lipid, glucose or HbA1c and alcohol consumption
-      records, the SMI register detail (active diagnosis, lithium therapy, care
-      plan, latest lithium level) and the earliest cardiovascular disease and
-      diabetes diagnoses. Consumers apply their own windows and join
-      dim_person_active_patients.
+    description: |
+      Clinical evidence for NICE long-term condition reviews and physical health
+      checks. One row per person in dim_person, including inactive and deceased
+      people. The indicator models select their eligible registered populations
+      and apply their own measurement windows.
+
+      Holds condition register membership, relevant diagnosis dates, frailty and
+      multimorbidity categories. Dated evidence covers smoking, alcohol, BMI,
+      medication reviews, falls, condition reviews, care plans, health checks,
+      laboratory tests and SMI care. Asthma completion requires a same-day review
+      and action plan with an exacerbation count in the preceding month.
+
+      Smoking support includes QOF v51 referral and pharmacotherapy evidence from
+      observations and prescriptions. Pharmacotherapy drugs use active membership
+      of SNOMED CT refset 12465801000001106. Multimorbidity category coverage is
+      incomplete; the count column documents the conditions not yet modelled.
+
+      Alcohol indicators also include first or new depression episodes at ages
+      10 to 17, using diagnosis history outside the adult depression register.
+      Their diagnosis and resolution ordering matches the existing register.
     config:
       meta:
         owner:
           name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: REFERSSSA_COD, PHARM_COD
+            source: PCD
     columns:
       - name: person_id
         description: Person identifier.
@@ -34,7 +40,7 @@ models:
       - name: ltc_count
         description: Number of distinct project LTC registers the person is on.
       - name: multimorbidity_cluster_count
-        description: Number of NICE IND205 condition clusters the person has a condition in (cancer, circulatory, diabetes, digestive, learning disability, mental health including alcohol problems, musculoskeletal, neurological, renal, respiratory), from the project registers. Chronic pain, constipation, diverticular disease, inflammatory bowel disease, eating disorders and substance misuse are not modelled, so the count is conservative.
+        description: Number of NICE IND205 condition clusters the person has a condition in (cancer, circulatory, diabetes, digestive, learning disability, mental health including alcohol problems, musculoskeletal, neurological, renal, respiratory), from the project registers. Lithium therapy without an SMI diagnosis does not count as a mental health condition. Chronic pain, constipation, diverticular disease, inflammatory bowel disease, eating disorders, substance misuse, other inflammatory polyarthropathies, systemic connective tissue disorders and bronchiectasis are not modelled, so the count is conservative.
       - name: has_chd
         description: On the CHD register.
       - name: has_pad
@@ -78,7 +84,7 @@ models:
       - name: earliest_hypertension_date
         description: Earliest hypertension diagnosis date; null if none.
       - name: earliest_depression_anxiety_date
-        description: Earliest depression or anxiety diagnosis date; null if none.
+        description: Earliest qualifying depression or anxiety diagnosis date; null if none. Uses current register membership for adults and anxiety, plus unresolved first or new depression episodes at ages 10 to 17 for NICE IND198/199. An older diagnosis remains the anchor after a later new episode.
       - name: latest_frailty_severity
         description: Latest coded frailty severity; null if none.
       - name: latest_smoking_status
@@ -88,7 +94,7 @@ models:
       - name: latest_never_smoked_date
         description: Date of the latest never-smoked record; null if none.
       - name: latest_smoking_intervention_date
-        description: Date of the latest smoking cessation support record; null if none.
+        description: Date of the latest stop-smoking referral or pharmacotherapy record or prescription, using QOF v51 REFERSSSA_COD, PHARM_COD and PHARMDRUG_COD; null if none. PHARMDRUG_COD uses active membership of SNOMED CT refset 12465801000001106. Generic advice and declined-care codes alone do not qualify.
       - name: latest_bmi_date
         description: Date of the latest BMI with a value; null if none.
       - name: latest_structured_medication_review_date
@@ -104,7 +110,7 @@ models:
       - name: is_latest_alcohol_screen_positive
         description: Whether the latest screen met the hazardous-drinking threshold.
       - name: latest_positive_alcohol_screen_date
-        description: Date of the latest positive screen; null if none.
+        description: Date of the latest FAST score of at least 3 or AUDIT-C score of at least 5; null if none. Full AUDIT does not qualify for the NICE brief intervention indicators.
       - name: latest_intervention_after_positive_screen_date
         description: Date of the latest alcohol brief intervention within 3 months after the latest positive screen; null if none.
       - name: has_alcohol_disorder
@@ -119,8 +125,12 @@ models:
         description: Latest first-or-new-episode cancer diagnosis date from the register; null if none.
       - name: latest_asthma_review_date
         description: Date of the latest asthma review record; null if none.
+      - name: latest_complete_asthma_review_date
+        description: Date of the latest asthma review with a same-day written personalised plan and an exacerbation count recorded within the preceding month, as QOF v51 AST015 defines; null if none.
       - name: latest_copd_review_date
         description: Date of the latest COPD review record; null if none.
+      - name: latest_copd_exacerbation_count_date
+        description: Date of the latest record of the number of COPD exacerbations (COPDEXACB_COD); null if none.
       - name: latest_mrc_dyspnoea_date
         description: Date of the latest MRC dyspnoea scale record; null if none.
       - name: latest_heart_failure_review_date
@@ -149,6 +159,8 @@ models:
         description: Whether an ethnicity category other than Unknown is recorded.
       - name: earliest_smi_diagnosis_date
         description: Earliest severe mental illness register diagnosis date; null if none.
+      - name: earliest_dementia_diagnosis_date
+        description: Earliest dementia register diagnosis date; null if none.
       - name: earliest_diabetes_diagnosis_date
         description: Earliest diabetes register diagnosis date; null if none.
       - name: earliest_cvd_diagnosis_date

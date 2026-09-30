@@ -8,7 +8,7 @@
 with latest_ward_stay as (
     {{
         select_latest_mhsds_record(
-            mhsds_table = ref('raw_mhsds_mhs502wardstay'),
+            mhsds_table = ref('stg_mhsds_ward_stay_history'),
             partition_cols = ['uniq_ward_stay_id'],
             tie_breaker_cols = ['mhs502_uniq_id']
         )

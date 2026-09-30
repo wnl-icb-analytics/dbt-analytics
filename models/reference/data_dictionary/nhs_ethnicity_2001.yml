@@ -1,0 +1,43 @@
+version: 2
+models:
+  - name: nhs_ethnicity_2001
+    description: >-
+      NHS Census 2001 ethnic category codes from the warehouse dictionary.
+      One row per EthnicCategoryCode from Dictionary.dbo.EthnicityCode where
+      EthnicityCodeType is EthnicCategoryCode and starred duplicate variants are
+      excluded. Includes the 16 ethnic categories, Z (Not stated) and the default
+      99 (Not known). Definitions follow the
+      [NHS Ethnic Category Code 2001](https://www.datadictionary.nhs.uk/attributes/ethnic_category_code_2001.html)
+      and [Ethnic Category data element](https://www.datadictionary.nhs.uk/data_elements/ethnic_category.html).
+      Chinese belongs to Other Ethnic Groups. Not stated and Not known are
+      recording statuses outside the five ethnic groups.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: ethnicity_2001_code
+        description: NHS Census 2001 ethnicity code used in national datasets.
+        data_tests:
+          - not_null
+          - unique
+          - accepted_values:
+              arguments:
+                values: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S', 'Z', '99']
+      - name: ethnicity_2001_detailed_description
+        description: Dictionary label, including its broad-group prefix. Z is normalised to Not stated and 99 to Not known.
+        data_tests: [not_null]
+      - name: ethnicity_2001_broad_group
+        description: Broad national group derived from the authoritative description.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - White
+                  - Mixed
+                  - Asian or Asian British
+                  - Black or Black British
+                  - Other Ethnic Groups
+                  - Not stated
+                  - Not known

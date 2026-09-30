@@ -11,8 +11,8 @@ Includes ALL persons (active, inactive, deceased) within 5 years following inter
 End-date derivation (end_date_source):
 - 'discharged'      - a real discharge date was recorded.
 - 'open'            - no discharge date, but the spell appears in an active
-                      submission within 2 reporting periods of the latest period
-                      in the dataset, so it is treated as genuinely open and
+                      submission within two calendar months of the latest staged
+                      spell period, so it is treated as open and
                       accrues to current_date. MHSDS requires providers to
                       resubmit every active spell each period.
 - 'last_submission' - no discharge date and the spell stopped appearing in
@@ -52,79 +52,8 @@ Proxy costing:
   outside the index's coverage are clamped to its earliest/latest rows.
 */
 
-with spells as (
-    select
-        s.*
-        , coalesce(s.disch_date_hosp_prov_spell, current_date) as fallback_end
-        , max(s.reporting_period_end_date) over () as latest_period_end
-    from {{ ref('stg_mhsds_spell') }} as s
-)
-
-, classified as (
-    select
-        spells.*
-        , case
-            when disch_date_hosp_prov_spell is not null then 'discharged'
-            when reporting_period_end_date >= dateadd(month, -2, latest_period_end) then 'open'
-            else 'last_submission'
-        end as end_date_source
-        , case
-            when disch_date_hosp_prov_spell is not null then disch_date_hosp_prov_spell
-            when reporting_period_end_date >= dateadd(month, -2, latest_period_end) then null
-            else greatest(reporting_period_end_date, dateadd(day, 1, start_date_hosp_prov_spell))
-        end as end_date
-    from spells
-)
-
--- Single occupancy rule 1: one spell per person and admission date, keeping
--- the record with the latest submission evidence.
-, deduplicated as (
-    select *
-    from classified
-    qualify row_number() over (
-        partition by coalesce(person_id, uniq_hosp_prov_spell_num)
-            , start_date_hosp_prov_spell
-        order by reporting_period_end_date desc nulls last
-            , uniq_hosp_prov_spell_num
-    ) = 1
-)
-
--- Rule 2: drop spells wholly contained inside a longer spell for the same
--- person (strict containment on at least one side, so exact duplicates on
--- both dates are not mutually eliminated).
-, uncontained as (
-    select d.*
-    from deduplicated as d
-    where not exists (
-        select 1
-        from deduplicated as o
-        where o.person_id = d.person_id
-            and o.uniq_hosp_prov_spell_num != d.uniq_hosp_prov_spell_num
-            and o.start_date_hosp_prov_spell <= d.start_date_hosp_prov_spell
-            and coalesce(o.end_date, current_date) >= coalesce(d.end_date, current_date)
-            and (o.start_date_hosp_prov_spell < d.start_date_hosp_prov_spell
-                or coalesce(o.end_date, current_date) > coalesce(d.end_date, current_date))
-    )
-)
-
--- Rule 3: discharge-forward supersession. A later admission ends any spell
--- still open at that date (end_date_source 'superseded').
-, base as (
-    select
-        * exclude (end_date, end_date_source, next_start_date)
-        , iff(next_start_date < coalesce(end_date, current_date)
-            , next_start_date, end_date) as end_date
-        , iff(next_start_date < coalesce(end_date, current_date)
-            , 'superseded', end_date_source) as end_date_source
-    from (
-        select
-            u.*
-            , lead(start_date_hosp_prov_spell) over (
-                partition by coalesce(person_id, uniq_hosp_prov_spell_num)
-                order by start_date_hosp_prov_spell, uniq_hosp_prov_spell_num
-            ) as next_start_date
-        from uncontained as u
-    )
+with base as (
+    select * from {{ ref('int_mhsds_inpatient_occupancy') }}
 )
 
 -- Dominant care setting per spell from ward stays, weighted by bed days.
@@ -225,7 +154,7 @@ with spells as (
 
 select
     c.uniq_hosp_prov_spell_num as encounter_id
-    , b.sk_patient_id
+    , c.sk_patient_id
     , c.org_id_prov
     , c.start_date_hosp_prov_spell as start_date
     , c.source_adm_mh_hosp_prov_spell as admission_source_code
@@ -240,9 +169,6 @@ select
     , 'MHSDS' as source
 from
     base as c
-left join
-    {{ ref('stg_mhsds_bridging') }} as b
-    on c.person_id = b.person_id
 left join
     ward_settings as ws
     on c.uniq_hosp_prov_spell_num = ws.uniq_hosp_prov_spell_num

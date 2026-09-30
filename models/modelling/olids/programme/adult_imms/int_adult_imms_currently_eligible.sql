@@ -6,19 +6,22 @@
 
 --April 2026 amend rsv eligibilty for new rules starting 1st April 2026, RSV for pregnant women and also new shingles vaccine eligibility aged 18+ immunosupressed.
 --Add in PPV Clinical Risk Groups which are similar to COVID but also with Cochlear Implant and CSF leak.
+WITH POPULATION AS (
 SELECT 
 p.PERSON_ID,
 p.BIRTH_DATE_APPROX,
 p.AGE,
 p.AGE_DAYS_APPROX,
 p.AGE_BAND_5Y,
+p.GENDER,
 p.IS_CARE_HOME_RESIDENT,
 p.IS_IMMUNOSUPPRESSED,
 p.IN_PPV_CLINICAL_RISK_GROUP,
+p.IN_RSV_CLINICAL_RISK_GROUP,
 p.IS_PREGNANT,
 p.TURN_65_AFTER_SEP_2023,
-p.TURN_75_AFTER_SEP_2024,
-p.TURN_80_AFTER_SEP_2024,
+-- p.TURN_75_AFTER_SEP_2024,
+-- p.TURN_80_AFTER_SEP_2024,
 sched.VACCINE_ORDER,
 sched.VACCINE_ID,
 sched.VACCINE_NAME,
@@ -51,6 +54,9 @@ WHEN sched.VACCINE_ID = 'RSV_1B' AND IS_CARE_HOME_RESIDENT AND AGE_DAYS_APPROX >
 AND AGE_DAYS_APPROX <= sched.eligible_age_to_days THEN TRUE
 WHEN sched.VACCINE_ID = 'RSV_1C' AND IS_PREGNANT AND AGE_DAYS_APPROX >= sched.eligible_age_from_days 
 AND AGE_DAYS_APPROX <= sched.eligible_age_to_days THEN TRUE
+--add in RSV new clinical risk group from 1st September 2026
+WHEN sched.VACCINE_ID = 'RSV_1D' AND IN_RSV_CLINICAL_RISK_GROUP AND AGE_DAYS_APPROX >= sched.eligible_age_from_days 
+AND AGE_DAYS_APPROX <= sched.eligible_age_to_days THEN TRUE
 --PPV add in PPV clinical risk groups (includes immunosuppression) from age 2 +
 WHEN sched.VACCINE_ID = 'PPV_1' AND AGE_DAYS_APPROX >= sched.eligible_age_from_days 
 AND AGE_DAYS_APPROX <= sched.eligible_age_to_days THEN TRUE 
@@ -64,3 +70,5 @@ CROSS JOIN {{ ref('stg_reference_imms_schedule_adult_latest') }} sched
 WHERE 
 AGE_DAYS_APPROX >= (select min(ELIGIBLE_AGE_FROM_DAYS) from {{ ref('stg_reference_imms_schedule_adult_latest') }}) 
 --AGE_DAYS_APPROX >= (select min(ELIGIBLE_AGE_FROM_DAYS) from MODELLING.DBT_STAGING.STG_REFERENCE_IMMS_SCHEDULE_ADULT_LATEST) 
+)
+SELECT * FROM POPULATION WHERE CURRENTLY_ELIGIBLE

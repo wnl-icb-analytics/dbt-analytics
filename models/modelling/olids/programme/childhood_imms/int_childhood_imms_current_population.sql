@@ -95,7 +95,10 @@ ELSE dem.MAIN_LANGUAGE END AS MAIN_LANGUAGE
     else 'Outside London'
     end as residential_loc
 ,dem.WARD_CODE
-,dem.WARD_NAME
+,CASE 
+        WHEN dem.local_authority_name = 'Haringey' AND dem.ward_name = 'Highgate' THEN 'Highgate (Haringey)' 
+        WHEN dem.local_authority_name = 'Camden' AND dem.ward_name = 'Highgate' THEN 'Highgate (Camden)'
+        ELSE dem.ward_name END AS ward_name
 ,dem.LSOA_CODE_21
 ,CASE WHEN l.PERSON_ID IS NULL  THEN 'No' ELSE 'Yes' END AS LAC_FLAG
 ,dem.is_active

@@ -16,6 +16,7 @@ WITH indicator_population AS (
         -- NICE exclusions: persisting contraindication anywhere on the record (allergy or adverse
         -- reaction), or an expiring contraindication recorded in the preceding 12 months
         AND NOT profile.has_anticoagulant_adverse_reaction
+        AND NOT profile.has_anticoagulant_persisting_contraindication
         AND NOT COALESCE(profile.latest_anticoagulant_contraindicated_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
 ),
 

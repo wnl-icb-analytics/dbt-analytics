@@ -1,4 +1,5 @@
 {% macro calculate_chd_register(reference_date_expr='CURRENT_DATE()') %}
+    {# Pair: fct_person_chd_register.sql. This macro is strict as-of; the live fact includes future-dated records. #}
     {#
     Calculates CHD (Coronary Heart Disease) register status at a given reference date.
 

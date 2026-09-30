@@ -7,7 +7,7 @@ with profile_sentinel_counts as (
         count_if(latest_contact_date < '1901-01-01'::date) as latest_contact_date,
         count_if(latest_detention_start_date < '1901-01-01'::date)
             as latest_detention_start_date
-    from {{ ref('dim_person_mh_profile') }}
+    from {{ ref('fct_mhsds_person_summary') }}
 )
 
 -- one row per date column so a failure names the column holding the sentinel

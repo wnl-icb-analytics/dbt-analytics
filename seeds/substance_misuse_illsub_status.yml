@@ -1,0 +1,68 @@
+seeds:
+  - name: substance_misuse_illsub_status
+    description: >
+      Qualifying/resolving classification of the NHS England Primary Care Domain
+      refset ILLSUB_COD (illicit substance abuse codes), 548 codes.
+
+      The codes themselves are already published to
+      DATA_LAKE__NCL.TERMINOLOGY.COMBINED_CODESETS under cluster_id ILLSUB_COD
+      and are read via the get_observations macro. This seed adds only the
+      status classification, which is an ICB editorial judgement rather than
+      NHSE-published refset content, and so is version-controlled here where the
+      reasoning is reviewable.
+
+      Why the classification is needed: ILLSUB_COD is diagnosis-led and contains
+      almost no "history of" codes, but it does mix in negation codes ("Does not
+      misuse drugs"), abstinence codes and in-remission codes alongside the
+      current-misuse codes. Treating cluster membership alone as evidence of
+      substance misuse would wrongly include people whose record explicitly says
+      the opposite.
+
+      Intended use: take each person's most recent ILLSUB_COD record. A
+      RESOLVING code as the latest record means the person does not qualify,
+      even if earlier records are QUALIFYING. Implemented in
+      int_substance_misuse_status.
+    config:
+      column_types:
+        snomed_code: varchar(18)
+        snomed_term: varchar(500)
+        status: varchar(20)
+        category: varchar(50)
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: snomed_code
+        description: SNOMED CT concept id, as published in the ILLSUB_COD refset.
+        data_tests:
+          - not_null
+          - unique
+      - name: snomed_term
+        description: SNOMED CT fully specified name at the time of extract.
+        data_tests:
+          - not_null
+      - name: status
+        description: >
+          QUALIFYING = the code indicates current substance misuse or dependence.
+          RESOLVING = the code indicates the person does not currently misuse
+          substances (negation, abstinence or remission).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['QUALIFYING', 'RESOLVING']
+      - name: category
+        description: >
+          Finer-grained reason for the status, retained for traceability and for
+          reporting cuts. Current misuse or dependence (QUALIFYING); In remission,
+          Abstinent, Negation, History observable (all RESOLVING).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 'Current misuse or dependence'
+                  - 'In remission'
+                  - 'Abstinent'
+                  - 'Negation'
+                  - 'History observable'

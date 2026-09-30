@@ -1,0 +1,56 @@
+version: 2
+models:
+- name: stg_csds_mpi_history
+  description: One CYP001 master patient index row from an accepted CSDS submission, including repeated
+    monthly occurrences. A person appears once per provider and month in most submissions, but a provider
+    can submit more than one local patient record for the same person; both are retained. Use this history
+    for demographics, residence and risk indicators as reported in each period. The latest record per
+    person and provider is in stg_csds_mpi.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  data_tests:
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1
+  columns:
+  - name: cyp001_unique_id
+    description: Identifier of one delivered CYP001 source row.
+    data_tests:
+    - unique
+    - not_null
+  - name: person_id
+    description: CSDS person identifier. Null when the source could not assign one; those rows are retained here.
+  - name: local_patient_identifier_extended
+    description: Provider-local patient identifier. One person can carry several within a provider.
+  - name: person_stated_gender_code
+    description: Supplied person stated gender code.
+  - name: ethnic_category
+    description: Supplied ethnic category code.
+  - name: dmic_ethnic_category_group
+    description: Ethnic category group derived by the source pipeline.
+  - name: lower_super_output_area_residence
+    description: Supplied 2021 LSOA of residence. Some providers still supply retired 2011 codes in this field.
+  - name: lower_super_output_area_residence_2011
+    description: Supplied 2011 LSOA of residence.
+  - name: local_authority_district_unitary_authority
+    description: Supplied local authority district of usual address.
+  - name: organisation_identifier_sub_icb_location_of_residence
+    description: Sub-ICB location of residence derived by the source pipeline.
+  - name: person_death_date
+    description: Supplied date of death.
+  - name: ic_age_of_patient_at_rp_end
+    description: Source-derived age in years at the reporting period end.
+  - name: unique_submission_id
+    description: Accepted submission containing this row.
+    data_tests:
+    - not_null
+  - name: organisation_code_provider
+    description: Supplied provider organisation code.
+  - name: effective_from
+    description: Date and time the submission portal received the file; not the time of care.
+  - name: reporting_period_end_date
+    description: Last date of the source reporting period.
+  - name: csds_version
+    description: Dataset version from the submission header.

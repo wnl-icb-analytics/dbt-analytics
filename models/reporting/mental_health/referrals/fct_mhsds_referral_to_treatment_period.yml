@@ -1,0 +1,47 @@
+version: 2
+models:
+- name: fct_mhsds_referral_to_treatment_period
+  description: >-
+    Referral-to-treatment clocks reported by providers. Each row is one accepted MHS104 record in a
+    reporting period, with the clock's dates, measurement type and status. A submitted clock is
+    different from the interval between referral and first recorded contact. Repeated period records
+    remain present, so counts of populated start and end dates are counts of submitted evidence,
+    not distinct clocks starting or ending. The specification allows earlier starts but expects
+    submitted end dates within the reporting month. A missing end date does not prove the person is still
+    waiting. Check date and status completeness by provider and period. The table does not decide
+    national waiting-list eligibility or target compliance.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: referral_to_treatment_period_id
+    description: Unique identifier at the documented model grain.
+    data_tests:
+    - not_null
+    - unique
+  - name: referral_source_record_id
+    description: Submitted referral source record id.
+  - name: pathway_issuer_organisation_code
+    description: Submitted pathway issuer organisation code.
+  - name: waiting_time_measurement_type_code
+    description: Submitted waiting time measurement type code.
+  - name: rtt_start_date
+    description: Submitted clock start date, which can repeat in later monthly records. A populated date does not mean a new start in this reporting period.
+  - name: rtt_end_date
+    description: Submitted clock end date. Null means no usable end date was supplied; it does not prove that the clock is still running.
+  - name: rtt_status_code
+    description: Submitted RTT status code. Read alongside both dates; missing or unknown status does not establish an active clock.
+  - name: is_recorded_open_at_period_end
+    description: Date-only flag for a start on or before period end and no end on or before that date. Does not use the submitted status, prove the clock remains active or establish waiting-list eligibility. A missing start can leave the flag null.
+  - name: recorded_rtt_interval_days
+    description: Calendar days between valid submitted start and end dates. Null when either date is missing or the end precedes the start. Repeated submissions can repeat the same interval.
+  - name: waiting_time_measurement_type_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: reporting_period_end_date
+    description: Period of the accepted source evidence; may be later than the clinical event.
+  - name: source_file_received_at
+    description: Source file receipt timestamp, not a clinical time.
+  - name: pathway_issuer_organisation_name
+    description: Authoritative organisation name for the corresponding source code; null when the code is missing
+      or unmatched.

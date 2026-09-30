@@ -110,11 +110,32 @@ models:
       +post-hook:
         - "{{ add_model_comment() }}"
         - "{{ log_row_count() }}"
+      segmentation:
+        +meta:
+          custom_message: "Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering."
       olids:
         +meta:
           custom_message: "Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering."
         risk_stratification:
           +schema: "RISK_STRATIFICATION"
+    
+    # Statistical modelling layer
+    stat_models:
+      +enabled: true
+      +materialized: table
+      +database: "STAT_MODELS"
+      +tags: ["stat_models"]
+      +post-hook:
+        - "{{ add_model_comment() }}"
+        - "{{ log_row_count() }}"
+      +meta:
+        custom_message: "Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering."
+      CCMS:
+        +schema: "CCMS"
+      EFI2:
+        +schema: "EFI2"
+      qadmissions:
+        +schema: "QADMISSIONS"
 
     # Reporting layer - aggregated and analytical models
     reporting:
@@ -125,6 +146,10 @@ models:
       +post-hook:
         - "{{ add_model_comment() }}"
         - "{{ log_row_count() }}"
+      segmentation:
+        +tags: ["daily"]
+        +meta:
+          custom_message: "Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering."
       olids:
         +meta:
           custom_message: "Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering."

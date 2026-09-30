@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND200: https://www.nice.org.uk/indicators/ind200
--- Brief intervention within 3 months of the latest positive screen for people on the SMI register with a positive screen in the preceding 12 months; excludes alcohol-related disorders.
+-- Brief intervention after a positive screen in 12 months for diagnosed SMI; lithium therapy alone does not qualify.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -10,8 +10,16 @@ WITH indicator_population AS (
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
     WHERE profile.has_smi
+        AND profile.earliest_smi_diagnosis_date IS NOT NULL
         AND profile.latest_positive_alcohol_screen_date >= DATEADD(month, -12, CURRENT_DATE())
         AND NOT profile.has_alcohol_disorder
+),
+
+qualifying_interventions AS (
+    SELECT person_id, MAX(latest_intervention_date) AS latest_record_date
+    FROM {{ ref('int_nice_alcohol_screen_intervention') }}
+    WHERE screen_date >= DATEADD(month, -12, CURRENT_DATE())
+    GROUP BY person_id
 ),
 
 assessed AS (
@@ -25,11 +33,13 @@ assessed AS (
         population.latest_alcohol_screen_score,
         population.latest_positive_alcohol_screen_date,
         population.latest_intervention_after_positive_screen_date,
-        population.latest_intervention_after_positive_screen_date AS latest_record_date,
-        population.latest_intervention_after_positive_screen_date IS NOT NULL AS is_in_numerator
+        interventions.latest_record_date,
+        interventions.latest_record_date IS NOT NULL AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
+    LEFT JOIN qualifying_interventions AS interventions
+        ON population.person_id = interventions.person_id
 )
 
 SELECT

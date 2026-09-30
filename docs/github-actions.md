@@ -10,10 +10,11 @@ Every pull request receives fast feedback:
 | Workflow | What it does |
 |----------|--------------|
 | `auto-author-assign.yml` | Assigns the pull request author |
+| `pr-title.yml` | Checks the title against Conventional Commits (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `ci`). Source-sync pull requests (`chore/source-sync-*` branches or the `source-sync` label) skip the check |
 | `dbt-code-quality.yml` | Checks hardcoded relations, raw/source layer boundaries, model descriptions and test coverage |
 | `dbt-compile.yml` | Runs Fusion compile against development metadata |
 | `model-ownership.yml` | Comments when changed models lack ownership metadata |
-| `dbt-pr-validation.yml` | Reports that runtime validation will run in the merge queue |
+| `dbt-pr-validation.yml` | Reports that runtime validation will run in the merge queue, or builds in development once when the `❄️snowflake-ci` label is added |
 
 The staging-reference check enforces the raw boundary in changed models. Staging
 may use `ref()` to a generated raw model but not `source()`; every other
@@ -38,8 +39,15 @@ then validate the exact commit GitHub would merge:
 - When no deployed manifest exists, validation builds the directly changed dbt
   nodes rather than the full project.
 
-Merge-queue runtime builds are serial because candidates share development
-relations. They do not publish deployment state.
+To validate a pull request in development before queueing it, add the
+`❄️snowflake-ci` label. The workflow merges current `main` into the pull request
+head, builds it the same way and removes the label. The result appears as a
+separate `DEV build (snowflake-ci)` check that does not block merging. Later
+commits are not rebuilt; add the label again to repeat the build. Fork pull
+requests are excluded.
+
+Merge-queue, label and manual runtime builds run one at a time because they
+share development relations. They do not publish deployment state.
 
 ## Production deployment
 
@@ -66,6 +74,7 @@ deployment-state manifest.
 | `project-status-in-progress.yml` | Moves referenced issues to In Progress after branch pushes |
 | `project-status-blocked.yml` | Moves issues labelled Blocked to Blocked |
 | `project-status-review.yml` | Moves ready pull requests with reviewers to Code Review |
+| `changelog-refresh.yml` | Asks the onboarding changelog to refresh after a merge to `main` |
 
 ## Credentials
 
@@ -78,5 +87,10 @@ secrets:
 - `SNOWFLAKE__PASSPHRASE`
 
 Project-board automation uses `PROJECT_TOKEN`; the coverage badge uses
-`GIST_TOKEN`. Workflows write private keys only for the current job and remove
-them in an `always()` cleanup step.
+`GIST_TOKEN`. The changelog refresh uses the `CHANGELOG_REVALIDATE_SECRET`
+secret, which must match the onboarding site's Vercel variable of the same
+name. The optional `CHANGELOG_SITE_URL` repository variable points it at
+another deployment; it defaults to `https://dbt-onboarding.vercel.app` and
+must use `https://`, because the secret is sent as a bearer token.
+Workflows write private keys only for the current job and remove them in an
+`always()` cleanup step.

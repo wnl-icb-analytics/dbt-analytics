@@ -16,7 +16,7 @@ WITH indicator_population AS (
         AND profile.has_type2_diabetes
         AND COALESCE(profile.latest_frailty_severity, 'None') NOT IN ('Moderate', 'Severe')
         AND NOT COALESCE(profile.latest_statin_order_date >= DATEADD(month, -6, CURRENT_DATE()), FALSE)
-        AND NOT profile.has_cvd
+        AND NOT profile.has_cvd_including_haemorrhagic_stroke
         AND NOT profile.has_familial_hypercholesterolaemia
         AND NOT profile.has_ckd
 ),

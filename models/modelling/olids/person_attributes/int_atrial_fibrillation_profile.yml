@@ -3,7 +3,8 @@ models:
     description: >
       Per-person atrial fibrillation profile for the NICE AF indicators. One row
       per person on the QOF AF register, including inactive and deceased people.
-      Holds the latest CHA2DS2-VASc and CHADS2 scores and the highest score ever,
+      Holds the last recorded CHA2DS2-VASc score, the last CHADS2 score before
+      1 April 2015 and the highest score ever,
       the latest oral anticoagulant, DOAC and VKA order dates, anticoagulant
       contraindication and declined records, DOAC exceptions (contraindicated,
       declined, not indicated, valvular AF, antiphospholipid syndrome) and the
@@ -13,6 +14,11 @@ models:
       meta:
         owner:
           name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: TTR_COD
+            source: PCD
     columns:
       - name: person_id
         description: Person on the AF register.
@@ -22,17 +28,21 @@ models:
       - name: earliest_af_diagnosis_date
         description: Earliest AF diagnosis date from the register.
       - name: latest_chadsvasc_score
-        description: Latest CHA2DS2-VASc score with a valid value; records without a valid value are ignored.
+        description: Value of the last recorded CHA2DS2-VASc assessment; null if absent or invalid. A later invalid assessment does not fall back to an older score.
       - name: latest_chadsvasc_date
         description: Date of the latest CHA2DS2-VASc assessment.
       - name: latest_chads2_score
-        description: Latest CHADS2 score with a valid value; records without a valid value are ignored.
+        description: Value of the last CHADS2 assessment before 1 April 2015, following QOF v51; null if absent or invalid.
       - name: latest_chads2_date
-        description: Date of the latest CHADS2 assessment.
+        description: Date of the last CHADS2 assessment before 1 April 2015.
+      - name: latest_stroke_risk_score_date
+        description: Later of the last CHA2DS2-VASc assessment and the last CHADS2 assessment before 1 April 2015, as QOF v51 AF006 defines LCHADS_DAT.
+      - name: latest_stroke_risk_score
+        description: Value at latest_stroke_risk_score_date; null if absent or invalid. QOF v51 AF006 uses this score for its previous-high-score exclusion.
       - name: max_stroke_risk_score_ever
         description: Highest valid CHA2DS2-VASc or CHADS2 score ever recorded.
       - name: max_stroke_risk_score_before_period
-        description: Highest CHADS2 or CHA2DS2-VASc score recorded before the preceding 12 months; null if none. NICE IND127 excludes a previous score of 2 or more.
+        description: Highest CHADS2 or CHA2DS2-VASc score recorded before the preceding 12 months; null if none. Historical summary only; IND127 uses latest_stroke_risk_score instead.
       - name: latest_anticoagulant_order_date
         description: Date of the most recent oral anticoagulant order; null if never.
       - name: latest_anticoagulant_type
@@ -43,13 +53,15 @@ models:
         description: Date of the most recent vitamin K antagonist order; null if never.
       - name: has_anticoagulant_adverse_reaction
         description: Any allergy or adverse reaction to an oral anticoagulant recorded; persisting.
+      - name: has_anticoagulant_persisting_contraindication
+        description: Any generic persisting oral anticoagulant contraindication in XORANTICOAGGENCON_COD.
       - name: latest_anticoagulant_contraindicated_date
         description: Date of the latest anticoagulation contraindicated or not tolerated record; null if none.
       - name: latest_anticoagulant_declined_date
         description: Date of the latest anticoagulant declined record; null if none.
       - name: is_doac_ineligible
-        description: Any record of valvular AF or antiphospholipid syndrome, where NICE expects a vitamin K antagonist rather than a DOAC.
+        description: Any record of valvular AF, which NICE IND247 excludes from its DOAC success criterion. Antiphospholipid syndrome is handled as a DOAC exception instead.
       - name: has_doac_exception
-        description: Any record that a DOAC is contraindicated, declined or not indicated.
+        description: A DOAC contraindication or antiphospholipid syndrome at any time, a DOAC decline in 12 months, or a not-indicated code in 12 months with latest non-null TTR at least 65% in six months, following QOF v51 AF008.
       - name: latest_anticoagulant_review_date
         description: Date of the latest anticoagulant medication review or AF annual review record; null if none.
