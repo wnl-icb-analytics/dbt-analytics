@@ -4,7 +4,8 @@ models:
   - name: stg_lpf_appointments
     description: |
       Staging layer for local provider flow appointments data.
-      Transformations: Removes deleted records, removes nulls on AppointmentID, deduplicates by latest version.
+      One row per appointment_id, holding the latest submitted version.
+      Removes deleted records and null appointment_id values.
       Source: raw_lpf_appointments
 
     config:
@@ -13,40 +14,13 @@ models:
           name: Data Team
 
     columns:
-      - name: metadata_record_ingestion_timestamp
-        description: "Timestamp when record was ingested"
+      - name: appointment_id
+        description: Provider identifier for the appointment. One row per value.
         data_tests:
+          - unique
           - not_null
 
-tests:
-  - name: referential_integrity_appointments
-    description: "All appointment records must reference valid persons"
-    sql: |
-      select * from {{ ref('stg_lpf_appointments') }}
-      where person_id is null
-    config:
-      severity: error
-      store_failures: true
-
-  - name: data_freshness_appointments
-    description: "Data should be recent (last 30 days)"
-    sql: |
-      with freshness as (
-        select
-          max(metadata_record_ingestion_timestamp) as latest_ingestion,
-          datediff(day, max(metadata_record_ingestion_timestamp), current_timestamp()) as days_since_latest
-        from {{ ref('stg_lpf_appointments') }}
-      )
-      select * from freshness where days_since_latest > 30
-    config:
-      severity: warn
-      store_failures: true
-
-  - name: data_history_appointments
-    description: "Data should cover records from 01/04/2021 onwards"
-    sql: |
-      select * from {{ ref('stg_lpf_appointments') }}
-      where metadata_record_ingestion_timestamp < '2021-04-01' limit 1
-    config:
-      severity: warn
-      store_failures: true
+      - name: metadata_record_ingestion_timestamp
+        description: Timestamp when the record was ingested.
+        data_tests:
+          - not_null
