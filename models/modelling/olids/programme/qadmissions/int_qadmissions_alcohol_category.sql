@@ -22,7 +22,8 @@ Source
   not align cleanly with the QAdmissions cat6 thresholds, whereas the
   Full AUDIT 0..40 bands map naturally to six categories.
 
-Score-to-category mapping (Full AUDIT 0..40 -> cat6):
+Score-to-category mapping (Full AUDIT 0..40 -> cat6), shared with
+int_qadmissions_features_history through the qadmissions_alcohol_cat6 macro:
   0       -> 0  (NonDrinker)
   1..3    -> 1  (Trivial)
   4..7    -> 2  (Light)
@@ -37,8 +38,7 @@ Per-person aggregation
   for stability when multiple observations share the same cat6.
 
 Persons with no Full AUDIT record do not appear here; the consuming
-int_qadmissions_features model passes NULL through to the registered
-QAdmissions model rather than substituting 0 (NonDrinker).
+int_qadmissions_features model sets their alcohol_cat6 to 0 (NonDrinker).
 
 Grain: one row per person who has at least one valid Full AUDIT score.
 */
@@ -49,15 +49,7 @@ WITH full_audit AS (
         id AS observation_id,
         clinical_effective_date,
         audit_score,
-        CASE
-            WHEN audit_score = 0                    THEN 0
-            WHEN audit_score BETWEEN  1 AND  3      THEN 1
-            WHEN audit_score BETWEEN  4 AND  7      THEN 2
-            WHEN audit_score BETWEEN  8 AND 15      THEN 3
-            WHEN audit_score BETWEEN 16 AND 19      THEN 4
-            WHEN audit_score >= 20                  THEN 5
-            ELSE NULL
-        END AS alcohol_cat6
+        {{ qadmissions_alcohol_cat6('audit_score') }} AS alcohol_cat6
     FROM {{ ref('int_alcohol_audit_scores') }}
     WHERE audit_type    = 'Full AUDIT'
       AND is_valid_score = TRUE
