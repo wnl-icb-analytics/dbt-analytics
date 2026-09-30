@@ -72,7 +72,7 @@ with items as (
         , null::boolean
         , coding_system
         , submitted_code
-        , code_description
+        , code_name
         , code_label_status
         , null::varchar
         , null::varchar
@@ -125,7 +125,7 @@ with items as (
         , procedure_description
         , procedure_label_status
         , procedure_context_code
-        , procedure_context_description
+        , procedure_context_name
         , asserted_procedure_code
         , null::varchar
         , null::varchar
@@ -170,7 +170,7 @@ with items as (
         , is_source_date_inconsistent
         , finding_coding_system
         , finding_code
-        , finding_description
+        , finding_name
         , finding_label_status
         , null::varchar
         , null::varchar
@@ -218,7 +218,7 @@ with items as (
         , is_source_date_inconsistent
         , 'SNOMED CT'
         , observation_code
-        , observation_description
+        , observation_name
         , observation_label_status
         , null::varchar
         , null::varchar
@@ -228,7 +228,7 @@ with items as (
         , observation_value_numeric
         , observation_value_parse_status
         , unit_of_measurement_code
-        , unit_of_measurement_description
+        , unit_of_measurement_name
         , unit_of_measurement_symbol
         , null::varchar
         , null::number(38, 9)

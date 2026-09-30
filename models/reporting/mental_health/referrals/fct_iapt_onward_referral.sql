@@ -21,8 +21,6 @@ select
     , 'IAPT' as source_dataset
     , o.referral_id
     , o.service_request_id as local_referral_id
-    , o.pathway_id
-    , o.source_row_id
     , o.person_id
     , b.sk_patient_id
     , o.onward_refer_date as onward_referral_date
@@ -49,7 +47,9 @@ select
     , o.provider_organisation_code
     , provider.organisation_name as provider_organisation_name
     , o.reported_period_count
+    , o.pathway_id
     , o.submission_id
+    , o.source_row_id
     , o.unique_month_id
     , o.reporting_period_start_date
     , o.reporting_period_end_date

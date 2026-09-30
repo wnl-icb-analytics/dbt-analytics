@@ -25,21 +25,16 @@ models:
     description: Same value as source_record_id; used by child facts.
   - name: local_referral_id
     description: Referral identifier assigned locally by the provider.
-  - name: pathway_id
-    description: NHS England pathway identifier for a Person_ID and referral pair. Changes when Person_ID changes;
-      do not use as a referral key.
-  - name: source_row_id
-    description: Row identifier of the selected submitted version; changes with every version.
   - name: person_id
     description: IAPT Person_ID on the selected version. Only comparable within IAPT.
   - name: sk_patient_id
     description: Cross-system pseudonymised NHS number key for person_id; null when the bridge has no value.
   - name: has_person_identifier_changed
     description: TRUE when accepted versions of the referral carry more than one Person_ID. Different Person_IDs are
-      not assumed to be the same person.
+      not assumed to be the same person. FALSE otherwise, never null.
   - name: has_patient_key_changed
     description: TRUE when accepted versions resolve to more than one sk_patient_id. Versions without a key are
-      ignored.
+      ignored. FALSE otherwise, never null.
   - name: referral_received_date
     description: Date the provider received the referral. No time is submitted.
   - name: service_discharge_date
@@ -173,8 +168,13 @@ models:
     description: Latest accepted reporting month containing the referral.
   - name: reported_period_count
     description: Number of accepted monthly versions.
+  - name: pathway_id
+    description: NHS England pathway identifier for a Person_ID and referral pair. Changes when Person_ID changes;
+      do not use as a referral key.
   - name: submission_id
     description: Accepted submission holding the selected version.
+  - name: source_row_id
+    description: Row identifier of the selected submitted version; changes with every version.
   - name: unique_month_id
     description: NHS England month number of the selected version.
   - name: reporting_period_start_date

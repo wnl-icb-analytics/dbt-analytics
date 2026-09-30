@@ -149,7 +149,7 @@ select
     , v.pathway_id
 
     , v.coding_scheme_code
-    , coalesce(diagnosis_scheme.description, finding_scheme.description) as coding_scheme_description
+    , coalesce(diagnosis_scheme.description, finding_scheme.description) as coding_scheme_name
     , v.coding_system
     , v.submitted_code
     , v.nhsd_validated_code
@@ -163,7 +163,7 @@ select
         , null
     ) as is_code_extended_by_nhsd
     , left(v.icd10_lookup_code, 3) as icd10_category_code
-    , icd10_category.description as icd10_category_description
+    , icd10_category.description as icd10_category_name
     -- Three-character submissions keep the category label, not NHSD's padded "unspecified" code.
     , case v.coding_system
         when 'ICD-10' then iff(
@@ -173,17 +173,17 @@ select
             , icd10.description
         )
         when 'SNOMED CT' then snomed.preferred_term
-    end as code_description
+    end as code_name
     , case
         when v.submitted_code is null then 'code_missing'
         when v.coding_scheme_code is null then 'coding_scheme_missing'
         when v.coding_system is null then 'coding_scheme_unrecognised'
         when v.coding_system = 'ICD-10' and v.nhsd_validated_code = '-3' then 'invalid_code_supplied'
-        when code_description is not null then 'labelled'
+        when code_name is not null then 'labelled'
         else 'code_unmatched'
     end as code_label_status
     , v.presenting_complaint_significance_code
-    , significance.description as presenting_complaint_significance_description
+    , significance.description as presenting_complaint_significance_name
 
     , case
         when v.source_table = 'IDS602' then 'not_collected'

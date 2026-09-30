@@ -95,7 +95,7 @@ with versions as (
         , regexp_substr(procedure_concept.fully_specified_name, '[(]([^()]*)[)]$', 1, 1, 'e', 1)
             as procedure_semantic_tag
         , p.procedure_context_code
-        , procedure_context.preferred_term as procedure_context_description
+        , procedure_context.preferred_term as procedure_context_name
         -- The common label keeps the context so an offered or planned therapy never reads as delivered.
         , case p.procedure_expression_type
             when 'bare_concept' then procedure_concept.preferred_term
@@ -117,7 +117,7 @@ with versions as (
 
         , p.finding_code is not null as has_finding
         , p.finding_scheme_code
-        , finding_scheme.description as finding_scheme_description
+        , finding_scheme.description as finding_scheme_name
         , p.finding_coding_system
         , p.finding_code
         , p.nhsd_validated_finding_code
@@ -130,7 +130,7 @@ with versions as (
             , null
         ) as is_finding_code_extended_by_nhsd
         , left(p.finding_icd10_lookup_code, 3) as finding_icd10_category_code
-        , finding_icd10_category.description as finding_icd10_category_description
+        , finding_icd10_category.description as finding_icd10_category_name
         -- Three-character submissions keep the category label, not NHSD's padded "unspecified" code.
         , case p.finding_coding_system
             when 'ICD-10' then iff(
@@ -140,20 +140,20 @@ with versions as (
                 , finding_icd10.description
             )
             when 'SNOMED CT' then finding_snomed.preferred_term
-        end as finding_description
+        end as finding_name
         , case
             when p.finding_code is null then 'code_missing'
             when p.finding_scheme_code is null then 'coding_scheme_missing'
             when p.finding_coding_system is null then 'coding_scheme_unrecognised'
             when p.finding_coding_system = 'ICD-10' and p.nhsd_validated_finding_code = '-3'
                 then 'invalid_code_supplied'
-            when finding_description is not null then 'labelled'
+            when finding_name is not null then 'labelled'
             else 'code_unmatched'
         end as finding_label_status
 
         , p.observation_code is not null or p.observation_value is not null as has_observation
         , p.observation_code
-        , observation_concept.preferred_term as observation_description
+        , observation_concept.preferred_term as observation_name
         , case
             when p.observation_code is null then 'code_missing'
             when observation_concept.snomed_code is null then 'code_unmatched'
@@ -169,7 +169,7 @@ with versions as (
             else 'not_numeric'
         end as observation_value_parse_status
         , p.unit_of_measurement_code
-        , unit.description as unit_of_measurement_description
+        , unit.description as unit_of_measurement_name
         , unit.unit_symbol as unit_of_measurement_symbol
         , case
             when p.unit_of_measurement_code is null then 'code_missing'

@@ -67,8 +67,6 @@ select
     , c.referral_id
     , c.care_contact_id
     , c.local_care_contact_id
-    , c.pathway_id
-    , c.source_row_id
     , c.person_id
     , b.sk_patient_id
     , c.age_care_contact_date as age_at_contact
@@ -151,7 +149,9 @@ select
     , c.dm_commissioner_derivation_reason as source_commissioner_derivation_reason
     , coalesce(wnl_icb.commissioner_code, wnl_sub_icb.commissioner_code, wnl_submitted.commissioner_code) is not null
         as is_wnl_commissioner
+    , c.pathway_id
     , c.submission_id
+    , c.source_row_id
     , c.unique_month_id
     , c.reporting_period_start_date
     , c.reporting_period_end_date

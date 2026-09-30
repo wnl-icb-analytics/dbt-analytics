@@ -15,9 +15,9 @@ with versions as (
         , count(distinct reporting_period_end_date) over (partition by referral_id) as reported_period_count
         -- Versions can name different people; each record keeps its own identity.
         , min(person_id) over (partition by referral_id)
-            <> max(person_id) over (partition by referral_id) as has_person_identifier_changed
+            is distinct from max(person_id) over (partition by referral_id) as has_person_identifier_changed
         , min(sk_patient_id) over (partition by referral_id)
-            <> max(sk_patient_id) over (partition by referral_id) as has_patient_key_changed
+            is distinct from max(sk_patient_id) over (partition by referral_id) as has_patient_key_changed
     from versions
     qualify row_number() over (
         partition by referral_id
@@ -65,8 +65,6 @@ select
     , 'IAPT' as source_dataset
     , o.referral_id
     , o.service_request_id as local_referral_id
-    , o.pathway_id
-    , o.source_row_id
     , o.person_id
     , o.sk_patient_id
     , o.has_person_identifier_changed
@@ -150,7 +148,9 @@ select
     , o.first_reported_period_end_date
     , o.last_reported_period_end_date
     , o.reported_period_count
+    , o.pathway_id
     , o.submission_id
+    , o.source_row_id
     , o.unique_month_id
     , o.reporting_period_start_date
     , o.reporting_period_end_date

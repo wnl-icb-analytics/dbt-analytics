@@ -38,7 +38,7 @@ models:
       - name: person_id
         description: IAPT Person_ID of the retained version. IAPT-scoped; use sk_patient_id across datasets.
       - name: has_person_identifier_changed
-        description: True when accepted versions carry different Person_IDs.
+        description: True when accepted versions carry different Person_IDs. False otherwise, never null.
       - name: referral_id
         description: Recorded referral. Null for IDS601, which is patient-level.
       - name: is_referral_linked
@@ -53,7 +53,7 @@ models:
         description: fct_iapt_referral when parent_record_id is populated.
       - name: coding_scheme_code
         description: Submitted scheme. IDS601 02 ICD-10 / 06 SNOMED CT; IDS602/603 01 ICD-10 / 04 SNOMED CT.
-      - name: coding_scheme_description
+      - name: coding_scheme_name
         description: UKHFD label for the scheme code.
       - name: coding_system
         description: ICD-10 or SNOMED CT; null when the scheme is missing or not valid for the table.
@@ -69,13 +69,13 @@ models:
         description: True when NHSD turned a three-character submission into a four-character code, such as F41 to F41.9 (unspecified).
       - name: icd10_category_code
         description: Three-character ICD-10 category, the parent of the code.
-      - name: code_description
+      - name: code_name
         description: Code label. Three-character ICD-10 submissions take the category label, so the label never claims the precision NHSD padding added.
       - name: code_label_status
         description: labelled, code_missing, coding_scheme_missing, coding_scheme_unrecognised, invalid_code_supplied or code_unmatched.
       - name: presenting_complaint_significance_code
         description: IDS603 coding significance, 1 primary or 2 secondary; null when not submitted or not a complaint.
-      - name: presenting_complaint_significance_description
+      - name: presenting_complaint_significance_name
         description: UKHFD label for the significance code.
       - name: clinical_date
         description: IDS601 diagnosis date or IDS603 recorded date, when clinical_date_status is recorded. Not an onset date.
