@@ -13,6 +13,7 @@ p.vaccine
 ,CASE
 WHEN p.cohort ='Aged 65 from Sep 2023' THEN 3
 WHEN p.cohort = 'Aged 70-79 Catch Up' THEN 4
+WHEN p.cohort = 'Immunocompromised' THEN 5
 END As VACC_ORDER 
 ,p.practice_code
 ,p.age_band_5y
@@ -52,5 +53,14 @@ vaccine, cohort, analysis_month, fiscal_year_label, practice_code, age_band_5y, 
 sum(vaccinated) as numerator, count(*) as denominator 
 FROM {{ ref('int_adult_imms_ts_historical_shingles_dose_1') }}
 where cohort = 'Aged 70-79 Catch Up'
+group by all
+
+UNION
+--Immunocompromised
+select 
+vaccine, cohort, analysis_month, fiscal_year_label, practice_code, age_band_5y, ethnicity_category,  imd_quintile, 
+sum(vaccinated) as numerator, count(*) as denominator 
+FROM {{ ref('int_adult_imms_ts_historical_shingles_dose_1') }}
+where cohort = 'Immunocompromised'
 group by all
 ) p
