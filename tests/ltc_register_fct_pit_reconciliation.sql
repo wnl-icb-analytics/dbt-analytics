@@ -91,8 +91,34 @@
 {# Live facts filtered to currently registered patients; their PIT members are compared on the same population. #}
 {% set current_patient_registers = ['familial_hypercholesterolaemia', 'gestational_diabetes', 'nafld'] %}
 
-{# Live facts that do not join dim_person; every other live fact covers people in dim_person only. #}
-{% set open_population_registers = ['cvd', 'pad', 'palliative_care', 'stroke_tia'] %}
+{# Live facts that inner join dim_person or dim_person_age, so they cover people in dim_person only. #}
+{% set dim_person_registers = [
+    'adhd',
+    'anxiety',
+    'asthma',
+    'autism',
+    'cerebral_palsy',
+    'chronic_liver_disease',
+    'ckd',
+    'cyp_asthma',
+    'depression',
+    'diabetes',
+    'epilepsy',
+    'familial_hypercholesterolaemia',
+    'frailty',
+    'hypothyroidism',
+    'learning_disability_under_14',
+    'mnd',
+    'ms',
+    'ndh_clinical',
+    'obesity',
+    'osteoarthritis',
+    'osteoporosis',
+    'parkinsons',
+    'rheumatoid_arthritis',
+    'sickle_cell',
+    'thalassaemia'
+] %}
 
 {#
 The live facts include records dated or entered after today; PIT today does not.
@@ -121,8 +147,11 @@ WITH mismatches AS (
             {% for source_model, date_column in register_sources[register_name] %}
             SELECT person_id
             FROM {{ source_model }}
-            WHERE {{ date_column }} > CURRENT_DATE()
-                OR CAST(date_recorded AS DATE) > CURRENT_DATE()
+            WHERE person_id IS NOT NULL
+                AND (
+                    CAST({{ date_column }} AS DATE) > CURRENT_DATE()
+                    OR CAST(date_recorded AS DATE) > CURRENT_DATE()
+                )
             {% if not loop.last %}UNION{% endif %}
             {% endfor %}
         ),
@@ -147,7 +176,7 @@ WITH mismatches AS (
                 pit.is_on_register = TRUE
                 AND live.person_id IS NULL
                 AND pit.person_id NOT IN (SELECT person_id FROM not_yet_known)
-                {% if register_name not in open_population_registers %}
+                {% if register_name in dim_person_registers %}
                 AND pit.person_id IN (SELECT person_id FROM {{ ref('dim_person') }})
                 {% endif %}
                 {% if register_name in current_patient_registers %}
@@ -192,14 +221,23 @@ WITH mismatches AS (
             SELECT person_id
             FROM pit_today
             WHERE is_on_hfref_register = TRUE
+        ),
+
+        not_yet_known AS (
+            SELECT person_id
+            FROM {{ ref('int_heart_failure_diagnoses_all') }}
+            WHERE person_id IS NOT NULL
+                AND (
+                    CAST(clinical_effective_date AS DATE) > CURRENT_DATE()
+                    OR CAST(date_recorded AS DATE) > CURRENT_DATE()
+                )
         )
 
         SELECT 'live_not_pit' AS direction, live.person_id
         FROM live_hfref AS live
         LEFT JOIN pit_hfref AS pit USING (person_id)
         WHERE pit.person_id IS NULL
-            AND live.latest_diagnosis_date <= CURRENT_DATE()
-            AND live.latest_reduced_ef_diagnosis_date <= CURRENT_DATE()
+            AND live.person_id NOT IN (SELECT person_id FROM not_yet_known)
 
         UNION ALL
 
@@ -207,6 +245,7 @@ WITH mismatches AS (
         FROM pit_hfref AS pit
         LEFT JOIN live_hfref AS live USING (person_id)
         WHERE live.person_id IS NULL
+            AND pit.person_id NOT IN (SELECT person_id FROM not_yet_known)
     ) AS mismatch
     LEFT JOIN (
         SELECT DISTINCT snapshot_date, release_version, source_file

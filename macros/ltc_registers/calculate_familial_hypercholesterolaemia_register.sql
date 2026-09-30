@@ -5,7 +5,7 @@
 
     Business Logic:
     - FHYP_COD diagnosis known by the reference date
-    - Estimated age at first diagnosis is at least 20 years, using age at the reference date capped at death
+    - Age at first diagnosis, from the birth date, is at least 20 years
     - No resolution codes
     Current active-patient filtering is omitted; monthly models apply registration
     and living status at each month-end.

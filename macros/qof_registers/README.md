@@ -13,8 +13,8 @@ Each macro:
    before the reference date (`ltc_register_known_by`)
 3. Computes age at the reference date where a rule uses age
 4. Returns one row per person and reference date: `reference_date, person_id,
-   register_name, is_on_register, earliest_diagnosis_date, latest_diagnosis_date`
-   plus register-specific columns
+   register_name, is_on_register`, the earliest and latest diagnosis dates where the
+   register is diagnosis-based, and register-specific columns
 
 Callers:
 - `qof_pit/pit_*_register` views: one date from the `qof_reference_date` var
