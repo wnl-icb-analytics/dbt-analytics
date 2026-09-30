@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND235: https://www.nice.org.uk/indicators/ind235
--- Last BP in 12 months below 140/90 clinic or 135/85 home for people on the CKD register with a latest ACR below 70 mg/mmol or none recorded, without moderate or severe frailty.
+-- Last BP in 12 months below 140/90 clinic or 135/85 home for people on the CKD register with a latest ACR below 70 mg/mmol, without moderate or severe frailty.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -9,7 +9,7 @@ WITH indicator_population AS (
     FROM {{ ref('int_ckd_profile') }} AS profile
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE NOT COALESCE(profile.latest_acr_value >= 70, FALSE)
+    WHERE profile.latest_acr_value < 70
         AND COALESCE(profile.latest_frailty_severity, 'None') NOT IN ('Moderate', 'Severe')
 ),
 
@@ -58,7 +58,7 @@ SELECT
     CURRENT_DATE() AS reporting_date,
     DATEADD(month, -12, CURRENT_DATE()) AS measurement_period_start,
     age,
-    'CKD with ACR below 70 mg/mmol or not recorded, without moderate or severe frailty' AS condition_name,
+    'CKD with ACR below 70 mg/mmol, without moderate or severe frailty' AS condition_name,
     current_practice_code,
     current_practice_name,
     latest_frailty_severity,

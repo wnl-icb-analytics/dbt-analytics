@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND321: https://www.nice.org.uk/indicators/ind321
--- Cervical screening recorded in 5.5 years for women aged 25 to 64; excludes unsuitable (no cervix).
+-- Cervical screening recorded in 5.5 years for women aged 25 to 64; excludes people without a cervix.
 WITH indicator_population AS (
     SELECT
         demographics.person_id,
@@ -16,8 +16,10 @@ WITH indicator_population AS (
         ON demographics.person_id = screening.person_id
     WHERE demographics.gender = 'Female'
         AND age.age BETWEEN 25 AND 64
-        -- No cervix or otherwise unsuitable: any unsuitable screening record
-        AND NOT COALESCE(screening.total_unsuitable_records > 0, FALSE)
+        AND NOT EXISTS (
+            SELECT 1 FROM {{ ref('int_cervix_removal_all') }} AS removal
+            WHERE removal.person_id = demographics.person_id
+        )
 ),
 
 assessed AS (

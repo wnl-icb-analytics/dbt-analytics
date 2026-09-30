@@ -19,6 +19,16 @@ models:
           - unique
       - name: patient_usual_address_postcode_pseudo
         description: Pseudonymised postcode value supplied by SUS; usually partial and sometimes a special pseudo postcode.
+      - name: patient_usual_address_lsoa_11
+        description: >-
+          Patient LSOA 2011 of residence supplied by SUS. Populated across the
+          full history, so use it for trends that span April 2024.
+      - name: patient_usual_address_lsoa_21
+        description: >-
+          Patient LSOA 2021 of residence from the data lake's derived ECDS
+          table (dmicLSOA2021), matched on the record's import. Reliable for
+          attendances from 1 April 2024 (about 97% populated); mostly null for
+          earlier attendances.
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:

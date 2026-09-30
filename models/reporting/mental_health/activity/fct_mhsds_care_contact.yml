@@ -1,0 +1,239 @@
+version: 2
+models:
+- name: fct_mhsds_care_contact
+  description: >-
+    Recorded patient contacts, including attended appointments, non-attendance and cancellations.
+    Each row is one referral/contact pair using its latest accepted version. Cancelled contacts
+    retain their scheduled date; pre-1901 missing-date markers are null. Contacts remain when their
+    referral is absent. Team details come from the contact's submission: an explicit contact team
+    takes precedence, with the primary referral team used for version 6 records without one. Later
+    changes to a referral's person ID do not reassign the contact.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Stable key generated from the service request and care contact identifiers.
+    data_tests:
+    - not_null
+    - unique
+  - name: source_dataset
+    description: Source data set; always MHSDS.
+  - name: mhs201_uniq_id
+    description: Submitted MHS201 row selected for the care contact.
+  - name: uniq_care_cont_id
+    description: MHSDS unique care contact identifier within a referral.
+  - name: care_contact_id
+    description: Provider-local care contact identifier.
+  - name: referral_source_record_id
+    description: Source-recorded MHSDS unique service request identifier.
+    data_tests:
+    - not_null
+  - name: service_request_id
+    description: Provider-local service request identifier.
+  - name: person_id
+    description: MHSDS person identifier.
+  - name: sk_patient_id
+    description: Pseudonymised cross-system patient key; null where bridging is unavailable.
+  - name: care_contact_date
+    description: Date the contact took place or, for a cancellation, was scheduled.
+  - name: care_contact_time
+    description: Time the contact began.
+  - name: care_contact_at
+    description: Care contact timestamp; date-only records use midnight.
+  - name: care_contact_time_precision
+    description: Precision of the care-contact value retained by the model.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - date
+          - timestamp
+  - name: clinical_contact_duration_minutes
+    description: Direct clinical contact duration in minutes, excluding administration and travel.
+  - name: attendance_status_code
+    description: Submitted attendance status code.
+  - name: attendance_status_description
+    description: Published description for the attendance status, including retired codes.
+  - name: consultation_type_code
+    description: Submitted consultation type code.
+  - name: consultation_type_description
+    description: Published description for the consultation type, including retired codes.
+  - name: consultation_mechanism_code
+    description: Submitted consultation mechanism code.
+  - name: consultation_mechanism_description
+    description: Published description for the consultation mechanism, including retired codes.
+  - name: consultation_medium_used_code
+    description: Historical consultation medium code retained for older MHSDS versions.
+  - name: consultation_medium_used_description
+    description: Published description for the consultation medium where UKHFD contains the code.
+  - name: activity_location_type_code
+    description: Submitted activity location type code.
+  - name: activity_location_type_description
+    description: Published description for the activity location, including retired codes.
+  - name: care_contact_subject_code
+    description: Submitted code for the subject discussed during the contact.
+  - name: care_contact_subject_description
+    description: Published description for the care contact subject, including retired codes.
+  - name: planned_care_contact_code
+    description: Submitted code indicating whether the contact was planned.
+  - name: planned_care_contact_description
+    description: Published description for the planned care contact indicator.
+  - name: place_of_safety_code
+    description: Submitted code indicating whether the contact occurred at a place of safety.
+  - name: place_of_safety_description
+    description: Published description for the place of safety indicator.
+  - name: group_therapy_code
+    description: Submitted code indicating whether the contact formed part of group therapy.
+  - name: group_therapy_description
+    description: Published description for the group therapy indicator.
+  - name: patient_therapy_mode_code
+    description: Submitted code for whether therapy involved an individual, family or group.
+  - name: patient_therapy_mode_description
+    description: Published description for the patient therapy mode, including retired codes.
+  - name: provider_organisation_code
+    description: Organisation code of the provider submitting the contact.
+  - name: provider_organisation_name
+    description: Current organisation name for the provider code.
+  - name: commissioner_organisation_code
+    description: Commissioner organisation code submitted for the contact. This can be an ICB, sub-ICB,
+      commissioning hub, provider or other organisation.
+  - name: commissioner_organisation_name
+    description: Current organisation name for the submitted commissioner code.
+  - name: source_derived_icb_commissioner_code
+    description: ICB commissioner assigned by the source pipeline before dbt fallback.
+  - name: derived_icb_commissioner_code
+    description: ICB commissioner from the source derivation, falling back to the submitted commissioner
+      when its current ODS role is ICB.
+  - name: derived_icb_commissioner_name
+    description: Current organisation name for the derived ICB commissioner code.
+  - name: icb_commissioner_derivation_method
+    description: Source-derived or submitted-ICB fallback used for the ICB commissioner.
+  - name: is_wnl_commissioner
+    description: Whether the commissioner belongs to current WNL or a predecessor commissioner.
+  - name: derived_sub_icb_commissioner_code
+    description: Sub-ICB commissioner assigned by the source pipeline; null for ICB-only assignments and
+      commissioners outside the mapping.
+  - name: derived_sub_icb_commissioner_name
+    description: Current organisation name for the derived sub-ICB commissioner code.
+  - name: treatment_site_code
+    description: Organisation site code where the contact took place.
+  - name: treatment_site_name
+    description: Current organisation name for the treatment site code.
+  - name: administrative_category_code
+    description: Patient administrative category recorded for the contact.
+  - name: administrative_category_description
+    description: Published description for the administrative category, including retired codes.
+  - name: specialised_mental_health_service_category_code
+    description: NHS England specialised mental health service category code. Its reference list is published
+      outside UKHFD and is not yet modelled in dbt.
+  - name: service_or_team_id
+    description: MHSDS-derived identifier for the team delivering the contact.
+  - name: service_or_team_local_id
+    description: Provider-local identifier for the team delivering the contact.
+  - name: service_or_team_type_code
+    description: Team type resolved within the contact submission; null when no supported type is available.
+  - name: service_or_team_type_description
+    description: Published description for the service or team type, including retired codes.
+  - name: source_service_or_team_type_name
+    description: Source-derived service type name; not a distinct local team name.
+  - name: service_or_team_intended_age_group_code
+    description: Intended patient age group recorded for the service or team.
+  - name: service_or_team_intended_age_group_description
+    description: Published description for the service or team's intended age group.
+  - name: earliest_reasonable_offer_date
+    description: Earliest date offered that the patient considered reasonable; source sentinels are null.
+  - name: earliest_clinically_appropriate_date
+    description: Earliest date considered clinically suitable for the appointment; source sentinels are
+      null.
+  - name: appointment_offer_date
+    description: Date the reported appointment was offered; source sentinels are null.
+  - name: appointment_booked_date
+    description: Date the reported appointment was booked; source sentinels are null.
+  - name: care_contact_cancellation_date
+    description: Date the contact was cancelled; source sentinels are null.
+  - name: care_contact_cancellation_reason_code
+    description: Submitted care contact cancellation reason code.
+  - name: care_contact_cancellation_reason_description
+    description: Published description for the cancellation reason, including retired codes.
+  - name: treatment_language_code
+    description: ISO 639-1 language code or NHS communication-method extension used for treatment.
+  - name: treatment_language_description
+    description: Published language or communication-method description.
+  - name: interpreter_present_code
+    description: Submitted code for whether an interpreter was present.
+  - name: interpreter_present_description
+    description: Published description for the interpreter-present indicator.
+  - name: community_perinatal_partner_assessment_offer_code
+    description: Submitted code indicating whether a community perinatal service offered a partner assessment.
+  - name: community_perinatal_partner_assessment_offer_description
+    description: Published description for the partner-assessment offer indicator.
+  - name: reasonable_adjustment_made_code
+    description: Submitted indicator that a reasonable adjustment was made.
+  - name: reasonable_adjustment_made_description
+    description: Published description for the reasonable-adjustment indicator.
+  - name: reason_patient_does_not_have_imca_code
+    description: Reason no Independent Mental Capacity Advocate was recorded.
+  - name: reason_patient_does_not_have_imca_description
+    description: Published description for the reason no IMCA was recorded.
+  - name: reason_patient_does_not_have_imha_code
+    description: Reason no Independent Mental Health Advocate was recorded.
+  - name: reason_patient_does_not_have_imha_description
+    description: Published description for the reason no IMHA was recorded.
+  - name: age_at_care_contact
+    description: Age in years at the care contact date.
+  - name: distance_from_home_km
+    description: Source-derived straight-line distance in kilometres from home to the contact location.
+  - name: minutes_from_referral_to_care_contact
+    description: Source-derived minutes between referral receipt and care contact.
+  - name: uniq_submission_id
+    description: Submission containing the selected MHS201 row.
+  - name: uniq_month_id
+    description: MHSDS reporting month number, where April 1900 is month 1.
+  - name: reporting_period_start_date
+    description: Start date of the selected submission period.
+  - name: reporting_period_end_date
+    description: End date of the selected submission period.
+  - name: mhsds_version
+    description: MHSDS version assigned by the source pipeline.
+  - name: source_file_received_at
+    description: Timestamp when the selected source file was received by the submission portal.
+  - name: source_loaded_at
+    description: Timestamp when the source pipeline loaded the selected row.
+  - name: is_attended
+    description: Attendance code 05 or 06; null when attendance is missing.
+  - name: is_dna
+    description: Attendance code 03 or 07; null when attendance is missing.
+  - name: is_cancelled
+    description: Attendance code 02 or 04; null when attendance is missing.
+  - name: same_submission_referral_record_id
+    description: >-
+      MHS101 source row in the same submission; null when absent.
+  - name: same_submission_referral_person_id
+    description: >-
+      Referral person identifier in the contact submission, before later revisions.
+  - name: same_submission_referral_received_date
+    description: >-
+      Referral receipt date recorded in the contact submission; null if absent.
+  - name: is_same_submission_referral_linked
+    description: >-
+      Whether the contact has an MHS101 parent in its own submission.
+  - name: is_same_submission_referral_person_consistent
+    description: >-
+      Whether both recorded person IDs agree; null when either is missing.
+  - name: service_or_team_attribution_basis
+    description: >-
+      Source of the selected team pointer, even if its team details are missing.
+  - name: latest_referral_person_id
+    description: >-
+      Person ID on the latest referral revision; may differ after national identity matching changes. Contact person_id is unchanged.
+  - name: latest_referral_reporting_period_end_date
+    description: >-
+      Reporting period of the latest referral revision, which can be later than the contact submission.
+  - name: is_latest_referral_linked
+    description: >-
+      Whether the referral key resolves to the latest referral fact.
+  - name: is_latest_referral_person_consistent
+    description: >-
+      Whether contact and latest-referral person IDs agree; null when either ID is missing. False does not prove different patients.

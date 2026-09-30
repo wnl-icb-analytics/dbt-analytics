@@ -1,7 +1,8 @@
 {% set code_sets = [
     ('priority_type', 'raw_ukhfd_data_dictionary_priority_type'),
     ('reason_for_referral', 'raw_ukhfd_data_dictionary_csds_reason_for_referral'),
-    ('referring_staff_group', 'raw_ukhfd_data_dictionary_csds_referring_staff_group')
+    ('referring_staff_group', 'raw_ukhfd_data_dictionary_csds_referring_staff_group'),
+    ('waiting_time_measurement_type', 'raw_ukhfd_data_dictionary_csds_waiting_time_measurement_type')
 ] %}
 
 {% for code_set_name, raw_model_name in code_sets %}

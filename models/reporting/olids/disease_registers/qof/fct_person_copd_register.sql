@@ -1,3 +1,7 @@
+-- Pair: macros/qof_registers/calculate_copd_register.sql.
+-- This live fact includes future-dated records. Its PIT pair is strict as-of
+-- and derives age at the reference date where age is used.
+
 {{
     config(
         materialized='table',
@@ -5,9 +9,9 @@
 }}
 
 /*
-COPD Register - Official QOF v50 Business Rules Implementation
+COPD Register - Official QOF v51 Business Rules Implementation
 
-Implements the exact QOF COPD register specification per v50.0 (01/04/2025):
+Implements the QOF COPD register specification v107 for 2026/27.
 
 RULE 1: If EUNRESCOPD_DAT < 01/04/2023 → SELECT
 - Automatic inclusion for patients with earliest unresolved diagnosis before April 2023
@@ -20,31 +24,42 @@ RULE 3: If EUNRESCOPD_DAT >= 01/04/2023 AND newly registered (last 12 months) AN
 - For patients who registered recently and already have spirometry from before registration
 
 RULE 4: If EUNRESCOPD_DAT >= 01/04/2023 → SELECT (all remaining)
-- Per QOF v50 spec Rule 4: all remaining post-2023 patients are included
+- All remaining post-2023 patients are included
 
-EUNRESCOPD_DAT Calculation (per QOF Field 22):
-- If COPDRES_DAT = NULL AND COPDRES1_DAT = NULL → RETURN COPD_DAT
-- Otherwise → RETURN COPD1_DAT
+QOF v51 diagnosis derivation:
+- COPDDIAG_COD disorder evidence counts at any date up to the achievement date.
+- COPDPROC_COD administrative evidence counts only in the preceding two years.
+- COPDEAR_DAT is the earliest eligible disorder or administrative evidence.
+- COPDRES_DAT is the latest resolved code up to the achievement date.
+- COPDLAT_DAT is the earliest eligible evidence after COPDRES_DAT.
+- EUNRESCOPD_DAT is COPDEAR_DAT when never resolved, otherwise COPDLAT_DAT.
 */
 
-WITH base_copd_diagnoses AS (
-    -- All COPD diagnoses (COPD_COD) - Field 4: COPD_DAT, Field 5: COPDLAT_DAT
+WITH eligible_copd_evidence AS (
+    -- Disorder evidence is all-time; administrative evidence has an exclusive two-year cutoff.
     SELECT
         d.person_id,
-        d.clinical_effective_date AS diagnosis_date,
+        d.clinical_effective_date AS evidence_date,
         d.ID,
         d.concept_code,
         d.concept_display,
         d.source_cluster_id,
+        d.is_disorder_code,
+        d.is_admin_code,
         age.age
     FROM {{ ref('int_copd_diagnoses_all') }} AS d
-    INNER JOIN {{ ref('dim_person_age') }} AS age
+    LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON d.person_id = age.person_id
-    WHERE d.is_diagnosis_code = TRUE  -- Only COPD_COD
+    WHERE
+        d.is_disorder_code = TRUE
+        OR (
+            d.is_admin_code = TRUE
+            AND d.clinical_effective_date > DATEADD('year', -2, CURRENT_DATE())
+        )
 ),
 
 copd_resolved_codes AS (
-    -- All COPD resolution codes (COPDRES_COD) - Field 6: COPDRES_DAT, Field 20: COPDRES1_DAT
+    -- COPDRES_DAT: latest resolved code up to the achievement date.
     SELECT
         d.person_id,
         d.clinical_effective_date AS resolution_date,
@@ -52,89 +67,67 @@ copd_resolved_codes AS (
         d.concept_code,
         d.concept_display
     FROM {{ ref('int_copd_diagnoses_all') }} AS d
-    WHERE d.is_resolved_code = TRUE  -- Only COPDRES_COD
+    WHERE d.is_resolved_code = TRUE
 ),
 
-person_copd_aggregates AS (
-    -- First get basic COPD diagnosis aggregates
+person_evidence_aggregates AS (
     SELECT
         person_id,
-        MIN(diagnosis_date) AS copd_dat,          -- Field 4: COPD_DAT
-        MAX(diagnosis_date) AS copdlat_dat,       -- Field 5: COPDLAT_DAT
+        MIN(evidence_date) AS copdear_dat,
+        MAX(evidence_date) AS latest_evidence_date,
         COUNT(DISTINCT ID) AS copd_diagnosis_count,
+        COUNT(DISTINCT CASE WHEN is_disorder_code THEN ID END) AS copd_disorder_code_count,
+        COUNT(DISTINCT CASE WHEN is_admin_code THEN ID END) AS copd_admin_code_count,
         MAX(age) AS current_age,
         ARRAY_AGG(DISTINCT concept_code) AS all_copd_concept_codes,
         ARRAY_AGG(DISTINCT concept_display) AS all_copd_concept_displays
-    FROM base_copd_diagnoses
+    FROM eligible_copd_evidence
     GROUP BY person_id
 ),
 
 person_resolved_aggregates AS (
-    -- Get resolved code aggregates separately
     SELECT
         person_id,
-        MIN(resolution_date) AS earliest_resolved_date,
-        MAX(resolution_date) AS latest_resolved_date
+        MAX(resolution_date) AS copdres_dat
     FROM copd_resolved_codes
     GROUP BY person_id
 ),
 
 qof_field_calculations AS (
-    -- Calculate QOF fields without nested aggregates
     SELECT
         pca.*,
-        pra.latest_resolved_date,
-        pra.earliest_resolved_date,
-
-        -- Field 6: COPDRES_DAT (latest resolved code after latest diagnosis)
-        CASE
-            WHEN pra.latest_resolved_date > pca.copdlat_dat
-                THEN pra.latest_resolved_date
-        END AS copdres_dat,
-
-        -- Field 20: COPDRES1_DAT (latest resolved code after earliest diagnosis)
-        CASE
-            WHEN pra.latest_resolved_date > pca.copd_dat
-                THEN pra.latest_resolved_date
-        END AS copdres1_dat
-
-    FROM person_copd_aggregates AS pca
+        pra.copdres_dat
+    FROM person_evidence_aggregates AS pca
     LEFT JOIN person_resolved_aggregates AS pra
         ON pca.person_id = pra.person_id
 ),
 
-copd1_dat_calculations AS (
-    -- Calculate COPD1_DAT separately to avoid subqueries
+copdlat_dat_calculations AS (
+    -- COPDLAT_DAT: earliest eligible disorder or administrative evidence after resolution.
     SELECT
         qfc.person_id,
-        MIN(bcd.diagnosis_date) AS copd1_dat
+        MIN(ece.evidence_date) AS copdlat_dat
     FROM qof_field_calculations AS qfc
-    INNER JOIN base_copd_diagnoses AS bcd
+    INNER JOIN eligible_copd_evidence AS ece
         ON
-            qfc.person_id = bcd.person_id
-            AND qfc.copdres1_dat < bcd.diagnosis_date
-    WHERE qfc.copdres1_dat IS NOT NULL
+            qfc.person_id = ece.person_id
+            AND qfc.copdres_dat < ece.evidence_date
+    WHERE qfc.copdres_dat IS NOT NULL
     GROUP BY qfc.person_id
 ),
 
 qof_field_calculations_extended AS (
-    -- Final QOF field calculations
     SELECT
         qfc.*,
-        -- Field 21: COPD1_DAT (earliest COPD diagnosis after latest resolved code)
-        cdc.copd1_dat,
-
-        -- Field 22: EUNRESCOPD_DAT (per exact QOF specification)
+        cdc.copdlat_dat,
         CASE
-            WHEN qfc.copdres_dat IS NULL AND qfc.copdres1_dat IS NULL
-                THEN
-                    qfc.copd_dat  -- No resolved codes: return earliest diagnosis
-            ELSE
-                cdc.copd1_dat  -- Return COPD1_DAT; NULL when fully resolved → off register
+            WHEN qfc.copdres_dat IS NULL AND qfc.copdear_dat IS NOT NULL
+                THEN qfc.copdear_dat
+            WHEN qfc.copdres_dat IS NOT NULL AND qfc.copdear_dat IS NOT NULL
+                THEN cdc.copdlat_dat
         END AS eunrescopd_dat
-
     FROM qof_field_calculations AS qfc
-    LEFT JOIN copd1_dat_calculations AS cdc
+    LEFT JOIN copdlat_dat_calculations AS cdc
         ON qfc.person_id = cdc.person_id
 ),
 
@@ -249,14 +242,14 @@ qof_rule_3_newly_registered AS (
         )
 ),
 
--- RULE 4: All remaining post-April 2023 patients (per QOF v50 spec)
+-- RULE 4: All remaining post-April 2023 patients
 qof_rule_4_post_april_2023_remaining AS (
     SELECT DISTINCT
         pfr.person_id,
         pfr.eunrescopd_dat AS diagnosis_date,
         'Rule 4: Post-April 2023 (All Remaining)' AS qof_rule_applied,
         TRUE AS qualifies_for_register,
-        'EUNRESCOPD_DAT >= 01/04/2023 - included per QOF v50 Rule 4'
+        'EUNRESCOPD_DAT >= 01/04/2023 - included per QOF v51 Rule 4'
             AS qualification_reason,
         NULL AS relevant_spirometry_date,
         NULL AS relevant_spirometry_ratio
@@ -339,14 +332,18 @@ SELECT
 
     -- Core register status
     qfce.eunrescopd_dat AS earliest_unresolved_diagnosis_date,
-    qfce.copd_dat AS earliest_diagnosis_date,
-    qfce.copdlat_dat AS latest_diagnosis_date,
+    qfce.copdear_dat AS earliest_diagnosis_date,
+    qfce.latest_evidence_date AS latest_diagnosis_date,
 
-    -- QOF Key Fields (exact specification)
+    -- QOF v51 fields and retained descriptive aliases
     qfce.copdres_dat AS latest_resolved_date,
-    qfce.copdres1_dat AS latest_resolved_after_earliest_date,
-    qfce.copd1_dat AS earliest_diagnosis_after_latest_resolved,
+    CASE
+        WHEN qfce.copdres_dat > qfce.copdear_dat THEN qfce.copdres_dat
+    END AS latest_resolved_after_earliest_date,
+    qfce.copdlat_dat AS earliest_diagnosis_after_latest_resolved,
     qfce.copd_diagnosis_count,
+    qfce.copd_disorder_code_count,
+    qfce.copd_admin_code_count,
     aqp.relevant_spirometry_date AS qof_relevant_spirometry_date,
     aqp.relevant_spirometry_ratio AS qof_relevant_spirometry_ratio,
     lsa.latest_spirometry_date,

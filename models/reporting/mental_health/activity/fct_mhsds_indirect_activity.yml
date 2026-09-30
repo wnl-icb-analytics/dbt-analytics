@@ -1,0 +1,34 @@
+version: 2
+models:
+- name: fct_mhsds_indirect_activity
+  description: >-
+    Care carried out for a patient without the patient being present. Each row is one accepted
+    MHS204 record, with submitted duration, procedures, findings, professional and referral/team
+    details from the same submission. Records from repeated reporting periods remain separate, so
+    totals count submitted occurrences rather than proven distinct events across all time. Eddie
+    Davison owns the definition.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: indirect_activity_id
+    description: Accepted MHS204 source occurrence identifier. Repeated monthly evidence is retained because
+      no stable cross-submission activity identifier is supplied.
+    data_tests:
+    - unique
+    - not_null
+  - name: duration_minutes
+    description: Recorded patient-perspective indirect activity duration in minutes. Do not multiply by
+      staff count.
+  - name: person_consulted_description
+    description: National description of the person consulted while the patient was absent.
+  - name: service_or_team_attribution_basis
+    description: 'Shared contact attribution rule: additional local pointer, legacy local pointer, then
+      v6 primary referral team in the same submission.'
+  - name: is_duration_outside_one_day
+    description: Recorded duration is negative or exceeds 1,440 minutes. Missing duration is not flagged.
+  - name: person_provider_period_id
+    description: Demographic key for this person, provider and reporting period.
+  - name: referral_period_id
+    description: Referral key within this accepted submission; a corresponding referral may be absent.

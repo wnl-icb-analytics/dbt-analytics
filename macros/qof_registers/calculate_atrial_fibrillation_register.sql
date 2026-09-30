@@ -1,4 +1,5 @@
 {% macro calculate_atrial_fibrillation_register(reference_date_expr='CURRENT_DATE()') %}
+    {# Pair: fct_person_atrial_fibrillation_register.sql. This macro is strict as-of; the live fact includes future-dated records. #}
     {#
     Calculates Atrial Fibrillation register status at a given reference date.
 

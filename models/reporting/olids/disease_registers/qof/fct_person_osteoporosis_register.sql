@@ -1,3 +1,7 @@
+-- Pair: macros/qof_registers/calculate_osteoporosis_register.sql.
+-- This live fact includes future-dated records. Its PIT pair is strict as-of
+-- and derives age at the reference date where age is used.
+
 {{
     config(
         materialized='table',

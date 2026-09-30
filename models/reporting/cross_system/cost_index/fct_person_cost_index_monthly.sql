@@ -9,7 +9,7 @@ Full-history union of the cost spines built so far:
   * SLAM (int_cost_index_slam_activity_monthly) — acute / community actual cost, WNL
     (NCL + NWL). From 2021-04 to the last complete month.
   * EPD prescribing (int_cost_index_epd_prescribing_monthly) — GP prescriptions
-    (Community), WNL. From 2018-04 and about 12 months behind SLAM.
+    (Community), WNL. V1 history followed by the V2 dispensing delivery.
   * MHSDS (int_cost_index_mhsds_activity_monthly) — MH inpatient and contacts.
     Proxy-costed from the NHSE 26/27 currency price schedule (deflated + MFF).
   * CSDS (int_cost_index_csds_activity_monthly) — community contacts.

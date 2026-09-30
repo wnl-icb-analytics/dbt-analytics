@@ -95,7 +95,8 @@ They do not replace a missing clinical date or establish diagnosis onset.
 APC context dates require positive agreement between the spell and episode person
 keys. OLIDS encounter context is prepared in dbt-OLIDS and requires a non-deleted
 encounter with the same person. Its precision remains in `parent_start_date_precision`.
-Known conflicting APC and OLIDS links are not promoted as parents; original source
+Known conflicting APC and OLIDS links are not promoted as parents, nor are MHSDS and
+CSDS referral links whose referral names a different person; original source
 keys remain in the detailed models. `recorded_at` retains the OLIDS recording timestamp
 separately.
 

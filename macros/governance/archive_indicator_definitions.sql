@@ -2,6 +2,7 @@
   {#- SCD Type 2 with daily granularity - only track changes across different days -#}
   
   {% set history_table = this.database ~ '.' ~ this.schema ~ '.def_indicator_history' %}
+  {% set dedup_table = this.database ~ '.' ~ this.schema ~ '.__def_indicator_history_current_dedup' %}
   
   -- Create history table if needed
   CREATE TABLE IF NOT EXISTS {{ history_table }} (
@@ -30,13 +31,36 @@
   -- Add table comment using existing macro pattern
   COMMENT ON TABLE {{ history_table }} IS '{{ generate_history_table_comment("def_indicator", "Historical versions of indicator definitions with daily granularity. Tracks changes to indicator definitions across different days only. Multiple runs on the same day update the existing record rather than creating new versions.") }}';
 
-  -- Step 1: Close out any existing records for indicators that have changed today
+  -- Remove repeated current snapshots created by the previous daily merge logic.
+  -- Keep the earliest version because unchanged definitions should retain valid_from.
+  CREATE OR REPLACE TEMPORARY TABLE {{ dedup_table }} AS
+  SELECT *
+  FROM {{ history_table }}
+  WHERE is_current = TRUE
+  QUALIFY COUNT(*) OVER (PARTITION BY indicator_id) > 1
+    AND ROW_NUMBER() OVER (
+      PARTITION BY indicator_id
+      ORDER BY valid_from, archived_at, dbt_run_id
+    ) = 1;
+
+  DELETE FROM {{ history_table }}
+  WHERE is_current = TRUE
+    AND indicator_id IN (SELECT indicator_id FROM {{ dedup_table }});
+
+  INSERT INTO {{ history_table }}
+  SELECT * FROM {{ dedup_table }};
+
+  DROP TABLE {{ dedup_table }};
+
+  -- Step 1: Close definitions that changed after their valid_from date.
+  -- Same-day changes update the existing daily version in the merge below.
   UPDATE {{ history_table }}
   SET 
-    valid_to = DATEADD(DAY, -1, CURRENT_DATE()),
+    valid_to = GREATEST(valid_from, DATEADD(DAY, -1, CURRENT_DATE())),
     is_current = FALSE
   WHERE is_current = TRUE
     AND valid_to IS NULL
+    AND valid_from < CURRENT_DATE()
     AND indicator_id IN (
       SELECT DISTINCT indicator_id 
       FROM {{ this }}
@@ -61,11 +85,10 @@
         )
     );
 
-  -- Step 2: Merge - Update existing records for today OR insert new ones
+  -- Step 2: Update the current version or insert a new version after a change.
   MERGE INTO {{ history_table }} AS hist
   USING {{ this }} AS curr
   ON hist.indicator_id = curr.indicator_id
-    AND hist.valid_from = CURRENT_DATE()
     AND hist.is_current = TRUE
   WHEN MATCHED THEN UPDATE SET
     indicator_type = curr.indicator_type,
@@ -135,7 +158,7 @@
   -- Step 3: Close out records for indicators that no longer exist
   UPDATE {{ history_table }}
   SET 
-    valid_to = DATEADD(DAY, -1, CURRENT_DATE()),
+    valid_to = GREATEST(valid_from, DATEADD(DAY, -1, CURRENT_DATE())),
     is_current = FALSE
   WHERE is_current = TRUE
     AND valid_to IS NULL
@@ -149,6 +172,7 @@
   {#- SCD Type 2 with daily granularity for usage contexts -#}
   
   {% set history_table = this.database ~ '.' ~ this.schema ~ '.def_indicator_usage_history' %}
+  {% set dedup_table = this.database ~ '.' ~ this.schema ~ '.__def_indicator_usage_history_current_dedup' %}
   
   CREATE TABLE IF NOT EXISTS {{ history_table }} (
     indicator_id STRING,
@@ -164,10 +188,32 @@
   -- Add table comment using existing macro pattern
   COMMENT ON TABLE {{ history_table }} IS '{{ generate_history_table_comment("def_indicator_usage", "Historical tracking of indicator usage contexts with daily granularity. Tracks where indicators have been used over time. Multiple runs on the same day update the existing record.") }}';
 
+  -- Remove repeated current snapshots created by the previous daily merge logic.
+  CREATE OR REPLACE TEMPORARY TABLE {{ dedup_table }} AS
+  SELECT *
+  FROM {{ history_table }}
+  WHERE is_current = TRUE
+  QUALIFY COUNT(*) OVER (PARTITION BY indicator_id, usage_context) > 1
+    AND ROW_NUMBER() OVER (
+      PARTITION BY indicator_id, usage_context
+      ORDER BY valid_from, archived_at, dbt_run_id
+    ) = 1;
+
+  DELETE FROM {{ history_table }}
+  WHERE is_current = TRUE
+    AND (indicator_id, usage_context) IN (
+      SELECT indicator_id, usage_context FROM {{ dedup_table }}
+    );
+
+  INSERT INTO {{ history_table }}
+  SELECT * FROM {{ dedup_table }};
+
+  DROP TABLE {{ dedup_table }};
+
   -- Close out removed usage contexts
   UPDATE {{ history_table }}
   SET 
-    valid_to = DATEADD(DAY, -1, CURRENT_DATE()),
+    valid_to = GREATEST(valid_from, DATEADD(DAY, -1, CURRENT_DATE())),
     is_current = FALSE
   WHERE is_current = TRUE
     AND valid_to IS NULL
@@ -186,7 +232,6 @@
   ) AS curr
   ON hist.indicator_id = curr.indicator_id
     AND hist.usage_context = curr.usage_context
-    AND hist.valid_from = CURRENT_DATE()
     AND hist.is_current = TRUE
   WHEN MATCHED THEN UPDATE SET
     metadata_extracted_at = curr.metadata_extracted_at,

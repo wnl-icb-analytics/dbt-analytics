@@ -49,11 +49,12 @@ models:
             name_short: "COPD Episodes"
             description_short: "Simplified COPD condition episodes with resolved state tracking"
             description_long: >
-              Episode tracking for COPD using diagnosis and resolved codes without
-              QOF restrictions.
-              Captures multiple condition cycles per person for complete clinical
-              history analysis.
-              Includes onset and resolved states enabling episode duration calculations.
+              COPD episode history using disorder, administrative and resolved codes.
+              Disorder codes produce onset events, administrative codes produce
+              diagnosis events, and resolved codes close episodes. Unlike the QOF v51
+              register, this model keeps administrative codes from any date. A person
+              with only a three-year-old administrative code keeps a COPD episode but
+              does not qualify for the QOF register from that evidence.
             is_qof: false
             source_column: "current_condition_status"
             sort_order: "CONDITION_EPISODES_COPD"
@@ -61,9 +62,11 @@ models:
               - "POPULATION_HEALTH_NEEDS_DASHBOARD"
               - "HISTORICAL_CONDITION_TRACKING"
             code_clusters:
-              - cluster_id: "COPD_COD"
+              - cluster_id: "COPDDIAG_COD"
                 category: "INCLUSION"
-              - cluster_id: "COPD_RESOLVED_COD"
+              - cluster_id: "COPDPROC_COD"
+                category: "INCLUSION"
+              - cluster_id: "COPDRES_COD"
                 category: "RESOLUTION"
 
           # Cardiovascular Conditions

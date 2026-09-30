@@ -1,37 +1,49 @@
 version: 2
-
 models:
-  - name: stg_csds_gp_registration
-    description: >
-      CSDS GP registrations. Grain: one row per person_id, practice_code and
-      registration_start_date. Population: CYP002 GP registration records.
-      Time semantics: the latest submitted record per registration is retained.
-    config:
-      meta:
-        owner:
-          name: Eddie Davison
+- name: stg_csds_gp_registration
+  description: Latest reported CSDS GP registration for each person, provider, practice and registration
+    start date, the ETOS derivation key. Practice codes are uppercased so case variants of one registration
+    collapse. Selection uses newest reporting period, then file receipt, submission and source row. The
+    same registration reported by several providers has one row per provider. Rows without a person ID
+    remain in stg_csds_gp_registration_history only.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - organisation_code_provider
+        - general_medical_practice_code_patient_registration
+        - start_date_gmp_patient_registration
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1
+  columns:
+  - name: cyp002_unique_id
+    description: Identifier of the selected CYP002 source row.
     data_tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - person_id
-              - practice_code
-              - registration_start_date
-    columns:
-      - name: person_id
-        description: CSDS person identifier.
-        data_tests:
-          - not_null
-      - name: practice_code
-        description: GP practice code.
-        data_tests:
-          - not_null
-      - name: registration_start_date
-        description: GP registration start date.
-      - name: registration_end_date
-        description: GP registration end date.
-      - name: organisation_code_ccg_of_gp_practice
-        description: CCG code of the GP practice.
+    - unique
+    - not_null
+  - name: person_id
+    description: CSDS person identifier.
+    data_tests:
+    - not_null
+  - name: organisation_code_provider
+    description: Supplied provider organisation code.
+  - name: general_medical_practice_code_patient_registration
+    description: GP practice code, uppercased.
+    data_tests:
+    - not_null
+  - name: start_date_gmp_patient_registration
+    description: Supplied registration start date. Null for about one row in twelve; null is part of the key.
+  - name: end_date_gmp_patient_registration
+    description: Supplied registration end date. Null while the registration is current or unknown.
+  - name: organisation_code_ccg_of_gp_practice
+    description: Supplied commissioner code of the practice, uppercased.
+  - name: unique_submission_id
+    description: Accepted submission the selected row came from.
+  - name: reporting_period_end_date
+    description: Reporting period of the selected row.

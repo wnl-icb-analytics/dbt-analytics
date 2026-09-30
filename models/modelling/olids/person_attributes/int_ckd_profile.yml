@@ -9,7 +9,9 @@ models:
       renin-angiotensin and SGLT2 inhibitor orders, ACE inhibitor and ARB
       contraindications (persisting at any time or expiring in the preceding
       12 months), and whether eGFR and ACR tests fall around the diagnosis
-      date. Consumers apply their own windows and join
+      date. Future observations are excluded. Latest renal results retain an
+      invalid last measurement as a null value rather than selecting an older
+      valid result. Consumers apply their own windows and join
       dim_person_active_patients.
     config:
       meta:
@@ -24,13 +26,13 @@ models:
       - name: ckd_diagnosis_date
         description: Earliest CKD stage 3 to 5 diagnosis date from the register.
       - name: latest_egfr_date
-        description: Date of the latest eGFR with a value; null if none.
+        description: Date of the latest recorded eGFR result on or before the build date; null if none.
       - name: latest_egfr_value
-        description: Latest eGFR in ml/min/1.73m2; null if none.
+        description: Latest eGFR in ml/min/1.73m2; null if none or the last result is invalid.
       - name: latest_acr_date
-        description: Date of the latest urine ACR ratio with a value; null if none.
+        description: Date of the latest urine ACR ratio result on or before the build date; null if none.
       - name: latest_acr_value
-        description: Latest urine ACR ratio with a value in mg/mmol; a later record without a value is ignored; null if none.
+        description: Latest urine ACR ratio in mg/mmol; a later record without a result is ignored; null if none or the last result is invalid.
       - name: has_proteinuria
         description: Any proteinuria, CKD proteinuria or persistent proteinuria code recorded.
       - name: has_microalbuminuria

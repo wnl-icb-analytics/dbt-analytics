@@ -143,6 +143,36 @@ WITH schema_metadata AS (
   
   UNION ALL
   
+    -- cwt_pathway: Cancer waiting times data, pathway level version.
+  SELECT 
+    'DATA_LAKE' as database_name,
+    'CWT' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "DATA_LAKE".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'CWT'
+  
+  UNION ALL
+  
+    -- rcrd: Rapid Cancer Registration Dataset (RCRD)
+  SELECT 
+    'DATA_LAKE' as database_name,
+    'RCRD' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "DATA_LAKE".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'RCRD'
+  
+  UNION ALL
+  
     -- registries_deaths: Register of deaths
   SELECT 
     'DATA_LAKE' as database_name,
@@ -473,6 +503,21 @@ WITH schema_metadata AS (
   
   UNION ALL
   
+    -- reference_terminology_curated: Curated Primary Care Domain terminology releases
+  SELECT 
+    'REFERENCE' as database_name,
+    'TERMINOLOGY' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "REFERENCE".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'TERMINOLOGY'
+  
+  UNION ALL
+  
     -- local_provider_flows: Providers submissions from PID environment via MESH
   SELECT 
     'DATA_LAKE' as database_name,
@@ -530,21 +575,6 @@ WITH schema_metadata AS (
     ordinal_position
   FROM "DATA_LAKE".INFORMATION_SCHEMA.COLUMNS
   WHERE table_schema = 'FACT_PRACTICE'
-  
-  UNION ALL
-  
-    -- sdl: ServicesDataLocal canonical-named feeds (mental health, community, 111, etc.)
-  SELECT 
-    'DATA_LAKE__NCL' as database_name,
-    'SDL' as schema_name,
-    table_name,
-    column_name,
-    data_type,
-    numeric_precision,
-    numeric_scale,
-    ordinal_position
-  FROM "DATA_LAKE__NCL".INFORMATION_SCHEMA.COLUMNS
-  WHERE table_schema = 'SDL'
   
   UNION ALL
   
@@ -650,6 +680,21 @@ WITH schema_metadata AS (
     ordinal_position
   FROM "PUBLISHED_REPORTING__DIRECT_CARE".INFORMATION_SCHEMA.COLUMNS
   WHERE table_schema = 'C_LTCS'
+  
+  UNION ALL
+  
+    -- qadmissions: qAdmissions model outputs
+  SELECT 
+    'STAT_MODELS' as database_name,
+    'QADMISSIONS' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "STAT_MODELS".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'QADMISSIONS'
   
   UNION ALL
   

@@ -7,15 +7,24 @@ with organisation_codes as (
     select distinct organisation_code
     from {{ ref('stg_dictionary_dbo_organisation') }}
     where sk_organisation_type_id = 41
+),
+
+-- Data lake enrichment of each appointment record; unique on primarykey_id and import.
+derived as (
+    select primarykey_id
+        , dmic_import_log_id
+        , dmic_lsoa2021
+    from {{ ref('raw_sus_op_derived') }}
 )
 
-select  primarykey_id,
+select  core.primarykey_id,
 
     -- patient details at time
     {{ consistent_sk_patient_id_format('appointment_patient_identity_nhs_number_value_pseudo') }} as sk_patient_id,
     appointment_patient_identity_local_patient_identifier_value as local_patient_identifier,
     appointment_patient_residence_derived_postcode_district,
     appointment_patient_residence_derived_lsoa_11,
+    derived.dmic_lsoa2021 as appointment_patient_residence_derived_lsoa_21,
     appointment_patient_residence_derived_local_authority_district,
     appointment_patient_identity_ethnic_category_2021,
     appointment_patient_residence_derived_index_of_multiple_deprivation_decile,
@@ -57,3 +66,6 @@ select  primarykey_id,
 from {{ ref('raw_sus_op_appointment') }} as core
 left join organisation_codes as provider
     on core.appointment_commissioning_service_agreement_provider = provider.organisation_code
+left join derived
+    on core.primarykey_id = derived.primarykey_id
+    and core.dmic_import_log_id = derived.dmic_import_log_id

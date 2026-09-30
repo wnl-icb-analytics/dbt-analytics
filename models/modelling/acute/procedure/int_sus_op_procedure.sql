@@ -2,13 +2,21 @@
 
 -- note: using sk_patient_id as person_id
 with
+    appointment_codes as (
+        select primarykey_id
+            , code
+            , opcs_id
+            , count(*) as observation_count
+        from {{ ref("stg_sus_op_appointment_clinical_coding_procedure_opcs") }}
+        where code is not null
+        group by primarykey_id, code, opcs_id
+    ),
     final_opcs4_codes as (
         select primarykey_id
-            , code 
-            , count(*) as observation_count
-            , array_agg(distinct opcs_id) WITHIN GROUP (ORDER BY opcs_id ASC) as ordered_id_array
-        from {{ ref("stg_sus_op_appointment_clinical_coding_procedure_opcs") }}
-        where code is not null 
+            , code
+            , sum(observation_count) as observation_count
+            , array_agg(opcs_id) within group (order by opcs_id asc) as ordered_id_array
+        from appointment_codes
         group by primarykey_id, code
 )
 select

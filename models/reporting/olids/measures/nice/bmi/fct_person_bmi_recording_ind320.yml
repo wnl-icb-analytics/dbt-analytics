@@ -1,14 +1,24 @@
 models:
   - name: fct_person_bmi_recording_ind320
-    description: >
-      NICE IND320 BMI recording. One row per currently registered, living, non-test person aged 18 and over on the CHD, stroke/TIA, diabetes, non-diabetic
-      hyperglycaemia, hypertension, PAD, heart failure or COPD register, or
-      with a dyslipidaemia, learning disability, obstructive sleep apnoea or
-      SMI record, assessed on the build date. The NDH register stands in for NICE's high risk of type 2 diabetes, and the dyslipidaemia group is a coded diagnosis only, narrower than NICE's lipid-lowering treatment or LDL and HDL results. NICE sets no age bound; the adult floor reflects the BMI model, which holds adult values only. The numerator requires a BMI value recorded in the preceding 12 months. Feeds
-      fct_person_nice_indicator_status. Personalised care adjustments are not
-      applied. Secondary-use consumers must join
-      DIM_PERSON_SECONDARY_USE_ALLOWED to apply National Data Opt-Out and Type
-      1 opt-out filtering.
+    description: |
+      NICE IND320. Annual BMI recording for adults with specified long-term
+      conditions. One row per currently registered, living, non-test person aged
+      18 and over with CHD, stroke or TIA, diabetes, non-diabetic hyperglycaemia,
+      hypertension, PAD, heart failure, COPD, dyslipidaemia, learning disability,
+      obstructive sleep apnoea or severe mental illness, assessed on the build
+      date.
+
+      Achievement requires a recorded BMI value in the preceding 12 months.
+
+      Dyslipidaemia follows QOF v51.3: lipid-lowering treatment in six months, or
+      the latest result in 12 months with LDL at least 4.1 mmol/L, triglycerides
+      at least 1.7 mmol/L, or HDL below 1.0 mmol/L for males or 1.3 mmol/L for
+      females. Unknown sex cannot qualify through HDL alone. An invalid latest
+      lipid result does not fall back to an older result. Non-diabetic
+      hyperglycaemia represents NICE's high-risk diabetes population; a validated
+      diabetes-risk score paired with raised glycaemia is not available.
+
+      Personalised care adjustments are not applied.
     config:
       meta:
         owner:
@@ -21,7 +31,23 @@ models:
           clinical_domain: "Lifestyle"
           name_short: "LTC BMI recorded"
           description_short: "BMI recorded in the preceding 12 months for people with a listed long-term condition"
-          description_long: "NICE IND320 before personalised care adjustments."
+          description_long: |
+            NICE IND320. One row per currently registered, living, non-test person aged 18
+            and over with CHD, stroke or TIA, diabetes, non-diabetic hyperglycaemia,
+            hypertension, PAD, heart failure, COPD, dyslipidaemia, learning disability,
+            obstructive sleep apnoea or severe mental illness, assessed on the build date.
+
+            Achievement requires a recorded BMI value in the preceding 12 months.
+
+            Dyslipidaemia follows QOF v51.3: lipid-lowering treatment in six months, or
+            the latest result in 12 months with LDL at least 4.1 mmol/L, triglycerides at
+            least 1.7 mmol/L, or HDL below 1.0 mmol/L for males or 1.3 mmol/L for females.
+            Unknown sex cannot qualify through HDL alone. An invalid latest lipid result
+            does not fall back to an older result. Non-diabetic hyperglycaemia represents
+            NICE's high-risk diabetes population; a validated diabetes-risk score paired
+            with raised glycaemia is not available.
+
+            Measured before personalised care adjustments.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -61,12 +87,13 @@ models:
         description: ACHIEVED or NOT_RECORDED_IN_PERIOD
 
   - name: fct_person_bmi_recording_ind320_snapshot_input
-    description: >
-      Thin snapshot-input projection of fct_person_bmi_recording_ind320:
-      person, indicator, current practice, latest qualifying record and
-      outcome. Excludes reporting_date and measurement_period_start, which
-      advance on every build, so the SCD2 snapshot versions only on genuine
-      changes. Feeds fct_person_bmi_recording_ind320_snapshot.
+    description: |
+      Current NICE BMI indicator outcomes used to record changes over time. One
+      row per person in the current indicator denominator.
+
+      Keeps the current practice, qualifying evidence date and outcome. Build-date
+      fields are excluded so a new snapshot version records a changed outcome or
+      practice rather than the daily date change.
     config:
       meta:
         owner:

@@ -20,12 +20,12 @@ WITH indicator_population AS (
 doses AS (
     SELECT
         population.person_id,
-        MIN(shingles.vaccination_date::DATE) AS first_dose_70_to_75_date
+        MIN(shingles.clinical_effective_date::DATE) AS first_dose_70_to_75_date
     FROM indicator_population AS population
-    INNER JOIN {{ ref('fct_shingles_vaccination_status') }} AS shingles
+    INNER JOIN {{ ref('int_shingles_vaccination_all') }} AS shingles
         ON population.person_id = shingles.person_id
-    WHERE shingles.vaccination_status = 'VACCINATION_ADMINISTERED'
-        AND shingles.vaccination_date::DATE
+    WHERE shingles.is_administered
+        AND shingles.clinical_effective_date::DATE
             BETWEEN DATEADD(year, 70, population.birth_date_approx) AND population.seventy_fifth_birthday
     GROUP BY population.person_id
 ),

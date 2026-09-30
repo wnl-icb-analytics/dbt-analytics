@@ -233,7 +233,7 @@ register_ndh AS (
         v.register_name,
         v.is_on_register
     FROM active_registrations ar
-    LEFT JOIN {{ ref('pit_ndh_register') }} v ON ar.person_id = v.person_id
+    LEFT JOIN {{ ref('pit_qof_ndh_gdm_register') }} v ON ar.person_id = v.person_id
 ),
 
 register_obesity AS (

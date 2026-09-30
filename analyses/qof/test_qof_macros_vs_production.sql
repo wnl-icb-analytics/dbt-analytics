@@ -229,7 +229,7 @@ macro_ndh AS (
         v.register_name,
         v.is_on_register
     FROM person_practices ar
-    LEFT JOIN {{ ref('pit_ndh_register') }} v ON ar.person_id = v.person_id
+    LEFT JOIN {{ ref('pit_qof_ndh_gdm_register') }} v ON ar.person_id = v.person_id
 ),
 
 macro_obesity AS (
@@ -288,7 +288,7 @@ production_counts AS (
     UNION ALL SELECT 'Learning Disability', COUNT(*) FROM {{ ref('fct_person_learning_disability_register') }}
     UNION ALL SELECT 'Osteoporosis', COUNT(*) FROM {{ ref('fct_person_osteoporosis_register') }}
     UNION ALL SELECT 'Rheumatoid Arthritis', COUNT(*) FROM {{ ref('fct_person_rheumatoid_arthritis_register') }}
-    UNION ALL SELECT 'NDH', COUNT(*) FROM {{ ref('fct_person_ndh_register') }}
+    UNION ALL SELECT 'NDH', COUNT(*) FROM {{ ref('fct_person_qof_ndh_gdm_register') }}
     UNION ALL SELECT 'Obesity', COUNT(*) FROM {{ ref('fct_person_obesity_register') }}
 )
 

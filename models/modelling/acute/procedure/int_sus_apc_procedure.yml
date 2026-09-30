@@ -1,7 +1,12 @@
 
 models:
   - name: int_sus_apc_procedure
-    description: "All admitted patient procedures from SUS data"
+    description: >-
+      Distinct OPCS-4 procedure codes submitted for SUS admitted patient spells.
+      One row represents one distinct procedure code per spell and
+      observation_count records repeated submissions of that code. Retains
+      clinical activity when the spell has no linked patient key; patient fields
+      are null in those rows.
     config:
       tags: ["daily"]
       meta:
@@ -34,7 +39,9 @@ models:
 
       - name: sk_patient_id
         data_type: varchar
-        description: "Unique identifier for the patient (pseudonymised NHS number)"
+        description: >-
+          Pseudonymised patient identifier. Null when the spell cannot be linked
+          to a patient; this does not remove the procedure activity.
 
       - name: organisation_id
         data_type: varchar

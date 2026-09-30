@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND132: https://www.nice.org.uk/indicators/ind132
--- Antiplatelet or oral anticoagulant order in 12 months on the CHD register.
+-- Antiplatelet or oral anticoagulant evidence in 12 months on the CHD register.
 -- Excludes people contraindicated to all three of salicylates, clopidogrel and oral anticoagulants (persisting at any time or expiring in 12 months), as NICE lists and QOF CHD005 applies.
 WITH
 -- Classes contraindicated: persisting at any time or expiring in the preceding 12 months (QOF reading)
@@ -37,9 +37,11 @@ assessed AS (
         therapy.latest_antiplatelet_order_date,
         therapy.latest_anticoagulant_order_date,
         therapy.latest_anticoagulant_type,
-        COALESCE(therapy.latest_antiplatelet_order_date
+        therapy.latest_antiplatelet_record_date,
+        therapy.latest_anticoagulant_record_date,
+        COALESCE(GREATEST_IGNORE_NULLS(therapy.latest_antiplatelet_order_date, therapy.latest_antiplatelet_record_date)
             >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_antiplatelet_in_period,
-        COALESCE(therapy.latest_anticoagulant_order_date
+        COALESCE(GREATEST_IGNORE_NULLS(therapy.latest_anticoagulant_order_date, therapy.latest_anticoagulant_record_date)
             >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_anticoagulant_in_period
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
@@ -61,6 +63,8 @@ SELECT
     latest_antiplatelet_order_date,
     latest_anticoagulant_order_date,
     latest_anticoagulant_type,
+    latest_antiplatelet_record_date,
+    latest_anticoagulant_record_date,
     is_antiplatelet_in_period,
     is_anticoagulant_in_period,
     TRUE AS is_in_denominator,
@@ -68,7 +72,9 @@ SELECT
     CASE
         WHEN is_antiplatelet_in_period OR is_anticoagulant_in_period THEN 'ACHIEVED'
         WHEN latest_antiplatelet_order_date IS NOT NULL
-            OR latest_anticoagulant_order_date IS NOT NULL THEN 'NOT_TREATED_IN_PERIOD'
+            OR latest_antiplatelet_record_date IS NOT NULL
+            OR latest_anticoagulant_order_date IS NOT NULL
+            OR latest_anticoagulant_record_date IS NOT NULL THEN 'NOT_TREATED_IN_PERIOD'
         ELSE 'NEVER_TREATED'
     END AS indicator_status
 FROM assessed

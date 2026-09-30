@@ -40,7 +40,7 @@ SELECT
     CURRENT_DATE() AS reporting_date,
     DATEADD(month, -12, CURRENT_DATE()) AS measurement_period_start,
     age,
-    'Moderate or severe frailty, or two or more long-term conditions' AS condition_name,
+    'Moderate or severe frailty, or conditions in four or more NICE multimorbidity categories' AS condition_name,
     current_practice_code,
     current_practice_name,
     ltc_count,

@@ -88,10 +88,11 @@ select
     s.treatment_site_name::varchar as site_name,
     null::varchar as referring_organisation_code,
     null::varchar as referring_organisation_name,
-    iff(s.referral_source_record_id is not null, 'referral', null)::varchar as parent_record_type,
-    s.referral_source_record_id::varchar as parent_record_id,
-    iff(s.referral_source_record_id is not null, 'fct_mhsds_referral', null)::varchar as parent_model_name,
-    iff(s.referral_source_record_id is not null, 'recorded_parent', null)::varchar as relationship_type,
+    -- A referral naming a different person is not promoted as the parent.
+    iff(iff(s.is_latest_referral_person_consistent is distinct from false, s.referral_source_record_id, null) is not null, 'referral', null)::varchar as parent_record_type,
+    iff(s.is_latest_referral_person_consistent is distinct from false, s.referral_source_record_id, null)::varchar as parent_record_id,
+    iff(iff(s.is_latest_referral_person_consistent is distinct from false, s.referral_source_record_id, null) is not null, 'fct_mhsds_referral', null)::varchar as parent_model_name,
+    iff(iff(s.is_latest_referral_person_consistent is distinct from false, s.referral_source_record_id, null) is not null, 'recorded_parent', null)::varchar as relationship_type,
     s.reporting_period_end_date::date as source_submission_period,
     s.source_file_received_at::timestamp_ntz as source_received_at,
     array_construct(
@@ -129,10 +130,11 @@ select
     null::varchar as site_name,
     null::varchar as referring_organisation_code,
     null::varchar as referring_organisation_name,
-    iff(s.referral_source_record_id is not null, 'referral', null)::varchar as parent_record_type,
-    s.referral_source_record_id::varchar as parent_record_id,
-    iff(s.referral_source_record_id is not null, 'fct_mhsds_referral', null)::varchar as parent_model_name,
-    iff(s.referral_source_record_id is not null, 'recorded_parent', null)::varchar as relationship_type,
+    -- A referral naming a different person is not promoted as the parent.
+    iff(iff((s.person_id = pr.person_id) is distinct from false, s.referral_source_record_id, null) is not null, 'referral', null)::varchar as parent_record_type,
+    iff((s.person_id = pr.person_id) is distinct from false, s.referral_source_record_id, null)::varchar as parent_record_id,
+    iff(iff((s.person_id = pr.person_id) is distinct from false, s.referral_source_record_id, null) is not null, 'fct_mhsds_referral', null)::varchar as parent_model_name,
+    iff(iff((s.person_id = pr.person_id) is distinct from false, s.referral_source_record_id, null) is not null, 'recorded_parent', null)::varchar as relationship_type,
     s.reporting_period_end_date::date as source_submission_period,
     s.source_file_received_at::timestamp_ntz as source_received_at,
     array_construct(
@@ -152,6 +154,7 @@ select
         )
     ) as milestones
 from {{ ref('fct_mhsds_hospital_provider_spell') }} as s
+left join {{ ref('fct_mhsds_referral') }} as pr on s.referral_source_record_id = pr.source_record_id
 where true
 {{ navigation_delivery_filter('s.source_file_received_at', 'hospital_provider_spell') }}
 union all

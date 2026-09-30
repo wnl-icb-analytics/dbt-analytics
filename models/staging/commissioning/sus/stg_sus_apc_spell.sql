@@ -14,6 +14,14 @@ with core_data as(
             , system_interchange_received_time desc nulls last
             , rownumber_id desc
         ) = 1
+),
+
+-- Data lake enrichment of each spell record; unique on primarykey_id and import.
+derived as (
+    select primarykey_id
+        , dmic_import_log_id
+        , dmic_lsoa2021
+    from {{ ref('raw_sus_apc_spell_derived') }}
 )
 
 select core.primarykey_id
@@ -66,6 +74,7 @@ select core.primarykey_id
     /* patient info at time of event  */
     , core.spell_patient_residence_derived_postcode_district
     , core.spell_patient_residence_derived_lsoa_11
+    , derived.dmic_lsoa2021 as spell_patient_residence_derived_lsoa_21
     , core.spell_patient_residence_residence_ccg
     , core.spell_patient_residence_derived_local_authority_district
     , core.spell_patient_residence_derived_index_of_multiple_deprivation_decile
@@ -79,5 +88,9 @@ select core.primarykey_id
     , core.spell_patient_identity_birth_month
 
 from core_data as core
+-- Match on import so the derived row belongs to the retained record version.
+left join derived
+    on core.primarykey_id = derived.primarykey_id
+    and core.dmic_import_log_id = derived.dmic_import_log_id
 
 
