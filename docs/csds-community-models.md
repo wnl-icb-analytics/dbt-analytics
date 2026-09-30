@@ -57,7 +57,7 @@ One row per (referral, contact). Reading it CTE by CTE:
 
 One row per currency code with the unit price resolved once through the fallback chain (community codes all resolve exactly). Shared with the MH models; its `not_null` test guarantees no contact reaches the priced fact without a price.
 
-## 5. Costing — [`fct_csds_currency_contacts.sql`](../models/reporting/community/fct_csds_currency_contacts.sql)
+## 5. Costing — [`fct_csds_currency_contacts.sql`](../models/reporting/community/currencies/fct_csds_currency_contacts.sql)
 
 One row per (referral, contact), everything above carried through, plus money: the 26/27 unit price rebased to the contact's fiscal year with the GDP deflator ([`uk_cost_indices`](../seeds/uk_cost_indices.csv)) and adjusted by the provider MFF ([`provider_market_forces_factor_2026_27`](../models/reference/finance/provider_market_forces_factor_2026_27.sql)). Attended contacts (5/6/null) are costed; DNAs and cancellations stay at zero cost so activity counts remain complete.
 
