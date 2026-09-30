@@ -85,11 +85,14 @@ where s.semantic_count <> d.row_count
 union all
 
 -- The activity WNL filter matches the activity fact's own flag.
-select 'wnl_activities' as entity, s.care_activity_count, d.row_count as domain_count
-from semantic_view(
-    {{ model }} metrics activities.care_activity_count dimensions activities.activities_is_wnl_commissioner
+select 'wnl_activities' as entity, s.semantic_count, d.row_count as domain_count
+from (
+    select coalesce(sum(iff(activities_is_wnl_commissioner, care_activity_count, 0)), 0) as semantic_count
+    from semantic_view(
+        {{ model }} metrics activities.care_activity_count dimensions activities.activities_is_wnl_commissioner
+    )
 ) as s
 cross join (select count(*) as row_count from {{ ref('fct_csds_care_activity') }} where is_wnl_commissioner) as d
-where s.activities_is_wnl_commissioner and s.care_activity_count <> d.row_count
+where s.semantic_count <> d.row_count
 
 {% endtest %}
