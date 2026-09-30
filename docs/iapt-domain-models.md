@@ -71,8 +71,8 @@ source scans are pruned.
 | Referral assessment | Referral, tool, completion date and time | 1.7 million | 1.7 million |
 
 The specification rejects repeated onward referrals within a submission, yet
-accepted data holds 20 extra copies across 19 natural-key groups, all with the
-same person, provider, referral and pathway. The onward referral history keeps
+accepted data holds about 20 extra copies, each with the same person, provider,
+referral and pathway as its original. The onward referral history keeps
 every source row; the fact keeps one milestone per natural key.
 
 Submitted row identifiers (`UniqueID_IDSnnn`, `RecordNumber`) change with every
@@ -102,7 +102,71 @@ if the whole data feed stalls, statuses stay relative to that last month.
 whether a late provider, not the referral, explains a `no_longer_submitted`
 status.
 
-## People
+## Provider code changes
+
+Referral identifiers are provider-qualified. When a provider's ODS code
+changes, its open referrals are resubmitted under the new code with new local
+and pathway identifiers and none of their earlier contacts. The old copy stops
+being reported without a discharge. Left alone, the referral is counted as
+received twice, the old copy looks abandoned, and NHS England's course fields
+on the new copy (first treatment date, contact counts, first scores, completed
+treatment, recovery) describe only the care after the change.
+
+`int_iapt_referral_transfer` pairs each successor with its predecessor: the
+same Person_ID and referral received date under different provider codes, the
+predecessor undischarged, and the successor first reported in the month after
+the predecessor was last reported. A referral with more than one candidate on
+either side is left unlinked, so both identifiers are unique. The rule names no
+providers. It finds about 11,000 pairs, over 99% of them in three known
+changes: four services moving to North London NHS Foundation Trust (G6V2S) in
+November 2024, the Camden and Islington services exchanging codes (TAF87 and
+TAF88) in June and July 2024, and RWK4C moving to RQY58 in December 2022. About
+50 pairs sit outside these; they meet the same rule and are not separated. A
+referral can transfer twice, and about 260 did.
+
+`fct_iapt_referral_summary` keeps both copies as rows:
+
+- `is_transfer_successor`, `is_transfer_predecessor`, `predecessor_referral_id`
+  and `successor_referral_id` link them. `original_referral_id` is the first
+  referral of the chain and has one value per course of care.
+- The predecessor's `as_of_referral_status` is `transferred`, ending at its
+  last reported month.
+- `has_partial_nhse_course_fields` is true on a successor. The supplied NHS
+  England values are unchanged on `fct_iapt_referral`.
+- `pathway_first_assessment_date` and `pathway_first_treatment_date` take the
+  earliest date across the chain. The chain's first treatment is earlier than
+  the successor's own for about 40% of successors, and a further 16% have no
+  first treatment of their own.
+
+Exclude `is_transfer_successor` to count each referral received once.
+Contacts, activities and assessments stay under the copy that reported them, so
+a course of care that spans a transfer needs both referral identifiers.
+`int_iapt_healthcare_event` emits no referral received milestone for a
+successor; event identifiers are otherwise unchanged.
+
+## Reconciling to NHS England's publication
+
+For services hosted in WNL, monthly figures from these facts match the
+publication's primary-file method within about 1%. They will not reproduce a
+past month exactly:
+
+- The facts use the latest accepted file for each month, which is the refresh
+  once it arrives. The publication's monthly figures come from the primary
+  file. Staging does not retain a primary file after its refresh replaces it.
+- A referral first reported late is dated to its true received month here, so
+  earlier months gain referrals the publication never added.
+- NHS England's published scripts filter on UsePathway_Flag, carried here as
+  `is_nhse_use_pathway`. It is false for about 0.01% of referral versions.
+- A transfer successor keeps its original received date, so counting referrals
+  by received month counts it twice unless `is_transfer_successor` is excluded.
+
+The facts are not limited to the WNL population. They hold all activity of
+services hosted in WNL, whoever commissions it, and only WNL-commissioned
+records from providers elsewhere. Filter `is_wnl_commissioner` for WNL
+population figures. Do not compare an out-of-area provider's totals with the
+publication, because most of that provider's activity is not in the feed.
+
+## People## People
 
 `person_id` is the IAPT Person_ID from the Master Person Service. It can be an
 NHS number, a linkable unmatched-person ID or a one-off ID that cannot be
@@ -235,14 +299,16 @@ means a time was supplied, not that its clinical accuracy has been established.
 
 | Model | One row represents |
 |---|---|
-| [`fct_iapt_referral`](../models/reporting/mental_health/referrals/fct_iapt_referral.sql) | One referral, latest accepted version |
-| [`fct_iapt_referral_summary`](../models/reporting/mental_health/referrals/fct_iapt_referral_summary.sql) | One referral with its status as of the latest accepted month |
+| [`fct_iapt_referral`](../models/reporting/mental_health/referrals/fct_iapt_referral.sql) | One referral, latest accepted version, recorded values only |
+| [`fct_iapt_referral_summary`](../models/reporting/mental_health/referrals/fct_iapt_referral_summary.sql) | One referral with its status as of the latest accepted month and its provider-code transfer links |
 | [`fct_iapt_care_contact`](../models/reporting/mental_health/activity/fct_iapt_care_contact.sql) | One care contact within its referral |
 | [`fct_iapt_onward_referral`](../models/reporting/mental_health/referrals/fct_iapt_onward_referral.sql) | One onward referral milestone |
 | [`fct_iapt_care_activity`](../models/reporting/mental_health/activity/fct_iapt_care_activity.sql) | One care activity with its procedure, finding and observation |
 | [`fct_iapt_assessment_score`](../models/reporting/mental_health/clinical/fct_iapt_assessment_score.sql) | One scored assessment question, dimension or total |
 | [`fct_iapt_health_condition`](../models/reporting/mental_health/clinical/fct_iapt_health_condition.sql) | One previous diagnosis, long-term condition or presenting complaint |
 | [`fct_iapt_clinical_record`](../models/reporting/mental_health/clinical/fct_iapt_clinical_record.sql) | One clinical item from the three clinical facts, in one list |
+| [`int_iapt_referral_transfer`](../models/modelling/mental_health/referrals/int_iapt_referral_transfer.sql) | One referral resubmitted under a new provider code, with the referral it continues |
+| [`int_iapt_care_activity_timing`](../models/modelling/mental_health/activity/int_iapt_care_activity_timing.sql) | One accepted care activity version with the date and time of its contact |
 | [`int_iapt_healthcare_event`](../models/modelling/mental_health/int_iapt_healthcare_event.sql) | One referral receipt, referral discharge, care contact or onward referral |
 | [`int_iapt_person_clinical_record`](../models/modelling/mental_health/int_iapt_person_clinical_record.sql) | One clinical item from `fct_iapt_clinical_record` |
 
@@ -279,29 +345,36 @@ Once `fct_person_healthcare_event` and `fct_person_clinical_record` are on main:
 
 ## Validation
 
-DEV profiling on 11-12 September 2026 covered all 7,430 accepted submissions,
-from September 2020 to July 2026. The prepared outputs contain 5,316,427 care
-milestones and 23,150,982 clinical items. Their identifiers are unique, and
+DEV profiling in September 2026 covered about 7,400 accepted submissions, from
+September 2020 to July 2026. The prepared outputs contain about 5.3 million care
+milestones and 23.2 million clinical items. Their identifiers are unique, and
 every dated item has a sort timestamp. Missing patient keys and undated
 conditions remain in the outputs.
 
-The published facts contain 920,139 referrals, 3,546,327 contacts, 3,023,188
-care activities, 3,623 onward referrals, 19,587,698 assessment items and
-714,966 recorded conditions. Month-qualified keys retain contacts, activities
-and assessment responses whose native identifiers are reused in another month.
-The clinical output excludes 5,021 superseded undated complaints, which remain
-in the condition fact.
+The published facts contain about 920,000 referrals, 3.5 million contacts, 3.0
+million care activities, 3,600 onward referrals, 19.6 million assessment items
+and 715,000 recorded conditions. Month-qualified keys retain contacts,
+activities and assessment responses whose native identifiers are reused in
+another month. The clinical output excludes about 5,000 superseded undated
+complaints, which remain in the condition fact.
 
-The referral summary has 846,338 recorded discharges, 33,890 open referrals and
-39,911 referrals no longer submitted. Recorded discharge events remain unchanged. No
-inferred end predates its referral receipt.
+In the referral summary about 92% of referrals have a recorded discharge, 3.7%
+are open, 3.1% are no longer submitted and 1.2% are transferred predecessors.
+Before transfers were linked, those predecessors counted as no longer
+submitted. Recorded discharge events are unchanged. No inferred end predates
+its referral receipt.
+
+The transfer model holds about 11,000 pairs and is unique on both the
+successor and the predecessor. Linking them removed the same number of referral
+received milestones from the event feed and changed no other milestone count.
+Fact row counts did not change.
 
 Validation included initial builds, a repeat incremental build, grain tests,
 procedure-expression examples and published-parent integrity checks. A
 controlled DEV test removed one retained onward-referral submission and added
 an inactive synthetic batch. The next incremental run restored the missing
-submission, removed the synthetic batch and exactly matched the original
-table's aggregate row count and content hash.
+submission, removed the synthetic batch and matched the original table's
+aggregate row count and content hash.
 
 Both reference seeds were regenerated from the official workbooks and matched
 the committed metadata. A full refresh of all nine histories on the configured
