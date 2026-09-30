@@ -3,7 +3,8 @@
 {% macro deduplicate_table(
         table,
         partition_cols,
-        order_cols
+        order_cols,
+        order_direction='DESC'
     ) %}
 
     {#
@@ -16,7 +17,13 @@
             a list of column(s) present in the dedup_table which the deduplication occurs over
 
         order_cols (list[str]):
-            a list of column(s) to order by when picking the row to keep (DESC)
+            a list of column(s) to order by when picking the row to keep
+
+        order_direction (str, optional):
+            'DESC' (default) keeps the row with the highest order_cols values, 'ASC' the
+            lowest. Applies to every order column. Use 'ASC' with date_recorded when the
+            table feeds point-in-time views: keeping the latest entry would hide the
+            record at dates when an earlier entry already existed.
 
         Example usage:
     #}
@@ -29,6 +36,10 @@
         {{ exceptions.raise_compiler_error("You must provide order_cols as a non-empty list to deduplicate_table.") }}
     {% endif %}
 
+    {% if order_direction | upper not in ['ASC', 'DESC'] %}
+        {{ exceptions.raise_compiler_error("order_direction must be 'ASC' or 'DESC' in deduplicate_table.") }}
+    {% endif %}
+
     SELECT
         tbl.*
     FROM {{ table }} AS tbl
@@ -39,7 +50,7 @@
         {%- endfor %}
         ORDER BY
         {%- for col in order_cols %}
-            tbl.{{ col }} DESC{% if not loop.last %},{% endif %}
+            tbl.{{ col }} {{ order_direction | upper }}{% if not loop.last %},{% endif %}
         {%- endfor %}
     ) = 1
 
