@@ -50,12 +50,14 @@ models:
               arguments:
                 expression: "> 0"
       - name: valid_from
-        description: Start date of this medication count period (inclusive)
+        description: Start date of this medication count period (inclusive). Can be in the future when a
+          current issue is due to run out and the count drops.
         data_tests:
           - not_null
 
       - name: valid_to
-        description: End date of this medication count period (inclusive, NULL if current)
+        description: End date of this medication count period (inclusive). Always populated; the final period
+          ends when the person's latest repeat issues are due to run out.
 
       - name: is_polypharmacy_5plus
         description: Flag for standard polypharmacy (5+ medications) during this period
@@ -89,6 +91,11 @@ models:
               arguments:
                 expression: ">= 0"
     data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - valid_from
       - dbt_utils.at_least_one:
           column_name: person_id
       - cluster_ids_exist:
