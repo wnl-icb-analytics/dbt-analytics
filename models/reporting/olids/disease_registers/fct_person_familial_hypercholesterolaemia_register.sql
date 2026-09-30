@@ -58,20 +58,18 @@ register_inclusion AS (
     SELECT
         fd.*,
 
-        -- Age at first diagnosis calculation using current age (approximation)
+        -- Age at first diagnosis, from the birth date
         CASE
             WHEN earliest_diagnosis_date IS NOT NULL
                 THEN
-                    age.age
-                    - DATEDIFF(YEAR, earliest_diagnosis_date, CURRENT_DATE())
+                    FLOOR(DATEDIFF('month', age.birth_date_approx, earliest_diagnosis_date) / 12)
         END AS age_at_first_fh_diagnosis,
 
         -- Register logic: Include if has diagnosis and estimated age ≥20 at first diagnosis
         COALESCE(
             earliest_diagnosis_date IS NOT NULL
             AND (
-                age.age
-                - DATEDIFF(YEAR, earliest_diagnosis_date, CURRENT_DATE())
+                FLOOR(DATEDIFF('month', age.birth_date_approx, earliest_diagnosis_date) / 12)
             )
             >= 20, FALSE
         ) AS is_on_register,
@@ -81,16 +79,14 @@ register_inclusion AS (
             WHEN
                 earliest_diagnosis_date IS NOT NULL
                 AND (
-                    age.age
-                    - DATEDIFF(YEAR, earliest_diagnosis_date, CURRENT_DATE())
+                    FLOOR(DATEDIFF('month', age.birth_date_approx, earliest_diagnosis_date) / 12)
                 )
                 >= 20
                 THEN 'Active FH diagnosis (age ≥20)'
             WHEN
                 earliest_diagnosis_date IS NOT NULL
                 AND (
-                    age.age
-                    - DATEDIFF(YEAR, earliest_diagnosis_date, CURRENT_DATE())
+                    FLOOR(DATEDIFF('month', age.birth_date_approx, earliest_diagnosis_date) / 12)
                 )
                 < 20
                 THEN 'FH diagnosis (age <20 - excluded from register)'

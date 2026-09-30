@@ -36,18 +36,11 @@
         GROUP BY ref_date.reference_date, diag.person_id
     ),
 
-    age_at_reference AS (
+    age_at_diagnosis AS (
         SELECT
             diag.reference_date,
             diag.person_id,
-            FLOOR(DATEDIFF(
-                'month',
-                birth.birth_date_approx,
-                CASE
-                    WHEN birth.death_date_approx <= diag.reference_date THEN birth.death_date_approx
-                    ELSE diag.reference_date
-                END
-            ) / 12) AS age
+            FLOOR(DATEDIFF('month', birth.birth_date_approx, diag.earliest_diagnosis_date) / 12) AS age_at_first_diagnosis
         FROM familial_hypercholesterolaemia_person_aggregates AS diag
         INNER JOIN {{ ref('dim_person_birth_death') }} AS birth
             ON diag.person_id = birth.person_id
@@ -60,11 +53,10 @@
             diag.person_id,
             diag.earliest_diagnosis_date,
             diag.latest_diagnosis_date,
-            -- Age at first diagnosis calculation using age at the reference date (approximation)
-            -- Live age-at-first-diagnosis approximation: age at the reference date less years since the first diagnosis.
-            age.age - DATEDIFF(YEAR, diag.earliest_diagnosis_date, diag.reference_date) AS age_at_first_fh_diagnosis
+            -- Age at first diagnosis, from the birth date, so it does not change with the reference date.
+            age.age_at_first_diagnosis AS age_at_first_fh_diagnosis
         FROM familial_hypercholesterolaemia_person_aggregates AS diag
-        LEFT JOIN age_at_reference AS age
+        LEFT JOIN age_at_diagnosis AS age
             ON diag.person_id = age.person_id
             AND diag.reference_date = age.reference_date
     )
