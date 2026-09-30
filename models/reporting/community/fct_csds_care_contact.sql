@@ -97,7 +97,7 @@ select
     , cancel.description as cancellation_reason_name
     , medium.description as legacy_consultation_medium_name
     , therapy.description as group_therapy_name
-from {{ ref('stg_csds_cyp201carecontact') }} as r
+from {{ ref('stg_csds_care_contact') }} as r
 left join {{ ref('stg_csds_bridging') }} as b on r.person_id = b.person_id
 left join {{ ref('stg_csds_referral_history') }} as submitted_referral
     on r.unique_submission_id = submitted_referral.unique_submission_id

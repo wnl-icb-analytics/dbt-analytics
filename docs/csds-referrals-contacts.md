@@ -21,8 +21,8 @@ profiles below check those rules against the received data, including versions
 | `stg_csds_activesubmission` | One accepted submission, enriched with its header and dataset version. |
 | `stg_csds_referral_history` | One referral in an accepted submission. |
 | `stg_csds_care_contact_history` | One contact in an accepted submission. |
-| `stg_csds_cyp101referral` | Latest reported state of a provider-qualified referral identifier. |
-| `stg_csds_cyp201carecontact` | Latest reported state of a referral/contact identifier pair. |
+| `stg_csds_referral` | Latest reported state of a provider-qualified referral identifier. |
+| `stg_csds_care_contact` | Latest reported state of a referral/contact identifier pair. |
 | `fct_csds_referral` | The latest referral, with source provenance, its own patient link and national labels. |
 | `fct_csds_care_contact` | The latest referral/contact pair, with source provenance, its own patient link and national labels. |
 | `csds_referral_code_lookup` | Newest definition of a referral reason, priority or professional-group code, including retired codes. |
