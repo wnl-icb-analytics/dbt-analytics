@@ -8,6 +8,7 @@
 Main indicators reference table.
 Extracts indicator definitions from model and column YAML meta properties.
 One row per indicator with core metadata for dashboards and reporting.
+The post-hook stores daily-grain history and repairs duplicate current versions.
 */
 
 {%- set metadata = extract_indicator_metadata() -%}

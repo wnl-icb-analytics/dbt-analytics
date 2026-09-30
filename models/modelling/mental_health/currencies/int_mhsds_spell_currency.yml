@@ -2,20 +2,13 @@ version: 2
 
 models:
   - name: int_mhsds_spell_currency
-    description: >
-      MHSDS hospital-provider spell currency classification. Grain: one row per
-      uniq_hosp_prov_spell_num. Population: spells in stg_mhsds_spell,
-      restored to single occupancy - provider-scoped spell ids mean trust
-      mergers and NHS/independent-sector dual submission record the same
-      admission more than once. One spell per person and admission date (latest
-      submission evidence wins), contained spells dropped, and a later
-      admission ends any spell still open at that date
-      (end_date_source 'superseded'). Time
-      semantics: diagnosis is the latest recorded on or before discharge, or
-      today for open spells. Cross-cutting crisis spells publish as MAZ99Z:
-      they stay in the nationally published MAZ99 family, and the family's
-      A-D suffixes name crisis service settings rather than bed types.
-      Bed-day pricing is resolved separately.
+    description: >-
+      NHS England costing classifications for hospital spells after shared occupancy selection. Each
+      row is one retained hospital-provider spell number. The diagnosis is the latest recorded on or
+      before discharge, or the run date for an open spell. Cross-cutting crisis spells use MAZ99Z
+      because the MAZ99 A-D suffixes describe crisis settings rather than bed types. Tied ward dates
+      are resolved by reporting period, file receipt, submission ID and ward-stay ID. Bed-day
+      pricing is applied separately.
     config:
       meta:
         owner:
@@ -41,9 +34,9 @@ models:
       - name: start_date_hosp_prov_spell
         description: Spell admission date.
       - name: end_date
-        description: Reused encounter end date.
+        description: End date from the shared occupancy interval.
       - name: end_date_source
-        description: Reused encounter end date source.
+        description: End-date reason from the shared occupancy interval.
       - name: age_hosp_start_date
         description: MHSDS-derived age at admission.
       - name: is_cyp

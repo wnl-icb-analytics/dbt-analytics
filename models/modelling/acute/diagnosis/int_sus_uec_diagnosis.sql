@@ -3,13 +3,21 @@
 -- standardize the ICD codes to ensure they follow the expected format
 -- `<CHAR><NUM><NUM>` or `<CHAR><NUM><NUM>.<NUM>`
 with
+    attendance_codes as (
+        select primarykey_id
+        , code
+        , snomed_id
+        , count(*) as observation_count
+        from {{ ref("stg_sus_ecds_clinical_diagnoses_snomed") }}
+        where code is not null
+        group by primarykey_id, code, snomed_id
+    ),
     diag_codes as (
         select primarykey_id
         , code
-        , count(*) as observation_count
-        , array_agg(distinct snomed_id)  WITHIN GROUP (ORDER BY snomed_id ASC) as snomed_ids
-        from {{ ref("stg_sus_ecds_clinical_diagnoses_snomed") }} 
-        where code is not null 
+        , sum(observation_count) as observation_count
+        , array_agg(snomed_id) within group (order by snomed_id asc) as snomed_ids
+        from attendance_codes
         group by primarykey_id, code
 ),
     final_icd_codes as (

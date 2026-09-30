@@ -1,7 +1,11 @@
 
 models:
   - name: int_sus_op_encounter
-    description: "Event history for attended outpatient appointments from SUS data"
+    description: >
+      One row per latest SUS outpatient appointment recorded as attended with
+      attendance code 5 or 6. Includes attended activity without a submitted
+      appointment identifier or linked patient key; visit_occurrence_id is the
+      SUS primarykey_id.
     config:
       meta:
         owner:
@@ -20,7 +24,9 @@ models:
 
       - name: sk_patient_id
         data_type: varchar
-        description: "Common commissioning patient identifier"
+        description: >
+          Common commissioning patient identifier. Null when the appointment
+          cannot be linked to a person; the attended activity remains included.
 
       - name: local_patient_identifier
         data_type: varchar
@@ -226,7 +232,19 @@ models:
 
       - name: lsoa_11_at_event
         data_type: varchar
-        description: "Ambiguous"
+        description: >-
+          Patient LSOA 2011 of residence at the time of the appointment.
+          Populated across the full history, so use it for trends that span
+          April 2024.
+
+      - name: lsoa_21_at_event
+        data_type: varchar
+        description: >-
+          Patient LSOA 2021 of residence at the time of the appointment.
+          Populated for appointments from 1 April 2024 (about 98%); mostly
+          null for earlier appointments, so use lsoa_11_at_event for trends
+          that span that date. About 2% of values from April 2024 lie in a
+          different local authority from lsoa_11_at_event.
 
       - name: lad_at_event
         data_type: varchar

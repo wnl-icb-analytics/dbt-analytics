@@ -4,68 +4,22 @@ with activity as (
         , c.unique_care_contact_identifier
         , c.person_id
         , b.sk_patient_id
-        , c.org_id_prov
+        , c.organisation_code_provider as org_id_prov
         , c.care_contact_date
         , r.ic_age_at_service_referral_received_date
         , coalesce(c.dm_icb_commissioner, r.dm_icb_commissioner) as dm_icb_commissioner
         , coalesce(c.dm_sub_icb_commissioner, r.dm_sub_icb_commissioner) as dm_sub_icb_commissioner
         , c.attendance_status
+        , {{ csds_attendance_code('c.attended_or_did_not_attend_code', 'c.attendance_status') }} as attendance_code
         , nullif(trim(st.team_type_code), '') as team_type_code
         , nullif(trim(r.primary_reason_for_referral_community_care), '') as primary_referral_reason
-    from {{ ref('stg_csds_cyp201carecontact') }} as c
-    left join {{ ref('stg_csds_cyp101referral') }} as r
+    from {{ ref('stg_csds_care_contact') }} as c
+    left join {{ ref('stg_csds_referral') }} as r
         on c.unique_service_request_identifier = r.unique_service_request_identifier
-    left join {{ ref('stg_csds_servicetype') }} as st
+    left join {{ ref('int_csds_currency_referral_service_type') }} as st
         on c.unique_service_request_identifier = st.unique_service_request_identifier
     left join {{ ref('stg_csds_bridging') }} as b
         on c.person_id = b.person_id
-)
-
-, practice_at_contact as (
-    select
-        a.unique_service_request_identifier
-        , a.unique_care_contact_identifier
-        , gp.practice_code
-    from activity as a
-    inner join {{ ref('stg_csds_gp_registration') }} as gp
-        on a.person_id = gp.person_id
-        and a.care_contact_date >= gp.registration_start_date
-        and (
-            gp.registration_end_date is null
-            or a.care_contact_date < gp.registration_end_date
-        )
-    qualify row_number() over (
-        partition by a.unique_service_request_identifier, a.unique_care_contact_identifier
-        order by gp.registration_start_date desc nulls last, gp.practice_code
-    ) = 1
-)
-
-, latest_gp_registration as (
-    select
-        person_id
-        , practice_code
-    from {{ ref('stg_csds_gp_registration') }}
-    qualify row_number() over (
-        partition by person_id
-        order by registration_start_date desc nulls last, practice_code
-    ) = 1
-)
-
-, practice_assignment as (
-    select
-        a.unique_service_request_identifier
-        , a.unique_care_contact_identifier
-        , coalesce(at_contact.practice_code, latest.practice_code) as practice_code
-        , case
-            when at_contact.practice_code is not null then 'at_contact'
-            when latest.practice_code is not null then 'latest_known'
-        end as practice_attribution
-    from activity as a
-    left join practice_at_contact as at_contact
-        on a.unique_service_request_identifier = at_contact.unique_service_request_identifier
-        and a.unique_care_contact_identifier = at_contact.unique_care_contact_identifier
-    left join latest_gp_registration as latest
-        on a.person_id = latest.person_id
 )
 
 , practice_context as (
@@ -93,30 +47,19 @@ with activity as (
     from {{ ref('stg_ukhfd_all_gp_and_gdp_practices') }}
 )
 
+-- one residence per person: the newest period record across providers
 , residence as (
     select
         person_id
-        , lsoa21_residence
-        , sub_icb_of_residence
-    from {{ ref('stg_csds_mpi') }}
-)
-
-, lsoa_to_lad as (
-    select
-        lsoa21_cd
-        , lad26_nm as residence_borough
-    from {{ ref('stg_reference_geo_lsoa21_sicbl26_icb26_nhser26_lad26') }}
-)
-
--- ~5% of submitted "2021" LSOAs are retired 2011 codes; bridge them to a
--- 2021 code (any split member - LAD is stable across splits) and resolve
-, lsoa11_to_lad as (
-    select distinct
-        b.old_lsoa_code as lsoa11_cd
-        , l.residence_borough
-    from {{ ref('stg_ukhfd_old_lsoa_to_new_lsoa_map') }} as b
-    inner join lsoa_to_lad as l
-        on b.new_lsoa_code = l.lsoa21_cd
+        , residence_lsoa_2021_code as lsoa21_residence
+        , residence_local_authority_name as residence_borough
+        , residence_sub_icb_code as sub_icb_of_residence
+    from {{ ref('dim_csds_person_provider_period') }}
+    qualify row_number() over (
+        partition by person_id
+        order by reporting_period_end_date desc nulls last, source_file_received_at desc nulls last,
+            submission_id::number desc, source_row_id::number desc
+    ) = 1
 )
 
 , enriched as (
@@ -133,10 +76,10 @@ with activity as (
         , context.pcn_name
         , context.practice_registered_borough
         , residence.lsoa21_residence
-        , coalesce(geography.residence_borough, geography_2011.residence_borough) as residence_borough
+        , residence.residence_borough
         , residence.sub_icb_of_residence
     from activity as a
-    left join practice_assignment as practice
+    left join {{ ref('int_csds_care_contact_context') }} as practice
         on a.unique_service_request_identifier = practice.unique_service_request_identifier
         and a.unique_care_contact_identifier = practice.unique_care_contact_identifier
     left join practice_context as context
@@ -145,10 +88,6 @@ with activity as (
         on practice.practice_code = ods.practice_code
     left join residence
         on a.person_id = residence.person_id
-    left join lsoa_to_lad as geography
-        on residence.lsoa21_residence = geography.lsoa21_cd
-    left join lsoa11_to_lad as geography_2011
-        on residence.lsoa21_residence = geography_2011.lsoa11_cd
 )
 
 , categorised as (
@@ -160,9 +99,9 @@ with activity as (
             when ic_age_at_service_referral_received_date between 0 and 17 then 'CYP'
             else 'Adult'
         end as age_category
-        -- lpad guards against zero-padded codes; nulls (~54% of contacts,
-        -- structural across providers) costed per NHSE v1.1 guidance
-        , lpad(attendance_status, 2, '0') in ('05', '06') or attendance_status is null as is_costed_attendance
+        -- NHSE v1.1 costs attended contacts and those with no attendance code.
+        -- Both attendance fields are read: the newer status is empty before v1.6.
+        , attendance_code in ('5', '6') or attendance_code is null as is_costed_attendance
     from enriched
 )
 

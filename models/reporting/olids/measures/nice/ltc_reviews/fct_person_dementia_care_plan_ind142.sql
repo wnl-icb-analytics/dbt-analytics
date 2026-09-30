@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND142: https://www.nice.org.uk/indicators/ind142
--- Dementia care plan or care plan review recorded in 12 months for people on the dementia register; the face-to-face setting is not coded.
+-- Dementia care plan or review in 12 months, on or after diagnosis; the face-to-face setting is not coded.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -20,7 +20,8 @@ assessed AS (
         active.current_practice_name,
         population.latest_dementia_care_plan_date AS latest_review_date,
         CASE WHEN population.latest_dementia_care_plan_date >= DATEADD(month, -12, CURRENT_DATE()) THEN population.latest_dementia_care_plan_date END AS latest_record_date,
-        COALESCE(population.latest_dementia_care_plan_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
+        COALESCE(population.latest_dementia_care_plan_date >= DATEADD(month, -12, CURRENT_DATE())
+            AND population.latest_dementia_care_plan_date >= population.earliest_dementia_diagnosis_date, FALSE) AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id

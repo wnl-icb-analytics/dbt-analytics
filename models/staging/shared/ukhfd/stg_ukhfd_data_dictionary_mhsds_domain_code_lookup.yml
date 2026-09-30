@@ -1,0 +1,32 @@
+version: 2
+models:
+- name: stg_ukhfd_data_dictionary_mhsds_domain_code_lookup
+  description: >-
+    National code descriptions for MHSDS demographics, circumstances, activity, discharge readiness
+    and restrictive care, including older definitions. Each row is one code-definition revision
+    identified by its code set, source reference model, source key and effective time. Employment
+    combines the general status list with the mental-health extension. These labels explain codes;
+    they do not establish clinical eligibility or whether a code was valid at a particular event date.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - source_reference_model
+        - code_set_name
+        - source_unique_key
+        - source_effective_from_at
+  columns:
+  - name: code_set_name
+    description: Named national code set.
+    data_tests:
+    - not_null
+  - name: code
+    description: National code, including retired values.
+    data_tests:
+    - not_null
+  - name: description
+    description: UKHFD national definition.

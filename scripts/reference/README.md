@@ -1,6 +1,7 @@
 # MHSDS assessment definitions
 
-Generate the reference seed from the public "MH Assessment Scales" worksheets
+Generate the reference seed from the public "MH Assessment Scales" and historical
+"Cluster Tools for MH" worksheets
 in the [current ETOS](https://digital.nhs.uk/data-and-information/data-collections-and-data-sets/data-sets/mental-health-services-data-set/tools-and-guidance)
 and [archived specifications](https://digital.nhs.uk/data-and-information/data-collections-and-data-sets/data-sets/mental-health-services-data-set/tools-and-guidance/mental-health-services-data-set-archived-specification).
 The committed seed uses v4.1, v5 and ETOS v6.0.7.1. Keep the downloaded workbooks outside
@@ -16,6 +17,13 @@ The extractor reads merged v4.1/v5 cells and explicit v6 rows. It includes both
 active and inactive concept IDs and fails on conflicting definitions within a
 version. Each seed row records its source version and worksheet row. Review
 the diff against the workbook before building the seed and downstream references.
+
+Clustering-only SARN concepts use the published tool name before "rating" in
+their descriptions, with each listed response and meaning retained. Their
+`source_row` refers to "Cluster Tools for MH". Shared concepts such as HoNOS keep
+the "MH Assessment Scales" definitions. The v5 change log records that SARN
+items were removed from the general assessment sheet because they belong in
+the clustering sheet.
 
 `mhsds_assessment_scale` supplies the latest available definition for each
 observable. `mhsds_assessment_response` retains the latest definition of every

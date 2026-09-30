@@ -1,4 +1,5 @@
 {% macro calculate_learning_disability_register(reference_date_expr='CURRENT_DATE()') %}
+    {# Pair: fct_person_learning_disability_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
     {#
     Calculates Learning Disability register status at a given reference date.
 

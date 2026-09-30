@@ -1,4 +1,5 @@
 {% macro calculate_osteoporosis_register(reference_date_expr='CURRENT_DATE()') %}
+    {# Pair: fct_person_osteoporosis_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
     {#
     Calculates Osteoporosis register status at a given reference date.
 
@@ -81,7 +82,14 @@
         SELECT
             person_id,
             birth_date_approx,
-            FLOOR(DATEDIFF('month', birth_date_approx, {{ reference_date_expr }}) / 12) AS age
+            FLOOR(DATEDIFF(
+                'month',
+                birth_date_approx,
+                CASE
+                    WHEN death_date_approx <= {{ reference_date_expr }} THEN death_date_approx
+                    ELSE {{ reference_date_expr }}
+                END
+            ) / 12) AS age
         FROM {{ ref('dim_person_birth_death') }}
         WHERE birth_date_approx IS NOT NULL
     ),

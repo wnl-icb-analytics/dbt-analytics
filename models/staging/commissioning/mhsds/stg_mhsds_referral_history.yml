@@ -1,0 +1,29 @@
+version: 2
+models:
+- name: stg_mhsds_referral_history
+  description: >-
+    Accepted MHS101 referral records before latest-referral selection. Each row is one submitted
+    MHS101 record across all accepted provider periods. Source cleaning matches the established
+    latest-referral interface; historical submissions remain available for period-specific analysis.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns: [uniq_submission_id, uniq_serv_req_id]
+  columns:
+  - name: mhs101_uniq_id
+    description: Submitted referral row identifier.
+    data_tests:
+    - not_null
+    - unique
+  - name: uniq_serv_req_id
+    description: Referral identifier which can recur across accepted reporting periods.
+    data_tests: [not_null]
+  - name: uniq_submission_id
+    description: Accepted submission containing the referral record.
+    data_tests: [not_null]
+  - name: reporting_period_end_date
+    description: Accepted source reporting-period end date, not the referral date.

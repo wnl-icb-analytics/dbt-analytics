@@ -1,0 +1,28 @@
+version: 2
+models:
+- name: fct_mhsds_group_therapy_contact
+  description: >-
+    Patient contacts marked as group therapy by therapy mode 3 or the older group indicator Y. Each
+    row is one latest referral/contact pair. Includes attendance, non-attendance and cancellation
+    states; use is_attended for attended contacts. Missing person IDs remain present. The contacts
+    have no shared session identifier, so they cannot establish exact session membership or be
+    linked to anonymous MHS301 sessions. These contacts are already included in
+    fct_mhsds_care_contact.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: group_therapy_contact_id
+    description: Unique key at the documented grain.
+    data_tests:
+    - not_null
+    - unique
+  - name: group_therapy_evidence_basis
+    description: National therapy mode 3 takes precedence when present; otherwise legacy indicator Y supplies
+      group evidence.
+  - name: has_conflicting_group_therapy_evidence
+    description: New and legacy fields explicitly disagree about group versus individual/couple therapy.
+  - name: clinical_contact_duration_minutes
+    description: Recorded duration for this patient contact. Summing across participants gives patient-contact
+      minutes, not facilitator time.

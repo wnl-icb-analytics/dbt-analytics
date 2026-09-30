@@ -1,0 +1,125 @@
+version: 2
+models:
+- name: rel_mhsds_referral_service_team
+  description: >-
+    Teams associated with each referral and their recorded roles. Each row is one referral, team
+    identifier and role, so a team can appear more than once for the same referral. MHS101 supplies
+    the primary team from version 6. MHS102 supplies referred-to teams before version 6 and
+    additional teams from version 6. Count referrals before joining this table if a referral total
+    is needed.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - referral_source_record_id
+        - service_or_team_relationship_type
+        - service_or_team_id
+  columns:
+  - name: referral_service_team_id
+    description: Stable key for the referral-to-service-or-team relationship.
+    data_tests:
+    - not_null
+    - unique
+  - name: referral_source_record_id
+    description: MHSDS unique service request identifier; joins to fct_mhsds_referral.source_record_id.
+    data_tests:
+    - not_null
+  - name: source_record_id
+    description: Selected MHS101 or MHS102 row supporting the relationship.
+    data_tests:
+    - not_null
+  - name: source_record_type
+    description: MHS101 for a primary team or MHS102 for another team.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - MHS101
+          - MHS102
+  - name: service_or_team_relationship_type
+    description: Primary, additional in v6, or referred-to before v6.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - primary
+          - additional
+          - referred_to
+  - name: service_or_team_local_id
+    description: Provider-local service or team identifier.
+  - name: service_or_team_id
+    description: MHSDS-derived team identifier, falling back to the provider-local identifier.
+    data_tests:
+    - not_null
+  - name: service_or_team_type_code
+    description: Submitted or MHS902-resolved service or team type code.
+  - name: service_or_team_type_description
+    description: Published description for the service or team type, including retired codes.
+  - name: source_service_or_team_type_name
+    description: Service or team name supplied by the provider.
+  - name: service_or_team_intended_age_group_code
+    description: Intended patient age group recorded for the service or team.
+  - name: service_or_team_intended_age_group_description
+    description: Published description for the intended age group.
+  - name: provider_organisation_code
+    description: Organisation code of the provider submitting the relationship.
+  - name: provider_organisation_name
+    description: Current organisation name for the provider code.
+  - name: record_start_date
+    description: Date the source relationship row first flowed.
+  - name: record_end_date
+    description: Date the source relationship row ceased to be valid.
+  - name: referral_rejection_date
+    description: Date the team referral was rejected.
+  - name: referral_rejection_time
+    description: Time the team referral was rejected.
+  - name: rejection_reason_code
+    description: Submitted team referral rejection reason code.
+  - name: rejection_reason_description
+    description: Published description for the referral rejection reason.
+  - name: referral_closure_date
+    description: Date the team referral was closed.
+  - name: referral_closure_time
+    description: Time the team referral was closed.
+  - name: closure_reason_code
+    description: Submitted team referral closure reason code.
+  - name: closure_reason_description
+    description: Published description for the referral closure reason.
+  - name: uniq_submission_id
+    description: Submission containing the selected source row.
+  - name: reporting_period_end_date
+    description: End date of the selected submission period.
+  - name: mhsds_version
+    description: MHSDS version assigned by the source pipeline.
+  - name: source_file_received_at
+    description: Timestamp when the selected source file was received by the submission portal.
+  - name: source_loaded_at
+    description: Timestamp when the source pipeline loaded the selected row.
+  - name: referral_rejected_at
+    description: Team referral rejection timestamp; date-only records use midnight.
+  - name: referral_rejected_time_precision
+    description: Whether team referral rejection has date or timestamp precision.
+    data_tests: &id001
+    - accepted_values:
+        arguments:
+          values:
+          - date
+          - timestamp
+  - name: referral_closed_at
+    description: Team referral closure timestamp; date-only records use midnight.
+  - name: referral_closed_time_precision
+    description: Whether team referral closure has date or timestamp precision.
+    data_tests: *id001
+  - name: service_or_team_relationship_status
+    description: Rejected, closed or open from the relationship dates.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - rejected
+          - closed
+          - open

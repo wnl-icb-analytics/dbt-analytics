@@ -19,16 +19,20 @@ WITH register AS (
 ),
 
 latest_egfr AS (
-    SELECT person_id, clinical_effective_date::DATE AS latest_egfr_date, egfr_value AS latest_egfr_value
+    SELECT
+        person_id,
+        clinical_effective_date::DATE AS latest_egfr_date,
+        CASE WHEN is_valid_egfr THEN egfr_value END AS latest_egfr_value
     FROM {{ ref('int_egfr_all') }}
-    WHERE egfr_value IS NOT NULL
+    WHERE clinical_effective_date::DATE <= CURRENT_DATE()
     QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date DESC, id DESC) = 1
 ),
 
 latest_acr AS (
     SELECT person_id, clinical_effective_date::DATE AS latest_acr_date, acr_value AS latest_acr_value
     FROM {{ ref('int_urine_acr_all') }}
-    WHERE is_acr_ratio AND acr_value IS NOT NULL
+    WHERE is_acr_ratio AND is_result_recorded
+        AND clinical_effective_date::DATE <= CURRENT_DATE()
     QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date DESC, id DESC) = 1
 ),
 
@@ -64,6 +68,7 @@ egfr_results AS (
     INNER JOIN {{ ref('int_egfr_all') }} AS egfr
         ON r.person_id = egfr.person_id
         AND egfr.egfr_value IS NOT NULL
+        AND egfr.clinical_effective_date::DATE <= CURRENT_DATE()
 ),
 
 -- eGFR on two occasions at least 90 days apart, the second within 90 days before diagnosis:
@@ -95,6 +100,7 @@ acr_near_diagnosis AS (
     INNER JOIN {{ ref('int_urine_acr_all') }} AS acr
         ON r.person_id = acr.person_id
         AND acr.is_acr_ratio
+        AND acr.clinical_effective_date::DATE <= CURRENT_DATE()
         AND acr.clinical_effective_date::DATE BETWEEN DATEADD(day, -90, r.ckd_diagnosis_date) AND DATEADD(day, 90, r.ckd_diagnosis_date)
     GROUP BY r.person_id
 ),

@@ -53,6 +53,7 @@ select
     , ethnicity_desc_at_event
     , postcode_district_at_event
     , lsoa_11_at_event
+    , lsoa_21_at_event
     , lad_at_event
     , imd_at_event
     , reg_practice_at_event

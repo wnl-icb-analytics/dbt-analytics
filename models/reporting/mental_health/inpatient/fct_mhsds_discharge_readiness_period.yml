@@ -1,0 +1,48 @@
+version: 2
+models:
+- name: fct_mhsds_discharge_readiness_period
+  description: >-
+    Periods when a patient was recorded as clinically ready for discharge, with the reported reason
+    for delay. Each row is one provider, hospital spell, readiness start date and delay reason. A
+    changed reason can start another period. The end date can mean the patient stopped being ready
+    without being discharged. Duration is the difference between recorded dates, not a count of
+    delayed occupied bed days. The latest accepted version is used; records with incomplete
+    identifying details remain separate.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: discharge_readiness_period_id
+    description: Unique identifier at the documented model grain.
+    data_tests:
+    - not_null
+    - unique
+  - name: hospital_provider_spell_source_record_id
+    description: Submitted hospital provider spell source record id.
+  - name: referral_source_record_id
+    description: Submitted referral source record id.
+  - name: readiness_start_date
+    description: Submitted readiness start date.
+  - name: readiness_end_date
+    description: Submitted readiness end date.
+  - name: delay_reason_code
+    description: Submitted delay reason code.
+  - name: delay_attribution_code
+    description: Submitted delay attribution code.
+  - name: responsible_organisation_code
+    description: Submitted responsible organisation code.
+  - name: delay_reason_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: delay_attribution_description
+    description: National label, including historical codes; null when no definition matches.
+  - name: n_accepted_source_records
+    description: Accepted submitted versions of this identity across all periods, including repeats.
+  - name: is_identity_incomplete
+    description: A required identity component is missing; the source row is retained separately.
+  - name: first_submission_period_end_date
+    description: First accepted reporting period containing this identity, not the clinical start date.
+  - name: reporting_period_end_date
+    description: Period of the accepted source evidence; may be later than the clinical event.
+  - name: source_file_received_at
+    description: Source file receipt timestamp, not a clinical time.

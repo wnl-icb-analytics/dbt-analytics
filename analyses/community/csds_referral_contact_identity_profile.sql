@@ -38,7 +38,7 @@ with conflicts as (
         on c.referral_source_row_id = submitted.cyp101_unique_id
         and c.submission_id = submitted.unique_submission_id
         and c.referral_id = submitted.unique_service_request_identifier
-    left join {{ ref('stg_csds_cyp101referral') }} as latest
+    left join {{ ref('stg_csds_referral') }} as latest
         on c.latest_referral_source_row_id = latest.cyp101_unique_id
         and c.referral_id = latest.unique_service_request_identifier
     left join historical_people as h

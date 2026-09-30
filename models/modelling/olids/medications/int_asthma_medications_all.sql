@@ -16,6 +16,7 @@ WITH asthma_orders_base AS (
         mo.person_id,
         mo.medication_order_id,
         mo.order_date,
+        mo.date_recorded,
         mo.order_medication_name,
         mo.mapped_concept_code,
         mo.mapped_concept_display,

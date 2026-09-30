@@ -1,9 +1,12 @@
 
 models:
   - name: int_sus_apc_procedure_hrg
-    description: "A table of APC procedures with HRG coding details for commissioning
-      analysis includes the unbundled HRGs for each episode and the core HRG for the
-      episode."
+    description: >-
+      Distinct core and unbundled HRG codes associated with SUS admitted patient
+      spells. One row represents one distinct HRG code per spell and
+      observation_count records its occurrences across episodes. Retains HRG
+      activity when the spell has no linked patient key; patient fields are null
+      in those rows.
     config:
       meta:
         owner:
@@ -34,7 +37,9 @@ models:
 
       - name: sk_patient_id
         data_type: varchar
-        description: "Unique patient identifier."
+        description: >-
+          Pseudonymised patient identifier. Null when the spell cannot be linked
+          to a patient; this does not remove the HRG activity.
 
       - name: organisation_id
         data_type: varchar

@@ -254,9 +254,12 @@ select
     , core.patient_usual_address_postcode_pseudo as postcode_id
     , core.patient_usual_address_postcode_district as postcode_district_at_event
     , core.patient_usual_address_lsoa_11 as lsoa_11_at_event
+    , core.patient_usual_address_lsoa_21 as lsoa_21_at_event
     , core.patient_usual_address_local_authority_district as lad_at_event
     , core.patient_usual_address_index_of_multiple_deprivation_decile as imd_at_event
     , case
+        when lsoa_21_imd.index_of_multiple_deprivation_decile is not null
+            then lsoa_21_imd.index_of_multiple_deprivation_decile
         when lsoa_imd.unambiguous_imd_2025_decile is not null
             then lsoa_imd.unambiguous_imd_2025_decile
         when try_to_number(core.patient_usual_address_index_of_multiple_deprivation_decile)
@@ -436,6 +439,10 @@ left join {{ ref('stg_dictionary_dbo_gp') }} as general_practitioner
 left join {{ ref('stg_ukhfd_all_gp_and_gdp_practices') }} as registered_practice
     on nullif(upper(trim(core.patient_gp_registration_general_practice)), '')
     = registered_practice.organisation_code
+
+-- IMD 2025 is published on LSOA 2021; use the recorded 2021 area before the 2011 bridge.
+left join {{ ref('stg_reference_imd2025') }} as lsoa_21_imd
+    on core.patient_usual_address_lsoa_21 = lsoa_21_imd.lsoa_code_2021
 
 left join lsoa_imd_2025 as lsoa_imd
     on core.patient_usual_address_lsoa_11 = lsoa_imd.old_lsoa_code

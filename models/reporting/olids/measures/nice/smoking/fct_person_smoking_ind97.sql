@@ -12,7 +12,7 @@ WITH indicator_population AS (
     WHERE (
             profile.has_chd OR profile.has_pad OR profile.has_stroke_tia OR profile.has_hypertension
             OR profile.has_diabetes OR profile.has_copd OR profile.has_ckd OR profile.has_asthma
-            OR profile.has_smi
+            OR profile.earliest_smi_diagnosis_date IS NOT NULL
         )
 ),
 

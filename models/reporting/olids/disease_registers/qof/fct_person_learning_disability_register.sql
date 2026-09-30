@@ -1,3 +1,7 @@
+-- Pair: macros/qof_registers/calculate_learning_disability_register.sql.
+-- This live fact includes future-dated records. Its PIT pair is strict as-of
+-- and derives age at the reference date where age is used.
+
 {{
     config(
         materialized='table',
@@ -75,7 +79,7 @@ register_logic AS (
         COALESCE(ld.has_active_ld_diagnosis, FALSE) AS is_on_register
 
     FROM learning_disability_diagnoses AS ld
-    INNER JOIN {{ ref('dim_person_age') }} AS age ON ld.person_id = age.person_id
+    LEFT JOIN {{ ref('dim_person_age') }} AS age ON ld.person_id = age.person_id
     WHERE ld.has_active_ld_diagnosis = TRUE
 )
 

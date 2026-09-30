@@ -1,0 +1,61 @@
+version: 2
+models:
+- name: fct_csds_referral_to_treatment_period
+  description: >-
+    Referral-to-treatment and response-time clocks reported by CSDS providers. Each row is one
+    accepted CYP104 record in a reporting period. A clock (referral and start date) repeats each
+    month it is reported, so filter is_latest_clock_record to count clocks. For the two-hour urgent
+    community response use is_two_hour_response_clock (type 05; type 06 is the two-day standard),
+    the latest record of each stopped clock with a valid wait, grouped by end month as nationally.
+    National figures also exclude rejected and acute-origin referrals, which this table keeps. A
+    missing end date does not prove the person is still waiting.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: referral_to_treatment_period_id
+    description: CYP104 source row identifier.
+    data_tests:
+    - unique
+    - not_null
+  - name: referral_source_record_id
+    description: Provider-qualified referral identifier; joins to source_record_id in fct_csds_referral.
+    data_tests:
+    - not_null
+  - name: waiting_time_measurement_type_code
+    description: Submitted community-care waiting time measurement type. Unmatched codes remain visible.
+  - name: waiting_time_measurement_type_name
+    description: Newest UKHFD description of the measurement type; null when unmatched.
+  - name: rtt_start_date
+    description: Supplied clock start date.
+  - name: rtt_end_date
+    description: Supplied clock end date; null when no end was reported in this period.
+  - name: rtt_status_code
+    description: Supplied referral-to-treatment period status.
+  - name: rtt_status_name
+    description: National status description; null when unmatched.
+  - name: is_two_hour_response_clock
+    description: Measurement type 05, crisis response intermediate care within two hours. Type 06 is the two-day standard.
+  - name: is_latest_clock_record
+    description: Newest report of this clock (referral and start date). Filter to count clocks once.
+  - name: is_wnl_commissioner
+    description: The same-submission referral's source-derived or submitted commissioner is West and North London.
+  - name: person_provider_period_id
+    description: Key for the person, provider and reporting period; joins dim_csds_person_provider_period. Null without a person.
+  - name: source_waiting_time_minutes
+    description: Waiting time in minutes derived by the national pipeline.
+  - name: source_waiting_time_overnight_days
+    description: Waiting time in overnight days derived by the national pipeline.
+  - name: is_response_standard_met
+    description: Source-derived flag that the response standard was met, for stopped clocks only; null for clocks without an end date or when not assessed.
+  - name: is_clock_stopped
+    description: The clock has an end date in this record.
+  - name: is_valid_wait
+    description: The source-derived waiting time is zero or more minutes; negative waits are invalid and excluded nationally.
+  - name: recorded_rtt_interval_days
+    description: Days from start to end when both are present and ordered; null otherwise.
+  - name: is_recorded_open_at_period_end
+    description: Started by period end with no end on or before it. Null when the start date is missing.
+  - name: reporting_period_end_date
+    description: Last date of the reporting month carrying this record.

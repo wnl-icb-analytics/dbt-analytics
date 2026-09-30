@@ -2,10 +2,10 @@ models:
   - name: int_cvd_risk_assessment_all
     description: >
       Cardiovascular risk assessment records from the PCD clusters CVDRISKASS_COD
-      and QRISKSCORE_COD, one row per observation for all people including
+      CVDASS2_COD and QRISKSCORE_COD, one row per observation for all people including
       inactive and deceased. Covers QRISK, QRISK2, QRISK3, JBS and Framingham
       score codes and "assessment done" codes, with or without a score value; an
-      observation in both clusters appears once. Observations dated after the
+      observation in several clusters appears once. Observations dated after the
       build date are excluded. Use int_qrisk_all for scored QRISK values; use
       this model to count that an assessment took place.
     config:
@@ -15,7 +15,7 @@ models:
     data_tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: CVDRISKASS_COD, QRISKSCORE_COD
+            cluster_ids: CVDRISKASS_COD, CVDASS2_COD, QRISKSCORE_COD
             source: PCD
     columns:
       - name: id
@@ -29,11 +29,15 @@ models:
         description: Date of the assessment record.
       - name: risk_score_value
         description: Numeric score as recorded, if any; scale depends on the tool.
+      - name: original_result_value
+        description: Unmodified recorded result; null for an assessment without a result.
       - name: concept_code
         description: SNOMED code of the record.
       - name: concept_display
         description: Description of the record.
       - name: source_cluster_id
-        description: CVDRISKASS_COD or QRISKSCORE_COD; the first when both match.
+        description: CVDASS2_COD, CVDRISKASS_COD or QRISKSCORE_COD; alphabetically first when several match.
       - name: is_qrisk_code
         description: Whether the code is a QRISK, QRISK2 or QRISK3 score code.
+      - name: is_cvd_risk_score_code
+        description: Whether the code belongs to QOF CVDASS2_COD, whose numeric values support the CVD treatment indicators. Generic assessment codes outside this set are not numeric risk scores.

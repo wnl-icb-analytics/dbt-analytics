@@ -1,0 +1,56 @@
+models:
+  - name: int_segmentation_ltc_history
+    description: >-
+      Monthly membership of the 17 LTCs used by population segmentation. One
+      row represents one active person on one condition register at one of the
+      last 60 completed month-ends. Condition-specific event dates remain in
+      the two upstream history models.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, end_date, condition_code]
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: end_date
+        description: Completed month-end used as the register reference date.
+        data_tests:
+          - not_null
+      - name: condition_code
+        description: Canonical segmentation condition code.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - AF
+                  - ANX
+                  - AST
+                  - CHD
+                  - CKD
+                  - COPD
+                  - DEM
+                  - DEP
+                  - DM
+                  - EP
+                  - HF
+                  - HTN
+                  - LD
+                  - NAFLD
+                  - PD
+                  - SMI
+                  - STIA
+      - name: is_on_register
+        description: Person meets the register definition at the month-end.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true]
+                quote: false

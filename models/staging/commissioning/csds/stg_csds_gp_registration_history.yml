@@ -1,0 +1,40 @@
+version: 2
+models:
+- name: stg_csds_gp_registration_history
+  description: One CYP002 GP registration row from an accepted CSDS submission, including repeated monthly
+    occurrences. Practice codes are as supplied, including lowercase variants. The latest registration per
+    person, provider, practice and start date is in stg_csds_gp_registration.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  data_tests:
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1
+  columns:
+  - name: cyp002_unique_id
+    description: Identifier of one delivered CYP002 source row.
+    data_tests:
+    - unique
+    - not_null
+  - name: person_id
+    description: CSDS person identifier. Null rows are retained here.
+  - name: general_medical_practice_code_patient_registration
+    description: Supplied GP practice code, in its supplied case.
+  - name: start_date_gmp_patient_registration
+    description: Supplied registration start date. Null for about one row in twelve.
+  - name: end_date_gmp_patient_registration
+    description: Supplied registration end date. Null while the registration is current or unknown.
+  - name: organisation_code_ccg_of_gp_practice
+    description: Supplied commissioner code of the practice.
+  - name: unique_submission_id
+    description: Accepted submission containing this row.
+    data_tests:
+    - not_null
+  - name: organisation_code_provider
+    description: Supplied provider organisation code.
+  - name: effective_from
+    description: Date and time the submission portal received the file; not the time of care.
+  - name: reporting_period_end_date
+    description: Last date of the source reporting period.
