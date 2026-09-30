@@ -229,13 +229,13 @@ means a time was supplied, not that its clinical accuracy has been established.
 
 | Model | One row represents |
 |---|---|
-| [`fct_iapt_referral`](../models/reporting/mental_health/fct_iapt_referral.sql) | One referral, latest accepted version |
-| [`fct_iapt_care_contact`](../models/reporting/mental_health/fct_iapt_care_contact.sql) | One care contact within its referral |
-| [`fct_iapt_onward_referral`](../models/reporting/mental_health/fct_iapt_onward_referral.sql) | One onward referral milestone |
-| [`fct_iapt_care_activity`](../models/reporting/mental_health/fct_iapt_care_activity.sql) | One care activity with its procedure, finding and observation |
-| [`fct_iapt_assessment_score`](../models/reporting/mental_health/fct_iapt_assessment_score.sql) | One scored assessment question, dimension or total |
-| [`fct_iapt_health_condition`](../models/reporting/mental_health/fct_iapt_health_condition.sql) | One previous diagnosis, long-term condition or presenting complaint |
-| [`fct_iapt_clinical_record`](../models/reporting/mental_health/fct_iapt_clinical_record.sql) | One clinical item from the three clinical facts, in one list |
+| [`fct_iapt_referral`](../models/reporting/mental_health/referrals/fct_iapt_referral.sql) | One referral, latest accepted version |
+| [`fct_iapt_care_contact`](../models/reporting/mental_health/activity/fct_iapt_care_contact.sql) | One care contact within its referral |
+| [`fct_iapt_onward_referral`](../models/reporting/mental_health/referrals/fct_iapt_onward_referral.sql) | One onward referral milestone |
+| [`fct_iapt_care_activity`](../models/reporting/mental_health/activity/fct_iapt_care_activity.sql) | One care activity with its procedure, finding and observation |
+| [`fct_iapt_assessment_score`](../models/reporting/mental_health/clinical/fct_iapt_assessment_score.sql) | One scored assessment question, dimension or total |
+| [`fct_iapt_health_condition`](../models/reporting/mental_health/clinical/fct_iapt_health_condition.sql) | One previous diagnosis, long-term condition or presenting complaint |
+| [`fct_iapt_clinical_record`](../models/reporting/mental_health/clinical/fct_iapt_clinical_record.sql) | One clinical item from the three clinical facts, in one list |
 | [`int_iapt_healthcare_event`](../models/modelling/mental_health/int_iapt_healthcare_event.sql) | One referral receipt, referral discharge, care contact or onward referral |
 | [`int_iapt_person_clinical_record`](../models/modelling/mental_health/int_iapt_person_clinical_record.sql) | One clinical item from `fct_iapt_clinical_record` |
 
