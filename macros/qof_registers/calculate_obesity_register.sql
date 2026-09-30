@@ -24,57 +24,77 @@
         {{ ltc_register_reference_dates(reference_date_expr, reference_dates) }}
     ),
 
-    bmi_events AS (
-        -- Latest-record rules of int_bmi_qof, applied to the records known by each reference date.
+    bmi_records AS (
         SELECT
-            ref_date.reference_date,
-            bmi.id,
-            bmi.person_id,
-            bmi.clinical_effective_date,
-            bmi.is_valid_bmi,
-            bmi.is_bmi_30_plus,
-            bmi.is_bmi_27_5_plus
-        FROM {{ ref('int_bmi_qof_all') }} AS bmi
-        INNER JOIN reference_dates AS ref_date
-            ON {{ ltc_register_known_by('bmi.clinical_effective_date', 'bmi.date_recorded', 'ref_date.reference_date') }}
+            person_id,
+            clinical_effective_date,
+            is_valid_bmi,
+            is_bmi_30_plus,
+            is_bmi_27_5_plus,
+            {{ ltc_known_date('clinical_effective_date', 'date_recorded') }} AS known_date,
+            -- Latest record: clinical time, then observation id and cluster, as in int_bmi_qof.
+            TO_VARCHAR(clinical_effective_date, 'YYYY-MM-DD HH24:MI:SS.FF9')
+                || '|' || TO_VARCHAR(id) || '|' || source_cluster_id AS record_key
+        FROM {{ ref('int_bmi_qof_all') }}
+        WHERE clinical_effective_date IS NOT NULL
     ),
 
-    bmi_dates AS (
-        SELECT
-            reference_date,
-            person_id,
-            MAX(clinical_effective_date) AS latest_diagnosis_date,
-            MAX(CASE WHEN is_valid_bmi THEN clinical_effective_date END) AS latest_valid_bmi_date
-        FROM bmi_events
-        GROUP BY reference_date, person_id
+    latest_valid_bmi AS (
+        {{ ltc_latest_known_record("SELECT person_id, record_key, known_date FROM bmi_records WHERE is_valid_bmi") }}
+    ),
+
+    latest_any_bmi AS (
+        {{ ltc_latest_known_record("SELECT person_id, record_key, known_date FROM bmi_records") }}
     ),
 
     bmi_data AS (
-        -- Flags come from the latest valid BMI record, as in fct_person_obesity_register.
+        -- Flags and date of the latest valid BMI, and the date of the latest BMI record
+        -- of any kind, known by each reference date.
         SELECT
-            reference_date,
+            valid.reference_date,
+            valid.person_id,
+            valid_record.is_bmi_30_plus,
+            valid_record.is_bmi_27_5_plus,
+            valid_record.clinical_effective_date AS latest_valid_bmi_date,
+            any_record.clinical_effective_date AS latest_bmi_date
+        FROM latest_valid_bmi AS valid
+        INNER JOIN bmi_records AS valid_record
+            ON valid.person_id = valid_record.person_id
+            AND valid.record_key = valid_record.record_key
+        INNER JOIN latest_any_bmi AS latest_any
+            ON valid.person_id = latest_any.person_id
+            AND valid.reference_date = latest_any.reference_date
+        INNER JOIN bmi_records AS any_record
+            ON latest_any.person_id = any_record.person_id
+            AND latest_any.record_key = any_record.record_key
+    ),
+
+    ethnicity_records AS (
+        SELECT
             person_id,
-            is_bmi_30_plus,
-            is_bmi_27_5_plus
-        FROM bmi_events
-        WHERE is_valid_bmi
-        QUALIFY ROW_NUMBER() OVER (
-            PARTITION BY reference_date, person_id ORDER BY clinical_effective_date DESC, id DESC
-        ) = 1
+            is_bame,
+            {{ ltc_known_date('clinical_effective_date', 'date_recorded') }} AS known_date,
+            -- Latest record: clinical date, then observation id and cluster, as in int_ethnicity_qof.
+            TO_VARCHAR(CAST(clinical_effective_date AS TIMESTAMP_NTZ), 'YYYY-MM-DD HH24:MI:SS.FF9')
+                || '|' || TO_VARCHAR(id) || '|' || cluster_id AS record_key
+        FROM {{ ref('int_ethnicity_qof_all') }}
+        WHERE clinical_effective_date IS NOT NULL
+    ),
+
+    latest_ethnicity AS (
+        {{ ltc_latest_known_record("SELECT person_id, record_key, known_date FROM ethnicity_records") }}
     ),
 
     ethnicity_data AS (
-        -- Latest QOF ethnicity record known by each reference date, as in int_ethnicity_qof.
+        -- Latest QOF ethnicity record known by each reference date.
         SELECT
-            ref_date.reference_date,
-            eth.person_id,
-            eth.is_bame
-        FROM {{ ref('int_ethnicity_qof_all') }} AS eth
-        INNER JOIN reference_dates AS ref_date
-            ON {{ ltc_register_known_by('eth.clinical_effective_date', 'eth.date_recorded', 'ref_date.reference_date') }}
-        QUALIFY ROW_NUMBER() OVER (
-            PARTITION BY ref_date.reference_date, eth.person_id ORDER BY eth.clinical_effective_date DESC, eth.id DESC
-        ) = 1
+            latest.reference_date,
+            latest.person_id,
+            record.is_bame
+        FROM latest_ethnicity AS latest
+        INNER JOIN ethnicity_records AS record
+            ON latest.person_id = record.person_id
+            AND latest.record_key = record.record_key
     ),
 
     age_at_reference AS (
@@ -109,14 +129,9 @@
                 FALSE
             ) AS is_on_register,
             -- fct_person_ltc_summary uses latest valid BMI as the earliest diagnosis date.
-            dates.latest_valid_bmi_date AS earliest_diagnosis_date,
-            dates.latest_diagnosis_date
+            bmi.latest_valid_bmi_date AS earliest_diagnosis_date,
+            bmi.latest_bmi_date AS latest_diagnosis_date
         FROM bmi_data AS bmi
-        INNER JOIN bmi_dates AS dates
-            ON bmi.person_id = dates.person_id
-            AND bmi.reference_date = dates.reference_date
-            -- The old macro omitted people with no valid BMI date.
-            AND dates.latest_valid_bmi_date IS NOT NULL
         LEFT JOIN age_at_reference age ON bmi.person_id = age.person_id
             AND bmi.reference_date = age.reference_date
         LEFT JOIN ethnicity_data eth ON bmi.person_id = eth.person_id

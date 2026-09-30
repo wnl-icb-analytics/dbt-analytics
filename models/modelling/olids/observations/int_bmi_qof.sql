@@ -42,7 +42,7 @@ latest_valid_bmi AS (
     SELECT
         person_id,
         bmi_value AS latest_valid_bmi_value,
-        ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date DESC, id DESC) AS rn
+        ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date DESC, id DESC, source_cluster_id DESC) AS rn
     FROM validated_observations
     WHERE is_valid_bmi = TRUE
 ),
@@ -51,7 +51,7 @@ latest_observations AS (
 
     SELECT
         vo.*,
-        ROW_NUMBER() OVER (PARTITION BY vo.person_id ORDER BY vo.clinical_effective_date DESC, vo.id DESC) AS rn
+        ROW_NUMBER() OVER (PARTITION BY vo.person_id ORDER BY vo.clinical_effective_date DESC, vo.id DESC, vo.source_cluster_id DESC) AS rn
     FROM validated_observations vo
 ),
 

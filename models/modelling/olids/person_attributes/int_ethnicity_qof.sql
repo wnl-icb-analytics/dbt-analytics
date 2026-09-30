@@ -50,7 +50,7 @@ LEFT JOIN person_level_aggregation AS pla
 QUALIFY
     row_number()
         OVER (
-            PARTITION BY qee.person_id ORDER BY qee.clinical_effective_date DESC, qee.id DESC
+            PARTITION BY qee.person_id ORDER BY qee.clinical_effective_date DESC, qee.id DESC, qee.cluster_id DESC
         )
     = 1
 ORDER BY qee.person_id
