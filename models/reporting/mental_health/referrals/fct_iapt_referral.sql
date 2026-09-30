@@ -101,6 +101,7 @@ select
         , null
     ) as symptom_onset_month_start_date
     , o.assessment_first_date as first_assessment_date
+    , o.assessment_last_date as last_assessment_date
     , o.therapy_session_first_date as first_treatment_date
     , o.therapy_session_second_date as second_treatment_date
     , o.therapy_session_last_date as last_treatment_date
@@ -134,6 +135,7 @@ select
     end as reliable_change_status
     , o.presenting_complaint_higher_category
     , o.presenting_complaint_lower_category
+    , o.use_pathway_flag as is_nhse_use_pathway
     , o.provider_organisation_code
     , provider.organisation_name as provider_organisation_name
     , o.org_id_comm as submitted_commissioner_code
