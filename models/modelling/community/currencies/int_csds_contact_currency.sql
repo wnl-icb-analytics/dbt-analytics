@@ -47,36 +47,19 @@ with activity as (
     from {{ ref('stg_ukhfd_all_gp_and_gdp_practices') }}
 )
 
--- one residence per person: the newest reported MPI record across providers
+-- one residence per person: the newest period record across providers
 , residence as (
     select
         person_id
-        , lower_super_output_area_residence as lsoa21_residence
-        , organisation_identifier_sub_icb_location_of_residence as sub_icb_of_residence
-    from {{ ref('stg_csds_mpi') }}
+        , residence_lsoa_2021_code as lsoa21_residence
+        , residence_local_authority_name as residence_borough
+        , residence_sub_icb_code as sub_icb_of_residence
+    from {{ ref('dim_csds_person_provider_period') }}
     qualify row_number() over (
         partition by person_id
-        order by reporting_period_end_date desc nulls last, effective_from desc nulls last,
-            unique_submission_id::number desc, cyp001_unique_id::number desc
+        order by reporting_period_end_date desc nulls last, source_file_received_at desc nulls last,
+            submission_id::number desc, source_row_id::number desc
     ) = 1
-)
-
-, lsoa_to_lad as (
-    select
-        lsoa21_cd
-        , lad26_nm as residence_borough
-    from {{ ref('stg_reference_geo_lsoa21_sicbl26_icb26_nhser26_lad26') }}
-)
-
--- ~5% of submitted "2021" LSOAs are retired 2011 codes; bridge them to a
--- 2021 code (any split member - LAD is stable across splits) and resolve
-, lsoa11_to_lad as (
-    select distinct
-        b.old_lsoa_code as lsoa11_cd
-        , l.residence_borough
-    from {{ ref('stg_ukhfd_old_lsoa_to_new_lsoa_map') }} as b
-    inner join lsoa_to_lad as l
-        on b.new_lsoa_code = l.lsoa21_cd
 )
 
 , enriched as (
@@ -93,7 +76,7 @@ with activity as (
         , context.pcn_name
         , context.practice_registered_borough
         , residence.lsoa21_residence
-        , coalesce(geography.residence_borough, geography_2011.residence_borough) as residence_borough
+        , residence.residence_borough
         , residence.sub_icb_of_residence
     from activity as a
     left join {{ ref('int_csds_care_contact_context') }} as practice
@@ -105,10 +88,6 @@ with activity as (
         on practice.practice_code = ods.practice_code
     left join residence
         on a.person_id = residence.person_id
-    left join lsoa_to_lad as geography
-        on residence.lsoa21_residence = geography.lsoa21_cd
-    left join lsoa11_to_lad as geography_2011
-        on residence.lsoa21_residence = geography_2011.lsoa11_cd
 )
 
 , categorised as (

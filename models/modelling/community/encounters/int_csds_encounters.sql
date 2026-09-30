@@ -11,17 +11,10 @@ only includes care contacts that were attended
 
 */
 
-select 
-    /* Information needed to derive standard encounter information */
-    bridge.sk_patient_id
-    , core.clinical_contact_duration_of_care_contact as duration
-    , core.care_contact_date as start_date
+select
+    sk_patient_id
+    , clinical_contact_duration_minutes as duration
+    , care_contact_date as start_date
     , 'CSDS' as source
-
-
-from {{ ref('stg_csds_care_contact')}} as core
-
-left join {{ ref('stg_csds_bridging')}} as bridge
-on core.person_id = bridge.person_id 
-
-where core.attendance_status in ('5', '6')
+from {{ ref('fct_csds_care_contact') }}
+where source_attendance_status_code in ('5', '6')
