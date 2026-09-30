@@ -683,6 +683,21 @@ WITH schema_metadata AS (
   
   UNION ALL
   
+    -- qadmissions: qAdmissions model outputs
+  SELECT 
+    'STAT_MODELS' as database_name,
+    'QADMISSIONS' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "STAT_MODELS".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'QADMISSIONS'
+  
+  UNION ALL
+  
     -- pmct: Central Performance Analytics Team (PMCT)
   SELECT 
     'DATA_LAKE' as database_name,
