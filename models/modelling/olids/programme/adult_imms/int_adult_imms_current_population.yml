@@ -1,7 +1,19 @@
 ﻿models:
   - name: int_adult_imms_current_population
-    description: Intermediate table holding demographics for base adult imms 
-      population currently registered aged 65+
+    description: >
+      Current adult immunisation population. One row per currently registered,
+      living person aged 18 or over.
+
+      IN_RSV_CLINICAL_RISK_GROUP is chronic respiratory disease or
+      immunosuppression on the latest flu campaign in
+      int_covid_flu_risk_group_flags. Those flu clinical intermediates include
+      people of every age (minimum 6 months). They are not the flu under-65
+      at-risk offer in fct_flu_eligibility.
+
+      RSV_1D uses this flag and applies the 65 to 74 age band separately. The
+      adult imms models document that band as a 65-74 proxy from 1 September
+      2026 (int_adult_imms_currently_eligible and the Clinical Risk 65-74
+      cohort in int_adult_imms_ts_historical_rsv).
 
     config:
       meta:
@@ -13,4 +25,8 @@
         tests:
           - not_null
           - unique
-
+      - name: in_rsv_clinical_risk_group
+        description: >
+          True when the person has chronic respiratory disease or
+          immunosuppression on the latest flu campaign, at any age. RSV_1D
+          eligibility then restricts the offer to ages 65 to 74.

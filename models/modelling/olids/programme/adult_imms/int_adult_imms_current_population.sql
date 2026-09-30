@@ -44,7 +44,11 @@ FROM {{ ref('int_csf_leak_latest')}}
 --FROM MODELLING.OLIDS_OBSERVATIONS.INT_CSF_LEAK_LATEST
 ) b
 )
---September 2026 add new group for RSV clinical risk groups which includes immunosuppression and chronic lung disease.
+-- RSV clinical risk is chronic respiratory disease or immunosuppression at any
+-- age. fct_flu_eligibility only publishes those subcohorts under 65, because
+-- everyone 65 and over qualifies for flu by age. The flags model reads the flu
+-- clinical intermediates before that gate. RSV_1D applies the 65-74 band at
+-- eligibility, not on this flag.
 ,RSV_clinical_risk_groups AS (
 SELECT distinct person_id
 FROM (
@@ -94,7 +98,7 @@ END AS TURN_65_AFTER_SEP_2023
 ,CASE WHEN imm.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_IMMUNOSUPPRESSED
 --PPV clinical risk group flag which includes immunosuppression but also other risk groups eligible for PPV
 ,CASE WHEN ppv.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IN_PPV_CLINICAL_RISK_GROUP
---RSV clinical risk group flag which includes immunosuppression and chronic lung disease. 
+-- RSV clinical risk flag: immunosuppression or chronic respiratory disease, any age.
 ,CASE WHEN rsv.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IN_RSV_CLINICAL_RISK_GROUP
 ,CASE WHEN preg.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_PREGNANT
 ,dem.GENDER
