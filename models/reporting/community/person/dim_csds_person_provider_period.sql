@@ -8,7 +8,9 @@ with ranked as (
             partition by person_id, organisation_code_provider, reporting_period_end_date
         ) as n_source_patient_records
         , count(distinct hash(ethnic_category, person_stated_gender_code, ic_age_of_patient_at_rp_end,
-            lower_super_output_area_residence, lower_super_output_area_residence_2011, person_death_date)) over (
+            lower_super_output_area_residence, lower_super_output_area_residence_2011, person_death_date,
+            organisation_identifier_icb_of_residence, organisation_identifier_sub_icb_location_of_residence,
+            dm_icb_residence_submitted, dm_sub_icb_residence_submitted)) over (
             partition by person_id, organisation_code_provider, reporting_period_end_date
         ) > 1 as has_conflicting_demographic_records
     from {{ ref('stg_csds_mpi_history') }} as m
