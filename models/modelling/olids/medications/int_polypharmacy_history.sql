@@ -16,8 +16,8 @@ efficient storage and accurate historical tracking.
 Example output for a patient:
 - 2020-01-15 to 2021-08-10: 4 medications (not polypharmacy)
 - 2021-08-11 to 2023-03-05: 5 medications (polypharmacy starts)
-- 2023-03-06 to 2026-11-02: 6 medications (current; ends when the latest
-  issues are due to run out, so later periods can start in the future)
+- 2023-03-06 to 2026-11-02: 6 medications (current; valid_to is always
+  set, and periods can start in the future as current issues run out)
 
 Grain: One row per person per distinct medication count period
 */
