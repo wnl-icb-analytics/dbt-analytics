@@ -1,0 +1,33 @@
+models:
+  - name: fct_person_familial_hypercholesterolaemia_register_by_month
+    description: >
+      Familial hypercholesterolaemia register at each completed month-end, on the
+      rules of fct_person_familial_hypercholesterolaemia_register: an FHYP_COD
+      diagnosis with estimated age at first diagnosis of at least 20 years.
+      The estimate uses age at the month-end, capped at death, less the year
+      difference since the first diagnosis; no resolution codes apply.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: earliest_diagnosis_date
+        description: Earliest familial hypercholesterolaemia diagnosis known by the month-end.
+      - name: latest_diagnosis_date
+        description: Latest familial hypercholesterolaemia diagnosis known by the month-end.

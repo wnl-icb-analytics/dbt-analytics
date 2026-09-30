@@ -21,7 +21,26 @@
     ('palliative_care', ref('fct_person_palliative_care_register'), calculate_palliative_care_register('CURRENT_DATE()')),
     ('rheumatoid_arthritis', ref('fct_person_rheumatoid_arthritis_register'), calculate_rheumatoid_arthritis_register('CURRENT_DATE()')),
     ('smi', ref('fct_person_smi_register'), calculate_smi_register('CURRENT_DATE()')),
-    ('stroke_tia', ref('fct_person_stroke_tia_register'), calculate_stroke_tia_register('CURRENT_DATE()'))
+    ('stroke_tia', ref('fct_person_stroke_tia_register'), calculate_stroke_tia_register('CURRENT_DATE()')),
+    ('adhd', ref('fct_person_adhd_register'), calculate_adhd_register('CURRENT_DATE()')),
+    ('anxiety', ref('fct_person_anxiety_register'), calculate_anxiety_register('CURRENT_DATE()')),
+    ('autism', ref('fct_person_autism_register'), calculate_autism_register('CURRENT_DATE()')),
+    ('cerebral_palsy', ref('fct_person_cerebral_palsy_register'), calculate_cerebral_palsy_register('CURRENT_DATE()')),
+    ('chronic_liver_disease', ref('fct_person_chronic_liver_disease_register'), calculate_chronic_liver_disease_register('CURRENT_DATE()')),
+    ('cyp_asthma', ref('fct_person_cyp_asthma_register'), calculate_cyp_asthma_register('CURRENT_DATE()')),
+    ('familial_hypercholesterolaemia', ref('fct_person_familial_hypercholesterolaemia_register'), calculate_familial_hypercholesterolaemia_register('CURRENT_DATE()')),
+    ('frailty', ref('fct_person_frailty_register'), calculate_frailty_register('CURRENT_DATE()')),
+    ('gestational_diabetes', ref('fct_person_gestational_diabetes_register'), calculate_gestational_diabetes_register('CURRENT_DATE()')),
+    ('hypothyroidism', ref('fct_person_hypothyroidism_register'), calculate_hypothyroidism_register('CURRENT_DATE()')),
+    ('learning_disability_under_14', ref('fct_person_learning_disability_register_under_14'), calculate_learning_disability_under_14_register('CURRENT_DATE()')),
+    ('mnd', ref('fct_person_mnd_register'), calculate_mnd_register('CURRENT_DATE()')),
+    ('ms', ref('fct_person_ms_register'), calculate_ms_register('CURRENT_DATE()')),
+    ('nafld', ref('fct_person_nafld_register'), calculate_nafld_register('CURRENT_DATE()')),
+    ('ndh_clinical', ref('fct_person_ndh_register'), calculate_ndh_register('CURRENT_DATE()')),
+    ('osteoarthritis', ref('fct_person_osteoarthritis_register'), calculate_osteoarthritis_register('CURRENT_DATE()')),
+    ('parkinsons', ref('fct_person_parkinsons_register'), calculate_parkinsons_register('CURRENT_DATE()')),
+    ('sickle_cell', ref('fct_person_sickle_cell_register'), calculate_sickle_cell_register('CURRENT_DATE()')),
+    ('thalassaemia', ref('fct_person_thalassaemia_register'), calculate_thalassaemia_register('CURRENT_DATE()'))
 ] %}
 
 {% set future_evidence_columns = {
@@ -47,8 +66,37 @@
     'palliative_care': ['LATEST_DIAGNOSIS_DATE'],
     'rheumatoid_arthritis': ['LATEST_DIAGNOSIS_DATE'],
     'smi': ['LATEST_DIAGNOSIS_DATE'],
-    'stroke_tia': ['LATEST_DIAGNOSIS_DATE']
+    'stroke_tia': ['LATEST_DIAGNOSIS_DATE'],
+    'adhd': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE', 'LATEST_RESOLVED_DATE'],
+    'anxiety': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'autism': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'cerebral_palsy': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'chronic_liver_disease': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE', 'EARLIEST_CIRRHOSIS_DATE', 'LATEST_CIRRHOSIS_DATE'],
+    'cyp_asthma': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE', 'LATEST_ASTHMA_MEDICATION_DATE'],
+    'familial_hypercholesterolaemia': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'frailty': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'gestational_diabetes': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'hypothyroidism': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'learning_disability_under_14': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'mnd': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'ms': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'nafld': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'ndh_clinical': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE', 'EARLIEST_NDH_DATE', 'LATEST_NDH_DATE', 'EARLIEST_IGT_DATE', 'LATEST_IGT_DATE', 'EARLIEST_PRD_DATE', 'LATEST_PRD_DATE', 'EARLIEST_DIABETES_DIAGNOSIS_DATE', 'LATEST_DIABETES_RESOLVED_DATE'],
+    'osteoarthritis': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'parkinsons': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'sickle_cell': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
+    'thalassaemia': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE']
 } %}
+
+{# Live facts filtered to currently registered patients; their PIT members are compared on the same population. #}
+{% set current_patient_registers = ['familial_hypercholesterolaemia', 'gestational_diabetes', 'nafld'] %}
+
+{#
+Live obesity takes its flags from the latest BMI record, including one dated in
+the future, which can drop a person whose earlier BMI qualifies. PIT ignores
+future records, so a person with a future-dated BMI may be PIT-only.
+#}
+{% set future_record_sources = {'obesity': ref('int_bmi_qof_all')} %}
 
 {#
 The live fact deliberately includes future-dated records; PIT today does not.
@@ -116,6 +164,19 @@ WITH mismatches AS (
             WHERE
                 pit.is_on_register = TRUE
                 AND live.person_id IS NULL
+                -- Live facts cover people in dim_person only.
+                AND pit.person_id IN (SELECT person_id FROM {{ ref('dim_person') }})
+                {% if register_name in future_record_sources %}
+                AND pit.person_id NOT IN (
+                    SELECT person_id
+                    FROM {{ future_record_sources[register_name] }}
+                    WHERE clinical_effective_date > CURRENT_DATE()
+                        OR CAST(date_recorded AS DATE) > CURRENT_DATE()
+                )
+                {% endif %}
+                {% if register_name in current_patient_registers %}
+                AND pit.person_id IN (SELECT person_id FROM {{ ref('dim_person_active_patients') }})
+                {% endif %}
         )
 
         SELECT 'live_not_pit' AS direction, person_id FROM live_only

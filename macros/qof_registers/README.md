@@ -1,59 +1,29 @@
 # QOF Register Calculation Macros
 
-Macros for calculating QOF disease register status at a given reference date.
+Register rules evaluated as at one or more reference dates.
 
 ## Pattern
 
+Each `calculate_<register>_register` macro holds the register rules as at a
+reference date. QOF registers live here; other registers in `macros/ltc_registers/`.
 Each macro:
-1. Accepts `reference_date_expr` parameter (defaults to `CURRENT_DATE()`)
-2. Assumes `active_registrations` CTE exists with (person_id, practice_code)
-3. Filters diagnosis/observation data to reference date
-4. Applies condition-specific business rules
-5. Returns (person_id, practice_code, register_name, is_on_register)
+1. Accepts `reference_date_expr` (a single date, default `CURRENT_DATE()`) or
+   `reference_dates` (a query returning a `reference_date` column; every date is evaluated)
+2. Counts an event once its clinical date and recorded date are on or before the
+   reference date (`ltc_register_known_by`)
+3. Computes age at the reference date where a rule uses age
+4. Returns one row per person and reference date: `reference_date, person_id,
+   register_name, is_on_register, earliest_diagnosis_date, latest_diagnosis_date`
+   plus register-specific columns
 
-## Example Structure
+Callers:
+- `qof_pit/pit_*_register` views: one date from the `qof_reference_date` var
+- `history/fct_person_*_register_by_month`: the 60 completed month-ends from
+  `ltc_register_history_month_ends()`
+- `tests/ltc_register_fct_pit_reconciliation.sql`: today's date, compared with the
+  live `fct_person_*_register` facts
 
-{% raw %}
-```sql
-{% macro calculate_{condition}_register(reference_date_expr='CURRENT_DATE()') %}
-    {#
-    Calculates {Condition} register status at a given reference date.
-
-    Business Logic:
-    - [List criteria]
-
-    Parameters:
-        reference_date_expr: SQL expression for reference date (default: CURRENT_DATE())
-
-    Returns: CTE with person_id, practice_code, register_name, is_on_register
-
-    Assumes: active_registrations CTE exists with (person_id, practice_code)
-    #}
-
-    WITH {condition}_diagnoses_filtered AS (
-        SELECT person_id, ...
-        FROM {{ ref('int_{condition}_diagnoses_all') }}
-        WHERE clinical_effective_date <= {{ reference_date_expr }}
-    ),
-
-    -- Aggregate, apply business rules
-
-    {condition}_register_logic AS (
-        SELECT
-            ar.person_id,
-            ar.practice_code,
-            '{Condition Display Name}' AS register_name,
-            COALESCE(..., FALSE) AS is_on_register
-        FROM active_registrations ar
-        LEFT JOIN ...
-    )
-
-    SELECT person_id, practice_code, register_name, is_on_register
-    FROM {condition}_register_logic
-
-{% endmacro %}
-```
-{% endraw %}
+Macros read modelling event models (`int_*_all`), never staging observations.
 
 ## Register Types
 
