@@ -28,13 +28,18 @@ select
     null::varchar as parent_record_id,
     s.reporting_period_end_date::date as source_submission_period,
     s.source_loaded_at::timestamp_ntz as source_received_at,
-    array_construct(
-        object_construct_keep_null(
-            'type', 'referral_received', 'name', 'Referral received',
-            'date', s.referral_received_date::date, 'at', null,
-            'precision', iff(s.referral_received_date is null, 'unknown', 'date'),
-            'basis', 'referral_received_date', 'retain_undated', true,
-            'outcome_code', null, 'outcome_name', null
+    array_construct_compact(
+        -- A referral resubmitted under another provider code was already received once, on its predecessor.
+        iff(
+            t.successor_referral_id is not null
+            , null
+            , object_construct_keep_null(
+                'type', 'referral_received', 'name', 'Referral received',
+                'date', s.referral_received_date::date, 'at', null,
+                'precision', iff(s.referral_received_date is null, 'unknown', 'date'),
+                'basis', 'referral_received_date', 'retain_undated', true,
+                'outcome_code', null, 'outcome_name', null
+            )
         ),
         object_construct_keep_null(
             'type', 'referral_discharged', 'name', 'Referral discharged',
@@ -45,6 +50,8 @@ select
         )
     ) as milestones
 from {{ ref('fct_iapt_referral') }} as s
+left join {{ ref('int_iapt_referral_transfer') }} as t
+    on s.referral_id = t.successor_referral_id
 
 union all
 

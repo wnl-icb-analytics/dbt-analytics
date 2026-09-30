@@ -134,7 +134,9 @@ with active as (
         , count_if(referral_received_date is null) as missing_received_date
         , count_if(service_discharge_date is not null) as discharged
         , count_if(as_of_referral_status = 'open') as open
-        , count_if(referral_end_date_source = 'last_submission') as inferred_closed
+        , count_if(as_of_referral_status = 'no_longer_submitted') as no_longer_submitted
+        , count_if(is_transfer_predecessor) as transfer_predecessors
+        , count_if(is_transfer_successor) as transfer_successors
         , count_if(discharge_reason_code is not null and discharge_reason_name is null) as unlabelled_discharge_reason
         , count_if(discharge_reason_code_set = 'discharge_reason_legacy') as legacy_labelled_discharge_reason
         , count_if(is_completed_treatment) as completed_treatment

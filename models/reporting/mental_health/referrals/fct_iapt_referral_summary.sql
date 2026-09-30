@@ -23,11 +23,18 @@ with reporting_date as (
         , pp.provider_latest_reporting_period_end_date
         , datediff(month, pp.provider_latest_reporting_period_end_date, d.as_of_date) as provider_months_behind_dataset
         , r.reporting_period_end_date = pp.provider_latest_reporting_period_end_date as is_in_latest_provider_period
+        , ts.predecessor_referral_id
+        , tp.successor_referral_id
+        , ts.successor_referral_id is not null as is_transfer_successor
+        , tp.predecessor_referral_id is not null as is_transfer_predecessor
+        , coalesce(ts.original_referral_id, r.referral_id) as original_referral_id
         -- Open referrals must be resubmitted every month (user guidance v1.6.1 pp15 and 32). Without a discharge
         -- date, a referral last reported within 2 months of as_of_date is open; an older one ended at its last
-        -- reported month, as in int_mhsds_spell_encounters.
+        -- reported month, as in int_mhsds_spell_encounters. A referral continued under another provider code
+        -- is transferred, not ended.
         , case
             when r.service_discharge_date is not null then 'discharged'
+            when tp.predecessor_referral_id is not null then 'transferred'
             when date_trunc('month', r.last_reported_period_end_date)
                 >= dateadd(month, -2, date_trunc('month', d.as_of_date)) then 'open'
             else 'no_longer_submitted'
@@ -36,6 +43,11 @@ with reporting_date as (
     cross join reporting_date as d
     left join provider_periods as pp
         on r.provider_organisation_code = pp.provider_organisation_code
+    -- The transfer model is unique on both keys, so neither join adds rows.
+    left join {{ ref('int_iapt_referral_transfer') }} as ts
+        on r.referral_id = ts.successor_referral_id
+    left join {{ ref('int_iapt_referral_transfer') }} as tp
+        on r.referral_id = tp.predecessor_referral_id
 )
 
 select
@@ -44,10 +56,16 @@ select
     , case as_of_referral_status
         when 'discharged' then service_discharge_date
         when 'no_longer_submitted' then last_reported_period_end_date
+        when 'transferred' then last_reported_period_end_date
     end as referral_end_date
     , case as_of_referral_status
         when 'discharged' then 'discharged'
-        when 'no_longer_submitted' then 'last_submission'
-        else 'open'
+        when 'open' then 'open'
+        else 'last_submission'
     end as referral_end_date_source
+    -- NHS England derives course fields per provider-qualified referral, so a successor's cover only the
+    -- part after the transfer.
+    , is_transfer_successor as has_partial_nhse_course_fields
+    , min(first_assessment_date) over (partition by original_referral_id) as pathway_first_assessment_date
+    , min(first_treatment_date) over (partition by original_referral_id) as pathway_first_treatment_date
 from referrals

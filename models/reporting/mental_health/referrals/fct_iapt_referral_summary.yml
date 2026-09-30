@@ -7,6 +7,8 @@ models:
     end of its last reported month, including when its provider stopped submitting. The rule is relative to the
     latest accepted month in the data set, not the build date, so a resumed submission can reopen a referral.
     provider_months_behind_dataset shows where a provider's delay, not the referral, explains the status.
+    A referral continued under another provider code (int_iapt_referral_transfer) is transferred, and both copies
+    are rows here; exclude is_transfer_successor to count each referral received once.
   config:
     meta:
       owner:
@@ -196,24 +198,51 @@ models:
     description: TRUE when the selected version is from the provider's latest accepted month. FALSE without a
       discharge means the provider dropped the referral while still submitting. TRUE with
       no_longer_submitted means the provider itself is more than 2 months behind the data set.
+  - name: predecessor_referral_id
+    description: Referral this one continues after a provider code change, from int_iapt_referral_transfer. Null
+      when the referral is not a transfer successor.
+  - name: successor_referral_id
+    description: Referral that continues this one under another provider code. Null when the referral is not a
+      transfer predecessor.
+  - name: is_transfer_successor
+    description: TRUE when the referral continues an earlier one under a new provider code. It was received once,
+      on the first referral of the chain; exclude successors when counting referrals received.
+  - name: is_transfer_predecessor
+    description: TRUE when the referral was resubmitted under another provider code.
+  - name: original_referral_id
+    description: First referral of the transfer chain; the referral's own identifier when it never transferred. One
+      value per course of care.
+    data_tests:
+    - not_null
   - name: as_of_referral_status
     description: Status at as_of_date. discharged when a discharge date is recorded. open when none is recorded
       and the referral was last reported within 2 months of as_of_date. no_longer_submitted when none is recorded
-      and it was last reported earlier; an inference, not a discharge.
+      and it was last reported earlier; an inference, not a discharge. transferred when none is recorded and the
+      referral continues under another provider code; its successor carries the current status.
     data_tests:
     - not_null
     - accepted_values:
         arguments:
-          values: [open, discharged, no_longer_submitted]
+          values: [open, discharged, transferred, no_longer_submitted]
   - name: referral_end_date
     description: End of the referral for timelines and durations. The recorded discharge date for discharged
-      referrals, or the last day of the last reported month when no_longer_submitted. Null while open. An inferred
+      referrals, or the last day of the last reported month when no_longer_submitted or transferred. Null while open. An inferred
       end is not a discharge and implies no discharge reason, discharge event or completed treatment.
   - name: referral_end_date_source
     description: Basis for referral_end_date. discharged means a recorded discharge date; open means no end yet;
-      last_submission means the end is inferred from the last reported month.
+      last_submission means the end is inferred from the last reported month, including transferred referrals.
     data_tests:
     - not_null
     - accepted_values:
         arguments:
           values: [discharged, open, last_submission]
+  - name: has_partial_nhse_course_fields
+    description: TRUE for a transfer successor. NHS England derives first and last treatment dates, contact counts,
+      first scores, completed treatment, recovery and reliable change per provider-qualified referral, so these
+      fields cover only the part after the transfer. The predecessor's cover the part before it.
+  - name: pathway_first_assessment_date
+    description: Earliest first_assessment_date across the transfer chain; the referral's own when it never
+      transferred.
+  - name: pathway_first_treatment_date
+    description: Earliest first_treatment_date across the transfer chain; the referral's own when it never
+      transferred. Use for waits from referral to first treatment.

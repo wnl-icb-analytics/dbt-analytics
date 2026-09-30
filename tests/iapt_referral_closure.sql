@@ -9,6 +9,7 @@ with expected as (
         , as_of_referral_status
         , referral_end_date
         , referral_end_date_source
+        , is_transfer_predecessor
         , case
             when service_discharge_date is not null then 'discharged'
             when datediff(month, last_reported_period_end_date, as_of_date) <= 2 then 'open'
@@ -41,6 +42,20 @@ with expected as (
         )
     from expected
     where service_discharge_date is null
+        and not is_transfer_predecessor
+
+    union all
+
+    -- A referral continued under another provider code is transferred and ends at its last reported month.
+    select
+        'transferred_predecessor'
+        , count_if(
+            as_of_referral_status is distinct from 'transferred'
+            or referral_end_date_source is distinct from 'last_submission'
+            or referral_end_date is distinct from last_reported_period_end_date
+        )
+    from expected
+    where is_transfer_predecessor
 
     union all
 
