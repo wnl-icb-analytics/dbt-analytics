@@ -26,6 +26,9 @@ select
         else 'timestamp'
     end as care_contact_time_precision
     , c.ic_age_at_care_contact_date as age_at_contact
+    -- commissioning of the same-submission contact the activity belongs to
+    , {{ is_wnl_icb_code(['c.dm_icb_commissioner', 'c.dm_sub_icb_commissioner', 'c.organisation_code_code_of_commissioner']) }}
+        as is_wnl_commissioner
     , c.activity_location_type_code
     , loc.description as activity_location_type_name
     , a.community_care_activity_type as activity_type_code
