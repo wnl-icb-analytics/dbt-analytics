@@ -1,4 +1,4 @@
-# CSDS Community Models: A Walkthrough
+# CSDS community currency models
 
 Models that classify **CSDS** (Community Services Data Set) care contacts into the NHSE community currencies, price them, and attribute them to commissioner, practice and place. This doc walks the pipeline in the order data flows, linking each transformation's code.
 
