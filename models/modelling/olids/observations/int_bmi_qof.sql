@@ -10,63 +10,10 @@ Includes both numeric BMI values (BMIVAL_COD) and BMI30+ codes (BMI30_COD).
 Implements specific obesity register logic with ethnicity-adjusted thresholds and BAME classification.
 */
 
-WITH base_observations AS (
+WITH validated_observations AS (
 
-    SELECT
-        obs.id,
-        obs.person_id,
-        obs.clinical_effective_date,
-        obs.mapped_concept_code AS concept_code,
-        obs.mapped_concept_display AS concept_display,
-        obs.cluster_id AS source_cluster_id,
-        obs.result_value,
-
-        -- Extract BMI value from result_value, handling both numeric and coded values
-        -- Use TRY_TO_NUMBER to handle invalid numeric values gracefully
-        CASE
-            WHEN obs.cluster_id = 'BMIVAL_COD' THEN TRY_CAST(obs.result_value AS FLOAT)
-            WHEN obs.cluster_id = 'BMI30_COD' THEN 30 -- BMI30_COD implies BMI >= 30
-            ELSE NULL
-        END AS bmi_value
-
-    FROM ({{ get_observations("'BMI30_COD', 'BMIVAL_COD'") }}) obs
-    WHERE obs.clinical_effective_date IS NOT NULL
-),
-
-filtered_observations AS (
     SELECT *
-    FROM base_observations
-    WHERE bmi_value IS NOT NULL
-),
-
-validated_observations AS (
-
-    SELECT
-        *,
-
-        -- Data quality flags
-        CASE
-            WHEN bmi_value BETWEEN 5 AND 400 THEN TRUE
-            ELSE FALSE
-        END AS is_valid_bmi,
-
-        -- QOF obesity register flags
-        CASE
-            WHEN source_cluster_id = 'BMI30_COD' OR bmi_value >= 30 THEN TRUE
-            ELSE FALSE
-        END AS is_bmi_30_plus,
-
-        CASE
-            WHEN bmi_value >= 27.5 THEN TRUE
-            ELSE FALSE
-        END AS is_bmi_27_5_plus,
-
-        CASE
-            WHEN bmi_value >= 25 THEN TRUE
-            ELSE FALSE
-        END AS is_bmi_25_plus
-
-    FROM filtered_observations
+    FROM {{ ref('int_bmi_qof_all') }}
 ),
 
 person_level_aggregation AS (
@@ -95,7 +42,7 @@ latest_valid_bmi AS (
     SELECT
         person_id,
         bmi_value AS latest_valid_bmi_value,
-        ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date DESC) AS rn
+        ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date DESC, id DESC) AS rn
     FROM validated_observations
     WHERE is_valid_bmi = TRUE
 ),
@@ -104,7 +51,7 @@ latest_observations AS (
 
     SELECT
         vo.*,
-        ROW_NUMBER() OVER (PARTITION BY vo.person_id ORDER BY vo.clinical_effective_date DESC) AS rn
+        ROW_NUMBER() OVER (PARTITION BY vo.person_id ORDER BY vo.clinical_effective_date DESC, vo.id DESC) AS rn
     FROM validated_observations vo
 ),
 

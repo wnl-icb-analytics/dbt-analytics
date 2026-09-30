@@ -1,0 +1,28 @@
+models:
+  - name: int_ethnicity_qof_all
+    description: >
+      QOF ethnicity observations (ETH2016*_COD clusters), one row per observation and
+      cluster, with is_bame marking the groups that take the lower BMI threshold in
+      the obesity register. Feeds int_ethnicity_qof and calculate_obesity_register.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: ETH2016MWBC_COD,ETH2016MWBA_COD,ETH2016MWA_COD,ETH2016AI_COD,ETH2016AP_COD,ETH2016AB_COD,ETH2016AC_COD,ETH2016AO_COD,ETH2016BA_COD,ETH2016BC_COD,ETH2016BO_COD,ETH2016OA_COD
+            source: PCD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - id
+              - cluster_id
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: date_recorded
+        description: Date the observation was entered in the record.
+      - name: is_bame
+        description: Ethnicity group that takes the lower BMI threshold (27.5) for the QOF obesity register.
