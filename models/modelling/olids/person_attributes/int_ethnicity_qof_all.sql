@@ -9,7 +9,18 @@
 -- per observation and cluster, with the BAME classification used by the obesity register.
 -- Includes ALL persons regardless of active status.
 
-WITH mapped_observations AS (
+WITH ethnicity_codes AS (
+    -- One row per code and cluster: the code set holds a row for each source.
+    SELECT
+        code,
+        cluster_id,
+        MIN(cluster_description) AS cluster_description
+    FROM {{ ref('stg_reference_combined_codesets') }}
+    WHERE cluster_id LIKE 'ETH2016%_COD'  -- Filter for ethnicity clusters
+    GROUP BY code, cluster_id
+),
+
+mapped_observations AS (
     -- Get all observations with proper concept mapping from staging
     SELECT
         o.id AS ID,
@@ -28,9 +39,8 @@ WITH mapped_observations AS (
         ON o.patient_id = p.id
     INNER JOIN {{ ref('int_patient_person_unique') }} AS pp
         ON p.id = pp.patient_id
-    INNER JOIN {{ ref('stg_reference_combined_codesets') }} AS ccs
+    INNER JOIN ethnicity_codes AS ccs
         ON o.mapped_concept_code = ccs.code
-        AND ccs.cluster_id LIKE 'ETH2016%_COD'  -- Filter for ethnicity clusters
     WHERE o.clinical_effective_date IS NOT NULL
 )
 

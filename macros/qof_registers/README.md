@@ -9,8 +9,8 @@ reference date. QOF registers live here; other registers in `macros/ltc_register
 Each macro:
 1. Accepts `reference_date_expr` (a single date, default `CURRENT_DATE()`) or
    `reference_dates` (a query returning a `reference_date` column; every date is evaluated)
-2. Counts an event once its clinical date and recorded date are on or before the
-   reference date (`ltc_register_known_by`)
+2. Counts an event once its clinical (or order) date and recorded date are on or
+   before the reference date (`ltc_register_known_by`)
 3. Computes age at the reference date where a rule uses age
 4. Returns one row per person and reference date: `reference_date, person_id,
    register_name, is_on_register, earliest_diagnosis_date, latest_diagnosis_date`
@@ -33,8 +33,8 @@ Macros read modelling event models (`int_*_all`), never staging observations.
 - No resolution codes or age restrictions
 
 ### Age Restricted
-- Diabetes (≥17), Asthma (≥6), CKD (≥18), Depression (≥18), Epilepsy (≥18), Rheumatoid Arthritis (≥16)
-- Hypertension (≤79) - upper age limit
+- Diabetes (≥17), Asthma (≥5), CKD (≥18), Depression (≥18), Epilepsy (≥18), Rheumatoid Arthritis (≥16)
+- Hypertension has no age limit
 - Logic: Age threshold + active diagnosis
 
 ### External Validation Required

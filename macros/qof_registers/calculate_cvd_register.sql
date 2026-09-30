@@ -19,11 +19,7 @@
         latest_diagnosis_date (latest qualifying component diagnosis)
     #}
 
-    WITH reference_dates AS (
-        {{ ltc_register_reference_dates(reference_date_expr, reference_dates) }}
-    ),
-
-    chd_register AS (
+    WITH chd_register AS (
         {{ calculate_chd_register(reference_date_expr=reference_date_expr, reference_dates=reference_dates) }}
     ),
 

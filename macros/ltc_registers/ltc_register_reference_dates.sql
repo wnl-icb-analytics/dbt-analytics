@@ -19,20 +19,24 @@
 
 {% macro ltc_register_history_month_ends() %}
 {#-
-    Month-ends evaluated by the monthly register history: the completed
-    month-ends held by the person-month spine.
+    Month-ends evaluated by the monthly register history: the last 60 completed
+    month-ends. Bounded here as well as in the person-month spine, which keeps
+    aged-out months after an incremental run.
 -#}
     SELECT DISTINCT month_end_date AS reference_date
     FROM {{ ref('int_segmentation_person_month_spine') }}
+    WHERE month_end_date BETWEEN LAST_DAY(DATEADD('month', -60, CURRENT_DATE()))
+        AND LAST_DAY(DATEADD('month', -1, CURRENT_DATE()))
 {% endmacro %}
 
 
 {% macro ltc_register_known_by(clinical_date_column, recorded_date_column, reference_date_column) %}
 {#-
-    An event counts at a reference date once both its clinical date and its
-    recorded date are on or before that date.
+    An event counts at a reference date once both its clinical (or order) date
+    and its recorded date are on or before that date. A null recorded date does
+    not block the event.
 -#}
-    {{ clinical_date_column }} <= {{ reference_date_column }}
+    CAST({{ clinical_date_column }} AS DATE) <= {{ reference_date_column }}
     AND (
         {{ recorded_date_column }} IS NULL
         OR CAST({{ recorded_date_column }} AS DATE) <= {{ reference_date_column }}

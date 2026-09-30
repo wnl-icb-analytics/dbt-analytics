@@ -43,65 +43,62 @@
     ('thalassaemia', ref('fct_person_thalassaemia_register'), calculate_thalassaemia_register('CURRENT_DATE()'))
 ] %}
 
-{% set future_evidence_columns = {
-    'asthma': ['LATEST_DIAGNOSIS_DATE', 'LATEST_ASTHMA_MEDICATION_DATE'],
-    'atrial_fibrillation': ['LATEST_DIAGNOSIS_DATE'],
-    'cancer': ['LATEST_DIAGNOSIS_DATE'],
-    'chd': ['LATEST_DIAGNOSIS_DATE'],
-    'ckd': ['LATEST_DIAGNOSIS_DATE'],
-    'copd': ['LATEST_DIAGNOSIS_DATE', 'QOF_RELEVANT_SPIROMETRY_DATE'],
-    'cvd': ['EARLIEST_QUALIFYING_DIAGNOSIS_DATE'],
-    'dementia': ['LATEST_DIAGNOSIS_DATE'],
-    'depression': ['LATEST_DIAGNOSIS_DATE'],
-    'diabetes': ['LATEST_DIAGNOSIS_DATE'],
-    'epilepsy': ['LATEST_DIAGNOSIS_DATE', 'LATEST_EPILEPSY_MEDICATION_DATE'],
-    'heart_failure': ['LATEST_DIAGNOSIS_DATE'],
-    'hypertension': ['LATEST_DIAGNOSIS_DATE'],
-    'learning_disability': ['LATEST_DIAGNOSIS_DATE'],
-    'ndh': ['LATEST_DIAGNOSIS_DATE', 'LATEST_DIABETES_RESOLVED_DATE'],
-    'obesity': ['LATEST_VALID_BMI_DATE', 'LATEST_BAME_DATE'],
-    'obesity2': ['LATEST_BMI_35_DATE', 'LATEST_BMI_32_5_DATE', 'LATEST_LOWER_THRESHOLD_ETHNICITY_DATE', 'EARLIEST_ASCVD_DATE', 'LATEST_HYPERTENSION_DATE', 'LATEST_HYPERTENSION_RESOLVED_DATE', 'LATEST_LIPID_THERAPY_DATE', 'LATEST_LDL_DATE', 'LATEST_TRIGLYCERIDES_DATE', 'LATEST_HDL_DATE', 'EARLIEST_OBSTRUCTIVE_SLEEP_APNOEA_DATE', 'LATEST_TYPE2_DIABETES_DATE', 'LATEST_DIABETES_RESOLVED_DATE'],
-    'osteoporosis': ['LATEST_DIAGNOSIS_DATE', 'LATEST_DXA_DATE', 'LATEST_DXA_T_SCORE_DATE', 'LATEST_FRAGILITY_FRACTURE_DATE'],
-    'pad': ['LATEST_DIAGNOSIS_DATE'],
-    'palliative_care': ['LATEST_DIAGNOSIS_DATE'],
-    'rheumatoid_arthritis': ['LATEST_DIAGNOSIS_DATE'],
-    'smi': ['LATEST_DIAGNOSIS_DATE'],
-    'stroke_tia': ['LATEST_DIAGNOSIS_DATE'],
-    'adhd': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE', 'LATEST_RESOLVED_DATE'],
-    'anxiety': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'autism': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'cerebral_palsy': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'chronic_liver_disease': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE', 'EARLIEST_CIRRHOSIS_DATE', 'LATEST_CIRRHOSIS_DATE'],
-    'cyp_asthma': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE', 'LATEST_ASTHMA_MEDICATION_DATE'],
-    'familial_hypercholesterolaemia': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'frailty': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'gestational_diabetes': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'hypothyroidism': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'learning_disability_under_14': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'mnd': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'ms': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'nafld': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'ndh_clinical': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE', 'EARLIEST_NDH_DATE', 'LATEST_NDH_DATE', 'EARLIEST_IGT_DATE', 'LATEST_IGT_DATE', 'EARLIEST_PRD_DATE', 'LATEST_PRD_DATE', 'EARLIEST_DIABETES_DIAGNOSIS_DATE', 'LATEST_DIABETES_RESOLVED_DATE'],
-    'osteoarthritis': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'parkinsons': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'sickle_cell': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE'],
-    'thalassaemia': ['EARLIEST_DIAGNOSIS_DATE', 'LATEST_DIAGNOSIS_DATE']
+{% set register_sources = {
+    'asthma': [(ref('int_asthma_diagnoses_all'), 'clinical_effective_date'), (ref('int_asthma_medications_all'), 'order_date')],
+    'atrial_fibrillation': [(ref('int_atrial_fibrillation_diagnoses_all'), 'clinical_effective_date')],
+    'cancer': [(ref('int_cancer_diagnoses_all'), 'clinical_effective_date')],
+    'chd': [(ref('int_chd_diagnoses_all'), 'clinical_effective_date')],
+    'ckd': [(ref('int_ckd_diagnoses_all'), 'clinical_effective_date')],
+    'copd': [(ref('int_copd_diagnoses_all'), 'clinical_effective_date'), (ref('int_spirometry_all'), 'clinical_effective_date')],
+    'cvd': [(ref('int_chd_diagnoses_all'), 'clinical_effective_date'), (ref('int_stroke_tia_diagnoses_all'), 'clinical_effective_date')],
+    'dementia': [(ref('int_dementia_diagnoses_all'), 'clinical_effective_date')],
+    'depression': [(ref('int_depression_diagnoses_all'), 'clinical_effective_date')],
+    'diabetes': [(ref('int_diabetes_diagnoses_all'), 'clinical_effective_date')],
+    'epilepsy': [(ref('int_epilepsy_diagnoses_all'), 'clinical_effective_date'), (ref('int_epilepsy_medications_all'), 'order_date')],
+    'heart_failure': [(ref('int_heart_failure_diagnoses_all'), 'clinical_effective_date')],
+    'hypertension': [(ref('int_hypertension_diagnoses_all'), 'clinical_effective_date')],
+    'learning_disability': [(ref('int_learning_disability_diagnoses_all'), 'clinical_effective_date')],
+    'ndh': [(ref('int_diabetes_diagnoses_all'), 'clinical_effective_date'), (ref('int_gestational_diabetes_diagnoses_all'), 'clinical_effective_date'), (ref('int_ndh_diagnoses_all'), 'clinical_effective_date')],
+    'obesity': [(ref('int_bmi_qof_all'), 'clinical_effective_date'), (ref('int_ethnicity_qof_all'), 'clinical_effective_date')],
+    'obesity2': [(ref('int_diabetes_diagnoses_all'), 'clinical_effective_date'), (ref('int_hypertension_diagnoses_all'), 'clinical_effective_date'), (ref('int_obesity2_bmi_all'), 'clinical_effective_date'), (ref('int_obesity2_diagnoses_all'), 'clinical_effective_date'), (ref('int_obesity2_ethnicity_all'), 'clinical_effective_date'), (ref('int_obesity2_lipid_lowering_medications_all'), 'order_date'), (ref('int_obesity2_lipids_all'), 'clinical_effective_date')],
+    'osteoporosis': [(ref('int_dxa_scans_all'), 'clinical_effective_date'), (ref('int_fragility_fractures_all'), 'clinical_effective_date'), (ref('int_osteoporosis_diagnoses_all'), 'clinical_effective_date')],
+    'pad': [(ref('int_pad_diagnoses_all'), 'clinical_effective_date')],
+    'palliative_care': [(ref('int_palliative_care_diagnoses_all'), 'clinical_effective_date')],
+    'rheumatoid_arthritis': [(ref('int_rheumatoid_arthritis_diagnoses_all'), 'clinical_effective_date')],
+    'smi': [(ref('int_smi_diagnoses_all'), 'clinical_effective_date')],
+    'stroke_tia': [(ref('int_stroke_tia_diagnoses_all'), 'clinical_effective_date')],
+    'adhd': [(ref('int_adhd_diagnoses_all'), 'clinical_effective_date')],
+    'anxiety': [(ref('int_anxiety_diagnoses_all'), 'clinical_effective_date')],
+    'autism': [(ref('int_autism_diagnoses_all'), 'clinical_effective_date')],
+    'cerebral_palsy': [(ref('int_cerebral_palsy_diagnoses_all'), 'clinical_effective_date')],
+    'chronic_liver_disease': [(ref('int_chronic_liver_disease_diagnoses_all'), 'clinical_effective_date')],
+    'cyp_asthma': [(ref('int_asthma_diagnoses_all'), 'clinical_effective_date'), (ref('int_asthma_medications_all'), 'order_date')],
+    'familial_hypercholesterolaemia': [(ref('int_familial_hypercholesterolaemia_diagnoses_all'), 'clinical_effective_date')],
+    'frailty': [(ref('int_frailty_diagnoses_all'), 'clinical_effective_date')],
+    'gestational_diabetes': [(ref('int_gestational_diabetes_diagnoses_all'), 'clinical_effective_date')],
+    'hypothyroidism': [(ref('int_hypothyroidism_diagnoses_all'), 'clinical_effective_date')],
+    'learning_disability_under_14': [(ref('int_learning_disability_diagnoses_all'), 'clinical_effective_date')],
+    'mnd': [(ref('int_mnd_diagnoses_all'), 'clinical_effective_date')],
+    'ms': [(ref('int_ms_diagnoses_all'), 'clinical_effective_date')],
+    'nafld': [(ref('int_nafld_diagnoses_all'), 'clinical_effective_date')],
+    'ndh_clinical': [(ref('int_diabetes_diagnoses_all'), 'clinical_effective_date'), (ref('int_ndh_diagnoses_all'), 'clinical_effective_date')],
+    'osteoarthritis': [(ref('int_osteoarthritis_diagnoses_all'), 'clinical_effective_date')],
+    'parkinsons': [(ref('int_parkinsons_diagnoses_all'), 'clinical_effective_date')],
+    'sickle_cell': [(ref('int_sickle_cell_diagnoses_all'), 'clinical_effective_date')],
+    'thalassaemia': [(ref('int_thalassaemia_diagnoses_all'), 'clinical_effective_date')]
 } %}
 
 {# Live facts filtered to currently registered patients; their PIT members are compared on the same population. #}
 {% set current_patient_registers = ['familial_hypercholesterolaemia', 'gestational_diabetes', 'nafld'] %}
 
-{#
-Live obesity takes its flags from the latest BMI record, including one dated in
-the future, which can drop a person whose earlier BMI qualifies. PIT ignores
-future records, so a person with a future-dated BMI may be PIT-only.
-#}
-{% set future_record_sources = {'obesity': ref('int_bmi_qof_all')} %}
+{# Live facts that do not join dim_person; every other live fact covers people in dim_person only. #}
+{% set open_population_registers = ['cvd', 'pad', 'palliative_care', 'stroke_tia'] %}
 
 {#
-The live fact deliberately includes future-dated records; PIT today does not.
-For live-only rows, only a future-valued membership evidence column explains
-that intended difference. PIT-only rows are always drift.
+The live facts include records dated or entered after today; PIT today does not.
+A mismatch is expected only for a person with such a record in the register's own
+sources (register_sources), so those people are left out of both directions. Every
+other mismatch is drift.
 #}
 
 WITH mismatches AS (
@@ -120,59 +117,38 @@ WITH mismatches AS (
             {{ pit_query }}
         ),
 
-        live_rows AS (
-            SELECT
-                live.person_id,
-                OBJECT_CONSTRUCT_KEEP_NULL(*) AS row_values
-            FROM {{ fact_model }} AS live
-        ),
-
-        live_scope AS (
-            SELECT
-                live.person_id,
-                MAX(IFF(
-                    field.key::VARCHAR IN (
-                        {% for column_name in future_evidence_columns[register_name] %}
-                        '{{ column_name }}'{% if not loop.last %},{% endif %}
-                        {% endfor %}
-                    )
-                    AND TRY_TO_DATE(field.value::VARCHAR) > CURRENT_DATE(),
-                    1,
-                    0
-                )) = 1 AS has_future_date
-            FROM live_rows AS live,
-                LATERAL FLATTEN(INPUT => live.row_values, OUTER => TRUE) AS field
-            GROUP BY live.person_id
+        not_yet_known AS (
+            {% for source_model, date_column in register_sources[register_name] %}
+            SELECT person_id
+            FROM {{ source_model }}
+            WHERE {{ date_column }} > CURRENT_DATE()
+                OR CAST(date_recorded AS DATE) > CURRENT_DATE()
+            {% if not loop.last %}UNION{% endif %}
+            {% endfor %}
         ),
 
         live_only AS (
             SELECT live.person_id
-            FROM live_scope AS live
+            FROM {{ fact_model }} AS live
             LEFT JOIN pit_today AS pit
                 ON live.person_id = pit.person_id
                 AND pit.is_on_register = TRUE
             WHERE
                 pit.person_id IS NULL
-                AND live.has_future_date = FALSE
+                AND live.person_id NOT IN (SELECT person_id FROM not_yet_known)
         ),
 
         pit_only AS (
             SELECT pit.person_id
             FROM pit_today AS pit
-            LEFT JOIN live_scope AS live
+            LEFT JOIN {{ fact_model }} AS live
                 ON pit.person_id = live.person_id
             WHERE
                 pit.is_on_register = TRUE
                 AND live.person_id IS NULL
-                -- Live facts cover people in dim_person only.
+                AND pit.person_id NOT IN (SELECT person_id FROM not_yet_known)
+                {% if register_name not in open_population_registers %}
                 AND pit.person_id IN (SELECT person_id FROM {{ ref('dim_person') }})
-                {% if register_name in future_record_sources %}
-                AND pit.person_id NOT IN (
-                    SELECT person_id
-                    FROM {{ future_record_sources[register_name] }}
-                    WHERE clinical_effective_date > CURRENT_DATE()
-                        OR CAST(date_recorded AS DATE) > CURRENT_DATE()
-                )
                 {% endif %}
                 {% if register_name in current_patient_registers %}
                 AND pit.person_id IN (SELECT person_id FROM {{ ref('dim_person_active_patients') }})

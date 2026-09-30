@@ -75,7 +75,7 @@
             {% if include_future_records %}
             ON TRUE
             {% else %}
-            ON diagnosis.clinical_effective_date <= ref_date.reference_date
+            ON {{ ltc_register_known_by('diagnosis.clinical_effective_date', 'diagnosis.date_recorded', 'ref_date.reference_date') }}
             {% endif %}
     ),
 

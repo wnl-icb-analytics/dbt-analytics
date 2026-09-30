@@ -64,8 +64,8 @@
             order_date
         FROM {{ ref('int_epilepsy_medications_all') }} AS meds
         INNER JOIN reference_dates AS ref_date
-            ON meds.order_date <= ref_date.reference_date
-            AND meds.order_date >= DATEADD('month', -6, ref_date.reference_date)
+            ON meds.order_date >= DATEADD('month', -6, ref_date.reference_date)
+            AND {{ ltc_register_known_by('meds.order_date', 'meds.date_recorded', 'ref_date.reference_date') }}
     ),
 
     epilepsy_medications_aggregates AS (

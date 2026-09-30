@@ -63,7 +63,7 @@
         FROM {{ ref('int_asthma_medications_all') }} AS med
         INNER JOIN reference_dates AS ref_date
             ON med.order_date >= ref_date.reference_date - INTERVAL '12 months'
-            AND med.order_date <= ref_date.reference_date
+            AND {{ ltc_register_known_by('med.order_date', 'med.date_recorded', 'ref_date.reference_date') }}
         GROUP BY ref_date.reference_date, med.person_id
     ),
 

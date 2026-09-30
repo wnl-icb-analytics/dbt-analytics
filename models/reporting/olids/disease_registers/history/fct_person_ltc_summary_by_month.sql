@@ -84,5 +84,5 @@ SELECT
     cu.earliest_diagnosis_date,
     cu.latest_diagnosis_date
 FROM condition_union AS cu
-INNER JOIN condition_metadata AS cm
+LEFT JOIN condition_metadata AS cm
     ON cu.condition_code = cm.condition_code

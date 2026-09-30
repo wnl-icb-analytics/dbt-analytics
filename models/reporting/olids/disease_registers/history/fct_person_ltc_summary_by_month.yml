@@ -19,9 +19,6 @@ models:
               - person_id
               - month_end_date
               - condition_code
-      - condition_codes_match_seed:
-          arguments:
-            seed_model: ltc_register_denominator_rules
     columns:
       - name: person_id
         data_tests:
@@ -30,12 +27,19 @@ models:
         description: "{{ doc('ltc_register_by_month_month_end_date') }}"
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_unique_value_count_to_be_between:
+              arguments:
+                max_value: 60
       - name: practice_code
         description: "{{ doc('ltc_register_by_month_practice_code') }}"
       - name: condition_code
         description: Condition code from ltc_register_denominator_rules.
         data_tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('ltc_register_denominator_rules')
+                field: condition_code
       - name: condition_name
         description: Condition name from ltc_register_denominator_rules.
       - name: clinical_domain
