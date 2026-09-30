@@ -17,7 +17,6 @@ models:
         description: 'Unique person identifier'
         tests:
           - not_null
-          - unique
 
       - name: sk_patient_id
         description: 'Surrogate key for patient record'
@@ -443,10 +442,15 @@ models:
       - name: total_new_episodes_this_month
         description: 'Total number of new episodes this month'
 
-      - name: has_any_conditions
+      - name: has_any_condition
         description: 'Whether person has any active condition this month'
 
       - name: has_any_new_episode
         description: 'Whether person has any new episode this month'
-
+        
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - person_id
+            - analysis_month
      
