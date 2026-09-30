@@ -73,13 +73,23 @@ where s.semantic_count <> d.row_count
 
 union all
 
--- Activities reach people through contacts without dropping or multiplying rows.
+-- Person dimensions must not drop or multiply activities.
 select 'activities_by_person_caseload' as entity, s.semantic_count, d.row_count as domain_count
 from (
     select sum(care_activity_count) as semantic_count
-    from semantic_view({{ model }} metrics activities.care_activity_count dimensions contacts.contacts_is_wnl_commissioner)
+    from semantic_view({{ model }} metrics activities.care_activity_count dimensions people.has_current_recorded_caseload)
 ) as s
 cross join (select count(*) as row_count from {{ ref('fct_csds_care_activity') }}) as d
 where s.semantic_count <> d.row_count
+
+union all
+
+-- The activity WNL filter matches the activity fact's own flag.
+select 'wnl_activities' as entity, s.care_activity_count, d.row_count as domain_count
+from semantic_view(
+    {{ model }} metrics activities.care_activity_count dimensions activities.activities_is_wnl_commissioner
+) as s
+cross join (select count(*) as row_count from {{ ref('fct_csds_care_activity') }} where is_wnl_commissioner) as d
+where s.activities_is_wnl_commissioner and s.care_activity_count <> d.row_count
 
 {% endtest %}

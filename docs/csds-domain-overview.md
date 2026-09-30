@@ -57,8 +57,8 @@ flowchart TD
 
 1. **Filter to West and North London.** About a quarter of recent contacts are
    delivered by WNL providers for other ICBs. Use `is_wnl_commissioner` on the
-   contact, referral, period, caseload and clock tables for WNL-commissioned
-   activity, or `is_wnl_resident` on the demographics for residents. Do not
+   contact, activity, referral, period, caseload and clock tables for
+   WNL-commissioned activity, or `is_wnl_resident` on the demographics for residents. Do not
    hard-code QMJ or QRV: current records use the WNL ICB code Z9B2Z. Before mid-2019
    some providers recorded themselves as commissioner, so add practice or
    residence for earlier years.
