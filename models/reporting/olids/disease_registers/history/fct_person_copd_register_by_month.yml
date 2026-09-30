@@ -1,0 +1,45 @@
+models:
+  - name: fct_person_copd_register_by_month
+    description: >
+      COPD register at each completed month-end, on the QOF v51 rules of
+      fct_person_copd_register: an unresolved COPD diagnosis, where disorder codes
+      count at any date and administrative codes only in the two years before the
+      month-end. Diagnoses from April 2023 qualify through Rules 2 to 4; Rule 4
+      admits all that remain, so spirometry records only which rule applied.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: earliest_diagnosis_date
+        description: Earliest eligible COPD evidence known by the month-end (QOF COPDEAR_DAT).
+      - name: latest_diagnosis_date
+        description: Latest eligible COPD evidence known by the month-end.
+      - name: latest_resolved_date
+        description: Latest COPD resolved code known by the month-end (QOF COPDRES_DAT).
+      - name: earliest_unresolved_diagnosis_date
+        description: Earliest eligible evidence after the latest resolution, or the earliest evidence when never resolved (QOF EUNRESCOPD_DAT).
+      - name: qof_rule_number
+        description: QOF COPD rule that admits the person (1 to 4). Rule 1 covers diagnoses before 1 April 2023.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4]
+                quote: false
