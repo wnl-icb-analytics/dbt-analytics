@@ -8,7 +8,9 @@
 -- Staged imaging Turnaround Times. Typed + normalised from the all-STRING raw landing
 -- (DATA_LAKE.TAT.TURNAROUND_TIMES_RAW). Grain: one row per diagnostic test event,
 -- keyed by tat_event_id; exact re-loads of the same file are de-duplicated.
--- Business logic (Flex/Freeze classification, TAT-hour calcs) lives downstream, not here.
+-- Business logic (Flex/Freeze classification, TAT-hour calcs) lives in
+-- int_tat_turnaround_times. Analysts should query that model, not this table
+-- and not DATA_LAKE__NCL.ANALYST_MANAGED.TURNAROUND_TIMES_RAW.
 
 with raw as (
 
