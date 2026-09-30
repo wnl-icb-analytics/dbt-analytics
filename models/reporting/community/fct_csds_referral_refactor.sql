@@ -559,7 +559,7 @@ LEFT JOIN REFERRING_ORGANISATION_LOOKUP REF_ORG_PREFIX
 LEFT JOIN RESOLVED_PATIENT PAT1 ON REF."Unique_service_request_identifier" = PAT1."Unique_service_request_identifier"
 LEFT JOIN PATIENT_DEDUPED PAT ON REF."Unique_service_request_identifier" = PAT."Unique_service_request_identifier"
 LEFT JOIN "Dictionary".NELCSU."Pre_2020/21_LSOA_To_Commissioner" LSOA ON PAT1."Lower_super_output_area_(Residence)" = LSOA."LSOACode"
-LEFT JOIN {{ ref('raw_dictionary_dbo_commissioner') }} COM2 ON LSOA."CommissionerCode" = COM2.Commissioner_Code
+LEFT JOIN {{ ref('stg_dictionary_dbo_commissioner') }} COM2 ON LSOA."CommissionerCode" = COM2.Commissioner_Code
 LEFT JOIN DIM_PRACTICE_LOOKUP PRAC ON PAT1.GPCODE = PRAC.PRACTICE_CODE 
 LEFT JOIN "Dictionary"."dbo"."Ethnicity" ETH ON PAT1.RESOLVED_ETH_CODE = ETH."BK_EthnicityCode"
 LEFT JOIN "Dictionary"."dbo"."Gender" GEN ON PAT1."Person_stated_gender_code" = GEN."GenderCode"
