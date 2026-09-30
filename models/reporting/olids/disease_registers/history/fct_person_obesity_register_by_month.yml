@@ -1,11 +1,11 @@
 models:
   - name: fct_person_obesity_register_by_month
     description: >
-      Obesity register at each completed month-end, on the QOF rules of
-      fct_person_obesity_register: aged 18 or over with BMI at least 30, or at
-      least 27.5 for the QOF BAME ethnicity groups. BMI flags use the latest
-      numeric or BMI30 observation, with a valid BMI record required; the
-      diagnosis-date fields follow fct_person_ltc_summary.
+      Obesity register at each completed month-end, on the rules of
+      fct_person_obesity_register: aged 18 or over with a latest valid BMI (any
+      date) of at least 30, or at least 27.5 for ethnic groups at higher
+      cardiometabolic risk. There is no QOF 12-month window, so counts exceed
+      published QOF. The diagnosis-date fields follow fct_person_ltc_summary.
       {{ doc('ltc_register_by_month_scope') }}
     config:
       meta:
@@ -17,9 +17,6 @@ models:
             combination_of_columns:
               - person_id
               - month_end_date
-      - cluster_ids_exist:
-          arguments:
-            cluster_ids: BMI30_COD, BMIVAL_COD
     columns:
       - name: person_id
         data_tests:

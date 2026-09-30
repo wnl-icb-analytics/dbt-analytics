@@ -5,8 +5,9 @@
 
     Business Logic:
     - Age ≥18 at reference date
-    - BMI ≥30 OR (BAME + BMI ≥27.5)
-    - Uses ethnicity-adjusted BMI thresholds
+    - Latest valid BMI (5 to 400) known by the reference date, at any date: ≥30, or ≥27.5
+      for ethnic groups at higher cardiometabolic risk
+    - No QOF 12-month window: an unmeasured person keeps their last valid BMI
 
     Parameters:
         reference_date_expr: SQL expression for a single reference date (default: CURRENT_DATE())
@@ -49,13 +50,14 @@
     ),
 
     bmi_data AS (
-        -- Flags come from the latest BMI record, valid or not, as in int_bmi_qof.
+        -- Flags come from the latest valid BMI record, as in fct_person_obesity_register.
         SELECT
             reference_date,
             person_id,
             is_bmi_30_plus,
             is_bmi_27_5_plus
         FROM bmi_events
+        WHERE is_valid_bmi
         QUALIFY ROW_NUMBER() OVER (
             PARTITION BY reference_date, person_id ORDER BY clinical_effective_date DESC, id DESC
         ) = 1
