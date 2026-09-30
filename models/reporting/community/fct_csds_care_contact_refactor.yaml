@@ -1,3 +1,4 @@
+# fct_csds_care_contact_refactor.yaml
 version: 2
 models:
 - name: fct_csds_care_contact_refactor
@@ -8,3 +9,12 @@ models:
     meta:
       owner:
         name: Jonathan Linney
+  tests:
+    - dbt_expectations.expect_table_row_count_to_be_between:
+        arguments:
+          min_value: 1
+  columns:
+    - name: primary_id
+      description: Care contact identifier (not unique)
+      tests:
+        - not_null
