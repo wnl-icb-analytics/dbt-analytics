@@ -41,7 +41,7 @@ indicator_population AS (
         )
 ),
 
--- Last recorded HbA1c in the period; an invalid last result is not replaced by an older one
+-- Value-free and invalid latest tests remain unassessable, without fallback.
 last_hba1c AS (
     SELECT
         hba.person_id,

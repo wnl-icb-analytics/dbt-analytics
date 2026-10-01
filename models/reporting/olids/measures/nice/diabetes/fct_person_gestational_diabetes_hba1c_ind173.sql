@@ -23,7 +23,7 @@ WITH indicator_population AS (
         )
 ),
 
--- Latest qualifying record in the period
+-- Test presence includes value-free tests; a numeric result is not required.
 latest_record AS (
     SELECT
         obs.person_id,
