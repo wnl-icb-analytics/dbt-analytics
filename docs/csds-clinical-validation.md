@@ -436,10 +436,12 @@ Derivations sheet. The keys are person, provider, immunisation type and date
 (CYP502); person, provider, diagnosis and date (CYP601); person, provider,
 screening outcome and audiology dates (CYP603); person, provider and card date
 (CYP604); person, provider and examination date (CYP605); and referral,
-diagnosis and date (CYP606 to CYP608). The diagnosis keys also keep the
+person, diagnosis and date (CYP606 to CYP608), with person added to the ETOS key
+so conflicting identities stay separate. The diagnosis keys also keep the
 submitted scheme; the empty source master and mapped diagnosis fields are not
 staged. Optional dates and outcomes are part of the key, so a missing
-value does not split restatements. A missing person, provider, referral or code
+value does not split restatements, except for CYP502 and CYP605: an undated
+immunisation or examination keeps each source occurrence. A missing person, provider, referral or code
 keeps each source occurrence. The latest row wins by reporting period, file
 receipt, submission and source row. CYP610 and CYP611 belong to a care activity
 and are not restated, so each accepted row is kept, as for CYP612.

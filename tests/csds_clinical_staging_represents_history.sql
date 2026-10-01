@@ -7,7 +7,7 @@
 select
     '{{ section }}' as section
     , (select count(*) from {{ ref('stg_csds_' ~ section ~ '_history') }}) as accepted_row_count
-    , (select sum(accepted_source_record_count) from {{ ref('stg_csds_' ~ section) }}) as represented_row_count
+    , (select coalesce(sum(accepted_source_record_count), 0) from {{ ref('stg_csds_' ~ section) }}) as represented_row_count
 where accepted_row_count is distinct from represented_row_count
 {% if not loop.last %}union all{% endif %}
 {% endfor %}
