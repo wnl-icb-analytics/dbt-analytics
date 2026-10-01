@@ -11,7 +11,9 @@ and are false when nothing is recorded. Age windows include the lower bound
 and exclude the upper one.
 
 Groups: DTAP_PRIMARY (4-, 5- or 6-in-1), DTAP_BOOSTER (4-in-1 preschool), MMR (MMR and
-MMRV), ROTAVIRUS and MENB. Windows are measured from the approximate birth date.
+MMRV), ROTAVIRUS and MENB. Birthday boundaries use source completed-year event
+age, with approximate birth dates as a fallback. Month and week boundaries use
+the approximate birth date.
 */
 
 WITH population AS (
@@ -70,17 +72,37 @@ event_codes AS (
 
     UNION ALL
 
+    SELECT DISTINCT
+        code,
+        'ROTAVIRUS' AS vaccine_group,
+        'Contraindicated' AS event_type
+    FROM {{ ref('stg_reference_combined_codesets') }}
+    WHERE source = 'PCD'
+        AND cluster_id = 'ROTAVACEXC_COD'
+        -- The wider cluster also contains PCA reasons, which NICE denominators retain.
+        AND code IN (
+            '868691000000101', -- Rotavirus vaccination contraindicated
+            '885901000000106'  -- History of rotavirus vaccine allergy
+        )
+
+    UNION ALL
+
     -- These QOF drug refsets are not included in the combined PCD code extract.
     SELECT DISTINCT
         referenced_component_id AS code,
-        'DTAP_PRIMARY' AS vaccine_group,
+        CASE
+            WHEN ref_set_id IN ('133231000001105', '2089331000001102') THEN 'MMR'
+            ELSE 'DTAP_PRIMARY'
+        END AS vaccine_group,
         'Administration_drug' AS event_type
     FROM {{ ref('stg_nhsd_snomed_sct_refset_simple') }}
     WHERE active
         AND ref_set_id IN (
             '72391000001101', -- 4IN1VACDRUG_COD
             '72381000001103', -- 5IN1VACDRUG_COD
-            '72371000001100'  -- 6IN1VACDRUG_COD
+            '72371000001100', -- 6IN1VACDRUG_COD
+            '133231000001105', -- MMRVACDRUG_COD
+            '2089331000001102' -- MMRVVACDRUG_COD
         )
 ),
 
@@ -94,6 +116,7 @@ events AS (
     SELECT
         obs.person_id,
         obs.clinical_effective_date::DATE AS event_date,
+        obs.age_at_event,
         codes.event_type,
         codes.vaccine_group
     FROM {{ ref('stg_olids_observation') }} AS obs
@@ -106,6 +129,7 @@ events AS (
     SELECT
         orders.person_id,
         orders.clinical_effective_date::DATE AS event_date,
+        orders.age_at_event,
         codes.event_type,
         codes.vaccine_group
     FROM {{ ref('stg_olids_medication_order') }} AS orders
@@ -122,7 +146,17 @@ grouped AS (
         ev.vaccine_group,
         ev.event_date,
         ev.event_type IN ('Administration', 'Administration_drug') AS is_administered,
-        ev.event_type = 'Contraindicated' AS is_contraindicated
+        ev.event_type = 'Contraindicated' AS is_contraindicated,
+        -- Source event age uses the real birth date, rather than its mid-month estimate.
+        COALESCE(ev.age_at_event >= 1,
+            ev.event_date >= DATEADD(year, 1, p.birth_date_approx)) AS is_on_or_after_first_birthday,
+        COALESCE(ev.age_at_event BETWEEN 1 AND 4,
+            ev.event_date >= DATEADD(year, 1, p.birth_date_approx)
+            AND ev.event_date < DATEADD(year, 5, p.birth_date_approx)) AS is_age_1_to_4,
+        COALESCE(ev.age_at_event = 0,
+            ev.event_date < DATEADD(year, 1, p.birth_date_approx)) AS is_before_first_birthday,
+        COALESCE(ev.age_at_event = 1,
+            ev.event_date >= DATEADD(year, 1, p.birth_date_approx)) AS is_age_1
     FROM population AS p
     LEFT JOIN events AS ev
         ON p.person_id = ev.person_id
@@ -135,16 +169,14 @@ SELECT
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'DTAP_PRIMARY'
         AND event_date < DATEADD(month, 8, birth_date_approx) THEN event_date END) AS dtap_doses_by_8_months,
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'MMR'
-        AND event_date >= DATEADD(month, 12, birth_date_approx)
+        AND is_on_or_after_first_birthday
         AND event_date < DATEADD(month, 18, birth_date_approx)
         THEN event_date END) AS mmr_doses_12_to_18_months,
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'MMR'
-        AND event_date >= DATEADD(year, 1, birth_date_approx)
-        AND event_date < DATEADD(year, 5, birth_date_approx)
+        AND is_age_1_to_4
         THEN event_date END) AS mmr_doses_1_to_5_years,
     COALESCE(BOOLOR_AGG(is_administered AND vaccine_group = 'DTAP_BOOSTER'
-        AND event_date >= DATEADD(year, 1, birth_date_approx)
-        AND event_date < DATEADD(year, 5, birth_date_approx)), FALSE) AS has_dtap_booster_1_to_5_years,
+        AND is_age_1_to_4), FALSE) AS has_dtap_booster_1_to_5_years,
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'ROTAVIRUS'
         AND event_date < DATEADD(week, 24, birth_date_approx) THEN event_date END) AS rotavirus_doses_by_24_weeks,
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'MENB'
@@ -152,9 +184,9 @@ SELECT
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'MENB'
         AND event_date < DATEADD(month, 18, birth_date_approx) THEN event_date END) AS menb_doses_by_18_months,
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'MENB'
-        AND event_date < DATEADD(month, 12, birth_date_approx) THEN event_date END) AS menb_primary_doses_by_12_months,
+        AND is_before_first_birthday THEN event_date END) AS menb_primary_doses_by_12_months,
     COUNT(DISTINCT CASE WHEN is_administered AND vaccine_group = 'MENB'
-        AND event_date >= DATEADD(month, 12, birth_date_approx)
+        AND is_age_1
         AND event_date < DATEADD(month, 18, birth_date_approx)
         THEN event_date END) AS menb_booster_doses_12_to_18_months,
     COALESCE(BOOLOR_AGG(is_contraindicated AND vaccine_group IN ('DTAP_PRIMARY', 'DTAP_BOOSTER')), FALSE) AS has_dtap_contraindication,

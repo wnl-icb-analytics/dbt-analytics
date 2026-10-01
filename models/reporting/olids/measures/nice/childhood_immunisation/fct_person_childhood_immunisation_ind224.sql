@@ -14,7 +14,7 @@ WITH indicator_population AS (
         ON profile.person_id = age.person_id
     WHERE DATEADD(week, 24, profile.birth_date_approx) > DATEADD(month, -12, CURRENT_DATE())
         AND DATEADD(week, 24, profile.birth_date_approx) <= CURRENT_DATE()
-        -- NICE excludes children with a contraindication to the vaccine
+        -- NICE excludes rotavirus contraindication or history of vaccine allergy.
         AND NOT profile.has_rotavirus_contraindication
 ),
 
