@@ -29,10 +29,12 @@ CONCEPT = re.compile(r'(?<![A-Za-z0-9])([0-9]{6,18}) *\|([^|]*)\|')
 
 
 def text(value):
+    """Cell value as a string with whitespace collapsed; empty for None."""
     return '' if value is None else ' '.join(str(value).split())
 
 
 def versioned_path(value):
+    """Parse a VERSION=path argument into (version, Path)."""
     version, separator, path = value.partition('=')
     if not separator or not version or not path:
         raise argparse.ArgumentTypeError('Use VERSION=path')
@@ -40,6 +42,7 @@ def versioned_path(value):
 
 
 def guidance_rows(path, version):
+    """Yield therapy type rows from the mapping guidance Therapy Types sheet, stopping at the retired types."""
     book = openpyxl.load_workbook(path, data_only=True, read_only=True)
     started = False
     category = None
@@ -93,6 +96,7 @@ def etos_count_derivations(book):
 
 
 def etos_rows(path, version, guidance):
+    """Yield ETOS clause concepts missing from the guidance, inheriting a legacy code only from a single guidance peer."""
     book = openpyxl.load_workbook(path, data_only=True, read_only=True)
     counts = list(etos_count_derivations(book))
     for code, term, category, number, clause in etos_clause_concepts(book):
@@ -118,6 +122,7 @@ def etos_rows(path, version, guidance):
 
 
 def main():
+    """Write the therapy type seed CSV from the guidance and ETOS workbooks."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--guidance', type=versioned_path, required=True, help='VERSION=terminology mapping guidance workbook')
     parser.add_argument('--etos', type=versioned_path, required=True, help='VERSION=IAPT v2.1 ETOS workbook')

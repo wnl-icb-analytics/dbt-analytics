@@ -24,14 +24,17 @@ NON_SCORE_LABELS = {'not applicable'}
 
 
 def text(value):
+    """Cell value as a string with whitespace collapsed; empty for None."""
     return '' if value is None else ' '.join(str(value).split())
 
 
 def iso_date(value):
+    """ISO date of a datetime cell; empty when the cell holds no date."""
     return value.date().isoformat() if hasattr(value, 'date') else ''
 
 
 def extract(path, version):
+    """Yield seed rows from one TOS workbook's ROM Mapping sheet, plus a non-score row for each "score not available" value."""
     book = openpyxl.load_workbook(path, data_only=True, read_only=True)
     started = False
     tool = start = concept = None
@@ -62,6 +65,7 @@ def extract(path, version):
 
 
 def main():
+    """Write the combined, de-duplicated seed CSV for every --spec workbook."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--spec', action='append', required=True, help='VERSION=path, for example 2.1.22=tos.xlsx')
     parser.add_argument('--output', type=Path, required=True)
