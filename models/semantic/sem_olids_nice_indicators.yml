@@ -17,9 +17,7 @@ models:
       NOT_RECORDED_IN_PERIOD, NOT_ASSESSABLE, NOT_TREATED_IN_PERIOD,
       NEVER_TREATED, VKA_WITHOUT_DOAC_EXCEPTION,
       DOAC_WHERE_VKA_INDICATED or OUT_OF_RANGE. Do not invent tokens.
-      An invalid latest result in the measurement window is
-      NOT_ASSESSABLE and is not replaced by an older result. How each
-      indicator selects a valid latest result stays on the family
+      Latest-result validity and selection rules depend on the family
       measure.
 
       Each indicator keeps its own population, time window and
@@ -48,13 +46,15 @@ models:
 
       Never return person_id or sk_patient_id in final results.
 
-      dbt grain tests are not defined on this semantic_view because
-      semantic views are not standard queryable relations. The
-      person_id and indicator_id grain is tested on
-      fct_person_nice_indicator_status.
+      The person_id and indicator_id grain is tested on
+      fct_person_nice_indicator_status. nice_indicator_semantic_counts
+      checks that people per indicator, overall and split by demographics,
+      match the fact's rows, so the demographics join drops no one.
     config:
       materialized: semantic_view
       schema: SEMANTIC
       meta:
         owner:
           name: Eddie Davison
+    data_tests:
+      - nice_indicator_semantic_counts
