@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND248: https://www.nice.org.uk/indicators/ind248
--- All six physical health checks in 12 months for people with an SMI diagnosis, before personalised care adjustments including remission.
+-- All six physical health checks in 12 months for people with an active SMI diagnosis.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -9,7 +9,7 @@ WITH indicator_population AS (
     FROM {{ ref('int_ltc_review_profile') }} AS profile
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE profile.earliest_smi_diagnosis_date IS NOT NULL
+    WHERE profile.has_active_smi_diagnosis
 ),
 
 assessed AS (

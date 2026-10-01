@@ -40,6 +40,17 @@ WITH dyslipidaemia AS (
             OR (gender.gender = 'Female' AND hdl.cholesterol_value < 1.3))
 ),
 
+latest_bmi AS (
+    SELECT person_id, clinical_effective_date::DATE AS bmi_date, is_valid_bmi
+    FROM {{ ref('int_bmi_all') }}
+    WHERE clinical_effective_date::DATE
+        BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY person_id
+        ORDER BY clinical_effective_date DESC, date_recorded DESC NULLS LAST, bmi_value DESC, id DESC
+    ) = 1
+),
+
 indicator_population AS (
     SELECT
         profile.*,
@@ -49,7 +60,7 @@ indicator_population AS (
         ON profile.person_id = age.person_id
     LEFT JOIN dyslipidaemia
         ON profile.person_id = dyslipidaemia.person_id
-    -- BMI values are modelled for adults only, so the denominator is 18 and over
+    -- NICE's rationale concerns adult weight management.
     WHERE age.age >= 18
         AND (
             profile.has_chd OR profile.has_stroke_tia OR profile.has_diabetes OR profile.has_ndh
@@ -66,12 +77,13 @@ assessed AS (
         active.current_practice_code,
         active.current_practice_name,
         population.latest_bmi_date,
-        CASE WHEN COALESCE(population.latest_bmi_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE)
-            THEN population.latest_bmi_date END AS latest_record_date,
-        COALESCE(population.latest_bmi_date >= DATEADD(month, -12, CURRENT_DATE()), FALSE) AS is_in_numerator
+        bmi.bmi_date,
+        CASE WHEN bmi.is_valid_bmi THEN bmi.bmi_date END AS latest_record_date,
+        COALESCE(bmi.is_valid_bmi, FALSE) AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
+    LEFT JOIN latest_bmi AS bmi ON population.person_id = bmi.person_id
 )
 
 SELECT
@@ -90,6 +102,7 @@ SELECT
     is_in_numerator,
     CASE
         WHEN is_in_numerator THEN 'ACHIEVED'
+        WHEN bmi_date IS NOT NULL THEN 'NOT_ASSESSABLE'
         ELSE 'NOT_RECORDED_IN_PERIOD'
     END AS indicator_status
 FROM assessed
