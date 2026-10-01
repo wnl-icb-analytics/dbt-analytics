@@ -44,26 +44,19 @@ FROM {{ ref('int_csf_leak_latest')}}
 --FROM MODELLING.OLIDS_OBSERVATIONS.INT_CSF_LEAK_LATEST
 ) b
 )
---September 2026 add new group for RSV clinical risk groups which includes immunosuppression and chronic lung disease.
+-- RSV clinical risk is chronic respiratory disease or immunosuppression at any
+-- age. fct_flu_eligibility only publishes those subcohorts under 65, because
+-- everyone 65 and over qualifies for flu by age. The flags model reads the flu
+-- clinical intermediates before that gate. RSV_1D applies the 65-74 band at
+-- eligibility, not on this flag.
 ,RSV_clinical_risk_groups AS (
-SELECT distinct person_id
-FROM (
-SELECT
-        person_id,
-        campaign_id,
-        TO_DATE(REGEXP_SUBSTR(campaign_id, '[0-9]{4}') || '-09-01') AS valid_from,
-        DATEADD(DAY,-1,LEAD(TO_DATE(REGEXP_SUBSTR(campaign_id, '[0-9]{4}') || '-09-01')) 
-        OVER (PARTITION BY person_id ORDER BY campaign_id)) AS valid_to,
-        CASE
-            WHEN COALESCE(HAS_CRD, FALSE)
-              OR COALESCE(IS_IMMUNOSUPPRESSED, FALSE)
-            THEN TRUE
-            ELSE FALSE
-        END AS IN_RSV_CLINICAL_RISK_GROUP
-   FROM {{ ref('int_covid_flu_risk_group_flags') }}
-    --FROM MODELLING.OLIDS_PROGRAMME.INT_COVID_FLU_RISK_GROUP_FLAGS rf
-    WHERE campaign_id LIKE 'Flu%' 
-) a WHERE IN_RSV_CLINICAL_RISK_GROUP AND VALID_TO is null 
+-- Current flu campaign only: the flags model has a row only where a person is
+-- in a clinical group that campaign, so a person's last row can be from an
+-- older season whose evidence has lapsed.
+SELECT DISTINCT person_id
+FROM {{ ref('int_covid_flu_risk_group_flags') }}
+WHERE campaign_id = '{{ flu_current_campaign() }}'
+    AND (COALESCE(has_crd, FALSE) OR COALESCE(is_immunosuppressed, FALSE))
 )
 
 SELECT DISTINCT
@@ -94,7 +87,7 @@ END AS TURN_65_AFTER_SEP_2023
 ,CASE WHEN imm.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_IMMUNOSUPPRESSED
 --PPV clinical risk group flag which includes immunosuppression but also other risk groups eligible for PPV
 ,CASE WHEN ppv.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IN_PPV_CLINICAL_RISK_GROUP
---RSV clinical risk group flag which includes immunosuppression and chronic lung disease. 
+-- RSV clinical risk flag: immunosuppression or chronic respiratory disease, any age.
 ,CASE WHEN rsv.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IN_RSV_CLINICAL_RISK_GROUP
 ,CASE WHEN preg.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_PREGNANT
 ,dem.GENDER
