@@ -1,50 +1,44 @@
 models:
   - name: int_pregnancy_episodes_all
-    description: 'Person-level pregnancy episodes assembled from raw pregnancy observations.
+    description: 'One row per pregnancy episode per person, for all people with pregnancy or outcome observations.
 
-      Key Features:
-
-      • One row per pregnancy episode, with episode_start and episode_end
-
-      • Episodes are anchored either on a pregnancy code, or (when antenatal coding is absent in primary care) on a delivery / pregnancy-loss code with episode_start back-dated by pregnancy_episode_max_weeks
-
-      • episode_end = earliest delivery or pregnancy-loss code in the episode, else fallback at start + pregnancy_episode_max_weeks
-
-      • episode_end capped at start + pregnancy_episode_max_weeks (default 42) to guard against mis-dated outcome records
-
-      • outcome_type indicates how the episode ended: delivery, pregnancy_loss, or fallback_max_duration
-
-      Purpose: Provide a reusable episode-level view for cohort-building and exclusion-window logic.'
+      Same-day codes are ordered pregnancy, delivery, then pregnancy loss. A pregnancy code starts a new episode when there is no prior code, the prior code is an outcome, or the prior code is more than pregnancy_episode_max_weeks earlier.
+      An outcome starts an orphan episode only when no pregnancy code was recorded within the preceding pregnancy_episode_max_weeks (default 42). Its start is back-dated by that duration.
+      Repeated outcomes within that duration of the latest pregnancy code join the episode; its outcome stays the earliest delivery or loss.
+      The episode ends at the earliest outcome or at start plus the maximum duration when no outcome is recorded. The end is capped at that maximum duration.'
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
               - person_id
               - episode_id
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "(outcome_type <> 'delivery' or delivery_date is not null) and (outcome_type <> 'pregnancy_loss' or loss_date is not null) and (outcome_type <> 'fallback_max_duration' or (delivery_date is null and loss_date is null))"
     columns:
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
       - name: episode_id
         description: 'Sequential episode number per person (1 = earliest recorded pregnancy episode)'
-        tests:
+        data_tests:
           - not_null
       - name: episode_start
         description: 'Date of the earliest pregnancy code in the episode, or for orphan-outcome episodes (no pregnancy code) the outcome date back-dated by pregnancy_episode_max_weeks'
-        tests:
+        data_tests:
           - not_null
       - name: episode_end
-        description: 'Date the episode ends: earliest delivery or loss code in the episode, else start + pregnancy_episode_max_weeks'
-        tests:
+        description: 'Earliest delivery or loss code date, or start plus pregnancy_episode_max_weeks if neither is recorded; capped at start plus that duration'
+        data_tests:
           - not_null
       - name: outcome_type
         description: 'How the episode ended: delivery, pregnancy_loss, or fallback_max_duration'
-        tests:
+        data_tests:
           - accepted_values:
               arguments:
                 values:

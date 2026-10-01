@@ -8,11 +8,14 @@
 Pregnancy episodes constructed from int_pregnancy_observations_all.
 
 Episode logic:
+  - Same-day events are ordered pregnancy, delivery, then pregnancy loss.
   - A pregnancy code starts a new episode if not preceded by an open episode (no
     prior code, prior code was an outcome, or prior code more than
     pregnancy_episode_max_weeks ago).
-  - A delivery / pregnancy_loss code can also start a new episode under the
-    same conditions. This catches "orphan" outcomes where antenatal care was
+  - A delivery / pregnancy_loss code starts an orphan episode only when no
+    pregnancy code is recorded in the preceding pregnancy_episode_max_weeks.
+    Repeated outcomes within that period join the episode; its outcome stays
+    the earliest outcome. This catches outcomes where antenatal care was
     delivered outside primary care and only the delivery / loss notification
     reached the GP record. For these episodes, episode_start is back-dated
     by pregnancy_episode_max_weeks from the outcome date (estimated conception).
@@ -44,7 +47,8 @@ preg_obs_dedup AS (
     SELECT DISTINCT
         person_id,
         clinical_effective_date,
-        event_type
+        event_type,
+        CASE event_type WHEN 'pregnancy' THEN 1 WHEN 'delivery' THEN 2 WHEN 'pregnancy_loss' THEN 3 END AS event_priority
     FROM preg_obs
     WHERE event_type IS NOT NULL
 
@@ -56,12 +60,17 @@ with_context AS (
         person_id,
         clinical_effective_date,
         event_type,
+        event_priority,
         LAG(clinical_effective_date) OVER (
-            PARTITION BY person_id ORDER BY clinical_effective_date, event_type
+            PARTITION BY person_id ORDER BY clinical_effective_date, event_priority
         ) AS prev_date,
         LAG(event_type) OVER (
-            PARTITION BY person_id ORDER BY clinical_effective_date, event_type
-        ) AS prev_event_type
+            PARTITION BY person_id ORDER BY clinical_effective_date, event_priority
+        ) AS prev_event_type,
+        MAX(CASE WHEN event_type = 'pregnancy' THEN clinical_effective_date END) OVER (
+            PARTITION BY person_id ORDER BY clinical_effective_date, event_priority
+            ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+        ) AS prev_pregnancy_date
     FROM preg_obs_dedup
 
 ),
@@ -72,6 +81,7 @@ episode_flags AS (
         person_id,
         clinical_effective_date,
         event_type,
+        event_priority,
         CASE
             -- A pregnancy code starts a new episode if not inside an open one
             WHEN event_type = 'pregnancy' AND (
@@ -84,10 +94,9 @@ episode_flags AS (
             -- An outcome code starts an "orphan" episode when no recent pregnancy
             -- code precedes it (otherwise it just closes an existing episode)
             WHEN event_type IN ('delivery', 'pregnancy_loss') AND (
-                prev_date IS NULL
-                OR prev_event_type IN ('delivery', 'pregnancy_loss')
+                prev_pregnancy_date IS NULL
                 OR DATEDIFF(
-                    'day', prev_date, clinical_effective_date
+                    'day', prev_pregnancy_date, clinical_effective_date
                 ) > {{ pregnancy_episode_max_weeks() }} * 7
             ) THEN 1
             ELSE 0
@@ -102,9 +111,10 @@ episode_assignment AS (
         person_id,
         clinical_effective_date,
         event_type,
+        event_priority,
         SUM(is_new_episode) OVER (
             PARTITION BY person_id
-            ORDER BY clinical_effective_date, event_type
+            ORDER BY clinical_effective_date, event_priority
             ROWS UNBOUNDED PRECEDING
         ) AS episode_number
     FROM episode_flags
