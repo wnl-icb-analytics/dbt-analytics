@@ -26,7 +26,7 @@ SELECT
 FROM {{ ref('int_smoking_status_all') }}
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id
-    ORDER BY clinical_effective_date DESC,
+    ORDER BY clinical_effective_date::DATE DESC,
         CASE source_cluster_id
             WHEN 'LSMOK_COD' THEN 1
             WHEN 'EXSMOK_COD' THEN 2

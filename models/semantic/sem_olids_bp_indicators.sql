@@ -56,7 +56,7 @@ DIMENSIONS(
     indicators.is_bp_recorded_in_last_12m AS is_bp_recorded_in_last_12m COMMENT = 'Latest BP was recorded in the 12 months up to the reporting date',
     indicators.is_latest_bp_within_indicator_target AS is_latest_bp_within_indicator_target COMMENT = 'Latest BP is below both indicator thresholds, regardless of recording date',
     indicators.is_in_numerator AS is_in_numerator COMMENT = 'Recent BP is below both published indicator thresholds',
-    indicators.indicator_status AS indicator_status WITH SYNONYMS = ('achievement status', 'care gap reason') COMMENT = 'ACHIEVED, NOT_RECORDED_IN_PERIOD, or ABOVE_TARGET',
+    indicators.indicator_status AS indicator_status WITH SYNONYMS = ('achievement status', 'care gap reason') COMMENT = 'ACHIEVED, NOT_RECORDED_IN_PERIOD, ABOVE_TARGET or NOT_ASSESSABLE',
 
     -- Demographics
     demographics.gender AS gender COMMENT = 'Patient gender',

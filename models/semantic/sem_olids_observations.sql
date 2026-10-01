@@ -316,7 +316,7 @@ DIMENSIONS(
     glucose.result_unit_display AS result_unit_display COMMENT = 'Recorded unit of the latest blood glucose. Values are not converted, so group or filter by this before averaging.',
 
     -- Smoking Status
-    smoking.smoking_status AS smoking_status COMMENT = 'Latest recorded smoking status (Current Smoker, Ex-Smoker, Never Smoked). People without a recorded status are absent.',
+    smoking.smoking_status AS smoking_status COMMENT = 'Latest recorded smoking status (Current Smoker, Ex-Smoker, Never Smoked, Non-Smoker (History Unknown), Unknown). People without a recorded status are absent.',
     smoking.is_current_smoker AS is_current_smoker COMMENT = 'TRUE when the latest smoking status is Current Smoker.',
     smoking.is_ex_smoker AS is_ex_smoker COMMENT = 'TRUE when the latest smoking status is Ex-Smoker.',
 

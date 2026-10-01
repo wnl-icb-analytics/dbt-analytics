@@ -406,14 +406,14 @@ additional_lipids AS (
 hba1c AS (
     SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_hba1c_date
     FROM {{ ref('int_hba1c_all') }}
-    WHERE hba1c_original_value IS NOT NULL
+    WHERE clinical_effective_date::DATE <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
 blood_glucose AS (
     SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_blood_glucose_date
     FROM {{ ref('int_blood_glucose_all') }}
-    WHERE result_value IS NOT NULL
+    WHERE clinical_effective_date::DATE <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
