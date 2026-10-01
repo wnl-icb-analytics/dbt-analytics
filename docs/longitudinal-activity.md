@@ -131,7 +131,8 @@ updated DNA actions. See [e-RS validation](ers-analyst-validation.md).
 
 Clinical items include OLIDS expanded observations and statement-enriched
 medication orders; MHSDS and CSDS prepared clinical records, including MHSDS
-social circumstances; SUS diagnoses and procedures; and ECDS diagnoses,
+social circumstances and CSDS childhood immunisations, diagnoses, child health
+screening, breastfeeding status and growth measurements; SUS diagnoses and procedures; and ECDS diagnoses,
 treatments, investigations, comorbidities, coded findings, observations, scored
 assessments, chief complaints, acuity, notifiable diseases, injury mechanism,
 intent and place, alcohol or drug involvement, and Mental Health Act legal status.

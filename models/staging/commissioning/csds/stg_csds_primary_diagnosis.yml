@@ -1,0 +1,39 @@
+version: 2
+models:
+- name: stg_csds_primary_diagnosis_history
+  description: One CYP607 primary diagnosis row from an accepted CSDS submission, recorded against a referral. The
+    same diagnosis repeats across reporting periods while the referral is submitted.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: cyp607_unique_id
+    description: Source table row identifier, unique across accepted submissions.
+    data_tests:
+    - not_null
+    - unique
+  - name: unique_submission_id
+    description: Accepted source submission supplying this occurrence.
+- name: stg_csds_primary_diagnosis
+  description: Latest accepted CYP607 primary diagnosis for each referral, diagnosis scheme, code and diagnosis
+    date, the ETOS derivation key plus the scheme. A missing date is part of the key. Rows missing
+    another key field keep each source occurrence.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: ETOS record key, with a source-row fallback when a required key field is missing.
+    data_tests:
+    - not_null
+    - unique
+  - name: cyp607_unique_id
+    description: Source row of the selected accepted occurrence.
+  - name: first_reported_period_end_date
+    description: Earliest accepted reporting period containing this key.
+  - name: last_reported_period_end_date
+    description: Latest accepted reporting period containing this key.
+  - name: accepted_source_record_count
+    description: Number of accepted source rows represented by the selected occurrence.

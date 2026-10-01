@@ -420,3 +420,72 @@ All 37,606,281 record keys remain unique. Aggregate fingerprints confirm that
 existing labels and mappings, submitted codes and values, units, clinical times
 and assessment results are unchanged. None of the new term labels receives a
 SNOMED mapping. Full-stack compilation passed all 6,912 nodes.
+
+
+## Child health, diagnosis and growth sections
+
+The fact also carries CYP502 childhood immunisations, CYP601 previous diagnoses,
+CYP603 newborn hearing screening, CYP604 newborn blood spot results, CYP605
+infant physical examinations, CYP606 to CYP608 provisional, primary and
+secondary diagnoses, CYP610 breastfeeding status and CYP611 weight, height and
+length. These sections previously had only generated raw models.
+
+Each restated section has a `_history` staging model with every accepted row
+and a latest model with one row per ETOS record key from the Complex
+Derivations sheet. The keys are person, provider, immunisation type and date
+(CYP502); person, provider, diagnosis and date (CYP601); person, provider,
+screening outcome and audiology dates (CYP603); person, provider and card date
+(CYP604); person, provider and examination date (CYP605); and referral,
+diagnosis and date (CYP606 to CYP608). The diagnosis keys also keep the
+submitted scheme; the empty source master and mapped diagnosis fields are not
+staged. Optional dates and outcomes are part of the key, so a missing
+value does not split restatements. A missing person, provider, referral or code
+keeps each source occurrence. The latest row wins by reporting period, file
+receipt, submission and source row. CYP610 and CYP611 belong to a care activity
+and are not restated, so each accepted row is kept, as for CYP612.
+
+CYP502 shows why this matters. About 48M accepted rows reduce to about 3.5M
+immunisations. Providers resend the whole history: the median immunisation
+appears in 12 accepted periods, about 89% appear in every month between their
+first and last report, and about 71% were first reported more than a year after
+the immunisation date. A permanent test checks that each latest model
+represents every accepted history row.
+
+About 44% of CYP502 immunisations share person, provider and date with a CYP501
+coded immunisation, so the same vaccination is often submitted in both tables.
+CYP502 rows therefore use the separate type `childhood_immunisation` and do not
+change `immunisation` counts. Neither table is deduplicated against the other.
+
+Code-list labels come from the UKHFD NHS Data Dictionary dimensions for
+childhood immunisation type, breastfeeding status, newborn hearing screening
+and audiology outcome, and newborn blood spot outcome status, added to
+`csds_activity_code_lookup`. UKHFD has no infant physical examination result
+list, so those codes keep null labels. ETOS publishes the permitted values, but
+they are not maintained in the warehouse. Diagnosis schemes use the shared
+`diagnosis_scheme` reference: 02 is ICD-10, 04 Read v2, 05 CTV3 and 06 SNOMED
+CT, resolved through the existing ICD-10, Read and SNOMED references.
+
+About half of CYP607 primary diagnoses lack a label. Most of the gap is about
+180K rows submitted under Read v2 whose codes are not Read v2 terms; about 96%
+of them are valid CTV3 codes. Codes are not relabelled under a different scheme
+than the one submitted.
+
+Screening sections with several coded fields give one row per populated field.
+Blood spot rows use `newborn_blood_spot_` plus the screened condition and take
+the card completion date, which ETOS defines as the sample date. Examination
+rows use `infant_physical_examination_` plus the examined area. CSDS supplies
+no hearing screening date, so those outcomes are undated; only a handful of
+audiology outcomes are populated. CYP611 types are `person_weight`,
+`person_height` and `person_length`, with no code and the units ETOS fixes:
+kg, m and cm. Their label status is `defined_by_data_element`. Breastfeeding
+and growth rows inherit the same-submission contact time on the same terms as
+CYP612; the warehouse observation date stays separate.
+
+Referral-linked items now carry `is_referral_person_consistent`. The
+longitudinal adapter promotes a referral parent only when the referral does not
+name a different person, matching the event adapter.
+
+This work covers #1139 in substance. Newborn hearing screening has accepted
+history and latest staging, person linkage, provider names, UKHFD labels and
+documented null dates, but it sits in the clinical fact at one row per ETOS
+record rather than in a separate fact at one row per submitted row.

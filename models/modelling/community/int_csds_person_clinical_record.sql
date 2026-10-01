@@ -47,11 +47,11 @@ select
     iff(mapped_code is not null, 'SNOMED CT', null)::varchar as mapped_coding_system,
     case
         when s.is_care_activity_linked and s.is_care_activity_person_consistent is distinct from false then s.care_activity_source_record_id::varchar
-        else s.referral_id::varchar
+        when s.is_referral_person_consistent is distinct from false then s.referral_id::varchar
     end as parent_record_id,
     case
         when s.is_care_activity_linked and s.is_care_activity_person_consistent is distinct from false then 'care_activity'
-        when s.referral_id is not null then 'referral'
+        when s.referral_id is not null and s.is_referral_person_consistent is distinct from false then 'referral'
     end as parent_record_type,
     case parent_record_type
         when 'care_activity' then 'fct_csds_care_activity'

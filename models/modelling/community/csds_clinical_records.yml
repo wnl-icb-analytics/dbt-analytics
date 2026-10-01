@@ -23,8 +23,9 @@ models:
   - name: last_reported_period_end_date
     description: Latest accepted period containing this immunisation key.
 - name: int_csds_clinical_record
-  description: One retained immunisation, accepted assessment occurrence or populated care-activity component
-    before clinical labelling. Referral and activity assessments retain repeated scores, including different
+  description: One retained immunisation, diagnosis, child health screening result, accepted assessment occurrence,
+    activity-linked breastfeeding status or growth measurement, or populated care-activity component before
+    clinical labelling. Screening sections with several coded fields give one row per populated field. Referral and activity assessments retain repeated scores, including different
     dates. Activity items inherit time through the explicit same-submission activity/contact relationship
     unless populated person identities conflict. Missing person identities remain unknown and do not suppress
     the linked date. No person identity is inferred.
@@ -34,14 +35,17 @@ models:
         name: Eddie Davison
   columns:
   - name: originating_source_record_id
-    description: Immunisation revision key, accepted assessment occurrence or activity occurrence key.
+    description: Retained record key, accepted assessment or activity-linked occurrence, or activity occurrence key.
   - name: clinical_record_type
-    description: Immunisation, referral assessment, activity assessment, procedure, finding or observation.
+    description: Clinical item type; see fct_csds_clinical_record.
   - name: source_clinical_date
-    description: Submitted administration or assessment completion date; no time-of-day precision is inferred.
+    description: Submitted administration, diagnosis, screening, examination or assessment completion date;
+      no time-of-day precision is inferred.
   - name: source_derived_date
-    description: Warehouse-added activity-assessment observation date, kept separately from inherited
+    description: Warehouse-added observation date for activity-linked items, kept separately from inherited
       contact time.
+  - name: code_set_name
+    description: CSDS code-lookup category for NHS Data Dictionary code-list values; null for terminology codes.
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

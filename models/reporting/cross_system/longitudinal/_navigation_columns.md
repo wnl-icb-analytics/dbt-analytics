@@ -163,7 +163,7 @@ Entity type of the explicit recorded parent. Other submitted links and consisten
 {% enddocs %}
 
 {% docs navigation_parent_record_id %}
-Recorded parent key in parent_model_name. A recorded link does not establish causality, attendance or a journey. Clinical activity links with conflicting person identifiers are not promoted.
+Recorded parent key in parent_model_name. A recorded link does not establish causality, attendance or a journey. Activity and referral links naming a different person are not promoted.
 {% enddocs %}
 
 {% docs navigation_parent_model_name %}

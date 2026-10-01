@@ -1,0 +1,39 @@
+version: 2
+models:
+- name: stg_csds_childhood_immunisation_history
+  description: One CYP502 childhood immunisation row from an accepted CSDS submission. Providers restate a child's
+    immunisation history every month, so the same immunisation repeats across reporting periods.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: cyp502_unique_id
+    description: Source table row identifier, unique across accepted submissions.
+    data_tests:
+    - not_null
+    - unique
+  - name: unique_submission_id
+    description: Accepted source submission supplying this occurrence.
+- name: stg_csds_childhood_immunisation
+  description: Latest accepted CYP502 childhood immunisation for each person, provider, immunisation type and
+    immunisation date, the ETOS derivation key. Selected by newest reporting period, then file receipt,
+    submission and source row. Rows missing a key field keep each source occurrence.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: ETOS record key, with a source-row fallback when a required key field is missing.
+    data_tests:
+    - not_null
+    - unique
+  - name: cyp502_unique_id
+    description: Source row of the selected accepted occurrence.
+  - name: first_reported_period_end_date
+    description: Earliest accepted reporting period containing this key.
+  - name: last_reported_period_end_date
+    description: Latest accepted reporting period containing this key.
+  - name: accepted_source_record_count
+    description: Number of accepted source rows represented by the selected occurrence.
