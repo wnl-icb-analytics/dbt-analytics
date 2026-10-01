@@ -4,7 +4,8 @@
       Long-term condition profile, one row per currently registered, living person with any
       SMI diagnosis code, including resolved ones, or active lithium. Active lithium means a
       lithium order in the last 6 months with no later LITSTP_COD stop code.
-      has_active_smi_diagnosis and is_on_lithium show which route applies. Adds the count
+      has_active_smi_diagnosis and is_on_lithium flag active diagnosis and active lithium.
+      Both can be false for people whose diagnosis has resolved. Adds the count
       and list of QOF LTC registers, excluding SMI, obesity, palliative care and
       non-diabetic hyperglycaemia. Also adds antipsychotic orders in the last 6 months,
       latest mental health care plan, medication review, QRISK, cholesterol, NDPP and pulmonary
@@ -17,6 +18,7 @@
     columns:
       - name: person_id
         description: Unique identifier for the person
-        tests:
+        data_tests:
           - not_null
+          - unique
 

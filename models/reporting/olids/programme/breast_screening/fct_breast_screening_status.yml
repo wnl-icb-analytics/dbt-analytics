@@ -1,12 +1,12 @@
 models:
   - name: fct_breast_screening_status
     description: >
-      Breast screening status for women aged 50 to 70 in completed years, one row per
+      Breast screening status for women with an estimated age of 50 to 70, one row per
       person, including deceased and deregistered women. Women are people recorded as Female
-      in dim_person_demographics. The age range runs from the 50th birthday up to the 71st
-      birthday. Deceased people use age at death. Filter on is_active and is_deceased where
+      in dim_person_demographics. Age uses the recorded birth month and, where available,
+      the death month for deceased women. Filter on is_active and is_deceased where
       needed. programme_status is Up to Date when the latest completed screening,
-      BRCANSCR_COD, is within the last 1,095 days or 3 years. It is Overdue when older and
+      BRCANSCR_COD, is within the last 1,095 days. It is Overdue when older and
       Never Screened when none is recorded. Declines, BRCANSCRDEC_COD, do not change the
       status. Non-response and unsuitable codes are not available.
     config:
@@ -20,10 +20,11 @@ models:
           - not_null
           - unique
       - name: current_age
-        description: 'Current age of the person in years'
+        description: 'Estimated age in years from the recorded birth month, at death
+          when a death date is available, otherwise today.'
       - name: is_screening_eligible
-        description: 'True when the person is Female and aged 50 to 70 in completed
-          years. True for every row.'
+        description: 'True when the person is Female and their estimated age is 50
+          to 70. True for every row.'
       - name: screening_interval_years
         description: 'Target screening interval 3 years for breast screening'
       - name: programme_status
