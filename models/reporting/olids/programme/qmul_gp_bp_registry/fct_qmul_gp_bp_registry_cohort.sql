@@ -8,12 +8,12 @@
 Final QMUL GP BP Registry research cohort.
 
 A person is included when:
-  - They are in the base population (on QOF hypertension register, with at
+  - They are in the base population (aged 18 or over, on QOF hypertension register, with at
     least one oral antihypertensive medication order).
   - Their eligible BP readings meet the spacing criterion:
     >= qmul_gp_bp_registry_min_qualifying_readings (default 4) readings at
     least qmul_gp_bp_registry_min_reading_gap_weeks (default 4) apart,
-    spanning at least qmul_gp_bp_registry_min_span_months (default 36) months,
+    spanning at least qmul_gp_bp_registry_min_span_months (default 36) calendar months,
     within the study extraction period (default 2010-01-01 to 2025-12-31).
   - BP readings inside pregnancy or HDP exclusion windows are dropped before
     the spacing check (handled by int_qmul_gp_bp_registry_bp_readings_eligible).
