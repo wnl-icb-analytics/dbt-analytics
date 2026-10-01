@@ -24,6 +24,7 @@ SELECT
     current_practice_name,
     condition_name,
     latest_bp_date,
+    is_valid_bp,
     latest_systolic_value,
     latest_diastolic_value,
     is_home_bp_event,

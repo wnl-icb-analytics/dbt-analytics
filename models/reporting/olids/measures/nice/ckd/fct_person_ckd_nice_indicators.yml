@@ -279,9 +279,17 @@ models:
       latest ACR of at least 70 mg/mmol and without moderate or severe frailty,
       assessed on the build date.
 
-      Achievement requires the latest blood pressure in the preceding 12 months to
+      Achievement requires the latest complete blood pressure pair in the preceding 12 months to
       be below 130/80 mmHg in clinic or 125/75 mmHg at home or by ambulatory
       monitoring. Both components must be strictly below their thresholds.
+
+      The latest date with a complete systolic/diastolic pair is used. Incomplete
+      single components are ignored. On that date, valid pairs take precedence, with
+      lowest systolic then lowest diastolic selected because within-day order is
+      unavailable. If no pair on that date is plausible (systolic 40-350 mmHg and
+      diastolic 20-200 mmHg, inclusive), the result is NOT_ASSESSABLE, without falling
+      back to an older pair. Unparented components retain the date-level MAX/MAX
+      fallback, which may combine different readings.
 
       Missing or invalid latest ACR values do not establish eligibility. An
       invalid latest ACR is not replaced by an older result.
@@ -304,9 +312,17 @@ models:
             CKD register with a latest ACR of at least 70 mg/mmol and without moderate or
             severe frailty, assessed on the build date.
 
-            Achievement requires the latest blood pressure in the preceding 12 months to
+            Achievement requires the latest complete blood pressure pair in the preceding 12 months to
             be below 130/80 mmHg in clinic or 125/75 mmHg at home or by ambulatory
             monitoring. Both components must be strictly below their thresholds.
+
+            The latest date with a complete systolic/diastolic pair is used. Incomplete
+            single components are ignored. On that date, valid pairs take precedence, with
+            lowest systolic then lowest diastolic selected because within-day order is
+            unavailable. If no pair on that date is plausible (systolic 40-350 mmHg and
+            diastolic 20-200 mmHg, inclusive), the result is NOT_ASSESSABLE, without falling
+            back to an older pair. Unparented components retain the date-level MAX/MAX
+            fallback, which may combine different readings.
 
             Missing or invalid latest ACR values do not establish eligibility. An invalid
             latest ACR is not replaced by an older result.
@@ -344,9 +360,11 @@ models:
       - name: latest_acr_value
         description: Latest urine ACR in mg/mmol; null when none
       - name: latest_bp_date
-        description: Date of the latest blood pressure reading at any time; null when none
+        description: Date of the latest complete blood pressure pair at any time; null when none
       - name: latest_record_date
         description: Date of the latest blood pressure reading when it falls in the preceding 12 months; null otherwise
+      - name: is_valid_bp
+        description: Whether the selected complete pair is plausible; null when no complete pair exists
       - name: latest_systolic_value
         description: Latest systolic BP in mmHg; null when none
       - name: latest_diastolic_value
@@ -362,11 +380,11 @@ models:
       - name: is_in_numerator
         description: Whether the latest reading falls in the period and below both thresholds
       - name: indicator_status
-        description: ACHIEVED, ABOVE_TARGET or NOT_RECORDED_IN_PERIOD
+        description: ACHIEVED, ABOVE_TARGET, NOT_ASSESSABLE or NOT_RECORDED_IN_PERIOD
         data_tests:
           - accepted_values:
               arguments:
-                values: ['ACHIEVED', 'ABOVE_TARGET', 'NOT_RECORDED_IN_PERIOD']
+                values: ['ACHIEVED', 'ABOVE_TARGET', 'NOT_ASSESSABLE', 'NOT_RECORDED_IN_PERIOD']
 
 
   - name: fct_person_ckd_bp_ind235
@@ -376,9 +394,17 @@ models:
       with a latest ACR below 70 mg/mmol and without moderate or severe frailty,
       assessed on the build date.
 
-      Achievement requires the latest blood pressure in the preceding 12 months to
+      Achievement requires the latest complete blood pressure pair in the preceding 12 months to
       be below 140/90 mmHg in clinic or 135/85 mmHg at home or by ambulatory
       monitoring. Both components must be strictly below their thresholds.
+
+      The latest date with a complete systolic/diastolic pair is used. Incomplete
+      single components are ignored. On that date, valid pairs take precedence, with
+      lowest systolic then lowest diastolic selected because within-day order is
+      unavailable. If no pair on that date is plausible (systolic 40-350 mmHg and
+      diastolic 20-200 mmHg, inclusive), the result is NOT_ASSESSABLE, without falling
+      back to an older pair. Unparented components retain the date-level MAX/MAX
+      fallback, which may combine different readings.
 
       Missing or invalid latest ACR values do not establish eligibility. An
       invalid latest ACR is not replaced by an older result.
@@ -401,9 +427,17 @@ models:
             CKD register with a latest ACR below 70 mg/mmol and without moderate or severe
             frailty, assessed on the build date.
 
-            Achievement requires the latest blood pressure in the preceding 12 months to
+            Achievement requires the latest complete blood pressure pair in the preceding 12 months to
             be below 140/90 mmHg in clinic or 135/85 mmHg at home or by ambulatory
             monitoring. Both components must be strictly below their thresholds.
+
+            The latest date with a complete systolic/diastolic pair is used. Incomplete
+            single components are ignored. On that date, valid pairs take precedence, with
+            lowest systolic then lowest diastolic selected because within-day order is
+            unavailable. If no pair on that date is plausible (systolic 40-350 mmHg and
+            diastolic 20-200 mmHg, inclusive), the result is NOT_ASSESSABLE, without falling
+            back to an older pair. Unparented components retain the date-level MAX/MAX
+            fallback, which may combine different readings.
 
             Missing or invalid latest ACR values do not establish eligibility. An invalid
             latest ACR is not replaced by an older result.
@@ -441,9 +475,11 @@ models:
       - name: latest_acr_value
         description: Latest urine ACR in mg/mmol; null when none
       - name: latest_bp_date
-        description: Date of the latest blood pressure reading at any time; null when none
+        description: Date of the latest complete blood pressure pair at any time; null when none
       - name: latest_record_date
         description: Date of the latest blood pressure reading when it falls in the preceding 12 months; null otherwise
+      - name: is_valid_bp
+        description: Whether the selected complete pair is plausible; null when no complete pair exists
       - name: latest_systolic_value
         description: Latest systolic BP in mmHg; null when none
       - name: latest_diastolic_value
@@ -459,11 +495,11 @@ models:
       - name: is_in_numerator
         description: Whether the latest reading falls in the period and below both thresholds
       - name: indicator_status
-        description: ACHIEVED, ABOVE_TARGET or NOT_RECORDED_IN_PERIOD
+        description: ACHIEVED, ABOVE_TARGET, NOT_ASSESSABLE or NOT_RECORDED_IN_PERIOD
         data_tests:
           - accepted_values:
               arguments:
-                values: ['ACHIEVED', 'ABOVE_TARGET', 'NOT_RECORDED_IN_PERIOD']
+                values: ['ACHIEVED', 'ABOVE_TARGET', 'NOT_ASSESSABLE', 'NOT_RECORDED_IN_PERIOD']
 
 
   - name: fct_person_ckd_new_diagnosis_egfr_ind233
