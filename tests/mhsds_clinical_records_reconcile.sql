@@ -11,6 +11,8 @@ with expected as (
     select 'clustering_assessment', count(*) from {{ ref('int_mhsds_clustering_assessment_response') }}
     union all
     select 'presenting_complaint', count(*) from {{ ref('int_mhsds_presenting_complaint') }}
+    union all
+    select 'social_circumstance', count(*) from {{ ref('int_mhsds_social_circumstance') }}
     {% for component in ['procedure', 'finding', 'observation'] %}
     union all
     select '{{ component }}', count_if(has_{{ component }})
