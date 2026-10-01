@@ -4,9 +4,8 @@
     Calculates Familial hypercholesterolaemia register status at one or more reference dates.
 
     Business Logic:
-    - FHYP_COD diagnosis known by the reference date
-    - Age at first diagnosis, from the birth date, is at least 20 years
-    - No resolution codes
+    - FHYP_COD diagnosis known by the reference date, at any age
+    - No resolution codes (genetic, lifelong)
     Current active-patient filtering is omitted; monthly models apply registration
     and living status at each month-end.
 
@@ -34,45 +33,16 @@
         INNER JOIN reference_dates AS ref_date
             ON {{ ltc_register_known_by('diag.clinical_effective_date', 'diag.date_recorded', 'ref_date.reference_date') }}
         GROUP BY ref_date.reference_date, diag.person_id
-    ),
-
-    age_at_diagnosis AS (
-        SELECT
-            diag.reference_date,
-            diag.person_id,
-            FLOOR(DATEDIFF('month', birth.birth_date_approx, diag.earliest_diagnosis_date) / 12) AS age_at_first_diagnosis
-        FROM familial_hypercholesterolaemia_person_aggregates AS diag
-        INNER JOIN {{ ref('dim_person_birth_death') }} AS birth
-            ON diag.person_id = birth.person_id
-        WHERE birth.birth_date_approx IS NOT NULL
-    ),
-
-    register_inclusion AS (
-        SELECT
-            diag.reference_date,
-            diag.person_id,
-            diag.earliest_diagnosis_date,
-            diag.latest_diagnosis_date,
-            -- Age at first diagnosis, from the birth date, so it does not change with the reference date.
-            age.age_at_first_diagnosis AS age_at_first_fh_diagnosis
-        FROM familial_hypercholesterolaemia_person_aggregates AS diag
-        LEFT JOIN age_at_diagnosis AS age
-            ON diag.person_id = age.person_id
-            AND diag.reference_date = age.reference_date
     )
 
     SELECT
         reference_date,
         person_id,
         'Familial hypercholesterolaemia' AS register_name,
-        -- Register logic: Include if has diagnosis and estimated age >=20 at first diagnosis
-        COALESCE(
-            earliest_diagnosis_date IS NOT NULL
-            AND age_at_first_fh_diagnosis >= 20,
-            FALSE
-        ) AS is_on_register,
+        -- Any FH diagnosis; no age or resolution rule. QOF v51 reads FHYP_COD the same way.
+        earliest_diagnosis_date IS NOT NULL AS is_on_register,
         earliest_diagnosis_date,
         latest_diagnosis_date
-    FROM register_inclusion
+    FROM familial_hypercholesterolaemia_person_aggregates
 
 {% endmacro %}
