@@ -4,6 +4,15 @@
         cluster_by=['person_id'])
 }}
 
+{#- A zero gap lets the ASOF join match a reading to itself and the chain never ends;
+    the final-reading rule needs a reading before the last one. -#}
+{%- if qmul_gp_bp_registry_min_reading_gap_weeks() | trim | int < 1
+    or qmul_gp_bp_registry_min_qualifying_readings() | trim | int < 2 -%}
+    {{ exceptions.raise_compiler_error(
+        'qmul_gp_bp_registry_min_reading_gap_weeks must be >= 1 and qmul_gp_bp_registry_min_qualifying_readings >= 2'
+    ) }}
+{%- endif %}
+
 /*
 Per-person assessment of the BP spacing inclusion criterion:
 "BP recorded on >= 4 separate dates >= 4 weeks apart over at least 36 consecutive months."
