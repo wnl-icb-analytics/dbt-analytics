@@ -1,15 +1,18 @@
 -- Identity mirrors the CSDS ETOS onward referral successor key (referral, date and
 -- reason), qualified by provider and the time MHSDS also supplies.
 with identified as (
-    select s.*, {{ dbt_utils.generate_surrogate_key(['s.org_id_prov', 's.uniq_serv_req_id', 's.onward_refer_date', 's.onward_refer_time', 's.onward_refer_reason', 'iff(s.uniq_serv_req_id is null or s.onward_refer_date is null, s.mhs105_uniq_id::varchar, null)']) }} as entity_id
+    select s.*, submission.reporting_period_end_date as submission_period_end_date, {{ dbt_utils.generate_surrogate_key(['s.org_id_prov', 's.uniq_serv_req_id', 's.onward_refer_date', 's.onward_refer_time', 's.onward_refer_reason', 'iff(s.uniq_serv_req_id is null or s.onward_refer_date is null, s.mhs105_uniq_id::varchar, null)']) }} as entity_id
         , s.uniq_serv_req_id is null or s.onward_refer_date is null as is_identity_incomplete
     from {{ ref('stg_mhsds_onward_referral') }} as s
+    -- Rank by the accepted submission's period, as select_latest_mhsds_record does.
+    inner join {{ ref('stg_mhsds_activesubmission') }} as submission
+        on s.uniq_submission_id = submission.uniq_submission_id
 ), selected as (
     select *
         , count(*) over (partition by entity_id) as n_accepted_source_records
         , min(reporting_period_end_date) over (partition by entity_id) as first_submission_period_end_date
     from identified
-    qualify row_number() over (partition by entity_id order by reporting_period_end_date desc, effective_from desc nulls last, uniq_submission_id desc, row_number desc nulls last, mhs105_uniq_id desc) = 1
+    qualify row_number() over (partition by entity_id order by submission_period_end_date desc nulls last, reporting_period_end_date desc nulls last, effective_from desc nulls last, uniq_submission_id desc, row_number desc nulls last, mhs105_uniq_id desc) = 1
 )
 select
     s.entity_id as source_record_id
