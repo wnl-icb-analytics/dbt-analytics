@@ -1,5 +1,5 @@
 {% macro age_band_nhs(age) %}
-    {#- NHS age bands from a supplied age in years, with the labels of age_band_nhs in calculate_age_attributes. -#}
+    {#- NHS age bands from a supplied age in years, the single definition also used by calculate_age_attributes. -#}
     case
         when {{ age }} is null or {{ age }} < 0 then 'Unknown'
         when {{ age }} < 5 then '0-4'
