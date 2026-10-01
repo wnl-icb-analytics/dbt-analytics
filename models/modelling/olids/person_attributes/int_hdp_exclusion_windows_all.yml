@@ -1,23 +1,15 @@
 models:
   - name: int_hdp_exclusion_windows_all
-    description: 'Unified pregnancy and hypertensive-disorder-of-pregnancy (HDP) exclusion windows for research cohort use.
+    description: 'One row per exclusion window per person, covering all people with pregnancy episodes or hypertensive-disorder-of-pregnancy (HDP) codes.
 
-      Key Features:
-
-      • One row per window; three reasons: pregnancy, pregnancy_hdp, hdp_standalone
-
-      • pregnancy windows = pregnancy episodes with no HDP code inside
-
-      • pregnancy_hdp windows = pregnancy episodes containing an HDP code; window_end extended by hdp_postpartum_weeks
-
-      • hdp_standalone windows = HDP codes outside any pregnancy episode; window runs hdp_postpartum_weeks forward from the code date
-
-      Purpose: Let downstream models exclude BP readings (or other observations) during HDP-affected periods with a single join.'
+      Pregnancy episodes without an HDP code have reason pregnancy. Episodes with an HDP code have reason pregnancy_hdp and extend the episode end by hdp_postpartum_extension_weeks (default 8 weeks).
+      HDP codes outside every pregnancy window, including its postpartum extension, have reason hdp_standalone and run from the code date for the same extension.
+      Dates are inclusive. Windows can overlap and are not merged. Used to exclude observations during pregnancy and HDP-related periods.'
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
@@ -26,23 +18,23 @@ models:
     columns:
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
       - name: window_id
         description: 'Sequential window number per person, ordered by window_start'
-        tests:
+        data_tests:
           - not_null
       - name: window_start
         description: 'Start date of the exclusion window (inclusive)'
-        tests:
+        data_tests:
           - not_null
       - name: window_end
         description: 'End date of the exclusion window (inclusive)'
-        tests:
+        data_tests:
           - not_null
       - name: reason
         description: 'Why the window exists: pregnancy, pregnancy_hdp, or hdp_standalone'
-        tests:
+        data_tests:
           - accepted_values:
               arguments:
                 values:

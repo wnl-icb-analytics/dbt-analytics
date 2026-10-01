@@ -13,8 +13,9 @@ Window sources:
   - pregnancy: an episode from int_pregnancy_episodes_all with no HDP code inside it.
   - pregnancy_hdp: an episode that contains at least one HDP code; episode_end extended
     by hdp_postpartum_extension_weeks to cover persistent HDP-related BP after delivery.
-  - hdp_standalone: an HDP code with no linked pregnancy episode; window runs from the
-    code date forward by hdp_postpartum_extension_weeks.
+  - hdp_standalone: an HDP code outside every pregnancy window, including the
+    postpartum extension; window runs from the code date forward by
+    hdp_postpartum_extension_weeks.
 
 One row per window per person.
 */
@@ -49,15 +50,11 @@ episode_hdp_flag AS (
         e.episode_start,
         e.episode_end,
         e.outcome_type,
-        MAX(
-            CASE
-                WHEN h.hdp_code_date BETWEEN e.episode_start AND e.episode_end
-                    THEN 1 ELSE 0
-            END
-        ) AS has_hdp_code
+        MAX(IFF(h.person_id IS NOT NULL, 1, 0)) AS has_hdp_code
     FROM episodes e
     LEFT JOIN hdp_codes h
         ON e.person_id = h.person_id
+        AND h.hdp_code_date BETWEEN e.episode_start AND e.episode_end
     GROUP BY
         e.person_id, e.episode_id, e.episode_start, e.episode_end, e.outcome_type
 
@@ -85,15 +82,17 @@ pregnancy_windows AS (
 
 ),
 
--- HDP codes not already inside any pregnancy episode
+-- HDP codes not already inside any pregnancy window, including its postpartum extension
 standalone_hdp_codes AS (
 
     SELECT h.person_id, h.hdp_code_date
     FROM hdp_codes h
-    LEFT JOIN episodes e
-        ON h.person_id = e.person_id
-        AND h.hdp_code_date BETWEEN e.episode_start AND e.episode_end
-    WHERE e.episode_id IS NULL
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM pregnancy_windows pw
+        WHERE h.person_id = pw.person_id
+          AND h.hdp_code_date BETWEEN pw.window_start AND pw.window_end
+    )
 
 ),
 
