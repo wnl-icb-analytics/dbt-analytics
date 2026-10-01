@@ -8,8 +8,8 @@
 Base population for the QMUL GP BP Registry research cohort.
 
 Inclusion rules applied here:
-  - On the QOF hypertension register (fct_person_hypertension_register.is_on_register = TRUE)
-    which encodes the spec's "Adults >= 18" and "diagnosis of hypertension" clauses
+  - Adults aged 18 or over on the QOF hypertension register
+    (fct_person_hypertension_register.is_on_register = TRUE)
     (active diagnosis: latest HYP_COD with no later HYPRES_COD).
   - At least one oral antihypertensive medication order on record.
 
@@ -29,6 +29,7 @@ WITH register AS (
         latest_diagnosis_date
     FROM {{ ref('fct_person_hypertension_register') }}
     WHERE is_on_register
+      AND age >= 18
 
 ),
 
@@ -39,6 +40,8 @@ antihyp_orders AS (
         MIN(order_date) AS earliest_antihyp_order_date,
         MAX(order_date) AS latest_antihyp_order_date
     FROM {{ ref('int_antihypertensive_medications_all') }}
+    -- Exclude non-oral products using dose form in the product name because OLIDS orders carry no route.
+    WHERE NOT REGEXP_LIKE(LOWER(COALESCE(mapped_concept_display, order_medication_name, '')), '.*(inject|infusion|ampoule|cream|ointment|gel|patch|transdermal|eye drop).*')
     GROUP BY person_id
 
 )

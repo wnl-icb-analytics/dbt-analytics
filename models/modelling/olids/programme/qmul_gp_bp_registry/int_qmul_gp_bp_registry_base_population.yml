@@ -2,13 +2,14 @@ models:
   - name: int_qmul_gp_bp_registry_base_population
     description: 'Base population for the QMUL GP BP Registry research cohort.
 
-      Persons on the QOF hypertension register (adult, active HTN diagnosis) with at least one oral antihypertensive medication order on record.
+      Adults aged 18 or over on the QOF hypertension register with at least one oral antihypertensive medication order on record. One row per included person, using current age and register status.
+      OLIDS orders carry no route; non-oral dose forms are excluded using the mapped product name, with the order medication name as fallback. Orders without either name remain eligible.
       Downstream models apply BP reading count and spacing rules, and exclude BP readings taken during pregnancy/HDP windows.'
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
@@ -16,18 +17,22 @@ models:
     columns:
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
           - unique
       - name: age
         description: 'Current age in years'
-        tests:
+        data_tests:
           - not_null
       - name: earliest_diagnosis_date
-        description: 'Earliest active hypertension diagnosis date'
+        description: 'Earliest recorded hypertension diagnosis date, including diagnoses before a later resolution'
+        data_tests:
+          - not_null
       - name: latest_diagnosis_date
         description: 'Most recent hypertension diagnosis date (post-resolution if any)'
       - name: earliest_antihyp_order_date
         description: 'Earliest oral antihypertensive medication order date'
+        data_tests:
+          - not_null
       - name: latest_antihyp_order_date
         description: 'Most recent oral antihypertensive medication order date'
