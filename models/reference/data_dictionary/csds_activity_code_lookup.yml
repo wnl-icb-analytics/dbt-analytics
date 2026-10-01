@@ -52,11 +52,12 @@ models:
   - name: source_effective_to_at
     description: End timestamp of this UKHFD definition revision, where supplied.
 - name: csds_activity_code_lookup
-  description: One latest UKHFD definition per CSDS activity, clinical code-list, coding-scheme or referral-outcome category
-    and code. Current activity and closure dictionaries take precedence over their predecessors; historical-only
-    codes remain available. Infant physical examination results, which UKHFD lacks, come from the CSDS ETOS
-    seed csds_infant_physical_examination_result; a UKHFD definition would take precedence. Scheme labels
-    describe the national dictionary and do not establish that every scheme is permitted by every CSDS version.
+  description: One latest definition per CSDS activity, clinical code-list, coding-scheme or referral-outcome category
+    and code. Definitions come from UKHFD NHS Data Dictionary dimensions, except infant physical examination
+    results, which UKHFD lacks; those come from the CSDS ETOS seed csds_infant_physical_examination_result,
+    and a UKHFD definition would take precedence. Current activity and closure dictionaries take precedence
+    over their predecessors; historical-only codes remain available. Scheme labels describe the national
+    dictionary and do not establish that every scheme is permitted by every CSDS version.
   config:
     meta:
       owner:
@@ -71,13 +72,14 @@ models:
   - name: code_set_name
     description: Code category used to join activity, service and clinical records to this lookup.
   - name: source_code_set_name
-    description: Original UKHFD dictionary name. Distinguishes current dictionaries from their predecessors.
+    description: Original UKHFD dictionary name, distinguishing current dictionaries from their predecessors,
+      or the CSDS ETOS worksheet for ETOS definitions.
   - name: code
     description: National code as text, retaining leading zeros.
   - name: description
     description: UKHFD or ETOS description for this definition.
   - name: short_description
-    description: Short UKHFD description, where supplied.
+    description: Short UKHFD description, where supplied. Null for ETOS definitions.
   - name: category
     description: UKHFD category, where supplied.
   - name: notes
@@ -91,7 +93,7 @@ models:
     description: Whether UKHFD marks this code as present in its source dictionary. Retired definitions
       remain available.
   - name: source_imported_at
-    description: Timestamp UKHFD imported this definition.
+    description: Timestamp UKHFD imported this definition. Null for ETOS definitions.
   - name: definition_updated_at
     description: Start timestamp of this UKHFD definition revision. Null for ETOS definitions.
   - name: definition_source
