@@ -41,7 +41,11 @@ antihyp_orders AS (
         MAX(order_date) AS latest_antihyp_order_date
     FROM {{ ref('int_antihypertensive_medications_all') }}
     -- Exclude non-oral products using dose form in the product name because OLIDS orders carry no route.
-    WHERE NOT REGEXP_LIKE(LOWER(COALESCE(mapped_concept_display, order_medication_name, '')), '.*(inject|infusion|ampoule|cream|ointment|gel|patch|transdermal|eye drop).*')
+    -- Whole words only: a substring such as "gel" matches "Boehringer Ingelheim" tablets.
+    WHERE NOT REGEXP_LIKE(
+        LOWER(COALESCE(mapped_concept_display, order_medication_name, '')),
+        '(.*[^a-z])?(inject[a-z]*|infusion|ampoules?|cream|ointment|gel|patch(es)?|transdermal|eye ?drops?)([^a-z].*)?'
+    )
     GROUP BY person_id
 
 )
