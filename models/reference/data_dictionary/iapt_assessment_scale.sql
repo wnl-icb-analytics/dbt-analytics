@@ -1,6 +1,12 @@
+with definitions as (
 select
     concept_code
     , specification_version
+    -- Numeric components: lexical order would put 2.0.3 after 2.0.26.
+    , try_to_number(split_part(specification_version, '.', 1)) * 1000000
+        + try_to_number(split_part(specification_version, '.', 2)) * 1000
+        + coalesce(try_to_number(split_part(specification_version, '.', 3)), 0)
+        as specification_version_order
     , min(assessment_tool_name) as assessment_tool_name
     , min(assessment_description) as assessment_description
     , listagg(distinct published_value, '; ') within group (order by published_value)
@@ -13,7 +19,12 @@ select
     , max({{ mhsds_assessment_range_bound('published_value', 'maximum') }})
         as maximum_numeric_value
     , min(collection_start_date) as collection_start_date
-    , specification_version = max(specification_version) over (partition by concept_code)
-        as is_latest_definition
 from {{ ref('iapt_assessment_scale_definitions') }}
 group by concept_code, specification_version
+)
+
+select
+    *
+    , specification_version_order = max(specification_version_order) over (partition by concept_code)
+        as is_latest_definition
+from definitions

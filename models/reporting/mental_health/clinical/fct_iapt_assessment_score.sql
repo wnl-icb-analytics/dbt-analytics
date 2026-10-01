@@ -141,7 +141,7 @@ with referral_assessments as (
     ) = 1
 )
 
--- The most recent earlier published range for each concept. TOS revisions changed definitions
+-- All earlier published ranges for each concept. TOS revisions changed definitions
 -- inside data set version 2.0 (the Diabetes Distress Scale moved from a 17-102 total to a 1-6
 -- mean in 2.0.27; ETOS v2.1.22 Change Control rows 117-119), so neither the data set version nor
 -- the value proves which revision a provider used.
@@ -149,12 +149,25 @@ with referral_assessments as (
     select
         concept_code
         , specification_version
+        , specification_version_order
         , minimum_numeric_value
         , maximum_numeric_value
     from {{ ref('iapt_assessment_scale') }}
     where not is_latest_definition
         and numeric_range_count = 1
-    qualify row_number() over (partition by concept_code order by specification_version desc) = 1
+)
+
+, historical_match as (
+    select
+        v.source_record_id
+        , e.specification_version
+    from versions as v
+    inner join earlier_ranges as e
+        on v.assessment_tool_code = e.concept_code
+        and v.score_numeric_parsed between e.minimum_numeric_value and e.maximum_numeric_value
+    qualify row_number() over (
+        partition by v.source_record_id order by e.specification_version_order desc
+    ) = 1
 )
 
 , scored as (
@@ -196,12 +209,12 @@ with referral_assessments as (
             when scale.numeric_range_count = 1
                 and v.score_numeric_parsed between scale.minimum_numeric_value and scale.maximum_numeric_value
                 then 'within_published_range'
-            when v.score_numeric_parsed between earlier.minimum_numeric_value and earlier.maximum_numeric_value
+            when historical_match.source_record_id is not null
                 then 'historical_published_range'
             when scale.concept_code is null then 'reference_not_available'
             else 'response_unmatched'
         end as assessment_response_status
-        , iff(assessment_response_status = 'historical_published_range', earlier.specification_version, null)
+        , iff(assessment_response_status = 'historical_published_range', historical_match.specification_version, null)
             as historical_reference_version
         -- Only values on the latest definition's scale are comparable; historical formats are not rescaled.
         , iff(assessment_response_status in ('enumerated_response', 'within_published_range')
@@ -260,8 +273,8 @@ with referral_assessments as (
         on scale.concept_code = response.concept_code
         and scale.specification_version = response.specification_version
         and (v.score_token = upper(response.response_code) or v.score_numeric_parsed = response.numeric_response_value)
-    left join earlier_ranges as earlier
-        on v.assessment_tool_code = earlier.concept_code
+    left join historical_match
+        on v.source_record_id = historical_match.source_record_id
     left join {{ ref('snomed_concept') }} as snomed
         on v.assessment_tool_code = snomed.snomed_code
     left join {{ ref('stg_iapt_bridging') }} as b
