@@ -402,11 +402,14 @@ sources:
       - META_UNMAPPED_FILES
       - META_ROW_COUNT_COMPARE
 
-  # ANALYST_MANAGED - volatile schema; only explicitly listed tables are used
+  # ANALYST_MANAGED - volatile schema; only explicitly listed tables are used.
+  # Do not add TURNAROUND_TIMES_RAW. That analyst-managed copy is retired;
+  # analysts use int_tat_turnaround_times. Keep DATA_LAKE.TAT.TURNAROUND_TIMES_RAW
+  # as the ingest source (source_name: tat below).
   - source_name: reference_analyst_managed
     database: DATA_LAKE__NCL
     schema: ANALYST_MANAGED
-    description: Analyst-managed reference datasets and business rules
+    description: Analyst-managed reference datasets and business rules. TURNAROUND_TIMES_RAW is not in this source; use int_tat_turnaround_times.
     raw_prefix: raw_reference
     domain: shared
     manual: true

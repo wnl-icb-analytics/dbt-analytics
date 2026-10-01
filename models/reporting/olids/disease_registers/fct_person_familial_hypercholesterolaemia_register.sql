@@ -18,7 +18,8 @@ Clinical Purpose:
 
 Register Criteria:
 - Any FH diagnosis code (FHYP_COD)
-- Age ≥20 years (applied in this fact table)
+- Any age: QOF v51 and the NICE indicators that exclude FH use any FHYP_COD diagnosis
+  (age limits for prevalence come from ltc_register_denominator_rules)
 - No resolution codes (genetic condition)
 - Important for cascade family screening programmes
 
@@ -58,45 +59,15 @@ register_inclusion AS (
     SELECT
         fd.*,
 
-        -- Age at first diagnosis calculation using current age (approximation)
+        -- Age at first diagnosis, from the birth date
         CASE
             WHEN earliest_diagnosis_date IS NOT NULL
                 THEN
-                    age.age
-                    - DATEDIFF(YEAR, earliest_diagnosis_date, CURRENT_DATE())
+                    FLOOR(DATEDIFF('month', age.birth_date_approx, earliest_diagnosis_date) / 12)
         END AS age_at_first_fh_diagnosis,
 
-        -- Register logic: Include if has diagnosis and estimated age ≥20 at first diagnosis
-        COALESCE(
-            earliest_diagnosis_date IS NOT NULL
-            AND (
-                age.age
-                - DATEDIFF(YEAR, earliest_diagnosis_date, CURRENT_DATE())
-            )
-            >= 20, FALSE
-        ) AS is_on_register,
-
-        -- Clinical interpretation
-        CASE
-            WHEN
-                earliest_diagnosis_date IS NOT NULL
-                AND (
-                    age.age
-                    - DATEDIFF(YEAR, earliest_diagnosis_date, CURRENT_DATE())
-                )
-                >= 20
-                THEN 'Active FH diagnosis (age ≥20)'
-            WHEN
-                earliest_diagnosis_date IS NOT NULL
-                AND (
-                    age.age
-                    - DATEDIFF(YEAR, earliest_diagnosis_date, CURRENT_DATE())
-                )
-                < 20
-                THEN 'FH diagnosis (age <20 - excluded from register)'
-            ELSE 'No FH diagnosis'
-        END AS fh_status,
-
+        -- Register logic: any FH diagnosis
+        earliest_diagnosis_date IS NOT NULL AS is_on_register
 
     FROM fh_diagnoses AS fd
     INNER JOIN {{ ref('dim_person_active_patients') }} AS ap
@@ -108,7 +79,6 @@ register_inclusion AS (
 SELECT
     ri.person_id,
     ri.is_on_register,
-    ri.fh_status,
     ri.earliest_diagnosis_date,
     ri.latest_diagnosis_date,
     ri.age_at_first_fh_diagnosis,
