@@ -1,0 +1,50 @@
+version: 2
+models:
+  - name: fct_resource_index_by_ward
+    description: >
+      Resource index by residence ward (2025) for the WNL exposure
+      population (includes deceased and deducted). Drives the ward
+      choropleths in the Aligning Resource Index pack. Two index bases -
+      "weighted" unqualified means Carr-Hill: weighted_person_years /
+      spend_per_weighted_year / resource_index_weighted use the practice
+      Carr-Hill ratio apportioned to residents; the age-sex basis keeps
+      resource_index_age_sex and the age_sex_weighted_* columns (renamed
+      from the pre-Carr-Hill weighted_* names). Denominators are
+      WNL-registered person-time by residence ward, NOT ONS ward populations
+      - boundary wards with many non-WNL-registered residents are partial.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      # ward names repeat across boroughs (e.g. Abbey), so the grain is the pair
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - residence_borough
+              - ward
+    columns:
+      - name: ward
+        description: Residence ward 2025 name.
+        data_tests:
+          - not_null
+      - name: residence_borough
+        description: Residence local authority / borough.
+      - name: population
+        description: Persons with WNL registration exposure resident in the ward.
+      - name: person_years
+        description: Registered person-years in the window.
+      - name: weighted_person_years
+        description: Carr-Hill weighted person-years (sum of weighted_months_12m / 12).
+      - name: cost_per_person_year
+        description: Actual window spend per registered person-year (GBP).
+      - name: age_sex_weighted_person_years
+        description: Age-sex-weighted exposure (expected cost / WNL mean rate per person-year).
+      - name: resource_index_age_sex
+        description: Age-sex basis, actual / expected. >1 = above age-sex-expected spend.
+      - name: spend_per_age_sex_weighted_year
+        description: Spend per age-sex-weighted person-year (GBP) = index x WNL mean rate.
+      - name: spend_per_weighted_year
+        description: Spend per Carr-Hill weighted person-year (GBP).
+      - name: resource_index_weighted
+        description: Carr-Hill basis, spend per weighted person-year vs the WNL mean. >1 = above expectation.

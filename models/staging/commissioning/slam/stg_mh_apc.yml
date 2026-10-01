@@ -1,0 +1,166 @@
+version: 2
+
+models:
+  - name: stg_mh_apc
+    description: |
+      MH Local SLAM APC dataset (Appendix 2b: mental health ward stays /
+      occupied bed days), from the SDL MH feed's APC submission files. Grain:
+      one row per ward stay per activity month (occupied_bed_days is the
+      monthly slice of the stay). Providers: RV300 (CNWL), RKL00 (WLT),
+      Aug 2023 onwards.
+
+      Coded fields normalised to the spec's national code sets (local codes
+      pass through); dates parsed; financial period from the stated DLP value
+      else the activity month else the file name; identifiers pseudonymised.
+
+      Cumulative Flex/Freeze restatement feed — summing double-counts; report
+      from stg_mh_apc_latest for the current statement per (provider, FY,
+      month).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      # -- SDL pipeline keys --------------------------------------------------
+      - name: meta_sk_row_id
+        description: Pipeline. Surrogate row key (1:1 with source).
+        data_tests:
+          - not_null
+          - unique
+      - name: meta_file_id
+        description: Pipeline. Source file id; joins to META_FILE_REGISTRY with meta_batch_id.
+      - name: meta_row_id
+        description: Pipeline. Row id within the source file.
+      - name: meta_batch_id
+        description: Pipeline. Load batch id.
+      - name: meta_partition_date
+        description: Pipeline. DSCRO monthly partition the file was loaded under.
+      - name: meta_provider_code
+        description: Pipeline. Provider ODS code assigned by the SDL ingest.
+      - name: meta_recipient_code
+        description: Pipeline. Recipient (commissioner / DSCRO) code.
+      - name: meta_version_id
+        description: Pipeline. Source layout version hash.
+
+      # -- Reporting period (derived) ----------------------------------------
+      - name: dv_financial_year
+        description: Derived. Financial year as 'YYYYYY'. Stated DLP value, else derived from the activity month, else the file name.
+      - name: dv_financial_month
+        description: Derived. Financial month 1 (April) - 12 (March).
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 12
+                inclusive: true
+      - name: dv_financial_period_source
+        description: Derived. Which source resolved the period - 'stated', 'derived_from_activity_month', or 'derived_from_file_name'. NULL where none could.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['stated', 'derived_from_activity_month', 'derived_from_file_name']
+          - not_null:
+              config:
+                severity: warn
+
+      # -- DLP standard submission fields ------------------------------------
+      - name: dlp_flex_or_freeze
+        description: Derived. DLP submission flag standardised to 'Flex' or 'Freeze'.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Flex', 'Freeze']
+      - name: dlp_commissioner_code
+        description: As supplied. DLP commissioner code (Sub-ICB; spec field 2).
+      - name: dlp_baseline_financial_month
+        description: As supplied. DLP baseline financial month (spec field 5).
+
+      # -- Spec body ----------------------------------------------------------
+      - name: commissioner_code
+        description: As supplied. Organisation identifier (code of commissioner), upper-cased (spec field 6).
+      - name: ward_start_date
+        description: Derived. Ward stay start date, parsed (spec field 7).
+      - name: ward_end_date
+        description: Derived. Ward stay end date, parsed (spec field 8); NULL while the stay is open (~2%).
+      - name: dv_year_of_birth
+        description: Derived. Year of birth (pipeline-pseudonymised) in lieu of full birth date (spec field 9); ~70% populated.
+      - name: ethnic_category_code
+        description: Derived. NHS ethnic category national code (spec field 10).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['A','B','C','D','E','F','G','H','J','K','L','M','N','P','R','S','Z','99','0']
+              config:
+                severity: warn
+      - name: extract_date
+        description: Derived. Provider extract date, parsed (spec field 11).
+      - name: gender_identity_code
+        description: Derived. Gender identity national code (1/2/3/4/X/Z; spec field 12).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '2', '3', '4', 'X', 'Z']
+              config:
+                severity: warn
+      - name: gp_practice_code
+        description: Derived. Registered GP practice (spec field 13); 6-char ODS shape validated; per the spec's WLT/CNWL agreement OBDs are split by GP practice; ~92% populated.
+      - name: local_patient_id
+        description: As supplied. Local patient identifier (spec field 14).
+      - name: sk_patient_id
+        description: Pipeline. Pseudonymised NHS-number-derived key in lieu of the raw NHS number (spec field 15).
+      - name: partial_postcode
+        description: Pipeline. Partial postcode (pseudonymised) in lieu of full postcode (spec field 16).
+      - name: lsoa
+        description: Pipeline. LSOA of residence (pipeline-derived). Not a spec field but high-value geography.
+      - name: provider_code
+        description: Derived. Provider ODS code, dictionary-cleaned (spec field 17).
+        data_tests:
+          - not_null
+      - name: activity_month
+        description: Derived. Activity month as the first day of the financial month, parsed (spec field 18).
+      - name: bed_type_code
+        description: Derived. Hospital bed type / MH admitted patient classification national code (n2, 10-40; spec field 19); zero-padded, local codes ('200', '999') pass through; ~99% in the national set.
+      - name: ward_name
+        description: As supplied. Ward name (spec field 20).
+      - name: ward_code
+        description: As supplied. Ward code (spec field 21).
+      - name: hospital_provider_spell_id
+        description: As supplied. Hospital provider spell identifier (spec field 22).
+      - name: service_group
+        description: As supplied. Local service group (spec field 23, optional); ~2% populated.
+      - name: team_code
+        description: As supplied. Local team code (spec field 24).
+      - name: team_name
+        description: As supplied. Local team name (spec field 25).
+      - name: occupied_bed_days
+        description: Derived. Total occupied bed days excluding leave, numeric (spec field 26). Provider counting conventions differ (CNWL counts first day, WLT the last; same-day stays CNWL 1 / WLT 0) per the spec.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+              config:
+                severity: warn
+
+      # -- Raw period (audit) --------------------------------------------------
+      - name: financial_year_raw
+        description: As supplied. Raw DLP financial year before parsing.
+      - name: financial_month_raw
+        description: As supplied. Raw DLP financial month before parsing.
+
+  - name: stg_mh_apc_latest
+    description: |
+      MH APC, current provider statement only - stg_mh_apc restricted to the
+      winning file per (provider, commissioner, FY, month) via
+      stg_mh_slam_latest_submission. Sum-safe (occupied_bed_days); superseded
+      cumulative Flex/Freeze restatements excluded. Report from this view;
+      cleaning and column conventions as stg_mh_apc.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: meta_sk_row_id
+        description: Surrogate row key; unique guards against lookup-join fan-out.
+        data_tests:
+          - not_null
+          - unique

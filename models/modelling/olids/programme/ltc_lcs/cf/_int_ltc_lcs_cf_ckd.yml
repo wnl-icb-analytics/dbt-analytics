@@ -1,0 +1,181 @@
+version: 2
+
+models:
+  - name: int_ltc_lcs_cf_ckd_61_base
+    description: >
+      ICB_CF_CKD_61_BASE shared parent (61/62/63): currently-registered patients aged
+      at least 17, not in ICS_METABOLIC_LTC, and not carrying any CKD-stage code
+      (eligible_for_ckd_case_finding_vs1). Does not exclude CF_NHSHC2Y.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - eligible_for_ckd_case_finding_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_ckd_64_base
+    description: >
+      ICB_CF_CKD_64_BASE parent: currently-registered patients aged at least 17, not in
+      ICS_METABOLIC_LTC, requiring an eGFR code recorded in the last 1 year
+      (ckd_case_finding_vs1). Does not exclude CF_NHSHC2Y.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - ckd_case_finding_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_ckd_61_woEX
+    description: >
+      ICB_CF_CKD_61_1D_woEX: 61_BASE patients with an eGFR > 0 recorded (vs1) whose latest
+      eGFR (vs2) is < 60. Pre-Rule-1 helper consumed by CKD_61 and 62/63/64 exclusions.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - cc380a59-cc4c-ee42-4a2e-30ab9286dc71  # with_most_recent_2_egfr60_and_not_on_ckd_reg_vs1
+              - with_most_recent_2_egfr60_and_not_on_ckd_reg_vs2
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_ckd_62_woEX
+    description: >
+      ICB_CF_CKD_62_woEX: 61_BASE minus 61_woEX, patients whose latest UACR is > 4.
+      Pre-Rule-1 helper consumed by CKD_62 and 63/64 exclusions.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - with_most_recent_2_uacr4_and_not_on_ckd_reg_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_ckd_63_woEX
+    description: >
+      ICB_CF_CKD_63_1D_woEX: 61_BASE minus 61_woEX minus 62_woEX, patients whose latest
+      UACR is > 70. Pre-Rule-1 helper consumed by CKD_63 and 64 exclusion.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - with_most_recent_uacr70_and_not_on_ckd_reg_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_ckd_64_woEX
+    description: >
+      ICB_CF_CKD_64_1D_woEX: 64_BASE minus 61/62/63 woEX, patients matching any at-risk arm
+      (AKI last 3y, at-risk conditions, nephrotoxic meds last 6m, latest microhaematuria).
+      Pre-Rule-1 helper consumed by CKD_64.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 4fad1128-518d-aab7-8bb8-ed51bd35c7b6  # at_risk_of_ckd_who_are_not_on_ckd_reg_vs1
+              - at_risk_of_ckd_who_are_not_on_ckd_reg_vs2
+              - at_risk_of_ckd_who_are_not_on_ckd_reg_vs4
+              - at_risk_of_ckd_who_are_not_on_ckd_reg_vs6
+              - at_risk_of_ckd_who_are_not_on_ckd_reg_vs7
+              - at_risk_of_ckd_who_are_not_on_ckd_reg_vs9
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_ckd_61
+    description: >
+      ICB_CF_CKD_61: 61_woEX population excluding anyone with a CKD screening code in the
+      last 3 years or on the CKD register. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 6e168908-5577-8967-f124-d109c66126e1  # with_most_recent_2_egfr60_and_not_on_ckd_reg_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_ckd_62
+    description: >
+      ICB_CF_CKD_62: 62_woEX population excluding anyone with a CKD screening code in the
+      last 3 years or on the CKD register. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - with_most_recent_2_uacr4_and_not_on_ckd_regckd_diagnosis_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_ckd_63
+    description: >
+      ICB_CF_CKD_63: 63_woEX population excluding anyone with a CKD screening code in the
+      last 3 years or on the CKD register. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - with_most_recent_uacr70_and_not_on_ckd_regckd_diagnosi_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_ckd_64
+    description: >
+      ICB_CF_CKD_64: 64_woEX population excluding anyone with a CKD screening code in the
+      last 3 years or on the CKD register. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 7b63b8f0-5846-9636-b5b0-7c2e2f177f30  # at_risk_of_ckd_who_are_not_on_ckd_reg_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]

@@ -1,6 +1,7 @@
 {{
     config(
-        materialized='table')
+        materialized='table',
+        tags=['cltcs_secure_source'])
 }}
 
 
@@ -52,91 +53,121 @@ with inclusion_list as (
 
 select il.patient_id
       ,{{ hxflake_pseudo_generation('il.patient_id') }} AS re_id_key
- --   , il.fragmented_sk_patient_id_flag -- include as DQ check later, excluded for now
---  , il.fragmented_person_id_flag
+    -- , il.fragmented_sk_patient_id_flag -- include as DQ check 
+    -- , il.fragmented_person_id_flag  -- include as DQ check 
     , il.area_code
-    , pd.practice_code
-    , pd.practice_name
-    , pd.age
-    , pd.main_language as main_language
-    , pd.gender
-    , pd.ethnicity_category
-    , case when pd.main_language in ('English', 'Not Recorded') then 0 else 1 end as main_language_flag -- TO DO: switch to interpreter flag
+    , coalesce(pd.practice_code, 'Unknown') as practice_code
+    , coalesce(pd.practice_name, 'Unknown') as practice_name
+    , pd.age 
+    , coalesce(pd.main_language, 'Unknown') as main_language
+    , coalesce(pd.gender, 'Unknown') as gender
+    , coalesce(pd.ethnicity_category, 'Unknown') as ethnicity_category
+    , case when pd.main_language is null or pd.main_language in ('English', 'Not Recorded') then 0 else 1 end as main_language_flag -- TO DO: switch to interpreter flag; unknown language treated as no interpreter need (flag 0)
     -- trajectories for sparkline visualisation [add other domains - GP, Community, MH, total?]
-    , tr.ae_encounters_sl
-    , tr.ip_encounters_sl
-    , tr.op_encounters_sl
-    , tr.gp_encounters_sl
+    , coalesce(tr.ae_encounters_sl, array_construct()) as ae_encounters_sl
+    , coalesce(tr.ip_encounters_sl, array_construct()) as ip_encounters_sl
+    , coalesce(tr.op_encounters_sl, array_construct()) as op_encounters_sl
+    , coalesce(tr.gp_encounters_sl, array_construct()) as gp_encounters_sl
     -- local disease registries and counts [ only of primary care for now, add acute/community etc data later ]
-    , pc.has_atrial_fibrillation
-    , pc.has_asthma
-    , pc.has_cancer
-    , pc.has_coronary_heart_disease
-    , pc.has_chronic_kidney_disease
-    , pc.has_copd
-    , pc.has_cyp_asthma
-    , pc.has_dementia as has_dementia
-    , pc.has_depression
-    , pc.has_diabetes
-    , pc.has_epilepsy
-    , pc.has_familial_hypercholesterolaemia
-    , pc.has_gestational_diabetes
-    , pc.has_frailty as has_frailty-- replace with ef2?
-    , pc.has_heart_failure
-    , pc.has_hypertension
-    , pc.has_learning_disability
-    , pc.has_learning_disability_under_14 as has_learning_disability_under_14
-    , pc.has_nafld
-    , pc.has_non_diabetic_hyperglycaemia
-    , pc.has_obesity
-    , pc.has_osteoporosis
-    , pc.has_peripheral_arterial_disease
-    , pc.has_palliative_care
-    , pc.has_rheumatoid_arthritis
-    , pc.has_severe_mental_illness as has_severe_mental_illness
-    , pc.has_stroke_tia
-    , pc.total_conditions
-    , pc.total_qof_conditions -- replace cambridge multimorbidity score/ similar complexity metric?
-    , pc.total_non_qof_conditions
-    , pc.cardiovascular_conditions
-    , pc.respiratory_conditions
-    , pc.mental_health_conditions
-    , pc.metabolic_conditions
-    , pc.musculoskeletal_conditions as musculoskeletal_conditions
-    , pc.neurology_conditions
-    , pc.geriatric_conditions
-    -- frailty flags
+    , coalesce(pc.has_atrial_fibrillation, false) as has_atrial_fibrillation
+    , coalesce(pc.has_asthma, false) as has_asthma
+    , coalesce(pc.has_cancer, false) as has_cancer
+    , coalesce(pc.has_coronary_heart_disease, false) as has_coronary_heart_disease
+    , coalesce(pc.has_chronic_kidney_disease, false) as has_chronic_kidney_disease
+    , coalesce(pc.has_copd, false) as has_copd
+    , coalesce(pc.has_cyp_asthma, false) as has_cyp_asthma
+    , coalesce(pc.has_dementia, false) as has_dementia
+    , coalesce(pc.has_depression, false) as has_depression
+    , coalesce(pc.has_diabetes, false) as has_diabetes
+    , coalesce(pc.has_epilepsy, false) as has_epilepsy
+    , coalesce(pc.has_familial_hypercholesterolaemia, false) as has_familial_hypercholesterolaemia
+    , coalesce(pc.has_gestational_diabetes, false) as has_gestational_diabetes
+    , coalesce(pc.has_frailty, false) as has_frailty
+    , coalesce(pc.has_heart_failure, false) as has_heart_failure
+    , coalesce(pc.has_hypertension, false) as has_hypertension
+    , coalesce(pc.has_learning_disability, false) as has_learning_disability
+    , coalesce(pc.has_learning_disability_under_14, false) as has_learning_disability_under_14
+    , coalesce(pc.has_nafld, false) as has_nafld
+    , coalesce(pc.has_non_diabetic_hyperglycaemia, false) as has_non_diabetic_hyperglycaemia
+    , coalesce(pc.has_obesity, false) as has_obesity
+    , coalesce(pc.has_osteoporosis, false) as has_osteoporosis
+    , coalesce(pc.has_peripheral_arterial_disease, false) as has_peripheral_arterial_disease
+    , coalesce(pc.has_palliative_care, false) as has_palliative_care
+    , coalesce(pc.has_rheumatoid_arthritis, false) as has_rheumatoid_arthritis
+    , coalesce(pc.has_severe_mental_illness, false) as has_severe_mental_illness
+    , coalesce(pc.has_stroke_tia, false) as has_stroke_tia
+    , coalesce(pc.total_conditions, 0) as total_conditions
+    , coalesce(pc.total_qof_conditions, 0) as total_qof_conditions 
+    , coalesce(pc.total_non_qof_conditions, 0) as total_non_qof_conditions
+    , coalesce(pc.cardiovascular_conditions, 0) as cardiovascular_conditions
+    , coalesce(pc.respiratory_conditions, 0) as respiratory_conditions
+    , coalesce(pc.mental_health_conditions, 0) as mental_health_conditions
+    , coalesce(pc.metabolic_conditions, 0) as metabolic_conditions
+    , coalesce(pc.musculoskeletal_conditions, 0) as musculoskeletal_conditions
+    , coalesce(pc.neurology_conditions, 0) as neurology_conditions
+    , coalesce(pc.geriatric_conditions, 0) as geriatric_conditions
+    -- frailty flags: NULL = not assessed, which is clinically distinct from a genuine low/zero score. Do not COALESCE to 0.
     , fr.efi_score
-    , fr.category as efi_category
-    , rockwood.frailty_level
-    , rockwood.frailty_category
+    , coalesce(fr.category, 'Unknown') as efi_category
+    , coalesce(rockwood.frailty_level, 'Unknown') as frailty_level
+    , coalesce(rockwood.frailty_category, 'Unknown') as frailty_category
 
-    -- mulimorb flags
+    -- mulimorb flags: NULL = not computed.
     , ccms.cambridge_comorbidity_score
-    -- Lifestyle and behavioural factors
-    , br.smoking_status
-    , br.smoking_risk_sort_key
-    , br.bmi_category
-    , br.bmi_value
-    , br.bmi_risk_sort_key
-    , br.alcohol_status
-    , br.alcohol_risk_sort_key
-    -- current status to consider 
-    , ps.is_currently_pregnant 
+
+    -- risk
+    , qrk.qrisk_score
+    , qrk.qrisk_type
+    , qrk.cvd_risk_category
+    , qrk.warrants_statin_consideration -- add actionable flag cross referencing statin prescription
+       
+      -- Lifestyle and behavioural factors
+    , coalesce(br.smoking_status, 'Not Recorded') as smoking_status
+    , coalesce(br.smoking_risk_sort_key, 0) as smoking_risk_sort_key
+    , coalesce(br.bmi_category, 'Not Recorded') as bmi_category
+    , br.bmi_value 
+    , coalesce(br.bmi_risk_sort_key, 0) as bmi_risk_sort_key
+    , coalesce(br.alcohol_status, 'Not Recorded') as alcohol_status
+    , coalesce(br.alcohol_risk_sort_key, 0) as alcohol_risk_sort_key
+    -- social care usage
+    , coalesce(asc_cld.borough_name, array_construct()) as borough_name
+    , coalesce(asc_cld.service_type, array_construct()) as service_type
+    , coalesce(asc_cld.primary_support_reason_category, array_construct()) as primary_support_reason_category
+    , coalesce(asc_cld.has_physical_support_personal_care, false) as has_physical_support_personal_care
+    , coalesce(asc_cld.has_physical_support_access_mobility, false) as has_physical_support_access_mobility
+    , coalesce(asc_cld.has_learning_disability_support, false) as has_learning_disability_support
+    , coalesce(asc_cld.has_mental_health_support, false) as has_mental_health_support
+    , coalesce(asc_cld.has_unknown_primary_support_reason, false) as has_unknown_primary_support_reason
+    , coalesce(asc_cld.has_memory_cognition_support, false) as has_memory_cognition_support
+    , coalesce(asc_cld.has_social_support_unpaid_carer, false) as has_social_support_unpaid_carer
+    , coalesce(asc_cld.has_social_support_social_isolation, false) as has_social_support_social_isolation
+    , coalesce(asc_cld.has_sensory_support_visual_impairment, false) as has_sensory_support_visual_impairment
+    , coalesce(asc_cld.has_sensory_support_hearing_impairment, false) as has_sensory_support_hearing_impairment
+    , coalesce(asc_cld.has_social_support_substance_misuse, false) as has_social_support_substance_misuse
+    , coalesce(asc_cld.has_sensory_support_dual_impairment, false) as has_sensory_support_dual_impairment
+    , coalesce(asc_cld.has_social_support_asylum_seeker, false) as has_social_support_asylum_seeker
+    , coalesce(asc_cld.has_asc_service, 0) as has_asc_service
+    , coalesce(ch.is_care_home_resident, false) as is_care_home_resident
+    , coalesce(ch.is_nursing_home_resident, false) as is_nursing_home_resident
+    , coalesce(ch.is_temporary_resident, false) as is_temporary_resident
+    , ch.residence_type 
+    , ch.residence_status 
+    -- current status to consider
+    , coalesce(ps.is_currently_pregnant, false) as is_currently_pregnant
     -- dim_person_is_carer?
     -- bespoke management flags : asthma management flags
-    , am.testing_no_diagnosis as asthma_testing_no_diagnosis
-    , am.diagnosis_no_testing as asthma_diagnosis_no_testing
-    , am.diagnosis_no_act as asthma_diagnosis_no_act
-    , am.salbutamol_only as asthma_salbutamol_only
-    , am.salbutamol_repeats as asthma_salbutamol_repeats
+    , coalesce(am.testing_no_diagnosis, false) as asthma_testing_no_diagnosis
+    , coalesce(am.diagnosis_no_testing, false) as asthma_diagnosis_no_testing
+    , coalesce(am.diagnosis_no_act, false) as asthma_diagnosis_no_act
+    , coalesce(am.salbutamol_only, false) as asthma_salbutamol_only
+    , coalesce(am.salbutamol_repeats, false) as asthma_salbutamol_repeats
     -- measurement flags (fully summaries elsewhere or held as array?)
     , case when bp.latest_bp_date between dateadd(month, -6, current_date()) and current_date() then bp.is_overall_bp_controlled else null end as is_overall_bp_controlled -- assuming bp control only relevant if recent, replace with more nuanced logic that ascerts likely control given redings history and time
     ,bp.is_overall_bp_controlled as is_most_recent_overall_bp_controlled
-    ,bp.latest_systolic_value
-    ,bp.latest_diastolic_value
+    ,bp.latest_systolic_value 
+    ,bp.latest_diastolic_value 
     ,bp.latest_bp_date
-    ,dcp.care_processes_completed
+    ,coalesce(dcp.care_processes_completed, 0) as care_processes_completed
     , case when dcp.hba1c_completed_in_last_12m = true then dcp.latest_hba1c_value else null end as latest_hba1c_value
     ,dcp.latest_hba1c_date
    -- ,dpr.earliest_type2_date
@@ -144,11 +175,10 @@ select il.patient_id
     ,zeroifnull(opa.op_att_tot_12mo) as op_att_tot_12mo
     ,zeroifnull(opa.op_spec_12mo) as op_spec_12mo
     ,zeroifnull(opa.op_prov_12mo) as op_prov_12mo
-    ,rat.predicted as op_predicted
-    ,rat.oe_ratio as op_oe_ratio
     ,zeroifnull(apca.apc_12mo) as apc_12mo
     ,zeroifnull(apca.apc_los_12mo) as apc_los_12mo
     ,zeroifnull(apca.apc_nel_12mo) as apc_nel_12mo
+    ,zeroifnull(apca.acs_nel_12mo) as acs_nel_12mo
     ,zeroifnull(aea.ae_t1_12mo) as ae_t1_12mo
     ,zeroifnull(aea.ae_inj_12mo) as ae_inj_12mo
     ,zeroifnull(aea.ae_tot_12mo) as ae_tot_12mo
@@ -164,17 +194,17 @@ select il.patient_id
     , lcs.hypertension_risk_group
     , coalesce(lcs.hr_hrc_ltc_lcs_conditions, array_construct()) as hr_hrc_ltc_lcs_conditions
     , zeroifnull(lcs.overall_risk_group_sort_key) as overall_risk_group_sort_key
-    , lcs.overall_risk_group
-    , lcs.overall_risk_rank
-    , lcs.in_any_risk_group
-    , lcs.moc_stage_completed_label
-    , lcs.moc_pathway_status
+    , coalesce(lcs.overall_risk_group, 'None') as overall_risk_group -- below source default for those not in MOC (LR = lowest risk)
+    , coalesce(lcs.overall_risk_rank, 6) as overall_risk_rank -- above source default for those not on MOC as is inverted scale (1 = highest rank)
+    , coalesce(lcs.in_any_risk_group, false) as in_any_risk_group
+    , lcs.moc_stage_completed_label 
+    , lcs.moc_pathway_status 
     -- Current waiting list counts and flags
     ,zeroifnull(wl.wl_current_total_count) as wl_total_count
     ,zeroifnull(wl.wl_current_distinct_providers_count) as wl_provider_count
     ,zeroifnull(wl.wl_current_distinct_tfc_count) as wl_specialty_count
-    ,wl.same_tfc_multiple_providers_flag as has_same_tfc_multiple_providers_flag
-    ,wl.current_waiting_list_arrays
+    ,coalesce(wl.same_tfc_multiple_providers_flag, false) as has_same_tfc_multiple_providers_flag
+    ,coalesce(wl.current_waiting_list_arrays, array_construct()) as current_waiting_list_arrays
     -- polypharmacy, high risk drugs, suspected non-adherence
     ,zeroifnull(polyp.medication_count) as medication_count
     ,CASE 
@@ -182,26 +212,27 @@ select il.patient_id
         WHEN ARRAY_SIZE(polyp.medication_name_list) = 0 THEN NULL
         ELSE polyp.medication_name_list
       END as medication_name_list
-    ,polyp.is_polypharmacy_5plus
-    , TO_NUMBER(main_language_flag) + TO_NUMBER(has_severe_mental_illness) + TO_NUMBER(has_learning_disability) + TO_NUMBER(musculoskeletal_conditions) as attendance_difficulty_score
+    ,coalesce(polyp.is_polypharmacy_5plus, false) as is_polypharmacy_5plus
+    ,coalesce(polyp.is_polypharmacy_10plus, false) as is_polypharmacy_10plus
+    , zeroifnull(TO_NUMBER(main_language_flag)) + zeroifnull(TO_NUMBER(has_severe_mental_illness)) + zeroifnull(TO_NUMBER(has_learning_disability)) + zeroifnull(TO_NUMBER(has_asc_service)) as attendance_difficulty_score
     -- Recent medications (last 30 days and last year)
-    ,rm.medications_recent_12mo as medications_recent_12mo
+    ,coalesce(rm.medications_recent_12mo, array_construct()) as medications_recent_12mo
     ,zeroifnull(rm.unique_active_ingredient_count_12mo) as unique_active_ingredient_count_12mo
     -- Current referrals
 
     -- Current risk scores?
     -- scores from cltcs_scores model
-    ,cs.score_activation
-    ,cs.score_coordination
-    ,cs.score_treatment
-    ,cs.score_frailty
+    ,coalesce(cs.score_activation, 0) as score_activation
+    ,coalesce(cs.score_coordination, 0) as score_coordination
+    ,coalesce(cs.score_treatment, 0) as score_treatment
+    ,coalesce(cs.score_frailty, 0) as score_frailty
     -- Other relevant annual activity (LTC LCS, C-LTCS review)
 
 from inclusion_list il
 left join {{ref('dim_person_demographics')}} pd
     on il.olids_id = pd.person_id
-left join {{ ref('trajectories') }} tr
-    on il.patient_id = tr.patient_id
+left join {{ ref('fct_person_recent_activity_trajectories') }} tr
+    on il.patient_id = tr.sk_patient_id
 left join {{ ref('dim_person_conditions')}} pc
     on il.olids_id = pc.person_id
 left join {{ref('fct_person_polypharmacy_current')}} polyp
@@ -222,19 +253,17 @@ left join {{ref('fct_person_wl_current_count_total')}} wl
     on il.patient_id = wl.sk_patient_id
 left join {{ref('fct_person_sus_op_recent')}} opa
     on il.patient_id  = opa.sk_patient_id
-left join {{ref('fct_person_sus_ip_recent')}} apca
+left join {{ref('fct_person_sus_apc_recent')}} apca
     on il.patient_id  = apca.sk_patient_id
-left join {{ref('fct_person_sus_ae_recent')}} aea
+left join {{ref('fct_person_sus_uec_recent')}} aea
     on il.patient_id  = aea.sk_patient_id
 left join {{ref('fct_person_gp_recent')}} gpa
     on il.patient_id  = gpa.sk_patient_id
 left join {{ref('fct_person_medications_recent')}} rm
     on il.olids_id = rm.person_id
-left join  {{ ref('stg_c_ltcs_op_oe_ratio') }} rat
-    on il.patient_id  = rat.patient_id 
 left join {{ref('cltcs_scores')}} cs
     on il.patient_id = cs.patient_id
-left join {{ref('stg_aic_int_efi2_scores')}} fr
+left join {{ref('fct_person_efi2')}} fr
     on il.olids_id = fr.person_id
 left join {{ref('dim_person_ccms')}} ccms
     on il.olids_id = ccms.person_id
@@ -242,3 +271,9 @@ left join {{ref('int_rockwood_latest')}} rockwood
     on il.olids_id = rockwood.person_id
 left join hr_hrc_ltc_lcs_conditions lcs
     on il.olids_id = lcs.person_id
+left join {{ref('fct_person_asc_service_recent')}} asc_cld
+    on il.patient_id = asc_cld.sk_patient_id
+LEFT JOIN {{ref('dim_person_care_home')}} ch
+    on il.olids_id = ch.person_id
+left join {{ref('int_qrisk_latest')}} qrk
+    on il.olids_id = qrk.person_id

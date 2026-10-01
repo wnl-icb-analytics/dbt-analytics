@@ -1,0 +1,26 @@
+models:
+  - name: stg_myria_enrolled_patients
+    description: Myria enrolled patients (Doccla), passthrough of the canonical DATA_LAKE__NCL.MYRIA.ENROLLED_PATIENTS table. One row per patient per uploaded file; file_date identifies the file.
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [hx_id, file_date]
+    columns:
+      - name: hx_id
+        description: Doccla patient identifier (hex), join key to the eligible cohort. Not unique across the table - one row per patient per file_date.
+        data_tests:
+          - not_null
+      - name: file_date
+        description: Date of the enrolled-patient file this row came from.
+        data_tests:
+          - not_null
+      - name: enrolled_date
+        description: Date the patient was enrolled.
+      - name: onboarded_date
+        description: Date the patient was onboarded.
+      - name: discharged_date
+        description: Date the patient was discharged.

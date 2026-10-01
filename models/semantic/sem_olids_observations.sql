@@ -28,8 +28,10 @@
     - Renal: eGFR (CKD staging), creatinine, urine ACR
     - Liver: ALT, GGT, bilirubin, composite high-LFT flag
     - Haematology: haemoglobin (anaemia), platelets, eosinophils
-    - Frailty: Electronic Frailty Index (eFI/eFI2), Rockwood Clinical Frailty Scale
-    - Diabetes care: Foot examination, retinal screening, DM 8 care processes
+    - Frailty: calculated eFI2, GP-recorded eFI/eFI2, Rockwood Clinical Frailty Scale
+
+    Diabetes care processes (foot exam, retinal screening, 8/9 care
+    processes, triple target) live in sem_olids_diabetes_care.
 #}
 
 TABLES(
@@ -83,23 +85,15 @@ TABLES(
 
     efi AS {{ ref('int_efi_latest') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Latest Electronic Frailty Index (eFI or eFI2). Only includes scores explicitly coded by the GP — not dynamically calculated. May be out of date or absent for many patients. For frailty prevalence, prefer has_frailty from sem_olids_population (clinical diagnosis register).',
+        COMMENT = 'Latest GP-recorded Electronic Frailty Index (eFI or coded eFI2), as coded by the practice. Superseded by the calculated efi2_score below: this is recorded for only ~10k people against ~258k scored by the pipeline, and reflects whenever the practice last coded it rather than the current data. Use it only when the question is specifically about what practices have recorded. For clinical-diagnosis frailty prevalence use has_frailty from sem_olids_population.',
+
+    efi2 AS {{ ref('int_efi2_scores') }}
+        PRIMARY KEY (person_id)
+        COMMENT = 'Calculated eFI2 score per living person aged 65+ as at end_date, recomputed from current OLIDS data rather than GP-recorded like efi or clinician-assessed like Rockwood. This is the preferred frailty measure: it covers the whole 65+ cohort (~258k people, against ~10k with a GP-recorded eFI) and reflects the latest data rather than whenever a practice last coded a score. Use for the current eFI2 cohort only; do not combine its category with efi or Rockwood categories. Profiled 2026-08-11: 63.58% Robust, 20.57% Mild, 9.18% Moderate, 6.68% Severe among 258,355 scored people; 4,732 had no matching demographics row.',
 
     rockwood AS {{ ref('int_rockwood_latest') }}
         PRIMARY KEY (person_id)
         COMMENT = 'Latest Rockwood Clinical Frailty Scale score (1-9)',
-
-    foot_exam AS {{ ref('int_foot_examination_latest') }}
-        PRIMARY KEY (person_id)
-        COMMENT = 'Latest diabetic foot examination with risk levels per foot',
-
-    retinal AS {{ ref('int_retinal_screening_latest') }}
-        PRIMARY KEY (person_id)
-        COMMENT = 'Latest completed diabetic retinal screening',
-
-    dm8cp AS {{ ref('fct_person_diabetes_8_care_processes') }}
-        PRIMARY KEY (person_id)
-        COMMENT = 'Diabetes 8 care processes completion status (12-month lookback). Only populated for persons on the diabetes register.',
 
     lft AS {{ ref('int_lft_latest') }}
         PRIMARY KEY (person_id)
@@ -131,10 +125,8 @@ RELATIONSHIPS(
     qrisk (person_id) REFERENCES demographics,
     acr (person_id) REFERENCES demographics,
     efi (person_id) REFERENCES demographics,
+    efi2 (person_id) REFERENCES demographics,
     rockwood (person_id) REFERENCES demographics,
-    foot_exam (person_id) REFERENCES demographics,
-    retinal (person_id) REFERENCES demographics,
-    dm8cp (person_id) REFERENCES demographics,
     lft (person_id) REFERENCES demographics,
     haemoglobin (person_id) REFERENCES demographics,
     platelets (person_id) REFERENCES demographics,
@@ -171,11 +163,9 @@ FACTS(
     eosinophils.eosinophil_count AS inferred_value WITH SYNONYMS = ('eosinophils', 'eos') COMMENT = 'Latest blood eosinophil count (10^9/L)',
 
     -- Frailty
-    efi.latest_efi_score_preferred AS latest_efi_score_preferred COMMENT = 'Electronic Frailty Index score (0-1). Uses most recent of eFI or eFI2.',
+    efi.latest_efi_score_preferred AS latest_efi_score_preferred COMMENT = 'Latest GP-recorded eFI or coded eFI2 score (0-1). Not the calculated eFI2 score.',
+    efi2.efi2_score AS efi_score WITH SYNONYMS = ('calculated eFI2 score', 'electronic frailty index 2 score') COMMENT = 'Calculated electronic Frailty Index 2 score (0-1) for living people aged 65+. Recomputed as at efi2_score_date; use efi2_category for population counts. Do not combine with GP-recorded eFI/eFI2 or Rockwood scores.',
     rockwood.rockwood_score AS rockwood_score COMMENT = 'Rockwood Clinical Frailty Scale score (1-9)',
-
-    -- Diabetes 8 Care Processes
-    dm8cp.care_processes_completed AS care_processes_completed COMMENT = 'Count of diabetes 8 care processes completed in last 12 months (0-8). Only for persons on diabetes register.',
 
     -- ESP
     demographics.esp_weight AS esp_weight COMMENT = 'ESP 2013 population weight for this persons age band (out of 100,000 total). Use with age_band_esp for age-standardised rate calculation.',
@@ -183,6 +173,10 @@ FACTS(
 )
 
 DIMENSIONS(
+    -- Person linkage key
+    demographics.person_id AS person_id COMMENT = 'Pseudonymised person key, shared by all sem_olids_* views. Exposed only for cross-view cohort intersection: join CTEs over two views on person_id, then aggregate. Never return person_id in final results.',
+    demographics.sk_patient_id AS sk_patient_id COMMENT = 'Representative pseudonymised patient key for linkage to non-OLIDS views (SUS acute activity, cost index, resource index). Every active person has one; the underlying person-patient mapping can be many-to-many, so joins remain approximate at the margins. Join CTEs on sk_patient_id, then aggregate; never return sk_patient_id in final results.',
+
     -- Observation Dates (each table's latest measurement date)
     bp.latest_bp_date AS clinical_effective_date COMMENT = 'Date of latest BP reading',
     hba1c.latest_hba1c_date AS clinical_effective_date COMMENT = 'Date of latest HbA1c',
@@ -194,10 +188,9 @@ DIMENSIONS(
     creatinine.latest_creatinine_date AS clinical_effective_date COMMENT = 'Date of latest creatinine',
     qrisk.latest_qrisk_date AS clinical_effective_date COMMENT = 'Date of latest QRISK',
     acr.latest_acr_date AS clinical_effective_date COMMENT = 'Date of latest ACR',
-    efi.latest_efi_date AS latest_efi_date COMMENT = 'Date of latest eFI assessment',
+    efi.latest_efi_date AS latest_efi_date COMMENT = 'Date of latest GP-recorded eFI or coded eFI2 assessment; not the calculated eFI2 score date.',
+    efi2.efi2_score_date AS end_date COMMENT = 'As-at date for the calculated eFI2 score. This is the model refresh date, not a clinical assessment date.',
     rockwood.latest_rockwood_date AS clinical_effective_date COMMENT = 'Date of latest Rockwood assessment',
-    foot_exam.latest_foot_exam_date AS clinical_effective_date COMMENT = 'Date of latest foot examination',
-    retinal.latest_retinal_date AS clinical_effective_date COMMENT = 'Date of latest retinal screening',
     lft.last_lft_date AS last_lft_date COMMENT = 'Date of latest liver function test (most recent of ALT/GGT/bilirubin)',
     haemoglobin.latest_haemoglobin_date AS clinical_effective_date COMMENT = 'Date of latest haemoglobin',
     platelets.latest_platelets_date AS clinical_effective_date COMMENT = 'Date of latest platelet count',
@@ -220,13 +213,13 @@ DIMENSIONS(
     demographics.is_deceased AS is_deceased COMMENT = 'Deceased status',
 
     -- Organisation
-    demographics.practice_code AS practice_code COMMENT = 'GP practice ODS code',
-    demographics.practice_name AS practice_name COMMENT = 'GP practice name',
-    demographics.pcn_code AS pcn_code COMMENT = 'Primary Care Network code',
-    demographics.pcn_name AS pcn_name COMMENT = 'Primary Care Network name',
-    demographics.pcn_name_with_borough AS pcn_name_with_borough COMMENT = 'PCN name with borough prefix',
+    demographics.registered_practice_code AS practice_code WITH SYNONYMS = ('practice code', 'ODS code', 'GP practice') COMMENT = 'ODS code of the patient''s registered GP practice',
+    demographics.registered_practice_name AS practice_name COMMENT = 'Name of the patient''s registered GP practice',
+    demographics.registered_pcn_code AS pcn_code COMMENT = 'PCN code of the registered practice',
+    demographics.registered_pcn_name AS pcn_name WITH SYNONYMS = ('PCN', 'primary care network') COMMENT = 'PCN name of the registered practice',
+    demographics.registered_pcn_name_with_borough AS pcn_name_with_borough COMMENT = 'Registered PCN name with borough prefix',
     demographics.borough_registered AS borough_registered COMMENT = 'Registration borough',
-    demographics.sub_icb_code AS sub_icb_code COMMENT = 'Sub-ICB / place-based partnership ODS code of the registered practice: QMJ = NHS North Central London (Camden, Islington, Barnet, Enfield, Haringey); QRV = NHS North West London (Brent, Ealing, Hammersmith and Fulham, Harrow, Hillingdon, Hounslow, Kensington and Chelsea, Westminster). NULL outside the WNL footprint.',
+    demographics.sub_icb_code AS sub_icb_code COMMENT = 'Sub-ICB / place-based partnership ODS code of the registered practice: 93C = NHS North Central London (Camden, Islington, Barnet, Enfield, Haringey); W2U3Z = NHS North West London (Brent, Ealing, Hammersmith and Fulham, Harrow, Hillingdon, Hounslow, Kensington and Chelsea, Westminster). NULL outside the WNL footprint.',
     demographics.sub_icb_name AS sub_icb_name COMMENT = 'Sub-ICB display name (NHS North Central London or NHS North West London) of the registered practice. NULL outside the WNL footprint.',
     demographics.neighbourhood_registered AS neighbourhood_registered COMMENT = 'Registration neighbourhood',
 
@@ -245,15 +238,15 @@ DIMENSIONS(
     demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile (1 - Most Deprived to 5 - Least Deprived, Unknown)',
 
     -- Blood Pressure (raw)
-    bp.is_home_bp_event AS is_home_bp_event WITH SYNONYMS = ('HBPM', 'home monitoring', 'home BP') COMMENT = 'Home BP measurement',
-    bp.is_abpm_bp_event AS is_abpm_bp_event WITH SYNONYMS = ('ABPM', 'ambulatory', '24-hour') COMMENT = 'Ambulatory BP measurement',
-    bp.is_hypertensive_range AS is_hypertensive_range COMMENT = 'BP in hypertensive range',
+    bp.is_home_bp_event AS is_home_bp_event WITH SYNONYMS = ('HBPM', 'home monitoring', 'home BP') COMMENT = 'TRUE when the representative latest paired BP reading is home monitored. This flag exists only in this latest-reading view, not sem_olids_observations_history.',
+    bp.is_abpm_bp_event AS is_abpm_bp_event WITH SYNONYMS = ('ABPM', 'ambulatory', '24-hour') COMMENT = 'TRUE when the representative latest paired BP reading is ambulatory monitored.',
+    bp.is_hypertensive_range AS is_hypertensive_range COMMENT = 'TRUE when any paired reading on the latest BP date was hypertensive: >=140/90 clinic or >=135/85 home/ABPM. It need not describe the representative lowest-of-day reading.',
 
     -- Blood Pressure Control
     bp_control.is_overall_bp_controlled AS is_overall_bp_controlled WITH SYNONYMS = ('BP at target', 'BP controlled', 'controlled') COMMENT = 'BP controlled per NICE NG136 — measurement-aware (HBPM/ABPM targets are clinic -5 mmHg)',
     bp_control.is_systolic_controlled AS is_systolic_controlled COMMENT = 'Systolic BP below NG136 target (HBPM/ABPM target is clinic -5 mmHg)',
     bp_control.is_diastolic_controlled AS is_diastolic_controlled COMMENT = 'Diastolic BP below NG136 target (HBPM/ABPM target is clinic -5 mmHg)',
-    bp_control.hypertension_stage AS hypertension_stage COMMENT = 'Hypertension stage (Normal, Stage 1, Stage 2, Stage 3 Severe)',
+    bp_control.hypertension_stage AS hypertension_stage COMMENT = 'NICE NG136 stage from the higher systolic/diastolic stage: Normal, Stage 1, Stage 2, or Stage 3 (Severe). Home/ABPM uses lower Stage 1/2 thresholds.',
     bp_control.hypertension_stage_number AS hypertension_stage_number COMMENT = 'Hypertension stage number (0-3)',
     bp_control.applied_patient_group AS applied_patient_group WITH SYNONYMS = ('BP threshold group') COMMENT = 'Which threshold applied (AGE_LT_80, AGE_GE_80, T2DM, CKD, CKD_ACR_GE_70)',
     bp_control.applied_measurement_context AS applied_measurement_context WITH SYNONYMS = ('BP threshold context', 'clinic vs home') COMMENT = 'CLINIC or HBPM_ABPM — which NG136 variant was used to score control, matching the latest reading source',
@@ -270,7 +263,7 @@ DIMENSIONS(
 
     -- Cholesterol Categories
     cholesterol.cholesterol_category AS cholesterol_category COMMENT = 'Cholesterol category (Desirable, Borderline, High)',
-    ldl.LDL_CVD_Target_Met AS LDL_CVD_Target_Met COMMENT = 'LDL at CVD target (Met, Not Met)',
+    ldl.LDL_CVD_Target_Met AS LDL_CVD_Target_Met COMMENT = 'Valid LDL <=2 mmol/L (Met, Not Met); no CVD eligibility or reporting period applied',
 
     -- BMI Categories
     bmi.bmi_category AS bmi_category COMMENT = 'BMI category (Underweight, Normal, Overweight, Obese Class I, Obese Class II, Obese Class III). Uses ethnicity-adjusted thresholds per NICE NG246.',
@@ -315,35 +308,14 @@ DIMENSIONS(
     eosinophils.eosinophil_category AS eosinophil_category COMMENT = 'Eosinophil count category (e.g. Normal, Raised). Raised eosinophils inform asthma/COPD biologic eligibility.',
 
     -- Electronic Frailty Index
-    efi.latest_efi_type_preferred AS latest_efi_type_preferred COMMENT = 'eFI algorithm type (EFI, EFI2). Uses most recent available. Only where explicitly GP-coded.',
-    efi.latest_efi_category_preferred AS latest_efi_category_preferred WITH SYNONYMS = ('frailty category', 'eFI category') COMMENT = 'eFI frailty category (Fit, Mildly Frail, Moderately Frail, Severely Frail). Only where explicitly GP-coded — not dynamically estimated. Coverage is incomplete. For population frailty prevalence, use has_frailty from sem_olids_population instead.',
+    efi.latest_efi_type_preferred AS latest_efi_type_preferred COMMENT = 'GP-recorded algorithm type (EFI, EFI2). Uses the most recent record; not the calculated eFI2 model.',
+    efi.latest_efi_category_preferred AS latest_efi_category_preferred WITH SYNONYMS = ('recorded eFI category') COMMENT = 'Category of the latest GP-recorded eFI or coded eFI2 (Fit, Mildly Frail, Moderately Frail, Severely Frail). Do not use as the calculated eFI2 category; coverage is incomplete.',
+    efi2.efi2_category AS category WITH SYNONYMS = ('calculated frailty category', 'eFI2 category', 'electronic frailty index 2 category') COMMENT = 'Calculated eFI2 category for living people aged 65+: Robust (<0.0857), Mild Frailty (>=0.0857 to <0.1624), Moderate Frailty (>=0.1624 to <=0.2391), Severe Frailty (>0.2391). Use this rather than efi2_score for population health counts. Separate from GP-recorded eFI/eFI2 and Rockwood categories.',
 
     -- Rockwood Clinical Frailty Scale
     rockwood.frailty_category AS frailty_category WITH SYNONYMS = ('Rockwood category', 'CFS category') COMMENT = 'Rockwood frailty category (Fit, Vulnerable, Mild Frailty, Moderate Frailty, Severe Frailty)',
     rockwood.is_frail AS is_frail COMMENT = 'Rockwood score >=5 (frail)',
-    rockwood.is_severely_frail AS is_severely_frail COMMENT = 'Rockwood score >=7 (severely frail)',
-
-    -- Diabetic Foot Examination
-    foot_exam.both_feet_checked AS both_feet_checked COMMENT = 'Both feet examined',
-    foot_exam.left_foot_risk_level AS left_foot_risk_level COMMENT = 'Left foot risk (Low, Moderate, High, Ulcerated)',
-    foot_exam.right_foot_risk_level AS right_foot_risk_level COMMENT = 'Right foot risk (Low, Moderate, High, Ulcerated)',
-    foot_exam.is_unsuitable AS is_unsuitable COMMENT = 'Patient unsuitable for foot exam',
-    foot_exam.is_declined AS is_declined COMMENT = 'Patient declined foot exam',
-
-    -- Diabetic Retinal Screening
-    retinal.screening_current_12m AS screening_current_12m COMMENT = 'Retinal screening completed in last 12 months',
-    retinal.screening_current_24m AS screening_current_24m COMMENT = 'Retinal screening completed in last 24 months',
-
-    -- Diabetes 8 Care Processes (only populated for persons on diabetes register)
-    dm8cp.hba1c_completed_in_last_12m AS hba1c_completed_in_last_12m WITH SYNONYMS = ('DM HbA1c check') COMMENT = 'DM care process: HbA1c in last 12m',
-    dm8cp.bp_completed_in_last_12m AS bp_completed_in_last_12m WITH SYNONYMS = ('DM BP check') COMMENT = 'DM care process: BP in last 12m',
-    dm8cp.cholesterol_completed_in_last_12m AS cholesterol_completed_in_last_12m WITH SYNONYMS = ('DM cholesterol check') COMMENT = 'DM care process: cholesterol in last 12m',
-    dm8cp.creatinine_completed_in_last_12m AS creatinine_completed_in_last_12m WITH SYNONYMS = ('DM creatinine check') COMMENT = 'DM care process: serum creatinine in last 12m',
-    dm8cp.acr_completed_in_last_12m AS acr_completed_in_last_12m WITH SYNONYMS = ('DM ACR check') COMMENT = 'DM care process: urine ACR in last 12m',
-    dm8cp.foot_check_completed_in_last_12m AS foot_check_completed_in_last_12m WITH SYNONYMS = ('DM foot check') COMMENT = 'DM care process: foot exam in last 12m',
-    dm8cp.bmi_completed_in_last_12m AS bmi_completed_in_last_12m WITH SYNONYMS = ('DM BMI check') COMMENT = 'DM care process: BMI in last 12m',
-    dm8cp.smoking_completed_in_last_12m AS smoking_completed_in_last_12m WITH SYNONYMS = ('DM smoking check') COMMENT = 'DM care process: smoking status in last 12m',
-    dm8cp.all_processes_completed AS all_processes_completed WITH SYNONYMS = ('all 8 care processes', 'DM 8CP') COMMENT = 'All 8 diabetes care processes completed in last 12m'
+    rockwood.is_severely_frail AS is_severely_frail COMMENT = 'Rockwood score >=7 (severely frail)'
 )
 
 METRICS(
@@ -375,7 +347,7 @@ METRICS(
     cholesterol.cholesterol_desirable_count AS COUNT(DISTINCT CASE WHEN cholesterol.cholesterol_category = 'Desirable' THEN cholesterol.person_id END) COMMENT = 'Patients with desirable cholesterol',
     cholesterol.cholesterol_high_count AS COUNT(DISTINCT CASE WHEN cholesterol.cholesterol_category = 'High' THEN cholesterol.person_id END) COMMENT = 'Patients with high cholesterol',
     ldl.patients_with_ldl AS COUNT(DISTINCT ldl.person_id) COMMENT = 'Patients with LDL',
-    ldl.ldl_at_target_count AS COUNT(DISTINCT CASE WHEN ldl.LDL_CVD_Target_Met = 'Met' THEN ldl.person_id END) COMMENT = 'Patients with LDL at target',
+    ldl.ldl_at_target_count AS COUNT(DISTINCT CASE WHEN ldl.LDL_CVD_Target_Met = 'Met' THEN ldl.person_id END) COMMENT = 'People with latest valid LDL <=2 mmol/L; no CVD eligibility or reporting period applied',
 
     -- BMI
     bmi.patients_with_bmi AS COUNT(DISTINCT bmi.person_id) COMMENT = 'Patients with BMI',
@@ -418,21 +390,17 @@ METRICS(
     efi.efi_moderately_frail_count AS COUNT(DISTINCT CASE WHEN efi.latest_efi_category_preferred = 'Moderately Frail' THEN efi.person_id END) COMMENT = 'Patients moderately frail (eFI)',
     efi.efi_severely_frail_count AS COUNT(DISTINCT CASE WHEN efi.latest_efi_category_preferred = 'Severely Frail' THEN efi.person_id END) COMMENT = 'Patients severely frail (eFI)',
 
+    -- Frailty (calculated eFI2)
+    efi2.patients_with_efi2 AS COUNT(DISTINCT efi2.person_id) COMMENT = 'Living people aged 65+ with a calculated eFI2 score',
+    efi2.efi2_robust_count AS COUNT(DISTINCT CASE WHEN efi2.category = 'ROBUST' THEN efi2.person_id END) COMMENT = 'People classed Robust by calculated eFI2',
+    efi2.efi2_mild_frailty_count AS COUNT(DISTINCT CASE WHEN efi2.category = 'MILD FRAILTY' THEN efi2.person_id END) COMMENT = 'People classed Mild Frailty by calculated eFI2',
+    efi2.efi2_moderate_frailty_count AS COUNT(DISTINCT CASE WHEN efi2.category = 'MODERATE FRAILTY' THEN efi2.person_id END) COMMENT = 'People classed Moderate Frailty by calculated eFI2',
+    efi2.efi2_severe_frailty_count AS COUNT(DISTINCT CASE WHEN efi2.category = 'SEVERE FRAILTY' THEN efi2.person_id END) COMMENT = 'People classed Severe Frailty by calculated eFI2',
+
     -- Frailty (Rockwood)
     rockwood.patients_with_rockwood AS COUNT(DISTINCT rockwood.person_id) COMMENT = 'Patients with Rockwood assessment',
     rockwood.rockwood_frail_count AS COUNT(DISTINCT CASE WHEN rockwood.is_frail THEN rockwood.person_id END) COMMENT = 'Patients frail (Rockwood >=5)',
     rockwood.rockwood_severely_frail_count AS COUNT(DISTINCT CASE WHEN rockwood.is_severely_frail THEN rockwood.person_id END) COMMENT = 'Patients severely frail (Rockwood >=7)',
-
-    -- Diabetic Foot Examination
-    foot_exam.patients_with_foot_exam AS COUNT(DISTINCT foot_exam.person_id) COMMENT = 'Patients with foot examination',
-
-    -- Diabetic Retinal Screening
-    retinal.patients_with_retinal AS COUNT(DISTINCT retinal.person_id) COMMENT = 'Patients with retinal screening',
-    retinal.retinal_current_12m_count AS COUNT(DISTINCT CASE WHEN retinal.screening_current_12m THEN retinal.person_id END) COMMENT = 'Patients with retinal screening in last 12m',
-
-    -- Diabetes 8 Care Processes
-    dm8cp.dm_patients_count AS COUNT(DISTINCT dm8cp.person_id) COMMENT = 'Patients on diabetes register (in DM 8CP model)',
-    dm8cp.dm_all_8cp_count AS COUNT(DISTINCT CASE WHEN dm8cp.all_processes_completed THEN dm8cp.person_id END) COMMENT = 'DM patients with all 8 care processes completed',
 
     -- Liver Function
     lft.patients_with_lft AS COUNT(DISTINCT lft.person_id) COMMENT = 'Patients with any liver function test',
@@ -454,8 +422,8 @@ METRICS(
     qrisk.avg_qrisk AS AVG(qrisk.qrisk_score) COMMENT = 'Average QRISK',
     acr.avg_acr AS AVG(acr.acr_value) COMMENT = 'Average ACR',
     efi.avg_efi_score AS AVG(efi.latest_efi_score_preferred) COMMENT = 'Average eFI score',
+    efi2.avg_efi2_score AS AVG(efi2.efi_score) COMMENT = 'Average calculated eFI2 score among living people aged 65+',
     rockwood.avg_rockwood AS AVG(rockwood.rockwood_score) COMMENT = 'Average Rockwood score',
-    dm8cp.avg_dm_care_processes AS AVG(dm8cp.care_processes_completed) COMMENT = 'Average DM care processes completed (of 8)',
     lft.avg_alt AS AVG(lft.alt_value) COMMENT = 'Average ALT (U/L)',
     lft.avg_ggt AS AVG(lft.ggt_value) COMMENT = 'Average GGT (U/L)',
     haemoglobin.avg_haemoglobin AS AVG(haemoglobin.inferred_value) COMMENT = 'Average haemoglobin (g/L)',
@@ -463,6 +431,6 @@ METRICS(
     eosinophils.avg_eosinophils AS AVG(eosinophils.inferred_value) COMMENT = 'Average eosinophil count (10^9/L)'
 )
 
-COMMENT = 'OLIDS Clinical Observations Semantic View - Biomarkers, frailty scores, diabetes care processes, and screening with category-based metrics. Includes patient-specific BP thresholds, liver function (ALT/GGT/bilirubin), haematology (haemoglobin/platelets/eosinophils), eFI/Rockwood frailty, DM 8 care processes, foot exam and retinal screening. Grain: one row per person (latest values). ESP 2013 weights available via age_band_esp.'
-AI_SQL_GENERATION 'Always filter to is_active = TRUE unless asked otherwise. For BP control queries, use bp_controlled_count and patients_with_bp_assessment to calculate control rate. Prefer category-based counts over averages for population health questions. BP control uses patient-specific thresholds based on T2DM, CKD, and age. DM 8 care processes (dm8cp table) are only populated for persons on the diabetes register — filter to dm8cp metrics when analysing diabetes care. The 8 processes are: HbA1c, BP, cholesterol, creatinine, urine ACR, foot exam, BMI, and smoking status — each checked within last 12 months. AGE-STANDARDISED RATES: To calculate an age-standardised rate (ASR) using ESP 2013 (the standard used by ONS/OHID/Fingertips), use this pattern: WITH strata AS (SELECT <area_column>, age_band_esp, COUNT(DISTINCT CASE WHEN <condition_or_category> THEN person_id END) AS cases, COUNT(DISTINCT person_id) AS pop, ANY_VALUE(esp_proportion) AS esp_prop FROM <this_view> WHERE is_active = TRUE GROUP BY <area_column>, age_band_esp) SELECT <area_column>, SUM(cases) AS crude_cases, SUM(pop) AS crude_pop, ROUND(SUM((cases / NULLIF(pop, 0)) * esp_prop) * 100000, 1) AS asr_per_100k FROM strata GROUP BY <area_column>. For internal NCL comparison instead of ESP, replace esp_prop with (pop / SUM(pop) OVER ()) to use the NCL population structure as the standard.'
-AI_QUESTION_CATEGORIZATION 'Use this view for questions about: BP control, HbA1c control, cholesterol, BMI, waist circumference, eGFR, CKD staging, creatinine, QRISK, ACR, liver function (ALT, GGT, bilirubin, abnormal LFTs), haemoglobin/anaemia, platelets, eosinophils, frailty (eFI, Rockwood), diabetic foot examination, retinal screening, diabetes 8 care processes, and all latest clinical biomarkers. This view holds the LATEST value per biomarker only — for serial readings, latest-2, or trajectory over time use sem_olids_observations_history. For condition prevalence and demographics use sem_olids_population. For condition trends over time use sem_olids_trends.'
+COMMENT = 'OLIDS Clinical Observations Semantic View - Latest biomarkers and frailty scores with category-based metrics. Includes patient-specific BP thresholds, liver function (ALT/GGT/bilirubin), haematology (haemoglobin/platelets/eosinophils), calculated eFI2, GP-recorded eFI/eFI2, and Rockwood frailty. Grain: one row per person; calculated eFI2 is current as-at scoring only, not a clinical history. ESP 2013 weights available via age_band_esp. Diabetes care processes, foot exam, and retinal screening live in sem_olids_diabetes_care. NICE BP indicators IND239-246 live in sem_olids_bp_indicators.'
+AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is one row per person with latest values; filter is_active = TRUE for current cohorts. Example: SELECT borough_resident, AGG(patients_with_bp_assessment), AGG(bp_controlled_count) FROM SEM_OLIDS_OBSERVATIONS WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce out-of-target HbA1c patients here and SGLT2 exposure in sem_olids_prescribing before joining. BP control here uses patient-specific thresholds (T2DM, CKD, age); use sem_olids_bp_indicators for NICE IND239-246 fixed-target achievement. Prefer category-based counts over averages for population health questions. For eFI2 population questions, use efi2_category; its rows are already limited to the living 65+ scoring cohort. It is a calculated current score, not the GP-recorded eFI/eFI2 fields or Rockwood. Diabetes care processes and retinal screening are in sem_olids_diabetes_care. age_band_esp and esp_proportion are ESP 2013 age-only weights for standardised rates.'
+AI_QUESTION_CATEGORIZATION 'Use this view for questions about: general patient-specific BP control, HbA1c control, cholesterol, BMI, waist circumference, eGFR, CKD staging, creatinine, QRISK, ACR, liver function (ALT, GGT, bilirubin, abnormal LFTs), haemoglobin/anaemia, platelets, eosinophils, and current frailty. For NICE BP indicators IND239-246 use sem_olids_bp_indicators. Use efi2_category for calculated eFI2 population counts in living people aged 65+; use latest_efi_* only for GP-recorded eFI/eFI2 and frailty_category only for Rockwood assessments. This view holds the LATEST value per biomarker only; calculated eFI2 has no serial history. For serial clinical readings, latest-2, or trajectory over time use sem_olids_observations_history. For condition prevalence and demographics use sem_olids_population. For condition trends over time use sem_olids_trends. Questions needing cohorts from TWO domains (e.g. biomarker control x medication, care-process gaps x appointment access) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'

@@ -1,0 +1,153 @@
+version: 2
+
+models:
+  - name: stg_ref
+    description: |
+      Community Referrals (REF) SDL feed, cleaned to the Community Referrals PLD
+      layout. Grain: one row per source referral.
+
+      Cleaning: best-populated provider-variant column picked per field; coded
+      fields mapped to national code sets (local codes pass through, with text
+      descriptions alongside); dates parsed; financial period from the stated
+      value else the referral date else the file name; identifiers pseudonymised.
+
+      Cumulative-restatement feed — summing double-counts; report from
+      stg_ref_latest for the current statement per (provider, FY, month).
+
+      Provider codes use clean_organisation_id: codes found in organisation
+      type 41 retain their full value; other codes use their first three
+      characters. The macro passes a null input through unchanged, but the
+      fallback to meta_provider_code means a null provider code is not
+      expected, so provider_code is tested not_null.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    # Provenance convention: "Pipeline" = added by the SDL ingest (reliable);
+    # "Derived" = computed/parsed/mapped here; "As supplied" = provider value
+    # passed through unchanged (sometimes coalesced across sibling columns, but
+    # the value itself is not altered).
+    columns:
+      # -- SDL pipeline keys --------------------------------------------------
+      - name: meta_sk_row_id
+        description: Pipeline. Surrogate row key (1:1 with source).
+        data_tests:
+          - not_null
+          - unique
+      - name: meta_file_id
+        description: Pipeline. Source file id; joins to META_FILE_REGISTRY with meta_batch_id.
+      - name: meta_row_id
+        description: Pipeline. Row id within the source file.
+      - name: meta_batch_id
+        description: Pipeline. Load batch id.
+      - name: meta_partition_date
+        description: Pipeline. DSCRO monthly partition the file was loaded under (ingest timing, not the activity month).
+      - name: meta_provider_code
+        description: Pipeline. Provider ODS code assigned by the SDL ingest.
+      - name: meta_recipient_code
+        description: Pipeline. Recipient (commissioner / DSCRO) code.
+      - name: meta_version_id
+        description: Pipeline. Source layout version hash.
+
+      # -- Reporting period (derived) ----------------------------------------
+      - name: dv_financial_year
+        description: Derived. Financial year as 'YYYYYY' (e.g. 202526 = FY2025/26), matching the SLAM feeds. Stated value, else derived from the referral date, else the file name.
+      - name: dv_financial_month
+        description: Derived. Financial month 1 (April) - 12 (March). Stated value, else derived from the referral date, else the file name.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 12
+                inclusive: true
+      - name: dv_financial_period_source
+        description: Derived. Which source resolved the period - 'stated', 'derived_from_referral_date', or 'derived_from_file_name'. NULL where none could.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['stated', 'derived_from_referral_date', 'derived_from_file_name']
+          # Nulls are expected (rows with no resolvable period); warn so the
+          # unresolved count is surfaced and tracked, not failed.
+          - not_null:
+              config:
+                severity: warn
+
+      # -- DLP standard submission fields ------------------------------------
+      - name: dlp_flex_or_freeze
+        description: Derived. DLP submission flag standardised to 'Flex' or 'Freeze' (case variants / 'Frozen' / PRIMARY / REFRESH folded in; other values -> NULL).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Flex', 'Freeze']
+      - name: dlp_commissioner_code
+        description: As supplied. DLP commissioner code (Sub-ICB; spec field 2).
+      - name: dlp_baseline_financial_month
+        description: As supplied. DLP baseline financial month (spec field 5).
+
+      # -- Referral / patient identifiers ------------------------------------
+      - name: service_request_id
+        description: As supplied. Service request identifier (coalesced across referral-id siblings; value unchanged).
+      - name: local_patient_id
+        description: As supplied. Local patient identifier (coalesced across provider sibling columns).
+      - name: sk_patient_id
+        description: Pipeline. Pseudonymised NHS-number-derived key (best-populated SK variant) in lieu of the raw NHS number. ~82% populated.
+      - name: dv_year_of_birth
+        description: Derived. Year of birth (pipeline-pseudonymised DV_YEAROF_BIRTH, cast to number) in lieu of full date of birth.
+      - name: partial_postcode
+        description: Pipeline. Partial/truncated postcode (pseudonymised) in lieu of full postcode.
+      - name: lsoa
+        description: Pipeline. LSOA of residence (pipeline-derived). Not a PLD spec field but high-value geography; ~74% populated.
+
+      # -- Demographics / registration / location ----------------------------
+      - name: gender_code
+        description: Derived. Gender mapped to the national code (1 Male, 2 Female, 9 Indeterminate, X Not Known); coalesced across siblings, unmapped values pass through.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '2', '9', 'X']
+              config:
+                severity: warn
+      - name: ethnic_category_code
+        description: Derived. NHS ethnic category national code (free-text variants mapped via nhs_ethnicity_category_code; unmappable -> NULL).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['A','B','C','D','E','F','G','H','J','K','L','M','N','P','R','S','Z','99','0']
+              config:
+                severity: warn
+      - name: gp_practice_code
+        description: Derived. Registered GP practice ODS code (6-char validated; coalesced across siblings, GP_PRACTICE_CODE best-populated, lifting fill ~7% -> 66%).
+      - name: site_of_treatment_code
+        description: As supplied. Site code of treatment (not a PLD spec field but useful location); ~67% populated.
+
+      # -- Referral detail ----------------------------------------------------
+      - name: source_of_referral_code
+        description: Derived. Source of referral; recognised national codes zero-padded, genuine local codes pass through.
+      - name: source_of_referral_description
+        description: As supplied. Source-of-referral text label (full Current spec field 17); aids the code where it is local. ~68% populated.
+      - name: referral_received_date
+        description: Derived. Referral request received date, parsed. ~98% populated.
+      - name: team_type_code
+        description: Derived. Service/team type referred to; mostly provider-local codes on this feed (recognised national codes zero-padded, local codes pass through).
+      - name: team_type_description
+        description: As supplied. Team referred-to text label; makes the mostly-local team_type_code usable. ~27% populated.
+      - name: priority_type_code
+        description: Derived. Priority mapped to the national code (1 Routine, 2 Urgent, 3 Two Week Wait); local descriptions pass through.
+      - name: primary_referral_reason_code
+        description: Derived. Primary referral reason; recognised national codes zero-padded (3-digit), local codes pass through.
+      - name: primary_referral_reason_description
+        description: As supplied. Referral reason text label; aids the code. ~33% populated.
+
+      # -- Provider / service -------------------------------------------------
+      - name: service_reporting_line
+        description: As supplied. Local service reporting line.
+      - name: provider_code
+        description: Derived. Provider ODS code, dictionary-cleaned, falling back to META_PROVIDER_CODE.
+        data_tests:
+          - not_null
+
+      # -- Raw period (audit, retained as supplied) --------------------------
+      - name: financial_year_raw
+        description: As supplied. Raw provider financial year before parsing (audit trail for dv_financial_year).
+      - name: financial_month_raw
+        description: As supplied. Raw provider financial month before parsing (audit trail for dv_financial_month).

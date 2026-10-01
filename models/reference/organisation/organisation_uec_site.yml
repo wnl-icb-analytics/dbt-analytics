@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: organisation_uec_site
+    description: >
+      Urgent treatment centre, walk-in centre and minor injuries unit sites
+      across WNL with an operational label and the dates each mapping applies.
+      One row per site code, department type and effective period. Join ECDS
+      attendances on site, department type and arrival date between
+      effective_from and effective_to; effective_to is 9999-12-31 for current
+      rows. Maintained in the uec_site_label seed.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - site_code
+              - department_type
+              - effective_from
+    columns:
+      - name: site_code
+        description: ECDS attendance site code.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_dictionary_dbo_organisation')
+                field: organisation_code
+      - name: department_type
+        description: ECDS department type (03 UTC, 04 walk-in).
+      - name: uec_site_label
+        description: Operational label, for example UTC_NP.
+        data_tests:
+          - not_null
+      - name: site_name
+        description: Site name from the organisation dictionary.
+      - name: provider_code
+        description: ODS code of the submitting provider.
+      - name: icb_footprint
+        description: NCL or NWL.
+      - name: effective_from
+        description: First arrival date the mapping applies to.
+      - name: effective_to
+        description: Last arrival date the mapping applies to; 9999-12-31 when current.
+      - name: is_current
+        description: True when the mapping has no end date.
+      - name: note
+        description: Context for the row.

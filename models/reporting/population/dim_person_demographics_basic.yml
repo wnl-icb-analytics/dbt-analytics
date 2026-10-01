@@ -1,0 +1,132 @@
+
+models:
+  - name: dim_person_demographics_basic
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    description: >
+      Dimensional table providing comprehensive demographic information for persons,
+      including gender, ethnicity, residence and registration details enriched with
+      reference data lookups.
+
+      Documentation available: https://github.com/ncl-icb-analytics/dbt-ncl-analytics/blob/main/docs/model_documentation/dim_person_demographics_basic.md
+    columns:
+      - name: sk_patient_id
+        description: Surrogate key for patient
+        data_tests:
+          - not_null
+          - unique
+          - is_canonical_numeric_key
+
+      - name: gender_code
+        description: Gender code
+
+      - name: gender
+        description: Gender description
+
+      - name: date_of_birth
+        description: Patient date of birth (rounded to 1st of month)
+
+      - name: date_of_death
+        description: Patient date of death (NULL if no recorded death or 
+          unknown)
+
+      - name: ethnicity_code
+        description: Ethnicity (BK) code
+
+      - name: ethnicity_desc
+        description: Full ethnicity description
+
+      - name: ethnicity
+        description: Ethnicity group
+
+      - name: ethnicity_detail
+        description: Ethnicity group description
+
+      - name: flag_current_resident
+        description: Flag indicating if patient is part of the current WNL (NCL + NWL)
+          resident population
+
+      - name: record_residence_start_date
+        description: Start date of current residence record
+
+      - name: residence_lsoa_2021_code
+        description: Lower Super Output Area code (2021 Census)
+
+      - name: residence_lsoa_2021_name
+        description: Lower Super Output Area name (2021 Census)
+
+      - name: residence_ward_2025_code
+        description: Ward code (2025)
+
+      - name: residence_ward_2025_name
+        description: Ward name (2025)
+
+      - name: residence_borough
+        description: Local authority name where patient resides
+
+      - name: residence_icb_code
+        description: Integrated Care Board code for residence location
+
+      - name: residence_icb_name
+        description: Integrated Care Board name for residence location
+
+      - name: residence_icb_group
+        description: Residence ICB group - NCL, NWL, Other London or Outside London
+
+      - name: residence_neighbourhood_code
+        description: Neighbourhood code for residence location (NCL only; the WNL
+          source is name-only, so NULL for NWL)
+
+      - name: residence_neighbourhood_name
+        description: Neighbourhood name for residence location (NCL + NWL)
+
+      - name: residence_imd_decile
+        description: Index of Multiple Deprivation decile for residence location
+
+      - name: flag_current_registered
+        description: Flag indicating if patient is part of the current WNL (NCL + NWL)
+          registered population
+
+      - name: record_registered_start_date
+        description: Start date of current registration record
+
+      - name: practice_code
+        description: GP practice code
+
+      - name: practice_name
+        description: GP practice name
+
+      - name: pcn_code
+        description: Primary Care Network code
+
+      - name: pcn_name
+        description: Primary Care Network name
+
+      - name: icb_code
+        description: Integrated Care Board code
+
+      - name: icb_name
+        description: Integrated Care Board name
+
+      - name: registered_borough
+        description: Registered borough via ODS organisation relationships (NCL + NWL)
+
+      - name: registered_sub_icb_code
+        description: Registered sub-ICB location code (93C = NCL, W2U3Z = NWL — the live RO98/RO319 codes national datasets carry)
+
+      - name: registered_sub_icb_name
+        description: Registered sub-ICB name (NHS North Central London / NHS North West London, curated)
+
+      - name: registered_neighbourhood_code
+        description: Neighbourhood code for registered GP practice (NCL + NWL)
+
+      - name: registered_neighbourhood_name
+        description: Neighbourhood name for registered GP practice (NCL + NWL)
+
+      - name: preferred_language
+        description: Patient preferred language
+
+      - name: interpreter_required
+        description: Flag indicating if patient requires an interpreter

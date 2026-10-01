@@ -2,9 +2,10 @@
 
 language: en-GB
 tone_instructions: >-
-  Be friendly, constructive and help colleagues grow their dbt skills. Focus on correctness, data quality, and dbt best
-  practices — not cosmetic style. Flag what matters for how code runs and is
-  maintained. Acknowledge good work. Open with a summary.
+  Be friendly and direct. Prioritise correctness, data quality and
+  clinical meaning. Mark polish "nit:" and inherited issues "follow-up
+  (non-blocking):". Combine overlapping comments. Keep design advice
+  non-blocking and proportional to the diff.
 early_access: false
 
 reviews:
@@ -12,10 +13,14 @@ reviews:
   request_changes_workflow: false
   high_level_summary: true
   high_level_summary_placeholder: "@coderabbitai summary"
+  high_level_summary_instructions: >-
+    Summarise changed model contracts, layer or dependency changes, downstream
+    impact and validation. Distinguish new behaviour from inherited design.
+    Mention public-repository data safety only when a potential issue was found.
   poem: true
   review_status: true
   collapse_walkthrough: true
-  sequence_diagrams: true
+  sequence_diagrams: false
   changed_files_summary: true
   assess_linked_issues: true
   related_issues: true
@@ -24,8 +29,19 @@ reviews:
   suggested_reviewers: true
   auto_review:
     enabled: true
-    drafts: false
+    drafts: true
     auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 0
+  pre_merge_checks:
+    custom_checks:
+      - name: "PR description gives context"
+        mode: warning
+        instructions: |
+          Warn only when the PR description is empty, merely repeats the title
+          or diff, or gives no reason for the change. One clear sentence
+          explaining why the change is being made or what problem it solves is
+          enough. Do not require headings, templates, test details or a
+          file-by-file summary. Allow draft descriptions to remain incomplete.
   finishing_touches:
     docstrings:
       enabled: false
@@ -35,148 +51,470 @@ reviews:
   path_filters:
     - "!target/**"
     - "!dbt_packages/**"
-    - "!logs/**"
 
   path_instructions:
-    # ── Project-wide dbt conventions ──
-    - path: "**/*.sql"
+    # Public repository data safety
+    - path: "**/*"
       instructions: |
-        This is an NHS dbt analytics project on Snowflake. Focus reviews on
-        functional correctness, data quality, and dbt best practices — not
-        cosmetic style issues. Don't comment on casing, whitespace, comma placement, or line length.
+        This is a public repository. Treat any change that appears to contain
+        real patient- or person-level data, direct identifiers, or combinations
+        of values that could identify a person as a critical finding that must
+        be resolved before merge.
+        Check seeds, test data, examples, logs, exports, screenshots, comments,
+        documentation and hardcoded SQL values. Column names and clearly
+        synthetic examples are not patient data by themselves. High-level
+        aggregates such as broad counts, rates, distributions and validation
+        totals are not person-level data and must not be flagged merely because
+        they were calculated from patient data. Flag aggregates only when small
+        cells or combined dimensions could expose an identifiable person. Do not
+        repeat a suspected value in the review: identify only the file, location
+        and data category. Ask the author to remove it and alert repository
+        maintainers; deleting it from the latest diff alone may not remove public
+        history.
 
-        **Focus areas:**
-        - Correctness of joins, filters, and business logic
-        - Watch for fan-out joins that silently multiply rows
-        - Check that models reference the correct layer (no skipping layers)
-        - cluster_by should include person_id where relevant for Snowflake query performance
-        - Materialization is set per-layer in dbt_project.yml, override in individual models as needed
+    # Project-wide dbt conventions
+    - path: "models/!(semantic)/**/*.sql"
+      instructions: |
+        This is a public NHS dbt project on Snowflake. Review the project
+        contract, not generic SQL style:
 
-        **Naming (only flag if inconsistent with existing patterns):**
-        - Booleans prefixed with is_ or has_
-        - Dates suffixed with _date, timestamps with _at
-        - IDs suffixed with _id
-        - snake_case for all column names
+        - Treat folder, model name, SQL, YAML and tests as one contract.
+        - Raw must never be consumed directly outside staging. Only models under
+          models/staging may ref() raw_ models; everything else must start from
+          staging or a later contract.
+        - Beyond staging, choose dependencies by the contract needed rather than
+          enforcing a rigid ladder. Modelling may reuse reporting models when
+          they are the established interface and this does not create a circular
+          dependency.
+        - All hand-written models use ref(). Only generated raw models use
+          source(). Flag every source() call in a changed hand-written model,
+          including one that was already present in staging, and require it to
+          be replaced with ref() to the generated raw model. This is a small fix
+          within the changed model, not a non-blocking follow-up. Do not search
+          unrelated files for legacy calls. Flag hardcoded warehouse relations.
+        - Check the subject and grain. Check population and time rules when the
+          model selects or derives them. Review joins against the stated grain;
+          do not require the author to label every join relationship. If the
+          left-hand grain should survive, the right-hand input must have at most
+          one row per join key. Prefer an intentional GROUP BY when several rows
+          should contribute, or a documented, deterministic rule when one record
+          should win. Require the resulting grain to be documented only when the
+          join changes it. For an effective-date lookup, check that no more than
+          one reference period can match each left-hand row. Flag DISTINCT used
+          after a join to hide duplication because it can discard real
+          differences and forces the warehouse to deduplicate an already
+          multiplied result, increasing memory use and spill.
+        - Before a Snowflake PIVOT, require its input to contain only the target
+          grain key or keys, pivot column and value. Snowflake implicitly groups
+          by every other input column, so carrying metadata into the PIVOT can
+          silently change the result's grain.
 
-    # ── Raw layer ──
+        Performance review:
+        Focus on the amount of data processed by expensive operations, not SQL
+        length. Fan-out, wide intermediates and repeated scans make Snowflake
+        hash or sort more data. When that exceeds warehouse memory, spill can
+        make the query much slower and more costly. Explain that mechanism in a
+        performance comment.
+
+        - Flag avoidable large intermediate results. Where the contract permits,
+          filter and project a large input before joins, windows, pivots, grouping
+          or deduplication; aggregate or select repeated child rows at the target
+          grain before joining; and defer descriptive enrichment until after the
+          reduction. These changes reduce the rows or width that the expensive
+          operation must process. Flag a filter after an expensive operation only
+          when the model always applies it, it does not depend on that operation's
+          result, and moving it earlier is a clear reduction in rows. Moving a
+          filter must not change a rank, aggregate, join outcome or population.
+          Snowflake may push a predicate down, but do not rely on that when the
+          safe early filter can be expressed directly. Do not require a new model
+          when a clear CTE is enough.
+        - Flag repeated scans or sorts of the same large input, several
+          ROW_NUMBER or QUALIFY passes with the same partition over that input,
+          repeated correlated lookups, and Cartesian or broadly matching
+          rule-table joins followed by grouping or deduplication when the same
+          rules can be expressed once against a narrow input. They can reread,
+          reorder or create rows only to discard them later. Keep separate
+          selections when they implement different contracts.
+        - Flag bare UNION between large branches known to be disjoint, DISTINCT
+          over a wide or post-join result, and distinct or ordered list and array
+          aggregates over a large input when that work is not part of the
+          contract. UNION and deduplication must compare the combined rows, often
+          by hashing or sorting them. A narrow key list or small lookup may use
+          DISTINCT plainly. Where possible, deduplicate the narrow key and values
+          before building a wide aggregate.
+        - Judge performance from the changed SQL and scale information already in
+          the pull request. Do not infer poor performance merely from a wide
+          result, a pivot, a window, or many small reference joins. Explain the
+          likely expensive intermediate operation. When its size or impact is
+          unknown, state the assumption and label the comment "follow-up
+          (non-blocking):". Do not ask the contributor to provide Query Profile,
+          spill or pruning evidence; profiling may be suggested only as optional
+          validation.
+        - Suggest cluster_by only for a materialised model when several
+          downstream consumers repeatedly filter or join a large result on the
+          same selective columns. The current build pays to sort its output so
+          later queries can prune irrelevant partitions; it does not make this
+          model's upstream reads cheaper. OLIDS
+          clinical event inputs are usually already clustered by mapped concept
+          code for the expensive code-filter scan. After that scan selects the
+          required rows, person_id may be the right output key when several
+          consumers join the result by person. Do not ask for fresh evidence when
+          the key follows the established model-family pattern. For a new or
+          unusual key, comment only when the changed lineage or pull-request
+          context shows the downstream access pattern. Explain the build-sort and
+          pruning trade-off, keep the suggestion non-blocking, and do not request
+          partitions-scanned or runtime evidence.
+        - When a new model appears to duplicate an existing one, ask how its
+          contract differs and whether the existing model can be extended,
+          composed or reused. A separate model should have a distinct subject,
+          grain, scope, stakeholder group or business reason to change. The
+          stakeholder group means the programme, product team or business users
+          served by the contract, not a repository maintainer.
+        - Name models for their subject and grain, not the processing step that
+          produced them. Treat names such as consolidated, enriched, processed,
+          intermediate and final as warning signs unless they describe a real
+          business concept or time/grain contract. Do not ask to rename an
+          established model merely because an enhancement touches it.
+        - Calibrate review depth to the change type. A new model puts its
+          boundary, responsibility and name in scope. An enhancement to an
+          existing model puts the addition and its effect on the existing
+          contract in scope. An explicitly transitional legacy migration must
+          still meet hard layer and correctness rules, but inherited internal
+          design can be a non-blocking follow-up when faithful parity is the
+          stated goal.
+        - When a new model or the changed logic adds concepts with different
+          grains, tests, owners, consumers or reasons to change, flag the confused
+          responsibility and suggest a useful boundary. Mention inherited
+          confusion only as a non-blocking follow-up. Do not equate one
+          transformation or CTE with one model: cohesive steps that serve the
+          same contract should stay together.
+        - Prefer readable, straightforward SQL. Flag long, nested or repeated
+          CASE statements when branching hides the business rule or makes it
+          hard to test. A short local CASE is fine. Suggest a named model, CTE or
+          lookup only when it makes the rule clearer. Logic must not masquerade
+          as data: a seed may hold lookup values and parameters, but must not
+          store expressions or branching for SQL or a macro to interpret.
+          Business decisions must remain visible in readable SQL.
+        - Flag a maintained provider list, code set, threshold or date rule only
+          when the same business definition is repeated across models or several
+          models need to depend on it. Prefer a join to the shared, reference or
+          programme-scoped model that owns maintained data, a macro for reused
+          SQL logic, or a project variable for a value supplied per run or
+          environment. A value that defines one model's concept belongs in that
+          model even if it may change. Do not suggest another DAG node merely to
+          extract a local literal.
+        - Flag new output columns implemented as literal NULL or otherwise known
+          to be null for every row. They advertise data the model does not
+          provide and make unpopulated fields look like missing data. Require the
+          column to be mapped, derived or omitted. Allow a placeholder only in a
+          model under models/published/, when its documented output contract
+          requires a fixed schema and the description explains why the field is
+          empty. Where union branches need compatible shapes, allow branch-specific
+          NULL aliases in the model performing the union when another branch
+          populates that output; do not expose all-null columns from the upstream
+          models. Treat a column as known to be empty only when the diff or pull
+          request evidence establishes this; do not infer it from its name or a
+          limited sample.
+        - Review the changed behaviour and its effect on the existing contract.
+          Do not ask a contributor enhancing an existing model to redesign
+          unrelated pre-existing code. Raise existing design debt as blocking
+          only when the change worsens it, depends on it, or cannot be safe
+          without resolving it. It may still be mentioned when visible in the
+          reviewed area and useful to future work: label it "follow-up
+          (non-blocking):", keep it out of the merge recommendation, and do not
+          search unrelated files for further debt.
+        - Shared models may own definitions and terminology agreed for the whole
+          project. A rule, term, label or classification approved for one
+          programme must stay in that programme's folder or schema and reuse the
+          shared models it needs. Show the programme in the model name using the
+          naming pattern of models in the same folder or model family. Audience
+          and product rules or vocabulary belong in their own downstream models.
+        - Any narrower model that runs beside a shared contract—programme,
+          geography, legacy migration or named consumer—must make that scope
+          clear in its model name and folder/schema. Require the description to
+          explain the scope when the name is not enough. Do not give a scoped
+          variant an unqualified name that appears project-wide.
+        - Preserve unknown, false, not-applicable and missing-evidence states when
+          the domain distinguishes them.
+        - In supported reporting, published or partner outputs, flag an opaque
+          category code or number when it is the only analyst-usable value and an
+          authoritative label is available. Prefer the source description or a
+          join to the shared reference model that owns it; retain the code when
+          useful for traceability, filtering or joins. A modelling block may stay
+          code-only when the downstream analyst-facing interface supplies the
+          label. Do not ask the author to invent a label or repeat a maintained
+          mapping in a local CASE expression.
+        - Clinical definitions, thresholds, code lists and date rules owned by a
+          model must be visible and checkable in its contract. When a model
+          filters or derives a population, require its description to explain
+          who or what is included. Refer to a named code list, value set or
+          upstream definition rather than copying a long list of codes into
+          prose. Do not ask for population rules where the model has none.
+        - When SQL, descriptions and tests disagree about business behaviour,
+          identify the contradiction and ask which contract is authoritative.
+          Do not prescribe a population-changing fix without evidence of the
+          intended business rule.
+        - Folder configuration in dbt_project.yml supplies database, schema,
+          materialisation, tags and hooks. Request a model override only for a
+          stated exception.
+
+        From staging onward, every output column name must be unquoted
+        snake_case except in published models. Flag quoted output aliases or
+        identifiers elsewhere, including quotes used to preserve spaces, case
+        or punctuation. Published models may use quoted consumer-facing names
+        and do not need to remove those characters, but friendly names are
+        optional and unquoted snake_case remains valid. Quoting a physical input
+        identifier in generated raw SQL or a source declaration is also allowed.
+        Use is_ or has_ for booleans and make dates, timestamps and identifiers
+        clear in the name. Prefer _date, _at and _id where they read naturally,
+        but accept an established model-family convention or another unambiguous
+        form such as date_. Outside generated raw models, do not carry legacy
+        derived names such as zcontracttype or z_contract_type into new project
+        interfaces. Prefer the unprefixed business name when the derived value
+        is the project interface. Use dv_ when retaining both supplied and
+        derived values makes their distinction useful, with the supplied value
+        kept as a clearly named column or upstream source field. Existing SLAM
+        and community dv_ families are established interfaces; do not request
+        their redesign in an enhancement PR. Do not comment on whitespace,
+        commas or line length.
+
+    # Raw layer
     - path: "models/raw/**"
       instructions: |
-        Raw models are 1:1 passthroughs from source tables in the DATA_LAKE.
-        They are autogenerated and should not be manually edited.
-        They rename columns to case insensitive snake_case.
-        Flag issues that affect correctness or break the raw layer contract:
+        Raw models are generated 1:1 evidence from source tables. They may quote
+        and rename physical columns to readable snake_case, but must not cast,
+        filter, deduplicate, join or interpret rows. They use source() and start
+        with raw_. Do not ask authors to edit generated output; flag manual edits
+        and point fixes to source mappings, manual source YAML or the generator.
 
-        - Must reference source() not ref()
-        - No joins, no business logic, no filtering beyond removing true duplicates
-        - Filenames start with raw_ prefix
-        - Each model should have a paired .yml file
-
-    # ── Staging layer ──
+    # Staging layer
     - path: "models/staging/**"
       instructions: |
-        Staging models clean and standardise raw/source data.
-        Flag issues that break the staging layer contract:
+        Staging is the required boundary between raw and every downstream area.
+        It provides one main project interface to a source object. New
+        models use ref() to a raw_ model, never source() or a hardcoded relation.
+        If a changed staging model already calls source() directly, require that
+        call to be replaced with ref() as part of the change. Select columns
+        explicitly. Apply
+        project names, types and universal source or delivery fixes while
+        normally preserving the source entity, grain and legitimate rows.
+        Staging should normally have no joins. Allow a join only when its sole
+        purpose is universal source cleaning, standardisation or enrichment that
+        every consumer should inherit; flag business populations and
+        consumer-specific rules.
+        Each source object should have one staging interface. Reuse or
+        extend an existing staging model for the same raw object rather than
+        creating a pipeline-, consumer- or migration-named duplicate. Name a
+        new model for the source object it cleans, using established project
+        vocabulary rather than copying an opaque physical name. Models start
+        with stg_. All output columns must have unquoted snake_case names. A base
+        staging model plus an established _latest view for a cumulative
+        resubmission feed is one source interface, not a duplicate.
 
-        - No joins between different source entities
-        - Should reference source() or raw_ models via ref(), not downstream models
-        - Filenames start with stg_ prefix
-        - Each model should have a paired .yml file
-        - The generic test test_all_source_columns_in_staging can verify column coverage
-        - Most data cleaning should be done in the staging layer, ideally not in modelling.
-        - Staging models with complex logic or window functions should be materialised as tables or incremental
+    # Reference layer
+    - path: "models/reference/**"
+      instructions: |
+        Reference models hold project-owned lookups and derived reference data
+        shared across domains. They use staging-or-later inputs, not raw models
+        or source(). Keep programme, audience and product rules out of this area.
+        Follow names used by models in the same folder or model family and state
+        the lookup grain and update basis.
 
-    # ── Modelling (intermediate) layer ──
+    # Modelling layer
     - path: "models/modelling/**"
       instructions: |
-        Modelling (intermediate) models apply business logic and transformations.
-        Focus on correctness and data architecture:
+        Modelling gives a purposeful transformation or shared domain rule a
+        named, tested home. It must not reference raw_ models or source(). Models
+        normally start with int_ and may join, filter or change grain. They may
+        reuse reporting models where those provide the right established
+        contract. Check that each model has one clear responsibility and grain.
+        Check its population and time basis where it selects or derives them. One
+        responsibility may contain several CTEs and transformations when they
+        change for the same reason. Recommend a split only for independently
+        changing concepts or contracts. Programme-specific logic belongs in its
+        programme folder/schema and reuses shared models without redefining them.
+        Use int_ plus the established programme subject, for example
+        int_flu_, int_smi_, int_myria_ or int_ltc_lcs_; inspect names in the same
+        folder or model family rather than inventing a new abbreviation. The
+        folder alone is not enough if an unqualified model name would suggest
+        project-wide scope.
+        OLIDS schemas and governance messages are derived from folder
+        configuration.
 
-        - Each model should serve a single clear purpose
-        - Include ALL persons (active, inactive, deceased) — filtering happens downstream
-        - Watch for fan-out joins or accidental row duplication
-        - Each model should have a clear grain
-        - Filenames start with int_ prefix; paired .yml with owner metadata
-        - OLIDS models get auto-derived schemas from folder structure (OLIDS_{SUBDOMAIN})
-        - OLIDS data carries governance restrictions with applied custom message tags
-
-    # ── Reporting layer ──
+    # Reporting layer
     - path: "models/reporting/**"
       instructions: |
-        Reporting is our marts layer.
-        Reporting models produce analytics-ready datasets.
-        Focus on correctness, layer integrity, and test coverage:
+        Reporting is the marts layer: supported business entities and concepts
+        for direct analysis. It must not reference raw_ models or source(). It
+        may compose staging, modelling and reporting contracts as needed. Each
+        model must state what one row represents. Where it selects a population
+        or time period, state those too and test the resulting grain.
+        Useful width is allowed when joins preserve the core grain and reuse
+        established definitions. Follow the existing dim_, fct_, pit_, obt_,
+        dq_, def_ and programme naming families. def_ models describe shared
+        indicator definitions and metadata; they are not a programme prefix.
+        Programme scope remains visible in
+        standard names such as fct_person_myria_, or in an established
+        programme-owned reporting prefix such as cltcs_. Do not introduce a new
+        programme prefix when the repository already has a family to follow.
+        Disease registers use fct_person_{condition}_register and their
+        established indicator metadata.
 
-        - Should reference modelling-layer models, not raw/staging directly
-        - Prefixes: dim_ (dimensions), fct_ (facts), pit_ (point-in-time),
-          dq_ (data quality), def_ (definitions)
-        - Paired .yml should include owner metadata and PK tests (unique + not_null)
-        - Disease registers follow fct_person_{condition}_register pattern
-          with indicator metadata (id, type, category, clinical_domain)
-        - Flag missing tests on primary keys or important columns
-
-    # ── Published layer ──
+    # Published layer
     - path: "models/published/**"
       instructions: |
-        Published models are production datasets for end users and dashboards.
+        Published models are governed contracts for named reports, dashboards,
+        extracts or applications. Product selection, audience policy, legal
+        basis and delivery naming belong here. Shared definitions must be reused
+        from upstream rather than recreated for one product. Check direct_care
+        and secondary_use placement, OLIDS opt-out or documented exemption, and
+        the matching Snowflake governance tags. Follow an established product
+        family such as the Myria _published models rather than renaming it to a
+        generic product name. Published outputs may use quoted consumer-facing
+        column names with spaces, case or punctuation. Do not require those
+        characters to be removed, and do not require friendly names when
+        snake_case already suits the consumer. A published model may expose an
+        all-null placeholder only when its documented output contract requires a
+        fixed schema and explains why the field is empty.
 
-        - Should only reference reporting-layer models (no skipping layers)
-        - direct_care/ → PUBLISHED_REPORTING__DIRECT_CARE database
-        - secondary_use/ → PUBLISHED_REPORTING__SECONDARY_USE database
-        - OLIDS models in secondary_use get Snowflake governance tags via post-hook
-        - Must have paired .yml files
-        - User-facing friendly column names are permitted but not required.
-
-    # ── YAML config files ──
-    - path: "**/*.yml"
+    # Partner products
+    - path: "models/partner/**"
       instructions: |
-        YAML files define model metadata, tests, and sources.
-        Focus on completeness, not formatting:
+        Partner models serve governed partner datasets and access mappings.
+        Keep partner filtering and row-access policy at this boundary rather
+        than changing shared reporting models. Partner-facing marts use the
+        established ptr_ family and must retain the person key required by the
+        configured row-access policy.
 
-        - Each SQL model should have a paired .yml file
-        - Primary keys need unique and not_null tests
-        - Owner metadata required: config.meta.owner.name
-        - Use data_tests (not the deprecated tests key at column level)
-        - Auto-generated sources (auto_ prefix) should not be manually edited
-        - Sources use quoted identifiers for Snowflake: '"DATABASE"', '"SCHEMA"'
+    # Semantic views
+    - path: "models/semantic/**"
+      instructions: |
+        These are Snowflake Semantic Views, named sem_. Review facts, dimensions,
+        metrics and joins against the contracts of their ref() inputs. The SQL is
+        semantic-view DDL; do not apply ordinary SELECT-model style rules or
+        treat their syntax alone as a defect.
 
-    # ── Macros ──
+    # Model properties
+    - path: "models/**/*.y*ml"
+      instructions: |
+        Review model properties as contracts, not formatting:
+
+        - Review only new or changed model entries; do not inventory untouched
+          models elsewhere in the same file. New or changed models need a
+          description stating the subject and what one row represents. State the
+          time basis where it matters. When the model filters or derives a
+          population, explain the inclusion and exclusion rules, including
+          thresholds and date rules. Name the code list, value set or upstream
+          definition used. Staging and lookup models
+          need only describe their source or subject and grain when they do no
+          population selection. Do not copy long code lists into prose.
+        - New non-raw models require config.meta.owner.name.
+        - New or changed test blocks use data_tests. Do not ask an enhancement
+          PR to migrate an untouched legacy tests block.
+        - Every new model, and every changed model with no test, must add a test
+          of its stated grain using its key or key combination. For a changed
+          inherited model that has other tests but no grain test, require one
+          when the change affects its grain, key or join behaviour; otherwise
+          mention it as a non-blocking follow-up.
+        - This project does not use test-driven development. Beyond the grain
+          test, request a permanent test only for a durable contract or an error
+          likely to recur. Tests run on every build and consume Snowflake
+          compute. Do not request tests of implementation details or duplicate
+          assertions already owned upstream.
+        - Focus tests on assumptions most likely to break when sources or rules
+          change: grain, join uniqueness, population boundaries and membership
+          of maintained lists. Prefer a relationship test to the model that owns
+          a changing list over copying values into an accepted-values test.
+        - Add accepted-value, not-null and relationship tests only when the
+          documented domain contract makes them true. Do not force away valid
+          nulls or out-of-scope parents to satisfy a generic test.
+        - Column descriptions should explain units, code systems, selection
+          rules, dates, null meaning, derivation or non-obvious relationships;
+          do not require prose that merely repeats a column name.
+        - A semantic change must update the affected SQL, descriptions and
+          existing contract tests together. Ask for a new test only under the
+          rules above.
+        - auto_ source YAML is generated and must not be edited by hand.
+
+    # Source registry and declarations
+    - path: "scripts/sources/**"
+      instructions: |
+        This pipeline owns generated source YAML and raw models. Review mapping,
+        naming, exclusions and manual-source handling for the intended source
+        scope. Generated drift outside the requested source must be called out
+        for deliberate inclusion, not assumed to be an author mistake.
+
+    - path: "models/sources/**"
+      instructions: |
+        auto_ files are generated. Manual source declarations are the editable
+        registry for opted-in tables and must match live identifiers and column
+        types. Snowflake database, schema and identifiers are quoted.
+
+    # Seeds
+    - path: "seeds/**"
+      instructions: |
+        Seeds are small, team-owned reference data reviewed like code. They are
+        not extracts, feeds or patient-level data. Check that CSV and YAML stay
+        aligned and that thresholds, units, source and update rules are
+        documented when they affect model logic. Seeds may hold lookup values,
+        mappings, thresholds, priorities and conversion parameters. Flag
+        expressions, operators or branching that a model or macro must parse:
+        logic must not masquerade as data, and the rule belongs in readable SQL.
+        When a new seed appears to duplicate an existing one, ask how its
+        contract differs and whether the existing seed can be extended or reused.
+        A separate seed should have a distinct subject, grain, scope, stakeholder
+        group or business reason to change.
+        Any seed that appears to contain real patient- or person-level data is a
+        critical finding that must be resolved before merge under the
+        repository-wide data-safety rule.
+
+    # Macros
     - path: "macros/**"
       instructions: |
-        Macros provide reusable logic. Focus on correctness and reusability:
+        Review the project behaviour the macro centralises, its callers and
+        null/empty-input behaviour. Place new macros with the clinical,
+        transformation, configuration, governance or utility macros in the same
+        folder or family. Require documentation for the macro contract and
+        arguments, not a prose version of its implementation. When a macro
+        expands to a correlated scalar
+        lookup for each calling row, check its use in large models. Prefer a join
+        at the required grain or one computed selection when repeated work or
+        fan-out is plausible. When scale is not clear from the callers or pull
+        request, keep the performance concern non-blocking; correctness fan-out
+        remains blocking.
 
-        - Organised by purpose: clinical/, transformations/, qof_registers/,
-          overrides/, governance/, observability/, campaigns/, utils/
-        - New macros should go in the appropriate subdirectory
-        - Include a brief comment at the top explaining the macro's purpose
-        - Check for edge cases in Jinja logic (null handling, empty lists)
-
-    # ── QOF register macros ──
+    # QOF register macros
     - path: "macros/qof_registers/**"
       instructions: |
-        QOF register calculation macros. Focus on clinical correctness:
+        QOF register macros are named calculate_{condition}_register.sql and use
+        shared observation and medication retrieval macros. Review inclusion,
+        exclusion, age, reference-date and tie-breaking logic against the cited
+        QOF rule. Keep enough dates, codes and flags for the result to be
+        explainable.
 
-        - Named calculate_{condition}_register.sql
-        - Use get_observations() and get_medication_orders() for data retrieval
-        - Follow NHS QOF business rules for register inclusion/exclusion
-        - Document clinical thresholds, age restrictions, and date logic clearly
-        - Called from reporting-layer models
-
-    # ── Tests ──
+    # Tests
     - path: "tests/**"
       instructions: |
-        Generic and singular tests for data validation.
-
-        - Existing generic tests: test_all_source_columns_in_staging,
-          test_bnf_codes_exist, test_cluster_ids_exist, test_no_future_dates,
-          test_valuesets_have_codes
+        Singular tests return rows that violate a named model contract. Check
+        that the test uses ref(), lives at the scope that owns the promise, and
+        returns identifying or explanatory columns rather than only a count.
+        Names and thresholds should make a production failure actionable. Flag
+        a test that repeats an upstream assertion or tests an implementation
+        detail without protecting a distinct contract.
 
 chat:
+  allow_non_org_members: false
   auto_reply: true
 
 knowledge_base:
   opt_out: false
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "PROJECT_CONVENTIONS.md"
   learnings:
     scope: local
+    approval_delay: 3
   issues:
     scope: local
   pull_requests:

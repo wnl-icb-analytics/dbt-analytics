@@ -1,0 +1,25 @@
+snapshots:
+  - name: fct_person_bp_control_snapshot
+    relation: ref('fct_person_bp_control_snapshot_input')
+    description: >
+      SCD2 history of BP control per person, for control-cohort matching: the overall NG136
+      control flag (is_overall_bp_controlled) and the latest reading (systolic / diastolic /
+      date). Sources the thin fct_person_bp_control_snapshot_input view rather than
+      fct_person_bp_control directly, because that model's CURRENT_DATE()-derived timeliness
+      columns change every run and would version every person on every build. check_cols: all
+      over the thin projection; a new reading or a control-status change opens a version.
+      Rows leaving the source are closed via hard_deletes: invalidate.
+    config:
+      strategy: check
+      unique_key: [person_id]
+      check_cols: all
+      hard_deletes: invalidate
+    columns:
+      - name: person_id
+        description: "Person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

@@ -1,8 +1,10 @@
 {{
     config(
-        materialized='table')
+        materialized='table',
+        tags=['cltcs_secure_source'])
 }}
 
+{% set placeholder_date = '1900-01-01'%} 
 
 /*
 Patient data processing for CLTCS
@@ -25,15 +27,15 @@ select il.patient_id
     , ltcs.is_on_register
     , ltcs.is_qof
     , CASE 
-        WHEN ltcs.earliest_diagnosis_date IS NULL THEN NULL
-        WHEN ltcs.earliest_diagnosis_date > CURRENT_DATE() THEN NULL  -- Future dates invalid
-        WHEN ltcs.earliest_diagnosis_date < DATEADD('year', -150, CURRENT_DATE()) THEN NULL  -- Unreasonably old dates
+        WHEN ltcs.earliest_diagnosis_date IS NULL THEN '{{placeholder_date}}'
+        WHEN ltcs.earliest_diagnosis_date > CURRENT_DATE() THEN '{{placeholder_date}}'  -- Future dates invalid
+        WHEN ltcs.earliest_diagnosis_date < DATEADD('year', -150, CURRENT_DATE()) THEN '{{placeholder_date}}'  -- Unreasonably old dates
         ELSE DATE(ltcs.earliest_diagnosis_date)
       END as earliest_diagnosis_date
     , CASE 
-        WHEN ltcs.latest_diagnosis_date IS NULL THEN NULL
-        WHEN ltcs.latest_diagnosis_date > CURRENT_DATE() THEN NULL  -- Future dates invalid
-        WHEN ltcs.latest_diagnosis_date < DATEADD('year', -150, CURRENT_DATE()) THEN NULL  -- Unreasonably old dates
+        WHEN ltcs.latest_diagnosis_date IS NULL THEN '{{placeholder_date}}'
+        WHEN ltcs.latest_diagnosis_date > CURRENT_DATE() THEN '{{placeholder_date}}'  -- Future dates invalid
+        WHEN ltcs.latest_diagnosis_date < DATEADD('year', -150, CURRENT_DATE()) THEN '{{placeholder_date}}' -- Unreasonably old dates
         ELSE DATE(ltcs.latest_diagnosis_date)
       END as latest_diagnosis_date
 from inclusion_list il

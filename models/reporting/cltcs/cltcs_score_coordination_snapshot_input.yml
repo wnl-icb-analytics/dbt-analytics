@@ -1,0 +1,22 @@
+models:
+  - name: cltcs_score_coordination_snapshot_input
+    description: >
+      Thin snapshot-input projection of cltcs_score_coordination: sk_patient_id and the
+      final score_coordination (plus table_refresh_date). Feeds
+      cltcs_score_coordination_snapshot; kept narrow so the SCD2 snapshot stores only
+      the score state needed for control-cohort matching.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: sk_patient_id
+        data_type: number
+        description: "Unique patient identifier; one row per patient (snapshot unique_key)."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: score_coordination
+        data_type: number
+        description: "Final coordination sub-score."

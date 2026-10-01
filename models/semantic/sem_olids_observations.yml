@@ -11,8 +11,13 @@ models:
       for population health analysis. Focuses on proportions at target
       rather than raw averages.
 
-      Includes ESP 2013 weights (age_band_esp, esp_weight, esp_proportion)
-      for age-standardised rate calculation across areas.
+      Includes ESP 2013 weights (age_band_esp, esp_weight, esp_proportion —
+      denormalised onto dim_person_demographics) for age-standardised rate
+      calculation across areas.
+
+      Exposes person_id as a pseudonymised linkage dimension for cross-view
+      cohort intersection (CTE joins to the other sem_olids_* views);
+      aggregate-only output.
 
       Design Principles:
       - Categories over averages (% at target vs mean value)
@@ -38,10 +43,12 @@ models:
       - int_eosinophil_count_latest: Blood eosinophil count with category
       - int_efi_latest: Electronic Frailty Index (GP-coded only, incomplete coverage)
       - int_rockwood_latest: Rockwood Clinical Frailty Scale
-      - int_foot_examination_latest: Diabetic foot examination
-      - int_retinal_screening_latest: Diabetic retinal screening
-      - fct_person_diabetes_8_care_processes: DM 8 care process completion
-      - esp_2013: European Standard Population weights
+
+      Diabetes care processes, foot examination, and retinal screening
+      moved to sem_olids_diabetes_care.
+
+      NICE blood pressure indicators IND239 to IND246 are exposed through
+      sem_olids_bp_indicators.
 
     config:
       materialized: semantic_view

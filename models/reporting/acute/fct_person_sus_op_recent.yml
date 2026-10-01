@@ -1,0 +1,47 @@
+
+models:
+  - name: fct_person_sus_op_recent
+    description: "Recent SUS outpatient activity per patient. One row per patient with an outpatient appointment of any status in the 12 months ending on the build date; the shared junk key '1' is excluded. Windows are not adjusted for reporting lag, so the latest weeks undercount. Attendance counts include only attended appointments (status 5 or 6); booked, specialty and provider counts include appointments of any status, including cancellations and DNAs. Warning: needs expert analyst review."
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: sk_patient_id
+        data_type: varchar
+        description: "Unique identifier for the patient (pseudonymised NHS number)"
+        tests:
+          - not_null
+          - unique
+
+      - name: op_att_tot_12mo
+        data_type: number
+        description: "Outpatient appointments attended in the 12 months ending on the build date"
+
+      - name: op_att_tot_3mo
+        data_type: number
+        description: "Outpatient appointments attended in the 3 months ending on the build date"
+
+      - name: op_att_tot_1mo
+        data_type: number
+        description: "Outpatient appointments attended in the month ending on the build date"
+
+      - name: op_att_first_12mo
+        data_type: number
+        description: "First outpatient appointments (first attendance code 1 or 3) attended in the 12 months ending on the build date"
+
+      - name: op_app_tot_12mo
+        data_type: number
+        description: "Outpatient appointments of any status (attended, cancelled or DNA) in the 12 months ending on the build date"
+
+      - name: op_spec_12mo
+        data_type: number
+        description: "Distinct treatment functions with an outpatient appointment of any status in the 12 months ending on the build date. Includes cancelled and DNA appointments."
+
+      - name: op_prov_12mo
+        data_type: number
+        description: "Distinct providers with an outpatient appointment of any status in the 12 months ending on the build date. Includes cancelled and DNA appointments."
+
+      - name: op_num_spec_2_prov_12mo
+        data_type: number
+        description: "Treatment functions with appointments of any status at more than one provider in the 12 months ending on the build date"

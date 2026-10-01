@@ -1,0 +1,36 @@
+version: 2
+models:
+  - name: stg_ukhfd_registered_patients_by_gp_practice
+    description: |
+      Registered patient counts from the NHS England "Patients Registered at a
+      GP Practice" monthly publication, via UKHFD. Actual counts taken on the
+      first of each month. One row per organisation, sex and 5-year age band
+      per monthly snapshot; org_type spans GP practice, PCN, ICB and other
+      geographies, and sex/age band include ALL rollup rows.
+
+      Source: UKHFD.Demography.fact_No_Of_Patients_Regd_At_GP_Prac_Regions_5Yr_AgeBand
+      (source 'ukhfd_demography' in models/sources/manual_ukhfd.yml)
+      via raw_ukhfd_registered_patients_by_gp_practice.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: org_type
+        description: Organisation type, e.g. GP, PCN, ICB, SUB_ICB_LOCATION_CODE.
+      - name: org_code
+        description: Organisation ODS code.
+        data_tests:
+          - not_null
+      - name: ons_code
+        description: ONS code for geographic organisation types.
+      - name: sex
+        description: MALE, FEMALE or ALL.
+      - name: age_band
+        description: 5-year age band (0_4 to 95+) or ALL.
+      - name: number_of_patients
+        description: Count of registered patients at the snapshot date.
+      - name: snapshot_date
+        description: Publication snapshot date (first of the month).
+      - name: source_file_version
+        description: UKHFD source-file version for the snapshot.

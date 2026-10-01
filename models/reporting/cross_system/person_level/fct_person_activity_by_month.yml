@@ -1,0 +1,135 @@
+
+models:
+  - name: fct_person_activity_by_month
+    description: "Fact table capturing person activity aggregated by month."
+    config:
+      meta:
+        owner:
+          name: Jessica Roberts
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - activity_month
+    columns:
+      - name: sk_patient_id
+        description: "Unique identifier for the person"
+      - name: activity_month
+        description: "The month (YYYY-MM) for which the activity started"
+
+      - name: total_encounters
+        description: "Count of encounters across all care settings"
+      - name: total_cost
+        description: "Sum of A&E encounter across all care settings"
+
+      - name: ae_encounters
+        description: "Count of A&E encounters"
+      - name: ip_encounters
+        description: "Count of inpatient admissions"
+      - name: op_encounters
+        description: "Count of outpatient encounters"
+      - name: gp_encounters
+        description: "Count of primary care encounters"
+      - name: cc_encounters
+        description: "Count of community care contacts"
+      - name: mh_encounters
+        description: "Count of mental health encounters"
+      - name: ae_cost
+        description: "Sum of A&E encounter cost"
+      - name: ip_cost
+        description: "Sum of inpatient admission cost"
+      - name: op_cost
+        description: "Sum of outpatient encounter cost"
+      - name: cc_cost
+        description: "N/A"
+      - name: mh_cost
+        description: "Sum of mental health encounter proxy cost - uses national cost
+          collection averages adjusted for NCL"
+      - name: ae_duration
+        description: "Sum of A&E encounter duration in hours"
+      - name: ip_duration
+        description: "Sum of inpatient admission duration in days"
+      - name: op_duration
+        description: "Sum of outpatient encounter duration in days"
+      - name: gp_duration
+        description: "Sum of primary care encounter duration in mins - DQ issues."
+      - name: cc_duration
+        description: "Sum of community care contacts duration in mins"
+      - name: mh_duration
+        description: "Sum of mental health encounter duration in days"
+
+      - name: ae_emergency_encounters
+        description: "Count of emergency care A&E encounters (AE-T1, AE-Other)"
+      - name: ae_urgent_encounters
+        description: "Count of urgent care A&E encounters (UCC, WiC, SDEC)"
+      - name: ae_emergency_cost
+        description: "Sum of emergency care A&E encounter cost (AE-T1, AE-Other)"
+      - name: ae_urgent_cost
+        description: "Sum of urgent care A&E encounter cost (UCC, WiC, SDEC)"
+      - name: ae_emergency_duration
+        description: "Sum of emergency care A&E encounter duration in hours (AE-T1,
+          AE-Other)"
+      - name: ae_urgent_duration
+        description: "Sum of urgent care A&E encounter duration in hours (UCC, WiC,
+          SDEC)"
+
+      - name: ip_el_encounters
+        description: "Count of elective inpatient admissions"
+      - name: ip_nel_emergency_encounters
+        description: "Count of non-elective emergency inpatient admissions"
+      - name: ip_nel_maternity_encounters
+        description: "Count of non-elective maternity inpatient admissions"
+      - name: ip_nel_other_encounters
+        description: "Count of non-elective other inpatient admissions"
+      - name: ip_el_cost
+        description: "Sum of elective inpatient admission cost"
+      - name: ip_nel_emergency_cost
+        description: "Sum of non-elective emergency inpatient admission cost"
+      - name: ip_nel_maternity_cost
+        description: "Sum of non-elective maternity inpatient admission cost"
+      - name: ip_nel_other_cost
+        description: "Sum of non-elective other inpatient admission cost"
+      - name: ip_el_duration
+        description: "Sum of elective inpatient admission duration in days"
+      - name: ip_nel_emergency_duration
+        description: "Sum of non-elective emergency inpatient admission duration in
+          days"
+      - name: ip_nel_maternity_duration
+        description: "Sum of non-elective maternity inpatient admission duration in
+          days"
+      - name: ip_nel_other_duration
+        description: "Sum of non-elective other inpatient admission duration in days"
+
+      - name: op_fa_encounters
+        description: "Count of outpatient first attendances (OPFA-F2F, OPFA-NFTF)"
+      - name: op_fup_encounters
+        description: "Count of outpatient follow-up attendances (OPFUP-F2F, OPFUP-NFTF)"
+      - name: op_proc_encounters
+        description: "Count of outpatient procedure attendances (OPPROC)"
+      - name: op_fa_cost
+        description: "Sum of outpatient first attendance cost (OPFA-F2F, OPFA-NFTF)"
+      - name: op_fup_cost
+        description: "Sum of outpatient follow-up attendance cost (OPFUP-F2F, OPFUP-NFTF)"
+      - name: op_proc_cost
+        description: "Sum of outpatient procedure attendance cost (OPPROC)"
+      - name: op_fa_duration
+        description: "Sum of outpatient first attendance duration in days (OPFA-F2F,
+          OPFA-NFTF)"
+      - name: op_fup_duration
+        description: "Sum of outpatient follow-up attendance duration in days (OPFUP-F2F,
+          OPFUP-NFTF)"
+      - name: op_proc_duration
+        description: "Sum of outpatient procedure attendance duration in days (OPPROC)"
+
+      - name: mh_spell_encounters
+        description: "Count of mental health service spells"
+      - name: mh_spell_cost
+        description: "Sum of mental health service spell proxy cost - uses national
+          cost collection average (£651) adjusted for NCL"
+      - name: mh_spell_duration
+        description: "Sum of mental health service spell duration in days (includes
+          estimates where actual end date is missing)"

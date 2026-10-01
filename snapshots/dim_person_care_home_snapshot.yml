@@ -1,0 +1,31 @@
+snapshots:
+  - name: dim_person_care_home_snapshot
+    relation: ref('dim_person_care_home')
+    description: >
+      SCD2 history of care-home / residence state per person (care-home entry is a
+      major state change and a key confounder for control-cohort matching).
+      `check_cols` are the residence-state columns only, so a new version opens when
+      residence status changes (other columns ride along, captured at version open).
+      Rows leaving the source are closed via `hard_deletes: invalidate`.
+
+    config:
+      strategy: check
+      unique_key: [person_id]
+      hard_deletes: invalidate
+      check_cols:
+        - is_care_home_resident
+        - is_nursing_home_resident
+        - is_temporary_resident
+        - residence_type
+        - residence_status
+
+    columns:
+      - name: person_id
+        description: "Person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

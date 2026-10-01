@@ -1,0 +1,263 @@
+version: 2
+
+models:
+  - name: int_ltc_lcs_cf_cvd_61_base
+    description: >
+      ICB_CF_CVD_61_BASE shared parent (61 + 62): currently-registered patients aged 40 to
+      <84, not in ICS_METABOLIC_LTC / CF_NHSHC2Y, not on atorvastatin (latest issue <12m) or
+      STAT_COD (latest code <12m), no statin adverse reaction / contraindication ever, no statin
+      declined in the last 5 years.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - people_with_aged_40_84_with_qrisk_recorded_vs1
+              - people_with_aged_40_84_with_qrisk_recorded_vs2
+              - people_with_aged_40_84_with_qrisk_recorded_vs3
+              - people_with_aged_40_84_with_qrisk_recorded_vs4
+              - people_with_aged_40_84_with_qrisk_recorded_vs5
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_63_base
+    description: >
+      ICB_CF_CVD_63_BASE shared parent (63 + 64 + 65): currently-registered patients aged 40 to
+      <84, not in ICS_METABOLIC_LTC, no statin adverse reaction / contraindication ever, with a
+      QRISK refset latest numeric value >= 10. Does not exclude NHSHC2Y or statin users.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - people_with_qrisk_10_vs1
+              - people_with_qrisk_10_vs2
+              - people_with_qrisk_10_vs3
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_61_woEX
+    description: >
+      ICB_CF_CVD_61_woEX: CVD_61_BASE with QRISK refset latest numeric value >= 20. Pre-Rule-1
+      cohort consumed by CVD_61 and as a mutual-exclusion set by 62-66.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 89e5bfaa-b61e-92e0-8e4d-00d41f703b64  # people_at_high_risk_cvd_eligible_pop_with_qrisk20_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_62_woEX
+    description: >
+      ICB_CF_CVD_62_woEX: CVD_61_BASE, excluding the CVD_61_woEX cohort, with QRISK refset latest
+      numeric value >= 15 and < 20. Pre-Rule-1 cohort.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 61b18223-5ea9-7e25-e497-f81bde391db3  # people_at_high_risk_cvd_eligible_population_with_qr15_20_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_63_woEX
+    description: >
+      ICB_CF_CVD_63_woEX: CVD_63_BASE, requiring non-HDL latest > 2.5, excluding CVD_61/62_woEX,
+      including patients on a statin (atorvastatin issue / STAT_COD code or issue, latest <12m).
+      Pre-Rule-1 cohort.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 23f72268-d2d1-6fb0-9fe5-19eeb497790e  # qrisk2_10_on_a_statin_and_a_non_hdl_25_vs1
+              - qrisk2_10_on_a_statin_and_a_non_hdl_25_vs2
+              - qrisk2_10_on_a_statin_and_a_non_hdl_25_vs3
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_64_woEX
+    description: >
+      ICB_CF_CVD_64_woEX: CVD_63_BASE, excluding CVD_61/62/63_woEX, including patients NOT on a
+      statin (no STAT_COD code/issue latest <12m, no statin declined latest <5y). No QRISK upper
+      bound. Pre-Rule-1 cohort.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 73a1adb2-031d-ffa6-1c8a-e0662ddbc9b4  # with_a_qrisk2_10_and_not_on_a_statin_vs1
+              - with_a_qrisk2_10_and_not_on_a_statin_vs2
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_65_woEX
+    description: >
+      ICB_CF_CVD_65_woEX: CVD_63_BASE with QRISK refset latest >= 10, excluding CVD_61/62/63/64_woEX
+      and lipid-lowering adverse reactions, including patients on a statin course (5-ingredient
+      statin list). Pre-Rule-1 cohort.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - ed40f2e7-f9f3-1a17-104a-42af018aaf32  # with_qrisk210_amd_not_on_a_high_intensity_statin_vs1
+              - fdead4de-c567-b1c4-15af-7e6a88bfb587  # with_qrisk210_amd_not_on_a_high_intensity_statin_vs2
+              - with_qrisk210_amd_not_on_a_high_intensity_statin_vs3
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_66_woEX
+    description: >
+      ICB_CF_CVD_66_woEX: registered patients aged 75 to <84, not in ICS_METABOLIC_LTC /
+      CF_NHSHC2Y, not on a statin (STAT_COD code/issue latest <12m, adverse reaction,
+      contraindication, declined latest <5y), excluding CVD_61-65_woEX, with no QRISK refset
+      reading in the last 5 years. Pre-Rule-1 cohort.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - people_with_aged_70_84_with_qrisk_recorded_vs1
+              - people_with_aged_70_84_with_qrisk_recorded_vs2
+              - people_with_aged_70_84_with_qrisk_recorded_vs3
+              - people_with_aged_70_84_with_qrisk_recorded_vs4
+              - a1c6f038-fa5a-8265-93aa-1a1eecf71007  # aged_75_84_years_who_are_not_on_a_statin_and_no_qriskin_l5y_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_61
+    description: >
+      ICB_CF_CVD_61: CVD_61_woEX excluding anyone with a "Cardiovascular disease high risk review
+      declined" code in the last 3 years. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 685fbf55-eda4-0f70-9bfc-3a0b55508944  # people_at_high_risk_cvd_eligible_pop_with_qrisk20_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_62
+    description: >
+      ICB_CF_CVD_62: CVD_62_woEX excluding "Cardiovascular disease high risk review declined" in
+      the last 3 years. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 68d3e80c-08d3-7134-0eb7-4b53b0a59b4b  # people_at_high_risk_cvd_eligible_population_with_qrisk_15_20_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_63
+    description: >
+      ICB_CF_CVD_63: CVD_63_woEX excluding "Cardiovascular disease high risk review declined" in
+      the last 3 years. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - a318069f-408c-4436-fbaa-070018f2db3a  # qrisk2_10_on_a_statin_and_a_non_hdl_25_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_64
+    description: >
+      ICB_CF_CVD_64: CVD_64_woEX excluding "Cardiovascular disease high risk review declined" in
+      the last 3 years. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 20072ac6-a53f-00e5-6e47-a40a38a59995  # with_a_qrisk2_10_and_not_on_a_statin_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_65
+    description: >
+      ICB_CF_CVD_65: CVD_65_woEX excluding "Cardiovascular disease high risk review declined" in
+      the last 3 years. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - e291831b-466c-ed7a-bba4-eeef6449a8f6  # with_qrisk210_amd_not_on_a_high_intensity_statin_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cvd_66
+    description: >
+      ICB_CF_CVD_66: CVD_66_woEX excluding "Cardiovascular disease high risk review declined" in
+      the last 3 years. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - ae5b5d5d-a74a-a1b1-38db-071db479f3ca  # aged_75_84_years_who_are_not_on_a_statin_and_no_qrisk_in_l5y_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]

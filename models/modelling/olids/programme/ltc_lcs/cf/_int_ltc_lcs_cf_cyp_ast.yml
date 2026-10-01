@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: int_ltc_lcs_cf_cyp_ast_61_base_woEX
+    description: >
+      ICB_CF_CYPAST_61_woEX eligible population: registered children/young people aged 18
+      months to 17 years, not on a respiratory register (ICS_RESP_LTC) and not asthma-resolved
+      (latest AST_COD event), with asthma medication or symptom activity in the last 12 months
+      (asthma med products, respiratory drug groups via BNF 03, prednisolone, montelukast,
+      suspected asthma, viral induced wheeze). Pre-Rule-1 population consumed by CYP_AST_61.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - e49a6f96-d7a8-ad43-7448-2166a2858204  # asthma_casefinding_vs1
+              - be433490-3609-4849-20b6-045ddfbdc032  # asthma_casefinding_vs2
+              - 54940f0f-b140-2393-9d8d-0104b3103367  # asthma_casefinding_eligible_patients_vs1
+              - asthma_casefinding_eligible_patients_vs3
+              - asthma_casefinding_eligible_patients_vs4
+              - asthma_casefinding_eligible_patients_vs5
+              - asthma_casefinding_eligible_patients_vs6
+              - asthma_casefinding_eligible_patients_vs7
+              - asthma_casefinding_eligible_patients_vs8
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_cyp_ast_61
+    description: >
+      ICB_CF_CYPAST_61: woEX eligible CYP asthma candidates excluding anyone with a
+      "Respiratory disease screening" code in the last 3 years. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 0bda5482-083e-41ba-a5eb-da032dd51b16  # asthma_casefinding_eligible_patients_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]

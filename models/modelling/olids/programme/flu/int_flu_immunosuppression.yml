@@ -6,15 +6,29 @@ models:
 
       • Four eligibility pathways: diagnosis (IMMDX_COD), medication (IMMRX_COD), admin codes (IMMADM_COD), or chemotherapy/radiotherapy (DXT_CHEMO_COD)
 
-      • Time-limited medication and treatment pathways (6 months lookback from campaign)
+      • Medication and chemotherapy pathways look back six months from the campaign; the admin code pathway looks back six months up to 2025-26 and three years from 2026-27
 
       • Age restriction: minimum 6 months for flu vaccination
 
       • Complex logic combining historical diagnoses with recent treatment indicators
 
-      • Generates data for current and previous flu campaigns automatically
+      • Generates data for every campaign in flu_reported_campaign_ids()
 
       Purpose: Identify people eligible for flu vaccination due to immunosuppression from causes.'
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - campaign_id
+              - person_id
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: DXT_CHEMO_COD,IMMDX_COD,IMMRX_COD,IMM_ADM_COD
+            source: UKHSA_FLU
+            versioned: true
     config:
       meta:
         indicator:
@@ -28,13 +42,13 @@ models:
             Flu vaccination eligibility for people with immunosuppression from any
             cause including
             diagnosis codes (IMMDX_COD), recent immunosuppressant medications (IMMRX_COD
-            within 6 months),
-            recent admin codes indicating immunosuppression (IMMADM_COD within 6 months),
-            or
-            recent chemotherapy/radiotherapy (DXT_CHEMO_COD within 6 months). Uses
-            6-month
-            lookback period for medication/treatment pathways to capture currently
-            immunosuppressed patients.
+            within 6 months), recent admin codes indicating immunosuppression
+            (IMMADM_COD), or recent chemotherapy/radiotherapy (DXT_CHEMO_COD within 6
+            months). The medication and chemotherapy pathways use a six-month lookback to
+            capture currently immunosuppressed patients. Spec v16.0 widened the admin code
+            pathway from six months to three years before the audit end date, so campaigns
+            up to 2025-26 keep the six-month rule they were reported under and 2026-27
+            onward uses three years.
           is_qof: false
           source_column: "person_id"
           sort_order: "FLU_5_IMMUNOSUPPRESSION"
@@ -63,24 +77,22 @@ models:
               threshold_value: "6"
               threshold_operator: "WITHIN"
               threshold_unit: "months"
-              description: "Lookback period for medication and treatment codes"
+              description: "Lookback period for medication and chemotherapy codes"
               sort_order: 2
+            - population_group: "ADMIN_CODE_FROM_2026_27"
+              threshold_type: "RECENCY_PERIOD"
+              threshold_value: "3"
+              threshold_operator: "WITHIN"
+              threshold_unit: "years"
+              description: "Lookback period for immunosuppression admin codes from 2026-27 (six months up to 2025-26)"
+              sort_order: 3
 
         owner:
           name: EddieDavison92
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - campaign_id
-              - person_id
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
     columns:
       - name: campaign_id
-        description: 'Flu campaign identifier (e.g., flu_2024_25, flu_2023_24)'
-        tests:
+        description: 'Flu campaign identifier, for example Flu 2025-26 or Flu 2026-27'
+        data_tests:
           - not_null
       - name: campaign_category
         description: 'Category of eligibility criteria (always "Clinical Condition")'
@@ -88,7 +100,7 @@ models:
         description: 'Risk group classification (always "Immunosuppression")'
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
       - name: qualifying_event_date
         description: 'Date of qualifying immunosuppression event (diagnosis, medication, or treatment)'

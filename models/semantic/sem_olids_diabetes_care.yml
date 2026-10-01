@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: sem_olids_diabetes_care
+    description: |
+      OLIDS Diabetes Care semantic view. Person-grain diabetes-register data
+      covers 8/9 care-process completion, triple treatment targets, and foot
+      check detail. Care-process completion windows are rolling 12 months
+      from the build date, rather than a fixed QOF year end.
+
+      All tables are for the diabetes register and include inactive and
+      deceased people; filter is_active for current-population analysis.
+      Triple targets use latest-ever values. Matching measurement dates, values
+      and separate recency flags explain whether each result is current.
+
+      Exposes person_id for aggregate-only CTE joins to other sem_olids_*
+      views. Never return person_id in final results.
+
+      Tables: dim_person_demographics, fct_person_diabetes_9_care_processes,
+      fct_person_diabetes_triple_target, and fct_person_diabetes_foot_check.
+    config:
+      materialized: semantic_view
+      schema: SEMANTIC
+      meta:
+        owner:
+          name: Eddie Davison

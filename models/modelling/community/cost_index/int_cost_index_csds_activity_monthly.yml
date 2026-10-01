@@ -1,0 +1,45 @@
+version: 2
+models:
+  - name: int_cost_index_csds_activity_monthly
+    description: |
+      CSDS proxy cost per patient and calendar month. Grain:
+      sk_patient_id x activity_month; service is Community Health Contact.
+      Activity counts every contact row and proxy cost is zero for
+      non-costed contacts.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: sk_patient_id
+        description: DMIC pseudonymised NHS number.
+        data_tests:
+          - not_null
+      - name: activity_month
+        description: First day of the calendar month.
+        data_tests:
+          - not_null
+      - name: service
+        description: Community Health Contact.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [Community Health Contact]
+      - name: total_cost
+        description: Proxy cost for the grain, £.
+      - name: total_activity
+        description: Contact rows for the grain.
+      - name: activity_unit
+        description: Unit counted in total_activity.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [contact]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - activity_month

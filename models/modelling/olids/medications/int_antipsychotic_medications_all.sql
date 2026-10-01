@@ -14,7 +14,7 @@ Do not include Lithium as this is already catpured in int_lithium_medications_al
 --date that medication data was first acquired from the Practice systems
 WITH Medsupload as (
 SELECT 
-    MAX(lds_datetime_first_acquired) AS lds_datetime_first_acquired
+    MAX(lds_transform_datetime) AS lds_transform_datetime
     FROM {{ ref('stg_olids_medication_order') }}
 )
 --Chapter 4.2.1 Antipsychotic Drugs
@@ -87,5 +87,5 @@ FROM (
 ) a
 
 --ensure there are orders only up to the data acquired date
-WHERE ORDER_DATE <= (SELECT lds_datetime_first_acquired from Medsupload)
+WHERE ORDER_DATE <= (SELECT lds_transform_datetime from Medsupload)
 ORDER BY person_id, order_date DESC

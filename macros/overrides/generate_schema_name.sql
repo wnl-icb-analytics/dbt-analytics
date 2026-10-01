@@ -4,18 +4,11 @@
     Environments (dev, test, prod) are handled at the database level instead of the schema level.
 
     Automatic schema derivation:
-    - For domains listed in var('auto_schema_domains'), schema names are automatically derived from subdomain folder structure
-    - Pattern: {DOMAIN}_{SUBDOMAIN}
-    - Examples:
-      - models/modelling/olids/diagnoses/ → OLIDS_DIAGNOSES schema
-      - models/reporting/olids/person_analytics/ → OLIDS_PERSON_ANALYTICS schema
-      - models/published/direct_care/olids/childhood_imms/ → OLIDS_CHILDHOOD_IMMS schema
-      - models/published/secondary_use/olids/db_utils/ → OLIDS_DB_UTILS schema
-    - Configure which domains use automatic schema naming via the 'auto_schema_domains' variable in dbt_project.yml
-    - Other domains use explicit schema configuration from dbt_project.yml
-
-    Custom schemas:
-    - When a custom schema is explicitly set in dbt_project.yml, that value is used instead
+    - Staging schemas use the source-system folder name.
+    - OLIDS subdomains use {DOMAIN}_{SUBDOMAIN}.
+    - Other modelling and reporting schemas use the domain folder name.
+    - Reference schemas use the reference subfolder name.
+    - Explicit custom schemas take precedence.
 #}
 
 {% macro generate_schema_name(custom_schema_name, node) -%}
@@ -23,19 +16,25 @@
     {%- set default_schema = target.schema -%}
 
     {%- if custom_schema_name is none -%}
-        {# If no custom schema, derive from folder structure #}
         {%- set path_parts = node.fqn -%}
         {%- set auto_schema_domains = var('auto_schema_domains', []) -%}
 
-        {# Check if model is in modelling or reporting with subdomain folders and domain uses auto schema #}
-        {%- if path_parts | length >= 4 and path_parts[1] in ['modelling', 'reporting'] and path_parts[2] in auto_schema_domains -%}
-            {# Extract domain and subdomain from folder structure #}
+        {# Staging models: schema named after the source-system folder containing the model #}
+        {%- if path_parts | length >= 4 and path_parts[1] == 'staging' -%}
+            {{ path_parts[-2] | upper }}
+        {# Auto-schema domains (olids): {DOMAIN}_{SUBDOMAIN} #}
+        {%- elif path_parts | length >= 4 and path_parts[1] in ['modelling', 'reporting'] and path_parts[2] in auto_schema_domains -%}
             {%- set domain = path_parts[2] | upper -%}
             {%- set subdomain = path_parts[3] | upper -%}
             {{ domain ~ '_' ~ subdomain }}
-        {# Check if model is in published layer with subdomain folders and domain uses auto schema #}
+        {# Other modelling/reporting domains: folder name is the schema (models/modelling/acute -> ACUTE) #}
+        {%- elif path_parts | length >= 4 and path_parts[1] in ['modelling', 'reporting'] -%}
+            {{ path_parts[2] | upper }}
+        {# Reference layer: models/reference/<schema>/model.sql -> <SCHEMA> #}
+        {%- elif path_parts | length >= 4 and path_parts[1] == 'reference' -%}
+            {{ path_parts[2] | upper }}
+        {# Published layer with auto-schema domains #}
         {%- elif path_parts | length >= 5 and path_parts[1] == 'published' and path_parts[3] in auto_schema_domains -%}
-            {# Extract domain and subdomain from folder structure (published/direct_care|secondary_use/olids/subdomain) #}
             {%- set domain = path_parts[3] | upper -%}
             {%- set subdomain = path_parts[4] | upper -%}
             {{ domain ~ '_' ~ subdomain }}

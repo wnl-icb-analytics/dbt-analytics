@@ -1,0 +1,34 @@
+snapshots:
+  - name: cltcs_cohort_membership_snapshot
+    relation: ref('cltcs_cohort_membership')
+    description: >
+      SCD2 history of C-LTCS cohort membership (see docs/archive/snapshots-guide.md).
+      One row per stint per patient: `unique_key` is `patient_id`. A new stint
+      opens when `area_code` changes (`check_cols` is selective — only
+      `area_code`, not metadata that changes every run). Rows removed from
+      `cltcs_cohort_membership` are closed via `hard_deletes: invalidate`
+      (`dbt_valid_to` set). Re-entry after exit opens a new row.
+
+      `dbt_valid_from` / `dbt_valid_to` are the snapshot validity window for
+      each version. `attributes_json` is not in `check_cols`, so it reflects
+      cohort attributes as at the start of that stint (wide fields collapsed
+      in the membership view).
+
+    config:
+      strategy: check
+      unique_key: [patient_id]
+      updated_at: table_refresh_date
+      hard_deletes: invalidate
+      check_cols:
+        - area_code
+
+    columns:
+      - name: patient_id
+        description: "Unique patient identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

@@ -1,0 +1,29 @@
+models:
+  - name: stg_common_efi2_weights
+    description: >
+      Staging model for the eFI2 deficit weights. Each deficit (optionally
+      broken down by a detail_key, e.g. polypharmacy bands, dementia/alcohol
+      sub-levels) carries a weight; the eFI2 score is the sum of the weights of the
+      deficits a person has. Weights per the published paper
+      (https://academic.oup.com/ageing/article/54/4/afaf077/8101467).
+      Migrated from stg_aic_base_efi2_weights (AIC_DEV.BASE_EFI2__WEIGHTS) to
+      DATA_LAKE__NCL.COMMON.EFI2_WEIGHTS.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    tests:
+      # Fails if the weights build empty (an empty table zeroes every score).
+      - dbt_utils.at_least_one:
+          column_name: deficit
+    columns:
+      - name: deficit
+        description: Frailty deficit (joins to the rules output on lower(deficit)).
+        tests:
+          - not_null
+      - name: detail_key
+        description: >
+          Sub-level within a deficit where the weight varies by band (e.g. '5-9' /
+          '10+' for polypharmacy). Null where the deficit has a single weight.
+      - name: weight
+        description: Contribution of the deficit to the eFI2 score. Can be negative.

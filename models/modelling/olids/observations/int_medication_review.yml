@@ -1,0 +1,20 @@
+models:
+  - name: int_medication_review
+    description: 'COMPREHENSIVE MEDICATION REVIEW. Built for SMI Longer Lives campaign using EL_CACHE Ref SMI_LONGER_LIVES_MEDICINES_REVIEW_COD'
+
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: SMI_LONGER_LIVES_MEDICINES_REVIEW
+            source: ECL_CACHE
+    columns:
+      - name: person_id
+        tests:
+          - not_null

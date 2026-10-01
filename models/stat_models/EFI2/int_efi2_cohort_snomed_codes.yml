@@ -1,0 +1,33 @@
+models:
+  - name: int_efi2_cohort_snomed_codes
+    description: >
+      eFI2-relevant observations, joined to the eFI2 codelist
+      and filtered to each code's time-constraint and age-limit windows. One row
+      per (person, code, observation). Port of lds-pipelines stg_efi2__cohort_snomed_codes.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    columns:
+      - name: person_id
+        description: Person identifier.
+        tests:
+          - not_null
+      - name: deficit
+        description: Frailty deficit the code contributes to.
+      - name: other_instructions
+        description: Free-text rule the code is subject to (drives the rules engine).
+      - name: snomed_code
+        description: SNOMED concept id of the matched observation.
+      - name: result_value
+        description: Numeric result value of the observation, where present.
+      - name: clinical_effective_date
+        description: Date of the observation.
+      - name: age_at_event
+        description: Age in years at the observation date.
+      - name: age_at_end
+        description: Age in years at the end (as-at) date.
+      - name: gender
+        description: Normalised gender carried from the patient list.
+      - name: end_date
+        description: As-at date for the scoring run.

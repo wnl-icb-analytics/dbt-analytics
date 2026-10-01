@@ -1,0 +1,74 @@
+models:
+  - name: stg_tat_turnaround_times
+    description: |
+      Staged imaging diagnostic Turnaround Times (TAT) provider submissions, typed and
+      normalised from the all-STRING raw landing (DATA_LAKE.TAT.TURNAROUND_TIMES_RAW,
+      loaded by the tat_provider_ingest pipeline). Header-spelling variants are reconciled,
+      datetimes parsed (UK 'DD/MM/YYYY HH:MI' + ISO), and trust/period derived from the
+      filename. Grain: one row per diagnostic test event (tat_event_id); exact re-loads of
+      the same file are de-duplicated. Flex/Freeze classification and TAT-hour calculations
+      are downstream business logic, not applied here. Analysts querying Turnaround
+      Times should use int_tat_turnaround_times, not this staging table and not
+      DATA_LAKE__NCL.ANALYST_MANAGED.TURNAROUND_TIMES_RAW.
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: tat_event_id
+        description: Surrogate key for a diagnostic test event (hash of filename + trust + test datetimes + imaging codes + provider/referrer/practice + demographics). Grain of the model.
+        data_tests:
+          - unique
+          - not_null
+      - name: trust_code
+        description: Provider trust code (chars 17-19 of the submission filename, e.g. RAL, RP4).
+      - name: submission_date
+        description: Date the file was submitted (YYYYMMDD prefix of the filename).
+      - name: data_period
+        description: First day of the nominal data month for the submission (from the _MonYY[YY] suffix).
+      - name: month
+        description: 3-letter month abbreviation of the data period (e.g. Apr).
+      - name: year
+        description: 4-digit year of the data period.
+      - name: ethnic_category
+        description: Patient ethnic category code.
+      - name: person_gender
+        description: Patient gender code.
+      - name: general_medical_practice
+        description: GP practice ODS code.
+      - name: patient_source_type
+        description: Patient source/setting type code (integer).
+      - name: referrer_code
+        description: Referrer code.
+      - name: referring_organisation
+        description: Referring organisation (COALESCE of ReferringOrg / ReferringOrganisation variants).
+      - name: diagnostic_test_request_date_time
+        description: Datetime the diagnostic test was requested.
+      - name: diagnostic_test_request_received_date_time
+        description: Datetime the test request was received.
+      - name: diagnostic_test_date_time
+        description: Datetime the diagnostic test (scan) was performed.
+      - name: service_report_issue_date_time
+        description: Datetime the service report was issued.
+      - name: imaging_code_nicip
+        description: NICIP imaging code (COALESCE of spaced/unspaced header variants).
+      - name: imaging_code_snomed
+        description: SNOMED imaging code (COALESCE of spaced/unspaced header variants).
+      - name: combined_imaging_code
+        description: NICIP preferred, falling back to SNOMED when NICIP is null.
+      - name: provider_site_code
+        description: Provider site code (COALESCE of spaced/unspaced header variants).
+      - name: priority_type_code
+        description: Priority type code (integer).
+      - name: cancer_pathway_flag
+        description: Raw cancer pathway flag as submitted (Y/N mapping applied downstream).
+      - name: file_name
+        description: Source filename (stage path and .gz stripped).
+      - name: source_file
+        description: Full stage path the row was loaded from (provenance).
+      - name: loaded_at
+        description: Timestamp the row was loaded into the raw layer (provenance).

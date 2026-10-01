@@ -1,6 +1,6 @@
 models:
   - name: stg_olids_patient_address
-    description: Patient address history linking patients to postcodes. Deduplicated by id - note that deleted records are not filtered as lds_is_deleted is not used in this table.
+    description: Patient address history linking patients to plain postcodes. Deleted records are excluded.
     config:
       meta:
         owner:
@@ -15,22 +15,23 @@ models:
         description: Foreign key to patient.id
       - name: address_type_source_concept_id
         description: Foreign key to concept.id - type of address (home, temporary, work, etc.)
+      # REVIEW: plain postcode replaces the removed postcode hash.
       - name: postcode_hash
-        description: Foreign key to postcode_hash.postcode_hash - hashed postcode
+        description: Pseudonymised postcode hash (source POSTCODE column)
+      - name: is_home_address
+        description: True for a home address
       - name: start_date
         description: Start date of the patient living at this address
       - name: end_date
         description: End date of the patient living at this address
       - name: person_id
         description: Foreign key to person.id - person-level identifier
-      - name: lds_id
-        description: LDS system identifier
       - name: publisher_organisation_code
         description: "ODS code of the publisher organisation (post-2026 OLIDS rename — was record_owner_organisation_code)"
-      - name: lds_datetime_first_acquired
-        description: Datetime when data was acquired by LDS
-      - name: lds_start_datetime
-        description: LDS datetime stamp from which the record version was correct - used for deduplication to get the latest record
+      - name: lds_transform_datetime
+        description: Datetime when the row was transformed
+      - name: lds_is_deleted
+        description: Soft-delete flag
       - name: lds_source_record_id
         description: LDS assigned unique identifier for the source record version
     tests:

@@ -124,87 +124,87 @@ FROM {{ ref('int_ltc_lcs_cf_base_population') }} AS base
 
 -- AF joins
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_af_61') }} AS af_61
+    {{ ref('int_ltc_lcs_cf_af_61') }} AS af_61
     ON base.person_id = af_61.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_af_62') }} AS af_62
+    {{ ref('int_ltc_lcs_cf_af_62') }} AS af_62
     ON base.person_id = af_62.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_hf_61') }} AS hf_61
+    {{ ref('int_ltc_lcs_cf_hf_61') }} AS hf_61
     ON base.person_id = hf_61.person_id
 
 -- CKD joins
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_ckd_61') }} AS ckd_61
+    {{ ref('int_ltc_lcs_cf_ckd_61') }} AS ckd_61
     ON base.person_id = ckd_61.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_ckd_62') }} AS ckd_62
+    {{ ref('int_ltc_lcs_cf_ckd_62') }} AS ckd_62
     ON base.person_id = ckd_62.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_ckd_63') }} AS ckd_63
+    {{ ref('int_ltc_lcs_cf_ckd_63') }} AS ckd_63
     ON base.person_id = ckd_63.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_ckd_64') }} AS ckd_64
+    {{ ref('int_ltc_lcs_cf_ckd_64') }} AS ckd_64
     ON base.person_id = ckd_64.person_id
 
 -- CVD joins
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_cvd_61') }} AS cvd_61
+    {{ ref('int_ltc_lcs_cf_cvd_61') }} AS cvd_61
     ON base.person_id = cvd_61.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_cvd_62') }} AS cvd_62
+    {{ ref('int_ltc_lcs_cf_cvd_62') }} AS cvd_62
     ON base.person_id = cvd_62.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_cvd_63') }} AS cvd_63
+    {{ ref('int_ltc_lcs_cf_cvd_63') }} AS cvd_63
     ON base.person_id = cvd_63.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_cvd_64') }} AS cvd_64
+    {{ ref('int_ltc_lcs_cf_cvd_64') }} AS cvd_64
     ON base.person_id = cvd_64.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_cvd_65') }} AS cvd_65
+    {{ ref('int_ltc_lcs_cf_cvd_65') }} AS cvd_65
     ON base.person_id = cvd_65.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_cvd_66') }} AS cvd_66
+    {{ ref('int_ltc_lcs_cf_cvd_66') }} AS cvd_66
     ON base.person_id = cvd_66.person_id
 
 -- Diabetes joins
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_dm_61') }} AS dm_61
+    {{ ref('int_ltc_lcs_cf_dm_61') }} AS dm_61
     ON base.person_id = dm_61.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_dm_62') }} AS dm_62
+    {{ ref('int_ltc_lcs_cf_dm_62') }} AS dm_62
     ON base.person_id = dm_62.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_dm_63') }} AS dm_63
+    {{ ref('int_ltc_lcs_cf_dm_63') }} AS dm_63
     ON base.person_id = dm_63.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_dm_64') }} AS dm_64
+    {{ ref('int_ltc_lcs_cf_dm_64') }} AS dm_64
     ON base.person_id = dm_64.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_dm_65') }} AS dm_65
+    {{ ref('int_ltc_lcs_cf_dm_65') }} AS dm_65
     ON base.person_id = dm_65.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_dm_66') }} AS dm_66
+    {{ ref('int_ltc_lcs_cf_dm_66') }} AS dm_66
     ON base.person_id = dm_66.person_id
 
 -- Hypertension joins
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_htn_61') }} AS htn_61
+    {{ ref('int_ltc_lcs_cf_htn_61') }} AS htn_61
     ON base.person_id = htn_61.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_htn_62') }} AS htn_62
+    {{ ref('int_ltc_lcs_cf_htn_62') }} AS htn_62
     ON base.person_id = htn_62.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_htn_63') }} AS htn_63
+    {{ ref('int_ltc_lcs_cf_htn_63') }} AS htn_63
     ON base.person_id = htn_63.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_htn_65') }} AS htn_65
+    {{ ref('int_ltc_lcs_cf_htn_65') }} AS htn_65
     ON base.person_id = htn_65.person_id
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_htn_66') }} AS htn_66
+    {{ ref('int_ltc_lcs_cf_htn_66') }} AS htn_66
     ON base.person_id = htn_66.person_id
 
 -- CYP Asthma join
 LEFT JOIN
-    {{ ref('dim_ltc_lcs_cf_cyp_ast_61') }} AS cyp_ast_61
+    {{ ref('int_ltc_lcs_cf_cyp_ast_61') }} AS cyp_ast_61
     ON base.person_id = cyp_ast_61.person_id

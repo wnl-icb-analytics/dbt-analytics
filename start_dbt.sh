@@ -7,11 +7,8 @@
 # dbt runs on the Fusion engine (installed to ~/.local/bin), NOT a Python
 # package. The .venv exists only for the Python tooling in scripts/.
 
-# Pin a Fusion version to override the default (e.g. 2.0.0-preview.188).
-# Leave empty to track the latest version from versions.json.
-FUSION_VERSION_PIN=""
-# Used only if versions.json can't be reached and no pin is set.
-FUSION_FALLBACK_VERSION="2.0.0-preview.188"
+# Fusion is unpinned. CI installs latest and the VS Code extension manages the
+# local version. This script installs latest only when dbt is missing.
 
 actions=()
 install_dir="$HOME/.local/bin"
@@ -65,50 +62,21 @@ echo ""
 # 3. dbt Fusion engine
 # ---------------------------------------------------------------------------
 echo "Checking dbt Fusion engine..."
-resolve_fusion_version() {
-    if [ -n "$FUSION_VERSION_PIN" ]; then echo "$FUSION_VERSION_PIN"; return; fi
-    local tag
-    tag=$(curl -fsSL https://public.cdn.getdbt.com/fs/versions.json 2>/dev/null \
-        | python3 -c "import sys,json;print(json.load(sys.stdin).get('stable',{}).get('tag','').lstrip('v'))" 2>/dev/null)
-    if [ -n "$tag" ]; then echo "$tag"; else echo "$FUSION_FALLBACK_VERSION"; fi
-}
-
 install_fusion() {
-    local version="$1" mode="$2"
-    if [ "$mode" = "update" ]; then
-        curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --version "$version" --target "$fusion_target" --update
-    else
-        curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --version "$version" --target "$fusion_target"
-    fi
+    curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --target "$fusion_target"
 }
 
-dbt_present=false
-command -v dbt &> /dev/null && dbt_present=true
-# Throttle the latest-version lookup to once per day (skipped when pinned or missing).
-marker="${TMPDIR:-/tmp}/wnl_fusion_update_check"
-today=$(date +%Y-%m-%d)
-checked_today=false
-[ -f "$marker" ] && [ "$(cat "$marker")" = "$today" ] && checked_today=true
-
-if [ "$dbt_present" = false ] || [ -n "$FUSION_VERSION_PIN" ] || [ "$checked_today" = false ]; then
-    desired=$(resolve_fusion_version)
-    current=""
-    [ "$dbt_present" = true ] && current=$(dbt --version 2>&1 | head -1)
-    if ! echo "$current" | grep -q "$desired"; then
-        echo "[INFO] Installing dbt Fusion $desired..."
-        if [ "$dbt_present" = true ]; then install_fusion "$desired" update; else install_fusion "$desired" install; fi
-        export PATH="$install_dir:$PATH"
-    else
-        echo "[OK] dbt Fusion $desired"
-    fi
-    [ -z "$FUSION_VERSION_PIN" ] && echo "$today" > "$marker"
+if ! command -v dbt &> /dev/null; then
+    echo "[INFO] Installing dbt Fusion (latest)..."
+    install_fusion
+    export PATH="$install_dir:$PATH"
 else
-    echo "[OK] dbt Fusion checked for updates today"
+    echo "[OK] dbt Fusion available; the VS Code extension manages updates"
 fi
 
 if ! command -v dbt &> /dev/null; then
     echo "[WARNING] dbt Fusion not available - install manually:"
-    echo "  curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --version $FUSION_FALLBACK_VERSION --target $fusion_target"
+    echo "  curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --target $fusion_target"
     actions+=("Install dbt Fusion (see CONTRIBUTING.md)")
 else
     echo "  $(dbt --version 2>&1 | head -1)"
@@ -251,7 +219,16 @@ echo ""
 # ---------------------------------------------------------------------------
 # 7. dbt packages - install if missing, or if packages.yml changed since last install
 # ---------------------------------------------------------------------------
+# Drop a stale dbt-core-format package-lock.yml. Fusion flags it (dbt1041 "Old
+# format package-lock.yml") and its pins can clash with packages.yml (dbt1005).
+# The old format lacks the per-package `name:` field Fusion writes, so detect by
+# its absence; `dbt deps` then regenerates a current, in-sync lock.
 need_deps=false
+if [ -f "package-lock.yml" ] && ! grep -q '^[[:space:]]*name:' package-lock.yml; then
+    rm -f package-lock.yml
+    echo "[INFO] Removed old-format package-lock.yml - dbt deps will regenerate it"
+    need_deps=true
+fi
 if [ ! -d "dbt_packages" ]; then
     need_deps=true
 elif [ -f "packages.yml" ] && [ "packages.yml" -nt "dbt_packages" ]; then

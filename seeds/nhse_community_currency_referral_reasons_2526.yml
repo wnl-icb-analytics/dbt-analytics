@@ -1,0 +1,40 @@
+version: 2
+
+seeds:
+  - name: nhse_community_currency_referral_reasons_2526
+    description: >
+      NHSE Community Currency Grouping v1.1 referral-reason-to-currency mapping
+      for 2025/26 CSDS data. Grain: one row per age_category, team_type_code,
+      and primary_referral_reason. Reason code 016 is absent from the source
+      list; 999 means reason not known.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+      column_types:
+        age_category: varchar(10)
+        team_type_code: varchar(10)
+        primary_referral_reason: varchar(10)
+        currency_code: varchar(10)
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - age_category
+              - team_type_code
+              - primary_referral_reason
+    columns:
+      - name: age_category
+        description: Adult or CYP category.
+        data_tests:
+          - not_null
+      - name: team_type_code
+        description: CYP102 service or team type code.
+        data_tests:
+          - not_null
+      - name: primary_referral_reason
+        description: CYP101 primary referral reason code.
+        data_tests:
+          - not_null
+      - name: currency_code
+        description: Community contact currency code.

@@ -1,0 +1,20 @@
+models:
+  - name: dim_person_ccms_snapshot_input
+    description: >
+      Thin snapshot-input projection of dim_person_ccms (person_id +
+      cambridge_comorbidity_score) that excludes the every-run last_updated /
+      ccms_score_id columns so the SCD2 snapshot versions only on genuine score
+      changes. Feeds dim_person_ccms_snapshot.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: person_id
+        description: "Person identifier; one row per person (snapshot unique_key)."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: cambridge_comorbidity_score
+        description: "Cambridge multimorbidity score."

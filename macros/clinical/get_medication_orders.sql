@@ -1,6 +1,15 @@
-{% macro get_medication_orders(bnf_code=none, cluster_id=none, source=none, include_history=false) %}
+{% macro get_medication_orders(bnf_code=none, cluster_id=none, source=none, include_history=false, versioned=false) %}
     -- Optional source parameter to filter to specific refset (e.g., 'LTC_LCS')
     -- include_history=true expands cluster codes with retired SNOMED predecessors via SCT_History
+    -- versioned=true reads every published version of a UKHSA cluster from
+    -- stg_reference_ukhsa_codecluster_versions and adds spec_version to the output, so the
+    -- caller can pin each campaign to the version it was reported under (UKHSA sources only)
+{% if versioned and (source is none or not source.startswith('UKHSA_')) %}
+    {{ exceptions.raise_compiler_error("get_medication_orders(versioned=true) needs a UKHSA source") }}
+{% endif %}
+{% if versioned and include_history %}
+    {{ exceptions.raise_compiler_error("get_medication_orders does not support include_history with versioned=true") }}
+{% endif %}
     --
     -- BNF filtering uses pre-computed columns from stg_olids_medication_order
     -- (clustered on bnf_chapter, mapped_concept_code in dbt-olids), so 2/4-char
@@ -52,8 +61,9 @@
         SELECT DISTINCT
             code as mapped_concept_code,
             cluster_id,
-            cluster_description
-        FROM {{ ref('stg_reference_combined_codesets') }}
+            cluster_description{% if versioned %},
+            spec_version{% endif %}
+        FROM {% if versioned %}{{ ref('stg_reference_ukhsa_codecluster_versions') }}{% else %}{{ ref('stg_reference_combined_codesets') }}{% endif %}
         WHERE UPPER(cluster_id) IN ('{{ cluster_ids_str }}')
         {% if source is not none %}
         AND source = '{{ source }}'
@@ -96,7 +106,8 @@
         mo.statement_medication_name,
         mo.mapped_concept_code,
         mo.mapped_concept_display,
-        cc.cluster_id,
+        cc.cluster_id,{% if versioned %}
+        cc.spec_version,{% endif %}
         mo.bnf_chapter,
         mo.bnf_section,
         mo.bnf_code,

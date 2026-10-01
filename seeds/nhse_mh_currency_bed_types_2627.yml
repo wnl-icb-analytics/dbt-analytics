@@ -1,0 +1,33 @@
+version: 2
+
+seeds:
+  - name: nhse_mh_currency_bed_types_2627
+    description: >
+      MHS502 admitted patient class mappings for 2026/27 mental health
+      currencies. v5 code 22 is Neurocognitive and 40 is Personality Disorders;
+      this corrects labels in the NHSE notebook. Grain: one row per admitted
+      patient class.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+      column_types:
+        mh_admitted_patient_class: varchar(10)
+        mhsds_version: varchar(10)
+        population_category: varchar(20)
+        setting_code: varchar(10)
+        setting_name: varchar(100)
+    columns:
+      - name: mh_admitted_patient_class
+        description: MHS502 admitted patient class code.
+        data_tests:
+          - not_null
+          - unique
+      - name: mhsds_version
+        description: MHSDS version for the code set.
+      - name: population_category
+        description: Mapped population category or cannot_classify.
+      - name: setting_code
+        description: Inpatient setting suffix.
+      - name: setting_name
+        description: Inpatient setting name.

@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: sem_cost_index
+    description: |
+      Cost Index semantic view. Grain is patient x month x service grouping x
+      service x attributable flag x cost basis x source x activity unit.
+      It includes SLAM actual cost from 2021-04 and EPD prescribing from
+      2018-04; EPD is about 12 months behind SLAM.
+
+      Filter is_patient_attributable for patient-level analysis. The latest
+      incomplete SLAM month is excluded, so recent combined totals are
+      asymmetric. About 1.5% of cost is Unmapped service.
+
+      Exposes sk_patient_id for aggregate-only CTE joins to
+      sem_olids_population. Never return sk_patient_id in final results.
+
+      Table: fct_person_cost_index_monthly.
+    config:
+      materialized: semantic_view
+      schema: SEMANTIC
+      meta:
+        owner:
+          name: Eddie Davison

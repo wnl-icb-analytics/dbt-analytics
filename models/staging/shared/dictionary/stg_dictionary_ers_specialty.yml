@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_dictionary_ers_specialty
+    description: "Staging model for eRS specialty dictionary. 1:1 passthrough from raw layer, no joins.\nNote: downstream in int_ers_action_base, this dictionary is joined on 'display' matched against the output of the 2WW specialty name mapping function/macro, not on 'code' — see ers_2ww_specialty_map.\nContact: jonathan.linney@nhs.net"
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+    columns:
+      - name: code
+        data_type: varchar
+        description: "Specialty code"
+        tests:
+          - unique
+          - not_null
+      - name: meaning
+        data_type: varchar
+        description: "Specialty meaning/label (used as TFC_CODE downstream in int_ers_action_base)"
+      - name: display
+        data_type: varchar
+        description: "Specialty display text (joined downstream against the 2WW specialty name mapping function output, not against code)"

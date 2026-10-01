@@ -1,0 +1,254 @@
+# dbt Scheduled Runs
+#
+# Replaces the Snowflake task DAGs (Snowflake-Deployment: dbt Admin/dbt Prod
+# Automated Runs/setup.sql). Runs dbt (Fusion) directly on the runner.
+#
+# Schedules (GitHub cron is UTC; times target 05:00/08:00/13:00
+# Europe/London in summer, an hour earlier in winter):
+#   0 4 * * 0,2-6  Daily build            build --select +tag:daily source:olids+
+#                                         resource_type:snapshot+ tag:indicator_definitions+
+#                                         --indirect-selection cautious --exclude tag:monthly-full
+#   0 4 * * 1      Weekly build           build --select +staging+ tag:indicator_definitions+
+#                                         --exclude tag:monthly-full (skips the 1st)
+#   0 4 1 * *      Monthly full refresh   build --select +staging+ tag:indicator_definitions+
+#                                         --full-refresh
+#   0 7,12 * * *   SDL intraday           SDL refresh procs, then
+#                                         build --select source:sdl_wnl+
+#   17 19 1 * *   Development full refresh from latest main, first evening monthly
+#                                         build --full-refresh --target dev
+#                 20:17 Europe/London in summer, 19:17 in winter.
+#
+# The daily build selects every descendant of the OLIDS source, regardless of
+# its folder, plus existing `daily` tags. Snapshots run in the same build so
+# dbt orders each snapshot before its consumers. `snapshots` remains a
+# workflow_dispatch option for ad-hoc runs.
+#
+# The daily build uses cautious indirect selection so a test runs only when
+# every model it reads is in the selection. Staging views for every feed carry
+# the daily tag, so under the default eager rule a singular test comparing a
+# staging view with a weekly-built table ran every day and failed whenever
+# the source moved between Monday builds (organisation_source_codes_retained,
+# mhsds_clinical_icd10_labels). Those cross-cadence tests now run in the weekly
+# build, where +staging+ selects both sides.
+#
+# def_indicator, def_indicator_usage and def_indicator_thresholds are built
+# from model metadata in the manifest and call no ref(), so they are DAG roots
+# that no upstream selector reaches. `+staging+` rebuilt only their siblings
+# def_indicator_codes and def_indicator_summary, which reach staging through
+# stg_reference_combined_codesets, and the family drifted apart until the
+# relationships test on def_indicator_codes.indicator_id failed. Every build
+# that can rebuild a consumer needs the indicator_definitions tag: the daily
+# build refreshes ltc_lcs_cf_dashboard_base, which inner joins def_indicator
+# and def_indicator_usage to choose the case-finding indicators it publishes,
+# so a stale parent silently drops a newly added indicator from the dashboard.
+#
+# Does NOT publish artifacts to the DBT_ARTIFACTS stage: latest/ is the
+# state:modified baseline meaning "main, as deployed", written only by
+# dbt-deploy.yml. Publishing here would mark [skip deploy] commits as current.
+#
+# Orphaned-object cleanup (TASK_CLEANUP_ORPHANED_DBT_OBJECTS) stays as a
+# Snowflake task - it does not depend on the dbt project object.
+
+name: dbt Scheduled Runs
+
+# Schedule events have no run name of their own, so every run would show as
+# "dbt Scheduled Runs" in the Actions list. Mirrors the cron -> run type
+# mapping in the "Resolve run type" step; keep the two in step.
+# Weekly-on-the-1st still titles itself "dbt weekly" even though it skips -
+# run-name resolves before the job runs.
+run-name: >-
+  dbt ${{ inputs.run_type
+  || (github.event.schedule == '0 7,12 * * *' && 'sdl-intraday')
+  || (github.event.schedule == '0 4 1 * *' && 'monthly-full-refresh')
+  || (github.event.schedule == '17 19 1 * *' && 'dev-monthly-full-refresh')
+  || (github.event.schedule == '0 4 * * 1' && 'weekly')
+  || 'daily' }}
+
+on:
+  schedule:
+    - cron: '0 4 * * 0,2-6'
+    - cron: '0 4 * * 1'
+    - cron: '0 4 1 * *'
+    - cron: '0 7,12 * * *'
+    - cron: '17 19 1 * *'
+  workflow_dispatch:
+    inputs:
+      run_type:
+        description: Which scheduled run to execute
+        type: choice
+        required: true
+        options:
+          - daily
+          - weekly
+          - monthly-full-refresh
+          - dev-monthly-full-refresh
+          - snapshots
+          - sdl-intraday
+
+# Dev refreshes also share the merge-validation lock before joining the prod queue.
+# Other schedules retain independent workflow runs and use only the job queue below.
+concurrency:
+  group: ${{ (inputs.run_type == 'dev-monthly-full-refresh' || github.event.schedule == '17 19 1 * *') && 'dbt-pr-validation-merge-queue' || format('dbt-scheduled-{0}', github.run_id) }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  run:
+    name: Scheduled dbt run
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    # Share warehouse capacity with production deploys and scheduled builds.
+    concurrency:
+      group: dbt-prod
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      actions: read  # previous successful run for failure attribution
+      contents: read
+      issues: write  # failure issues (report_dbt_failures.py)
+      pull-requests: read  # associate dependency changes with merged PRs
+    env:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE__USERNAME }}
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
+      SNOWFLAKE_ROLE: DBT_ADMIN
+      SNOWFLAKE_WAREHOUSE: WH_WNL_ENGINEERING_M
+    steps:
+      - name: Resolve run type
+        id: plan
+        env:
+          CRON: ${{ github.event.schedule }}
+          DISPATCH_RUN_TYPE: ${{ inputs.run_type }}
+        run: |
+          case "${DISPATCH_RUN_TYPE:-$CRON}" in
+            daily|"0 4 * * 0,2-6")        run_type=daily ;;
+            weekly|"0 4 * * 1")           run_type=weekly ;;
+            monthly-full-refresh|"0 4 1 * *") run_type=monthly-full-refresh ;;
+            dev-monthly-full-refresh|"17 19 1 * *") run_type=dev-monthly-full-refresh ;;
+            snapshots)                    run_type=snapshots ;;  # dispatch only
+            sdl-intraday|"0 7,12 * * *")  run_type=sdl-intraday ;;
+            *) echo "Unknown schedule: $CRON" >&2; exit 1 ;;
+          esac
+
+          # Weekly skips the 1st of the month - the monthly full refresh covers it.
+          if [ "$run_type" = "weekly" ] && [ "$(date -u +%d)" = "01" ]; then
+            echo "1st of month - monthly full refresh covers this; skipping weekly"
+            run_type=skip
+          fi
+
+          dbt_target=prod
+          case "$run_type" in
+            daily)                dbt_args="build --select +tag:daily source:olids+ resource_type:snapshot+ tag:indicator_definitions+ --indirect-selection cautious --exclude tag:monthly-full" ;;
+            weekly)               dbt_args="build --select +staging+ tag:indicator_definitions+ --exclude tag:monthly-full" ;;
+            monthly-full-refresh) dbt_args="build --select +staging+ tag:indicator_definitions+ --full-refresh" ;;
+            dev-monthly-full-refresh) dbt_args="build --full-refresh"; dbt_target=dev ;;
+            snapshots)            dbt_args="snapshot" ;;
+            sdl-intraday)         dbt_args="build --select source:sdl_wnl+" ;;
+            skip)                 dbt_args="" ;;
+          esac
+
+          echo "run_type=$run_type" >> "$GITHUB_OUTPUT"
+          echo "dbt_args=$dbt_args" >> "$GITHUB_OUTPUT"
+          if [ "$run_type" = "monthly-full-refresh" ]; then
+            echo "EFI2_HISTORY_WAREHOUSE=WH_WNL_OLIDS_L" >> "$GITHUB_ENV"
+          fi
+          echo "dbt_target=$dbt_target" >> "$GITHUB_OUTPUT"
+          echo "Run type: $run_type / dbt $dbt_args --target $dbt_target"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Resolve main after entering the shared queue, including manual dev runs.
+          ref: ${{ steps.plan.outputs.dbt_target == 'dev' && 'main' || github.ref }}
+          persist-credentials: false
+          # Failure attribution compares dependency-path changes with the last
+          # successful run of the same schedule type.
+          fetch-depth: 0
+
+      - name: Install dbt Fusion
+        if: steps.plan.outputs.run_type != 'skip'
+        run: |
+          # Latest Fusion, unpinned - matches the VS Code extension.
+          curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --target x86_64-unknown-linux-gnu --update
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/dbt" --version
+
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        if: steps.plan.outputs.run_type == 'sdl-intraday'
+        with:
+          version: "0.9.x"
+
+      - name: Write Snowflake private key
+        if: steps.plan.outputs.run_type != 'skip'
+        env:
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE__PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.snowflake
+          printf '%s\n' "$SNOWFLAKE_PRIVATE_KEY" > ~/.snowflake/rsa_key.p8
+          chmod 600 ~/.snowflake/rsa_key.p8
+          echo "SNOWFLAKE_PRIVATE_KEY_PATH=$HOME/.snowflake/rsa_key.p8" >> "$GITHUB_ENV"
+
+      # Deterministic refresh -> build chaining, as the old task DAG had.
+      # DBT_ADMIN holds DATA_PLATFORM_MANAGER, so it can run the DPM-owned
+      # SDL refresh procs (EXECUTE AS OWNER).
+      - name: Refresh SDL
+        if: steps.plan.outputs.run_type == 'sdl-intraday'
+        run: |
+          uv run --with snowflake-connector-python python - << 'EOF'
+          import os
+          import snowflake.connector
+
+          conn = snowflake.connector.connect(
+              account=os.environ["SNOWFLAKE_ACCOUNT"],
+              user=os.environ["SNOWFLAKE_USER"],
+              private_key_file=os.environ["SNOWFLAKE_PRIVATE_KEY_PATH"],
+              private_key_file_pwd=os.environ.get("SNOWFLAKE_PRIVATE_KEY_PASSPHRASE", "").encode() or None,
+              role="DBT_ADMIN",
+              warehouse="WH_NCL_ENGINEERING_XS",
+          )
+          try:
+              cur = conn.cursor()
+              for proc in ("DATA_LAKE.SDL.SP_META_REFRESH_ALL()",
+                           "DATA_LAKE.SDL.SP_INCREMENTAL_LOAD_ALL()"):
+                  print(f"CALL {proc}")
+                  cur.execute(f"CALL {proc}")
+                  print(cur.fetchall())
+          finally:
+              conn.close()
+          EOF
+
+      - name: Install dbt packages
+        if: steps.plan.outputs.run_type != 'skip'
+        run: dbt deps
+
+      - name: dbt run
+        id: build
+        if: steps.plan.outputs.run_type != 'skip'
+        env:
+          DBT_ARGS: ${{ steps.plan.outputs.dbt_args }}
+          DBT_TARGET: ${{ steps.plan.outputs.dbt_target }}
+        run: |
+          read -r -a dbt_args <<< "$DBT_ARGS"
+          dbt "${dbt_args[@]}" --target "$DBT_TARGET" --profiles-dir .
+
+      # Failure notifications ride the GitHub -> Teams app via issues (no
+      # webhooks; NHS-tenant Teams blocks them). One open issue per run type,
+      # commented with the failed nodes on repeat failures, closed on
+      # recovery. SDL intraday is excluded by design.
+      # Teams channel setup:
+      # @github subscribe wnl-icb-analytics/dbt-analytics +label:"dbt-scheduled-run-failure"
+      - name: Report or resolve failure issue
+        if: ${{ !cancelled() && !contains(fromJSON('["sdl-intraday", "skip"]'), steps.plan.outputs.run_type) }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DBT_CONTEXT: ${{ steps.plan.outputs.run_type }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ISSUE_LABEL: dbt-scheduled-run-failure
+          # Allows open scheduled issues created before the label split to be
+          # found on recovery, or relabelled if they fail again.
+          LEGACY_ISSUE_LABEL: dbt-run-failure
+        run: python3 .github/scripts/report_dbt_failures.py
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f ~/.snowflake/rsa_key.p8

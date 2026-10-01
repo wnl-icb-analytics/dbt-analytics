@@ -1,0 +1,31 @@
+models:
+  - name: stg_reference_ethnicity_codes
+    description: >
+      Ethnicity codes with category, subcategory, granular classification and
+      selection priority, one row per code.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: code
+        description: Primary key - ethnicity code
+        tests:
+          - unique
+          - not_null
+      - name: term
+        description: Ethnicity term/description
+      - name: category
+        description: High-level ethnicity category
+      - name: subcategory
+        description: Ethnicity subcategory
+      - name: granular
+        description: Most granular ethnicity classification
+      - name: deprioritise_flag
+        description: Whether to deprioritise this code in selection logic
+      - name: preference_rank
+        description: Preference ranking for code selection
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

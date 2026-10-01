@@ -1,0 +1,21 @@
+models:
+  - name: stg_sus_apc_spell_episodes_clinical_coding_diagnosis_icd
+    description: 'Clinical diagnosis codes recorded in admitted care (APC) from SUS data.
+
+      One row per diagnosis code per admission.
+
+      '
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: diagnosis_id
+        description: Unique identifier for the recorded diagnosis (surrogate key from primarykey_id, episodes_id, icd_id)
+        # Surrogate key from generate_surrogate_key, which never returns null.
+        data_tests:
+          - unique
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

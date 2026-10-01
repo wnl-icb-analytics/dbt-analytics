@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: stg_source_content_freshness
+    description: >
+      Source-derived content-currency signals at one row per profiled logical
+      source. Each row exposes consensus and latest dates with their derivation
+      rules.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: source_schema
+        description: Logical source identifier shown in freshness reporting.
+        data_tests:
+          - not_null
+          - unique
+      - name: content_date
+        description: Compatibility alias for consensus_content_date.
+        data_tests:
+          - not_null
+      - name: latest_content_date
+        description: Latest valid content date found in the source.
+        data_tests:
+          - not_null
+      - name: consensus_content_date
+        description: Date representing normal breadth of coverage for the source.
+        data_tests:
+          - not_null
+      - name: signal_type
+        description: Compatibility alias for consensus_signal_type.
+        data_tests:
+          - not_null
+      - name: signal_detail
+        description: Compatibility alias for consensus_signal_detail.
+        data_tests:
+          - not_null
+      - name: consensus_signal_type
+        description: Rule used to derive consensus_content_date.
+        data_tests:
+          - not_null
+      - name: consensus_signal_detail
+        description: Explanation of how the consensus date is derived.
+        data_tests:
+          - not_null
+      - name: latest_signal_type
+        description: Rule used to derive latest_content_date.
+        data_tests:
+          - not_null
+      - name: latest_signal_detail
+        description: Explanation of how the latest date is derived.
+        data_tests:
+          - not_null

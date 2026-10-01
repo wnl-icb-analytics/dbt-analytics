@@ -1,0 +1,29 @@
+models:
+  - name: int_csds_activities_summary
+    description: |
+      Superseded by fct_csds_referral_summary and retiring once remaining readers move. Summary of the number and types of activities per contact (tests, assessments, interventions).
+      One row per care contact (CARE_CONTACT_IDENTIFIER).
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - referral_id
+              - contact_id
+    columns:
+      - name: sk_patient_id
+        description: "Unique pseudo-anonymised patient identifier (NHS_NUMBER)"
+##        tests:
+##          - not_null (14/10/2025: commented out for now. csds_bridging table has null pseudo_nhs_numbers)
+      - name: referral_id
+        description: "Unique identifier for the referral (UNIQUE_SERVICE_REQUEST_IDENTIFIER)"
+        tests:
+          - not_null
+      - name: contact_id
+        description: "Unique identifier for the contact (UNIQUE_CARE_CONTACT_IDENTIFIER)"
+        tests:
+          - not_null

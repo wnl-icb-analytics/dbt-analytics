@@ -1,0 +1,77 @@
+version: 2
+models:
+  - name: fct_person_resource_index
+    description: >
+      Resource index at person level (indirect age-sex standardisation on a
+      person-time basis). One row per patient with WNL registration exposure
+      in the rolling 12-month cost window - including the deceased and the
+      deducted, attributed to their window practice. actual = 12-month
+      patient-attributable spend; expected = empirical WNL age-sex
+      cost-per-month rate x months registered. resource_index =
+      sum(actual) / sum(expected) for any cut (never average the ratio).
+      Also carries the UKHFD Core need basis. weighted_months_12m apportions
+      the practice's Core Services weighted/registered ratio to its patients.
+      The health-inequalities weight is excluded.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: sk_patient_id
+        description: DMIC pseudonymised NHS number (primary key).
+        data_tests:
+          - not_null
+          - unique
+      - name: gender
+        description: Gender ('Unknown' when missing; matches the curve band).
+      - name: age
+        description: Age in completed years at the window end (at death for decedents).
+      - name: age_band
+        description: NHS age band (0-4, 5-14, ... 85+, Unknown), used for the cost curve.
+      - name: months_registered
+        description: Months of WNL registration in the window (1-12) — the exposure behind expected_cost_12m.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 12
+                inclusive: true
+      - name: died_in_window
+        description: TRUE when the patient died inside the window. Decedent spend is a distinct, policy-relevant cut.
+      - name: practice_code
+        description: WNL practice at the last registered month in the window.
+      - name: registered_borough
+        description: Borough of the window practice (contractual, via ODS).
+      - name: registered_sub_icb_code
+        description: Registered sub-ICB of the window practice (93C = NCL, W2U3Z = NWL).
+      - name: actual_cost_12m
+        description: Patient-attributable spend over the window (GBP).
+        data_tests:
+          - not_null
+      - name: expected_cost_12m
+        description: Age-sex band cost-per-month rate x months registered (GBP).
+        data_tests:
+          - not_null
+      - name: residence_imd_quintile
+        description: IMD 2025 quintile of the residence LSOA (1 = most deprived, from decile).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+              config:
+                where: residence_imd_quintile is not null
+      - name: practice_weighted_ratio
+        description: Practice UKHFD Core Services weighted/registered ratio; WNL exposure-weighted mean when unavailable.
+        data_tests:
+          - not_null
+      - name: practice_weight_financial_year
+        description: UKHFD allocation base year used for the practice.
+      - name: practice_weight_financial_year_start
+        description: First day of the UKHFD allocation base year used for the practice.
+      - name: weighted_ratio_imputed
+        description: TRUE when the practice has no eligible UKHFD ratio and the WNL mean was used.
+      - name: weighted_months_12m
+        description: practice_weighted_ratio x months_registered. sum()/12 = Core need-weighted person-years for any cut.
+        data_tests:
+          - not_null

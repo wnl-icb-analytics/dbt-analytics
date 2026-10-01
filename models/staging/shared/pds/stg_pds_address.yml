@@ -1,0 +1,31 @@
+models:
+  - name: stg_pds_address
+    description: >
+      PDS usual address history for pseudonymised patients, one row per patient
+      and event_to_date, so each patient has at most one current address.
+      Includes postcode sector, 2021 LSOA of residence and CQC care home code. A
+      null event_to_date marks the current address. Superseded rows sharing an
+      effective-from date are dropped.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - row_id
+              - sk_patient_id
+    columns:
+      - name: row_id
+        description: Row identifier
+        tests:
+          - not_null
+      - name: sk_patient_id
+        description: Surrogate key patient identifier (pseudonymised NHS number)
+        tests:
+          - not_null
+      - name: postcode_sector
+        description: Postcode sector of residence
+      - name: lsoa_21
+        description: 2021 LSOA Code of residence

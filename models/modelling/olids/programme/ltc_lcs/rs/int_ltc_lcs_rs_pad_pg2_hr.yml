@@ -1,0 +1,34 @@
+version: 2
+models:
+  - name: int_ltc_lcs_rs_pad_pg2_hr
+    description: |
+      PAD Register Priority Group 2 - High Risk.
+      Excludes PG1 (HRC) patients.
+
+      Patients on PAD register meeting:
+      - Rule 2: peripheral ischaemia code dated 90-365 days ago (include on pass)
+      - Rule 3 (gate): peripheral ischaemia code before 12 months ago (exclude on fail)
+      - Rules 4-8: latest BP in last 12 months controlled (exclude on pass),
+        age-banded thresholds - age <= 80: clinic <= 140/90, home/ABPM <= 135/85;
+        age > 80: clinic <= 150/90, home/ABPM <= 145/85.
+        No BP reading in 12 months counts as uncontrolled (included).
+
+      BP follows the HTN rs convention: single latest BP event from
+      int_blood_pressure_latest with thresholds chosen by reading type.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - on_pad_reg_pg2_hr_vs1
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

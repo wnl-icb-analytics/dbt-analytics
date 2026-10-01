@@ -1,0 +1,19 @@
+models:
+  - name: int_blood_glucose_latest
+    description: 'Most recent valid Blood Glucose measurement per person for primary prevention and statin therapy decision-making.
+
+      One row per person with their latest Blood Glucose measurement including type preservation (Fasting/Non-Fasting).'
+
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: person_id
+        tests:
+          - unique
+          - not_null

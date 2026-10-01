@@ -1,0 +1,28 @@
+models:
+  - name: stg_sus_ecds_attendance_expected_treatment_times
+    description: Expected treatment timestamps recorded for SUS ECDS attendances.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - primarykey_id
+              - expected_treatment_times_id
+    columns:
+      - name: primarykey_id
+        description: Primary key from the parent emergency care attendance.
+        data_tests:
+          - not_null
+      - name: expected_treatment_times_id
+        description: Source sequence identifier for an expected treatment time.
+        data_tests:
+          - not_null
+      - name: rownumber_id
+        description: Source row identifier.
+      - name: expected_treatment_at
+        description: Timestamp at which treatment was expected to take place.
+      - name: allocated_at
+        description: Timestamp at which the expected treatment time was allocated.

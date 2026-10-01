@@ -15,7 +15,7 @@ WITH ncl_practices AS (
 -- Current PDS registrations for NCL
 current_regs AS (
     SELECT reg.sk_patient_id, reg.practice_code
-    FROM {{ ref('stg_pds_pds_patient_care_practice') }} reg
+    FROM {{ ref('stg_pds_patient_care_practice') }} reg
     INNER JOIN ncl_practices np ON reg.practice_code = np.practice_code
     WHERE reg.sk_patient_id IS NOT NULL
         AND CURRENT_DATE() BETWEEN reg.event_from_date
@@ -27,7 +27,7 @@ current_removals AS (
     SELECT
         reas.sk_patient_id,
         reas.reason_for_removal
-    FROM {{ ref('stg_pds_pds_reason_for_removal') }} reas
+    FROM {{ ref('stg_pds_reason_for_removal') }} reas
     WHERE CURRENT_DATE() BETWEEN reas.event_from_date
         AND COALESCE(reas.event_to_date, '9999-12-31')
 )

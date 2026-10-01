@@ -2,7 +2,6 @@
     config(
         materialized='table',
         alias='ltc_lcs_cf_dashboard_base',
-        tags=['secondary_use_s251_exempt'],
         cluster_by=['indicator_category', 'indicator_id'],
         meta={
             'custom_message': 'Includes OLIDS data published for secondary use under a Section 251 exemption as a HealtheIntent replacement dashboard. National Data Opt-Out and Type 1 opt-out filtering is intentionally NOT applied. Approved for this s251 purpose only.'

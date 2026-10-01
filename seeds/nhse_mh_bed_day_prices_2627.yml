@@ -1,0 +1,59 @@
+version: 2
+seeds:
+  - name: nhse_mh_bed_day_prices_2627
+    description: |
+      NHS England indicative mental health inpatient bed-day prices, 2026/27.
+
+      Grain: one row per NCC currency code (MBU98 Other/Unclassified inpatient
+      family only - the setting-level split used to proxy-cost MHSDS spells).
+
+      Source: NHSE Non-Acute Collection Template v0.95, "Price Schedule" tab
+      ("Schedule of Indicative Prices 26/27" - indicative prices based on
+      adjusted unit costs as reported in the 24/25 National Cost Collection).
+
+      Price base: fiscal year 2026/27 (fiscal_year_start = 2026 in
+      uk_cost_indices). Downstream models rebase to the activity year with
+      the GDP deflator and apply the provider Market Forces Factor from
+      provider_market_forces_factor_2026_27.
+
+      The Other/Unclassified (MBU98) family is used, rather than the
+      population-specific currencies (MAA98/MAB98/...), because MHSDS ward
+      stay data supports a setting split (Acute & PICU / Rehab / Specialist /
+      Forensic) but not a reliable diagnosis-population split.
+
+      MBU98D (Forensic) is a specialised service, out of scope for the NCC
+      price schedule, so its price is NULL here; the costing model falls back
+      to the MBU98Z price for forensic bed days.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+      column_types:
+        currency_code: varchar(10)
+        setting_key: varchar(20)
+        currency_name: varchar(100)
+        bed_day_price_gbp: float
+        additional_notes: varchar(200)
+    columns:
+      - name: currency_code
+        description: NCC currency code (MBU98Z/A/B/C/D). Primary key.
+        data_tests:
+          - not_null
+          - unique
+      - name: setting_key
+        description: >
+          Join key used by int_mhsds_spell_encounters
+          (unclassified / acute_picu / rehab / specialist / forensic).
+        data_tests:
+          - not_null
+          - unique
+      - name: currency_name
+        description: Currency description from the price schedule.
+        data_tests:
+          - not_null
+      - name: bed_day_price_gbp
+        description: >
+          Indicative 2026/27 price per bed day, GBP. NULL for MBU98D
+          (specialised, out of NCC scope).
+      - name: additional_notes
+        description: Notes column from the price schedule, plus local caveats.

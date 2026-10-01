@@ -1,0 +1,33 @@
+version: 2
+
+macros:
+  - name: covid_reported_campaign_ids
+    description: >
+      The COVID campaigns the models build, returned as a Jinja list of campaign_id strings
+      in chronological order. Takes no arguments.
+
+      This list is the campaign contract. Ids are appended and never removed, so a season
+      that has been reported keeps its rows when the next one is added. A campaign must
+      already be defined in covid_campaign_config() before it is listed here, and a campaign
+      whose offer UKHSA has not yet defined is deliberately left out.
+
+      Guarded by tests/covid_flu_reported_campaigns_are_present.sql.
+
+  - name: covid_reported_campaigns
+    description: >
+      Emits every campaign in covid_reported_campaign_ids() as a single UNION ALL block of
+      covid_campaign_config() selects, one row per campaign, for use as a model's
+      all_campaigns CTE. Takes no arguments. Column order follows covid_campaign_config(),
+      so every campaign branch there must expose the same columns in the same order.
+
+  - name: flu_reported_campaign_ids
+    description: >
+      The flu campaigns the models build, returned as a Jinja list of campaign_id strings in
+      chronological order. Takes no arguments. Same append-only contract as the COVID list,
+      and guarded by the same test.
+
+  - name: flu_reported_campaigns
+    description: >
+      Emits every campaign in flu_reported_campaign_ids() as a single UNION ALL block of
+      flu_campaign_config() selects, one row per campaign, for use as a model's
+      all_campaigns CTE. Takes no arguments.

@@ -1,0 +1,56 @@
+version: 2
+
+seeds:
+  - name: uec_site_label
+    description: >
+      Urgent treatment centre, walk-in centre and minor injuries unit labels
+      for ECDS attendance sites across WNL, keyed on site code and department
+      type with the dates each mapping applies. Sites re-code over time (for
+      example LNWH UTCs moved from Totally AD9xx codes to R1K1x in January
+      2023 and to the hospital site codes in August 2023), so consumers must
+      join on arrival date between effective_from and effective_to. Blank
+      effective_to means still current. Sites and dates were derived from ECDS
+      activity for both ICBs.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: site_code
+        description: ECDS attendance site code (ODS site).
+        data_tests:
+          - not_null
+      - name: department_type
+        description: ECDS department type the label applies to (03 UTC, 04 walk-in).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['03', '04']
+      - name: uec_site_label
+        description: Operational label for the UEC site (for example UTC_NP).
+        data_tests:
+          - not_null
+      - name: provider_code
+        description: ODS code of the provider submitting activity for the site.
+      - name: icb_footprint
+        description: NCL or NWL.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['NCL', 'NWL']
+      - name: effective_from
+        description: First arrival date the mapping applies to (inclusive).
+        data_tests:
+          - not_null
+      - name: effective_to
+        description: Last arrival date the mapping applies to (inclusive); blank when current.
+      - name: note
+        description: Context for the row.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - site_code
+              - department_type
+              - effective_from

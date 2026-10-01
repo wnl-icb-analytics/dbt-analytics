@@ -7,26 +7,44 @@
 
 -- Person Care Home Dimension Table
 -- Holds the latest care home/nursing home status for persons
--- Only includes persons who have a recorded care home, nursing home, or temporary care home status
--- Uses CAREHOME_COD, NURSEHOME_COD, and TEMPCARHOME_COD clusters
+-- Only includes persons who have a recorded care home or temporary care home status
+-- Uses CAREHOME_COD and TEMPCARHOME_COD clusters.
+-- NURSEHOME_COD is excluded: its only code is "Employed by nursing home" (a staff
+-- code, not a residency code). A handful of staff codes mixed into CAREHOME_COD
+-- (employed by/matron/residential child or youth care worker) are excluded below
+-- for the same reason - see issue #840.
 
-WITH observation_clusters AS (
+WITH care_home_observations AS (
+    SELECT *
+    FROM (
+        {{ get_observations("'CAREHOME_COD', 'TEMPCARHOME_COD'") }}
+    )
+    WHERE mapped_concept_code NOT IN (
+        '1092561000000107', -- Employed by care home
+        '158944006', -- Matron (old people's home)
+        '158942005', -- Residential child care worker
+        '158943000' -- Residential youth care worker
+    )
+),
+
+observation_clusters AS (
     -- First, collect all cluster IDs and determine residence status for each observation
     SELECT
         o.ID,
         ARRAY_AGG(DISTINCT o.cluster_id) WITHIN GROUP (ORDER BY o.cluster_id) AS cluster_ids,
         -- Pre-calculate residence status based on clusters
+        -- Nursing home is a sub-type of CAREHOME_COD codes (no separate residency
+        -- cluster exists for it), identified by code description
         CASE
+            WHEN ARRAY_CONTAINS('CAREHOME_COD'::VARIANT, ARRAY_AGG(DISTINCT o.cluster_id))
+                AND BOOLOR_AGG(o.code_description ILIKE '%nursing home%') THEN 'Nursing Home'
             WHEN ARRAY_CONTAINS('CAREHOME_COD'::VARIANT, ARRAY_AGG(DISTINCT o.cluster_id)) THEN 'Care Home'
-            WHEN ARRAY_CONTAINS('NURSEHOME_COD'::VARIANT, ARRAY_AGG(DISTINCT o.cluster_id)) THEN 'Nursing Home'
             WHEN ARRAY_CONTAINS('TEMPCARHOME_COD'::VARIANT, ARRAY_AGG(DISTINCT o.cluster_id)) THEN 'Temporary Care Home'
             ELSE NULL
         END AS residence_type,
         -- Determine if temporary
         ARRAY_CONTAINS('TEMPCARHOME_COD'::VARIANT, ARRAY_AGG(DISTINCT o.cluster_id)) AS is_temporary
-    FROM (
-        {{ get_observations("'CAREHOME_COD', 'NURSEHOME_COD', 'TEMPCARHOME_COD'") }}
-    ) o
+    FROM care_home_observations o
     GROUP BY o.ID
 ),
 
@@ -50,9 +68,7 @@ latest_residence_status_per_person AS (
         END AS residence_status,
         oc.cluster_ids AS source_cluster_ids,
         o.ID AS observation_lds_id -- Include for potential tie-breaking
-    FROM (
-        {{ get_observations("'CAREHOME_COD', 'NURSEHOME_COD', 'TEMPCARHOME_COD'") }}
-    ) o
+    FROM care_home_observations o
     JOIN {{ ref('int_patient_person_unique') }} pp
         ON o.patient_id = pp.patient_id
     JOIN observation_clusters oc

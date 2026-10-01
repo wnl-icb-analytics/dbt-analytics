@@ -1,6 +1,6 @@
 -- LTC LCS: Model of Care activity - Care plan sharing completed
 -- Flags persons with a Long term condition summary sent to patient event in the last 12 months.
--- Used as stage 2 in HRCS2 / HRS2 (alongside Remote Desktop Review (RDR)) and as the only stage 2 activity in MRS2 / LRS2.
+-- Used by HRCS2B / HRS2B searches.
 
 with events as (
     select

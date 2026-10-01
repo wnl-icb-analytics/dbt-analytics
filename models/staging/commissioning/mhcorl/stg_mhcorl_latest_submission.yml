@@ -1,0 +1,69 @@
+version: 2
+
+models:
+  - name: stg_mhcorl_latest_submission
+    description: |
+      Latest-submission lookup for MHCORL: the file holding the current
+      provider statement per (dataset, provider, commissioner, FY, month)
+      slice. Ranking by META_FILE_REGISTRY load time with file/batch
+      tiebreaks, per month-slice so split submissions resolve. The
+      commissioner is in the slice key so a per-commissioner file (RNK00 NCL /
+      NWL, RV300 per CCG) cannot supersede the full submission for the other
+      commissioners; the dataset is in the key because inpatient and
+      community files for one month are separate submissions. Consumed by
+      the stg_mhcorl_latest view.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - dv_dataset
+              - dv_provider_code
+              - dv_commissioner
+              - dv_financial_year
+              - dv_financial_month
+    columns:
+      - name: dv_dataset
+        description: MHCORL dataset the slice belongs to (community / inpatient / liaison; slice key).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['community', 'inpatient', 'liaison']
+      - name: dv_provider_code
+        description: Cleaned provider ODS trust code (slice key; matches stg_mhcorl.provider_code).
+      - name: dv_commissioner
+        description: Commissioner code (slice key; coalesce of commissioner_code and dlp_commissioner_code). NULL where a row states neither; those rows form their own slice.
+      - name: dv_financial_year
+        description: Financial year 'YYYYYY' (slice key).
+      - name: dv_financial_month
+        description: Financial month 1-12 (slice key).
+      - name: meta_file_id
+        description: Winning file id for the slice.
+      - name: meta_batch_id
+        description: Winning batch id for the slice.
+      - name: submission_loaded_at
+        description: When ISL loaded the winning file (META_FILE_REGISTRY.CREATED_DATETIME).
+      - name: submission_file_name
+        description: Original file name of the winning submission.
+
+  - name: stg_mhcorl_latest
+    description: |
+      MHCORL current provider statement only - stg_mhcorl restricted to the
+      winning file per (dataset, provider, commissioner, FY, month). Sum-safe
+      within a dataset; cumulative Flex/Freeze, year-to-date and
+      per-commissioner restatements excluded. Report from this rather than
+      stg_mhcorl. Columns are exactly those of stg_mhcorl (see that model for
+      descriptions); filter on dv_dataset before counting.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: meta_sk_row_id
+        description: Surrogate row key; unique guards against lookup-join fan-out.
+        data_tests:
+          - not_null
+          - unique

@@ -1,0 +1,31 @@
+models:
+  - name: stg_sus_ecds_clinical_comorbidities
+    description: SUS A&E clinical comorbidities (SNOMED CT)
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - primarykey_id
+              - comorbidities_id
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: primarykey_id
+        description: Primary key from main A&E attendance (FK)
+        tests:
+          - not_null
+      - name: comorbidities_id
+        description: Unique identifier for this comorbidity entry
+        tests:
+          - not_null
+      - name: rownumber_id
+        description: Sequence number for ordering comorbidities within an attendance
+        tests:
+          - not_null
+      - name: code
+        description: SNOMED CT comorbidity code

@@ -47,16 +47,6 @@ base_observations AS (
     value_column='result_value'
 ) }}
 
-,
-
-validated AS (
-    SELECT
-        *,
-        inferred_value < 0 AS is_negative,
-        inferred_value > 80 AS is_extreme_outlier
-    FROM standardised
-)
-
 SELECT
     id,
     person_id,
@@ -79,10 +69,11 @@ SELECT
     is_negative,
     is_extreme_outlier,
     CASE
-        WHEN inferred_value IS NULL OR confidence = 'NONE' THEN 'Abnormal'
+        WHEN inferred_value IS NULL THEN 'Abnormal'
+        WHEN inferred_value < 0 THEN 'Abnormal'
         WHEN inferred_value <= 5 THEN 'Normal'
         WHEN inferred_value <= 20 THEN 'Elevated'
         WHEN inferred_value <= 100 THEN 'Very Elevated'
         ELSE 'Abnormal'
     END AS eosinophil_category
-FROM validated
+FROM flagged

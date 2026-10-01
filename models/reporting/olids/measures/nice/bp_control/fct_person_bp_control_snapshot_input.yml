@@ -1,0 +1,26 @@
+models:
+  - name: fct_person_bp_control_snapshot_input
+    description: >
+      Thin snapshot-input projection of fct_person_bp_control (person_id + the overall NG136
+      BP-control flag and the latest reading) that excludes the CURRENT_DATE()-derived
+      timeliness columns (latest_bp_reading_age_months, is_latest_bp_within_recommended_interval)
+      so the SCD2 snapshot versions only on genuine changes. Feeds
+      fct_person_bp_control_snapshot.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    columns:
+      - name: person_id
+        description: "Person identifier; one row per person (snapshot unique_key)."
+        data_tests:
+          - unique
+          - not_null
+      - name: is_overall_bp_controlled
+        description: "Latest BP within the patient-specific NG136 target (systolic AND diastolic)."
+      - name: latest_systolic_value
+        description: "Systolic value of the latest BP reading."
+      - name: latest_diastolic_value
+        description: "Diastolic value of the latest BP reading."
+      - name: latest_bp_date
+        description: "Date of the latest BP reading."

@@ -1,6 +1,6 @@
 models:
   - name: cltcs_events
-    description: "Event-level data for C-LTCS cohort over 2 years. SUS (AE, APC, OP) and GP appointments in a rolling window. One row per event."
+    description: "Event-level data for C-LTCS cohort over a rolling 2 years. SUS (AE, OP), GP appointments, and APC spells (sourced from int_sus_apc_imputed_spells for end-date imputation and dedup). One row per event."
     config:
       meta:
         owner:
@@ -35,7 +35,9 @@ models:
 
       - name: event_end_date
         data_type: date
-        description: "End date of the event"
+        description: "End date of the event. Never null: point events (OP, GP, AE with no departure) use the start date; APC spells use the discharge date, imputed from median duration where missing (see is_end_date_imputed)."
+        data_tests:
+          - not_null
 
       - name: event_type
         data_type: varchar
@@ -50,5 +52,11 @@ models:
       - name: event_id
         data_type: varchar
         description: "Event identifier (visit_occurrence_id or encounter_id from source)"
+        data_tests:
+          - not_null
+
+      - name: is_end_date_imputed
+        data_type: boolean
+        description: "True when the source end date was missing and has been imputed (APC: from int_sus_apc_imputed_spells.dq_end_date; AE: no recorded departure). Point events (OP, GP) are always false. Used by the app to flag spells whose duration is estimated."
         data_tests:
           - not_null

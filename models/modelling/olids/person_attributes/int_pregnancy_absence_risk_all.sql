@@ -22,7 +22,7 @@ preg_risk_observations AS (
         o.mapped_concept_code AS concept_code,
         vpc.code_category,
         o.date_recorded,
-        o.lds_datetime_first_acquired,
+        o.lds_transform_datetime,
         COALESCE(o.mapped_concept_display, 'Unknown PREGRISK Code')
             AS concept_display,
         COALESCE(ecl.cluster_id, 'PREGRISK') AS source_cluster_id
@@ -50,6 +50,6 @@ SELECT
 
     -- Standard metadata fields
     date_recorded,
-    lds_datetime_first_acquired
+    lds_transform_datetime
 
 FROM preg_risk_observations

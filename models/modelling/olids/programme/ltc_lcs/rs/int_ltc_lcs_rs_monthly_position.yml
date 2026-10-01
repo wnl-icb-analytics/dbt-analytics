@@ -1,0 +1,113 @@
+version: 2
+models:
+  - name: int_ltc_lcs_rs_monthly_position
+    description: |
+      Person-level LTC LCS risk stratification position at each month end, derived
+      from the SCD2 snapshot (fct_person_ltc_lcs_risk_summary_snapshot). One row per
+      person per month they were on the LTC LCS MOC base population. Feeds the
+      monthly roll-up (fct_ltc_lcs_rs_monthly_summary) and movement
+      (fct_ltc_lcs_rs_monthly_movement) reporting models.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, month_end_date]
+    columns:
+      - name: person_id
+        description: Unique person identifier
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: Last day of the month this position applies to
+        data_tests:
+          - not_null
+      - name: af_risk_group
+        description: Highest AF risk group as of month end (HR/MR); null if not stratified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['HR', 'MR']
+      - name: asthma_adult_risk_group
+        description: Highest Asthma Adult risk group as of month end (HRC/HR/MR/LR); null if not stratified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['HRC', 'HR', 'MR', 'LR']
+      - name: asthma_cyp_risk_group
+        description: Highest Asthma CYP risk group as of month end (HR/LR); null if not stratified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['HR', 'LR']
+      - name: chd_risk_group
+        description: Highest CHD risk group as of month end (HRC/HR/MR); null if not stratified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['HRC', 'HR', 'MR']
+      - name: ckd_risk_group
+        description: Highest CKD risk group as of month end (HRC/HR/MR); null if not stratified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['HRC', 'HR', 'MR']
+      - name: copd_risk_group
+        description: Highest COPD risk group as of month end (HRC/HR/MR); null if not stratified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['HRC', 'HR', 'MR']
+      - name: diabetes_risk_group
+        description: Highest Diabetes risk group as of month end (HRC/HR/MR/MRa/MRb/LR); null if not stratified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['HRC', 'HR', 'MR', 'MRa', 'MRb', 'LR']
+      - name: hf_risk_group
+        description: Highest Heart Failure risk group as of month end (HR/MR); null if not stratified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['HR', 'MR']
+      - name: hypertension_risk_group
+        description: Highest Hypertension risk group as of month end (HRC/HR/MRa/MRb/LR); null if not stratified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['HRC', 'HR', 'MRa', 'MRb', 'LR']
+      - name: nafld_risk_group
+        description: Highest NAFLD risk group as of month end (MR only); null if not stratified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['MR']
+      - name: pad_risk_group
+        description: Highest PAD risk group as of month end (HRC/HR/MR); null if not stratified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['HRC', 'HR', 'MR']
+      - name: stroke_tia_risk_group
+        description: Highest Stroke/TIA risk group as of month end (HRC/HR/MR); null if not stratified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['HRC', 'HR', 'MR']
+      - name: overall_risk_group
+        description: Highest risk group across all conditions as of month end (HRC/HR/MR/LR); MRa/MRb collapse to MR
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['HRC', 'HR', 'MR', 'LR']
+      - name: overall_risk_rank
+        description: Numeric rank of overall_risk_group as of month end (1=HRC highest, 5=LR lowest)
+        data_tests:
+          - not_null
+      - name: in_any_risk_group
+        description: True if person was in any condition risk group as of month end
+        data_tests:
+          - not_null

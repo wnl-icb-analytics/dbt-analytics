@@ -69,8 +69,8 @@ pds.date_of_death as pds_date_of_death,
 NULL as reg_date_of_death
 --FROM MODELLING.DBT_STAGING.STG_OLIDS_PATIENT p
 FROM {{ ref('stg_olids_patient') }} p
---LEFT JOIN  MODELLING.DBT_STAGING.STG_PDS_PDS_PERSON pds on pds.sk_patient_id = p.sk_patient_id
-LEFT JOIN {{ ref('stg_pds_pds_person') }} pds on pds.sk_patient_id = p.sk_patient_id
+--LEFT JOIN  MODELLING.DBT_STAGING.STG_PDS_PERSON pds on pds.sk_patient_id = p.sk_patient_id
+LEFT JOIN {{ ref('stg_pds_person') }} pds on pds.sk_patient_id = p.sk_patient_id
 where pds.date_of_death is not null 
 
 UNION

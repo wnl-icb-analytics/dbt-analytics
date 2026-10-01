@@ -1,0 +1,82 @@
+
+models:
+  - name: int_sus_apc_diagnosis
+    description: >-
+      Distinct ICD-10 diagnosis codes submitted for SUS admitted patient spells.
+      One row represents one distinct diagnosis code per spell and
+      observation_count records repeated submissions of that code. Retains
+      clinical activity when the spell has no linked patient key; patient fields
+      are null in those rows.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - visit_occurrence_id
+              - source_concept_code
+    columns:
+
+      - name: diagnosis_id
+        data_type: number
+        description: "Unique ID for each diagnosis code that spell. unlinkable to source table due to deduplication"
+
+      - name: sk_patient_id
+        data_type: varchar
+        description: >-
+          Common commissioning patient identifier. Null when the spell cannot be
+          linked to a patient; this does not remove the diagnosis activity.
+      
+      - name: date
+        data_type: date
+        description: "Start date of admission spell"
+
+      - name: visit_occurrence_id
+        data_type: number
+        description: ""
+
+      - name: visit_occurrence_type
+        data_type: varchar
+        description: ""
+
+      - name: organisation_id
+        data_type: varchar
+        description: ""
+
+      - name: organisation_name
+        data_type: varchar
+        description: ""
+
+      - name: site_id
+        data_type: varchar
+        description: ""
+
+      - name: site_name
+        data_type: varchar
+        description: ""
+
+      - name: source_concept_code
+        data_type: varchar
+        description: ""
+
+      - name: observation_count
+        data_type: number
+        description: "Count of the number of occurances of that diagnosis code across all episodes"
+
+      - name: ordered_id_array
+        data_type: array
+        description: "array of episodes ids"
+      
+      - name: concept_code
+        data_type: varchar
+        description: ""
+
+      - name: concept_name
+        data_type: varchar
+        description: ""
+
+      - name: concept_vocabulary
+        data_type: varchar
+        description: ""

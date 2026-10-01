@@ -4,8 +4,8 @@
 -- Inclusion rules (any one qualifies):
 -- - Rule 2: HbA1c 75-90
 -- - Rule 3: Diabetic foot ulceration in last 3 years
--- - Rule 4: MI (first episode) in last 1 year
--- - Rule 5: Cerebral artery thrombosis (first episode) in last 1 year
+-- - Rule 4: earliest CHD code (episode excluding Review/End) in last 1 year
+-- - Rule 5: earliest stroke/TIA code (episode excluding Review/End) in last 1 year
 -- - Rule 6: eGFR 15-29
 -- - Rule 7: ACR > 70 (if failed, excluded from final result)
 
@@ -38,34 +38,40 @@ rule_3_foot_ulcer as (
     where clinical_effective_date >= dateadd(year, -3, current_date())
 ),
 
--- Rule 4: MI (first episode) in last 1 year
--- vs3 = MI codes, first episode (not review/end), earliest date
+-- Rule 4: earliest CHD code (episode excluding Review/End) within last 1 year
+-- vs3 = CHD_COD codes
 rule_4_mi as (
     select person_id
-    from ({{ get_ltc_lcs_observations("on_dm_reg_pg2_hr_vs3") }})
-    where is_problem = true
-      and coalesce(is_review, false) = false
-    qualify row_number() over (partition by person_id order by clinical_effective_date asc) = 1
-      and clinical_effective_date >= dateadd(year, -1, current_date())
+    from (
+        select o.person_id, o.observation_id, o.clinical_effective_date
+        from ({{ get_ltc_lcs_observations("on_dm_reg_pg2_hr_vs3") }}) o
+        left join {{ ref('stg_olids_enriched_concept_map') }} ecm
+            on o.episodicity_source_concept_id = ecm.source_concept_id
+        where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    )
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date asc, observation_id asc
+    ) = 1
+        and clinical_effective_date >= dateadd(year, -1, current_date())
 ),
 
--- Rule 5: Cerebral artery thrombosis or TIA (first episode) in last 1 year
--- vs4 = cerebral thrombosis codes (STRK_COD), vs5 = TIA codes (TIA_COD)
--- First episode (not review/end), earliest date
+-- Rule 5: earliest stroke/TIA code (episode excluding Review/End) within last 1 year
+-- vs4 = STRK_COD, vs5 = TIA_COD
 rule_5_cerebral_thrombosis_tia as (
     select person_id
-    from ({{ get_ltc_lcs_observations("on_dm_reg_pg2_hr_vs4") }})
-    where is_problem = true
-      and coalesce(is_review, false) = false
-    qualify row_number() over (partition by person_id order by clinical_effective_date asc) = 1
-      and clinical_effective_date >= dateadd(year, -1, current_date())
-    union
-    select person_id
-    from ({{ get_ltc_lcs_observations("on_dm_reg_pg2_hr_vs5") }})
-    where is_problem = true
-      and coalesce(is_review, false) = false
-    qualify row_number() over (partition by person_id order by clinical_effective_date asc) = 1
-      and clinical_effective_date >= dateadd(year, -1, current_date())
+    from (
+        select o.person_id, o.observation_id, o.clinical_effective_date
+        from ({{ get_ltc_lcs_observations("on_dm_reg_pg2_hr_vs4, on_dm_reg_pg2_hr_vs5") }}) o
+        left join {{ ref('stg_olids_enriched_concept_map') }} ecm
+            on o.episodicity_source_concept_id = ecm.source_concept_id
+        where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    )
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date asc, observation_id asc
+    ) = 1
+        and clinical_effective_date >= dateadd(year, -1, current_date())
 ),
 
 -- Rule 6: eGFR 15-29 (latest value)

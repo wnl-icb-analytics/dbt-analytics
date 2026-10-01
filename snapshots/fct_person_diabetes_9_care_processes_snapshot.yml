@@ -1,0 +1,27 @@
+snapshots:
+  - name: fct_person_diabetes_9_care_processes_snapshot
+    relation: ref('fct_person_diabetes_9_care_processes_snapshot_input')
+    description: >
+      SCD2 history of the diabetes care-process inputs per person, for control-cohort matching:
+      the latest measurement dates, the latest HbA1c value, and a date-independent
+      foot_check_qualifies flag. Sources the thin
+      fct_person_diabetes_9_care_processes_snapshot_input view rather than the care-processes
+      model directly, because that model's rolling-12-month completion columns are anchored on
+      CURRENT_DATE() and would version every person on every build. The rolling window is
+      re-applied as-at index_date downstream in cltcs_monthly_covariates. check_cols: all over
+      the thin projection; a new reading opens a version. Rows leaving the source (leaving the
+      diabetes register) are closed via hard_deletes: invalidate.
+    config:
+      strategy: check
+      unique_key: [person_id]
+      check_cols: all
+      hard_deletes: invalidate
+    columns:
+      - name: person_id
+        description: "Person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

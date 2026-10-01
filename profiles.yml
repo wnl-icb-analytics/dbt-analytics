@@ -4,8 +4,8 @@
 # Set required environment variables in your .env file (see env.example).
 #
 # Targets:
-#   dev            - Local dev (uses env vars for credentials)
-#   prod           - Local prod (uses env vars for credentials)
+#   dev            - Client dev: local (SSO/PAT/password) or GitHub Actions (key-pair)
+#   prod           - Client prod: local (SSO/PAT/password) or GitHub Actions (key-pair)
 #   snowflake-dev  - Snowflake native execution (empty credentials)
 #   snowflake-prod - Snowflake native execution (empty credentials)
 
@@ -19,9 +19,13 @@ wnl_analytics:
       user: "{{ env_var('SNOWFLAKE_USER', 'placeholder') }}"
       password: "{{ env_var('SNOWFLAKE_PASSWORD', '') }}"
       token: "{{ env_var('SNOWFLAKE_PAT', '') }}"
-      # Authenticator: externalbrowser (SSO) | username_password_mfa (uses password) |
-      # programmatic_access_token (uses token = PAT). Auto-picked from whichever secret is set.
-      authenticator: "{{ env_var('SNOWFLAKE_AUTHENTICATOR', 'programmatic_access_token' if env_var('SNOWFLAKE_PAT', '') else ('username_password_mfa' if env_var('SNOWFLAKE_PASSWORD', '') else 'externalbrowser')) }}"
+      # Key-pair auth (GitHub Actions). Takes precedence in the adapter when set.
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH', '') }}"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', '') }}"
+      # Authenticator: snowflake_jwt (key-pair) | externalbrowser (SSO) |
+      # username_password_mfa (uses password) | programmatic_access_token (uses token = PAT).
+      # Auto-picked from whichever secret is set.
+      authenticator: "{{ env_var('SNOWFLAKE_AUTHENTICATOR', 'snowflake_jwt' if env_var('SNOWFLAKE_PRIVATE_KEY_PATH', '') else ('programmatic_access_token' if env_var('SNOWFLAKE_PAT', '') else ('username_password_mfa' if env_var('SNOWFLAKE_PASSWORD', '') else 'externalbrowser'))) }}"
       role: "{{ env_var('SNOWFLAKE_ROLE', 'DBT_ADMIN') }}"
       database: MODELLING
       schema: DBT_DEV
@@ -29,6 +33,10 @@ wnl_analytics:
       threads: 16
       client_session_keep_alive: true
       query_tag: dbt_analytics_dev
+      # Retry transient connection failures (see snowflake-dev note).
+      connect_retries: 3
+      connect_timeout: 10
+      retry_all: true
 
     prod:
       type: snowflake
@@ -36,9 +44,13 @@ wnl_analytics:
       user: "{{ env_var('SNOWFLAKE_USER', 'placeholder') }}"
       password: "{{ env_var('SNOWFLAKE_PASSWORD', '') }}"
       token: "{{ env_var('SNOWFLAKE_PAT', '') }}"
-      # Authenticator: externalbrowser (SSO) | username_password_mfa (uses password) |
-      # programmatic_access_token (uses token = PAT). Auto-picked from whichever secret is set.
-      authenticator: "{{ env_var('SNOWFLAKE_AUTHENTICATOR', 'programmatic_access_token' if env_var('SNOWFLAKE_PAT', '') else ('username_password_mfa' if env_var('SNOWFLAKE_PASSWORD', '') else 'externalbrowser')) }}"
+      # Key-pair auth (GitHub Actions). Takes precedence in the adapter when set.
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH', '') }}"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', '') }}"
+      # Authenticator: snowflake_jwt (key-pair) | externalbrowser (SSO) |
+      # username_password_mfa (uses password) | programmatic_access_token (uses token = PAT).
+      # Auto-picked from whichever secret is set.
+      authenticator: "{{ env_var('SNOWFLAKE_AUTHENTICATOR', 'snowflake_jwt' if env_var('SNOWFLAKE_PRIVATE_KEY_PATH', '') else ('programmatic_access_token' if env_var('SNOWFLAKE_PAT', '') else ('username_password_mfa' if env_var('SNOWFLAKE_PASSWORD', '') else 'externalbrowser'))) }}"
       role: "{{ env_var('SNOWFLAKE_ROLE', 'DBT_ADMIN') }}"
       database: MODELLING
       schema: DBT_PROD
@@ -46,12 +58,20 @@ wnl_analytics:
       threads: 16
       client_session_keep_alive: true
       query_tag: dbt_analytics_prod
+      # Retry transient connection failures (see snowflake-dev note).
+      connect_retries: 3
+      connect_timeout: 10
+      retry_all: true
 
-    # Snowflake native execution targets (empty credentials - runs in Snowflake context)
+    # Snowflake native execution targets (runs in the Snowflake session context).
+    # account/user are placeholders, NOT real credentials: native execution uses
+    # the in-session connection and ignores their values, but Fusion's compile-time
+    # metadata introspection rejects an empty account ("260000: account is empty"),
+    # so they must be non-empty.
     snowflake-dev:
       type: snowflake
-      account: ''
-      user: ''
+      account: placeholder
+      user: placeholder
       role: DBT_ADMIN
       database: MODELLING
       schema: DBT_DEV
@@ -59,11 +79,17 @@ wnl_analytics:
       threads: 16
       client_session_keep_alive: false
       query_tag: dbt_analytics_dev
+      # Retry transient connection failures. A single Fusion bridge login stall
+      # ("context deadline exceeded" on localhost) failed 36 models in one 90ms
+      # window; retry_all covers timeouts (not just DatabaseErrors).
+      connect_retries: 3
+      connect_timeout: 10
+      retry_all: true
 
     snowflake-prod:
       type: snowflake
-      account: ''
-      user: ''
+      account: placeholder
+      user: placeholder
       role: DBT_ADMIN
       database: MODELLING
       schema: DBT_PROD
@@ -71,6 +97,10 @@ wnl_analytics:
       threads: 16
       client_session_keep_alive: false
       query_tag: dbt_analytics_prod
+      # Retry transient connection failures (see snowflake-dev note).
+      connect_retries: 3
+      connect_timeout: 10
+      retry_all: true
 
     # CI compile gate (key-pair auth, read-only metadata introspection).
     # ci-dev introspects the DEV__ catalog (PR validation); ci-prod the prod

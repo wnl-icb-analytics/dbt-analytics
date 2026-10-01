@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: int_sus_uec_referred_to_service
+    description: >
+      Onward referrals recorded on A&E attendances (ECDS referred-to service).
+      One row per referral record; an attendance can have several. Join to
+      int_sus_uec_encounter on visit_occurrence_id. Around 14% of referral
+      records belong to attendances with more than one, so counts must be
+      taken here rather than from a single value on the encounter.
+    config:
+      tags: ["daily"]
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: referral_id
+        description: Surrogate key of attendance and source sequence. Grain of the model.
+        data_tests:
+          - unique
+          - not_null
+      - name: visit_occurrence_id
+        description: ECDS attendance identifier; join key to int_sus_uec_encounter.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('int_sus_uec_encounter')
+                field: visit_occurrence_id
+      - name: sk_patient_id
+        description: Pseudonymised patient key from the attendance.
+      - name: attendance_date
+        description: Arrival date of the attendance.
+      - name: referral_sequence
+        description: Source sequence of the referral within the attendance (1 = first).
+      - name: referred_to_service_code
+        description: SNOMED CT code of the service referred to.
+      - name: referred_to_service_desc
+        description: SNOMED UK preferred term for the service.
+      - name: referred_to_service_ecds_group1
+        description: ECDS group 1 for the service code.
+      - name: assessment_date
+        description: Date the referred-to service assessed the patient, where recorded.
+      - name: assessment_time
+        description: Time the referred-to service assessed the patient, where recorded.

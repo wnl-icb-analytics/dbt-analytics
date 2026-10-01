@@ -14,6 +14,26 @@ models:
         tests:
           - not_null
           - unique
+      - name: total_conditions
+        description: >-
+          Count of distinct conditions the person is on a register for. Subset
+          registers are collapsed into their parent so the same disease is not
+          counted twice: LD_U14 counts as LD, CYP_AST counts as AST.
+        tests:
+          - not_null
+      - name: total_qof_conditions
+        description: >-
+          Count of distinct QOF conditions. Uses canonical (parent) register
+          status, so LD_U14/CYP_AST are attributed to their QOF parent (LD/AST).
+          This is a condition-family count, not a national QOF denominator count.
+        tests:
+          - not_null
+      - name: total_non_qof_conditions
+        description: >-
+          Count of distinct non-QOF conditions. Deduped against QOF parents so a
+          disease is not counted in both QOF and non-QOF totals.
+        tests:
+          - not_null
       - name: has_osteoarthritis
         description: Boolean flag indicating whether person is on osteoarthritis register
         tests:
@@ -24,5 +44,13 @@ models:
           - not_null
       - name: has_chronic_liver_disease
         description: Boolean flag indicating whether person is on chronic liver disease register
+        tests:
+          - not_null
+      - name: has_sickle_cell
+        description: Boolean flag indicating whether person is on the sickle cell disease register
+        tests:
+          - not_null
+      - name: has_thalassaemia
+        description: Boolean flag indicating whether person is on the thalassaemia register
         tests:
           - not_null

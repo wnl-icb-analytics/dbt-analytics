@@ -1,0 +1,40 @@
+version: 2
+
+seeds:
+  - name: nhse_community_currency_team_types_2526
+    description: >
+      NHSE Community Currency Grouping v1.1 team-type-to-currency mapping for
+      2025/26 CSDS data. Grain: one row per age_category and team_type_code.
+      is_reason_split marks teams resolved by primary referral reason, with
+      currency_code as their fallback.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+      column_types:
+        age_category: varchar(10)
+        team_type_code: varchar(10)
+        team_type_name: varchar(200)
+        currency_code: varchar(10)
+        is_reason_split: boolean
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - age_category
+              - team_type_code
+    columns:
+      - name: age_category
+        description: Adult or CYP category.
+        data_tests:
+          - not_null
+      - name: team_type_code
+        description: CYP102 service or team type code.
+        data_tests:
+          - not_null
+      - name: team_type_name
+        description: Service or team type name.
+      - name: currency_code
+        description: Community contact currency code.
+      - name: is_reason_split
+        description: Whether referral reason resolves the currency.

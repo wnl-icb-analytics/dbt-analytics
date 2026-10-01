@@ -8,6 +8,7 @@
 -- Person Birth and Death Dimension Table
 -- Core birth and death information for each person
 -- Designed to be reused by other dimension tables for age calculations
+-- August 2026 - KH amended to catch a nonsense death date of < birth date.
 
 WITH current_patient_per_person AS (
     -- Current registration per person (for SK and current practice context)
@@ -37,6 +38,24 @@ patient_candidates AS (
         p.sk_patient_id,
         p.birth_year,
         p.birth_month,
+        -- Calculate approximate birth date using exact midpoint of the month
+        CASE
+        WHEN p.birth_year IS NOT NULL AND p.birth_month IS NOT NULL
+            THEN DATEADD(
+                DAY,
+                FLOOR(
+                    DAY(
+                        LAST_DAY(
+                            TO_DATE(
+                                p.birth_year || '-' || p.birth_month || '-01'
+                            )
+                        )
+                    )
+                    / 2
+                ),
+                TO_DATE(p.birth_year || '-' || p.birth_month || '-01')
+            )
+        END AS birth_date_approx,
         pds.death_year,
         pds.death_month,
         pds.is_deceased,
@@ -60,36 +79,19 @@ best_patient AS (
         ORDER BY has_dob DESC, patient_id DESC
     ) = 1
 )
-
+--remove nonsense death dates (death date < birth date)
 SELECT
     ap.person_id,
     -- Prefer SK from current registration; otherwise from best mapped patient
     COALESCE(cpp.sk_patient_id, bp.sk_patient_id) AS sk_patient_id,
     bp.birth_year,
     bp.birth_month,
-    -- Calculate approximate birth date using exact midpoint of the month
-    bp.death_year,
-    bp.death_month,
-    CASE
-        WHEN bp.birth_year IS NOT NULL AND bp.birth_month IS NOT NULL
-            THEN DATEADD(
-                DAY,
-                FLOOR(
-                    DAY(
-                        LAST_DAY(
-                            TO_DATE(
-                                bp.birth_year || '-' || bp.birth_month || '-01'
-                            )
-                        )
-                    )
-                    / 2
-                ),
-                TO_DATE(bp.birth_year || '-' || bp.birth_month || '-01')
-            )
-    END AS birth_date_approx,
-    bp.death_date_approx,
-    bp.is_deceased,
-    bp.death_source_flag,
+    bp.birth_date_approx,
+    CASE WHEN bp.death_date_approx < bp.birth_date_approx THEN NULL ELSE bp.death_year END AS death_year,
+    CASE WHEN bp.death_date_approx < bp.birth_date_approx THEN NULL ELSE bp.death_month END AS death_month,
+    CASE WHEN bp.death_date_approx < bp.birth_date_approx THEN NULL ELSE bp.death_date_approx END AS death_date_approx,
+    CASE WHEN bp.death_date_approx < bp.birth_date_approx THEN FALSE ELSE bp.is_deceased END AS is_deceased,
+    CASE WHEN bp.death_date_approx < bp.birth_date_approx THEN NULL ELSE bp.death_source_flag END AS death_source_flag,
     COALESCE(bp.is_test_patient, FALSE) AS is_test_patient
 FROM persons_with_patients AS ap
 INNER JOIN best_patient AS bp

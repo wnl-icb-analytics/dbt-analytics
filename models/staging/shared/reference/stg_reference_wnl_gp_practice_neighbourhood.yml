@@ -1,0 +1,25 @@
+models:
+  - name: stg_reference_wnl_gp_practice_neighbourhood
+    description: WNL registered neighbourhood - GP practice to neighbourhood, NCL + NWL (tagged by icb_group), one row per practice.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: practice_code
+        description: Primary key - GP practice (ODS) code.
+        tests:
+          - unique
+          - not_null
+      - name: practice_name
+        description: GP practice name.
+      - name: neighbourhood_code
+        description: Neighbourhood code (null for non-geographic practices).
+      - name: neighbourhood_name
+        description: Neighbourhood name (null for non-geographic practices).
+      - name: icb_group
+        description: ICB group - NCL or NWL.
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

@@ -1,0 +1,73 @@
+version: 2
+models:
+  - name: int_cost_index_slam_activity_monthly
+    description: |
+      Patient-level SLAM activity & actual cost — spine of the Aligning
+      Resource Index model. Full history from 2021-04 to the last complete
+      month from stg_lsplcm_latest (actual provider cost, WNL = NCL+NWL).
+      Rolling windows are applied in reporting facts. Grain:
+      patient x month x commissioner x provider x service hierarchy x POD x
+      HRG x cost_basis. Service = governed POD group (POD Group Manager app
+      via stg_reference_pod_group_mapping; tiered join - exact POD/local
+      POD/description, then unambiguous POD/local POD, then unambiguous
+      POD-only - ~98.5% of cost mapped); service_grouping +
+      is_patient_attributable from the pod_group_service_lens seed. Cost in £
+      (dv_total_cost).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - activity_month
+              - commissioner_code
+              - provider_code
+              - registered_practice_code
+              - service_grouping
+              - service
+              - pod_code
+              - hrg_code
+              - is_patient_attributable
+    columns:
+      - name: sk_patient_id
+        description: DMIC pseudonymised NHS number (NULL for unidentified activity).
+      - name: activity_month
+        description: First of the calendar month derived from financial year/month.
+        data_tests:
+          - not_null
+      - name: commissioner_code
+        description: Commissioner ODS code (ICB attribution — NCL 93C, NWL W2U3Z, others out-of-sector).
+      - name: provider_code
+        description: Cleaned provider ODS code.
+      - name: registered_practice_code
+        description: GP practice responsibility code (registration field is unpopulated in current SLAM).
+      - name: service_grouping
+        description: Top-level lens (Crisis/Community/Planned/Excluded/Unmapped) from pod_group_service_lens.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [Crisis, Community, Planned, Excluded, Unmapped]
+      - name: service
+        description: Governed POD group (18 curated categories; 'Unmapped' for uncurated combinations).
+        data_tests:
+          - not_null
+      - name: pod_code
+        description: SLAM point-of-delivery code (upper-cased).
+      - name: hrg_code
+        description: HRG / national tariff currency code (from tariff_code).
+      - name: is_patient_attributable
+        description: FALSE for CQUIN / transport / block-and-adjustment groups — exclude for per-patient resource cuts.
+      - name: cost_basis
+        description: "Cost basis: 'actual' (SLAM agreed actual cost)."
+        data_tests:
+          - not_null
+      - name: total_cost
+        description: Actual SLAM cost for the grain, £.
+      - name: total_activity
+        description: Sum of dv_activity_count for the grain.
+      - name: line_count
+        description: Source PLD lines aggregated into the row.

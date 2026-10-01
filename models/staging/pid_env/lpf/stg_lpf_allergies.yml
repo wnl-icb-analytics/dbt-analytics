@@ -1,0 +1,127 @@
+version: 2
+
+models:
+  - name: stg_lpf_allergies
+    description: |
+      Staging layer for local provider flow allergies data.
+      
+      Transformations applied:
+      - Removes deleted records (delete_ind = 'Y')
+      - Removes records with null allergy_id
+      - Deduplicates by taking the latest version of each allergy
+      
+      Source: raw_lpf_allergies (DATA_LAKE.LOCAL_PROVIDER_FLOWS.ALLERGIES)
+
+    config:
+      meta:
+        owner:
+          name: Data Team
+
+    columns:
+      - name: metadata_file_path
+        description: "Metadata file path"
+
+      - name: metadata_file_row_number
+        description: "Row number in the metadata file"
+
+      - name: metadata_record_ingestion_timestamp
+        description: "Timestamp when record was ingested"
+
+      - name: metadata_file_content_key
+        description: "Content key for the metadata file"
+
+      - name: metadata_file_last_modified
+        description: "Last modified timestamp of the metadata file"
+
+      - name: allergy_id
+        description: "Unique identifier for the allergy record"
+        # Grain holds by construction (row_number = 1 per key). Each test re-runs
+        # the full dedup over the source, so these run in the monthly build only.
+        data_tests:
+          - unique:
+              config:
+                tags: ['monthly-full']
+          - not_null:
+              config:
+                tags: ['monthly-full']
+
+      - name: version
+        description: "Version number of the record"
+
+      - name: person_id
+        description: "Unique identifier for the person"
+
+      - name: encounter_id
+        description: "Unique identifier for the encounter"
+
+      - name: allergen_code_id
+        description: "Code ID for the allergen"
+
+      - name: allergen_code_system_id
+        description: "Code system ID for the allergen"
+
+      - name: allergen_display
+        description: "Display name of the allergen"
+
+      - name: onset_date
+        description: "Date when the allergy was identified"
+
+      - name: resolved_date
+        description: "Date when the allergy was resolved"
+
+      - name: reaction_code_id
+        description: "Code ID for the reaction"
+
+      - name: reaction_code_system_id
+        description: "Code system ID for the reaction"
+
+      - name: reaction_display
+        description: "Display name of the reaction"
+
+      - name: severity_code_id
+        description: "Code ID for severity"
+
+      - name: severity_code_system_id
+        description: "Code system ID for severity"
+
+      - name: severity_display
+        description: "Display name of severity"
+
+      - name: status_code_id
+        description: "Code ID for status"
+
+      - name: status_code_system_id
+        description: "Code system ID for status"
+
+      - name: status_display
+        description: "Display name of status"
+
+      - name: category_code_id
+        description: "Code ID for category"
+
+      - name: category_code_system_id
+        description: "Code system ID for category"
+
+      - name: category_display
+        description: "Display name of category"
+
+      - name: type_code_id
+        description: "Code ID for type"
+
+      - name: type_code_system_id
+        description: "Code system ID for type"
+
+      - name: type_display
+        description: "Display name of type"
+
+      - name: criticality_code_id
+        description: "Code ID for criticality"
+
+      - name: criticality_code_system_id
+        description: "Code system ID for criticality"
+
+      - name: criticality_display
+        description: "Display name of criticality"
+
+      - name: asserted_date
+        description: "Date when the allergy was asserted"

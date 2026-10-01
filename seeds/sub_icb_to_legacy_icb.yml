@@ -1,0 +1,33 @@
+version: 2
+
+seeds:
+  - name: sub_icb_to_legacy_icb
+    description: |
+      London sub-ICB location code to pre-merger ICB (RO261) identity.
+      ODS retained these edges after the 2026-04 WNL merger but has since
+      purged them from OrganisationDescendent, so the dissolved hierarchy
+      is pinned here as static reference data. For non-merged ICBs the
+      legacy ICB is the ICB itself. Codes verified against
+      Dictionary.dbo.Organisation.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+      column_types:
+        sub_icb_code: varchar(10)
+        legacy_icb_code: varchar(10)
+        legacy_icb_name: varchar(200)
+    columns:
+      - name: sub_icb_code
+        description: RO98/RO319 sub-ICB location code (93C, W2U3Z, A3A8R, 72Q, 36L).
+        data_tests:
+          - not_null
+          - unique
+      - name: legacy_icb_code
+        description: Pre-merger ICB ODS code (QMJ, QRV, QMF, QKK, QWE).
+        data_tests:
+          - not_null
+      - name: legacy_icb_name
+        description: Pre-merger ICB display name.
+        data_tests:
+          - not_null

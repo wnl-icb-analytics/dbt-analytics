@@ -1,0 +1,234 @@
+version: 2
+
+models:
+  - name: stg_lsdrplcm
+    description: |
+      Cleaned SLAM high-cost drugs PLD (LSDrPLCM) — provider patient-level
+      drug contract-monitoring submissions from ServicesDataLocal. Grain 1:1
+      with DATA_LAKE.SDL.LSDRPLCM.
+
+      Full submission history - incremental, pure append of new files. SLAM
+      files are cumulative-YTD restatements, so summing this table
+      double-counts — report from stg_lsdrplcm_latest for the current provider
+      statement of each (provider, FY, month).
+
+      Cleaning applied: dv_financial_year validated to 'YYYYYY' with the
+      platform file-name FY token as fallback; dv_financial_month validated to
+      1-12; dv_provider_code cleaned via dictionary lookup (site-suffixed
+      codes resolve to the parent org); dv_dataset_created_at multi-format
+      parsed; prices, support charge, total cost and drug quantity parsed to
+      NUMBER(38,6) (currency symbols, thousands commas and accounting
+      negatives handled; 'TBC' and other junk -> NULL); drug dispensed date
+      parsed from UK date formats. Invalid values become NULL, never guesses;
+      originals kept in *_raw or the unprefixed column.
+
+      Column conventions: meta_* = typed SDL pipeline metadata (reliable);
+      submission_* = file identity from META_FILE_REGISTRY; dv_* = derived /
+      cleaned in this model; *_raw = the original provider text retained
+      alongside a dv_ column. All other columns are 1:1 passthrough of
+      provider-submitted text (source is all TEXT) — code columns are not
+      validated here.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      # SDL pipeline metadata (typed, reliable)
+      - name: meta_sk_row_id
+        description: Surrogate row key from the SDL pipeline.
+        data_tests:
+          - not_null
+          - unique
+      - name: meta_file_id
+        description: SDL source file id. Joins to META_FILE_REGISTRY with meta_batch_id. Not monotonic with load time.
+        data_tests:
+          - not_null
+      - name: meta_row_id
+        description: Row number within the source file (SDL pipeline).
+      - name: meta_batch_id
+        description: SDL load batch id; (meta_file_id, meta_batch_id) identifies one loaded file.
+      - name: meta_partition_date
+        description: DSCRO monthly partition the file was loaded under (one per file).
+      - name: meta_provider_code
+        description: Submitting provider per the SDL pipeline, site-suffixed (e.g. RRP00). Prefer dv_provider_code.
+      - name: meta_recipient_code
+        description: Recipient organisation code per the SDL pipeline.
+      - name: meta_version_id
+        description: SDL pipeline version that loaded the file.
+
+      # Submission identity + reporting period
+      - name: submission_loaded_at
+        description: When ISL/OneLondon processed the file — the reliable submission ordering.
+      - name: submission_file_name
+        description: Original provider file name from the registry.
+      - name: financial_year_raw
+        description: Provider-typed financial year as submitted. Cleaned in dv_financial_year.
+      - name: financial_month_raw
+        description: Provider-typed financial month as submitted. Cleaned in dv_financial_month.
+      - name: dv_period_date
+        description: >-
+          The dispensed/delivery date used for period derivation. Populated only when
+          the stated period was incomplete; plausibility-gated (2015-04-01 to
+          today).
+      - name: dv_financial_year
+        description: >-
+          Validated financial year as 'YYYYYY' (e.g. '202627'): provider value,
+          else file-name FY token, else derived from the dispensed/delivery
+          date (see dv_financial_period_source). Original in financial_year_raw.
+      - name: dv_financial_month
+        description: >-
+          Financial month 1 (April) - 12 (March): provider value where valid,
+          else derived from the dispensed/delivery date. Junk values -> NULL.
+          Original in financial_month_raw.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 12
+                inclusive: true
+      - name: dv_financial_period_source
+        description: >-
+          Where the period came from - 'stated' (provider value), 'file_name'
+          (FY token from the platform file name) or 'activity_date' (derived
+          from the dispensed/delivery date - how providers bill). NULL when
+          unrecoverable.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['stated', 'file_name', 'activity_date']
+      - name: dataset_created_raw
+        description: Provider-typed DATE_AND_TIME_DATA_SET_CREATED as submitted. Parsed in dv_dataset_created_at.
+      - name: dv_dataset_created_at
+        description: dataset_created_raw multi-format parsed to TIMESTAMP_NTZ. Provider-typed - prefer submission_loaded_at for ordering.
+
+      # Organisations
+      - name: provider_code
+        description: Provider ODS code as submitted (ORGANISATION_IDENTIFIER_CODE_OF_PROVIDER). Cleaned in dv_provider_code.
+      - name: dv_provider_code
+        description: Provider ODS code cleaned via dictionary lookup. Original in provider_code.
+        data_tests:
+          - not_null
+      - name: commissioner_code
+        description: Commissioner organisation code as submitted.
+      - name: residence_responsibility_code
+        description: Organisation responsible by patient residence, as submitted.
+      - name: gp_practice_responsibility_code
+        description: Organisation responsible by GP practice, as submitted.
+      - name: gp_practice_code_registration
+        description: GP practice of registration, as submitted.
+      - name: site_of_treatment_code
+        description: Site of treatment organisation code, as submitted.
+
+      # Patient
+      - name: sk_patient_id
+        description: Pseudonymised NHS-number-derived patient hash; matches sk_patient_id in stg_sus_*, stg_csds_*, stg_mhsds_*.
+      - name: local_patient_identifier
+        description: Local patient identifier as submitted (LOCAL_PATIENT_IDENTIFIER_EXTENDED).
+      - name: age_at_activity_date
+        description: AGE_AT_ACTIVITY_DATE_CONTRACT_MONITORING as NUMBER; non-numeric -> NULL.
+      - name: year_of_birth
+        description: Year of birth as NUMBER, from the DSCRO-derived DV_YEAROF_BIRTH source column.
+      - name: gender_code
+        description: Person stated gender code as submitted.
+      - name: ethnic_category
+        description: Ethnic category as submitted.
+      - name: lsoa
+        description: LSOA of residence, from the DSCRO-derived DV_LSOA source column.
+      - name: partial_post_code
+        description: Partial postcode of residence, from the DSCRO-derived DV_PARTIAL_POST_CODE source column.
+
+      # Service / contract categorisation (passthrough)
+      - name: commissioned_service_category_code
+        description: Commissioned service category code as submitted.
+      - name: point_of_delivery_code
+        description: National point-of-delivery (POD) code as submitted.
+      - name: local_point_of_delivery_code
+        description: Local POD code as submitted.
+      - name: local_point_of_delivery_description
+        description: Local POD description as submitted.
+      - name: point_of_delivery_further_detail_code
+        description: POD further-detail code as submitted.
+      - name: point_of_delivery_further_detail_description
+        description: POD further-detail description as submitted.
+      - name: activity_treatment_function_code
+        description: Treatment function (specialty) code as submitted.
+      - name: service_code
+        description: Service code as submitted.
+      - name: reporting_type_indicator
+        description: Reporting type indicator as submitted.
+      - name: local_contract_code
+        description: Local contract code as submitted.
+      - name: local_contract_monitoring_code
+        description: Local contract-monitoring code as submitted.
+      - name: local_contract_monitoring_description
+        description: Local contract-monitoring description as submitted.
+      - name: cam_assignment
+        description: CAM assignment as submitted.
+
+      # Feed-specific
+      - name: vat_charged_indicator
+        description: VAT charged indicator as submitted.
+
+      # Drug detail (passthrough unless dv_)
+      - name: drug_name
+        description: High-cost tariff-excluded drug name as submitted (free text).
+      - name: drug_strength
+        description: Drug strength as submitted (free text).
+      - name: drug_pack_size
+        description: Drug pack size as submitted (free text).
+      - name: drug_quantity_raw
+        description: Drug quantity / weight proportion as submitted. Parsed in dv_drug_quantity.
+      - name: dv_drug_quantity
+        description: drug_quantity_raw as NUMBER(38,6); non-numeric -> NULL.
+      - name: dispensing_route
+        description: Dispensing route as submitted.
+      - name: drug_code_dmd
+        description: dm+d (SNOMED CT) code of the high-cost tariff-excluded drug, as submitted.
+      - name: dmd_taxonomy_code
+        description: dm+d taxonomy code as submitted.
+      - name: therapeutic_indication_code
+        description: Therapeutic indication SNOMED CT code as submitted.
+      - name: route_of_administration_code
+        description: Route of administration SNOMED CT code; coalesce of the dm+d and plain source columns.
+      - name: unit_of_measurement_code
+        description: Unit of measurement dm+d code; coalesce of the two source columns.
+      - name: drug_dispensed_date
+        description: CLINICAL_INTERVENTION_DATE_DRUG_DISPENSED parsed to DATE (UK formats); unparseable -> NULL.
+      - name: drug_delivery_date
+        description: DRUG_DELIVERY_DATE parsed to DATE (UK formats); unparseable -> NULL. Agrees 100% with the stated period where both exist.
+
+      # Linkage identifiers (passthrough)
+      - name: non_cds_unique_identifier
+        description: Non-CDS unique identifier as submitted.
+      - name: out_patient_attendance_identifier
+        description: Outpatient attendance identifier as submitted.
+      - name: hospital_provider_spell_identifier
+        description: Hospital provider spell identifier as submitted.
+
+      # Measures (derived)
+      - name: dv_unit_price_commissioner
+        description: UNIT_PRICE_COMMISSIONER as NUMBER(38,6).
+      - name: dv_unit_price_supplier
+        description: UNIT_PRICE_SUPPLIER as NUMBER(38,6).
+      - name: dv_commissioner_support_charge
+        description: COMMISSIONER_SUPPORT_CHARGE as NUMBER(38,6).
+      - name: dv_total_cost
+        description: TOTAL_COST as NUMBER(38,6). £/commas/'TBC' handled; sum-safe.
+
+  - name: stg_lsdrplcm_latest
+    description: |
+      SLAM high-cost drugs PLD, current provider statement only - stg_lsdrplcm restricted to the
+      winning file per (provider, FY, month) via stg_slam_latest_submission.
+      Sum-safe; superseded cumulative restatements excluded. Report from this
+      view; cleaning and column conventions as stg_lsdrplcm.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: meta_sk_row_id
+        description: Surrogate row key; unique guards against lookup-join fan-out.
+        data_tests:
+          - not_null
+          - unique
+

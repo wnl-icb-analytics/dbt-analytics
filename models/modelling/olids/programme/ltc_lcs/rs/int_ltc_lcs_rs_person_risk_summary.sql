@@ -7,6 +7,22 @@
 --   1 = HRC, 2 = HR, 3 = MR, 4 = MRa/MRb, 5 = LR
 
 with all_rs as (
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_acyp_pg2_hr') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_acyp_pg4_lr') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_af_pg2_hr') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_af_pg3_mr') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_ast_pg1_hrc') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_ast_pg2_hr') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_ast_pg3_mr') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_ast_pg4_lr') }}
+    union all
     select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_chd_pg1_hrc') }}
     union all
     select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_chd_pg2_hr') }}
@@ -50,6 +66,20 @@ with all_rs as (
     select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_htn_pg3b_mrb') }}
     union all
     select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_htn_pg4_lr') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_nafld_pg3_mr') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_pad_pg1_hrc') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_pad_pg2_hr') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_pad_pg3_mr') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_stroke_pg1_hrc') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_stroke_pg2_hr') }}
+    union all
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_stroke_pg3_mr') }}
 ),
 
 ranked as (
@@ -87,12 +117,18 @@ highest_per_condition as (
 pivoted as (
     select
         person_id,
+        max(case when condition = 'AF' then risk_group end) as af_risk_group,
+        max(case when condition = 'Asthma Adult' then risk_group end) as asthma_adult_risk_group,
+        max(case when condition = 'Asthma CYP' then risk_group end) as asthma_cyp_risk_group,
         max(case when condition = 'CHD' then risk_group end) as chd_risk_group,
         max(case when condition = 'CKD' then risk_group end) as ckd_risk_group,
         max(case when condition = 'COPD' then risk_group end) as copd_risk_group,
         max(case when condition = 'Diabetes' then risk_group end) as diabetes_risk_group,
         max(case when condition = 'HF' then risk_group end) as hf_risk_group,
         max(case when condition = 'Hypertension' then risk_group end) as hypertension_risk_group,
+        max(case when condition = 'NAFLD' then risk_group end) as nafld_risk_group,
+        max(case when condition = 'PAD' then risk_group end) as pad_risk_group,
+        max(case when condition = 'Stroke/TIA' then risk_group end) as stroke_tia_risk_group,
         min(risk_rank) as overall_risk_rank
     from highest_per_condition
     group by person_id
@@ -100,12 +136,18 @@ pivoted as (
 
 select
     person_id,
+    af_risk_group,
+    asthma_adult_risk_group,
+    asthma_cyp_risk_group,
     chd_risk_group,
     ckd_risk_group,
     copd_risk_group,
     diabetes_risk_group,
     hf_risk_group,
     hypertension_risk_group,
+    nafld_risk_group,
+    pad_risk_group,
+    stroke_tia_risk_group,
     case overall_risk_rank
         when 1 then 'HRC'
         when 2 then 'HR'

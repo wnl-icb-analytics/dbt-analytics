@@ -11,18 +11,16 @@ Includes ICBs, local authorities, LSOAs, MSOAs and their hierarchies.
 */
 
 WITH postcode_geography AS (
-    -- Latest postcode geography mappings
+    -- REVIEW: Dictionary.dbo.Postcode replaces the hashed OLIDS join source.
     SELECT DISTINCT
-        postcode_hash,
         primary_care_organisation,
-        local_authority_organisation,
-        yr_2011_lsoa,
-        yr_2011_msoa,
-        yr_2021_lsoa,
-        yr_2021_msoa
-    FROM {{ ref('stg_olids_postcode_hash') }}
-    WHERE is_latest = TRUE
-        AND postcode_hash IS NOT NULL
+        local_authority_district_unitary_authority as local_authority_organisation,
+        yr2011_lsoa as yr_2011_lsoa,
+        yr2011_msoa as yr_2011_msoa,
+        lsoa as yr_2021_lsoa, -- REVIEW: generic current LSOA is treated as the 2021 code.
+        msoa as yr_2021_msoa -- REVIEW: generic current MSOA is treated as the 2021 code.
+    FROM {{ ref('stg_dictionary_dbo_postcode') }}
+    WHERE postcode_no_space IS NOT NULL
 ),
 
 primary_care_orgs AS (

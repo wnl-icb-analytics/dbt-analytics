@@ -1,0 +1,38 @@
+models:
+  - name: stg_reference_ltc_lcs_expanded_concepts
+    description: >
+      LTC LCS SNOMED CT codes expanded from value sets by the terminology
+      server, one row per concept_id and valueset_id. Where a pair has several
+      codes, only the first snomed_code in sort order is kept.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - concept_id
+              - valueset_id
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: concept_id
+        description: Unique identifier for this concept
+        tests:
+          - not_null
+      - name: valueset_id
+        description: Foreign key to associated valueset
+        tests:
+          - not_null
+      - name: snomed_code
+        description: SNOMED CT code (joins to observations/medications)
+        tests:
+          - not_null
+      - name: display
+        description: Display term for the SNOMED code
+      - name: source
+        description: Source of the code (original, translated, child, etc.)
+      - name: exclude_children
+        description: Flag indicating if child concepts should be excluded

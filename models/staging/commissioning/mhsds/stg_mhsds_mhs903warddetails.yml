@@ -1,0 +1,45 @@
+models:
+  - name: stg_mhsds_mhs903warddetails
+    description: >-
+      MHSDS ward-detail snapshots. Each row is one accepted submission and provider-qualified ward.
+      Duplicate definitions within a file use the last source row.
+    config:
+      meta:
+        owner:
+          name: Kate Homer
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [uniq_submission_id, uniq_ward_code]
+    columns:
+      - name: mhs903_uniq_id
+        description: Identifier of the submitted ward-detail row.
+        data_tests:
+          - not_null
+
+      - name: ward_code
+        description: Provider-local ward identifier.
+        data_tests:
+          - not_null
+
+      - name: uniq_ward_code
+        description: Ward identifier qualified by provider and reporting period, used by the MHS502
+          version 6 derivation. It is not a stable ward identifier across months.
+        data_tests:
+          - not_null
+
+      - name: site_id_of_ward
+        description: Organisation site identifier for the ward.
+
+      - name: org_id_prov
+        description: Provider organisation code.
+        data_tests:
+          - not_null
+
+      - name: uniq_submission_id
+        description: Submission containing the ward definition.
+        data_tests:
+          - not_null
+             
+      - name: dmic_ccg_code
+        description: Commissioner code derived by the source pipeline.

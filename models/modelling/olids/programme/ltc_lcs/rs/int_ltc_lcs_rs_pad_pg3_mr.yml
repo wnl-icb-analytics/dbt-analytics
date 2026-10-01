@@ -1,0 +1,36 @@
+version: 2
+models:
+  - name: int_ltc_lcs_rs_pad_pg3_mr
+    description: |
+      PAD Register Priority Group 3 - Medium Risk.
+      Excludes PG1 (HRC) and PG2 (HR) patients.
+
+      Patients on PAD register meeting:
+      - Rule 2 (gate): peripheral ischaemia code before 12 months ago (exclude on fail)
+      - Rule 3: latest non-HDL cholesterol > 2.5 (include on pass)
+      - Rule 4 (gate): high-intensity statin order in last 6 months or current
+        repeat course of any statin (exclude on pass - on optimal therapy)
+      - Rule 5: no statin order/code in last 12 months and no statin declined
+        in last year (include on pass - statin review needed)
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - on_pad_reg_pg3_mr_vs1
+              - on_pad_reg_pg3_mr_vs2
+              - on_pad_reg_pg3_mr_vs3
+              - on_pad_reg_pg3_mr_vs4
+              - on_pad_reg_pg3_mr_vs5
+              - on_pad_reg_pg3_mr_vs6
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

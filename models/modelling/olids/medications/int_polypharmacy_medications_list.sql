@@ -12,7 +12,7 @@ Uses exclusion-based approach with granular subchapter-level filtering.
 Exclusions are managed in seed file: bnf_polypharmacy_exclusions.csv
 This approach provides:
 - Single source of truth for exclusions
-- Future-proofing: new BNF subchapters automatically included unless explicitly excluded
+- New BNF subchapters are included unless explicitly excluded
 - Auditable configuration changes
 
 Key exclusions:
@@ -25,7 +25,7 @@ Key exclusions:
 
 Logic:
 1. Start with all BNF medications that have valid SNOMED codes
-2. Apply hierarchical exclusion rules (subchapter overrides chapter)
+2. Match each BNF code to its most-specific exclusion rule
 3. Only include medications not marked as excluded
 4. This ensures only drugs with valid BNF mappings in non-excluded chapters are included
 
@@ -37,7 +37,6 @@ WITH bnf_base AS (
         snomed_code,
         bnf_code,
         LEFT(bnf_code, 2) AS bnf_chapter_2digit,
-        SUBSTRING(bnf_code, 1, 5) AS bnf_subchapter_4digit,
         bnf_name
     FROM {{ ref('stg_reference_bnf_latest') }}
     WHERE snomed_code IS NOT NULL
@@ -48,33 +47,28 @@ WITH bnf_base AS (
 exclusions AS (
     SELECT
         bnf_chapter_code,
-        chapter_name,
-        is_excluded
+        is_excluded,
+        REPLACE(bnf_chapter_code, '.', '') AS bnf_code_prefix
     FROM {{ ref('stg_reference_bnf_polypharmacy_exclusions') }}
 ),
 
--- Apply exclusions hierarchically: subchapter-level rules override chapter-level rules
--- More specific exclusions (4-digit) take precedence over less specific (2-digit)
+-- Match dotted seed codes against undotted source BNF codes.
+-- The longest matching prefix takes precedence, allowing subchapters to
+-- override chapter rules such as the HIV and hepatitis inclusions in chapter 5.
 medications_with_exclusion_status AS (
     SELECT
         b.snomed_code,
         b.bnf_code,
         b.bnf_chapter_2digit AS bnf_chapter,
         b.bnf_name,
-        -- Check if excluded at subchapter level (4-digit)
-        e_sub.is_excluded AS excluded_at_subchapter,
-        -- Check if excluded at chapter level (2-digit)
-        e_chap.is_excluded AS excluded_at_chapter,
-        -- Determine final exclusion status:
-        -- 1. If subchapter rule exists, use it (handles explicit inclusions like 5.3.1)
-        -- 2. Otherwise, use chapter rule if it exists
-        -- 3. Otherwise, default to FALSE (include by default)
-        COALESCE(e_sub.is_excluded, e_chap.is_excluded, FALSE) AS is_excluded
+        COALESCE(e.is_excluded, FALSE) AS is_excluded
     FROM bnf_base b
-    LEFT JOIN exclusions e_sub
-        ON b.bnf_subchapter_4digit = e_sub.bnf_chapter_code
-    LEFT JOIN exclusions e_chap
-        ON b.bnf_chapter_2digit = e_chap.bnf_chapter_code
+    LEFT JOIN exclusions e
+        ON b.bnf_code LIKE e.bnf_code_prefix || '%'
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY b.snomed_code
+        ORDER BY LENGTH(e.bnf_code_prefix) DESC NULLS LAST
+    ) = 1
 )
 
 -- Final list: only medications that are NOT excluded

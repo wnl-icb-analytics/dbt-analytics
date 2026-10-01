@@ -1,0 +1,61 @@
+version: 2
+
+models:
+  - name: stg_ers_header
+    description: "Staging model for eRS primary care header/submission records. 1:1 passthrough from raw layer, no joins.\nContact: jonathan.linney@nhs.net"
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+    columns:
+      - name: version
+        data_type: number
+        description: "Submission version"
+      - name: org_id_referrer
+        data_type: varchar
+        description: "Organisation ID of the referrer"
+      - name: uniq_submission_id
+        data_type: number
+        description: "Unique submission identifier"
+        tests:
+          - unique
+          - not_null
+      - name: ebsx00_id
+        data_type: number
+        description: "ebsx00 header record identifier"
+      - name: file_type
+        data_type: varchar
+        description: "Submission file type"
+      - name: rp_start_date
+        data_type: timestamp_ntz
+        description: "Reporting period start date/time"
+      - name: rp_end_date
+        data_type: timestamp_ntz
+        description: "Reporting period end date/time"
+      - name: unique_month_id
+        data_type: varchar
+        description: "Unique month identifier"
+      - name: total_ebsx02
+        data_type: number
+        description: "Total ebsx02 (UBRN action) records in this submission"
+      - name: total_records
+        data_type: number
+        description: "Total records in this submission"
+      - name: dmic_import_log_id
+        data_type: number
+        description: "DMIC import log identifier"
+      - name: dmic_month_id
+        data_type: number
+        description: "DMIC month identifier"
+      - name: dmic_system_id
+        data_type: number
+        description: "DMIC system identifier"
+      - name: dmic_ccg_code_referrer
+        data_type: varchar
+        description: "DMIC CCG code of the referring organisation"
+      - name: dmic_dscro
+        data_type: varchar
+        description: "DMIC DSCRO"
+      - name: dmic_date_added
+        data_type: timestamp_ntz
+        description: "Date/time record was added by DMIC"

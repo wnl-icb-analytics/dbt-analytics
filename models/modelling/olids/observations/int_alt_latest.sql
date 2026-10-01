@@ -6,7 +6,7 @@
 
 /*
 Latest valid ALT observation per person.
-Excludes NONE confidence and negative values, returns the most recent per person.
+Excludes excluded units, negative values and extreme outliers, returns the most recent per person.
 */
 
 SELECT
@@ -28,8 +28,9 @@ SELECT
     confidence,
     alt_category
 FROM {{ ref('int_alt_all') }}
-WHERE confidence != 'NONE'
+WHERE inferred_value IS NOT NULL
   AND NOT is_negative
+  AND NOT is_extreme_outlier
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id
     ORDER BY clinical_effective_date DESC, id DESC

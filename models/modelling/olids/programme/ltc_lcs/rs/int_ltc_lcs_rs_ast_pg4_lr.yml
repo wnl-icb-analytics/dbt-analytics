@@ -1,0 +1,30 @@
+version: 2
+models:
+  - name: int_ltc_lcs_rs_ast_pg4_lr
+    description: |
+      Asthma Adult Register Priority Group 4 - Low Risk.
+      Excludes PG1 (HRC), PG2 (HR) and PG3 (MR). Parent population is the
+      asthma register restricted to age >= 18 (EMIS 'LTC LCS: Asthma Adult
+      Register*').
+
+      Patients meeting any of:
+      - Rule 2: ICS order in last 6 months
+      - Rule 3: SABA order in last 12 months
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - on_asthma_adult_reg_pg4_lr_vs1
+              - on_asthma_adult_reg_pg4_lr_vs2
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

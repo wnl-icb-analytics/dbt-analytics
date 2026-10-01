@@ -215,6 +215,42 @@ persons_with_language AS (
         ON llpp.person_id = lin.person_id
 ),
 
+-- Canonicalise the extracted language label: collapse spelling, casing and
+-- source-phrasing variants of the same language, and strip any residual SNOMED
+-- semantic tag. Only same-language duplicates are merged; distinct languages and
+-- dialects (e.g. Farsi/Dari, Mandarin/Cantonese) are left as recorded.
+persons_with_language_normalised AS (
+    SELECT
+        person_id,
+        sk_patient_id,
+        latest_language_date,
+        concept_id,
+        concept_code,
+        term,
+        CASE
+            WHEN language ILIKE '%british sign language%' THEN 'British Sign Language'
+            WHEN language ILIKE '%makaton%'               THEN 'Makaton Sign Language'
+            WHEN language ILIKE 'sign language'           THEN 'Sign Language'
+            WHEN language = 'Gujerati'                    THEN 'Gujarati'
+            WHEN language = 'Pushto'                       THEN 'Pashto'
+            WHEN language = 'Panjabi'                      THEN 'Punjabi'
+            WHEN language IN ('Uigur', 'Uighur')           THEN 'Uyghur'
+            WHEN language ILIKE 'french cr_ole'            THEN 'French Creole'
+            -- strip trailing "(finding)", "(observable entity)" etc. left by some source phrasings
+            ELSE REGEXP_REPLACE(language, ' \\((finding|observable entity|qualifier value|disorder|situation)\\)$', '')
+        END AS language,
+        CASE
+            WHEN language ILIKE '%sign language%' OR language ILIKE '%makaton%' THEN 'Sign'
+            ELSE language_type
+        END AS language_type,
+        language_source,
+        interpreter_needed,
+        interpreter_type,
+        communication_support_needed,
+        communication_support_type
+    FROM persons_with_language
+),
+
 -- Then get all persons to ensure complete coverage
 all_persons AS (
     SELECT person_id
@@ -240,5 +276,5 @@ SELECT
     pwl.communication_support_needed,
     pwl.communication_support_type
 FROM all_persons AS ap
-LEFT JOIN persons_with_language AS pwl
+LEFT JOIN persons_with_language_normalised AS pwl
     ON ap.person_id = pwl.person_id

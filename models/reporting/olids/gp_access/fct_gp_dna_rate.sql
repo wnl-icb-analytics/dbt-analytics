@@ -29,6 +29,6 @@ select
             / NULLIF(SUM(CASE WHEN is_attended OR is_dna THEN 1 ELSE 0 END), 0),
         1
     ) as dna_rate_pct
-from {{ ref('int_appointment_gp_clean_recent') }}
+from {{ ref('int_appointment_gp_clinical_recent') }}
 where is_attended = TRUE or is_dna = TRUE
 group by practice_code, report_month

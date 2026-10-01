@@ -1,0 +1,22 @@
+models:
+  - name: int_csds_contacts_summary
+    description: |
+      Superseded by fct_csds_referral_summary and retiring once remaining readers move. Summary of the number and types of contacts per referral.
+      One row per referral per patient (SERVICE_REQUEST_IDENTIFIER + NHS_NUMBER).
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [referral_id, sk_patient_id]
+    columns:
+      - name: sk_patient_id
+        description: "Unique pseudo-anonymised patient identifier (NHS_NUMBER)"
+##        tests:
+##          - not_null
+      - name: referral_id
+        description: "Unique identifier for the referral (SERVICE_REQUEST_IDENTIFIER)"
+        tests:
+          - not_null

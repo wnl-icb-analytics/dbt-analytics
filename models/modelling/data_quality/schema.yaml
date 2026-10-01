@@ -1,0 +1,124 @@
+version: 2
+
+### Description: Schema tests for provider daily activity models:
+### - No null provider names
+### - Only valid NCL providers (catches typos, unexpected providers, missing lookups)
+### - No null dates
+### - No null record counts
+
+models:
+  - name: provider_daily_apc_activity
+    description: >
+      Daily SUS admitted patient care spell counts by discharge date for ten monitored
+      providers, to monitor data completeness. One row per provider and discharge date.
+      Covers the last 744 days. Spells without a discharge date are excluded. Providers
+      are matched on commissioning service agreement provider code: RRV, RKE, RAL, RP4,
+      RP6, RAN, RYJ, RQM, R1K, RAS. provider is the organisation_nhs_provider name, or the
+      code where the lookup has no match.
+    columns:
+      - name: provider
+        description: "Provider name from lookup"
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 'Chelsea and Westminster Hospital NHS Foundation Trust'
+                  - 'Great Ormond Street Hospital for Children NHS Foundation Trust'
+                  - 'Imperial College Healthcare NHS Trust'
+                  - 'London North West University Healthcare NHS Trust'
+                  - 'Moorfields Eye Hospital NHS Foundation Trust'
+                  - 'Royal Free London NHS Foundation Trust'
+                  - 'Royal National Orthopaedic Hospital NHS Trust'
+                  - 'The Hillingdon Hospitals NHS Foundation Trust'
+                  - 'University College London Hospitals NHS Foundation Trust'
+                  - 'Whittington Health NHS Trust'
+                quote: true
+      - name: activity_date
+        description: "Date of activity"
+        tests:
+          - not_null
+
+      - name: records
+        description: "Count of records"
+        tests:
+          - not_null
+
+  - name: provider_daily_op_activity
+    description: "Daily Outpatient (OP) activity by provider"
+    config:
+      meta:
+        owner:
+          name: JonathanLinney
+    columns:
+      - name: provider
+        description: "Provider name from lookup"
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 'Chelsea and Westminster Hospital NHS Foundation Trust'
+                  - 'Great Ormond Street Hospital for Children NHS Foundation Trust'
+                  - 'Imperial College Healthcare NHS Trust'
+                  - 'London North West University Healthcare NHS Trust'
+                  - 'Moorfields Eye Hospital NHS Foundation Trust'
+                  - 'Royal Free London NHS Foundation Trust'
+                  - 'Royal National Orthopaedic Hospital NHS Trust'
+                  - 'The Hillingdon Hospitals NHS Foundation Trust'
+                  - 'University College London Hospitals NHS Foundation Trust'
+                  - 'Whittington Health NHS Trust'
+                quote: true
+      - name: activity_date
+        description: "Date of activity"
+        tests:
+          - not_null
+
+      - name: records
+        description: "Count of records"
+        tests:
+          - not_null
+
+  - name: provider_daily_ecds_activity
+    description: >
+      Daily ECDS emergency care attendance counts by arrival date for ten monitored
+      providers, to monitor data completeness. One row per provider and arrival date.
+      Covers the last 744 days. Providers are matched on system record provider code: RRV,
+      RKE, RAL, RP4, RP6, RAN, RYJ, RQM, R1K, RAS. provider is the
+      organisation_nhs_provider name, or the code where the lookup has no match.
+    columns:
+      - name: provider
+        description: "Provider name from lookup"
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 'Chelsea and Westminster Hospital NHS Foundation Trust'
+                  - 'Great Ormond Street Hospital for Children NHS Foundation Trust'
+                  - 'Imperial College Healthcare NHS Trust'
+                  - 'London North West University Healthcare NHS Trust'
+                  - 'Moorfields Eye Hospital NHS Foundation Trust'
+                  - 'Royal Free London NHS Foundation Trust'
+                  - 'Royal National Orthopaedic Hospital NHS Trust'
+                  - 'The Hillingdon Hospitals NHS Foundation Trust'
+                  - 'University College London Hospitals NHS Foundation Trust'
+                  - 'Whittington Health NHS Trust'
+                quote: true
+      - name: activity_date
+        description: "Date of activity"
+        tests:
+          - not_null
+
+      - name: records
+        description: "Count of records"
+        tests:
+          - not_null
+
+  - name: provider_missing_summary
+    description: "Pivot table summarising missing provider records across APC, OP, and ECDS."
+    columns:
+      - name: provider
+        description: "The name of the NHS Provider"
+        tests:
+          - not_null

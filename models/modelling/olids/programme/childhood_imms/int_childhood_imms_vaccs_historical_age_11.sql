@@ -125,6 +125,7 @@ FROM COMBINED
 --add back in demographics and person months
 select 
 p.ANALYSIS_MONTH
+,p.fiscal_year_label
 ,v.PERSON_ID
 ,v.PRACTICE_NAME
 ,p.practice_code

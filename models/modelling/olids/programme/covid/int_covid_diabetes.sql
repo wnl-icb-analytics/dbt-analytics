@@ -5,7 +5,8 @@ Business Rule: Person is eligible if they have:
 1. Diabetes diagnosis (DIAB_COD) - latest occurrence
 2. AND NOT resolved diabetes (DMRES_COD more recent than diagnosis), OR
 3. Addison's disease/pan-hypopituitarism (ADDIS_COD) - any time, OR  
-4. Gestational diabetes (via separate int_covid_gestational_diabetes model)
+4. Gestational diabetes while pregnant (int_covid_gestational_diabetes, GDIAB_GROUP),
+   which DIAB_GROUP selects after Addison's and before the diagnosis check (spec 2.2)
 5. AND aged 5+ years (minimum age for COVID vaccination)
 6. Only eligible in 2024/25 campaigns (broader eligibility)
 
@@ -13,17 +14,15 @@ Exclusion rule - resolved diabetes patients are excluded unless more recent diag
 This condition is NOT eligible in 2025/26 restricted campaigns.
 */
 
-{{ config(materialized='table') }}
+{{ config(
+    materialized='table',
+    tags=['covid_flu']
+) }}
 
 WITH all_campaigns AS (
-    -- Generate data for both current and previous campaigns automatically
-    SELECT * FROM ({{ covid_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_spring_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_autumn_config() }})
-    UNION ALL
-    SELECT * FROM ({{ covid_previous_spring_config() }})
+    -- Every COVID campaign the models report on
+    -- (campaign list: macros/config/covid_campaign_selection.sql)
+    {{ covid_reported_campaigns() }}
 ),
 
 -- Step 1: Find people with diabetes diagnosis (for all campaigns)
@@ -34,12 +33,11 @@ people_with_diabetes_diagnosis AS (
         MAX(obs.clinical_effective_date) AS latest_diabetes_date,
         cc.audit_end_date,
         cc.campaign_reference_date
-    FROM ({{ get_observations("'DIAB_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'DIAB_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= cc.audit_end_date
-        -- Only include if this condition is eligible in the campaign
-        AND cc.eligible_diabetes = TRUE
     GROUP BY 
         cc.campaign_id, obs.person_id, cc.audit_end_date,
         cc.campaign_reference_date
@@ -52,12 +50,11 @@ people_with_diabetes_resolved AS (
         obs.person_id,
         MAX(obs.clinical_effective_date) AS latest_resolved_date,
         cc.audit_end_date
-    FROM ({{ get_observations("'DMRES_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'DMRES_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= cc.audit_end_date
-        -- Only include if this condition is eligible in the campaign
-        AND cc.eligible_diabetes = TRUE
     GROUP BY cc.campaign_id, obs.person_id, cc.audit_end_date
 ),
 
@@ -69,12 +66,11 @@ people_with_addisons AS (
         MAX(obs.clinical_effective_date) AS latest_addisons_date,
         cc.audit_end_date,
         cc.campaign_reference_date
-    FROM ({{ get_observations("'ADDIS_COD'", 'UKHSA_COVID') }}) obs
+    FROM ({{ get_observations("'ADDIS_COD'", 'UKHSA_COVID', versioned=true) }}) obs
     CROSS JOIN all_campaigns cc
-    WHERE obs.clinical_effective_date IS NOT NULL
+    WHERE obs.spec_version = cc.terminology_version
+        AND obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= cc.audit_end_date
-        -- Only include if this condition is eligible in the campaign
-        AND cc.eligible_diabetes = TRUE
     GROUP BY 
         cc.campaign_id, obs.person_id, cc.audit_end_date, cc.campaign_reference_date
 ),
@@ -112,27 +108,58 @@ people_with_diabetes_eligible AS (
     WHERE (pdd.person_id IS NOT NULL OR pwa.person_id IS NOT NULL)
 ),
 
--- Step 5: Add age information and apply age restrictions
+-- Step 5: Add gestational diabetes (GDIAB_GROUP), keeping one row per person in spec
+-- order: Addison's, then gestational diabetes, then active diabetes
+diabetes_group AS (
+    SELECT
+        campaign_id,
+        person_id,
+        COALESCE(latest_addisons_date, latest_diabetes_date) AS qualifying_event_date,
+        campaign_reference_date,
+        eligibility_reason,
+        IFF(latest_addisons_date IS NOT NULL, 1, 3) AS spec_order
+    FROM people_with_diabetes_eligible
+    WHERE is_diabetes_eligible = TRUE
+
+    UNION ALL
+
+    SELECT
+        campaign_id,
+        person_id,
+        qualifying_event_date,
+        reference_date AS campaign_reference_date,
+        'Gestational diabetes during pregnancy' AS eligibility_reason,
+        2 AS spec_order
+    FROM {{ ref('int_covid_gestational_diabetes') }}
+    -- Same campaigns as this build, so an incremental run replaces only those
+    WHERE campaign_id IN (SELECT campaign_id FROM all_campaigns)
+),
+
+diabetes_group_person AS (
+    SELECT *
+    FROM diabetes_group
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY campaign_id, person_id ORDER BY spec_order) = 1
+),
+
+-- Step 6: Add age information and apply age restrictions
 people_with_diabetes_eligible_with_age AS (
-    SELECT 
+    SELECT
         pde.campaign_id,
         pde.person_id,
         demo.birth_date_approx,
-        DATEDIFF('year', demo.birth_date_approx, pde.campaign_reference_date) AS age_years_at_ref_date,
-        DATEDIFF('month', demo.birth_date_approx, pde.campaign_reference_date) AS age_months_at_ref_date,
-        COALESCE(pde.latest_addisons_date, pde.latest_diabetes_date) AS qualifying_event_date,
+        FLOOR(MONTHS_BETWEEN(pde.campaign_reference_date, demo.birth_date_approx) / 12) AS age_years_at_ref_date,
+        FLOOR(MONTHS_BETWEEN(pde.campaign_reference_date, demo.birth_date_approx)) AS age_months_at_ref_date,
+        pde.qualifying_event_date,
         pde.campaign_reference_date,
         pde.eligibility_reason
-    FROM people_with_diabetes_eligible pde
-    LEFT JOIN {{ ref('dim_person_demographics') }} demo 
+    FROM diabetes_group_person pde
+    LEFT JOIN {{ ref('dim_person_demographics') }} demo
         ON pde.person_id = demo.person_id
-    WHERE demo.is_active = TRUE
-        AND demo.birth_date_approx IS NOT NULL
-        AND pde.is_diabetes_eligible = TRUE
-        AND DATEDIFF('year', demo.birth_date_approx, pde.campaign_reference_date) >= 5  -- Minimum age 5
+    WHERE demo.birth_date_approx IS NOT NULL
+        AND demo.birth_date_approx <= DATEADD('year', -5, pde.campaign_reference_date)  -- Minimum age 5, tested on birth date
 ),
 
--- Step 6: Format for eligibility table
+-- Step 7: Format for eligibility table
 final_eligible AS (
     SELECT 
         campaign_id,

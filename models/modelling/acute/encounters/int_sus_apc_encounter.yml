@@ -1,0 +1,293 @@
+
+models:
+  - name: int_sus_apc_encounter
+    description: >-
+      Admitted patient care from SUS, with one row per staged hospital spell,
+      including open spells. Retains the staged spell population without an
+      additional date or patient-status filter. Missing dictionary matches leave
+      labels null without removing the spell or its supplied codes.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: visit_occurrence_id
+        data_type: number
+        description: "Primary key for the encounter within SUS"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        data_type: varchar
+        description: "Common commissioning patient identifier"
+
+      - name: source
+        data_type: varchar
+        description: "Commissioning data source of record"
+
+      - name: local_patient_identifier
+        data_type: varchar
+        description: "Trust-provided patient id."
+
+      - name: organisation_id
+        data_type: varchar
+        description: "Provider organisation identifier"
+
+      - name: organisation_name
+        data_type: varchar
+        description: "Provider organisation name"
+
+      - name: site_id
+        data_type: varchar
+        description: "Site identifier"
+
+      - name: site_name
+        data_type: varchar
+        description: "Site name"
+
+      - name: start_date
+        data_type: timestamp_ntz
+        description: "Spell start date"
+
+      - name: end_date
+        data_type: timestamp_ntz
+        description: "Submitted spell discharge date. Null when SUS+ supplied no spell discharge date."
+
+      - name: estimated_discharge_date
+        data_type: date
+        description: >-
+          Estimated discharge date for a closed spell with no submitted discharge
+          date. Uses the latest non-null submitted episode end date first, then
+          admission date plus the SUS+ grouper length of stay. Null for open
+          spells and where neither estimate can be calculated. This does not
+          replace end_date and does not drive point of delivery.
+
+      - name: has_estimated_discharge_date
+        data_type: boolean
+        description: >-
+          True when estimated_discharge_date is populated. False does not mean a
+          submitted discharge date exists; inspect end_date separately.
+
+      - name: estimated_discharge_date_method
+        data_type: varchar
+        description: >-
+          Method used for estimated_discharge_date: EPISODE_END_DATE for the
+          latest non-null submitted episode end date, or
+          ADMISSION_PLUS_GROUPER_LOS for admission date plus the SUS+ grouper
+          length of stay. Null when no estimate is present.
+
+      - name: duration
+        data_type: number
+        description: "Length of stay in days. This value is an output of the grouper process and represents the sum of the Episode Adjusted Durations for non-excluded episodes in the spell."
+
+      - name: is_open_spell
+        data_type: boolean
+        description: >-
+          Whether SUS+ supplied an open-spell indicator of 1 for the latest spell
+          record. This preserves the supplied status and is not inferred from a
+          missing discharge date. Null means no indicator was supplied.
+
+      - name: unadjusted_length_of_stay_days
+        data_type: number
+        description: >-
+          SUS+-supplied length of stay before critical-care, rehabilitation,
+          palliative-care and delayed-discharge adjustments. Null means SUS+
+          supplied no value.
+
+      - name: excess_bed_days
+        data_type: number
+        description: >-
+          SUS+-supplied number of length-of-stay days above the tariff trim point.
+          dbt passes the spell-level value through without recalculation. Null
+          means SUS+ supplied no value.
+
+      - name: duration_to_date
+        data_type: number
+        description: >-
+          Calendar days from admission to the submitted discharge date. For a
+          spell explicitly marked open, calendar days from admission to the
+          model build date. Null for a closed spell without a submitted discharge
+          date and where admission date is missing.
+
+      - name: spell_admission_method
+        data_type: varchar
+        description: "Method of admission of the spell (code)"
+
+      - name: admission_method_name
+        data_type: varchar
+        description: "Method of admission of the spell (name)"
+
+      - name: admission_method_group
+        data_type: varchar
+        description: "Group of admission method"
+
+      - name: admission_patient_classification
+        data_type: varchar
+        description: "Patient classification at admission"
+
+      - name: pod
+        data_type: varchar
+        description: >-
+          Point of delivery based on admission method, patient classification and
+          submitted spell dates. Emergency spells are NEL-ZLOS for same-day
+          discharge and NEL-LOS+1 for later discharge; the value is null when no
+          submitted discharge date exists. Other admission-based groups do not
+          depend on discharge date.
+
+      - name: discharge_destination_code
+        data_type: varchar
+        description: >-
+          Supplied inpatient discharge destination code. Retained even when no
+          dictionary label matches; null means no code was supplied.
+
+      - name: discharge_destination_name
+        data_type: varchar
+        description: >-
+          Latest UKHFD discharge destination label, including retired codes.
+          The modern Destination Of Discharge definition takes precedence over
+          the legacy code set; this is not the wording as at the discharge date.
+          Null when the supplied code is missing or has no matching label.
+
+      - name: discharge_method_code
+        data_type: varchar
+        description: >-
+          Supplied inpatient discharge method code. Retained even when no
+          dictionary label matches; null means no code was supplied.
+
+      - name: discharge_method_name
+        data_type: varchar
+        description: >-
+          Latest UKHFD discharge method label, including retired codes.
+          The modern Method Of Discharge definition takes precedence over
+          the legacy code set; this is not the wording as at the discharge date.
+          Null when the supplied code is missing or has no matching label.
+
+      - name: critical_care_days_for_length_of_stay
+        data_type: number(38,0)
+        description: >-
+          SUS+-derived critical-care days, calculated by SUS+ from submitted
+          critical-care activity for its length-of-stay adjustment. SUS+ subtracts
+          distinct critical-care days from episode duration. dbt passes through
+          the supplied spell-level value unchanged, without recalculation
+          or further subtraction from duration. This is not a financial amount
+          or a measure of critical-care occupancy. Null means no value was supplied.
+
+      - name: primary_diagnosis_code
+        data_type: varchar
+        description: "Primary diagnosis code for the spell as derived by the HRG grouper"
+
+      - name: secondary_diagnosis_code
+        data_type: varchar
+        description: "Secondary diagnosis code for the spell as derived by the HRG grouper"
+
+      - name: primary_treatment
+        data_type: varchar
+        description: "Dominant procedure code for the spell as derived by the HRG grouper"
+
+      - name: main_specialty_code
+        data_type: varchar
+        description: "The specialty (code) in which the consultant is contracted or recognised, derived from the dominant episode of the spell."
+
+      - name: main_specialty_name
+        data_type: varchar
+        description: "The specialty (name) in which the consultant is contracted or recognised, derived from the dominant episode of the spell."
+
+      - name: main_specialty_category
+        data_type: varchar
+        description: "The specialty (category) in which the consultant is contracted or recognised, derived from the dominant episode of the spell."
+
+      - name: treatment_function_code
+        data_type: varchar
+        description: "Treatment function code for the specialised service within which the patient is treated."
+
+      - name: treatment_function_code_desc
+        data_type: varchar
+        description: "Treatment function description for the specialised service within which the patient is treated."
+
+      - name: hrg_code
+        data_type: varchar
+        description: "The spell level HRG returned by the grouper as a result of grouping non-excluded episodes."
+
+      - name: core_hrg_desc
+        data_type: varchar
+        description: "HRG description associated with the spell"
+
+      - name: core_hrg_chapter
+        data_type: varchar
+        description: "HRG chapter key associated with the spell"
+
+      - name: core_hrg_chapter_desc
+        data_type: varchar
+        description: "HRG chapter description associated with the spell"
+
+      - name: spec_comm_flag
+        data_type: varchar
+        description: "Specialised Commission Flag"
+
+      - name: spec_comm
+        data_type: varchar
+        description: "Specialised Commission Code"
+
+      - name: type
+        data_type: varchar
+        description: "An amalgamation of admission_type and sub_type where type = 'NON'."
+
+      - name: cost
+        data_type: number
+        description: "The final calculated national price from SUS"
+
+      - name: age_at_event
+        data_type: number
+        description: "The age at the start of the dominant episode."
+
+      - name: gender_at_event
+        data_type: varchar
+        description: "Patient gender code at time of event"
+
+      - name: gender_desc_at_event
+        data_type: varchar
+        description: "Patient gender description at time of event"
+
+      - name: ethnicity_at_event
+        data_type: varchar
+        description: "Patient ethnicity code at time of event"
+
+      - name: ethnicity_desc_at_event
+        data_type: varchar
+        description: "Patient ethnicity description at time of event"
+
+      - name: postcode_district_at_event
+        data_type: varchar
+        description: "The first part of the patient's postcode (outward code) at the time of the event."
+
+      - name: lsoa_11_at_event
+        data_type: varchar
+        description: >-
+          Patient LSOA 2011 of residence at the time of the spell. Populated
+          across the full history, so use it for trends that span April 2024.
+
+      - name: lsoa_21_at_event
+        data_type: varchar
+        description: >-
+          Patient LSOA 2021 of residence at the time of the spell. Populated
+          for spells discharged from 1 April 2024 (about 96%); mostly null for
+          earlier spells, so use lsoa_11_at_event for trends that span that
+          date. About 2% of values from April 2024 lie in a different local
+          authority from lsoa_11_at_event.
+
+      - name: lad_at_event
+        data_type: varchar
+        description: "Patient local authority district at time of event"
+
+      - name: imd_at_event
+        data_type: varchar
+        description: "Patient index of multiple deprivation decile at time of event"
+
+      - name: reg_practice_at_event
+        data_type: varchar
+        description: "Patient registered GP practice at time of event"
+
+      - name: visit_occurrence_type
+        data_type: varchar
+        description: "Type of visit occurrence"

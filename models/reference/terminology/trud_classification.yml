@@ -1,0 +1,128 @@
+version: 2
+models:
+- name: icd10_code
+  description: One ICD10 code with its latest available label. Prefers the current TRUD title and retains additional
+    codes from the warehouse dictionary, including historical codes. Dictionary-only codes use the latest retained
+    dictionary revision. Codes are undotted; this is a label reference, not retrospective submission validation.
+  config: &id001
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: code
+    description: Classification code without dots.
+    data_tests:
+    - unique
+    - not_null
+  - name: description
+    description: TRUD title or latest available warehouse dictionary description. Null when neither supplies
+      a label.
+  - name: definition_source
+    description: Reference that supplied the retained definition.
+- name: opcs4_code
+  description: One OPCS4 code with its latest available label. Prefers the current TRUD title and retains additional
+    codes from the warehouse dictionary, including historical codes. Dictionary-only codes use the latest retained
+    dictionary revision. Codes are undotted; this is a label reference, not retrospective submission validation.
+  config: *id001
+  columns:
+  - name: code
+    description: Classification code without dots.
+    data_tests:
+    - unique
+    - not_null
+  - name: description
+    description: TRUD title or latest available warehouse dictionary description. Null when neither supplies
+      a label.
+  - name: definition_source
+    description: Reference that supplied the retained definition.
+- name: snomed_to_icd10_map
+  description: One active published SNOMED-to-ICD10 map member per source concept, map block, group and priority.
+    Retains all conditional alternatives and required groups. This is a forward classification reference, not
+    a one-to-one clinical equivalence or a reverse map. Apply the published mapping criteria before assigning
+    a classification.
+  config: *id001
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - snomed_code
+        - map_block
+        - map_group
+        - map_priority
+  columns:
+  - name: snomed_code
+    description: Source SNOMED CT concept identifier.
+    data_tests:
+    - not_null
+  - name: snomed_description
+    description: Latest retained NHS Digital preferred term, falling back to the TRUD fully specified name.
+  - name: icd10_code
+    description: Published target classification code without dots.
+    data_tests:
+    - not_null
+  - name: icd10_description
+    description: Label from the shared classification code reference, falling back to the map title.
+  - name: map_block
+    description: Published UK map block. Identifies a set of mapping groups; retained as part of the map-member
+      key.
+  - name: map_group
+    description: Group of candidate records for one target code within the map block. More than one group can
+      be required.
+  - name: map_priority
+    description: Order in which candidate records within a group are checked against the mapping criteria.
+  - name: map_rule
+    description: Published machine-readable selection rule. Null means no rule was supplied, not that every
+      target should be assigned.
+  - name: map_advice
+    description: Published instructions and qualifications for selecting or supplementing the target code.
+  - name: effective_date
+    description: Effective date of the retained map member.
+  - name: release_id
+    description: TRUD release containing this map member; retained for reference provenance.
+- name: snomed_to_opcs4_map
+  description: One active published SNOMED-to-OPCS4 map member per source concept, map block, group and priority,
+    within its OPCS version. Retains all conditional alternatives and required groups. This is a forward classification
+    reference, not a one-to-one clinical equivalence or a reverse map. Apply the published mapping criteria
+    before assigning a classification.
+  config: *id001
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - snomed_code
+        - opcs_version
+        - map_block
+        - map_group
+        - map_priority
+  columns:
+  - name: snomed_code
+    description: Source SNOMED CT concept identifier.
+    data_tests:
+    - not_null
+  - name: snomed_description
+    description: Latest retained NHS Digital preferred term, falling back to the TRUD fully specified name.
+  - name: opcs4_code
+    description: Published target classification code without dots.
+    data_tests:
+    - not_null
+  - name: opcs4_description
+    description: Label from the shared classification code reference, falling back to the map title.
+  - name: opcs_version
+    description: Target OPCS-4 version published with the map.
+  - name: map_block
+    description: Published UK map block. Identifies a set of mapping groups; retained as part of the map-member
+      key.
+  - name: map_group
+    description: Group of candidate records for one target code within the map block. More than one group can
+      be required.
+  - name: map_priority
+    description: Order in which candidate records within a group are checked against the mapping criteria.
+  - name: map_rule
+    description: Published machine-readable selection rule. Null means no rule was supplied, not that every
+      target should be assigned.
+  - name: map_advice
+    description: Published instructions and qualifications for selecting or supplementing the target code.
+  - name: effective_date
+    description: Effective date of the retained map member.
+  - name: release_id
+    description: TRUD release containing this map member; retained for reference provenance.

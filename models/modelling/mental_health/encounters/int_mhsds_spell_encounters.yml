@@ -1,0 +1,90 @@
+
+models:
+  - name: int_mhsds_spell_encounters
+    description: >-
+      Inferred inpatient spells prepared for cross-system activity reporting. Each row is one
+      interval retained by the shared occupancy rules, which handle stale undischarged spells,
+      duplicate admissions, contained spells and later overlapping admissions. The end-date reason
+      distinguishes recorded discharge from inferred closure. Proxy costs use 2026/27 NHS England
+      bed-day prices from the MBU98 family, the provider's market forces factor and GDP-deflator
+      adjustment to each bed day's fiscal year. They are estimates rather than actual provider
+      costs.
+    config:
+      meta:
+        owner:
+          name: Jessica Roberts
+    columns:
+      - name: encounter_id
+        description: "Surrogate key - unique identifier for the encounter"
+        data_tests:
+          - unique
+          - not_null
+      - name: sk_patient_id
+        description: pseudo NHS number
+      - name: org_id_prov
+        description: Provider organisation code
+      - name: start_date
+        description: Start date of the spell
+      - name: admission_source_code
+        description: Source of admission code
+      - name: admission_source
+        description: Source of admission
+      - name: admission_method_code
+        description: Admission method code
+      - name: admission_method
+        description: Admission method
+      - name: end_date
+        description: >
+          End date of the spell. Discharge date where recorded; for undischarged
+          spells no longer appearing in active submissions, the end of the last
+          reporting period the spell was submitted in. NULL only for genuinely
+          open spells (still in a current submission).
+      - name: end_date_source
+        description: >
+          How end_date was derived - 'discharged' (real discharge date),
+          'open' (still in a current submission, accrues to current date),
+          'last_submission' (orphaned undischarged spell closed at its last
+          reporting period), or 'superseded' (closed at a later admission
+          date for the same person).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['discharged', 'open', 'last_submission', 'superseded']
+      - name: care_setting
+        description: >
+          Dominant care setting from the spell's ward stays (by bed days) -
+          acute_picu, rehab, specialist, forensic, or unclassified where no
+          usable ward stay data exists (~57% of spells).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['acute_picu', 'rehab', 'specialist', 'forensic', 'unclassified']
+      - name: duration_to_date
+        description: >
+          Spell duration in days (nights) from start to end_date, or to the
+          current date for genuinely open spells.
+      - name: proxy_cost
+        description: >
+          Proxy cost of the spell to date. Bed days priced with the NHSE 26/27
+          indicative price schedule (24/25 NCC) MBU98 Other/Unclassified
+          inpatient currencies by care setting (forensic and unclassified fall
+          back to MBU98Z), multiplied by the provider's 26/27 Market Forces
+          Factor (1.0 where unknown), and rebased from 26/27 prices to each bed
+          day's own fiscal year using the GDP deflator (uk_cost_indices).
+        data_tests:
+          # Canary for the seed lookups: if the 26/27 deflator row or the
+          # 'unclassified' price row ever goes missing, every spell's cost
+          # becomes 0, which "proxy_cost >= 0" below would still pass.
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: 1
+      - name: source
+        description: Source system of the data (MHSDS)
+
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "end_date is null or end_date >= start_date"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "proxy_cost >= 0"

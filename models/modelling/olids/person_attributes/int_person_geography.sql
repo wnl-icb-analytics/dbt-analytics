@@ -35,12 +35,12 @@ current_addresses AS (
         ORDER BY
             CASE WHEN pa.end_date IS NULL THEN 0 ELSE 1 END,  -- Active addresses first
             pa.start_date DESC NULLS LAST,
-            pa.lds_datetime_first_acquired DESC NULLS LAST
+            pa.lds_transform_datetime DESC NULLS LAST
     ) = 1
 ),
 
 postcode_geography AS (
-    -- Get the latest geography data for each postcode hash
+    -- Geography per postcode hash, from the feed's lookup table
     SELECT
         postcode_hash,
         primary_care_organisation,
@@ -50,8 +50,11 @@ postcode_geography AS (
         yr_2021_lsoa,
         yr_2021_msoa
     FROM {{ ref('stg_olids_postcode_hash') }}
-    WHERE is_latest = TRUE
-        AND postcode_hash IS NOT NULL
+    WHERE postcode_hash IS NOT NULL
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY postcode_hash
+        ORDER BY last_updated DESC NULLS LAST, version DESC NULLS LAST
+    ) = 1
 ),
 
 neighbourhood_reference AS (

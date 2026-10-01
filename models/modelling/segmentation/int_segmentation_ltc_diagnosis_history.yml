@@ -1,0 +1,46 @@
+models:
+  - name: int_segmentation_ltc_diagnosis_history
+    description: >-
+      Monthly membership of segmentation LTC registers determined by diagnosis,
+      resolution or exclusion events. One row represents one active person on
+      one condition register at one of the last 60 completed month-ends. Each
+      event counts only when both its clinical date and recorded date are on or
+      before the month-end.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, end_date, condition_code]
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: end_date
+        description: Completed month-end used as the register reference date.
+        data_tests:
+          - not_null
+      - name: condition_code
+        description: Segmentation condition code.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [AF, CHD, DEM, HF, HTN, LD, STIA, PD, ANX, NAFLD]
+      - name: is_on_register
+        description: Person meets the register definition at the month-end.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true]
+                quote: false
+      - name: latest_diagnosis_date
+        description: Latest qualifying diagnosis date by the month-end.
+      - name: latest_resolved_date
+        description: Latest qualifying resolution date by the month-end.
+      - name: latest_exclusion_date
+        description: Latest qualifying exclusion date by the month-end.

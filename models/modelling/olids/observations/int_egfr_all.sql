@@ -14,7 +14,13 @@ WITH base_observations AS (
         obs.id,
         obs.person_id,
         obs.clinical_effective_date,
-        CAST(obs.result_value AS NUMBER(10,1)) AS egfr_value,
+        -- result_value is FLOAT and carries occasional junk magnitudes
+        -- (e.g. 8.6e14); out-of-range values become null and fall into the
+        -- invalid classification below
+        CASE
+            WHEN ABS(obs.result_value) < 1e9
+                THEN CAST(obs.result_value AS NUMBER(10, 1))
+        END AS egfr_value,
         obs.result_unit_display,
         obs.mapped_concept_code AS concept_code,
         obs.mapped_concept_display AS concept_display,
@@ -45,7 +51,7 @@ SELECT
 
     -- CKD stage classification (mL/min/1.73m²)
     CASE
-        WHEN egfr_value NOT BETWEEN 1 AND 200 THEN 'Invalid'
+        WHEN egfr_value IS NULL OR egfr_value NOT BETWEEN 1 AND 200 THEN 'Invalid'
         WHEN egfr_value >= 90 THEN 'Normal/High (≥90)'
         WHEN egfr_value >= 60 THEN 'Mild decrease (60-89)'
         WHEN egfr_value >= 45 THEN 'CKD Stage 3a (45-59)'

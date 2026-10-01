@@ -1,0 +1,29 @@
+version: 2
+models:
+  - name: int_ltc_lcs_nafld_register
+    description: |
+      LTC LCS NAFLD register per the EMIS 'LTC LCS: NAFLD Register v2*'
+      definition - the steatotic liver disease family (fatty liver conditions
+      including the alcoholic branch, plus MASLD/MASH codes). Broader than
+      fct_person_nafld_register, which stays on the clinically clean MASLD
+      cluster. Parent for the NAFLD risk stratification model and the LTC LCS
+      base population.
+
+      Implemented from the ECL-managed SLD_DX_CODES cluster (verified
+      equivalent to the EMIS valueset expansion). Active patients only.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: SLD_DX_CODES
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

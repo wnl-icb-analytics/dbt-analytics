@@ -3,27 +3,31 @@ models:
   - name: int_ltc_lcs_rs_hf_pg3_mr
     description: |
       Heart Failure Register Priority Group 3 - Medium Risk.
-      NB: There is no PG1 for HF.
+      Excludes PG2 (HR) patients.
 
       Patients on Heart Failure register meeting:
-      - Rule 1: Not in PG2 high-risk cohort
-      - Rule 2: Heart failure coded in last 6 months (include on pass)
-      - Rule 3: New York Heart Association Classification I - IV (include on pass)
-      - Rule 4: Oedema (not present or of feet) (include on pass)
-      - Rule 5: Latest left ventricular ejection fraction < 50 (exclude on fail)
-      - Rule 6: Rule 6: Dapagliflozin, Empagliflozin, Canagliflozin, Ertugliflozin L-pyroglutamic acid within 6 months (or adverse reaction) (include on fail)
-      - Rule 7: MRAs within 6 months (or adverse reaction) (include on fail)
-      - Rule 8: beta blockers within last 6 months (include on fail)
-      - Rule 9: ace inhibitors within last 6 months (or adverse reaction) (include on fail)
+      - Rule 2: earliest HF code (episode excluding Review/End) in last
+        6 months - first diagnosis within 6 months (include on pass)
+      - Rule 3: latest NYHA classification is Class II (include on pass)
+      - Rule 4: latest oedema code is ankle/feet oedema (include on pass)
+      - Rule 5 (gate): latest LVEF < 50 (exclude on fail)
+      - Rules 6-8: on SGLT2 / MRA / beta-blocker (include on fail - therapy gap)
+      - Rule 9: on the ACE inhibitor pathway, including persistent ACEi
+        contraindications (XACE_COD cluster, resolved from the EMIS library
+        item via the issue #400 screenshots) - exclude on pass, include on fail
 
+      Rule actions verified against the EMIS search screenshots in issue #400.
     config:
       meta:
         owner:
           name: Peter Shakeshaft
-    tests:
+    data_tests:
       - dbt_utils.at_least_one:
           arguments:
             column_name: person_id
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: XACE_COD
       - valuesets_have_codes:
           arguments:
             valuesets:

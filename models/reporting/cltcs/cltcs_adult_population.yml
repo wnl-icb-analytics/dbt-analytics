@@ -1,0 +1,33 @@
+models:
+  - name: cltcs_adult_population
+    description: >
+      Shared living-adult registrant population for the C-LTCS sub-score models.
+      One row per sk_patient_id, with the OLIDS person_id (latest-registered-record
+      tiebreak) and the C-LTCS neighbourhood_code. The sk_patient_id <-> person_id
+      resolution is a local stopgap and does not handle fragmented records well
+      (see the model header).
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: sk_patient_id
+        data_type: number
+        description: "Unique patient identifier (sk_patient_id from PDS via dim_person_demographics_basic)."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: person_id
+        description: "OLIDS person key (via dim_person_pseudo, deduped to one per sk_patient_id). Null if unmapped."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: neighbourhood_code
+        data_type: varchar
+        description: "C-LTCS local neighbourhood code (z-score scaling group). Null for practices outside the Haringey/Camden mapping."
+
+      - name: practice_code
+        data_type: varchar
+        description: "Registered GP practice ODS code."

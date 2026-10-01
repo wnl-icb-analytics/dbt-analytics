@@ -4,8 +4,15 @@
 # Catches broken refs/sources, Jinja/YAML errors, SQL syntax, and (where the
 # target catalog is populated) column/type errors - before merge.
 #
-#   pull_request -> compile against DEV   (ci-dev target, every PR commit)
-#   merge_group  -> compile against PROD  (ci-prod target, before deploy)
+#   pull_request -> compile against DEV  (ci-dev target, every PR commit)
+#   merge_group  -> compile against PROD (ci-prod target, exact merge candidate)
+#
+# This workflow intentionally has no path filter. `Fusion compile` is a required
+# check, so every PR and merge-queue candidate must report the same status even
+# when GitHub's changed-path classification would otherwise skip the workflow.
+# The required dbt PR Validation check also compiles on merge_group immediately
+# before materialising models. That small duplication keeps the runtime build
+# self-contained while this check remains independently enforceable.
 #
 # Auth: key-pair (reuses the secrets the deploy workflow already uses).
 # Compile is read-only (no materialization); it only reads schema metadata.
@@ -14,20 +21,17 @@ name: dbt Compile
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
-    paths:
-      - 'models/**'
-      - 'macros/**'
-      - 'dbt_project.yml'
-      - 'profiles.yml'
-      - 'packages.yml'
+  # Required checks must handle merge_group or queued PRs cannot merge.
   merge_group:
+    types: [checks_requested]
 
 jobs:
   compile:
     name: Fusion compile
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     concurrency:
       group: dbt-compile-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
@@ -41,18 +45,17 @@ jobs:
       SNOWFLAKE_WAREHOUSE: WH_NCL_ENGINEERING_XS
       SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install dbt Fusion
         run: |
-          FALLBACK=2.0.0-preview.188
-          ver=$(curl -fsSL https://public.cdn.getdbt.com/fs/versions.json 2>/dev/null \
-            | python3 -c "import sys,json;print(json.load(sys.stdin).get('stable',{}).get('tag','').lstrip('v'))" 2>/dev/null) || true
-          [ -z "$ver" ] && ver=$FALLBACK
-          curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --version "$ver" --target x86_64-unknown-linux-gnu --update
+          # Latest Fusion, unpinned - matches the VS Code extension, which
+          # auto-updates to latest.
+          curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --target x86_64-unknown-linux-gnu --update
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/dbt" --version
 
       - name: Write Snowflake private key
         env:

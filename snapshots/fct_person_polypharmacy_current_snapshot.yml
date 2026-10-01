@@ -1,0 +1,29 @@
+snapshots:
+  - name: fct_person_polypharmacy_current_snapshot
+    relation: ref('fct_person_polypharmacy_current')
+    description: >
+      SCD2 history of current medication burden per person, for control-cohort
+      matching. `check_cols` are the burden measures (`medication_count`,
+      `is_polypharmacy_5plus`, `is_polypharmacy_10plus`); Rows leaving the source are closed via
+      `hard_deletes: invalidate`.
+
+    config:
+      strategy: check
+      unique_key: [person_id]
+      hard_deletes: invalidate
+      check_cols:
+        - medication_name_list
+        - medication_count
+        - is_polypharmacy_5plus
+        - is_polypharmacy_10plus
+
+    columns:
+      - name: person_id
+        description: "Person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

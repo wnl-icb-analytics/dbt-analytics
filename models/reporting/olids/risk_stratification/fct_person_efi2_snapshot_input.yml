@@ -1,0 +1,20 @@
+models:
+  - name: fct_person_efi2_snapshot_input
+    description: >
+      Thin snapshot-input projection of fct_person_efi2 (person_id + eFI2 score and category
+      band) that excludes the CURRENT_DATE()-derived end_date / age_at_end so the SCD2 snapshot
+      versions only on genuine frailty changes. Feeds fct_person_efi2_snapshot.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    columns:
+      - name: person_id
+        description: "Person identifier; one row per person (snapshot unique_key)."
+        data_tests:
+          - unique
+          - not_null
+      - name: efi_score
+        description: "Electronic Frailty Index 2 score (0-1 scale)."
+      - name: category
+        description: "eFI2 frailty category (ROBUST / MILD / MODERATE / SEVERE FRAILTY)."

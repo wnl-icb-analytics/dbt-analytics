@@ -1,0 +1,35 @@
+snapshots:
+  - name: cltcs_score_activation_snapshot
+    relation: ref('cltcs_score_activation_snapshot_input')
+    description: >
+      SCD2 history of the C-LTCS activation sub-score, keyed on `sk_patient_id`.
+      Built to support matching cohort patients against a control cohort by
+      comparing score state as-at a given date.
+
+      `check_cols` is `score_activation` only, so a new version opens when the
+      score changes. Unlike the cohort-relative, 1dp-rounded treatment/frailty
+      scores, score_activation is a raw (unrounded) formula over rolling-12-month
+      activity, so it versions whenever those rolling windows shift.
+
+      Rows removed from `cltcs_score_activation_snapshot_input` (patient leaves
+      the scored population) are closed via `hard_deletes: invalidate`
+      (`dbt_valid_to` set). Re-entry opens a new row.
+
+    config:
+      strategy: check
+      unique_key: [sk_patient_id]
+      updated_at: table_refresh_date
+      hard_deletes: invalidate
+      check_cols:
+        - score_activation
+
+    columns:
+      - name: sk_patient_id
+        description: "Unique patient identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

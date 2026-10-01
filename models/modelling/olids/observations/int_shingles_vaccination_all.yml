@@ -1,0 +1,41 @@
+models:
+  - name: int_shingles_vaccination_all
+    description: >
+      Shingles vaccination and contraindication evidence, one row per
+      observation and PCD cluster for all people, including inactive and
+      deceased people. Covers GP and other-provider administrations,
+      recombinant first and second doses, and SHCON_COD contraindications.
+      Records after the build date are excluded. Dose dates are retained so
+      consumers can apply their own vaccination age window.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: QOF v51 vaccination and immunisation, shingles clinical code clusters
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [id, source_cluster_id]
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: SHVACGP_COD, SHVACOHP_COD, SHVACGP1_COD, SHVACGP2_COD, SHCON_COD
+            source: PCD
+    columns:
+      - name: id
+        description: Source observation identifier.
+        data_tests:
+          - not_null
+      - name: person_id
+        description: Person identifier.
+      - name: clinical_effective_date
+        description: Date of the vaccination or contraindication record.
+      - name: is_administered
+        description: Whether the code records an administered shingles vaccination.
+      - name: is_contraindicated
+        description: Whether the record belongs to SHCON_COD.
+      - name: concept_code
+        description: SNOMED CT concept code.
+      - name: concept_display
+        description: SNOMED CT concept description.
+      - name: source_cluster_id
+        description: PCD shingles vaccination or contraindication cluster.

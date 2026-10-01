@@ -16,7 +16,7 @@ WITH ncl_practices AS (
 -- PDS Step 1: All care practice records for NCL practices
 pds_all AS (
     SELECT reg.practice_code, reg.sk_patient_id
-    FROM {{ ref('stg_pds_pds_patient_care_practice') }} reg
+    FROM {{ ref('stg_pds_patient_care_practice') }} reg
     INNER JOIN ncl_practices np ON reg.practice_code = np.practice_code
     WHERE reg.sk_patient_id IS NOT NULL
 ),
@@ -24,7 +24,7 @@ pds_all AS (
 -- PDS Step 2: Currently active care practice records
 pds_current AS (
     SELECT reg.practice_code, reg.sk_patient_id
-    FROM {{ ref('stg_pds_pds_patient_care_practice') }} reg
+    FROM {{ ref('stg_pds_patient_care_practice') }} reg
     INNER JOIN ncl_practices np ON reg.practice_code = np.practice_code
     WHERE reg.sk_patient_id IS NOT NULL
         AND CURRENT_DATE() BETWEEN reg.event_from_date
@@ -34,9 +34,9 @@ pds_current AS (
 -- PDS Step 3: Remove deceased
 pds_alive AS (
     SELECT reg.practice_code, reg.sk_patient_id
-    FROM {{ ref('stg_pds_pds_patient_care_practice') }} reg
+    FROM {{ ref('stg_pds_patient_care_practice') }} reg
     INNER JOIN ncl_practices np ON reg.practice_code = np.practice_code
-    LEFT JOIN {{ ref('stg_pds_pds_person') }} per
+    LEFT JOIN {{ ref('stg_pds_person') }} per
         ON reg.sk_patient_id = per.sk_patient_id
         AND CURRENT_DATE() BETWEEN per.event_from_date
             AND COALESCE(per.event_to_date, '9999-12-31')
@@ -50,13 +50,13 @@ pds_alive AS (
 -- PDS Step 4: Remove reason_for_removal
 pds_no_removal AS (
     SELECT reg.practice_code, reg.sk_patient_id
-    FROM {{ ref('stg_pds_pds_patient_care_practice') }} reg
+    FROM {{ ref('stg_pds_patient_care_practice') }} reg
     INNER JOIN ncl_practices np ON reg.practice_code = np.practice_code
-    LEFT JOIN {{ ref('stg_pds_pds_person') }} per
+    LEFT JOIN {{ ref('stg_pds_person') }} per
         ON reg.sk_patient_id = per.sk_patient_id
         AND CURRENT_DATE() BETWEEN per.event_from_date
             AND COALESCE(per.event_to_date, '9999-12-31')
-    LEFT JOIN {{ ref('stg_pds_pds_reason_for_removal') }} reas
+    LEFT JOIN {{ ref('stg_pds_reason_for_removal') }} reas
         ON reg.sk_patient_id = reas.sk_patient_id
         AND CURRENT_DATE() BETWEEN reas.event_from_date
             AND COALESCE(reas.event_to_date, '9999-12-31')
@@ -73,15 +73,15 @@ pds_merged AS (
     SELECT
         reg.practice_code,
         COALESCE(merg.sk_patient_id_superseded, reg.sk_patient_id) AS merged_id
-    FROM {{ ref('stg_pds_pds_patient_care_practice') }} reg
+    FROM {{ ref('stg_pds_patient_care_practice') }} reg
     INNER JOIN ncl_practices np ON reg.practice_code = np.practice_code
-    LEFT JOIN {{ ref('stg_pds_pds_person_merger') }} merg
+    LEFT JOIN {{ ref('stg_pds_person_merger') }} merg
         ON reg.sk_patient_id = merg.sk_patient_id
-    LEFT JOIN {{ ref('stg_pds_pds_person') }} per
+    LEFT JOIN {{ ref('stg_pds_person') }} per
         ON reg.sk_patient_id = per.sk_patient_id
         AND CURRENT_DATE() BETWEEN per.event_from_date
             AND COALESCE(per.event_to_date, '9999-12-31')
-    LEFT JOIN {{ ref('stg_pds_pds_reason_for_removal') }} reas
+    LEFT JOIN {{ ref('stg_pds_reason_for_removal') }} reas
         ON reg.sk_patient_id = reas.sk_patient_id
         AND CURRENT_DATE() BETWEEN reas.event_from_date
             AND COALESCE(reas.event_to_date, '9999-12-31')

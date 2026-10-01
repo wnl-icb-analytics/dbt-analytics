@@ -1,0 +1,83 @@
+version: 2
+
+models:
+  - name: int_mhsds_spell_currency
+    description: >-
+      NHS England costing classifications for hospital spells after shared occupancy selection. Each
+      row is one retained hospital-provider spell number. The diagnosis is the latest recorded on or
+      before discharge, or the run date for an open spell. Cross-cutting crisis spells use MAZ99Z
+      because the MAZ99 A-D suffixes describe crisis settings rather than bed types. Tied ward dates
+      are resolved by reporting period, file receipt, submission ID and ward-stay ID. Bed-day
+      pricing is applied separately.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "currency_group <> 'MAZ' or currency_code = 'MAZ99Z'"
+    columns:
+      - name: uniq_hosp_prov_spell_num
+        description: Hospital provider spell identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: uniq_serv_req_id
+        description: Unique service request identifier.
+      - name: person_id
+        description: MHSDS person identifier.
+      - name: sk_patient_id
+        description: Pseudonymised patient identifier.
+      - name: org_id_prov
+        description: Provider organisation code.
+      - name: start_date_hosp_prov_spell
+        description: Spell admission date.
+      - name: end_date
+        description: End date from the shared occupancy interval.
+      - name: end_date_source
+        description: End-date reason from the shared occupancy interval.
+      - name: age_hosp_start_date
+        description: MHSDS-derived age at admission.
+      - name: is_cyp
+        description: >-
+          Whether age at admission is under 18. A spell with no recorded age is
+          treated as adult, so read this with has_known_age_at_admission. Most
+          accepted spells carry no recorded age.
+      - name: has_known_age_at_admission
+        description: >-
+          Whether an age at admission was recorded. False means is_cyp and the
+          population-group cascade fell back to the adult branch rather than
+          using a known age.
+      - name: icd10_3
+        description: Latest three-character ICD-10 code.
+      - name: diagnosis_category
+        description: Diagnosis population category.
+      - name: mh_admitted_patient_class
+        description: Latest ward-stay admitted patient class.
+      - name: bed_category
+        description: Bed type population category.
+      - name: setting_code
+        description: Inpatient setting suffix.
+      - name: setting_name
+        description: Inpatient setting name.
+      - name: prim_reason_referral_mh
+        description: Primary referral reason code.
+      - name: referral_reason_category
+        description: Referral reason population category.
+      - name: serv_team_type_ref_to_mh
+        description: Service team type referred to code.
+      - name: team_type_category
+        description: Service team population category retained for audit.
+      - name: last_submission_period_end
+        description: End of the last active reporting period carrying the spell.
+      - name: winning_tier
+        description: Classification tier that ended the cascade.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['diagnosis', 'bed_type', 'referral_reason', 'unclassified']
+      - name: currency_group
+        description: Currency population group.
+      - name: currency_code
+        description: Six-character inpatient currency code.

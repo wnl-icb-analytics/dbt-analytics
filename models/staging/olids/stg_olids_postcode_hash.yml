@@ -1,6 +1,7 @@
 models:
+  # REVIEW: retained for hash-keyed consumers, but person geography now uses plain postcode.
   - name: stg_olids_postcode_hash
-    description: Hashed postcodes linked to geographical and administrative areas. Deduplicated by postcode_hash using lds_start_date_time.
+    description: Hashed postcodes linked to geographical and administrative areas.
     config:
       meta:
         owner:
@@ -23,16 +24,14 @@ models:
         description: 2021 Lower Super Output Area code
       - name: yr_2021_msoa
         description: 2021 Middle Super Output Area code
-      - name: effective_from
-        description: Date this geographical mapping became effective
-      - name: effective_to
-        description: Date this geographical mapping ceased to be effective
-      - name: is_latest
-        description: Boolean indicating if this is the latest mapping for the postcode
-      - name: lds_start_date_time
-        description: LDS datetime stamp from which the record version was correct - used for deduplication to get the latest record
-      - name: lakehouse_date_processed
-        description: Date when record was processed by lakehouse
+      - name: outcode
+        description: Postcode outcode
+      - name: ward
+        description: Ward code
+      - name: version
+        description: Lookup version
+      - name: last_updated
+        description: Lookup update datetime
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:

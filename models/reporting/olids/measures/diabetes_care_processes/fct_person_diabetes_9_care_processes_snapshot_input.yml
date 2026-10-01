@@ -1,0 +1,47 @@
+models:
+  - name: fct_person_diabetes_9_care_processes_snapshot_input
+    description: >
+      Thin snapshot-input projection of fct_person_diabetes_9_care_processes (person_id + the
+      latest measurement dates, the latest HbA1c value, and a date-independent
+      foot_check_qualifies flag) that excludes the CURRENT_DATE()-derived rolling completion
+      columns (care_processes_completed, every *_completed_in_last_12m) so the SCD2 snapshot
+      versions only on genuine changes (a new reading). The rolling 12-month window is
+      re-applied as-at index_date downstream in cltcs_monthly_covariates. Feeds
+      fct_person_diabetes_9_care_processes_snapshot.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    columns:
+      - name: person_id
+        description: "Person identifier; one row per person (snapshot unique_key)."
+        data_tests:
+          - unique
+          - not_null
+      - name: latest_hba1c_date
+        description: "Date of the latest HbA1c reading."
+      - name: latest_hba1c_value
+        description: "Value of the latest HbA1c reading."
+      - name: latest_bp_date
+        description: "Date of the latest blood-pressure reading (BP as a diabetes care process)."
+      - name: latest_cholesterol_date
+        description: "Date of the latest cholesterol reading."
+      - name: latest_creatinine_date
+        description: "Date of the latest serum-creatinine reading."
+      - name: latest_acr_date
+        description: "Date of the latest urine ACR reading."
+      - name: latest_foot_check_date
+        description: "Date of the latest foot examination."
+      - name: latest_bmi_date
+        description: "Date of the latest BMI reading."
+      - name: latest_smoking_date
+        description: "Date of the latest smoking-status recording."
+      - name: latest_retinal_screening_date
+        description: "Date of the latest retinal screening (the 9th care process); rides along for future use."
+      - name: foot_check_qualifies
+        description: >
+          Date-independent part of the foot-check completion rule: an adequate examination of
+          both feet (allowing for an absent/amputated foot) that was not declined or deemed
+          unsuitable. Combined with the 12-month recency of latest_foot_check_date downstream.
+        data_tests:
+          - not_null

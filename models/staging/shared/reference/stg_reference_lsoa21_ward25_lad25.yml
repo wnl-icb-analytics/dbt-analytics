@@ -1,0 +1,37 @@
+models:
+  - name: stg_reference_lsoa21_ward25_lad25
+    description: LSOA 2021 to Ward 2025 and Local Authority District 2025 mapping
+      from REFERENCE.GEO.LSOA_WARD_EW. Name kept for compatibility; no longer
+      reads DATA_LAKE__NCL.ANALYST_MANAGED.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: lsoa21_cd
+        description: Primary key - LSOA 2021 code
+        data_tests:
+          - unique
+          - not_null
+      - name: lsoa21_nm
+        description: LSOA 2021 name
+      - name: wd25_cd
+        description: Ward 2025 code
+        data_tests:
+          - not_null
+      - name: wd25_nm
+        description: Ward 2025 name
+      - name: lad25_cd
+        description: Local Authority District 2025 code
+        data_tests:
+          - not_null
+      - name: lad25_nm
+        description: Local Authority District 2025 name
+      - name: resident_flag
+        description: London residence classification derived from LAD code -
+          NCL (Barnet, Camden, Enfield, Haringey, Islington), Other London
+          (other E09 LADs) or Outside London
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

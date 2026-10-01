@@ -66,6 +66,14 @@ models:
       - name: author_organisation_id
         description: "Foreign key to organisation.id — the organisation that authored this episode-of-care record. New in the 2026 OLIDS schema realignment (issue #747)."
     tests:
+      # the registration spine filters episode_type_source_code = 'Regular'
+      # (2.76M of 2.88M episodes); a literal change would empty registrations
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1500000
+            row_condition: "episode_type_source_code = 'Regular'"
+          config:
+            severity: error
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1

@@ -70,5 +70,6 @@ reads them with `env_var()`. With `SNOWFLAKE_PAT` set, dbt authenticates via
 - **No secrets set** — `dbt debug` will fail to connect. Add the secrets above
   (and rebuild, or open a new terminal so they're picked up).
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for full contributor setup and
-[dbt-fusion-guide.md](dbt-fusion-guide.md) for the VS Code extension.
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for full contributor setup, and
+[dbt-onboarding.vercel.app](https://dbt-onboarding.vercel.app/) for the VS Code
+extension and dbt learning.

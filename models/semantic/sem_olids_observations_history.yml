@@ -20,7 +20,13 @@ models:
       for per-person and currently-registered-cohort change, not long-run
       population averages.
 
-      Grain: One row per observation event.
+      Grain: One row per observation event (a person can have multiple
+      readings of one biomarker on the same date; observation_event_id is
+      the tiebreaker).
+
+      Exposes person_id as a pseudonymised linkage dimension for latest-N
+      windowing and cross-view cohort intersection (CTE joins to the other
+      sem_olids_* views); aggregate-only output.
 
       Tables Included:
       - int_observation_events_long: long-format biomarker history

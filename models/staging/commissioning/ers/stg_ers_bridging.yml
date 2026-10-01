@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: stg_ers_bridging
+    description: Bridging table linking eRS person identifiers to pseudonymised NHS numbers
+    config:
+      meta:
+        owner:
+          name: Jonathan Linney
+    columns:
+      - name: person_id
+        description: eRS person identifier
+        tests:
+          - not_null
+          - unique:
+              config:
+                severity: warn
+      - name: sk_patient_id
+        description: Pseudonymised NHS number (surrogate key for patient)

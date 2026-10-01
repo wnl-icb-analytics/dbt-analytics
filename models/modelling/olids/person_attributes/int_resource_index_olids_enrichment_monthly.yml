@@ -1,0 +1,33 @@
+version: 2
+models:
+  - name: int_resource_index_olids_enrichment_monthly
+    description: |
+      Monthly OLIDS activity enrichment for the NCL resource index view,
+      aggregated to sk_patient_id x activity_month.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: sk_patient_id
+        description: Pseudonymised NHS number from dim_person_pseudo.
+        data_tests:
+          - not_null
+      - name: activity_month
+        description: Activity month.
+        data_tests:
+          - not_null
+      - name: gp_appointment_cost
+        description: Attended GP appointment cost in the month, PSSRU nominal GBP.
+      - name: gp_appointments
+        description: Attended GP appointment count in the month.
+      - name: olids_prescribing_cost_modelled
+        description: OLIDS estimated medication-order cost in the month, GBP.
+      - name: olids_prescription_orders
+        description: OLIDS medication orders in the month.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - activity_month

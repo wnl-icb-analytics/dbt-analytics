@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: sem_resource_index
+    description: |
+      Resource Index semantic view. Grain is one patient with WNL registration
+      exposure in the latest rolling 12-month SLAM window, including
+      deceased and deducted people attributed to their window practice.
+
+      Actual cost is SLAM acute only. Calculate resource ratio as
+      SUM(actual_cost_12m) / SUM(expected_cost_12m), never an average of
+      person-level ratios. Carr-Hill expected-cost allocation lags the cost
+      window by about one year; weighted_ratio_imputed flags the fallback.
+
+      Exposes sk_patient_id for aggregate-only CTE joins to
+      sem_olids_population. Never return sk_patient_id in final results.
+
+      Table: fct_person_resource_index.
+    config:
+      materialized: semantic_view
+      schema: SEMANTIC
+      meta:
+        owner:
+          name: Eddie Davison

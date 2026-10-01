@@ -1,0 +1,25 @@
+models:
+  - name: stg_reference_wnl_neighbourhood_lsoa
+    description: WNL residence neighbourhood - LSOA 2021 to neighbourhood, all 13 NCL + NWL boroughs. Name-only (no neighbourhood code in source).
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: lsoa_2021_code
+        description: Primary key - LSOA 2021 code.
+        tests:
+          - unique
+          - not_null
+      - name: lsoa_2021_name
+        description: LSOA 2021 name.
+      - name: borough
+        description: Local authority / borough name.
+      - name: neighbourhood_name
+        description: Neighbourhood name.
+      - name: imd_2025_decile
+        description: IMD 2025 decile (1 = most deprived).
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

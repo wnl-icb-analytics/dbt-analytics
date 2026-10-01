@@ -1,0 +1,50 @@
+version: 2
+models:
+  - name: int_ltc_lcs_rs_acyp_pg2_hr
+    description: |
+      Asthma CYP Register Priority Group 2 - High Risk.
+      Implements the latest EMIS variant 'V2 Oct 2025'.
+      Parent population is the CYP asthma register ONLY (patients not on any
+      other LTC LCS register).
+
+      Patients meeting any of:
+      - Rule 1: latest child protection status is 'on protection register',
+        or latest child-in-need status is 'in need'
+      - Rule 2: emergency asthma admission code in last 12 months
+      - Rule 3: more than 2 acute exacerbation codes in last 12 months
+      - Rule 4: >= 2 prednisolone orders in last 12 months
+      - Rule 5: theophylline order in last 12 months
+      - Rule 6: >= 3 SABA orders in last 3 months
+      - Rule 7: LABA order in last 12 months
+      - Rule 8: no ICS in last 12 months with SABA in last 3 months
+
+      Issue counts follow the live EMIS search definitions; the agent-API
+      parse of the R5 XML drops count restrictions.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - on_asthma_cyp_reg_pg2_hr_v2_oct_2025_vs1
+              - on_asthma_cyp_reg_pg2_hr_v2_oct_2025_vs2
+              - on_asthma_cyp_reg_pg2_hr_v2_oct_2025_vs3
+              - on_asthma_cyp_reg_pg2_hr_v2_oct_2025_vs4
+              - on_asthma_cyp_reg_pg2_hr_v2_oct_2025_vs5
+              - on_asthma_cyp_reg_pg2_hr_v2_oct_2025_vs6
+              - on_asthma_cyp_reg_pg2_hr_v2_oct_2025_vs7
+              - on_asthma_cyp_reg_pg2_hr_v2_oct_2025_vs8
+              - on_asthma_cyp_reg_pg2_hr_v2_oct_2025_vs9
+              - on_asthma_cyp_reg_pg2_hr_v2_oct_2025_vs10
+              - on_asthma_cyp_reg_pg2_hr_v2_oct_2025_vs11
+              - on_asthma_cyp_reg_pg2_hr_v2_oct_2025_vs12
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

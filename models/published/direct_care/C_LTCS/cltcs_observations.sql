@@ -1,7 +1,8 @@
 {{
     config(
         materialized='table',
-        cluster_by=['patient_id'])
+        cluster_by=['patient_id'],
+        tags=['cltcs_secure_source'])
 }}
 
 

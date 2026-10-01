@@ -1,0 +1,27 @@
+version: 2
+models:
+  - name: int_ltc_lcs_rs_pad_pg1_hrc
+    description: |
+      PAD Register Priority Group 1 - High Risk & Complex.
+
+      Patients on PAD register meeting:
+      - Rule 1: peripheral ischaemia code in last 90 days (include on pass)
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+          config:
+            severity: warn
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - on_pad_reg_pg1_hrc_vs1
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

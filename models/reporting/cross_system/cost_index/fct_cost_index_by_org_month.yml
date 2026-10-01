@@ -1,0 +1,50 @@
+version: 2
+models:
+  - name: fct_cost_index_by_org_month
+    description: |
+      SLAM commissioned cost by organisation and month — ICB / sub-ICB /
+      provider totals over time for the Aligning Resource Index work.
+      Grain: activity_month x icb_group x commissioner_code x provider_code
+      x service_grouping x service. icb_group separates WNL-commissioned
+      (resident) spend from out-of-sector pass-through. SLAM only; see
+      fct_person_cost_index_monthly for the patient-level SLAM+EPD union.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: activity_month
+        data_tests: [not_null]
+        description: First of the calendar month.
+      - name: icb_group
+        description: WNL in-patch vs Out-of-sector.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['WNL in-patch', 'Out-of-sector']
+      - name: in_patch
+        description: TRUE for WNL-commissioned (resident) spend — the resource index numerator.
+      - name: commissioner_code
+        description: Commissioner ODS code.
+      - name: provider_code
+        description: Provider ODS code.
+      - name: service_grouping
+        description: Crisis / Community / Planned / Excluded / Unmapped.
+      - name: service
+        description: Mid-level service.
+      - name: total_cost
+        description: Actual SLAM cost, £.
+      - name: attributable_cost
+        description: Cost on patient-attributable lines only (excludes block/adjustment/transport).
+      - name: patients
+        description: Distinct patients in the grain (null-patient lines excluded from the count).
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - activity_month
+              - commissioner_code
+              - provider_code
+              - service_grouping
+              - service

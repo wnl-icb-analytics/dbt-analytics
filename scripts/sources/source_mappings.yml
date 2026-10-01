@@ -57,11 +57,11 @@ sources:
     domain: commissioning
   
    # SUS Unified - Emergency Care
-  - source_name: sus_ae
+  - source_name: sus_ecds
     database: DATA_LAKE
     schema: SUS_UNIFIED_ECDS
     description: SUS emergency care attendances and activity
-    raw_prefix: raw_sus_ae
+    raw_prefix: raw_sus_ecds
     domain: commissioning
 
   # eRS referrals
@@ -88,6 +88,22 @@ sources:
     raw_prefix: raw_mhsds
     domain: commissioning
 
+  # CWT schema in DATA_LAKE
+  - source_name: cwt_pathway
+    database: DATA_LAKE
+    schema: CWT
+    description: Cancer waiting times data, pathway level version.
+    raw_prefix: raw_cwt_pathway
+    domain: commissioning
+
+  # CWT schema in DATA_LAKE
+  - source_name: rcrd
+    database: DATA_LAKE
+    schema: RCRD
+    description: Rapid Cancer Registration Dataset (RCRD)
+    raw_prefix: raw_rcrd
+    domain: commissioning
+
   # Registry Data (Births/Deaths)
   - source_name: registries_deaths
     database: DATA_LAKE
@@ -109,6 +125,14 @@ sources:
     schema: SOCIAL_CARE
     description: National submission from local authorities for adult social care (client level dataset)
     raw_prefix: raw_asc_cld
+    domain: shared
+
+    # TERMINOLOGY schema in DATA_LAKE
+  - source_name: reference_trud_terminology
+    database: DATA_LAKE
+    schema: TERMINOLOGY
+    description: SNOMED CT cross-map and terminology reference data. Sourced by NHS TRUD.
+    raw_prefix: raw_reference
     domain: shared
 
 
@@ -212,6 +236,8 @@ sources:
     description: Data management reference datasets
     raw_prefix: raw_reference
     domain: shared
+    exclude_tables:
+      - WNL  # Broken view retained upstream; unused by dbt.
 
   # CANCER schemas in DATA_LAKE__NCL
   - source_name: reference_cancer_cwt_alliance
@@ -257,6 +283,48 @@ sources:
   # Additional OLIDS sources can be added here if needed
 
   # ========================================
+  # REFERENCE [curated reference database]
+  # ========================================
+  # Curated practice/PCN/neighbourhood and geography reference data.
+  # Replaces MODELLING.LOOKUP_NCL and DATA_LAKE__NCL.ANALYST_MANAGED for
+  # these domains. Table lists are explicit: the schemas also hold geometry,
+  # export views and app-internal tables that dbt should not pull.
+
+  - source_name: reference_primary_care
+    database: REFERENCE
+    schema: PRIMARY_CARE
+    description: Curated primary care organisation reference - practices, PCNs, neighbourhoods and memberships
+    raw_prefix: raw_reference_primary_care
+    domain: shared
+    tables:
+      - PRACTICE_ACTIVE
+      - PRACTICE_ALL
+      - PCN_CURRENT
+      - PCN_MEMBERSHIP_ALL
+      - NEIGHBOURHOOD_CURRENT
+      - PRACTICE_SUCCESSION
+
+  - source_name: reference_geo
+    database: REFERENCE
+    schema: GEO
+    description: Curated geography lookups - LSOA to neighbourhood, ward, MSOA and ICB hierarchies
+    raw_prefix: raw_reference_geo
+    domain: shared
+    tables:
+      - NEIGHBOURHOOD_LSOA
+      - LSOA_WARD_EW
+      - LSOA_WIDER_LOOKUP
+      - LSOA21_SICBL26_ICB26_NHSER26_LAD26
+
+  - source_name: reference_terminology_curated
+    database: REFERENCE
+    schema: TERMINOLOGY
+    description: Curated Primary Care Domain terminology releases
+    raw_prefix: raw_reference_terminology
+    domain: shared
+    manual: true
+
+  # ========================================
   # MESH IN-FLOW Via PID Environment
   # ========================================
 
@@ -272,7 +340,7 @@ sources:
   - source_name: cltcs_emis_extract
     database: DATA_LAKE__NCL
     schema: CLTCS
-    description: EMIS extract for c-ltcs pipeline from PID environment via MESH
+    description: EMIS extract for c-ltcs pipeline from PID environment via MESH and other local lookups
     raw_prefix: raw_cltcs_emis
     domain: pid_env
 
@@ -305,24 +373,79 @@ sources:
   # tagged `manual: true` are skipped by the metadata query and source YAML
   # generation steps; their column lists come from the manual YAML instead.
 
-  # ServicesDataLocal remapped feeds (CNWL et al. spreadsheet submissions)
-  # See https://github.com/.../servicesdatalocal-remapping
-  # Many tables in this schema; only MHCORL is currently consumed downstream
-  # so we declare it manually to avoid auto-pulling 30+ unused feeds.
-  - source_name: sdl
-    database: DATA_LAKE__NCL
+  # ServicesDataLocal feeds (permanent home; the DATA_LAKE__NCL.SDL copy was
+  # dropped 2026-09). Only the SLAM contract-monitoring feeds, MHCORL and the
+  # pipeline META observability objects are pulled; the schema holds 20+
+  # other feeds (CONTROL_* tables stay in DATA_LAKE only).
+  - source_name: sdl_wnl
+    database: DATA_LAKE
     schema: SDL
-    description: ServicesDataLocal canonical-named feeds (mental health, community, 111, etc.)
-    raw_prefix: raw_sdl
+    description: ServicesDataLocal canonical-named feeds, WNL footprint (SLAM contract monitoring)
+    raw_prefix: raw_sdl_wnl
     domain: commissioning
-    manual: true
+    tables:
+      - LSACM
+      - LSPLCM
+      - LSDRPLCM
+      - LSDEPLCM
+      - COMOPL
+      - REF
+      - MH
+      - MHCORL
+      - META_FILE_REGISTRY
+      - META_SCHEMA_VERSIONS
+      - META_FILE_VERSIONS
+      - META_EXCEPTIONS
+      - META_BUILD_STATE
+      - META_REFRESH_LOG
+      - META_NULL_RATE_PROFILE
+      - META_UNMAPPED_FILES
+      - META_ROW_COUNT_COMPARE
 
-  # ANALYST_MANAGED - volatile schema; only explicitly listed tables are used
+  # ANALYST_MANAGED - volatile schema; only explicitly listed tables are used.
+  # Do not add TURNAROUND_TIMES_RAW. That analyst-managed copy is retired;
+  # analysts use int_tat_turnaround_times. Keep DATA_LAKE.TAT.TURNAROUND_TIMES_RAW
+  # as the ingest source (source_name: tat below).
   - source_name: reference_analyst_managed
     database: DATA_LAKE__NCL
     schema: ANALYST_MANAGED
-    description: Analyst-managed reference datasets and business rules
+    description: Analyst-managed reference datasets and business rules. TURNAROUND_TIMES_RAW is not in this source; use int_tat_turnaround_times.
     raw_prefix: raw_reference
+    domain: shared
+    manual: true
+
+  # POD_GROUP_MANAGER - governed POD group mappings maintained by the
+  # Streamlit-in-Snowflake POD Group Manager app (audited writes). Manual so
+  # only the mapping table is used; app-internal tables/views are excluded.
+  # raw_prefix 'raw' -> raw_pod_group_mapping (table names carry the domain).
+  - source_name: pod_group_manager
+    database: DATA_LAKE__NCL
+    schema: POD_GROUP_MANAGER
+    description: POD Group Manager app - governed POD group mappings
+    raw_prefix: raw
+    domain: shared
+    manual: true
+
+  # MYRIA - Project Myria (BEVC) canonical inputs. Two tables (ENROLLED_PATIENTS,
+  # MATCHED_PATIENTS) loaded by DATA_LAKE__NCL.MYRIA.LOAD_NEW_FILES(). Manual so the
+  # column list is controlled; FILE_DATE versions each upload.
+  - source_name: myria
+    database: DATA_LAKE__NCL
+    schema: MYRIA
+    description: Project Myria (BEVC) canonical inputs - enrolled and propensity-matched patients
+    raw_prefix: raw_myria
+    domain: shared
+    manual: true
+
+  # NHS PAYMENTS GP - annual practice-level NHS Payments to General Practice
+  # file (national): registered + Carr-Hill weighted list sizes, FY 2015/16
+  # onwards. Loaded by DATA_LAKE__NCL.NHS_PAYMENTS_GP.INGEST_NHS_PAYMENTS_GP()
+  # (Snowflake-Deployment repo). Manual so the column list is controlled.
+  - source_name: nhs_payments_gp
+    database: DATA_LAKE__NCL
+    schema: NHS_PAYMENTS_GP
+    description: NHS Payments to General Practice - annual practice-level registered and Carr-Hill weighted list sizes
+    raw_prefix: raw_nhs_payments_gp
     domain: shared
     manual: true
 
@@ -342,16 +465,23 @@ sources:
     raw_prefix: raw_c_ltcs
     domain: commissioning
     manual: true
-  
-    # AIC dev tables
-  - source_name: aic
-    database: DATA_LAKE__NCL
-    schema: AIC_DEV
-    description: parallel pipeline for AIC
-    raw_prefix: raw_aic
+
+  # statistical modelling output tables
+  ## Qadmissions
+  - source_name: qadmissions
+    database: STAT_MODELS
+    schema: QADMISSIONS
+    description: qAdmissions model outputs
+    raw_prefix: raw_qadmissions
     domain: shared
     manual: true
+    tables:
+      - QADMISSIONS_PREDICTIONS_HISTORY
 
+  # NOTE: the AIC_DEV pipeline (source_name: aic) was retired and is superseded
+  # by DATA_LAKE__NCL.COMMON, declared manually in models/sources/manual_common.yml.
+  # Manual-only sources (common, ukhfd_*) set their raw domain/prefix via `meta`
+  # in their own YAML rather than here.
 
   # Central Performance Analytics Team (CPAT PMCT)
   - source_name: pmct
@@ -360,3 +490,15 @@ sources:
     description: Central Performance Analytics Team (PMCT)
     raw_prefix: raw_pmct
     domain: commissioning
+
+  # Imaging diagnostic Turnaround Times (TAT) provider submissions
+  # Loaded by the tat_provider_ingest pipeline (Snowflake-Deployment repo).
+  # Only the raw landing table is a source; TAT_INGEST_LOG is operational, not consumed.
+  - source_name: tat
+    database: DATA_LAKE
+    schema: TAT
+    description: Imaging diagnostic turnaround-time provider submissions (raw landing)
+    raw_prefix: raw_tat
+    domain: commissioning
+    tables:
+      - TURNAROUND_TIMES_RAW

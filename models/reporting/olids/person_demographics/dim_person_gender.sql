@@ -49,7 +49,13 @@ SELECT
 FROM (
     SELECT
         ap.person_id,
-        COALESCE(p_best.gender_display, p_curr.gender_display, p_best.gender_source_display, p_curr.gender_source_display, 'Unknown') AS gender,
+        COALESCE(
+            -- "Finding related to biological sex" is the SNOMED parent grouper (429019009)
+            -- mapped to source code 'U'/'Unknown'; non-informative, so fall through to source display
+            NULLIF(p_best.gender_display, 'Finding related to biological sex'),
+            NULLIF(p_curr.gender_display, 'Finding related to biological sex'),
+            p_best.gender_source_display, p_curr.gender_source_display, 'Unknown'
+        ) AS gender,
         ROW_NUMBER() OVER (
             PARTITION BY ap.person_id
             ORDER BY

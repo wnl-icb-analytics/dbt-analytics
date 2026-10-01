@@ -1,0 +1,30 @@
+version: 2
+
+seeds:
+  - name: cancer_snomed_code_to_icd10_override
+    description:
+      Table to support mapping OLIDS Cancer Diagnosis concept codes to ICD10. 
+      Only includes instances where the possible map options correspond to different cancer types based on the ICD10 to CWT Cancer Type mapping.
+      The map_priority field refers to the SNOMED to ICD10 mapping in the DATA_LAKE.TERMINOLOGY schema.
+    config:
+      column_types:
+        concept_code: varchar(64)
+        gender: varchar(64)
+        map_priority: integer
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - concept_code
+              - gender
+    columns:
+      - name: concept_code
+        description: SNOMED Concept code representing the cancer diagnosis.
+        data_tests:
+          - not_null
+      - name: gender
+        description: Gender of the patient required for some mappings. If NULL then map does not rely on Gender.
+      - name: map_priority
+        description: The numeric priority that should be used over the default (1) option.
+        data_tests:
+          - not_null

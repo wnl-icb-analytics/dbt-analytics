@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: int_ltc_lcs_cf_hf_61_base_woEX
+    description: >
+      ICB_CF_HF_61_woEX shared parent: currently-registered patients not in
+      ICS_METABOLIC_LTC and not on the AF/HF register and without any HF-evidence
+      code (eligible_for_hf_casefinding_vs1), who match any HF inclusion arm
+      (HF-specific meds / SGLT2-digoxin group / pro-BNP > 400 / pro-BNP > 2000
+      within 2y / cardiomyopathy + breathlessness / digoxin / spironolactone, meds
+      in last 3 months), minus the PCOS-pattern carve-out (age < 40 + Female +
+      hirsutism). Pre-Rule-1 population consumed by HF_61. CF_NHSHC2Y not applied.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - eligible_for_hf_casefinding_vs1
+              - hf_case_finding_eligible_patients_vs1
+              - hf_case_finding_eligible_patients_vs2
+              - hf_case_finding_eligible_patients_vs3
+              - hf_case_finding_eligible_patients_vs4
+              - hf_case_finding_eligible_patients_vs5
+              - hf_case_finding_eligible_patients_vs7
+              - hf_case_finding_eligible_patients_vs8
+              - hf_case_finding_eligible_patients_vs9
+              - hf_case_finding_eligible_patients_vs10
+              - hf_case_finding_eligible_patients_vs11
+              - hf_case_finding_eligible_patients_vs12
+              - hf_case_finding_eligible_patients_vs13
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_hf_61
+    description: >
+      ICB_CF_HF_61: HF case-finding eligible patients (base_woEX) excluding anyone
+      with a "Heart failure excluded" code in the last 3 years. One row per included
+      person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 9228a15e-e6cb-1dd2-6074-0c306c800c1b  # hf_case_finding_eligible_patients_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]

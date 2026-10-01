@@ -1,0 +1,155 @@
+models:
+  - name: cltcs_monthly_covariates
+    description: >
+      Monthly point-in-time covariate panel for the C-LTCS matched-control candidate pool.
+      One row per (patient_id, index_date): each control candidate's covariate profile
+      reconstructed as-at index_date. The spine is the monthly population roster
+      (cltcs_population_monthly_capture) for that month (INNER = eligibility gate); covariates
+      are read as-at from their SCD2 snapshots via temporal_join (LEFT) and from the monthly
+      activity capture. Columns mirror cltcs_cohort_data for comparability. All patients are
+      kept -- the treated/control split happens at matching. Covariates with no history yet
+      are listed commented-out in a GAP block in the model.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - patient_id
+              - index_date
+    columns:
+      - name: patient_id
+        description: "Commissioning patient key (sk_patient_id). Part of the grain."
+        data_tests:
+          - not_null
+      - name: index_date
+        description: "As-at date the covariates are reconstructed for. Part of the grain."
+        data_tests:
+          - not_null
+      - name: re_id_key
+        description: "HxFlake pseudonym generated from patient_id (for re-identification)."
+      - name: neighbourhood_code
+        description: "C-LTCS local neighbourhood tag, carried from the population roster for that month; may be null."
+      - name: area_code
+        description: "Same value as neighbourhood_code, under the name cltcs_cohort_data uses (area_code is a legacy alias of the nh_gp-mapping neighbourhood_code). Emitted for definitional parity with the treated arm."
+      - name: imd_quintile_25
+        description: >
+          Resident IMD 2025 quintile (text label, e.g. Most Deprived .. Least Deprived) as-at
+          index_date, from int_person_geography_snapshot. NULL when residence is unknown (not
+          coalesced -- unknown must not fall into a band). Net-new covariate: not a cltcs_cohort_data
+          column, so it is matched as a separate stratum: both arms read this value as-at from
+          int_person_geography_snapshot (controls at index_date here, the treated arm at their enrolment
+          date at matching time). Caveats: forward-only (NULL before the
+          snapshot's first run); and int_person_geography holds a single, mostly-undated address per
+          person, so the value is most-recently-known residence tracked forward, NOT period-accurate
+          deprivation.
+      - name: age
+        description: "Age in whole years as-at index_date, computed from live (immutable) date of birth via floor(datediff(month, dob, index_date)/12) -- same definition as dim_person_demographics.age, anchored on index_date. NULL when DOB is unavailable. Not snapshotted (DOB never changes), so it has no forward-only floor."
+      - name: practice_name
+        description: "Registered-practice name, resolved from the as-at practice_code via the dim_practice reference (one row per practice_code). 'Unknown' when the code is absent/unmapped. The name is dim_practice's current canonical name, not rename-accurate to index_date -- practice_code (the matching key) is fully as-at; the name is a near-static label. Not snapshotted, so it adds no forward-only floor beyond practice_code's."
+      - name: efi_score
+        description: "eFI2 score (0-1) as-at index_date, from fct_person_efi2_snapshot. NULL when not assessed (distinct from a low score) -- not coalesced, mirroring cltcs_cohort_data."
+      - name: efi_category
+        description: "eFI2 frailty category (ROBUST / MILD / MODERATE / SEVERE FRAILTY) as-at index_date; 'Unknown' when absent."
+      - name: frailty_level
+        description: "Latest Rockwood frailty level as-at index_date, from int_rockwood_latest_snapshot; 'Unknown' when absent."
+      - name: frailty_category
+        description: "Latest Rockwood frailty category as-at index_date, from int_rockwood_latest_snapshot; 'Unknown' when absent."
+      - name: cambridge_comorbidity_score
+        description: "Cambridge multimorbidity score as-at index_date. NULL = not computed."
+      - name: moc_stage_completed_label
+        description: "LTC-LCS Model of Care stage. Ride-along on the risk-summary snapshot (not a check_col), so it reflects the last risk-group version open and may lag index_date."
+      - name: moc_pathway_status
+        description: "LTC-LCS Model of Care pathway status. Ride-along (see moc_stage_completed_label caveat)."
+      - name: score_activation
+        description: "C-LTCS activation sub-score as-at index_date. Raw (unrounded) formula over rolling-12-month activity, read from cltcs_score_activation_snapshot."
+      - name: score_coordination
+        description: "C-LTCS coordination sub-score as-at index_date. Raw (unrounded) formula over rolling-12-month activity, read from cltcs_score_coordination_snapshot."
+      - name: score_treatment
+        description: "C-LTCS treatment sub-score as-at index_date."
+      - name: score_frailty
+        description: "C-LTCS frailty sub-score as-at index_date."
+      - name: care_processes_completed
+        description: >
+          Number of the 8 diabetes care processes (HbA1c, BP, cholesterol, creatinine, urine
+          ACR, foot check, BMI, smoking) with a reading in the 12 months to index_date.
+          Reconstructed as-at index_date: the latest measurement dates are read from
+          fct_person_diabetes_9_care_processes_snapshot and the rolling 12-month window is
+          re-applied on index_date. 0 for anyone not on the diabetes register as-at index_date.
+      - name: latest_hba1c_value
+        description: "Value of the latest HbA1c reading, only when that reading falls within 12 months of index_date (else NULL), mirroring cltcs_cohort_data."
+      - name: latest_hba1c_date
+        description: "Date of the latest HbA1c reading as-at index_date (ungated)."
+      # QRISK CVD risk -- as-at read of int_qrisk_latest_snapshot; passthrough (no coalesce, no
+      # recency gate), NULL when absent, matching cltcs_cohort_data.
+      - name: qrisk_score
+        description: "Latest valid QRISK cardiovascular risk score (%, 0-100) as-at index_date. NULL when the patient has no valid QRISK by then. Not recency-gated (mirrors cltcs_cohort_data)."
+      - name: qrisk_type
+        description: "QRISK variant of the latest score (QRISK / QRISK2 / QRISK3 / Unknown), as-at index_date."
+      - name: cvd_risk_category
+        description: "Banded CVD risk label for the latest QRISK as-at index_date (Low Risk (<10%) / Moderate Risk (10-20%) / High Risk (>=20%) / Invalid)."
+      - name: warrants_statin_consideration
+        description: "True when the latest QRISK as-at index_date is >= 10% (a pure score threshold; it does not cross-reference statin prescriptions). NULL when absent."
+      # Adult social care (ASC) -- captured monthly (cltcs_asc_monthly_capture); values are as-at
+      # the captured month, forward-only (null -> coalesced defaults before the capture's first run).
+      - name: has_asc_service
+        description: "1 if the patient had any ASC service in the captured month, else 0 (presence flag; coalesced to 0 when absent)."
+      - name: borough_name
+        description: "Array of distinct local-authority (borough) names for the patient's ASC services, as-at the captured month. Distinct from neighbourhood_code. Empty array when absent."
+      - name: service_type
+        description: "Array of distinct ASC service types for the patient, as-at the captured month. Empty array when absent."
+      - name: primary_support_reason_category
+        description: "Array of distinct high-level ASC primary support reason categories, as-at the captured month. Empty array when absent."
+      - name: has_physical_support_personal_care
+        description: "Patient had an ASC service with personal care physical support in the captured month."
+      - name: has_physical_support_access_mobility
+        description: "Patient had an ASC service with access and mobility physical support in the captured month."
+      - name: has_learning_disability_support
+        description: "Patient had an ASC service with learning disability support in the captured month."
+      - name: has_mental_health_support
+        description: "Patient had an ASC service with mental health support in the captured month."
+      - name: has_unknown_primary_support_reason
+        description: "Patient had an ASC service with an unknown primary support reason in the captured month."
+      - name: has_memory_cognition_support
+        description: "Patient had an ASC service with memory and cognition support in the captured month."
+      - name: has_social_support_unpaid_carer
+        description: "Patient had an ASC service with social support for an unpaid carer in the captured month."
+      - name: has_social_support_social_isolation
+        description: "Patient had an ASC service with social support for social isolation or other in the captured month."
+      - name: has_sensory_support_visual_impairment
+        description: "Patient had an ASC service with sensory support for visual impairment in the captured month."
+      - name: has_sensory_support_hearing_impairment
+        description: "Patient had an ASC service with sensory support for hearing impairment in the captured month."
+      - name: has_social_support_substance_misuse
+        description: "Patient had an ASC service with social support for substance misuse in the captured month."
+      - name: has_sensory_support_dual_impairment
+        description: "Patient had an ASC service with sensory support for dual impairment in the captured month."
+      - name: has_social_support_asylum_seeker
+        description: "Patient had an ASC service with social support for asylum seekers in the captured month."
+      - name: attendance_difficulty_score
+        description: >
+          Sum of main_language_flag + has_severe_mental_illness + has_learning_disability +
+          has_asc_service (mirrors cltcs_cohort_data). Now computable since has_asc_service is
+          available from the ASC capture.
+      # Waiting list flag + array -- captured monthly (cltcs_activity_monthly_capture, alongside the
+      # WL counts); values are as-at the captured month, forward-only (null -> coalesced defaults on
+      # months captured before these columns were added).
+      - name: has_same_tfc_multiple_providers_flag
+        description: "True if the patient has an open waiting list for the same treatment-function code under more than one provider, as-at the captured month. Coalesced to false when absent."
+      - name: current_waiting_list_arrays
+        description: >
+          Array of the patient's open waiting-list entries as-at the captured month, each an object of
+          provider / tfc_name / days_on_waiting_list / days_until_future_appointment. Empty array when
+          absent.
+      # Recent medications -- captured monthly (cltcs_medications_monthly_capture); values are as-at
+      # the captured month, forward-only (empty array / 0 before the capture's first run).
+      - name: medications_recent_12mo
+        description: >
+          Array of the patient's medications prescribed in the year to the captured month, each an
+          object of medication_name / prescription_count. Empty array when absent.
+      - name: unique_active_ingredient_count_12mo
+        description: >
+          Distinct active-ingredient (VTM) count over the year to the captured month. Prescriptions
+          with no VTM mapping in dm+d are excluded from this count. 0 when absent.

@@ -1,0 +1,30 @@
+models:
+  - name: fct_person_antimicrobials
+    description: >
+      Person-level antimicrobial (BNF 5.1 antibacterial) prescribing summary from
+      primary care: order counts over rolling 3/6/12-month windows and distinct
+      active ingredients (VTM) in the last 12 months. One row per person with at
+      least one antibacterial order in the last 12 months. Secondary-care and
+      infection-presentation columns are placeholders (currently null).
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: person_id
+        description: "Person identifier; one row per person (grain)."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: antimicrobial_order_count_3mo
+        description: "Distinct antibacterial medication orders in the last 3 months (primary care)."
+
+      - name: antimicrobial_order_count_6mo
+        description: "Distinct antibacterial medication orders in the last 6 months (primary care)."
+
+      - name: antimicrobial_order_count_12mo
+        description: "Distinct antibacterial medication orders in the last 12 months (primary care)."
+
+      - name: unique_active_ingredient_count_12mo
+        description: "Distinct antibacterial active ingredients (VTM) prescribed in the last 12 months (primary care)."

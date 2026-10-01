@@ -1,0 +1,30 @@
+version: 2
+models:
+- name: fct_mhsds_social_circumstance_observation
+  description: >-
+    Social and personal circumstances recorded for patients. Each row is one accepted MHS011
+    observation, with a description where the SNOMED code has a matching reference. Repeated
+    submissions remain separate. The recorded date describes the observation; it does not establish
+    the whole period during which the circumstance applied.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: social_circumstance_observation_id
+    description: Unique identifier at the documented model grain.
+    data_tests:
+    - not_null
+    - unique
+  - name: circumstance_code
+    description: Submitted circumstance code.
+  - name: circumstance_recorded_at
+    description: Submitted circumstance recorded at.
+  - name: circumstance_recorded_date
+    description: Submitted circumstance recorded date.
+  - name: circumstance_description
+    description: SNOMED CT preferred term; null for unmatched codes or expressions.
+  - name: reporting_period_end_date
+    description: Period of the accepted source evidence; may be later than the clinical event.
+  - name: source_file_received_at
+    description: Source file receipt timestamp, not a clinical time.

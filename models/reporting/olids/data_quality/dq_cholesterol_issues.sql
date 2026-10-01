@@ -5,16 +5,7 @@
         cluster_by=['person_id', 'clinical_effective_date'])
 }}
 
--- Cholesterol Data Quality Issues
--- Identifies cholesterol measurements that are flagged as invalid in int_cholesterol_all
--- This table captures cholesterol values that are filtered out from the main cholesterol analysis tables
---
--- Valid Cholesterol Range: 0.5-20 mmol/L (maintains current clinically validated range)
--- Rationale:
--- - Lower limit 0.5: Catches data entry errors while allowing very low cholesterol from malnutrition/medications
--- - Upper limit 20: Catches data entry errors while allowing severe familial hypercholesterolaemia
--- - Clinical reality: Normal <5.0, high >5.0, very high >7.5, severe cases can reach 15-20 mmol/L
--- - Conservative approach to avoid false positives in extreme but legitimate cases
+-- Retain the original value and unit so invalid results can be investigated.
 
 SELECT
     person_id,
@@ -26,6 +17,8 @@ SELECT
     concept_display,
     source_cluster_id,
     original_result_value,
+    original_result_unit_display,
+    unit_status,
     
     -- DQ Flags based on current validated ranges
     CASE 
@@ -50,6 +43,8 @@ SELECT
     
     -- Cholesterol category with valid ranges
     CASE
+        WHEN unit_status = 'Unsupported unit' THEN unit_status
+        WHEN cholesterol_value IS NULL THEN 'Missing numeric result'
         WHEN cholesterol_value < 0.5 THEN 'Below Valid Range (< 0.5)'
         WHEN cholesterol_value > 20 THEN 'Above Valid Range (> 20)'
         WHEN cholesterol_value > 15 THEN 'Extremely High (> 15)'

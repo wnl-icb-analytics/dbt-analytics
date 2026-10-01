@@ -47,16 +47,6 @@ base_observations AS (
     value_column='result_value'
 ) }}
 
-,
-
-validated AS (
-    SELECT
-        *,
-        inferred_value < 0 AS is_negative,
-        inferred_value > biological_upper AS is_extreme_outlier
-    FROM standardised
-)
-
 SELECT
     id,
     person_id,
@@ -79,7 +69,7 @@ SELECT
     is_negative,
     is_extreme_outlier,
     CASE
-        WHEN inferred_value IS NULL OR confidence = 'NONE' THEN 'Abnormal'
+        WHEN inferred_value IS NULL THEN 'Abnormal'
         WHEN inferred_value < 0 THEN 'Abnormal'
         WHEN inferred_value < 10 THEN 'Severe Thrombocytopenia'
         WHEN inferred_value < 50 THEN 'Moderate Thrombocytopenia'
@@ -88,4 +78,4 @@ SELECT
         WHEN inferred_value <= 1000 THEN 'Thrombocytosis'
         ELSE 'Severe Thrombocytosis'
     END AS platelets_category
-FROM validated
+FROM flagged

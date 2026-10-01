@@ -1,0 +1,93 @@
+
+models:
+  - name: int_sus_uec_procedure
+    description: >-
+      Distinct investigation, treatment, comorbidity and Coded Clinical Finding
+      codes submitted for ECDS attendances. One row represents one distinct
+      code per attendance and observation_type. observation_count records how
+      many source entries used that code.
+    config:
+      tags: ["daily"]
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: event_id
+        data_type: varchar
+        description: "Unique identifier for the record"
+        data_tests:
+          - not_null
+          - unique
+
+      - name: sk_patient_id
+        data_type: varchar
+        description: "Unique identifier for the patient (pseudonymised NHS number)"
+
+      - name: visit_occurrence_id
+        data_type: number
+        description: "ECDS attendance identifier."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('int_sus_uec_encounter')
+                field: visit_occurrence_id
+
+      - name: observation_type
+        data_type: varchar
+        description: "Source list containing the code: investigation, treatment, comorbs or findings. Findings are ECDS Coded Clinical Findings, not diagnoses."
+
+      - name: date
+        data_type: date
+        description: "Start date of the attendance associated with the observation"
+
+      - name: visit_occurrence_type
+        data_type: varchar
+        description: " Source of the visit occurrence (e.g., AE_ATTENDANCE = A&E attendance)"
+
+      - name: organisation_id
+        data_type: varchar
+        description: "Unique identifier for the provider organisation providing the
+          service"
+
+      - name: organisation_name
+        data_type: varchar
+        description: "Provider namw"
+
+      - name: site_id
+        data_type: varchar
+        description: ""
+
+      - name: site_name
+        data_type: varchar
+        description: "Unique identifier for the site where the service was provided"
+
+      - name: department_type
+        data_type: varchar
+        description: "Type of urgent department where the attendance took place"
+
+      - name: snomed_code
+        data_type: varchar
+        description: "Snomed code of the observation"
+        data_tests:
+          - not_null
+
+      - name: observation_count
+        data_type: number
+        description: "Number of source entries for this attendance, observation type and code."
+
+      - name: ecds_description
+        data_type: varchar
+        description: "ECDS description of the observation"
+
+      - name: ecds_group1
+        data_type: varchar
+        description: "ECDS description group 1 of the observation"
+
+      - name: snomed_decription
+        data_type: varchar
+        description: "Snomed description of the observation as per the ECDS dictionary"

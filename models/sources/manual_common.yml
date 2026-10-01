@@ -1,0 +1,225 @@
+version: 2
+
+# Shared NCL reference tables in DATA_LAKE__NCL.COMMON.
+#
+# ---------------------------------------------------------------------------
+# PROVENANCE - NEEDS REVIEW
+#
+# This schema is NOT a single governed feed. It is a mix of two routes:
+#
+#   1. Manual file uploads - codelists and weights hand-loaded into Snowflake
+#      from spreadsheets supplied by researchers (e.g. the eFI2 codelist, which
+#      is not published with the paper and reached us by email). These have no
+#      automated refresh, no version stamp and no upstream owner: whatever was
+#      uploaded is what downstream models score against, indefinitely.
+#
+#   2. A connection to an S3 bucket held by the London AI Centre (AIC). These
+#      refresh outside our control, on a cadence and with a change process we
+#      do not currently have visibility of.
+#
+# Neither route is version-controlled or contract-tested by us, and per-table
+# attribution below is partly inferred rather than confirmed. Both need review
+# with the AI Centre before anything here is treated as a stable dependency -
+# see docs/model_documentation/ccms_overview.md ("Outstanding issues"), which
+# already flags the S3 dependency and the unconfirmed CCMS weights version.
+#
+# Practical consequences to keep in mind:
+#   - A silent upstream change to an S3-backed codelist re-scores every person
+#     downstream with no signal to us.
+#   - A manually uploaded table will silently go stale instead; the failure mode
+#     is the opposite and just as invisible.
+#   - The manual sources are not covered by check_manual_source_drift() (see
+#     the note on routing below), so column-level drift is not detected either.
+# ---------------------------------------------------------------------------
+#
+# This source supersedes the retired AIC_DEV pipeline (source_name: aic), which
+# published the same reference data under BASE_* names. Only tables with no
+# curated equivalent elsewhere in the project are declared here - IMD, ward
+# names and the BNF/SNOMED mapping are deliberately omitted because REFERENCE
+# already carries them (raw_reference_imd2019, raw_reference_geo_lsoa_ward_ew,
+# raw_reference_bnf_latest), as are the single-row VARIANT landing blobs
+# (AMP_RAW, VMP_RAW, VTM_RAW).
+#
+# Declared manually rather than via scripts/sources/source_mappings.yml so that
+# 2_generate_sources.py's sync_manual_source_types() does not rewrite this file
+# through yaml.dump() and strip its comments. Raw-layer routing therefore comes
+# from config.meta below, which 3_generate_raw_models.py reads.
+
+sources:
+  - name: common
+    database: '"DATA_LAKE__NCL"'
+    schema: '"COMMON"'
+    description: >
+      Shared reference tables in the NCL data lake COMMON schema. Supersedes the
+      AIC_DEV pipeline. Includes the eFI2 (electronic Frailty Index 2) codelists
+      and weights that feed the native eFI2 pipeline
+      (models/modelling/olids/risk_stratification/int_efi2_*), the Cambridge
+      Comorbidity Score (CCMS) SNOMED and dm+d codelists, and the AI Centre
+      OMOP-style concept vocabulary.
+
+      PROVENANCE NEEDS REVIEW. This schema mixes two ingestion routes: manual
+      file uploads of researcher-supplied codelists and weights (no automated
+      refresh, no version stamp, no upstream owner) and a connection to an S3
+      bucket held by the London AI Centre (refreshes outside our control, change
+      process not visible to us). Per-table attribution below is partly inferred
+      rather than confirmed. Neither route is version-controlled or contract-
+      tested by us. Confirm both with the AI Centre before treating anything in
+      this schema as a stable dependency - see the "Outstanding issues" section
+      of docs/model_documentation/ccms_overview.md.
+    config:
+      meta:
+        domain: shared
+        raw_prefix: raw_common
+        provenance_review_required: true
+        ingestion_routes: [manual_upload, aic_s3_bucket]
+    tables:
+      # Route: MANUAL UPLOAD (evidenced). The eFI2 codelist is not published with
+      # the paper; this copy reached the team by email from the researchers and was
+      # loaded by hand. No refresh, no version stamp - it will go stale silently.
+      - name: EFI2_CODELISTS
+        identifier: '"EFI2_CODELISTS"'
+        description: >
+          eFI2 deficit codelist - one row per (deficit, SNOMED concept).
+          Route: manual upload of a researcher-supplied file (not published with
+          the paper; received by email). Not automatically refreshed and carries
+          no version stamp - confirm currency before relying on it.
+        columns:
+          - name: DEFICIT
+            data_type: TEXT
+          - name: SNOMEDCT_CONCEPTID
+            data_type: TEXT
+          - name: CTV3
+            data_type: TEXT
+          - name: PROVENANCE
+            data_type: TEXT
+          - name: CODE_DESCRIPTION
+            data_type: TEXT
+          - name: TIME_CONSTRAINT_YEARS
+            data_type: NUMBER(38,0)
+          - name: AGE_LIMIT
+            data_type: NUMBER(38,0)
+          - name: OTHER_INSTRUCTIONS
+            data_type: TEXT
+          - name: NEW_DESCRIPTIONS
+            data_type: TEXT
+
+      # Route: MANUAL UPLOAD (evidenced). Weights transcribed from the published
+      # paper. Only 40 rows, so a transcription error is plausible and would shift
+      # every score - worth a line-by-line check against the paper.
+      - name: EFI2_WEIGHTS
+        identifier: '"EFI2_WEIGHTS"'
+        description: >
+          eFI2 deficit weights - one row per (deficit, detail key).
+          Route: manual upload, transcribed from the published paper
+          (https://academic.oup.com/ageing/article/54/4/afaf077/8101467).
+          Not automatically refreshed; 40 rows, never independently verified
+          against the paper.
+        columns:
+          - name: DEFICIT
+            data_type: TEXT
+          - name: DETAIL_KEY
+            data_type: TEXT
+          - name: WEIGHT
+            data_type: FLOAT
+
+      # Route: AIC S3 BUCKET (evidenced - flagged as an outstanding issue in
+      # docs/model_documentation/ccms_overview.md). Refreshes outside our control;
+      # a silent upstream edit re-scores every person downstream with no signal.
+      - name: CCMC_SNOMED
+        identifier: '"CCMC_SNOMED"'
+        description: >
+          Cambridge Comorbidity Score SNOMED codelist - one row per (condition,
+          SNOMED concept). Replaces AIC_DEV.BASE_CCMS_SNOMED_CODES.
+          Route: connection to a London AI Centre S3 bucket of definitions.
+          Refresh cadence and change process are not visible to us and the exact
+          model version is unconfirmed - flagged for review with the AI Centre
+          (see "Outstanding issues" in docs/model_documentation/ccms_overview.md).
+        columns:
+          - name: CONDITIONID
+            data_type: NUMBER(38,0)
+          - name: CONDITIONNAME
+            data_type: TEXT
+          - name: CONCEPTID
+            data_type: NUMBER(38,0)
+          - name: PRIMARYTERM
+            data_type: TEXT
+
+      # Route: AIC S3 BUCKET (evidenced - same dependency as CCMC_SNOMED).
+      - name: CCMC_DMD
+        identifier: '"CCMC_DMD"'
+        description: >
+          Cambridge Comorbidity Score dm+d medication codelist - one row per
+          (condition, dm+d product). Replaces AIC_DEV.BASE_CCMS_DMD_CODES.
+          Route: connection to a London AI Centre S3 bucket of definitions, the
+          same dependency as CCMC_SNOMED. Refresh cadence and change process are
+          not visible to us and the exact model version is unconfirmed - flagged
+          for review with the AI Centre.
+        columns:
+          - name: CONDITIONID
+            data_type: NUMBER(38,0)
+          - name: CONDITIONNAME
+            data_type: TEXT
+          - name: PRODUCTID
+            data_type: NUMBER(38,0)
+          - name: PRIMARYTERM
+            data_type: TEXT
+
+      # Route: UNCONFIRMED - AI Centre origin is clear from the name and from the
+      # AIC_DEV table it replaces, but whether it arrives via the S3 bucket or was
+      # loaded once by hand has not been established. 5.3M rows across ICD-10,
+      # OPCS-4 and SNOMED feeding every int_sus_* diagnosis/procedure model, so
+      # this is the widest-reaching unknown in the schema - confirm first.
+      - name: AICENTRE_VOCAB
+        identifier: '"AICENTRE_VOCAB"'
+        description: >
+          AI Centre OMOP-style concept vocabulary (ICD-10, OPCS-4, SNOMED and
+          others), used to attach descriptions to coded activity. Replaces
+          AIC_DEV.BASE_ATHENA__CONCEPT.
+          Route: UNCONFIRMED - AI Centre origin, but not established whether it
+          refreshes from the S3 bucket or was a one-off manual load. Widest
+          downstream reach of anything in this schema (all int_sus_* diagnosis
+          and procedure models); confirm provenance with the AI Centre first.
+        columns:
+          - name: CONCEPT_ID
+            data_type: NUMBER(38,0)
+          - name: CONCEPT_NAME
+            data_type: TEXT
+          - name: DOMAIN_ID
+            data_type: TEXT
+          - name: VOCABULARY_ID
+            data_type: TEXT
+          - name: CONCEPT_CLASS_ID
+            data_type: TEXT
+          - name: STANDARD_CONCEPT
+            data_type: TEXT
+          - name: CONCEPT_CODE
+            data_type: TEXT
+          - name: VALID_START_DATE
+            data_type: DATE
+          - name: VALID_END_DATE
+            data_type: DATE
+          - name: INVALID_REASON
+            data_type: TEXT
+
+      # No consumer today - declared so the dm+d AMP -> VMP bridge is available
+      # without going back to AIC_DEV. Replaces AIC_DEV.BASE_NHSBSA__APID_VPID.
+      #
+      # Route: UNCONFIRMED - derived in-schema by parsing AMP_RAW (a single-row
+      # VARIANT landing blob), so it is downstream of whichever route loads that.
+      #
+      # DATA QUALITY: every row is duplicated exactly twice - 328,522 rows but
+      # only 164,261 distinct (APID, VPID) pairs, which match COMMON.APID_VPID
+      # exactly. Deduplicate in staging, or point at COMMON.APID_VPID instead,
+      # before wiring this up to anything.
+      - name: APID_VPID_PARSED
+        identifier: '"APID_VPID_PARSED"'
+        description: >
+          dm+d actual-product to virtual-product mapping, parsed from AMP_RAW.
+          Route: UNCONFIRMED, derived in-schema from the AMP_RAW landing blob.
+          Known issue: rows are duplicated 2x (328,522 rows, 164,261 distinct
+          pairs, identical to COMMON.APID_VPID). No consumer today.
+        columns:
+          - name: APID
+            data_type: NUMBER(38,0)
+          - name: VPID
+            data_type: NUMBER(38,0)

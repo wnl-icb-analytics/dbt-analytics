@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: int_ltc_lcs_cf_af_61_base_woEX
+    description: >
+      ICB_CF_AF_61_base_woEX shared parent: currently-registered patients not in
+      ICS_METABOLIC_LTC / CF_NHSHC2Y, on AF-relevant medication in the last 6 months,
+      minus the woEX clinical exclusions (DVT/PE, AF/flutter, Long COVID, hypoplastic
+      left heart). Pre-Rule-1 population consumed by AF_61 and AF_62.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - patients_on_digoxin_flecainide_propafenone_or_anticoag_vs2
+              - f4f774b1-0949-b062-b74a-d03f7d820a81  # af_case_finding_eligible_population_on_af_medication_vs1
+              - af_case_finding_eligible_population_on_af_medication_vs2
+              - af_case_finding_eligible_population_on_af_medication_vs3
+              - af_case_finding_eligible_population_on_af_medication_vs4
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_af_61
+    description: >
+      ICB_CF_AF_61: AF medication candidates (base_woEX) excluding anyone with an
+      "AF excluded/confirmed" code in the last 3 years. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 9d65ae05-99d1-8995-36b4-d64960af37e5  # af_case_finding_eligible_population_on_af_medication_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_af_62
+    description: >
+      ICB_CF_AF_62: registered patients aged >= 65, not in ICS_METABOLIC_LTC /
+      CF_NHSHC2Y, not already an AF_61 medication candidate, with no pulse check in the
+      last 3 years and no "AF excluded/confirmed" code in the last 3 years.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - c73a0da9-a1dd-594d-7f07-fac41d07cb80  # af_case_finding_eligible_population_over_65s_missing_pulse_vs1
+              - af_case_finding_eligible_population_over_65s_missing_pulse_vs2
+              - af_case_finding_eligible_population_over_65s_missing_pulse_vs3
+              - af_case_finding_eligible_population_over_65s_missing_pulse_vs4
+              - 5bceb829-7789-d579-1163-85c6908516e6  # af_case_finding_eligible_population_over_65s_missing_pulse_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]

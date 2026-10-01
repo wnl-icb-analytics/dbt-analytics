@@ -1,9 +1,12 @@
 models:
   - name: fct_person_obesity_register
-    description: 'QOF obesity register for patients aged 18+ using ethnicity-specific
-      BMI thresholds.
+    description: 'Obesity register for people aged 18+, using the QOF BMI thresholds.
 
-      One row per person with BMI ≥30 (all ethnicities) or BMI ≥27.5 (BAME populations).'
+      One row per person whose latest valid BMI (5 to 400, recorded at any date) is 30 or
+      more, or 27.5 or more for Asian, Black, Arab, or mixed White and Asian or White and
+      Black ethnicity (int_ethnicity_qof_all.is_bame). Unlike QOF OBES_REG there is no 12-month
+      window: a person who has not been weighed recently keeps their last valid BMI, so
+      counts are higher than published QOF.'
 
     tests:
       - dbt_utils.at_least_one:
@@ -19,11 +22,11 @@ models:
           name_short: "Obesity"
           description_short: "QOF obesity register"
           description_long: >
-            Obesity diagnosed using QOF criteria: Age ≥18 years using ethnicity-specific
-            BMI  thresholds (BMI ≥30 for all ethnicities, BMI ≥27.5 for BAME populations
-            to reflect  increased cardiometabolic risk). Uses BMI measurements and
-            ethnicity data for  accurate risk stratification. Maps to QOF indicator
-            OB001 (Obesity Register).  Uses BMI_COD and ETH2016AI_COD cluster codes.
+            Aged 18 or over with a latest valid BMI (any date) of 30 or more, or 27.5
+            or more for ethnic groups at higher cardiometabolic risk. Uses the QOF
+            thresholds and BMI clusters (BMIVAL_COD, BMI30_COD) but not the QOF
+            12-month window, so it counts people with obesity rather than recent
+            recording.
           is_qof: true
           qof_indicator: "OB001"
           source_column: "is_on_register"

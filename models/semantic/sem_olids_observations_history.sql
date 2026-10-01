@@ -44,7 +44,9 @@
 
     Biomarkers: Systolic BP, Diastolic BP, Total Cholesterol, LDL Cholesterol,
     QRISK, HbA1c, BMI, Waist Circumference, eGFR, Creatinine, Urine ACR, ALT,
-    GGT, Bilirubin, Haemoglobin, Platelets, Eosinophils.
+    GGT, Bilirubin, Haemoglobin, Platelets, Eosinophils, GP-recorded Electronic
+    Frailty Index (eFI/eFI2), Rockwood Frailty Scale. Calculated eFI2 has no
+    serial history and is only in sem_olids_observations.
 #}
 
 TABLES(
@@ -66,13 +68,18 @@ FACTS(
 )
 
 DIMENSIONS(
+    -- Person linkage key (on obs so it can be selected alongside the value fact)
+    obs.person_id AS person_id COMMENT = 'Pseudonymised person key, shared by all sem_olids_* views. Use for latest-N windowing within this view and for cross-view cohort intersection (join CTEs over two views on person_id, then aggregate). Never return person_id in final results.',
+    demographics.sk_patient_id AS sk_patient_id COMMENT = 'Representative pseudonymised patient key for linkage to non-OLIDS views (SUS acute activity, cost index, resource index). Every active person has one; the underlying person-patient mapping can be many-to-many, so joins remain approximate at the margins. Join CTEs on sk_patient_id, then aggregate; never return sk_patient_id in final results.',
+
     -- Observation
     obs.observation_event_id AS observation_event_id COMMENT = 'Stable per-event surrogate key. Use as the final ORDER BY tiebreaker in latest-N windows so tied clinical_effective_dates rank deterministically.',
-    obs.observation_type AS observation_type WITH SYNONYMS = ('biomarker', 'measurement', 'test') COMMENT = 'Biomarker label. Filter to one value before aggregating: Systolic BP, Diastolic BP, Total Cholesterol, LDL Cholesterol, QRISK, HbA1c, BMI, Waist Circumference, eGFR, Creatinine, Urine ACR, ALT, GGT, Bilirubin, Haemoglobin, Platelets, Eosinophils.',
-    obs.observation_group AS observation_group COMMENT = 'Clinical group (Cardiovascular, Metabolic, Renal, Liver, Haematology)',
+    obs.observation_type AS observation_type WITH SYNONYMS = ('biomarker', 'measurement', 'test') COMMENT = 'Biomarker label. Filter to one value before aggregating: Systolic BP, Diastolic BP, Total Cholesterol, LDL Cholesterol, QRISK, HbA1c, BMI, Waist Circumference, eGFR, Creatinine, Urine ACR, ALT, GGT, Bilirubin, Haemoglobin, Platelets, Eosinophils, GP-recorded Electronic Frailty Index (eFI/eFI2), Rockwood Frailty Scale. Calculated eFI2 is not in this history view.',
+    obs.observation_group AS observation_group COMMENT = 'Clinical group (Cardiovascular, Metabolic, Renal, Liver, Haematology, Frailty)',
     obs.clinical_effective_date AS clinical_effective_date WITH SYNONYMS = ('observation date', 'test date', 'date') COMMENT = 'Date of the reading',
     obs.unit AS unit COMMENT = 'Unit of measure for value',
-    obs.category AS category COMMENT = 'Type-specific clinical category for this reading (meaning varies by observation_type)',
+    obs.category AS category COMMENT = 'Type-specific clinical category; filter observation_type first. All observation types except Diastolic BP are categorised. Systolic BP is Hypertensive range or Below hypertensive range; HbA1c, BMI, eGFR, cholesterol, renal, liver, haematology, QRISK, waist and frailty types use their upstream clinical categories.',
+    obs.hypertension_stage AS hypertension_stage COMMENT = 'NICE NG136 stage for paired BP events: Normal, Stage 1, Stage 2, or Stage 3 (Severe). Uses the event''s clinic or home/ABPM context; NULL for non-BP types.',
 
     -- Core Demographics
     demographics.gender AS gender COMMENT = 'Patient gender (Male, Female, Unknown)',
@@ -91,13 +98,13 @@ DIMENSIONS(
     demographics.is_deceased AS is_deceased COMMENT = 'Deceased status',
 
     -- Organisation
-    demographics.practice_code AS practice_code COMMENT = 'GP practice ODS code',
-    demographics.practice_name AS practice_name COMMENT = 'GP practice name',
-    demographics.pcn_code AS pcn_code COMMENT = 'Primary Care Network code',
-    demographics.pcn_name AS pcn_name COMMENT = 'Primary Care Network name',
-    demographics.pcn_name_with_borough AS pcn_name_with_borough COMMENT = 'PCN name with borough prefix',
+    demographics.registered_practice_code AS practice_code WITH SYNONYMS = ('practice code', 'ODS code', 'GP practice') COMMENT = 'ODS code of the patient''s registered GP practice',
+    demographics.registered_practice_name AS practice_name COMMENT = 'Name of the patient''s registered GP practice',
+    demographics.registered_pcn_code AS pcn_code COMMENT = 'PCN code of the registered practice',
+    demographics.registered_pcn_name AS pcn_name WITH SYNONYMS = ('PCN', 'primary care network') COMMENT = 'PCN name of the registered practice',
+    demographics.registered_pcn_name_with_borough AS pcn_name_with_borough COMMENT = 'Registered PCN name with borough prefix',
     demographics.borough_registered AS borough_registered COMMENT = 'Registration borough',
-    demographics.sub_icb_code AS sub_icb_code COMMENT = 'Sub-ICB / place-based partnership ODS code of the registered practice: QMJ = NHS North Central London; QRV = NHS North West London. NULL outside the WNL footprint.',
+    demographics.sub_icb_code AS sub_icb_code COMMENT = 'Sub-ICB / place-based partnership ODS code of the registered practice: 93C = NHS North Central London; W2U3Z = NHS North West London. NULL outside the WNL footprint.',
     demographics.sub_icb_name AS sub_icb_name COMMENT = 'Sub-ICB display name (NHS North Central London or NHS North West London). NULL outside the WNL footprint.',
     demographics.neighbourhood_registered AS neighbourhood_registered COMMENT = 'Registration neighbourhood',
 
@@ -124,6 +131,6 @@ METRICS(
     obs.max_value AS MAX(obs.value) COMMENT = 'Maximum value (filter to one observation_type)'
 )
 
-COMMENT = 'OLIDS Clinical Observations History Semantic View - every recorded biomarker reading (one row per person x biomarker x date) for serial, latest-N, trajectory, variability, and recheck-interval analysis. Long format: filter to a single observation_type before reading value. Biomarkers: BP (systolic/diastolic), cholesterol, LDL, QRISK, HbA1c, BMI, waist, eGFR, creatinine, urine ACR, ALT, GGT, bilirubin, haemoglobin, platelets, eosinophils.'
-AI_SQL_GENERATION 'Always filter to a single observation_type before aggregating or comparing value — values across types are not comparable (different units). For latest-N questions ("last 2 HbA1c"), use ROW_NUMBER() OVER (PARTITION BY person_id, observation_type ORDER BY clinical_effective_date DESC, observation_event_id DESC) and filter the rank — the event id is a deterministic tiebreaker for multiple readings on the same date. For CHANGE / trajectory questions ("whose BMI or waist circumference rose in the last X months"), per person take the latest reading and a baseline reading (the most recent reading on or before DATEADD(month, -X, latest_date)), then difference them; require both to exist. Blood pressure is two types: Systolic BP and Diastolic BP. Always filter to is_active = TRUE unless asked otherwise. RETENTION: full history is retained for currently-registered persons but only ~5 years for left/deceased persons, so this view is NOT capped at 60 months — use it for per-person trajectories and change within the currently-registered cohort. Do NOT compute long-run population cross-sections (e.g. average value by calendar year going back >5 years) as if representative — pre-5-year data is survivor-biased toward people still registered. This view is for over-time analysis; for the single latest value per biomarker use sem_olids_observations.'
-AI_QUESTION_CATEGORIZATION 'Use this view for: serial biomarker readings, latest-2 / last-N values, trends in an individual or cohort over time, variability, rate of change, time between readings, and recheck intervals. For the single most recent value per biomarker (current state) use sem_olids_observations. For condition prevalence/demographics use sem_olids_population. For condition incidence/prevalence trends use sem_olids_trends.'
+COMMENT = 'OLIDS Clinical Observations History Semantic View - every recorded biomarker observation event; a person can have multiple readings of one biomarker on the same date. observation_event_id is the deterministic tiebreaker. Use for serial, latest-N, trajectory, variability, and recheck-interval analysis. Long format: filter to one observation_type before reading value.'
+AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE and keep person_id out of the final output. This view is observation-event grain, so keep the events: reduce to one row per person only when joining to a person-grain view. For latest-N, trajectory or change questions, hold clinical_effective_date and observation_event_id in the CTE and rank with ROW_NUMBER() in the OUTER query, filtering rn <= N there. filter one observation_type and clinical_effective_date window before linkage. Future-dated readings are excluded at source; legacy readings can be decades old, so date windows must state their range. Example: SELECT clinical_effective_date, AGG(patient_count) FROM SEM_OLIDS_OBSERVATIONS_HISTORY WHERE observation_type = ''HbA1c'' GROUP BY clinical_effective_date. Example linkage: reduce latest HbA1c values here and medication exposure in sem_olids_prescribing before joining. For latest-N, first isolate a person-grain CTE over this view (no window functions inside the semantic-view query — they do not compile there), then rank the CTE result in the OUTER query with ROW_NUMBER() OVER (PARTITION BY person_id, observation_type ORDER BY clinical_effective_date DESC, observation_event_id DESC). For change/trajectory questions, take each person''s latest reading and a baseline reading on or before DATEADD(month, -N, latest date), require both, then difference. Blood pressure is two observation_types: Systolic BP and Diastolic BP. RETENTION: full history is kept for currently-registered persons but only ~5 years for left/deceased persons — per-person trajectories in the current cohort are fine, but do not treat population cross-sections older than 5 years as representative (survivor bias). Use sem_olids_observations for current latest values.'
+AI_QUESTION_CATEGORIZATION 'Use this view for: serial biomarker readings, latest-2 / last-N values, trends in an individual or cohort over time, variability, rate of change, time between readings, and recheck intervals. Frailty rows are GP-recorded eFI/eFI2 or Rockwood assessments; calculated eFI2 has no history and is only in sem_olids_observations. For the single most recent value per biomarker (current state) use sem_olids_observations. For condition prevalence/demographics use sem_olids_population. For condition incidence/prevalence trends use sem_olids_trends. Questions needing cohorts from TWO domains (e.g. biomarker trajectory x medication exposure) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'

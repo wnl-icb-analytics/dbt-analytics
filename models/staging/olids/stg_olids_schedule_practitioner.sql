@@ -5,12 +5,10 @@ select
     -- Business columns
     schedule_id,
     practitioner_id,
-    lds_id,
     publisher_organisation_code,
-    lds_datetime_first_acquired,
+    lds_transform_datetime,
 
     -- Metadata
-    lds_start_datetime,
     lds_is_deleted,
     lds_source_record_id
 

@@ -106,17 +106,28 @@ models:
         description: 'Surrogate key for ICB organisation'
 
       - name: sub_icb_code
-        description: 'Legacy ICB ODS code (QMJ NCL, QRV NWL) derived from the PCN''s commissioner via ODS hierarchy. All PCNs in dim_pcn are Z9B2Z so this always resolves to QMJ or QRV.'
+        description: 'Live RO98/RO319 sub-ICB location code — the PCN''s commissioner. All PCNs in dim_pcn are WNL so this is 93C (North Central London) or W2U3Z (North West London). Matches the commissioner codes in national datasets (SLAM/SUS/EPD).'
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['93C', 'W2U3Z']
+
+      - name: sub_icb_name
+        description: 'Sub-ICB display name (NHS North Central London / NHS North West London, curated).'
+        tests:
+          - not_null
+
+      - name: legacy_icb_code
+        description: 'Pre-merger ICB ODS code (QMJ NCL / QRV NWL — legally dissolved 2026-03-31).'
         tests:
           - not_null
           - accepted_values:
               arguments:
                 values: ['QMJ', 'QRV']
 
-      - name: sub_icb_name
-        description: 'Legacy ICB display name (NHS North Central London / NHS North West London).'
-        tests:
-          - not_null
+      - name: legacy_icb_name
+        description: 'Pre-merger ICB display name (NHS North Central London / NHS North West London Integrated Care Board).'
 
       - name: sk_pcn_dict_id
         description: 'Dictionary organisation surrogate key for PCN'

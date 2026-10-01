@@ -13,8 +13,6 @@ models:
           - not_null
       - name: person_uuid
         description: Native person UUID
-      - name: matched_nhs_no_hash
-        description: Hashed NHS number (BINARY) - join key to NDOO_HASHED and other hash-keyed tables
       - name: birth_year
         description: Year of birth
       - name: birth_month
@@ -25,16 +23,15 @@ models:
         description: Month of death (1-12), if deceased
       - name: death_notification_status
         description: Death notification status
+      # REVIEW: plain postcode replaces the removed postcode hash.
       - name: postcode_hash
-        description: Hash of registered postcode
+        description: Pseudonymised postcode hash (source POSTCODE column)
       - name: sensitivity_flag
         description: Record sensitivity flag
       - name: gp_practice_code
         description: Registered practice ODS code
       - name: gp_registration_date
         description: Date of registration with current GP practice
-      - name: as_at_date
-        description: Snapshot reference date for registration fields
       - name: preferred_contact_method
         description: Preferred contact method
       - name: nominated_pharmacy
@@ -45,18 +42,10 @@ models:
         description: Medical appliance supplier
       - name: lds_is_deleted
         description: Soft-delete flag
-      - name: lds_start_datetime
-        description: Incremental high-water column
-      - name: person_record_type
-        description: "Type / category of the person record. New in the 2026 OLIDS schema realignment (issue #747)."
-      - name: person_version_id
-        description: "Version identifier for the person record. New in the 2026 OLIDS schema realignment (issue #747)."
-      - name: sk_patient_id
-        description: "Surrogate key linking this person to a patient record. New in the 2026 OLIDS schema realignment (issue #747)."
-      - name: lds_datetime_first_acquired_person
-        description: "LDS datetime stamp when the linked person record was first acquired. New in the 2026 OLIDS schema realignment (issue #747)."
-      - name: lds_datetime_update_acquired_person
-        description: "LDS datetime stamp when an update for the linked person record was acquired. New in the 2026 OLIDS schema realignment (issue #747)."
+      - name: lds_source_record_id
+        description: LDS source record identifier
+      - name: lds_transform_datetime
+        description: Datetime when the row was transformed
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:

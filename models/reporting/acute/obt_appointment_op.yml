@@ -1,0 +1,241 @@
+
+models:
+  - name: obt_appointment_op
+    description: >
+      One row per latest SUS outpatient appointment. Includes attended and
+      non-attended activity, appointments without a submitted appointment
+      identifier, and appointments without a linked patient key.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: visit_occurrence_id
+        data_type: number
+        description: "Primary key for the appointment within SUS"
+        data_tests:
+          - unique:
+              config:
+                severity: error
+                error_if: ">100"
+                warn_if: ">10"
+          - not_null
+
+      - name: sk_patient_id
+        data_type: varchar
+        description: >
+          Common commissioning patient identifier. Null when the appointment
+          cannot be linked to a person; the appointment remains included.
+
+      - name: source
+        data_type: varchar
+        description: "Commissioning data source"
+
+      - name: local_patient_identifier
+        data_type: varchar
+        description: "Trust-provided patient id."
+
+      - name: organisation_id
+        data_type: varchar
+        description: "Provider organisation identifier"
+
+      - name: organisation_name
+        data_type: varchar
+        description: "Provider organisation name"
+
+      - name: site_id
+        data_type: varchar
+        description: "Site identifier"
+
+      - name: site_name
+        data_type: varchar
+        description: "Site name"
+
+      - name: start_date
+        data_type: date
+        description: "The date the appointment took place or will take place if in the future"
+
+      - name: start_time
+        data_type: time
+        description: "The time of day for the appointment"
+
+      - name: expected_duration
+        data_type: varchar
+        description: "Expected Duration of Appointment"
+
+      - name: appointment_outcome
+        data_type: varchar
+        description: "Code: Records the action resulting from the attendance such as making another appointment or ending the series of consultations by discharging the patient. It does not record clinical outcome."
+
+      - name: outcome_desc
+        data_type: varchar
+        description: "Desc: Records the action resulting from the attendance such as making another appointment or ending the series of consultations by discharging the patient. It does not record clinical outcome."
+
+      - name: appointment_attended_or_dna
+        data_type: varchar
+        description: "Code: An indication of whether an appointment took place or not and if not, whether advance warning was given"
+
+      - name: appointment_attendance_outcome_desc
+        data_type: varchar
+        description: "Desc: An indication of whether an appointment took place or not and if not, whether advance warning was given"
+
+      - name: appointment_first_attendance
+        data_type: varchar
+        description: "Code: Flag for whether the appointment was a first attendance"
+
+      - name: first_attendance_desc
+        data_type: varchar
+        description: "Desc: Flag for whether the appointment was a first attendance"
+
+      - name: pod
+        data_type: varchar
+        description: "Point of delivery, based on HRG code"
+
+      - name: primary_diagnosis_code
+        data_type: varchar
+        description: "Primary ICD diagnosis code for the appointment"
+
+      - name: primary_diagnosis_name
+        data_type: varchar
+        description: "Primary ICD diagnosis description for the appointment"
+
+      - name: primary_procedure_code
+        data_type: varchar
+        description: "Primary OPCS procedure code for the appointment"
+
+      - name: primary_procedure_category
+        data_type: varchar
+        description: "Primary OPCS procedure category for the appointment"
+
+      - name: primary_procedure_name
+        data_type: varchar
+        description: "Primary OPCS procedure description for the appointment"
+
+      - name: main_specialty_code
+        data_type: varchar
+        description: "Code: The specialty in which the consultant is contracted or recognised and the code identifies a specialty as designated by Royal Colleges."
+
+      - name: main_specialty_name
+        data_type: varchar
+        description: "Desc: The specialty in which the consultant is contracted or recognised and the code identifies a specialty as designated by Royal Colleges."
+
+      - name: main_specialty_category
+        data_type: varchar
+        description: "Grouping: The specialty in which the consultant is contracted or recognised and the code identifies a specialty as designated by Royal Colleges."
+
+      - name: treatment_function_code
+        data_type: varchar
+        description: "Treatment function code for the specialised service within which the patient is treated."
+
+      - name: treatment_function_code_desc
+        data_type: varchar
+        description: "Treatment function description for the specialised service within which the patient is treated."
+            
+      - name: referral_organisation_id
+        data_type: varchar
+        description: "Code: Organisation identifier for the referring organisation."
+
+      - name: referral_organisation_date
+        data_type: date
+        description: "Date the referral was made."
+
+      - name: referral_source_op
+        data_type:  varchar
+        description: "Code: Referral Group code for the source of referral. 
+          Categories into GP, Consultant, and others."
+
+      - name: referral_source_op_desc
+        data_type: varchar
+        description: "Desc: Referral Group code for the source of referral. 
+          Categories into GP, Consultant, and others."
+
+      - name: referral_acuity
+        data_type: number
+        description: "Code: The priority of a request for services as assessed by or on behalf of the consultant"
+
+      - name: referral_acuity_desc
+        data_type: varchar
+        description: "Desc: The priority of a request for services as assessed by or on behalf of the consultant"
+
+      - name: spec_comm_flag
+        data_type: varchar
+        description: "Specialised Commission Flag"
+
+      - name: spec_comm
+        data_type: varchar
+        description: "Specialised Commission Code"
+
+      - name: core_hrg_code
+        data_type: varchar
+        description: "HRG code associated with the appointment"
+
+      - name: core_hrg_desc
+        data_type: varchar
+        description: "HRG description associated with the appointment"
+
+      - name: core_hrg_chapter
+        data_type: varchar
+        description: "HRG chapter key associated with the appointment"
+
+      - name: core_hrg_chapter_desc
+        data_type: varchar
+        description: "HRG chapter description associated with the appointment"
+
+      - name: cost
+        data_type: number
+        description: "The final calculated national SUS listed price"
+
+      - name: age_at_event
+        data_type: number
+        description: "The age in years of the patient derived by the sender as at the relevant CDS activity date of the CDS type."
+
+      - name: gender_at_event
+        data_type: varchar
+        description: "Patient gender code at time of event"
+
+      - name: gender_desc_at_event
+        data_type: varchar
+        description: "Patient gender description at time of event"
+
+      - name: ethnicity_at_event
+        data_type: varchar
+        description: "Patient ethnicity code at time of event"
+
+      - name: ethnicity_desc_at_event
+        data_type: varchar
+        description: "Patient ethnicity description at time of event"
+
+      - name: postcode_district_at_event
+        data_type: varchar
+        description: "Patient postcode district at time of event"
+
+      - name: lsoa_11_at_event
+        data_type: varchar
+        description: >-
+          Patient LSOA 2011 of residence at the time of the appointment. Populated
+          across the full history, so use it for trends that span April 2024.
+
+      - name: lsoa_21_at_event
+        data_type: varchar
+        description: >-
+          Patient LSOA 2021 of residence at the time of the appointment.
+          Populated for appointments from 1 April 2024 (about 98%); mostly
+          null for earlier appointments, so use lsoa_11_at_event for trends
+          that span that date. About 2% of values from April 2024 lie in a
+          different local authority from lsoa_11_at_event.
+
+      - name: lad_at_event
+        data_type: varchar
+        description: "Patient local authority district at time of event"
+
+      - name: imd_at_event
+        data_type: varchar
+        description: "Patient index of multiple deprivation decile at time of event"
+
+      - name: reg_practice_at_event
+        data_type: varchar
+        description: "Patient registered GP practice at time of event"
+
+      - name: visit_occurrence_type
+        data_type: varchar
+        description: "Type of visit occurrence"

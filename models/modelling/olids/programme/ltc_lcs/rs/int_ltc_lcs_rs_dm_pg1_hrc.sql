@@ -44,12 +44,13 @@ rule_5_hba1c_prerequisite as (
     where result_value > 75
 ),
 
--- Rule 6: Cardiac conditions (inclusion) - first/new episodes only
+-- Rule 6: Heart failure (inclusion) - episode type not Review or Ended
 rule_6_cardiac as (
-    select distinct person_id
-    from ({{ get_ltc_lcs_observations("on_dm_reg_pg1_hrc_vs5") }})
-    where is_problem = true
-      and coalesce(is_review, false) = false
+    select distinct o.person_id
+    from ({{ get_ltc_lcs_observations("on_dm_reg_pg1_hrc_vs5") }}) o
+    left join {{ ref('stg_olids_enriched_concept_map') }} ecm
+        on o.episodicity_source_concept_id = ecm.source_concept_id
+    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
 ),
 
 -- Rule 6: Diabetes medications in last 6 months (inclusion)

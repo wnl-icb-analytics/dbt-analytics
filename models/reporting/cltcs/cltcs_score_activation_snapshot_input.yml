@@ -1,0 +1,22 @@
+models:
+  - name: cltcs_score_activation_snapshot_input
+    description: >
+      Thin snapshot-input projection of cltcs_score_activation: sk_patient_id and the
+      final score_activation (plus table_refresh_date). Feeds
+      cltcs_score_activation_snapshot; kept narrow so the SCD2 snapshot stores only
+      the score state needed for control-cohort matching.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: sk_patient_id
+        data_type: number
+        description: "Unique patient identifier; one row per patient (snapshot unique_key)."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: score_activation
+        data_type: number
+        description: "Final activation sub-score."

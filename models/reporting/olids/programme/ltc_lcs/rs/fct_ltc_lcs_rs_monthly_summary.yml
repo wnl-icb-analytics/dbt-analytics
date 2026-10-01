@@ -1,0 +1,36 @@
+version: 2
+models:
+  - name: fct_ltc_lcs_rs_monthly_summary
+    description: |
+      Monthly LTC LCS population counts by overall risk group, for dashboard trend
+      charts. One row per month_end_date x overall_risk_group.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [month_end_date, overall_risk_group]
+    columns:
+      - name: month_end_date
+        description: Last day of the month this count applies to
+        data_tests:
+          - not_null
+      - name: month_year_label
+        description: Display label for the month, e.g. 'JUN 2026'
+      - name: financial_year
+        description: UK financial year label (April-March), e.g. '2026/27'
+      - name: financial_quarter
+        description: UK financial quarter label, e.g. 'Q1'
+      - name: overall_risk_group
+        description: Highest risk group across all conditions (HRC/HR/MR/LR)
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['HRC', 'HR', 'MR', 'LR']
+      - name: person_count
+        description: Distinct count of persons in this risk group as of month end
+        data_tests:
+          - not_null

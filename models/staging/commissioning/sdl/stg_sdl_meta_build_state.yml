@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: stg_sdl_meta_build_state
+    description: |
+      One row per feed: incremental high-water mark and the needs_rebuild flag that triggers a full rebuild after schema drift.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: feed
+        data_tests:
+          - not_null
+          - unique
+      - name: max_file_id_loaded
+        description: Incremental high-water mark.
+      - name: last_built_at
+      - name: last_bulk_at
+      - name: needs_rebuild
+        description: True when the mapped view schema drifted from the final table; nightly task rebuilds.
+      - name: last_error
+        description: Most recent build error, if any.

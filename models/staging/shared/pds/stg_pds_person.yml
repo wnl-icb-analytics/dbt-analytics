@@ -1,0 +1,42 @@
+models:
+  - name: stg_pds_person
+    description: >
+      PDS person demographics for pseudonymised patients, one row per source row
+      with no filtering or deduplication. A patient can have several rows
+      covering different business-effective periods, from event_from_date to
+      event_to_date.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - row_id
+              - sk_patient_id
+    columns:
+      - name: row_id
+        description: Row identifier
+        tests:
+          - not_null
+      - name: sk_patient_id
+        description: Surrogate key patient identifier (pseudonymised NHS number)
+        tests:
+          - not_null
+      - name: year_month_of_birth
+        description: Month of birth, stored as the first day of that month
+      - name: gender_code
+        description: Gender code as supplied by PDS
+      - name: date_of_death
+        description: Date of death
+      - name: death_status
+        description: Death status indicator
+      - name: preferred_language_code
+        description: Preferred language code as supplied by PDS
+      - name: interpreter_required
+        description: Interpreter required indicator
+      - name: event_from_date
+        description: Start of the PDS business-effective period for this record version
+      - name: event_to_date
+        description: End of the PDS business-effective period for this record version

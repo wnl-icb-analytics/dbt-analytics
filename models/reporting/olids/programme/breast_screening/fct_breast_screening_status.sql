@@ -16,12 +16,13 @@ Clinical Purpose:
 - Foundation data for programme analysis
 
 Key Business Rules:
-- Females aged 50 to 71 : invited every 3 years
+- Females aged 50 to 70 : invited every 3 years
 - Declined/non-response status: valid for 12 months only - NON RESPONSE NOT AVAIALBLE IN PCD REFSETS
 - Unsuitable status: permanent unless superseded by completed screening - NOT AVAIALBLE IN PCD REFSETS
 
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 This is OBSERVATION-LEVEL data - one row per breast screening observation.
+2026-08-05 Rachel spotted an error - range should be 50-70 not 50-71. Updated to reflect this.
 */
 WITH person_demographics AS (
     SELECT
@@ -33,7 +34,7 @@ WITH person_demographics AS (
         -- Age-based screening eligibility
         CASE
             WHEN dpa.gender != 'Female' THEN FALSE
-            WHEN dpa.age BETWEEN 50 AND 71 THEN TRUE
+            WHEN dpa.age BETWEEN 50 AND 70 THEN TRUE
             ELSE FALSE
         END AS is_screening_eligible,
         
@@ -46,7 +47,7 @@ WITH person_demographics AS (
     FROM {{ ref('dim_person_demographics') }} dpa
     --FROM REPORTING.OLIDS_PERSON_DEMOGRAPHICS.DIM_PERSON_DEMOGRAPHICS dpa
         WHERE dpa.gender = 'Female'  -- Only include women
-        AND dpa.age BETWEEN 50 AND 71  -- Only include eligible age range
+        AND dpa.age BETWEEN 50 AND 70  -- Only include eligible age range
 ),
 
 screening_history AS (
@@ -173,5 +174,5 @@ SELECT
    -- total_non_response_records
 
 FROM programme_status
--- Already filtered to eligible women (50 - 71) in person_demographics CTE
+-- Already filtered to eligible women (50 - 70) in person_demographics CTE
 ORDER BY person_id

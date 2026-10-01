@@ -10,10 +10,14 @@ models:
       • One row per practice. Multiple historic CCG paths are resolved by preferring the
       most recent relationship (active first, then latest end date, then latest start date).
 
-      • Sub-ICB (legacy NCL / NWL / etc.) derived from the RO98 commissioner''s RO261 parent
-      in ODS, excluding the merged WNL ICB (Z9B2Z). Preserves the pre-2026-04-01 QMJ/QRV
-      identities NHSE retained as ended-but-extant parent edges. Non-merged ICBs resolve
-      to themselves.
+      • Sub-ICB = the live RO98/RO319 sub-ICB location the practice is commissioned
+      through (93C = North Central London, W2U3Z = North West London) — the codes
+      national datasets (SLAM/SUS/EPD) carry. Names curated for the WNL pair.
+
+      • Legacy ICB (pre-merger NCL / NWL system identity) from the
+      sub_icb_to_legacy_icb seed. ODS purged the RO261 parent edges after the
+      2026-04 merger, so the dissolved hierarchy is pinned as static reference
+      data. Non-merged ICBs resolve to themselves.
 
       • PCN borough from majority member borough; PCN sub-ICB from the PCN''s single
       commissioner (verified one-to-one).
@@ -34,7 +38,7 @@ models:
     columns:
       - name: practice_code
         description: 'GP practice identifier. Unique after the practice-grain dedup.'
-        tests:
+        data_tests:
           - not_null
           - unique
       - name: borough_registered
@@ -46,15 +50,27 @@ models:
         description: 'Current RO98 sub-ICB / place-based partnership commissioner code from
           OrganisationMatrixPracticeView (e.g. 93C, W2U3Z, A3A8R, 72Q, 36L).'
       - name: sub_icb_code
-        description: 'Legacy ICB ODS code. For WNL (merged Apr 2026): QMJ (NCL) or QRV
-          (NWL) depending on the commissioner''s pre-merger parent. For ICBs that have
-          not merged: the ICB code itself (QMF, QKK, QWE).'
-        tests:
+        description: 'Live RO98/RO319 sub-ICB location code — the commissioner itself.
+          93C = North Central London, W2U3Z = North West London (both re-parented to
+          Z9B2Z at the 2026-04 merger). Matches the commissioner codes in national
+          datasets (SLAM/SUS/EPD).'
+        data_tests:
           - not_null
       - name: sub_icb_name
-        description: 'Legacy ICB display name sourced from Dictionary.Organisation.'
-        tests:
+        description: 'Sub-ICB display name. Curated for the WNL pair (NHS North Central
+          London / NHS North West London — the post-merger ODS names are unreadable);
+          dictionary commissioner name otherwise.'
+        data_tests:
           - not_null
+      - name: legacy_icb_code
+        description: 'Pre-merger ICB ODS code from the sub_icb_to_legacy_icb seed:
+          QMJ (NCL) or QRV (NWL) — legally dissolved 2026-03-31 and since purged
+          from ODS. For ICBs that have not merged: the ICB code itself (QMF, QKK,
+          QWE).'
+        data_tests:
+          - not_null
+      - name: legacy_icb_name
+        description: 'Pre-merger ICB display name from the sub_icb_to_legacy_icb seed.'
       - name: network_code
         description: 'Primary Care Network (PCN) identifier that the practice belongs to.'
       - name: pcn_borough
@@ -62,7 +78,11 @@ models:
       - name: pcn_borough_practice_count
         description: 'Number of practices within the PCN assigned to this borough.'
       - name: pcn_sub_icb_code
-        description: 'Legacy sub-ICB code at the PCN grain, derived from the PCN''s
-          commissioner via ODS (same logic as sub_icb_code).'
+        description: 'Live sub-ICB location code at the PCN grain — the PCN''s
+          commissioner (same logic as sub_icb_code).'
       - name: pcn_sub_icb_name
-        description: 'Legacy sub-ICB display name at the PCN grain.'
+        description: 'Sub-ICB display name at the PCN grain (curated for the WNL pair).'
+      - name: pcn_legacy_icb_code
+        description: 'Pre-merger ICB code at the PCN grain (same logic as legacy_icb_code).'
+      - name: pcn_legacy_icb_name
+        description: 'Pre-merger ICB display name at the PCN grain.'

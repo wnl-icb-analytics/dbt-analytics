@@ -1,0 +1,96 @@
+models:
+- name: int_person_pds_demographics
+  description: Demographic lookup table for the current population based on the PDS dataset. Includes ethnicity data from dev__modelling.lookup_ncl.ethnicity_national_data_sets.
+  tests:
+  - dbt_utils.at_least_one:
+      column_name: sk_patient_id
+  columns:
+  - name: sk_patient_id
+    description: Surrogate key patient identifier (pseudonymised NHS number)
+    tests:
+    - not_null
+    - unique
+  - name: current_ncl_person_flag
+    data_type: boolean
+    description: TRUE if the person appears in DATA_LAKE.PDS.PDS_PERSON with no defined end date
+  - name: record_person_end_date
+    data_type: date
+    description: Date that the latest record from the PDS Person table is valid until, NULL otherwise
+  - name: year_month_of_birth
+    data_type: date
+    description: The month the person was born, set to the 1st of the month to save as a DATE variable
+  - name: gender
+    data_type: varchar
+    description: Gender name of person
+  - name: date_of_death
+    data_type: date
+    description: Date the person died, NULL if no record of death
+  - name: preferred_language
+    data_type: varchar
+    description: Preferred language if on record
+  - name: interpreter_required
+    data_type: varchar
+    description: Flag variable if the person requires an intepreter for appointments
+  - name: current_ncl_registered_flag
+    data_type: boolean
+    description: TRUE if the patient is registered to a NCL practice, the record has no end date, the patient id has no record of death, and the registered practice organisation has no end date
+  - name: record_registered_end_date
+    data_type: date
+    description: Date that the latest record from the PDS Practice table is valid until, NULL otherwise
+  - name: practice_code
+    data_type: varchar
+    description: Organisation code of the person's registered GP Practice, NULL implies not registered to any practice
+  - name: practice_name
+    data_type: varchar
+    description: Organisation name of the person's registered GP Practice, NULL implies not registered to any practice
+  - name: pcn_code
+    data_type: varchar
+    description: PCN code of listed practice
+  - name: pcn_name
+    data_type: varchar
+    description: PCN name of listed practice
+  - name: icb_code
+    data_type: varchar
+    description: ICB code of listed practice
+  - name: icb_name
+    data_type: varchar
+    description: ICB name of listed practice
+  - name: registered_borough
+    data_type: varchar
+    description: Borough of listed practice (based on practice postcode)
+  - name: registered_neighbourhood_code
+    data_type: varchar
+    description: Neighbourhood code of listed practice (based on practice postcode)
+  - name: registered_neighbourhood_name
+    data_type: varchar
+    description: Neighbourhood name of listed practice (based on practice postcode)
+  - name: current_ncl_resident_flag
+    data_type: boolean
+    description: TRUE if the patient has a NCL address, the record has no end date, and the patient id has no record of death
+  - name: postcode_sector
+    data_type: varchar
+    description: First half of the postcode for the person's residence, NULL implies no known residence
+  - name: lsoa_21
+    data_type: varchar
+    description: LSOA code of residence using the 2021 LSOA definitions, NULL implies no known residence
+  - name: ward_2025_code
+    data_type: varchar
+    description: Ward code of residence using the 2025 ward definitions
+  - name: ward_2025_name
+    data_type: varchar
+    description: Ward name of residence using the 2025 ward definitions
+  - name: residence_borough
+    data_type: varchar
+    description: Borough name of residence
+  - name: residence_neighbourhood_code
+    data_type: varchar
+    description: Neighbourhood code of residence using latest available neighbourhood definitions in the NCL_LOOKUP schema
+  - name: residence_neighbourhood_name
+    data_type: varchar
+    description: Neighbourhood name of residence using latest available neighbourhood definitions in the NCL_LOOKUP schema
+  - name: residence_imd_decile
+    data_type: number
+    description: IMD Decile of the record's listed LSOA 2021 code using the latest available IMD data in the NCL_LOOKUP schema
+  - name: _timestamp
+    data_type: datetime
+    description: Timestamp of when the row was created, indication of when the refresh process for this table was last ran

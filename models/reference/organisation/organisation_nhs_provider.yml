@@ -1,0 +1,30 @@
+models:
+  - name: organisation_nhs_provider
+    description: >-
+      One row per provider organisation code. Includes NHS providers and trusts,
+      current trust records held under the generic organisation type, and
+      independent providers that submit urgent and emergency care activity.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: organisation_code
+        description: Organisation code
+        data_tests:
+          - not_null
+          - unique
+      - name: organisation_name
+        description: Organisation name
+      - name: sk_organisation_type_id
+        description: FK to organisation type
+      - name: start_date
+        description: Organisation start date
+      - name: end_date
+        description: Organisation end date (null if active)
+      - name: status
+        description: Organisation status
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

@@ -1,0 +1,21 @@
+models:
+  - name: stg_myria_rfl_submission_patients
+    description: Myria RFL submission patients, passthrough of the canonical DATA_LAKE__NCL.MYRIA.RFL_SUBMISSION_PATIENTS table. One row per patient per uploaded file; file_date identifies the file.
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [hex_id, file_date]
+    columns:
+      - name: hex_id
+        description: RFL (hex), join key to the eligible cohort. Not unique across the table - one row per patient per file_date.
+        data_tests:
+          - not_null
+      - name: file_date
+        description: Date of the enrolled-patient file this row came from.
+        data_tests:
+          - not_null
+   

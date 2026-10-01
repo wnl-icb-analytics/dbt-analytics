@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: cltcs_cohort_membership
+    description: >
+      Membership-collapsed view of `cltcs_cohort_data` that feeds
+      `cltcs_cohort_membership_snapshot`. One row per patient_id with the
+      patient's current area_code and a VARIANT (`attributes_json`) holding
+      the wide cohort attributes via OBJECT_CONSTRUCT_KEEP_NULL. The snapshot
+      uses a check strategy on `area_code` only and invalidates hard deletes;
+      see docs/archive/snapshots-guide.md.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: patient_id
+        data_type: number
+        description: "Unique patient identifier from commissioning data [sk_patient_id]"
+        data_tests:
+          - unique:
+              config:
+                severity: warn
+                warn_if: ">1"
+          - not_null
+
+      - name: area_code
+        data_type: varchar
+        description: >
+          Area code (Neighbourhood in this context). The only column in the
+          snapshot's `check_cols`: a change ends the current stint and opens a
+          new one. Patient presence in this view is tracked via the snapshot
+          `unique_key` and `hard_deletes: invalidate`.
+
+      - name: re_id_key
+        data_type: varchar
+        description: "Pseudonymised patient identifier (hxflake)."
+
+      - name: attributes_json
+        data_type: variant
+        description: >
+          Wide cohort attributes from `cltcs_cohort_data` collapsed into a
+          single VARIANT via OBJECT_CONSTRUCT_KEEP_NULL, excluding the
+          identifying columns (patient_id, area_code, re_id_key). Null
+          values are preserved. Omitted from the snapshot `check_cols`, so in
+          the snapshot table this VARIANT is frozen at the start of each stint.
+
+      - name: table_refresh_date
+        data_type: timestamp_ntz
+        description: >
+          Build timestamp passed to the snapshot as `updated_at` (project
+          pattern for check-strategy snapshots alongside selective `check_cols`).

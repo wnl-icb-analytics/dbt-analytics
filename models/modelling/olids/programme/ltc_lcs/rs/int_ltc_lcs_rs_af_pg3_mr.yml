@@ -1,0 +1,52 @@
+version: 2
+models:
+  - name: int_ltc_lcs_rs_af_pg3_mr
+    description: |
+      AF Register Priority Group 3 - Medium Risk.
+      Excludes PG2 (HR) patients.
+
+      Patients on AF register meeting:
+      - Rule 2 (gate): anticoagulants in last 6 months, age > 65, latest Cockcroft-Gault
+        40-<60, latest body weight >= 50, latest Rockwood level 1-6 is level 6,
+        latest Rockwood score 6-<7 in last 6 months, or latest CHA2DS2-VASc >= 1
+        (exclude on fail)
+      - Rules 3-4: on oral anticoagulants/DOACs with latest serum creatinine
+        over 15 months old (include on pass)
+      - Rules 5-7: on DOACs with Cockcroft-Gault 40-<60, weight >50-<=60 or
+        age >= 75 (include on pass)
+      - Rules 8-9: on DOACs with latest Rockwood level 6 or latest Rockwood
+        score 6-<7 in last 6 months (include on pass)
+      - Rule 10 (gate): on anticoagulants (exclude on pass)
+      - Rules 11-14: not anticoagulated with CHA2DS2-VASc >= 1 (male),
+        >= 2 (female), score over 2 years old and age > 65, or no score
+        and age > 65 (include on pass)
+
+      vs1 (oral anticoagulants) is an unexpanded dm+d drug group; vs1 arms are
+      supplemented with BNF section 020802 via get_medication_orders.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - on_af_reg_pg3_mr_vs1
+              - on_af_reg_pg3_mr_vs2
+              - on_af_reg_pg3_mr_vs3
+              - on_af_reg_pg3_mr_vs4
+              - on_af_reg_pg3_mr_vs5
+              - on_af_reg_pg3_mr_vs6
+              - on_af_reg_pg3_mr_vs7
+              - on_af_reg_pg3_mr_vs8
+              - on_af_reg_pg3_mr_vs9
+              - on_af_reg_pg3_mr_vs10
+              - on_af_reg_pg3_mr_vs11
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

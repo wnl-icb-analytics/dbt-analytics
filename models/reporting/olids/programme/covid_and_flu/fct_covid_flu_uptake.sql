@@ -13,10 +13,11 @@ Key features:
 
 Multi-Programme Support:
 COVID Campaigns:
-- COVID Autumn 2024, COVID Spring 2025, COVID Autumn 2025, COVID Spring 2026
+- COVID Autumn 2024, COVID Spring 2025, COVID Autumn 2025, COVID Spring 2026,
+  COVID Autumn 2026
 
 Flu Campaigns: 
-- Flu 2023-24, Flu 2024-25, Flu 2025-26
+- Flu 2024-25, Flu 2025-26, Flu 2026-27
 
 Usage:
 - Filter by programme_type for programme-specific analysis
@@ -27,6 +28,7 @@ Usage:
 
 {{ config(
     materialized='table',
+    tags=['covid_flu'],
     cluster_by=['programme_type', 'campaign_id', 'person_id']
 ) }}
 
@@ -41,6 +43,7 @@ WITH covid_uptake AS (
         is_eligible,
         campaign_category,
         risk_group,
+        subcohort,  
         eligibility_reason,
         rule_type,
         
@@ -80,6 +83,7 @@ flu_uptake AS (
         is_eligible,
         campaign_category,
         risk_group,
+        subcohort,
         eligibility_reason,
         rule_type,
         
@@ -119,6 +123,7 @@ final_combined AS (
     SELECT 
         programme_type,
         campaign_id,
+        subcohort,
         
         -- Extract campaign year for easier analysis
         CASE 
@@ -126,13 +131,14 @@ final_combined AS (
                 CASE
                     WHEN campaign_id IN ('COVID Autumn 2024', 'COVID Spring 2025') THEN '2024/25'
                     WHEN campaign_id IN ('COVID Autumn 2025', 'COVID Spring 2026') THEN '2025/26'
+                    WHEN campaign_id IN ('COVID Autumn 2026', 'COVID Spring 2027') THEN '2026/27'
                     ELSE 'Unknown'
                 END
             WHEN programme_type = 'FLU' THEN
                 CASE 
-                    WHEN campaign_id = 'Flu 2023-24' THEN '2023/24'
                     WHEN campaign_id = 'Flu 2024-25' THEN '2024/25'
                     WHEN campaign_id = 'Flu 2025-26' THEN '2025/26'
+                    WHEN campaign_id = 'Flu 2026-27' THEN '2026/27'
                     ELSE 'Unknown'
                 END
             ELSE 'Unknown'

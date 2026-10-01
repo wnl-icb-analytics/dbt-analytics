@@ -1,0 +1,34 @@
+version: 2
+seeds:
+  - name: wnl_commissioner_icb_lookup
+    description: >
+      WNL-family commissioner codes resolved to a canonical ICB. MHSDS holds
+      sub-ICB codes on spells and ICB codes on contacts; legacy borough CCG
+      codes appear on pre-2022 activity. One row per code, verified against
+      the organisation dictionary. Codes outside the WNL family are not
+      listed - consumers treat Q-prefixed codes as their own ICB and leave
+      the rest unresolved.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+      column_types:
+        commissioner_code: varchar(10)
+        commissioner_name: varchar(100)
+        icb_code: varchar(10)
+        icb_name: varchar(100)
+        sub_icb_code: varchar(10)
+    columns:
+      - name: commissioner_code
+        description: Commissioner code as submitted (ICB, sub-ICB location, or legacy CCG).
+        data_tests:
+          - not_null
+          - unique
+      - name: icb_code
+        description: Canonical ICB the code resolves to.
+        data_tests:
+          - not_null
+      - name: icb_name
+        description: ICB name.
+      - name: sub_icb_code
+        description: Sub-ICB location where determinable; null for the merged ICB code.

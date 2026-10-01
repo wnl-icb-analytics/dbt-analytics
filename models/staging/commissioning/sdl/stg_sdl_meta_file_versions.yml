@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: stg_sdl_meta_file_versions
+    description: |
+      One row per loaded file: which layout it matched and how.
+      match_method is headers / header_id / profile_code; NULL version_id means the file is unmapped.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - feed
+              - file_id
+              - batch_id
+    columns:
+      - name: feed
+        data_tests:
+          - not_null
+      - name: file_id
+      - name: batch_id
+      - name: version_id
+        description: Matched layout; NULL when unmapped.
+      - name: match_method
+        description: How the file matched its layout - headers, header_id or profile_code (cascade fallbacks).

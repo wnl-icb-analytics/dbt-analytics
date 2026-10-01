@@ -6,7 +6,7 @@ models:
       Atrial Fibrillation, CKD, CHD, Diabetes, Hypertension, NAFLD, Asthma (Adult),
       Asthma (CYP), COPD, Heart Failure, PAD, Stroke/TIA.
       Used to gate downstream risk stratification and MOC activity reporting to
-      the LTC LCS cohort.
+      the LTC LCS cohort. Includes the number of listed registers each person is on.
     config:
       meta:
         owner:
@@ -21,3 +21,11 @@ models:
         data_tests:
           - not_null
           - unique
+      - name: number_of_ltc_lcs_conditions
+        description: Number of LTC LCS condition registers the person is on (1-12)
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 12

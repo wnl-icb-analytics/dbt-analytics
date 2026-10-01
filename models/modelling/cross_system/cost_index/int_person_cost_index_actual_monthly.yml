@@ -1,0 +1,29 @@
+version: 2
+models:
+  - name: int_person_cost_index_actual_monthly
+    description: >
+      Per-person patient-attributable actual spend by month, from monthly cost
+      index adapters.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: sk_patient_id
+        description: DMIC pseudonymised NHS number.
+        data_tests:
+          - not_null
+      - name: activity_month
+        description: Activity month.
+        data_tests:
+          - not_null
+      - name: actual_cost
+        description: Patient-attributable actual spend in the month (GBP).
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - activity_month

@@ -1,0 +1,34 @@
+version: 2
+models:
+  - name: int_cost_index_olids_prescribing_monthly
+    description: |
+      OLIDS prescribing cost per person per month, from
+      MEDICATION_ORDER.estimated_cost. Basis is an estimate, not reimbursed
+      spend.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: person_id
+        description: OLIDS person.
+        data_tests:
+          - not_null
+      - name: activity_month
+        description: Month of medication order.
+        data_tests:
+          - not_null
+      - name: prescription_orders
+        description: Medication orders in the month.
+      - name: orders_costed
+        description: Orders with a positive estimated cost (~96%).
+      - name: prescribing_cost_modelled
+        description: Sum of estimated_cost, GBP.
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - activity_month

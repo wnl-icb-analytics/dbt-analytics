@@ -55,7 +55,7 @@ SELECT
     cr.has_changed_practice,
     cr.practitioner_id,
     p.publisher_organisation_code AS record_owner_org_code,
-    p.lds_datetime_first_acquired AS latest_record_date
+    p.lds_transform_datetime AS latest_record_date
 FROM {{ ref('dim_person') }} AS dp
 INNER JOIN current_registrations AS cr
     ON dp.person_id = cr.person_id

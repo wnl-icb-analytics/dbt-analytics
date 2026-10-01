@@ -1,0 +1,50 @@
+snapshots:
+  - name: fct_person_ltc_lcs_case_finding_snapshot
+    relation: ref('fct_person_ltc_lcs_case_finding')
+    description: >
+      Historical snapshot of LTC LCS case-finding cohort membership per person so
+      movement into and out of each case-finding indicator can be tracked over time.
+      A new row opens when any indicator flag changes; people who drop out of all
+      case-finding indicators are closed via hard_deletes: invalidate. Tracks the
+      indicator flags only; in_any_case_finding and case_finding_count are derived
+      from them and captured as at the start of each stint.
+    config:
+      strategy: check
+      unique_key: [person_id]
+      updated_at: table_refresh_date
+      hard_deletes: invalidate
+      check_cols:
+        - in_af_61
+        - in_af_62
+        - in_hf_61
+        - in_ckd_61
+        - in_ckd_62
+        - in_ckd_63
+        - in_ckd_64
+        - in_cvd_61
+        - in_cvd_62
+        - in_cvd_63
+        - in_cvd_64
+        - in_cvd_65
+        - in_cvd_66
+        - in_dm_61
+        - in_dm_62
+        - in_dm_63
+        - in_dm_64
+        - in_dm_65
+        - in_dm_66
+        - in_htn_61
+        - in_htn_62
+        - in_htn_63
+        - in_htn_65
+        - in_htn_66
+        - in_cyp_ast_61
+    columns:
+      - name: person_id
+        description: "Unique person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

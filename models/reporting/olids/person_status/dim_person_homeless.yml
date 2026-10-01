@@ -1,11 +1,33 @@
 models:
   - name: dim_person_homeless
-    description: Dimension table providing the latest recorded homeless status for persons who have a recorded residence status. Only includes persons with HOMELESS_COD records and/or those who are registered with the CHIP practice.
+    description: >
+      Homeless persons. One row per person whose latest residential status
+      code (RESIDE_COD or HOMELESS_COD) is a homelessness code, or who is
+      currently registered with the Camden Health Improvement Practice
+      (Y02674). A homelessness code wins a same-day tie with another
+      residential code, as in the UKHSA rule HOMELESS_DAT >= RESIDE_DAT.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: RESIDE_COD, HOMELESS_COD
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        data_tests:
+          - unique
+          - not_null
+      - name: latest_residential_date
+        description: Date of the latest residential status record, when it is
+          a homelessness code. NULL for people included only through CHIP
+          registration.
+      - name: concept_code
+        description: SNOMED code of the latest homelessness record
+      - name: code_description
+        description: Display term of the latest homelessness record
+      - name: registered_chip
+        description: TRUE when currently registered with the Camden Health
+          Improvement Practice (Y02674); NULL otherwise

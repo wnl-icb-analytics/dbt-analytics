@@ -1,0 +1,27 @@
+snapshots:
+  - name: dim_person_conditions_snapshot
+    relation: ref('dim_person_conditions')
+    description: >
+      SCD2 history of consolidated person condition state (disease-register flags,
+      condition counts, clinical-domain counts, diagnosis dates) so a person's
+      registered conditions can be tracked over time for control-cohort matching.
+      `check_cols: all` — the model has no every-run columns, so newly added
+      condition flags are tracked automatically. Rows leaving the source are closed
+      via `hard_deletes: invalidate`.
+
+    config:
+      strategy: check
+      unique_key: [person_id]
+      check_cols: all
+      hard_deletes: invalidate
+
+    columns:
+      - name: person_id
+        description: "Person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

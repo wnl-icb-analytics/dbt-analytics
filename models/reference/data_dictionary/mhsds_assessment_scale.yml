@@ -1,0 +1,57 @@
+version: 2
+models:
+  - name: mhsds_assessment_scale
+    description: >-
+      Assessment question and score definitions, with one row per current or historical SNOMED
+      concept. Gives the assessment tool, allowed responses and numeric ranges from the newest
+      available ETOS v4.1, v5 or v6 definition. A concept can describe an individual question;
+      it does not necessarily represent a whole-questionnaire score. Definitions are not matched
+      to the specification in force when a response was submitted.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: concept_code
+        description: Active or inactive SNOMED observable concept from the specification.
+        data_tests: [not_null, unique]
+      - name: assessment_tool_name
+        description: Named tool to which the observable belongs. Different observables are not interchangeable scores.
+      - name: assessment_description
+        description: Published observable description, not an inferred questionnaire total.
+      - name: published_values
+        description: Enumerated responses or numeric ranges, separated by semicolons.
+      - name: decimal_places
+        description: Published permitted decimal places. Null means no usable precision rule.
+      - name: numeric_range_count
+        description: Number of simple numeric ranges in the latest definition. Only a single range is interpreted automatically.
+      - name: minimum_numeric_value
+        description: Lower published range bound. Use only when numeric_range_count is one.
+      - name: maximum_numeric_value
+        description: Upper published range bound. Use only when numeric_range_count is one.
+      - name: specification_version
+        description: Latest available specification supplying the observable definition.
+  - name: mhsds_assessment_response
+    description: >-
+      Meanings of coded assessment responses, with one row per assessment concept and response
+      code. Uses the newest available ETOS v4.1, v5 or v6 definition, including historical codes
+      and responses meaning missing, unknown or not applicable. Numeric response ranges are
+      described in mhsds_assessment_scale; this table lists individually defined response codes.
+    config: *owner
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [concept_code, response_code]
+    columns:
+      - name: concept_code
+        description: SNOMED observable to which the response meaning applies.
+      - name: response_code
+        description: Case-sensitive published response code.
+      - name: response_description
+        description: Published label for this concept and response pair.
+      - name: numeric_response_value
+        description: Numeric representation of an enumerated response, not proof that it is a score.
+      - name: is_non_score_response
+        description: True only for published missing, unknown or not-applicable meanings. A number such as 9 or 999 has no universal exclusion rule.
+      - name: specification_version
+        description: Latest available specification containing this concept and response pair.

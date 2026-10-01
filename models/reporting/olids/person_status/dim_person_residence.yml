@@ -1,0 +1,37 @@
+models:
+  - name: dim_person_residence
+    description: |
+      Household-level residence attributes for persons with a known UPRN hash.
+
+      One row per person with a non-null uprn_hash from dim_person_demographics. Aggregates
+      registered household size and frailty counts at the address level (via uprn_hash) using
+      fct_person_frailty_register. frail_household_flag is set when every registered person
+      at the address is on the frailty register.
+    config:
+      enabled: false
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier
+        tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        description: Surrogate key for patient
+
+      - name: uprn_hash
+        description: Hashed Unique Property Reference Number for the person's residential address
+        tests:
+          - not_null
+
+      - name: household_registered_count
+        description: Number of registered persons at the same uprn_hash in OLIDS
+
+      - name: frail_household_count
+        description: Number of persons at the same uprn_hash with a frailty register record
+
+      - name: frail_household_flag
+        description: 1 when all registered persons at the address are on the frailty register; otherwise 0

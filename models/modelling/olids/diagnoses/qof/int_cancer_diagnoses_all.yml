@@ -35,9 +35,13 @@ models:
       - name: cancer_observation_type
         description: 'Categorised cancer observation type (Cancer Diagnosis)'
 
+      - name: icd10_code
+        description: 'Mapped ICD10 using the NHS TRUD API mapping. Note overrides are applied where issues in the default (map priority = 1) were found.'
+
     tests:
       - dbt_utils.at_least_one:
           column_name: id
       - cluster_ids_exist:
           arguments:
             cluster_ids: CAN_COD
+            source: PCD

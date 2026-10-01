@@ -3,6 +3,9 @@ models:
     description: 'Patient registration data quality issues where individuals have
       multiple current practice registrations.
 
+      One row per person and registration sequence from the practice history.
+      Registrations at the same practice on the same date remain separate.
+
       Registration Rules:
 
       • Each person should have only one current active registration
@@ -13,15 +16,22 @@ models:
 
       Purpose: Supports patient registration data validation and duplicate resolution
       processes.'
-    # TODO: grain test disabled - 73 duplicates found
-    # Upstream data may have multiple sk_patient_ids per person+practice+date
     config:
       meta:
         owner:
           name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - registration_sequence
     columns:
       - name: person_id
         description: Unique person identifier with multiple registrations
+
+      - name: registration_sequence
+        description: Sequence of the registration within this person's complete practice history.
 
       - name: practice_id
         description: Practice identifier for this registration
@@ -38,14 +48,5 @@ models:
       - name: registration_status
         description: Status of this registration
 
-      - name: is_current_registration
-        description: Whether this is flagged as current registration
-
       - name: current_registration_count
         description: Total number of current registrations for this person
-
-      - name: overlap_severity
-        description: Severity score for registration overlaps
-
-      - name: data_quality_issue_type
-        description: Type of registration data quality issue identified

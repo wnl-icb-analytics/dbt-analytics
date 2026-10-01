@@ -78,4 +78,9 @@ INNER JOIN {{ ref('int_patient_person_unique') }} pp
 LEFT JOIN {{ ref('stg_olids_medication_statement') }} ms
     ON mo.medication_statement_id = ms.id
 
+-- Date sanity: source carries ~346k future-dated orders (up to year 2621) and
+-- ~58k pre-1990 orders (back to 1799) out of 381M. These poison rolling
+-- windows and fiscal_year_start, so exclude them here.
 WHERE mo.clinical_effective_date IS NOT NULL
+    AND mo.clinical_effective_date >= '1990-01-01'
+    AND mo.clinical_effective_date <= CURRENT_DATE

@@ -1,0 +1,56 @@
+models:
+  - name: fct_person_sickle_cell_register
+    description: >
+      Sickle cell disease register - one row per person with a sickle cell disease
+      diagnosis (non-QOF).
+
+      Sickle cell disease is an inherited blood disorder where abnormal haemoglobin makes
+      red blood cells stiff and crescent ("sickle") shaped, causing episodes of severe
+      pain, anaemia, frequent infections and higher stroke risk. Lifelong; most common
+      in people of African and Caribbean family backgrounds.
+
+      On register if any SICKLE_COD diagnosis is recorded. No resolution codes, no age
+      limit. Counts cover all persons (active, inactive, deceased).
+
+    tests:
+      - dbt_utils.at_least_one:
+          column_name: person_id
+
+    config:
+      meta:
+        indicator:
+          id: "SCD"
+          type: "CONDITION"
+          category: "LTC"
+          clinical_domain: "Haematology"
+          name_short: "Sickle Cell Disease"
+          description_short: "Sickle cell disease register (non-QOF)"
+          description_long: >
+            Sickle cell disease register using the SICKLE_COD diagnosis cluster. Sickle
+            cell disease is an inherited blood disorder causing painful crises, anaemia
+            and raised stroke/infection risk. Lifelong condition - no resolution codes or
+            age restrictions.
+          is_qof: false
+          source_column: "is_on_register"
+          sort_order: "COND_HAEM_SCD"
+          usage_contexts:
+            - "POPULATION_HEALTH_NEEDS_DASHBOARD"
+          code_clusters:
+            - cluster_id: "SICKLE_COD"
+              category: "INCLUSION"
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        tests:
+          - unique
+          - not_null
+      - name: is_on_register
+        description: Always TRUE - person has a recorded sickle cell disease diagnosis
+      - name: earliest_diagnosis_date
+        description: Date of the person's first sickle cell disease diagnosis
+      - name: latest_diagnosis_date
+        description: Date of the person's most recent sickle cell disease diagnosis
+      - name: total_diagnoses
+        description: Count of sickle cell disease diagnosis observations for the person

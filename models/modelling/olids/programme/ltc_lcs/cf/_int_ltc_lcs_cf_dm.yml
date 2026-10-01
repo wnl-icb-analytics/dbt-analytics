@@ -1,0 +1,218 @@
+version: 2
+
+models:
+  - name: int_ltc_lcs_cf_dm_61_woEX
+    description: >
+      ICB_CF_DM_61_woEX shared parent: registered patients aged >= 17, not in
+      ICS_METABOLIC_LTC / CF_NHSHC2Y, whose latest HbA1c (3-code IFCC) is >= 48,
+      minus diabetes resolved / in-remission markers (vs2; vs1 is polluted in the
+      reference data with HbA1c measurement codes, see SQL). Pre-Rule-1 population
+      consumed by DM_61 and subtracted by DM_62-66.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - latest_hba1c_48_and_no_diagnosis_of_dm_vs3
+              - 68968843-a4fb-1a67-29d0-bfe7f33b241e  # latest_hba1c_48_and_no_diagnosis_of_dm_vs2
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_dm_61
+    description: >
+      ICB_CF_DM_61: latest HbA1c >= 48 with no diabetes diagnosis, excluding anyone with
+      an "annual review declined" code in the last 3 years. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 877b18f5-9756-23a8-7a41-1900d12e70fa  # latest_hba1c_48_and_no_diagnosis_of_dm_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_dm_62_woEX
+    description: >
+      ICB_CF_DM_62_woEX shared parent: DM base on a gestational-diabetes code, not in
+      DM_61_woEX, with no HbA1c in the last 1 year. Subtracted by DM_63-66.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - patients_on_gestational_dm_vs1
+              - 56fd73ba-981e-cab3-0404-8c26b02afb36  # gestational_dm_and_no_hba1c_in_the_last_year_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_dm_62
+    description: >
+      ICB_CF_DM_62: history of gestational diabetes, no HbA1c in the last year, excluding
+      "annual review declined" in the last 3 years.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 5d6cf960-e4cd-9015-fd93-5105d7bf219a  # gestational_dm_and_no_hba1c_in_the_last_year_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_dm_63_woEX
+    description: >
+      ICB_CF_DM_63_woEX shared parent: DM base whose latest HbA1c (3-code IFCC) is 46-47
+      and older than 1 year, not in DM_61/62_woEX. Subtracted by DM_64-66.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 160ec384-bb4f-915b-9a8e-66d118eefe0c  # latest_hba1c_46_47_and_no_hba1c_in_the_last_year_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_dm_63
+    description: >
+      ICB_CF_DM_63: latest HbA1c 46-47 and no HbA1c in the last year, excluding "annual
+      review declined" in the last 3 years.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 776f1587-24f9-1d71-a7ff-6ff4e2a1c27d  # latest_hba1c_46_47_and_no_hba1c_in_the_last_year_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_dm_64_base
+    description: >
+      ICB_CF_DM_64_BASE shared helper: DM base whose latest BMI is >= 35, or >= 32.5 with
+      BAME ethnicity. Consumed by DM_64_woEX and excluded by DM_65_BASE.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - obesity_with_latest_bmi_35_325_bame_population_vs1
+              - 55c83e52-63f7-477c-82c8-9b172815352c  # obesity_with_latest_bmi_35_325_bame_population_vs2
+              - obesity_with_latest_bmi_35_325_bame_population_vs3
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_dm_64_woEX
+    description: >
+      ICB_CF_DM_64_woEX shared parent: DM_64_BASE not in DM_61/62/63_woEX, with no HbA1c
+      in the last 2 years. Subtracted by DM_65-66.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 5bf8f69d-5b7e-b917-f3bf-4dcda11c8b6f  # with_latest_bmi_35325bame_populationand_no_hba1c_in_l2y_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_dm_64
+    description: >
+      ICB_CF_DM_64: latest BMI >= 35 (>= 32.5 BAME) and no HbA1c in the last 2 years,
+      excluding "annual review declined" in the last 3 years.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 4ed7513e-8c5c-68c8-3850-f4bff1387f79  # with_latest_bmi_35325bame_populationand_no_hba1c_in_l2y_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_dm_65_woEX
+    description: >
+      ICB_CF_DM_65_woEX shared parent: DM base (minus DM_64_BASE) whose latest BMI is
+      30-35, or 27.5-32.5 with BAME ethnicity, not in DM_61/62/63/64_woEX, with no HbA1c
+      in the last 2 years. Subtracted by DM_66.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - obesity_with_latest_bmi_30_35_275_325_bame_population_vs1
+              - 2e9a5dbb-a1f2-19ff-d657-bf70de2d2c43  # obesity_with_latest_bmi_30_35_275_325_bame_population_vs2
+              - obesity_with_latest_bmi_30_35_275_325_bame_population_vs3
+              - dd384e6e-92e2-04b5-f1f9-17c119852411  # with_latest_bmi_30275bame_pop_no_hba1c_in_l2y_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_dm_65
+    description: >
+      ICB_CF_DM_65: latest BMI >= 30 (>= 27.5 BAME) and no HbA1c in the last 2 years,
+      excluding "annual review declined" in the last 3 years.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 49bd264d-50de-3a1f-09e3-c06db976f89b  # with_latest_bmi_30275bame_populationand_no_hba1c_in_l2y_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_dm_66
+    description: >
+      ICB_CF_DM_66: latest HbA1c 42-45 and no HbA1c in the last year, not in any higher DM
+      cohort (61-65 woEX), excluding "annual review declined" in the last 3 years.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - a4dfc336-6ec7-4cec-21fa-c7d3e7842f2d  # latest_hba1c_42_45_and_no_hba1c_in_the_last_year_vs1
+              - 343c45e1-2edb-f252-16d1-d6e1955659ea  # latest_hba1c_42_45_and_no_hba1c_in_the_last_year_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]

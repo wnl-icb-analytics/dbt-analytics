@@ -7,7 +7,7 @@
 
 with 
 emis as (
-    select * from {{ ref('stg_cltcs_emis_emis') }}
+    select * from {{ ref('stg_cltcs_emis') }}
 ),
 
 registered_practice as (

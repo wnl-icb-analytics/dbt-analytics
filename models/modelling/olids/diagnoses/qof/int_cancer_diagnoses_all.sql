@@ -50,10 +50,38 @@ SELECT
     CASE
         WHEN obs.cluster_id = 'CAN_COD' THEN 'Cancer Diagnosis'
         ELSE 'Unknown'
-    END AS cancer_observation_type
+    END AS cancer_observation_type,
+    trud.icd10_code
 
 FROM ({{ get_observations("'CAN_COD'", source='PCD') }}) obs
 LEFT JOIN {{ ref('stg_olids_enriched_concept_map') }} ecm
     ON obs.episodicity_source_concept_id = ecm.source_concept_id
+
+-- Addition 2028-08-14: Mapping the SNOMED concept code to ICD10 and use the overwrite table to determine which map to use
+-- Gender is required for some mappings
+LEFT JOIN {{ ref('dim_person_demographics')}} dem
+    ON obs.person_id = dem.person_id
+
+-- Pull in the overwrite map
+LEFT JOIN {{ ref('cancer_snomed_code_to_icd10_override')}} ow
+    ON obs.mapped_concept_code = ow.concept_code
+    AND case 
+            when ow.gender is not null 
+                then ow.gender = dem.gender
+            else true
+        end
+
+-- Map to ICD10
+LEFT JOIN {{ ref('stg_reference_snomed_to_icd10_latest')}} trud
+    ON obs.mapped_concept_code = trud.snomed_concept_id
+    AND trud.map_priority = (
+            CASE
+                WHEN ow.concept_code IS NOT NULL
+                THEN ow.map_priority
+                ELSE 1
+            END 
+        )
+    AND trud.map_block = 1
+    AND trud.map_group = 1
 
 ORDER BY person_id, clinical_effective_date, id

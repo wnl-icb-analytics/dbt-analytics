@@ -1,0 +1,49 @@
+version: 2
+
+seeds:
+  - name: nhse_currency_prices_2627
+    description: >
+      NHSE Non-Acute Collection Template v0.95 Price Schedule tab, 2026/27
+      indicative prices from the 2024/25 NCC. Grain: one row per currency code
+      across mental health inpatient, mental health contacts, Talking Therapies,
+      ADHD/ASD guide prices, and community contacts. NULL price is specialised
+      or outside NCC scope, marked * in the source. population_group,
+      currency_family, and setting_code are parsed only for MH M??96–99 codes
+      and are empty otherwise. Price base is FY 2026/27; downstream models
+      rebase with the GDP deflator and provider MFF.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+      column_types:
+        currency_code: varchar(20)
+        section: varchar(100)
+        population_group: varchar(10)
+        currency_family: varchar(10)
+        setting_code: varchar(10)
+        currency_name: varchar(500)
+        unit: varchar(100)
+        price_gbp: number(12, 2)
+        additional_notes: varchar(500)
+    columns:
+      - name: currency_code
+        description: Price schedule currency code.
+        data_tests:
+          - not_null
+          - unique
+      - name: section
+        description: Price schedule section.
+      - name: population_group
+        description: Parsed MH population group.
+      - name: currency_family
+        description: Parsed MH currency family.
+      - name: setting_code
+        description: Parsed MH setting suffix.
+      - name: currency_name
+        description: Price schedule currency name.
+      - name: unit
+        description: Price schedule unit.
+      - name: price_gbp
+        description: Indicative 2026/27 price in GBP.
+      - name: additional_notes
+        description: Price schedule notes.

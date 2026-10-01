@@ -1,0 +1,238 @@
+version: 2
+
+models:
+  - name: int_ltc_lcs_cf_htn_base
+    description: >
+      ICB_CF_HTN_61_Base shared start population for all HTN priority-group indicators:
+      currently-registered living patients not in ICS_METABOLIC_LTC / CF_NHSHC2Y, minus
+      Hypertension-resolved / White-coat HTN codes and minus anyone with a latest on-register
+      HYP_COD record. EMIS library items 3de35e4f / ea06414e omitted pending verification.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - uclp_priority_groups_base_vs1
+              - uclp_priority_groups_base_vs3
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_htn_61_woEX
+    description: >
+      ICB_CF_HTN_61_woEX (UCLP Priority Group 1): HTN base patients whose latest per-arm BP
+      meets clinic >=180/120 or home/ABPM >=170/115. Pre-Rule-1 population consumed by HTN_61
+      and by the mutual exclusion of 62/63/65/66_woEX.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 9f24e551-90ff-610d-61e7-ca822a831953  # uclp_pg1_highest_risk_vs1
+              - uclp_pg1_highest_risk_vs2
+              - uclp_pg1_highest_risk_vs3
+              - uclp_pg1_highest_risk_vs4
+              - uclp_pg1_highest_risk_vs5
+              - uclp_pg1_highest_risk_vs6
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_htn_62_woEX
+    description: >
+      ICB_CF_HTN_62_woEX (UCLP Priority Group 2a): HTN base patients (excluding 61_woEX) whose
+      latest per-arm BP meets clinic >=160/100 or home/ABPM >=150/95.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - dfa19d4f-2d74-deab-3a99-ab0ea818a3c5  # uclp_priority_group_2a_vs1
+              - uclp_priority_group_2a_vs2
+              - uclp_priority_group_2a_vs3
+              - uclp_priority_group_2a_vs4
+              - uclp_priority_group_2a_vs5
+              - uclp_priority_group_2a_vs6
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_htn_63_woEX
+    description: >
+      ICB_CF_HTN_63_woEX (UCLP Priority Group 2b): Black-ethnicity HTN base patients with
+      stage-1 BP (clinic >=140/90, home >=135/85) and a CVD/metabolic risk factor
+      (CHD/Stroke/TIA/PAD/CKD/eGFR<60/Diabetes/BMI>35), excluding 61_woEX and 62_woEX.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - feda64d2-aba7-a4ce-0365-8e7f0237d461  # uclp_priority_group_2b_vs1
+              - uclp_priority_group_2b_vs2
+              - uclp_priority_group_2b_vs3
+              - uclp_priority_group_2b_vs4
+              - uclp_priority_group_2b_vs5
+              - uclp_priority_group_2b_vs6
+              - uclp_priority_group_2b_vs7
+              - uclp_priority_group_2b_vs8
+              - uclp_priority_group_2b_vs9
+              - uclp_priority_group_2b_vs10
+              - uclp_priority_group_2b_vs11
+              - uclp_priority_group_2b_vs12
+              - uclp_priority_group_2b_vs13
+              - uclp_priority_group_2b_vs14
+              - uclp_priority_group_2b_vs15
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_htn_65_woEX
+    description: >
+      ICB_CF_HTN_65_woEX (UCLP Priority Group 3a): HTN base patients with stage-1 BP
+      (clinic >=140/90, home >=135/85) and a CVD risk factor or Black ethnicity (no BMI arm),
+      excluding 61_woEX, 62_woEX and 63_woEX.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 4df8a74f-daed-fda0-5a8d-81d6f775ab83  # uclp_priority_group_3a_vs1
+              - uclp_priority_group_3a_vs2
+              - uclp_priority_group_3a_vs3
+              - uclp_priority_group_3a_vs4
+              - uclp_priority_group_3a_vs5
+              - uclp_priority_group_3a_vs6
+              - uclp_priority_group_3a_vs7
+              - uclp_priority_group_3a_vs8
+              - uclp_priority_group_3a_vs9
+              - uclp_priority_group_3a_vs10
+              - uclp_priority_group_3a_vs11
+              - uclp_priority_group_3a_vs12
+              - uclp_priority_group_3a_vs13
+              - uclp_priority_group_3a_vs14
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_htn_66_woEX
+    description: >
+      ICB_CF_HTN_66_woEX (UCLP Priority Group 3b): HTN base patients with stage-1 BP
+      (clinic >=140/90, home >=135/85), excluding 61/62/63/65_woEX and the age>=80 elderly-band
+      low-BP exclusions (clinic <150/<90, home <145/<85, both sys AND dia below band).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 8c607c29-9273-b754-5056-727bbbc8d5fa  # uclp_priority_group_3b_vs1
+              - uclp_priority_group_3b_vs2
+              - uclp_priority_group_3b_vs3
+              - uclp_priority_group_3b_vs4
+              - uclp_priority_group_3b_vs5
+              - uclp_priority_group_3b_vs6
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_htn_61
+    description: >
+      ICB_CF_HTN_61: PG1 (61_woEX) minus anyone with a Hypertension-screening code in the last
+      3 years. One row per included person.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 166bb252-61af-1b31-8ebc-e651bbbd4f29  # uclp_pg1_highest_risk_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_htn_62
+    description: >
+      ICB_CF_HTN_62: PG2a (62_woEX) minus anyone with a Hypertension-screening code in the last
+      3 years.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 80f7370c-2495-0ff5-2c56-92fe5fd37f42  # uclp_priority_group_2a_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_htn_63
+    description: >
+      ICB_CF_HTN_63: PG2b (63_woEX) minus anyone with a Hypertension-screening code in the last
+      3 years.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 1e093c88-90aa-0c4e-adf1-e0a8daef3b5d  # uclp_priority_group_2b_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_htn_65
+    description: >
+      ICB_CF_HTN_65: PG3a (65_woEX) minus anyone with a Hypertension-screening code in the last
+      3 years.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 590709e2-0364-85a8-2fe6-ebf8af31cddb  # uclp_priority_group_3a_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]
+
+  - name: int_ltc_lcs_cf_htn_66
+    description: >
+      ICB_CF_HTN_66: PG3b (66_woEX) minus anyone with a Hypertension-screening code in the last
+      3 years.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - a1a449b9-c2c3-792f-b08d-0142c3de3744  # uclp_priority_group_3b_vs1
+    columns:
+      - name: person_id
+        data_tests: [not_null, unique]

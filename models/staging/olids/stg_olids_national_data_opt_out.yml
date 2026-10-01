@@ -1,0 +1,43 @@
+models:
+  - name: stg_olids_national_data_opt_out
+    description: Latest and historical National Data Opt-Out preferences by patient key.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: sk_patient_id
+        description: Surrogate patient key
+        tests:
+          - not_null
+          - unique:
+              config:
+                where: "is_latest = 1"
+      - name: preference_type
+        description: Opt-out preference type, normalised to the established contract
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['NATIONAL_DATA_OPT_OUT']
+              config:
+                severity: error
+      - name: preference_status
+        description: Opt-out preference status, normalised to the established contract
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['OPT_IN', 'OPT_OUT', 'UNKNOWN']
+              config:
+                severity: error
+      - name: effective_from
+        description: Validity start
+      - name: effective_to
+        description: Validity end
+      - name: is_latest
+        description: True for the latest preference record
+      - name: lds_record_id
+        description: LDS record identifier
+      - name: lds_business_id
+        description: LDS business identifier
+      - name: lds_is_deleted
+        description: Soft-delete flag

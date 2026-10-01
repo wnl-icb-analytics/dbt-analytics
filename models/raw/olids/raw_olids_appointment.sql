@@ -1,21 +1,24 @@
 {{
     config(
-        description="Raw layer (OLIDS stable layer - cleaned and filtered patient records). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE.OLIDS.APPOINTMENT \ndbt: source(''olids'', ''APPOINTMENT'') \nColumns:\n  LDS_SOURCE_RECORD_ID -> lds_source_record_id\n  ID -> id\n  PROVIDER_ORGANISATION_ID -> provider_organisation_id\n  PUBLISHER_ORGANISATION_ID -> publisher_organisation_id\n  PATIENT_ID -> patient_id\n  PERSON_ID -> person_id\n  PRACTITIONER_IN_ROLE_ID -> practitioner_in_role_id\n  SCHEDULE_ID -> schedule_id\n  START_DATE -> start_date\n  PLANNED_DURATION_MINS -> planned_duration_mins\n  ACTUAL_DURATION_MINS -> actual_duration_mins\n  STATUS_SOURCE_CONCEPT_ID -> status_source_concept_id\n  APPOINTMENT_STATUS_SOURCE_CODE -> appointment_status_source_code\n  APPOINTMENT_STATUS_SOURCE_DISPLAY -> appointment_status_source_display\n  APPOINTMENT_STATUS_CODE -> appointment_status_code\n  APPOINTMENT_STATUS_DISPLAY -> appointment_status_display\n  PATIENT_WAIT_MINS -> patient_wait_mins\n  PATIENT_DELAY_MINS -> patient_delay_mins\n  DATETIME_BOOKED -> datetime_booked\n  DATETIME_SENT_IN -> datetime_sent_in\n  DATETIME_LEFT -> datetime_left\n  CANCELLED_DATE -> cancelled_date\n  APPOINTMENT_TYPE -> appointment_type\n  AGE_AT_EVENT -> age_at_event\n  AGE_AT_EVENT_BABY -> age_at_event_baby\n  AGE_AT_EVENT_NEONATE -> age_at_event_neonate\n  BOOKING_METHOD_SOURCE_CONCEPT_ID -> booking_method_source_concept_id\n  BOOKING_METHOD_SOURCE_CODE -> booking_method_source_code\n  BOOKING_METHOD_SOURCE_DISPLAY -> booking_method_source_display\n  BOOKING_METHOD_CODE -> booking_method_code\n  BOOKING_METHOD_DISPLAY -> booking_method_display\n  CONTACT_MODE_SOURCE_CONCEPT_ID -> contact_mode_source_concept_id\n  CONTACT_MODE_SOURCE_CODE -> contact_mode_source_code\n  CONTACT_MODE_SOURCE_DISPLAY -> contact_mode_source_display\n  CONTACT_MODE_CODE -> contact_mode_code\n  CONTACT_MODE_DISPLAY -> contact_mode_display\n  IS_BLOCKED -> is_blocked\n  NATIONAL_SLOT_CATEGORY_NAME -> national_slot_category_name\n  CONTEXT_TYPE -> context_type\n  SERVICE_SETTING -> service_setting\n  NATIONAL_SLOT_CATEGORY_DESCRIPTION -> national_slot_category_description\n  CSDS_CARE_CONTACT_IDENTIFIER -> csds_care_contact_identifier\n  PUBLISHER_ORGANISATION_CODE -> publisher_organisation_code\n  PATIENT_SHARD_ID -> patient_shard_id\n  PERSON_SHARD_ID -> person_shard_id\n  LDS_SOURCE_RECORD_SHARD_ID -> lds_source_record_shard_id\n  LDS_ID -> lds_id\n  LDS_BUSINESS_KEY -> lds_business_key\n  LDS_SOURCE_DATASET_ID -> lds_source_dataset_id\n  LDS_CDM_EVENT_ID -> lds_cdm_event_id\n  LDS_VERSIONER_EVENT_ID -> lds_versioner_event_id\n  LDS_DATETIME_FIRST_ACQUIRED -> lds_datetime_first_acquired\n  LDS_DATETIME_UPDATE_ACQUIRED -> lds_datetime_update_acquired\n  LDS_IS_DELETED -> lds_is_deleted\n  LDS_START_DATETIME -> lds_start_datetime\n  LDS_LAKEHOUSE_DATE_PROCESSED -> lds_lakehouse_date_processed\n  LDS_LAKEHOUSE_DATETIME_UPDATED -> lds_lakehouse_datetime_updated"
+        description="Raw layer (OLIDS stable layer - cleaned and filtered patient records). 1:1 passthrough with cleaned column names. \nSource: DATA_LAKE.OLIDS.APPOINTMENT \ndbt: source(''olids'', ''APPOINTMENT'') \nColumns:\n  ID -> id\n  LDS_SOURCE_RECORD_ID -> lds_source_record_id\n  PATIENT_ID -> patient_id\n  PERSON_ID -> person_id\n  PUBLISHER_ORGANISATION_ID -> publisher_organisation_id\n  PROVIDER_ORGANISATION_ID -> provider_organisation_id\n  AUTHOR_ORGANISATION_ID -> author_organisation_id\n  SLOT_ID -> slot_id\n  PRACTITIONER_IN_ROLE_ID -> practitioner_in_role_id\n  SCHEDULE_ID -> schedule_id\n  START_DATE -> start_date\n  PLANNED_DURATION_MINS -> planned_duration_mins\n  ACTUAL_DURATION_MINS -> actual_duration_mins\n  APPOINTMENT_STATUS_SOURCE_CONCEPT_ID -> appointment_status_source_concept_id\n  APPOINTMENT_STATUS_DERIVED -> appointment_status_derived\n  APPOINTMENT_STATUS_SOURCE_CODE -> appointment_status_source_code\n  APPOINTMENT_STATUS_SOURCE_DISPLAY -> appointment_status_source_display\n  APPOINTMENT_STATUS_CODE -> appointment_status_code\n  APPOINTMENT_STATUS_DISPLAY -> appointment_status_display\n  PATIENT_WAIT_MINS -> patient_wait_mins\n  PATIENT_DELAY_MINS -> patient_delay_mins\n  DATETIME_BOOKED -> datetime_booked\n  DATETIME_SENT_IN -> datetime_sent_in\n  DATETIME_LEFT -> datetime_left\n  CANCELLED_DATE -> cancelled_date\n  APPOINTMENT_TYPE -> appointment_type\n  AGE_AT_EVENT -> age_at_event\n  AGE_AT_EVENT_BABY -> age_at_event_baby\n  AGE_AT_EVENT_NEONATE -> age_at_event_neonate\n  BOOKING_METHOD_SOURCE_CONCEPT_ID -> booking_method_source_concept_id\n  BOOKING_METHOD_SOURCE_CODE -> booking_method_source_code\n  BOOKING_METHOD_SOURCE_DISPLAY -> booking_method_source_display\n  BOOKING_METHOD_CODE -> booking_method_code\n  BOOKING_METHOD_DISPLAY -> booking_method_display\n  CONTACT_MODE_SOURCE_CONCEPT_ID -> contact_mode_source_concept_id\n  CONTACT_MODE_SOURCE_CODE -> contact_mode_source_code\n  CONTACT_MODE_SOURCE_DISPLAY -> contact_mode_source_display\n  CONTACT_MODE_CODE -> contact_mode_code\n  CONTACT_MODE_DISPLAY -> contact_mode_display\n  IS_BLOCKED -> is_blocked\n  NATIONAL_SLOT_CATEGORY_NAME -> national_slot_category_name\n  CONTEXT_TYPE -> context_type\n  SERVICE_SETTING -> service_setting\n  NATIONAL_SLOT_CATEGORY_DESCRIPTION -> national_slot_category_description\n  CSDS_CARE_CONTACT_IDENTIFIER -> csds_care_contact_identifier\n  LDS_IS_DELETED -> lds_is_deleted\n  PUBLISHER_ORGANISATION_CODE -> publisher_organisation_code\n  CLINICAL_SYSTEM -> clinical_system\n  SOURCE_EXTRACTION_DATE -> source_extraction_date\n  LDS_TRANSFORM_DATETIME -> lds_transform_datetime"
     )
 }}
 select
-    "LDS_SOURCE_RECORD_ID" as lds_source_record_id,
     "ID" as id,
-    "PROVIDER_ORGANISATION_ID" as provider_organisation_id,
-    "PUBLISHER_ORGANISATION_ID" as publisher_organisation_id,
+    "LDS_SOURCE_RECORD_ID" as lds_source_record_id,
     "PATIENT_ID" as patient_id,
     "PERSON_ID" as person_id,
+    "PUBLISHER_ORGANISATION_ID" as publisher_organisation_id,
+    "PROVIDER_ORGANISATION_ID" as provider_organisation_id,
+    "AUTHOR_ORGANISATION_ID" as author_organisation_id,
+    "SLOT_ID" as slot_id,
     "PRACTITIONER_IN_ROLE_ID" as practitioner_in_role_id,
     "SCHEDULE_ID" as schedule_id,
     "START_DATE" as start_date,
     "PLANNED_DURATION_MINS" as planned_duration_mins,
     "ACTUAL_DURATION_MINS" as actual_duration_mins,
-    "STATUS_SOURCE_CONCEPT_ID" as status_source_concept_id,
+    "APPOINTMENT_STATUS_SOURCE_CONCEPT_ID" as appointment_status_source_concept_id,
+    "APPOINTMENT_STATUS_DERIVED" as appointment_status_derived,
     "APPOINTMENT_STATUS_SOURCE_CODE" as appointment_status_source_code,
     "APPOINTMENT_STATUS_SOURCE_DISPLAY" as appointment_status_source_display,
     "APPOINTMENT_STATUS_CODE" as appointment_status_code,
@@ -46,19 +49,9 @@ select
     "SERVICE_SETTING" as service_setting,
     "NATIONAL_SLOT_CATEGORY_DESCRIPTION" as national_slot_category_description,
     "CSDS_CARE_CONTACT_IDENTIFIER" as csds_care_contact_identifier,
-    "PUBLISHER_ORGANISATION_CODE" as publisher_organisation_code,
-    "PATIENT_SHARD_ID" as patient_shard_id,
-    "PERSON_SHARD_ID" as person_shard_id,
-    "LDS_SOURCE_RECORD_SHARD_ID" as lds_source_record_shard_id,
-    "LDS_ID" as lds_id,
-    "LDS_BUSINESS_KEY" as lds_business_key,
-    "LDS_SOURCE_DATASET_ID" as lds_source_dataset_id,
-    "LDS_CDM_EVENT_ID" as lds_cdm_event_id,
-    "LDS_VERSIONER_EVENT_ID" as lds_versioner_event_id,
-    "LDS_DATETIME_FIRST_ACQUIRED" as lds_datetime_first_acquired,
-    "LDS_DATETIME_UPDATE_ACQUIRED" as lds_datetime_update_acquired,
     "LDS_IS_DELETED" as lds_is_deleted,
-    "LDS_START_DATETIME" as lds_start_datetime,
-    "LDS_LAKEHOUSE_DATE_PROCESSED" as lds_lakehouse_date_processed,
-    "LDS_LAKEHOUSE_DATETIME_UPDATED" as lds_lakehouse_datetime_updated
+    "PUBLISHER_ORGANISATION_CODE" as publisher_organisation_code,
+    "CLINICAL_SYSTEM" as clinical_system,
+    "SOURCE_EXTRACTION_DATE" as source_extraction_date,
+    "LDS_TRANSFORM_DATETIME" as lds_transform_datetime
 from {{ source('olids', 'APPOINTMENT') }}

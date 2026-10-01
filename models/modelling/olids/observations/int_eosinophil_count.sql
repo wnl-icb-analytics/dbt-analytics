@@ -7,7 +7,9 @@
 /*
 All blood eosinophil count observations with unit standardisation and data quality flags.
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
-Uses the standardise_count_observation macro for value-first unit inference.
+Uses the standardise_count_observation macro: values inside the absolute range are kept
+as-is; conversions are attempted only when a value is implausibly high; nothing is dropped
+(out-of-range values pass through, carried by flags).
 Standard unit: 10*9/L (billion per liter).
 */
 
@@ -47,16 +49,6 @@ base_observations AS (
     value_column='result_value'
 ) }}
 
-,
-
-validated AS (
-    SELECT
-        *,
-        inferred_value < 0 AS is_negative,
-        inferred_value > 100 AS is_extreme_outlier
-    FROM standardised
-)
-
 SELECT
     id,
     person_id,
@@ -79,7 +71,7 @@ SELECT
     is_negative,
     is_extreme_outlier,
     CASE
-        WHEN inferred_value IS NULL OR confidence = 'NONE' THEN 'Abnormal'
+        WHEN inferred_value IS NULL THEN 'Abnormal'
         WHEN inferred_value < 0 THEN 'Abnormal'
         WHEN inferred_value < 0.04 THEN 'Eosinopenia'
         WHEN inferred_value <= 0.5 THEN 'Normal'
@@ -91,4 +83,4 @@ SELECT
             -- https://b-s-h.org.uk/guidelines/guidelines/investigation-and-management-of-eosinophilia
             -- https://www.rightdecisions.scot.nhs.uk/tam-treatments-and-medicines-nhs-highland/adult-therapeutic-guidelines/haematology/eosinophilia-guidelines/
     END AS eosinophil_category
-FROM validated
+FROM flagged

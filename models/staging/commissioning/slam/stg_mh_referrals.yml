@@ -1,0 +1,184 @@
+version: 2
+
+models:
+  - name: stg_mh_referrals
+    description: |
+      MH Local SLAM Referrals dataset (Appendix 2c), from the SDL REF feed's
+      MHRef submission profile (MH referrals travel in the REF feed, not MH).
+      Grain: one row per referral per active month per submission — a monthly
+      caseload snapshot, so counting rows overcounts referrals ~4x even in the
+      latest view. Count referrals via count(distinct referral_id) or the
+      dv_is_current_referral_row flag on stg_mh_referrals_latest. Providers:
+      RV300 (CNWL), RKL00 (WLT). The LPSRef profile (Liaison Psychiatry) is a
+      separate dataset and is not included.
+
+      Two layout eras: the current spec layout (~3.2M rows, all spec fields)
+      and older MHRef layouts (~1.8M rows) recovered via sibling-column
+      coalesces; fields the old layouts never carried (ethnic category, GP
+      practice, CAMHS flag, closure reason, extract date) are NULL there.
+
+      Cumulative Flex/Freeze restatement feed — summing double-counts; report
+      from stg_mh_referrals_latest for the current statement per (provider,
+      FY, month).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      # -- SDL pipeline keys --------------------------------------------------
+      - name: meta_sk_row_id
+        description: Pipeline. Surrogate row key (1:1 with source).
+        data_tests:
+          - not_null
+          - unique
+      - name: meta_file_id
+        description: Pipeline. Source file id; joins to META_FILE_REGISTRY with meta_batch_id.
+      - name: meta_row_id
+        description: Pipeline. Row id within the source file.
+      - name: meta_batch_id
+        description: Pipeline. Load batch id.
+      - name: meta_partition_date
+        description: Pipeline. DSCRO monthly partition the file was loaded under.
+      - name: meta_provider_code
+        description: Pipeline. Provider ODS code assigned by the SDL ingest.
+      - name: meta_recipient_code
+        description: Pipeline. Recipient (commissioner / DSCRO) code.
+      - name: meta_version_id
+        description: Pipeline. Source layout version hash.
+
+      # -- Reporting period (derived) ----------------------------------------
+      - name: dv_financial_year
+        description: Derived. Financial year as 'YYYYYY'. Stated value, else derived from the referral received date, else the file name.
+      - name: dv_financial_month
+        description: Derived. Financial month 1 (April) - 12 (March).
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 12
+                inclusive: true
+      - name: dv_financial_period_source
+        description: Derived. Which source resolved the period - 'stated', 'derived_from_referral_date', or 'derived_from_file_name'. NULL where none could.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['stated', 'derived_from_referral_date', 'derived_from_file_name']
+          - not_null:
+              config:
+                severity: warn
+
+      # -- DLP standard submission fields ------------------------------------
+      - name: dlp_flex_or_freeze
+        description: Derived. DLP submission flag standardised to 'Flex' or 'Freeze'.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Flex', 'Freeze']
+      - name: dlp_commissioner_code
+        description: As supplied. DLP commissioner code (Sub-ICB; spec field 2).
+      - name: dlp_baseline_financial_month
+        description: As supplied. DLP baseline financial month (spec field 5).
+
+      # -- Spec body ----------------------------------------------------------
+      - name: commissioner_code
+        description: As supplied. Organisation identifier (code of commissioner), upper-cased (spec field 6).
+      - name: dv_year_of_birth
+        description: Derived. Year of birth (pipeline-pseudonymised) in lieu of full birth date (spec field 7).
+      - name: ethnic_category_code
+        description: Derived. NHS ethnic category national code (spec field 8); current layout only (~64%).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['A','B','C','D','E','F','G','H','J','K','L','M','N','P','R','S','Z','99','0']
+              config:
+                severity: warn
+      - name: extract_date
+        description: Derived. Provider extract date, parsed (spec field 9); current layout only.
+      - name: gender_identity_code
+        description: Derived. Gender identity national code (1/2/3/4/X/Z; spec field 10); coalesced across sibling gender columns for the old layouts.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '2', '3', '4', 'X', 'Z']
+              config:
+                severity: warn
+      - name: gp_practice_code
+        description: Derived. Registered GP practice (spec field 11); 6-char ODS shape validated; current layout only (~64%).
+      - name: local_patient_id
+        description: As supplied. Local patient identifier (spec field 12; coalesced across siblings).
+      - name: sk_patient_id
+        description: Pipeline. Pseudonymised NHS-number-derived key in lieu of the raw NHS number (spec field 13).
+      - name: partial_postcode
+        description: Pipeline. Partial postcode (pseudonymised) in lieu of full postcode (spec field 14).
+      - name: lsoa
+        description: Pipeline. LSOA of residence (pipeline-derived). Not a spec field but high-value geography.
+      - name: provider_code
+        description: Derived. Provider ODS code, dictionary-cleaned (spec field 15).
+        data_tests:
+          - not_null
+      - name: service_group
+        description: As supplied. Local service group (spec field 16, optional).
+      - name: team_code
+        description: As supplied. Local team code (spec field 17); current layout only.
+      - name: team_name
+        description: As supplied. Local team name (spec field 18; coalesced across siblings).
+      - name: referral_received_date
+        description: Derived. Referral request received date, parsed (spec field 19).
+      - name: service_discharge_date
+        description: Derived. Service discharge date, parsed (spec field 20; coalesced across discharge/closure siblings). NULL = referral still active.
+      - name: team_type_code
+        description: As supplied. Service or team type (an3 national set; spec field 21), upper-cased; the old layouts mostly submit local team codes here (~62% national overall).
+      - name: source_of_referral_code
+        description: As supplied. Source of referral (MH alphanumeric national set A1-Q2; spec field 22), upper-cased; local codes pass through.
+      - name: primary_referral_reason_code
+        description: Derived. Primary reason for referral national code (n2, 01-31; spec field 23); zero-padded, local values pass through.
+      - name: camhs_flag
+        description: Derived. CAMHS flag as number (1 CAMHS, 0 not; spec field 24); current layout only.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+              config:
+                severity: warn
+      - name: referral_id
+        description: As supplied. Referral identifier (spec field 25; coalesced across siblings).
+      - name: clinical_priority_code
+        description: Derived. Clinical response priority national code (1 Emergency, 2 Urgent/serious, 3 Routine, 4 Very Urgent; spec field 26). NOTE this is the MH set - NOT the community priority set where Routine = 1.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '2', '3', '4']
+              config:
+                severity: warn
+      - name: referral_closure_reason_code
+        description: Derived. Referral closure reason national code (n2, 01-09; spec field 27); zero-padded, local '99' passes through; current layout only.
+
+      # -- Raw period (audit) --------------------------------------------------
+      - name: financial_year_raw
+        description: As supplied. Raw provider financial year before parsing.
+      - name: financial_month_raw
+        description: As supplied. Raw provider financial month before parsing.
+
+  - name: stg_mh_referrals_latest
+    description: |
+      MH Referrals, current provider statement only - stg_mh_referrals
+      restricted to the winning file per (provider, commissioner, FY, month)
+      via stg_mh_slam_latest_submission. Superseded cumulative Flex/Freeze
+      restatements excluded. Grain is still referral x active month (monthly
+      caseload snapshot, ~4 rows per referral): filter on
+      dv_is_current_referral_row to count referrals or read their latest
+      state. Cleaning and column conventions as stg_mh_referrals.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: meta_sk_row_id
+        description: Surrogate row key; unique guards against lookup-join fan-out.
+        data_tests:
+          - not_null
+          - unique
+      - name: dv_is_current_referral_row
+        description: Derived. TRUE on the most recent snapshot row per (provider, referral) - the row to use for referral counts and latest state (closure fields populate on the final rows).
+        data_tests:
+          - not_null

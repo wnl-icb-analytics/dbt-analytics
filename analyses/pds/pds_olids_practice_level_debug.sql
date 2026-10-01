@@ -19,15 +19,15 @@ pds_counts AS (
         reg.practice_code,
         COUNT(DISTINCT reg.sk_patient_id) AS pds_unmerged,
         COUNT(DISTINCT COALESCE(merg.sk_patient_id_superseded, reg.sk_patient_id)) AS pds_merged
-    FROM {{ ref('stg_pds_pds_patient_care_practice') }} reg
+    FROM {{ ref('stg_pds_patient_care_practice') }} reg
     INNER JOIN ncl_practices np ON reg.practice_code = np.practice_code
-    LEFT JOIN {{ ref('stg_pds_pds_person_merger') }} merg
+    LEFT JOIN {{ ref('stg_pds_person_merger') }} merg
         ON reg.sk_patient_id = merg.sk_patient_id
-    LEFT JOIN {{ ref('stg_pds_pds_person') }} per
+    LEFT JOIN {{ ref('stg_pds_person') }} per
         ON reg.sk_patient_id = per.sk_patient_id
         AND CURRENT_DATE() BETWEEN per.event_from_date
             AND COALESCE(per.event_to_date, '9999-12-31')
-    LEFT JOIN {{ ref('stg_pds_pds_reason_for_removal') }} reas
+    LEFT JOIN {{ ref('stg_pds_reason_for_removal') }} reas
         ON reg.sk_patient_id = reas.sk_patient_id
         AND CURRENT_DATE() BETWEEN reas.event_from_date
             AND COALESCE(reas.event_to_date, '9999-12-31')

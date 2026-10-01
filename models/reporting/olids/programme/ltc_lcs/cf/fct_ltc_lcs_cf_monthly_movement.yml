@@ -1,0 +1,42 @@
+version: 2
+models:
+  - name: fct_ltc_lcs_cf_monthly_movement
+    description: |
+      Month-to-month movement into and out of each LTC LCS case-finding indicator.
+      One row per person per indicator per to_month_end_date, comparing membership
+      at to_month_end_date against the immediately prior populated month.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, indicator_code, to_month_end_date]
+    columns:
+      - name: person_id
+        description: Unique person identifier
+        data_tests:
+          - not_null
+      - name: indicator_code
+        description: Case-finding indicator this movement record is for
+        data_tests:
+          - not_null
+      - name: condition
+        description: Case-finding condition the indicator belongs to
+        data_tests:
+          - not_null
+      - name: to_month_end_date
+        description: Month end this movement record is reporting into
+        data_tests:
+          - not_null
+      - name: movement_type
+        description: |
+          Change in indicator membership vs the prior populated month. 'Entered'
+          (member this month, not prior / first month), 'Retained' (member both),
+          'Exited' (member prior month, not this month).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Entered', 'Retained', 'Exited']

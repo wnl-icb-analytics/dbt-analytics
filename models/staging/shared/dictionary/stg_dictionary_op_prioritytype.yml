@@ -1,0 +1,22 @@
+models:
+  - name: stg_dictionary_op_prioritytype
+    description: Outpatient priority type codes reference (routine, urgent, etc.)
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: sk_priority_type_id
+        description: Primary key - surrogate key for priority type
+        tests:
+          - unique
+          - not_null
+      - name: bk_priority_type_code
+        description: Business key - priority type code
+        tests:
+          - unique
+          - not_null
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

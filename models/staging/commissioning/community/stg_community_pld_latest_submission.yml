@@ -1,0 +1,80 @@
+version: 2
+
+models:
+  - name: stg_community_pld_latest_submission
+    description: |
+      Latest-submission lookup for the community PLD feeds (COMOPL, REF). Grain:
+      one row per (feed, provider, FY, month), identifying the file with the
+      current provider statement (ranked by load time). These feeds restate
+      cumulatively (Flex -> Freeze); the stg_*_latest views use this to drop
+      superseded restatements.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - feed
+              - dv_provider_code
+              - dv_financial_year
+              - dv_financial_month
+    columns:
+      - name: feed
+        description: COMOPL or REF.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['COMOPL', 'REF']
+      - name: dv_provider_code
+        description: Provider ODS code (slice key; from the staging output).
+      - name: dv_financial_year
+        description: Financial year 'YYYYYY' (slice key; from the staging output).
+      - name: dv_financial_month
+        description: Financial month 1-12 (slice key; from the staging output).
+      - name: meta_file_id
+        description: Winning file id for the slice.
+        data_tests:
+          - not_null
+      - name: meta_batch_id
+        description: Winning batch id for the slice.
+      - name: submission_loaded_at
+        description: Platform (ISL) load time of the winning file - the ranking key.
+      - name: submission_file_name
+        description: Original file name of the winning file.
+
+  - name: stg_comopl_latest
+    description: |
+      COMOPL current provider statement only - stg_comopl restricted to the
+      winning file per (provider, FY, month). Sum-safe; cumulative restatements
+      excluded. Report from this rather than stg_comopl. Columns are exactly
+      those of stg_comopl (see that model for descriptions).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: meta_sk_row_id
+        description: Surrogate row key; unique guards against lookup-join fan-out.
+        data_tests:
+          - not_null
+          - unique
+
+  - name: stg_ref_latest
+    description: |
+      Community Referrals current provider statement only - stg_ref restricted
+      to the winning file per (provider, FY, month). Sum-safe; cumulative
+      restatements excluded. Report from this rather than stg_ref. Columns are
+      exactly those of stg_ref (see that model for descriptions).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: meta_sk_row_id
+        description: Surrogate row key; unique guards against lookup-join fan-out.
+        data_tests:
+          - not_null
+          - unique

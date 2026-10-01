@@ -16,7 +16,7 @@ WITH ncl_practices AS (
 -- PDS current registrations (no death filter)
 pds_no_death_filter AS (
     SELECT DISTINCT reg.sk_patient_id, reg.practice_code
-    FROM {{ ref('stg_pds_pds_patient_care_practice') }} reg
+    FROM {{ ref('stg_pds_patient_care_practice') }} reg
     INNER JOIN ncl_practices np ON reg.practice_code = np.practice_code
     WHERE reg.sk_patient_id IS NOT NULL
         AND CURRENT_DATE() BETWEEN reg.event_from_date
@@ -29,7 +29,7 @@ pds_person AS (
         sk_patient_id,
         death_status,
         date_of_death
-    FROM {{ ref('stg_pds_pds_person') }}
+    FROM {{ ref('stg_pds_person') }}
     WHERE CURRENT_DATE() BETWEEN event_from_date
         AND COALESCE(event_to_date, '9999-12-31')
 ),

@@ -6,8 +6,8 @@
 
 /*
 Latest eosinophil count per person.
-Filters to observations with confidence != 'NONE' and non-negative values,
-then returns the most recent per person.
+Filters to observations with a non-null inferred value that are non-negative and not
+extreme outliers (> 100 x10*9/L), then returns the most recent per person.
 */
 
 SELECT
@@ -29,7 +29,7 @@ SELECT
     confidence,
     eosinophil_category
 FROM {{ ref('int_eosinophil_count') }}
-WHERE confidence != 'NONE' AND NOT is_negative
+WHERE inferred_value IS NOT NULL AND NOT is_negative AND NOT is_extreme_outlier
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id
     ORDER BY clinical_effective_date DESC, id DESC

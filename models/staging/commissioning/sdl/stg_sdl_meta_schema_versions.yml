@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: stg_sdl_meta_schema_versions
+    description: |
+      One row per distinct column layout per feed.
+      version_id is the md5 fingerprint of the layout's position-to-name mapping; raw_mapping holds the original T-SQL header string.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - feed
+              - version_id
+    columns:
+      - name: feed
+      - name: version_id
+        description: md5 fingerprint of the layout (16 hex chars).
+        data_tests:
+          - not_null
+      - name: file_count
+        description: Files using this layout.
+      - name: first_seen
+      - name: last_seen
+      - name: raw_mapping
+        description: Original SourceColumnHeaders T-SQL fragment.
+      - name: column_mapping
+        description: Parsed position-to-name mapping.

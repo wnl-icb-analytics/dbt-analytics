@@ -47,16 +47,6 @@ base_observations AS (
     value_column='result_value'
 ) }}
 
-,
-
-validated AS (
-    SELECT
-        *,
-        inferred_value < 0 AS is_negative,
-        inferred_value > biological_upper AS is_extreme_outlier
-    FROM standardised
-)
-
 SELECT
     id,
     person_id,
@@ -79,7 +69,7 @@ SELECT
     is_negative,
     is_extreme_outlier,
     CASE
-        WHEN inferred_value IS NULL OR confidence = 'NONE' THEN 'Abnormal'
+        WHEN inferred_value IS NULL THEN 'Abnormal'
         WHEN inferred_value < 20 OR inferred_value > 250 THEN 'Abnormal'
         WHEN inferred_value < 80 THEN 'Severe Anaemia'
         WHEN inferred_value < 100 THEN 'Moderate Anaemia'
@@ -88,4 +78,4 @@ SELECT
         WHEN inferred_value <= 180 THEN 'Normal'
         ELSE 'Elevated'
     END AS haemoglobin_category
-FROM validated
+FROM flagged

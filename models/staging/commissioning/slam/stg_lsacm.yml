@@ -1,0 +1,176 @@
+version: 2
+
+models:
+  - name: stg_lsacm
+    description: |
+      Cleaned SLAM ACM (LSACM) — provider aggregate contract-monitoring
+      submissions (plan/actual activity and price by POD) from
+      ServicesDataLocal. Grain 1:1 with DATA_LAKE.SDL.LSACM. Aggregate feed:
+      no patient-level fields.
+
+      Full submission history - incremental, pure append of new files. SLAM
+      files are cumulative-YTD restatements, so summing this table
+      double-counts — report from stg_lsacm_latest for the current provider
+      statement of each (provider, FY, month).
+
+      Cleaning applied: dv_financial_year validated to 'YYYYYY' with the
+      platform file-name FY token as fallback; dv_financial_month validated to
+      1-12; dv_provider_code cleaned via dictionary lookup (site-suffixed
+      codes resolve to the parent org); dv_dataset_created_at multi-format
+      parsed; plan/actual activity, price and market-forces-factor parsed to
+      NUMBER(38,6) (currency symbols, thousands commas and accounting
+      negatives handled; 'TBC' and other junk -> NULL). Invalid values become
+      NULL, never guesses; originals kept in *_raw or the unprefixed column.
+
+      Column conventions: meta_* = typed SDL pipeline metadata (reliable);
+      submission_* = file identity from META_FILE_REGISTRY; dv_* = derived /
+      cleaned in this model; *_raw = the original provider text retained
+      alongside a dv_ column. All other columns are 1:1 passthrough of
+      provider-submitted text (source is all TEXT) — code columns are not
+      validated here.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      # SDL pipeline metadata (typed, reliable)
+      - name: meta_sk_row_id
+        description: Surrogate row key from the SDL pipeline.
+        data_tests:
+          - not_null
+          - unique
+      - name: meta_file_id
+        description: SDL source file id. Joins to META_FILE_REGISTRY with meta_batch_id. Not monotonic with load time.
+        data_tests:
+          - not_null
+      - name: meta_row_id
+        description: Row number within the source file (SDL pipeline).
+      - name: meta_batch_id
+        description: SDL load batch id; (meta_file_id, meta_batch_id) identifies one loaded file.
+      - name: meta_partition_date
+        description: DSCRO monthly partition the file was loaded under (one per file).
+      - name: meta_provider_code
+        description: Submitting provider per the SDL pipeline, site-suffixed (e.g. RRP00). Prefer dv_provider_code.
+      - name: meta_recipient_code
+        description: Recipient organisation code per the SDL pipeline.
+      - name: meta_version_id
+        description: SDL pipeline version that loaded the file.
+
+      # Submission identity + reporting period
+      - name: submission_loaded_at
+        description: When ISL/OneLondon processed the file — the reliable submission ordering.
+      - name: submission_file_name
+        description: Original provider file name from the registry.
+      - name: financial_year_raw
+        description: Provider-typed financial year as submitted. Cleaned in dv_financial_year.
+      - name: financial_month_raw
+        description: Provider-typed financial month as submitted. Cleaned in dv_financial_month.
+      - name: dv_financial_year
+        description: Validated financial year as 'YYYYYY' (e.g. '202627'); see stg_lsplcm. Original in financial_year_raw.
+      - name: dv_financial_month
+        description: Financial month 1 (April) - 12 (March). Junk values -> NULL. Original in financial_month_raw.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 12
+                inclusive: true
+      - name: dv_financial_period_source
+        description: >-
+          Where the period came from - 'stated' (provider value) or 'file_name'
+          (FY token from the platform file name). NULL when unrecoverable; ACM
+          is an aggregate feed with no activity dates to fall back on.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['stated', 'file_name']
+      - name: dataset_created_raw
+        description: Provider-typed DATE_AND_TIME_DATA_SET_CREATED as submitted. Parsed in dv_dataset_created_at.
+      - name: dv_dataset_created_at
+        description: dataset_created_raw multi-format parsed to TIMESTAMP_NTZ. Provider-typed - prefer submission_loaded_at for ordering.
+
+      # Organisations
+      - name: provider_code
+        description: Provider ODS code as submitted (ORGANISATION_IDENTIFIER_CODE_OF_PROVIDER). Cleaned in dv_provider_code.
+      - name: dv_provider_code
+        description: Provider ODS code cleaned via dictionary lookup. Original in provider_code.
+        data_tests:
+          - not_null
+      - name: commissioner_code
+        description: Commissioner organisation code as submitted.
+      - name: residence_responsibility_code
+        description: Organisation responsible by patient residence, as submitted.
+      - name: gp_practice_responsibility_code
+        description: Organisation responsible by GP practice, as submitted.
+      - name: gp_practice_code_registration
+        description: GP practice of registration, as submitted.
+      - name: site_of_treatment_code
+        description: Site of treatment organisation code, as submitted.
+
+      # Service / contract categorisation (passthrough)
+      - name: commissioned_service_category_code
+        description: Commissioned service category code as submitted.
+      - name: point_of_delivery_code
+        description: National point-of-delivery (POD) code as submitted.
+      - name: local_point_of_delivery_code
+        description: Local POD code as submitted.
+      - name: local_point_of_delivery_description
+        description: Local POD description as submitted.
+      - name: point_of_delivery_further_detail_code
+        description: POD further-detail code as submitted.
+      - name: point_of_delivery_further_detail_description
+        description: POD further-detail description as submitted.
+      - name: activity_treatment_function_code
+        description: Treatment function (specialty) code as submitted.
+      - name: service_code
+        description: Service code as submitted.
+      - name: reporting_type_indicator
+        description: Reporting type indicator as submitted.
+      - name: local_contract_code
+        description: Local contract code as submitted.
+      - name: local_contract_monitoring_code
+        description: Local contract-monitoring code as submitted.
+      - name: local_contract_monitoring_description
+        description: Local contract-monitoring description as submitted.
+      - name: cam_assignment
+        description: CAM assignment as submitted.
+
+      # Feed-specific: service / tariff detail (passthrough)
+      - name: tariff_code
+        description: Tariff code as submitted.
+      - name: national_tariff_indicator
+        description: National tariff indicator as submitted.
+      - name: local_sub_specialty_code
+        description: Local sub-specialty code as submitted.
+
+      # Measures (derived, plan vs actual)
+      - name: dv_planned_activity
+        description: CONTRACT_MONITORING_PLANNED_ACTIVITY as NUMBER(38,6).
+      - name: dv_actual_activity
+        description: CONTRACT_MONITORING_ACTUAL_ACTIVITY as NUMBER(38,6).
+      - name: dv_planned_price
+        description: CONTRACT_MONITORING_PLANNED_PRICE as NUMBER(38,6).
+      - name: dv_actual_price
+        description: CONTRACT_MONITORING_ACTUAL_PRICE as NUMBER(38,6). Sum-safe.
+      - name: dv_planned_market_forces_factor
+        description: CONTRACT_MONITORING_PLANNED_MARKET_FORCES_FACTOR as NUMBER(38,6).
+      - name: dv_actual_market_forces_factor
+        description: CONTRACT_MONITORING_ACTUAL_MARKET_FORCES_FACTOR as NUMBER(38,6).
+
+  - name: stg_lsacm_latest
+    description: |
+      SLAM ACM, current provider statement only - stg_lsacm restricted to the
+      winning file per (provider, FY, month) via stg_slam_latest_submission.
+      Sum-safe; superseded cumulative restatements excluded. Report from this
+      view; cleaning and column conventions as stg_lsacm.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: meta_sk_row_id
+        description: Surrogate row key; unique guards against lookup-join fan-out.
+        data_tests:
+          - not_null
+          - unique
+

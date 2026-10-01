@@ -12,9 +12,11 @@ models:
       MOC columns cover the full pathway: per-stage activity flags and dates (last 12m),
       pathway-aware stage completion (HRCS/HRS/MRS/LRS), current status and next action,
       data-quality flags for missing prior stages, stage durations, and care plan expiry.
+      Named stage flags use _12m for the trailing 12 months and _fy for the current
+      financial year to date (1 April through current date).
 
-      Population health inclusion flags (learning disability, SMI, pregnancy) are surfaced
-      for cohort filtering alongside standard demographics.
+      Population health inclusion flags (learning disability, SMI, pregnancy, complex
+      adults, housebound) are surfaced for cohort filtering alongside standard demographics.
 
       Direct-care variant — no Type 1 opt-out filter.
     config:
@@ -39,7 +41,7 @@ models:
       - name: hx_flake
         description: "HxFlake pseudonymised key (XX-XXX-XXX, 10 chars) for patient re-identification. Reversible transformation from sk_patient_id via dim_person_pseudo."
       - name: postcode_hash
-        description: Hashed postcode
+        description: Hashed residential postcode
       - name: uprn_hash
         description: Hashed UPRN (Unique Property Reference Number)
 
@@ -168,10 +170,20 @@ models:
         description: QOF Severe Mental Illness register flag
       - name: is_currently_pregnant
         description: Currently pregnant flag
+      - name: is_complex_adult
+        description: True if the person is in the complex adults cohort (fct_person_complex_adults), regardless of their population segment. Membership needs a complexity and a utilisation criterion; 12-month activity windows end on the last completed month-end.
+      - name: is_housebound
+        description: True if the latest housebound status record is housebound; false if the latest record is no longer housebound or none is recorded
 
       # ============================================================
       # Risk stratification: per-condition
       # ============================================================
+      - name: af_risk_group
+        description: Highest AF risk group (HR/MR)
+      - name: asthma_adult_risk_group
+        description: Highest Asthma Adult risk group (HRC/HR/MR/LR)
+      - name: asthma_cyp_risk_group
+        description: Highest Asthma CYP risk group (HR/LR)
       - name: chd_risk_group
         description: Highest CHD risk group (HRC/HR/MR)
       - name: ckd_risk_group
@@ -184,6 +196,12 @@ models:
         description: Highest Heart Failure risk group (HR/MR)
       - name: hypertension_risk_group
         description: Highest Hypertension risk group (HRC/HR/MRa/MRb/LR)
+      - name: nafld_risk_group
+        description: Highest NAFLD risk group (MR only)
+      - name: pad_risk_group
+        description: Highest PAD risk group (HRC/HR/MR)
+      - name: stroke_tia_risk_group
+        description: Highest Stroke/TIA risk group (HRC/HR/MR)
 
       # ============================================================
       # Risk stratification: overall
@@ -194,12 +212,16 @@ models:
         description: Numeric rank of overall_risk_group (1=HRC highest, 5=LR lowest)
       - name: in_any_risk_group
         description: True if person is in any condition risk group
+      - name: number_of_ltc_lcs_conditions
+        description: Number of LTC LCS condition registers the person is on (1-12)
 
       # ============================================================
       # MOC: pathway identity
       # ============================================================
       - name: moc_pathway
         description: EMIS pathway family that applies to this person (HRCS/HRS/MRS/LRS), derived from overall_risk_group
+      - name: moc_risk_category
+        description: Dashboard risk category (High Risk + Complex, High Risk, Medium Risk, or Low Risk)
 
       # ============================================================
       # MOC: activity flags + dates (last 12 months), in pathway order
@@ -217,9 +239,9 @@ models:
       - name: moc_careplan_sharing_date
         description: Latest care plan sharing date
       - name: moc_stage_2_completed
-        description: Stage 2 done using pathway-specific rule (HRCS/HRS = Remote Desktop Review (RDR) OR careplan sharing; MRS/LRS = careplan sharing only)
+        description: Stage 2 completed (HRCS/HRS = MDT Review and Care Plan Sharing; MRS/LRS = Remote Desktop Review)
       - name: moc_stage_2_date
-        description: Effective stage 2 date (earliest RDR / careplan for HRCS/HRS; careplan for MRS/LRS)
+        description: Later MDT Review or Care Plan Sharing date for HRCS/HRS; Remote Desktop Review date for MRS/LRS
       - name: moc_discussion_completed
         description: Discussion appointment completed in last 12 months
       - name: moc_discussion_date
@@ -236,6 +258,60 @@ models:
         description: True if the person declined in last 12m but has since had a progression activity recorded after the decline
       - name: moc_any_activity_12m
         description: True if any MOC activity (including declined) recorded in last 12 months
+      - name: moc_any_activity_fy
+        description: True if any MOC activity was recorded in the current financial year to date
+
+      # ============================================================
+      # MOC: named progression stages (12m and current FY to date)
+      # ============================================================
+      - name: moc_check_test_completed_12m
+        description: Check & Test completed in the trailing 12 months
+      - name: moc_check_test_date_12m
+        description: Latest Check & Test date in the trailing 12 months
+      - name: moc_check_test_completed_fy
+        description: Check & Test completed in the current financial year to date
+      - name: moc_check_test_date_fy
+        description: Latest Check & Test date in the current financial year to date
+      - name: moc_remote_desktop_review_completed_12m
+        description: Remote Desktop Review completed in the trailing 12 months for MRS/LRS pathways
+      - name: moc_remote_desktop_review_date_12m
+        description: Latest Remote Desktop Review date in the trailing 12 months for MRS/LRS pathways
+      - name: moc_remote_desktop_review_completed_fy
+        description: Remote Desktop Review completed in the current financial year to date for MRS/LRS pathways
+      - name: moc_remote_desktop_review_date_fy
+        description: Latest Remote Desktop Review date in the current financial year to date for MRS/LRS pathways
+      - name: moc_mdt_review_completed_12m
+        description: MDT Review completed in the trailing 12 months for HRCS/HRS pathways
+      - name: moc_mdt_review_date_12m
+        description: Latest MDT Review date in the trailing 12 months for HRCS/HRS pathways
+      - name: moc_mdt_review_completed_fy
+        description: MDT Review completed in the current financial year to date for HRCS/HRS pathways
+      - name: moc_mdt_review_date_fy
+        description: Latest MDT Review date in the current financial year to date for HRCS/HRS pathways
+      - name: moc_careplan_sharing_completed_12m
+        description: Care Plan Sharing completed in the trailing 12 months for HRCS/HRS pathways
+      - name: moc_careplan_sharing_date_12m
+        description: Latest Care Plan Sharing date in the trailing 12 months for HRCS/HRS pathways
+      - name: moc_careplan_sharing_completed_fy
+        description: Care Plan Sharing completed in the current financial year to date for HRCS/HRS pathways
+      - name: moc_careplan_sharing_date_fy
+        description: Latest Care Plan Sharing date in the current financial year to date for HRCS/HRS pathways
+      - name: moc_discussion_completed_12m
+        description: Discussion completed in the trailing 12 months
+      - name: moc_discussion_date_12m
+        description: Latest Discussion date in the trailing 12 months
+      - name: moc_discussion_completed_fy
+        description: Discussion completed in the current financial year to date
+      - name: moc_discussion_date_fy
+        description: Latest Discussion date in the current financial year to date
+      - name: moc_followup_completed_12m
+        description: Follow-up completed in the trailing 12 months
+      - name: moc_followup_date_12m
+        description: Latest Follow-up date in the trailing 12 months
+      - name: moc_followup_completed_fy
+        description: Follow-up completed in the current financial year to date
+      - name: moc_followup_date_fy
+        description: Latest Follow-up date in the current financial year to date
 
       # ============================================================
       # MOC: progression summary
@@ -243,13 +319,17 @@ models:
       - name: moc_stage_completed
         description: Furthest MOC pathway stage reached in the last 12 months (0-4)
       - name: moc_stage_completed_label
-        description: Readable label for the furthest MOC stage reached (Not started / Check & Test / RDR / Careplan / Careplan sharing / Discussion / Follow-up)
+        description: Full name of the furthest progression stage reached
+      - name: moc_stage_completed_code
+        description: Short code for moc_stage_completed_label; null when not started
       - name: moc_pathway_status
-        description: "Overall MOC cycle state: 'Not started' | 'In progress' | 'Cycle complete' (all four stages recorded, equivalent to moc_cycle_complete=true) | 'Declined'"
+        description: "Overall MOC cycle state: 'Not started' | 'In progress' | 'Cycle complete' (all required stages recorded) | 'Declined'"
       - name: moc_next_action
-        description: "Next MOC action needed (Check & Test / RDR / Careplan / Careplan sharing / Discussion / Follow-up); NULL when no action is required (cycle complete or declined)"
+        description: Full name of the next progression stage; null when no action is required
+      - name: moc_next_action_code
+        description: Short code for moc_next_action; null when no action is required
       - name: moc_cycle_complete
-        description: True if all four MOC stages recorded in the last 12m
+        description: True if all required pathway stages are recorded in the last 12m
 
       # ============================================================
       # MOC: data quality - missing prior stages
@@ -287,21 +367,21 @@ models:
       # Outcome: hypertension BP control
       # ============================================================
       - name: htn_bp_controlled_rolling
-        description: "Current position: true if the HTN register member's last known BP in the trailing 12 months is well controlled (<= 140/90 if age <= 80, <= 150/90 if age > 80). Null for non-HTN-register persons. False if on register but no qualifying reading in window."
+        description: "Current position (ICS_HTN_21): true if the last BP in the last 12 months is below the NICE target (clinic < 140/90, home/ABPM < 135/85; aged 80+ clinic < 150/90, home/ABPM < 145/85). Null outside the denominator: not on the HTN register, or excluded for age 90+, end of life care, care home or moderate/severe frailty. False if in the denominator with no reading in the window."
       - name: htn_bp_control_rolling_has_reading
-        description: True if the person has a qualifying paired BP reading in the trailing 12 months. Null for non-HTN-register persons.
+        description: True if the person has a paired BP reading in the last 12 months. Null outside the ICS_HTN_21 denominator.
       - name: htn_bp_control_rolling_bp_date
-        description: Date of the last known paired BP reading in the trailing 12 months (null if none / not on register)
+        description: Date of the last known paired BP reading in the trailing 12 months (null if none / outside the ICS_HTN_21 denominator)
       - name: htn_bp_control_rolling_systolic
         description: Systolic value (mmHg) of the last known reading in the trailing 12 months
       - name: htn_bp_control_rolling_diastolic
         description: Diastolic value (mmHg) of the last known reading in the trailing 12 months
       - name: htn_bp_controlled_fy
-        description: "Current financial year: true if the HTN register member's last known BP since 1 April (current FY) is well controlled (<= 140/90 if age <= 80, <= 150/90 if age > 80). Null for non-HTN-register persons. False if on register but no qualifying reading in window."
+        description: "Current financial year (ICS_HTN_21): true if the last BP since 1 April is below the NICE target (as htn_bp_controlled_rolling). Null outside the denominator. False if in the denominator with no reading in the window."
       - name: htn_bp_control_fy_has_reading
-        description: True if the person has a qualifying paired BP reading in the current FY. Null for non-HTN-register persons.
+        description: True if the person has a paired BP reading in the current FY. Null outside the ICS_HTN_21 denominator.
       - name: htn_bp_control_fy_bp_date
-        description: Date of the last known paired BP reading in the current FY (null if none / not on register)
+        description: Date of the last known paired BP reading in the current FY (null if none / outside the ICS_HTN_21 denominator)
       - name: htn_bp_control_fy_systolic
         description: Systolic value (mmHg) of the last known reading in the current FY
       - name: htn_bp_control_fy_diastolic

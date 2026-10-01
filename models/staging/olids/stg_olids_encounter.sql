@@ -16,16 +16,14 @@ select
     age_at_event_baby,
     age_at_event_neonate,
     type,
-    sub_type,
+    subtype as sub_type,
     admission_method,
-    end_date,
+    -- REVIEW: end_date was removed upstream and has no replacement.
     date_recorded,
-    lds_id,
     publisher_organisation_code,
-    lds_datetime_first_acquired,
+    lds_transform_datetime,
 
     -- Metadata
-    lds_start_datetime,
     lds_is_deleted,
     lds_source_record_id,
 

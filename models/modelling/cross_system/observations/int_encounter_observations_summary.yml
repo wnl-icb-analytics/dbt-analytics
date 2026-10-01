@@ -1,0 +1,48 @@
+
+models:
+  - name: int_encounter_observations_summary
+    description: >
+      Count of distinct SUS and ECDS clinical codes per encounter (diagnoses, procedures,
+      comorbidities, findings, investigations and treatments), for encounters
+      starting in the last 12 months up to today. One row per visit occurrence,
+      observation vocabulary and observation type. Source is int_observations. Only
+      observations with a patient key and a concept code are counted.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - visit_occurrence_id
+              - observation_vocabulary
+              - observation_type
+    columns:
+      - name: sk_patient_id
+        data_type: varchar
+        description: "Unique identifier for the patient."
+        data_tests:
+          - not_null
+
+      - name: visit_occurrence_id
+        data_type: number
+        description: "Unique identifier for the visit occurrence."
+
+      - name: visit_occurrence_type
+        data_type: varchar
+        description: "Clinical setting of the visit occurrence (e.g., inpatient, outpatient,
+          emergency)."
+
+      - name: observation_vocabulary
+        data_type: varchar
+        description: "Code type of the observation (e.g., ICD-10, SNOMED)."
+
+      - name: observation_type
+        data_type: varchar
+        description: "Category of the observation (e.g., diagnosis, procedure)."
+
+      - name: unique_code_count
+        data_type: number
+        description: "Count of distinct observation concept codes for the encounter,
+          vocabulary, and type where the encounter began within the last 12 months."

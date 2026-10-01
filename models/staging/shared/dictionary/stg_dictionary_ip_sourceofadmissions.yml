@@ -1,0 +1,20 @@
+models:
+  - name: stg_dictionary_ip_sourceofadmissions
+    description: >
+      NHS Data Dictionary source of admission codes for inpatient hospital
+      provider spells, one row per sk_source_of_admission_id with the latest
+      update kept.
+    config:
+      meta:
+        owner:
+          name: Jessica Roberts
+    columns:
+      - name: sk_source_of_admission_id
+        description: Primary key - surrogate key for source of admission
+        tests:
+          - unique
+          - not_null
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

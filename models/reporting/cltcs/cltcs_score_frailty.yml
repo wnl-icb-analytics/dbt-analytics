@@ -1,0 +1,22 @@
+models:
+  - name: cltcs_score_frailty
+    description: "Frailty sub-score for C-LTCS cohort. One row per patient. Derived from age, frailty-related conditions, falls/emergency activity, BP control, comorbidity burden and AIC eFI2 score."
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: sk_patient_id
+        data_type: number
+        description: "Unique patient identifier (sk_patient_id from PDS via dim_person_demographics_basic)"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: neighbourhood_code
+        data_type: varchar
+        description: "Neighbourhood code (from stg_cltcs_emis_cltcs_local_mapping_nh_gp) used as the z-score scaling group. Null for practices outside the Haringey/Camden local mapping."
+
+      - name: score_frailty
+        data_type: number
+        description: "Frailty sub-score (higher indicates higher frailty and complexity risk)"

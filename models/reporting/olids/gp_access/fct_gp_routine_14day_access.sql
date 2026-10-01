@@ -24,7 +24,7 @@ select
         100.0 * SUM(CASE WHEN booking_to_slot_days <= 14 THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0),
         1
     ) as routine_within_14d_pct
-from {{ ref('int_appointment_gp_clean_recent') }}
+from {{ ref('int_appointment_gp_clinical_recent') }}
 where urgency = 'Routine'
   and is_attended = TRUE
   and booking_to_slot_days IS NOT NULL

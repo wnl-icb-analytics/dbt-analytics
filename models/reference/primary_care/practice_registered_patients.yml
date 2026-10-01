@@ -1,0 +1,45 @@
+version: 2
+models:
+  - name: practice_registered_patients
+    description: |
+      Actual registered patient counts per GP practice by sex and 5-year age
+      band, from the NHS England "Patients Registered at a GP Practice"
+      monthly publication (via UKHFD). Counts are whole-person headcounts
+      taken on the first of each month; national coverage from April 2017.
+      ALL sex/age rollup rows are excluded, so practice totals are the sum
+      over sex and age band. Counterpart to practice_weighted_population,
+      which holds modelled allocation-year projections rather than actual
+      counts.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [practice_code, snapshot_date, sex, age_band]
+    columns:
+      - name: practice_code
+        description: GP practice ODS code (national coverage; filter to WNL downstream).
+        data_tests:
+          - not_null
+      - name: snapshot_date
+        description: Publication snapshot date (first of the month).
+        data_tests:
+          - not_null
+      - name: sex
+        description: MALE or FEMALE.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [MALE, FEMALE]
+      - name: age_band
+        description: 5-year age band, 0_4 through 90_94 then 95+.
+      - name: registered_patients
+        description: Count of patients registered at the practice on the snapshot date.
+        data_tests:
+          - not_null
+      - name: source_file_version
+        description: UKHFD source-file version for the snapshot.
+      - name: is_latest
+        description: TRUE for the practice's newest snapshot month.

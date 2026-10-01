@@ -11,9 +11,11 @@ flags:
   require_generic_test_arguments_property: true
 on-run-start:
   - "{% if execute %}{{ log('🔗 DBT CONNECTION: Role=' ~ target.role ~ ', Warehouse=' ~ target.warehouse ~ ', Database=' ~ target.database ~ ', Schema=' ~ target.schema ~ ', Target=' ~ target.name, info=True) }}{% endif %}"
-  - "{% if flags.WHICH in ['run', 'build'] %}{{ ensure_governance_tags() }}{% endif %}"
   - "{% if flags.WHICH in ['run', 'build'] %}{{ create_row_count_log_table() }}{% endif %}"
 
+on-run-end:
+  - "{{ trigger_cltcs_secure_view_rebuild() }}"
+  
 clean-targets:
   - "target"
   - "dbt_modules"
@@ -30,11 +32,32 @@ vars:
   disable_run_results: "{{ target.name not in ['prod', 'snowflake-prod'] }}"
   disable_tests_results: "{{ target.name not in ['prod', 'snowflake-prod'] }}"
   disable_dbt_invocation_autoupload: "{{ target.name not in ['prod', 'snowflake-prod'] }}"
+  #ICB definitions
+  wnl_ods_codes: ['Z9B2Z', 'QMJ', 'QRV']   # merged + legacy NCL/NWL
+  #Sub ICB definitions
+  ncl_sub_icb: "93C"
+  ncl_trust_codes_acute: ['RP4', 'RP6', 'RAL', 'RAN', 'RRV', 'RKE']
+  ncl_trust_codes_full: ['RP4', 'RP6', 'RAL', 'RAN', 'RRV', 'RKE', 'G6V2S', 'RNK']
+  ncl_borough_names: ['Barnet', 'Camden', 'Enfield', 'Islington', 'Haringey']
+  ncl_borough_codes: ['E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019']
+  nwl_sub_icb: "W2U3Z"
+  nwl_trust_codes_acute: ['RAS', 'RYJ', 'RQM', 'R1K']
+  nwl_trust_codes_full: ['RAS', 'RYJ', 'RQM', 'R1K', 'RKL', 'RV3', 'RYX']
+  ##Provisional: not clear if 'West London' should be included, there is no borough code for 'West London'
+  nwl_borough_names: ['Brent', 'Ealing', 'Hammersmith and Fulham', 'Harrow', 'Hillingdon', 'Hounslow', 'Kensington and Chelsea', 'Westminster', 'West London']
+  nwl_borough_codes: ['E09000005', 'E09000009', 'E09000013', 'E09000015', 'E09000017', 'E09000018', 'E09000020', 'E09000033']
 
 # Configure test failure storage (only for failures)
 tests:
   +store_failures: false
   +schema: "test_audit"
+
+# Analyses are ad-hoc QA SQL: compiled for manual execution, never built.
+# They reference relations by constructed name across environments, so skip
+# static analysis (Fusion otherwise errors on relations absent from the catalog).
+analyses:
+  wnl_analytics:
+    +static_analysis: "off"
 
 models:
   wnl_analytics:
@@ -47,21 +70,36 @@ models:
     # Raw layer - source data with minimal transformation
     raw:
       +materialized: view
-      +database: "MODELLING"
+      +database: "STAGING"
       +schema: "DBT_RAW"
-      +tags: ["raw", "daily"]
+      # No 'daily' tag: raw views build as ancestors of the staging/daily models
+      # that ref them (+tag:daily pulls them in). Tagging all ~660 raw views
+      # 'daily' fired every view at once, exhausting the connection pool inside
+      # EXECUTE DBT PROJECT (Fusion ignores threads).
+      +tags: ["raw"]
       +post-hook: ["{{ add_model_comment() }}"]
 
     # Staging layer - cleaned and standardised source data
+    # Schema derived per source-system folder via generate_schema_name macro
     staging:
       +materialized: view
-      +database: "MODELLING"
-      +schema: "DBT_STAGING"
+      +database: "STAGING"
       +tags: ["staging", "daily"]
       +post-hook: ["{{ add_model_comment() }}"]
       olids:
         +meta:
           custom_message: "Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering."
+
+    # Reference layer - derived reference datasets
+    # Schema = subfolder name: models/reference/organisation -> REFERENCE.ORGANISATION
+    reference:
+      +enabled: true
+      +materialized: table
+      +database: "REFERENCE"
+      +tags: ["reference"]
+      +post-hook:
+        - "{{ add_model_comment() }}"
+        - "{{ log_row_count() }}"
 
     # Modelling layer - business logic and transformations
     modelling:
@@ -72,11 +110,32 @@ models:
       +post-hook:
         - "{{ add_model_comment() }}"
         - "{{ log_row_count() }}"
-      commissioning:
-        +schema: "COMMISSIONING_MODELLING"
+      segmentation:
+        +meta:
+          custom_message: "Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering."
       olids:
         +meta:
           custom_message: "Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering."
+        risk_stratification:
+          +schema: "RISK_STRATIFICATION"
+    
+    # Statistical modelling layer
+    stat_models:
+      +enabled: true
+      +materialized: table
+      +database: "STAT_MODELS"
+      +tags: ["stat_models"]
+      +post-hook:
+        - "{{ add_model_comment() }}"
+        - "{{ log_row_count() }}"
+      +meta:
+        custom_message: "Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering."
+      CCMS:
+        +schema: "CCMS"
+      EFI2:
+        +schema: "EFI2"
+      qadmissions:
+        +schema: "QADMISSIONS"
 
     # Reporting layer - aggregated and analytical models
     reporting:
@@ -87,14 +146,18 @@ models:
       +post-hook:
         - "{{ add_model_comment() }}"
         - "{{ log_row_count() }}"
-      commissioning:
-        +schema: "COMMISSIONING_REPORTING"
+      segmentation:
+        +tags: ["daily"]
+        +meta:
+          custom_message: "Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering."
       olids:
         +meta:
           custom_message: "Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering."
         # Schema names automatically derived from subdomain folder names via generate_schema_name macro
         definitions:
           +database: "{{ target.database.replace('MODELLING', 'REPORTING') }}"
+        risk_stratification:
+          +schema: "RISK_STRATIFICATION"
 
     # Semantic layer - Snowflake Semantic Views for Cortex Analyst
     semantic:
@@ -106,7 +169,29 @@ models:
       +schema: "SEMANTIC"
       +tags: ["semantic"]
       +meta:
-        custom_message: "Snowflake Semantic View - Includes OLIDS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering. Query via SEMANTIC_VIEW() function."
+        custom_message: "Snowflake semantic view for aggregate analysis. Use the view definition for available dimensions, facts and metrics."
+
+    # Partner layer - production-ready datasets for partner users
+    partner:
+      +enabled: true
+      +materialized: table
+      +database: "PUBLISHED_REPORTING__PARTNER"
+      +tags: ["partner"]
+      +post-hook:
+        - "{{ add_model_comment() }}"
+        - "{{ log_row_count() }}"
+      published_data:
+        +database: "PUBLISHED_REPORTING__PARTNER"
+        +schema: "PUBLISHED_DATA"
+        # Row access policy on published data only. NOT on security/: the policy
+        # body queries PARTNER_MAPPING, so attaching it to the mapping table
+        # would be self-referential.
+        +row_access_policy: >-
+          {%- if target.name in ['prod', 'snowflake-prod'] -%}
+          PUBLISHED_REPORTING__PARTNER.SECURITY.PARTNER_POLICY on (sk_patient_id)
+          {%- else -%}
+          DEV__PUBLISHED_REPORTING__PARTNER.SECURITY.PARTNER_POLICY on (sk_patient_id)
+          {%- endif -%}
 
     # Published layer - production-ready datasets for end users
     published:
@@ -134,9 +219,6 @@ models:
           # Schema names automatically derived from subdomain folder names via generate_schema_name macro
           +post-hook:
             - "{{ add_model_comment() }}"
-            - "{{ apply_snowflake_tag_if_tagged('secondary_use_opt_out', 'DATA_CATEGORY', 'PRIMARY_CARE_SECONDARY_USE') }}"
-            - "{{ apply_snowflake_tag_if_tagged('secondary_use_s251_exempt', 'DATA_CATEGORY', 'PRIMARY_CARE_SECONDARY_USE') }}"
-            - "{{ apply_snowflake_tag_if_tagged('secondary_use_s251_exempt', 'S251_EXEMPT', 'TRUE') }}"
             - "{{ log_row_count() }}"
 
   # Elementary observability configuration
@@ -151,6 +233,17 @@ seeds:
     +schema: "DBT_SEEDS"
     +quote_columns: false
     +post-hook: ["{{ add_model_comment() }}"]
+
+    uec_site_label:
+      +column_types:
+        site_code: varchar(10)
+        department_type: varchar(2)
+        uec_site_label: varchar(50)
+        provider_code: varchar(10)
+        icb_footprint: varchar(3)
+        effective_from: date
+        effective_to: date
+        note: varchar(200)
 
     practice_merges:
       +column_types:

@@ -1,0 +1,70 @@
+version: 2
+models:
+  - name: fct_person_cost_index_monthly
+    description: |
+      Patient-level spend by month and service grouping. Canonical cost index
+      for WNL resource analysis. Full-history union of the SLAM
+      actual-cost spine (int_cost_index_slam_activity_monthly, WNL = NCL+NWL, from 2021-04)
+      with EPD prescribing (int_cost_index_epd_prescribing_monthly, from 2018-04
+      and about 12 months behind SLAM), MHSDS inpatient and contacts, and CSDS
+      community contacts. MHSDS and CSDS are proxy-costed from the NHSE 26/27
+      currency price schedule (deflated + MFF). Grain: patient x month x service_grouping x service x
+      is_patient_attributable x cost_basis x cost_source x activity_unit.
+
+      Pending unions (sources identified): GP appointments (OLIDS) and
+      high-cost drugs/devices PLD.
+
+      Filter is_patient_attributable for per-patient cuts. MH/community
+      provider block payments inside SLAM are mostly not patient-attributable,
+      so patient-attributable cuts do not double count; whole-system totals
+      mixing SLAM block lines with these proxy sources may double count.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: sk_patient_id
+        description: DMIC pseudonymised NHS number (NULL for unidentified SLAM activity).
+      - name: activity_month
+        description: First of the calendar month.
+        data_tests:
+          - not_null
+      - name: service_grouping
+        description: Crisis / Community / Mental Health / Planned / Excluded / Unmapped.
+        data_tests:
+          - not_null
+      - name: service
+        description: Governed POD group, GP Prescriptions, MH activity, or Community Health Contact.
+      - name: is_patient_attributable
+        description: FALSE for SLAM CQUIN / transport / block-and-adjustment groups.
+      - name: cost_basis
+        description: "Cost basis: actual, proxy, nominal, or tariff."
+        data_tests:
+          - not_null
+      - name: cost_source
+        description: SLAM, EPD, MHSDS, or CSDS — provenance of the cost.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [SLAM, EPD, MHSDS, CSDS]
+      - name: activity_unit
+        description: Unit counted in total_activity, such as slam_activity or prescription_item.
+        data_tests:
+          - not_null
+      - name: total_cost
+        description: Spend for the grain, £.
+      - name: total_activity
+        description: Activity count / prescription items for the grain.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - activity_month
+              - service_grouping
+              - service
+              - is_patient_attributable
+              - cost_basis
+              - cost_source
+              - activity_unit

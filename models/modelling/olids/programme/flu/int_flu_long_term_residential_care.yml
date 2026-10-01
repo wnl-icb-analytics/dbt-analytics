@@ -2,6 +2,9 @@ models:
   - name: int_flu_long_term_residential_care
     description: 'Flu vaccination eligibility for people in long-term residential care settings.
 
+      Grain: at most one row per campaign per person, for campaigns with
+      eligible_long_term_residential_care switched on in flu_campaign_config().
+
       Key Features:
 
       • Residential status logic using LONGRES_COD vs RESIDE_COD comparison
@@ -12,9 +15,29 @@ models:
 
       • Captures current residential status (not historical)
 
-      • Generates data for current and previous flu campaigns automatically
+      • Local extension: UKHSA removed the long-stay residential care indicator and the LONGRES_COD group from the flu specification at v15.7, but residents remain eligible and their vaccinations are coordinated through a provider, so the cohort is kept and drives eligibility. Not part of the ImmForm return
+
+      • LONGRES_COD is read from the COVID workbook, which still publishes it, unpinned because the seven codes are identical in every published version; RESIDE_COD is read from the flu workbook pinned to the campaign version
 
       Purpose: Identify care home residents eligible for flu vaccination due to communal living infection risk.'
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - campaign_id
+              - person_id
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: LONGRES_COD
+            source: UKHSA_COVID
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: RESIDE_COD
+            source: UKHSA_FLU
+            versioned: true
     config:
       meta:
         indicator:
@@ -31,7 +54,9 @@ models:
             from long-term care cluster (LONGRES_COD) to qualify. Minimum age requirement
             of 6 months. Captures current residential status to identify communal
             living
-            infection risks.
+            infection risks. UKHSA removed this indicator from the flu specification at
+            v15.7; it is kept as a local extension because residents remain eligible and
+            their vaccinations are coordinated through a provider.
           is_qof: false
           source_column: "person_id"
           sort_order: "FLU_18_CARE_HOME_RESIDENT"
@@ -54,19 +79,10 @@ models:
 
         owner:
           name: EddieDavison92
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - campaign_id
-              - person_id
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
     columns:
       - name: campaign_id
-        description: 'Flu campaign identifier (e.g., flu_2024_25, flu_2023_24)'
-        tests:
+        description: 'Flu campaign identifier, for example Flu 2025-26 or Flu 2026-27'
+        data_tests:
           - not_null
       - name: campaign_category
         description: 'Category of eligibility criteria (always "Social Care")'
@@ -74,7 +90,7 @@ models:
         description: 'Risk group classification (always "Long Term Residential Care")'
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
       - name: qualifying_event_date
         description: 'Date of qualifying residential care code'

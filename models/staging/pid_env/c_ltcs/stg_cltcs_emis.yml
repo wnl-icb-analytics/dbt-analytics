@@ -1,0 +1,28 @@
+models:
+  - name: stg_cltcs_emis
+    description: >
+      CLTCS EMIS extract (clinical and demographic patient attributes). Source raw_cltcs_emis_emis.
+      One row per sk_patient_id and usual GP organisation code (practice_code), keeping the
+      latest ingested record when duplicates exist. PDS registration filtering is applied in
+      cltcs_emis_extract.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - practice_code
+    columns:
+      - name: sk_patient_id
+        data_type: varchar
+        description: Pseudonymised NHS number (surrogate key for patient)
+        data_tests:
+          - not_null
+
+      - name: practice_code
+        description: Usual GP organisation code from the EMIS extract
+        data_tests:
+          - not_null

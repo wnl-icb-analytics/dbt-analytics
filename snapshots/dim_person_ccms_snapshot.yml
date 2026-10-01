@@ -1,0 +1,28 @@
+snapshots:
+  - name: dim_person_ccms_snapshot
+    relation: ref('dim_person_ccms_snapshot_input')
+    description: >
+      SCD2 history of the Cambridge multimorbidity score per person, for
+      control-cohort matching. Sources the thin `dim_person_ccms_snapshot_input`
+      view (person_id + cambridge_comorbidity_score) rather than dim_person_ccms
+      directly, because that model's `last_updated` / `ccms_score_id` change every
+      run and would otherwise version every person on every build creating junk and misleading data. `check_cols: all`
+      here means the single score column. Rows leaving the source are closed via
+      `hard_deletes: invalidate`.
+
+    config:
+      strategy: check
+      unique_key: [person_id]
+      check_cols: all
+      hard_deletes: invalidate
+
+    columns:
+      - name: person_id
+        description: "Person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

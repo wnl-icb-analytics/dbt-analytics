@@ -13,11 +13,10 @@
 # dbt itself is the Fusion binary (installed to %USERPROFILE%\.local\bin), NOT a
 # Python package. The .venv exists only for the Python tooling in scripts/.
 
-# Pin a Fusion version to override the default (e.g. '2.0.0-preview.188').
-# Leave empty to track the latest version from versions.json.
-$FusionVersionPin = ''
-# Used only if versions.json can't be reached and no pin is set.
-$FusionFallbackVersion = '2.0.0-preview.188'
+# Fusion engine is unpinned: CI installs latest and the VS Code dbt extension
+# auto-updates to latest. This script only installs when dbt is missing; if
+# an installed dbt is out of date it WARNS instead of updating, because the
+# extension's LSP holds a lock on dbt.exe and updating underneath it fails.
 
 $actions = @()
 $installDir = Join-Path $env:USERPROFILE '.local\bin'
@@ -65,46 +64,47 @@ Write-Host ""
 # ---------------------------------------------------------------------------
 Write-Host "Checking dbt Fusion engine..." -ForegroundColor Cyan
 
-function Resolve-FusionVersion {
-    if ($FusionVersionPin) { return $FusionVersionPin }
-    try {
-        $v = Invoke-RestMethod 'https://public.cdn.getdbt.com/fs/versions.json'
-        if ($v.stable.tag) { return ($v.stable.tag -replace '^v', '') }
-    } catch {}
-    return $FusionFallbackVersion
+function Install-Fusion {
+    # Clear partial downloads left by a previous failed/locked install, else the
+    # installer can trip over them.
+    Get-ChildItem -Path $installDir -Filter 'tmp-dbt-download-*' -Directory -ErrorAction SilentlyContinue |
+        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    $installer = [scriptblock]::Create((Invoke-RestMethod 'https://public.cdn.getdbt.com/fs/install/install.ps1'))
+    & $installer -Target $fusionTarget
 }
 
-function Install-Fusion {
-    param([string]$Version, [switch]$Update)
-    $installer = [scriptblock]::Create((Invoke-RestMethod 'https://public.cdn.getdbt.com/fs/install/install.ps1'))
-    if ($Update) { & $installer -Version $Version -Target $fusionTarget -Update }
-    else { & $installer -Version $Version -Target $fusionTarget }
+function Get-LatestFusionVersion {
+    # The installer resolves 'latest' from the same endpoint.
+    try {
+        $tag = (Invoke-RestMethod 'https://public.cdn.getdbt.com/fs/versions.json' -TimeoutSec 5).latest.tag
+        if ($tag) { return $tag -replace '^v', '' }
+    } catch { }
+    return $null
 }
 
 try {
-    $dbtPresent = [bool](Get-Command dbt -ErrorAction SilentlyContinue)
-    # Throttle the latest-version lookup to once per day (skipped when pinned or missing).
-    $marker = Join-Path $env:TEMP 'wnl_fusion_update_check'
-    $today = (Get-Date).ToString('yyyy-MM-dd')
-    $checkedToday = (Test-Path $marker) -and ((Get-Content $marker -Raw).Trim() -eq $today)
-
-    if (-not $dbtPresent -or $FusionVersionPin -or -not $checkedToday) {
-        $desired = Resolve-FusionVersion
-        $current = if ($dbtPresent) { (dbt --version 2>&1) -join ' ' } else { '' }
-        if ($current -notmatch [regex]::Escape($desired)) {
-            Write-Host "[INFO] Installing dbt Fusion $desired..." -ForegroundColor Cyan
-            Install-Fusion -Version $desired -Update:$dbtPresent
-            if ($env:PATH -notlike "*$installDir*") { $env:PATH = "$installDir;$env:PATH" }
-        } else {
-            Write-Host "[OK] dbt Fusion $desired" -ForegroundColor Green
-        }
-        if (-not $FusionVersionPin) { Set-Content -Path $marker -Value $today }
+    if (-not (Get-Command dbt -ErrorAction SilentlyContinue)) {
+        Write-Host "[INFO] Installing dbt Fusion (latest)..." -ForegroundColor Cyan
+        Install-Fusion
+        if ($env:PATH -notlike "*$installDir*") { $env:PATH = "$installDir;$env:PATH" }
+        Write-Host "  $((dbt --version 2>&1) | Select-Object -First 1)" -ForegroundColor Gray
     } else {
-        Write-Host "[OK] dbt Fusion checked for updates today" -ForegroundColor Green
+        # Never auto-update an existing install: the VS Code dbt extension's
+        # LSP holds a lock on dbt.exe, so in-place updates fail awkwardly.
+        # The extension auto-updates Fusion itself; just surface staleness.
+        $currentLine = (dbt --version 2>&1) | Select-Object -First 1
+        $latest = Get-LatestFusionVersion
+        if ($latest -and "$currentLine" -notmatch [regex]::Escape($latest)) {
+            Write-Host "[WARNING] dbt Fusion is out of date (installed: $currentLine, latest: $latest)" -ForegroundColor Yellow
+            Write-Host "  The VS Code dbt extension updates it automatically, or close VS Code" -ForegroundColor Gray
+            Write-Host "  (releases the dbt.exe lock) and run: dbt system update" -ForegroundColor Gray
+        } else {
+            Write-Host "[OK] dbt Fusion up to date" -ForegroundColor Green
+        }
+        Write-Host "  $currentLine" -ForegroundColor Gray
     }
-    Write-Host "  $((dbt --version 2>&1) | Select-Object -First 1)" -ForegroundColor Gray
 } catch {
-    Write-Host "[WARNING] Could not install/update dbt Fusion: $_" -ForegroundColor Yellow
+    Write-Host "[WARNING] Could not install dbt Fusion: $_" -ForegroundColor Yellow
     Write-Host "  Install manually: irm https://public.cdn.getdbt.com/fs/install/install.ps1 | iex" -ForegroundColor Gray
     $actions += "Install dbt Fusion (see CONTRIBUTING.md)"
 }
@@ -263,7 +263,17 @@ Write-Host ""
 # ---------------------------------------------------------------------------
 # 7. dbt packages - install if missing, or if packages.yml changed since last install
 # ---------------------------------------------------------------------------
-$needDeps = -not (Test-Path "dbt_packages")
+# Drop a stale dbt-core-format package-lock.yml. Fusion flags it (dbt1041 "Old
+# format package-lock.yml") and its pins can clash with packages.yml (dbt1005).
+# The old format lacks the per-package `name:` field Fusion writes, so detect by
+# its absence; `dbt deps` then regenerates a current, in-sync lock.
+$lockRemoved = $false
+if ((Test-Path "package-lock.yml") -and -not (Select-String -Path "package-lock.yml" -Pattern '^\s*name:' -Quiet)) {
+    Remove-Item "package-lock.yml" -Force
+    Write-Host "[INFO] Removed old-format package-lock.yml - dbt deps will regenerate it" -ForegroundColor Cyan
+    $lockRemoved = $true
+}
+$needDeps = $lockRemoved -or -not (Test-Path "dbt_packages")
 if (-not $needDeps -and (Test-Path "packages.yml")) {
     if ((Get-Item "packages.yml").LastWriteTimeUtc -gt (Get-Item "dbt_packages").LastWriteTimeUtc) {
         $needDeps = $true

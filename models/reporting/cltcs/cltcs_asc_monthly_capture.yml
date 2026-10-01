@@ -1,0 +1,65 @@
+models:
+  - name: cltcs_asc_monthly_capture
+    description: >
+      Monthly append-only capture of adult social care (ASC) service covariates from
+      fct_person_asc_service_recent. One row per (sk_patient_id, snapshot_month). ASC is a
+      rolling "recent" aggregate anchored on CURRENT_DATE (each LA's most-recent CLD
+      submission), so it changes with the clock and cannot be reconstructed historically --
+      captured append-only like cltcs_activity_monthly_capture rather than snapshotted. Feeds
+      the ASC covariates in cltcs_monthly_covariates. Forward-only: history starts at the
+      first run.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - snapshot_month
+    columns:
+      - name: sk_patient_id
+        description: "Patient identifier."
+        data_tests:
+          - not_null
+      - name: snapshot_month
+        description: "First day of the calendar month this row was captured (append key)."
+        data_tests:
+          - not_null
+      - name: captured_at
+        description: "Timestamp the row was written (for audit; not part of the grain)."
+      - name: has_asc_service
+        description: "1 for anyone with an ASC service (presence flag from fct_person_asc_service_recent)."
+      - name: borough_name
+        description: "Array of distinct local-authority (borough) names for the patient's captured ASC services."
+      - name: service_type
+        description: "Array of distinct ASC service types for the patient."
+      - name: primary_support_reason_category
+        description: "Array of distinct high-level primary support reason categories for the patient."
+      - name: has_physical_support_personal_care
+        description: "Patient has at least one service with personal care physical support."
+      - name: has_physical_support_access_mobility
+        description: "Patient has at least one service with access and mobility physical support."
+      - name: has_learning_disability_support
+        description: "Patient has at least one service with learning disability support."
+      - name: has_mental_health_support
+        description: "Patient has at least one service with mental health support."
+      - name: has_unknown_primary_support_reason
+        description: "Patient has at least one service with an unknown primary support reason."
+      - name: has_memory_cognition_support
+        description: "Patient has at least one service with memory and cognition support."
+      - name: has_social_support_unpaid_carer
+        description: "Patient has at least one service with social support for an unpaid carer."
+      - name: has_social_support_social_isolation
+        description: "Patient has at least one service with social support for social isolation or other."
+      - name: has_sensory_support_visual_impairment
+        description: "Patient has at least one service with sensory support for visual impairment."
+      - name: has_sensory_support_hearing_impairment
+        description: "Patient has at least one service with sensory support for hearing impairment."
+      - name: has_social_support_substance_misuse
+        description: "Patient has at least one service with social support for substance misuse."
+      - name: has_sensory_support_dual_impairment
+        description: "Patient has at least one service with sensory support for dual impairment."
+      - name: has_social_support_asylum_seeker
+        description: "Patient has at least one service with social support for asylum seekers."

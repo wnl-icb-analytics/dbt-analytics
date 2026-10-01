@@ -1,18 +1,23 @@
 -- LTC LCS: Hypertension Register - Priority Group 3A (Medium Risk a)
--- Parent population: Hypertension register, excluding PG1 (HRC) and PG2 (HR)
+-- Parent population: Hypertension register
+-- EMIS source: 'On Hypertension Register- LTC LCS Priority Group 3A (MRa) v3'
+-- (docs/emis_specs/ltc_lcs_r5/risk_stratification/specs/conditions/hypertension/
+--  on_hypertension_register_ltc_lcs_priority_group_3a_mra_v3.md)
 --
--- Inclusion: Has comorbidity AND latest BP in last 12 months exceeds Stage 1 thresholds
--- - Clinic: SBP > 140 or DBP > 90
--- - Home/ABPM: SBP > 135 or DBP > 85
+-- Rule chain (exclusion-shaped in EMIS):
+-- - Rule 1 (gate): BP monitoring code (vs1 CLINBP_COD or vs2 HOMEAMBBP_COD)
+--   in last 12 months. Fail -> exclude.
+-- - Rule 2: exclude PG1 (HRC) v3 and PG2 (HR) v3.
+-- - Rule 3 (must match): any of - CHD (vs3), Stroke/TIA (vs4/vs5), PAD (vs6)
+--   with episode type not Review or Ended; CKD (vs7); latest eGFR < 60 (vs8);
+--   diabetes (vs9); ethnicity (vs10).
+-- - Rules 4-5: exclude patients whose latest reading is controlled at stage 1 -
+--   clinic <= 140/90, home/ABPM <= 135/85. Everyone else -> include.
 --
--- Comorbidities (any one, using EMIS valuesets):
--- - vs3: CHD (CHD_COD, first episode excl review/end)
--- - vs4+vs5: Stroke/TIA (STRK_COD + TIA_COD, first episode excl review/end)
--- - vs6: PAD (PAD_COD, first episode excl review/end)
--- - vs7: CKD (CKD_COD)
--- - vs8: eGFR < 60
--- - vs9: Diabetes (DM_COD)
--- - vs10: Ethnicity (EMIS-defined valueset)
+-- Because EMIS excludes the controlled, gated patients with a qualifying
+-- comorbidity whose readings do not resolve to a paired value are INCLUDED.
+-- Controlled checks use the single latest paired BP event
+-- (int_blood_pressure_latest, the established rs convention).
 
 with
 -- Parent population: Patients currently on hypertension register
@@ -22,80 +27,73 @@ hypertension_register as (
     where is_on_register = true
 ),
 
--- Exclude PG1 and PG2
+-- Rule 2: Exclude PG1 and PG2
 higher_pg_exclusions as (
     select person_id from {{ ref('int_ltc_lcs_rs_htn_pg1_hrc') }}
     union
     select person_id from {{ ref('int_ltc_lcs_rs_htn_pg2_hr') }}
 ),
 
--- Latest BP within 12 months
-latest_bp as (
-    select
-        person_id,
-        systolic_value,
-        diastolic_value,
-        coalesce(is_home_bp_event or is_abpm_bp_event, false) as is_home_or_abpm
-    from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+-- Rule 1: BP monitoring code in last 12 months
+rule_1_bp_code as (
+    select distinct person_id
+    from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs1, on_htn_reg_priority_group_3a_mra_v3_vs2") }})
+    where clinical_effective_date > dateadd(month, -12, current_date())
 ),
 
--- Rule 3: Comorbidities (any one qualifies)
--- CHD (first episode, excluding review/end)
+-- Rule 3: CHD (episode type not Review or Ended)
 rule_3_chd as (
-    select distinct person_id
-    from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs3") }})
-    where is_problem = true
-      and coalesce(is_review, false) = false
+    select distinct o.person_id
+    from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs3") }}) o
+    left join {{ ref('stg_olids_enriched_concept_map') }} ecm
+        on o.episodicity_source_concept_id = ecm.source_concept_id
+    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
 ),
 
--- Stroke/TIA (first episode, excluding review/end)
+-- Rule 3: Stroke/TIA (episode type not Review or Ended)
 rule_3_stroke_tia as (
-    select distinct person_id
-    from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs4") }})
-    where is_problem = true
-      and coalesce(is_review, false) = false
-    union
-    select distinct person_id
-    from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs5") }})
-    where is_problem = true
-      and coalesce(is_review, false) = false
+    select distinct o.person_id
+    from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs4, on_htn_reg_priority_group_3a_mra_v3_vs5") }}) o
+    left join {{ ref('stg_olids_enriched_concept_map') }} ecm
+        on o.episodicity_source_concept_id = ecm.source_concept_id
+    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
 ),
 
--- PAD (first episode, excluding review/end)
+-- Rule 3: PAD (episode type not Review or Ended)
 rule_3_pad as (
-    select distinct person_id
-    from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs6") }})
-    where is_problem = true
-      and coalesce(is_review, false) = false
+    select distinct o.person_id
+    from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs6") }}) o
+    left join {{ ref('stg_olids_enriched_concept_map') }} ecm
+        on o.episodicity_source_concept_id = ecm.source_concept_id
+    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
 ),
 
--- CKD
+-- Rule 3: CKD
 rule_3_ckd as (
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs7") }})
 ),
 
--- eGFR < 60
+-- Rule 3: eGFR < 60 (latest value)
 rule_3_egfr as (
     select person_id
     from ({{ get_ltc_lcs_observations_latest("on_htn_reg_priority_group_3a_mra_v3_vs8") }})
     where result_value < 60
 ),
 
--- Diabetes
+-- Rule 3: Diabetes
 rule_3_diabetes as (
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs9") }})
 ),
 
--- Ethnicity (EMIS valueset vs10)
+-- Rule 3: Ethnicity (vs10)
 rule_3_ethnicity as (
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs10") }})
 ),
 
-comorbidities as (
+rule_3_comorbidities as (
     select person_id from rule_3_chd
     union
     select person_id from rule_3_stroke_tia
@@ -111,34 +109,39 @@ comorbidities as (
     select person_id from rule_3_ethnicity
 ),
 
--- Rules 4+5: BP exceeds Stage 1 thresholds
--- Clinic: SBP > 140 or DBP > 90
--- Home/ABPM: SBP > 135 or DBP > 85
-uncontrolled_bp as (
+-- Rules 4-5: latest paired BP event is controlled at stage 1
+-- Clinic: SBP <= 140 and DBP <= 90; Home/ABPM: SBP <= 135 and DBP <= 85
+rules_4_5_bp_controlled as (
     select person_id
-    from latest_bp
-    where (
-        (not is_home_or_abpm and (systolic_value > 140 or diastolic_value > 90))
-        or
-        (is_home_or_abpm and (systolic_value > 135 or diastolic_value > 85))
-    )
+    from {{ ref('int_blood_pressure_latest') }}
+    where clinical_effective_date >= dateadd(month, -12, current_date())
+      and (
+          (not coalesce(is_home_bp_event or is_abpm_bp_event, false)
+           and systolic_value <= 140 and diastolic_value <= 90)
+          or
+          (coalesce(is_home_bp_event or is_abpm_bp_event, false)
+           and systolic_value <= 135 and diastolic_value <= 85)
+      )
 ),
 
--- Combine all rules
+-- Combine rule results for all hypertension register patients
 patient_rules as (
     select
         hr.person_id,
-        (com.person_id is not null) as has_comorbidity,
-        (ubp.person_id is not null) as has_uncontrolled_bp,
+        (r1.person_id is not null) as rule_1_bp_code,
+        (com.person_id is not null) as rule_3_comorbidity,
+        (bpc.person_id is not null) as rules_4_5_bp_controlled,
         case
-            when com.person_id is not null and ubp.person_id is not null then 'Included'
-            else 'Excluded'
+            when r1.person_id is null then 'Excluded'
+            when com.person_id is null then 'Excluded'
+            when bpc.person_id is not null then 'Excluded'
+            else 'Included'
         end as final_status
     from hypertension_register hr
-    inner join latest_bp lbp on hr.person_id = lbp.person_id  -- Must have BP in last 12 months
     left join higher_pg_exclusions excl on hr.person_id = excl.person_id
-    left join comorbidities com on hr.person_id = com.person_id
-    left join uncontrolled_bp ubp on hr.person_id = ubp.person_id
+    left join rule_1_bp_code r1 on hr.person_id = r1.person_id
+    left join rule_3_comorbidities com on hr.person_id = com.person_id
+    left join rules_4_5_bp_controlled bpc on hr.person_id = bpc.person_id
     where excl.person_id is null  -- Exclude PG1 and PG2
 )
 

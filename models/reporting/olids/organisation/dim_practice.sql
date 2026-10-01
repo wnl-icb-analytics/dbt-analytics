@@ -37,7 +37,9 @@ WITH practice_org_joined AS (
     borough_map.practice_historic_ccg,
     borough_map.sub_icb_code,
     borough_map.sub_icb_name,
-    
+    borough_map.legacy_icb_code,
+    borough_map.legacy_icb_name,
+
     -- Practice organisational details from OLIDS
     -- type_code / type_desc were removed in the 2026 OLIDS schema realignment
     -- (issue #747). The replacement free-text `description` is exposed here as
@@ -113,7 +115,7 @@ INNER JOIN (
                 PARTITION BY organisation_code 
                 ORDER BY 
                     CASE WHEN is_obsolete = FALSE THEN 0 ELSE 1 END,  -- Prefer active records
-                    lds_datetime_first_acquired DESC,  -- Then most recent data
+                    lds_transform_datetime DESC,  -- Then most recent data
                     id DESC  -- Finally by ID as tiebreaker
             ) AS rn
         FROM {{ ref('stg_olids_organisation') }}

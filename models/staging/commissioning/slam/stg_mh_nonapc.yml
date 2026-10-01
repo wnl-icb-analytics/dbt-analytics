@@ -1,0 +1,183 @@
+version: 2
+
+models:
+  - name: stg_mh_nonapc
+    description: |
+      MH Local SLAM Non-APC dataset (Appendix 2a: mental health care contacts),
+      from the SDL MH feed's NONAPC submission files. Grain: one row per source
+      care contact. Providers: RV300 (CNWL), RKL00 (WLT), Aug 2023 onwards.
+
+      Coded fields normalised to the spec's national code sets (local codes
+      pass through); dates parsed; financial period from the stated DLP value
+      else the contact date else the file name; identifiers pseudonymised.
+
+      Cumulative Flex/Freeze restatement feed — summing double-counts; report
+      from stg_mh_nonapc_latest for the current statement per (provider, FY,
+      month).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    # Provenance convention: "Pipeline" = added by the SDL ingest (reliable);
+    # "Derived" = computed/parsed/mapped here; "As supplied" = provider value
+    # passed through unchanged.
+    columns:
+      # -- SDL pipeline keys --------------------------------------------------
+      - name: meta_sk_row_id
+        description: Pipeline. Surrogate row key (1:1 with source).
+        data_tests:
+          - not_null
+          - unique
+      - name: meta_file_id
+        description: Pipeline. Source file id; joins to META_FILE_REGISTRY with meta_batch_id.
+      - name: meta_row_id
+        description: Pipeline. Row id within the source file.
+      - name: meta_batch_id
+        description: Pipeline. Load batch id.
+      - name: meta_partition_date
+        description: Pipeline. DSCRO monthly partition the file was loaded under (ingest timing, not the activity month).
+      - name: meta_provider_code
+        description: Pipeline. Provider ODS code assigned by the SDL ingest.
+      - name: meta_recipient_code
+        description: Pipeline. Recipient (commissioner / DSCRO) code.
+      - name: meta_version_id
+        description: Pipeline. Source layout version hash.
+
+      # -- Reporting period (derived) ----------------------------------------
+      - name: dv_financial_year
+        description: Derived. Financial year as 'YYYYYY' (e.g. 202526 = FY2025/26), matching the SLAM feeds. Stated DLP value, else derived from the contact date, else the file name.
+      - name: dv_financial_month
+        description: Derived. Financial month 1 (April) - 12 (March).
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 12
+                inclusive: true
+      - name: dv_financial_period_source
+        description: Derived. Which source resolved the period - 'stated', 'derived_from_contact_date', or 'derived_from_file_name'. NULL where none could.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['stated', 'derived_from_contact_date', 'derived_from_file_name']
+          - not_null:
+              config:
+                severity: warn
+
+      # -- DLP standard submission fields ------------------------------------
+      - name: dlp_flex_or_freeze
+        description: Derived. DLP submission flag standardised to 'Flex' or 'Freeze'.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Flex', 'Freeze']
+      - name: dlp_commissioner_code
+        description: As supplied. DLP commissioner code (Sub-ICB; spec field 2).
+      - name: dlp_baseline_financial_month
+        description: As supplied. DLP baseline financial month (spec field 5).
+
+      # -- Spec body ----------------------------------------------------------
+      - name: commissioner_code
+        description: As supplied. Organisation identifier (code of commissioner), upper-cased (spec field 6).
+      - name: contact_date
+        description: Derived. Care contact date, parsed (spec field 7).
+      - name: dv_year_of_birth
+        description: Derived. Year of birth (pipeline-pseudonymised) in lieu of full birth date (spec field 8); ~88% populated.
+      - name: ethnic_category_code
+        description: Derived. NHS ethnic category national code (spec field 9); free-text variants mapped, unmappable -> NULL.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['A','B','C','D','E','F','G','H','J','K','L','M','N','P','R','S','Z','99','0']
+              config:
+                severity: warn
+      - name: extract_date
+        description: Derived. Provider extract date, parsed (spec field 10).
+      - name: consultation_mechanism_code
+        description: Derived. Consultation mechanism (MH) national code (1 Face to face, 2 Telephone, ... 98 Other; spec field 11); leading zeros stripped, local values pass through.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1','2','3','4','5','9','10','11','12','13','98']
+              config:
+                severity: warn
+      - name: gender_identity_code
+        description: Derived. Gender identity national code (1 Male, 2 Female, 3 Non-binary, 4 Other, X Not Known, Z Not Stated; spec field 12); word variants mapped, others pass through.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['1', '2', '3', '4', 'X', 'Z']
+              config:
+                severity: warn
+      - name: gp_practice_code
+        description: Derived. Registered GP practice at point of contact (spec field 13); 6-char ODS shape validated, branch suffix stripped, other values -> NULL.
+      - name: local_patient_id
+        description: As supplied. Local patient identifier (spec field 14).
+      - name: sk_patient_id
+        description: Pipeline. Pseudonymised NHS-number-derived key (SK_PATIENT_ID_NHS_NUMBER) in lieu of the raw NHS number (spec field 15).
+      - name: partial_postcode
+        description: Pipeline. Partial postcode (pseudonymised) in lieu of full postcode (spec field 16).
+      - name: lsoa
+        description: Pipeline. LSOA of residence (pipeline-derived). Not a spec field but high-value geography; ~99% populated.
+      - name: provider_code
+        description: Derived. Provider ODS code, dictionary-cleaned, falling back to META_PROVIDER_CODE (spec field 17).
+        data_tests:
+          - not_null
+      - name: attended_or_dna_code
+        description: Derived. Attended or DNA national code (2-7; spec field 18); leading zeros stripped, local values ('0', 'N') pass through.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['2', '3', '4', '5', '6', '7']
+              config:
+                severity: warn
+      - name: activity_month
+        description: Derived. Activity month as the first day of the financial month, parsed (spec field 19).
+      - name: referral_received_date
+        description: Derived. Referral request received date, parsed (spec field 20).
+      - name: service_request_id
+        description: As supplied. Service request identifier / referral ID (spec field 21).
+      - name: team_type_code
+        description: As supplied. Service or team type (an3 national set, e.g. A06; spec field 22), upper-cased; ~98% in the workbook set (F/Z-prefixed values are wider-MHSDS codes).
+      - name: camhs_flag
+        description: Derived. CAMHS flag as number (1 CAMHS, 0 not; spec field 23).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+              config:
+                severity: warn
+      - name: service_group
+        description: As supplied. Local service group (spec field 24, optional); ~38% populated.
+      - name: team_code
+        description: As supplied. Local team code (spec field 25).
+      - name: team_name
+        description: As supplied. Local team name (spec field 26).
+      - name: care_contact_id
+        description: As supplied. Care contact identifier / appointment ID (spec field 27); ~96% populated.
+      - name: care_contact_referral_id
+        description: As supplied. Referral ID associated with the care contact (spec field 28); ~97% populated.
+
+      # -- Raw period (audit) --------------------------------------------------
+      - name: financial_year_raw
+        description: As supplied. Raw DLP financial year before parsing (audit trail for dv_financial_year).
+      - name: financial_month_raw
+        description: As supplied. Raw DLP financial month before parsing (audit trail for dv_financial_month).
+
+  - name: stg_mh_nonapc_latest
+    description: |
+      MH Non-APC, current provider statement only - stg_mh_nonapc restricted
+      to the winning file per (provider, commissioner, FY, month) via
+      stg_mh_slam_latest_submission. Sum-safe; superseded cumulative Flex/
+      Freeze restatements excluded. Report from this view; cleaning and column
+      conventions as stg_mh_nonapc.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: meta_sk_row_id
+        description: Surrogate row key; unique guards against lookup-join fan-out.
+        data_tests:
+          - not_null
+          - unique

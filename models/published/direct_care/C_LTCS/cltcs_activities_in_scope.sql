@@ -21,20 +21,20 @@ Includes ALL persons (active, inactive, deceased) within 5 years following inter
 */
 with exclusion_activities as (
     select visit_occurrence_id
-    from {{ref('int_comm_maternity')}}
+    from {{ref('int_activity_maternity')}}
     where start_date between dateadd(month, -12, current_date()) and current_date()
     union all
     select visit_occurrence_id
-    from {{ref('int_comm_dialysis')}}
+    from {{ref('int_activity_dialysis')}}
     where start_date between dateadd(month, -12, current_date()) and current_date()
     union all
     select visit_occurrence_id
-    from {{ref('int_comm_cancer')}}
+    from {{ref('int_activity_cancer')}}
     where start_date between dateadd(month, -12, current_date()) and current_date()
 ),
 people_in_scope as (
     SELECT PSEUDO_NHS_NUMBER as sk_patient_id, PRIMARY_CARE_PROVIDER
-    FROM {{ ref('stg_pds_pds_patient_care_practice') }}
+    FROM {{ ref('stg_pds_patient_care_practice') }}
     WHERE REASON_FOR_REMOVAL IS NULL
     AND PRIMARY_CARE_PROVIDER_BUSINESS_EFFECTIVE_TO_DATE IS NULL
     AND PRIMARY_CARE_PROVIDER in ('F83023','F83677','F83632','F83018','F83022','F83057','F85682','F85043','F85023','F85634','F85654','F85072','F85025','Y03402','F85039','E83049','E83053','E83016','E83030')
@@ -42,7 +42,7 @@ people_in_scope as (
 op_cohort as (
     select * 
     from 
-        {{ ref('obt_appointment_outpatient') }} 
+        {{ ref('int_sus_op_appointment') }} 
     where 
         start_date between dateadd(month, -12, current_date()) and current_date()
         and sk_patient_id is not null
@@ -71,15 +71,15 @@ op_flags as (
     select sk_patient_id,
     CASE WHEN visit_occurrence_id IN (
             SELECT visit_occurrence_id 
-            FROM {{ref('int_comm_cancer')}}
+            FROM {{ref('int_activity_cancer')}}
         ) THEN 1 ELSE 0 END AS cancer_flag,
      CASE WHEN visit_occurrence_id IN (
             SELECT visit_occurrence_id 
-            FROM {{ref('int_comm_dialysis')}}
+            FROM {{ref('int_activity_dialysis')}}
         ) THEN 1 ELSE 0 END AS dialysis_flag,
      CASE WHEN visit_occurrence_id IN (
             SELECT visit_occurrence_id 
-            FROM {{ref('int_comm_maternity')}}
+            FROM {{ref('int_activity_maternity')}}
         ) THEN 1 ELSE 0 END AS maternity_flag
     from op_cohort
 ),

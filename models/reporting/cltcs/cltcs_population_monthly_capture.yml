@@ -1,0 +1,41 @@
+models:
+  - name: cltcs_population_monthly_capture
+    description: >
+      Monthly append-only capture of the C-LTCS control-candidate population
+      (cltcs_adult_population). One row per (sk_patient_id, snapshot_month) for each patient
+      in the pool that month. All people who meet the eligibility criteria across the whole NCL are in the pool - 
+      including patients who were treated on the C-LTCS MDT.
+      Eligibility membership can change over time, so this table captures records of 
+      who were eligible at each month; covariates are read separately from the SCD2 snapshots and put in
+      cltcs_monthly_covariates. 
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - snapshot_month
+    columns:
+      - name: sk_patient_id
+        description: "Patient identifier."
+        data_tests:
+          - not_null
+      - name: snapshot_month
+        description: "First day of the calendar month this roster was captured (append key)."
+        data_tests:
+          - not_null
+      - name: person_id
+        description: "OLIDS person key, resolved in cltcs_adult_population (latest-registered-record tiebreak)."
+        data_tests:
+          - not_null
+      - name: neighbourhood_code
+        description: >
+          C-LTCS local neighbourhood tag, carried from cltcs_adult_population. Non-null in
+          practice: cltcs_adult_population filters to practices in the local (Haringey/Camden)
+          mapping, so out-of-locality candidates are excluded; this would only become nullable
+          if that pool is later widened to out-of-locality candidates.
+      - name: captured_at
+        description: "Timestamp the row was written (for audit; not part of the grain)."

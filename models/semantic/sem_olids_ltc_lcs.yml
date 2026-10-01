@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: sem_olids_ltc_lcs
+    description: |
+      OLIDS LTC LCS semantic view. Case finding is person-grain candidates
+      with one or more programme indicators, not a diagnosed register.
+      Risk summary is person-grain people on one or more LTC LCS registers,
+      with risk strata and Model of Care activity.
+
+      Do not combine case-finding and risk-summary elements in one query.
+      Risk summary includes inactive and deceased people; filter is_active
+      for current-population analysis. Pathway-neutral Model of Care flags
+      avoid double counting remote desktop and MDT review events.
+
+      Exposes person_id for aggregate-only CTE joins to other sem_olids_*
+      views. Never return person_id in final results.
+
+      Tables: fct_person_ltc_lcs_case_finding,
+      fct_person_ltc_lcs_risk_summary, and dim_person_demographics.
+    config:
+      materialized: semantic_view
+      schema: SEMANTIC
+      meta:
+        owner:
+          name: Eddie Davison

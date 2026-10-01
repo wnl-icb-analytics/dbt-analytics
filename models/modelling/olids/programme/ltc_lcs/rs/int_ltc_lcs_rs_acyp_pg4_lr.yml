@@ -1,0 +1,20 @@
+version: 2
+models:
+  - name: int_ltc_lcs_rs_acyp_pg4_lr
+    description: |
+      Asthma CYP Register Priority Group 4 - Low Risk.
+      Parent population is the CYP asthma register ONLY (patients not on any
+      other LTC LCS register); includes everyone not in PG2 (HR).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

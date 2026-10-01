@@ -1,0 +1,35 @@
+models:
+  - name: stg_dictionary_ecds_diagnosis
+    description: >
+      ECDS diagnosis codes from the ETOS reference data, one row per
+      ecds_unique_id and valid_from version, including retired entries. Includes
+      ECDS groupings, clinical flags and ICD-10 and ICD-11 mappings. Use
+      valid_to and dv_is_active to select current entries. ICD-10 mappings are
+      cleaned by clean_icd10_code.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - ecds_unique_id
+              - valid_from
+    columns:
+      - name: ecds_unique_id
+        description: ECDS unique identifier (part of composite key with valid_from)
+        tests:
+          - not_null
+      - name: snomed_code
+        description: SNOMED CT code
+        tests:
+          - not_null
+      - name: icd10_mapping
+        description: Mapped ICD-10 code
+      - name: icd11_mapping
+        description: Mapped ICD-11 code
+      - name: valid_from
+        description: Valid from date (part of composite key with ecds_unique_id)
+        tests:
+          - not_null

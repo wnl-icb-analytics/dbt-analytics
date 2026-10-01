@@ -148,17 +148,28 @@ models:
                 values: ['Z9B2Z', 'QMJ', 'QMF', 'QRV', 'QWE', 'QKK']
 
       - name: sub_icb_code
-        description: 'Legacy ICB ODS code derived from the practice''s commissioner via ODS hierarchy. WNL practices resolve to QMJ (NCL) or QRV (NWL) depending on pre-merger parent. Non-merged ICBs resolve to the ICB code itself (QMF, QKK, QWE).'
+        description: 'Live RO98/RO319 sub-ICB location code — the practice''s commissioner. WNL: 93C (North Central London) / W2U3Z (North West London); other London ICBs: A3A8R (NEL), 72Q (SEL), 36L (SWL). Matches the commissioner codes in national datasets (SLAM/SUS/EPD).'
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['93C', 'W2U3Z', 'A3A8R', '72Q', '36L']
+
+      - name: sub_icb_name
+        description: 'Sub-ICB display name. Curated for the WNL pair (NHS North Central London / NHS North West London); dictionary commissioner name otherwise.'
+        tests:
+          - not_null
+
+      - name: legacy_icb_code
+        description: 'Pre-merger ICB ODS code (QMJ NCL / QRV NWL — legally dissolved 2026-03-31). Non-merged ICBs resolve to the ICB code itself (QMF, QKK, QWE).'
         tests:
           - not_null
           - accepted_values:
               arguments:
                 values: ['QMJ', 'QRV', 'QMF', 'QWE', 'QKK']
 
-      - name: sub_icb_name
-        description: 'Legacy ICB display name sourced from Dictionary.Organisation.'
-        tests:
-          - not_null
+      - name: legacy_icb_name
+        description: 'Pre-merger ICB display name sourced from Dictionary.Organisation.'
 
       - name: icb_name
         description: 'ICB display name (London Integrated Care Boards)'

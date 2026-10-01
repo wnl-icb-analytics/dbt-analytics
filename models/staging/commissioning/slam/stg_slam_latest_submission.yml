@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: stg_slam_latest_submission
+    description: |
+      Latest-submission lookup for the 4 SLAM feeds: one row per
+      (feed, provider, FY, month) slice identifying the file holding the
+      current provider statement. Rebuilt fully each run so it never goes
+      stale while the stg_ls* tables stay pure append.
+
+      Ordering is META_FILE_REGISTRY.CREATED_DATETIME (ISL processing log) —
+      meta_file_id is not monotonic with load time and the provider-typed
+      created field is unreliable. Winner picked per month-slice, so
+      submissions split across files (M1_6 + M7_12) resolve correctly.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - feed
+              - dv_provider_code
+              - dv_commissioner
+              - dv_financial_year
+              - dv_financial_month
+    columns:
+      - name: feed
+        description: Registry feed literal (LSACM / LSPLCM / LSDrPLCM / LSDePLCM).
+        data_tests:
+          - not_null
+      - name: dv_provider_code
+        description: Dictionary-cleaned provider ODS code (slice key).
+      - name: dv_commissioner
+        description: |
+          Commissioner ODS code — part of the slice key for LSACM only (DLP/Local
+          providers submit per-commissioner files). NULL for the other SLAM feeds,
+          which stay provider-grain.
+      - name: dv_financial_year
+        description: Validated financial year 'YYYYYY' (slice key).
+      - name: dv_financial_month
+        description: Financial month 1-12 (slice key).
+      - name: meta_file_id
+        description: Winning file id for the slice.
+        data_tests:
+          - not_null
+      - name: meta_batch_id
+        description: Winning batch id for the slice.
+      - name: submission_loaded_at
+        description: When ISL/OneLondon processed the winning file.
+      - name: submission_file_name
+        description: Original provider file name of the winning file.

@@ -1,0 +1,63 @@
+
+models:
+  - name: int_observations
+    description: "Observations derived from SUS AE, SUS OP, SUS APC, CSDS (to be added),
+      and MHDS (to be added). Diagnosis and procedure codes in ICD10 or snomed codes
+      as indicated. No measurement data. One row per code with counts and ordering within the clinical event shown"
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - visit_occurrence_id
+              - observation_concept_code
+              - observation_vocabulary
+              - observation_type
+    columns:
+      - name: record_id
+        data_type: varchar
+        description: "The generated surrogate key to act as a unique record identifier."
+
+      - name: sk_patient_id
+        data_type: varchar
+        description: "Unique identifier for the patient."
+
+      - name: visit_occurrence_id
+        data_type: number
+        description: "Unique identifier for the visit occurrence."
+
+      - name: visit_occurrence_type
+        data_type: varchar
+        description: "Clinical setting of the visit occurrence (e.g., inpatient, outpatient,
+          emergency)."
+
+      - name: date
+        data_type: date
+        description: "Start date of the clinical event containing the observation."
+
+      - name: clinical_end_date
+        data_type: varchar
+        description: "End date of the clinical event containing the observation."
+
+      - name: ordered_id_array
+        data_type: array
+        description: "Array of the ordered ids."
+
+      - name: observation_concept_code
+        data_type: varchar
+        description: "ICD-10 or snomed code representing the observation."
+
+      - name: observation_count
+        data_type: number
+        description: "Count of the observation within that clinical event e.g., spell, attendance or appointment."
+
+      - name: observation_concept_name
+        data_type: varchar
+        description: "ICD-10 or snomed description representing the observation."
+
+      - name: observation_vocabulary
+        data_type: varchar
+        description: "Code type of the observation (e.g., ICD-10, SNOMED)."

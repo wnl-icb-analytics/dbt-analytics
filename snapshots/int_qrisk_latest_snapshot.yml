@@ -1,0 +1,25 @@
+snapshots:
+  - name: int_qrisk_latest_snapshot
+    relation: ref('int_qrisk_latest')
+    description: >
+      SCD2 history of each person's latest valid QRISK cardiovascular risk score
+      (qrisk_score + qrisk_type + cvd_risk_category + warrants_statin_consideration, plus the
+      reading's date/concept), so QRISK can be read as-at an index date for control-cohort
+      matching. Snapshots int_qrisk_latest directly (no thin input needed): every column is a
+      pure function of the underlying observation with no CURRENT_DATE() dependency, so
+      check_cols: all is churn-free -- a version opens only when a new QRISK reading changes
+      the row. Rows leaving int_qrisk_latest are closed via hard_deletes: invalidate.
+    config:
+      strategy: check
+      unique_key: [person_id]
+      check_cols: all
+      hard_deletes: invalidate
+    columns:
+      - name: person_id
+        description: "Person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

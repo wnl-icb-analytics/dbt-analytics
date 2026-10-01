@@ -1,0 +1,39 @@
+version: 2
+models:
+  - name: fct_ltc_lcs_cf_monthly_summary
+    description: |
+      Monthly LTC LCS case-finding population counts per indicator, grouped by
+      condition, for dashboard trend charts. One row per month_end_date x
+      condition x indicator. A person in multiple indicators is counted once per
+      indicator, so counts are not additive across rows within a month.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [month_end_date, condition, indicator_code]
+    columns:
+      - name: month_end_date
+        description: Last day of the month this count applies to
+        data_tests:
+          - not_null
+      - name: month_year_label
+        description: Display label for the month, e.g. 'JUN 2026'
+      - name: financial_year
+        description: UK financial year label (April-March), e.g. '2026/27'
+      - name: financial_quarter
+        description: UK financial quarter label, e.g. 'Q1'
+      - name: condition
+        description: Case-finding condition the indicator belongs to
+        data_tests:
+          - not_null
+      - name: indicator_code
+        description: Case-finding indicator
+        data_tests:
+          - not_null
+      - name: person_count
+        description: Distinct count of persons in this indicator as of month end
+        data_tests:
+          - not_null

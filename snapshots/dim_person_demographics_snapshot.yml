@@ -1,0 +1,28 @@
+snapshots:
+  - name: dim_person_demographics_snapshot
+    relation: ref('dim_person_demographics_snapshot_input')
+    description: >
+      SCD2 history of stable / structural demographic match keys (gender, ethnicity,
+      language, registered practice, PCN, registered neighbourhood, death) for
+      control-cohort matching and to track structural change (practice moves, death).
+      Sources the thin `dim_person_demographics_snapshot_input` view, which excludes
+      `age` (it changes continuously and would version every person on their
+      birthday). `check_cols: all` over the thin, stable projection. Rows leaving the
+      source are closed via `hard_deletes: invalidate`.
+
+    config:
+      strategy: check
+      unique_key: [person_id]
+      check_cols: all
+      hard_deletes: invalidate
+
+    columns:
+      - name: person_id
+        description: "Person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

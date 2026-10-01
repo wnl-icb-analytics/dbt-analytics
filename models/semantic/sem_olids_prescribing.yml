@@ -9,7 +9,11 @@ models:
 
       All medication orders (issues) enriched with BNF classification,
       prescription type (acute/repeat from medication statements),
-      prescribing practice details, patient demographics and conditions.
+      details for the practice that issued the order (practice_code,
+      practice_name, pcn_code, pcn_name and borough_registered),
+      and core patient demographics. Condition, vulnerability, and
+      polypharmacy cohorts are NOT denormalised here — they come from
+      sem_olids_population via person_id CTE joins.
 
       Pre-defined medication category tables are linked for key drug
       classes: statins, antihypertensives, ACE inhibitors, ARBs,
@@ -18,11 +22,15 @@ models:
       medications, inhaled corticosteroids, antibacterials, NSAIDs,
       and PPIs.
 
-      BNF codes are mapped from SNOMED via stg_reference_bnf_latest (~96%
-      coverage). The chatbot has a BNF lookup tool to resolve drug class
-      names to BNF codes for filtering.
+      BNF codes are mapped from SNOMED via stg_reference_bnf_latest. The
+      chatbot has a BNF lookup tool to resolve drug class names to BNF codes
+      for filtering.
 
       Grain: one row per medication order (issue).
+
+      Exposes person_id as a pseudonymised linkage dimension for cross-view
+      cohort intersection (CTE joins to the other sem_olids_* views);
+      aggregate-only output.
 
       Core table: int_medication_order_bnf (view, not materialised).
 

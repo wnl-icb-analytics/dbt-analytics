@@ -32,6 +32,7 @@
     - Oncology (QOF): Cancer
     - Endocrine (non-QOF): Hypothyroidism
     - Hepatology (non-QOF): NAFLD, Chronic Liver Disease
+    - Haematology (non-QOF): Sickle Cell Disease, Thalassaemia
     - Genetics (non-QOF): Familial Hypercholesterolaemia
     - Geriatric (non-QOF): Frailty
     - Palliative Care (QOF): Palliative Care
@@ -82,6 +83,10 @@ FACTS(
 )
 
 DIMENSIONS(
+    -- Person linkage key
+    demographics.person_id AS person_id COMMENT = 'Pseudonymised person key, shared by all sem_olids_* views. Exposed only for cross-view cohort intersection: join CTEs over two views on person_id, then aggregate. Never return person_id in final results.',
+    demographics.sk_patient_id AS sk_patient_id COMMENT = 'Representative pseudonymised patient key for linkage to non-OLIDS views (SUS acute activity, cost index, resource index). Every active person has one; the underlying person-patient mapping can be many-to-many, so joins remain approximate at the margins. Join CTEs on sk_patient_id, then aggregate; never return sk_patient_id in final results.',
+
     -- Core Demographics
     demographics.gender AS gender COMMENT = 'Patient gender (Male, Female, Unknown)',
     demographics.age_band_5y AS age_band_5y COMMENT = '5-year age bands (0-4, 5-9, ..., 80-84, 85+, Unknown)',
@@ -104,13 +109,13 @@ DIMENSIONS(
     demographics.is_deceased AS is_deceased COMMENT = 'Deceased status',
 
     -- Practice/Organisation
-    demographics.practice_code AS practice_code COMMENT = 'GP practice ODS code',
-    demographics.practice_name AS practice_name COMMENT = 'GP practice name',
-    demographics.pcn_code AS pcn_code COMMENT = 'Primary Care Network code',
-    demographics.pcn_name AS pcn_name COMMENT = 'Primary Care Network name',
-    demographics.pcn_name_with_borough AS pcn_name_with_borough COMMENT = 'PCN name with borough prefix',
+    demographics.registered_practice_code AS practice_code WITH SYNONYMS = ('practice code', 'ODS code', 'GP practice') COMMENT = 'ODS code of the patient''s registered GP practice',
+    demographics.registered_practice_name AS practice_name COMMENT = 'Name of the patient''s registered GP practice',
+    demographics.registered_pcn_code AS pcn_code COMMENT = 'PCN code of the registered practice',
+    demographics.registered_pcn_name AS pcn_name WITH SYNONYMS = ('PCN', 'primary care network') COMMENT = 'PCN name of the registered practice',
+    demographics.registered_pcn_name_with_borough AS pcn_name_with_borough COMMENT = 'Registered PCN name with borough prefix',
     demographics.borough_registered AS borough_registered COMMENT = 'Borough where GP practice is located',
-    demographics.sub_icb_code AS sub_icb_code COMMENT = 'Sub-ICB / place-based partnership ODS code of the registered practice: QMJ = NHS North Central London (Camden, Islington, Barnet, Enfield, Haringey); QRV = NHS North West London (Brent, Ealing, Hammersmith and Fulham, Harrow, Hillingdon, Hounslow, Kensington and Chelsea, Westminster). NULL outside the WNL footprint.',
+    demographics.sub_icb_code AS sub_icb_code COMMENT = 'Sub-ICB / place-based partnership ODS code of the registered practice: 93C = NHS North Central London (Camden, Islington, Barnet, Enfield, Haringey); W2U3Z = NHS North West London (Brent, Ealing, Hammersmith and Fulham, Harrow, Hillingdon, Hounslow, Kensington and Chelsea, Westminster). NULL outside the WNL footprint.',
     demographics.sub_icb_name AS sub_icb_name COMMENT = 'Sub-ICB display name (NHS North Central London or NHS North West London) of the registered practice. NULL outside the WNL footprint.',
     demographics.neighbourhood_registered AS neighbourhood_registered COMMENT = 'NCL neighbourhood based on registration',
 
@@ -182,6 +187,10 @@ DIMENSIONS(
     -- Hepatology
     conditions.has_nafld AS has_nafld WITH SYNONYMS = ('NAFLD', 'fatty liver') COMMENT = 'Non-alcoholic fatty liver disease (non-QOF)',
     conditions.has_chronic_liver_disease AS has_chronic_liver_disease WITH SYNONYMS = ('CLD') COMMENT = 'Chronic liver disease (non-QOF)',
+
+    -- Haematology
+    conditions.has_sickle_cell AS has_sickle_cell WITH SYNONYMS = ('sickle cell', 'sickle cell disease', 'SCD') COMMENT = 'On sickle cell disease register - an inherited blood disorder causing painful crises and anaemia (non-QOF)',
+    conditions.has_thalassaemia AS has_thalassaemia WITH SYNONYMS = ('thalassaemia', 'thalassemia', 'thal') COMMENT = 'On thalassaemia register - an inherited blood disorder causing anaemia, severe forms transfusion-dependent (non-QOF)',
 
     -- Genetics
     conditions.has_familial_hypercholesterolaemia AS has_familial_hypercholesterolaemia WITH SYNONYMS = ('FH') COMMENT = 'Familial hypercholesterolaemia (non-QOF, age >=20)',
@@ -280,6 +289,8 @@ METRICS(
     conditions.palliative_care_count AS COUNT(DISTINCT CASE WHEN conditions.has_palliative_care THEN conditions.person_id END) COMMENT = 'Patients on palliative care',
     conditions.nafld_count AS COUNT(DISTINCT CASE WHEN conditions.has_nafld THEN conditions.person_id END) COMMENT = 'Patients with NAFLD',
     conditions.cld_count AS COUNT(DISTINCT CASE WHEN conditions.has_chronic_liver_disease THEN conditions.person_id END) COMMENT = 'Patients with chronic liver disease',
+    conditions.sickle_cell_count AS COUNT(DISTINCT CASE WHEN conditions.has_sickle_cell THEN conditions.person_id END) COMMENT = 'Patients with sickle cell disease',
+    conditions.thalassaemia_count AS COUNT(DISTINCT CASE WHEN conditions.has_thalassaemia THEN conditions.person_id END) COMMENT = 'Patients with thalassaemia',
     conditions.fh_count AS COUNT(DISTINCT CASE WHEN conditions.has_familial_hypercholesterolaemia THEN conditions.person_id END) COMMENT = 'Patients with FH',
     conditions.gestational_diabetes_count AS COUNT(DISTINCT CASE WHEN conditions.has_gestational_diabetes THEN conditions.person_id END) COMMENT = 'Patients with gestational diabetes',
 
@@ -310,5 +321,5 @@ METRICS(
 )
 
 COMMENT = 'OLIDS Population Health Semantic View - NCL registered population with demographics, all condition registers (QOF v50), diabetes type, vulnerability factors, and risk behaviours. Source: OLIDS (One London Integrated Data Set — primary care data from system suppliers, unified by the One London team). Grain: one row per person (current state). ESP 2013 weights available via age_band_esp for age-standardised rate calculation.'
-AI_SQL_GENERATION 'Always filter to is_active = TRUE unless the user explicitly asks about deceased or inactive patients. Use borough_registered for practice-based geography and borough_resident for residence-based geography. IMD 2025 (imd_decile_25, imd_quintile_25) is preferred over IMD 2019. Condition registers are built to QOF Business Rules v50. AGE-STANDARDISED RATES: To calculate an age-standardised rate (ASR) using ESP 2013 (the standard used by ONS/OHID/Fingertips), use this pattern: WITH strata AS (SELECT <area_column>, age_band_esp, COUNT(DISTINCT CASE WHEN <condition> THEN person_id END) AS cases, COUNT(DISTINCT person_id) AS pop, ANY_VALUE(esp_proportion) AS esp_prop FROM <this_view> WHERE is_active = TRUE GROUP BY <area_column>, age_band_esp) SELECT <area_column>, SUM(cases) AS crude_cases, SUM(pop) AS crude_pop, ROUND(SUM((cases / NULLIF(pop, 0)) * esp_prop) * 100000, 1) AS asr_per_100k FROM strata GROUP BY <area_column>. For age-AND-sex standardisation, add gender to the GROUP BY in both the strata CTE and the outer query dimensions, or group strata by age_band_esp+gender and collapse in the outer sum. For internal NCL comparison instead of ESP, replace esp_prop with (pop / SUM(pop) OVER ()) to use the NCL population structure as the standard.'
-AI_QUESTION_CATEGORIZATION 'Use this view for questions about: condition prevalence (all 38 conditions), diabetes type (T1/T2), demographics, multimorbidity, Cambridge Comorbidity Score (CCMS), vulnerability, smoking, polypharmacy, and population counts. CCMS (cambridge_comorbidity_score) is a continuous weighted score (higher = greater comorbidity burden, can be negative) with NO published risk bands and is NULL for under-16s — report it as a number or average, do not invent thresholds. For clinical biomarkers (BP, HbA1c, BMI, cholesterol) use sem_olids_observations. For serial/over-time biomarker readings use sem_olids_observations_history. For trends over time use sem_olids_trends.'
+AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is one row per person. Example: SELECT borough_resident, AGG(patient_count) FROM SEM_OLIDS_POPULATION WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce active diabetes people here and SGLT2 exposure in sem_olids_prescribing before joining. Use sk_patient_id, not person_id, for sem_sus_acute_activity, sem_cost_index and sem_resource_index. Use borough_registered for practice geography and borough_resident for residence. Prefer IMD 2025. Filter is_active = TRUE unless the user asks about inactive or deceased patients. age_band_esp and esp_proportion are ESP 2013 age-only weights for standardised rates.'
+AI_QUESTION_CATEGORIZATION 'Use this view for questions about: condition prevalence (all 40 conditions), diabetes type (T1/T2), demographics, multimorbidity, Cambridge Comorbidity Score (CCMS), vulnerability, smoking, polypharmacy, and population counts. CCMS (cambridge_comorbidity_score) is a continuous weighted score (higher = greater comorbidity burden, can be negative) with NO published risk bands and is NULL for under-16s — report it as a number or average, do not invent thresholds. For clinical biomarkers (BP, HbA1c, BMI, cholesterol) use sem_olids_observations. For serial/over-time biomarker readings use sem_olids_observations_history. For trends over time use sem_olids_trends. Questions needing cohorts from TWO domains (e.g. condition x medication, condition x biomarker control, condition x appointment access) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'

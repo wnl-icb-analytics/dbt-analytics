@@ -1,0 +1,40 @@
+models:
+  - name: cltcs_activity_monthly_capture
+    description: >
+      Monthly append-only capture of rolling-12-month person activity (A&E, inpatient,
+      outpatient, GP, waiting list). One row per (sk_patient_id,
+      snapshot_month). Rolling counts change every build and cannot be reconstructed
+      historically, so this append capture is used instead of an SCD2 snapshot. See
+      docs/person-scd2-snapshots-plan.md section 6.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - snapshot_month
+    columns:
+      - name: sk_patient_id
+        description: "Patient identifier."
+        data_tests:
+          - not_null
+      - name: snapshot_month
+        description: "First day of the calendar month this row was captured (append key)."
+        data_tests:
+          - not_null
+      - name: captured_at
+        description: "Timestamp the row was written (for audit; not part of the grain)."
+      - name: same_tfc_multiple_providers_flag
+        description: >
+          Boolean flag indicating whether the patient has the same TFC code assigned to multiple
+          providers (from fct_person_wl_current_count_total). Coalesced to false; added after the
+          other columns, so months captured before it existed hold NULL (append_new_columns) --
+          which is why there is no not_null test.
+      - name: current_waiting_list_arrays
+        description: >
+          Array of waiting list objects for the patient, sorted by days on waiting list (from
+          fct_person_wl_current_count_total). Coalesced to an empty array; NULL on months captured
+          before this column was added (append_new_columns).

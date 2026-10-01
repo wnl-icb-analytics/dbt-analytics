@@ -1,12 +1,12 @@
 models:
   - name: dim_person_gender
-    description: 'Gender demographics for all persons with standardised three-category classification.
+    description: 'Gender demographics for all persons with standardised classification.
 
       Key Features:
 
       • One row per person derived from gender_source_concept_id mappings
 
-      • Standardised categories: Male, Female, Unknown
+      • Standardised categories: Male, Female, Indeterminate sex, Unknown
 
       • Patient selection prioritises records with gender data
 
@@ -26,6 +26,13 @@ models:
         description: 'Persons gender derived from gender concept mappings'
         tests:
           - not_null
+          # screening, child-bearing-age and valproate cohorts filter on these
+          # literals; a feed display change must fail here, not zero cohorts
           - accepted_values:
               arguments:
-                values: ['Male', 'Female', 'Unknown', 'Indeterminate sex', 'Finding related to biological sex']
+                values: ['Female', 'Male', 'Indeterminate sex', 'Unknown']
+              config:
+                severity: error
+          - accepted_values:
+              arguments:
+                values: ['Male', 'Female', 'Indeterminate sex', 'Unknown']

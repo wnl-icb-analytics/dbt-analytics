@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: stg_ukhfd_other_iso_language_codes
+    description: ISO 639-1 language definitions held in UKHFD. One row per code and revision.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [code, source_effective_from_at]
+    columns:
+      - name: source_code_set_name
+        description: Source code set; always ISO 639-1.
+        data_tests: [not_null]
+      - name: code
+        description: ISO 639-1 code.
+        data_tests: [not_null]
+      - name: description
+        description: English language name.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD revision applies.

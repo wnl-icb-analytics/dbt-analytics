@@ -6,6 +6,7 @@
 
 select 
 p.analysis_month
+,p.fiscal_year_label
 ,p.vaccination_metric
 ,'11 YEARS' as reporting_age
 ,CASE
@@ -28,7 +29,7 @@ FROM (
 ------- 11 YEAR METRICS FROM HISTORICAL 
 --sixin1_11y 
 select 
- '6-in-1 (3 doses) 11 Years' as vaccination_metric, analysis_month, practice_name, practice_code, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ '6-in-1 (3 doses) 11 Years' as vaccination_metric, analysis_month, fiscal_year_label,  practice_name, practice_code, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(sixin1_comp_by_11) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_11') }}
 group by all
@@ -36,7 +37,7 @@ group by all
 UNION
 --hibmenc_11y 
 select 
- 'Hib/MenC 11 Years' as vaccination_metric, analysis_month, practice_name, practice_code, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ 'Hib/MenC 11 Years' as vaccination_metric, analysis_month, fiscal_year_label,  practice_name, practice_code, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(hibmc_comp_by_11) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_11') }}
 group by all
@@ -44,7 +45,7 @@ group by all
 UNION
 --fourin1_11y 
 select 
- '4-in-1 (dose 1) 11 Years' as vaccination_metric, analysis_month, practice_name, practice_code, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ '4-in-1 (dose 1) 11 Years' as vaccination_metric, analysis_month, fiscal_year_label,  practice_name, practice_code, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(fourin1_comp_by_11) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_11') }}
 group by all
@@ -52,7 +53,7 @@ group by all
 UNION
 --mmr1_11y 
 select 
- 'MMR (2 doses) 11 Years' as vaccination_metric, analysis_month, practice_name, practice_code, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ 'MMR (2 doses) 11 Years' as vaccination_metric, analysis_month, fiscal_year_label,  practice_name, practice_code, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(mmr_comp_by_11) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_11') }}
 group by all
@@ -60,7 +61,7 @@ group by all
 UNION
 --all_vacc11y 
 select 
- 'All vaccinations 11 Years' as vaccination_metric, analysis_month, practice_name, practice_code, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ 'All vaccinations 11 Years' as vaccination_metric, analysis_month, fiscal_year_label,  practice_name, practice_code, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(all_comp_by_11) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_11') }}
 group by all

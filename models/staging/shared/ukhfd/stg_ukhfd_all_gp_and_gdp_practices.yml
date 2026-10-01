@@ -1,0 +1,25 @@
+models:
+  - name: stg_ukhfd_all_gp_and_gdp_practices
+    description: >
+      National ODS GP and dental practice dimension from UKHFD, latest record
+      per practice code.
+
+      Source: UKHFD.ODS.dim_All_GP_and_GDP_Practices_SCD
+      (source 'ukhfd_ods' in models/sources/manual_ukhfd.yml)
+      via raw_ukhfd_all_gp_and_gdp_practices.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: organisation_code
+        description: practice ODS code, upper-cased
+        data_tests:
+          - unique
+          - not_null
+      - name: organisation_name
+        description: practice name

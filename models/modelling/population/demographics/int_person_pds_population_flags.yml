@@ -1,0 +1,28 @@
+
+models:
+  - name: int_person_pds_population_flags
+    description: >
+      Flags indicating whether a patient belongs to the current WNL (NCL + NWL)
+      registered or resident population, based on PDS data.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns:
+      - name: sk_patient_id
+        description: Surrogate key for patient
+        data_tests:
+          - not_null
+          - unique
+
+      - name: flag_current_registered
+        description: >
+          Flag indicating if patient is part of the current WNL registered population.
+          True when patient is registered with an active GP practice in the WNL practice
+          list, has no record of death, and registration has not been marked as removed.
+
+      - name: flag_current_resident
+        description: >
+          Flag indicating if patient is part of the current WNL resident population.
+          True when patient's residence LSOA is in NCL or NWL, has no record of death,
+          and residence record is currently active.

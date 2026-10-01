@@ -1,0 +1,35 @@
+version: 2
+
+seeds:
+  - name: nhs_occupation_codes
+    description: >-
+      NHS Occupation Code Manual v22.1 lookup published by NHS England. One
+      row per code, including retired codes for historical joins. Where the
+      workbook repeats a code, the valid definition takes precedence; ties
+      retain the first published definition. Rebuild with
+      scripts/seeds/nhs_occupation_codes/build_seed.py.
+    config:
+      column_types:
+        occupation_code: varchar
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: occupation_code
+        description: Three-character NHS occupation code.
+        data_tests: [not_null, unique]
+      - name: occupation_code_name
+        description: Published occupation code name.
+        data_tests: [not_null]
+      - name: main_staff_group
+        description: Published main occupation code staff group.
+      - name: broad_staff_group
+        description: Published broad occupation code staff group.
+      - name: detailed_staff_group
+        description: Published detailed occupation code staff group.
+      - name: occupation_level
+        description: Published occupation level.
+      - name: care_setting_or_specialty
+        description: Published care setting or specialty.
+      - name: is_currently_valid
+        description: TRUE when version 22.1 marks the code as valid rather than retired.

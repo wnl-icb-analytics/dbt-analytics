@@ -1,0 +1,18 @@
+models:
+  - name: int_smoking_intervention
+    description: 'SMOKING CESSATION INTERVENTIONS. Built for SMI Longer Lives campaign using PCD REFSET SMOKINGINT_COD'
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: SMOKINGINT_COD
+    columns:
+      - name: person_id
+        tests:
+          - not_null

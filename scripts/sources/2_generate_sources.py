@@ -157,6 +157,13 @@ def normalize_identifier(value):
         return value[1:-1]
     return value
 
+
+def should_generate_table(table_name, mapping):
+    """Return whether a source table should be generated."""
+    if 'tables' in mapping and table_name not in mapping['tables']:
+        return False
+    return table_name not in mapping.get('exclude_tables', [])
+
 def sync_manual_source_types(df):
     """Sync data_type values in all manual source YAMLs from extracted metadata.
 
@@ -324,8 +331,7 @@ def main():
 
         # Get all tables for this source from metadata
         for table_name, table_group in group.groupby('TABLE_NAME'):
-            # Check if specific tables are configured
-            if 'tables' in mapping and table_name not in mapping['tables']:
+            if not should_generate_table(table_name, mapping):
                 continue
 
             # Auto-generate from metadata

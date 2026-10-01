@@ -91,6 +91,8 @@ SELECT
   has_osteoporosis,
   has_osteoarthritis,
   has_chronic_liver_disease,
+  has_sickle_cell,
+  has_thalassaemia,
   has_palliative_care,
   has_rheumatoid_arthritis,
   total_conditions,

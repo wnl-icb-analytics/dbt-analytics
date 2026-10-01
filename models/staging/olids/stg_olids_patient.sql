@@ -3,8 +3,7 @@ select
     id,
 
     -- Business columns
-    nhs_number_hash,
-    sk_patient_id,
+    {{ consistent_sk_patient_id_format('sk_patient_id')}} as sk_patient_id,
     title,
     gender_source_concept_id,
     gender_code,
@@ -20,11 +19,9 @@ select
     is_confidential,
     is_test_patient,
     publisher_organisation_code,
-    lds_id,
-    lds_datetime_first_acquired,
+    lds_transform_datetime,
 
     -- Metadata
-    lds_start_datetime,
     lds_is_deleted,
     lds_source_record_id,
 

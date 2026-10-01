@@ -3,14 +3,15 @@ models:
   - name: int_eosinophil_count
     description: >
       Blood eosinophil count observations with unit standardisation and data quality flags.
-      One row per observation using the EOS_COUNT cluster. Applies a value-first standardisation
-      workflow via the standardise_count_observation macro to infer correct units and values,
-      then categorises by clinical severity. Standard unit: 10*9/L.
+      One row per observation using the EOS_COUNT cluster. Applies the standardise_count_observation
+      macro to infer correct units and values (conversions attempted only when a value is implausibly
+      high; out-of-range values pass through unchanged), then categorises by clinical severity.
+      Standard unit: 10*9/L.
     config:
       meta:
         owner:
           name: ThomasShallcross
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
@@ -19,6 +20,9 @@ models:
               - original_result_value
               - original_result_unit_code
               - concept_code
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: EOS_COUNT
     columns:
       - name: id
         description: Unique observation identifier
@@ -48,7 +52,7 @@ models:
       - name: expected_measurement_type
         description: Always COUNT for this model
       - name: inferred_unit
-        description: Standardised unit after inference (10*9/L or NULL if NONE confidence)
+        description: Standardised unit after inference (10*9/L, or NULL if the unit is excluded)
       - name: inferred_value
         description: Standardised numeric value after any conversion
       - name: value_was_converted
@@ -58,15 +62,15 @@ models:
       - name: conversion_reason
         description: Human-readable explanation of standardisation action taken
       - name: confidence
-        description: Confidence level in the inferred value
+        description: Confidence flag in the inferred value
         data_tests:
           - accepted_values:
               arguments:
-                values: ['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'NONE']
+                values: ['HIGH', 'MEDIUM', 'LOW']
       - name: is_negative
         description: TRUE if inferred value is negative
       - name: is_extreme_outlier
-        description: TRUE if inferred value exceeds 100 x10*9/L
+        description: TRUE if inferred value exceeds 20 x10*9/L (the BIOLOGICAL_UPPER bound)
       - name: eosinophil_category
         description: Clinical severity category based on inferred value
         data_tests:

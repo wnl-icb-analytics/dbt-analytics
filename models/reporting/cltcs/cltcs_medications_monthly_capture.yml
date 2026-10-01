@@ -1,0 +1,49 @@
+models:
+  - name: cltcs_medications_monthly_capture
+    description: >
+      Monthly append-only capture of recent-medication covariates from
+      fct_person_medications_recent. One row per (person_id, snapshot_month). Recent
+      medications is a rolling "recent" aggregate anchored on CURRENT_DATE (last 30 days and
+      last year), so it changes with the clock and cannot be reconstructed historically --
+      captured append-only like cltcs_asc_monthly_capture rather than snapshotted (its
+      array_agg medication arrays would also churn a check-strategy snapshot). Keyed on
+      person_id (its own capture, not folded into the sk_patient_id-keyed activity capture).
+      Feeds the recent-medication covariates in cltcs_monthly_covariates. Forward-only:
+      history starts at the first run.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - snapshot_month
+    columns:
+      - name: person_id
+        description: "Person identifier."
+        data_tests:
+          - not_null
+      - name: snapshot_month
+        description: "First day of the calendar month this row was captured (append key)."
+        data_tests:
+          - not_null
+      - name: captured_at
+        description: "Timestamp the row was written (for audit; not part of the grain)."
+      - name: medications_recent_12mo
+        description: "Array of medication objects (medication_name, prescription_count) prescribed in the last year, as-at the captured month."
+      - name: unique_active_ingredient_count_12mo
+        description: "Distinct active-ingredient (VTM) count over the last year. Prescriptions with no VTM mapping in dm+d are excluded from this count."
+      - name: total_prescriptions_12mo
+        description: "Total prescription orders in the last year (captured for future use; not surfaced in the panel)."
+      - name: unique_medication_count_12mo
+        description: "Distinct medication names prescribed in the last year (captured for future use)."
+      - name: medications_recent_30d
+        description: "Array of medication objects prescribed in the last 30 days (captured for future use)."
+      - name: total_prescriptions_30d
+        description: "Total prescription orders in the last 30 days (captured for future use)."
+      - name: unique_medication_count_30d
+        description: "Distinct medication names prescribed in the last 30 days (captured for future use)."
+      - name: unique_active_ingredient_count_30d
+        description: "Distinct active-ingredient (VTM) count over the last 30 days (captured for future use). VTM-null prescriptions excluded."

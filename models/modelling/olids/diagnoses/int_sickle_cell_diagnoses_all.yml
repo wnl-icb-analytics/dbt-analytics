@@ -1,0 +1,45 @@
+models:
+  - name: int_sickle_cell_diagnoses_all
+    description: >
+      Sickle cell disease diagnosis observations (one row per observation).
+
+      Sickle cell disease is an inherited blood disorder: abnormal haemoglobin makes
+      red blood cells stiff and crescent ("sickle") shaped, causing episodes of severe
+      pain, anaemia, frequent infections and higher stroke risk. Lifelong; most common
+      in people of African and Caribbean family backgrounds.
+
+      Uses the SICKLE_COD code cluster (disease codes only - excludes carrier/trait).
+      Feeds fct_person_sickle_cell_register.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: id
+        description: 'Unique identifier for the clinical observation'
+        tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: 'Patient identifier'
+      - name: clinical_effective_date
+        description: 'Date the diagnosis was recorded as clinically effective'
+      - name: date_recorded
+        description: 'Date the observation was entered into the source system'
+      - name: concept_code
+        description: 'SNOMED code for the sickle cell disease diagnosis'
+      - name: concept_display
+        description: 'Readable name of the diagnosis code'
+      - name: source_cluster_id
+        description: 'Code cluster the diagnosis came from (always SICKLE_COD)'
+      - name: is_diagnosis_code
+        description: 'Always TRUE - every row is a sickle cell disease diagnosis'
+      - name: sickle_cell_observation_type
+        description: 'Observation type label (always "Sickle Cell Disease Diagnosis")'
+    tests:
+      - dbt_utils.at_least_one:
+          column_name: id
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: SICKLE_COD
+            source: PCD

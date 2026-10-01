@@ -46,7 +46,9 @@ SELECT DISTINCT
     -- borough-to-sub-ICB CASE lives in exactly one place.
     borough_map.pcn_sub_icb_code AS sub_icb_code,
     borough_map.pcn_sub_icb_name AS sub_icb_name,
-    
+    borough_map.pcn_legacy_icb_code AS legacy_icb_code,
+    borough_map.pcn_legacy_icb_name AS legacy_icb_name,
+
     -- PCN membership details
     pp.member_practice_count,
     pp.member_practice_codes,

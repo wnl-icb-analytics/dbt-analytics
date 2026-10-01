@@ -4,9 +4,8 @@
         cluster_by=['person_id', 'clinical_effective_date'],
         tags=['smi_registry'])
 }}
- --This model captures observations where Cholesterol measurement was declined by the patient.
- --This table is empty if there are no such observations in the source data. Maybe the concepts 
- with QCHECK as (
+ --This model captures observations Codes indicating the patient has chosen not to receive mental health quality indicator care.
+  with QCHECK as (
 SELECT
     obs.id,
     obs.person_id,

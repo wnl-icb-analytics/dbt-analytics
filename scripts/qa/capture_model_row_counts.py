@@ -22,6 +22,7 @@ from typing import Optional
 import snowflake.connector
 
 DEFAULT_DATABASES = [
+    # STAGING (raw + staging views) excluded by design; counts equal upstream
     "MODELLING",
     "REPORTING",
     "PUBLISHED_REPORTING__DIRECT_CARE",
@@ -35,8 +36,6 @@ EXCLUDE_SCHEMA_PATTERNS = [
     "TEST_AUDIT%",
     "DBT_SNAPSHOTS",
     "ELEMENTARY%",
-    "DBT_RAW",       # raw layer is a view-over-source passthrough; counts equal upstream
-    "DBT_STAGING",   # staging is a view; counts equal upstream
 ]
 
 BASELINE_TABLE = "DATA_LAKE__NCL.DBT_OBSERVABILITY.MODEL_ROW_COUNT_BASELINE"

@@ -1,0 +1,35 @@
+models:
+  - name: stg_reference_geo_lsoa21_sicbl26_icb26_nhser26_lad26
+    description: '2021 LSOA to 2026 sub-ICB, ICB and local authority district lookup, one row per LSOA21'
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: lsoa21_cd
+        description: 2021 LSOA code
+        data_tests:
+          - unique
+          - not_null
+      - name: lsoa21_nm
+        description: 2021 LSOA name
+      - name: sicbl26_cd
+        description: sub-ICB location ONS code
+      - name: sicbl26_cdh
+        description: sub-ICB location ODS code
+      - name: sicbl26_nm
+        description: sub-ICB location name
+      - name: icb26_cd
+        description: ICB ONS code
+      - name: icb26_cdh
+        description: ICB ODS code
+      - name: icb26_nm
+        description: ICB name
+      - name: lad26_cd
+        description: local authority district ONS code
+      - name: lad26_nm
+        description: local authority district name

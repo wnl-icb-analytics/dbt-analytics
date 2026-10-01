@@ -1,0 +1,23 @@
+
+models:
+  - name: int_sus_apc_merged_spells
+    description: |
+      Non-overlapping inpatient length of stay per patient over a rolling 12-month window. Overlapping and nested
+      spells from int_sus_apc_imputed_spells are merged into maximal intervals (island detection) before summing
+      days. Same-day spells (e.g. day-case admissions) count as 0.5 days rather than 0. One row per patient with
+      at least one qualifying spell in the window.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: sk_patient_id
+        data_type: varchar
+        description: "Common commissioning patient identifier"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: apc_los_12mo
+        data_type: number
+        description: "Total non-overlapping length of stay in days for inpatient spells in the last 12 months. Same-day merged intervals count as 0.5."

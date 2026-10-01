@@ -1,0 +1,24 @@
+models:
+  - name: stg_myria_matched_patients
+    description: Myria propensity-matched evaluation population (Barnet treatment + matched Enfield controls), passthrough of DATA_LAKE__NCL.MYRIA.MATCHED_PATIENTS. One row per patient per matching run; file_date identifies the run.
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [patient_id, file_date, match_id]
+    columns:
+      - name: patient_id
+        description: Patient identifier; may appear in multiple match pairs within a run.
+        data_tests:
+          - not_null
+      - name: match_id
+        description: Match-pair identifier within the matching run.
+        data_tests:
+          - not_null
+      - name: file_date
+        description: Date of the matching run this row came from.
+        data_tests:
+          - not_null

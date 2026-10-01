@@ -26,5 +26,5 @@ select
     ROUND(AVG(duration_minutes), 1) as avg_duration_minutes,
     ROUND(AVG(booking_to_slot_days), 1) as avg_booking_to_slot_days,
     ROUND(AVG(patient_wait_mins), 1) as avg_patient_wait_minutes
-from {{ ref('int_appointment_gp_clean_recent') }}
+from {{ ref('int_appointment_gp_clinical_recent') }}
 group by practice_code, report_month, contact_mode, practitioner_role_group

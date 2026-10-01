@@ -1,0 +1,40 @@
+version: 2
+models:
+  - name: stg_reference_pod_group_mapping
+    description: |
+      Governed POD group mapping from the POD Group Manager app
+      (DATA_LAKE__NCL.POD_GROUP_MANAGER). One row per (pod_code,
+      local_pod_code, local_pod_description) combination, assigned to one of
+      18 curated POD groups shared with WNL contracting/urgent care
+      reporting. Maintained in the app (audited writes, unmapped detection).
+      Join to SLAM feeds on all three key fields with equal_null semantics.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: pod_code
+        description: Upper-cased SLAM point-of-delivery code (NULL for ~13
+          lines keyed on local code only, e.g. BED / HTCS).
+      - name: local_pod_code
+        description: Upper-cased local POD code (NULL when not supplied).
+      - name: local_pod_description
+        description: Upper-cased local POD description (NULL when not supplied).
+      - name: pod_group
+        description: One of the 18 governed POD group categories (POD_GROUP_OPTION).
+        data_tests:
+          - not_null
+          # Full lens coverage gate: a new category added in the app fails the
+          # build until pod_group_service_lens decides its service_grouping and
+          # attributability (one seed row).
+          - relationships:
+              arguments:
+                to: ref('pod_group_service_lens')
+                field: pod_group
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - pod_code
+              - local_pod_code
+              - local_pod_description

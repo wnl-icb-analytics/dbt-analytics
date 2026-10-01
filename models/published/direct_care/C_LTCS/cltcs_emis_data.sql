@@ -1,3 +1,9 @@
+{{
+    config(
+        materialized='table',
+        tags=['cltcs_secure_source'])
+}}
+
 with in_scope_practice_list as (
     select practice_code, area_code, area_name
     from {{ ref('cltcs_organisations_in_scope') }}

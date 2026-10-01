@@ -1,0 +1,47 @@
+version: 2
+models:
+  - name: int_cost_index_mhsds_activity_monthly
+    description: >-
+      Estimated mental-health care costs by patient, calendar month and service. Each row is one
+      such combination. Inpatient costs are apportioned from fiscal-year bed-day segments, with
+      monthly bed days reconciling to the currency bed-day total. Contact activity counts every
+      contact row, while non-attended contacts have zero proxy cost. The table supplies MHSDS
+      estimates to the cross-system cost index; it does not contain actual provider expenditure.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: sk_patient_id
+        description: DMIC pseudonymised NHS number.
+        data_tests:
+          - not_null
+      - name: activity_month
+        description: First day of the calendar month.
+        data_tests:
+          - not_null
+      - name: service
+        description: MH Inpatient, MH Crisis Contact, or MH Community Contact.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [MH Inpatient, MH Crisis Contact, MH Community Contact]
+      - name: total_cost
+        description: Proxy cost for the grain, £.
+      - name: total_activity
+        description: Bed days or contacts for the grain.
+      - name: activity_unit
+        description: Unit counted in total_activity.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [bed_day, contact]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - activity_month
+              - service

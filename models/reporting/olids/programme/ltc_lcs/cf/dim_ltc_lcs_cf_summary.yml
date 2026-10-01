@@ -1,19 +1,415 @@
 models:
   - name: dim_ltc_lcs_cf_summary
-    description: 'LTC case finding summary aggregating indicators across multiple
-      condition areas.
-
-      One row per person meeting criteria for atrial fibrillation, heart failure, CKD, cardiovascular,
-      diabetes, or hypertension case finding.'
+    description: >
+      LTC LCS case-finding status at build time across all condition areas. One
+      row per currently registered, living person in the case-finding base
+      population. Each flag applies the condition-specific exclusions and
+      thresholds in its indicator model. Rolling lookback periods are evaluated
+      against current_date().
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
     config:
       meta:
+        indicators:
+          - id: "LTC_LCS_CF_AF_61"
+            type: "CASE_FINDING"
+            category: "AF"
+            clinical_domain: "Cardiovascular Case Finding"
+            name_short: "AF_61: Cardiac meds, no AF/HF"
+            description_short: "Cardiac medications without AF/HF diagnosis"
+            description_long: >
+              On digoxin, flecainide, propafenone, or anticoagulant, not on
+              AF or heart failure registers, no DVT/PE ever recorded.
+            is_qof: false
+            source_column: "in_af_61"
+            sort_order: "LTC_LCS_AF_61"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_AF_62"
+            type: "CASE_FINDING"
+            category: "AF"
+            clinical_domain: "Cardiovascular Case Finding"
+            name_short: "AF_62: 65+, no pulse check"
+            description_short: "65+ without pulse check in last 3 years, excluding AF_61"
+            description_long: >
+              Age 65+, no pulse rate/rhythm check in last 3 years. Excludes patients
+              already identified in AF_61 medication case finding.
+            is_qof: false
+            source_column: "in_af_62"
+            sort_order: "LTC_LCS_AF_62"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_CKD_61"
+            type: "CASE_FINDING"
+            category: "CKD"
+            clinical_domain: "Chronic Kidney Disease Case Finding"
+            name_short: "CKD_61: Latest eGFR <60"
+            description_short: "Latest eGFR reading <60"
+            description_long: >
+              Age 17+, latest eGFR below 60 ml/min/1.73m². Excludes people in
+              the metabolic LTC population, people on the CKD register, and
+              people with recent CKD screening.
+            is_qof: false
+            source_column: "in_ckd_61"
+            sort_order: "LTC_LCS_CKD_61"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_CKD_62"
+            type: "CASE_FINDING"
+            category: "CKD"
+            clinical_domain: "Chronic Kidney Disease Case Finding"
+            name_short: "CKD_62: Latest UACR >4"
+            description_short: "Latest UACR reading >4"
+            description_long: >
+              Age 17+, latest UACR above 4 mg/mmol. Excludes people in the
+              metabolic LTC population, people on the CKD register, CKD_61
+              candidates, and people with recent CKD screening.
+            is_qof: false
+            source_column: "in_ckd_62"
+            sort_order: "LTC_LCS_CKD_62"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_CKD_63"
+            type: "CASE_FINDING"
+            category: "CKD"
+            clinical_domain: "Chronic Kidney Disease Case Finding"
+            name_short: "CKD_63: Latest UACR >70"
+            description_short: "Latest UACR >70 mg/mmol"
+            description_long: >
+              Age 17+, latest UACR above 70 mg/mmol. Excludes people in the
+              metabolic LTC population, people on the CKD register, CKD_61 or
+              CKD_62 candidates, and people with recent CKD screening.
+            is_qof: false
+            source_column: "in_ckd_63"
+            sort_order: "LTC_LCS_CKD_63"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_CKD_64"
+            type: "CASE_FINDING"
+            category: "CKD"
+            clinical_domain: "Chronic Kidney Disease Case Finding"
+            name_short: "CKD_64: High-risk, no eGFR in 12m"
+            description_short: "High-risk conditions, no eGFR in 12m"
+            description_long: >
+              Age 17+, high-risk conditions without eGFR monitoring in the last
+              year. Risk factors include recent AKI, nephrotoxic medication,
+              at-risk conditions, or microhaematuria.
+            is_qof: false
+            source_column: "in_ckd_64"
+            sort_order: "LTC_LCS_CKD_64"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_CVD_61"
+            type: "CASE_FINDING"
+            category: "CVD"
+            clinical_domain: "Cardiovascular Disease Case Finding"
+            name_short: "CVD_61: QRISK2 ≥20%, no statins"
+            description_short: "QRISK2 ≥20%, no statins"
+            description_long: >
+              Age 40 to under 84, QRISK2 at least 20%, and no recent statin.
+              Excludes statin adverse reactions, contraindications, declines,
+              and high CVD risk review declines.
+            is_qof: false
+            source_column: "in_cvd_61"
+            sort_order: "LTC_LCS_CVD_61"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_CVD_62"
+            type: "CASE_FINDING"
+            category: "CVD"
+            clinical_domain: "Cardiovascular Disease Case Finding"
+            name_short: "CVD_62: QRISK2 15-20%, no statins"
+            description_short: "QRISK2 15-19.99%, no statins"
+            description_long: >
+              Age 40 to under 84, QRISK2 from 15% to under 20%, and no recent
+              statin. Excludes CVD_61 candidates, statin adverse reactions,
+              contraindications, declines, and high CVD risk review declines.
+            is_qof: false
+            source_column: "in_cvd_62"
+            sort_order: "LTC_LCS_CVD_62"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_CVD_63"
+            type: "CASE_FINDING"
+            category: "CVD"
+            clinical_domain: "Cardiovascular Disease Case Finding"
+            name_short: "CVD_63: On statins, non-HDL >2.5"
+            description_short: "On statins, non-HDL >2.5 mmol/L"
+            description_long: >
+              Age 40 to under 84, QRISK2 at least 10%, recent statin treatment,
+              and latest non-HDL cholesterol above 2.5 mmol/L. Excludes higher
+              CVD cohorts and high CVD risk review declines.
+            is_qof: false
+            source_column: "in_cvd_63"
+            sort_order: "LTC_LCS_CVD_63"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_CVD_64"
+            type: "CASE_FINDING"
+            category: "CVD"
+            clinical_domain: "Cardiovascular Disease Case Finding"
+            name_short: "CVD_64: QRISK2 ≥10%, no statins"
+            description_short: "QRISK2 ≥10%, no statins"
+            description_long: >
+              Age 40 to under 84, QRISK2 at least 10%, and no recent statin.
+              Excludes higher CVD cohorts, statin declines, and high CVD risk
+              review declines.
+            is_qof: false
+            source_column: "in_cvd_64"
+            sort_order: "LTC_LCS_CVD_64"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_CVD_65"
+            type: "CASE_FINDING"
+            category: "CVD"
+            clinical_domain: "Cardiovascular Disease Case Finding"
+            name_short: "CVD_65: Not on high-intensity statin"
+            description_short: "QRISK2 ≥10%, not on a high-intensity statin"
+            description_long: >
+              Age 40 to under 84, QRISK2 at least 10%, on a statin course but
+              not high-intensity treatment. Excludes higher CVD cohorts and
+              high CVD risk review declines.
+            is_qof: false
+            source_column: "in_cvd_65"
+            sort_order: "LTC_LCS_CVD_65"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_CVD_66"
+            type: "CASE_FINDING"
+            category: "CVD"
+            clinical_domain: "Cardiovascular Disease Case Finding"
+            name_short: "CVD_66: 75-<84, no recent QRISK2"
+            description_short: "Age 75-<84, no QRISK2 in 5 years"
+            description_long: >
+              Age 75 to under 84, no QRISK2 reading in the last 5 years, and no
+              recent statin. Excludes higher CVD cohorts, recent NHS health checks,
+              statin adverse reactions, contraindications, and declines.
+            is_qof: false
+            source_column: "in_cvd_66"
+            sort_order: "LTC_LCS_CVD_66"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_CYP_AST_61"
+            type: "CASE_FINDING"
+            category: "CYP_AST"
+            clinical_domain: "Children and Young People Asthma Case Finding"
+            name_short: "Possible asthma"
+            description_short: "Asthma activity without a diagnosis"
+            description_long: >
+              Registered children aged 18 months to 17 years with recent asthma
+              medication, symptoms, suspected asthma, or viral-induced wheeze.
+              Excludes respiratory registers and recent screening.
+            is_qof: false
+            source_column: "in_cyp_ast_61"
+            sort_order: "LTC_LCS_CYP_AST_61"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_DM_61"
+            type: "CASE_FINDING"
+            category: "DM"
+            clinical_domain: "Diabetes Mellitus Case Finding"
+            name_short: "DM_61: HbA1c ≥48, no diabetes dx"
+            description_short: "HbA1c ≥48 mmol/mol, no diabetes diagnosis"
+            description_long: >
+              Age 17+, latest HbA1c at least 48 mmol/mol, and no diabetes
+              diagnosis. Excludes diabetes resolved or remission markers and
+              recent annual review declines.
+            is_qof: false
+            source_column: "in_dm_61"
+            sort_order: "LTC_LCS_DM_61"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_DM_62"
+            type: "CASE_FINDING"
+            category: "DM"
+            clinical_domain: "Diabetes Mellitus Case Finding"
+            name_short: "DM_62: Gestational DM, no HbA1c in 12m"
+            description_short: "Gestational diabetes, no HbA1c in 12m"
+            description_long: >
+              Age 17+, history of gestational diabetes, and no HbA1c in the last
+              year. Excludes higher diabetes cohorts and recent annual review declines.
+            is_qof: false
+            source_column: "in_dm_62"
+            sort_order: "LTC_LCS_DM_62"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_DM_63"
+            type: "CASE_FINDING"
+            category: "DM"
+            clinical_domain: "Diabetes Mellitus Case Finding"
+            name_short: "DM_63: HbA1c 46-47, reading >12m old"
+            description_short: "HbA1c 46-47 mmol/mol, reading >12m old"
+            description_long: >
+              Age 17+, latest HbA1c from 46 to 47 mmol/mol and more than one year
+              old. Excludes higher diabetes cohorts and recent annual review declines.
+            is_qof: false
+            source_column: "in_dm_63"
+            sort_order: "LTC_LCS_DM_63"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_DM_64"
+            type: "CASE_FINDING"
+            category: "DM"
+            clinical_domain: "Diabetes Mellitus Case Finding"
+            name_short: "DM_64: High BMI, no HbA1c in 24m"
+            description_short: "High BMI, no HbA1c in 24m"
+            description_long: >
+              Age 17+, latest BMI at least 35 kg/m², or at least 32.5 kg/m² for
+              people recorded as BAME, with no HbA1c in the last 2 years. Excludes
+              higher diabetes cohorts and recent annual review declines.
+            is_qof: false
+            source_column: "in_dm_64"
+            sort_order: "LTC_LCS_DM_64"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_DM_65"
+            type: "CASE_FINDING"
+            category: "DM"
+            clinical_domain: "Diabetes Mellitus Case Finding"
+            name_short: "DM_65: Moderate BMI, no HbA1c in 24m"
+            description_short: "Moderate BMI, no HbA1c in 24m"
+            description_long: >
+              Age 17+, latest BMI from 30 to under 35 kg/m², or from 27.5 to under
+              32.5 kg/m² for people recorded as BAME, with no HbA1c in the last
+              2 years. Excludes higher cohorts and recent annual review declines.
+            is_qof: false
+            source_column: "in_dm_65"
+            sort_order: "LTC_LCS_DM_65"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_DM_66"
+            type: "CASE_FINDING"
+            category: "DM"
+            clinical_domain: "Diabetes Mellitus Case Finding"
+            name_short: "DM_66: HbA1c 42-45, no recheck in 12m"
+            description_short: "HbA1c 42-45 mmol/mol, no recheck in 12m"
+            description_long: >
+              Age 17+, latest HbA1c from 42 to 45 mmol/mol and no HbA1c in the
+              last year. Excludes higher diabetes cohorts and recent annual review declines.
+            is_qof: false
+            source_column: "in_dm_66"
+            sort_order: "LTC_LCS_DM_66"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_HF_61"
+            type: "CASE_FINDING"
+            category: "HF"
+            clinical_domain: "Heart Failure Case Finding"
+            name_short: "HF_61: Possible undiagnosed HF"
+            description_short: "HF treatment, test, or symptom triggers without an HF diagnosis"
+            description_long: >
+              Registered patients with heart failure treatment, raised NT-proBNP,
+              cardiomyopathy with breathlessness, digoxin, or spironolactone triggers.
+              Excludes AF/HF registers, prior HF evidence, and recent HF exclusions.
+            is_qof: false
+            source_column: "in_hf_61"
+            sort_order: "LTC_LCS_HF_61"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_HTN_61"
+            type: "CASE_FINDING"
+            category: "HTN"
+            clinical_domain: "Hypertension Case Finding"
+            name_short: "HTN_61: BP ≥180/120 or home ≥170/115"
+            description_short: "Clinic BP ≥180/120 or home/ABPM ≥170/115"
+            description_long: >
+              Latest clinic BP at least 180/120 mmHg or home/ABPM at least
+              170/115 mmHg. Excludes hypertension registers and recent screening.
+            is_qof: false
+            source_column: "in_htn_61"
+            sort_order: "LTC_LCS_HTN_61"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_HTN_62"
+            type: "CASE_FINDING"
+            category: "HTN"
+            clinical_domain: "Hypertension Case Finding"
+            name_short: "HTN_62: BP ≥160/100 or home ≥150/95"
+            description_short: "Clinic BP ≥160/100 or home/ABPM ≥150/95"
+            description_long: >
+              Latest clinic BP at least 160/100 mmHg or home/ABPM at least
+              150/95 mmHg. Excludes HTN_61, hypertension registers, and recent screening.
+            is_qof: false
+            source_column: "in_htn_62"
+            sort_order: "LTC_LCS_HTN_62"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_HTN_63"
+            type: "CASE_FINDING"
+            category: "HTN"
+            clinical_domain: "Hypertension Case Finding"
+            name_short: "HTN_63: Black ethnicity, stage 1 BP + CVD risk"
+            description_short: "Black ethnicity, stage 1 BP and CVD risk"
+            description_long: >
+              People recorded with Black ethnicity, stage 1 blood pressure, and a
+              cardiovascular or metabolic risk factor. Excludes higher hypertension
+              cohorts, hypertension registers, and recent screening.
+            is_qof: false
+            source_column: "in_htn_63"
+            sort_order: "LTC_LCS_HTN_63"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_HTN_65"
+            type: "CASE_FINDING"
+            category: "HTN"
+            clinical_domain: "Hypertension Case Finding"
+            name_short: "HTN_65: Stage 1 BP + CVD risk"
+            description_short: "Stage 1 BP with CVD risk factors"
+            description_long: >
+              Stage 1 blood pressure with a cardiovascular risk factor or Black
+              ethnicity. Excludes higher hypertension cohorts, hypertension registers,
+              and recent screening.
+            is_qof: false
+            source_column: "in_htn_65"
+            sort_order: "LTC_LCS_HTN_65"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
+          - id: "LTC_LCS_CF_HTN_66"
+            type: "CASE_FINDING"
+            category: "HTN"
+            clinical_domain: "Hypertension Case Finding"
+            name_short: "HTN_66: Stage 1 BP"
+            description_short: "Stage 1 BP without higher-priority criteria"
+            description_long: >
+              Stage 1 blood pressure without higher-priority criteria. Uses the
+              higher systolic threshold for people aged 80 or over. Excludes higher
+              hypertension cohorts, hypertension registers, and recent screening.
+            is_qof: false
+            source_column: "in_htn_66"
+            sort_order: "LTC_LCS_HTN_66"
+            usage_contexts:
+              - "LTC_LCS_DASHBOARD"
+              - "CASE_FINDING_PROGRAMME"
         owner:
           name: EddieDavison92
     columns:
       - name: person_id
+        description: Unique person identifier
         tests:
           - not_null
           - unique

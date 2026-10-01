@@ -1,0 +1,37 @@
+version: 2
+models:
+  - name: int_person_resource_index_exposure_monthly
+    description: |
+      WNL registration exposure by patient-month for months covered by the
+      SLAM cost index. Built from PDS registration episodes x WNL practices.
+      Exposure is truncated at the death month and at the deduction month
+      (stg_pds_reason_for_removal, since PDS leaves deducted episodes open);
+      both truncation months count. Reconciles to the published GP list
+      within ~1-2%.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: sk_patient_id
+        description: DMIC pseudonymised NHS number.
+        data_tests:
+          - not_null
+      - name: activity_month
+        description: Registered month.
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: WNL practice for the registered month.
+        data_tests:
+          - not_null
+      - name: date_of_death
+        description: PDS date of death (NULL if alive).
+      - name: died_in_month
+        description: TRUE when death falls inside the registered month.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - activity_month

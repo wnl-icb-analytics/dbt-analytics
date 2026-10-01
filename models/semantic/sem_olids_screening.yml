@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: sem_olids_screening
+    description: |
+      OLIDS Screening semantic view. Pre-filtered programme cohorts cover
+      bowel screening (50-74), breast screening (female 50-70), cervical
+      screening (female 25-64), and NHS Health Check eligibility.
+
+      Screening fields distinguish the latest event of any type from the latest
+      completed screening. Days overdue is null for people who are up to date
+      or have never completed screening.
+
+      Each programme table already applies its cohort restriction. Programme
+      tables include inactive and deceased people; filter is_active for
+      coverage analysis. Query one programme table at a time to avoid joins
+      multiplying rows.
+
+      Exposes person_id for aggregate-only CTE joins to other sem_olids_*
+      views. Never return person_id in final results.
+
+      Tables: dim_person_demographics, fct_person_bowel_screening_status,
+      fct_person_breast_screening_status, fct_person_cervical_screening_status,
+      and fct_person_nhs_health_check_status.
+    config:
+      materialized: semantic_view
+      schema: SEMANTIC
+      meta:
+        owner:
+          name: Eddie Davison

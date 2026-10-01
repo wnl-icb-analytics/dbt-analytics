@@ -59,7 +59,7 @@ mr.person_id
 ,DATE(mr.clinical_effective_date) as MED_REVIEW_DATE
 ,mr.MED_REV_LAST_12M
 --FROM DEV__MODELLING.OLIDS_OBSERVATIONS.INT_SMI_LONGLIVES_MED_REVIEW_LATEST mr
-FROM {{ ref('int_smi_longlives_med_review_latest')  }} mr
+FROM {{ ref('int_medication_review_latest')  }} mr
 --INNER JOIN MODELLING.OLIDS_PROGRAMME.INT_SMI_POPULATION_BASE p USING (PERSON_ID)
 INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
 )

@@ -1,0 +1,38 @@
+version: 2
+models:
+  - name: fct_resource_index_by_residence_borough
+    description: >
+      Resource index by residence borough for the WNL exposure population.
+      Residence-based attribution (where patients live) complementing
+      fct_resource_index_by_area (registered practice). Includes non-WNL
+      boroughs and an 'Unknown' bucket so spend reconciles. Both index bases:
+      resource_index_age_sex (age-sex) and resource_index_weighted
+      (Carr-Hill).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: residence_borough
+        description: Residence local authority / borough ('Unknown' when unresolvable).
+        data_tests:
+          - not_null
+          - unique
+      - name: population
+        description: Persons with WNL registration exposure resident in the borough.
+      - name: person_years
+        description: Registered person-years in the window.
+      - name: weighted_person_years
+        description: Carr-Hill weighted person-years.
+      - name: actual_cost_12m
+        description: Patient-attributable spend over the window (GBP).
+      - name: expected_cost_12m
+        description: Expected spend from the age-sex cost curve (GBP).
+      - name: resource_index_age_sex
+        description: Age-sex basis, actual / expected.
+      - name: cost_per_person_year
+        description: Actual spend per registered person-year (GBP).
+      - name: spend_per_weighted_year
+        description: Spend per Carr-Hill weighted person-year (GBP).
+      - name: resource_index_weighted
+        description: Carr-Hill basis, spend per weighted person-year vs the WNL mean.

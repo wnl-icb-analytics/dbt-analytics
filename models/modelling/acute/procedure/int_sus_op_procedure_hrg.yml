@@ -1,0 +1,84 @@
+models:
+  - name: int_sus_op_procedure_hrg
+    description: >
+      One row per outpatient appointment and bundled or unbundled HRG code.
+      Repeated occurrences of the same code are represented by
+      observation_count. Includes activity without a linked patient key; use
+      visit_occurrence_id to join to the appointment.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          config:
+            severity: error
+            error_if: ">1000"
+            warn_if: ">10"
+          arguments:
+            combination_of_columns:
+              - visit_occurrence_id
+              - source_concept_code
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: procedure_id
+        data_type: varchar
+        description: "Unique identifier of procedure (surrogate key) using appointment identifier, code order and code"
+
+      - name: date
+        data_type: date
+        description: "Date of appointment"
+
+      - name: visit_occurrence_id
+        data_type: number
+        description: "Unique identifier of appointment (primarykey_id in raw sus tables)"
+
+      - name: visit_occurrence_type
+        data_type: varchar
+        description: "Indicator of source dataset"
+
+      - name: sk_patient_id
+        data_type: varchar
+        description: >
+          Common commissioning patient identifier. Null when the appointment
+          cannot be linked to a person; the HRG remains valid activity.
+
+      - name: organisation_id
+        data_type: varchar
+        description: "The Organisation Code of the Organisation acting as a Health Care Provider as issued by the Organisation Data Service (ODS). This field represents the organisation receiving payment for the associated activity"
+
+      - name: organisation_name
+        data_type: varchar
+        description: "The name associated with the ODS code for the Health Care Provider"
+
+      - name: site_id
+        data_type: varchar
+        description: "Site Code of Treatment is the Organisation Code of the location where the patient was treated, i.e. it should enable the treating Organisation site to be identified."
+
+      - name: site_name
+        data_type: varchar
+        description: "The name associated with the site id code"
+
+      - name: source_concept_code
+        data_type: varchar
+        description: "HRG code. Either: Unbundled HRG code or the core HRG derived by SUS as a result of HRG grouping and used for tariff application"
+        tests:
+          - not_null
+
+      - name: concept_name
+        data_type: varchar
+        description: "HRG description as listed in the HRG dictionary"
+
+      - name: concept_vocabulary
+        data_type: varchar
+        description: "Code type shown"
+
+      - name: hrg_chapter
+        data_type: varchar
+        description: "Descriptive broad category of HRG treatment/conditions"
+
+      - name: hrg_subchapter
+        data_type: varchar
+        description: "Descriptive sub-category of HRG treatment/conditions"

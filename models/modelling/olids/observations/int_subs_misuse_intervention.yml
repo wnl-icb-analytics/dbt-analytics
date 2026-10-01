@@ -1,0 +1,19 @@
+models:
+  - name: int_subs_misuse_intervention
+    description: 'SUBSTANCE MISUSE INTERVENTIONS. Built for SMI Longer Lives campaign using PCD REFSET ILLSUBINT_COD'
+
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: ILLSUBINT_COD
+    columns:
+      - name: person_id
+        tests:
+          - not_null

@@ -1,0 +1,38 @@
+version: 2
+models:
+  - name: stg_nhs_payments_gp_practice_payments
+    description: |
+      NHS Payments to General Practice annual practice-level file (national).
+      One row per practice per financial year, FY 2015/16 onwards. Carries
+      the registered and Carr-Hill weighted list sizes (annual averages) used
+      as the weighted denominator in the resource index models. Rows without a
+      practice code or weighted list size are dropped.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [practice_code, financial_year]
+    columns:
+      - name: practice_code
+        description: GP practice ODS code.
+        data_tests:
+          - not_null
+      - name: financial_year
+        description: Financial year label, e.g. 2024/25.
+        data_tests:
+          - not_null
+      - name: financial_year_start
+        description: 1 April of the financial year, for sorting and windows.
+      - name: commissioner_code
+        description: Sub-ICB code (CCG code before 2022/23).
+      - name: registered_patients
+        description: Average number of registered patients over the year.
+      - name: weighted_patients
+        description: Average number of Carr-Hill (global sum) weighted patients over the year.
+        data_tests:
+          - not_null
+      - name: total_nhs_payments
+        description: Total NHS payments to the practice over the year, £.

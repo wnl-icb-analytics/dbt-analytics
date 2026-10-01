@@ -38,10 +38,8 @@ select
     date_recorded,
     is_confidential,
     issue_method_description,
-    lds_id,
     publisher_organisation_code,
-    lds_datetime_first_acquired,
-    medication_statement_source_concept_id,
+    lds_transform_datetime,
     statement_medication_name,
     mapped_concept_id,
     mapped_concept_code,
@@ -54,7 +52,6 @@ select
     bnf_name,
 
     -- Metadata
-    lds_start_datetime,
     lds_is_deleted,
     lds_source_record_id
 

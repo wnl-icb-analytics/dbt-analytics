@@ -1,0 +1,96 @@
+version: 2
+
+models:
+  - name: stg_mhsds_referral
+    description: >-
+      MHSDS referrals from active provider submissions. Each row is one unique service request. The
+      newest reporting period is retained; source-effective and submitted record identifiers resolve
+      ties within that period.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: uniq_serv_req_id
+        description: MHSDS unique service request identifier.
+        data_tests: [not_null, unique]
+      - name: mhs101_uniq_id
+        description: Unique submitted MHS101 record identifier.
+        data_tests: [not_null]
+      - name: service_request_id
+        description: Provider-local service request identifier.
+      - name: person_id
+        description: MHSDS person identifier.
+      - name: referral_request_received_date
+        description: Date the provider received the referral request; source dates before 1901 are null.
+      - name: referral_request_received_time
+        description: Recorded time the provider received the referral request.
+      - name: decision_to_treat_date
+        description: Recorded decision-to-treat date; source dates before 1901 are null.
+      - name: decision_to_treat_time
+        description: Recorded decision-to-treat time.
+      - name: disch_plan_creation_date
+        description: Recorded discharge plan creation date.
+      - name: disch_plan_creation_time
+        description: Recorded discharge plan creation time.
+      - name: disch_plan_last_updated_date
+        description: Recorded discharge plan update date.
+      - name: disch_plan_last_updated_time
+        description: Recorded discharge plan update time.
+      - name: refer_rejection_date
+        description: Recorded referral rejection date.
+      - name: refer_rejection_time
+        description: Recorded referral rejection time.
+      - name: refer_reject_reason
+        description: Referral rejection reason code.
+      - name: serv_disch_date
+        description: Recorded service discharge date.
+      - name: serv_disch_time
+        description: Recorded service discharge time.
+      - name: refer_clos_reason
+        description: Referral closure reason code.
+      - name: disch_letter_iss_date
+        description: Discharge letter issue date; source dates before 1901 are null.
+      - name: source_of_referral_mh
+        description: Source-of-referral code.
+      - name: prim_reason_referral_mh
+        description: Primary reason for referral code.
+      - name: clin_resp_priority_type
+        description: Clinical response priority code.
+      - name: org_id_prov
+        description: Provider organisation code.
+      - name: org_id_comm
+        description: Commissioner organisation code submitted by the provider.
+      - name: org_id_referring_org
+        description: Referring organisation code.
+      - name: org_id_referring
+        description: Referring organisation or person code.
+      - name: nhs_serv_agree_line_id
+        description: NHS service agreement line identifier.
+      - name: nhs_serv_agree_line_num
+        description: NHS service agreement line number.
+      - name: referring_care_professional_type
+        description: Referring care professional type where applicable.
+      - name: care_prof_team_local_id
+        description: Provider-local primary service or team identifier.
+      - name: uniq_care_prof_team_local_id
+        description: MHSDS-derived primary service or team identifier.
+      - name: serv_team_type
+        description: Primary service or team type code supplied in MHSDS v6.
+      - name: service_type_name
+        description: Service or team name supplied by the provider.
+      - name: age_serv_refer_rec_date
+        description: Age at the referral request received date.
+      - name: dm_icb_commissioner
+        description: ICB commissioner code derived by the source pipeline.
+      - name: dm_sub_icb_commissioner
+        description: Sub-ICB commissioner code derived by the source pipeline.
+      - name: dm_commissioner_derivation_reason
+        description: Code explaining the source pipeline's commissioner derivation.
+      - name: uniq_submission_id
+        description: MHSDS submission identifier.
+        data_tests: [not_null]
+      - name: reporting_period_end_date
+        description: End date of the source submission period.
+      - name: dmic_dataset
+        description: MHSDS version assigned by the source pipeline.

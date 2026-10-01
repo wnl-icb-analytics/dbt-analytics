@@ -31,17 +31,17 @@ SELECT
 
     CASE
         WHEN is_negative THEN 'Negative Value'
-        WHEN is_extreme_outlier THEN 'Extreme Outlier (> 100 x10*9/L)'
-        WHEN confidence = 'NONE' AND conversion_reason = 'Excluded unit on this measurement type' THEN 'Excluded Unit (' || original_result_unit_code || ')'
-        WHEN confidence = 'NONE' AND inferred_value IS NULL THEN 'Value Out of Range After All Conversions'
-        WHEN confidence = 'NONE' THEN 'Could Not Determine Valid Value'
+        WHEN is_extreme_outlier THEN 'Extreme Outlier (> 20 x10*9/L)'
+        WHEN inferred_value IS NULL THEN 'Excluded Unit (' || original_result_unit_code || ')'
+        WHEN conversion_reason = 'Value out of plausible range, kept unchanged' THEN 'Out of Plausible Range, Kept Unchanged'
         ELSE eosinophil_category
     END AS eosinophil_category_with_issues
 
 FROM {{ ref('int_eosinophil_count') }}
 
-WHERE confidence = 'NONE'
+WHERE inferred_value IS NULL
    OR is_extreme_outlier = TRUE
    OR is_negative = TRUE
+   OR conversion_reason = 'Value out of plausible range, kept unchanged'
 
 ORDER BY person_id, clinical_effective_date DESC

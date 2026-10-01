@@ -1,0 +1,40 @@
+version: 2
+sources:
+- name: pod_group_manager
+  database: '"DATA_LAKE__NCL"'
+  schema: '"POD_GROUP_MANAGER"'
+  description: POD Group Manager (Streamlit-in-Snowflake app) - governed POD
+    group mappings for WNL contracting/urgent care reporting. Writes go through
+    audited stored procedures; unmapped combinations are detected and assigned
+    in the app.
+  tables:
+  - name: POD_GROUP_MAPPING
+    description: Master POD group mapping. One row per (point_of_delivery_code, local_point_of_delivery_code,
+      local_point_of_delivery_description) combination, assigned to one of the 18
+      governed POD_GROUP_OPTION categories (pod_group_overview_master). Component
+      fields carry real NULLs; POD_LOOKUP retained for legacy join parity.
+    columns:
+    - name: POD_LOOKUP
+      data_type: TEXT
+    - name: POINT_OF_DELIVERY_CODE
+      data_type: TEXT
+    - name: LOCAL_POINT_OF_DELIVERY_CODE
+      data_type: TEXT
+    - name: LOCAL_POINT_OF_DELIVERY_DESCRIPTION
+      data_type: TEXT
+    - name: POD_GROUP_OVERVIEW_MASTER
+      data_type: TEXT
+    - name: OLD_POD_GROUP_OVERVIEW
+      data_type: TEXT
+    - name: NOTES
+      data_type: TEXT
+    - name: INSERTION_DATE
+      data_type: DATE
+    - name: CREATED_BY
+      data_type: TEXT
+    - name: CREATED_AT
+      data_type: TIMESTAMP_NTZ
+    - name: UPDATED_BY
+      data_type: TEXT
+    - name: UPDATED_AT
+      data_type: TIMESTAMP_NTZ

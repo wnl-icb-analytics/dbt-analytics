@@ -1,0 +1,31 @@
+models:
+  - name: stg_reference_lookup_ncl_gp_practice
+    description: Active NCL GP practices from REFERENCE.PRIMARY_CARE.PRACTICE_ACTIVE
+      with borough, PCN and neighbourhood context. Name kept for compatibility;
+      no longer reads MODELLING.LOOKUP_NCL.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: gp_practice_code
+        description: Primary key - GP practice code
+        data_tests:
+          - unique
+          - not_null
+      - name: practice_name
+        description: Full GP practice name
+      - name: borough
+        description: Registered borough (commissioning view) from REFERENCE
+      - name: pcn_code
+        description: Primary Care Network code
+      - name: pcn_name
+        description: Primary Care Network name
+      - name: neighbourhood_code
+        description: Neighbourhood (INT) code, canonical REFERENCE scheme (e.g. BAR01)
+      - name: neighbourhood_name
+        description: 'Neighbourhood (INT) name, canonical REFERENCE scheme (e.g. "Barnet: East")'
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

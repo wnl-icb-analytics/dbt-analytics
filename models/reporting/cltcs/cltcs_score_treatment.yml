@@ -1,0 +1,22 @@
+models:
+  - name: cltcs_score_treatment
+    description: "Treatment sub-score for C-LTCS cohort. One row per patient. Derived from QOF conditions, A&E/GP usage, polypharmacy, age and asthma/BP treatment flags."
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: sk_patient_id
+        data_type: number
+        description: "Unique patient identifier (sk_patient_id from PDS via dim_person_demographics_basic)"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: neighbourhood_code
+        data_type: varchar
+        description: "Neighbourhood code (from stg_cltcs_emis_cltcs_local_mapping_nh_gp) used as the z-score scaling group. Null for practices outside the Haringey/Camden local mapping."
+
+      - name: score_treatment
+        data_type: number
+        description: "Final treatment score, bounded to [1, 100]. Six z-scored, clipped subdomain scores are each rescaled to 0-100 and combined as a weighted average (domain weights default to 1/equal; set in the model header), then an age multiplier is applied: +15% max at age 18 (flat below 18), linear to neutral at 60, then up to -15% penalty from age 100+."

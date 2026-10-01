@@ -1,0 +1,55 @@
+version: 2
+models:
+  - name: fct_resource_index_by_area
+    description: >
+      Resource index by registered geography (sub-ICB x borough x
+      neighbourhood) for the WNL exposure population (includes deceased and
+      deducted, attributed to their window practice). Convenience aggregate
+      for the Aligning Resource Index pack and dashboards. Roll up to
+      borough or sub-ICB by summing actual + expected; the index is
+      sum(actual) / sum(expected), never an average of indices. Per-head
+      measures use registered person-years (exposure), not raw headcount.
+      Carries both index bases: resource_index_age_sex (age-sex) and
+      resource_index_weighted (Carr-Hill weighted person-years).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: registered_sub_icb_code
+        description: Registered sub-ICB (93C = NCL, W2U3Z = NWL).
+      - name: registered_borough
+        description: Registered borough of the window practice (ODS organisation relationships).
+      - name: registered_neighbourhood_name
+        description: Registered neighbourhood of the window practice.
+      - name: population
+        description: Persons with WNL registration exposure in the area.
+        data_tests:
+          - not_null
+      - name: person_years
+        description: Registered person-years in the window (sum of months / 12).
+      - name: died_in_window
+        description: Persons who died inside the window.
+      - name: actual_cost_12m
+        description: Patient-attributable spend over the window (GBP).
+      - name: expected_cost_12m
+        description: Expected spend from the person-time age-sex cost curve (GBP).
+      - name: resource_index_age_sex
+        description: actual / expected. >1 = above age-sex-expected spend.
+      - name: cost_per_person_year
+        description: Actual spend per registered person-year (GBP).
+      - name: expected_per_person_year
+        description: Expected spend per registered person-year (GBP).
+      - name: weighted_person_years
+        description: Carr-Hill weighted person-years (sum of weighted_months_12m / 12).
+      - name: spend_per_weighted_year
+        description: Spend per Carr-Hill weighted person-year (GBP).
+      - name: resource_index_weighted
+        description: Carr-Hill basis, spend per weighted person-year vs the WNL mean. >1 = above expectation.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - registered_sub_icb_code
+              - registered_borough
+              - registered_neighbourhood_name

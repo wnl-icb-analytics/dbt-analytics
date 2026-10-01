@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: sem_olids_conditions
+    description: |
+      OLIDS Conditions Detail semantic view. It contains two grains that must
+      not be mixed: current person x condition register rows from
+      fct_person_ltc_summary, and person x condition x episode history from
+      fct_person_condition_episodes.
+
+      Registers include inactive and deceased people; filter is_active for
+      current-population analysis. Condition elements must be filtered before
+      using metrics. Obesity diagnosis dates are BMI dates.
+
+      Exposes person_id for aggregate-only CTE joins to other sem_olids_*
+      views. Never return person_id in final results.
+
+      Tables: dim_person_demographics, fct_person_ltc_summary, and
+      fct_person_condition_episodes.
+    config:
+      materialized: semantic_view
+      schema: SEMANTIC
+      meta:
+        owner:
+          name: Eddie Davison

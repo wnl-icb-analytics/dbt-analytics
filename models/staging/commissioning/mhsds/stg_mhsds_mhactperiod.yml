@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: stg_mhsds_mhactperiod
+    description: >-
+      Mental Health Act legal-status periods reported by providers. Each row is one MHSDS
+      legal-status period, using its newest accepted version. NHSD codes distinguish informal
+      admission, detention, guardianship and unknown or not-applicable status. The reporting
+      legal-status table supplies the labels and the rules for identifying current detention.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: mhs401_uniq_id
+        description: Identifier of the retained source row; changes on resubmission.
+      - name: uniq_mh_act_episode_id
+        description: Unique Mental Health Act episode identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: MHSDS person identifier.
+      - name: nhsd_legal_status
+        description: NHSD legal-status code.
+      - name: start_date_mh_act_legal_status_class
+        description: >-
+          Legal-status period start date, as a date. Source values before 1901
+          are Excel-epoch missing-value sentinels and are null here.
+      - name: end_date_mh_act_legal_status_class
+        description: >-
+          Legal-status period end date, as a date. Null while the period is
+          open. Source values before 1901 are Excel-epoch missing-value
+          sentinels and are null here.
+      - name: expiry_date_mh_act_legal_status_class
+        description: >-
+          Legal-status period expiry date, as a date. Source values before 1901
+          are Excel-epoch missing-value sentinels and are null here.
+      - name: org_id_prov
+        description: Provider organisation code.
+      - name: unique_local_patient_id
+        description: Provider-local patient identifier.
+      - name: uniq_submission_id
+        description: Accepted submission containing the retained period version.
+      - name: reporting_period_end_date
+        description: >
+          Reporting period recorded on the retained legal-status record, which
+          is the one from the newest accepted submission containing the period.
+      - name: effective_from
+        description: Time the retained source file was received.

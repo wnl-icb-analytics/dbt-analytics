@@ -1,0 +1,37 @@
+version: 2
+models:
+  - name: fct_person_ltc_lcs_case_finding
+    description: |
+      LTC LCS case-finding cohort membership. One row per person currently in any
+      case-finding indicator (in_any_case_finding = true). Each in_* column flags
+      membership of a specific case-finding indicator. Snapshot source for the
+      monthly cohort-tracking models.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+    columns:
+      - name: person_id
+        description: Unique person identifier
+        data_tests:
+          - not_null
+          - unique
+      - name: in_any_case_finding
+        description: Always true in this model (cohort is filtered to case-finding members)
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true]
+      - name: case_finding_count
+        description: Count of case-finding indicators the person is in
+        data_tests:
+          - not_null
+      - name: table_refresh_date
+        description: Timestamp when the row was built
+        data_tests:
+          - not_null

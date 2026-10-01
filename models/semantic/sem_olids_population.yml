@@ -12,8 +12,13 @@ models:
       diabetes type classification, and person status into a unified
       semantic layer for Cortex Analyst and governed metric definitions.
 
-      Includes ESP 2013 weights (age_band_esp, esp_weight, esp_proportion)
-      for age-standardised rate calculation across areas.
+      Includes ESP 2013 weights (age_band_esp, esp_weight, esp_proportion —
+      denormalised onto dim_person_demographics) for age-standardised rate
+      calculation across areas.
+
+      Exposes person_id as a pseudonymised linkage dimension for cross-view
+      cohort intersection (CTE joins to the other sem_olids_* views);
+      aggregate-only output.
 
       Grain: One row per person (current state)
 
@@ -22,7 +27,6 @@ models:
       - dim_person_conditions: Boolean flags for all 38 conditions + diabetes type + summary counts
       - dim_person_status_summary: Vulnerability, risk behaviours, polypharmacy, data sharing
       - dim_person_ccms: Cambridge Comorbidity Score (continuous weighted score, 16+ only)
-      - esp_2013: European Standard Population weights
 
     config:
       materialized: semantic_view

@@ -1,12 +1,15 @@
 models:
   - name: int_ltc_lcs_rs_htn_pg1_hrc
     description: |
-      Hypertension Register Priority Group 1 - High Risk & Complex identification.
+      Hypertension Register Priority Group 1 - High Risk & Complex.
+      Exclusion-shaped per the EMIS v3 search: patients with a BP monitoring
+      code in the last 12 months are included unless their latest paired BP
+      reading is controlled:
+      - Clinic: systolic <= 180 and diastolic <= 120
+      - Home/ABPM: systolic <= 170 and diastolic <= 115
 
-      Patients on the hypertension register are included if their latest BP (within 12 months)
-      exceeds severe thresholds:
-      - Clinic BP: systolic > 180 or diastolic > 120
-      - Home/ABPM BP: systolic > 170 or diastolic > 115
+      Patients whose monitoring codes have no resolvable paired reading are
+      included, mirroring the EMIS exclude-the-controlled structure.
     config:
       meta:
         owner:
@@ -14,6 +17,11 @@ models:
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - on_htn_reg_pg1_hrc_v3_vs1
+              - on_htn_reg_pg1_hrc_v3_vs2
     columns:
       - name: person_id
         tests:

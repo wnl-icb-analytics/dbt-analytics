@@ -3,7 +3,7 @@ models:
     description: >
       Eosinophil count data quality issues. Captures records from int_eosinophil_count
       that fail validation for investigation, including negative values, extreme outliers,
-      excluded units, and values that could not be standardised.
+      excluded units, and values outside the plausible range that were kept unchanged.
     config:
       meta:
         owner:
@@ -31,11 +31,11 @@ models:
       - name: original_result_unit_code
         description: Raw unit code from source data
       - name: inferred_value
-        description: Standardised numeric value (NULL if inference failed)
+        description: Standardised numeric value (NULL only for excluded units)
       - name: inferred_unit
-        description: Standardised unit (NULL if inference failed)
+        description: Standardised unit (NULL only for excluded units)
       - name: confidence
-        description: Confidence level in the inferred value
+        description: Confidence flag in the inferred value
       - name: conversion_reason
         description: Human-readable explanation of standardisation action taken
       - name: value_was_converted
@@ -45,7 +45,7 @@ models:
       - name: is_negative
         description: TRUE if inferred value is negative
       - name: is_extreme_outlier
-        description: TRUE if inferred value exceeds 100 x10*9/L
+        description: TRUE if inferred value exceeds 20 x10*9/L (the BIOLOGICAL_UPPER bound)
       - name: eosinophil_category
         description: Clinical severity category from base model
       - name: eosinophil_category_with_issues

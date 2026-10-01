@@ -3,34 +3,42 @@
 {#
     Standardises count-type observation values and units.
 
-    Produces a standardised output with inferred values and units as well as
-    assigning confidence levels to the inference. A given row will have a value
-    and corresponding unit.
+    Produces a standardised output with inferred values and units, an audit reason, the
+    is_negative / is_extreme_outlier flags, and a HIGH/MEDIUM/LOW confidence rating. A given
+    row always carries a value and corresponding unit (nothing is dropped except excluded
+    units, whose value/unit are NULL).
 
-    Uses a 3-pass approach:
-      Pass 1 - Accept values already in plausible range (defined by ABSOLUTE_LOWER / ABSOLUTE_UPPER
-               in the observation_value_bounds seed), regardless of recorded unit.
+    Uses a 3-pass approach, all gated on the ABSOLUTE [lower, upper] band from the
+    observation_value_bounds seed:
+      Pass 1 - Accept values already inside [ABSOLUTE_LOWER, ABSOLUTE_UPPER], regardless
+               of recorded unit. Kept exactly as recorded.
 
-      Pass 2 - For out-of-range values, look at the unit and apply known conversion factors
-               from the seed table if possible (e.g. {cells}/uL -> 10*9/L via x0.001).
+      Pass 2 - For values ABOVE ABSOLUTE_UPPER, apply a known conversion factor from the
+               seed (e.g. {cells}/uL -> 10*9/L via x0.001) when the converted value lands
+               back inside [ABSOLUTE_LOWER, ABSOLUTE_UPPER].
 
-      Pass 3 - For remaining out-of-range values, check if the value is unambiguously
-               a raw base-unit recording (e.g. cells/L instead of 10*9/L) by dividing
-               by 10^CANONICAL_EXPONENT and checking the result falls in
-               [BIOLOGICAL_LOWER, ABSOLUTE_UPPER]. Controlled by the observation_value_bounds
-               seed — CANONICAL_EXPONENT IS NULL disables Pass 3.
+      Pass 3 - For values ABOVE ABSOLUTE_UPPER, check if the value is unambiguously a raw
+               base-unit recording (e.g. cells/L instead of 10*9/L) by dividing by
+               10^CANONICAL_EXPONENT and checking the result lands inside
+               [BIOLOGICAL_LOWER, ABSOLUTE_UPPER]. CANONICAL_EXPONENT IS NULL disables Pass 3.
+
+      Conversions (Pass 2/3) are attempted ONLY when the value is implausibly HIGH
+      (numeric_value > ABSOLUTE_UPPER), never when implausibly low. Values matching no
+      pass (out-of-range and unconvertible, including negatives) pass through unchanged.
 
     Unit classification after LEFT JOIN to seed:
       known    - CONVERT_FROM_UNIT IS NOT NULL AND MULTIPLY_BY IS NOT NULL
       excluded - CONVERT_FROM_UNIT IS NOT NULL AND MULTIPLY_BY IS NULL
       unknown  - CONVERT_FROM_UNIT IS NULL (no match in seed)
 
-    Confidence levels:
-      VERY_HIGH - Canonical unit (e.g. 10*9/L -> 10*9/L), value in range
-      HIGH      - Known equivalent unit (MULTIPLY_BY=1) with value in range, or known conversion applied (Pass 2)
-      MEDIUM    - Unknown/nonsense unit, or known non-equivalent unit, but value in plausible range
-      LOW       - Value inferred from magnitude (Pass 3)
-      NONE      - Excluded unit, or value out of range after all passes
+    Flags and confidence:
+      is_negative        - inferred_value < 0
+      is_extreme_outlier - inferred_value > BIOLOGICAL_UPPER
+      confidence:
+        HIGH   - Value kept exactly as recorded in the canonical unit (nothing changed).
+        MEDIUM - Only the unit was relabelled (value kept) and not an extreme outlier.
+        LOW    - Value was converted (Pass 2/3), is negative, is an extreme outlier
+                 (> BIOLOGICAL_UPPER), or the unit is excluded.
 
     Parameters:
       base_cte (str):
@@ -49,11 +57,13 @@
       original_result_value       - Raw value preserved from source
       original_result_unit_code   - Raw unit code preserved from source
       original_result_unit_display - Raw unit display preserved from source
-      inferred_value              - Standardised numeric value (NULL if NONE confidence)
-      inferred_unit               - Standardised unit (NULL if NONE confidence)
-      confidence                  - VERY_HIGH / HIGH / MEDIUM / LOW / NONE
+      inferred_value              - Standardised numeric value (NULL only for excluded units)
+      inferred_unit               - Standardised unit (NULL only for excluded units)
       value_was_converted         - TRUE if value was mathematically changed
       conversion_reason           - Human-readable explanation of action taken
+      is_negative                 - TRUE if inferred_value < 0
+      is_extreme_outlier          - TRUE if inferred_value > BIOLOGICAL_UPPER
+      confidence                  - HIGH / MEDIUM / LOW
 #}
 
 -- Filter seed to rules for this measurement only
@@ -82,7 +92,7 @@ value_bounds AS (
 classified AS (
     SELECT
         base.*,
-        TRY_CAST(base.{{ value_column }} AS FLOAT) AS numeric_value,
+        CAST(base.{{ value_column }} AS FLOAT) AS numeric_value,
         base.result_unit_code AS original_result_unit_code,
         base.result_unit_display AS original_result_unit_display,
         base.{{ value_column }} AS original_result_value,
@@ -90,8 +100,8 @@ classified AS (
         vb.ABSOLUTE_LOWER AS lower_limit,
         vb.ABSOLUTE_UPPER AS upper_limit,
         vb.CANONICAL_EXPONENT AS canonical_exponent,
-        vb.BIOLOGICAL_LOWER AS biological_lower,
-        vb.BIOLOGICAL_UPPER AS biological_upper, -- passed through for downstream outlier flags
+        vb.BIOLOGICAL_LOWER AS biological_lower, -- Pass 3 floor
+        vb.BIOLOGICAL_UPPER AS biological_upper, -- extreme-outlier threshold
         ur.MULTIPLY_BY AS seed_multiply_by,
         ur.PRE_OFFSET AS seed_pre_offset,
         ur.POST_OFFSET AS seed_post_offset,
@@ -111,7 +121,6 @@ classified AS (
 ),
 
 -- Determine which pass (if any) applies - evaluated ONCE per row
--- All output columns in standardised are then derived from matched_pass
 pass_assigned AS (
     SELECT
         *,
@@ -119,26 +128,28 @@ pass_assigned AS (
             + COALESCE(seed_post_offset, 0) AS converted_value,
         CASE
             WHEN unit_status = 'excluded' THEN 'excluded'
+            -- Pass 1: value already plausible, keep as recorded
             WHEN numeric_value BETWEEN lower_limit AND upper_limit
                 THEN 'pass_1'
-            WHEN unit_status = 'known'
+            -- Pass 2: implausibly high, rescued by a known unit factor
+            WHEN numeric_value > upper_limit
+             AND unit_status = 'known'
              AND seed_multiply_by != 1
              AND ((numeric_value + COALESCE(seed_pre_offset, 0)) * seed_multiply_by
                   + COALESCE(seed_post_offset, 0))
                   BETWEEN lower_limit AND upper_limit
                 THEN 'pass_2'
-            -- Pass 3: value is unambiguously in raw base-unit scale
-            WHEN canonical_exponent IS NOT NULL
-             AND numeric_value > upper_limit
-             AND (numeric_value / POWER(10, canonical_exponent)) >= biological_lower
-             AND (numeric_value / POWER(10, canonical_exponent)) <= upper_limit
+            -- Pass 3: implausibly high, unambiguously a raw base-unit recording
+            WHEN numeric_value > upper_limit
+             AND canonical_exponent IS NOT NULL
+             AND (numeric_value / POWER(10, canonical_exponent)) BETWEEN biological_lower AND upper_limit
                 THEN 'pass_3'
             ELSE 'no_match'
         END AS matched_pass
     FROM classified
 ),
 
--- Derive ALL output columns from matched_pass - no repeated condition logic
+-- Derive the standardised value/unit/audit columns from matched_pass
 standardised AS (
     SELECT
         *,
@@ -148,32 +159,19 @@ standardised AS (
             WHEN 'pass_1' THEN numeric_value
             WHEN 'pass_2' THEN converted_value
             WHEN 'pass_3' THEN numeric_value / POWER(10, canonical_exponent)
+            -- pass through: keep raw value when no pass matched
+            WHEN 'no_match' THEN numeric_value
             ELSE NULL
         END AS inferred_value,
 
-        -- confidence: how confident we are in the inferred value
-        CASE matched_pass
-            WHEN 'excluded' THEN 'NONE'
-            WHEN 'pass_1' THEN
-                CASE
-                    WHEN is_canonical THEN 'VERY_HIGH'
-                    WHEN unit_status = 'known' AND seed_multiply_by = 1 THEN 'HIGH'
-                    ELSE 'MEDIUM'
-                END
-            WHEN 'pass_2' THEN 'HIGH'
-            WHEN 'pass_3' THEN 'LOW'
-            ELSE 'NONE'
-        END AS confidence,
-
-        -- inferred_unit: the standardised unit code (all successful passes target the canonical unit)
+        -- inferred_unit: the standardised unit code (everything except excluded targets the canonical unit)
         CASE
-            WHEN matched_pass IN ('excluded', 'no_match') THEN NULL
+            WHEN matched_pass = 'excluded' THEN NULL
             ELSE canonical_unit_code
         END AS inferred_unit,
 
         -- value_was_converted: TRUE if the numeric value was mathematically changed
         CASE matched_pass
-            WHEN 'pass_1' THEN FALSE
             WHEN 'pass_2' THEN TRUE
             WHEN 'pass_3' THEN TRUE
             ELSE FALSE
@@ -190,10 +188,28 @@ standardised AS (
                 END
             WHEN 'pass_2' THEN 'Value converted using known unit factor (x' || seed_multiply_by::VARCHAR || ')'
             WHEN 'pass_3' THEN 'Value divided by 10^' || canonical_exponent::VARCHAR || ' (inferred raw base-unit recording)'
-            ELSE 'Value out of range after all conversion attempts'
+            ELSE 'Value out of plausible range, kept unchanged'
         END AS conversion_reason
 
     FROM pass_assigned
+),
+
+-- Derive model-level flags and the confidence rating from the standardised value
+flagged AS (
+    SELECT
+        *,
+        inferred_value < 0 AS is_negative,
+        inferred_value > biological_upper AS is_extreme_outlier,
+        -- confidence: HIGH if nothing changed; MEDIUM if only the unit changed and the value
+        -- is not an extreme outlier; LOW if converted, negative, extreme, or an excluded unit
+        CASE
+            WHEN inferred_value IS NULL THEN 'LOW'
+            WHEN inferred_value < 0 OR inferred_value > biological_upper THEN 'LOW'
+            WHEN value_was_converted THEN 'LOW'
+            WHEN inferred_unit IS DISTINCT FROM original_result_unit_code THEN 'MEDIUM'
+            ELSE 'HIGH'
+        END AS confidence
+    FROM standardised
 )
 
 {% endmacro %}

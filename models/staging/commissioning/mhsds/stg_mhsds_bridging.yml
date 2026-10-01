@@ -1,0 +1,20 @@
+models:
+  - name: stg_mhsds_bridging
+    description: >-
+      Each row is one MHSDS person identifier, linked to the pseudonymised patient key.
+    config:
+      meta:
+        owner:
+          name: Jessica Roberts
+    columns:
+      - name: person_id
+        description: MHSDS person identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: sk_patient_id
+        description: Pseudonymised patient key; null where the source person cannot be linked.
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

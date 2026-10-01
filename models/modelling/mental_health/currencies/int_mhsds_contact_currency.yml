@@ -1,0 +1,84 @@
+version: 2
+
+models:
+  - name: int_mhsds_contact_currency
+    description: >-
+      NHS England costing classifications for patient contacts outside inpatient care. Each row is
+      one referral/contact pair. The diagnosis used is the latest recorded on or before the contact
+      date. A contact is excluded when its date falls between admission and the derived end of an
+      inpatient spell for the same referral. This date-based rule differs from the NHS England
+      notebook's submission-month rule. Contact identifiers alone are not unique across referrals.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - uniq_serv_req_id
+              - uniq_care_cont_id
+    columns:
+      - name: uniq_care_cont_id
+        description: Care contact identifier.
+        data_tests:
+          - not_null
+      - name: uniq_serv_req_id
+        description: Unique service request identifier.
+        data_tests:
+          - not_null
+      - name: person_id
+        description: MHSDS person identifier.
+      - name: sk_patient_id
+        description: Pseudonymised patient identifier.
+      - name: org_id_prov
+        description: Provider organisation code.
+      - name: care_cont_date
+        description: Care contact date.
+      - name: age_care_cont_date
+        description: MHSDS-derived age at the contact date.
+      - name: is_cyp
+        description: >-
+          Whether age at contact is under 18. A contact with no recorded age is
+          treated as adult, so read this with has_known_age_at_contact.
+      - name: has_known_age_at_contact
+        description: >-
+          Whether an age at the contact date was recorded. False means is_cyp
+          and the population-group cascade fell back to the adult branch rather
+          than using a known age.
+      - name: attend_status
+        description: Care contact attendance status.
+      - name: cons_mechanism_mh
+        description: Consultation mechanism code.
+      - name: act_loc_type_code
+        description: Care activity location type code.
+      - name: icd10_3
+        description: Latest three-character ICD-10 code.
+      - name: diagnosis_category
+        description: Diagnosis population category.
+      - name: serv_team_type_ref_to_mh
+        description: Service team type referred to code.
+      - name: team_type_category
+        description: Service team population category.
+      - name: setting_group
+        description: Contact setting family.
+      - name: setting_code
+        description: Contact setting suffix.
+      - name: setting_name
+        description: Contact setting name.
+      - name: prim_reason_referral_mh
+        description: Primary referral reason code.
+      - name: referral_reason_category
+        description: Referral reason population category.
+      - name: is_crisis_referral
+        description: Resolved crisis referral flag.
+      - name: winning_tier
+        description: Classification tier that ended the cascade.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['mhst', 'diagnosis', 'team_type', 'referral_reason', 'unclassified']
+      - name: currency_group
+        description: Currency population group.
+      - name: currency_code
+        description: Six-character contact currency code.

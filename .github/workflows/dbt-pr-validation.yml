@@ -1,86 +1,144 @@
 # dbt PR Validation Workflow
 #
-# Validates changed dbt models in Snowflake DEV environment before merge.
-# Runs full build to report all errors (no fail-fast).
+# Required merge-queue check for dbt changes. Pull-request events report the
+# check without materialising models (except the opt-in label build below);
+# the existing compile workflow gives fast
+# feedback on each dbt commit. Once "Merge when ready" is selected, merge_group
+# validates the exact candidate GitHub would merge into main:
+#
+#   1. dbt compile against production metadata (ci-prod).
+#   2. dbt build of state:modified nodes in Snowflake DEV - the same selection
+#      the post-merge deploy will run (minus downstream), against the same
+#      deployed-state manifest. This is a dress rehearsal of the deploy: nodes
+#      merged but not yet deployed (e.g. behind a [skip deploy] or an
+#      in-flight deploy) stay selected on every candidate until a deploy
+#      publishes them, exactly as the next deploy will build them. It also
+#      means config-only changes (dbt_project.yml etc.) get a real DEV build,
+#      not just a compile. UEC code changes also rebuild their encounter parent
+#      so relationship tests do not compare fresh codes with older encounters.
+#
+# Queue runs NEVER publish the manifest - only production deploys advance
+# deploy state. When no state manifest exists, falls back to building the
+# candidate's directly changed nodes (bounded; never a full project build).
+#
+# Adding the ❄️snowflake-ci label runs the same DEV build once for the PR head
+# merged with current main, then removes the label. It reports as a separate,
+# non-required "DEV build (snowflake-ci)" check so it never blocks or masks the
+# required check. Later commits do not rebuild; re-add the label to validate
+# again. Fork PRs are excluded.
+#
+# Uses --defer --favor-state against the last deployed manifest (from the
+# DBT_ARTIFACTS stage): unselected parents resolve to prod relations, so
+# validation does not depend on the DEV__ mirror being complete or fresh.
 #
 # Prerequisites:
 #   - Snowflake secrets: SNOWFLAKE_ACCOUNT, SNOWFLAKE__USERNAME,
 #     SNOWFLAKE__PRIVATE_KEY, SNOWFLAKE__PASSPHRASE
-#   - DBT_ADMIN role with: USAGE on warehouse, DBT_ADMIN role granted
-#
-# Snowflake objects:
-#   - Role: DBT_ADMIN
-#   - Warehouse: WH_NCL_ENGINEERING_XS for FETCH + ADD VERSION,
-#                WH_WNL_ENGINEERING_M for EXECUTE DBT PROJECT (7200s timeout)
-#   - Database/Schema: ACCOUNT_ADMIN.DBT_MANAGEMENT
-#   - Git repo: REPO__GITHUB__DBT_NCL_ANALYTICS
-#   - dbt project: DBT_NCL_ANALYTICS__CI
+#   - DBT_ADMIN role with USAGE on WH_WNL_ENGINEERING_M and WH_WNL_OLIDS_L
+#     (eFI2 history models)
 
 name: dbt PR Validation
 
 on:
   workflow_dispatch:
   pull_request:
-    types: [review_requested, synchronize, labeled]
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches: [main]
-    paths:
-      - 'models/**'
-      - 'macros/**'
+  # Required checks must handle merge_group or queued PRs cannot merge.
+  merge_group:
+    types: [checks_requested]
 
+# The label-build condition is repeated in name, concurrency and env because
+# job-level fields cannot read env.
 jobs:
   validate-models:
-    name: Validate Changed Models
+    name: ${{ (github.event.action == 'labeled' && github.event.label.name == '❄️snowflake-ci' && github.event.pull_request.head.repo.full_name == github.repository) && 'DEV build (snowflake-ci)' || 'Validate Changed Models' }}
+    # Other labels need no run.
+    if: github.event.action != 'labeled' || github.event.label.name == '❄️snowflake-ci'
     runs-on: ubuntu-latest
-    # Only run when:
-    # - Manual dispatch, OR
-    # - Reviewer just assigned, OR
-    # - snowflake-ci label just added, OR
-    # - New commit pushed AND (reviewer or label already present)
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      github.event.action == 'review_requested' ||
-      (github.event.action == 'labeled' && github.event.label.name == '❄️snowflake-ci') ||
-      (github.event.action == 'synchronize' && (
-        github.event.pull_request.requested_reviewers[0] != null ||
-        contains(github.event.pull_request.labels.*.name, '❄️snowflake-ci')
-      ))
+    timeout-minutes: 350
     concurrency:
-      # Per-PR concurrency: new commits to same PR cancel old runs
-      group: pr-validation-${{ github.event.pull_request.number }}
-      cancel-in-progress: true
+      # DEV builds (merge candidates, label and manual runs) share DEV
+      # relations, so validate them serially.
+      # queue: max holds up to 100 pending runs FIFO instead of cancelling all
+      # but one, so the queue can build every entry of a stack. It cannot be
+      # combined with cancel-in-progress, so PR status-only runs queue too.
+      group: ${{ (github.event_name != 'pull_request' || (github.event.action == 'labeled' && github.event.label.name == '❄️snowflake-ci' && github.event.pull_request.head.repo.full_name == github.repository)) && 'dbt-pr-validation-merge-queue' || format('dbt-pr-validation-{0}', github.event.pull_request.number || github.ref_name) }}
+      cancel-in-progress: false
+      queue: max
     permissions:
       contents: read
-      actions: read  # Required for turnstyle to check workflow runs
+    env:
+      RUNTIME_BUILD: ${{ github.event_name != 'pull_request' || (github.event.action == 'labeled' && github.event.label.name == '❄️snowflake-ci' && github.event.pull_request.head.repo.full_name == github.repository) }}
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE__USERNAME }}
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
+      SNOWFLAKE_ROLE: DBT_ADMIN
+      SNOWFLAKE_WAREHOUSE: WH_WNL_ENGINEERING_M
+      # The eFI2 history models expand observations across 60 month-ends. A
+      # merge candidate builds them into DEV from empty, so route them off the
+      # Medium warehouse here as well as on the monthly refresh in
+      # dbt-scheduled.yml.
+      EFI2_HISTORY_WAREHOUSE: WH_WNL_OLIDS_L
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Report PR-side queue gate
+        if: env.RUNTIME_BUILD != 'true'
+        run: |
+          echo "Runtime dbt validation is deferred to GitHub's merge queue."
+          echo "No models are materialised for this pull-request event."
+          echo "Add the ❄️snowflake-ci label for a one-off DEV build."
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.RUNTIME_BUILD == 'true'
         with:
           fetch-depth: 0
+          persist-credentials: false
+          # A label run may wait hours in the queue; build the PR head merged
+          # with main as of now so it matches the manifest fetched below.
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
 
-      # Queue across different PRs - Snowflake dbt project can only run one branch at a time
-      - name: Wait for other PR validations
-        uses: softprops/turnstyle@v2
-        with:
-          same-branch-only: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6
-        with:
-          version: "0.6.x"
-
-      - name: Get changed models
-        id: changes
+      - name: Merge current main into PR head
+        if: env.RUNTIME_BUILD == 'true' && github.event_name == 'pull_request'
         run: |
+          git -c user.name=ci -c user.email=ci@localhost merge --no-edit origin/main
+
+      - name: Check validation selection
+        if: env.RUNTIME_BUILD == 'true'
+        run: python -m unittest discover -s .github/scripts -p test_validate_dbt_models.py
+
+      # Fallback selection (no state manifest) and diagnostics: lets a failed
+      # candidate see at a glance whether a failing node came from this PR's
+      # own files or was inherited un-deployed state.
+      - name: Map changed files to nodes
+        id: changes
+        if: env.RUNTIME_BUILD == 'true'
+        env:
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+        run: |
+          if [ "${{ github.event_name }}" = "merge_group" ]; then
+            BASE_SHA="$MERGE_GROUP_BASE_SHA"
+          else
+            # A manual or label run compares its branch with main.
+            BASE_SHA=$(git merge-base origin/main HEAD)
+          fi
+          echo "Comparing $BASE_SHA...HEAD"
+
           # Get changed .sql files directly
-          SQL_FILES=$(git diff --name-only --diff-filter=d origin/${{ github.base_ref }}...HEAD -- 'models/**/*.sql')
-          
+          SQL_FILES=$(git diff --name-only --diff-filter=d "$BASE_SHA"...HEAD -- 'models/**/*.sql')
+
           # Get changed .yml/.yaml files and find associated .sql models
-          YML_FILES=$(git diff --name-only --diff-filter=d origin/${{ github.base_ref }}...HEAD -- 'models/**/*.yml' 'models/**/*.yaml')
-          
+          YML_FILES=$(git diff --name-only --diff-filter=d "$BASE_SHA"...HEAD -- 'models/**/*.yml' 'models/**/*.yaml')
+
           # Get changed macro files
-          MACRO_FILES=$(git diff --name-only --diff-filter=d origin/${{ github.base_ref }}...HEAD -- 'macros/**/*.sql')
-          
-          # For each yml file, find corresponding sql file with same base name
+          MACRO_FILES=$(git diff --name-only --diff-filter=d "$BASE_SHA"...HEAD -- 'macros/**/*.sql')
+
+          # Get changed seeds and snapshots (selected by name, like models)
+          SEED_FILES=$(git diff --name-only --diff-filter=d "$BASE_SHA"...HEAD -- 'seeds/**/*.csv')
+          SNAPSHOT_FILES=$(git diff --name-only --diff-filter=d "$BASE_SHA"...HEAD -- 'snapshots/**/*.sql')
+
+          # For each yml file, find a corresponding sql file with the same base
+          # name. Also retain the YAML path selector so tests in shared files
+          # such as schema.yml are not silently missed.
           YML_DERIVED_SQL=""
           for yml in $YML_FILES; do
             dir=$(dirname "$yml")
@@ -90,172 +148,120 @@ jobs:
               YML_DERIVED_SQL="$YML_DERIVED_SQL $dir/$base.sql"
             fi
           done
-          
+
           # For each changed macro, find models that reference it
           MACRO_DERIVED_SQL=""
           for macro_file in $MACRO_FILES; do
-            # Extract macro name from filename (e.g., calculate_ckd_register.sql -> calculate_ckd_register)
             macro_name=$(basename "$macro_file" .sql)
             echo "Searching for models using macro: $macro_name"
-            # Find models that call this macro (search for {{ macro_name( pattern)
             matching_models=$(grep -rl "{{ *$macro_name(" models/ --include="*.sql" 2>/dev/null || true)
             if [ -n "$matching_models" ]; then
               MACRO_DERIVED_SQL="$MACRO_DERIVED_SQL $matching_models"
               echo "  Found: $matching_models"
             fi
           done
-          
-          # Combine and deduplicate
-          CHANGED=$(echo "$SQL_FILES $YML_DERIVED_SQL $MACRO_DERIVED_SQL" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-          COUNT=$(echo "$CHANGED" | wc -w)
-          echo "changed_files=$CHANGED" >> $GITHUB_OUTPUT
-          echo "file_count=$COUNT" >> $GITHUB_OUTPUT
-          echo "Found $COUNT changed model files"
+
+          # Combine, deduplicate, and reduce runnable resources to node names.
+          # YAML path selectors retain tests/configuration from shared files.
+          CHANGED=$(echo "$SQL_FILES $YML_DERIVED_SQL $MACRO_DERIVED_SQL $SEED_FILES $SNAPSHOT_FILES" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+          SELECT=$(
+            {
+              for f in $CHANGED; do basename "$f" | sed 's/\.[^.]*$//'; done
+              for f in $YML_FILES; do echo "path:$f"; done
+            } | sort -u | tr '\n' ' '
+          )
+          COUNT=$(echo "$SELECT" | wc -w)
+          echo "select=$SELECT" >> $GITHUB_OUTPUT
+          echo "node_count=$COUNT" >> $GITHUB_OUTPUT
+          echo "Found $COUNT changed nodes: $SELECT"
           [ -n "$YML_FILES" ] && echo "YML changes detected - included associated models" || true
           [ -n "$MACRO_FILES" ] && echo "Macro changes detected - included models that use them" || true
 
-      - name: Setup Snowflake credentials
-        if: steps.changes.outputs.file_count != '0'
+      - name: Install dbt Fusion
+        if: env.RUNTIME_BUILD == 'true'
+        run: |
+          # Latest Fusion, unpinned - matches the VS Code extension.
+          curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --target x86_64-unknown-linux-gnu --update
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/dbt" --version
+
+      - name: Write Snowflake private key
+        if: env.RUNTIME_BUILD == 'true'
         env:
           SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE__PRIVATE_KEY }}
         run: |
           mkdir -p ~/.snowflake
           printf '%s\n' "$SNOWFLAKE_PRIVATE_KEY" > ~/.snowflake/rsa_key.p8
           chmod 600 ~/.snowflake/rsa_key.p8
-          echo "Key file created: $(wc -c < ~/.snowflake/rsa_key.p8) bytes"
-          head -1 ~/.snowflake/rsa_key.p8
+          echo "SNOWFLAKE_PRIVATE_KEY_PATH=$HOME/.snowflake/rsa_key.p8" >> "$GITHUB_ENV"
+
+      - name: Install dbt packages
+        if: env.RUNTIME_BUILD == 'true'
+        run: dbt deps
+
+      - name: Compile against production metadata
+        if: env.RUNTIME_BUILD == 'true'
+        run: dbt compile --target ci-prod --profiles-dir .
+
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        if: env.RUNTIME_BUILD == 'true'
+        with:
+          version: "0.9.x"
+
+      - name: Fetch state manifest
+        id: state
+        if: env.RUNTIME_BUILD == 'true'
+        run: uv run --with snowflake-connector-python python .github/scripts/fetch_dbt_state.py
 
       - name: Validate in Snowflake DEV
-        if: steps.changes.outputs.file_count != '0'
+        if: env.RUNTIME_BUILD == 'true'
         env:
-          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE__USERNAME }}
-          SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
-          CHANGED_FILES: ${{ steps.changes.outputs.changed_files }}
-          FILE_COUNT: ${{ steps.changes.outputs.file_count }}
-          PR_BRANCH: ${{ github.head_ref }}
+          NODE_COUNT: ${{ steps.changes.outputs.node_count }}
+          PR_SELECT: ${{ steps.changes.outputs.select }}
+          HAS_STATE: ${{ steps.state.outputs.has_state }}
         run: |
-          uv run --with snowflake-connector-python --with cryptography python << 'EOF'
-          import os
-          import re
-          import sys
-          import snowflake.connector
+          if [ "$HAS_STATE" != "true" ]; then
+            # No deployed baseline (first activation / stage wiped): fall back
+            # to the candidate's directly changed nodes - bounded, and never
+            # silently a full-project build.
+            if [ "$NODE_COUNT" = "0" ]; then
+              echo "No state manifest and no changed dbt files - nothing to validate"
+              exit 0
+            fi
+            echo "No state manifest - falling back to $NODE_COUNT directly changed nodes: $PR_SELECT"
+            read -r -a pr_select_args <<< "$PR_SELECT"
+            python .github/scripts/validate_dbt_models.py --select "${pr_select_args[@]}"
+            exit 0
+          fi
 
-          def validate_identifier(value, pattern=r'^[a-zA-Z0-9_\-/]+$'):
-              """Validate identifier to prevent injection."""
-              if not value or not re.match(pattern, value):
-                  raise ValueError(f"Invalid identifier: {value}")
-              return value
-
-          def get_model_name(filepath):
-              """Extract and validate model name from filepath."""
-              name = filepath.split('/')[-1].replace('.sql', '')
-              return validate_identifier(name, r'^[a-zA-Z0-9_]+$')
-
-          from cryptography.hazmat.backends import default_backend
-          from cryptography.hazmat.primitives import serialization
-
-          # Load and validate private key
-          key_path = os.path.expanduser('~/.snowflake/rsa_key.p8')
-          print(f"Key file exists: {os.path.exists(key_path)}")
-          if os.path.exists(key_path):
-              print(f"Key file size: {os.path.getsize(key_path)} bytes")
-              with open(key_path, 'rb') as f:
-                  key_data = f.read()
-              print(f"Key looks valid: {key_data.startswith(b'-----BEGIN')}")
-          else:
-              print("ERROR: Key file not found!")
-              sys.exit(1)
-
-          passphrase = os.environ.get('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', '')
-          print(f"Passphrase length: {len(passphrase)}")
-
-          # Load private key with cryptography library
-          p_key = serialization.load_pem_private_key(
-              key_data,
-              password=passphrase.encode() if passphrase else None,
-              backend=default_backend()
-          )
-          pkb = p_key.private_bytes(
-              encoding=serialization.Encoding.DER,
-              format=serialization.PrivateFormat.PKCS8,
-              encryption_algorithm=serialization.NoEncryption()
-          )
-
-          try:
-              conn = snowflake.connector.connect(
-                  account=os.environ['SNOWFLAKE_ACCOUNT'],
-                  user=os.environ['SNOWFLAKE_USER'],
-                  private_key=pkb,
-                  role='DBT_ADMIN',
-                  database='ACCOUNT_ADMIN',
-                  schema='DBT_MANAGEMENT',
-                  warehouse='WH_NCL_ENGINEERING_XS'
-              )
-
-              cur = conn.cursor()
-              cur.execute("USE WAREHOUSE WH_NCL_ENGINEERING_XS")
-
-              pr_branch = validate_identifier(os.environ['PR_BRANCH'])
-
-              print("Fetching git repository...")
-              cur.execute("ALTER GIT REPOSITORY REPO__GITHUB__DBT_NCL_ANALYTICS FETCH")
-              print("Git fetch complete")
-
-              print(f"Setting project to PR branch: {pr_branch}")
-              cur.execute(f'ALTER DBT PROJECT DBT_NCL_ANALYTICS__CI ADD VERSION FROM \'@REPO__GITHUB__DBT_NCL_ANALYTICS/branches/"{pr_branch}"\'')
-              print("Project branch set")
-
-              file_count = int(os.environ.get('FILE_COUNT', 0))
-              changed_files = os.environ.get('CHANGED_FILES', '').strip()
-
-              if file_count > 100:
-                  print(f"Large changeset ({file_count} files) - running full build")
-                  args = "build --target snowflake-dev"
-              else:
-                  models = [get_model_name(f) for f in changed_files.split() if f]
-                  select = ' '.join(models)
-                  print(f"Validating {file_count} changed models: {select}")
-                  args = f"build --target snowflake-dev --select {select}"
-
-              # Lift the 1h cap on EXECUTE DBT PROJECT. Both are required:
-              #   - ALTER SESSION overrides the account-level STATEMENT_TIMEOUT_IN_SECONDS
-              #     (3600) in the session hierarchy.
-              #   - USE WAREHOUSE switches onto WH_WNL_ENGINEERING_M (7200s) so the
-              #     warehouse isn't the binding constraint.
-              # Lowest of {session-hierarchy, warehouse} wins, so we need both >= 7200.
-              # FETCH/ADD VERSION above stay on XS.
-              print(f"Executing: dbt {args}")
-              cur.execute("ALTER SESSION SET STATEMENT_TIMEOUT_IN_SECONDS = 7200")
-              cur.execute("USE WAREHOUSE WH_WNL_ENGINEERING_M")
-              cur.execute(f"EXECUTE DBT PROJECT DBT_NCL_ANALYTICS__CI ARGS = '{args}'")
-
-              results = cur.fetchall()
-              print("\n--- dbt execution results ---")
-              for row in results:
-                  print(row[0] if len(row) == 1 else row)
-              print("--- end results ---\n")
-
-              # Check for failures in results (avoid false positives from "ERROR=0")
-              result_text = str(results)
-              if 'job failed' in result_text.lower() or '"command_success": false' in result_text.lower():
-                  print("dbt build reported failures", file=sys.stderr)
-                  sys.exit(1)
-
-              print("Validation complete!")
-
-          except Exception as e:
-              print(f"Error: {e}", file=sys.stderr)
-              sys.exit(1)
-          finally:
-              if 'cur' in locals(): cur.close()
-              if 'conn' in locals(): conn.close()
-          EOF
+          # Preserve the state selection and its tests; add the UEC encounter
+          # parent when its code models need it. Other parents stay deferred.
+          python .github/scripts/validate_dbt_models.py --state state --select state:modified
 
       - name: Cleanup credentials
-        if: always()
+        if: always() && env.RUNTIME_BUILD == 'true'
         run: rm -f ~/.snowflake/rsa_key.p8
 
-      - name: Skip message
-        if: steps.changes.outputs.file_count == '0'
-        run: echo "No model changes detected - skipping validation"
+  # One-off trigger: clear the label so later commits don't look validated and
+  # re-adding it starts a new build. Separate job so the build job's token
+  # stays read-only.
+  clear-label:
+    name: Clear snowflake-ci label
+    needs: validate-models
+    if: always() && github.event.action == 'labeled' && github.event.label.name == '❄️snowflake-ci'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Remove label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        # REST API: gh pr edit fails on the deprecated Projects (classic) field.
+        run: |
+          label=$(jq -rn '"❄️snowflake-ci" | @uri')
+          if ! out=$(gh api --method DELETE "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/labels/$label" 2>&1); then
+            echo "$out"
+            # 404: someone removed the label during the run.
+            grep -q "HTTP 404" <<<"$out" || exit 1
+          fi

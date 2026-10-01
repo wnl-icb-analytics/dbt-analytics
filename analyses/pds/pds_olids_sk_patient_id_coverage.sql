@@ -30,7 +30,7 @@ olids_patient_sk AS (
 -- How many distinct sk_patient_ids in each system?
 pds_sk AS (
     SELECT COUNT(DISTINCT sk_patient_id) AS pds_distinct_sk
-    FROM {{ ref('stg_pds_pds_patient_care_practice') }}
+    FROM {{ ref('stg_pds_patient_care_practice') }}
     WHERE sk_patient_id IS NOT NULL
 ),
 
@@ -45,7 +45,7 @@ sk_overlap AS (
             THEN p.sk_patient_id END) AS pds_only,
         COUNT(DISTINCT CASE WHEN o.sk_patient_id IS NOT NULL AND p.sk_patient_id IS NULL
             THEN o.sk_patient_id END) AS olids_only
-    FROM (SELECT DISTINCT sk_patient_id FROM {{ ref('stg_pds_pds_patient_care_practice') }} WHERE sk_patient_id IS NOT NULL) p
+    FROM (SELECT DISTINCT sk_patient_id FROM {{ ref('stg_pds_patient_care_practice') }} WHERE sk_patient_id IS NOT NULL) p
     FULL OUTER JOIN (SELECT DISTINCT sk_patient_id FROM {{ ref('stg_olids_patient') }} WHERE sk_patient_id IS NOT NULL) o
         ON p.sk_patient_id = o.sk_patient_id
 )

@@ -1,0 +1,45 @@
+version: 2
+models:
+  - name: fct_person_resource_index_olids
+    description: >
+      NCL deep-dive on fct_person_resource_index (registered sub-ICB 93C
+      only), enriched with OLIDS primary-care context - Cambridge
+      comorbidity score, LTC register count, frailty severity, GP
+      appointment cost (PSSRU nominal) and OLIDS-estimated prescribing.
+      actual_cost_12m is SLAM acute only (EPD held out of the resource
+      index while stale). Same person grain as the base fact;
+      has_olids_record flags patients with an OLIDS link. Cut resource
+      index by morbidity (score bands, LTC count, frailty) x deprivation
+      quintile for the NCL pack.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: sk_patient_id
+        description: DMIC pseudonymised NHS number (primary key; fan-out tripwire).
+        data_tests:
+          - not_null
+          - unique
+      - name: has_olids_record
+        description: TRUE when the patient bridges to an OLIDS person record.
+      - name: cambridge_comorbidity_score
+        description: Cambridge Multimorbidity Score; null when no OLIDS score.
+      - name: ltc_count
+        description: Distinct LTC registers (0 when no OLIDS record).
+      - name: frailty_severity
+        description: Mild / Moderate / Severe; null when not on the frailty register.
+      - name: gp_appointment_cost_12m
+        description: Attended GP appointment cost over the window (PSSRU nominal GBP). Additive.
+      - name: total_cost_incl_gp_appointments_12m
+        description: actual_cost_12m + GP appointment cost (GBP).
+        data_tests:
+          - not_null
+      - name: olids_prescribing_cost_12m_modelled
+        description: Full-window prescribing from OLIDS estimated_cost (GBP, validated vs EPD to 0.4%).
+      - name: olids_prescription_orders_12m
+        description: OLIDS medication orders in the window.
+      - name: total_cost_whole_person_12m
+        description: actual (SLAM) + OLIDS-modelled prescribing + GP appointments (GBP). The whole-person headline.
+        data_tests:
+          - not_null

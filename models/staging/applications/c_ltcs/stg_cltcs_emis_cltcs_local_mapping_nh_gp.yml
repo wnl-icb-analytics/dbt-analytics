@@ -1,0 +1,36 @@
+models:
+  - name: stg_cltcs_emis_cltcs_local_mapping_nh_gp
+    description: >
+      C-LTCS mapping of GP practices to neighbourhoods for the Haringey test
+      bed, one row per practice. Practices with several rows keep those whose
+      local_authority matches the last word of neighbourhood_registered, or all
+      rows if none match. If more than one row remains, the practice_code unique
+      test fails.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+
+    columns:
+      - name: practice_name
+        data_type: varchar
+        description: "GP practice name"
+
+      - name: practice_code
+        data_type: varchar
+        description: "GP practice ODS code"
+        tests:
+        - unique
+        - not_null
+
+      - name: neighbourhood_code
+        data_type: varchar
+        description: "Neighbourhood code from NCL, remapped to Haringey test bed neighbourhood code"
+
+      - name: neighbourhood_registered
+        data_type: varchar
+        description: "Neighbourhood registered name from NCL"
+
+      - name: local_authority
+        data_type: varchar
+        description: "Local authority from NCL"

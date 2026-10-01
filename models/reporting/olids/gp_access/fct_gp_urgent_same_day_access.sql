@@ -27,7 +27,7 @@ select
         100.0 * SUM(CASE WHEN is_same_day THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0),
         1
     ) as urgent_same_day_pct
-from {{ ref('int_appointment_gp_clean_recent') }}
+from {{ ref('int_appointment_gp_clinical_recent') }}
 where urgency = 'Urgent'
   and is_attended = TRUE
   and datetime_booked IS NOT NULL

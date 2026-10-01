@@ -3,7 +3,9 @@ sources:
 - name: reference_analyst_managed
   database: '"DATA_LAKE__NCL"'
   schema: '"ANALYST_MANAGED"'
-  description: Analyst-managed reference datasets and business rules
+  description: >
+    Analyst-managed reference datasets and business rules.
+    TURNAROUND_TIMES_RAW is not in this source; use int_tat_turnaround_times.
   tables:
   - name: EMIS_QOF_V50_REGISTER_COUNTS
     identifier: '"EMIS_QOF_V50_REGISTER_COUNTS"'
@@ -243,36 +245,6 @@ sources:
       data_type: TEXT
     - name: OBJECTID
       data_type: NUMBER(38,0)
-  - name: LSOA21_WARD25_LAD25
-    identifier: '"LSOA21_WARD25_LAD25"'
-    columns:
-    - name: LSOA21CD
-      data_type: TEXT
-    - name: LSOA21NM
-      data_type: TEXT
-    - name: WD25CD
-      data_type: TEXT
-    - name: WD25NM
-      data_type: TEXT
-    - name: LAD25CD
-      data_type: TEXT
-    - name: LAD25NM
-      data_type: TEXT
-    - name: RESIDENT_FLAG
-      data_type: TEXT
-  - name: NCL_NEIGHBOURHOOD_LSOA_2021
-    identifier: '"NCL_NEIGHBOURHOOD_LSOA_2021"'
-    columns:
-    - name: LSOA_2021_CODE
-      data_type: TEXT
-    - name: LSOA_2021_NAME
-      data_type: TEXT
-    - name: NEIGHBOURHOOD_CODE
-      data_type: TEXT
-    - name: NEIGHBOURHOOD_NAME
-      data_type: TEXT
-    - name: START_DATE
-      data_type: DATE
   - name: PRACTICE_NEIGHBOURHOOD_LOOKUP
     identifier: '"PRACTICE_NEIGHBOURHOOD_LOOKUP"'
     columns:
@@ -286,30 +258,43 @@ sources:
       data_type: TEXT
     - name: PRACTICENEIGHBOURHOOD
       data_type: TEXT
-  - name: MYRIA_ENROLLED_PATIENTS_20250507
-    identifier: '"MYRIA_ENROLLED_PATIENTS_20250507"'
+  - name: WNLNEIGHBOURHOODS
+    identifier: '"WNLNEIGHBOURHOODS"'
+    description: WNL residence neighbourhood (LSOA 2021 -> neighbourhood), all 13 NCL + NWL boroughs. Name-only (no neighbourhood code).
     columns:
-    - name: HX_ID
+    - name: LSOA21CD
       data_type: TEXT
-    - name: ACTIVATED_DATE
-      data_type: DATE
-    - name: ENROLLED_DATE
-      data_type: DATE
-    - name: ONBOARDED_DATE
-      data_type: DATE
-    - name: DISCHARGED_DATE
-      data_type: DATE
-  - name: MYRIA_ENROLLED_PATIENTS_20260603
-    identifier: '"MYRIA_ENROLLED_PATIENTS_20260603"'
+    - name: LSOA21NM
+      data_type: TEXT
+    - name: LACODE
+      data_type: TEXT
+    - name: LANAME
+      data_type: TEXT
+    - name: IMDRANK
+      data_type: NUMBER(38,0)
+    - name: IMD25DECIL
+      data_type: NUMBER(38,0)
+    - name: IMD19DECIL
+      data_type: NUMBER(38,0)
+    - name: IMDDEPRIIN
+      data_type: NUMBER(38,0)
+    - name: INT
+      data_type: TEXT
+    - name: INTBOROUGH
+      data_type: TEXT
+  - name: WNL_GP_PRACTICE_NEIGHBOURHOOD
+    identifier: '"WNL_GP_PRACTICE_NEIGHBOURHOOD"'
+    description: WNL registered neighbourhood (practice -> neighbourhood), NCL + NWL (tagged by ICB_GROUP).
     columns:
-    - name: HX_ID
+    - name: PRACTICE_CODE
       data_type: TEXT
-    - name: ACTIVATED_DATE
-      data_type: DATE
-    - name: ENROLLED_DATE
-      data_type: DATE
-    - name: ONBOARDED_DATE
-      data_type: DATE
-    - name: DISCHARGED_DATE
-      data_type: DATE
-  
+    - name: PRACTICE_NAME
+      data_type: TEXT
+    - name: NEIGHBOURHOOD_NAME
+      data_type: TEXT
+    - name: NEIGHBOURHOOD_CODE
+      data_type: TEXT
+    - name: ICB_GROUP
+      data_type: TEXT
+    - name: DATE_UPLOADED
+      data_type: TEXT

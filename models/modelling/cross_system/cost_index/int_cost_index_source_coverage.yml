@@ -1,0 +1,38 @@
+version: 2
+models:
+  - name: int_cost_index_source_coverage
+    description: >
+      Source coverage for fct_person_cost_index_monthly. One row per cost
+      source and cost basis, with month range, month count, spend, and current
+      flag against the SLAM max month.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: cost_source
+        description: Cost provenance, such as SLAM or EPD.
+        data_tests:
+          - not_null
+      - name: cost_basis
+        description: Cost basis for the source.
+        data_tests:
+          - not_null
+      - name: min_month
+        description: First activity month present for the source.
+        data_tests:
+          - not_null
+      - name: max_month
+        description: Last activity month present for the source.
+        data_tests:
+          - not_null
+      - name: months_present
+        description: Count of activity months present for the source.
+      - name: total_cost
+        description: Total cost present for the source, £.
+      - name: is_current
+        description: Whether the source reaches the SLAM max month.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [cost_source, cost_basis]

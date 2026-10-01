@@ -1,21 +1,15 @@
 {{
     config(
-        materialized='incremental',
-        unique_key=['id', 'source_cluster_id'],
-        incremental_strategy='merge',
+        materialized='table',
         tags=['intermediate', 'clinical', 'blood_pressure', 'incremental'],
         cluster_by=['person_id', 'effective_date'])
 }}
 
 /*
-Base Blood Pressure Observations - Incremental
+Base Blood Pressure Observations
 ================================================
 Raw BP observations with row classification flags.
 Shared foundation for int_blood_pressure_all and dq_blood_pressure_issues.
-
-Incremental Strategy:
-- Uses lds_start_datetime (LDS processing timestamp) to catch late-arriving data
-- Merge on id to handle updates
 
 Note: Future date handling (clinical_effective_date > date_recorded) is applied
 in the get_observations macro, benefiting all models that use it.
@@ -28,7 +22,6 @@ WITH base_observations AS (
         obs.clinical_effective_date,  -- Already corrected by macro if needed
         obs.clinical_effective_date_raw,  -- Original value from macro
         obs.date_recorded,
-        obs.lds_start_datetime,
         obs.result_value,
         obs.mapped_concept_code AS concept_code,
         obs.mapped_concept_display AS concept_display,
@@ -41,17 +34,6 @@ WITH base_observations AS (
         ON obs.id = src.id
     WHERE obs.result_value IS NOT NULL
       AND obs.person_id IS NOT NULL
-    {% if is_incremental() %}
-      -- COALESCE so the first incremental run (target empty) doesn't compare
-      -- against NULL and exclude every row; '1900-01-01' is safely earlier
-      -- than any real lds_start_datetime.
-      -- Alias the target as `t` so Snowflake doesn't treat the subquery's
-      -- bare `lds_start_datetime` as correlated against outer obs.
-      AND obs.lds_start_datetime > COALESCE(
-        (SELECT MAX(t.lds_start_datetime) FROM {{ this }} AS t),
-        '1900-01-01'::TIMESTAMP_NTZ
-      )
-    {% endif %}
 )
 
 SELECT
@@ -62,7 +44,6 @@ SELECT
     -- Keep original values for audit/DQ
     clinical_effective_date_raw,
     date_recorded,
-    lds_start_datetime,
     
     result_value,
     'mmHg' AS result_unit_display,

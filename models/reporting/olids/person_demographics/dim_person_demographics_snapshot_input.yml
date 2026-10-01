@@ -1,0 +1,18 @@
+models:
+  - name: dim_person_demographics_snapshot_input
+    description: >
+      Thin snapshot-input projection of dim_person_demographics exposing only stable
+      structural demographic match keys (gender, ethnicity, language, registered
+      practice, PCN, registered neighbourhood, death). `age` is deliberately excluded
+      because it changes continuously and would version every person on their
+      birthday. Feeds dim_person_demographics_snapshot.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: person_id
+        description: "Person identifier; one row per person (snapshot unique_key)."
+        data_tests:
+          - unique
+          - not_null

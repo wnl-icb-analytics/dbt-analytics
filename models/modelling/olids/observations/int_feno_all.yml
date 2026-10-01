@@ -10,7 +10,7 @@ models:
       meta:
         owner:
           name: ThomasShallcross
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
@@ -19,6 +19,9 @@ models:
               - original_result_value
               - original_result_unit_code
               - concept_code
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: FENO
     columns:
       - name: id
         description: Unique observation identifier
@@ -58,11 +61,11 @@ models:
       - name: conversion_reason
         description: Human-readable explanation of standardisation action taken
       - name: confidence
-        description: Confidence level in the inferred value
+        description: Confidence flag in the inferred value
         data_tests:
           - accepted_values:
               arguments:
-                values: ['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'NONE']
+                values: ['HIGH', 'MEDIUM', 'LOW']
       - name: is_negative
         description: TRUE if inferred value is negative
       - name: is_extreme_outlier

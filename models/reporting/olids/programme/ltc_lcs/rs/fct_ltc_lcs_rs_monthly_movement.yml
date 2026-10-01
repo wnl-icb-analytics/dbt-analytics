@@ -1,0 +1,46 @@
+version: 2
+models:
+  - name: fct_ltc_lcs_rs_monthly_movement
+    description: |
+      Person-level month-to-month movement between LTC LCS overall risk groups.
+      One row per person per to_month_end_date, comparing their risk group at
+      to_month_end_date against their risk group at their immediately prior
+      populated month.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, to_month_end_date]
+    columns:
+      - name: person_id
+        description: Unique person identifier
+        data_tests:
+          - not_null
+      - name: to_month_end_date
+        description: Month end this movement record is reporting into
+        data_tests:
+          - not_null
+      - name: from_month_end_date
+        description: Month end of the person's immediately prior populated month; null for new entrants
+      - name: from_risk_group
+        description: Overall risk group at from_month_end_date; null for new entrants
+      - name: from_risk_rank
+        description: Overall risk rank at from_month_end_date (1=HRC highest, 5=LR lowest); null for new entrants
+      - name: to_risk_group
+        description: Overall risk group at to_month_end_date; null if the person left the register this month
+      - name: to_risk_rank
+        description: Overall risk rank at to_month_end_date; null if the person left the register this month
+      - name: movement_type
+        description: |
+          Classification of the change between from_risk_group and to_risk_group.
+          'New entrant' (no prior month), 'Left register' (no current month, present
+          prior month), 'Improved' (rank increased = lower risk), 'Worsened' (rank
+          decreased = higher risk), 'No change' (same rank).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['New entrant', 'Left register', 'Improved', 'Worsened', 'No change']

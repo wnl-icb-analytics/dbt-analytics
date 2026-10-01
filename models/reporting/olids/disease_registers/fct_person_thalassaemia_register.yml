@@ -1,0 +1,56 @@
+models:
+  - name: fct_person_thalassaemia_register
+    description: >
+      Thalassaemia register - one row per person with a thalassaemia diagnosis (non-QOF).
+
+      Thalassaemia is an inherited blood disorder where the body makes too little normal
+      haemoglobin, causing anaemia. Severe forms (e.g. thalassaemia major) need lifelong
+      regular blood transfusions plus treatment to remove excess iron. Most common in
+      people of Mediterranean, Middle Eastern, South Asian and South-East Asian family
+      backgrounds.
+
+      On register if any THAL_COD diagnosis is recorded. No resolution codes, no age
+      limit. Counts cover all persons (active, inactive, deceased).
+
+    tests:
+      - dbt_utils.at_least_one:
+          column_name: person_id
+
+    config:
+      meta:
+        indicator:
+          id: "THAL"
+          type: "CONDITION"
+          category: "LTC"
+          clinical_domain: "Haematology"
+          name_short: "Thalassaemia"
+          description_short: "Thalassaemia register (non-QOF)"
+          description_long: >
+            Thalassaemia register using the THAL_COD diagnosis cluster. Thalassaemia is an
+            inherited blood disorder causing anaemia; severe forms need lifelong blood
+            transfusions and iron-removal treatment. Lifelong condition - no resolution
+            codes or age restrictions.
+          is_qof: false
+          source_column: "is_on_register"
+          sort_order: "COND_HAEM_THAL"
+          usage_contexts:
+            - "POPULATION_HEALTH_NEEDS_DASHBOARD"
+          code_clusters:
+            - cluster_id: "THAL_COD"
+              category: "INCLUSION"
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: person_id
+        description: Unique identifier for the person
+        tests:
+          - unique
+          - not_null
+      - name: is_on_register
+        description: Always TRUE - person has a recorded thalassaemia diagnosis
+      - name: earliest_diagnosis_date
+        description: Date of the person's first thalassaemia diagnosis
+      - name: latest_diagnosis_date
+        description: Date of the person's most recent thalassaemia diagnosis
+      - name: total_diagnoses
+        description: Count of thalassaemia diagnosis observations for the person

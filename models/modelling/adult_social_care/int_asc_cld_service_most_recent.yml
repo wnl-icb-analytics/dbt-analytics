@@ -1,0 +1,48 @@
+models:
+  - name: int_asc_cld_service_most_recent
+    description: |
+      Adult Social Care Client Level Dataset (CLD) service records from the most
+      recent submission period per local authority. Limited to relatively current
+      reporting periods and event_type = 'Service'. Deduplicated per CLD dashboard
+      methodology (la_code, patient, event start date, and service attributes).
+      Primary support reasons are standardised and mapped to high-level categories.
+      One row per deduplicated service; patient-level aggregation is in
+      fct_person_asc_service_recent. AWAITING REVIEW BY LOCAL AUTHORITY COLLEAGUES.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: sk_patient_id
+        description: Pseudonymised NHS number (surrogate key for patient)
+        data_tests:
+          - not_null
+
+      - name: la_code
+        description: Local authority code submitting the record
+        data_tests:
+          - not_null
+
+      - name: borough_name
+        description: Local authority name from organisation_local_authority
+
+      - name: service_type
+        description: Type of social care service
+
+      - name: primary_support_reason_cleaned
+        description: |
+          Standardised primary support reason label derived from the raw
+          primary_support_reason value.
+
+      - name: primary_support_reason_category
+        description: |
+          High-level category for the cleaned primary support reason (Physical,
+          Learning disability, Mental Health, Sensory, Social, Memory/cognition,
+          Other, Unknown).
+
+      - name: primary_support_reason
+        description: Primary reason for social care support as submitted in CLD

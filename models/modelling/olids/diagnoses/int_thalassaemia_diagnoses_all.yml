@@ -1,0 +1,46 @@
+models:
+  - name: int_thalassaemia_diagnoses_all
+    description: >
+      Thalassaemia diagnosis observations (one row per observation).
+
+      Thalassaemia is an inherited blood disorder where the body makes too little normal
+      haemoglobin, causing anaemia. Severe forms (e.g. thalassaemia major) need lifelong
+      regular blood transfusions plus treatment to remove excess iron. Most common in
+      people of Mediterranean, Middle Eastern, South Asian and South-East Asian family
+      backgrounds.
+
+      Uses the THAL_COD code cluster (disease codes only - excludes carrier/trait).
+      Feeds fct_person_thalassaemia_register.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: id
+        description: 'Unique identifier for the clinical observation'
+        tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: 'Patient identifier'
+      - name: clinical_effective_date
+        description: 'Date the diagnosis was recorded as clinically effective'
+      - name: date_recorded
+        description: 'Date the observation was entered into the source system'
+      - name: concept_code
+        description: 'SNOMED code for the thalassaemia diagnosis'
+      - name: concept_display
+        description: 'Readable name of the diagnosis code'
+      - name: source_cluster_id
+        description: 'Code cluster the diagnosis came from (always THAL_COD)'
+      - name: is_diagnosis_code
+        description: 'Always TRUE - every row is a thalassaemia diagnosis'
+      - name: thalassaemia_observation_type
+        description: 'Observation type label (always "Thalassaemia Diagnosis")'
+    tests:
+      - dbt_utils.at_least_one:
+          column_name: id
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: THAL_COD
+            source: PCD

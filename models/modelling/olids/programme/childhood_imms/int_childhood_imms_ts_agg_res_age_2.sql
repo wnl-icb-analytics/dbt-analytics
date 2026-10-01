@@ -6,6 +6,7 @@
 
 select 
 p.analysis_month
+,p.fiscal_year_label
 ,p.vaccination_metric
 ,'2 YEARS' as reporting_age
 ,CASE
@@ -33,7 +34,7 @@ FROM (
 ------- 2 YEAR METRICS FROM HISTORICAL 
 --sixin1_2y 
 select 
- '6-in-1 (3 doses) 2 Years' as vaccination_metric, analysis_month, residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ '6-in-1 (3 doses) 2 Years' as vaccination_metric, analysis_month, fiscal_year_label,  residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(sixin1_comp_by_2) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_2') }}
 group by all
@@ -41,7 +42,7 @@ group by all
 UNION
 --sixin1_4_2y (NEW)
 select 
- '6-in-1 (4 doses) 2 Years' as vaccination_metric, analysis_month, residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ '6-in-1 (4 doses) 2 Years' as vaccination_metric, analysis_month, fiscal_year_label,  residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(sixin1_4_comp_by_2) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_2') }}
 group by all
@@ -49,7 +50,7 @@ group by all
 UNION
 --hibmenc_2y 
 select 
- 'Hib/MenC 2 Years' as vaccination_metric, analysis_month, residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ 'Hib/MenC 2 Years' as vaccination_metric, analysis_month, fiscal_year_label,  residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(hibmc_comp_by_2) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_2') }}
 group by all
@@ -57,7 +58,7 @@ group by all
 UNION
 --menb_2y 
 select 
- 'Men B (dose 3) 2 Years' as vaccination_metric, analysis_month, residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ 'Men B (dose 3) 2 Years' as vaccination_metric, analysis_month, fiscal_year_label,  residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(menb_comp_by_2) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_2') }}
 group by all
@@ -65,7 +66,7 @@ group by all
 UNION
 --mmr1_2y 
 select 
- 'MMR (dose 1) 2 Years' as vaccination_metric, analysis_month, residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ 'MMR (dose 1) 2 Years' as vaccination_metric, analysis_month, fiscal_year_label,  residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(mmr1_comp_by_2) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_2') }}
 group by all
@@ -73,7 +74,7 @@ group by all
 UNION
 --mmrv1_2y (NEW)
 select 
- 'MMRV (dose 1) 2 Years' as vaccination_metric, analysis_month, residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ 'MMRV (dose 1) 2 Years' as vaccination_metric, analysis_month, fiscal_year_label,  residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(mmrv1_comp_by_2) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_2') }}
 group by all
@@ -81,7 +82,7 @@ group by all
 UNION
 --mmrv2_2y  (NEW)
 select 
- 'MMRV (dose 2) 2 Years' as vaccination_metric, analysis_month, residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ 'MMRV (dose 2) 2 Years' as vaccination_metric, analysis_month, fiscal_year_label,  residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(mmrv2_comp_by_2) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_2') }}
 group by all
@@ -89,7 +90,7 @@ group by all
 UNION
 --pcv_2y 
 select 
- 'PCV (dose 2) 2 Years' as vaccination_metric, analysis_month, residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ 'PCV (dose 2) 2 Years' as vaccination_metric, analysis_month, fiscal_year_label,  residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(pcv_comp_by_2) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_2') }}
 group by all
@@ -97,7 +98,7 @@ group by all
 UNION
 --all_vacc2y 
 select 
- 'All vaccinations 2 Years' as vaccination_metric, analysis_month, residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
+ 'All vaccinations 2 Years' as vaccination_metric, analysis_month, fiscal_year_label,  residential_borough, residential_neighbourhood, ward_name, ethcat_order, ethnicity_category, imd_quintile, imdquintile_order, 
 sum(all_comp_by_2) as numerator, count(*) as denominator 
 FROM {{ ref('int_childhood_imms_vaccs_historical_age_2') }}
 group by all

@@ -1,6 +1,8 @@
 select
     -- Primary key
     id,
+    source_entity,
+    source_record_id,
 
     -- Business columns
     patient_id,
@@ -11,9 +13,10 @@ select
     clinical_effective_date,
     clinical_effective_date_precision_source_concept_id,
     result_value,
-    result_units_source_concept_id,
+    result_value_units_source_concept_id as result_units_source_concept_id,
     result_date,
     result_text,
+    allergy_medication_name,
     is_problem,
     is_review,
     problem_end_date,
@@ -31,9 +34,8 @@ select
     is_problem_deleted,
     is_confidential,
     lds_is_deleted,
-    lds_id,
     publisher_organisation_code,
-    lds_datetime_first_acquired,
+    lds_transform_datetime,
     mapped_concept_id,
     mapped_concept_code,
     mapped_concept_display,
@@ -41,7 +43,6 @@ select
     result_unit_display,
 
     -- Metadata
-    lds_start_datetime,
     lds_source_record_id
 
 from {{ ref('raw_olids_observation') }}

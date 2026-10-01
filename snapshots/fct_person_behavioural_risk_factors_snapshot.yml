@@ -1,0 +1,26 @@
+snapshots:
+  - name: fct_person_behavioural_risk_factors_snapshot
+    relation: ref('fct_person_behavioural_risk_factors')
+    description: >
+      SCD2 history of consolidated behavioural risk factors (smoking, BMI, alcohol
+      categories / risk keys / flags) so a person's behavioural risk profile can be
+      tracked over time for control-cohort matching. `check_cols: all` — all columns
+      are deterministic, so new risk-factor columns are tracked automatically. Rows
+      leaving the source are closed via `hard_deletes: invalidate`.
+
+    config:
+      strategy: check
+      unique_key: [person_id]
+      check_cols: all
+      hard_deletes: invalidate
+
+    columns:
+      - name: person_id
+        description: "Person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: int_nhse_currency_price_resolution
+    description: >
+      Resolved 2026/27 unit price per currency code. Grain: one row per
+      currency_code, covering the published NHSE price schedule plus every
+      code constructible from the MH population groups x families x settings.
+      price_source records which step of the fallback chain supplied the
+      price (exact, population family Z, MBU setting, MBU Z). Prices are the
+      26/27 base; consumers rebase with the GDP deflator and apply the
+      provider MFF. The not_null test on unit_price_2627_gbp guarantees no
+      classifier-emitted code can reach a fact unpriced.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: currency_code
+        description: Currency code.
+        data_tests:
+          - not_null
+          - unique
+      - name: population_group
+        description: Population group prefix; null for non-MH codes.
+      - name: currency_family
+        description: Currency family (96/97/98/99); null for non-MH codes.
+      - name: setting_code
+        description: Setting suffix; null for non-MH codes.
+      - name: unit
+        description: Pricing basis from the schedule (Bed Day / Contact / Guide Price).
+      - name: unit_price_2627_gbp
+        description: Resolved 2026/27 price in GBP.
+        data_tests:
+          - not_null
+      - name: price_source
+        description: Fallback-chain step that supplied the price.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['exact', 'population_family', 'unclassified_setting', 'unclassified_family']

@@ -1,0 +1,22 @@
+models:
+  - name: cltcs_score_frailty_snapshot_input
+    description: >
+      Thin snapshot-input projection of cltcs_score_frailty: sk_patient_id, the
+      scaled frailty subdomain scores, score_exclusions and the final score_frailty
+      (plus table_refresh_date). Feeds cltcs_score_frailty_snapshot; kept narrow so
+      the SCD2 snapshot stores only the score state needed for control-cohort matching.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: sk_patient_id
+        data_type: number
+        description: "Unique patient identifier; one row per patient (snapshot unique_key)."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: score_frailty
+        data_type: number
+        description: "Final frailty score (higher indicates higher frailty and complexity risk)."

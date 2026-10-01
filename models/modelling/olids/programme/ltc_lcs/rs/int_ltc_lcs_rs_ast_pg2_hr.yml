@@ -1,0 +1,45 @@
+version: 2
+models:
+  - name: int_ltc_lcs_rs_ast_pg2_hr
+    description: |
+      Asthma Adult Register Priority Group 2 - High Risk.
+      Excludes PG1 (HRC). Parent population is the asthma register restricted
+      to age >= 18 (EMIS 'LTC LCS: Asthma Adult Register*').
+
+      Patients meeting any of:
+      - Rule 2: emergency asthma admission code in last 12 months
+      - Rule 3: tiotropium in last 6 months, montelukast or theophylline in
+        last 12 months
+      - Rule 4: >= 3 prednisolone orders in last 12 months
+      - Rule 5: >= 3 antibiotics orders in last 12 months
+      - Rule 6: >= 3 high-dose ICS/LABA inhaler orders in last 6 months
+      - Rule 7: beclometasone/formoterol combination and Beclazone-type
+        inhaler both in last 6 months
+
+      Issue counts follow the live EMIS search definitions; the agent-API
+      parse of the R5 XML drops count restrictions.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - on_asthma_adult_reg_pg2_hr_vs1
+              - on_asthma_adult_reg_pg2_hr_vs2
+              - on_asthma_adult_reg_pg2_hr_vs3
+              - on_asthma_adult_reg_pg2_hr_vs4
+              - on_asthma_adult_reg_pg2_hr_vs5
+              - on_asthma_adult_reg_pg2_hr_vs6
+              - on_asthma_adult_reg_pg2_hr_vs7
+              - on_asthma_adult_reg_pg2_hr_vs8
+              - on_asthma_adult_reg_pg2_hr_vs9
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

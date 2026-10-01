@@ -5,12 +5,22 @@
 }}
 
 
---This table creates dose count and date labels for adult immunisations for adults aged 60+ using a base table
+--This table creates dose count and date labels for adult immunisations for adults aged 18+ using a base table
 SELECT DISTINCT
 v.PERSON_ID 
-,v.age
+,v.age_65_plus
+,v.age_75_plus
 ,v.age_band_5y
 ,v.is_care_home_resident
+,v.is_immunosuppressed
+,v.in_ppv_clinical_risk_group
+,v.in_rsv_clinical_risk_group
+,v.turn_65_after_Sep_2023
+,v.is_pregnant
+,v.ethnicity_category
+,v.ethcat_order
+,v.imd_quintile
+,v.imdquintile_order
 ,v.practice_code
 ,ppv_dose1_label
 ,ppv_dose1_fiscal

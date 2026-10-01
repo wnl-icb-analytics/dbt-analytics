@@ -1,0 +1,194 @@
+models:
+  - name: stg_asc_cld_adult_social_care_cld
+    description: |
+      Staged Adult Social Care Client Level Dataset (CLD) — national submissions
+      from local authorities. One row per client event; pseudonymised NHS number
+      exposed as sk_patient_id for cross-dataset joins.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+      - dbt_utils.unique_combination_of_columns:
+          config:
+            severity: warn
+            warn_if: ">1"
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - la_code
+              - reporting_period_start_date
+              - reporting_period_end_date
+
+
+    columns:
+      - name: sk_patient_id
+        description: Pseudonymised NHS number (surrogate key for patient)
+
+      - name: la_code
+        description: Local authority code submitting the record
+
+      - name: reporting_period_start_date
+        description: Start date of the reporting period for this submission
+
+      - name: reporting_period_end_date
+        description: End date of the reporting period for this submission
+
+      - name: la_person_unique_identifier
+        description: Local authority person unique identifier
+
+      - name: gender
+        description: Client gender
+
+      - name: ethnicity
+        description: Client ethnicity
+
+      - name: client_type
+        description: Type of social care client
+
+      - name: primary_support_reason
+        description: Primary reason for social care support
+
+      - name: accommodation_status
+        description: Client accommodation status
+
+      - name: employment_status
+        description: Client employment status
+
+      - name: has_unpaid_carer
+        description: Whether the client has an unpaid carer
+
+      - name: autism_spectrum_disorder_asd
+        description: Autism spectrum disorder flag or category
+
+      - name: visual_impairment
+        description: Visual impairment flag or category
+
+      - name: hearing_impairment
+        description: Hearing impairment flag or category
+
+      - name: dementia
+        description: Dementia flag or category
+
+      - name: client_funding_status
+        description: Client funding status for social care
+
+      - name: event_type
+        description: Type of social care event (e.g. assessment, service, review)
+
+      - name: event_reference
+        description: Local authority event reference identifier
+
+      - name: event_start_date
+        description: Event start date
+
+      - name: event_end_date
+        description: Event end date
+
+      - name: event_description
+        description: Event description
+
+      - name: event_outcome
+        description: Event outcome
+
+      - name: request_route_of_access
+        description: Route of access for the request
+
+      - name: assessment_type
+        description: Type of assessment
+
+      - name: eligible_needs_identified
+        description: Whether eligible needs were identified at assessment
+
+      - name: informal_carer_involved_in_assessment
+        description: Whether an informal carer was involved in the assessment
+
+      - name: method_of_assessment
+        description: Method used for the assessment
+
+      - name: total_hrs_caring_per_week
+        description: Total hours of caring per week (carer-related events)
+
+      - name: no_of_adults_being_cared_for
+        description: Number of adults being cared for (carer-related events)
+
+      - name: adult_1_linked_person_id
+        description: Linked person identifier for first adult cared for
+
+      - name: adult_2_linked_person_id
+        description: Linked person identifier for second adult cared for
+
+      - name: adult_3_linked_person_id
+        description: Linked person identifier for third adult cared for
+
+      - name: service_type
+        description: Type of social care service
+
+      - name: service_component
+        description: Service component within the service type
+
+      - name: delivery_mechanism
+        description: How the service is delivered
+
+      - name: provider_cqc_location_name
+        description: CQC-registered provider location name
+
+      - name: provider_cqc_location_id
+        description: CQC location identifier for the provider
+
+      - name: review_reason
+        description: Reason for care review
+
+      - name: review_outcomes_achieved
+        description: Outcomes achieved at review
+
+      - name: method_of_review
+        description: Method used for the review
+
+      - name: unit_cost
+        description: Unit cost of the service
+
+      - name: cost_frequency_unit_type
+        description: Cost frequency or unit type for the unit cost
+
+      - name: planned_units_per_week
+        description: Planned service units per week
+
+      - name: full_cost_client
+        description: Whether the client is full-cost to the local authority
+
+      - name: dm_age_at_reporting_period_start_date
+        description: Derived age at reporting period start date
+
+      - name: dm_ccg_of_practice_from_nhs_number
+        description: Derived CCG of practice from NHS number
+
+      - name: dm_ccg_of_residence_from_nhs_number
+        description: Derived CCG of residence from NHS number
+
+      - name: dm_practice_code_from_nhs_number
+        description: Derived GP practice code from NHS number
+
+      - name: dm_import_log_id
+        description: Import log identifier for the submission file
+
+      - name: dm_row_id
+        description: Unique row identifier from the data management layer
+        tests:
+          - unique
+          - not_null
+
+      - name: dm_flow_id
+        description: Data flow identifier for the submission
+
+      - name: dm_submitted_file_name
+        description: Name of the submitted source file
+
+      - name: dm_specification
+        description: Data specification version for the submission
+
+      - name: dm_received_date
+        description: Date the submission was received

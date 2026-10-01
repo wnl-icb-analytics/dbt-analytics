@@ -11,14 +11,19 @@ models:
       Built on person_month_analysis_base with 60-month rolling window.
       Condition registers built to QOF Business Rules v50.
 
-      Includes ESP 2013 weights (age_band_esp, esp_weight, esp_proportion)
-      for age-standardised prevalence/incidence trends.
+      Includes age_band_esp for ESP 2013 age-band grouping. ESP weights
+      (esp_weight, esp_proportion) are NOT in this view — for age-standardised
+      rates use sem_olids_population.
 
-      Grain: One row per person per month (active registrations only)
+      Exposes person_id as a pseudonymised linkage dimension for cross-view
+      cohort intersection (CTE joins to the other sem_olids_* views);
+      aggregate-only output.
+
+      Grain: One row per person per month. Includes inactive/deceased rows —
+      filter is_active as needed.
 
       Tables Included:
       - person_month_analysis_base: 60-month rolling window with demographics and condition flags
-      - esp_2013: European Standard Population weights
 
       Note: This view covers CONDITIONS and DEMOGRAPHICS trends only.
       For clinical biomarker analysis (BP, HbA1c), use sem_olids_observations.

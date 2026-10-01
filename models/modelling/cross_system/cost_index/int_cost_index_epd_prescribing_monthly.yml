@@ -1,0 +1,30 @@
+version: 2
+models:
+  - name: int_cost_index_epd_prescribing_monthly
+    description: |
+      Primary care prescribing cost per patient per month, from EPD
+      (stg_epd_pc_meds). Latest submission only (deduped), cost converted
+      from pence to £. Feeds the person cost model as the prescribing POD.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - activity_month
+    columns:
+      - name: sk_patient_id
+        description: DMIC pseudonymised NHS number.
+        data_tests:
+          - not_null
+      - name: activity_month
+        description: First day of the prescribing processing-period month.
+        data_tests:
+          - not_null
+      - name: prescribing_cost
+        description: Actual reimbursed prescribing spend for the patient-month, in £.
+      - name: prescribing_items
+        description: Number of prescription items dispensed in the patient-month.

@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: stg_sdl_meta_unmapped_files
+    description: |
+      Live view of files not yet loaded into any final table, with the reason.
+      Empty means the pipeline is fully caught up.
+      data_not_logged = the data rows never arrived upstream; not_yet_refreshed = awaiting the nightly metadata refresh.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: feed
+        data_tests:
+          - not_null
+      - name: file_id
+      - name: batch_id
+      - name: header_id
+      - name: profile_code
+      - name: original_file_name
+      - name: row_count
+      - name: logged_at
+      - name: loader_job_name
+      - name: has_headers
+        description: Whether the log row carried a header string.
+      - name: exception_detected_at
+      - name: reason
+        description: >-
+          Why the file is unmapped - exception_unknown_layout, null_headers_no_cascade_sibling, not_yet_refreshed, mapped_but_null_version or data_not_logged.
+        data_tests:
+          - not_null

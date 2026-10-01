@@ -1,6 +1,7 @@
 {{
     config(
-        materialized='table')
+        materialized='table',
+        tags=['cltcs_secure_source'])
 }}
 
 
@@ -183,6 +184,7 @@ ldl_cholesterol_measurements as(
     from {{ ref('int_cholesterol_ldl_all')}} ldl 
     inner join inclusion_list il on il.olids_id = ldl.person_id
     where ldl.clinical_effective_date between dateadd(year, {{ measurement_cutoff }}, current_date()) and current_date()
+    and ldl.is_valid_cholesterol = true
     qualify 
         row_number() over (
             partition by il.patient_id, ldl.clinical_effective_date, ldl.cholesterol_value
@@ -190,6 +192,56 @@ ldl_cholesterol_measurements as(
         ) = 1
 ),
 
+eosinophil_count_measurements as (
+    select il.patient_id,
+        il.area_code,
+        eos.clinical_effective_date,
+        eos.id as measurement_id,
+        eos.inferred_value as value,
+        eos.eosinophil_category as category,
+        case 
+            when eos.eosinophil_category = 'Abnormal' then 1
+            when eos.eosinophil_category = 'Eosinopenia' then 2
+            when eos.eosinophil_category = 'Normal' then 3
+            when eos.eosinophil_category = 'Eosinophilia' then 4
+            when eos.eosinophil_category = 'Hypereosinophilia' then 5
+            when eos.eosinophil_category = 'Severe Hypereosinophilia' then 6
+        else 10
+        end as colour_mapping,
+        'eosinophil_count' as measurement_type
+    from {{ ref('int_eosinophil_count')}} eos 
+    inner join inclusion_list il on il.olids_id = eos.person_id
+    where eos.clinical_effective_date between dateadd(year, {{ measurement_cutoff }}, current_date()) and current_date()
+    qualify 
+        row_number() over (
+            partition by il.patient_id, eos.clinical_effective_date, eos.inferred_value
+            order by measurement_id
+        ) = 1
+),
+eosinophil_percentage_measurements as (
+    select il.patient_id,
+        il.area_code,
+        eos_p.clinical_effective_date,
+        eos_p.id as measurement_id,
+        eos_p.inferred_value as value,
+        eos_p.eosinophil_category as category,
+        case 
+            when eos_p.eosinophil_category = 'Abnormal' then 1
+            when eos_p.eosinophil_category = 'Normal' then 2
+            when eos_p.eosinophil_category = 'Elevated' then 3
+            when eos_p.eosinophil_category = 'Very Elevated' then 4
+        else 10
+        end as colour_mapping,
+        'eosinophil_percentage' as measurement_type
+    from {{ ref('int_eosinophil_percentage')}} eos_p
+    inner join inclusion_list il on il.olids_id = eos_p.person_id
+    where eos_p.clinical_effective_date between dateadd(year, {{ measurement_cutoff }}, current_date()) and current_date()
+    qualify 
+        row_number() over (
+            partition by il.patient_id, eos_p.clinical_effective_date, eos_p.inferred_value
+            order by measurement_id
+        ) = 1
+),
 complete_measurements as (
     select * from hba1c_measurements
     union all
@@ -203,7 +255,12 @@ complete_measurements as (
     union all
     select * from total_cholesterol_measurements
     union all
-    select * from ldl_cholesterol_measurements)
+    select * from ldl_cholesterol_measurements
+    union all
+    select * from eosinophil_count_measurements
+    union all
+    select * from eosinophil_percentage_measurements
+)
 
 select patient_id, 
     area_code, 

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Check that only staging models reference raw models or sources.
+# Check raw and source references follow the project layer boundary.
 # Only checks files passed as arguments (typically changed files in a PR).
-# Models outside of models/staging/ and models/raw/ should not directly
-# reference raw_* models or use source().
+# Staging models may reference raw_* models but must not use source(). Models
+# outside models/staging/ and models/raw/ may use neither.
 
 set -euo pipefail
 
@@ -19,8 +19,7 @@ for file in "$@"; do
     [[ ! -f "$file" ]] && continue
     [[ "$file" == *dbt_packages* ]] && continue
 
-    # Skip staging and raw directories (they're allowed)
-    [[ "$file" == */staging/* ]] && continue
+    # Generated raw models are the only models allowed to use source().
     [[ "$file" == */raw/* ]] && continue
 
     # Only check files in models/
@@ -28,8 +27,8 @@ for file in "$@"; do
 
     issues=""
 
-    # Check for raw_* model references
-    if grep -qE '\{\{\s*ref\s*\(\s*['"'"'"]raw_' "$file"; then
+    # Staging may ref() generated raw models; other layers may not.
+    if [[ "$file" != */staging/* ]] && grep -qE '\{\{\s*ref\s*\(\s*['"'"'"]raw_' "$file"; then
         issues+="  - References raw_* model directly"$'\n'
     fi
 
@@ -45,18 +44,18 @@ for file in "$@"; do
 done
 
 if [[ $failed -eq 1 ]]; then
-    echo "FAILED: Found raw/source references outside staging:"
+    echo "FAILED: Found invalid raw/source references:"
     echo ""
     for file in "${!file_issues[@]}"; do
         echo "$file:"
         echo -n "${file_issues[$file]}"
         echo ""
     done
-    echo "Only models in staging/ should reference raw models or sources."
-    echo "Other models should reference staging models instead."
+    echo "Staging models must ref() generated raw models, not use source()."
+    echo "Other models must reference staging-or-later models."
     echo "See: https://docs.getdbt.com/best-practices/how-we-structure/2-staging"
     exit 1
 fi
 
-echo "PASSED: All raw/source references are in staging models."
+echo "PASSED: All raw/source references follow the layer boundary."
 exit 0

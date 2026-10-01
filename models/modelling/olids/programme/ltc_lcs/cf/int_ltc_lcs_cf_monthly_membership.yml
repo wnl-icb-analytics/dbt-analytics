@@ -1,0 +1,39 @@
+version: 2
+models:
+  - name: int_ltc_lcs_cf_monthly_membership
+    description: |
+      LTC LCS case-finding indicator membership at each month end, long format.
+      One row per person per month per case-finding indicator they were in,
+      derived from the SCD2 snapshot (fct_person_ltc_lcs_case_finding_snapshot).
+      Feeds fct_ltc_lcs_cf_monthly_summary and fct_ltc_lcs_cf_monthly_movement.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, month_end_date, indicator_code]
+    columns:
+      - name: person_id
+        description: Unique person identifier
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: Last day of the month this membership applies to
+        data_tests:
+          - not_null
+      - name: condition
+        description: Case-finding condition the indicator belongs to
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['AF', 'HF', 'CKD', 'CVD', 'DM', 'HTN', 'CYP Asthma']
+      - name: indicator_code
+        description: Case-finding indicator the person was in as of month end
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['af_61', 'af_62', 'hf_61', 'ckd_61', 'ckd_62', 'ckd_63', 'ckd_64', 'cvd_61', 'cvd_62', 'cvd_63', 'cvd_64', 'cvd_65', 'cvd_66', 'dm_61', 'dm_62', 'dm_63', 'dm_64', 'dm_65', 'dm_66', 'htn_61', 'htn_62', 'htn_63', 'htn_65', 'htn_66', 'cyp_ast_61']

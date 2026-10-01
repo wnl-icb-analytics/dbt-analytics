@@ -1,0 +1,105 @@
+version: 2
+
+models:
+  - name: fct_csds_currency_contacts
+    description: >
+      Costed CSDS community contact currencies. Grain: one row per
+      unique_service_request_identifier and unique_care_contact_identifier;
+      providers reuse local contact identifiers across referrals. Population:
+      all classified CYP201 contacts. Time semantics: each contact is allocated
+      to the fiscal year containing care_contact_date and rebased from 2026/27
+      with the GDP deflator.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - unique_service_request_identifier
+              - unique_care_contact_identifier
+    columns:
+      - name: unique_service_request_identifier
+        description: Unique service request identifier.
+        data_tests:
+          - not_null
+      - name: unique_care_contact_identifier
+        description: Unique care contact identifier.
+        data_tests:
+          - not_null
+      - name: sk_patient_id
+        description: Pseudonymised patient identifier.
+      - name: person_id
+        description: CSDS person identifier.
+      - name: org_id_prov
+        description: Provider organisation code.
+      - name: care_contact_date
+        description: Care contact date.
+      - name: dm_icb_commissioner
+        description: Derived ICB commissioner code.
+      - name: dm_sub_icb_commissioner
+        description: Derived sub-ICB commissioner code.
+      - name: practice_code
+        description: GP practice code at or nearest to contact.
+      - name: practice_attribution
+        description: Method used to assign the GP practice.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['at_contact', 'latest_known']
+      - name: practice_name
+        description: GP practice name.
+      - name: practice_metadata_source
+        description: >
+          Where practice context resolved - the WNL PCN membership lookup or
+          the national ODS practice dimension (name only).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['wnl_pcn_lookup', 'ods_national']
+      - name: pcn_code
+        description: >
+          Populated for practices in the WNL PCN membership lookup only -
+          out-of-area registrations (about a third of contacts, as providers
+          serve other ICBs) carry practice_code but null PCN fields.
+      - name: pcn_name
+        description: Primary care network name.
+      - name: practice_registered_borough
+        description: Borough where the GP practice is registered.
+      - name: lsoa21_residence
+        description: 2021 LSOA code for latest submitted residence.
+      - name: residence_borough
+        description: Borough for latest submitted residence.
+      - name: sub_icb_of_residence
+        description: Sub-ICB location code of latest submitted residence.
+      - name: fiscal_year_start
+        description: Fiscal year containing the care contact date.
+      - name: attendance_status
+        description: Care contact attendance status.
+      - name: is_costed_attendance
+        description: Whether the attendance is priced.
+      - name: age_category
+        description: Adult or CYP currency age category.
+      - name: currency_code
+        description: Community contact currency code.
+      - name: currency_source
+        description: Currency classification source.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['reason_split', 'team_type', 'team_fallback', 'unmapped_team']
+      - name: unit_price_2627_gbp
+        description: Resolved 2026/27 price in GBP.
+        data_tests:
+          - not_null
+      - name: price_source
+        description: Price resolution source.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['exact', 'age_default']
+      - name: mff_factor
+        description: Provider Market Forces Factor.
+      - name: proxy_cost
+        description: Price multiplied by MFF and GDP deflator ratio, or zero for uncosted attendance.

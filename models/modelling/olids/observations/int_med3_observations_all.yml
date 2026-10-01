@@ -1,0 +1,40 @@
+models:
+  - name: int_med3_observations_all
+    description: >
+      All coded issued MED3 certification statuses from the clinical record. MED3 certificates
+      are medical evidence that can enable an individual to access health-related benefits or 
+      evidence eligibility for Statutory Sick Pay (SSP). This model
+      produces one row per coded certification status (not per person).
+
+      Cluster: MED3_CERTIFICATE
+    config:
+      meta:
+        owner:
+          name: Emma Keston 
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: id
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: MED3_CERTIFICATE
+    columns:
+      - name: id
+        description: 'Unique identifier for the clinical observation.'
+        data_tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: 'Patient identifier.'
+        data_tests:
+          - not_null
+      - name: clinical_effective_date
+        description: 'Date the MED3 certificate status was issued. Filtered to non-null.'
+        data_tests:
+          - not_null
+      - name: concept_code
+        description: 'SNOMED concept code for the MED3 certificate status.'
+      - name: concept_display
+        description: 'Human-readable description of the SNOMED concept.'
+      - name: source_cluster_id
+        description: 'Source cluster identifier (MED3_CERTIFICATE).'

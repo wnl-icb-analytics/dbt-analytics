@@ -1,0 +1,38 @@
+version: 2
+
+seeds:
+  - name: nhse_mh_currency_team_types_2627
+    description: >
+      MHS102 service-team type mappings, crisis referral flags, and contact
+      settings for 2026/27 mental health currencies. Grain: one row per
+      service-team type.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+      column_types:
+        serv_team_type: varchar(10)
+        population_category: varchar(20)
+        is_crisis_referral: boolean
+        crisis_requires_urgent_priority: boolean
+        setting_group: varchar(20)
+        setting_code: varchar(10)
+        setting_name: varchar(100)
+    columns:
+      - name: serv_team_type
+        description: MHS102 service-team type code.
+        data_tests:
+          - not_null
+          - unique
+      - name: population_category
+        description: Mapped population category or cannot_classify.
+      - name: is_crisis_referral
+        description: Whether the team type marks the referral as crisis.
+      - name: crisis_requires_urgent_priority
+        description: Whether crisis status depends on urgent priority.
+      - name: setting_group
+        description: Contact setting family.
+      - name: setting_code
+        description: Price schedule setting suffix.
+      - name: setting_name
+        description: Contact setting name.

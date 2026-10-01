@@ -1,19 +1,22 @@
 models:
   - name: int_ltc_lcs_rs_htn_pg3b_mrb
     description: |
-      Hypertension Register Priority Group 3B - Medium Risk (b) identification.
-      Excludes PG1 (HRC), PG2 (HR), and PG3A (MRa) patients.
+      Hypertension Register Priority Group 3B - Medium Risk (b).
+      Exclusion-shaped per the EMIS v3 search: patients with a BP monitoring
+      code in the last 12 months, not in PG1, PG2, or PG3A, are included
+      unless their latest paired BP reading is controlled at age-banded
+      thresholds. No comorbidity required.
 
-      No comorbidity required. Patients are included if their latest BP (within 12 months)
-      exceeds age-appropriate thresholds:
+      Age <= 80 controlled:
+      - Clinic: systolic <= 140 and diastolic <= 90
+      - Home/ABPM: systolic <= 135 and diastolic <= 85
 
-      Age <= 80:
-      - Clinic: SBP > 140 or DBP > 90
-      - Home/ABPM: SBP > 135 or DBP > 85
+      Age > 80 controlled (relaxed systolic):
+      - Clinic: systolic <= 150 and diastolic <= 90
+      - Home/ABPM: systolic <= 145 and diastolic <= 85
 
-      Age > 80 (relaxed systolic):
-      - Clinic: SBP > 150 or DBP > 90
-      - Home/ABPM: SBP > 145 or DBP > 85
+      Patients whose monitoring codes have no resolvable paired reading
+      are included, mirroring the EMIS exclude-the-controlled structure.
     config:
       meta:
         owner:
@@ -21,6 +24,11 @@ models:
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - on_htn_reg_priority_group_3b_mrb_v3_vs1
+              - on_htn_reg_priority_group_3b_mrb_v3_vs2
     columns:
       - name: person_id
         tests:

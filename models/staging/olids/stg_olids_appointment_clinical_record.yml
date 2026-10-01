@@ -1,0 +1,36 @@
+version: 2
+models:
+- name: stg_olids_appointment_clinical_record
+  description: One appointment, clinical record type and clinical record ID linked through an encounter
+    in dbt-OLIDS. Includes only non-deleted records from the filtered NCL patient spine with the same
+    person ID on all three records. The upstream snapshot removes changed or deleted links. Patient-associated
+    blocked slots and all current appointment statuses remain included.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - appointment_id
+        - clinical_record_type
+        - clinical_record_id
+  columns:
+  - name: appointment_id
+    description: ID in stg_olids_appointment.
+  - name: clinical_record_type
+    description: Detail entity, observation or medication_order.
+  - name: clinical_record_id
+    description: Stable namespaced ID shared with fct_gp_clinical_record, distinct across detail entities.
+  - name: encounter_id
+    description: Recorded encounter connecting the appointment and clinical record.
+  - name: patient_id
+    description: Practice-level patient ID on the appointment. It can differ from the clinical record's
+      patient ID.
+  - name: person_id
+    description: Consistent person ID shared by the appointment, encounter and clinical record across
+      practice registrations.
+  - name: source_record_id
+    description: ID in the detail entity named by clinical_record_type. Expanded allergies and referrals
+      use observation.id.

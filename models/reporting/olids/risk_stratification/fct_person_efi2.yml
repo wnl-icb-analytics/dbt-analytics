@@ -1,0 +1,32 @@
+models:
+  - name: fct_person_efi2
+    description: >
+      Reporting-layer eFI2 score and frailty category per person (in-house
+      int_efi2_scores joined to dim_person) — a computed per-person frailty measure, so
+      fct_. Native replacement for the retired AIC import stg_aic_int_efi2_scores, which
+      it was built in parallel to. See int_efi2_scores for the documented divergences
+      from the AIC-published score. Renamed from dim_person_efi2 (was a dim_; it is a measure).
+      The scoring population includes all living OLIDS people aged at least 65,
+      without a GP registration filter, then requires a link to dim_person.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    columns:
+      - name: person_id
+        description: Person identifier; one row per person.
+        tests:
+          - unique
+          - not_null
+      - name: end_date
+        description: As-at date for the scoring run.
+      - name: efi_score
+        description: Electronic Frailty Index 2 score (0-1 scale), defaults to 0 if not available.
+      - name: category
+        description: Frailty category (ROBUST / MILD / MODERATE / SEVERE FRAILTY).
+      - name: age_at_end
+        description: Patient age at the end date.
+      - name: gender
+        description: Normalised gender.
+      - name: date_of_death
+        description: Approximate date of death where present.

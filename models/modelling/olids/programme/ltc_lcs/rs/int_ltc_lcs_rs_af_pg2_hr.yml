@@ -1,0 +1,45 @@
+version: 2
+models:
+  - name: int_ltc_lcs_rs_af_pg2_hr
+    description: |
+      AF Register Priority Group 2 - High Risk.
+      NB: There is no PG1 for AF.
+
+      Patients on AF register meeting:
+      - Rule 1 (gate): anticoagulant therapy in last 6 months (exclude on fail)
+      - Rule 2: antiplatelet order or aspirin prophylaxis code in last 6 months (include on pass)
+      - Rule 3: latest HAS-BLED >= 3 or latest ORBIT-AF >= 4 (include on pass)
+      - Rule 4 (gate): DOAC order in last 6 months (exclude on fail)
+      - Rule 5: latest Cockcroft-Gault < 40, latest body weight < 50,
+        Rockwood level 7-9 code or latest Rockwood score >= 7 (include on pass)
+
+      vs1 (oral anticoagulants) is an unexpanded dm+d drug group; the arm is
+      supplemented with BNF section 020802 via get_medication_orders.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - on_af_reg_pg2_hr_vs1
+              - on_af_reg_pg2_hr_vs2
+              - on_af_reg_pg2_hr_vs3
+              - on_af_reg_pg2_hr_vs4
+              - on_af_reg_pg2_hr_vs5
+              - on_af_reg_pg2_hr_vs6
+              - on_af_reg_pg2_hr_vs7
+              - on_af_reg_pg2_hr_vs8
+              - on_af_reg_pg2_hr_vs9
+              - on_af_reg_pg2_hr_vs10
+              - on_af_reg_pg2_hr_vs11
+              - on_af_reg_pg2_hr_vs12
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

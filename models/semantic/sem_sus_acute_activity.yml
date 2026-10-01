@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: sem_sus_acute_activity
+    description: |
+      SUS Acute Activity semantic view. APC is admission-spell grain, UEC is
+      A&E-attendance grain, and OP is attended-outpatient-appointment grain.
+      Do not combine settings in one query.
+
+      Costs are SUS listed/national prices, not actual provider costs. Use
+      sem_cost_index for SLAM actual costs. REVIEW: the SUS coverage window
+      has not yet been validated.
+
+      Exposes setting-specific sk_patient_id linkage dimensions for
+      aggregate-only CTE joins to sem_olids_population. Never return the key.
+
+      Tables: obt_encounter_apc, obt_encounter_uec, and obt_encounter_op.
+    config:
+      materialized: semantic_view
+      schema: SEMANTIC
+      meta:
+        owner:
+          name: Eddie Davison

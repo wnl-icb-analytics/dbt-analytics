@@ -1,0 +1,19 @@
+models:
+  - name: int_alcohol_intervention
+    description: 'Determine alcohol education or referrals. Built for SMI for Longer Lives campaign using clusters: SMI_LONGER_LIVES_ALCOHOL_EDUCATION, ALCOHOLINT_COD, ALCSPADVDEC_COD, ALCBRINTDEC_COD. Includes declined codes'
+
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: ALCBRINTDEC_COD, ALCOHOLINT_COD, ALCSPADVDEC_COD, SMI_LONGER_LIVES_ALCOHOL_EDUCATION
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: person_id
+        tests:
+          - not_null

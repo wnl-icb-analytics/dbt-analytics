@@ -1,0 +1,38 @@
+version: 2
+models:
+  - name: int_ltc_lcs_copd_register
+    description: |
+      LTC LCS COPD register per the EMIS 'LTC LCS: COPD Register*' definition.
+      Differs from QOF by also keeping patients coded in the last year ahead
+      of spirometry confirmation (rules 3/6). Every rule carries the active-COPD
+      group requirement: no COPD resolved code, or a diagnosis dated after the
+      latest resolved code. Parent for the COPD risk stratification models and
+      the LTC LCS base population.
+
+      - Rule 1: QOF COPD register (assumed for the unexported EMIS library item
+        ee5b135f; empirically adds < 15 people over rules 2-6)
+      - Rule 2: earliest COPD-family code before 1 year ago is a diagnosis,
+        and COPD is active
+      - Rule 3: family code in last year with spirometry within -93/+186 days,
+        and COPD is active
+      - Rule 6: earliest family code within the last year is a diagnosis,
+        and COPD is active
+      - Rules 4-5 (new-registration variants) are subsumed by rule 6
+
+      Active patients only.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: COPD_COD, COPDRES_COD, FEV1FVC_COD, FEV1FVCL70_COD
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

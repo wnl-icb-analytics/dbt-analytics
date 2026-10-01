@@ -1,0 +1,25 @@
+snapshots:
+  - name: int_rockwood_latest_snapshot
+    relation: ref('int_rockwood_latest')
+    description: >
+      SCD2 history of each person's latest Rockwood Clinical Frailty Scale reading
+      (rockwood_score + frailty_level + frailty_category, plus the reading's date / concept), so
+      Rockwood frailty can be read as-at an index date for control-cohort matching. Snapshots
+      int_rockwood_latest directly (no thin input needed): it has no CURRENT_DATE() columns --
+      clinical_effective_date is the reading date, stable per reading -- so check_cols: all is
+      churn-free, opening a version only when a new latest reading changes the row. Rows leaving
+      int_rockwood_latest are closed via hard_deletes: invalidate.
+    config:
+      strategy: check
+      unique_key: [person_id]
+      check_cols: all
+      hard_deletes: invalidate
+    columns:
+      - name: person_id
+        description: "Person identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: "When this snapshot version became active (SCD2)."
+        data_tests:
+          - not_null

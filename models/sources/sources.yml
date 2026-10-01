@@ -1,100 +1,4 @@
 sources:
-- name: aic
-  database: '"DATA_LAKE__NCL"'
-  schema: '"AIC_DEV"'
-  description: AIC pipelines
-  tables:
-  - name: INT_EFI2_SCORES
-    identifier: '"INT_EFI2_SCORES"'
-    columns:
-    - name: PERSON_ID
-      data_type: NUMBER(38,0)
-    - name: END_DATE
-      data_type: DATE
-    - name: EFI_SCORE
-      data_type: NUMBER(16,3)
-    - name: CATEGORY
-      data_type: TEXT
-    - name: AGE_AT_END
-      data_type: NUMBER(9,0)
-    - name: GENDER
-      data_type: TEXT
-    - name: DATE_OF_DEATH
-      data_type: DATE
-  - name: BASE_ATHENA__CONCEPT
-    identifier: '"BASE_ATHENA__CONCEPT"'
-    columns:
-    - name: CONCEPT_ID
-      data_type: NUMBER(38,0)
-    - name: CONCEPT_NAME
-      data_type: TEXT
-    - name: DOMAIN_ID
-      data_type: TEXT
-    - name: VOCABULARY_ID
-      data_type: TEXT
-    - name: CONCEPT_CLASS_ID
-      data_type: TEXT
-    - name: STANDARD_CONCEPT
-      data_type: TEXT
-    - name: CONCEPT_CODE
-      data_type: TEXT
-    - name: VALID_START_DATE
-      data_type: DATE
-    - name: VALID_END_DATE
-      data_type: DATE
-    - name: INVALID_REASON
-      data_type: TEXT
-  - name: BASE_CCMS_DMD_CODES
-    identifier: '"BASE_CCMS_DMD_CODES"'
-    columns:
-    - name: CONDITIONID
-      data_type: NUMBER(38,0)
-    - name: CONDITIONNAME
-      data_type: TEXT
-    - name: PRODUCTID
-      data_type: NUMBER(38,0)
-    - name: PRIMARYTERM
-      data_type: TEXT
-  - name: BASE_CCMS_SNOMED_CODES
-    identifier: '"BASE_CCMS_SNOMED_CODES"'
-    columns:
-    - name: CONDITIONID
-      data_type: NUMBER(38,0)
-    - name: CONDITIONNAME
-      data_type: TEXT
-    - name: CONCEPTID
-      data_type: NUMBER(38,0)
-    - name: PRIMARYTERM
-      data_type: TEXT
-  - name: BASE_GOV__IMD_2019
-    identifier: '"BASE_GOV__IMD_2019"'
-    columns:
-    - name: LSOA_CODE_2011
-      data_type: TEXT
-    - name: LSOA_NAME_2011
-      data_type: TEXT
-    - name: LA_CODE_2019
-      data_type: TEXT
-    - name: LA_NAME_2019
-      data_type: TEXT
-    - name: IMD_RANK
-      data_type: NUMBER(38,0)
-    - name: IMD_DECILE
-      data_type: NUMBER(38,0)
-  - name: BASE_GOV__WARD_NAMES
-    identifier: '"BASE_GOV__WARD_NAMES"'
-    columns:
-    - name: WARD_CODE
-      data_type: TEXT
-    - name: WARD_NAME
-      data_type: TEXT
-  - name: BASE_NHSBSA__APID_VPID
-    identifier: '"BASE_NHSBSA__APID_VPID"'
-    columns:
-    - name: APID
-      data_type: NUMBER(38,0)
-    - name: VPID
-      data_type: NUMBER(38,0)
 - name: c_ltcs
   database: '{{ ''PUBLISHED_REPORTING__DIRECT_CARE'' if target.name in [''prod'',
     ''snowflake-prod''] else (''DEV__PUBLISHED_REPORTING__DIRECT_CARE'' if target.name
@@ -224,3 +128,106 @@ sources:
       data_type: FLOAT
     - name: CreateTS
       data_type: TIMESTAMP_NTZ
+- name: performance
+  database: '"DATA_LAKE"'
+  schema: '"PERFORMANCE"'
+  description: Current Performance presentation feeds
+  tables:
+  - name: DiagnosticsMonthlySourceAppendReviseProvComm
+    identifier: '"DiagnosticsMonthlySourceAppendReviseProvComm"'
+    columns:
+    - name: PERIOD
+      data_type: TEXT
+    - name: _INGESTED_AT
+      data_type: TIMESTAMP_NTZ
+- name: qadmissions
+  database: '{{ ''STAT_MODELS'' if target.name in [''prod'',
+    ''snowflake-prod''] else (''DEV__STAT_MODELS'' if target.name
+    in [''dev'', ''snowflake-dev''] else target.name | upper | trim ~ ''__STAT_MODELS'')
+    }}'
+  schema: '"QADMISSIONS"'
+  description: qAdmissions model output
+  tables:
+  - name: QADMISSIONS_PREDICTIONS_HISTORY
+    identifier: QADMISSIONS_PREDICTIONS_HISTORY
+    columns:
+    - name: PERSON_ID
+      data_type: NUMBER
+    - name: SK_PATIENT_ID
+      data_type: NUMBER
+    - name: age
+      data_type: NUMBER
+    - name: alcohol_cat6
+      data_type: NUMBER
+    - name: b_af
+      data_type: BOOLEAN
+    - name: b_ccf
+      data_type: BOOLEAN
+    - name: b_anticoagulant
+      data_type: BOOLEAN
+    - name: b_antidepressant
+      data_type: BOOLEAN
+    - name: b_antipsychotic
+      data_type: BOOLEAN
+    - name: b_anycancer
+      data_type: BOOLEAN
+    - name: b_asthmacopd
+      data_type: BOOLEAN
+    - name: b_corticosteroids
+      data_type: BOOLEAN
+    - name: b_cvd
+      data_type: BOOLEAN
+    - name: b_epilepsy
+      data_type: BOOLEAN
+    - name: b_falls
+      data_type: BOOLEAN
+    - name: b_liverpancreas
+      data_type: BOOLEAN
+    - name: b_malabsorption
+      data_type: BOOLEAN
+    - name: b_manicschiz
+      data_type: BOOLEAN
+    - name: b_nsaid
+      data_type: BOOLEAN
+    - name: b_renal
+      data_type: BOOLEAN
+    - name: b_type1
+      data_type: BOOLEAN
+    - name: b_type2
+      data_type: BOOLEAN
+    - name: b_vte
+      data_type: BOOLEAN
+    - name: bmi
+      data_type: FLOAT
+    - name: c_hb
+      data_type: BOOLEAN
+    - name: ethrisk
+      data_type: NUMBER
+    - name: hes_admitprior_cat
+      data_type: NUMBER
+    - name: high_lft
+      data_type: BOOLEAN
+    - name: high_platelet
+      data_type: BOOLEAN
+    - name: sha1
+      data_type: NUMBER
+    - name: smoke_cat
+      data_type: NUMBER
+    - name: surv
+      data_type: NUMBER
+    - name: town
+      data_type: FLOAT
+    - name: ok
+      data_type: BOOLEAN
+    - name: engine
+      data_type: VARCHAR
+    - name: sex
+      data_type: VARCHAR
+    - name: score_percent
+      data_type: FLOAT
+    - name: errors
+      data_type: VARCHAR
+    - name: SCORED_AT
+      data_type: TIMESTAMP_LTZ
+    - name: MODEL_VERSION
+      data_type: VARCHAR

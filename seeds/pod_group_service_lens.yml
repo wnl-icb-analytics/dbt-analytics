@@ -1,0 +1,54 @@
+version: 2
+seeds:
+  - name: pod_group_service_lens
+    description: |
+      Aligning-Resource-to-Need lens over the 18 governed POD groups
+      (stg_reference_pod_group_mapping / POD Group Manager app), plus an
+      Unmapped row for combinations the app has not curated yet. One row per
+      POD group: service_grouping (Crisis / Community / Planned / Excluded /
+      Unmapped) and is_patient_attributable.
+
+      This seed owns only the analysis-specific judgment calls; the POD ->
+      group taxonomy itself is governed in the app (audited, shared with
+      contracting reporting). Replaces the retired slam_pod_service_grouping
+      seed, which mixed both concerns at POD-code grain.
+
+      is_patient_attributable = FALSE flags groups that are real provider
+      spend but not patient-level activity (CQUIN, transport, and the
+      block/adjustment-dominated Other group). Filter it for per-patient /
+      need cuts; keep all rows for provider-total reconciliation.
+
+      review_note flags judgment calls for sign-off.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+      column_types:
+        pod_group: varchar
+        service_grouping: varchar
+        is_patient_attributable: boolean
+        review_note: varchar
+    columns:
+      - name: pod_group
+        description: Governed POD group name (POD_GROUP_OPTION), plus 'Unmapped'. Primary key.
+        data_tests:
+          - not_null
+          - unique
+      - name: service_grouping
+        description: Aligning-Resource-to-Need category.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Crisis
+                  - Community
+                  - Planned
+                  - Excluded
+                  - Unmapped
+      - name: is_patient_attributable
+        description: FALSE for groups that are spend but not patient-level activity.
+        data_tests:
+          - not_null
+      - name: review_note
+        description: Free-text flag for judgment calls needing sign-off. Blank when unambiguous.

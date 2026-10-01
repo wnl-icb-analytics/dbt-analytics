@@ -1,0 +1,760 @@
+models:
+  - name: fct_person_ckd_ras_therapy_ind263
+    description: |
+      NICE IND263. ACE inhibitor or ARB treatment in CKD with heavy albuminuria.
+      One row per currently registered, living, non-test person on the CKD
+      register with a latest ACR of at least 70 mg/mmol and no diabetes, assessed
+      on the build date.
+
+      Achievement requires an ACE inhibitor or angiotensin receptor blocker (ARB)
+      prescription in the preceding six calendar months.
+
+      Missing or invalid latest ACR values do not establish eligibility. An
+      invalid latest ACR is not replaced by an older result.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind263
+        indicator:
+          id: "IND263"
+          type: "MEASURE"
+          category: "KIDNEY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CKD ACR 70 on ACEi or ARB"
+          description_short: "ACE inhibitor or ARB order in the preceding 6 months for people with CKD, ACR 70 or more and no diabetes"
+          description_long: |
+            NICE IND263. One row per currently registered, living, non-test person on the
+            CKD register with a latest ACR of at least 70 mg/mmol and no diabetes,
+            assessed on the build date.
+
+            Achievement requires an ACE inhibitor or angiotensin receptor blocker (ARB)
+            prescription in the preceding six calendar months.
+
+            Missing or invalid latest ACR values do not establish eligibility. An invalid
+            latest ACR is not replaced by an older result.
+
+            Measured before personalised care adjustments.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND263"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_egfr_value
+        description: Latest eGFR in ml/min/1.73m2; null when none
+      - name: latest_acr_value
+        description: Latest urine ACR in mg/mmol; null when none
+      - name: latest_therapy_order_date
+        description: Date of the latest order of the counted therapy at any time; null when never ordered
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED, NOT_TREATED_IN_PERIOD (an order more than 6 months ago) or NEVER_TREATED
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_TREATED_IN_PERIOD', 'NEVER_TREATED']
+
+
+  - name: fct_person_ckd_ras_therapy_ind130
+    description: |
+      NICE IND130. ACE inhibitor or ARB treatment in CKD with hypertension and
+      proteinuria. One row per currently registered, living, non-test person on
+      the CKD and hypertension registers with a proteinuria record, assessed on
+      the build date.
+
+      Achievement requires an ACE inhibitor or angiotensin receptor blocker (ARB)
+      prescription in the preceding six calendar months.
+
+      People contraindicated to both drug classes are excluded. Each class
+      requires a persisting contraindication at any time or an expiring
+      contraindication in the preceding 12 months. The both-class interpretation
+      follows NICE IND134 and QOF.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind130
+        indicator:
+          id: "IND130"
+          type: "MEASURE"
+          category: "KIDNEY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CKD hypertension proteinuria on RAS"
+          description_short: "ACE inhibitor or ARB order in the preceding 6 months for people with CKD, hypertension and proteinuria"
+          description_long: |
+            NICE IND130. One row per currently registered, living, non-test person on the
+            CKD and hypertension registers with a proteinuria record, assessed on the
+            build date.
+
+            Achievement requires an ACE inhibitor or angiotensin receptor blocker (ARB)
+            prescription in the preceding six calendar months.
+
+            People contraindicated to both drug classes are excluded. Each class requires
+            a persisting contraindication at any time or an expiring contraindication in
+            the preceding 12 months. The both-class interpretation follows NICE IND134 and
+            QOF.
+
+            Measured before personalised care adjustments.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND130"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_egfr_value
+        description: Latest eGFR in ml/min/1.73m2; null when none
+      - name: latest_acr_value
+        description: Latest urine ACR in mg/mmol; null when none
+      - name: latest_therapy_order_date
+        description: Date of the latest order of the counted therapy at any time; null when never ordered
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED, NOT_TREATED_IN_PERIOD (an order more than 6 months ago) or NEVER_TREATED
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_TREATED_IN_PERIOD', 'NEVER_TREATED']
+
+
+  - name: fct_person_ckd_sglt2_therapy_ind324
+    description: |
+      NICE IND324. SGLT2 inhibitor treatment in eligible people with CKD. One row
+      per currently registered, living, non-test person on the CKD register who
+      has type 2 diabetes or meets the specified renal and treatment criteria,
+      assessed on the build date.
+
+      Achievement requires an SGLT2 inhibitor prescription in the preceding six
+      calendar months. Outside type 2 diabetes, an ACE inhibitor or ARB
+      prescription in those six months must be on or before the last SGLT2
+      prescription, unless both classes are contraindicated.
+
+      Outside type 2 diabetes, eligibility requires current ACE inhibitor or ARB
+      treatment or contraindication to both, and eGFR 20-44 mL/min/1.73m2 or eGFR
+      45-59 with ACR at least 22.6 mg/mmol. An unknown diabetes type follows this
+      branch. A latest eGFR below 20 excludes everyone; an unknown eGFR does not
+      exclude the type 2 diabetes branch. The published integer ranges and
+      existing same-day prescription ordering are retained.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind324
+        indicator:
+          id: "IND324"
+          type: "MEASURE"
+          category: "KIDNEY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CKD on SGLT2 inhibitor"
+          description_short: "SGLT2 inhibitor order in the preceding 6 months for eligible people with CKD"
+          description_long: |
+            NICE IND324. One row per currently registered, living, non-test person on the
+            CKD register who has type 2 diabetes or meets the specified renal and
+            treatment criteria, assessed on the build date.
+
+            Achievement requires an SGLT2 inhibitor prescription in the preceding six
+            calendar months. Outside type 2 diabetes, an ACE inhibitor or ARB prescription
+            in those six months must be on or before the last SGLT2 prescription, unless
+            both classes are contraindicated.
+
+            Outside type 2 diabetes, eligibility requires current ACE inhibitor or ARB
+            treatment or contraindication to both, and eGFR 20-44 mL/min/1.73m2 or eGFR
+            45-59 with ACR at least 22.6 mg/mmol. An unknown diabetes type follows this
+            branch. A latest eGFR below 20 excludes everyone; an unknown eGFR does not
+            exclude the type 2 diabetes branch. The published integer ranges and existing
+            same-day prescription ordering are retained.
+
+            Measured before personalised care adjustments.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND324"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_egfr_value
+        description: Latest eGFR in ml/min/1.73m2; null when none
+      - name: latest_acr_value
+        description: Latest urine ACR in mg/mmol; null when none
+      - name: latest_therapy_order_date
+        description: Date of the latest order of the counted therapy at any time; null when never ordered
+      - name: is_treatment_sequence_met
+        description: Whether a renin-angiotensin order in the preceding 6 months precedes the latest SGLT2 order (or both classes are contraindicated), or the person has type 2 diabetes
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED, NOT_TREATED_IN_PERIOD (an order more than 6 months ago or sequence not met) or NEVER_TREATED
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_TREATED_IN_PERIOD', 'NEVER_TREATED']
+
+
+  - name: fct_person_ckd_bp_ind264
+    description: |
+      NICE IND264. Blood pressure control in CKD with heavy albuminuria. One row
+      per currently registered, living, non-test person on the CKD register with a
+      latest ACR of at least 70 mg/mmol and without moderate or severe frailty,
+      assessed on the build date.
+
+      Achievement requires the latest blood pressure in the preceding 12 months to
+      be below 130/80 mmHg in clinic or 125/75 mmHg at home or by ambulatory
+      monitoring. Both components must be strictly below their thresholds.
+
+      Missing or invalid latest ACR values do not establish eligibility. An
+      invalid latest ACR is not replaced by an older result.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind264
+        indicator:
+          id: "IND264"
+          type: "MEASURE"
+          category: "KIDNEY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CKD ACR 70 BP target"
+          description_short: "Latest BP in the preceding 12 months below 130/80 clinic or 125/75 home for people with CKD and ACR 70 or more"
+          description_long: |
+            NICE IND264. One row per currently registered, living, non-test person on the
+            CKD register with a latest ACR of at least 70 mg/mmol and without moderate or
+            severe frailty, assessed on the build date.
+
+            Achievement requires the latest blood pressure in the preceding 12 months to
+            be below 130/80 mmHg in clinic or 125/75 mmHg at home or by ambulatory
+            monitoring. Both components must be strictly below their thresholds.
+
+            Missing or invalid latest ACR values do not establish eligibility. An invalid
+            latest ACR is not replaced by an older result.
+
+            Measured before personalised care adjustments.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND264"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_frailty_severity
+        description: Latest coded frailty severity; null when none
+      - name: latest_acr_value
+        description: Latest urine ACR in mg/mmol; null when none
+      - name: latest_bp_date
+        description: Date of the latest blood pressure reading at any time; null when none
+      - name: latest_record_date
+        description: Date of the latest blood pressure reading when it falls in the preceding 12 months; null otherwise
+      - name: latest_systolic_value
+        description: Latest systolic BP in mmHg; null when none
+      - name: latest_diastolic_value
+        description: Latest diastolic BP in mmHg; null when none
+      - name: applied_measurement_context
+        description: CLINIC or HBPM_ABPM for the latest reading; null when none
+      - name: indicator_systolic_threshold
+        description: Exclusive systolic threshold in mmHg applied to the latest reading; null when none
+      - name: indicator_diastolic_threshold
+        description: Exclusive diastolic threshold in mmHg applied to the latest reading; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the latest reading falls in the period and below both thresholds
+      - name: indicator_status
+        description: ACHIEVED, ABOVE_TARGET or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'ABOVE_TARGET', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_ckd_bp_ind235
+    description: |
+      NICE IND235. Blood pressure control in CKD with ACR below 70 mg/mmol. One
+      row per currently registered, living, non-test person on the CKD register
+      with a latest ACR below 70 mg/mmol and without moderate or severe frailty,
+      assessed on the build date.
+
+      Achievement requires the latest blood pressure in the preceding 12 months to
+      be below 140/90 mmHg in clinic or 135/85 mmHg at home or by ambulatory
+      monitoring. Both components must be strictly below their thresholds.
+
+      Missing or invalid latest ACR values do not establish eligibility. An
+      invalid latest ACR is not replaced by an older result.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind235
+        indicator:
+          id: "IND235"
+          type: "MEASURE"
+          category: "KIDNEY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "CKD ACR under 70 BP target"
+          description_short: "Latest BP in the preceding 12 months below 140/90 clinic or 135/85 home for people with CKD and ACR below 70"
+          description_long: |
+            NICE IND235. One row per currently registered, living, non-test person on the
+            CKD register with a latest ACR below 70 mg/mmol and without moderate or severe
+            frailty, assessed on the build date.
+
+            Achievement requires the latest blood pressure in the preceding 12 months to
+            be below 140/90 mmHg in clinic or 135/85 mmHg at home or by ambulatory
+            monitoring. Both components must be strictly below their thresholds.
+
+            Missing or invalid latest ACR values do not establish eligibility. An invalid
+            latest ACR is not replaced by an older result.
+
+            Measured before personalised care adjustments.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND235"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_frailty_severity
+        description: Latest coded frailty severity; null when none
+      - name: latest_acr_value
+        description: Latest urine ACR in mg/mmol; null when none
+      - name: latest_bp_date
+        description: Date of the latest blood pressure reading at any time; null when none
+      - name: latest_record_date
+        description: Date of the latest blood pressure reading when it falls in the preceding 12 months; null otherwise
+      - name: latest_systolic_value
+        description: Latest systolic BP in mmHg; null when none
+      - name: latest_diastolic_value
+        description: Latest diastolic BP in mmHg; null when none
+      - name: applied_measurement_context
+        description: CLINIC or HBPM_ABPM for the latest reading; null when none
+      - name: indicator_systolic_threshold
+        description: Exclusive systolic threshold in mmHg applied to the latest reading; null when none
+      - name: indicator_diastolic_threshold
+        description: Exclusive diastolic threshold in mmHg applied to the latest reading; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the latest reading falls in the period and below both thresholds
+      - name: indicator_status
+        description: ACHIEVED, ABOVE_TARGET or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'ABOVE_TARGET', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_ckd_new_diagnosis_egfr_ind233
+    description: |
+      NICE IND233. eGFR confirmation before a new CKD diagnosis. One row per
+      currently registered, living, non-test person whose first coded CKD stage 3
+      to 5 diagnosis was in the preceding 12 months, assessed on the build date.
+
+      Achievement requires two eGFR measurements at least 90 days apart. The
+      second must be within 90 days before the diagnosis. Future-dated tests
+      cannot count.
+
+      The current measurement input requires recorded numeric results. It cannot
+      reliably distinguish tests from acute secondary-care episodes, which NICE
+      says should be excluded.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind233
+        indicator:
+          id: "IND233"
+          type: "MEASURE"
+          category: "KIDNEY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "New CKD confirmed by eGFR"
+          description_short: "Two eGFR measurements at least 90 days apart, the second within 90 days before a new CKD diagnosis"
+          description_long: |
+            NICE IND233. One row per currently registered, living, non-test person whose
+            first coded CKD stage 3 to 5 diagnosis was in the preceding 12 months,
+            assessed on the build date.
+
+            Achievement requires two eGFR measurements at least 90 days apart. The second
+            must be within 90 days before the diagnosis. Future-dated tests cannot count.
+
+            The current measurement input requires recorded numeric results. It cannot
+            reliably distinguish tests from acute secondary-care episodes, which NICE says
+            should be excluded.
+
+            Measured before personalised care adjustments.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND233"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: diagnosis_date
+        description: Diagnosis date anchoring the indicator window
+      - name: latest_egfr_value
+        description: Latest eGFR in ml/min/1.73m2; null when none
+      - name: latest_acr_value
+        description: Latest urine ACR in mg/mmol; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_ckd_new_diagnosis_tests_ind234
+    description: |
+      NICE IND234. eGFR and ACR testing around a new CKD diagnosis. One row per
+      currently registered, living, non-test person whose first coded CKD stage 3
+      to 5 diagnosis was in the preceding 12 months, assessed on the build date.
+
+      Achievement requires an eGFR measurement and urine ACR test within 90 days
+      before or after diagnosis, with neither test after the build date.
+
+      The eGFR input requires a recorded numeric result. The ACR test does not
+      require a numeric result.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind234
+        indicator:
+          id: "IND234"
+          type: "MEASURE"
+          category: "KIDNEY"
+          clinical_domain: "Cardiometabolic"
+          name_short: "New CKD eGFR and ACR"
+          description_short: "eGFR and urine ACR within 90 days of a new CKD diagnosis in the preceding 12 months"
+          description_long: |
+            NICE IND234. One row per currently registered, living, non-test person whose
+            first coded CKD stage 3 to 5 diagnosis was in the preceding 12 months,
+            assessed on the build date.
+
+            Achievement requires an eGFR measurement and urine ACR test within 90 days
+            before or after diagnosis, with neither test after the build date.
+
+            The eGFR input requires a recorded numeric result. The ACR test does not
+            require a numeric result.
+
+            Measured before personalised care adjustments.
+          is_qof: false
+          source_column: "is_in_numerator"
+          usage_contexts:
+            - "NICE_GUIDANCE"
+          sort_order: "NICE_IND234"
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+          - unique
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: diagnosis_date
+        description: Diagnosis date anchoring the indicator window
+      - name: latest_egfr_value
+        description: Latest eGFR in ml/min/1.73m2; null when none
+      - name: latest_acr_value
+        description: Latest urine ACR in mg/mmol; null when none
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
+
+
+  - name: fct_person_ckd_nice_indicators
+    description: |
+      Current NICE chronic kidney disease indicator outcomes. One row per eligible
+      person and indicator on the reporting date.
+
+      Each indicator retains its own denominator, achievement rules and
+      measurement period. The table includes clinical detail for the family;
+      fields that do not apply to an indicator are null.
+
+      Personalised care adjustments are not applied.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['IND130', 'IND144', 'IND233', 'IND234', 'IND235', 'IND263', 'IND264', 'IND324']
+      - name: indicator_name
+        description: Published NICE indicator name
+      - name: reporting_date
+        description: Build date used for eligibility and the measurement period
+      - name: measurement_period_start
+        description: Inclusive start of the measurement period before the reporting date
+      - name: age
+        description: Age in years on the reporting date; null when no birth date is recorded
+      - name: condition_name
+        description: Population defining the indicator
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: current_practice_name
+        description: Name of the current registration practice
+      - name: latest_egfr_value
+        description: Latest eGFR in ml/min/1.73m2; null when none; typed null for branches that do not emit it
+      - name: latest_acr_value
+        description: Latest urine ACR in mg/mmol; null when none; typed null for branches that do not emit it
+      - name: latest_systolic_value
+        description: Latest systolic BP in mmHg; null when none; typed null for branches that do not emit it
+      - name: latest_diastolic_value
+        description: Latest diastolic BP in mmHg; null when none; typed null for branches that do not emit it
+      - name: latest_frailty_severity
+        description: Latest coded frailty severity; null when none; typed null for branches that do not emit it
+      - name: latest_therapy_order_date
+        description: Date of the latest order of the counted therapy at any time; null when never ordered; typed null for branches that do not emit it
+      - name: diagnosis_date
+        description: Diagnosis date anchoring the indicator window; typed null for branches that do not emit it
+      - name: latest_bp_date
+        description: Date of the latest blood pressure reading at any time for the BP indicators; typed null for other branches
+      - name: applied_measurement_context
+        description: CLINIC or HBPM_ABPM for the latest reading for the BP indicators; typed null for other branches
+      - name: indicator_systolic_threshold
+        description: Exclusive systolic threshold in mmHg for the BP indicators; typed null for other branches
+      - name: indicator_diastolic_threshold
+        description: Exclusive diastolic threshold in mmHg for the BP indicators; typed null for other branches
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: is_in_denominator
+        description: Always true; every row is an eligible person before personalised care adjustments
+      - name: is_in_numerator
+        description: Whether the person meets the indicator on the reporting date
+      - name: indicator_status
+        description: ACHIEVED, NOT_RECORDED_IN_PERIOD, ABOVE_TARGET, NOT_TREATED_IN_PERIOD or NEVER_TREATED
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD', 'ABOVE_TARGET', 'NOT_TREATED_IN_PERIOD', 'NEVER_TREATED']
+
+  - name: fct_person_ckd_nice_indicators_snapshot_input
+    description: |
+      Current NICE ckd indicators outcomes used to record changes over time. One
+      row per person and indicator in the current indicator denominator.
+
+      Keeps the current practice, qualifying evidence date and outcome. Build-date
+      fields are excluded so a new snapshot version records a changed outcome or
+      practice rather than the daily date change.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier
+      - name: current_practice_code
+        description: ODS code of the current registration practice
+      - name: latest_record_date
+        description: Date of the latest qualifying record in the period; null when none
+      - name: latest_egfr_value
+        description: Latest eGFR in ml/min/1.73m2; null when not emitted
+      - name: latest_acr_value
+        description: Latest urine ACR in mg/mmol; null when not emitted
+      - name: latest_systolic_value
+        description: Latest systolic BP in mmHg; null when not emitted
+      - name: latest_diastolic_value
+        description: Latest diastolic BP in mmHg; null when not emitted
+      - name: is_in_numerator
+        description: Whether the person meets the indicator
+      - name: indicator_status
+        description: Status token for the indicator

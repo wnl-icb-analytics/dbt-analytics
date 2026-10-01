@@ -1,0 +1,47 @@
+{{
+    config(materialized = 'table')
+}}
+
+select primarykey_id
+    , {{ consistent_sk_patient_id_format('PATIENT_IDENTITY_NHS_NUMBER_VALUE_PSEUDO') }} as sk_patient_id
+    , patient_identity_local_patient_identifier_value as local_patient_identifier
+    , EPISODES_ID
+
+    -- Timing & duration - NEED TO CONFIRM IF THE RELEVANT FIELDS
+    , ADMISSION_SOURCE
+    , DISCHARGE_DESTINATION
+    , START_DATE
+    , START_TIME
+    , END_DATE
+    , END_TIME
+    , DURATION
+    -- location - NEED TO CONFIRM IF THE RELEVANT FIELDS
+    , {{ clean_organisation_id('COMMISSIONING_SERVICE_AGREEMENT_PROVIDER') }} as COMMISSIONING_SERVICE_AGREEMENT_PROVIDER
+    , COMMISSIONING_SERVICE_AGREEMENT_COMMISSIONER
+
+    -- activity - NEED TO CONFIRM IF THE RELEVANT FIELDS
+    , COMMISSIONING_GROUPING_CORE_HRG
+    , DOMINANT_EPISODE_FLAG
+    , CARE_PROFESSIONAL_MAIN_SPECIALTY
+    , CARE_PROFESSIONAL_TREATMENT_FUNCTION
+    , CARE_PROFESSIONAL_LOCAL_SUB_SPECIALTY
+    , CLINICAL_CODING_GROUPER_DERIVED_DOMINANT_PROCEDURE
+
+    -- cost - NEED TO CONFIRM IF THE RELEVANT FIELDS
+    , COMMISSIONING_GROUPING_PROGRAMME_BUDGETING_CATEGORY
+    , COMMISSIONING_TARIFF_CALCULATION_EXCLUDED_FROM_PBR
+    , COMMISSIONING_TARIFF_CALCULATION_PBR_LENGTH_OF_STAY_CRITICAL_CARE_DAYS
+    , COMMISSIONING_TARIFF_CALCULATION_PBR_LENGTH_OF_STAY_PALLIATIVE_CARE_DAYS
+    , COMMISSIONING_TARIFF_CALCULATION_PBR_LENGTH_OF_STAY_PBR_DELAYED_DISCHARGE_DAYS
+    , COMMISSIONING_TARIFF_CALCULATION_PBR_LENGTH_OF_STAY_REHABILITATION_DAYS
+
+from {{ ref('raw_sus_apc_spell_episodes') }}
+qualify row_number() over (
+    partition by primarykey_id, episodes_id
+    order by
+        system_transaction_cds_activity_date desc nulls last
+        , try_to_number(system_record_version) desc nulls last
+        , system_interchange_received_date desc nulls last
+        , system_interchange_received_time desc nulls last
+        , rownumber_id desc
+) = 1

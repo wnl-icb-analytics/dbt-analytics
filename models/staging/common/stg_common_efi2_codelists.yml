@@ -1,0 +1,42 @@
+models:
+  - name: stg_common_efi2_codelists
+    description: >
+      Staging model for the eFI2 codelist: maps each frailty deficit to
+      its SNOMED concept(s), with the per-code time-constraint (years lookback),
+      age limit and free-text rule instructions used by the eFI2 rules engine.
+      Note: The codelists are not available from the original paper, but can be found from an email to the research team.
+      Migrated from stg_aic_base_efi2_codelist (AIC_DEV.BASE_EFI2__CODELIST) to
+      DATA_LAKE__NCL.COMMON.EFI2_CODELISTS.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    tests:
+      # Fails if the codelist builds empty (an empty codelist zeroes every score).
+      - dbt_utils.at_least_one:
+          column_name: snomedct_conceptid
+    columns:
+      - name: deficit
+        description: Frailty deficit the code contributes to (e.g. Hypertension, BMI, Falls).
+      - name: snomedct_conceptid
+        description: SNOMED CT concept id for the code, joined to observation mapped_concept_code.
+        tests:
+          - not_null
+      - name: ctv3
+        description: CTV3 code where provided (unused downstream; retained for provenance).
+      - name: provenance
+        description: Source/provenance of the code.
+      - name: code_description
+        description: Human-readable description of the code.
+      - name: time_constraint_years
+        description: >
+          Lookback window in years; an observation only counts if it is within this
+          many years of the end date. Null means no time constraint (ever).
+      - name: age_limit
+        description: Minimum age at event for the code to count. Null means no age limit.
+      - name: other_instructions
+        description: >
+          Free-text rule the eFI2 rules engine keys on (e.g. threshold logic for
+          blood pressure, alcohol bands). Null means the code counts on presence alone.
+      - name: new_descriptions
+        description: Any revised description supplied by the research team.

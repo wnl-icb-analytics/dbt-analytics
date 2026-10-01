@@ -86,12 +86,13 @@ rule_4_diabetic_foot_risk as (
     from ({{ get_ltc_lcs_observations("on_dm_reg_priority_group_3b_mrb_vs6") }})
 ),
 
--- vs7 = Heart failure (first episode, excluding review/end)
+-- vs7 = Heart failure (episode type not Review or Ended)
 rule_4_heart_failure as (
-    select distinct person_id
-    from ({{ get_ltc_lcs_observations("on_dm_reg_priority_group_3b_mrb_vs7") }})
-    where is_problem = true
-      and coalesce(is_review, false) = false
+    select distinct o.person_id
+    from ({{ get_ltc_lcs_observations("on_dm_reg_priority_group_3b_mrb_vs7") }}) o
+    left join {{ ref('stg_olids_enriched_concept_map') }} ecm
+        on o.episodicity_source_concept_id = ecm.source_concept_id
+    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
 ),
 
 -- GLP-1 medications (vs9) and Insulins in last 6 months

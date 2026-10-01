@@ -1,0 +1,73 @@
+
+models:
+  - name: int_sus_apc_imputed_spells
+    description: |
+      Admitted patient care spells with imputed missing dates and durations based on median length of stay by HRG, 
+      treatment function, patient, and global fallbacks, deduplicated to one row per spell if the same admission date 
+      and time are obseerved. Sourced from int_sus_apc_encounter over a rolling 2-year window. Missing start/end dates and duration are
+      imputed using median length of stay by HRG, treatment function, patient, and global fallbacks. Downstream
+      12-month consumers (fct_person_sus_apc_recent, int_sus_apc_merged_spells) apply their own 12-month filter.
+      Spell-level attributes otherwise match int_sus_apc_encounter.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: visit_occurrence_id
+        data_type: number
+        description: "Primary key for the encounter within SUS"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        data_type: varchar
+        description: "Common commissioning patient identifier"
+
+      - name: start_date
+        data_type: timestamp_ntz
+        description: "Spell start date. Imputed from end date and duration when missing in source."
+
+      - name: end_date
+        data_type: timestamp_ntz
+        description: "Spell end date. Imputed from start date and duration when missing in source."
+
+      - name: duration
+        data_type: number
+        description: "Length of stay in days. Imputed from median duration when missing in source."
+
+      - name: duration_to_date
+        data_type: number
+        description: "Length of stay in days from start date to current date, recalculated after date imputation."
+
+      - name: spell_admission_method
+        data_type: varchar
+        description: "Method of admission of the spell (code)"
+
+      - name: hrg_code
+        data_type: varchar
+        description: "The spell level HRG returned by the grouper as a result of grouping non-excluded episodes."
+
+      - name: treatment_function_code
+        data_type: varchar
+        description: "Treatment function code for the specialised service within which the patient is treated."
+
+      - name: dq_start_date
+        data_type: boolean
+        description: "True when the source start date was missing."
+
+      - name: dq_end_date
+        data_type: boolean
+        description: "True when the source end date was missing."
+
+      - name: dq_duration
+        data_type: boolean
+        description: "True when the source duration was missing."
+
+      - name: imputed_median_duration
+        data_type: number
+        description: "Median duration used for imputation, selected by HRG (or treatment function), patient, then global fallback."
+
+      - name: in_year_duration
+        data_type: number
+        description: "Portion of spell duration falling within the rolling 12-month window, for in-year length-of-stay measures."

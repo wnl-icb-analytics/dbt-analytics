@@ -1,242 +1,219 @@
 # dbt Deploy to Production Workflow
 #
-# Deploys changed dbt models + downstream to Snowflake PROD.
-# Triggered on merge to main or manual dispatch.
+# Runs dbt (Fusion) directly on the runner against Snowflake PROD - no dbt
+# project object, no ADD VERSION, no 20k file limit.
+#
+# Selection: state:modified+ plus tag:indicator_definitions+ against the latest
+# deploy-state manifest in the DBT_ARTIFACTS stage. Metadata-derived definitions
+# have no ref() dependencies, so state selection can miss their YAML changes.
+# UEC diagnosis/procedure builds also refresh their encounter parent, as in DEV.
+# Falls back to a full build when no state manifest exists or on manual dispatch.
+#
+# Runs that pass Fusion compile publish target/manifest.json + run_results.json
+# + meta.json as the next baseline, even if execution later fails. This prevents
+# later unrelated deploys from retrying failed nodes. A compile failure, or a
+# failure before the build starts, keeps the prior baseline and stores any
+# available artifacts under attempts/<run_id>/.
 #
 # Prerequisites:
 #   - Snowflake secrets: SNOWFLAKE_ACCOUNT, SNOWFLAKE__USERNAME,
 #     SNOWFLAKE__PRIVATE_KEY, SNOWFLAKE__PASSPHRASE
-#   - DBT_ADMIN role with USAGE on warehouse
-#
-# Snowflake objects:
-#   - Role: DBT_ADMIN
-#   - Warehouse: WH_NCL_ENGINEERING_XS for FETCH + ADD VERSION,
-#                WH_WNL_ENGINEERING_M for EXECUTE DBT PROJECT (7200s timeout)
-#   - Database/Schema: ACCOUNT_ADMIN.DBT_MANAGEMENT
-#   - Git repo: REPO__GITHUB__DBT_NCL_ANALYTICS
-#   - dbt project: DBT_NCL_ANALYTICS__MAIN
+#   - DBT_ADMIN role with USAGE on WH_WNL_ENGINEERING_M,
+#     WH_NCL_ENGINEERING_XS and WH_WNL_OLIDS_L (eFI2 history models)
+#   - Stage DATA_LAKE__NCL.DBT_OBSERVABILITY.STG_DBT_ARTIFACTS
+#     (Snowflake-Deployment: dbt Admin/dbt GitHub Actions Runs/setup.sql)
 
 name: dbt Deploy to Production
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # manual trigger = full build
   push:
     branches: [main]
     paths:
       - 'models/**'
       - 'macros/**'
+      - 'seeds/**'
+      - 'snapshots/**'
+      - 'packages.yml'
+      - 'dbt_project.yml'
+      - '.github/workflows/dbt-deploy.yml'
+      - '.github/scripts/validate_dbt_models.py'
 
 jobs:
-  deploy-models:
-    name: Deploy Changed Models + Downstream
+  deploy-decision:
+    name: Check deploy marker
     runs-on: ubuntu-latest
-    # Skip if the merge commit message contains [skip deploy] or [skip-deploy].
-    # Manual workflow_dispatch always runs.
-    if: |
-      github.event_name == 'workflow_dispatch' || (
-        !contains(github.event.head_commit.message, '[skip deploy]') &&
-        !contains(github.event.head_commit.message, '[skip-deploy]')
-      )
-    # Queue deploys sequentially - don't cancel, wait for previous to finish
-    concurrency:
-      group: dbt-deploy-prod
-      cancel-in-progress: false
     permissions:
       contents: read
+      pull-requests: read
+    outputs:
+      should-deploy: ${{ steps.decision.outputs.should-deploy }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - name: Resolve skip-deploy marker
+        id: decision
+        uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0
         with:
+          script: |
+            if (context.eventName === 'workflow_dispatch') {
+              core.setOutput('should-deploy', 'true');
+              return;
+            }
+
+            const marker = /\[skip(?: |-)deploy\]/i;
+            const pushMessages = [
+              context.payload.head_commit?.message,
+              ...(context.payload.commits ?? []).map(commit => commit.message),
+            ].filter(Boolean);
+
+            let skipSource = pushMessages.find(message => marker.test(message));
+
+            // A merge queue controls the final commit message, so also inspect
+            // the associated PR title. This keeps `[skip deploy]` reliable when
+            // the marker was supplied before the PR entered the queue.
+            // The lookup is advisory: a transient API failure must not cancel
+            // the deploy (and a skipped deploy job would open no issue), so
+            // fail open and treat the marker as absent.
+            if (!skipSource) {
+              try {
+                const { data: pulls } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  commit_sha: context.sha,
+                });
+                const markedPull = pulls.find(pull => marker.test(pull.title));
+                if (markedPull) {
+                  skipSource = `PR #${markedPull.number}: ${markedPull.title}`;
+                }
+              } catch (error) {
+                core.warning(
+                  `Could not read associated PRs (${error.message}); assuming no [skip deploy] marker.`
+                );
+              }
+            }
+
+            const shouldDeploy = !skipSource;
+            core.setOutput('should-deploy', String(shouldDeploy));
+            core.notice(
+              shouldDeploy
+                ? 'No [skip deploy] marker found; production deployment will run.'
+                : `Production deployment skipped by ${skipSource}`
+            );
+
+  deploy:
+    name: Deploy Modified Models + Downstream
+    needs: deploy-decision
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    # Manual workflow_dispatch always runs. Pushes skip when the marker is in
+    # a pushed commit message or the associated PR title, including queued PRs.
+    if: needs.deploy-decision.outputs.should-deploy == 'true'
+    # Queue prod runs sequentially (shared with dbt-scheduled.yml). Each queued
+    # deploy compares against the manifest its predecessor published, so it
+    # only builds its own delta.
+    concurrency:
+      group: dbt-prod
+      cancel-in-progress: false
+      queue: max
+    permissions:
+      contents: read
+      issues: write  # failure issues (report_dbt_failures.py)
+      pull-requests: read  # associate the deployed commit with its PR
+    env:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE__USERNAME }}
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
+      SNOWFLAKE_ROLE: DBT_ADMIN
+      SNOWFLAKE_WAREHOUSE: WH_WNL_ENGINEERING_M
+      # The eFI2 history models expand observations across 60 month-ends. The
+      # first build after they merge is a full build (the tables do not exist
+      # yet), so route them off the Medium warehouse here as well as on the
+      # monthly refresh in dbt-scheduled.yml.
+      EFI2_HISTORY_WAREHOUSE: WH_WNL_OLIDS_L
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # Failure attribution compares failed dbt dependency paths with the
+          # commit being deployed.
           fetch-depth: 0
 
-      - uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6
-        with:
-          version: "0.6.x"
+      - name: Check build selection
+        run: python3 -m unittest discover -s .github/scripts -p test_validate_dbt_models.py
 
-      - name: Get changed models
-        id: changes
+      - name: Install dbt Fusion
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            # Get changed .sql files directly
-            SQL_FILES=$(git diff --name-only --diff-filter=d ${{ github.event.before }} ${{ github.sha }} -- 'models/**/*.sql')
-            
-            # Get changed .yml/.yaml files and find associated .sql models
-            YML_FILES=$(git diff --name-only --diff-filter=d ${{ github.event.before }} ${{ github.sha }} -- 'models/**/*.yml' 'models/**/*.yaml')
-            
-            # Get changed macro files
-            MACRO_FILES=$(git diff --name-only --diff-filter=d ${{ github.event.before }} ${{ github.sha }} -- 'macros/**/*.sql')
-            
-            # For each yml file, find corresponding sql file with same base name
-            YML_DERIVED_SQL=""
-            for yml in $YML_FILES; do
-              dir=$(dirname "$yml")
-              base=$(basename "$yml" .yml)
-              base=$(basename "$base" .yaml)
-              if [ -f "$dir/$base.sql" ]; then
-                YML_DERIVED_SQL="$YML_DERIVED_SQL $dir/$base.sql"
-              fi
-            done
-            
-            # For each changed macro, find models that reference it
-            MACRO_DERIVED_SQL=""
-            for macro_file in $MACRO_FILES; do
-              # Extract macro name from filename (e.g., calculate_ckd_register.sql -> calculate_ckd_register)
-              macro_name=$(basename "$macro_file" .sql)
-              echo "Searching for models using macro: $macro_name"
-              # Find models that call this macro (search for {{ macro_name( pattern)
-              matching_models=$(grep -rl "{{ *$macro_name(" models/ --include="*.sql" 2>/dev/null || true)
-              if [ -n "$matching_models" ]; then
-                MACRO_DERIVED_SQL="$MACRO_DERIVED_SQL $matching_models"
-                echo "  Found: $matching_models"
-              fi
-            done
-            
-            # Combine and deduplicate
-            CHANGED=$(echo "$SQL_FILES $YML_DERIVED_SQL $MACRO_DERIVED_SQL" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-            [ -n "$YML_FILES" ] && echo "YML changes detected - included associated models" || true
-            [ -n "$MACRO_FILES" ] && echo "Macro changes detected - included models that use them" || true
-          else
-            CHANGED=""  # Manual trigger = full build
-          fi
-          COUNT=$(echo "$CHANGED" | wc -w)
-          echo "changed_files=$CHANGED" >> $GITHUB_OUTPUT
-          echo "file_count=$COUNT" >> $GITHUB_OUTPUT
-          echo "Found $COUNT changed model files"
+          # Latest Fusion, unpinned - matches the VS Code extension, which
+          # auto-updates to latest. If an engine upgrade changes manifest
+          # internals, state:modified may over-select once (extra rebuilds,
+          # never missed ones) and the new manifest resets the baseline.
+          curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --target x86_64-unknown-linux-gnu --update
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/dbt" --version
 
-      - name: Setup Snowflake credentials
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.9.x"
+
+      - name: Write Snowflake private key
         env:
           SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE__PRIVATE_KEY }}
         run: |
           mkdir -p ~/.snowflake
           printf '%s\n' "$SNOWFLAKE_PRIVATE_KEY" > ~/.snowflake/rsa_key.p8
           chmod 600 ~/.snowflake/rsa_key.p8
-          echo "Key file created: $(wc -c < ~/.snowflake/rsa_key.p8) bytes"
-          head -1 ~/.snowflake/rsa_key.p8
+          echo "SNOWFLAKE_PRIVATE_KEY_PATH=$HOME/.snowflake/rsa_key.p8" >> "$GITHUB_ENV"
 
-      - name: Deploy to Snowflake PROD
-        env:
-          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE__USERNAME }}
-          SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
-          CHANGED_FILES: ${{ steps.changes.outputs.changed_files }}
-          FILE_COUNT: ${{ steps.changes.outputs.file_count }}
+      - name: Install dbt packages
+        run: dbt deps
+
+      - name: Compile project
+        id: compile
+        run: dbt compile --target prod --profiles-dir .
+
+      - name: Fetch state manifest
+        id: state
+        if: github.event_name == 'push'
+        run: uv run --with snowflake-connector-python python .github/scripts/fetch_dbt_state.py
+
+      - name: dbt build
+        id: build
         run: |
-          uv run --with snowflake-connector-python --with cryptography python << 'EOF'
-          import os
-          import re
-          import sys
-          import snowflake.connector
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ steps.state.outputs.has_state }}" != "true" ]; then
+            command=(dbt build --target prod --profiles-dir .)
+            echo "Full build (manual trigger or no state manifest)"
+          else
+            command=(python3 .github/scripts/validate_dbt_models.py --target prod --state state --select "state:modified+" "tag:indicator_definitions+")
+            echo "State-based build: modified + downstream and indicator definitions + downstream"
+          fi
+          echo "dbt_command=${command[*]}" >> "$GITHUB_OUTPUT"
+          "${command[@]}"
 
-          def validate_identifier(value, pattern=r'^[a-zA-Z0-9_\-/]+$'):
-              """Validate identifier to prevent injection."""
-              if not value or not re.match(pattern, value):
-                  raise ValueError(f"Invalid identifier: {value}")
-              return value
+      # Execution failures advance state so later PRs remain isolated. Compile
+      # failures are archived without replacing the prior baseline.
+      - name: Publish dbt artifacts
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/publish-dbt-artifacts
+        with:
+          dbt-command: ${{ steps.compile.outcome != 'success' && 'dbt compile --target prod' || steps.build.outputs.dbt_command }}
+          target: prod
+          build-outcome: ${{ steps.compile.outcome != 'success' && 'failure' || steps.build.outcome }}
+          compile-outcome: ${{ steps.compile.outcome }}
 
-          def get_model_name(filepath):
-              """Extract and validate model name from filepath."""
-              name = filepath.split('/')[-1].replace('.sql', '')
-              return validate_identifier(name, r'^[a-zA-Z0-9_]+$')
-
-          from cryptography.hazmat.backends import default_backend
-          from cryptography.hazmat.primitives import serialization
-
-          # Load and validate private key
-          key_path = os.path.expanduser('~/.snowflake/rsa_key.p8')
-          print(f"Key file exists: {os.path.exists(key_path)}")
-          if os.path.exists(key_path):
-              print(f"Key file size: {os.path.getsize(key_path)} bytes")
-              with open(key_path, 'rb') as f:
-                  key_data = f.read()
-              print(f"Key looks valid: {key_data.startswith(b'-----BEGIN')}")
-          else:
-              print("ERROR: Key file not found!")
-              sys.exit(1)
-
-          passphrase = os.environ.get('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', '')
-          print(f"Passphrase length: {len(passphrase)}")
-
-          # Load private key with cryptography library
-          p_key = serialization.load_pem_private_key(
-              key_data,
-              password=passphrase.encode() if passphrase else None,
-              backend=default_backend()
-          )
-          pkb = p_key.private_bytes(
-              encoding=serialization.Encoding.DER,
-              format=serialization.PrivateFormat.PKCS8,
-              encryption_algorithm=serialization.NoEncryption()
-          )
-
-          try:
-              conn = snowflake.connector.connect(
-                  account=os.environ['SNOWFLAKE_ACCOUNT'],
-                  user=os.environ['SNOWFLAKE_USER'],
-                  private_key=pkb,
-                  role='DBT_ADMIN',
-                  database='ACCOUNT_ADMIN',
-                  schema='DBT_MANAGEMENT',
-                  warehouse='WH_NCL_ENGINEERING_XS'
-              )
-
-              cur = conn.cursor()
-              cur.execute("USE WAREHOUSE WH_NCL_ENGINEERING_XS")
-
-              print("Fetching git repository...")
-              cur.execute("ALTER GIT REPOSITORY REPO__GITHUB__DBT_NCL_ANALYTICS FETCH")
-              print("Git fetch complete")
-
-              print("Updating project to main branch...")
-              cur.execute("ALTER DBT PROJECT DBT_NCL_ANALYTICS__MAIN ADD VERSION FROM '@REPO__GITHUB__DBT_NCL_ANALYTICS/branches/main'")
-              print("Project branch set")
-
-              file_count = int(os.environ.get('FILE_COUNT', 0))
-              changed_files = os.environ.get('CHANGED_FILES', '').strip()
-
-              if file_count == 0 or file_count > 50:
-                  print(f"Running full build ({file_count} files changed or manual trigger)")
-                  args = "build --target snowflake-prod"
-              else:
-                  # Changed models + downstream (append +)
-                  models = [get_model_name(f) + '+' for f in changed_files.split() if f]
-                  select = ' '.join(models)
-                  print(f"Deploying {file_count} changed models + downstream: {select}")
-                  args = f"build --target snowflake-prod --select {select}"
-
-              # Lift the 1h cap on EXECUTE DBT PROJECT. Both are required:
-              #   - ALTER SESSION overrides the account-level STATEMENT_TIMEOUT_IN_SECONDS
-              #     (currently 3600) in the session hierarchy. Without this, the
-              #     effective timeout is min(account=3600, warehouse) = 3600.
-              #   - USE WAREHOUSE switches off WH_NCL_ENGINEERING_XS (3600s cap) onto
-              #     WH_WNL_ENGINEERING_M (7200s cap). Otherwise the warehouse caps it
-              #     at 3600 regardless of the session setting.
-              # Lowest of {session-hierarchy, warehouse} wins, so we need both >= 7200.
-              # FETCH/ADD VERSION above stay on XS (cheap, short).
-              print(f"Executing: dbt {args}")
-              cur.execute("ALTER SESSION SET STATEMENT_TIMEOUT_IN_SECONDS = 7200")
-              cur.execute("USE WAREHOUSE WH_WNL_ENGINEERING_M")
-              cur.execute(f"EXECUTE DBT PROJECT DBT_NCL_ANALYTICS__MAIN ARGS = '{args}'")
-
-              results = cur.fetchall()
-              print("\n--- dbt execution results ---")
-              for row in results:
-                  print(row[0] if len(row) == 1 else row)
-              print("--- end results ---\n")
-
-              # Check for failures in results (avoid false positives from "ERROR=0")
-              result_text = str(results)
-              if 'job failed' in result_text.lower() or '"command_success": false' in result_text.lower():
-                  print("dbt build reported failures", file=sys.stderr)
-                  sys.exit(1)
-
-              print("Deployment complete!")
-
-          except Exception as e:
-              print(f"Error: {e}", file=sys.stderr)
-              sys.exit(1)
-          finally:
-              if 'cur' in locals(): cur.close()
-              if 'conn' in locals(): conn.close()
-          EOF
+      # Failure issue naming the broken nodes (-> Teams via the
+      # +label:"dbt-run-failure" issues subscription). This label is deploy-only;
+      # scheduled failures use dbt-scheduled-run-failure. Deploy issues do NOT
+      # close on the next green deploy - unrelated deploys skip execution-time
+      # failures under the latest-attempt baseline - only when every tracked
+      # node builds green again or leaves the project.
+      - name: Report or resolve failure issue
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DBT_CONTEXT: deploy
+          BUILD_OUTCOME: ${{ steps.compile.outcome != 'success' && 'failure' || steps.build.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ISSUE_LABEL: dbt-run-failure
+        run: python3 .github/scripts/report_dbt_failures.py
 
       - name: Cleanup credentials
         if: always()

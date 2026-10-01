@@ -11,7 +11,7 @@ select
     start_date,
     planned_duration_mins,
     actual_duration_mins,
-    status_source_concept_id,
+    appointment_status_source_concept_id as status_source_concept_id,
     appointment_status_code,
     appointment_status_display,
     appointment_status_source_code,
@@ -42,12 +42,10 @@ select
     service_setting,
     national_slot_category_description,
     csds_care_contact_identifier,
-    lds_id,
     publisher_organisation_code,
-    lds_datetime_first_acquired,
+    lds_transform_datetime,
 
     -- Metadata
-    lds_start_datetime,
     lds_is_deleted,
     lds_source_record_id,
 

@@ -1,0 +1,38 @@
+models:
+  - name: stg_pds_patient_care_practice
+    description: Personal Demographics Service patient GP practice registration
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - row_id
+              - sk_patient_id
+    columns:
+      - name: row_id
+        description: Row identifier
+        tests:
+          - not_null
+      - name: sk_patient_id
+        description: Surrogate key patient identifier (pseudonymised NHS number)
+        tests:
+          - not_null
+      - name: primary_care_provider
+        description: GP practice code
+      - name: event_from_date
+        description: Registration effective from date
+      - name: event_to_date
+        description: Registration effective to date (null if current)
+      - name: registered_reason_for_removal
+        description: Reason for removal from practice list (sourced from stg_pds_reason_for_removal)
+      - name: der_ccg_of_registration
+        description: CCG of registration
+      - name: der_current_ccg_of_registration
+        description: Current CCG of registration
+      - name: der_icb_of_registration
+        description: ICB of registration
+      - name: der_current_icb_of_registration
+        description: Current ICB of registration

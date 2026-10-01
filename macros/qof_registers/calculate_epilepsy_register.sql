@@ -1,6 +1,7 @@
-{% macro calculate_epilepsy_register(reference_date_expr='CURRENT_DATE()') %}
+{% macro calculate_epilepsy_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
+    {# Pair: fct_person_epilepsy_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
     {#
-    Calculates Epilepsy register status at a given reference date.
+    Calculates Epilepsy register status at one or more reference dates.
 
     Business Logic:
     - Age ≥18 at reference date
@@ -8,59 +9,78 @@
     - Recent medication within 6 months from reference date
 
     Parameters:
-        reference_date_expr: SQL expression for reference date (default: CURRENT_DATE())
+        reference_date_expr: SQL expression for a single reference date (default: CURRENT_DATE())
+        reference_dates: query returning a reference_date column; evaluates every
+            date it returns instead of reference_date_expr
 
-    Returns: CTE with person_id, register_name, is_on_register
+    Returns: one row per person with a record known by each reference date:
+        reference_date, person_id, register_name, is_on_register,
+        earliest_diagnosis_date, latest_diagnosis_date, latest_resolved_date,
+        latest_medication_date
     #}
 
-    WITH epilepsy_diagnoses_filtered AS (
+    WITH reference_dates AS (
+        {{ ltc_register_reference_dates(reference_date_expr, reference_dates) }}
+    ),
+
+    epilepsy_diagnoses_filtered AS (
         SELECT
-            person_id,
+            ref_date.reference_date,
+            event.person_id,
             clinical_effective_date,
             is_diagnosis_code,
             is_resolved_code
-        FROM {{ ref('int_epilepsy_diagnoses_all') }}
-        WHERE clinical_effective_date <= {{ reference_date_expr }} AND (date_recorded IS NULL OR CAST(date_recorded AS DATE) <= {{ reference_date_expr }})
+        FROM {{ ref('int_epilepsy_diagnoses_all') }} AS event
+        INNER JOIN reference_dates AS ref_date
+            ON {{ ltc_register_known_by('event.clinical_effective_date', 'event.date_recorded', 'ref_date.reference_date') }}
     ),
 
     epilepsy_person_aggregates AS (
         SELECT
+            reference_date,
             person_id,
             MIN(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) AS earliest_diagnosis_date,
             MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) AS latest_diagnosis_date,
             MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END) AS latest_resolved_date
         FROM epilepsy_diagnoses_filtered
-        GROUP BY person_id
+        GROUP BY reference_date, person_id
     ),
 
     age_at_reference AS (
         SELECT
-            person_id,
-            birth_date_approx,
-            FLOOR(DATEDIFF('month', birth_date_approx, {{ reference_date_expr }}) / 12) AS age
-        FROM {{ ref('dim_person_birth_death') }}
-        WHERE birth_date_approx IS NOT NULL
+            diag.reference_date,
+            diag.person_id,
+            FLOOR(DATEDIFF('month', birth.birth_date_approx, diag.reference_date) / 12) AS age
+        FROM epilepsy_person_aggregates AS diag
+        INNER JOIN {{ ref('dim_person_birth_death') }} AS birth
+            ON diag.person_id = birth.person_id
+        WHERE birth.birth_date_approx IS NOT NULL
     ),
 
     epilepsy_medications_filtered AS (
         SELECT
-            person_id,
+            ref_date.reference_date,
+            meds.person_id,
             order_date
-        FROM {{ ref('int_epilepsy_medications_all') }}
-        WHERE order_date <= {{ reference_date_expr }}
-          AND order_date >= DATEADD('month', -6, {{ reference_date_expr }})
+        FROM {{ ref('int_epilepsy_medications_all') }} AS meds
+        INNER JOIN reference_dates AS ref_date
+            ON meds.order_date >= DATEADD('month', -6, ref_date.reference_date)
+            AND {{ ltc_register_known_by('meds.order_date', 'meds.date_recorded', 'ref_date.reference_date') }}
     ),
 
     epilepsy_medications_aggregates AS (
         SELECT
+            reference_date,
             person_id,
-            COUNT(*) AS recent_medication_count
+            COUNT(*) AS recent_medication_count,
+            MAX(order_date) AS latest_medication_date
         FROM epilepsy_medications_filtered
-        GROUP BY person_id
+        GROUP BY reference_date, person_id
     ),
 
     epilepsy_register_logic AS (
         SELECT
+            diag.reference_date,
             diag.person_id,
             'Epilepsy' AS register_name,
             COALESCE(
@@ -72,16 +92,27 @@
                 )
                 AND meds.recent_medication_count > 0,
                 FALSE
-            ) AS is_on_register
+            ) AS is_on_register,
+            diag.earliest_diagnosis_date,
+            diag.latest_diagnosis_date,
+            diag.latest_resolved_date,
+            meds.latest_medication_date
         FROM epilepsy_person_aggregates diag
         LEFT JOIN age_at_reference age ON diag.person_id = age.person_id
+            AND diag.reference_date = age.reference_date
         LEFT JOIN epilepsy_medications_aggregates meds ON diag.person_id = meds.person_id
+            AND diag.reference_date = meds.reference_date
     )
 
     SELECT
+        reference_date,
         person_id,
         register_name,
-        is_on_register
+        is_on_register,
+        earliest_diagnosis_date,
+        latest_diagnosis_date,
+        latest_resolved_date,
+        latest_medication_date
     FROM epilepsy_register_logic
 
 {% endmacro %}

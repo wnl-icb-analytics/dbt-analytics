@@ -91,16 +91,24 @@ select
     cond.has_learning_disability,
     cond.has_severe_mental_illness,
     coalesce(preg.is_currently_pregnant, false) as is_currently_pregnant,
+    ca.person_id is not null as is_complex_adult,
+    coalesce(hb.is_housebound, false) as is_housebound,
 
     -- ============================================================
     -- Risk stratification: per-condition
     -- ============================================================
+    rs.af_risk_group,
+    rs.asthma_adult_risk_group,
+    rs.asthma_cyp_risk_group,
     rs.chd_risk_group,
     rs.ckd_risk_group,
     rs.copd_risk_group,
     rs.diabetes_risk_group,
     rs.hf_risk_group,
     rs.hypertension_risk_group,
+    rs.nafld_risk_group,
+    rs.pad_risk_group,
+    rs.stroke_tia_risk_group,
 
     -- ============================================================
     -- Risk stratification: overall
@@ -108,11 +116,13 @@ select
     rs.overall_risk_group,
     rs.overall_risk_rank,
     rs.in_any_risk_group,
+    rs.number_of_ltc_lcs_conditions,
 
     -- ============================================================
     -- MOC: pathway identity
     -- ============================================================
     rs.moc_pathway,
+    rs.moc_risk_category,
 
     -- ============================================================
     -- MOC: activity flags + dates (last 12 months), in pathway order
@@ -133,14 +143,45 @@ select
     rs.moc_declined_date,
     rs.moc_re_engaged_after_decline,
     rs.moc_any_activity_12m,
+    rs.moc_any_activity_fy,
+
+    -- ============================================================
+    -- MOC: named progression stages (12m and current FY to date)
+    -- ============================================================
+    rs.moc_check_test_completed_12m,
+    rs.moc_check_test_date_12m,
+    rs.moc_check_test_completed_fy,
+    rs.moc_check_test_date_fy,
+    rs.moc_remote_desktop_review_completed_12m,
+    rs.moc_remote_desktop_review_date_12m,
+    rs.moc_remote_desktop_review_completed_fy,
+    rs.moc_remote_desktop_review_date_fy,
+    rs.moc_mdt_review_completed_12m,
+    rs.moc_mdt_review_date_12m,
+    rs.moc_mdt_review_completed_fy,
+    rs.moc_mdt_review_date_fy,
+    rs.moc_careplan_sharing_completed_12m,
+    rs.moc_careplan_sharing_date_12m,
+    rs.moc_careplan_sharing_completed_fy,
+    rs.moc_careplan_sharing_date_fy,
+    rs.moc_discussion_completed_12m,
+    rs.moc_discussion_date_12m,
+    rs.moc_discussion_completed_fy,
+    rs.moc_discussion_date_fy,
+    rs.moc_followup_completed_12m,
+    rs.moc_followup_date_12m,
+    rs.moc_followup_completed_fy,
+    rs.moc_followup_date_fy,
 
     -- ============================================================
     -- MOC: progression summary
     -- ============================================================
     rs.moc_stage_completed,
     rs.moc_stage_completed_label,
+    rs.moc_stage_completed_code,
     rs.moc_pathway_status,
     rs.moc_next_action,
+    rs.moc_next_action_code,
     rs.moc_cycle_complete,
 
     -- ============================================================
@@ -194,6 +235,10 @@ left join {{ ref('dim_person_conditions') }} cond
     on rs.person_id = cond.person_id
 left join {{ ref('fct_person_pregnancy_status') }} preg
     on rs.person_id = preg.person_id
+left join {{ ref('fct_person_complex_adults') }} ca
+    on rs.person_id = ca.person_id
+left join {{ ref('dim_person_housebound_status') }} hb
+    on rs.person_id = hb.person_id
 left join {{ ref('fct_person_ltc_lcs_outcomes_htn_bp_control') }} htn_roll
     on rs.person_id = htn_roll.person_id
 left join {{ ref('fct_person_ltc_lcs_outcomes_htn_bp_control_fy') }} htn_fy

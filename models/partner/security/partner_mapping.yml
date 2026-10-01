@@ -1,0 +1,22 @@
+models:
+  - name: partner_mapping
+    description: 'Patients are mapped to a local authority partner if they are either registered with a GP practice in that borough, OR if they are resident in that borough. This is because local authorities provide services to all their residents, and suppoort practices in their boroughs so both groups of patients are relevant to the local authority.'
+    config:
+      meta:
+        owner:
+          name: FelixPeckitt
+    columns:
+      - name: sk_patient_id
+        description: 'Patient surrogate key stored as VARCHAR, preserving the source text for partner access matching.'
+        tests:
+          - not_null
+      - name: partner_role
+        description: 'Snowflake role for the partner'
+        tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - partner_role

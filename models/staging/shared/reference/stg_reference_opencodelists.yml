@@ -1,0 +1,45 @@
+models:
+  - name: stg_reference_opencodelists
+    description: >
+      OpenCodelists reference terminology mapping codelists to individual codes across coding systems (SNOMED, BNF, ICD-10, etc.).
+      Deduplicated to one row per codelist/code key. Non-null terms are preferred over null terms; where multiple non-null terms exist, one is selected arbitrarily so the user may prefer to remove the terms and join from a canonical reference table at point of use.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - codelist_org
+              - codelist_slug
+              - version_hash
+              - code
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: codelist_org
+        description: Organisation that published the codelist (e.g. opencodelists)
+        tests:
+          - not_null
+      - name: codelist_slug
+        description: Unique slug identifier for the codelist
+        tests:
+          - not_null
+      - name: codelist_name
+        description: Human-readable name of the codelist
+      - name: version_hash
+        description: Hash of the codelist version for change detection
+      - name: coding_system
+        description: Coding system for the code (e.g. snomed, bnf, icd10)
+        tests:
+          - not_null
+      - name: code
+        description: Individual code within the codelist
+        tests:
+          - not_null
+      - name: term
+        description: Display term for the code
+      - name: cluster_id
+        description: Internal cluster identifier for the codelist

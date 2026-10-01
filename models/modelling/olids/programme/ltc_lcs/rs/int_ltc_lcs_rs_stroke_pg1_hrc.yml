@@ -1,0 +1,31 @@
+version: 2
+models:
+  - name: int_ltc_lcs_rs_stroke_pg1_hrc
+    description: |
+      Stroke/TIA Register Priority Group 1 - High Risk & Complex.
+
+      Patients on Stroke/TIA register meeting:
+      - Rule 1a: stroke/TIA code in last 30 days with Episode = First, New
+        or Flare Up (include on pass)
+      - Rule 1b: same codes with Problem Significance = Significant.
+        Data gap: problem significance is not in OLIDS (as CHD PG1 rule 1b).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+          config:
+            severity: warn
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - on_stroketia_reg_pg1_hrc_vs1
+              - on_stroketia_reg_pg1_hrc_vs2
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+          - unique

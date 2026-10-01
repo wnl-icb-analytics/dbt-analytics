@@ -1,18 +1,18 @@
 models:
   - name: int_flu_severe_obesity
-    description: 'Flu vaccination eligibility for people with severe obesity using BMI logic and age restrictions.
+    description: 'Flu vaccination eligibility for people with severe obesity using their latest BMI and BMI stage evidence.
 
       Key Features:
 
-      • BMI threshold logic: BMI ≥40 or severe obesity codes
+      • BMI threshold: latest BMI ≥40 when not superseded by a later BMI stage
 
-      • Complex BMI calculation using BMI_COD values vs BMI_STAGE_COD timing
+      • Severe obesity codes qualify only when they are the latest BMI stage
 
       • Age restriction: 18+ years (adults only)
 
       • Uses latest BMI values and severe obesity stage codes
 
-      • Generates data for current and previous flu campaigns automatically
+      • Generates data for every campaign in flu_reported_campaign_ids()
 
       Purpose: Identify people with severe obesity eligible for flu vaccination due to increased infection risk.'
     config:
@@ -25,10 +25,9 @@ models:
           name_short: "Flu Eligible Severe Obesity"
           description_short: "People with severe obesity eligible for flu vaccination"
           description_long: >
-            Flu vaccination eligibility for people with severe obesity (BMI ≥40) using
-            complex BMI logic. Uses latest BMI values (BMI_COD) ≥40 or severe obesity
-            stage codes (SEV_OBESITY_COD) when more recent than general BMI stage
-            codes.
+            Flu vaccination eligibility for people with severe obesity. Uses the latest
+            BMI value and latest BMI stage. A severe obesity code qualifies only when
+            it is the latest BMI stage and is later than the latest BMI value.
             Age restriction of 18+ years for adults only.
           is_qof: false
           source_column: "person_id"
@@ -62,6 +61,11 @@ models:
         owner:
           name: EddieDavison92
     tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: BMI_COD,BMI_STAGE_COD,SEV_OBESITY_COD
+            source: UKHSA_FLU
+            versioned: true
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
@@ -72,16 +76,16 @@ models:
             min_value: 1
     columns:
       - name: campaign_id
-        description: 'Flu campaign identifier (e.g., flu_2024_25, flu_2023_24)'
-        tests:
+        description: 'Flu campaign identifier, for example Flu 2025-26 or Flu 2026-27'
+        data_tests:
           - not_null
       - name: campaign_category
         description: 'Category of eligibility criteria (always "Clinical Condition")'
       - name: risk_group
-        description: 'Risk group classification (always "Severe Obesity")'
+        description: 'Risk group classification (always "Morbid Obesity")'
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
       - name: qualifying_event_date
         description: 'Date of qualifying BMI measurement or obesity code'

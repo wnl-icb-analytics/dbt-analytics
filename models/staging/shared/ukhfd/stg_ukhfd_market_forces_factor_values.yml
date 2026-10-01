@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: stg_ukhfd_market_forces_factor_values
+    description: |
+      Provider Market Forces Factor values from NHS tariff and payment
+      workbooks held in UKHFD. One row represents a provider in one source
+      workbook.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [provider_code, source_file_name]
+    columns:
+      - name: provider_code
+        description: Provider organisation ODS code.
+        data_tests:
+          - not_null
+      - name: provider_name
+        description: Provider name in the source workbook.
+      - name: mff_factor
+        description: Market Forces Factor for the workbook's first year.
+      - name: mff_factor_year_2
+        description: Market Forces Factor for the workbook's second year, when supplied.
+      - name: mff_factor_year_3
+        description: Market Forces Factor for the workbook's third year, when supplied.
+      - name: mff_factor_year_4
+        description: Market Forces Factor for the workbook's fourth year, when supplied.
+      - name: mff_factor_year_5
+        description: Market Forces Factor for the workbook's fifth year, when supplied.
+      - name: notes
+        description: Notes published with the factor.
+      - name: source_file_name
+        description: UKHFD path and source workbook name.
+        data_tests:
+          - not_null
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the workbook.
+      - name: source_created_date
+        description: Start date of the financial year represented by the workbook.

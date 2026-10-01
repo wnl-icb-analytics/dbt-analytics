@@ -25,7 +25,7 @@ event_ethnicity as (
         de.visit_occurrence_type::varchar as source_encounter,
         de.ethnicity_at_event::varchar as source_code,
         dict.subcategory::varchar as ethnicity
-    from {{ ref('int_commissioning_demographics_at_event') }} de
+    from {{ ref('int_encounter_demographics') }} de
     left join {{ref('ethnicity_snomed_ONS_NHS')}} dict on dict.bk_ethnicity_code = de.ethnicity_at_event
     where ethnicity_at_event is not null and ethnicity_at_event not IN ('Z', '99')
 ),

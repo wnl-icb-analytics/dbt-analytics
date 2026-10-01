@@ -1,0 +1,56 @@
+version: 2
+models:
+- name: dq_csds_provider_submission
+  description: >-
+    Submission dates, record counts and volume changes for each CSDS provider and accepted reporting period. Use it to
+    check how recent a provider's evidence is before comparing activity or caseload. Counts describe
+    submitted rows before the latest version of each record is selected. A missing period has no row;
+    a zero count in one section does not by itself mean the submission failed.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - provider_organisation_code
+        - reporting_period_end_date
+  columns:
+  - name: provider_organisation_code
+    description: Provider organisation code from the submission header.
+    data_tests:
+    - not_null
+  - name: provider_organisation_name
+    description: Organisation name; null when the code has no organisation reference.
+  - name: reporting_period_end_date
+    description: Last date of the accepted reporting month.
+    data_tests:
+    - not_null
+  - name: n_accepted_submissions
+    description: Accepted files listed for this provider and reporting period.
+  - name: n_referral_source_records
+    description: Accepted CYP101 rows in the period, not newly received referrals.
+  - name: n_contact_source_records
+    description: Accepted CYP201 rows in the period, not contacts occurring in the period.
+  - name: n_team_source_records
+    description: Accepted CYP102 service/team rows in the period.
+  - name: referral_records_ratio_to_previous_period
+    description: Referral rows divided by the provider's previous accepted period. Far from 1 suggests a partial file or a recording change.
+  - name: contact_records_ratio_to_previous_period
+    description: Contact rows divided by the provider's previous accepted period.
+  - name: team_records_ratio_to_previous_period
+    description: Team rows divided by the provider's previous accepted period. Some submissions omit or truncate the team section.
+  - name: has_missing_section
+    description: The accepted file has no referral, contact or team rows. Treat that provider-month's caseload and activity as incomplete.
+  - name: n_patient_source_records
+    description: Accepted CYP001 rows in the period, not distinct people.
+  - name: provider_latest_reporting_period_end_date
+    description: This provider's latest accepted reporting period.
+  - name: dataset_latest_reporting_period_end_date
+    description: Latest accepted reporting period for any provider.
+  - name: provider_months_behind_dataset
+    description: Calendar months between this provider's latest period and the dataset's latest period.
+      Describes relative freshness, not completeness.
+  - name: is_latest_provider_period
+    description: True on each provider's latest accepted period; use it to pick one row per provider.

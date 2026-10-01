@@ -1,0 +1,187 @@
+version: 2
+
+models:
+  - name: source_content_freshness
+    description: >
+      Source content currency at one row per profiled logical source. Status is
+      based on the consensus date; the latest valid date is retained for context.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: source_schema
+        description: Logical source identifier shown in freshness reporting.
+        data_tests:
+          - not_null
+          - unique
+          - accepted_values:
+              arguments:
+                values:
+                  - DATA_LAKE.OLIDS
+                  - DATA_LAKE.PDS
+                  - DATA_LAKE.DEATHS
+                  - DATA_LAKE.SUS_UNIFIED_APC
+                  - DATA_LAKE.SUS_UNIFIED_OP
+                  - DATA_LAKE.SUS_UNIFIED_ECDS
+                  - DATA_LAKE.EPD_PRIMARY_CARE
+                  - DATA_LAKE.CSDS
+                  - DATA_LAKE.MHSDS
+                  - SDL
+                  - DATA_LAKE.WL
+                  - DATA_LAKE.ERS
+                  - DATA_LAKE.FACT_PATIENT
+                  - DATA_LAKE.PMCT
+                  - DATA_LAKE.TAT
+                  - DATA_LAKE.TERMINOLOGY
+      - name: content_date
+        description: Compatibility alias for consensus_content_date.
+        data_tests:
+          - not_null
+      - name: latest_content_date
+        description: Latest valid content date found in the source.
+        data_tests:
+          - not_null
+      - name: consensus_content_date
+        description: Date representing normal breadth of coverage for the source.
+        data_tests:
+          - not_null
+      - name: observed_at
+        description: When the source recorded or received the content signal.
+      - name: signal_type
+        description: Compatibility alias for consensus_signal_type.
+        data_tests:
+          - not_null
+      - name: signal_detail
+        description: Compatibility alias for consensus_signal_detail.
+        data_tests:
+          - not_null
+      - name: consensus_signal_type
+        description: Rule used to derive consensus_content_date.
+        data_tests:
+          - not_null
+      - name: consensus_signal_detail
+        description: User-facing explanation of the consensus date derivation.
+        data_tests:
+          - not_null
+      - name: latest_signal_type
+        description: Rule used to derive latest_content_date.
+        data_tests:
+          - not_null
+      - name: latest_signal_detail
+        description: User-facing explanation of the latest date derivation.
+        data_tests:
+          - not_null
+      - name: expected_days
+        description: Normal delivery cadence in days.
+        data_tests:
+          - not_null
+      - name: sla_days
+        description: Contractual maximum content age in days. Populated only for OLIDS.
+      - name: breach_after_days
+        description: Content age in days that marks a sustained delay.
+        data_tests:
+          - not_null
+      - name: content_age_days
+        description: Whole days between content_date and the current date.
+        data_tests:
+          - not_null
+      - name: expected_by_date
+        description: Date by which the next content update was expected.
+        data_tests:
+          - not_null
+      - name: sla_by_date
+        description: Contractual content-age deadline. Populated only for OLIDS.
+      - name: breach_by_date
+        description: Date when unchanged content reaches the breach threshold.
+        data_tests:
+          - not_null
+      - name: days_past_expected
+        description: Days beyond the expected cadence, floored at zero.
+        data_tests:
+          - not_null
+      - name: days_past_sla
+        description: Days beyond the OLIDS SLA, or null for feeds without an SLA.
+      - name: days_past_breach
+        description: Days beyond the breach threshold, floored at zero.
+        data_tests:
+          - not_null
+      - name: days_until_breach
+        description: Days remaining before breach, floored at zero.
+        data_tests:
+          - not_null
+      - name: is_past_expected
+        description: Whether content is older than its normal update cadence.
+        data_tests:
+          - not_null
+      - name: is_sla_missed
+        description: Whether OLIDS content is older than its SLA.
+        data_tests:
+          - not_null
+      - name: is_breached
+        description: Whether content is older than its breach threshold.
+        data_tests:
+          - not_null
+      - name: freshness_status
+        description: Analyst status derived from expected, SLA, and breach thresholds.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [current, past_expected, sla_missed, breached]
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_equal:
+          arguments:
+            value: 16
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "expected_days > 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "breach_after_days > coalesce(sla_days, expected_days)"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "content_date <= current_date()"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "latest_content_date <= current_date()"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "content_date = consensus_content_date"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "signal_type = consensus_signal_type"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "signal_detail = consensus_signal_detail"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "latest_content_date >= consensus_content_date"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "sla_days is null or source_schema = 'DATA_LAKE.OLIDS'"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "source_schema != 'DATA_LAKE.OLIDS' or sla_days is not null"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "is_breached = (content_age_days >= breach_after_days)"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "(freshness_status = 'breached') = is_breached"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "source_schema = 'DATA_LAKE.FACT_PATIENT' or observed_at is not null"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: >-
+              source_schema not in (
+                'DATA_LAKE.SUS_UNIFIED_APC',
+                'DATA_LAKE.SUS_UNIFIED_OP',
+                'DATA_LAKE.SUS_UNIFIED_ECDS'
+              ) or signal_type = 'provider_volume_consensus_receipt_date'
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: >-
+              source_schema != 'DATA_LAKE.DEATHS'
+              or signal_type = 'latest_batch_registration_p99'

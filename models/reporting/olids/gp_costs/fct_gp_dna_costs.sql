@@ -44,7 +44,7 @@ select
         1
     ) as dna_rate_pct,
 
-    -- Total cost (in-scope appointments) in 2023/24 real terms
+    -- Total cost (in-scope appointments) in 2024/25 real terms
     ROUND(
         SUM(CASE WHEN is_attended OR is_dna THEN appointment_cost_gbp_base_prices END),
         2
@@ -88,7 +88,7 @@ select
         1
     ) as dna_cost_pct_of_total
 
-from {{ ref('int_appointment_gp_clean_recent') }}
+from {{ ref('int_appointment_gp_clinical_recent') }}
 where is_attended = TRUE or is_dna = TRUE
 group by
     publisher_organisation_code,
