@@ -33,6 +33,8 @@ with contacts as (
         , referral_id
         , care_contact_id
         , count(*) as care_activity_count
+        -- NHS England treatment counts exclude contacts recording employment support (I101D29).
+        , count_if(code_proc_and_proc_status = '1098051000000103') as employment_support_activity_count
     from {{ ref('stg_iapt_care_activity_history') }}
     group by submission_id, referral_id, care_contact_id
 )
@@ -89,27 +91,51 @@ select
         , null
         , c.appointment_type_code_normalised in ('02', '03', '05')
     ) as is_treatment_appointment_type
+    -- ETOS clause [3]: assessment, or assessment and treatment.
+    , iff(
+        c.appointment_type_code_normalised is null
+        , null
+        , c.appointment_type_code_normalised in ('01', '03')
+    ) as is_assessment_appointment_type
     , c.attend_or_dna_code as attendance_code
     , attendance.description as attendance_name
     , c.is_attended
     , c.is_nhse_attended_or_unplanned
+    -- I101D29 contact rule, judged against the same submission's referral; unknown without that referral.
+    , iff(
+        sr.referral_id is null
+        , null
+        , c.is_nhse_attended_or_unplanned
+            and coalesce(c.appointment_type_code_normalised in ('02', '03', '05'), false)
+            and coalesce(ac.employment_support_activity_count, 0) = 0
+            and coalesce(
+                c.care_cont_date between sr.referral_request_received_date
+                    and coalesce(sr.serv_disch_date, c.reporting_period_end_date)
+                , false
+            )
+    ) as is_nhse_treatment_contact
     , c.planned_care_cont_indicator as planned_care_contact_code
     , planned.description as planned_care_contact_name
     , c.cancellation as short_notice_cancellation_code
     , cancellation.description as short_notice_cancellation_name
     , c.clin_cont_dur_of_care_cont as clinical_contact_duration_minutes
     , c.consultation_code as consultation_mechanism_code
-    -- Each version is labelled from its own list: v2.0 consultation medium used, v2.1 consultation mechanism.
-    -- The other list labels an unmatched code only when both source fields agree, such as 06 or 08 in v2.1.
+    -- Each version is labelled only from its own list: v2.0 consultation medium used, v2.1 consultation mechanism.
+    -- A code valid only in the other version keeps no label and groups as unknown, as NHS England's M1009 does.
+    , iff(
+        consultation_group.code is null
+        , null
+        , iff(c.dataset_version = '2.0', medium.description, mechanism.description)
+    ) as consultation_mechanism_name
+    , iff(consultation_group.code is null, null, consultation_group.code_set_name) as consultation_mechanism_code_set
     , case
-        when c.dataset_version = '2.0' then coalesce(medium.description, mechanism.description)
-        else coalesce(mechanism.description, medium.description)
-    end as consultation_mechanism_name
-    , case
-        when c.dataset_version = '2.0' and medium.code is not null then 'consultation_medium_used'
-        when mechanism.code is not null then 'consultation_mechanism'
-        when medium.code is not null then 'consultation_medium_used'
-    end as consultation_mechanism_code_set
+        when c.consultation_code is null then 'code_missing'
+        when consultation_group.code is not null then 'labelled'
+        when other_version_consultation_group.code is not null then 'other_version_code'
+        else 'code_unmatched'
+    end as consultation_mechanism_label_status
+    , coalesce(consultation_group.group_code, 'unknown') as consultation_mechanism_group
+    , coalesce(consultation_group.group_name, 'Unknown') as consultation_mechanism_group_name
     , c.care_cont_patient_ther_mode as patient_therapy_mode_code
     , therapy_mode.description as patient_therapy_mode_name
     , try_to_number(c.num_group_ther_participants) as group_therapy_participant_count
@@ -166,6 +192,14 @@ left join activity_counts as ac
     on c.submission_id = ac.submission_id
     and c.referral_id = ac.referral_id
     and c.care_contact_id = ac.care_contact_id
+left join {{ ref('iapt_code_group') }} as consultation_group
+    on consultation_group.code_set_name
+        = iff(c.dataset_version = '2.0', 'consultation_medium_used', 'consultation_mechanism')
+    and upper(c.consultation_code) = consultation_group.code
+left join {{ ref('iapt_code_group') }} as other_version_consultation_group
+    on other_version_consultation_group.code_set_name
+        = iff(c.dataset_version = '2.0', 'consultation_mechanism', 'consultation_medium_used')
+    and upper(c.consultation_code) = other_version_consultation_group.code
 left join {{ ref('stg_iapt_referral_history') }} as sr
     on c.submission_id = sr.submission_id
     and c.referral_id = sr.referral_id
@@ -191,7 +225,6 @@ left join {{ ref('mhsds_care_contact_code_lookup') }} as planned
 left join {{ ref('mhsds_care_contact_code_lookup') }} as medium
     on medium.code_set_name = 'consultation_medium_used'
     and upper(c.consultation_code) = medium.code
-    and (c.dataset_version = '2.0' or upper(c.cons_mechanism) = upper(c.cons_medium_used))
 left join {{ ref('mhsds_care_contact_code_lookup') }} as therapy_mode
     on therapy_mode.code_set_name = 'patient_therapy_mode'
     and upper(c.care_cont_patient_ther_mode) = therapy_mode.code
@@ -200,7 +233,6 @@ left join {{ ref('mhsds_care_contact_code_lookup') }} as interpreter
     and upper(c.interpreter_present_ind) = interpreter.code
 left join {{ ref('consultation_mechanism') }} as mechanism
     on upper(c.consultation_code) = mechanism.code
-    and (c.dataset_version = '2.1' or upper(c.cons_mechanism) = upper(c.cons_medium_used))
 left join {{ ref('activity_location_type') }} as location
     on upper(c.act_loc_type_code) = location.code
 left join {{ ref('language') }} as treatment_language

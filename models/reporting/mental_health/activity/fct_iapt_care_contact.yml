@@ -5,8 +5,9 @@ models:
     submission for that month (the Refresh file when one replaced the Primary). A contact is accepted only in the file
     for the month of its date (ETOS v2.1.22 IDS201 row 6), so a contact identifier reused in another month is a
     separate contact with its own row. Includes attended, cancelled, missed and unplanned contacts; use is_attended for
-    recorded attendance and is_nhse_attended_or_unplanned for the NHS England counting rule. A contact whose referral
-    is missing or names a different person stays visible with linkage flags.
+    recorded attendance, is_nhse_attended_or_unplanned for the NHS England counting rule and
+    is_nhse_treatment_contact for NHS England treatment contacts. A contact whose referral is missing or names a
+    different person stays visible with linkage flags.
   config:
     meta:
       owner:
@@ -51,6 +52,10 @@ models:
   - name: is_treatment_appointment_type
     description: TRUE for appointment types 02, 03 and 05, which NHS England counts as treatment. Says nothing about
       attendance.
+  - name: is_assessment_appointment_type
+    description: TRUE for appointment types 01 (assessment) and 03 (assessment and treatment), the types NHS England
+      uses for first and last assessment dates (ETOS clause [3]). Says nothing about attendance. Null when no type is
+      submitted.
   - name: attendance_code
     description: Attended or did not attend code as submitted. Blank is allowed for unplanned contacts.
   - name: attendance_name
@@ -63,6 +68,14 @@ models:
     description: NHS England contact-count condition (IDS101 CareContact_Count), attendance code 5 or 6 OR planned
       indicator N. TRUE even where a negative attendance code conflicts with an unplanned contact; otherwise FALSE.
       The referral-to-discharge date window of the national count is not applied here.
+  - name: is_nhse_treatment_contact
+    description: NHS England treatment contact rule of TreatmentCareContact_Count (I101D29). TRUE when the contact
+      was attended or unplanned (is_nhse_attended_or_unplanned), has treatment appointment type 02, 03 or 05, has no
+      employment support activity (1098051000000103) in the same submission, and is dated from the referral's
+      received date to its discharge date, or to the reporting period end while undischarged. The referral dates
+      come from the same submission's referral row. FALSE when any condition fails, including a missing contact
+      date; null when the submission has no row for the referral. Internet-enabled therapy logs, which NHS England
+      also counts, are not contacts.
   - name: planned_care_contact_code
     description: Whether the contact came from a planned appointment (Y or N).
   - name: planned_care_contact_name
@@ -79,18 +92,35 @@ models:
       names; the warehouse holds the same value in both, and staging keeps both fields.
   - name: consultation_mechanism_name
     description: UKHFD label for consultation_mechanism_code from the list of the contact's data set version, the
-      consultation medium used list for v2.0 and the consultation mechanism list for v2.1. When that list lacks the
-      code, the other list labels it only when both source fields agree, for example 06 SMS text messaging or 08
-      online instant messaging sent in v2.1,
-      or 11 video consultation sent in v2.0. Null when neither list holds the code, such as CH or Si.
+      consultation medium used list for v2.0 and the consultation mechanism list for v2.1. A code valid only in the
+      other version's list, such as 03 telemedicine or 08 online instant messaging sent in v2.1, keeps no label;
+      consultation_mechanism_label_status shows why.
   - name: consultation_mechanism_code_set
-    description: Code list supplying consultation_mechanism_name, consultation_medium_used or consultation_mechanism.
-      It differs from the data set version's own list only for the fallback codes above. Null when unlabelled. A
-      label from one list does not make the code valid in the other.
+    description: The contact's version list when it holds the code, consultation_medium_used for v2.0 or
+      consultation_mechanism for v2.1. Null when the code is missing or not in that list.
     data_tests:
     - accepted_values:
         arguments:
           values: [consultation_mechanism, consultation_medium_used]
+  - name: consultation_mechanism_label_status
+    description: labelled when the code is in its data set version's list; other_version_code when it is valid
+      only in the other version's list, such as 03, 06 or 08 sent in v2.1 or 11 sent in v2.0; code_unmatched when it
+      is in neither, such as CH or Si; code_missing when blank.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values: [labelled, other_version_code, code_unmatched, code_missing]
+  - name: consultation_mechanism_group
+    description: Delivery group from iapt_code_group, aligned to NHS England measures M1001 to M1020. face_to_face,
+      telephone, video, text_based (email, text message, instant messaging, message board, chat room), other (talk
+      type and other) or unknown. Video is v2.0 code 03 and v2.1 code 11, so it is continuous across versions.
+      unknown covers missing codes and codes not valid for the contact's version, as NHS England's M1009 does.
+      Never null.
+    data_tests:
+    - not_null
+  - name: consultation_mechanism_group_name
+    description: Readable name of consultation_mechanism_group, such as Face to face.
   - name: patient_therapy_mode_code
     description: Individual, couple or group therapy.
   - name: patient_therapy_mode_name

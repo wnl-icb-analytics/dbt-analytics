@@ -41,6 +41,9 @@ with versions as (
         , try_to_decimal(gad_last_score, 38, 9) as gad7_last_score_value
         , adsm_first_score::number(38, 9) as adsm_first_score_value
         , adsm_last_score::number(38, 9) as adsm_last_score_value
+        -- The warehouse copies the one submitted item into both source columns, so the data set version decides
+        -- the list: v2.0 SourceOfReferralMH, renamed SourceOfReferralIAPT in v2.1 (DARS v2.1.7 PC_FIELDS A109).
+        , iff(dataset_version = '2.0', source_of_referral_mh, source_of_referral_iapt) as source_of_referral_code
         -- NHS England sets True when discharged with two or more treatment contacts, else null. FALSE needs a
         -- visibly failed criterion; a null flag whose criteria look met stays unknown.
         , case
@@ -77,22 +80,24 @@ select
     -- Recorded discharge only, as in fct_mhsds_referral; fct_iapt_referral_summary infers the as-of status.
     , iff(o.serv_disch_date is not null, 'closed', 'open') as referral_status
     , o.age_referral_request_received_date as age_at_referral
+    , {{ age_band_nhs('o.age_referral_request_received_date') }} as age_band_nhs_at_referral
     , o.age_service_discharge_date as age_at_discharge
-    -- The warehouse copies the one submitted item into both source columns, so the data set version decides the
-    -- list: v2.0 SourceOfReferralMH, renamed SourceOfReferralIAPT in v2.1 (DARS v2.1.7 PC_FIELDS A109).
-    , iff(o.dataset_version = '2.0', o.source_of_referral_mh, o.source_of_referral_iapt) as source_of_referral_code
+    , o.source_of_referral_code
     , coalesce(source_mh.description, source_iapt.description) as source_of_referral_name
     , case
         when o.dataset_version = '2.0' and o.source_of_referral_mh is not null then 'mental_health'
         when o.dataset_version = '2.1' and o.source_of_referral_iapt is not null then 'iapt'
     end as source_of_referral_code_set
+    , source_group.group_code as source_of_referral_group
+    , source_group.group_name as source_of_referral_group_name
     , o.end_code as discharge_reason_code
     , coalesce(discharge.description, discharge_legacy.description) as discharge_reason_name
     , case
         when discharge.code is not null then 'discharge_reason'
         when discharge_legacy.code is not null then 'discharge_reason_legacy'
     end as discharge_reason_code_set
-    , discharge.category as discharge_reason_category
+    , discharge_group.group_code as discharge_reason_group
+    , discharge_group.group_name as discharge_reason_group_name
     , o.prev_diag_cond_ind as previous_diagnosed_condition_code
     , previous_condition.description as previous_diagnosed_condition_name
     , o.onset_date as symptom_onset_month
@@ -106,10 +111,11 @@ select
     , o.therapy_session_first_date as first_treatment_date
     , o.therapy_session_second_date as second_treatment_date
     , o.therapy_session_last_date as last_treatment_date
-    , o.care_contact_count as attended_contact_count
-    , o.treatment_care_contact_count as treatment_contact_count
+    , o.care_contact_count as nhse_care_contact_count
+    , o.treatment_care_contact_count as nhse_treatment_contact_count
     , o.is_completed_treatment
     , o.adsm as anxiety_disorder_specific_measure
+    , adsm_scale.assessment_tool_name as anxiety_disorder_specific_measure_name
     , o.phq9_first_score_value as phq9_first_score
     , o.phq9_last_score_value as phq9_last_score
     , o.gad7_first_score_value as gad7_first_score
@@ -177,6 +183,19 @@ left join {{ ref('iapt_code_lookup') }} as discharge_legacy
     on discharge.code is null
     and discharge_legacy.code_set_name = 'discharge_reason_legacy'
     and upper(o.end_code) = discharge_legacy.code
+left join {{ ref('iapt_code_group') }} as source_group
+    on source_group.code_set_name
+        = iff(o.dataset_version = '2.0', 'source_of_referral_mental_health', 'source_of_referral_iapt')
+    and upper(o.source_of_referral_code) = source_group.code
+left join {{ ref('iapt_code_group') }} as discharge_group
+    on discharge_group.code_set_name = iff(discharge.code is not null, 'discharge_reason', 'discharge_reason_legacy')
+    and upper(o.end_code) = discharge_group.code
+left join {{ ref('iapt_code_group') }} as adsm_group
+    on adsm_group.code_set_name = 'anxiety_disorder_specific_measure'
+    and o.adsm = adsm_group.code
+left join {{ ref('iapt_assessment_scale') }} as adsm_scale
+    on adsm_group.group_code = adsm_scale.concept_code
+    and adsm_scale.is_latest_definition
 left join {{ ref('iapt_code_lookup') }} as previous_condition
     on previous_condition.code_set_name = 'previous_diagnosed_condition_indicator'
     and upper(o.prev_diag_cond_ind) = previous_condition.code

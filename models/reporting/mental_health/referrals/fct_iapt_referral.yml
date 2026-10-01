@@ -48,6 +48,10 @@ models:
           values: [open, closed]
   - name: age_at_referral
     description: Source-derived age in years at referral receipt.
+  - name: age_band_nhs_at_referral
+    description: NHS age band of age_at_referral (0-4, 5-14, 15-24 ... 75-84, 85+), the project's standard bands from
+      the age_band_nhs macro. Unknown when no age is supplied. NHS England's publication groups age differently, at
+      the reporting period end.
   - name: age_at_discharge
     description: Source-derived age in years at discharge.
   - name: source_of_referral_code
@@ -66,6 +70,12 @@ models:
     - accepted_values:
         arguments:
           values: [iapt, mental_health]
+  - name: source_of_referral_group
+    description: NHS England referral source group of source_of_referral_code from iapt_code_group, following
+      measures M002 to M018, M287 and M345, such as self_referral (B1), gp (A1) or other (M1-M8). The same groups
+      apply to the v2.0 mental health list. Null when no source is recorded or the code has no group.
+  - name: source_of_referral_group_name
+    description: Readable name of source_of_referral_group, such as Self referral.
   - name: discharge_reason_code
     description: Submitted discharge from IAPT service reason (end code), never inferred. Some referrals have a
       reason without a discharge date; the submitted reason is retained without inventing a discharge date or event.
@@ -83,9 +93,13 @@ models:
     - accepted_values:
         arguments:
           values: [discharge_reason, discharge_reason_legacy]
-  - name: discharge_reason_category
-    description: UKHFD category for a current discharge reason where published, such as seen but not taken on for
-      treatment. Null for retired codes, which have no published grouping.
+  - name: discharge_reason_group
+    description: Group of discharge_reason_code from iapt_code_group. not_assessed (50), seen_not_treated (10-17
+      and 95) or seen_and_treated (46-49 and 96), as grouped under I101250 in the IAPT v2.1 ETOS. Retired care spell
+      end codes take the group of their UKHFD category, such as 42 completed scheduled treatment in
+      seen_and_treated. Null when no reason is recorded or the code has no group.
+  - name: discharge_reason_group_name
+    description: Readable name of discharge_reason_group, such as Seen but not taken on for a course of treatment.
   - name: previous_diagnosed_condition_code
     description: Whether the patient reports a recurrence of a previously diagnosed condition.
   - name: previous_diagnosed_condition_name
@@ -104,19 +118,24 @@ models:
     description: NHS England derived date of the second attended treatment contact.
   - name: last_treatment_date
     description: NHS England derived date of the last attended treatment contact.
-  - name: attended_contact_count
-    description: NHS England count of attended or unplanned contacts, plus internet therapy logs, between referral and
-      discharge.
-  - name: treatment_contact_count
-    description: NHS England count of attended treatment contacts (appointment types 02, 03, 05, excluding employment
-      support).
+  - name: nhse_care_contact_count
+    description: NHS England CareContact_Count (I101D28). Contacts of any appointment type that were attended (codes
+      5 or 6) or unplanned, dated from referral receipt to discharge (or the reporting period end while open), plus
+      completed internet-enabled therapy weekly logs. Counts within this provider-qualified referral only. Zero
+      means the referral was not seen.
+  - name: nhse_treatment_contact_count
+    description: NHS England TreatmentCareContact_Count (I101D29). As nhse_care_contact_count, restricted to treatment
+      appointment types 02, 03 and 05 without an employment support activity, plus internet-enabled therapy logs.
   - name: is_completed_treatment
     description: Derived state of the NHS England completed-treatment rule, which is the same in v2.0 and v2.1
       (discharged with at least two treatment contacts). TRUE when the source flag is True. FALSE when either stated
       criterion fails, either no discharge date as of the selected version or fewer than two treatment contacts. Null
       when the treatment count is missing, or the criteria look met but the source flag is absent.
   - name: anxiety_disorder_specific_measure
-    description: NHS England selected anxiety measure used for recovery, such as GAD7 or PTSD.
+    description: NHS England selected anxiety measure used for recovery (I101D90), a token such as GAD7 or PTSD.
+  - name: anxiety_disorder_specific_measure_name
+    description: Assessment tool name for anxiety_disorder_specific_measure from iapt_assessment_scale, such as
+      Generalised Anxiety Disorder 7 (GAD-7). The token maps to its score concept through iapt_code_group.
   - name: phq9_first_score
     description: NHS England first valid PHQ-9 score (0-27) in the referral. Parsed from the submitted text to 9
       decimal places, as in fct_iapt_assessment_score, so no value is rounded; null when the text is not a number.
