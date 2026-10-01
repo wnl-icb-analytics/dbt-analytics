@@ -130,13 +130,16 @@ not independent care milestones. e-RS action labels distinguish recorded and
 updated DNA actions. See [e-RS validation](ers-analyst-validation.md).
 
 Clinical items include OLIDS expanded observations and statement-enriched
-medication orders; MHSDS and CSDS prepared clinical records; SUS diagnoses and
-procedures; and ECDS diagnoses, treatments, investigations, comorbidities, coded
-findings, observations, scored assessments, chief complaints, acuity, notifiable
-diseases, injury mechanism, intent and place, and alcohol or drug involvement.
+medication orders; MHSDS and CSDS prepared clinical records, including MHSDS
+social circumstances; SUS diagnoses and procedures; and ECDS diagnoses,
+treatments, investigations, comorbidities, coded findings, observations, scored
+assessments, chief complaints, acuity, notifiable diseases, injury mechanism,
+intent and place, alcohol or drug involvement, and Mental Health Act legal status.
 Single-valued ECDS attendance fields emit one row per recorded code, keyed by the
 attendance. Injury details take the recorded injury date; chief complaint, acuity
-and notifiable disease have no supported clinical date. There are no standalone medication statements. Acute code
+and notifiable disease have no supported clinical date. Legal status takes its
+assignment start, which older ECDS deliveries supply as separate date and time
+fields; most records state not applicable or not known. There are no standalone medication statements. Acute code
 positions are preserved, including repeated codes in distinct supplied positions.
 ECDS observations and scored assessments keep separate source-sequence rows,
 values, reported units and clinical timestamps. Submitted scores populate the
@@ -174,6 +177,7 @@ Existing source key names remain available:
 | `fct_sus_uec_observation` | `observation_id` |
 | `fct_sus_uec_scored_assessment` | `assessment_id` |
 | `int_sus_uec_injury_alcohol_drug` | `involvement_id` |
+| `int_sus_uec_mental_health_legal_status` | `legal_status_id` |
 
 Recorded parents follow `parent_model_name`. MHSDS/CSDS parents use
 `source_record_id`; e-RS referrals use `ubrn_id`; acute encounters use
