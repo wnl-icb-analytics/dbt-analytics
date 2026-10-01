@@ -19,7 +19,12 @@ SELECT
     register.latest_diagnosis_date,
     register.latest_resolved_date,
     register.earliest_unresolved_diagnosis_date,
-    register.qof_rule_number
+    register.qof_rule_number,
+    CASE register.qof_rule_number
+        {% for rule_number, rule_label in copd_qof_rule_labels().items() %}
+        WHEN {{ rule_number }} THEN '{{ rule_label }}'
+        {% endfor %}
+    END AS qof_rule_applied
 FROM register
 INNER JOIN {{ ref('int_segmentation_person_month_spine') }} AS spine
     ON register.person_id = spine.person_id

@@ -160,7 +160,7 @@ qof_rule_1_pre_april_2023 AS (
     SELECT
         qfce.person_id,
         qfce.eunrescopd_dat AS diagnosis_date,
-        'Rule 1: Pre-April 2023' AS qof_rule_applied,
+        '{{ copd_qof_rule_labels()[1] }}' AS qof_rule_applied,
         TRUE AS qualifies_for_register,
         'EUNRESCOPD_DAT < 01/04/2023 - automatic inclusion'
             AS qualification_reason,
@@ -191,7 +191,7 @@ qof_rule_2_spirometry_timeframe AS (
     SELECT DISTINCT
         pfr.person_id,
         pfr.eunrescopd_dat AS diagnosis_date,
-        'Rule 2: Post-April 2023 + Spirometry' AS qof_rule_applied,
+        '{{ copd_qof_rule_labels()[2] }}' AS qof_rule_applied,
         TRUE AS qualifies_for_register,
         'Spirometry <0.7 within 93 days before to 186 days after EUNRESCOPD_DAT'
             AS qualification_reason,
@@ -221,7 +221,7 @@ qof_rule_3_newly_registered AS (
     SELECT DISTINCT
         pfr.person_id,
         pfr.eunrescopd_dat AS diagnosis_date,
-        'Rule 3: Newly Registered + Spirometry' AS qof_rule_applied,
+        '{{ copd_qof_rule_labels()[3] }}' AS qof_rule_applied,
         TRUE AS qualifies_for_register,
         'Newly registered patient with spirometry <0.7 within 93 days before to 186 days after registration'
             AS qualification_reason,
@@ -247,7 +247,7 @@ qof_rule_4_post_april_2023_remaining AS (
     SELECT DISTINCT
         pfr.person_id,
         pfr.eunrescopd_dat AS diagnosis_date,
-        'Rule 4: Post-April 2023 (All Remaining)' AS qof_rule_applied,
+        '{{ copd_qof_rule_labels()[4] }}' AS qof_rule_applied,
         TRUE AS qualifies_for_register,
         'EUNRESCOPD_DAT >= 01/04/2023 - included per QOF v51 Rule 4'
             AS qualification_reason,
@@ -278,10 +278,10 @@ all_qualifying_patients AS (
         ORDER BY
             -- Prioritize by rule number (Rule 1 > Rule 2 > Rule 3 > Rule 4)
             CASE qof_rule_applied
-                WHEN 'Rule 1: Pre-April 2023' THEN 1
-                WHEN 'Rule 2: Post-April 2023 + Spirometry' THEN 2
-                WHEN 'Rule 3: Newly Registered + Spirometry' THEN 3
-                WHEN 'Rule 4: Post-April 2023 (All Remaining)' THEN 4
+                WHEN '{{ copd_qof_rule_labels()[1] }}' THEN 1
+                WHEN '{{ copd_qof_rule_labels()[2] }}' THEN 2
+                WHEN '{{ copd_qof_rule_labels()[3] }}' THEN 3
+                WHEN '{{ copd_qof_rule_labels()[4] }}' THEN 4
                 ELSE 5
             END,
             -- Then by earliest spirometry date for tie-breaking
@@ -373,10 +373,10 @@ SELECT
     COALESCE(uss.total_unable_spirometry_records, 0) AS total_unable_spirometry_records,
 
     -- Rule qualification flags
-    COALESCE(aqp.qof_rule_applied = 'Rule 1: Pre-April 2023', FALSE) AS qualified_rule_1,
-    COALESCE(aqp.qof_rule_applied = 'Rule 2: Post-April 2023 + Spirometry', FALSE) AS qualified_rule_2,
-    COALESCE(aqp.qof_rule_applied = 'Rule 3: Newly Registered + Spirometry', FALSE) AS qualified_rule_3,
-    COALESCE(aqp.qof_rule_applied = 'Rule 4: Post-April 2023 (All Remaining)', FALSE) AS qualified_rule_4,
+    COALESCE(aqp.qof_rule_applied = '{{ copd_qof_rule_labels()[1] }}', FALSE) AS qualified_rule_1,
+    COALESCE(aqp.qof_rule_applied = '{{ copd_qof_rule_labels()[2] }}', FALSE) AS qualified_rule_2,
+    COALESCE(aqp.qof_rule_applied = '{{ copd_qof_rule_labels()[3] }}', FALSE) AS qualified_rule_3,
+    COALESCE(aqp.qof_rule_applied = '{{ copd_qof_rule_labels()[4] }}', FALSE) AS qualified_rule_4,
 
     -- Flag for patients who have "unable to spirometry" codes (for analytics, not register requirement)
     COALESCE(uss.total_unable_spirometry_records > 0, FALSE) AS has_unable_spirometry_code

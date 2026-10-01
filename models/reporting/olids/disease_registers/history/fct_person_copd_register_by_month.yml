@@ -36,10 +36,15 @@ models:
       - name: earliest_unresolved_diagnosis_date
         description: Earliest eligible evidence after the latest resolution, or the earliest evidence when never resolved (QOF EUNRESCOPD_DAT).
       - name: qof_rule_number
-        description: QOF COPD rule that admits the person (1 to 4). Rule 1 covers diagnoses before 1 April 2023.
+        description: QOF COPD rule that admits the person (1 to 4); qof_rule_applied gives its label.
         data_tests:
           - not_null
           - accepted_values:
               arguments:
                 values: [1, 2, 3, 4]
                 quote: false
+      - name: qof_rule_applied
+        description: >
+          QOF COPD rule label, as in fct_person_copd_register. Rule 1 covers diagnoses before
+          1 April 2023; later diagnoses qualify by spirometry around diagnosis (Rule 2), by
+          spirometry after registering in the last 12 months (Rule 3) or otherwise (Rule 4).
