@@ -6,7 +6,7 @@ General pregnancy/HDP window mechanics (used by reusable upstream models)
 live in pregnancy_hdp_config.sql.
 
 Usage:
-  DATEDIFF('day', span_start, span_end) >= {{ qmul_gp_bp_registry_min_span_months() }} * 30
+  span_end >= DATEADD('month', {{ qmul_gp_bp_registry_min_span_months() }}, span_start)
 
 Override at runtime:
   dbt run --vars '{"qmul_gp_bp_registry_min_span_months": 24}'
