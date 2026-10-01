@@ -215,7 +215,7 @@ Latest supported reference or source description of the clinical code. Historica
 {% enddocs %}
 
 {% docs navigation_source_coding_system %}
-Source clinical coding system or its source-supplied label. Keep source and mapped codes separate.
+Coding system of the source code, or its source-supplied label. Keep source and mapped codes separate. CSDS gives the Read scheme the code belongs to: a code submitted as Read v2 or CTV3 that is absent from that scheme but an exact concept code in the other takes the other scheme. fct_csds_clinical_record keeps the submitted scheme.
 {% enddocs %}
 
 {% docs navigation_mapped_code %}

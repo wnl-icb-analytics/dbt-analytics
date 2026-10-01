@@ -37,20 +37,30 @@ models:
       type or screening outcome. Null for weight, height and length, which the data element identifies.
       Unmatched codes remain present.
   - name: clinical_description
-    description: Submitted-code label from shared SNOMED CT, ICD-10 or scheme-qualified Read dictionaries, including explicit dictionary alternatives,
+    description: Submitted-code label from shared SNOMED CT, ICD-10 or scheme-qualified Read dictionaries in clinical_code_system, including explicit dictionary alternatives,
       or the latest UKHFD NHS Data Dictionary label for code-list values. It is not replaced by the mapped SNOMED
       label. Infant physical examination results have no maintained label list.
   - name: clinical_code_system
-    description: SNOMED CT, Read v2, CTV3 or ICD-10 for the supported resolvers; other recognised
-      schemes retain their authoritative UKHFD name. Code-list values name their NHS Data Dictionary list. Established by the submitted field-specific scheme
-      or assessment specification, never code shape. Null for an unrecognised or absent scheme.
+    description: Coding system the clinical code is resolved in. SNOMED CT, Read v2, CTV3 or ICD-10 for the
+      supported resolvers; other recognised schemes retain their authoritative UKHFD name. Code-list values name
+      their NHS Data Dictionary list. Normally the submitted field-specific scheme or assessment specification,
+      never code shape. A code submitted as Read v2 or CTV3 that is absent from that scheme but an exact concept
+      code in the other Read scheme takes the other scheme (see is_clinical_code_system_corrected). Null for an
+      unrecognised or absent scheme.
+  - name: submitted_clinical_code_system
+    description: Coding system named by the submitted scheme, before Read scheme correction. Equals
+      clinical_code_system unless is_clinical_code_system_corrected is true.
+  - name: is_clinical_code_system_corrected
+    description: True when a code submitted as Read v2 was resolved in CTV3, or the reverse, because it is
+      absent from the submitted scheme and an exact Dictionary concept code in the other. Alternative codes and
+      term identifiers do not trigger a correction. Labels and SNOMED mappings then come from the corrected scheme.
   - name: coding_scheme_code
-    description: Submitted community-care scheme. Procedure 06, finding 04, observation 03 and diagnosis
-      06 mean SNOMED CT; diagnosis 02 means ICD-10. Null for assessments where SNOMED CT is fixed by
-      specification and for code-list values.
+    description: Submitted community-care scheme, unchanged by Read scheme correction. Procedure 06, finding 04,
+      observation 03 and diagnosis 06 mean SNOMED CT; diagnosis 02 means ICD-10. Null for assessments where
+      SNOMED CT is fixed by specification and for code-list values.
   - name: coding_scheme_name
-    description: UKHFD scheme label, or specification-fixed SNOMED CT. A dictionary label does not establish
-      version-specific submission validity.
+    description: UKHFD label of the submitted scheme, or specification-fixed SNOMED CT. Unchanged by Read
+      scheme correction. A dictionary label does not establish version-specific submission validity.
   - name: clinical_label_status
     description: labelled, code_missing, coding_scheme_unrecognised, reference_not_available, code_or_expression_unmatched
       or defined_by_data_element for weight, height and length. Reference availability is distinct from clinical validity.
@@ -218,11 +228,12 @@ models:
       referral assessments or without a usable date.
   - name: clinical_label_source
     description: Reference supplying the submitted-code label. Read matches require exact case
-      and the submitted Read v2 or CTV3 system. UKHFD supplies historical seven-character
+      and the Read v2 or CTV3 system in clinical_code_system. UKHFD supplies historical seven-character
       Read v2 code-and-term labels and exact CTV3 term identifiers after existing Dictionary matches. These term labels do not imply a SNOMED mapping.
+      Read labels come from clinical_code_system, which may be the corrected Read scheme.
   - name: dictionary_snomed_code
-    description: SNOMED mapping supplied by Dictionary.dbo.ReadCodes for the matched Read code or explicit dictionary alternative.
-      This is reference enrichment, not a mapping submitted in CSDS.
+    description: SNOMED mapping supplied by Dictionary.dbo.ReadCodes for the matched Read code or explicit dictionary alternative,
+      in the Read scheme named by clinical_code_system. This is reference enrichment, not a mapping submitted in CSDS.
   - name: dictionary_snomed_description
     description: SNOMED dictionary description of the separately retained Read dictionary mapping; null
       without a recognised mapped concept.

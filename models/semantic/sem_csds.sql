@@ -87,7 +87,7 @@ DIMENSIONS(
     activities.activities_is_wnl_commissioner AS is_wnl_commissioner COMMENT = 'The activity''s own same-submission contact is commissioned by West and North London. Filter true for WNL activity.',
     activities.activity_contact_date AS care_contact_date COMMENT = 'Date of the contact the activity belongs to; activities have no separate date.',
     clinical.clinical_record_type AS clinical_record_type COMMENT = 'Clinical item type, such as immunisation, childhood_immunisation, primary_diagnosis, newborn_hearing_screening, newborn_blood_spot_ plus the condition, breastfeeding_status, person_weight, referral_assessment, procedure, finding or observation.',
-    clinical.clinical_code_system AS clinical_code_system COMMENT = 'Coding system of the submitted clinical code.',
+    clinical.clinical_code_system AS clinical_code_system COMMENT = 'Coding system of the clinical code. Read v2 and CTV3 codes submitted under the wrong Read scheme take the scheme they belong to.',
     clinical.clinical_date AS clinical_date COMMENT = 'Recorded or inherited date of the clinical item.',
     clinical.clinical_label_status AS clinical_label_status COMMENT = 'Whether the submitted code found a label. Reference availability is not clinical validity.',
     referral_periods.referral_periods_provider_code AS provider_organisation_code COMMENT = 'Provider reporting the referral in this period.',

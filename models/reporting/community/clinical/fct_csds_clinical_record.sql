@@ -1,5 +1,5 @@
 -- Scheme numbers are field-specific; resolve each submitted scheme to the terminology it names.
-with resolved as (
+with submitted as (
     select
         r.*
         , case
@@ -18,8 +18,31 @@ with resolved as (
                 or (r.coding_scheme_kind = 'diagnosis' and trim(r.coding_scheme_code) = '05') then 'CTV3'
             when (r.coding_scheme_kind = 'finding' and trim(r.coding_scheme_code) = '01')
                 or (r.coding_scheme_kind = 'diagnosis' and trim(r.coding_scheme_code) = '02') then 'ICD-10'
-        end as resolver_system
+        end as submitted_resolver_system
     from {{ ref('int_csds_clinical_record') }} as r
+)
+
+-- A code absent from its submitted Read scheme but an exact concept code in the other one
+-- was submitted under the wrong Read scheme; resolve it there. Valid submitted schemes are kept.
+, resolved as (
+    select
+        s.*
+        , case
+            when s.submitted_resolver_system in ('Read v2', 'CTV3')
+                and submitted_read.code is null and other_read.code is not null
+                then iff(s.submitted_resolver_system = 'Read v2', 'CTV3', 'Read v2')
+            else s.submitted_resolver_system
+        end as resolver_system
+    from submitted as s
+    left join {{ ref('read_code') }} as submitted_read
+        on trim(s.clinical_code) = submitted_read.code
+        and submitted_read.coding_system = case s.submitted_resolver_system
+            when 'Read v2' then 'read_v2' when 'CTV3' then 'ctv3' end
+    left join {{ ref('read_code') }} as other_read
+        on trim(s.clinical_code) = other_read.code
+        and other_read.match_type = 'exact_code'
+        and other_read.coding_system = case s.submitted_resolver_system
+            when 'Read v2' then 'ctv3' when 'CTV3' then 'read_v2' end
 )
 
 , code_list_sets as (
@@ -41,6 +64,8 @@ with resolved as (
                 then 'NHS Data Dictionary: ' || initcap(replace(r.code_set_name, '_', ' '))
             else coding_scheme_name
         end as clinical_code_system
+        , coalesce(r.submitted_resolver_system, clinical_code_system) as submitted_clinical_code_system
+        , r.resolver_system is distinct from r.submitted_resolver_system as is_clinical_code_system_corrected
         , coalesce(snomed.preferred_term, icd.description, read_code.term, code_list.description) as clinical_description
         , case when snomed.snomed_code is not null then snomed.definition_source
             when icd.code is not null then icd.definition_source
@@ -169,6 +194,8 @@ select
     , dictionary_snomed_code
     , dictionary_snomed_description
     , clinical_code_system
+    , submitted_clinical_code_system
+    , is_clinical_code_system_corrected
     , coding_scheme_code
     , coding_scheme_name
     , clinical_label_status

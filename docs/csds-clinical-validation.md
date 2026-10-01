@@ -232,8 +232,9 @@ Full UKHFD SNOMED description history adds no concept-identifier matches for
 the remaining records submitted as SNOMED CT. Read gaps have no case-only matches,
 and source clinical codes contain no outer padding. Some unlabelled CTV3 tokens
 occur in UKHFD migration maps, but a mapped target description is not the original
-Read term. This change does not relabel a submitted scheme or treat a migration
-map as an equivalent source description.
+Read term. A migration map is not treated as an equivalent source description.
+The later [Read scheme correction](#read-scheme-correction) moves only exact
+concept codes between Read v2 and CTV3.
 
 The 2,156,884 unresolved observation-unit records use 200 distinct tokens. Four
 numeric tokens account for 1,267,074 records; none matches UKHFD UCUM ConceptID
@@ -467,10 +468,10 @@ they are not maintained in the warehouse. Diagnosis schemes use the shared
 `diagnosis_scheme` reference: 02 is ICD-10, 04 Read v2, 05 CTV3 and 06 SNOMED
 CT, resolved through the existing ICD-10, Read and SNOMED references.
 
-About half of CYP607 primary diagnoses lack a label. Most of the gap is about
+About half of CYP607 primary diagnoses lacked a label. Most of the gap was about
 180K rows submitted under Read v2 whose codes are not Read v2 terms; about 96%
-of them are valid CTV3 codes. Codes are not relabelled under a different scheme
-than the one submitted.
+of them are CTV3 concept codes. The [Read scheme correction](#read-scheme-correction)
+resolves those in CTV3.
 
 Screening sections with several coded fields give one row per populated field.
 Blood spot rows use `newborn_blood_spot_` plus the screened condition and take
@@ -491,3 +492,38 @@ This work covers #1139 in substance. Newborn hearing screening has accepted
 history and latest staging, person linkage, provider names, UKHFD labels and
 documented null dates, but it sits in the clinical fact at one row per ETOS
 record rather than in a separate fact at one row per submitted row.
+
+## Read scheme correction
+
+Some CSDS records carry CTV3 codes under the Read v2 scheme, or the reverse.
+When a code is absent from its submitted Read scheme but is an exact Dictionary
+concept code in the other, the fact resolves it in the other scheme. This
+applies to diagnoses, immunisations, procedures, findings and observations.
+`clinical_code_system` names the scheme used, and the longitudinal adapter's
+`source_coding_system` follows it. `submitted_clinical_code_system`,
+`coding_scheme_code` and `coding_scheme_name` keep the submitted scheme, and
+`is_clinical_code_system_corrected` marks the change. The label, Read match type
+and Dictionary SNOMED mapping come from the corrected scheme.
+
+A code found in its submitted scheme keeps it, even when the other scheme also
+contains it. Dictionary alternatives and CTV3 term identifiers do not trigger a
+correction: an alternative excluded as ambiguous in one scheme should not resolve
+through the other, and a term identifier is not a concept code.
+
+The shared-DEV build on 1 October 2026 corrected about 177K records:
+
+| Clinical record type | Corrected records | Direction | Labelled before | Labelled after |
+|---|---:|---|---:|---:|
+| Primary diagnosis | ~174K | Read v2 to CTV3 | 49.0% | 97.5% |
+| Observation | ~2.6K | CTV3 to Read v2 | 77.26% | 77.28% |
+| Immunisation | ~0.5K | Read v2 to CTV3 | 28.21% | 28.23% |
+| Procedure | under 0.1K | CTV3 to Read v2 | 96.55% | 96.55% |
+
+No finding or other diagnosis type met the rule. The corrected primary
+diagnoses have no Dictionary SNOMED mapping, so their mapped fields stay empty;
+the corrected observations and procedures all gained one. Record keys stayed
+unique.
+
+MHSDS has no equivalent gap. Of its ~34K Read v2 and CTV3 clinical records, none
+that is absent from its submitted scheme is an exact concept code in the other,
+so the MHSDS models are unchanged.
