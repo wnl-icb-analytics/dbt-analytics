@@ -5,12 +5,9 @@
 }}
 
 /*
-All smoking status observations from clinical records.
-Uses QOF-specific cluster IDs: LSMOK_COD (current smoker),
-EXSMOK_COD (ex-smoker), and NSMOK_COD (never smoked) codes.
-Excludes SMOK_COD as it's a catch-all that duplicates the specific clusters.
-Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
-Enhanced with analytics-ready flags and legacy structure alignment.
+Smoking habit observations, including non-smokers whose past history is unknown.
+Specific QOF clusters determine current, ex-smoker and never-smoked status.
+SMOK_COD-only observations cannot establish never-smoking history.
 */
 
 WITH base_observations AS (
@@ -28,10 +25,20 @@ WITH base_observations AS (
         CASE WHEN obs.cluster_id = 'EXSMOK_COD' THEN TRUE ELSE FALSE END AS is_ex_smoker_code,
         CASE WHEN obs.cluster_id = 'NSMOK_COD' THEN TRUE ELSE FALSE END AS is_never_smoked_code
 
-    FROM ({{ get_observations("'LSMOK_COD', 'EXSMOK_COD', 'NSMOK_COD'") }}) obs
+    FROM ({{ get_observations("'SMOK_COD', 'LSMOK_COD', 'EXSMOK_COD', 'NSMOK_COD'") }}) obs
     WHERE obs.clinical_effective_date IS NOT NULL
     AND obs.clinical_effective_date <= CURRENT_DATE() -- No future dates
     AND obs.age_at_event >= 11 -- Filter out parent smoking codes recorded on children's records (#595)
+    -- Keep one observation when its concept belongs to several clusters.
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY obs.id
+        ORDER BY CASE obs.cluster_id
+            WHEN 'LSMOK_COD' THEN 1
+            WHEN 'EXSMOK_COD' THEN 2
+            WHEN 'NSMOK_COD' THEN 3
+            ELSE 4
+        END
+    ) = 1
 )
 
 SELECT
@@ -53,6 +60,7 @@ SELECT
         WHEN is_smoker_code THEN 'Current Smoker'
         WHEN is_ex_smoker_code THEN 'Ex-Smoker'
         WHEN is_never_smoked_code THEN 'Never Smoked'
+        WHEN concept_code = '405746006' THEN 'Non-Smoker (History Unknown)'
         ELSE 'Unknown'
     END AS smoking_status,
 

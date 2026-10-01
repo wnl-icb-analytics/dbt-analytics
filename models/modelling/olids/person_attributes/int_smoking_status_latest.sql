@@ -5,8 +5,8 @@
 }}
 
 /*
-Latest smoking status per person based on most recent smoking-related observation.
-Uses QOF definitions and prioritises specific status codes over general smoking codes.
+Latest smoking habit observation per person, including SMOK_COD-only evidence.
+QOF v51 checks specific status codes on the latest smoking habit date.
 */
 
 SELECT
@@ -23,10 +23,15 @@ SELECT
     is_current_smoker,
     is_ex_smoker
 
-FROM (
-    {{ get_latest_events(
-        ref('int_smoking_status_all'),
-        partition_by=['person_id'],
-        order_by='clinical_effective_date'
-    ) }}
-) latest_smoking_status
+FROM {{ ref('int_smoking_status_all') }}
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY person_id
+    ORDER BY clinical_effective_date DESC,
+        CASE source_cluster_id
+            WHEN 'LSMOK_COD' THEN 1
+            WHEN 'EXSMOK_COD' THEN 2
+            WHEN 'NSMOK_COD' THEN 3
+            ELSE 4
+        END,
+        id DESC
+) = 1
