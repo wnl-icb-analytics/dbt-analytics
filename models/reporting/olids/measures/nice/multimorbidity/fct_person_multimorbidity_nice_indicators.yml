@@ -3,17 +3,22 @@ models:
     description: |
       NICE IND207: Multimorbidity medication review. One row per currently registered,
       living, non-test person with moderate or severe coded frailty, or conditions in
-      four or more NICE IND205 multimorbidity categories, assessed on the build date.
+      four or more NICE IND207 multimorbidity categories, assessed on the build date.
 
       Achievement requires a structured medication review record in the preceding 12
       months. The code does not independently establish use of an assessment tool or
       shared decision making.
 
-      Category coverage is incomplete. Chronic pain, constipation, diverticular disease,
-      inflammatory bowel disease, eating disorders, substance misuse, other inflammatory
-      polyarthropathies, systemic connective tissue disorders and bronchiectasis are not
-      modelled. Eligible people may therefore be missed. Lithium therapy without an SMI
-      diagnosis does not count as a mental health condition.
+      Counts each category once using int_nice_multimorbidity_categories. Chronic pain
+      requires four analgesic issues or four specified antiepileptic issues in the last
+      12 months, with no epilepsy diagnosis in that period for the antiepileptic route.
+      Constipation requires four laxative issues. Supplemental diagnoses include Crohn's
+      disease, ulcerative colitis, unclassified inflammatory bowel disease,
+      anorexia or bulimia, current substance misuse,
+      bronchiectasis and the Bristol connective tissue disorder set.
+      Diverticular disease has no source-backed code set and remains omitted. Existing
+      register age/treatment restrictions and the alcohol flag's age floor remain.
+      Lithium therapy without an SMI diagnosis does not count as mental health evidence.
 
       Personalised care adjustments are not applied.
     config:
@@ -30,19 +35,23 @@ models:
           description_short: "Structured medication review in the preceding 12 months for people with frailty or multimorbidity (four or more condition clusters)"
           description_long: |
             Currently registered, living, non-test people with moderate or severe coded
-            frailty, or conditions in four or more NICE IND205 multimorbidity
+            frailty, or conditions in four or more NICE IND207 multimorbidity
             categories.
 
             Achievement requires a structured medication review record in the preceding
             12 months. The code does not independently establish use of an assessment
             tool or shared decision making.
 
-            Category coverage is incomplete. Chronic pain, constipation, diverticular
-            disease, inflammatory bowel disease, eating disorders, substance misuse,
-            other inflammatory polyarthropathies, systemic connective tissue disorders
-            and bronchiectasis are not modelled. Eligible people may therefore be
-            missed. Lithium therapy without an SMI diagnosis does not count as a mental
-            health condition.
+            Counts each category once using int_nice_multimorbidity_categories. Chronic
+            pain and constipation use four-issue prescribing rules in the last 12 months;
+            the antiepileptic pain route excludes epilepsy diagnoses in that period.
+            Supplemental diagnoses include Crohn's disease, ulcerative colitis,
+            unclassified inflammatory bowel disease, anorexia or bulimia, current
+            substance misuse, bronchiectasis and the Bristol
+            connective tissue disorder set. Diverticular disease remains omitted because
+            no source-backed code set was found. Existing register age/treatment
+            restrictions and the alcohol flag's age floor remain. Lithium therapy without
+            an SMI diagnosis does not count as a mental health condition.
 
             Assessed on the reporting date before personalised care adjustments.
           is_qof: false
@@ -75,7 +84,7 @@ models:
       - name: ltc_count
         description: Number of distinct project long-term condition registers the person is on
       - name: multimorbidity_cluster_count
-        description: Number of NICE IND205 condition clusters the person has a condition in
+        description: Number of NICE categories represented; IND207 uses the expanded category model, while IND208 retains the existing review profile count.
       - name: latest_frailty_severity
         description: Latest coded frailty severity; null if none
       - name: latest_record_date
@@ -170,7 +179,7 @@ models:
       - name: ltc_count
         description: Number of distinct project long-term condition registers the person is on
       - name: multimorbidity_cluster_count
-        description: Number of NICE IND205 condition clusters the person has a condition in
+        description: Number of NICE categories represented; IND207 uses the expanded category model, while IND208 retains the existing review profile count.
       - name: latest_frailty_severity
         description: Latest coded frailty severity; null if none
       - name: latest_record_date
@@ -215,6 +224,6 @@ models:
       - name: ltc_count
         description: Number of LTC registers at the build.
       - name: multimorbidity_cluster_count
-        description: Number of NICE IND205 condition clusters at the build.
+        description: Number of NICE categories at the build; IND207 uses the expanded category model, while IND208 retains the existing review profile count.
       - name: latest_frailty_severity
         description: Latest coded frailty severity at the build.
