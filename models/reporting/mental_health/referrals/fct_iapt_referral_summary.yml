@@ -7,8 +7,9 @@ models:
     end of its last reported month, including when its provider stopped submitting. The rule is relative to the
     latest accepted month in the data set, not the build date, so a resumed submission can reopen a referral.
     provider_months_behind_dataset shows where a provider's delay, not the referral, explains the status.
-    A referral continued under another provider code (int_iapt_referral_transfer) is transferred, and both copies
-    are rows here; exclude is_transfer_successor to count each referral received once.
+    A referral continued under another provider code (a confirmed transfer in int_iapt_referral_transfer) is
+    transferred, and both copies are rows here; exclude is_transfer_successor to count each referral received once.
+    Unconfirmed transfer candidates are treated as separate referrals.
   config:
     meta:
       owner:
@@ -107,17 +108,20 @@ models:
   - name: anxiety_disorder_specific_measure
     description: NHS England selected anxiety measure used for recovery, such as GAD7 or PTSD.
   - name: phq9_first_score
-    description: NHS England first valid PHQ-9 score (0-27) in the referral.
+    description: NHS England first valid PHQ-9 score (0-27) in the referral. Parsed from the submitted text to 9
+      decimal places, as in fct_iapt_assessment_score, so no value is rounded; null when the text is not a number.
   - name: phq9_last_score
-    description: NHS England last valid PHQ-9 score (0-27); null until discharge.
+    description: NHS England last valid PHQ-9 score (0-27); null until discharge. Parsed as phq9_first_score.
   - name: gad7_first_score
-    description: NHS England first valid GAD-7 score (0-21) in the referral.
+    description: NHS England first valid GAD-7 score (0-21) in the referral. Parsed as phq9_first_score.
   - name: gad7_last_score
-    description: NHS England last valid GAD-7 score (0-21); null until discharge.
+    description: NHS England last valid GAD-7 score (0-21); null until discharge. Parsed as phq9_first_score.
   - name: adsm_first_score
-    description: NHS England first score for anxiety_disorder_specific_measure.
+    description: NHS England first score for anxiety_disorder_specific_measure, to 9 decimal places. Some measures
+      are fractional, such as the agoraphobia mobility inventory mean (1-5).
   - name: adsm_last_score
-    description: NHS England last score for anxiety_disorder_specific_measure; null until discharge.
+    description: NHS England last score for anxiety_disorder_specific_measure, to 9 decimal places; null until
+      discharge.
   - name: caseness_at_start_status
     description: For completed treatment only. at_caseness when a first PHQ-9 or anxiety score met its caseness
       threshold (source Caseness_Flag); not_at_caseness when both were below (source NotCaseness_Flag);
@@ -205,16 +209,17 @@ models:
       discharge means the provider dropped the referral while still submitting. TRUE with
       no_longer_submitted means the provider itself is more than 2 months behind the data set.
   - name: predecessor_referral_id
-    description: Referral this one continues after a provider code change, from int_iapt_referral_transfer. Null
-      when the referral is not a transfer successor.
+    description: Referral this one continues after a provider code change, from a confirmed transfer in
+      int_iapt_referral_transfer. Null when the referral is not a confirmed transfer successor.
   - name: successor_referral_id
-    description: Referral that continues this one under another provider code. Null when the referral is not a
-      transfer predecessor.
+    description: Referral that continues this one under another provider code, from a confirmed transfer. Null when
+      the referral is not a confirmed transfer predecessor.
   - name: is_transfer_successor
-    description: TRUE when the referral continues an earlier one under a new provider code. It was received once,
-      on the first referral of the chain; exclude successors when counting referrals received.
+    description: TRUE when the referral continues an earlier one under a new provider code, as a confirmed transfer.
+      It was received once, on the first referral of the chain; exclude successors when counting referrals
+      received.
   - name: is_transfer_predecessor
-    description: TRUE when the referral was resubmitted under another provider code.
+    description: TRUE when the referral was resubmitted under another provider code, as a confirmed transfer.
   - name: original_referral_id
     description: First referral of the transfer chain; the referral's own identifier when it never transferred. One
       value per course of care.

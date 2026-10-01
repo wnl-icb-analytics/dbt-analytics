@@ -43,11 +43,13 @@ with reporting_date as (
     cross join reporting_date as d
     left join provider_periods as pp
         on r.provider_organisation_code = pp.provider_organisation_code
-    -- The transfer model is unique on both keys, so neither join adds rows.
+    -- The transfer model is unique on both keys, so neither join adds rows. Unconfirmed candidates are ignored.
     left join {{ ref('int_iapt_referral_transfer') }} as ts
         on r.referral_id = ts.successor_referral_id
+        and ts.is_confirmed_transfer
     left join {{ ref('int_iapt_referral_transfer') }} as tp
         on r.referral_id = tp.predecessor_referral_id
+        and tp.is_confirmed_transfer
 )
 
 select

@@ -114,6 +114,7 @@ with versions as (
         end as procedure_label_status
         , therapy.therapy_type_category
         , therapy.legacy_therapy_type_code
+        , therapy.legacy_therapy_type_description as legacy_therapy_type_name
 
         , p.finding_code is not null as has_finding
         , p.finding_scheme_code

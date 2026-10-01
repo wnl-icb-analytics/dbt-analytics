@@ -105,8 +105,11 @@ models:
   - name: qualifier_name
     description: Label for qualifier_code.
   - name: parent_record_id
-    description: Parent key supplied by the source fact, populated only when the parent exists and every recorded link
-      agrees on referral, contact and person.
+    description: Parent key from fct_iapt_clinical_record. Activity items take their contact, and assessment items
+      their care activity, only when every recorded link agrees on referral, contact and person. An assessment item
+      whose activity link fails falls back to its referral when the published referral names the same non-null
+      Person_ID, as long-term conditions and presenting complaints do. IDS601 previous diagnoses have no parent.
+      Null when no rule is met.
   - name: parent_record_type
     description: care_activity, care_contact or referral.
   - name: parent_model_name

@@ -34,10 +34,13 @@ with versions as (
 , outcomes as (
     select
         l.*
-        , try_to_number(phq9_first_score) as phq9_first_score_value
-        , try_to_number(phq9_last_score) as phq9_last_score_value
-        , try_to_number(gad_first_score) as gad7_first_score_value
-        , try_to_number(gad_last_score) as gad7_last_score_value
+        -- Scale 9 matches fct_iapt_assessment_score, so a fractional score is never rounded.
+        , try_to_decimal(phq9_first_score, 38, 9) as phq9_first_score_value
+        , try_to_decimal(phq9_last_score, 38, 9) as phq9_last_score_value
+        , try_to_decimal(gad_first_score, 38, 9) as gad7_first_score_value
+        , try_to_decimal(gad_last_score, 38, 9) as gad7_last_score_value
+        , adsm_first_score::number(38, 9) as adsm_first_score_value
+        , adsm_last_score::number(38, 9) as adsm_last_score_value
         -- NHS England sets True when discharged with two or more treatment contacts, else null. FALSE needs a
         -- visibly failed criterion; a null flag whose criteria look met stays unknown.
         , case
@@ -111,14 +114,14 @@ select
     , o.phq9_last_score_value as phq9_last_score
     , o.gad7_first_score_value as gad7_first_score
     , o.gad7_last_score_value as gad7_last_score
-    , o.adsm_first_score
-    , o.adsm_last_score
+    , o.adsm_first_score_value as adsm_first_score
+    , o.adsm_last_score_value as adsm_last_score
     -- Caseness flags need completed treatment and first scores; neither can be shown without both scores.
     , case
         when o.is_completed_treatment is distinct from true then null
         when o.caseness_flag then 'at_caseness'
         when o.not_caseness_flag then 'not_at_caseness'
-        when o.phq9_first_score_value is null or o.adsm_first_score is null then 'not_assessable'
+        when o.phq9_first_score_value is null or o.adsm_first_score_value is null then 'not_assessable'
     end as caseness_at_start_status
     -- Source flag as supplied: recovery thresholds differ by data set version, so no negative is inferred.
     , o.recovery_flag as is_recovered
@@ -129,7 +132,7 @@ select
         when o.reliable_deterioration_flag then 'reliable_deterioration'
         when o.no_change_flag then 'no_reliable_change'
         when o.phq9_first_score_value is null or o.phq9_last_score_value is null
-            or o.adsm_first_score is null or o.adsm_last_score is null then 'not_assessable'
+            or o.adsm_first_score_value is null or o.adsm_last_score_value is null then 'not_assessable'
     end as reliable_change_status
     , o.presenting_complaint_higher_category
     , o.presenting_complaint_lower_category

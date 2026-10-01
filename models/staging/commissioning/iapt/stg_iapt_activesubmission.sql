@@ -6,8 +6,12 @@ select
     , upper(nullif(trim(h.org_id_prov), '')) as provider_organisation_code
     , h.reporting_period_start_date::date as reporting_period_start_date
     , h.reporting_period_end_date::date as reporting_period_end_date
-    , try_to_number(h.unique_month_id) as unique_month_id
-    , to_varchar(h.dat_set_ver::number(4, 1)) as dataset_version
+    -- A non-integer month number stays null so its test fails rather than being rounded.
+    , iff(regexp_like(trim(h.unique_month_id), '[0-9]+'), trim(h.unique_month_id)::number, null) as unique_month_id
+    -- Formatted only when the submitted value is exactly 2.0 or 2.1; any other version keeps its raw text and
+    -- fails the accepted-values test.
+    , iff(h.dat_set_ver in (2.0, 2.1), to_varchar(h.dat_set_ver::number(2, 1)), to_varchar(h.dat_set_ver))
+        as dataset_version
     , nullif(trim(h.file_type), '') as file_type
     , h.effective_from as source_file_received_at
     , h.date_time_dat_set_create as source_file_created_at

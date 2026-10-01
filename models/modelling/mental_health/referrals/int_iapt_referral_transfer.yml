@@ -1,37 +1,50 @@
 version: 2
 models:
 - name: int_iapt_referral_transfer
-  description: NHS Talking Therapies (IAPT data set) referrals resubmitted under another provider code, one row
-    per successor referral with the referral it continues. Referral identifiers are provider-qualified, so a
-    provider code change, such as a trust merger, resubmits open referrals under new identifiers without their
-    earlier contacts. A pair is the same Person_ID and referral received date under different provider codes, where
-    the predecessor has no recorded discharge and the successor is first reported in the month after the
-    predecessor was last reported. A referral with more than one candidate on either side is left unlinked. The
-    rule uses no provider list, so a few pairs outside known code changes are included; they are under 1% of
-    pairs.
+  description: NHS Talking Therapies (IAPT data set) referrals that may have been resubmitted under another provider
+    code, one row per candidate successor referral with the referral it may continue. Referral identifiers are
+    provider-qualified, so a provider code change, such as a trust merger, resubmits open referrals under new
+    identifiers without their earlier contacts. A candidate pair is the same Person_ID and referral received date
+    under different provider codes, where the predecessor has no recorded discharge and the successor is first
+    reported in the month after the predecessor was last reported. A referral with more than one candidate on
+    either side is left unlinked. A candidate is confirmed only when at least 100 candidate pairs share its
+    predecessor provider, successor provider and transition month, the pattern of a bulk code change. Only
+    confirmed transfers change referral status, chains and the event feed.
   config:
     meta:
       owner:
         name: Eddie Davison
   columns:
   - name: successor_referral_id
-    description: Referral in fct_iapt_referral that continues the predecessor under the new provider code.
+    description: Referral in fct_iapt_referral that may continue the predecessor under the new provider code.
     data_tests:
     - unique
     - not_null
   - name: predecessor_referral_id
     description: Referral in fct_iapt_referral that stopped being reported the month before. A predecessor has one
-      successor.
+      candidate successor.
     data_tests:
     - unique
     - not_null
-  - name: original_referral_id
-    description: First referral of the chain. Equals predecessor_referral_id unless the referral transferred more
-      than once.
+  - name: is_confirmed_transfer
+    description: TRUE when provider_transition_pair_count is at least 100. Known code changes produce about 150 to
+      2,700 pairs per provider pair and month; other matching pairs are scattered, with no group reaching a dozen,
+      and stay as unconfirmed candidates. FALSE pairs share a person and received date but are not treated as one
+      course of care.
     data_tests:
     - not_null
+  - name: provider_transition_pair_count
+    description: Candidate pairs with the same predecessor provider, successor provider and successor first
+      reported month, including this one.
+  - name: original_referral_id
+    description: First referral of the confirmed chain. Equals predecessor_referral_id unless the referral
+      transferred more than once. Null for unconfirmed candidates.
+    data_tests:
+    - not_null:
+        config:
+          where: is_confirmed_transfer
   - name: transfer_number
-    description: Position of this transfer in the chain, starting at 1.
+    description: Position of this transfer in the confirmed chain, starting at 1. Null for unconfirmed candidates.
   - name: successor_provider_organisation_code
     description: Provider ODS code of the successor.
   - name: predecessor_provider_organisation_code

@@ -40,9 +40,9 @@ models:
       - name: person_id
         description: IAPT Person_ID. IAPT-scoped; use sk_patient_id across datasets.
       - name: parent_record_id
-        description: Parent key, populated only when the parent exists and every recorded link agrees on referral, contact and person.
+        description: Parent key chosen by the source fact. Activity items take their contact only when the same-submission contact and the published contact agree on referral, contact and person. Assessment items take their care activity when every recorded link agrees; otherwise, including IDS607 items whose activity link fails, they fall back to their referral when the published referral names the same non-null Person_ID. Long-term conditions and presenting complaints take their referral on the same Person_ID rule; IDS601 previous diagnoses have no parent. Null when no rule is met; a missing Person_ID never establishes a parent.
       - name: parent_record_type
-        description: care_contact, care_activity or referral.
+        description: care_contact, care_activity or referral, following parent_record_id.
       - name: parent_model_name
         description: Fact holding the parent.
       - name: clinical_date

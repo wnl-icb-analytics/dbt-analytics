@@ -16,7 +16,7 @@ with referrals as (
 
 -- The successor first appears in the month after the predecessor's last month. Wider gaps add almost no
 -- matches and link the first copy of a twice-transferred referral to its third.
-, transfers as (
+, candidates as (
     select
         successor.referral_id as successor_referral_id
         , predecessor.referral_id as predecessor_referral_id
@@ -38,14 +38,43 @@ with referrals as (
         and count(*) over (partition by successor.referral_id) = 1
 )
 
--- Walk each chain from its first referral; a referral can transfer more than once.
+-- A matching person and received date does not prove a code change on its own. A code change moves a
+-- provider's whole open caseload in one month, so a pair is confirmed only when at least 100 pairs share its
+-- predecessor provider, successor provider and month. Known changes produce about 150 to 2,700 pairs per
+-- group; no other group reaches a dozen.
+, counted as (
+    select
+        *
+        , count(*) over (
+            partition by
+                predecessor_provider_organisation_code
+                , successor_provider_organisation_code
+                , successor_first_reported_period_end_date
+        ) as provider_transition_pair_count
+    from candidates
+)
+
+, evidenced as (
+    select
+        *
+        , provider_transition_pair_count >= 100 as is_confirmed_transfer
+    from counted
+)
+
+, confirmed as (
+    select successor_referral_id, predecessor_referral_id
+    from evidenced
+    where is_confirmed_transfer
+)
+
+-- Walk each confirmed chain from its first referral; a referral can transfer more than once.
 , chains as (
     select
         t.successor_referral_id
         , t.predecessor_referral_id as original_referral_id
         , 1 as transfer_number
-    from transfers as t
-    left join transfers as earlier
+    from confirmed as t
+    left join confirmed as earlier
         on t.predecessor_referral_id = earlier.successor_referral_id
     where earlier.successor_referral_id is null
 
@@ -55,20 +84,22 @@ with referrals as (
         t.successor_referral_id
         , c.original_referral_id
         , c.transfer_number + 1
-    from transfers as t
+    from confirmed as t
     inner join chains as c
         on t.predecessor_referral_id = c.successor_referral_id
 )
 
 select
-    t.successor_referral_id
-    , t.predecessor_referral_id
+    e.successor_referral_id
+    , e.predecessor_referral_id
+    , e.is_confirmed_transfer
+    , e.provider_transition_pair_count
     , c.original_referral_id
     , c.transfer_number
-    , t.successor_provider_organisation_code
-    , t.predecessor_provider_organisation_code
-    , t.successor_first_reported_period_end_date
-    , t.predecessor_last_reported_period_end_date
-from transfers as t
-inner join chains as c
-    on t.successor_referral_id = c.successor_referral_id
+    , e.successor_provider_organisation_code
+    , e.predecessor_provider_organisation_code
+    , e.successor_first_reported_period_end_date
+    , e.predecessor_last_reported_period_end_date
+from evidenced as e
+left join chains as c
+    on e.successor_referral_id = c.successor_referral_id

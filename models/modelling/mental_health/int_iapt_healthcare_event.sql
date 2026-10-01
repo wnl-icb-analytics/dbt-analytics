@@ -29,7 +29,7 @@ select
     s.reporting_period_end_date::date as source_submission_period,
     s.source_loaded_at::timestamp_ntz as source_received_at,
     array_construct_compact(
-        -- A referral resubmitted under another provider code was already received once, on its predecessor.
+        -- A confirmed transfer successor was already received once, on its predecessor.
         iff(
             t.successor_referral_id is not null
             , null
@@ -52,6 +52,7 @@ select
 from {{ ref('fct_iapt_referral') }} as s
 left join {{ ref('int_iapt_referral_transfer') }} as t
     on s.referral_id = t.successor_referral_id
+    and t.is_confirmed_transfer
 
 union all
 
