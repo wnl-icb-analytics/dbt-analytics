@@ -22,10 +22,16 @@ models:
     columns:
       - name: concept_code
         description: SNOMED CT observable concept ID.
+        data_tests:
+          - unique:
+              config:
+                where: is_latest_definition
       - name: specification_version
         description: Specification version publishing the definition. Only 2.0.26 and 2.1.22 are extracted; 2.0.27 is not public.
       - name: specification_version_order
         description: Numeric sort key for specification_version (major x 1,000,000 + minor x 1,000 + patch). Order versions by this, not the text.
+        data_tests:
+          - not_null
       - name: assessment_tool_name
         description: Named tool the observable belongs to. Different observables are not interchangeable scores.
       - name: assessment_description

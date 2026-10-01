@@ -124,13 +124,14 @@ with conditions as (
 )
 
 -- ETOS v2.1.22 IDS603 row 24: an undated complaint is superseded when a later period sends the
--- same referral, scheme and code with a date.
+-- same referral, scheme and code with a date. A dated record resubmitted later counts, so use
+-- the last period each dated record was sent.
 , dated_complaints as (
     select
         parent_key
         , coding_scheme_code
         , submitted_code
-        , max(first_reported_period_end_date) as latest_dated_first_period_end_date
+        , max(last_reported_period_end_date) as latest_dated_period_end_date
     from versions
     where source_table = 'IDS603' and source_date is not null
     group by parent_key, coding_scheme_code, submitted_code
@@ -202,7 +203,7 @@ select
         else 'presenting_complaint_recorded'
     end as clinical_time_basis
     , iff(v.source_table = 'IDS603' and v.source_date is null
-        , coalesce(dated.latest_dated_first_period_end_date > v.first_reported_period_end_date, false), null)
+        , coalesce(dated.latest_dated_period_end_date > v.first_reported_period_end_date, false), null)
         as is_superseded_by_dated_record
 
     , v.provider_organisation_code
