@@ -6,7 +6,8 @@
 
 /*
 Latest valid GGT observation per person.
-Excludes excluded units, negative values and extreme outliers, returns the most recent per person.
+Excludes excluded units and negative values, returns the most recent per person. Extreme outliers
+(above the biological upper limit in observation_value_bounds) are kept.
 */
 
 SELECT
@@ -30,7 +31,6 @@ SELECT
 FROM {{ ref('int_ggt_all') }}
 WHERE inferred_value IS NOT NULL
   AND NOT is_negative
-  AND NOT is_extreme_outlier
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id
     ORDER BY clinical_effective_date DESC, id DESC
