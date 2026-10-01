@@ -83,9 +83,9 @@ such as `TAT_scan`. Use the snake_case names on `int_tat_turnaround_times`.
 | `priority_type_code_routine_default` | `priority_type_code_routine_default` | Null defaulted to 1 |
 | `cancer_pathway_flag` | `cancer_pathway_flag` | As submitted |
 | `cancer_pathway_flag_string` | `cancer_pathway_flag_string` | Y / N / Unclassified |
-| `TAT_scan` | `tat_scan` | Hours, request to scan |
-| `TAT_report` | `tat_report` | Hours, scan to report |
-| `TAT_overall` | `tat_overall` | Hours, request to report |
+| `TAT_scan` | `tat_scan` | Hours, request to scan. See rounding below |
+| `TAT_report` | `tat_report` | Hours, scan to report. See rounding below |
+| `TAT_overall` | `tat_overall` | Hours, request to report. See rounding below |
 | `datedifftest` | `datedifftest` | Whole months, data period to test month |
 | `file_name` | `file_name` | Surviving submission filename |
 | `month_year` | *(derive)* | `to_char(data_period, 'MonYY')` |
@@ -95,12 +95,17 @@ such as `TAT_scan`. Use the snake_case names on `int_tat_turnaround_times`.
 | *(none)* | `source_file` | Stage path |
 | *(none)* | `loaded_at` | Raw load timestamp |
 
+Rounding: dbt rounds TAT hours half away from zero. The R pipeline that wrote
+the analyst-managed table rounded half to even, so a value exactly on a half
+hour (for example 30 minutes) can be one hour higher in dbt. Under 1% of rows
+are affected.
+
 ## 4. Consumers found in code
 
-Snowflake access history was not available in this environment, so this list
-is from public git only. Worksheets, Power BI datasets, Streamlit apps and
-scheduled Snowflake tasks that are not in git are unlisted. Do not drop the
-analyst-managed table on this evidence.
+This list is from public git. Snowflake access history for the 90 days to
+1 October 2026 shows the analyst-managed table last written on 13 August 2026
+(the `tat_dashboard` delete-and-append) and last read on 27 August 2026. Use
+access history over the agreed retirement period before dropping it (section 5).
 
 ### This repository
 
@@ -131,10 +136,11 @@ place.
 ## 5. Drop
 
 Do not drop `DATA_LAKE__NCL.ANALYST_MANAGED.TURNAROUND_TIMES_RAW` in this
-change. After a human with `SNOWFLAKE.ACCOUNT_USAGE.ACCESS_HISTORY` (or the
-approved equivalent) confirms zero remaining readers, and after the
-`tat_dashboard` write has stopped, drop only that analyst-managed table
-through the approved Snowflake process. Do not drop `DATA_LAKE.TAT.TURNAROUND_TIMES_RAW`.
+change. Drop only that analyst-managed table, through the approved Snowflake
+process, once `SNOWFLAKE.ACCOUNT_USAGE.ACCESS_HISTORY` shows no reads and no
+writes for the whole retirement period agreed in #1150. A single zero-read
+check can miss infrequent consumers. On 1 October 2026 the last write was
+13 August 2026 and the last read 27 August 2026. Do not drop `DATA_LAKE.TAT.TURNAROUND_TIMES_RAW`.
 
 ## 6. Ingest objects in `DATA_LAKE.TAT`
 
@@ -180,8 +186,9 @@ Names are case-insensitive in Snowflake.
 ## 9. What to sense-check
 
 - Counts from the original modelling validation (dev): raw about 9.30 million
-  rows from 145 files. A 148-file run gave staging 9,415,704 and modelling
-  9,235,786 (Flex 6.13 million / Freeze 3.11 million), all 7 trusts. Later
+  rows from 145 files. A 148-file run gave staging about 9.4 million and
+  modelling about 9.2 million (Flex 6.1 million / Freeze 3.1 million), all 7
+  trusts. Later
   builds change as new files arrive.
 - Datetime parsing: providers send UK `DD/MM/YYYY HH:MI`; xlsx-converted
   files arrive ISO. About 99.8% of test datetimes parsed in that run; the
