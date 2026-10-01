@@ -44,6 +44,21 @@ with versions as (
         -- The warehouse copies the one submitted item into both source columns, so the data set version decides
         -- the list: v2.0 SourceOfReferralMH, renamed SourceOfReferralIAPT in v2.1 (DARS v2.1.7 PC_FIELDS A109).
         , iff(dataset_version = '2.0', source_of_referral_mh, source_of_referral_iapt) as source_of_referral_code
+        , try_to_decimal(wasas_home_management_first_score, 38, 9) as wsas_home_management_first_score_value
+        , try_to_decimal(wasas_private_leisure_activities_first_score, 38, 9) as wsas_private_leisure_activities_first_score_value
+        , try_to_decimal(wasas_relationships_first_score, 38, 9) as wsas_relationships_first_score_value
+        , try_to_decimal(wasas_social_leisure_activities_first_score, 38, 9) as wsas_social_leisure_activities_first_score_value
+        , try_to_decimal(wasas_work_first_score, 38, 9) as wsas_work_first_score_value
+        , try_to_decimal(wasas_home_management_last_score, 38, 9) as wsas_home_management_last_score_value
+        , try_to_decimal(wasas_private_leisure_activities_last_score, 38, 9) as wsas_private_leisure_activities_last_score_value
+        , try_to_decimal(wasas_relationships_last_score, 38, 9) as wsas_relationships_last_score_value
+        , try_to_decimal(wasas_social_leisure_activities_last_score, 38, 9) as wsas_social_leisure_activities_last_score_value
+        , try_to_decimal(wasas_work_last_score, 38, 9) as wsas_work_last_score_value
+        -- UKHFD employment status codes are two-character; pad so a submitted 1 matches 01.
+        , iff(regexp_like(employment_status_first, '[0-9]'), lpad(employment_status_first, 2, '0'),
+            upper(employment_status_first)) as employment_status_first_normalised
+        , iff(regexp_like(employment_status_last, '[0-9]'), lpad(employment_status_last, 2, '0'),
+            upper(employment_status_last)) as employment_status_last_normalised
         -- NHS England sets True when discharged with two or more treatment contacts, else null. FALSE needs a
         -- visibly failed criterion; a null flag whose criteria look met stays unknown.
         , case
@@ -140,9 +155,53 @@ select
         when o.phq9_first_score_value is null or o.phq9_last_score_value is null
             or o.adsm_first_score_value is null or o.adsm_last_score_value is null then 'not_assessable'
     end as reliable_change_status
+    -- NHS England therapy and course derivations, supplied values (ETOS v2.1.22 IDS101).
+    , o.therapy_type_first as first_therapy_type_code
+    , first_therapy_concept.preferred_term as first_therapy_type_name
+    , coalesce(
+        first_therapy.therapy_type_category
+        , iff(startswith(o.therapy_type_first, 'IET'), 'Internet Enabled Therapy', null)
+    ) as first_therapy_type_category
+    , o.therapy_type_last as last_therapy_type_code
+    , last_therapy_concept.preferred_term as last_therapy_type_name
+    , coalesce(
+        last_therapy.therapy_type_category
+        , iff(startswith(o.therapy_type_last, 'IET'), 'Internet Enabled Therapy', null)
+    ) as last_therapy_type_category
+    , o.high_intensity_therapy_first_date as first_high_intensity_therapy_date
+    , o.low_intensity_therapy_first_date as first_low_intensity_therapy_date
+    , o.integrated_contact_first_date as first_integrated_contact_date
+    , o.integrated_treatment_first_date as first_integrated_treatment_date
+    , o.internet_enabled_therapy_count as nhse_internet_enabled_therapy_count
+    , o.wsas_home_management_first_score_value as wsas_home_management_first_score
+    , o.wsas_private_leisure_activities_first_score_value as wsas_private_leisure_activities_first_score
+    , o.wsas_relationships_first_score_value as wsas_relationships_first_score
+    , o.wsas_social_leisure_activities_first_score_value as wsas_social_leisure_activities_first_score
+    , o.wsas_work_first_score_value as wsas_work_first_score
+    , o.wsas_home_management_last_score_value as wsas_home_management_last_score
+    , o.wsas_private_leisure_activities_last_score_value as wsas_private_leisure_activities_last_score
+    , o.wsas_relationships_last_score_value as wsas_relationships_last_score
+    , o.wsas_social_leisure_activities_last_score_value as wsas_social_leisure_activities_last_score
+    , o.wsas_work_last_score_value as wsas_work_last_score
+    , o.employment_status_first as employment_status_first_code
+    , employment_first.description as employment_status_first_name
+    , o.employment_status_last as employment_status_last_code
+    , employment_last.description as employment_status_last_name
+    , o.sickpay_indicator_first as statutory_sick_pay_first_code
+    -- I004080 codes: Y receiving, N not receiving; U unknown and Z not stated stay null.
+    , case upper(o.sickpay_indicator_first) when 'Y' then true when 'N' then false end
+        as is_receiving_statutory_sick_pay_first
+    , o.sickpay_indicator_last as statutory_sick_pay_last_code
+    , case upper(o.sickpay_indicator_last) when 'Y' then true when 'N' then false end
+        as is_receiving_statutory_sick_pay_last
+    , o.psychotropic_indicator_first as psychotropic_medication_first_code
+    , psychotropic_first.description as psychotropic_medication_first_name
+    , o.psychotropic_indicator_last as psychotropic_medication_last_code
+    , psychotropic_last.description as psychotropic_medication_last_name
     , o.presenting_complaint_higher_category
     , o.presenting_complaint_lower_category
     , o.use_pathway_flag as is_nhse_use_pathway
+    , o.use_quarter_referral_flag as is_nhse_use_quarter
     , o.provider_organisation_code
     , provider.organisation_name as provider_organisation_name
     , o.org_id_comm as submitted_commissioner_code
@@ -196,6 +255,26 @@ left join {{ ref('iapt_code_group') }} as adsm_group
 left join {{ ref('iapt_assessment_scale') }} as adsm_scale
     on adsm_group.group_code = adsm_scale.concept_code
     and adsm_scale.is_latest_definition
+left join {{ ref('iapt_therapy_type_definitions') }} as first_therapy
+    on o.therapy_type_first = first_therapy.snomed_code
+left join {{ ref('iapt_therapy_type_definitions') }} as last_therapy
+    on o.therapy_type_last = last_therapy.snomed_code
+left join {{ ref('snomed_concept') }} as first_therapy_concept
+    on o.therapy_type_first = first_therapy_concept.snomed_code
+left join {{ ref('snomed_concept') }} as last_therapy_concept
+    on o.therapy_type_last = last_therapy_concept.snomed_code
+left join {{ ref('mhsds_domain_code_lookup') }} as employment_first
+    on employment_first.code_set_name = 'employment_status'
+    and o.employment_status_first_normalised = employment_first.code
+left join {{ ref('mhsds_domain_code_lookup') }} as employment_last
+    on employment_last.code_set_name = 'employment_status'
+    and o.employment_status_last_normalised = employment_last.code
+left join {{ ref('iapt_code_lookup') }} as psychotropic_first
+    on psychotropic_first.code_set_name = 'psychotropic_medication_usage'
+    and upper(o.psychotropic_indicator_first) = psychotropic_first.code
+left join {{ ref('iapt_code_lookup') }} as psychotropic_last
+    on psychotropic_last.code_set_name = 'psychotropic_medication_usage'
+    and upper(o.psychotropic_indicator_last) = psychotropic_last.code
 left join {{ ref('iapt_code_lookup') }} as previous_condition
     on previous_condition.code_set_name = 'previous_diagnosed_condition_indicator'
     and upper(o.prev_diag_cond_ind) = previous_condition.code

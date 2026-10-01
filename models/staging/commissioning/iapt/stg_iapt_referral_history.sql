@@ -13,6 +13,7 @@ select
     , nullif(trim(r.service_request_id), '') as service_request_id
     , nullif(trim(r.pathway_id), '') as pathway_id
     , r.use_pathway_flag
+    , r.use_quarter_referral_flag
     , upper(nullif(trim(r.org_id_comm), '')) as org_id_comm
     , r.referral_request_received_date::date as referral_request_received_date
     -- v2.1 submits the IAPT source list; v2.0 submitted the mental health list.
@@ -31,6 +32,30 @@ select
     , r.therapy_session_last_date::date as therapy_session_last_date
     , r.care_contact_count
     , r.treatment_care_contact_count
+    , r.internet_enabled_therapy_count
+    , r.high_intensity_therapy_first_date::date as high_intensity_therapy_first_date
+    , r.low_intensity_therapy_first_date::date as low_intensity_therapy_first_date
+    -- A SNOMED CT therapy concept, or IET followed by the internet-enabled therapy programme.
+    , nullif(trim(r.therapy_type_first), '') as therapy_type_first
+    , nullif(trim(r.therapy_type_last), '') as therapy_type_last
+    , r.integrated_contact_first_date::date as integrated_contact_first_date
+    , r.integrated_treatment_first_date::date as integrated_treatment_first_date
+    , nullif(trim(r.employment_status_first), '') as employment_status_first
+    , nullif(trim(r.employment_status_last), '') as employment_status_last
+    , nullif(trim(r.sickpay_indicator_first), '') as sickpay_indicator_first
+    , nullif(trim(r.sickpay_indicator_last), '') as sickpay_indicator_last
+    , nullif(trim(r.psychotropic_indicator_first), '') as psychotropic_indicator_first
+    , nullif(trim(r.psychotropic_indicator_last), '') as psychotropic_indicator_last
+    , nullif(trim(r.wasas_home_management_first_score), '') as wasas_home_management_first_score
+    , nullif(trim(r.wasas_private_leisure_activities_first_score), '') as wasas_private_leisure_activities_first_score
+    , nullif(trim(r.wasas_relationships_first_score), '') as wasas_relationships_first_score
+    , nullif(trim(r.wasas_social_leisure_activities_first_score), '') as wasas_social_leisure_activities_first_score
+    , nullif(trim(r.wasas_work_first_score), '') as wasas_work_first_score
+    , nullif(trim(r.wasas_home_management_last_score), '') as wasas_home_management_last_score
+    , nullif(trim(r.wasas_private_leisure_activities_last_score), '') as wasas_private_leisure_activities_last_score
+    , nullif(trim(r.wasas_relationships_last_score), '') as wasas_relationships_last_score
+    , nullif(trim(r.wasas_social_leisure_activities_last_score), '') as wasas_social_leisure_activities_last_score
+    , nullif(trim(r.wasas_work_last_score), '') as wasas_work_last_score
     , r.completed_treatment_flag
     , nullif(trim(r.phq9_first_score), '') as phq9_first_score
     , nullif(trim(r.phq9_last_score), '') as phq9_last_score
