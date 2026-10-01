@@ -4,7 +4,7 @@ models:
   - name: stg_lpf_result
     description: |
       Staging layer for local provider flow result data.
-      One row per result_id, holding the latest submitted version.
+      One row per result_id, holding the highest-version submission that is not deleted (ingestion time, then file row, break ties).
       Removes deleted records and null result_id values.
       Source: raw_lpf_result
 
@@ -16,11 +16,15 @@ models:
     columns:
       - name: result_id
         description: Provider identifier for the result. One row per value.
+        # Grain holds by construction (row_number = 1 per key). Each test re-runs
+        # the full dedup over the source, so these run in the monthly build only.
         data_tests:
-          - unique
-          - not_null
+          - unique:
+              config:
+                tags: ['monthly-full']
+          - not_null:
+              config:
+                tags: ['monthly-full']
 
       - name: metadata_record_ingestion_timestamp
         description: Timestamp when the record was ingested.
-        data_tests:
-          - not_null

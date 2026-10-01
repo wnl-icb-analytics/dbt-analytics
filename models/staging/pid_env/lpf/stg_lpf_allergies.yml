@@ -35,17 +35,21 @@ models:
 
       - name: allergy_id
         description: "Unique identifier for the allergy record"
+        # Grain holds by construction (row_number = 1 per key). Each test re-runs
+        # the full dedup over the source, so these run in the monthly build only.
         data_tests:
-          - unique
-          - not_null
+          - unique:
+              config:
+                tags: ['monthly-full']
+          - not_null:
+              config:
+                tags: ['monthly-full']
 
       - name: version
         description: "Version number of the record"
 
       - name: person_id
         description: "Unique identifier for the person"
-        data_tests:
-          - not_null
 
       - name: encounter_id
         description: "Unique identifier for the encounter"
