@@ -52,22 +52,74 @@ with reporting_date as (
         and tp.is_confirmed_transfer
 )
 
+-- Course dates across a confirmed transfer chain. The predecessor's contacts precede the successor's, so the
+-- chain's second treatment is the second earliest of its members' first and second treatment dates.
+, chain_treatment_dates as (
+    select original_referral_id, first_treatment_date as treatment_date
+    from referrals
+    where first_treatment_date is not null
+    union all
+    select original_referral_id, second_treatment_date
+    from referrals
+    where second_treatment_date is not null
+)
+
+, chain_second_treatment as (
+    select
+        original_referral_id
+        , (array_agg(treatment_date) within group (order by treatment_date))[1]::date
+            as pathway_second_treatment_date
+    from chain_treatment_dates
+    group by original_referral_id
+)
+
+, pathway as (
+    select
+        r.*
+        -- An inferred end closes the timeline only; it is never a discharge date.
+        , case r.as_of_referral_status
+            when 'discharged' then r.service_discharge_date
+            when 'no_longer_submitted' then r.last_reported_period_end_date
+            when 'transferred' then r.last_reported_period_end_date
+        end as referral_end_date
+        , case r.as_of_referral_status
+            when 'discharged' then 'discharged'
+            when 'open' then 'open'
+            else 'last_submission'
+        end as referral_end_date_source
+        -- NHS England derives course fields per provider-qualified referral, so a successor's cover only the
+        -- part after the transfer.
+        , r.is_transfer_successor as has_partial_nhse_course_fields
+        , min(r.first_assessment_date) over (partition by r.original_referral_id) as pathway_first_assessment_date
+        , min(r.first_treatment_date) over (partition by r.original_referral_id) as pathway_first_treatment_date
+        , c.pathway_second_treatment_date
+    from referrals as r
+    left join chain_second_treatment as c
+        on r.original_referral_id = c.original_referral_id
+)
+
 select
     *
-    -- An inferred end closes the timeline only; it is never a discharge date.
-    , case as_of_referral_status
-        when 'discharged' then service_discharge_date
-        when 'no_longer_submitted' then last_reported_period_end_date
-        when 'transferred' then last_reported_period_end_date
-    end as referral_end_date
-    , case as_of_referral_status
-        when 'discharged' then 'discharged'
-        when 'open' then 'open'
-        else 'last_submission'
-    end as referral_end_date_source
-    -- NHS England derives course fields per provider-qualified referral, so a successor's cover only the
-    -- part after the transfer.
-    , is_transfer_successor as has_partial_nhse_course_fields
-    , min(first_assessment_date) over (partition by original_referral_id) as pathway_first_assessment_date
-    , min(first_treatment_date) over (partition by original_referral_id) as pathway_first_treatment_date
-from referrals
+    -- NHS England ended referral measures M073 to M076, on this referral's own supplied counts and flag.
+    , case
+        when service_discharge_date is null then null
+        when is_completed_treatment then 'finished_course_treatment'
+        when nhse_treatment_contact_count = 1 then 'treated_once'
+        when nhse_treatment_contact_count = 0 and nhse_care_contact_count > 0 then 'seen_not_treated'
+        when nhse_care_contact_count = 0 then 'not_seen'
+    end as ended_referral_type
+    -- M193 numerator over the M195 denominator: finished a course of treatment, not recorded as below caseness
+    -- at the start. Null outside that denominator.
+    , case
+        when is_completed_treatment is distinct from true then null
+        when caseness_at_start_status = 'not_at_caseness' then null
+        else coalesce(is_recovered and reliable_change_status = 'reliable_improvement', false)
+    end as is_reliably_recovered
+    -- Waits as in M024 to M037 and M046: calendar days from referral receipt. Chain dates keep a transfer
+    -- successor's wait from the original receipt; members of a chain share the received date.
+    , datediff(day, referral_received_date, pathway_first_assessment_date) as days_referral_to_first_assessment
+    , datediff(day, referral_received_date, pathway_first_treatment_date) as days_referral_to_first_treatment
+    , days_referral_to_first_treatment <= 42 as is_first_treatment_within_6_weeks
+    , days_referral_to_first_treatment <= 126 as is_first_treatment_within_18_weeks
+    , datediff(day, pathway_first_treatment_date, pathway_second_treatment_date) as days_first_to_second_treatment
+from pathway

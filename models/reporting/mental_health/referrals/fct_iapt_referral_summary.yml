@@ -9,7 +9,9 @@ models:
     provider_months_behind_dataset shows where a provider's delay, not the referral, explains the status.
     A referral continued under another provider code (a confirmed transfer in int_iapt_referral_transfer) is
     transferred, and both copies are rows here; exclude is_transfer_successor to count each referral received once.
-    Unconfirmed transfer candidates are treated as separate referrals.
+    Unconfirmed transfer candidates are treated as separate referrals. The analyst entry point for referrals: it adds
+    NHS England ended-referral types, reliable recovery, waits to first assessment and treatment, and the referral
+    source and discharge reason groups.
   config:
     meta:
       owner:
@@ -365,3 +367,40 @@ models:
   - name: pathway_first_treatment_date
     description: Earliest first_treatment_date across the transfer chain; the referral's own when it never
       transferred. Use for waits from referral to first treatment.
+  - name: pathway_second_treatment_date
+    description: Second treatment date across the transfer chain, the second earliest of the members' first and
+      second treatment dates; the referral's own second_treatment_date when it never transferred.
+  - name: ended_referral_type
+    description: NHS England ended-referral group (M073 to M076) for a referral with a recorded discharge date, from
+      its own supplied counts. finished_course_treatment when is_completed_treatment is TRUE (M076); treated_once
+      with one treatment contact (M075); seen_not_treated with contacts but no treatment contact (M074); not_seen
+      with no attended or unplanned contact (M073). Null while undischarged, or when the counts are missing or
+      the completed-treatment flag is absent despite two or more treatment contacts. A transfer successor's type
+      covers only care after the transfer (has_partial_nhse_course_fields). not_seen and seen_not_treated together
+      approximate M153, ended before treatment.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [finished_course_treatment, treated_once, seen_not_treated, not_seen]
+  - name: is_reliably_recovered
+    description: NHS England reliable recovery (M193 over the M195 denominator). TRUE when the referral finished a
+      course of treatment, is_recovered and showed reliable improvement. FALSE when it finished a course of
+      treatment, was not recorded as below caseness at the start and did not reliably recover. Null otherwise,
+      including referrals not discharged, not finishing a course or starting below caseness. The share of TRUE
+      among non-null rows is the reliable recovery rate.
+  - name: days_referral_to_first_assessment
+    description: Calendar days from referral_received_date to pathway_first_assessment_date, as in NHS England
+      measures M024 to M027. Null without a first assessment.
+  - name: days_referral_to_first_treatment
+    description: Calendar days from referral_received_date to pathway_first_treatment_date, as in M032 to M037 and
+      M049. A transfer successor counts from the original receipt to the chain's first treatment. Null without a
+      first treatment.
+  - name: is_first_treatment_within_6_weeks
+    description: TRUE when days_referral_to_first_treatment is 42 or fewer (M036); FALSE when longer; null without a
+      first treatment.
+  - name: is_first_treatment_within_18_weeks
+    description: TRUE when days_referral_to_first_treatment is 126 or fewer (M037); FALSE when longer; null without a
+      first treatment.
+  - name: days_first_to_second_treatment
+    description: Calendar days from pathway_first_treatment_date to pathway_second_treatment_date, as in M046 (over 28
+      days) and M047 (over 90 days). Null without a second treatment.
