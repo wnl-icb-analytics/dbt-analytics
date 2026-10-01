@@ -8,7 +8,8 @@
     ('referring_care_professional_staff_group', 'raw_ukhfd_data_dictionary_mhsds_referring_care_professional_staff_group_legacy'),
     ('rejection_reason', 'raw_ukhfd_data_dictionary_mhsds_referral_rejection_reason'),
     ('closure_reason', 'raw_ukhfd_data_dictionary_mhsds_referral_closure_reason'),
-    ('out_of_area_referral_reason', 'raw_ukhfd_data_dictionary_mhsds_out_of_area_referral_reason')
+    ('out_of_area_referral_reason', 'raw_ukhfd_data_dictionary_mhsds_out_of_area_referral_reason'),
+    ('onward_referral_reason', 'raw_ukhfd_data_dictionary_onward_referral_reason')
 ] %}
 
 {% for code_set_name, raw_model_name in code_sets %}
