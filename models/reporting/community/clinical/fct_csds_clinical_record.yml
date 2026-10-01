@@ -38,8 +38,9 @@ models:
       Unmatched codes remain present.
   - name: clinical_description
     description: Submitted-code label from shared SNOMED CT, ICD-10 or scheme-qualified Read dictionaries in clinical_code_system, including explicit dictionary alternatives,
-      or the latest UKHFD NHS Data Dictionary label for code-list values. It is not replaced by the mapped SNOMED
-      label. Infant physical examination results have no maintained label list.
+      or the latest UKHFD NHS Data Dictionary label for code-list values. Infant physical examination results,
+      absent from UKHFD, use the permitted values published in CSDS ETOS v1.6.10. It is not replaced by the
+      mapped SNOMED label.
   - name: clinical_code_system
     description: Coding system the clinical code is resolved in. SNOMED CT, Read v2, CTV3 or ICD-10 for the
       supported resolvers; other recognised schemes retain their authoritative UKHFD name. Code-list values name
@@ -230,7 +231,8 @@ models:
     description: Reference supplying the submitted-code label. Read matches require exact case
       and the Read v2 or CTV3 system in clinical_code_system. UKHFD supplies historical seven-character
       Read v2 code-and-term labels and exact CTV3 term identifiers after existing Dictionary matches. These term labels do not imply a SNOMED mapping.
-      Read labels come from clinical_code_system, which may be the corrected Read scheme.
+      Read labels come from clinical_code_system, which may be the corrected Read scheme. Code-list values name
+      UKHFD NHS Data Dictionary or, for infant physical examination results, the CSDS ETOS version.
   - name: dictionary_snomed_code
     description: SNOMED mapping supplied by Dictionary.dbo.ReadCodes for the matched Read code or explicit dictionary alternative,
       in the Read scheme named by clinical_code_system. This is reference enrichment, not a mapping submitted in CSDS.

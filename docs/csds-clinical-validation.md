@@ -463,8 +463,12 @@ Code-list labels come from the UKHFD NHS Data Dictionary dimensions for
 childhood immunisation type, breastfeeding status, newborn hearing screening
 and audiology outcome, and newborn blood spot outcome status, added to
 `csds_activity_code_lookup`. UKHFD has no infant physical examination result
-list, so those codes keep null labels. ETOS publishes the permitted values, but
-they are not maintained in the warehouse. Diagnosis schemes use the shared
+list. The CYP605IPE worksheet of CSDS ETOS v1.6.10 publishes one list for the
+hips, heart, eyes and testes results: 01 Satisfactory, 02 Problem Identified,
+03 Problem Suspected and NN Not examined. The `csds_infant_physical_examination_result`
+seed holds those values and the lookup adds them with `definition_source`
+`CSDS ETOS v1.6.10`; a UKHFD definition would take precedence. All submitted
+examination results now have a label. Diagnosis schemes use the shared
 `diagnosis_scheme` reference: 02 is ICD-10, 04 Read v2, 05 CTV3 and 06 SNOMED
 CT, resolved through the existing ICD-10, Read and SNOMED references.
 

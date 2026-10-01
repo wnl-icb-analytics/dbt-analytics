@@ -1,0 +1,33 @@
+version: 2
+seeds:
+  - name: csds_infant_physical_examination_result
+    description: >-
+      Permitted national codes for the CSDS CYP605 infant physical examination
+      results (hips, heart, eyes and testes), as published in the CYP605IPE
+      worksheet of CSDS ETOS v1.6.10. The four result fields share one list.
+      UKHFD has no NHS Data Dictionary dimension for these values. One row per
+      code. These are labels, not a rule about which values a historical CSDS
+      version accepted.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+      column_types:
+        code: varchar(2)
+        description: varchar(100)
+        specification_version: varchar(20)
+        source_worksheet: varchar(50)
+        source_url: varchar(500)
+    columns:
+      - name: code
+        description: National code as submitted, retaining leading zeros. NN means not examined.
+        data_tests: [not_null, unique]
+      - name: description
+        description: National code definition published in ETOS.
+        data_tests: [not_null]
+      - name: specification_version
+        description: CSDS ETOS version the definition was taken from.
+      - name: source_worksheet
+        description: ETOS worksheet holding the permitted values.
+      - name: source_url
+        description: Public NHS England Digital location of the ETOS workbook.

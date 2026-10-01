@@ -54,8 +54,9 @@ models:
 - name: csds_activity_code_lookup
   description: One latest UKHFD definition per CSDS activity, clinical code-list, coding-scheme or referral-outcome category
     and code. Current activity and closure dictionaries take precedence over their predecessors; historical-only
-    codes remain available. Scheme labels describe the national dictionary and do not establish that every
-    scheme is permitted by every CSDS version.
+    codes remain available. Infant physical examination results, which UKHFD lacks, come from the CSDS ETOS
+    seed csds_infant_physical_examination_result; a UKHFD definition would take precedence. Scheme labels
+    describe the national dictionary and do not establish that every scheme is permitted by every CSDS version.
   config:
     meta:
       owner:
@@ -74,7 +75,7 @@ models:
   - name: code
     description: National code as text, retaining leading zeros.
   - name: description
-    description: UKHFD description for this definition.
+    description: UKHFD or ETOS description for this definition.
   - name: short_description
     description: Short UKHFD description, where supplied.
   - name: category
@@ -92,4 +93,7 @@ models:
   - name: source_imported_at
     description: Timestamp UKHFD imported this definition.
   - name: definition_updated_at
-    description: Start timestamp of this UKHFD definition revision.
+    description: Start timestamp of this UKHFD definition revision. Null for ETOS definitions.
+  - name: definition_source
+    description: UKHFD NHS Data Dictionary, or the CSDS ETOS version for infant physical examination results.
+      UKHFD-only fields such as validity dates are null for ETOS definitions.

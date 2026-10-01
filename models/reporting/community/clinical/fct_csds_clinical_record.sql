@@ -70,7 +70,7 @@ with submitted as (
         , case when snomed.snomed_code is not null then snomed.definition_source
             when icd.code is not null then icd.definition_source
             when read_code.code is not null then read_code.definition_source
-            when code_list.code is not null then 'UKHFD NHS Data Dictionary' end as clinical_label_source
+            when code_list.code is not null then code_list.definition_source end as clinical_label_source
         , read_code.match_type as read_code_match_type
         , read_code.snomed_ct_code::varchar as dictionary_snomed_code
         , mapped_snomed.preferred_term as dictionary_snomed_description
