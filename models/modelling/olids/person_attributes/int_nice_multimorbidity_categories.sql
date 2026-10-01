@@ -53,11 +53,12 @@ other_conditions AS (
     GROUP BY person_id, category_code
 ),
 
-recent_epilepsy AS (
+-- Any diagnosis known by today excludes the antiepileptic pain route, including resolved epilepsy.
+epilepsy_diagnoses AS (
     SELECT person_id
     FROM {{ ref('int_epilepsy_diagnoses_all') }}
     WHERE is_diagnosis_code
-        AND clinical_effective_date::DATE BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+        AND clinical_effective_date::DATE <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -85,7 +86,7 @@ additional_categories AS (
     UNION ALL
     SELECT prescribing.person_id, 'CHRONIC_PAIN'
     FROM prescription_counts AS prescribing
-    LEFT JOIN recent_epilepsy AS epilepsy ON prescribing.person_id = epilepsy.person_id
+    LEFT JOIN epilepsy_diagnoses AS epilepsy ON prescribing.person_id = epilepsy.person_id
     WHERE prescribing.analgesic_issues >= 4
         OR (prescribing.antiepileptic_issues >= 4 AND epilepsy.person_id IS NULL)
     UNION ALL

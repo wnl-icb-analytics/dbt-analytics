@@ -1,15 +1,15 @@
 models:
   - name: int_smoking_status_latest
     description: >-
-      Latest recorded smoking habit for each person with qualifying evidence.
-      One row per person from int_smoking_status_all, including SMOK_COD-only
-      non-smokers with unknown past history and other Unknown habit evidence.
-      Includes inactive and deceased people; observations must be dated no later
-      than today and recorded at age 11 or older. A later broad-cluster record
-      replaces an older specific status. On the same clinical effective date,
-      current smoker, ex-smoker and never-smoked evidence take precedence in that
-      order over broad-cluster evidence, consistent with the classification in
-      int_smoking_status_all. The greatest observation ID breaks remaining ties.
+      Latest recorded smoking status for each person with qualifying evidence.
+      One row per person from int_smoking_status_all, including inactive and
+      deceased people. Observations must be dated no later than today and recorded
+      at age 11 or older. Includes SMOK_COD concept 405746006 for non-smokers with
+      unknown past history; excludes status-free pack-years and unknown-consumption
+      records. A later unknown-history non-smoker status replaces an older specific
+      status. On the same calendar date, current smoker, ex-smoker and never-smoked
+      evidence take precedence in that order over unknown-history non-smoker
+      evidence. The greatest observation ID breaks remaining ties.
     config:
       meta:
         owner:
@@ -23,5 +23,4 @@ models:
       - name: smoking_status
         description: >-
           Latest recorded status, including Non-Smoker (History Unknown), which
-          cannot establish never-smoking history, and Unknown for habit evidence
-          without a specific status.
+          cannot establish never-smoking history.

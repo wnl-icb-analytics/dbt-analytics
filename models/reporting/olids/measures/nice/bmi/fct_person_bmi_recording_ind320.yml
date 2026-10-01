@@ -8,10 +8,11 @@ models:
       obstructive sleep apnoea or severe mental illness, assessed on the build
       date.
 
-      Achievement requires the latest recorded or calculated BMI in the preceding
-      12 months to be valid (10 to 150 kg/m2 inclusive). An invalid latest result
-      is NOT_ASSESSABLE, with no fallback to an older value. Adult calculated BMI
-      uses the weight date and the latest preceding adult height.
+      Achievement requires any valid recorded or calculated BMI in the preceding
+      12 months (10 to 150 kg/m2 inclusive), even if a later or same-day BMI is
+      invalid. A window containing only invalid BMIs is NOT_ASSESSABLE; no BMI
+      in the window is NOT_RECORDED_IN_PERIOD. Adult calculated BMI uses the
+      weight date and the latest preceding adult height.
 
       Dyslipidaemia follows QOF v51.3: lipid-lowering treatment in six months, or
       the latest result in 12 months with LDL at least 4.1 mmol/L, triglycerides
@@ -40,10 +41,11 @@ models:
             hypertension, PAD, heart failure, COPD, dyslipidaemia, learning disability,
             obstructive sleep apnoea or severe mental illness, assessed on the build date.
 
-            Achievement requires the latest recorded or calculated BMI in the preceding
-            12 months to be valid (10 to 150 kg/m2 inclusive). An invalid latest result
-            is NOT_ASSESSABLE, with no fallback to an older value. Adult calculated BMI
-            uses the weight date and the latest preceding adult height.
+            Achievement requires any valid recorded or calculated BMI in the preceding
+            12 months (10 to 150 kg/m2 inclusive), even if a later or same-day BMI is
+            invalid. A window containing only invalid BMIs is NOT_ASSESSABLE; no BMI
+            in the window is NOT_RECORDED_IN_PERIOD. Adult calculated BMI uses the
+            weight date and the latest preceding adult height.
 
             Dyslipidaemia follows QOF v51.3: lipid-lowering treatment in six months, or
             the latest result in 12 months with LDL at least 4.1 mmol/L, triglycerides at
@@ -82,15 +84,15 @@ models:
       - name: current_practice_name
         description: Name of the current registration practice
       - name: latest_bmi_date
-        description: Date of the latest BMI value, regardless of period; null if none
+        description: Date of the latest valid recorded or calculated BMI, regardless of period; null if none is valid
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: Date of the latest valid BMI in the period; null when none is valid
       - name: is_in_denominator
         description: Always true; every row is an eligible person before personalised care adjustments
       - name: is_in_numerator
         description: Whether the person meets the indicator on the reporting date
       - name: indicator_status
-        description: ACHIEVED, NOT_ASSESSABLE for an invalid latest BMI, or NOT_RECORDED_IN_PERIOD
+        description: ACHIEVED for any valid BMI in the period, NOT_ASSESSABLE for invalid-only evidence, or NOT_RECORDED_IN_PERIOD for no BMI evidence
         data_tests:
           - accepted_values:
               arguments:

@@ -15,14 +15,26 @@ WITH reading_rows AS (
     WHERE effective_date::DATE <= CURRENT_DATE()
 ),
 
--- Preserve the existing date-level MAX/MAX fallback for unparented components.
+-- Unparented components use plausible maxima, retaining invalid-only evidence.
 complete_readings AS (
     SELECT
         person_id,
         reading_date,
         reading_id,
-        MAX(CASE WHEN is_systolic_row THEN result_value END) AS systolic_value,
-        MAX(CASE WHEN is_diastolic_row THEN result_value END) AS diastolic_value,
+        CASE WHEN reading_id = 'NOPARENT' THEN
+            COALESCE(
+                MAX(CASE WHEN is_systolic_row AND result_value BETWEEN 40 AND 350 THEN result_value END),
+                MAX(CASE WHEN is_systolic_row THEN result_value END)
+            )
+        ELSE MAX(CASE WHEN is_systolic_row THEN result_value END)
+        END AS systolic_value,
+        CASE WHEN reading_id = 'NOPARENT' THEN
+            COALESCE(
+                MAX(CASE WHEN is_diastolic_row AND result_value BETWEEN 20 AND 200 THEN result_value END),
+                MAX(CASE WHEN is_diastolic_row THEN result_value END)
+            )
+        ELSE MAX(CASE WHEN is_diastolic_row THEN result_value END)
+        END AS diastolic_value,
         BOOLOR_AGG(is_home_bp_row) AS is_home_bp_event,
         BOOLOR_AGG(is_abpm_bp_row) AS is_abpm_bp_event
     FROM reading_rows

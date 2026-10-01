@@ -5,8 +5,8 @@
 }}
 
 /*
-Latest smoking habit observation per person, including SMOK_COD-only evidence.
-QOF v51 checks specific status codes on the latest smoking habit date.
+Latest recorded smoking status per person. Specific status takes priority
+on the same calendar date over a non-smoker record with unknown past history.
 */
 
 SELECT

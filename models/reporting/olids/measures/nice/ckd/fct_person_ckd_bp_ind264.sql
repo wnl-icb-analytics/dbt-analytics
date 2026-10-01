@@ -40,7 +40,7 @@ assessed AS (
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
-    LEFT JOIN {{ ref('int_blood_pressure_nice_latest') }} AS bp
+    LEFT JOIN {{ ref('int_nice_blood_pressure_latest') }} AS bp
         ON population.person_id = bp.person_id
 ),
 

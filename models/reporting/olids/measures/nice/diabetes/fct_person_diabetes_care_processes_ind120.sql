@@ -2,9 +2,18 @@
 
 -- NICE IND120: https://www.nice.org.uk/indicators/ind120
 -- NICE corrected the renal process to eGFR creatinine measurement in February 2026.
--- Count performed foot and ACR tests anywhere in the period, even if a later
--- foot record is declined or the ACR test has no numeric result.
-WITH egfr AS (
+-- Count HbA1c tests with or without a value, and performed foot and ACR tests
+-- anywhere in the period, even if a later foot record is declined or the ACR
+-- test has no numeric result.
+WITH hba1c AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_hba1c_date
+    FROM {{ ref('int_hba1c_all') }}
+    WHERE clinical_effective_date::DATE
+        BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+    GROUP BY person_id
+),
+
+egfr AS (
     SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_egfr_date
     FROM {{ ref('int_egfr_test_all') }}
     WHERE clinical_effective_date::DATE
@@ -39,19 +48,21 @@ assessed AS (
         active.current_practice_code,
         active.current_practice_name,
         processes.care_processes_completed
+            - IFF(COALESCE(processes.hba1c_completed_in_last_12m, FALSE), 1, 0)
             - IFF(COALESCE(processes.creatinine_completed_in_last_12m, FALSE), 1, 0)
             - IFF(COALESCE(processes.foot_check_completed_in_last_12m, FALSE), 1, 0)
             - IFF(COALESCE(processes.acr_completed_in_last_12m, FALSE), 1, 0)
             + IFF(age.age < 18 AND profile.latest_bmi_date
                 BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
                 AND NOT COALESCE(processes.bmi_completed_in_last_12m, FALSE), 1, 0)
+            + IFF(hba1c.latest_hba1c_date IS NOT NULL, 1, 0)
             + IFF(foot.latest_foot_date IS NOT NULL, 1, 0)
             + IFF(acr.latest_acr_date IS NOT NULL, 1, 0)
             + IFF(egfr.latest_egfr_date IS NOT NULL, 1, 0) AS care_processes_completed_count,
         GREATEST_IGNORE_NULLS(
             GREATEST_IGNORE_NULLS(processes.latest_bmi_date,
                 CASE WHEN age.age < 18 THEN profile.latest_bmi_date END),
-            processes.latest_bp_date, processes.latest_hba1c_date, processes.latest_cholesterol_date,
+            processes.latest_bp_date, hba1c.latest_hba1c_date, processes.latest_cholesterol_date,
             processes.latest_smoking_date, foot.latest_foot_date, acr.latest_acr_date,
             egfr.latest_egfr_date
         )::DATE AS latest_process_date
@@ -62,6 +73,8 @@ assessed AS (
         ON processes.person_id = age.person_id
     LEFT JOIN {{ ref('int_ltc_review_profile') }} AS profile
         ON processes.person_id = profile.person_id
+    LEFT JOIN hba1c
+        ON processes.person_id = hba1c.person_id
     LEFT JOIN egfr
         ON processes.person_id = egfr.person_id
     LEFT JOIN foot

@@ -29,8 +29,8 @@ RELATIONSHIPS(
 )
 
 FACTS(
-    indicators.latest_systolic_bp AS latest_systolic_value COMMENT = 'Latest systolic BP in mmHg',
-    indicators.latest_diastolic_bp AS latest_diastolic_value COMMENT = 'Latest diastolic BP in mmHg',
+    indicators.latest_systolic_bp AS CASE WHEN is_valid_bp THEN latest_systolic_value END COMMENT = 'Latest plausible systolic BP in mmHg; null when the complete pair is invalid or absent',
+    indicators.latest_diastolic_bp AS CASE WHEN is_valid_bp THEN latest_diastolic_value END COMMENT = 'Latest plausible diastolic BP in mmHg; null when the complete pair is invalid or absent',
     indicators.indicator_systolic_threshold AS indicator_systolic_threshold COMMENT = 'Exclusive systolic threshold in mmHg specified by the indicator',
     indicators.indicator_diastolic_threshold AS indicator_diastolic_threshold COMMENT = 'Exclusive diastolic threshold in mmHg specified by the indicator',
     demographics.esp_weight AS esp_weight COMMENT = 'ESP 2013 weight for the persons age band out of 100,000',
@@ -48,7 +48,7 @@ DIMENSIONS(
     indicators.age AS age COMMENT = 'Age in years on the reporting date',
 
     -- Indicator evidence and status
-    indicators.latest_bp_date AS latest_bp_date COMMENT = 'Date of latest valid paired BP; null when none is recorded',
+    indicators.latest_bp_date AS latest_bp_date COMMENT = 'Date of latest complete BP pair, including an implausible pair; null when none is recorded',
     indicators.applied_measurement_context AS applied_measurement_context WITH SYNONYMS = ('BP setting', 'clinic or home') COMMENT = 'CLINIC or HBPM_ABPM context used for the indicator threshold',
     indicators.is_home_bp_event AS is_home_bp_event COMMENT = 'Latest BP was recorded using home monitoring',
     indicators.is_abpm_bp_event AS is_abpm_bp_event COMMENT = 'Latest BP was recorded using ambulatory monitoring',
@@ -94,6 +94,7 @@ METRICS(
     indicators.care_gap_count AS COUNT(DISTINCT CASE WHEN indicators.is_in_denominator AND NOT indicators.is_in_numerator THEN indicators.person_id END) COMMENT = 'People not achieving the selected indicator before personalised care adjustments',
     indicators.bp_not_recorded_count AS COUNT(DISTINCT CASE WHEN indicators.indicator_status = 'NOT_RECORDED_IN_PERIOD' THEN indicators.person_id END) COMMENT = 'People without a BP in the preceding 12 months',
     indicators.bp_above_target_count AS COUNT(DISTINCT CASE WHEN indicators.indicator_status = 'ABOVE_TARGET' THEN indicators.person_id END) COMMENT = 'People with a recent BP above the indicator target',
+    indicators.bp_not_assessable_count AS COUNT(DISTINCT CASE WHEN indicators.indicator_status = 'NOT_ASSESSABLE' THEN indicators.person_id END) COMMENT = 'People whose latest complete BP pair in the preceding 12 months is implausible',
     indicators.achievement_rate AS COUNT(DISTINCT CASE WHEN indicators.is_in_numerator THEN indicators.person_id END) / NULLIF(COUNT(DISTINCT CASE WHEN indicators.is_in_denominator THEN indicators.person_id END), 0) COMMENT = 'Unadjusted indicator achievement rate from 0 to 1'
 )
 

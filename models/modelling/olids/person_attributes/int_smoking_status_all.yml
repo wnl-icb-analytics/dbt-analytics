@@ -1,15 +1,16 @@
 models:
   - name: int_smoking_status_all
     description: >-
-      Smoking habit evidence for all people, including inactive and deceased people.
-      One row per observation from SMOK_COD, LSMOK_COD, EXSMOK_COD or NSMOK_COD,
-      with overlapping cluster membership resolved in favour of a specific status.
+      Recorded smoking status for all people, including inactive and deceased people.
+      One row per observation from LSMOK_COD, EXSMOK_COD or NSMOK_COD, plus
+      SMOK_COD concept 405746006. Overlapping cluster membership is resolved in
+      favour of a specific status before observations are selected.
       Includes observations dated no later than today with age at event at least 11, to exclude
       parent smoking records on children's records. Specific clusters identify
       current smokers, ex-smokers and people who have never smoked. SNOMED CT
       405746006 identifies a current non-smoker with unknown past history, not a
-      never-smoker. Other broad-cluster evidence, including pack-years and unknown
-      consumption, has Unknown status and does not prove never-smoking history.
+      never-smoker. Pack-years and unknown-consumption codes that do not state a
+      smoking status are excluded.
     config:
       meta:
         owner:
@@ -25,16 +26,15 @@ models:
           - not_null
           - unique
       - name: source_cluster_id
-        description: Specific status cluster where available, otherwise SMOK_COD.
+        description: Specific status cluster where available, otherwise SMOK_COD for 405746006.
       - name: smoking_status
         description: >-
           Recorded status. Non-Smoker (History Unknown) means currently not smoking
-          without evidence of whether the person smoked previously. Unknown means
-          the smoking habit code does not establish a specific status.
+          without evidence of whether the person smoked previously.
         data_tests:
           - accepted_values:
               arguments:
-                values: ['Current Smoker', 'Ex-Smoker', 'Never Smoked', 'Non-Smoker (History Unknown)', 'Unknown']
+                values: ['Current Smoker', 'Ex-Smoker', 'Never Smoked', 'Non-Smoker (History Unknown)']
       - name: is_never_smoked_code
         description: True only for NSMOK_COD; unknown past history is false.
       - name: has_smoking_history

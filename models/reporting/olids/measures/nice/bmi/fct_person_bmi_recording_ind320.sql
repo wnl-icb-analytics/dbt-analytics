@@ -40,15 +40,15 @@ WITH dyslipidaemia AS (
             OR (gender.gender = 'Female' AND hdl.cholesterol_value < 1.3))
 ),
 
-latest_bmi AS (
-    SELECT person_id, clinical_effective_date::DATE AS bmi_date, is_valid_bmi
+bmi_in_period AS (
+    SELECT
+        person_id,
+        MAX(clinical_effective_date::DATE) AS latest_bmi_in_period_date,
+        MAX(CASE WHEN is_valid_bmi THEN clinical_effective_date::DATE END) AS latest_valid_bmi_date
     FROM {{ ref('int_bmi_all') }}
     WHERE clinical_effective_date::DATE
         BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
-    QUALIFY ROW_NUMBER() OVER (
-        PARTITION BY person_id
-        ORDER BY clinical_effective_date DESC, date_recorded DESC NULLS LAST, bmi_value DESC, id DESC
-    ) = 1
+    GROUP BY person_id
 ),
 
 indicator_population AS (
@@ -77,13 +77,13 @@ assessed AS (
         active.current_practice_code,
         active.current_practice_name,
         population.latest_bmi_date,
-        bmi.bmi_date,
-        CASE WHEN bmi.is_valid_bmi THEN bmi.bmi_date END AS latest_record_date,
-        COALESCE(bmi.is_valid_bmi, FALSE) AS is_in_numerator
+        bmi.latest_bmi_in_period_date,
+        bmi.latest_valid_bmi_date AS latest_record_date,
+        bmi.latest_valid_bmi_date IS NOT NULL AS is_in_numerator
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
-    LEFT JOIN latest_bmi AS bmi ON population.person_id = bmi.person_id
+    LEFT JOIN bmi_in_period AS bmi ON population.person_id = bmi.person_id
 )
 
 SELECT
@@ -102,7 +102,7 @@ SELECT
     is_in_numerator,
     CASE
         WHEN is_in_numerator THEN 'ACHIEVED'
-        WHEN bmi_date IS NOT NULL THEN 'NOT_ASSESSABLE'
+        WHEN latest_bmi_in_period_date IS NOT NULL THEN 'NOT_ASSESSABLE'
         ELSE 'NOT_RECORDED_IN_PERIOD'
     END AS indicator_status
 FROM assessed

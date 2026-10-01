@@ -212,7 +212,7 @@ DIMENSIONS(
     status.has_vulnerability_flag AS has_vulnerability_flag COMMENT = 'Has any vulnerability indicator (care home, homeless, housebound, or LAC)',
 
     -- Smoking & Alcohol
-    status.smoking_status AS smoking_status COMMENT = 'Smoking status (Never Smoked, Ex-Smoker, Current Smoker, Unknown)',
+    status.smoking_status AS smoking_status COMMENT = 'Smoking status (Never Smoked, Ex-Smoker, Current Smoker, Non-Smoker (History Unknown), Unknown); Unknown means no qualifying recorded status',
     status.alcohol_status AS alcohol_status COMMENT = 'Alcohol status (Non-Drinker, Lower Risk, Increasing Risk, Higher Risk, Dependent, Unknown)',
     status.alcohol_requires_intervention AS alcohol_requires_intervention COMMENT = 'Requires alcohol intervention (AUDIT score >=5)',
 

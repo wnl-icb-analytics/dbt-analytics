@@ -10,8 +10,10 @@ models:
       status. Alcohol units, usage status or a screening tool qualify. Lipid evidence is
       total cholesterol, HDL, LDL, non-HDL, cholesterol to HDL ratio or triglyceride
       results, or a PCD NONVALCHOL_COD completed lipid test without a value. Glucose
-      and HbA1c tests count with or without a value. BMI includes numeric recording at any age
-      and adult calculations from height and weight on the weight date.
+      and HbA1c tests count with or without a value. BMI counts any valid recording
+      at any age or adult calculation from height and weight on the weight date
+      (10 to 150 kg/m2 inclusive at all ages). Later or same-day invalid BMIs do
+      not erase valid evidence. Invalid-only BMI evidence does not count.
       checks_met_count ranges from 0 to 6.
 
       Lithium therapy without an SMI diagnosis does not qualify. People in remission
@@ -39,9 +41,11 @@ models:
             and smoking status. Alcohol units, usage status or a screening tool qualify.
             Lipid evidence includes total cholesterol, HDL, LDL, non-HDL, cholesterol to
             HDL ratio and triglyceride results, or PCD NONVALCHOL_COD completed tests
-            without a value. Glucose and HbA1c tests count with or without a value. BMI includes
-            numeric recording at any age and adult calculations from height and weight
-            on the weight date. checks_met_count ranges from 0 to 6.
+            without a value. Glucose and HbA1c tests count with or without a value. BMI counts
+            any valid recording at any age or adult calculation from height and weight
+            on the weight date (10 to 150 kg/m2 inclusive at all ages). Later or same-day
+            invalid BMIs do not erase valid evidence. Invalid-only BMI evidence does not
+            count. checks_met_count ranges from 0 to 6.
 
             Lithium therapy without an SMI diagnosis does not qualify. People in remission
             are excluded under the agreed active-diagnosis population for SMI measures.
@@ -77,7 +81,7 @@ models:
       - name: latest_blood_pressure_date
         description: Date of the latest blood pressure reading; null when none
       - name: latest_bmi_date
-        description: Date of the latest numeric recorded BMI at any age or adult calculated BMI; null when none
+        description: Date of the latest valid recorded BMI at any age or adult calculated BMI; null when none is valid
       - name: latest_alcohol_record_date
         description: Date of the latest alcohol consumption record (units, usage status or screening tool); null when none
       - name: latest_lipid_date
@@ -186,8 +190,10 @@ models:
       SMI register, excluding remission and lithium therapy without an SMI diagnosis,
       assessed on the build date.
 
-      Achievement requires numeric recorded BMI at any age or adult calculated BMI
-      in the preceding 15 months. Calculated BMI uses the weight date.
+      Achievement requires any valid recorded BMI at any age or adult calculated BMI
+      in the preceding 15 months (10 to 150 kg/m2 inclusive at all ages). Later or
+      same-day invalid BMIs do not erase valid evidence. Calculated BMI uses the
+      weight date. Invalid-only evidence does not count.
 
       Personalised care adjustments are not applied.
     config:
@@ -207,8 +213,10 @@ models:
             affective disorder or another psychosis on the SMI register, excluding
             remission and lithium therapy without an SMI diagnosis.
 
-            Achievement requires numeric recorded BMI at any age or adult calculated BMI
-            in the preceding 15 months. Calculated BMI uses the weight date.
+            Achievement requires any valid recorded BMI at any age or adult calculated BMI
+            in the preceding 15 months (10 to 150 kg/m2 inclusive at all ages). Later or
+            same-day invalid BMIs do not erase valid evidence. Calculated BMI uses the
+            weight date. Invalid-only evidence does not count.
 
             Assessed on the reporting date before personalised care adjustments.
           is_qof: false
@@ -239,7 +247,7 @@ models:
       - name: current_practice_name
         description: Name of the current registration practice
       - name: latest_bmi_date
-        description: Date of the latest numeric recorded BMI at any age or adult calculated BMI; null when none
+        description: Date of the latest valid recorded BMI at any age or adult calculated BMI; null when none is valid
       - name: latest_record_date
         description: Date of the latest qualifying record in the period; null when none
       - name: is_in_denominator

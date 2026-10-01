@@ -1,11 +1,12 @@
 models:
-  - name: int_blood_pressure_nice_latest
+  - name: int_nice_blood_pressure_latest
     description: |
       Latest complete blood pressure pair for NICE control indicators. One row per
       person with numeric systolic and diastolic components on or before the build date.
       Components share a parent observation and date. Components without a parent
-      use the existing date-level maximum systolic and maximum diastolic fallback,
-      which may combine different readings.
+      use the date-level maximum plausible systolic and maximum plausible diastolic,
+      which may combine different readings. Each component uses its unfiltered maximum
+      only when no value is plausible for that component on that date.
 
       Incomplete single components are ignored. The latest complete-pair date is
       selected before plausibility checks can exclude evidence. On that date, valid

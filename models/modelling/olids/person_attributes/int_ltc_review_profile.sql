@@ -13,10 +13,11 @@ plan, health check, MRC, NYHA and thyroid function test records, the latest new
 depression diagnosis with its 10-to-35-day review, the first cancer care review
 after the latest new cancer diagnosis, whether ethnicity is recorded, the
 latest blood pressure, lipid, glucose or HbA1c and alcohol consumption
-records, the SMI register detail (active diagnosis, lithium therapy, care
-plan, lithium levels) and the earliest cardiovascular disease and diabetes
-diagnoses, so each measure applies only its own population and window. No registration, living or test-patient filter; consumers join
-dim_person_active_patients.
+records, the SMI register detail (active diagnosis, care plan, lithium levels),
+current lithium therapy from medication orders and stop records independently
+of SMI diagnosis, and the earliest cardiovascular disease and diabetes
+diagnoses, so each measure applies only its own population and window. No
+registration, living or test-patient filter; consumers join dim_person_active_patients.
 
 The smoking-status LTC list (IND156, IND157) is CHD, PAD, stroke/TIA,
 hypertension, diabetes, COPD, CKD and asthma; IND97 adds severe mental illness. Multimorbidity follows NICE IND205: four or
@@ -163,15 +164,16 @@ smoking_intervention AS (
 bmi_evidence AS (
     SELECT person_id, clinical_effective_date::DATE AS bmi_date
     FROM {{ ref('int_bmi_all') }}
-    WHERE bmi_value IS NOT NULL AND clinical_effective_date::DATE <= CURRENT_DATE()
+    WHERE is_valid_bmi AND clinical_effective_date::DATE <= CURRENT_DATE()
 
     UNION ALL
 
-    -- Numeric recording has no age floor; BMI30_COD alone is not a measurement.
+    -- Valid recording has no age floor; BMI30_COD alone is not a measurement.
     SELECT person_id, clinical_effective_date::DATE AS bmi_date
     FROM {{ ref('int_bmi_qof_all') }}
     WHERE source_cluster_id = 'BMIVAL_COD'
-        AND bmi_value IS NOT NULL AND clinical_effective_date::DATE <= CURRENT_DATE()
+        AND bmi_value BETWEEN 10 AND 150
+        AND clinical_effective_date::DATE <= CURRENT_DATE()
 ),
 
 bmi AS (
