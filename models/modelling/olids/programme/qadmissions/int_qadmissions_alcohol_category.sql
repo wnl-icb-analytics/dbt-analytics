@@ -38,7 +38,8 @@ Per-person aggregation
   for stability when multiple observations share the same cat6.
 
 Persons with no Full AUDIT record do not appear here; the consuming
-int_qadmissions_features model sets their alcohol_cat6 to 0 (NonDrinker).
+int_qadmissions_features model passes NULL through for them, to be handled
+at scoring, rather than substituting 0 (NonDrinker).
 
 Grain: one row per person who has at least one valid Full AUDIT score.
 */
