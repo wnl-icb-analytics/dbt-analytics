@@ -1,46 +1,48 @@
+{% set age_built_on = ltc_relation_built_on(ref('dim_person_age')) %}
+{% set as_of_cache = {} %}
 {% set register_pairs = [
-    ('asthma', ref('fct_person_asthma_register'), calculate_asthma_register('CURRENT_DATE()')),
-    ('atrial_fibrillation', ref('fct_person_atrial_fibrillation_register'), calculate_atrial_fibrillation_register('CURRENT_DATE()')),
-    ('cancer', ref('fct_person_cancer_register'), calculate_cancer_register('CURRENT_DATE()')),
-    ('chd', ref('fct_person_chd_register'), calculate_chd_register('CURRENT_DATE()')),
-    ('ckd', ref('fct_person_ckd_register'), calculate_ckd_register('CURRENT_DATE()')),
-    ('copd', ref('fct_person_copd_register'), calculate_copd_register('CURRENT_DATE()')),
-    ('cvd', ref('fct_person_cvd_register'), calculate_cvd_register('CURRENT_DATE()')),
-    ('dementia', ref('fct_person_dementia_register'), calculate_dementia_register('CURRENT_DATE()')),
-    ('depression', ref('fct_person_depression_register'), calculate_depression_register('CURRENT_DATE()')),
-    ('diabetes', ref('fct_person_diabetes_register'), calculate_diabetes_register('CURRENT_DATE()')),
-    ('epilepsy', ref('fct_person_epilepsy_register'), calculate_epilepsy_register('CURRENT_DATE()')),
-    ('heart_failure', ref('fct_person_heart_failure_register'), calculate_heart_failure_register('CURRENT_DATE()')),
-    ('hypertension', ref('fct_person_hypertension_register'), calculate_hypertension_register('CURRENT_DATE()')),
-    ('learning_disability', ref('fct_person_learning_disability_register'), calculate_learning_disability_register('CURRENT_DATE()')),
-    ('ndh', ref('fct_person_qof_ndh_gdm_register'), calculate_qof_ndh_gdm_register('CURRENT_DATE()')),
-    ('obesity', ref('fct_person_obesity_register'), calculate_obesity_register('CURRENT_DATE()')),
-    ('obesity2', ref('fct_person_obesity2_register'), calculate_obesity2_register('CURRENT_DATE()')),
-    ('osteoporosis', ref('fct_person_osteoporosis_register'), calculate_osteoporosis_register('CURRENT_DATE()')),
-    ('pad', ref('fct_person_pad_register'), calculate_pad_register('CURRENT_DATE()')),
-    ('palliative_care', ref('fct_person_palliative_care_register'), calculate_palliative_care_register('CURRENT_DATE()')),
-    ('rheumatoid_arthritis', ref('fct_person_rheumatoid_arthritis_register'), calculate_rheumatoid_arthritis_register('CURRENT_DATE()')),
-    ('smi', ref('fct_person_smi_register'), calculate_smi_register('CURRENT_DATE()')),
-    ('stroke_tia', ref('fct_person_stroke_tia_register'), calculate_stroke_tia_register('CURRENT_DATE()')),
-    ('adhd', ref('fct_person_adhd_register'), calculate_adhd_register('CURRENT_DATE()')),
-    ('anxiety', ref('fct_person_anxiety_register'), calculate_anxiety_register('CURRENT_DATE()')),
-    ('autism', ref('fct_person_autism_register'), calculate_autism_register('CURRENT_DATE()')),
-    ('cerebral_palsy', ref('fct_person_cerebral_palsy_register'), calculate_cerebral_palsy_register('CURRENT_DATE()')),
-    ('chronic_liver_disease', ref('fct_person_chronic_liver_disease_register'), calculate_chronic_liver_disease_register('CURRENT_DATE()')),
-    ('cyp_asthma', ref('fct_person_cyp_asthma_register'), calculate_cyp_asthma_register('CURRENT_DATE()')),
-    ('familial_hypercholesterolaemia', ref('fct_person_familial_hypercholesterolaemia_register'), calculate_familial_hypercholesterolaemia_register('CURRENT_DATE()')),
-    ('frailty', ref('fct_person_frailty_register'), calculate_frailty_register('CURRENT_DATE()')),
-    ('gestational_diabetes', ref('fct_person_gestational_diabetes_register'), calculate_gestational_diabetes_register('CURRENT_DATE()')),
-    ('hypothyroidism', ref('fct_person_hypothyroidism_register'), calculate_hypothyroidism_register('CURRENT_DATE()')),
-    ('learning_disability_under_14', ref('fct_person_learning_disability_register_under_14'), calculate_learning_disability_under_14_register('CURRENT_DATE()')),
-    ('mnd', ref('fct_person_mnd_register'), calculate_mnd_register('CURRENT_DATE()')),
-    ('ms', ref('fct_person_ms_register'), calculate_ms_register('CURRENT_DATE()')),
-    ('nafld', ref('fct_person_nafld_register'), calculate_nafld_register('CURRENT_DATE()')),
-    ('ndh_clinical', ref('fct_person_ndh_register'), calculate_ndh_register('CURRENT_DATE()')),
-    ('osteoarthritis', ref('fct_person_osteoarthritis_register'), calculate_osteoarthritis_register('CURRENT_DATE()')),
-    ('parkinsons', ref('fct_person_parkinsons_register'), calculate_parkinsons_register('CURRENT_DATE()')),
-    ('sickle_cell', ref('fct_person_sickle_cell_register'), calculate_sickle_cell_register('CURRENT_DATE()')),
-    ('thalassaemia', ref('fct_person_thalassaemia_register'), calculate_thalassaemia_register('CURRENT_DATE()'))
+    ('asthma', ref('fct_person_asthma_register'), calculate_asthma_register(ltc_live_register_as_of(ref('fct_person_asthma_register'), age_built_on, as_of_cache))),
+    ('atrial_fibrillation', ref('fct_person_atrial_fibrillation_register'), calculate_atrial_fibrillation_register(ltc_live_register_as_of(ref('fct_person_atrial_fibrillation_register'), age_built_on, as_of_cache))),
+    ('cancer', ref('fct_person_cancer_register'), calculate_cancer_register(ltc_live_register_as_of(ref('fct_person_cancer_register'), age_built_on, as_of_cache))),
+    ('chd', ref('fct_person_chd_register'), calculate_chd_register(ltc_live_register_as_of(ref('fct_person_chd_register'), age_built_on, as_of_cache))),
+    ('ckd', ref('fct_person_ckd_register'), calculate_ckd_register(ltc_live_register_as_of(ref('fct_person_ckd_register'), age_built_on, as_of_cache))),
+    ('copd', ref('fct_person_copd_register'), calculate_copd_register(ltc_live_register_as_of(ref('fct_person_copd_register'), age_built_on, as_of_cache))),
+    ('cvd', ref('fct_person_cvd_register'), calculate_cvd_register(ltc_live_register_as_of(ref('fct_person_cvd_register'), age_built_on, as_of_cache))),
+    ('dementia', ref('fct_person_dementia_register'), calculate_dementia_register(ltc_live_register_as_of(ref('fct_person_dementia_register'), age_built_on, as_of_cache))),
+    ('depression', ref('fct_person_depression_register'), calculate_depression_register(ltc_live_register_as_of(ref('fct_person_depression_register'), age_built_on, as_of_cache))),
+    ('diabetes', ref('fct_person_diabetes_register'), calculate_diabetes_register(ltc_live_register_as_of(ref('fct_person_diabetes_register'), age_built_on, as_of_cache))),
+    ('epilepsy', ref('fct_person_epilepsy_register'), calculate_epilepsy_register(ltc_live_register_as_of(ref('fct_person_epilepsy_register'), age_built_on, as_of_cache))),
+    ('heart_failure', ref('fct_person_heart_failure_register'), calculate_heart_failure_register(ltc_live_register_as_of(ref('fct_person_heart_failure_register'), age_built_on, as_of_cache))),
+    ('hypertension', ref('fct_person_hypertension_register'), calculate_hypertension_register(ltc_live_register_as_of(ref('fct_person_hypertension_register'), age_built_on, as_of_cache))),
+    ('learning_disability', ref('fct_person_learning_disability_register'), calculate_learning_disability_register(ltc_live_register_as_of(ref('fct_person_learning_disability_register'), age_built_on, as_of_cache))),
+    ('ndh', ref('fct_person_qof_ndh_gdm_register'), calculate_qof_ndh_gdm_register(ltc_live_register_as_of(ref('fct_person_qof_ndh_gdm_register'), age_built_on, as_of_cache))),
+    ('obesity', ref('fct_person_obesity_register'), calculate_obesity_register(ltc_live_register_as_of(ref('fct_person_obesity_register'), age_built_on, as_of_cache))),
+    ('obesity2', ref('fct_person_obesity2_register'), calculate_obesity2_register(ltc_live_register_as_of(ref('fct_person_obesity2_register'), age_built_on, as_of_cache))),
+    ('osteoporosis', ref('fct_person_osteoporosis_register'), calculate_osteoporosis_register(ltc_live_register_as_of(ref('fct_person_osteoporosis_register'), age_built_on, as_of_cache))),
+    ('pad', ref('fct_person_pad_register'), calculate_pad_register(ltc_live_register_as_of(ref('fct_person_pad_register'), age_built_on, as_of_cache))),
+    ('palliative_care', ref('fct_person_palliative_care_register'), calculate_palliative_care_register(ltc_live_register_as_of(ref('fct_person_palliative_care_register'), age_built_on, as_of_cache))),
+    ('rheumatoid_arthritis', ref('fct_person_rheumatoid_arthritis_register'), calculate_rheumatoid_arthritis_register(ltc_live_register_as_of(ref('fct_person_rheumatoid_arthritis_register'), age_built_on, as_of_cache))),
+    ('smi', ref('fct_person_smi_register'), calculate_smi_register(ltc_live_register_as_of(ref('fct_person_smi_register'), age_built_on, as_of_cache))),
+    ('stroke_tia', ref('fct_person_stroke_tia_register'), calculate_stroke_tia_register(ltc_live_register_as_of(ref('fct_person_stroke_tia_register'), age_built_on, as_of_cache))),
+    ('adhd', ref('fct_person_adhd_register'), calculate_adhd_register(ltc_live_register_as_of(ref('fct_person_adhd_register'), age_built_on, as_of_cache))),
+    ('anxiety', ref('fct_person_anxiety_register'), calculate_anxiety_register(ltc_live_register_as_of(ref('fct_person_anxiety_register'), age_built_on, as_of_cache))),
+    ('autism', ref('fct_person_autism_register'), calculate_autism_register(ltc_live_register_as_of(ref('fct_person_autism_register'), age_built_on, as_of_cache))),
+    ('cerebral_palsy', ref('fct_person_cerebral_palsy_register'), calculate_cerebral_palsy_register(ltc_live_register_as_of(ref('fct_person_cerebral_palsy_register'), age_built_on, as_of_cache))),
+    ('chronic_liver_disease', ref('fct_person_chronic_liver_disease_register'), calculate_chronic_liver_disease_register(ltc_live_register_as_of(ref('fct_person_chronic_liver_disease_register'), age_built_on, as_of_cache))),
+    ('cyp_asthma', ref('fct_person_cyp_asthma_register'), calculate_cyp_asthma_register(ltc_live_register_as_of(ref('fct_person_cyp_asthma_register'), age_built_on, as_of_cache))),
+    ('familial_hypercholesterolaemia', ref('fct_person_familial_hypercholesterolaemia_register'), calculate_familial_hypercholesterolaemia_register(ltc_live_register_as_of(ref('fct_person_familial_hypercholesterolaemia_register'), age_built_on, as_of_cache))),
+    ('frailty', ref('fct_person_frailty_register'), calculate_frailty_register(ltc_live_register_as_of(ref('fct_person_frailty_register'), age_built_on, as_of_cache))),
+    ('gestational_diabetes', ref('fct_person_gestational_diabetes_register'), calculate_gestational_diabetes_register(ltc_live_register_as_of(ref('fct_person_gestational_diabetes_register'), age_built_on, as_of_cache))),
+    ('hypothyroidism', ref('fct_person_hypothyroidism_register'), calculate_hypothyroidism_register(ltc_live_register_as_of(ref('fct_person_hypothyroidism_register'), age_built_on, as_of_cache))),
+    ('learning_disability_under_14', ref('fct_person_learning_disability_register_under_14'), calculate_learning_disability_under_14_register(ltc_live_register_as_of(ref('fct_person_learning_disability_register_under_14'), age_built_on, as_of_cache))),
+    ('mnd', ref('fct_person_mnd_register'), calculate_mnd_register(ltc_live_register_as_of(ref('fct_person_mnd_register'), age_built_on, as_of_cache))),
+    ('ms', ref('fct_person_ms_register'), calculate_ms_register(ltc_live_register_as_of(ref('fct_person_ms_register'), age_built_on, as_of_cache))),
+    ('nafld', ref('fct_person_nafld_register'), calculate_nafld_register(ltc_live_register_as_of(ref('fct_person_nafld_register'), age_built_on, as_of_cache))),
+    ('ndh_clinical', ref('fct_person_ndh_register'), calculate_ndh_register(ltc_live_register_as_of(ref('fct_person_ndh_register'), age_built_on, as_of_cache))),
+    ('osteoarthritis', ref('fct_person_osteoarthritis_register'), calculate_osteoarthritis_register(ltc_live_register_as_of(ref('fct_person_osteoarthritis_register'), age_built_on, as_of_cache))),
+    ('parkinsons', ref('fct_person_parkinsons_register'), calculate_parkinsons_register(ltc_live_register_as_of(ref('fct_person_parkinsons_register'), age_built_on, as_of_cache))),
+    ('sickle_cell', ref('fct_person_sickle_cell_register'), calculate_sickle_cell_register(ltc_live_register_as_of(ref('fct_person_sickle_cell_register'), age_built_on, as_of_cache))),
+    ('thalassaemia', ref('fct_person_thalassaemia_register'), calculate_thalassaemia_register(ltc_live_register_as_of(ref('fct_person_thalassaemia_register'), age_built_on, as_of_cache)))
 ] %}
 
 {% set register_sources = {
@@ -121,10 +123,13 @@
 ] %}
 
 {#
-The live facts include records dated or entered after today; PIT today does not.
-A mismatch is expected only for a person with such a record in the register's own
-sources (register_sources), so those people are left out of both directions. Every
-other mismatch is drift.
+Each live fact is compared with its macro at the date the live fact was evaluated
+(ltc_live_register_as_of): live facts apply CURRENT_DATE() and today's age at build
+time, and in merge-queue builds unchanged facts are read from an earlier prod build.
+The live facts also include records dated or entered after that date, which the macro
+does not. A mismatch is expected only for a person with such a record in the
+register's own sources (register_sources), so those people are left out of both
+directions. Every other mismatch is drift.
 #}
 
 WITH mismatches AS (
@@ -149,8 +154,8 @@ WITH mismatches AS (
             FROM {{ source_model }}
             WHERE person_id IS NOT NULL
                 AND (
-                    CAST({{ date_column }} AS DATE) > CURRENT_DATE()
-                    OR CAST(date_recorded AS DATE) > CURRENT_DATE()
+                    CAST({{ date_column }} AS DATE) > {{ ltc_live_register_as_of(fact_model, age_built_on, as_of_cache) }}
+                    OR CAST(date_recorded AS DATE) > {{ ltc_live_register_as_of(fact_model, age_built_on, as_of_cache) }}
                 )
             {% if not loop.last %}UNION{% endif %}
             {% endfor %}
@@ -205,7 +210,7 @@ WITH mismatches AS (
         release.source_file AS pcd_source_file
     FROM (
         WITH pit_today AS (
-            {{ calculate_heart_failure_register('CURRENT_DATE()') }}
+            {{ calculate_heart_failure_register(ltc_live_register_as_of(ref('fct_person_heart_failure_register'), age_built_on, as_of_cache)) }}
         ),
 
         live_hfref AS (
@@ -228,8 +233,8 @@ WITH mismatches AS (
             FROM {{ ref('int_heart_failure_diagnoses_all') }}
             WHERE person_id IS NOT NULL
                 AND (
-                    CAST(clinical_effective_date AS DATE) > CURRENT_DATE()
-                    OR CAST(date_recorded AS DATE) > CURRENT_DATE()
+                    CAST(clinical_effective_date AS DATE) > {{ ltc_live_register_as_of(ref('fct_person_heart_failure_register'), age_built_on, as_of_cache) }}
+                    OR CAST(date_recorded AS DATE) > {{ ltc_live_register_as_of(ref('fct_person_heart_failure_register'), age_built_on, as_of_cache) }}
                 )
         )
 

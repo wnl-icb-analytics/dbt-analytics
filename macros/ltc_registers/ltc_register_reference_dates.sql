@@ -42,3 +42,45 @@
         OR CAST({{ recorded_date_column }} AS DATE) <= {{ reference_date_column }}
     )
 {% endmacro %}
+
+
+{% macro ltc_relation_built_on(relation) %}
+{#-
+    Day a table was last built (its created_on, as dbt replaces tables on each
+    build), as 'YYYY-MM-DD' in the session time zone, matching CURRENT_DATE() in the
+    build. Read with SHOW TABLES when the caller compiles; none if the table cannot
+    be found or the project is only being parsed.
+-#}
+{%- set built_on = none -%}
+{%- if execute -%}
+    {%- do run_query("SHOW TABLES LIKE '" ~ (relation.identifier | upper) ~ "' IN SCHEMA " ~ relation.database ~ "." ~ relation.schema) -%}
+    {%- set result = run_query("SELECT TO_VARCHAR(MAX(\"created_on\")::DATE, 'YYYY-MM-DD') FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())) WHERE UPPER(\"name\") = '" ~ (relation.identifier | upper) ~ "'") -%}
+    {%- if result.rows | length > 0 -%}
+        {%- set built_on = result.rows[0][0] -%}
+    {%- endif -%}
+{%- endif -%}
+{{ return(built_on) }}
+{% endmacro %}
+
+
+{% macro ltc_live_register_as_of(live_relation, age_built_on, cache) %}
+{#-
+    Date a live register's rules were evaluated, as a date literal: the earlier of
+    the day it was built and the day dim_person_age (its source of age) was built
+    (age_built_on, from ltc_relation_built_on). Live facts use CURRENT_DATE() and
+    today's age at build time, so comparing them with the as-of macros must use this
+    date, not the date the comparison runs. Results are kept in cache (a dict) so a
+    caller can ask again without another lookup. Falls back to CURRENT_DATE().
+-#}
+{%- set key = live_relation | string -%}
+{%- if key in cache -%}
+    {{ return(cache[key]) }}
+{%- endif -%}
+{%- set candidates = [] -%}
+{%- set live_built_on = ltc_relation_built_on(live_relation) -%}
+{%- if live_built_on -%}{%- do candidates.append(live_built_on) -%}{%- endif -%}
+{%- if age_built_on -%}{%- do candidates.append(age_built_on) -%}{%- endif -%}
+{%- set as_of = ("'" ~ (candidates | min) ~ "'::DATE") if candidates | length > 0 else 'CURRENT_DATE()' -%}
+{%- do cache.update({key: as_of}) -%}
+{{ return(as_of) }}
+{% endmacro %}
