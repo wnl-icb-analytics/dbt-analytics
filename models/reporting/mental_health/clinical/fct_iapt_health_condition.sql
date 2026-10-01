@@ -130,7 +130,7 @@ with conditions as (
         parent_key
         , coding_scheme_code
         , submitted_code
-        , min(first_reported_period_end_date) as first_dated_period_end_date
+        , max(first_reported_period_end_date) as latest_dated_first_period_end_date
     from versions
     where source_table = 'IDS603' and source_date is not null
     group by parent_key, coding_scheme_code, submitted_code
@@ -202,7 +202,7 @@ select
         else 'presenting_complaint_recorded'
     end as clinical_time_basis
     , iff(v.source_table = 'IDS603' and v.source_date is null
-        , coalesce(dated.first_dated_period_end_date > v.first_reported_period_end_date, false), null)
+        , coalesce(dated.latest_dated_first_period_end_date > v.first_reported_period_end_date, false), null)
         as is_superseded_by_dated_record
 
     , v.provider_organisation_code
