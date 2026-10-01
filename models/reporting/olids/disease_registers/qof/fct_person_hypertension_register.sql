@@ -8,7 +8,8 @@
 }}
 
 -- Hypertension Register (QOF Pattern 6: Complex Clinical Logic)
--- Business Logic: Active HTN diagnosis (QOF v50 HYP_REG, no age restriction) + Clinical staging based on latest BP with context-specific NICE thresholds
+-- Business Logic: Active HTN diagnosis (QOF v50 HYP_REG, no age restriction) + Project-specific NICE-informed staging of the latest BP
+-- Staging uses context-specific thresholds, not the NG136 diagnostic definition based on a confirmed ABPM/HBPM average.
 -- Complex Logic: BP staging varies by measurement context (Home/ABPM vs Clinic readings)
 
 WITH hypertension_person_aggregates AS (
@@ -128,7 +129,8 @@ register_logic AS (
             ), FALSE
         ) AS is_on_register,
 
-        -- NICE staging of the latest BP, with context-specific thresholds
+        -- Project-specific NICE-informed staging of the latest BP, with context-specific thresholds.
+        -- This is not the NG136 diagnostic definition based on a confirmed ABPM/HBPM average.
         CASE
             WHEN
                 bp.latest_bp_systolic_value IS NULL
