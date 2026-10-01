@@ -115,11 +115,11 @@ Their source facts retain the derivation and consistency evidence.
 | Source | Milestones |
 |---|---|
 | OLIDS | Recorded current booking, scheduled appointment slot and terminology-selected patient referral. No reconstructed booking or cancellation history. |
-| MHSDS | Referral received, rejected and discharged; care contact; hospital admission and discharge; ward stay start and end. |
-| CSDS | Referral received and discharged; care contact. |
+| MHSDS | Referral received, rejected and discharged; care contact; onward referral; hospital admission and discharge; ward stay start and end; Mental Health Act legal status start and end; community treatment order start and end; recall start and end; leave of absence, home leave and absence without leave start and end; restrictive intervention start and end; clinically ready for discharge start and end. |
+| CSDS | Referral received and discharged; care contact; onward referral. |
 | SUS APC | Spell admission and discharge. |
 | SUS OP | Scheduled appointment, including non-attendance and cancellations recorded on the appointment. |
-| ECDS | Arrival, initial assessment, seen for treatment, decision to admit and departure. |
+| ECDS | Arrival, initial assessment, seen for treatment, decision to admit, clinically ready to proceed and departure; onward referral to a service and that service's assessment. |
 | e-RS | Selected recorded actions and scheduled appointment slots. `ers_healthcare_event_type` defines the action selection. |
 
 Primary milestones retain source records with missing dates. Optional milestones
@@ -128,6 +128,27 @@ Status and outcome fields describe their source meanings and can be extract-curr
 e-RS reminders, printing, letter edits and unconfirmed cancellation requests are
 not independent care milestones. e-RS action labels distinguish recorded and
 updated DNA actions. See [e-RS validation](ers-analyst-validation.md).
+
+Start and end milestones of the same period share a source record. Each start is
+primary; each end is optional. MHSDS legal-status periods have no recorded
+parent; community treatment orders and recalls link to their legal-status
+period; leave links to its ward stay; restrictive interventions and discharge
+readiness link to their hospital spell. `event_code` carries the record's legal
+status or reason, with `event_coding_system` naming the NHS Data Dictionary item.
+Order and leave end milestones carry their end reason instead.
+
+An onward referral records the request, not acceptance by the receiving
+organisation or later care. MHSDS and CSDS onward referrals carry their reason
+and `receiving_organisation_code`, and link to the referral they were made from.
+Pre-2021 MHSDS reason codes often fall outside the national list and keep a null
+label. CSDS supplies no onward referral time.
+
+ECDS onward referrals use the date and time the referred-to service received the
+request, a separate ECDS data item from attendance conclusion or departure. The
+optional assessment milestone is that service's recorded assessment. Both carry
+the referred-to service SNOMED code and link to the attendance. Clinically ready
+to proceed is supplied with a UTC offset matching UK local time; the adapter
+keeps its local clock time and drops the offset.
 
 Clinical items include OLIDS expanded observations and statement-enriched
 medication orders; MHSDS and CSDS prepared clinical records; SUS diagnoses and
@@ -152,19 +173,21 @@ Existing source key names remain available:
 
 | Detail model | Key represented by `source_record_id` |
 |---|---|
-| MHSDS and CSDS facts | `source_record_id` |
+| MHSDS and CSDS facts | `source_record_id`; MHSDS legal-status, order, recall, leave, restrictive-intervention and discharge-readiness facts use their entity ID, such as `mental_health_act_period_id` |
 | `fct_gp_appointment` | `appointment_id` |
 | `fct_gp_referral_request` | `source_record_id` |
 | `fct_gp_clinical_record` | `source_record_id` together with `source_record_type` |
 | `fct_ers_referral_action` | `action_id` |
 | `fct_ers_appointment` | `appointment_id` |
 | `obt_encounter_apc`, `int_sus_op_appointment`, `obt_encounter_uec` | `visit_occurrence_id` |
+| `int_sus_uec_referred_to_service` | `referral_id` |
 | SUS diagnosis staging | `diagnosis_id` |
 | SUS procedure staging | `procedure_id` |
 | ECDS clinical staging | `diagnosis_id` for diagnoses; `source_record_id` for other items |
 
 Recorded parents follow `parent_model_name`. MHSDS/CSDS parents use
-`source_record_id`; e-RS referrals use `ubrn_id`; acute encounters use
+`source_record_id`, except MHSDS legal-status periods, which use
+`mental_health_act_period_id`; e-RS referrals use `ubrn_id`; acute encounters use
 `visit_occurrence_id`; APC episodes use `source_record_id`; OLIDS encounters
 use `id`. A parent link is source evidence, not a completed journey. Additional
 links and their consistency flags remain in the detailed models.

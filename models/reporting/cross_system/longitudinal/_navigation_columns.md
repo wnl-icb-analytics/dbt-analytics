@@ -55,7 +55,7 @@ Readable milestone label. e-RS preserves the recorded action label, including au
 {% enddocs %}
 
 {% docs navigation_event_code %}
-Recorded code associated with the milestone. For an e-RS slot this is its latest recorded appointment-state action, not evidence of attendance.
+Recorded code associated with the milestone. For an e-RS slot this is its latest recorded appointment-state action, not evidence of attendance. MHSDS legal-status, restrictive-intervention, discharge-readiness and onward-referral milestones carry the record's status or reason; end milestones of community treatment orders and leave carry their end reason. ECDS onward referrals carry the referred-to service.
 {% enddocs %}
 
 {% docs navigation_event_code_name %}
@@ -63,7 +63,7 @@ Authoritative or retained source label for event_code.
 {% enddocs %}
 
 {% docs navigation_event_coding_system %}
-Namespace defining event_code, such as the e-RS action dictionary or the supplied OLIDS clinical coding system.
+Namespace defining event_code, such as the e-RS action dictionary, an NHS Data Dictionary code list named after its data item, SNOMED CT or the supplied OLIDS clinical coding system.
 {% enddocs %}
 
 {% docs navigation_care_setting %}
@@ -158,6 +158,14 @@ Recorded referring organisation, where available. No referral direction is infer
 Retained source or reference name for the referring organisation.
 {% enddocs %}
 
+{% docs navigation_receiving_organisation_code %}
+Recorded organisation an onward referral was sent to, where supplied. A referral to it does not establish acceptance or later care.
+{% enddocs %}
+
+{% docs navigation_receiving_organisation_name %}
+Latest reference name for the receiving organisation. Null when the code is not recognised.
+{% enddocs %}
+
 {% docs navigation_parent_record_type %}
 Entity type of the explicit recorded parent. Other submitted links and consistency flags remain on the detailed source fact.
 {% enddocs %}
@@ -167,7 +175,7 @@ Recorded parent key in parent_model_name. A recorded link does not establish cau
 {% enddocs %}
 
 {% docs navigation_parent_model_name %}
-dbt model containing the recorded parent. Consult the source-key mapping for keys named appointment_id, visit_occurrence_id, ubrn_id or id.
+dbt model containing the recorded parent. Consult the source-key mapping for keys named appointment_id, visit_occurrence_id, ubrn_id, mental_health_act_period_id or id.
 {% enddocs %}
 
 {% docs navigation_relationship_type %}
