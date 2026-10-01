@@ -1,22 +1,21 @@
 models:
   - name: int_date_spine
-    description: 'Comprehensive date dimension table for temporal analysis.
+    description: 'Date dimension view for temporal analysis: one row per month for the last 120 completed months.
 
-      Pre-calculates all date attributes and relative flags for a 10-year monthly spine. Centralises date logic to eliminate repetitive date calculations across models.
+      Calculates date attributes and relative flags for each month. A view, so months and flags always follow the current date; a table built before the 1st of a month would leave its consumers a month behind. Centralises date logic used across models.
 
       Key Features:
 
-      • 10-year monthly spine (120 months) up to current month
+      • 10-year monthly spine (120 months) ending with the last completed month
 
-      • Pre-calculated calendar and financial year dimensions
+      • Calendar and financial year dimensions
 
-      • Relative date flags (is_last_X_months) updated on each build
+      • Relative date flags (is_last_X_months) calculated when queried
 
       • UK financial year support (April to March)
 
       • Display labels and sorting helpers
 
-      • Clustered by month_start_date for optimal join performance
 
       Purpose: Single source of truth for all date-related calculations in temporal analyses.'
     config:
