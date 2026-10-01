@@ -1,6 +1,16 @@
 models:
   - name: int_adult_imms_dose_base
-    description: Intermediate table holding historical imms population by practice over the age of 60 and any vaccinations associated with 
+    description: >
+      Adult immunisation events for people aged 18 or over, with demographic
+      and clinical-risk flags. One row per person per retained vaccination
+      event from int_adult_imms_vaccination_events_historical; people with no
+      event keep one row with null event columns.
+
+      IN_RSV_CLINICAL_RISK_GROUP is chronic respiratory disease or
+      immunosuppression on the current flu campaign (flu_current_campaign())
+      in int_covid_flu_risk_group_flags, at any age. It does not use the flu
+      under-65 at-risk offer. RSV_1D eligibility applies the 65 to 74 band
+      separately.
 
     config:
       meta:
@@ -11,3 +21,8 @@ models:
         description: Identifier for the person. There may be > 1 person if registered at multiple practices
         data_tests:
          - not_null
+      - name: in_rsv_clinical_risk_group
+        description: >
+          True when the person has chronic respiratory disease or
+          immunosuppression on the current flu campaign, at any age. RSV_1D
+          eligibility then restricts the offer to ages 65 to 74.

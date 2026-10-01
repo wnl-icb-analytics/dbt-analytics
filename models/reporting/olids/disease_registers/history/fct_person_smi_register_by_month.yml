@@ -1,0 +1,34 @@
+models:
+  - name: fct_person_smi_register_by_month
+    description: >
+      Serious mental illness register at each completed month-end, on the QOF
+      v51 rules of fct_person_smi_register: an MH_COD diagnosis at any age.
+      Remission does not remove a diagnosed person; remission-only records and
+      lithium therapy do not qualify.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: earliest_diagnosis_date
+        description: Earliest SMI diagnosis known by the month-end.
+      - name: latest_diagnosis_date
+        description: Latest SMI diagnosis known by the month-end.
+      - name: latest_remission_date
+        description: Latest SMI remission code known by the month-end; remission does not remove register membership.
