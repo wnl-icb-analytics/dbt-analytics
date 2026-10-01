@@ -1,16 +1,19 @@
 models:
   - name: int_adult_imms_dose_base
     description: >
-      Adult immunisation events for people aged 18 or over, with demographic
-      and clinical-risk flags. One row per person per retained vaccination
-      event from int_adult_imms_vaccination_events_historical; people with no
-      event keep one row with null event columns.
-
-      IN_RSV_CLINICAL_RISK_GROUP is chronic respiratory disease or
-      immunosuppression on the current flu campaign (flu_current_campaign())
-      in int_covid_flu_risk_group_flags, at any age. It does not use the flu
-      under-65 at-risk offer. RSV_1D eligibility applies the 65 to 74 band
-      separately.
+      People aged 18+, registered or not, with their adult immunisation events.
+      One row per person and event; people with no event appear once. The PPV clinical risk
+      group flag reflects only cochlear implant and CSF leak records, because it filters
+      fct_covid_eligibility on risk_group values that model does not produce. Events come
+      from int_adult_imms_vaccination_events_historical, at most one per person and vaccine
+      ID, dated up to today. practice_code is the current or last registered practice. Adds
+      demographic and risk flags and the April-to-March fiscal year of the event.
+      Deceased people are included; their demographic age is age at death when known.
+      People with no event have null event columns. in_rsv_clinical_risk_group is chronic
+      respiratory disease or immunosuppression on the current flu campaign,
+      flu_current_campaign(), in int_covid_flu_risk_group_flags, without an age gate on the
+      flag. It does not use the flu under-65 at-risk offer. RSV_1D eligibility applies the
+      schedule's 65 to 74 proxy separately.
 
     config:
       meta:

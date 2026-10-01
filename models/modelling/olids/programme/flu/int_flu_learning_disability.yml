@@ -1,20 +1,11 @@
 models:
   - name: int_flu_learning_disability
-    description: 'Flu vaccination eligibility for people with learning disabilities using severity classification.
-
-      Key Features:
-
-      • Two pathway logic: severe learning disability (SEV_LRNDIS_COD) or general learning disability (LEARNDIS_COD)
-
-      • Earliest occurrence in medical history qualifies
-
-      • Age restriction: minimum 6 months for flu vaccination
-
-      • Includes all severities of learning disability
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      Purpose: Identify people eligible for flu vaccination due to learning disability conditions.'
+    description: >
+      Flu learning disability risk group, one row per person and campaign. Any LEARNDIS_COD
+      record qualifies from age 6 months, with no upper age limit. Records must be on or
+      before the campaign audit end date, using the campaign's pinned terminology version.
+      Age is tested at the campaign run date. The description column reads 6 months to 64
+      years, but no upper limit is applied.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -83,7 +74,7 @@ models:
         data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying diagnosis (earliest learning disability diagnosis)'
+        description: 'Latest LEARNDIS_COD record date'
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description

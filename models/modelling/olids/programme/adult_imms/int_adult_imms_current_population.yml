@@ -1,19 +1,21 @@
 ﻿models:
   - name: int_adult_imms_current_population
     description: >
-      Current adult immunisation population. One row per currently registered,
-      living person aged 18 or over.
-
-      IN_RSV_CLINICAL_RISK_GROUP is chronic respiratory disease or
-      immunosuppression on the current flu campaign (flu_current_campaign())
-      in int_covid_flu_risk_group_flags. Those flu clinical intermediates include
-      people of every age (minimum 6 months). They are not the flu under-65
-      at-risk offer in fct_flu_eligibility.
-
-      RSV_1D uses this flag and applies the 65 to 74 age band separately. The
-      adult imms models document that band as a 65-74 proxy from 1 September
-      2026 (int_adult_imms_currently_eligible and the Clinical Risk 65-74
-      cohort in int_adult_imms_ts_historical_rsv).
+      Currently registered, living people aged 18+ with demographics and adult immunisation
+      programme flags. One row per person. Flags cover care home residence,
+      immunosuppression from any COVID campaign, PPV and RSV clinical risk groups and
+      current pregnancy. PPV risk uses each person's latest available flu campaign in
+      int_covid_flu_risk_group_flags for chronic respiratory, heart, kidney and liver
+      disease, asplenia, diabetes or immunosuppression, plus cochlear implant and CSF leak
+      records. RSV risk is chronic respiratory disease or immunosuppression on the current
+      flu campaign, flu_current_campaign(), in int_covid_flu_risk_group_flags. These flu
+      clinical groups start at 6 months and have no upper age limit. The RSV flag has no
+      age gate of its own. RSV_1D applies the schedule's 65 to 74 proxy separately, documented
+      from 1 September 2026. Pregnancy covers ages 12 to 55, but the population excludes
+      under-18s. Birth-date cohort flags use these ranges:
+      turn_65_after_sep_2023 is born 2 September 1957 to 1 September 1958,
+      turn_75_after_sep_2024 is born 2 September 1944 to 1 September 1949 and
+      turn_80_after_sep_2024 is born 2 September 1943 to 1 September 1944.
 
     config:
       meta:
