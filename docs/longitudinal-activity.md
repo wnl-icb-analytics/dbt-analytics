@@ -140,7 +140,9 @@ Single-valued ECDS attendance fields emit one row per recorded code, keyed by th
 attendance. Injury details take the recorded injury date; chief complaint, acuity
 and notifiable disease have no supported clinical date. Legal status takes its
 assignment start, which older ECDS deliveries supply as separate date and time
-fields; most records state not applicable or not known. There are no standalone medication statements. Acute code
+fields. Only recorded legal statuses enter the clinical record: codes 98 (not
+applicable) and 99 (not known), about 98% of source rows, are placeholders and
+remain in `int_sus_uec_mental_health_legal_status` for drill-down. There are no standalone medication statements. Acute code
 positions are preserved, including repeated codes in distinct supplied positions.
 ECDS observations and scored assessments keep separate source-sequence rows,
 values, reported units and clinical timestamps. Submitted scores populate the
