@@ -500,33 +500,35 @@ record rather than in a separate fact at one row per submitted row.
 ## Read scheme correction
 
 Some CSDS records carry CTV3 codes under the Read v2 scheme, or the reverse.
-When a code is absent from its submitted Read scheme but is an exact Dictionary
-concept code in the other, the fact resolves it in the other scheme. This
-applies to diagnoses, immunisations, procedures, findings and observations.
-`clinical_code_system` names the scheme used, and the longitudinal adapter's
-`source_coding_system` follows it. `submitted_clinical_code_system`,
-`coding_scheme_code` and `coding_scheme_name` keep the submitted scheme, and
-`is_clinical_code_system_corrected` marks the change. The label, Read match type
-and Dictionary SNOMED mapping come from the corrected scheme.
+`read_code_scheme_correction` lists each code with no membership evidence in a
+Read scheme that is an exact Dictionary concept code in the other. Membership
+evidence is any Dictionary code or alternative with that scheme's flag, taken
+before `read_code` drops ambiguous alternatives, and any UKHFD Read v2 term or
+code, CTV3 concept or CTV3 term identifier. A code with any such evidence keeps
+its submitted scheme, even when it is unlabelled or also a concept in the other.
 
-A code found in its submitted scheme keeps it, even when the other scheme also
-contains it. Dictionary alternatives and CTV3 term identifiers do not trigger a
-correction: an alternative excluded as ambiguous in one scheme should not resolve
-through the other, and a term identifier is not a concept code.
+`fct_csds_clinical_record` and `fct_csds_care_activity` both use this model, so
+their labels, Read SNOMED mappings and observation-unit aliases agree. The rule
+applies to diagnoses, immunisations, procedures, findings and observations. In
+the clinical fact `clinical_code_system` names the scheme used, and the
+longitudinal adapter's `source_coding_system` follows it.
+`submitted_clinical_code_system`, `coding_scheme_code` and `coding_scheme_name`
+keep the submitted scheme, and `is_clinical_code_system_corrected` marks the
+change. The activity fact keeps its submitted scheme codes.
 
-The shared-DEV build on 1 October 2026 corrected about 177K records:
+The shared-DEV build on 1 October 2026 corrected about 175K records:
 
 | Clinical record type | Corrected records | Direction | Labelled before | Labelled after |
 |---|---:|---|---:|---:|
 | Primary diagnosis | ~174K | Read v2 to CTV3 | 49.0% | 97.5% |
-| Observation | ~2.6K | CTV3 to Read v2 | 77.26% | 77.28% |
 | Immunisation | ~0.5K | Read v2 to CTV3 | 28.21% | 28.23% |
-| Procedure | under 0.1K | CTV3 to Read v2 | 96.55% | 96.55% |
 
-No finding or other diagnosis type met the rule. The corrected primary
-diagnoses have no Dictionary SNOMED mapping, so their mapped fields stay empty;
-the corrected observations and procedures all gained one. Record keys stayed
-unique.
+No finding, observation, procedure or other diagnosis type met the rule. A first
+version tested only the codes `read_code` resolves. It also moved about 2.6K
+observations and a few procedures whose codes are ambiguous Dictionary
+alternatives in their submitted scheme; requiring no membership evidence keeps
+them in that scheme. The corrected primary diagnoses have no Dictionary SNOMED
+mapping, so their mapped fields stay empty. Record keys stayed unique.
 
 MHSDS has no equivalent gap. Of its ~34K Read v2 and CTV3 clinical records, none
 that is absent from its submitted scheme is an exact concept code in the other,

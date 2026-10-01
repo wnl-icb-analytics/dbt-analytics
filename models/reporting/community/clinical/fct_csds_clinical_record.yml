@@ -45,16 +45,16 @@ models:
     description: Coding system the clinical code is resolved in. SNOMED CT, Read v2, CTV3 or ICD-10 for the
       supported resolvers; other recognised schemes retain their authoritative UKHFD name. Code-list values name
       their NHS Data Dictionary list. Normally the submitted field-specific scheme or assessment specification,
-      never code shape. A code submitted as Read v2 or CTV3 that is absent from that scheme but an exact concept
+      never code shape. A code submitted as Read v2 or CTV3 with no evidence in that scheme but an exact concept
       code in the other Read scheme takes the other scheme (see is_clinical_code_system_corrected). Null for an
       unrecognised or absent scheme.
   - name: submitted_clinical_code_system
     description: Coding system named by the submitted scheme, before Read scheme correction. Equals
       clinical_code_system unless is_clinical_code_system_corrected is true.
   - name: is_clinical_code_system_corrected
-    description: True when a code submitted as Read v2 was resolved in CTV3, or the reverse, because it is
-      absent from the submitted scheme and an exact Dictionary concept code in the other. Alternative codes and
-      term identifiers do not trigger a correction. Labels and SNOMED mappings then come from the corrected scheme.
+    description: True when a code submitted as Read v2 was resolved in CTV3, or the reverse, because it has no
+      membership evidence in the submitted scheme and is an exact Dictionary concept code in the other (see
+      read_code_scheme_correction). Labels and SNOMED mappings then come from the corrected scheme.
   - name: coding_scheme_code
     description: Submitted community-care scheme, unchanged by Read scheme correction. Procedure 06, finding 04,
       observation 03 and diagnosis 06 mean SNOMED CT; diagnosis 02 means ICD-10. Null for assessments where

@@ -22,27 +22,19 @@ with submitted as (
     from {{ ref('int_csds_clinical_record') }} as r
 )
 
--- A code absent from its submitted Read scheme but an exact concept code in the other one
--- was submitted under the wrong Read scheme; resolve it there. Valid submitted schemes are kept.
+-- read_code_scheme_correction holds Read codes submitted under the wrong Read scheme.
 , resolved as (
     select
         s.*
-        , case
-            when s.submitted_resolver_system in ('Read v2', 'CTV3')
-                and submitted_read.code is null and other_read.code is not null
-                then iff(s.submitted_resolver_system = 'Read v2', 'CTV3', 'Read v2')
-            else s.submitted_resolver_system
-        end as resolver_system
+        , coalesce(
+            decode(correction.resolved_coding_system, 'read_v2', 'Read v2', 'ctv3', 'CTV3'),
+            s.submitted_resolver_system
+        ) as resolver_system
     from submitted as s
-    left join {{ ref('read_code') }} as submitted_read
-        on trim(s.clinical_code) = submitted_read.code
-        and submitted_read.coding_system = case s.submitted_resolver_system
+    left join {{ ref('read_code_scheme_correction') }} as correction
+        on trim(s.clinical_code) = correction.code
+        and correction.submitted_coding_system = case s.submitted_resolver_system
             when 'Read v2' then 'read_v2' when 'CTV3' then 'ctv3' end
-    left join {{ ref('read_code') }} as other_read
-        on trim(s.clinical_code) = other_read.code
-        and other_read.match_type = 'exact_code'
-        and other_read.coding_system = case s.submitted_resolver_system
-            when 'Read v2' then 'ctv3' when 'CTV3' then 'read_v2' end
 )
 
 , code_list_sets as (
