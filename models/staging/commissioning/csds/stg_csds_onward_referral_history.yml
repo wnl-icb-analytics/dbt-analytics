@@ -1,0 +1,35 @@
+version: 2
+models:
+- name: stg_csds_onward_referral_history
+  description: One CYP105 onward referral row from an accepted CSDS submission, including repeated monthly
+    occurrences of the same onward referral. The latest onward referral interface remains separate.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  columns:
+  - name: cyp105_unique_id
+    description: Identifier of one delivered CYP105 source row.
+    data_tests:
+    - unique
+    - not_null
+  - name: unique_service_request_identifier
+    description: Provider-qualified identifier of the referral the onward referral was made from.
+    data_tests:
+    - not_null
+  - name: onward_referral_date
+    description: Date the onward referral was made.
+  - name: onward_referral_reason
+    description: Submitted onward referral reason code, trimmed and upper case. The legacy alias agrees wherever
+      populated and is not repeated.
+  - name: organisation_identifier_receiving
+    description: Submitted ODS code of the receiving organisation, trimmed and upper case. The two alias fields
+      agree wherever populated and are not repeated.
+  - name: unique_submission_id
+    description: Accepted submission containing this row.
+    data_tests:
+    - not_null
+  - name: effective_from
+    description: Date and time the submission portal received the file; not the time of care.
+  - name: reporting_period_end_date
+    description: Last date of the source reporting period.
