@@ -9,7 +9,9 @@ select
     , c.nhsd_legal_status is not null as is_classified_legal_status
     , coalesce(c.is_detained, false) as is_detention_period
     , m.start_date_mh_act_legal_status_class as legal_status_start_date
+    , m.start_time_mh_act_legal_status_class as legal_status_start_time
     , m.end_date_mh_act_legal_status_class as legal_status_end_date
+    , m.end_time_mh_act_legal_status_class as legal_status_end_time
     , m.expiry_date_mh_act_legal_status_class as legal_status_expiry_date
     , d.as_of_date
     , coalesce(c.is_detained, false)
