@@ -12,6 +12,21 @@ IAPT source-of-referral list and consultation mechanism. The warehouse copies
 each renamed item into both its old and new columns. Staging keeps both; facts
 choose the label list from the data set version.
 
+## Where to start
+
+- `fct_iapt_referral_summary` is the referral entry point. It holds each
+  referral's status at the latest accepted month, NHS England's ended-referral
+  type, reliable recovery, waits to first assessment and treatment, and the
+  referral source, discharge reason and age groups.
+- `fct_iapt_referral_period` gives open referrals and waits at the end of any
+  accepted month. Filter one `reporting_period_end_date` for a snapshot.
+- `fct_iapt_care_contact` is the contact entry point, with the NHS England
+  attended-or-unplanned and treatment contact rules and a delivery group.
+- `dq_iapt_provider_submission` says whether a provider's month can be
+  trusted. Check it before comparing providers or months.
+- `sem_iapt` is the semantic view over these and the activity, assessment and
+  condition facts, with named NHS England measures.
+
 ## Initial scope
 
 The models cover referrals, care contacts, onward referrals, care activities,
@@ -60,6 +75,31 @@ one per provider and month, covering September 2020 to July 2026.
 
 Incremental runs avoid rewriting the histories. They do not guarantee that raw
 source scans are pruned.
+
+`stg_iapt_submission_header` stages every IDS000 header, including Primary
+files a Refresh replaced, so `dq_iapt_provider_submission` can compare each
+accepted Refresh with its Primary. Header section totals cover the whole file;
+for providers outside WNL the warehouse feed holds only WNL-commissioned rows,
+so staging can hold fewer rows than the header reports.
+
+### Submission caveats
+
+- Truncated refresh files. In 17 provider-months the accepted Refresh holds
+  under half the rows of the Primary it replaced in a section where the
+  Primary held at least 100 (`has_refresh_section_shortfall`). The largest are
+  all three West London NHS Trust services (RKL07, RKL14 and RKL42) in July
+  2024, whose Refresh kept about 5% of the Primary's contacts and almost none
+  of its activity assessments. Their referrals were resubmitted in full. Every
+  model reads the accepted Refresh, so contact, activity and assessment counts
+  for those months are understated. The Primary rows are not retained.
+- Missing items at Central and North West London. Since moving to data set
+  v2.1 in April 2022 the CNWL services (RV3 codes) have left the referral
+  source blank for most new referrals (all of them in 2024 and 2025, about half
+  in 2026), have sent no discharge reason since 2024, and left consultation
+  mechanism blank from 2022 until mid-2025. They account for almost all
+  provider-months flagged by
+  `is_source_of_referral_mostly_missing`, `is_discharge_reason_mostly_missing`
+  and `is_consultation_mechanism_mostly_missing`.
 
 | Record | Fact key | Accepted versions | Records |
 |---|---|---|---|
@@ -112,19 +152,26 @@ received twice, the old copy looks abandoned, and NHS England's course fields
 on the new copy (first treatment date, contact counts, first scores, completed
 treatment, recovery) describe only the care after the change.
 
-`int_iapt_referral_transfer` pairs each successor with its predecessor: the
-same Person_ID and referral received date under different provider codes, the
-predecessor undischarged, and the successor first reported in the month after
-the predecessor was last reported. A referral with more than one candidate on
-either side is left unlinked, so both identifiers are unique. The rule names no
-providers. It finds about 11,000 pairs, over 99% of them in three known
-changes: four services moving to North London NHS Foundation Trust (G6V2S) in
-November 2024, the Camden and Islington services exchanging codes (TAF87 and
-TAF88) in June and July 2024, and RWK4C moving to RQY58 in December 2022. About
-50 pairs sit outside these; they meet the same rule and are not separated. A
+`int_iapt_referral_transfer` lists candidate pairs: the same Person_ID and
+referral received date under different provider codes, the predecessor
+undischarged, and the successor first reported in the month after the
+predecessor was last reported. A referral with more than one candidate on
+either side is left unlinked, so both identifiers are unique.
+
+A matching person and date does not prove a code change. A code change moves a
+provider's whole open caseload in one month, so a candidate is confirmed
+(`is_confirmed_transfer`) only when at least 100 candidates share its
+predecessor provider, successor provider and transition month. The rule names
+no providers. The confirmed groups are the three known changes, each with about
+150 to 2,700 pairs per provider pair and month: four services moving to North
+London NHS Foundation Trust (G6V2S) in November 2024, the Camden and Islington
+services exchanging codes (TAF87 and TAF88) in June and July 2024, and RWK4C
+moving to RQY58 in December 2022. Together they hold about 11,000 pairs. The
+other 70 or so candidates are spread over about 50 groups, none above a dozen,
+and stay unconfirmed: they do not change status, chains or the event feed. A
 referral can transfer twice, and about 260 did.
 
-`fct_iapt_referral_summary` keeps both copies as rows:
+`fct_iapt_referral_summary` keeps both copies of a confirmed transfer as rows:
 
 - `is_transfer_successor`, `is_transfer_predecessor`, `predecessor_referral_id`
   and `successor_referral_id` link them. `original_referral_id` is the first
@@ -134,15 +181,19 @@ referral can transfer twice, and about 260 did.
 - `has_partial_nhse_course_fields` is true on a successor. The supplied NHS
   England values are unchanged on `fct_iapt_referral`.
 - `pathway_first_assessment_date` and `pathway_first_treatment_date` take the
-  earliest date across the chain. The chain's first treatment is earlier than
-  the successor's own for about 40% of successors, and a further 16% have no
-  first treatment of their own.
+  earliest date across the chain, and `pathway_second_treatment_date` the second
+  earliest treatment. The chain's first treatment is earlier than the
+  successor's own for about 40% of successors, and a further 16% have no first
+  treatment of their own. Waits in the summary use these chain dates.
+- `fct_iapt_referral_period` counts care recorded under the earlier code, so a
+  moved course is not shown as waiting again.
 
 Exclude `is_transfer_successor` to count each referral received once.
 Contacts, activities and assessments stay under the copy that reported them, so
 a course of care that spans a transfer needs both referral identifiers.
 `int_iapt_healthcare_event` emits no referral received milestone for a
-successor; event identifiers are otherwise unchanged.
+confirmed successor. Its discharge milestone keeps the successor as source
+record, and its contacts keep it as their referral parent.
 
 ## Reconciling to NHS England's publication
 
@@ -187,7 +238,17 @@ mismatches.
 
 `fct_iapt_care_contact.is_attended` is the recorded attendance outcome.
 `is_nhse_attended_or_unplanned` applies the NHS England counting rule, which
-also counts unplanned contacts.
+also counts unplanned contacts. `is_nhse_treatment_contact` applies the rule of
+TreatmentCareContact_Count (I101D29): attended or unplanned, appointment type
+02, 03 or 05, no employment support activity, and dated within the referral.
+For discharged referrals without a transfer, counting these contacts matches
+the supplied treatment count (net of internet-enabled therapy logs) for about
+97%. `is_assessment_appointment_type` marks types 01 and 03.
+
+The referral's `nhse_care_contact_count` and `nhse_treatment_contact_count` are
+NHS England's supplied CareContact_Count and TreatmentCareContact_Count. Both
+include unplanned contacts and internet-enabled therapy logs, so they are not
+attended appointment counts.
 
 NHS England's referral outcome flags are only ever true or null.
 `fct_iapt_referral.is_recovered` is the recovery flag as supplied: true or null,
@@ -195,6 +256,31 @@ never false. `is_completed_treatment` is true from the source flag and false
 only when a simple stated criterion fails: no discharge date, or fewer than two
 treatment contacts. Otherwise it is null. Caseness and reliable-change statuses
 are reported only for completed treatment.
+
+Referral-level scores keep fractional values: PHQ-9, GAD-7, anxiety measure and
+WSAS scores are parsed to 9 decimal places, as in `fct_iapt_assessment_score`.
+
+### NHS England measures
+
+The summary applies these NHS England monthly measure definitions to the
+supplied referral derivations. Add `is_nhse_use_pathway` and the measure's date
+window to reproduce a published figure.
+
+| Field | NHS England measures | Rule |
+|---|---|---|
+| `ended_referral_type` | M073 to M076 | For a recorded discharge: `finished_course_treatment` when completed treatment is flagged, `treated_once` with one treatment contact, `seen_not_treated` with contacts but no treatment contact, `not_seen` with no contact |
+| `is_reliably_recovered` | M193 over the M195 denominator | Recovered and reliably improved; FALSE for other finished courses not below caseness at the start; null outside that denominator |
+| `days_referral_to_first_assessment` | M024 to M027 | Receipt to first assessment |
+| `days_referral_to_first_treatment` | M032 to M035, M049 | Receipt to first treatment |
+| `is_first_treatment_within_6_weeks`, `_18_weeks` | M036, M037 | 42 and 126 days or fewer |
+| `days_first_to_second_treatment` | M046, M047 | First to second treatment |
+| `source_of_referral_group` | M002 to M018, M287, M345 | Referral source group |
+| `consultation_mechanism_group` | M1001 to M1020 | Delivery group of attended or unplanned contacts |
+| `fct_iapt_referral_period.waiting_state` | M029, M038 | Waiting for assessment or treatment at the period end |
+
+A transfer successor's ended type and outcome flags cover only care after the
+transfer, as NHS England derives them per provider-qualified referral; its
+waits use the chain dates.
 
 ## Assessments
 
@@ -227,13 +313,34 @@ column records which list supplied each label:
   code list, valid until March 2020 (`discharge_reason_legacy`). Examples are 42
   completed scheduled treatment and 44 referred to a non-IAPT service. The
   v2.0 specification deleted or replaced them in 2019 and published no
-  equivalent current code. `discharge_reason_code_set` marks them, and they have
-  no discharge category.
-- Consultation codes use their own version's list: consultation medium for
-  v2.0 and mechanism for v2.1. The other list labels an unmatched code only
-  when both source fields agree. This labels v2.1 codes 06 (SMS text messaging)
-  and 08 (online instant messaging), and v2.0 code 11 (video consultation).
-  `consultation_mechanism_code_set` identifies the list that supplied the label.
+  equivalent current code. `discharge_reason_code_set` marks them. They take
+  the discharge group of their UKHFD category (assessed only or assessed and
+  treated).
+- Consultation codes use only their own version's list: consultation medium
+  for v2.0 and mechanism for v2.1. A code valid only in the other version, such
+  as 03, 06 or 08 sent in v2.1, keeps its code but no label, and
+  `consultation_mechanism_label_status` is `other_version_code`.
+
+### Groups
+
+`iapt_code_group` is the maintained seed for code groups, one row per code set
+and code with the document that defines the group:
+
+- `discharge_reason_group`: `not_assessed` (50), `seen_not_treated` (10-17 and
+  95) and `seen_and_treated` (46-49 and 96), as grouped under I101250 in the
+  ETOS. It replaces the UKHFD category, which is null for every current code.
+- `source_of_referral_group`: NHS England's referral source measures, such as
+  `self_referral` (B1), `gp` (A1) and `other` (M1-M8). The same codes in the
+  v2.0 mental health list take the same groups.
+- `consultation_mechanism_group`: `face_to_face`, `telephone`, `video`,
+  `text_based`, `other` or `unknown`. Video is v2.0 code 03 (telemedicine) and
+  v2.1 code 11, so it is continuous across versions. As in NHS England's M1009,
+  missing codes and codes not valid for the contact's version are `unknown`.
+- Anxiety measure tokens map to their score concept, which labels
+  `anxiety_disorder_specific_measure_name` from `iapt_assessment_scale`.
+
+The age band on referrals uses the project's NHS bands (`age_band_nhs` macro);
+NHS England's publication bands age differently, at the period end.
 
 Some submitted codes appear in no published list and keep a null label:
 consultation mechanism CH and Si, psychotropic medication 00 and one onward
@@ -246,13 +353,15 @@ set. The warehouse copies that item into its legacy consultation-medium field;
 staging retains both, but they are not separate analyst fields.
 
 Missing codes are a larger limitation than missing labels. Since 2024 about
-41-43% of recorded discharges lack a reason, concentrated in a few providers.
+41-43% of recorded discharges lack a reason, concentrated in a few providers,
+chiefly CNWL (see submission caveats).
 About 32% of v2.1 referrals lack a referral source. Consultation mechanism is
 missing for 28-41% of contacts in 2022-2024, falling below 1% in 2026. Accepted
 refresh files have the same gaps as their replaced primary files. Comparisons
 by referral source, discharge reason or delivery mechanism therefore describe
-an incomplete and unevenly recorded population. The aggregate profile reports
-completeness by year and the concentration in providers with mostly blank data.
+an incomplete and unevenly recorded population. `dq_iapt_provider_submission`
+flags provider-months where most values are blank, and the aggregate profile
+reports completeness by year.
 
 Site names come from the shared organisation reference. About 660,000 contacts
 use one of about 80 site codes it does not hold, mostly five-character codes, so
@@ -300,21 +409,25 @@ means a time was supplied, not that its clinical accuracy has been established.
 | Model | One row represents |
 |---|---|
 | [`fct_iapt_referral`](../models/reporting/mental_health/referrals/fct_iapt_referral.sql) | One referral, latest accepted version, recorded values only |
-| [`fct_iapt_referral_summary`](../models/reporting/mental_health/referrals/fct_iapt_referral_summary.sql) | One referral with its status as of the latest accepted month and its provider-code transfer links |
+| [`fct_iapt_referral_summary`](../models/reporting/mental_health/referrals/fct_iapt_referral_summary.sql) | One referral with its status as of the latest accepted month, NHS England outcomes and waits, groups and provider-code transfer links |
+| [`fct_iapt_referral_period`](../models/reporting/mental_health/referrals/fct_iapt_referral_period.sql) | One referral in one accepted reporting month, with its open and waiting state |
+| [`dq_iapt_provider_submission`](../models/reporting/mental_health/quality/dq_iapt_provider_submission.sql) | One provider and accepted reporting month, with delivery, volume and completeness checks |
+| [`sem_iapt`](../models/semantic/sem_iapt.sql) | Semantic view over the referral, contact, activity, assessment, condition, referral period and submission tables |
 | [`fct_iapt_care_contact`](../models/reporting/mental_health/activity/fct_iapt_care_contact.sql) | One care contact within its referral and reporting month |
 | [`fct_iapt_onward_referral`](../models/reporting/mental_health/referrals/fct_iapt_onward_referral.sql) | One onward referral milestone |
 | [`fct_iapt_care_activity`](../models/reporting/mental_health/activity/fct_iapt_care_activity.sql) | One care activity within its referral, contact and reporting month, with its procedure, finding and observation |
 | [`fct_iapt_assessment_score`](../models/reporting/mental_health/clinical/fct_iapt_assessment_score.sql) | One scored assessment question, dimension or total |
 | [`fct_iapt_health_condition`](../models/reporting/mental_health/clinical/fct_iapt_health_condition.sql) | One previous diagnosis, long-term condition or presenting complaint |
 | [`fct_iapt_clinical_record`](../models/reporting/mental_health/clinical/fct_iapt_clinical_record.sql) | One clinical item from the three clinical facts, in one list |
-| [`int_iapt_referral_transfer`](../models/modelling/mental_health/referrals/int_iapt_referral_transfer.sql) | One referral resubmitted under a new provider code, with the referral it continues |
+| [`int_iapt_referral_transfer`](../models/modelling/mental_health/referrals/int_iapt_referral_transfer.sql) | One candidate successor referral under a new provider code, with the referral it may continue and whether the transfer is confirmed |
 | [`int_iapt_care_activity_timing`](../models/modelling/mental_health/activity/int_iapt_care_activity_timing.sql) | One accepted care activity version with the date and time of its contact |
 | [`int_iapt_healthcare_event`](../models/modelling/mental_health/int_iapt_healthcare_event.sql) | One referral receipt, referral discharge, care contact or onward referral |
 | [`int_iapt_person_clinical_record`](../models/modelling/mental_health/int_iapt_person_clinical_record.sql) | One clinical item from `fct_iapt_clinical_record` |
 
-The history models are in `models/staging/commissioning/iapt/`, and the code
-lookups are `models/reference/data_dictionary/iapt_code_lookup.sql` and
-`iapt_code_lookup_history.sql`.
+The history models and `stg_iapt_submission_header` are in
+`models/staging/commissioning/iapt/`, and the code lookups are
+`models/reference/data_dictionary/iapt_code_lookup.sql` and
+`iapt_code_lookup_history.sql`. Code groups are in the `iapt_code_group` seed.
 
 The two `int_` feeds use the column shape of the other source feeds, are full
 rebuilds and are clustered on patient key and sort timestamp. The event feed
@@ -358,16 +471,25 @@ activities and assessment responses whose native identifiers are reused in
 another month. The clinical output excludes about 5,000 superseded undated
 complaints, which remain in the condition fact.
 
-In the referral summary about 92% of referrals have a recorded discharge, 3.7%
-are open, 3.1% are no longer submitted and 1.2% are transferred predecessors.
+In the referral summary about 92% of referrals have a recorded discharge, 3.6%
+are open, 3.2% are no longer submitted and 1.2% are confirmed transfer predecessors.
 Before transfers were linked, those predecessors counted as no longer
 submitted. Recorded discharge events are unchanged. No inferred end predates
 its referral receipt.
 
-The transfer model holds about 11,000 pairs and is unique on both the
-successor and the predecessor. Linking them removed the same number of referral
-received milestones from the event feed and changed no other milestone count.
-Fact row counts did not change.
+The transfer model holds about 11,000 confirmed pairs and 70 unconfirmed
+candidates, and is unique on both the successor and the predecessor. Linking
+confirmed pairs removed the same number of referral received milestones from
+the event feed and changed no other milestone count. Fact row counts did not
+change.
+
+In October 2026, for WNL-commissioned referrals discharged from April 2025 to
+March 2026, about 33% finished a course of treatment, 28% had one treatment
+contact, 3% were seen but not treated and 36% were not seen. Reliable recovery
+was about 46% and recovery about 49%, close to the published national rates.
+For first treatments in the same year the median wait was 15 days, with about
+89% treated within 6 weeks and 98% within 18 weeks. `fct_iapt_referral_period`
+holds about 3.5 million referral-months.
 
 Validation included initial builds, a repeat incremental build, grain tests,
 procedure-expression examples and published-parent integrity checks. A
