@@ -1,0 +1,36 @@
+models:
+  - name: fct_person_ckd_register_by_month
+    description: >
+      CKD register at each completed month-end, on the QOF v51 rules of
+      fct_person_ckd_register: aged 18 or over with a stage 3-5 diagnosis and no
+      later stage 1-2 or resolved code. A stage 1-2 or resolved code on the same
+      date retains the diagnosis.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: earliest_diagnosis_date
+        description: Earliest CKD stage 3-5 code known by the month-end.
+      - name: latest_diagnosis_date
+        description: Latest CKD stage 3-5 code known by the month-end.
+      - name: latest_resolved_date
+        description: Latest CKD resolved code known by the month-end.
+      - name: latest_stage_1_2_date
+        description: Latest CKD stage 1-2 code known by the month-end.

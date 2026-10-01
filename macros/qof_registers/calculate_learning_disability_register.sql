@@ -1,7 +1,7 @@
-{% macro calculate_learning_disability_register(reference_date_expr='CURRENT_DATE()') %}
+{% macro calculate_learning_disability_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
     {# Pair: fct_person_learning_disability_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
     {#
-    Calculates Learning Disability register status at a given reference date.
+    Calculates Learning Disability register status at one or more reference dates.
 
     Business Logic (QOF v50):
     - Has learning disability diagnosis (LD_COD)
@@ -9,33 +9,45 @@
     - No age restriction in QOF spec (includes all ages)
 
     Parameters:
-        reference_date_expr: SQL expression for reference date (default: CURRENT_DATE())
+        reference_date_expr: SQL expression for a single reference date (default: CURRENT_DATE())
+        reference_dates: query returning a reference_date column; evaluates every
+            date it returns instead of reference_date_expr
 
-    Returns: CTE with person_id, register_name, is_on_register
+    Returns: one row per person with a record known by each reference date:
+        reference_date, person_id, register_name, is_on_register,
+        earliest_diagnosis_date, latest_diagnosis_date
     #}
 
-    WITH learning_disability_diagnoses_filtered AS (
+    WITH reference_dates AS (
+        {{ ltc_register_reference_dates(reference_date_expr, reference_dates) }}
+    ),
+
+    learning_disability_diagnoses_filtered AS (
         SELECT
-            person_id,
+            ref_date.reference_date,
+            event.person_id,
             clinical_effective_date,
             is_diagnosis_code,
             is_exclusion_code
-        FROM {{ ref('int_learning_disability_diagnoses_all') }}
-        WHERE clinical_effective_date <= {{ reference_date_expr }} AND (date_recorded IS NULL OR CAST(date_recorded AS DATE) <= {{ reference_date_expr }})
+        FROM {{ ref('int_learning_disability_diagnoses_all') }} AS event
+        INNER JOIN reference_dates AS ref_date
+            ON {{ ltc_register_known_by('event.clinical_effective_date', 'event.date_recorded', 'ref_date.reference_date') }}
     ),
 
     learning_disability_person_aggregates AS (
         SELECT
+            reference_date,
             person_id,
             MIN(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) AS earliest_diagnosis_date,
             MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) AS latest_diagnosis_date,
             MAX(CASE WHEN is_exclusion_code THEN clinical_effective_date END) AS latest_exclusion_date
         FROM learning_disability_diagnoses_filtered
-        GROUP BY person_id
+        GROUP BY reference_date, person_id
     ),
 
     learning_disability_register_logic AS (
         SELECT
+            diag.reference_date,
             diag.person_id,
             'Learning Disability' AS register_name,
             COALESCE(
@@ -47,14 +59,19 @@
                     OR diag.latest_diagnosis_date > diag.latest_exclusion_date
                 ),
                 FALSE
-            ) AS is_on_register
+            ) AS is_on_register,
+            diag.earliest_diagnosis_date,
+            diag.latest_diagnosis_date
         FROM learning_disability_person_aggregates diag
     )
 
     SELECT
+        reference_date,
         person_id,
         register_name,
-        is_on_register
+        is_on_register,
+        earliest_diagnosis_date,
+        latest_diagnosis_date
     FROM learning_disability_register_logic
 
 {% endmacro %}
