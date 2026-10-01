@@ -31,24 +31,13 @@ FROM {{ ref('int_csf_leak_latest')}}
 -- clinical intermediates before that gate. RSV_1D applies the 65-74 band at
 -- eligibility, not on this flag.
 ,RSV_clinical_risk_groups AS (
+-- Current flu campaign only: the flags model has a row only where a person is
+-- in a clinical group that campaign, so a person's last row can be from an
+-- older season whose evidence has lapsed.
 SELECT DISTINCT person_id
-FROM (
-    SELECT
-        person_id,
-        campaign_id,
-        TO_DATE(REGEXP_SUBSTR(campaign_id, '[0-9]{4}') || '-09-01') AS valid_from,
-        DATEADD(DAY, -1, LEAD(TO_DATE(REGEXP_SUBSTR(campaign_id, '[0-9]{4}') || '-09-01'))
-            OVER (PARTITION BY person_id ORDER BY campaign_id)) AS valid_to,
-        CASE
-            WHEN COALESCE(HAS_CRD, FALSE)
-              OR COALESCE(IS_IMMUNOSUPPRESSED, FALSE)
-            THEN TRUE
-            ELSE FALSE
-        END AS IN_RSV_CLINICAL_RISK_GROUP
-    FROM {{ ref('int_covid_flu_risk_group_flags') }}
-    WHERE campaign_id LIKE 'Flu%'
-) a
-WHERE IN_RSV_CLINICAL_RISK_GROUP AND valid_to IS NULL
+FROM {{ ref('int_covid_flu_risk_group_flags') }}
+WHERE campaign_id = '{{ flu_current_campaign() }}'
+    AND (COALESCE(has_crd, FALSE) OR COALESCE(is_immunosuppressed, FALSE))
 )
 --Using the person_demographics for anyone over the age of 60 who has been ever been registered with an NCL practice (active or inactive) n~200,000
 --Creating a base table for vaccinations for this population to be joined against in further analysis n~2.5 million rows 
