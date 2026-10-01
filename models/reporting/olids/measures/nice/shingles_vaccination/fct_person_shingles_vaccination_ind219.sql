@@ -2,19 +2,25 @@
 
 -- NICE IND219: https://www.nice.org.uk/indicators/ind219
 -- Shingles vaccination between the 70th and 75th birthdays for people who reached 75 in the preceding 12 months; excludes immunosuppressed people.
-WITH indicator_population AS (
+WITH current_immunosuppression AS (
+    SELECT DISTINCT person_id
+    FROM {{ ref('int_covid_immunosuppression') }}
+    WHERE campaign_id = '{{ covid_current_autumn() }}'
+),
+
+indicator_population AS (
     SELECT
         age.person_id,
         age.age,
         age.birth_date_approx::DATE AS birth_date_approx,
         DATEADD(year, 75, age.birth_date_approx)::DATE AS seventy_fifth_birthday
     FROM {{ ref('dim_person_age') }} AS age
-    LEFT JOIN {{ ref('int_adult_imms_current_population') }} AS adult
-        ON age.person_id = adult.person_id
+    LEFT JOIN current_immunosuppression AS immunosuppression
+        ON age.person_id = immunosuppression.person_id
     WHERE DATEADD(year, 75, age.birth_date_approx) > DATEADD(month, -12, CURRENT_DATE())
         AND DATEADD(year, 75, age.birth_date_approx) <= CURRENT_DATE()
-        -- NICE excludes immunocompromised people
-        AND NOT COALESCE(adult.is_immunosuppressed, FALSE)
+        -- Current COVID campaign membership is the immunocompromise proxy.
+        AND immunosuppression.person_id IS NULL
 ),
 
 doses AS (

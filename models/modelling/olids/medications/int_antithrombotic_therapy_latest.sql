@@ -3,11 +3,12 @@
 /*
 Latest antiplatelet and oral anticoagulant orders per person, for "is being
 taken" measures such as NICE IND132, IND133 and IND94. One row per person with
-either class ever ordered. Antiplatelets are BNF 2.9; oral anticoagulants are
+an order or treatment record. Antiplatelets are BNF 2.9; oral anticoagulants are
 BNF 2.8.2. Orders dated before 1990 or after the build date are ignored.
 
-Recorded OTC salicylate use (OSAL_COD) and oral anticoagulant prophylaxis
-(ORANTICOAG_COD) also establish that treatment is being taken for NICE IND132,
+Recorded OTC salicylate use (OSAL_COD), clopidogrel prophylaxis (CLO_COD)
+and oral anticoagulant prophylaxis (ORANTICOAG_COD) also establish that
+treatment is being taken for NICE IND132,
 IND133 and IND94. They do not establish an anticoagulant prescription for AF.
 Consumers apply their own window to the latest dates.
 */
@@ -38,11 +39,11 @@ anticoagulant AS (
 treatment_records AS (
     SELECT
         obs.person_id,
-        MAX(CASE WHEN obs.cluster_id = 'OSAL_COD'
+        MAX(CASE WHEN obs.cluster_id IN ('OSAL_COD', 'CLO_COD')
             THEN obs.clinical_effective_date::DATE END) AS latest_antiplatelet_record_date,
         MAX(CASE WHEN obs.cluster_id = 'ORANTICOAG_COD'
             THEN obs.clinical_effective_date::DATE END) AS latest_anticoagulant_record_date
-    FROM ({{ get_observations("'OSAL_COD', 'ORANTICOAG_COD'", source='PCD') }}) obs
+    FROM ({{ get_observations("'OSAL_COD', 'CLO_COD', 'ORANTICOAG_COD'", source='PCD') }}) obs
     WHERE obs.clinical_effective_date::DATE BETWEEN '1990-01-01' AND CURRENT_DATE()
     GROUP BY obs.person_id
 )
