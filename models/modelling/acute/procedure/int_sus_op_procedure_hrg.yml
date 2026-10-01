@@ -1,6 +1,10 @@
 models:
   - name: int_sus_op_procedure_hrg
-    description: "All bundled and unbundled HRGs recorded for individuals in an outpatient setting. Grain: HRG code"
+    description: >
+      One row per outpatient appointment and bundled or unbundled HRG code.
+      Repeated occurrences of the same code are represented by
+      observation_count. Includes activity without a linked patient key; use
+      visit_occurrence_id to join to the appointment.
     config:
       meta:
         owner:
@@ -37,9 +41,9 @@ models:
 
       - name: sk_patient_id
         data_type: varchar
-        description: "Unique patient identifer linkage across commissioning datasets"
-        tests:
-          - not_null
+        description: >
+          Common commissioning patient identifier. Null when the appointment
+          cannot be linked to a person; the HRG remains valid activity.
 
       - name: organisation_id
         data_type: varchar

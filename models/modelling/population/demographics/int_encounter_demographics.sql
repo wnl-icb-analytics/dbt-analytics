@@ -17,6 +17,7 @@ op_demo as(
     appointment_patient_identity_ethnic_category as ethnicity_at_event,
     appointment_patient_residence_derived_postcode_district as postcode_district_at_event,
     appointment_patient_residence_derived_lsoa_11 as lsoa_11_at_event,
+    appointment_patient_residence_derived_lsoa_21 as lsoa_21_at_event,
     appointment_patient_residence_derived_local_authority_district as lad_at_event,
     appointment_patient_residence_derived_index_of_multiple_deprivation_decile as imd_at_event,
     appointment_patient_registration_general_practice as reg_practice_at_event,
@@ -32,6 +33,7 @@ apc_demo as (
     , spell_patient_identity_ethnic_category as ethnicity_at_event
     , spell_patient_residence_derived_postcode_district as postcode_district_at_event
     , spell_patient_residence_derived_lsoa_11 as lsoa_11_at_event
+    , spell_patient_residence_derived_lsoa_21 as lsoa_21_at_event
     , spell_patient_residence_derived_local_authority_district as lad_at_event
     , spell_patient_residence_derived_index_of_multiple_deprivation_decile as imd_at_event
     , spell_patient_registration_general_practice as reg_practice_at_event
@@ -47,6 +49,7 @@ ae_demo as (
     , patient_ethnic_category as ethnicity_at_event
     , patient_usual_address_postcode_district as postcode_district_at_event
     , patient_usual_address_lsoa_11 as lsoa_11_at_event
+    , patient_usual_address_lsoa_21 as lsoa_21_at_event
     , patient_usual_address_local_authority_district as lad_at_event
     , patient_usual_address_index_of_multiple_deprivation_decile as imd_at_event
     , patient_gp_registration_general_practice as reg_practice_at_event
@@ -62,6 +65,7 @@ wl_demo as (
     , ethnic_category as ethnicity_at_event
     , null::varchar as postcode_district_at_event
     , null::varchar as lsoa_11_at_event
+    , null::varchar as lsoa_21_at_event
     , null::varchar as lad_at_event
     , null::varchar as imd_at_event
     , practice_code as reg_practice_at_event
@@ -92,6 +96,7 @@ select primarykey_id as visit_occurrence_id
     , eth.ethnicity_desc as ethnicity_desc_at_event
     , postcode_district_at_event
     , lsoa_11_at_event
+    , lsoa_21_at_event
     , lad_at_event
     , imd_at_event
     , reg_practice_at_event

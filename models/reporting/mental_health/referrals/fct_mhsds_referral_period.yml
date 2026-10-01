@@ -1,0 +1,50 @@
+version: 2
+models:
+- name: fct_mhsds_referral_period
+  description: >-
+    Referral state in each accepted submission. Each row is one referral and submission. A referral
+    is open at period end if it was received by that date and has no rejection or discharge by that
+    date. Attendance uses records whose contact date and reporting period are both no later than the
+    selected period end. Later accepted corrections can revise historical results. An open referral
+    with no attendance provides evidence of waiting, but does not establish eligibility for a
+    national waiting list or target. Attendance follows the same referral ID when national person
+    IDs change, with differences flagged.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: referral_period_id
+    description: Key for the referral and accepted submission.
+    data_tests:
+    - unique
+    - not_null
+  - name: person_provider_period_id
+    description: Key for demographic context in the same provider reporting period; a matching MPI row can
+      be absent.
+  - name: is_recorded_open_at_period_end
+    description: Receipt on or before period end, with no rejection or discharge on or before that date. Null
+      if receipt is unknown and other conditions allow an open state.
+  - name: is_open_without_recorded_attendance
+    description: Recorded open state with no attended contact evidenced by that period. A person can be awaiting
+      other care after a first contact.
+  - name: recorded_access_state
+    description: Receipt-date missing, not started, rejected, discharged, attended contact recorded or no attended
+      contact recorded, evaluated at the period end.
+  - name: days_open_without_recorded_attendance
+    description: Calendar days since receipt at period end for the recorded open-without-attendance population.
+      Null otherwise.
+  - name: observed_days_to_first_attendance
+    description: Non-negative calendar days from this period's recorded receipt to first evidenced attendance;
+      null for missing or inconsistent dates.
+  - name: attendance_evidence_available_by_date
+    description: Latest usable attendance-evidence boundary no later than period end. This is the later of
+      contact date and accepted reporting-period end, not file receipt.
+  - name: has_pre_referral_attendance
+    description: Earliest evidenced attendance precedes this period's referral receipt date; the observed interval
+      is null.
+  - name: has_attendance_person_identifier_difference
+    description: At least one non-null person identifier on evidenced attendance differs from this referral
+      snapshot. Can reflect a changed national identifier; attendance is not discarded.
+  - name: last_recorded_attended_contact_date
+    description: Latest attended date supported by accepted evidence through this period end.

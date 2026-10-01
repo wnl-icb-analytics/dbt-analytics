@@ -1,0 +1,36 @@
+version: 2
+models:
+- name: int_csds_person_evidence
+  description: >-
+    The identifiable people found in modelled CSDS evidence. Each row is one person and evidence
+    type, with the number of accepted source records and the first and last reporting periods they
+    appear in. Covers patient records, GP registrations, referrals, service teams, clock records,
+    contacts, care activities and clinical records. It supplies the population for
+    fct_csds_person_summary. The patient bridge does not create or remove people here.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - evidence_type
+  columns:
+  - name: person_id
+    description: CSDS person identifier.
+    data_tests:
+    - not_null
+  - name: evidence_type
+    description: Source family the evidence comes from.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [patient_record, gp_registration, referral, service_team, referral_to_treatment, care_contact, care_activity, clinical_record]
+  - name: n_records
+    description: Accepted source rows (clinical records for clinical_record), counting repeated monthly submissions.
+  - name: first_reporting_period_end_date
+    description: Earliest reporting period containing this evidence.
+  - name: last_reporting_period_end_date
+    description: Latest reporting period containing this evidence.

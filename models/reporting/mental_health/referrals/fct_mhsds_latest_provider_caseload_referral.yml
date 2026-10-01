@@ -1,0 +1,32 @@
+version: 2
+models:
+- name: fct_mhsds_latest_provider_caseload_referral
+  description: >-
+    Open referrals from each provider's latest accepted reporting period. Each row is one referral
+    received by period end with no rejection or discharge by that date. Includes referrals without
+    an attended contact, with no inactivity cut-off. Provider periods can differ or be old; use the
+    lag fields when comparing providers. Use fct_mhsds_current_caseload_referral for a common
+    dataset-latest month. Referrals absent from a provider's latest submission are neither carried
+    forward nor declared discharged. Join team relationships using both submission and referral;
+    several teams may match. Eddie Davison owns the definition.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: referral_period_id
+    description: Unique open referral-period key.
+    data_tests:
+    - unique
+    - not_null
+  - name: recorded_caseload_contact_state
+    description: No attendance recorded, attended in the latest provider period, or attendance only in an earlier
+      period. This does not prove an active treatment plan.
+  - name: days_since_last_attended_contact
+    description: Calendar days from the latest evidenced attended contact to the provider period end. Null
+      when no attendance is evidenced.
+  - name: provider_months_behind_dataset
+    description: Difference in calendar months from this provider evidence date to the dataset latest period.
+      Zero is aligned; larger values show older evidence.
+  - name: days_since_referral_received
+    description: Calendar days since receipt at the provider evidence date.

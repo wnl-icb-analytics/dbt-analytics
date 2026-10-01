@@ -1,0 +1,58 @@
+models:
+  - name: fct_person_segment_snapshot_input
+    description: >-
+      Core person-level segment fields used by fct_person_segment_snapshot.
+      One row represents one person in the current segmentation output,
+      limited to the segment assignment, population state and cohort
+      membership. Age, general demographics and the drivers behind each cohort
+      (LTC counts, criteria counts and criterion flags) are excluded so they do
+      not open extra snapshot versions. Cohort membership can still change
+      because a rolling 12-month activity window moved rather than because new
+      evidence was recorded, so a new version does not always mean a new
+      clinical event. Use fct_person_segment for the drivers and demographics.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier and snapshot key.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: segment_number
+        description: Assigned segment, 1-8, with the highest eligible segment winning.
+
+      - name: segment_name
+        description: Assigned segment name.
+
+      - name: is_active
+        description: Currently registered in the scoped GP population.
+
+      - name: is_deceased
+        description: Person is recorded as deceased.
+
+      - name: is_end_of_life
+        description: Meets the End of Life cohort definition.
+
+      - name: is_complex_adult
+        description: >-
+          Meets the Adults with Complexity cohort definition. Some criteria use
+          rolling 12-month activity counts, so this can change as the window
+          moves.
+
+      - name: has_multiple_ltcs
+        description: Adult with at least two qualifying LTCs.
+
+      - name: has_single_ltc
+        description: Adult with one qualifying LTC.
+
+      - name: is_complex_child
+        description: >-
+          Meets at least one children with complexity criterion. Some criteria
+          use rolling 12-month activity counts, so this can change as the
+          window moves.
+
+      - name: has_child_health_needs
+        description: Child with at least one qualifying LTC.

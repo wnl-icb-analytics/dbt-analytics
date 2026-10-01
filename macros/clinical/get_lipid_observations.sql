@@ -10,9 +10,11 @@
     'TCHOLHDL_COD': [1, 20]
 } -%}
 {%- set validity_range = validity_ranges[cluster_id] -%}
-{#- Labels that mean "no unit supplied" rather than a unit. -#}
-{%- set unknown_unit_labels = "'.', 'unknown', '(unknown)', 'unknownunits', 'unkuom', 'n/a', '(nouom)'" -%}
-{%- set ratio_unit_labels = "'ratio', '1', ':1', '1/1', 'mmol/mmol', 'mol/mol', 'totalcholesterol:hdlratio'" -%}
+{#- Labels that mean "no unit supplied" rather than a unit. The UCUM map sends unknown and
+    unparseable source units (e.g. mg/100 ml, (Unknown)) to [arb'U], so it falls through to
+    the source unit label. -#}
+{%- set unknown_unit_labels = "'.', 'unknown', '(unknown)', 'unknownunits', 'unkuom', 'n/a', '(nouom)', '[arb''u]'" -%}
+{%- set ratio_unit_labels = "'ratio', '{ratio}', '1', ':1', '1/1', 'mmol/mmol', 'mol/mol', 'totalcholesterol:hdlratio'" -%}
 {#- Labels whose recorded values profile as mmol/L in OLIDS despite the label: mg/100ml results
     have a median of 5.6 for total cholesterol and 1.5 for HDL; the others are typos or
     impossible units for a lipid concentration. Treated as mmol/L and flagged for review. -#}
@@ -33,8 +35,12 @@ recorded AS (
         NULLIF(TRIM(units.display), '') AS source_result_unit_display,
         NULLIF(TRIM(obs.result_unit_code), '') AS mapped_result_unit_code,
         NULLIF(TRIM(obs.result_unit_display), '') AS mapped_result_unit_display,
+        -- The mapped unit is keyed on its UCUM code (mmol/L, mg/dL, {ratio}); its display is
+        -- the UCUM long name (millimole per liter). The source unit concept has no UCUM code,
+        -- so its display comes first.
+        LOWER(REPLACE(COALESCE(source_result_unit_display, source_result_unit_code), ' ', '')) AS source_unit_label,
+        LOWER(REPLACE(COALESCE(mapped_result_unit_code, mapped_result_unit_display), ' ', '')) AS mapped_unit_label,
         {% for prefix in ['source', 'mapped'] %}
-        LOWER(REPLACE(COALESCE({{ prefix }}_result_unit_display, {{ prefix }}_result_unit_code), ' ', '')) AS {{ prefix }}_unit_label,
         CASE
             WHEN {{ prefix }}_unit_label IN ({{ unknown_unit_labels }}) THEN NULL
             WHEN {{ prefix }}_unit_label IN ('µmol/l', 'μmol/l') THEN 'umol/l'

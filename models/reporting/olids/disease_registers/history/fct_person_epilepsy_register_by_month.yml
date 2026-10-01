@@ -1,0 +1,36 @@
+models:
+  - name: fct_person_epilepsy_register_by_month
+    description: >
+      Epilepsy register at each completed month-end, on the QOF rules of
+      fct_person_epilepsy_register: aged 18 or over with a diagnosis later than
+      any resolution code and an epilepsy medication order in the preceding six
+      months.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: earliest_diagnosis_date
+        description: Earliest epilepsy diagnosis known by the month-end.
+      - name: latest_diagnosis_date
+        description: Latest epilepsy diagnosis known by the month-end.
+      - name: latest_resolved_date
+        description: Latest epilepsy resolved code known by the month-end.
+      - name: latest_medication_date
+        description: Latest epilepsy medication order known by the month-end in the preceding six-month window.

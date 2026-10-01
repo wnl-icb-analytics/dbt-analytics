@@ -1,0 +1,37 @@
+models:
+  - name: int_segmentation_ltc_count_history
+    description: >-
+      Monthly LTC count for population segmentation. One row represents one
+      active person with at least one qualifying LTC at one of the last 60
+      completed month-ends. The wider list contains 16 complex-adult
+      conditions plus NAFLD. Learning disability counts below age 18 or from
+      age 65.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, end_date]
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: end_date
+        description: Completed month-end used as the register reference date.
+        data_tests:
+          - not_null
+      - name: ltc_count
+        description: Count of qualifying condition registers, from 1 to 17.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 17
+      - name: ltc_list
+        description: Sorted array of qualifying condition codes.
+        data_tests:
+          - not_null

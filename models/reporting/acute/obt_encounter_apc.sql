@@ -17,6 +17,9 @@ select
     , start_time
     , end_date
     , end_time
+    , estimated_discharge_date
+    , has_estimated_discharge_date
+    , estimated_discharge_date_method
     , is_open_spell
     , duration
     , duration_to_date
@@ -50,6 +53,7 @@ select
     , ethnicity_desc_at_event
     , postcode_district_at_event
     , lsoa_11_at_event
+    , lsoa_21_at_event
     , lad_at_event
     , imd_at_event
     , reg_practice_at_event

@@ -3,11 +3,12 @@ version: 2
 macros:
   - name: get_ltc_lcs_htn_bp_control
     description: >
-      Generates the LTC LCS hypertension good blood-pressure-control outcome for a supplied
-      date window. Returns one row per person on the hypertension register with their last
-      known paired BP reading in the window and a strict good-control flag
-      (age <= 80: <= 140/90; age > 80: <= 150/90). No clinic/home/ABPM split and no
-      ACR/CKD/diabetes target tightening. Shared by the rolling and financial-year variant models.
+      Generates the LTC LCS ICS_HTN_21 hypertension BP control outcome for a supplied date
+      window. Returns one row per hypertension register member not
+      excluded for age 90+, end of life care, care home or latest moderate/severe frailty
+      finding, with their last paired BP reading in the window and a flag for being below the
+      NICE target (under 80: clinic < 140/90, home/ABPM < 135/85; 80+: clinic < 150/90,
+      home/ABPM < 145/85). Current registration is left to consumers (is_active). Shared by the rolling and financial-year variant models.
     arguments:
       - name: window_start
         type: string

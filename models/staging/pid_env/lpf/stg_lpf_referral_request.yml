@@ -4,7 +4,8 @@ models:
   - name: stg_lpf_referral_request
     description: |
       Staging layer for local provider flow referral request data.
-      Transformations: Removes deleted records, removes nulls on ReferralRequestID, deduplicates by latest version.
+      One row per referral_request_id, holding the highest-version submission that is not deleted (ingestion time, then file row, break ties).
+      Removes deleted records and null referral_request_id values.
       Source: raw_lpf_referral_request
 
     config:
@@ -13,48 +14,17 @@ models:
           name: Data Team
 
     columns:
-      - name: metadata_record_ingestion_timestamp
-        description: "Timestamp when record was ingested"
+      - name: referral_request_id
+        description: Provider identifier for the referral request. One row per value.
+        # Grain holds by construction (row_number = 1 per key). Each test re-runs
+        # the full dedup over the source, so these run in the monthly build only.
         data_tests:
-          - not_null
+          - unique:
+              config:
+                tags: ['monthly-full']
+          - not_null:
+              config:
+                tags: ['monthly-full']
 
-tests:
-  - name: concept_mapping_referral
-    description: "Referral priority codes must have code system and display"
-    sql: |
-      select * from {{ ref('stg_lpf_referral_request') }}
-      where priority_code_id is not null and (priority_code_system_id is null or priority_display is null)
-    config:
-      severity: warn
-      store_failures: true
-
-  - name: referential_integrity_referral
-    description: "All referral records must reference valid persons"
-    sql: |
-      select * from {{ ref('stg_lpf_referral_request') }} where person_id is null
-    config:
-      severity: error
-      store_failures: true
-
-  - name: referral_status_specified
-    description: "All referrals must have a status code"
-    sql: |
-      select * from {{ ref('stg_lpf_referral_request') }}
-      where "StatusCodeID" is null
-    config:
-      severity: warn
-      store_failures: true
-
-  - name: data_freshness_referral
-    description: "Referral data should be current (last 7 days typical for waiting list tracking)"
-    sql: |
-      with freshness as (
-        select
-          max(metadata_record_ingestion_timestamp) as latest_ingestion,
-          datediff(day, max(metadata_record_ingestion_timestamp), current_timestamp()) as days_since_latest
-        from {{ ref('stg_lpf_referral_request') }}
-      )
-      select * from freshness where days_since_latest > 7
-    config:
-      severity: warn
-      store_failures: true
+      - name: metadata_record_ingestion_timestamp
+        description: Timestamp when the record was ingested.

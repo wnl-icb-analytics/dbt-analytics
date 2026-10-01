@@ -1,0 +1,41 @@
+version: 2
+models:
+- name: int_mhsds_inpatient_occupancy
+  description: >-
+    Inpatient intervals inferred from recorded hospital spells. Each row is one retained spell. For
+    the same person and admission date, the latest submission evidence wins. Contained spells are
+    removed and a later admission ends an overlapping spell. Undischarged spells reported within two
+    calendar months of the latest staged spell period remain open. Older spells end at the later of
+    their last reporting period and admission plus one day. The run date is used when comparing open
+    intervals. Reporting, encounters and costing reuse this selection; this table itself adds no
+    costing classification.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: uniq_hosp_prov_spell_num
+    description: Established spell number used by encounter and currency models; one retained occupancy
+      interval.
+    data_tests:
+    - not_null
+    - unique
+  - name: uniq_hosp_prov_spell_id
+    description: Provider-qualified key joining to source_record_id in the recorded hospital-spell fact.
+  - name: person_id
+    description: Recorded MHSDS person. Null when unidentified; the spell number is used for partitioning without replacing this value.
+  - name: end_date
+    description: Recorded or inferred exclusive interval end for bed-day analysis. Null for a retained
+      open interval.
+  - name: end_date_source
+    description: discharged, open, last_submission or superseded. A later admission can truncate a recorded
+      discharge.
+  - name: latest_period_end
+    description: Maximum reporting-period end among staged spells, preserving the existing occupancy freshness
+      anchor.
+  - name: reporting_period_end_date
+    description: Last submission evidence for the retained spell.
+  - name: sk_patient_id
+    description: Cross-system patient key; null when no bridge exists.
+  - name: calculation_date
+    description: Run date used to evaluate open interval comparisons and supersession.

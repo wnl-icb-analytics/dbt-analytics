@@ -1,0 +1,53 @@
+version: 2
+models:
+- name: int_mhsds_diagnosis
+  description: >-
+    Recorded diagnoses with repeated versions resolved. Each row identifies a diagnosis by source,
+    provider-local patient or referral, person, coding scheme, code and clinical date/time
+    precision. Fully identified diagnoses use the latest accepted version. Missing related records,
+    scheme, code or time leave separate source rows. A missing national person ID does not prevent
+    version selection when the provider-local identifiers are complete. Different codes and person
+    IDs remain separate. First and last reporting periods describe submission evidence, not clinical
+    onset or current diagnosis.
+  config: &id001
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Stable guarded logical diagnosis key, with source-row fallback for incomplete keys.
+    data_tests:
+    - not_null
+    - unique
+  - name: diagnosis_scheme_code
+    description: Submitted diagnosis scheme, labelled in the reporting fact.
+  - name: accepted_source_record_count
+    description: Number of accepted source rows represented by this retained diagnosis.
+  - name: has_person_identifier_changed
+    description: TRUE when different national person identifiers occur for the source diagnosis key.
+- name: int_mhsds_clinical_record
+  description: >-
+    Clinical evidence brought together before shared patient and terminology enrichment. Each row is
+    one source occurrence and clinical record type. Referral and activity assessment responses
+    remain separate, including repeated scores. Activity-assessment time is taken only from a
+    matching activity in the same submission with no conflicting person or referral ID; both person
+    IDs can be missing when the other links agree. Historical clustering responses use the latest
+    source-identified version and a same-submission completion record. Presenting complaints remain
+    separate from diagnoses. Staff links are not expanded into extra clinical rows.
+  config: *id001
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - source_table
+        - source_record_id
+        - clinical_record_type
+  columns:
+  - name: source_record_id
+    description: Guarded diagnosis key, accepted assessment-row key or established activity key.
+    data_tests:
+    - not_null
+  - name: source_table
+    description: MHSDS table supplying the occurrence.
+  - name: clinical_record_type
+    description: Clinical component or assessment/diagnosis role.

@@ -1,31 +1,45 @@
-{% macro calculate_asthma_register(reference_date_expr='CURRENT_DATE()') %}
+{% macro calculate_asthma_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
+    {# Pair: fct_person_asthma_register.sql. This macro is strict as-of and derives age at the reference date; the live fact includes future-dated records. #}
     {#
-    Calculates Asthma register status at a given reference date.
+    Calculates Asthma register status at one or more reference dates.
 
     Business Logic:
-    - Age ≥6 at reference date
+    - Age ≥5 at reference date
     - Active asthma diagnosis (latest diagnosis > latest resolution)
     - Recent asthma medication (within 12 months prior to reference date)
 
     Parameters:
-        reference_date_expr: SQL expression for reference date (default: CURRENT_DATE())
+        reference_date_expr: SQL expression for a single reference date (default: CURRENT_DATE())
+        reference_dates: query returning a reference_date column; evaluates every
+            date it returns instead of reference_date_expr
 
-    Returns: CTE with person_id, register_name, is_on_register
+    Returns: one row per person with an asthma record known by each reference date:
+        reference_date, person_id, register_name, is_on_register,
+        earliest_diagnosis_date, latest_diagnosis_date, latest_resolved_date,
+        latest_medication_date
     #}
 
-    WITH asthma_diagnoses_filtered AS (
+    WITH reference_dates AS (
+        {{ ltc_register_reference_dates(reference_date_expr, reference_dates) }}
+    ),
+
+    asthma_diagnoses_filtered AS (
         SELECT
-            person_id,
-            clinical_effective_date,
-            is_diagnosis_code,
-            is_resolved_code
-        FROM {{ ref('int_asthma_diagnoses_all') }}
-        WHERE clinical_effective_date <= {{ reference_date_expr }} AND (date_recorded IS NULL OR CAST(date_recorded AS DATE) <= {{ reference_date_expr }})
+            ref_date.reference_date,
+            diag.person_id,
+            diag.clinical_effective_date,
+            diag.is_diagnosis_code,
+            diag.is_resolved_code
+        FROM {{ ref('int_asthma_diagnoses_all') }} AS diag
+        INNER JOIN reference_dates AS ref_date
+            ON {{ ltc_register_known_by('diag.clinical_effective_date', 'diag.date_recorded', 'ref_date.reference_date') }}
     ),
 
     asthma_person_aggregates AS (
         SELECT
+            reference_date,
             person_id,
+            MIN(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) AS earliest_diagnosis_date,
             MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) AS latest_diagnosis_date,
             MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END) AS latest_resolved_date,
             COALESCE(
@@ -38,47 +52,65 @@
                 FALSE
             ) AS has_active_asthma_diagnosis
         FROM asthma_diagnoses_filtered
-        GROUP BY person_id
+        GROUP BY reference_date, person_id
     ),
 
     asthma_medications_filtered AS (
         SELECT
-            person_id,
-            MAX(order_date) AS latest_medication_date
-        FROM {{ ref('int_asthma_medications_all') }}
-        WHERE order_date >= {{ reference_date_expr }} - INTERVAL '12 months'
-          AND order_date <= {{ reference_date_expr }}
-        GROUP BY person_id
+            ref_date.reference_date,
+            med.person_id,
+            MAX(med.order_date) AS latest_medication_date
+        FROM {{ ref('int_asthma_medications_all') }} AS med
+        INNER JOIN reference_dates AS ref_date
+            ON med.order_date >= ref_date.reference_date - INTERVAL '12 months'
+            AND {{ ltc_register_known_by('med.order_date', 'med.date_recorded', 'ref_date.reference_date') }}
+        GROUP BY ref_date.reference_date, med.person_id
     ),
 
     age_at_reference AS (
         SELECT
-            person_id,
-            birth_date_approx,
-            FLOOR(DATEDIFF('month', birth_date_approx, {{ reference_date_expr }}) / 12) AS age
-        FROM {{ ref('dim_person_birth_death') }}
-        WHERE birth_date_approx IS NOT NULL
+            diag.reference_date,
+            diag.person_id,
+            FLOOR(DATEDIFF('month', birth.birth_date_approx, diag.reference_date) / 12) AS age
+        FROM asthma_person_aggregates AS diag
+        INNER JOIN {{ ref('dim_person_birth_death') }} AS birth
+            ON diag.person_id = birth.person_id
+        WHERE birth.birth_date_approx IS NOT NULL
     ),
 
     asthma_register_logic AS (
         SELECT
+            diag.reference_date,
             diag.person_id,
             'Asthma' AS register_name,
             COALESCE(
-                age.age >= 6
+                age.age >= 5
                 AND diag.has_active_asthma_diagnosis = TRUE
                 AND med.latest_medication_date IS NOT NULL,
                 FALSE
-            ) AS is_on_register
-        FROM asthma_person_aggregates diag
-        LEFT JOIN age_at_reference age ON diag.person_id = age.person_id
-        LEFT JOIN asthma_medications_filtered med ON diag.person_id = med.person_id
+            ) AS is_on_register,
+            diag.earliest_diagnosis_date,
+            diag.latest_diagnosis_date,
+            diag.latest_resolved_date,
+            med.latest_medication_date
+        FROM asthma_person_aggregates AS diag
+        LEFT JOIN age_at_reference AS age
+            ON diag.person_id = age.person_id
+            AND diag.reference_date = age.reference_date
+        LEFT JOIN asthma_medications_filtered AS med
+            ON diag.person_id = med.person_id
+            AND diag.reference_date = med.reference_date
     )
 
     SELECT
+        reference_date,
         person_id,
         register_name,
-        is_on_register
+        is_on_register,
+        earliest_diagnosis_date,
+        latest_diagnosis_date,
+        latest_resolved_date,
+        latest_medication_date
     FROM asthma_register_logic
 
 {% endmacro %}

@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: stg_ukhfd_pss_service_line_hierarchy
+    description: >
+      Service line hierarchy reference data from the UKHFD Prescribed
+      Specialised Services service line hierarchy source. One row represents
+      one source service line hierarchy record.
+      Via raw_ukhfd_pss_service_line_hierarchy.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: service_line
+        description: Prescribed specialised service line identifier.
+      - name: service_line_description
+        description: Description of the prescribed specialised service line.
+      - name: applicable_in_setting_1
+        description: First care setting to which the service line applies.
+      - name: applicable_in_setting_2
+        description: Second care setting to which the service line applies.
+      - name: apc_episode_spell_hierarchies
+        description: APC episode and spell hierarchy mapping for the service line.
+      - name: apc_percentage_top_up
+        description: APC percentage top-up associated with the service line.
+      - name: nac_hierarchy
+        description: National activity category hierarchy for the service line.
+      - name: file_name
+        description: Name of the source file from which the record was imported.
+      - name: import_date
+        description: Date on which the source record was imported.
+      - name: created_date
+        description: Date on which the source record was created.

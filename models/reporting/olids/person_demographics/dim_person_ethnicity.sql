@@ -6,6 +6,8 @@
 }}
 
 -- Person Ethnicity Dimension Table
+-- Subject: person ethnicity classification
+-- Grain: one row per person
 -- Holds the latest ethnicity record for ALL persons
 -- Starts from PATIENT_PERSON and LEFT JOINs the latest ethnicity record if available
 -- Ethnicity fields display 'Not Recorded' for persons with no recorded ethnicity
@@ -57,8 +59,14 @@ persons_with_ethnicity AS (
         lepp.deprioritise_flag,
         lepp.preference_rank,
         lepp.category_sort,
-        lepp.display_sort_key
+        lepp.display_sort_key,
+        e2k.ethnicity_2001_code,
+        e2k.ethnicity_2001_detailed_description,
+        e2k.ethnicity_2001_broad_group,
+        e2k.mapping_status AS ethnicity_2001_mapping_status
     FROM latest_ethnicity_per_person AS lepp
+    LEFT JOIN {{ ref('snomed_ethnicity_2001_bridge') }} AS e2k
+        ON UPPER(TRIM(lepp.snomed_code)) = e2k.snomed_code
 ),
 
 -- Then get all persons to ensure complete coverage
@@ -83,6 +91,13 @@ SELECT
     COALESCE(pwe.ethnicity_category, 'Not Recorded') AS ethnicity_category,
     COALESCE(pwe.ethnicity_subcategory, 'Not Recorded') AS ethnicity_subcategory,
     COALESCE(pwe.ethnicity_granular, 'Not Recorded') AS ethnicity_granular,
+    pwe.ethnicity_2001_code,
+    pwe.ethnicity_2001_detailed_description,
+    pwe.ethnicity_2001_broad_group,
+    CASE
+        WHEN pwe.person_id IS NULL THEN 'no_ethnicity_record'
+        ELSE COALESCE(pwe.ethnicity_2001_mapping_status, 'unmapped_seed_code')
+    END AS ethnicity_2001_mapping_status,
     /* expose sorting helpers for downstream charts */
     pwe.deprioritise_flag,
     pwe.preference_rank,

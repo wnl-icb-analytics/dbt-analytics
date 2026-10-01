@@ -1,0 +1,193 @@
+version: 2
+models:
+- name: fct_mhsds_care_activity
+  description: >-
+    Clinical activities reported within patient contacts. Each row is one accepted MHS202 activity
+    in a provider reporting period. The linked contact supplies date, service and commissioner
+    details. If its date is missing, a valid source-derived activity date within the reporting
+    period is used, with date-only precision. Activities remain when the contact is missing,
+    identified by is_care_contact_linked. Repeated period records are retained.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Stable identifier for the provider, reporting period and care activity.
+    data_tests:
+    - not_null
+    - unique
+  - name: source_dataset
+    description: Source dataset, always MHSDS.
+    data_tests:
+    - not_null
+  - name: mhs202_uniq_id
+    description: Identifier of the accepted MHS202 source row.
+    data_tests:
+    - not_null
+    - unique
+  - name: uniq_care_act_id
+    description: MHSDS-derived care activity identifier, unique within the reporting period.
+    data_tests:
+    - not_null
+  - name: care_act_id
+    description: Provider-local care activity identifier.
+  - name: referral_source_record_id
+    description: MHSDS unique service request identifier; joins to fct_mhsds_referral.
+  - name: uniq_care_cont_id
+    description: MHSDS-derived care contact identifier.
+  - name: care_contact_id
+    description: Provider-local care contact identifier.
+  - name: person_id
+    description: MHSDS person identifier.
+  - name: sk_patient_id
+    description: Shared pseudonymised patient identifier where the bridge contains the person.
+  - name: care_activity_date
+    description: Date of the linked care contact, falling back to the selected activity's source-derived
+      date when it is after 1900 and within the reporting period. Null when neither is usable. Supports
+      daily ordering without implying same-day order.
+  - name: care_activity_time
+    description: Time of the linked care contact where submitted.
+  - name: care_activity_at
+    description: Contact timestamp or recovered activity date at midnight. Read with care_activity_time_precision;
+      midnight for date precision is not a recorded clock time.
+  - name: care_activity_time_precision
+    description: Whether care_activity_at has date or timestamp precision.
+  - name: care_activity_time_basis
+    description: same_submission_care_contact for the accepted MHS201 parent date, or source_derived_activity_date
+      for the selected activity's date-only fallback.
+  - name: clinical_contact_duration_minutes
+    description: Clinical contact duration for the activity in minutes.
+  - name: is_clinical_contact_duration_over_24_hours
+    description: TRUE when the submitted duration exceeds 1,440 minutes. This exposes an implausible-duration
+      check and is not an ETOS rejection rule.
+    data_tests:
+    - not_null
+  - name: procedure_code
+    description: Submitted SNOMED CT procedure code or expression, selected from the field defined for
+      the record's MHSDS version.
+  - name: procedure_description
+    description: SNOMED CT preferred term when the procedure is a single recognised concept.
+  - name: procedure_label_status
+    description: Whether the procedure is missing, labelled or an unmatched code or expression.
+  - name: finding_scheme_code
+    description: Submitted finding coding scheme code.
+  - name: finding_scheme_description
+    description: Published description for the finding coding scheme, including retired schemes.
+  - name: finding_code
+    description: Submitted finding code, selected from the field defined for the MHSDS version.
+  - name: finding_description
+    description: ICD-10 or SNOMED CT description where the submitted scheme supports a direct lookup.
+  - name: finding_label_status
+    description: Whether the finding is missing, labelled, mapped to SNOMED CT, unmatched or uses a coding
+      system without a local reference.
+  - name: standardised_snomed_finding_code
+    description: Source-pipeline SNOMED CT code derived from the submitted finding where available.
+  - name: standardised_snomed_finding_description
+    description: SNOMED CT preferred term for the standardised finding code.
+  - name: is_observation_scheme_inferred
+    description: TRUE when the observation scheme comes from the SNOMED-only specification rule rather
+      than a submitted scheme field.
+  - name: observation_scheme_code
+    description: Submitted observation coding scheme through v4.0; 03 (SNOMED CT) for a populated observation
+      code from v4.1, where the specification fixes the coding system.
+  - name: observation_scheme_description
+    description: Published description for the observation coding scheme, including retired schemes.
+  - name: observation_code
+    description: Submitted observation code selected for the MHSDS version.
+  - name: observation_description
+    description: SNOMED CT preferred term when the observation code is recognised, including records where
+      the submitted scheme is missing.
+  - name: observation_label_status
+    description: Whether the observation is missing, labelled, mapped to SNOMED CT or unmatched. A separate
+      status identifies a recognised SNOMED CT code whose required pre-v6 scheme is missing.
+  - name: standardised_snomed_observation_code
+    description: Source-pipeline SNOMED CT code derived from the submitted observation where available.
+  - name: standardised_snomed_observation_description
+    description: SNOMED CT preferred term for the standardised observation code.
+  - name: observation_value
+    description: Submitted numeric observation value, retained as source text.
+  - name: unit_of_measurement_code
+    description: Submitted UCUM unit code selected from the field defined for the MHSDS version.
+  - name: unit_of_measurement_description
+    description: Exact-case UKHFD UCUM or warehouse dictionary label for the submitted symbol or recognised
+      alias.
+  - name: unit_of_measurement_label_status
+    description: Whether the unit code is missing, unmatched or labelled.
+  - name: unit_of_measurement_symbol
+    description: Reference unit symbol. No numeric conversion is applied.
+  - name: unit_of_measurement_match_type
+    description: ucum_code, dictionary_symbol or known_alias. Dictionary and alias matches do not certify
+      UCUM conformance.
+  - name: unit_of_measurement_definition_source
+    description: UKHFD UCUM or the named warehouse dictionary supplying the unit label.
+  - name: has_procedure
+    description: TRUE when MHS202 contains a procedure code.
+  - name: has_finding
+    description: TRUE when MHS202 contains a finding code.
+  - name: has_observation
+    description: TRUE when MHS202 contains an observation code or value.
+  - name: clinical_item_count
+    description: Number of populated procedure, finding and observation components, from zero to three.
+  - name: provider_organisation_code
+    description: Organisation code of the provider submitting the activity.
+  - name: provider_organisation_name
+    description: Current organisation name for the provider code.
+  - name: commissioner_organisation_code
+    description: Commissioner code inherited from the linked care contact.
+  - name: commissioner_organisation_name
+    description: Current organisation name for the contact commissioner.
+  - name: derived_icb_commissioner_code
+    description: ICB commissioner derived for the linked care contact.
+  - name: derived_icb_commissioner_name
+    description: Current organisation name for the derived ICB commissioner.
+  - name: derived_sub_icb_commissioner_code
+    description: Sub-ICB commissioner derived for the linked care contact.
+  - name: derived_sub_icb_commissioner_name
+    description: Current organisation name for the derived sub-ICB commissioner.
+  - name: treatment_site_code
+    description: Treatment site code inherited from the linked care contact.
+  - name: treatment_site_name
+    description: Current name for the treatment site.
+  - name: service_or_team_id
+    description: MHSDS-derived identifier for the team linked to the care contact.
+  - name: service_or_team_local_id
+    description: Provider-local identifier for the team linked to the care contact.
+  - name: service_or_team_type_code
+    description: Team type resolved within the linked contact submission.
+  - name: service_or_team_type_description
+    description: Published description for the service or team type, including retired codes.
+  - name: source_service_or_team_type_name
+    description: Source-derived service type name; not a distinct local team name.
+  - name: service_or_team_intended_age_group_code
+    description: Intended patient age group recorded for the service or team.
+  - name: service_or_team_intended_age_group_description
+    description: Published description for the intended age group.
+  - name: is_care_contact_linked
+    description: TRUE when MHS202 resolves to an MHS201 parent in the same accepted submission.
+    data_tests:
+    - not_null
+  - name: is_care_contact_person_consistent
+    description: TRUE when linked MHS202 and MHS201 rows have the same person; null when the care contact
+      is missing.
+  - name: uniq_submission_id
+    description: Accepted submission containing the activity.
+    data_tests:
+    - not_null
+  - name: uniq_month_id
+    description: MHSDS reporting month number, where April 1900 is month 1.
+  - name: reporting_period_start_date
+    description: Start date of the accepted reporting period.
+  - name: reporting_period_end_date
+    description: End date of the accepted reporting period; part of the activity grain.
+    data_tests:
+    - not_null
+  - name: mhsds_version
+    description: MHSDS version assigned by the source pipeline.
+  - name: source_file_received_at
+    description: Timestamp when the source file was received.
+  - name: source_loaded_at
+    description: Timestamp when the source row was loaded.
+  - name: service_or_team_attribution_basis
+    description: >-
+      Source of the selected team pointer, even if its team details are missing.

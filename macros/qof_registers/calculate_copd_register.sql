@@ -1,121 +1,117 @@
-{% macro calculate_copd_register(reference_date_expr='CURRENT_DATE()') %}
+{% macro calculate_copd_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
+    {# Pair: fct_person_copd_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
     {#
-    Calculates COPD register status at a given reference date.
+    Calculates COPD register status at one or more reference dates.
 
-    Implements full QOF v50 COPD Rules 1-4:
+    Implements QOF v51 COPD Rules 1-4:
     - Rule 1: EUNRESCOPD_DAT < 01/04/2023 → automatic inclusion
     - Rule 2: EUNRESCOPD_DAT >= 01/04/2023 + spirometry <0.7 within -93 to +186 days of diagnosis
     - Rule 3: EUNRESCOPD_DAT >= 01/04/2023 + newly registered (last 12 months) + spirometry <0.7 within -93 to +186 days of registration
-    - Rule 4: EUNRESCOPD_DAT >= 01/04/2023 → all remaining patients included (no spirometry code required per QOF v50)
+    - Rule 4: EUNRESCOPD_DAT >= 01/04/2023 → all remaining patients included
 
-    EUNRESCOPD_DAT (Field 22):
-    - If COPDRES_DAT and COPDRES1_DAT are both NULL → COPD_DAT (earliest diagnosis)
-    - Else → COPD1_DAT (earliest diagnosis after latest resolved code). When the patient
-      is fully resolved (resolved code with no later diagnosis) COPD1_DAT is NULL, so
-      EUNRESCOPD_DAT is NULL and the patient is correctly off the register.
+    QOF v51 diagnosis derivation:
+    - COPDDIAG_COD disorder evidence counts at any date up to the reference date.
+    - COPDPROC_COD administrative evidence counts only in the preceding two years.
+    - COPDEAR_DAT is the earliest eligible disorder or administrative evidence.
+    - COPDRES_DAT is the latest resolved code up to the reference date.
+    - COPDLAT_DAT is the earliest eligible evidence after COPDRES_DAT.
+    - EUNRESCOPD_DAT is COPDEAR_DAT when never resolved, otherwise COPDLAT_DAT.
 
     Note: Rule 4 (EUNRESCOPD_DAT >= 01/04/2023 → Select) is the spec's catch-all and makes
-    Rules 2-3 non-gating for the register; the register is diagnosis-based. The spirometry
+    Rules 2-3 non-gating for the register. The spirometry
     rules populate FEV1FVCDIAG/REG dates used by downstream indicators, not the register.
 
     Parameters:
-        reference_date_expr: SQL expression for reference date (default: CURRENT_DATE())
+        reference_date_expr: SQL expression for a single reference date (default: CURRENT_DATE())
+        reference_dates: query returning a reference_date column; evaluates every
+            date it returns instead of reference_date_expr
 
-    Returns: CTE with person_id, register_name, is_on_register
+    Returns: one row per person with eligible COPD evidence known by each reference date:
+        reference_date, person_id, register_name, is_on_register,
+        earliest_diagnosis_date (COPDEAR_DAT), latest_diagnosis_date (latest eligible evidence),
+        latest_resolved_date (COPDRES_DAT), earliest_unresolved_diagnosis_date (EUNRESCOPD_DAT),
+        qof_rule_number (1-4, null when not on the register)
     #}
 
-    WITH copd_diagnoses_filtered AS (
+    WITH reference_dates AS (
+        {{ ltc_register_reference_dates(reference_date_expr, reference_dates) }}
+    ),
+
+    copd_diagnoses_filtered AS (
         SELECT
-            person_id,
-            clinical_effective_date,
-            is_diagnosis_code,
-            is_resolved_code
-        FROM {{ ref('int_copd_diagnoses_all') }}
-        WHERE clinical_effective_date <= {{ reference_date_expr }} AND (date_recorded IS NULL OR CAST(date_recorded AS DATE) <= {{ reference_date_expr }})
+            ref_date.reference_date,
+            diag.person_id,
+            diag.clinical_effective_date,
+            diag.is_disorder_code,
+            diag.is_admin_code,
+            diag.is_resolved_code,
+            -- Disorder codes count at any date; administrative codes only in the two years before the reference date.
+            diag.is_disorder_code
+                OR (
+                    diag.is_admin_code
+                    AND diag.clinical_effective_date > DATEADD('year', -2, ref_date.reference_date)
+                ) AS is_eligible_evidence
+        FROM {{ ref('int_copd_diagnoses_all') }} AS diag
+        INNER JOIN reference_dates AS ref_date
+            ON {{ ltc_register_known_by('diag.clinical_effective_date', 'diag.date_recorded', 'ref_date.reference_date') }}
     ),
 
     copd_person_aggregates AS (
         SELECT
+            reference_date,
             person_id,
-            MIN(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) AS copd_dat,
-            MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) AS copdlat_dat,
-            MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END) AS latest_resolved_date
+            MIN(CASE WHEN is_eligible_evidence THEN clinical_effective_date END) AS copdear_dat,
+            MAX(CASE WHEN is_eligible_evidence THEN clinical_effective_date END) AS latest_evidence_date,
+            MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END) AS copdres_dat
         FROM copd_diagnoses_filtered
-        GROUP BY person_id
+        GROUP BY reference_date, person_id
     ),
 
-    copd_qof_fields AS (
+    copdlat_dat_calc AS (
         SELECT
-            person_id,
-            copd_dat,
-            copdlat_dat,
-            latest_resolved_date,
-            -- COPDRES_DAT: latest resolved after latest diagnosis
-            CASE
-                WHEN latest_resolved_date > copdlat_dat THEN latest_resolved_date
-            END AS copdres_dat,
-            -- COPDRES1_DAT: latest resolved after earliest diagnosis
-            CASE
-                WHEN latest_resolved_date > copd_dat THEN latest_resolved_date
-            END AS copdres1_dat
-        FROM copd_person_aggregates
-    ),
-
-    copd1_dat_calc AS (
-        SELECT
-            qf.person_id,
-            MIN(df.clinical_effective_date) AS copd1_dat
-        FROM copd_qof_fields qf
-        INNER JOIN copd_diagnoses_filtered df
-            ON qf.person_id = df.person_id
-            AND df.is_diagnosis_code = TRUE
-            AND qf.copdres1_dat < df.clinical_effective_date
-        WHERE qf.copdres1_dat IS NOT NULL
-        GROUP BY qf.person_id
+            agg.reference_date,
+            agg.person_id,
+            MIN(df.clinical_effective_date) AS copdlat_dat
+        FROM copd_person_aggregates AS agg
+        INNER JOIN copd_diagnoses_filtered AS df
+            ON agg.person_id = df.person_id
+            AND agg.reference_date = df.reference_date
+            AND df.is_eligible_evidence
+            AND agg.copdres_dat < df.clinical_effective_date
+        WHERE agg.copdres_dat IS NOT NULL
+        GROUP BY agg.reference_date, agg.person_id
     ),
 
     eunrescopd_dat_calc AS (
         SELECT
-            qf.person_id,
-            qf.copd_dat,
-            qf.copdlat_dat,
-            qf.copdres_dat,
-            qf.copdres1_dat,
-            c1.copd1_dat,
-            -- EUNRESCOPD_DAT (Field 22): per exact QOF specification
-            -- If no resolved codes → COPD_DAT; otherwise → COPD1_DAT (may be NULL).
-            -- COPD1_DAT is NULL when the patient has a resolved code with no later
-            -- diagnosis (fully resolved) → EUNRESCOPD_DAT NULL → off register.
+            agg.reference_date,
+            agg.person_id,
+            agg.copdear_dat,
+            agg.latest_evidence_date,
+            agg.copdres_dat,
+            cdc.copdlat_dat,
             CASE
-                WHEN qf.copdres_dat IS NULL AND qf.copdres1_dat IS NULL THEN qf.copd_dat
-                ELSE c1.copd1_dat
+                WHEN agg.copdres_dat IS NULL AND agg.copdear_dat IS NOT NULL
+                    THEN agg.copdear_dat
+                WHEN agg.copdres_dat IS NOT NULL AND agg.copdear_dat IS NOT NULL
+                    THEN cdc.copdlat_dat
             END AS eunrescopd_dat
-        FROM copd_qof_fields qf
-        LEFT JOIN copd1_dat_calc c1 ON qf.person_id = c1.person_id
+        FROM copd_person_aggregates AS agg
+        LEFT JOIN copdlat_dat_calc AS cdc
+            ON agg.person_id = cdc.person_id
+            AND agg.reference_date = cdc.reference_date
     ),
 
     spirometry_filtered AS (
         SELECT
-            person_id,
-            clinical_effective_date AS spirometry_date,
-            fev1_fvc_ratio,
-            is_below_0_7,
-            is_valid_spirometry
-        FROM {{ ref('int_spirometry_all') }}
-        WHERE clinical_effective_date <= {{ reference_date_expr }} AND (date_recorded IS NULL OR CAST(date_recorded AS DATE) <= {{ reference_date_expr }})
-          AND is_valid_spirometry = TRUE
-          AND is_below_0_7 = TRUE
-    ),
-
-    -- Rule 1: Pre-April 2023 automatic inclusion
-    rule_1_qualifiers AS (
-        SELECT
-            person_id,
-            eunrescopd_dat,
-            1 AS rule_number
-        FROM eunrescopd_dat_calc
-        WHERE eunrescopd_dat IS NOT NULL
-          AND eunrescopd_dat < '2023-04-01'
+            ref_date.reference_date,
+            spiro.person_id,
+            spiro.clinical_effective_date AS spirometry_date
+        FROM {{ ref('int_spirometry_all') }} AS spiro
+        INNER JOIN reference_dates AS ref_date
+            ON {{ ltc_register_known_by('spiro.clinical_effective_date', 'spiro.date_recorded', 'ref_date.reference_date') }}
+        WHERE spiro.is_valid_spirometry = TRUE
+          AND spiro.is_below_0_7 = TRUE
     ),
 
     -- Patients for Rules 2-4 (post-April 2023)
@@ -129,12 +125,12 @@
     -- Rule 2: Spirometry within -93 to +186 days of diagnosis
     rule_2_qualifiers AS (
         SELECT DISTINCT
-            pap.person_id,
-            pap.eunrescopd_dat,
-            2 AS rule_number
-        FROM post_april_patients pap
-        INNER JOIN spirometry_filtered sf
+            pap.reference_date,
+            pap.person_id
+        FROM post_april_patients AS pap
+        INNER JOIN spirometry_filtered AS sf
             ON pap.person_id = sf.person_id
+            AND pap.reference_date = sf.reference_date
             AND sf.spirometry_date >= DATEADD('day', -93, pap.eunrescopd_dat)
             AND sf.spirometry_date <= DATEADD('day', 186, pap.eunrescopd_dat)
     ),
@@ -142,69 +138,76 @@
     -- Rule 3: Newly registered patients (last 12 months) with spirometry within -93 to +186 days of registration
     newly_registered_patients AS (
         SELECT
-            person_id,
-            registration_start_date AS reg_dat
-        FROM {{ ref('dim_person_historical_practice') }}
+            ref_date.reference_date,
+            reg.person_id,
+            reg.registration_start_date AS reg_dat
+        FROM {{ ref('dim_person_historical_practice') }} AS reg
         -- Registered as of the reference date (point-in-time), NOT is_current_registration
         -- which reflects status today. Mirror the QOF GMS rule: registration started in the
         -- 12 months up to the reference date and not ended (death-adjusted) by then.
-        WHERE registration_start_date > {{ reference_date_expr }} - INTERVAL '12 months'
-          AND registration_start_date <= {{ reference_date_expr }}
-          AND (effective_end_date IS NULL OR effective_end_date > {{ reference_date_expr }})
+        INNER JOIN reference_dates AS ref_date
+            ON reg.registration_start_date > ref_date.reference_date - INTERVAL '12 months'
+            AND reg.registration_start_date <= ref_date.reference_date
+            AND (reg.effective_end_date IS NULL OR reg.effective_end_date > ref_date.reference_date)
     ),
 
     rule_3_qualifiers AS (
         SELECT DISTINCT
-            pap.person_id,
-            pap.eunrescopd_dat,
-            3 AS rule_number
-        FROM post_april_patients pap
-        INNER JOIN newly_registered_patients nrp
+            pap.reference_date,
+            pap.person_id
+        FROM post_april_patients AS pap
+        INNER JOIN newly_registered_patients AS nrp
             ON pap.person_id = nrp.person_id
-        INNER JOIN spirometry_filtered sf
+            AND pap.reference_date = nrp.reference_date
+        INNER JOIN spirometry_filtered AS sf
             ON pap.person_id = sf.person_id
+            AND pap.reference_date = sf.reference_date
             AND sf.spirometry_date >= DATEADD('day', -93, nrp.reg_dat)
             AND sf.spirometry_date <= DATEADD('day', 186, nrp.reg_dat)
-        WHERE pap.person_id NOT IN (SELECT person_id FROM rule_2_qualifiers)
-    ),
-
-    -- Rule 4: All remaining post-April 2023 patients (per QOF v50 spec)
-    -- The spec's Rule 4 says: "If EUNRESCOPD_DAT >= 01/04/2023 → Select"
-    -- This includes ALL remaining patients - no "unable to spirometry" code required
-    rule_4_qualifiers AS (
-        SELECT DISTINCT
-            pap.person_id,
-            pap.eunrescopd_dat,
-            4 AS rule_number
-        FROM post_april_patients pap
-        WHERE pap.person_id NOT IN (SELECT person_id FROM rule_2_qualifiers)
-          AND pap.person_id NOT IN (SELECT person_id FROM rule_3_qualifiers)
-    ),
-
-    all_qualifiers AS (
-        SELECT person_id, eunrescopd_dat, rule_number FROM rule_1_qualifiers
-        UNION ALL
-        SELECT person_id, eunrescopd_dat, rule_number FROM rule_2_qualifiers
-        UNION ALL
-        SELECT person_id, eunrescopd_dat, rule_number FROM rule_3_qualifiers
-        UNION ALL
-        SELECT person_id, eunrescopd_dat, rule_number FROM rule_4_qualifiers
+        LEFT JOIN rule_2_qualifiers AS r2
+            ON pap.person_id = r2.person_id
+            AND pap.reference_date = r2.reference_date
+        WHERE r2.person_id IS NULL
     ),
 
     copd_register_logic AS (
         SELECT
-            aq.person_id,
+            calc.reference_date,
+            calc.person_id,
             'COPD' AS register_name,
-            TRUE AS is_on_register
-        FROM (
-            SELECT person_id FROM all_qualifiers GROUP BY person_id
-        ) aq
+            calc.eunrescopd_dat IS NOT NULL AS is_on_register,
+            calc.copdear_dat AS earliest_diagnosis_date,
+            calc.latest_evidence_date AS latest_diagnosis_date,
+            calc.copdres_dat AS latest_resolved_date,
+            calc.eunrescopd_dat AS earliest_unresolved_diagnosis_date,
+            CASE
+                WHEN calc.eunrescopd_dat IS NULL THEN NULL
+                -- Rule 1: Pre-April 2023 automatic inclusion
+                WHEN calc.eunrescopd_dat < '2023-04-01' THEN 1
+                WHEN r2.person_id IS NOT NULL THEN 2
+                WHEN r3.person_id IS NOT NULL THEN 3
+                -- Rule 4: all remaining post-April 2023 patients; no "unable to spirometry" code required
+                ELSE 4
+            END AS qof_rule_number
+        FROM eunrescopd_dat_calc AS calc
+        LEFT JOIN rule_2_qualifiers AS r2
+            ON calc.person_id = r2.person_id
+            AND calc.reference_date = r2.reference_date
+        LEFT JOIN rule_3_qualifiers AS r3
+            ON calc.person_id = r3.person_id
+            AND calc.reference_date = r3.reference_date
     )
 
     SELECT
+        reference_date,
         person_id,
         register_name,
-        is_on_register
+        is_on_register,
+        earliest_diagnosis_date,
+        latest_diagnosis_date,
+        latest_resolved_date,
+        earliest_unresolved_diagnosis_date,
+        qof_rule_number
     FROM copd_register_logic
 
 {% endmacro %}

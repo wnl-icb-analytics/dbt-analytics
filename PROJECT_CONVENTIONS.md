@@ -351,6 +351,13 @@ reviewers must still confirm that it covers the stated key or key combination.
   satisfy a generic test.
 - Put a test where its promise is made. Downstream models should test their new
   composition and grain, not copy every upstream assertion.
+- A model that reads a code cluster through `get_observations`,
+  `get_medication_orders`, `get_medication_statements` or
+  `get_lipid_observations` lists each cluster in a `cluster_ids_exist` test with
+  the same `source` and `versioned` arguments as the call. A model that reads LTC
+  LCS value sets through a `get_ltc_lcs_*` macro lists each value set in a
+  `valuesets_have_codes` test using the GUID the SQL uses, because friendly names
+  are not unique. The Cluster Existence Tests CI check enforces both.
 - Use singular tests for domain rules that generic tests cannot express. Select
   only the model keys and context needed to diagnose a failure. Treat any
   returned rows as potentially patient-level under the safety rules above.
