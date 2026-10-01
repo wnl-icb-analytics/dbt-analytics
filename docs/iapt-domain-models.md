@@ -166,7 +166,7 @@ records from providers elsewhere. Filter `is_wnl_commissioner` for WNL
 population figures. Do not compare an out-of-area provider's totals with the
 publication, because most of that provider's activity is not in the feed.
 
-## People## People
+## People
 
 `person_id` is the IAPT Person_ID from the Master Person Service. It can be an
 NHS number, a linkable unmatched-person ID or a one-off ID that cannot be
@@ -301,9 +301,9 @@ means a time was supplied, not that its clinical accuracy has been established.
 |---|---|
 | [`fct_iapt_referral`](../models/reporting/mental_health/referrals/fct_iapt_referral.sql) | One referral, latest accepted version, recorded values only |
 | [`fct_iapt_referral_summary`](../models/reporting/mental_health/referrals/fct_iapt_referral_summary.sql) | One referral with its status as of the latest accepted month and its provider-code transfer links |
-| [`fct_iapt_care_contact`](../models/reporting/mental_health/activity/fct_iapt_care_contact.sql) | One care contact within its referral |
+| [`fct_iapt_care_contact`](../models/reporting/mental_health/activity/fct_iapt_care_contact.sql) | One care contact within its referral and reporting month |
 | [`fct_iapt_onward_referral`](../models/reporting/mental_health/referrals/fct_iapt_onward_referral.sql) | One onward referral milestone |
-| [`fct_iapt_care_activity`](../models/reporting/mental_health/activity/fct_iapt_care_activity.sql) | One care activity with its procedure, finding and observation |
+| [`fct_iapt_care_activity`](../models/reporting/mental_health/activity/fct_iapt_care_activity.sql) | One care activity within its referral, contact and reporting month, with its procedure, finding and observation |
 | [`fct_iapt_assessment_score`](../models/reporting/mental_health/clinical/fct_iapt_assessment_score.sql) | One scored assessment question, dimension or total |
 | [`fct_iapt_health_condition`](../models/reporting/mental_health/clinical/fct_iapt_health_condition.sql) | One previous diagnosis, long-term condition or presenting complaint |
 | [`fct_iapt_clinical_record`](../models/reporting/mental_health/clinical/fct_iapt_clinical_record.sql) | One clinical item from the three clinical facts, in one list |
