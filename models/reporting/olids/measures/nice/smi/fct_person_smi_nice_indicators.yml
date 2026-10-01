@@ -3,17 +3,19 @@ models:
     description: |
       NICE IND248: SMI six health checks. One row per currently registered, living,
       non-test person with schizophrenia, bipolar affective disorder or another
-      psychosis on the SMI register, including remission, assessed on the build date.
+      psychosis on the SMI register with an active diagnosis, assessed on the build date.
 
       Achievement requires all six checks in the preceding 12 months: blood pressure,
       BMI, alcohol consumption, lipid profile, blood glucose or HbA1c, and smoking
       status. Alcohol units, usage status or a screening tool qualify. Lipid evidence is
-      a total cholesterol or cholesterol to HDL ratio result. Laboratory checks require
-      a recorded value. checks_met_count ranges from 0 to 6.
+      total cholesterol, HDL, LDL, non-HDL, cholesterol to HDL ratio or triglyceride
+      results, or a PCD NONVALCHOL_COD completed lipid test without a value. Glucose
+      and HbA1c require a recorded value. BMI includes numeric recording at any age
+      and adult calculations from height and weight on the weight date.
+      checks_met_count ranges from 0 to 6.
 
-      Lithium therapy without an SMI diagnosis does not qualify. NICE treats remission
-      as a personalised care adjustment for IND248, so remitted people remain in this
-      denominator.
+      Lithium therapy without an SMI diagnosis does not qualify. People in remission
+      are excluded under the agreed active-diagnosis population for SMI measures.
 
       Personalised care adjustments are not applied.
     config:
@@ -30,19 +32,19 @@ models:
           description_short: "All six SMI physical health checks recorded in the preceding 12 months"
           description_long: |
             Currently registered, living, non-test people with schizophrenia, bipolar
-            affective disorder or another psychosis on the SMI register, including
-            remission.
+            affective disorder or another psychosis on the SMI register with an active diagnosis.
 
             Achievement requires all six checks in the preceding 12 months: blood
             pressure, BMI, alcohol consumption, lipid profile, blood glucose or HbA1c,
             and smoking status. Alcohol units, usage status or a screening tool qualify.
-            Lipid evidence is a total cholesterol or cholesterol to HDL ratio result.
-            Laboratory checks require a recorded value. checks_met_count ranges from 0
-            to 6.
+            Lipid evidence includes total cholesterol, HDL, LDL, non-HDL, cholesterol to
+            HDL ratio and triglyceride results, or PCD NONVALCHOL_COD completed tests
+            without a value. Glucose and HbA1c require a recorded value. BMI includes
+            numeric recording at any age and adult calculations from height and weight
+            on the weight date. checks_met_count ranges from 0 to 6.
 
-            Lithium therapy without an SMI diagnosis does not qualify. NICE treats
-            remission as a personalised care adjustment for IND248, so remitted people
-            remain in this denominator.
+            Lithium therapy without an SMI diagnosis does not qualify. People in remission
+            are excluded under the agreed active-diagnosis population for SMI measures.
 
             Assessed on the reporting date before personalised care adjustments.
           is_qof: false
@@ -75,7 +77,7 @@ models:
       - name: latest_blood_pressure_date
         description: Date of the latest blood pressure reading; null when none
       - name: latest_bmi_date
-        description: Date of the latest BMI with a value; null when none
+        description: Date of the latest numeric recorded BMI at any age or adult calculated BMI; null when none
       - name: latest_alcohol_record_date
         description: Date of the latest alcohol consumption record (units, usage status or screening tool); null when none
       - name: latest_lipid_date
@@ -184,7 +186,8 @@ models:
       SMI register, excluding remission and lithium therapy without an SMI diagnosis,
       assessed on the build date.
 
-      Achievement requires a BMI record with a numeric value in the preceding 15 months.
+      Achievement requires numeric recorded BMI at any age or adult calculated BMI
+      in the preceding 15 months. Calculated BMI uses the weight date.
 
       Personalised care adjustments are not applied.
     config:
@@ -204,8 +207,8 @@ models:
             affective disorder or another psychosis on the SMI register, excluding
             remission and lithium therapy without an SMI diagnosis.
 
-            Achievement requires a BMI record with a numeric value in the preceding 15
-            months.
+            Achievement requires numeric recorded BMI at any age or adult calculated BMI
+            in the preceding 15 months. Calculated BMI uses the weight date.
 
             Assessed on the reporting date before personalised care adjustments.
           is_qof: false
@@ -236,7 +239,7 @@ models:
       - name: current_practice_name
         description: Name of the current registration practice
       - name: latest_bmi_date
-        description: Date of the latest BMI with a value; null when none
+        description: Date of the latest numeric recorded BMI at any age or adult calculated BMI; null when none
       - name: latest_record_date
         description: Date of the latest qualifying record in the period; null when none
       - name: is_in_denominator
@@ -1080,9 +1083,10 @@ models:
   - name: fct_person_lithium_monitoring_ind87
     description: |
       NICE IND87: Lithium level in range. One row per currently registered, living,
-      non-test person on lithium therapy according to the SMI register, based on
-      prescriptions in the preceding 6 months and lithium-stopped records, assessed on
-      the build date.
+      non-test person on lithium therapy, independent of SMI diagnosis, assessed
+      on the build date. The latest prescription must be strictly after the six-month
+      boundary and up to today, with no LITSTP_COD stop later than that order. Orders
+      and stops must be known by today; a same-day stop does not exclude.
 
       Achievement requires the latest serum lithium record in the preceding 4 months to
       have a value between 0.4 and 1.0 mmol/L inclusive. A latest record without a
@@ -1107,9 +1111,11 @@ models:
           name_short: "Lithium level in range"
           description_short: "Latest serum lithium in the preceding 4 months in the 0.4 to 1.0 mmol/L range"
           description_long: |
-            Currently registered, living, non-test people on lithium therapy according
-            to the SMI register, based on prescriptions in the preceding 6 months and
-            lithium-stopped records.
+            Currently registered, living, non-test people on lithium therapy, independent
+            of SMI diagnosis. The latest prescription must be strictly after the
+            six-month boundary and up to today, with no LITSTP_COD stop later than that
+            order. Orders and stops must be known by today; a same-day stop does not
+            exclude.
 
             Achievement requires the latest serum lithium record in the preceding 4
             months to have a value between 0.4 and 1.0 mmol/L inclusive. A latest record

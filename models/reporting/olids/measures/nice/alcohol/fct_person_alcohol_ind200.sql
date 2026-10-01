@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 -- NICE IND200: https://www.nice.org.uk/indicators/ind200
--- Brief intervention after a positive screen in 12 months for diagnosed SMI; lithium therapy alone does not qualify.
+-- Brief intervention after a positive screen in 12 months for active diagnosed SMI; lithium therapy alone does not qualify.
 WITH indicator_population AS (
     SELECT
         profile.*,
@@ -9,10 +9,10 @@ WITH indicator_population AS (
     FROM {{ ref('int_ltc_review_profile') }} AS profile
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE profile.has_smi
+    WHERE profile.has_active_smi_diagnosis
         AND profile.earliest_smi_diagnosis_date IS NOT NULL
         AND profile.latest_positive_alcohol_screen_date >= DATEADD(month, -12, CURRENT_DATE())
-        AND NOT profile.has_alcohol_disorder
+        AND NOT profile.has_nice_alcohol_disorder
 ),
 
 qualifying_interventions AS (

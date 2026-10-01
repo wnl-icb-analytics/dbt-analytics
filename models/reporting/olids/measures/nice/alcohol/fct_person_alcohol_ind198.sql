@@ -11,7 +11,7 @@ WITH indicator_population AS (
         ON profile.person_id = age.person_id
     WHERE profile.earliest_depression_anxiety_date >= DATEADD(month, -12, CURRENT_DATE())
         AND age.age >= 10
-        AND NOT profile.has_alcohol_disorder
+        AND NOT profile.has_nice_alcohol_disorder
 ),
 
 assessed AS (

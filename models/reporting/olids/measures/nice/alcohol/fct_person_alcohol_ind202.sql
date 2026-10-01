@@ -14,7 +14,7 @@ WITH indicator_population AS (
             OR profile.has_stroke_tia OR profile.has_diabetes OR profile.has_dementia
         )
         AND profile.latest_positive_alcohol_screen_date >= DATEADD(month, -24, CURRENT_DATE())
-        AND NOT profile.has_alcohol_disorder
+        AND NOT profile.has_nice_alcohol_disorder
 ),
 
 qualifying_interventions AS (

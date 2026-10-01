@@ -42,11 +42,16 @@ assessed AS (
             - IFF(COALESCE(processes.creatinine_completed_in_last_12m, FALSE), 1, 0)
             - IFF(COALESCE(processes.foot_check_completed_in_last_12m, FALSE), 1, 0)
             - IFF(COALESCE(processes.acr_completed_in_last_12m, FALSE), 1, 0)
+            + IFF(age.age < 18 AND profile.latest_bmi_date
+                BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
+                AND NOT COALESCE(processes.bmi_completed_in_last_12m, FALSE), 1, 0)
             + IFF(foot.latest_foot_date IS NOT NULL, 1, 0)
             + IFF(acr.latest_acr_date IS NOT NULL, 1, 0)
             + IFF(egfr.latest_egfr_date IS NOT NULL, 1, 0) AS care_processes_completed_count,
         GREATEST_IGNORE_NULLS(
-            processes.latest_bmi_date, processes.latest_bp_date, processes.latest_hba1c_date, processes.latest_cholesterol_date,
+            GREATEST_IGNORE_NULLS(processes.latest_bmi_date,
+                CASE WHEN age.age < 18 THEN profile.latest_bmi_date END),
+            processes.latest_bp_date, processes.latest_hba1c_date, processes.latest_cholesterol_date,
             processes.latest_smoking_date, foot.latest_foot_date, acr.latest_acr_date,
             egfr.latest_egfr_date
         )::DATE AS latest_process_date
@@ -55,6 +60,8 @@ assessed AS (
         ON processes.person_id = active.person_id
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON processes.person_id = age.person_id
+    LEFT JOIN {{ ref('int_ltc_review_profile') }} AS profile
+        ON processes.person_id = profile.person_id
     LEFT JOIN egfr
         ON processes.person_id = egfr.person_id
     LEFT JOIN foot

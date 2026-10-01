@@ -10,7 +10,7 @@ WITH indicator_population AS (
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
     WHERE profile.earliest_hypertension_date >= DATEADD(month, -12, CURRENT_DATE())
-        AND NOT profile.has_alcohol_disorder
+        AND NOT profile.has_nice_alcohol_disorder
 ),
 
 assessed AS (
