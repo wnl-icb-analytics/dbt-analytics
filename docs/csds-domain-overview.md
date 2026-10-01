@@ -50,6 +50,7 @@ flowchart TD
 | What care took place? | `fct_csds_care_contact`, `fct_csds_care_activity` | Contacts in all attendance states with delivering team and GP practice; activities within contacts. |
 | What clinical detail was recorded? | `fct_csds_clinical_record` | Immunisations, assessment responses, procedures, findings and observations. |
 | How quickly were people seen? | `fct_csds_referral_to_treatment_period` | Submitted clocks, including the two-hour urgent community response. |
+| Where were patients referred on to? | `fct_csds_onward_referral` | Latest onward referrals, with reason and receiving organisation. |
 | How recent is each provider's data? | `dq_csds_provider_submission`, `fct_csds_latest_provider_caseload_referral` | Provider submission dates and lag; open referrals in each provider's latest month. |
 | What do contacts cost? | `fct_csds_currency_contacts` | NHSE community currency and proxy cost per contact. See the [currency guide](csds-currency-models.md). |
 
@@ -124,7 +125,7 @@ Referral keys have different names across tables:
 |---|---|
 | `fct_csds_referral`, `fct_csds_referral_summary` | `source_record_id` |
 | `fct_csds_care_contact`, `fct_csds_referral_service`, `fct_csds_care_activity` | `referral_id` |
-| `fct_csds_referral_period`, `fct_csds_referral_to_treatment_period` | `referral_source_record_id` |
+| `fct_csds_referral_period`, `fct_csds_referral_to_treatment_period`, `fct_csds_onward_referral` | `referral_source_record_id` |
 
 `referral_source_row_id` on the contact and team facts is a submitted CYP101 row,
 not the referral identifier; joining it to the columns above returns nothing. Use
