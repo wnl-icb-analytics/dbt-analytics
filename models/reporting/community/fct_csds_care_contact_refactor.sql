@@ -81,6 +81,23 @@ PATIENT_BASE AS (
 
 ),
 
+GP_LIST_SIZE AS (
+
+    SELECT
+        GP_PRACTICE_CODE,
+        GP_PRACTICE_NAME,
+        LIST_SIZE_VALUE,
+        LIST_SIZE_DATE,
+
+        ROW_NUMBER() OVER (
+            PARTITION BY GP_PRACTICE_CODE
+            ORDER BY LIST_SIZE_DATE DESC
+        ) AS RN
+
+    FROM {{ ref('raw_reference_national_gp_practice_latest_list_sizes') }}
+
+),
+
 /*==============================================================================
   2. VALID PATIENT ETHNICITY
 
@@ -648,8 +665,9 @@ CONTACT_ENRICHED AS (
         PRAC.PCN_CODE AS LEGACY_PCN_CODE,
         PRAC.PCN_NAME AS LEGACY_PCN_NAME,
         PRAC.PRACTICE_NAME AS LEGACY_PRACTICE_NAME,
-        PRAC.WEIGHTED_LIST_SIZE AS LEGACY_WEIGHTED_LIST_SIZE,
 
+        GLS.LIST_SIZE_VALUE AS LEGACY_WEIGHTED_LIST_SIZE,
+        
         GEN."Gender" AS LEGACY_GENDER_NAME,
 
         IMD.INDEX_OF_MULTIPLE_DEPRIVATION_IMD_DECILE_WHERE_1_IS_MOST_DEPRIVED_10_PERCENT__OF_LSOAS
@@ -697,23 +715,27 @@ CONTACT_ENRICHED AS (
         ON PAT1."Lower_super_output_area_(Residence)"
             = IMD.LSOA_CODE_2021
 
-    LEFT JOIN DATA_LAKE__NCL.ANALYST_MANAGED.CSDS_LOOKUP CSLK1
+    LEFT JOIN {{ ref('attendance_status') }} CSLK1
         ON CCON."Attended_or_did_not_attend_code" = CSLK1.CODE
-       AND CSLK1.SIMPLETABLE_FIELDNAME
+       AND CSLK1.SOURCE_CODE_SET_NAME
             = 'Attended_or_did_not_attend_code'
 
-    LEFT JOIN DATA_LAKE__NCL.ANALYST_MANAGED.CSDS_LOOKUP CSLK3
+    LEFT JOIN {{ ref('consultation_mechanism') }} CSLK3
         ON CCON."Consultation_medium_used" = CSLK3.CODE
-       AND CSLK3.SIMPLETABLE_FIELDNAME
+       AND CSLK3.SOURCE_CODE_SET_NAME
             = 'Consultation_medium_used'
 
-    LEFT JOIN DATA_LAKE__NCL.ANALYST_MANAGED.CSDS_LOOKUP CSLK4
+    LEFT JOIN {{ ref('activity_location_type') }} CSLK4
         ON CCON."Activity_location_type_code" = CSLK4.CODE
-       AND CSLK4.SIMPLETABLE_FIELDNAME
+       AND CSLK4.SOURCE_CODE_SET_NAME
             = 'Activity_location_type_code'
 
-    LEFT JOIN MODELLING.LOOKUP_WNL.VW_GP_PRACTICE PRAC
-        ON PAT1.GPCODE = PRAC.PRACTICE_CODE
+    LEFT JOIN {{ ref('stg_reference_lookup_ncl_gp_practice') }} PRAC
+        ON PAT1.GPCODE = PRAC.GP_PRACTICE_CODE
+
+    LEFT JOIN GP_LIST_SIZE GLS
+        ON PAT1.GPCODE = GLS.GP_PRACTICE_CODE
+        AND GLS.RN = 1
 
     LEFT JOIN DATA_LAKE.CSDS_SIMPLE."tblReferral" REF
         ON CCON."Unique_service_request_identifier"
@@ -736,8 +758,8 @@ CONTACT_ENRICHED AS (
         ON CCON."Unique_service_request_identifier"
             = FACD."Unique_service_request_identifier"
 
-    LEFT JOIN MODELLING.LOOKUP_WNL.VW_GP_PRACTICE NGH_REG
-        ON PAT1.GPCODE = NGH_REG.PRACTICE_CODE
+    LEFT JOIN {{ ref('stg_reference_lookup_ncl_gp_practice') }} NGH_REG
+        ON PAT1.GPCODE = NGH_REG.GP_PRACTICE_CODE
 
     LEFT JOIN DATA_LAKE__NCL.ANALYST_MANAGED.NCL_NEIGHBOURHOOD_LSOA_2021 NGH_RES
         ON PAT1."Lower_super_output_area_(Residence)"

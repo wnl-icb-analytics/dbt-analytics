@@ -565,9 +565,11 @@ LEFT JOIN "Dictionary"."dbo"."Ethnicity" ETH ON PAT1.RESOLVED_ETH_CODE = ETH."BK
 LEFT JOIN "Dictionary"."dbo"."Gender" GEN ON PAT1."Person_stated_gender_code" = GEN."GenderCode"
 LEFT JOIN TMP_IMD IMD ON IMD.LSOA_CODE_2021 = PAT1."Lower_super_output_area_(Residence)"
 LEFT JOIN REFERENCE.DATA_DICTIONARY.CSDS_SOURCE_OF_REFERRAL CSLK1 ON REF."Source_of_referral_for_community" = CSLK1.CODE
-LEFT JOIN DATA_LAKE__NCL.ANALYST_MANAGED.CSDS_LOOKUP CSLK2 ON LTRIM(REF."Primary_reason_for_referral_(Community_care)", '0#') = CSLK2.CODE AND CSLK2."SIMPLETABLE_FIELDNAME" = 'Primary_reason_for_referral_(Community_care)'
+LEFT JOIN {{ ref('csds_referral_code_lookup') }} CSLK2 ON LPAD(LTRIM(REF."Primary_reason_for_referral_(Community_care)",'0#'),3,'0') = CSLK2.CODE
+   AND CSLK2.CODE_SET_NAME = 'reason_for_referral'
 LEFT JOIN REFERENCE.DATA_DICTIONARY.CSDS_SERVICE_OR_TEAM_TYPE CSLK3 ON REF.CLEAN_TEAM_CODE = CSLK3.CODE
-LEFT JOIN DATA_LAKE__NCL.ANALYST_MANAGED.CSDS_LOOKUP CSLK4 ON RIGHT(REF."Waiting_time_measurement_type_(Community_Care)", 1) = CSLK4.CODE AND CSLK4."SIMPLETABLE_FIELDNAME" = 'Waiting_time_measurement_type_(Community_Care)'
+LEFT JOIN {{ ref('csds_referral_code_lookup') }} CSLK4 ON LPAD(LTRIM(REF."Waiting_time_measurement_type_(Community_Care)",'0#'),2,'0') = CSLK4.CODE
+   AND CSLK4.CODE_SET_NAME = 'waiting_time_measurement_type'
 LEFT JOIN "Dictionary"."E-Referral"."Priority" PRIO ON REF."Priority_type_code" = PRIO."Meaning"
 LEFT JOIN TMP_CON CON ON REF."Unique_service_request_identifier" = CON."Unique_service_request_identifier"
 LEFT JOIN CYP102_DATA ON REF."Unique_service_request_identifier" = CYP102_DATA."UNIQUE SERVICE REQUEST IDENTIFIER"
