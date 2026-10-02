@@ -131,3 +131,17 @@ models:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
+  - name: nhse_olids_reg_comparison_all_direct_care
+    description: |
+      OLIDS registered patients compared with the NHS England monthly "Patients Registered at a GP Practice" publication. One row per practice per monthly snapshot within the last 60 months. Covers practices with OLIDS registrations in at least one of those snapshots; other practices in the NHSE publication are left out.
+
+      A monthly trend check between EMIS extracts, with no pass or fail flag; the EMIS comparison is the authority because OLIDS comes from EMIS. Use the latest snapshot for current alignment and earlier snapshots to see trends. OLIDS counts each person at one practice, as dim_person_active_patients does. See int_nhse_olids_practice_registration_comparison for the method.
+
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [practice_code, snapshot_date]

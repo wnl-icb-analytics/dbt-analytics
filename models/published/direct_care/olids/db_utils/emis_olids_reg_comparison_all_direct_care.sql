@@ -47,6 +47,7 @@ select
     absolute_difference,
     percent_difference,
     absolute_percent_difference,
+    olids_count_basis,
     extract_date as snapshot_date,
     meets_acceptance_criteria,
     variance_category
