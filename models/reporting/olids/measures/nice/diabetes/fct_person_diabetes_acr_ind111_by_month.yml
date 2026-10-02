@@ -1,0 +1,58 @@
+models:
+- name: fct_person_diabetes_acr_ind111_by_month
+  description: |
+    NICE IND111. Annual urine albumin:creatinine ratio testing in diabetes.
+    One row per eligible person and completed month-end. The population is living,
+    non-test people registered at month-end on the diabetes register. Achievement
+    requires an ACR ratio test in the inclusive preceding 15 months, with or without
+    a numeric result. The latest qualifying clinical day is reported; null means
+    no qualifying test. Other urine tests do not count.
+
+    Recalculated at monthly refresh for the last 60 completed month-ends using today's
+    rules and code lists. Personalised care adjustments are not applied. Registration
+    and practice use the existing monthly spine; registration start is inclusive,
+    registration end and death exclusive. Overlapping registrations retain the spine's
+    current-registration priority. Birth and death dates are approximate; missing birth
+    dates prevent historical active rows. Current gender and test flags apply
+    retrospectively. Register diagnosis state uses clinical and recorded dates; other
+    evidence uses its clinical or order date through month-end. Later corrections and
+    changed code lists can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind111
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
+      row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at month-end under the monthly spine attribution.
+  - name: latest_record_date
+    description: Date of the latest qualifying record in the period; null when none
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or the reason not achieved
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

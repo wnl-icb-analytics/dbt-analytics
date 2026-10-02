@@ -1,0 +1,69 @@
+models:
+- name: fct_person_diabetes_care_processes_ind120_by_month
+  description: |
+    NICE IND120. Eight annual care processes in diabetes.
+    One row per eligible person and completed month-end. The population is living,
+    non-test people registered at month-end on the diabetes register. Achievement
+    requires all eight processes in the inclusive preceding 12 months: BMI, valid-pair
+    blood pressure, HbA1c, valid total cholesterol, smoking status, performed foot
+    examination, urine ACR and eGFR. The count is the number completed, from zero to eight.
+    HbA1c, ACR and eGFR tests count without numeric results. Serum creatinine alone
+    does not count, following NICE's February 2026 correction. BMI retains valid recorded
+    or calculated adult evidence and valid numeric BMIVAL_COD recording for under-18s
+    (10 to 150 kg/m2 inclusive). Age eligibility uses month-end age; calculated BMI
+    retains the source's adult height and weight restriction. A performed foot check
+    counts despite same-date or later declined, unsuitable or referral records. An
+    absent or amputated opposite foot counts once its first clinical date is reached
+    at month-end, even if that date follows the examination. The evidence date is
+    reported only when all eight processes are complete; otherwise it is null.
+
+    Recalculated at monthly refresh for the last 60 completed month-ends using today's
+    rules and code lists. Personalised care adjustments are not applied. Registration
+    and practice use the existing monthly spine; registration start is inclusive,
+    registration end and death exclusive. Overlapping registrations retain the spine's
+    current-registration priority. Birth and death dates are approximate; missing birth
+    dates prevent historical active rows. Current gender and test flags apply
+    retrospectively. Register diagnosis state uses clinical and recorded dates; other
+    evidence uses its clinical or order date through month-end. Later corrections and
+    changed code lists can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind120
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
+      row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at month-end under the monthly spine attribution.
+  - name: care_processes_completed_count
+    description: Number of the eight care processes recorded in the preceding 12 months, 0 to 8
+  - name: latest_record_date
+    description: Latest qualifying process date when all eight processes are complete; null otherwise
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
