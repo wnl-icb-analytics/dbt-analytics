@@ -1,0 +1,69 @@
+models:
+- name: int_childhood_immunisation_profile_by_month
+  description: NICE childhood vaccine evidence. One row per active non-test person and completed month-end
+    with the 24-week, 8-month, 18-month or fifth-birthday milestone in (month-end minus 12 months, month-end].
+    Distinct administration dates count within the established age windows. Source event age takes priority
+    for completed-year boundaries; approximate birth dates are the fallback. Contraindications apply through
+    the month-end. DTP and MMR retain existing proxies without an authorised specific anaphylaxis definition.
+    Recalculated at monthly refresh for the last 60 completed month-ends using today's rules and code
+    lists. Registration and practice come from the existing monthly spine. Registration start is inclusive,
+    end and death dates exclusive. Overlapping registrations retain the spine's current-registration priority.
+    Birth and death dates are approximate; missing birth dates prevent historical active rows. Current
+    gender and test flags apply retrospectively. Diagnosis state uses both clinical and recorded dates.
+    Other evidence uses its clinical or order date through the month-end. Later corrections and current
+    code-list changes can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Child identifier.
+  - name: reporting_date
+    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
+      row.
+  - name: birth_date_approx
+    description: Approximate birth date (mid-month).
+  - name: dtap_doses_by_8_months
+    description: Distinct 4-, 5- or 6-in-1 DTP-containing administration or vaccine order dates before
+      8 months of age.
+  - name: mmr_doses_12_to_18_months
+    description: Distinct MMR or MMRV administration or vaccine order dates on or after the first birthday,
+      using completed-year event age when known, and before approximate 18 months. Missing event age uses
+      the approximate first birthday.
+  - name: mmr_doses_1_to_5_years
+    description: Distinct MMR or MMRV administration or vaccine order dates at completed-year event ages
+      1 to 4. Missing event age uses the approximate first and fifth birthdays.
+  - name: has_dtap_booster_1_to_5_years
+    description: Whether an explicit DTAPIPVVACBOOST_COD preschool booster was recorded at completed-year
+      event ages 1 to 4. Missing event age uses the approximate first and fifth birthdays. A generic 4-in-1
+      vaccine product does not establish booster administration.
+  - name: rotavirus_doses_by_24_weeks
+    description: Distinct rotavirus administration or vaccine order dates before 24 weeks of age.
+  - name: menb_doses_by_8_months
+    description: Distinct MenB administration or vaccine order dates before 8 months of age.
+  - name: menb_doses_by_18_months
+    description: Distinct MenB administration or vaccine order dates before 18 months of age.
+  - name: menb_primary_doses_by_12_months
+    description: Distinct MenB administration or vaccine order dates at completed-year event age 0, the
+      primary-course proxy. Missing event age uses the approximate first birthday.
+  - name: menb_booster_doses_12_to_18_months
+    description: Distinct MenB administration or vaccine order dates at completed-year event age 1 and
+      before approximate 18 months, the booster proxy. Missing event age uses the approximate first birthday.
+  - name: has_dtap_contraindication
+    description: Any DTP contraindication record from the childhood lookup or PCD DTPCON_COD or DTAPIPVCON_COD.
+      Proxy for confirmed anaphylaxis, not a specific anaphylaxis definition.
+  - name: has_mmr_contraindication
+    description: Any contraindicated code for MMR or MMRV. Proxy for confirmed anaphylaxis; no separate
+      authorised immunocompromise code set is available.
+  - name: has_rotavirus_contraindication
+    description: Any contraindicated code for rotavirus vaccine or the contraindication and history-of-vaccine-allergy
+      codes in PCD ROTAVACEXC_COD. Other cluster members do not add exclusions.
+  - name: has_menb_contraindication
+    description: Any contraindicated code for MenB vaccine.

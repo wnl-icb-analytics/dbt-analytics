@@ -1,0 +1,38 @@
+models:
+- name: int_nice_childhood_immunisation_all
+  description: NICE childhood vaccine evidence before programme dose assignment, including inactive and
+    deceased people. One row per person, clinical date, source completed-year event age, vaccine group
+    and event type. Null event age remains a separate group. Includes administrations, vaccine orders
+    and contraindications from the established lookup, PCD clusters and active drug refsets. Excludes
+    future dates. Consumers apply the birth-month lower boundary. Declined records cannot displace completed
+    doses.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - event_date
+        - age_at_event
+        - vaccine_group
+        - event_type
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: 4IN1VAC_COD,5IN1VAC_COD,6IN1VAC_COD,DTPCON_COD,DTAPIPVVACBOOST_COD,DTAPIPVCON_COD,ROTAVACEXC_COD
+        source: PCD
+  columns:
+  - name: person_id
+    description: Person with vaccine evidence.
+  - name: event_date
+    description: Clinical date of the administration, vaccine order or contraindication.
+  - name: age_at_event
+    description: Source completed years; null when unavailable. Consumers use approximate birth dates
+      as a fallback.
+  - name: vaccine_group
+    description: DTAP_PRIMARY, DTAP_BOOSTER, MMR, ROTAVIRUS or MENB.
+  - name: event_type
+    description: Administration, Administration_drug or Contraindicated. Administration_drug includes
+      vaccine orders.
