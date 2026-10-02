@@ -1,19 +1,17 @@
 models:
-- name: fct_person_learning_disability_thyroid_test_ind79_by_month
-  description: NICE IND79. One row per eligible registered, living, non-test person and completed month-end.
-    LD register members aged 18+ with a DS_COD diagnosis known by R, excluding the THY register (hypothyroidism).
-    A TFT_COD test in the inclusive 15-month window through R qualifies. TFT_COD also includes free T4
-    and T3, so it is a broader proxy for TSH. Dates may be present without numeric results. Personalised
-    care adjustments are not applied. Recalculated monthly for 60 completed month-ends using today's rules
-    and code lists. Registration starts are inclusive; ends and deaths are exclusive. The established
-    spine supplies age and practice. Approximate birth and death dates and retrospective current test
-    flags limit interpretation. Register and diagnosis eligibility uses known dates; other evidence uses
-    clinical or order dates through R. Later corrections can change earlier results.
+- name: fct_person_lithium_renal_thyroid_monitoring_ind86_by_month
+  description: 'NICE IND86. One row per eligible registered, living, non-test person and completed month-end.
+    Recalculated for 60 completed month-ends using current rules and code lists. The established spine
+    supplies registration, age and practice; approximate dates and retrospective test flags limit interpretation.
+    All current lithium users, regardless of SMI diagnosis. Uses the shared therapy definition: an order
+    strictly after R minus six calendar months through R, with known-date caps and no later stop. Both
+    CRE_COD and TFT_COD records must fall within the inclusive nine-month window through R. Records count
+    without numeric results. TFT_COD includes free T4 and T3 and is a broader proxy for TSH.'
   config:
     meta:
       owner:
         name: EddieDavison92
-      clinical_source: https://www.nice.org.uk/indicators/ind79
+      clinical_source: https://www.nice.org.uk/indicators/ind86
   columns:
   - name: person_id
     description: Person in the indicator denominator.
@@ -41,10 +39,10 @@ models:
     description: ODS code of the registration practice at R.
   - name: practice_name
     description: Name of the registration practice at R.
-  - name: downs_syndrome_diagnosis_date
-    description: Earliest clinical DS_COD diagnosis known by R.
+  - name: latest_creatinine_date
+    description: Latest CRE_COD record through R, including stale evidence.
   - name: latest_thyroid_function_test_date
-    description: Latest TFT_COD test through R, including stale evidence; null when absent.
+    description: Latest TFT_COD record through R, including stale evidence.
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

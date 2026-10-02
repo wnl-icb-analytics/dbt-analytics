@@ -1,0 +1,67 @@
+unit_tests:
+- name: nice_w4_ind86_all_lithium_users_tests_expiry_and_asof
+  model: fct_person_lithium_renal_thyroid_monitoring_ind86_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age,
+      column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code,
+      column7::VARCHAR AS practice_name FROM VALUES (-4301, '2026-08-31', 40, '1980-01-01', 'Female',
+      'SYNTHETIC', 'Synthetic practice'), (-4301, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC',
+      'Synthetic practice'), (-4308, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic
+      practice'), (-4307, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+      (-4306, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-4305, '2026-09-30',
+      40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-4304, '2026-09-30', 40, '1980-01-01',
+      'Female', 'SYNTHETIC', 'Synthetic practice'), (-4303, '2026-09-30', 40, '1980-01-01', 'Female',
+      'SYNTHETIC', 'Synthetic practice'), (-4302, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC',
+      'Synthetic practice'), (-4306, '2026-08-31', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic
+      practice')
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::BOOLEAN AS is_on_lithium
+      FROM VALUES (-4301, '2026-08-31', TRUE), (-4301, '2026-09-30', TRUE), (-4308, '2026-09-30', FALSE),
+      (-4307, '2026-09-30', TRUE), (-4306, '2026-09-30', TRUE), (-4305, '2026-09-30', TRUE), (-4304, '2026-09-30',
+      TRUE), (-4303, '2026-09-30', TRUE), (-4302, '2026-09-30', TRUE), (-4306, '2026-08-31', TRUE)
+  - input: ref('int_lithium_monitoring_tests_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date, column3::VARCHAR
+      AS source_cluster_id FROM VALUES (-4301, '2025-11-30', 'CRE_COD'), (-4301, '2026-08-31', 'TFT_COD'),
+      (-4302, '2025-12-30', 'CRE_COD'), (-4302, '2025-12-30', 'TFT_COD'), (-4303, '2026-09-30', 'CRE_COD'),
+      (-4303, '2026-09-30', 'TFT_COD'), (-4303, '2026-09-30', 'TFT_COD'), (-4304, '2026-10-01', 'CRE_COD'),
+      (-4304, '2026-09-30', 'TFT_COD'), (-4305, '2026-09-30', 'CRE_COD'), (-4306, '2025-11-30', 'TFT_COD'),
+      (-4306, '2026-08-31', 'CRE_COD'), (-4307, '2025-12-30', 'CRE_COD'), (-4307, '2026-10-01', 'CRE_COD'),
+      (-4307, '2026-09-30', 'TFT_COD')
+  expect:
+    rows:
+    - person_id: -4301
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -4301
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -4307
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -4306
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -4305
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -4304
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -4303
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -4302
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -4306
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+    - nice-w4-fixture
