@@ -1,0 +1,70 @@
+models:
+- name: fct_person_asthma_smoking_status_ind189_by_month
+  description: NICE IND189. One row per active, living, non-test person aged 5 to 19 inclusive with an
+    unresolved IND186 asthma diagnosis. SMOK_COD recording in (R minus 12 months, R] qualifies, without
+    the age-at-event restriction of the adult smoking-state model. Passive-exposure lists SMOKEXPOS_COD
+    and NOSMOKEXPOS_COD are unavailable and omitted. No recent-treatment requirement or personalised care
+    adjustments. Recalculated at monthly refresh for the last 60 completed month-ends with current rules
+    and code lists. Monthly spine registration start is inclusive; registration end and death dates are
+    exclusive. Approximate birth/death dates, overlap priority and current test/gender flags constrain
+    history. Diagnosis and resolution use clinical and recorded known dates; other evidence uses clinical/order
+    dates through R. Later corrections can change earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind189
+      indicator:
+        id: IND189
+        type: MEASURE
+        category: ASTHMA
+        clinical_domain: Respiratory
+        name_short: Asthma smoking recording
+        description_short: Smoking status recorded in 12 months for people with asthma aged 5 to 19.
+        description_long: NICE IND189. One row per active, living, non-test person aged 5 to 19 inclusive
+          with an unresolved IND186 asthma diagnosis. SMOK_COD recording in (R minus 12 months, R] qualifies,
+          without the age-at-event restriction of the adult smoking-state model. Passive-exposure lists
+          SMOKEXPOS_COD and NOSMOKEXPOS_COD are unavailable and omitted. No recent-treatment requirement
+          or personalised care adjustments. Recalculated for the last 60 completed month-ends with current
+          rules and code lists. Monthly spine registration start is inclusive; registration end and death
+          dates are exclusive. Approximate birth/death dates, overlap priority and current test/gender
+          flags constrain history. Diagnosis and resolution use clinical and recorded known dates; other
+          evidence uses clinical/order dates through R. Later corrections can change earlier results.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND189
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published indicator name.
+  - name: reporting_date
+    description: Date at which eligibility and evidence are assessed.
+  - name: measurement_period_start
+    description: Start of the cohort or evidence period; see the model description for boundary inclusion.
+  - name: age
+    description: Completed years at reporting_date.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true. Personalised care adjustments are not applied.
+  - name: is_in_numerator
+    description: Whether the person meets the numerator rule.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: latest_record_date
+    description: Latest qualifying evidence date; null when the numerator is not met.
+  - name: practice_code
+    description: ODS registration practice at reporting_date.
+  - name: practice_name
+    description: Registration practice name at reporting_date.

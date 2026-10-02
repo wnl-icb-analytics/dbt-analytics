@@ -1,0 +1,85 @@
+models:
+- name: fct_person_asthma_objective_tests_ind272
+  description: NICE IND272. One row per active, living, non-test person aged 5+ whose earliest unresolved
+    asthma diagnosis known at R falls in (R minus 15 months, R minus 3 months]. No recent-treatment requirement.
+    Objective tests fall within three calendar months either side of diagnosis, inclusive, capped at R.
+    FENO_COD, ASTSPIR_COD, PEFRVAR_COD and BRONCCHALENG_COD qualify at any eligible age. Over 16, EOS_COUNT
+    or FBC_COD also qualifies. Ages 5 to 16 additionally qualify through SKINTEST_COD or both IGE_COD
+    and EOS_COUNT/FBC_COD. PEFR variability qualifies unconditionally. Tests need no recorded numeric
+    result or algorithm threshold. No personalised care adjustments. R is the build date.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind272
+      indicator:
+        id: IND272
+        type: MEASURE
+        category: ASTHMA
+        clinical_domain: Respiratory
+        name_short: Asthma objective tests
+        description_short: Objective asthma test within three months either side of a new unresolved diagnosis,
+          aged 5+.
+        description_long: NICE IND272. One row per active, living, non-test person aged 5+ whose earliest
+          unresolved asthma diagnosis known at R falls in (R minus 15 months, R minus 3 months]. No recent-treatment
+          requirement. Objective tests fall within three calendar months either side of diagnosis, inclusive,
+          capped at R. FENO_COD, ASTSPIR_COD, PEFRVAR_COD and BRONCCHALENG_COD qualify at any eligible
+          age. Over 16, EOS_COUNT or FBC_COD also qualifies. Ages 5 to 16 additionally qualify through
+          SKINTEST_COD or both IGE_COD and EOS_COUNT/FBC_COD. PEFR variability qualifies unconditionally.
+          Tests need no recorded numeric result or algorithm threshold. No personalised care adjustments.
+          R is the build date.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND272
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: Person in the denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published indicator name.
+  - name: reporting_date
+    description: Date at which eligibility and evidence are assessed.
+  - name: measurement_period_start
+    description: Start of the cohort or evidence period; see the model description for boundary inclusion.
+  - name: age
+    description: Completed years at reporting_date.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true. Personalised care adjustments are not applied.
+  - name: is_in_numerator
+    description: Whether the person meets the numerator rule.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: latest_record_date
+    description: Latest qualifying evidence date; null when the numerator is not met.
+  - name: current_practice_code
+    description: ODS registration practice at reporting_date.
+  - name: current_practice_name
+    description: Registration practice name at reporting_date.
+  - name: diagnosis_date
+    description: Earliest known asthma diagnosis after the latest known resolution, using calendar dates.
+  - name: feno_date
+    description: Latest FENO_COD record in the diagnosis test window; null when absent.
+  - name: reversibility_date
+    description: Latest ASTSPIR_COD bronchodilator reversibility record in the test window; null when
+      absent.
+  - name: pefr_variability_date
+    description: Latest PEFRVAR_COD record in the test window; no spirometry-unavailability condition.
+      Null when absent.
+  - name: bronchial_challenge_date
+    description: Latest BRONCCHALENG_COD record in the test window; null when absent.
+  - name: skin_prick_date
+    description: Latest SKINTEST_COD record in the test window; null when absent.
+  - name: ige_date
+    description: Latest IGE_COD record in the test window; null when absent.
+  - name: eosinophil_or_fbc_date
+    description: Latest EOS_COUNT or FBC_COD record in the test window; null when absent.
