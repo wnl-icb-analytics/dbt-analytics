@@ -16,7 +16,7 @@ with snapshots as (
 olids_registered as (
     -- One practice per person on each date, matching the NHSE whole-person
     -- headcount. The registration with the latest start wins, as in
-    -- dim_person_active_patients.
+    -- dim_person_active_patients; the episode id settles exact ties.
     select
         snapshots.snapshot_date,
         registrations.practice_ods_code as practice_code,
@@ -30,7 +30,10 @@ olids_registered as (
         )
     qualify row_number() over (
         partition by snapshots.snapshot_date, registrations.person_id
-        order by registrations.registration_start_date desc, registrations.patient_id desc
+        order by
+            registrations.registration_start_date desc,
+            registrations.patient_id desc,
+            registrations.registration_record_id desc
     ) = 1
 ),
 
@@ -104,14 +107,5 @@ select
     absolute_difference,
     percent_difference,
     abs(percent_difference) as absolute_percent_difference,
-    -- Same thresholds as the EMIS and PDS comparisons: under 2% or under 5 people.
-    coalesce(abs(percent_difference) < 2 or absolute_difference < 5, false) as meets_acceptance_criteria,
-    case
-        when nhse_registered_patients is null or nhse_registered_patients = 0 then 'Missing Data'
-        when abs(percent_difference) < 2 or absolute_difference < 5 then 'Meets Criteria'
-        when abs(percent_difference) < 5 then '2-5% Variance'
-        when abs(percent_difference) < 20 then '5-20% Variance'
-        else '20%+ Variance'
-    end as variance_category,
     snapshot_date = max(snapshot_date) over () as is_latest_snapshot
 from measured

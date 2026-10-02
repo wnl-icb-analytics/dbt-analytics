@@ -17,7 +17,5 @@ select
     absolute_difference,
     percent_difference,
     absolute_percent_difference,
-    meets_acceptance_criteria,
-    variance_category,
     is_latest_snapshot
 from {{ ref('int_nhse_olids_practice_registration_comparison') }}

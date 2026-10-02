@@ -17,15 +17,16 @@ models:
 
       Data Sources:
       - EMIS: Static extract (date from seed file)
-      - OLIDS: Regular episode types only, active as of EMIS extract date
+      - OLIDS: Regular registrations open on the EMIS extract date (see olids_count_basis)
 
-      OLIDS registrations come from EMIS, so this is the authoritative check. The
-      OLIDS count is rebuilt for the extract date from today's registration history,
-      and EMIS later rewrites some registration dates: a patient removed in list
+      OLIDS registrations come from EMIS, so this is the authoritative check. EMIS
+      rewrites some registration dates after the event: a patient removed in list
       cleaning and then re-registered gets a new start date, and leaving dates can
-      be backdated. The comparison therefore drifts down as the extract ages. Rebuilt
-      from a mid-July 2026 copy of the feed, the June 2026 extract matched within
-      about 0.1%. Use a fresh extract for a current check.
+      be backdated. A count rebuilt later from current history therefore drifts down
+      as the extract ages. When the daily registration snapshot covers the extract
+      date, OLIDS is counted as recorded on that date instead. The June 2026 extract
+      predates the snapshot; rebuilt from a mid-July 2026 copy of the feed, it matched
+      within about 0.1%.
 
     config:
       meta:
@@ -52,6 +53,12 @@ models:
       - name: olids_regular_count
         description: Number of patients with Regular registration episodes in 
           OLIDS
+
+      - name: olids_count_basis
+        description: As recorded when the OLIDS count comes from the daily
+          registration snapshot for the extract date; Rebuilt when the extract
+          predates the snapshot and the count is rebuilt from current history.
+          NULL for practices with no OLIDS registrations.
 
       - name: difference
         description: Difference between OLIDS and EMIS (signed, can be negative)
