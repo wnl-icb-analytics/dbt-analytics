@@ -68,9 +68,12 @@
        lead to wrong patients being given the wrong treatment."
 */
 
-{#- Placeholder index month-ends. Each must allow a full outcome horizon of
-    complete SUS follow-up before it is used for validation. -#}
-{%- set index_dates = ['2022-01-31', '2023-01-31', '2026-09-30'] -%}
+{#- Index month-ends, from macros/config/qadmissions_index_dates.sql, which a
+    test also reads to check every date has rows. Each needs a full outcome
+    horizon of complete SUS follow-up before it is used for validation.
+    2026-09-30 is for comparison with the live model only: it has no
+    follow-up and must not be used for outcome validation. -#}
+{%- set index_dates = qadmissions_history_index_dates() -%}
 
 {#- QOF register macros behind the dim_person_conditions flags used by the
     live model. Each macro is the strict as-at pair of its live

@@ -23,7 +23,9 @@
             'DESC' (default) keeps the row with the highest order_cols values, 'ASC' the
             lowest. Applies to every order column. Use 'ASC' with date_recorded when the
             table feeds point-in-time views: keeping the latest entry would hide the
-            record at dates when an earlier entry already existed.
+            record at dates when an earlier entry already existed. 'ASC' sorts NULLs
+            last explicitly, so a row with a value is kept over one without, whatever
+            the session's DEFAULT_NULL_ORDERING. 'DESC' keeps the session default.
 
         Example usage:
     #}
@@ -50,7 +52,7 @@
         {%- endfor %}
         ORDER BY
         {%- for col in order_cols %}
-            tbl.{{ col }} {{ order_direction | upper }}{% if not loop.last %},{% endif %}
+            tbl.{{ col }} {{ order_direction | upper }}{% if order_direction | upper == 'ASC' %} NULLS LAST{% endif %}{% if not loop.last %},{% endif %}
         {%- endfor %}
     ) = 1
 

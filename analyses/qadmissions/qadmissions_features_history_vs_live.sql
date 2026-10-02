@@ -8,10 +8,10 @@
 -- Usage: compile with dbt, then run the compiled query in Snowflake.
 --
 -- SET UP FIRST
---   1. Temporarily add the latest completed month-end (the spine's newest
---      month, LAST_DAY of last month) to index_dates in
---      int_qadmissions_features_history. The check uses MAX(end_date), so
---      the older dates can stay. Remove it again before committing.
+--   1. Make sure the latest completed month-end (the spine's newest month,
+--      LAST_DAY of last month) is in qadmissions_history_index_dates()
+--      (macros/config/qadmissions_index_dates.sql). The check uses
+--      MAX(end_date), so the older dates can stay.
 --   2. Build both models from the same DEV inputs in ONE run, so source
 --      refreshes between builds don't show up as differences:
 --        dbt build -s int_qadmissions_features int_qadmissions_features_history
