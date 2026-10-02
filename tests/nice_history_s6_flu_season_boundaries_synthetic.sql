@@ -1,5 +1,8 @@
 {{ config(tags=['monthly-full', 'nice-history']) }}
 
+-- Run the season-boundary fixture with the monthly flu family.
+-- depends_on: {{ ref('fct_person_flu_vaccination_nice_indicators_by_month') }}
+
 WITH reference_dates AS (
     SELECT
         column1::DATE AS reporting_date,
