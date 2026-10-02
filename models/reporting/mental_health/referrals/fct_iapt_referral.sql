@@ -69,8 +69,7 @@ with versions as (
     from latest as l
 )
 
--- Groups are UKHFD categories. v2.0 codes use the retired mental health list v2.0 submitted against; the shared
--- lookup prefers the MHSDS list, which has no category for H2. group_key folds case, spacing and punctuation, so
+-- Groups are UKHFD categories. v2.0 codes use the retired mental health list v2.0 submitted against. group_key folds case, spacing and punctuation, so
 -- "Self referral" and "Self-Referral" share a key and take the v2.1 spelling as group_name. A category with no v2.1
 -- counterpart keeps its own name.
 , categorised_codes as (
@@ -78,7 +77,7 @@ with versions as (
         code_set_name
         , code
         , trim(regexp_replace(lower(category), '[^a-z0-9]+', '_'), '_') as group_key
-        , regexp_replace(category, '^[[:space:]]+|[[:space:]]+$') as category
+        , category
     from {{ ref('iapt_code_lookup') }}
     where code_set_name in ('source_of_referral', 'discharge_reason', 'discharge_reason_legacy')
         and category is not null
@@ -87,7 +86,7 @@ with versions as (
         'source_of_referral_mental_health' as code_set_name
         , code
         , trim(regexp_replace(lower(category), '[^a-z0-9]+', '_'), '_') as group_key
-        , regexp_replace(category, '^[[:space:]]+|[[:space:]]+$') as category
+        , category
     from {{ ref('mhsds_source_of_referral_history') }}
     where is_latest_definition
         and source_code_set_name = 'Source_Of_Referral_For_Mental_Health'
