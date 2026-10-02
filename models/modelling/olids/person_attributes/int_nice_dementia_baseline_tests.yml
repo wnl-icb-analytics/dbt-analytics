@@ -1,0 +1,54 @@
+models:
+- name: int_nice_dementia_baseline_tests
+  description: Dementia baseline test evidence, one row per active, living, non-test dementia register
+    member and reporting date. Earliest diagnosis must be known by that date. IND80 uses tests from six
+    months before to six months after diagnosis, capped at reporting date. IND118 uses the twelve months
+    ending at diagnosis. Each window includes both boundaries. All eight test types are required; each
+    detail date is the latest qualifying test, or null when absent. No personalised care adjustments apply.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: diagnosis_date
+    description: First dementia diagnosis known by the reporting date.
+  - name: reporting_date
+    description: Date used for eligibility and evidence.
+  - name: ind80_fbc_date
+    description: Latest fbc test in the IND80 window; null when absent.
+  - name: ind80_calcium_date
+    description: Latest calcium test in the IND80 window; null when absent.
+  - name: ind80_glucose_date
+    description: Latest glucose test in the IND80 window; null when absent.
+  - name: ind80_renal_date
+    description: Latest renal test in the IND80 window; null when absent.
+  - name: ind80_liver_date
+    description: Latest liver test in the IND80 window; null when absent.
+  - name: ind80_thyroid_date
+    description: Latest thyroid test in the IND80 window; null when absent.
+  - name: ind80_b12_date
+    description: Latest b12 test in the IND80 window; null when absent.
+  - name: ind80_folate_date
+    description: Latest folate test in the IND80 window; null when absent.
+  - name: ind118_fbc_date
+    description: Latest fbc test in the IND118 window; null when absent.
+  - name: ind118_calcium_date
+    description: Latest calcium test in the IND118 window; null when absent.
+  - name: ind118_glucose_date
+    description: Latest glucose test in the IND118 window; null when absent.
+  - name: ind118_renal_date
+    description: Latest renal test in the IND118 window; null when absent.
+  - name: ind118_liver_date
+    description: Latest liver test in the IND118 window; null when absent.
+  - name: ind118_thyroid_date
+    description: Latest thyroid test in the IND118 window; null when absent.
+  - name: ind118_b12_date
+    description: Latest b12 test in the IND118 window; null when absent.
+  - name: ind118_folate_date
+    description: Latest folate test in the IND118 window; null when absent.

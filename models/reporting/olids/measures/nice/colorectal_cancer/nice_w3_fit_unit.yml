@@ -1,0 +1,83 @@
+unit_tests:
+- name: nice_w3_fit_latest_referral_windows_expiry_ties_and_multiplicity
+  model: fct_person_colorectal_cancer_fit_ind267_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-93301::NUMBER, '2026-08-31'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93301::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93308::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93307::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93306::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93305::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93304::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93303::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93302::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR)
+  - input: ref('int_nice_colorectal_referral_fit_all')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id, column3::DATE AS event_date, column4::VARCHAR AS source_cluster_id
+      FROM VALUES
+          ('SYN_EXPIRY'::VARCHAR, -93301::NUMBER, '2025-09-01'::DATE, 'GICANREF_COD'::VARCHAR),
+          ('SYN_EXPIRY_FIT'::VARCHAR, -93301::NUMBER, '2025-08-11'::DATE, 'FAECIMM_COD'::VARCHAR),
+          ('SYN_REF2'::VARCHAR, -93302::NUMBER, '2026-09-30'::DATE, 'GICANREF_COD'::VARCHAR),
+          ('SYN_FIT2'::VARCHAR, -93302::NUMBER, '2026-09-09'::DATE, 'FAECIMM_COD'::VARCHAR),
+          ('SYN_REF3'::VARCHAR, -93303::NUMBER, '2026-09-30'::DATE, 'GICANREF_COD'::VARCHAR),
+          ('SYN_FIT3'::VARCHAR, -93303::NUMBER, '2026-09-08'::DATE, 'FAECIMM_COD'::VARCHAR),
+          ('SYN_REF4'::VARCHAR, -93304::NUMBER, '2026-09-30'::DATE, 'GICANREF_COD'::VARCHAR),
+          ('SYN_FIT4'::VARCHAR, -93304::NUMBER, '2026-10-01'::DATE, 'FAECIMM_COD'::VARCHAR),
+          ('SYN_REF5_OLD'::VARCHAR, -93305::NUMBER, '2026-08-01'::DATE, 'GICANREF_COD'::VARCHAR),
+          ('SYN_FIT5'::VARCHAR, -93305::NUMBER, '2026-08-01'::DATE, 'FAECIMM_COD'::VARCHAR),
+          ('SYN_REF5_A'::VARCHAR, -93305::NUMBER, '2026-09-30'::DATE, 'GICANREF_COD'::VARCHAR),
+          ('SYN_REF5_Z'::VARCHAR, -93305::NUMBER, '2026-09-30'::DATE, 'GICANREF_COD'::VARCHAR),
+          ('SYN_REF6'::VARCHAR, -93306::NUMBER, '2025-09-30'::DATE, 'GICANREF_COD'::VARCHAR),
+          ('SYN_REF7'::VARCHAR, -93307::NUMBER, '2026-10-01'::DATE, 'GICANREF_COD'::VARCHAR),
+          ('SYN_REF8'::VARCHAR, -93308::NUMBER, '2026-09-30'::DATE, 'GICANREF_COD'::VARCHAR),
+          ('SYN_FIT8_A'::VARCHAR, -93308::NUMBER, '2026-09-30'::DATE, 'FAECIMM_COD'::VARCHAR),
+          ('SYN_FIT8_Z'::VARCHAR, -93308::NUMBER, '2026-09-30'::DATE, 'FAECIMM_COD'::VARCHAR)
+  expect:
+    rows:
+    - person_id: -93301
+      reporting_date: '2026-08-31'
+      referral_date: '2025-09-01'
+      referral_id: SYN_EXPIRY
+      latest_record_date: '2025-08-11'
+      is_in_numerator: true
+    - person_id: -93302
+      reporting_date: '2026-09-30'
+      referral_date: '2026-09-30'
+      referral_id: SYN_REF2
+      latest_record_date: '2026-09-09'
+      is_in_numerator: true
+    - person_id: -93303
+      reporting_date: '2026-09-30'
+      referral_date: '2026-09-30'
+      referral_id: SYN_REF3
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -93304
+      reporting_date: '2026-09-30'
+      referral_date: '2026-09-30'
+      referral_id: SYN_REF4
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -93305
+      reporting_date: '2026-09-30'
+      referral_date: '2026-09-30'
+      referral_id: SYN_REF5_Z
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -93308
+      reporting_date: '2026-09-30'
+      referral_date: '2026-09-30'
+      referral_id: SYN_REF8
+      latest_record_date: '2026-09-30'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+    - nice-w3-tests

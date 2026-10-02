@@ -1,0 +1,206 @@
+unit_tests:
+- name: nice_w3_nsaid_windows_expiry_ckd_exclusion_and_multiplicity
+  model: fct_person_nsaid_egfr_ind232_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-93401::NUMBER, '2026-09-30'::DATE, 50::NUMBER, '1976-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93402::NUMBER, '2026-09-30'::DATE, 50::NUMBER, '1976-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93403::NUMBER, '2026-09-30'::DATE, 50::NUMBER, '1976-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93404::NUMBER, '2026-09-30'::DATE, 50::NUMBER, '1976-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93405::NUMBER, '2026-09-30'::DATE, 50::NUMBER, '1976-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93406::NUMBER, '2026-09-30'::DATE, 50::NUMBER, '1976-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93407::NUMBER, '2026-09-30'::DATE, 50::NUMBER, '1976-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93408::NUMBER, '2026-09-30'::DATE, 50::NUMBER, '1976-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93409::NUMBER, '2026-09-30'::DATE, 50::NUMBER, '1976-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93401::NUMBER, '2026-08-31'::DATE, 50::NUMBER, '1976-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93403::NUMBER, '2026-08-31'::DATE, 50::NUMBER, '1976-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93408::NUMBER, '2026-08-31'::DATE, 50::NUMBER, '1976-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR)
+    format: sql
+  - input: ref('fct_person_ckd_register_by_month')
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, column3::DATE AS earliest_diagnosis_date, column4::DATE AS latest_diagnosis_date, column5::DATE AS latest_resolved_date, column6::DATE AS latest_stage_1_2_date
+      FROM VALUES
+          (-93408::NUMBER, '2026-09-30'::DATE, '2026-09-01'::DATE, '2026-09-01'::DATE, NULL::DATE, NULL::DATE)
+    format: sql
+  - input: ref('int_oral_nsaid_medications_all')
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS medication_order_id, column3::DATE AS order_date
+      FROM VALUES
+          (-93401::NUMBER, 'SYN_0_1'::VARCHAR, '2026-07-01'::DATE),
+          (-93401::NUMBER, 'SYN_0_2'::VARCHAR, '2026-07-02'::DATE),
+          (-93401::NUMBER, 'SYN_0_3'::VARCHAR, '2026-07-03'::DATE),
+          (-93401::NUMBER, 'SYN_0_4'::VARCHAR, '2026-07-04'::DATE),
+          (-93401::NUMBER, 'SYN_0_5'::VARCHAR, '2026-07-05'::DATE),
+          (-93401::NUMBER, 'SYN_0_6'::VARCHAR, '2026-07-06'::DATE),
+          (-93401::NUMBER, 'SYN_0_7'::VARCHAR, '2026-07-07'::DATE),
+          (-93401::NUMBER, 'SYN_0_8'::VARCHAR, '2026-07-08'::DATE),
+          (-93401::NUMBER, 'SYN_0_9'::VARCHAR, '2026-07-09'::DATE),
+          (-93401::NUMBER, 'SYN_0_10'::VARCHAR, '2026-07-10'::DATE),
+          (-93401::NUMBER, 'SYN_0_11'::VARCHAR, '2026-07-11'::DATE),
+          (-93401::NUMBER, 'SYN_0_EXTRA'::VARCHAR, '2026-07-12'::DATE),
+          (-93402::NUMBER, 'SYN_1_1'::VARCHAR, '2026-07-01'::DATE),
+          (-93402::NUMBER, 'SYN_1_2'::VARCHAR, '2026-07-02'::DATE),
+          (-93402::NUMBER, 'SYN_1_3'::VARCHAR, '2026-07-03'::DATE),
+          (-93402::NUMBER, 'SYN_1_4'::VARCHAR, '2026-07-04'::DATE),
+          (-93402::NUMBER, 'SYN_1_5'::VARCHAR, '2026-07-05'::DATE),
+          (-93402::NUMBER, 'SYN_1_6'::VARCHAR, '2026-07-06'::DATE),
+          (-93402::NUMBER, 'SYN_1_7'::VARCHAR, '2026-07-07'::DATE),
+          (-93402::NUMBER, 'SYN_1_8'::VARCHAR, '2026-07-08'::DATE),
+          (-93402::NUMBER, 'SYN_1_9'::VARCHAR, '2026-07-09'::DATE),
+          (-93402::NUMBER, 'SYN_1_10'::VARCHAR, '2026-07-10'::DATE),
+          (-93402::NUMBER, 'SYN_1_11'::VARCHAR, '2026-07-11'::DATE),
+          (-93402::NUMBER, 'SYN_1_EXTRA'::VARCHAR, '2026-07-11'::DATE),
+          (-93403::NUMBER, 'SYN_2_1'::VARCHAR, '2026-07-01'::DATE),
+          (-93403::NUMBER, 'SYN_2_2'::VARCHAR, '2026-07-02'::DATE),
+          (-93403::NUMBER, 'SYN_2_3'::VARCHAR, '2026-07-03'::DATE),
+          (-93403::NUMBER, 'SYN_2_4'::VARCHAR, '2026-07-04'::DATE),
+          (-93403::NUMBER, 'SYN_2_5'::VARCHAR, '2026-07-05'::DATE),
+          (-93403::NUMBER, 'SYN_2_6'::VARCHAR, '2026-07-06'::DATE),
+          (-93403::NUMBER, 'SYN_2_7'::VARCHAR, '2026-07-07'::DATE),
+          (-93403::NUMBER, 'SYN_2_8'::VARCHAR, '2026-07-08'::DATE),
+          (-93403::NUMBER, 'SYN_2_9'::VARCHAR, '2026-07-09'::DATE),
+          (-93403::NUMBER, 'SYN_2_10'::VARCHAR, '2026-07-10'::DATE),
+          (-93403::NUMBER, 'SYN_2_11'::VARCHAR, '2026-07-11'::DATE),
+          (-93403::NUMBER, 'SYN_2_EXTRA'::VARCHAR, '2024-09-30'::DATE),
+          (-93404::NUMBER, 'SYN_3_1'::VARCHAR, '2026-07-01'::DATE),
+          (-93404::NUMBER, 'SYN_3_2'::VARCHAR, '2026-07-02'::DATE),
+          (-93404::NUMBER, 'SYN_3_3'::VARCHAR, '2026-07-03'::DATE),
+          (-93404::NUMBER, 'SYN_3_4'::VARCHAR, '2026-07-04'::DATE),
+          (-93404::NUMBER, 'SYN_3_5'::VARCHAR, '2026-07-05'::DATE),
+          (-93404::NUMBER, 'SYN_3_6'::VARCHAR, '2026-07-06'::DATE),
+          (-93404::NUMBER, 'SYN_3_7'::VARCHAR, '2026-07-07'::DATE),
+          (-93404::NUMBER, 'SYN_3_8'::VARCHAR, '2026-07-08'::DATE),
+          (-93404::NUMBER, 'SYN_3_9'::VARCHAR, '2026-07-09'::DATE),
+          (-93404::NUMBER, 'SYN_3_10'::VARCHAR, '2026-07-10'::DATE),
+          (-93404::NUMBER, 'SYN_3_11'::VARCHAR, '2026-07-11'::DATE),
+          (-93404::NUMBER, 'SYN_3_EXTRA'::VARCHAR, '2026-10-01'::DATE),
+          (-93405::NUMBER, 'SYN_4_1'::VARCHAR, '2026-07-01'::DATE),
+          (-93405::NUMBER, 'SYN_4_2'::VARCHAR, '2026-07-02'::DATE),
+          (-93405::NUMBER, 'SYN_4_3'::VARCHAR, '2026-07-03'::DATE),
+          (-93405::NUMBER, 'SYN_4_4'::VARCHAR, '2026-07-04'::DATE),
+          (-93405::NUMBER, 'SYN_4_5'::VARCHAR, '2026-07-05'::DATE),
+          (-93405::NUMBER, 'SYN_4_6'::VARCHAR, '2026-07-06'::DATE),
+          (-93405::NUMBER, 'SYN_4_7'::VARCHAR, '2026-07-07'::DATE),
+          (-93405::NUMBER, 'SYN_4_8'::VARCHAR, '2026-07-08'::DATE),
+          (-93405::NUMBER, 'SYN_4_9'::VARCHAR, '2026-07-09'::DATE),
+          (-93405::NUMBER, 'SYN_4_10'::VARCHAR, '2026-07-10'::DATE),
+          (-93405::NUMBER, 'SYN_4_11'::VARCHAR, '2026-07-11'::DATE),
+          (-93405::NUMBER, 'SYN_4_EXTRA'::VARCHAR, '2026-09-30'::DATE),
+          (-93406::NUMBER, 'SYN_5_1'::VARCHAR, '2026-07-01'::DATE),
+          (-93406::NUMBER, 'SYN_5_2'::VARCHAR, '2026-07-02'::DATE),
+          (-93406::NUMBER, 'SYN_5_3'::VARCHAR, '2026-07-03'::DATE),
+          (-93406::NUMBER, 'SYN_5_4'::VARCHAR, '2026-07-04'::DATE),
+          (-93406::NUMBER, 'SYN_5_5'::VARCHAR, '2026-07-05'::DATE),
+          (-93406::NUMBER, 'SYN_5_6'::VARCHAR, '2026-07-06'::DATE),
+          (-93406::NUMBER, 'SYN_5_7'::VARCHAR, '2026-07-07'::DATE),
+          (-93406::NUMBER, 'SYN_5_8'::VARCHAR, '2026-07-08'::DATE),
+          (-93406::NUMBER, 'SYN_5_9'::VARCHAR, '2026-07-09'::DATE),
+          (-93406::NUMBER, 'SYN_5_10'::VARCHAR, '2026-07-10'::DATE),
+          (-93406::NUMBER, 'SYN_5_11'::VARCHAR, '2026-07-11'::DATE),
+          (-93406::NUMBER, 'SYN_5_EXTRA'::VARCHAR, '2026-07-12'::DATE),
+          (-93407::NUMBER, 'SYN_6_1'::VARCHAR, '2026-07-01'::DATE),
+          (-93407::NUMBER, 'SYN_6_2'::VARCHAR, '2026-07-02'::DATE),
+          (-93407::NUMBER, 'SYN_6_3'::VARCHAR, '2026-07-03'::DATE),
+          (-93407::NUMBER, 'SYN_6_4'::VARCHAR, '2026-07-04'::DATE),
+          (-93407::NUMBER, 'SYN_6_5'::VARCHAR, '2026-07-05'::DATE),
+          (-93407::NUMBER, 'SYN_6_6'::VARCHAR, '2026-07-06'::DATE),
+          (-93407::NUMBER, 'SYN_6_7'::VARCHAR, '2026-07-07'::DATE),
+          (-93407::NUMBER, 'SYN_6_8'::VARCHAR, '2026-07-08'::DATE),
+          (-93407::NUMBER, 'SYN_6_9'::VARCHAR, '2026-07-09'::DATE),
+          (-93407::NUMBER, 'SYN_6_10'::VARCHAR, '2026-07-10'::DATE),
+          (-93407::NUMBER, 'SYN_6_11'::VARCHAR, '2026-07-11'::DATE),
+          (-93407::NUMBER, 'SYN_6_EXTRA'::VARCHAR, '2026-07-12'::DATE),
+          (-93408::NUMBER, 'SYN_7_1'::VARCHAR, '2026-07-01'::DATE),
+          (-93408::NUMBER, 'SYN_7_2'::VARCHAR, '2026-07-02'::DATE),
+          (-93408::NUMBER, 'SYN_7_3'::VARCHAR, '2026-07-03'::DATE),
+          (-93408::NUMBER, 'SYN_7_4'::VARCHAR, '2026-07-04'::DATE),
+          (-93408::NUMBER, 'SYN_7_5'::VARCHAR, '2026-07-05'::DATE),
+          (-93408::NUMBER, 'SYN_7_6'::VARCHAR, '2026-07-06'::DATE),
+          (-93408::NUMBER, 'SYN_7_7'::VARCHAR, '2026-07-07'::DATE),
+          (-93408::NUMBER, 'SYN_7_8'::VARCHAR, '2026-07-08'::DATE),
+          (-93408::NUMBER, 'SYN_7_9'::VARCHAR, '2026-07-09'::DATE),
+          (-93408::NUMBER, 'SYN_7_10'::VARCHAR, '2026-07-10'::DATE),
+          (-93408::NUMBER, 'SYN_7_11'::VARCHAR, '2026-07-11'::DATE),
+          (-93408::NUMBER, 'SYN_7_EXTRA'::VARCHAR, '2026-07-12'::DATE),
+          (-93409::NUMBER, 'SYN_8_1'::VARCHAR, '2026-07-01'::DATE),
+          (-93409::NUMBER, 'SYN_8_2'::VARCHAR, '2026-07-02'::DATE),
+          (-93409::NUMBER, 'SYN_8_3'::VARCHAR, '2026-07-03'::DATE),
+          (-93409::NUMBER, 'SYN_8_4'::VARCHAR, '2026-07-04'::DATE),
+          (-93409::NUMBER, 'SYN_8_5'::VARCHAR, '2026-07-05'::DATE),
+          (-93409::NUMBER, 'SYN_8_6'::VARCHAR, '2026-07-06'::DATE),
+          (-93409::NUMBER, 'SYN_8_7'::VARCHAR, '2026-07-07'::DATE),
+          (-93409::NUMBER, 'SYN_8_8'::VARCHAR, '2026-07-08'::DATE),
+          (-93409::NUMBER, 'SYN_8_9'::VARCHAR, '2026-07-09'::DATE),
+          (-93409::NUMBER, 'SYN_8_10'::VARCHAR, '2026-07-10'::DATE),
+          (-93409::NUMBER, 'SYN_8_11'::VARCHAR, '2026-07-11'::DATE),
+          (-93409::NUMBER, 'SYN_8_EXTRA'::VARCHAR, '2026-07-12'::DATE)
+    format: sql
+  - input: ref('int_egfr_test_all')
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date
+      FROM VALUES
+          (-93401::NUMBER, '2025-09-01'::DATE),
+          (-93405::NUMBER, '2026-09-30'::DATE),
+          (-93405::NUMBER, '2026-10-01'::DATE),
+          (-93406::NUMBER, '2025-09-30'::DATE),
+          (-93406::NUMBER, '2025-09-30'::DATE),
+          (-93407::NUMBER, '2025-09-29'::DATE)
+    format: sql
+  expect:
+    rows:
+    - person_id: -93401
+      reporting_date: '2026-08-31'
+      nsaid_issue_day_count: 12
+      latest_therapy_order_date: '2026-07-12'
+      latest_record_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -93401
+      reporting_date: '2026-09-30'
+      nsaid_issue_day_count: 12
+      latest_therapy_order_date: '2026-07-12'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -93403
+      reporting_date: '2026-08-31'
+      nsaid_issue_day_count: 12
+      latest_therapy_order_date: '2026-07-11'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -93405
+      reporting_date: '2026-09-30'
+      nsaid_issue_day_count: 12
+      latest_therapy_order_date: '2026-09-30'
+      latest_record_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -93406
+      reporting_date: '2026-09-30'
+      nsaid_issue_day_count: 12
+      latest_therapy_order_date: '2026-07-12'
+      latest_record_date: '2025-09-30'
+      is_in_numerator: true
+    - person_id: -93407
+      reporting_date: '2026-09-30'
+      nsaid_issue_day_count: 12
+      latest_therapy_order_date: '2026-07-12'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -93408
+      reporting_date: '2026-08-31'
+      nsaid_issue_day_count: 12
+      latest_therapy_order_date: '2026-07-12'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -93409
+      reporting_date: '2026-09-30'
+      nsaid_issue_day_count: 12
+      latest_therapy_order_date: '2026-07-12'
+      latest_record_date: null
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+    - nice-w3-tests

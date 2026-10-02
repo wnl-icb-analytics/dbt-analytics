@@ -1,0 +1,54 @@
+models:
+- name: fct_person_colorectal_cancer_fit_ind267_by_month
+  description: NICE IND267 person-level adaptation. One row per active, living, non-test person with a
+    GICANREF_COD urgent suspected colorectal cancer referral in (reporting date minus twelve months, reporting
+    date]. Only the latest referral counts, with the highest observation id breaking same-day ties. Achievement
+    requires a FAECIMM_COD FIT record between 21 days before that referral and the referral day, both
+    inclusive. PCD COLCANSCREV_COD bowel-screening result codes are excluded from FIT evidence. Generic
+    FIT codes cannot distinguish screening context. This counts people rather than every referral in the
+    NICE specification. No personalised care adjustments apply. Recalculated for the last 60 completed
+    month-ends using current rules and code lists. Registration and practice follow the monthly spine.
+    Birth and death dates are approximate; current gender and test flags apply retrospectively. Diagnoses
+    use clinical and recorded dates; other evidence uses clinical dates through month-end. Later corrections
+    can change earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind267
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: reporting_date
+    description: Date used for eligibility and evidence.
+  - name: measurement_period_start
+    description: Start of the stated cohort or evidence period; see the model description for boundary
+      inclusion.
+  - name: latest_record_date
+    description: Latest qualifying evidence date; null when no qualifying evidence exists.
+  - name: is_in_denominator
+    description: Always true for every row.
+  - name: is_in_numerator
+    description: Whether the complete indicator rule is met.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: referral_date
+    description: Latest eligible referral clinical date.
+  - name: referral_id
+    description: Highest observation id on the latest referral day.
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: age
+    description: Completed years at reporting date, based on the approximate birth date.
+  - name: practice_code
+    description: Registration practice ODS code at reporting date.
+  - name: practice_name
+    description: Registration practice name at reporting date.

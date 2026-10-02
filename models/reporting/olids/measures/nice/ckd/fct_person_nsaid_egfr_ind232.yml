@@ -1,0 +1,68 @@
+models:
+- name: fct_person_nsaid_egfr_ind232
+  description: NICE IND232. One row per active, living, non-test person outside the CKD register with
+    at least 12 distinct oral NSAID issue days in (reporting date minus 24 months, reporting date]. NHS_DRUG_REFSETS
+    ORALNSAIDDRUG_COD defines oral NSAIDs. Same-day prescriptions count once. Achievement requires a PCD
+    EGFR_COD performed test in [reporting date minus 12 months, reporting date], including tests without
+    a numeric result. No personalised care adjustments apply. Assessed on the build date.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind232
+      indicator:
+        id: IND232
+        type: MEASURE
+        category: KIDNEY
+        clinical_domain: Cardiometabolic
+        name_short: eGFR for long-term NSAID use
+        description_short: eGFR in 12 months for long-term oral NSAID users outside the CKD register
+        description_long: NICE IND232. One row per active, living, non-test person outside the CKD register
+          with at least 12 distinct oral NSAID issue days in (reporting date minus 24 months, reporting
+          date]. NHS_DRUG_REFSETS ORALNSAIDDRUG_COD defines oral NSAIDs. Same-day prescriptions count
+          once. Achievement requires a PCD EGFR_COD performed test in [reporting date minus 12 months,
+          reporting date], including tests without a numeric result. No personalised care adjustments
+          apply.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND232
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Date used for eligibility and evidence.
+  - name: measurement_period_start
+    description: Inclusive start of the 12-month eGFR measurement period. The NSAID cohort uses a separate
+      24-month period with an exclusive start.
+  - name: age
+    description: Completed years at reporting date; null when unavailable in current mode.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: current_practice_code
+    description: Registration practice ODS code at reporting date.
+  - name: current_practice_name
+    description: Registration practice name at reporting date.
+  - name: nsaid_issue_day_count
+    description: Distinct oral NSAID issue days in the 24-month period; at least 12.
+  - name: latest_therapy_order_date
+    description: Latest oral NSAID issue day in the 24-month period.
+  - name: latest_record_date
+    description: Latest performed eGFR test date in the 12-month period; null when absent. A numeric result
+      is not required.
+  - name: is_in_denominator
+    description: Always true for every row.
+  - name: is_in_numerator
+    description: Whether an eGFR test was performed in the 12-month period.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
