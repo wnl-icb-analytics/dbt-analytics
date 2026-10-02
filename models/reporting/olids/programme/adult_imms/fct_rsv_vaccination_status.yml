@@ -1,17 +1,30 @@
 models:
   - name: fct_rsv_vaccination_status
-    description: 'Respiratory Syncytial Virus (RSV) vaccination programme status for
-      people aged 75+ from 1st Sept 2024 or are currently aged 75-79 years for a catch-up
-      campaign Single per person or newly eligible aged 80+ from 1st April 2026 - dose 1 status only.
-      This table does not include RSV routine maternity vaccinations.'
+    description: >
+      RSV dose 1 status for registered adults aged 75+, care home residents and pregnant
+      people. Each row is an eligible person and one RSV vaccination status result. A
+      person can have more than one row when both administered and declined records exist.
+      People aged 65 to 74 who qualify only through clinical risk are excluded. The
+      population is currently registered, living people aged 18+ in
+      int_adult_imms_current_population who meet one of those
+      criteria. vaccination_status is VACCINATION_ADMINISTERED, VACCINATION_DECLINED or
+      NO_VACCINATION_RECORD. Records cover RSV_1 age, RSV_1B care home, RSV_1C maternity
+      and RSV_1D clinical risk vaccine IDs where the person also meets the population rule.
+      Administered records prefer Completed over OutofSchedule, then the latest date.
+      Declined records use the earliest retained date across those vaccine IDs.
     config:
       meta:
         owner:
           name: KateHomer55
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - vaccination_status
     columns:
       - name: person_id
         description: 'Unique identifier for the person'
         tests:
           - not_null
-          - unique
 

@@ -15,8 +15,6 @@
 WITH bmi_data AS (
     SELECT
         person_id,
-        is_bmi_30_plus,
-        is_bmi_27_5_plus,
         latest_bmi_date,
         latest_valid_bmi_date,
         latest_valid_bmi_value,
@@ -60,17 +58,14 @@ register_logic AS (
 
         -- Ethnicity data
         coalesce(age.age >= 18, FALSE) AS meets_age_criteria,
-        coalesce(bmi.is_bmi_30_plus, FALSE) AS has_bmi_30_plus,
-        coalesce(bmi.is_bmi_27_5_plus, FALSE) AS has_bmi_27_5_plus,
+        coalesce(bmi.latest_valid_bmi_value >= 30, FALSE) AS has_bmi_30_plus,
+        coalesce(bmi.latest_valid_bmi_value >= 27.5, FALSE) AS has_bmi_27_5_plus,
         coalesce(eth.is_bame, FALSE) AS is_bame,
 
         -- Person demographics
         coalesce(age.age >= 18 AND (
-            bmi.latest_valid_bmi_date IS NOT NULL
-            AND (
-                bmi.is_bmi_30_plus = TRUE
-                OR (eth.is_bame = TRUE AND bmi.is_bmi_27_5_plus = TRUE)
-            )
+            bmi.latest_valid_bmi_value >= 30
+            OR (eth.is_bame = TRUE AND bmi.latest_valid_bmi_value >= 27.5)
         ), FALSE) AS is_on_register
     FROM {{ ref('dim_person') }} AS p
     INNER JOIN {{ ref('dim_person_age') }} AS age ON p.person_id = age.person_id

@@ -7,9 +7,17 @@ with organisation_codes as (
     select distinct organisation_code
     from {{ ref('stg_dictionary_dbo_organisation') }}
     where sk_organisation_type_id = 41
+),
+
+-- Data lake enrichment of each attendance record; unique on primarykey_id and import.
+derived as (
+    select primarykey_id
+        , dmic_import_log_id
+        , dmic_lsoa2021
+    from {{ ref('raw_sus_ecds_derived') }}
 )
 
-select primarykey_id
+select core.primarykey_id
     , system_transaction_cds_unique_identifier
     , {{ consistent_sk_patient_id_format('patient_nhs_number_value_pseudo') }} as sk_patient_id
     , patient_local_patient_identifier_value as local_patient_identifier
@@ -113,6 +121,7 @@ select primarykey_id
     , patient_usual_address_postcode_pseudo
     , patient_usual_address_postcode_district
     , patient_usual_address_lsoa_11
+    , derived.dmic_lsoa2021 as patient_usual_address_lsoa_21
     , patient_usual_address_local_authority_district
     , patient_usual_address_index_of_multiple_deprivation_decile
     , patient_gp_registration_general_practice
@@ -122,3 +131,6 @@ left join organisation_codes as provider
     on core.attendance_location_hes_provider_3 = provider.organisation_code
 left join organisation_codes as ambulance
     on core.attendance_arrival_conveying_ambulance_trust = ambulance.organisation_code
+left join derived
+    on core.primarykey_id = derived.primarykey_id
+    and core.dmic_import_log_id = derived.dmic_import_log_id
