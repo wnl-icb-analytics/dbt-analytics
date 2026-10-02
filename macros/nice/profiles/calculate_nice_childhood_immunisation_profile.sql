@@ -1,16 +1,26 @@
 {% macro calculate_nice_childhood_immunisation_profile(reference='current') %}
 {#-
     Calculate vaccine dose counts and contraindication state at each reference date.
-    Args: reference is current or by_month; population scope comes from its adapter.
+    Args: reference is current or by_month.
     Returns: person_id, birth_date_approx, reporting_date and the existing vaccine
              dose-count and contraindication fields, one person per date.
+    Candidates are common population members with a 24-week, 8-month, 18-month
+    or fifth-birthday milestone in (reference date minus 12 months, reference date].
 -#}
 WITH population AS (
     SELECT
         person_id,
         birth_date_approx,
         reporting_date
-    FROM ({{ nice_reference_population(reference, scope='childhood') }})
+    FROM ({{ nice_reference_population(reference) }})
+    WHERE (DATEADD(week, 24, birth_date_approx) > DATEADD(month, -12, reporting_date)
+            AND DATEADD(week, 24, birth_date_approx) <= reporting_date)
+        OR (DATEADD(month, 8, birth_date_approx) > DATEADD(month, -12, reporting_date)
+            AND DATEADD(month, 8, birth_date_approx) <= reporting_date)
+        OR (DATEADD(month, 18, birth_date_approx) > DATEADD(month, -12, reporting_date)
+            AND DATEADD(month, 18, birth_date_approx) <= reporting_date)
+        OR (DATEADD(year, 5, birth_date_approx) > DATEADD(month, -12, reporting_date)
+            AND DATEADD(year, 5, birth_date_approx) <= reporting_date)
 ),
 
 birth_dates AS (

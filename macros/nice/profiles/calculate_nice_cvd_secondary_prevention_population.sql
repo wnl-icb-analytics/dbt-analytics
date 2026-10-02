@@ -1,9 +1,11 @@
 {% macro calculate_nice_cvd_secondary_prevention_population(reference='current') %}
 {#-
     Calculate CVD register membership, diagnosis anchors and lifelong exclusions.
-    Args: reference is current or by_month; register/population adapters supply inputs.
+    Args: reference is current or by_month; register adapters define membership.
     Returns: person_id, reporting_date, CHD/STIA/PAD flags and earliest dates,
              earliest_cvd_diagnosis_date, FH and haemorrhagic-stroke history flags.
+    Current candidates are live register members; monthly candidates are active
+    monthly register members. Indicators exclude test patients through population joins.
 -#}
 WITH cvd_registers AS (
     {% for condition in ['CHD', 'STIA', 'PAD'] %}
@@ -44,7 +46,7 @@ fh_history AS (
 )
 SELECT
     cvd.person_id,
-    population.reporting_date,
+    cvd.reporting_date,
     cvd.has_chd,
     cvd.has_stroke_tia,
     cvd.has_pad,
@@ -59,7 +61,4 @@ LEFT JOIN fh_history AS fh
     ON cvd.person_id = fh.person_id
 LEFT JOIN {{ ref('int_haemorrhagic_stroke_history') }} AS hs
     ON cvd.person_id = hs.person_id
-INNER JOIN ({{ nice_reference_population(reference, scope='cvd') }}) AS population
-    ON cvd.person_id = population.person_id
-    AND cvd.reporting_date = population.reporting_date
 {% endmacro %}
