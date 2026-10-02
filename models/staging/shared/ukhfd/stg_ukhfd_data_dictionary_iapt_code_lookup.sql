@@ -9,7 +9,8 @@
     ('psychotropic_medication_usage', 'raw_ukhfd_data_dictionary_iapt_psychotropic_medication_usage'),
     ('short_notice_cancellation_indicator', 'raw_ukhfd_data_dictionary_iapt_short_notice_cancellation_indicator'),
     ('integrated_ltc_service_indicator', 'raw_ukhfd_data_dictionary_iapt_integrated_ltc_service_indicator'),
-    ('coding_significance', 'raw_ukhfd_data_dictionary_iapt_coding_significance')
+    ('coding_significance', 'raw_ukhfd_data_dictionary_iapt_coding_significance'),
+    ('statutory_sick_pay_indicator', 'raw_ukhfd_data_dictionary_iapt_statutory_sick_pay_indicator')
 ] %}
 
 {% for code_set_name, raw_model_name in code_sets %}
