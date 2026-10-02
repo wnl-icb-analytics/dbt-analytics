@@ -19,10 +19,13 @@ models:
       - EMIS: Static extract (date from seed file)
       - OLIDS: Regular episode types only, active as of EMIS extract date
 
-      The EMIS seed is a one-off extract. At some practices it is well above both
-      OLIDS and the NHS England monthly publication, so check
-      int_nhse_olids_practice_registration_comparison before treating a failure
-      here as an OLIDS gap.
+      OLIDS registrations come from EMIS, so this is the authoritative check. The
+      OLIDS count is rebuilt for the extract date from today's registration history,
+      and EMIS later rewrites some registration dates: a patient removed in list
+      cleaning and then re-registered gets a new start date, and leaving dates can
+      be backdated. The comparison therefore drifts down as the extract ages. Rebuilt
+      from a mid-July 2026 copy of the feed, the June 2026 extract matched within
+      about 0.1%. Use a fresh extract for a current check.
 
     config:
       meta:
