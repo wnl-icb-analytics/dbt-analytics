@@ -1,0 +1,584 @@
+unit_tests:
+- name: w2_cardiac_four_pillars_boundaries_and_expiry
+  model: fct_person_heart_failure_four_pillars_ind317_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, 60 AS age, '1966-01-01'::DATE AS
+      birth_date_approx, 'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name
+      FROM VALUES (-2001,'2026-09-30'),(-2001,'2026-10-31'),(-2002,'2026-09-30'),(-2003,'2026-09-30')
+  - input: ref('fct_person_heart_failure_register_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, '2020-01-01'::DATE AS earliest_diagnosis_date,
+      '2020-01-01'::DATE AS latest_diagnosis_date, TRUE AS is_on_hfref_register FROM VALUES (-2001,'2026-09-30'),(-2001,'2026-10-31'),(-2002,'2026-09-30'),(-2003,'2026-09-30')
+  - input: ref('int_heart_failure_diagnoses_all')
+    format: sql
+    rows: SELECT -2001 AS person_id, '2020-01-01'::DATE AS clinical_effective_date, '2020-01-01'::DATE AS date_recorded,
+      TRUE AS is_diagnosis_code, FALSE AS is_resolved_code WHERE FALSE
+  - input: ref('int_nice_cardiac_therapy_by_month')
+    format: sql
+    rows: SELECT 2::NUMBER AS antiplatelet_chemical_count_in_period, column1::NUMBER AS person_id, column2::DATE
+      AS reporting_date, column3::DATE AS latest_ras_order_date, column3::DATE AS latest_beta_blocker_order_date,
+      column3::DATE AS latest_hf_licensed_beta_blocker_order_date, column3::DATE AS latest_mra_order_date, column3::DATE
+      AS latest_sglt2_order_date FROM VALUES (-2001,'2026-09-30','2026-03-30'),(-2001,'2026-10-31','2026-03-30'),(-2002,'2026-09-30','2026-09-30'),(-2003,'2026-09-30','2026-10-01')
+  expect:
+    rows:
+    - person_id: -2001
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_ras_in_period: true
+      is_beta_blocker_in_period: true
+      is_hf_licensed_beta_blocker_in_period: true
+      is_mra_in_period: true
+      is_sglt2_in_period: true
+    - person_id: -2001
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+      is_ras_in_period: false
+      is_beta_blocker_in_period: false
+      is_hf_licensed_beta_blocker_in_period: false
+      is_mra_in_period: false
+      is_sglt2_in_period: false
+    - person_id: -2002
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_ras_in_period: true
+      is_beta_blocker_in_period: true
+      is_hf_licensed_beta_blocker_in_period: true
+      is_mra_in_period: true
+      is_sglt2_in_period: true
+    - person_id: -2003
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_ras_in_period: false
+      is_beta_blocker_in_period: false
+      is_hf_licensed_beta_blocker_in_period: false
+      is_mra_in_period: false
+      is_sglt2_in_period: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: w2_cardiac_hf_entry_known_date_cohort_and_echo_boundaries
+  model: fct_person_heart_failure_confirmation_ind192_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, 60 AS age, '1966-01-01'::DATE AS
+      birth_date_approx, 'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name
+      FROM VALUES (-2010,'2026-09-30'),(-2010,'2026-10-31'),(-2011,'2026-09-30'),(-2012,'2026-09-30'),(-2013,'2026-09-30'),(-2014,'2026-09-30'),(-2015,'2026-09-30'),(-2016,'2026-09-30'),(-2017,'2026-09-30'),(-2018,'2026-09-30')
+  - input: ref('fct_person_heart_failure_register_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, '2020-01-01'::DATE AS earliest_diagnosis_date,
+      '2026-06-30'::DATE AS latest_diagnosis_date, FALSE AS is_on_hfref_register FROM VALUES (-2010,'2026-09-30'),(-2010,'2026-10-31'),(-2011,'2026-09-30'),(-2012,'2026-09-30'),(-2013,'2026-09-30'),(-2014,'2026-09-30'),(-2015,'2026-09-30'),(-2016,'2026-09-30'),(-2017,'2026-09-30'),(-2018,'2026-09-30')
+  - input: ref('int_heart_failure_diagnoses_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date, column3::DATE AS date_recorded,
+      column4::BOOLEAN AS is_diagnosis_code, column5::BOOLEAN AS is_resolved_code FROM VALUES (-2010,'2025-07-31','2025-07-31',TRUE,FALSE),(-2011,'2025-06-30','2025-06-30',TRUE,FALSE),(-2012,'2026-06-30','2026-06-30',TRUE,FALSE),(-2013,'2026-07-01','2026-07-01',TRUE,FALSE),(-2014,'2026-06-30','2026-06-30',TRUE,FALSE),(-2015,'2026-06-30','2026-06-30',TRUE,FALSE),(-2016,'2026-06-30','2026-06-30',TRUE,FALSE),(-2016,'2020-01-01','2026-10-01',TRUE,FALSE),(-2017,'2026-05-31','2026-05-31',TRUE,FALSE),(-2018,'2020-01-01','2020-01-01',TRUE,FALSE),(-2018,'2026-06-30','2026-06-30',FALSE,TRUE),(-2018,'2026-06-30','2026-06-30',TRUE,FALSE),(-2016,'2026-10-01',NULL,FALSE,TRUE)
+  - input: ref('int_heart_failure_confirmation_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date FROM VALUES (-2010,'2025-04-30'),(-2012,'2026-09-30'),(-2014,'2026-03-29'),(-2015,'2026-10-01'),(-2016,'2026-06-30'),(-2017,'2026-09-01'),(-2018,'2026-06-30')
+  expect:
+    rows:
+    - person_id: -2010
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -2012
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -2014
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -2015
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -2016
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -2017
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -2018
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: w2_cardiac_mi_125_substitution_boundaries_and_expiry
+  model: fct_person_myocardial_infarction_therapy_ind125_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, 60 AS age, '1966-01-01'::DATE AS
+      birth_date_approx, 'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name
+      FROM VALUES (-2020,'2026-09-30'),(-2020,'2026-10-31'),(-2021,'2026-09-30'),(-2022,'2026-09-30'),(-2023,'2026-09-30'),(-2026,'2026-09-30'),(-2026,'2026-10-31'),(-2024,'2026-09-30'),(-2025,'2026-09-30'),(-2029,'2026-09-30')
+  - input: ref('int_nice_mi_profile_by_month')
+    format: sql
+    rows: SELECT 2::NUMBER AS antiplatelet_chemical_count_in_period, column1::NUMBER AS person_id, column2::DATE
+      AS reporting_date, '2020-01-01'::DATE AS earliest_mi_date, '2026-04-01'::DATE AS latest_mi_date, IFF(column1=-2029,NULL::DATE,'2026-04-01'::DATE)
+      AS latest_mi_in_financial_year_date, NULL::DATE AS first_lvsd_date, column1=-2025 AS has_lvsd, column4::BOOLEAN
+      AS has_ace_inhibitor_intolerance, column4::BOOLEAN AS has_aspirin_intolerance, NULL::DATE AS latest_aspirin_record_date,
+      IFF(column1 IN (-2026,-2022),column3::DATE,NULL::DATE) AS latest_ace_inhibitor_order_date, IFF(column1=-2026,NULL::DATE,column3::DATE)
+      AS latest_arb_order_date, IFF(column1=-2026,column2::DATE,column3::DATE) AS latest_aspirin_order_date, IFF(column1=-2026,column2::DATE,column3::DATE)
+      AS latest_p2y12_order_date, IFF(column1=-2026,column2::DATE,column3::DATE) AS latest_clopidogrel_order_date,
+      IFF(column1=-2026,column2::DATE,column3::DATE) AS latest_antiplatelet_order_date, IFF(column1=-2026,column2::DATE,column3::DATE)
+      AS latest_anticoagulant_order_date, IFF(column1=-2026,column2::DATE,column3::DATE) AS latest_statin_order_date,
+      IFF(column1 IN (-2024,-2025),NULL::DATE,IFF(column1=-2026,column2::DATE,column3::DATE)) AS latest_beta_blocker_order_date
+      FROM VALUES (-2020,'2026-09-30','2026-03-30',TRUE),(-2020,'2026-10-31','2026-03-30',TRUE),(-2021,'2026-09-30','2026-09-30',TRUE),(-2022,'2026-09-30','2026-10-01',TRUE),(-2023,'2026-09-30','2026-09-30',FALSE),(-2026,'2026-09-30','2026-03-30',FALSE),(-2026,'2026-10-31','2026-03-30',FALSE),(-2024,'2026-09-30','2026-09-30',TRUE),(-2025,'2026-09-30','2026-09-30',TRUE),(-2029,'2026-09-30','2026-09-30',TRUE)
+  expect:
+    rows:
+    - person_id: -2020
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_arb_in_period: true
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+      is_ace_inhibitor_in_period: false
+    - person_id: -2020
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+      is_arb_in_period: false
+      is_aspirin_in_period: false
+      is_p2y12_in_period: false
+      is_clopidogrel_in_period: false
+      is_antiplatelet_in_period: false
+      is_anticoagulant_in_period: false
+      is_statin_in_period: false
+      is_beta_blocker_in_period: false
+      is_ace_inhibitor_in_period: false
+    - person_id: -2021
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_arb_in_period: true
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+      is_ace_inhibitor_in_period: false
+    - person_id: -2022
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_arb_in_period: false
+      is_aspirin_in_period: false
+      is_p2y12_in_period: false
+      is_clopidogrel_in_period: false
+      is_antiplatelet_in_period: false
+      is_anticoagulant_in_period: false
+      is_statin_in_period: false
+      is_beta_blocker_in_period: false
+      is_ace_inhibitor_in_period: false
+    - person_id: -2023
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_arb_in_period: true
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+      is_ace_inhibitor_in_period: false
+    - person_id: -2026
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_ace_inhibitor_in_period: true
+      is_arb_in_period: false
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+    - person_id: -2026
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+      is_ace_inhibitor_in_period: false
+      is_arb_in_period: false
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+    - person_id: -2024
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_ace_inhibitor_in_period: false
+      is_arb_in_period: true
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: false
+    - person_id: -2025
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_ace_inhibitor_in_period: false
+      is_arb_in_period: true
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: w2_cardiac_mi_126_substitution_boundaries_and_expiry
+  model: fct_person_myocardial_infarction_therapy_ind126_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, 60 AS age, '1966-01-01'::DATE AS
+      birth_date_approx, 'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name
+      FROM VALUES (-2020,'2026-09-30'),(-2020,'2026-10-31'),(-2021,'2026-09-30'),(-2022,'2026-09-30'),(-2023,'2026-09-30'),(-2026,'2026-09-30'),(-2026,'2026-10-31'),(-2024,'2026-09-30'),(-2025,'2026-09-30'),(-2027,'2026-09-30'),(-2028,'2026-09-30'),(-2042,'2026-09-30'),(-2043,'2026-09-30')
+  - input: ref('int_nice_mi_profile_by_month')
+    format: sql
+    rows: SELECT 2::NUMBER AS antiplatelet_chemical_count_in_period, column1::NUMBER AS person_id, column2::DATE
+      AS reporting_date, CASE WHEN column1=-2027 THEN '2025-09-30'::DATE WHEN column1=-2028 THEN '2025-09-29'::DATE
+      ELSE '2020-01-01'::DATE END AS earliest_mi_date, '2026-04-01'::DATE AS latest_mi_date, '2026-04-01'::DATE
+      AS latest_mi_in_financial_year_date, NULL::DATE AS first_lvsd_date, column1=-2025 AS has_lvsd, column4::BOOLEAN
+      AS has_ace_inhibitor_intolerance, column4::BOOLEAN AS has_aspirin_intolerance, NULL::DATE AS latest_aspirin_record_date,
+      IFF(column1 IN (-2026,-2042,-2043,-2022),column3::DATE,NULL::DATE) AS latest_ace_inhibitor_order_date, IFF(column1
+      IN (-2026,-2042,-2043),NULL::DATE,column3::DATE) AS latest_arb_order_date, IFF(column1 IN (-2042,-2043),NULL::DATE,IFF(column1=-2026,column2::DATE,column3::DATE))
+      AS latest_aspirin_order_date, IFF(column1=-2026,column2::DATE,column3::DATE) AS latest_p2y12_order_date, IFF(column1=-2026,column2::DATE,column3::DATE)
+      AS latest_clopidogrel_order_date, IFF(column1=-2026,column2::DATE,column3::DATE) AS latest_antiplatelet_order_date,
+      IFF(column1 IN (-2042,-2043),NULL::DATE,IFF(column1=-2026,column2::DATE,column3::DATE)) AS latest_anticoagulant_order_date,
+      IFF(column1=-2026,column2::DATE,column3::DATE) AS latest_statin_order_date, IFF(column1 IN (-2024,-2025),NULL::DATE,IFF(column1=-2026,column2::DATE,column3::DATE))
+      AS latest_beta_blocker_order_date FROM VALUES (-2020,'2026-09-30','2026-03-30',TRUE),(-2020,'2026-10-31','2026-03-30',TRUE),(-2021,'2026-09-30','2026-09-30',TRUE),(-2022,'2026-09-30','2026-10-01',TRUE),(-2023,'2026-09-30','2026-09-30',FALSE),(-2026,'2026-09-30','2026-03-30',FALSE),(-2026,'2026-10-31','2026-03-30',FALSE),(-2024,'2026-09-30','2026-09-30',TRUE),(-2025,'2026-09-30','2026-09-30',TRUE),(-2027,'2026-09-30','2026-09-30',TRUE),(-2028,'2026-09-30','2026-09-30',TRUE),(-2042,'2026-09-30','2026-09-30',FALSE),(-2043,'2026-09-30','2026-09-30',TRUE)
+  expect:
+    rows:
+    - person_id: -2020
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_arb_in_period: true
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+      is_ace_inhibitor_in_period: false
+    - person_id: -2020
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+      is_arb_in_period: false
+      is_aspirin_in_period: false
+      is_p2y12_in_period: false
+      is_clopidogrel_in_period: false
+      is_antiplatelet_in_period: false
+      is_anticoagulant_in_period: false
+      is_statin_in_period: false
+      is_beta_blocker_in_period: false
+      is_ace_inhibitor_in_period: false
+    - person_id: -2021
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_arb_in_period: true
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+      is_ace_inhibitor_in_period: false
+    - person_id: -2022
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_arb_in_period: false
+      is_aspirin_in_period: false
+      is_p2y12_in_period: false
+      is_clopidogrel_in_period: false
+      is_antiplatelet_in_period: false
+      is_anticoagulant_in_period: false
+      is_statin_in_period: false
+      is_beta_blocker_in_period: false
+      is_ace_inhibitor_in_period: false
+    - person_id: -2023
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_arb_in_period: true
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+      is_ace_inhibitor_in_period: false
+    - person_id: -2026
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_ace_inhibitor_in_period: true
+      is_arb_in_period: false
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+    - person_id: -2026
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+      is_ace_inhibitor_in_period: false
+      is_arb_in_period: false
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+    - person_id: -2024
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_ace_inhibitor_in_period: false
+      is_arb_in_period: true
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: false
+    - person_id: -2025
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_ace_inhibitor_in_period: false
+      is_arb_in_period: true
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: false
+    - person_id: -2028
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_ace_inhibitor_in_period: false
+      is_arb_in_period: true
+      is_aspirin_in_period: true
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: true
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+    - person_id: -2042
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_ace_inhibitor_in_period: true
+      is_arb_in_period: false
+      is_aspirin_in_period: false
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: false
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+    - person_id: -2043
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_ace_inhibitor_in_period: true
+      is_arb_in_period: false
+      is_aspirin_in_period: false
+      is_p2y12_in_period: true
+      is_clopidogrel_in_period: true
+      is_antiplatelet_in_period: true
+      is_anticoagulant_in_period: false
+      is_statin_in_period: true
+      is_beta_blocker_in_period: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: w2_cardiac_mi_profile_known_date_financial_year_and_intolerance_expiry
+  model: int_nice_mi_profile_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, 60 AS age, '1966-01-01'::DATE AS
+      birth_date_approx, 'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name
+      FROM VALUES (-2030,'2026-09-30'),(-2030,'2026-10-31'),(-2031,'2026-09-30'),(-2032,'2026-09-30'),(-2031,'2026-03-31'),(-2031,'2026-04-30')
+  - input: ref('int_myocardial_infarction_diagnoses_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date, column3::DATE AS date_recorded
+      FROM VALUES (-2030,'2026-04-01','2026-04-01'),(-2031,'2026-03-31','2026-03-31'),(-2032,'2026-09-01','2026-10-01'),(-2030,'2020-01-01','2026-10-01'),(-2032,'2026-10-01',NULL)
+  - input: ref('int_heart_failure_diagnoses_all')
+    format: sql
+    rows: SELECT -2030 AS person_id, '2026-09-01'::DATE AS clinical_effective_date, '2026-10-01'::DATE AS date_recorded,
+      TRUE AS is_hf_lvsd_code, FALSE AS is_reduced_ef_code UNION ALL SELECT -2031,'2026-10-01'::DATE,NULL::DATE,TRUE,FALSE
+  - input: ref('int_ras_contraindication_all')
+    format: sql
+    rows: SELECT -2030 AS person_id, '2025-09-30'::DATE AS clinical_effective_date, FALSE AS is_persisting, 'ACE_INHIBITOR'
+      AS drug_class UNION ALL SELECT -2031, '2026-10-01'::DATE, TRUE, 'ACE_INHIBITOR'
+  - input: ref('int_antithrombotic_contraindication_all')
+    format: sql
+    rows: SELECT -2030 AS person_id, '2025-09-30'::DATE AS clinical_effective_date, FALSE AS is_persisting, 'SALICYLATE'
+      AS drug_class UNION ALL SELECT -2031, '2026-10-01'::DATE, TRUE, 'SALICYLATE'
+  - input: ref('int_antithrombotic_treatment_all')
+    format: sql
+    rows: SELECT -2030 AS person_id, column1::DATE AS clinical_effective_date, 'OSAL_COD' AS source_cluster_id FROM
+      VALUES ('2026-09-30'),('2026-10-01')
+  - input: ref('int_nice_cardiac_therapy_by_month')
+    format: sql
+    rows: SELECT 2::NUMBER AS antiplatelet_chemical_count_in_period, column1::NUMBER AS person_id, column2::DATE
+      AS reporting_date, NULL::DATE AS latest_ace_inhibitor_order_date, NULL::DATE AS latest_arb_order_date, NULL::DATE
+      AS latest_aspirin_order_date, NULL::DATE AS latest_p2y12_order_date, NULL::DATE AS latest_clopidogrel_order_date,
+      NULL::DATE AS latest_antiplatelet_order_date, NULL::DATE AS latest_anticoagulant_order_date, NULL::DATE AS
+      latest_statin_order_date, NULL::DATE AS latest_beta_blocker_order_date FROM VALUES (-2030,'2026-09-30'),(-2030,'2026-10-31'),(-2031,'2026-09-30'),(-2032,'2026-09-30'),(-2031,'2026-03-31'),(-2031,'2026-04-30')
+  expect:
+    rows:
+    - person_id: -2030
+      reporting_date: '2026-09-30'
+      earliest_mi_date: '2026-04-01'
+      latest_mi_in_financial_year_date: '2026-04-01'
+      has_ace_inhibitor_intolerance: true
+      has_aspirin_intolerance: true
+      has_lvsd: false
+      latest_aspirin_record_date: '2026-09-30'
+    - person_id: -2030
+      reporting_date: '2026-10-31'
+      earliest_mi_date: '2020-01-01'
+      latest_mi_in_financial_year_date: '2026-04-01'
+      has_ace_inhibitor_intolerance: false
+      has_aspirin_intolerance: false
+      has_lvsd: true
+      latest_aspirin_record_date: '2026-10-01'
+    - person_id: -2031
+      reporting_date: '2026-09-30'
+      earliest_mi_date: '2026-03-31'
+      latest_mi_in_financial_year_date: null
+      has_ace_inhibitor_intolerance: false
+      has_aspirin_intolerance: false
+      has_lvsd: false
+      latest_aspirin_record_date: null
+    - person_id: -2031
+      reporting_date: '2026-03-31'
+      earliest_mi_date: '2026-03-31'
+      latest_mi_in_financial_year_date: '2026-03-31'
+      has_lvsd: false
+      has_ace_inhibitor_intolerance: false
+      has_aspirin_intolerance: false
+      latest_aspirin_record_date: null
+    - person_id: -2031
+      reporting_date: '2026-04-30'
+      earliest_mi_date: '2026-03-31'
+      latest_mi_in_financial_year_date: null
+      has_lvsd: false
+      has_ace_inhibitor_intolerance: false
+      has_aspirin_intolerance: false
+      latest_aspirin_record_date: null
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: w2_cardiac_therapy_upper_cap_and_multiplicity
+  model: int_nice_cardiac_therapy_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT -2040 AS person_id,column1::DATE AS reporting_date,60 AS age,'1966-01-01'::DATE AS birth_date_approx,'Female'
+      AS gender,'SYNTHETIC' AS practice_code,'Synthetic practice' AS practice_name FROM VALUES ('2026-09-30'),('2026-10-31')
+  - input: ref('fct_person_heart_failure_register_by_month')
+    format: sql
+    rows: SELECT -2040 AS person_id, '2026-09-30'::DATE AS month_end_date, '2020-01-01'::DATE AS earliest_diagnosis_date,
+      '2020-01-01'::DATE AS latest_diagnosis_date, TRUE AS is_on_hfref_register WHERE FALSE
+  - input: ref('int_myocardial_infarction_diagnoses_all')
+    format: sql
+    rows: SELECT -2040 AS person_id,'2020-01-01'::DATE AS clinical_effective_date,'2020-01-01'::DATE AS date_recorded
+  - input: ref('int_heart_failure_diagnoses_all')
+    format: sql
+    rows: SELECT -2040 AS person_id,'2020-01-01'::DATE AS clinical_effective_date,'2020-01-01'::DATE AS date_recorded,TRUE
+      AS is_diagnosis_code,FALSE AS is_resolved_code WHERE FALSE
+  - input: ref('int_ace_inhibitor_medications_all')
+    format: sql
+    rows: SELECT -2040 AS person_id,column1::DATE AS order_date,TRUE AS is_aspirin, TRUE AS is_p2y12_inhibitor,
+      TRUE AS is_clopidogrel,TRUE AS is_hf_licensed,TRUE AS is_statin, '0209000A0' AS bnf_code FROM VALUES ('2026-09-30'),('2026-09-30'),('2026-10-01'),('2026-11-01')
+  - input: ref('int_arb_medications_all')
+    format: sql
+    rows: SELECT -2040 AS person_id,column1::DATE AS order_date,TRUE AS is_aspirin, TRUE AS is_p2y12_inhibitor,
+      TRUE AS is_clopidogrel,TRUE AS is_hf_licensed,TRUE AS is_statin, '0209000A0' AS bnf_code FROM VALUES ('2026-09-30'),('2026-09-30'),('2026-10-01'),('2026-11-01')
+  - input: ref('int_beta_blocker_medications_all')
+    format: sql
+    rows: SELECT -2040 AS person_id,column1::DATE AS order_date,TRUE AS is_aspirin, TRUE AS is_p2y12_inhibitor,
+      TRUE AS is_clopidogrel,TRUE AS is_hf_licensed,TRUE AS is_statin, '0209000A0' AS bnf_code FROM VALUES ('2026-09-30'),('2026-09-30'),('2026-10-01'),('2026-11-01')
+  - input: ref('int_mra_medications_all')
+    format: sql
+    rows: SELECT -2040 AS person_id,column1::DATE AS order_date,TRUE AS is_aspirin, TRUE AS is_p2y12_inhibitor,
+      TRUE AS is_clopidogrel,TRUE AS is_hf_licensed,TRUE AS is_statin, '0209000A0' AS bnf_code FROM VALUES ('2026-09-30'),('2026-09-30'),('2026-10-01'),('2026-11-01')
+  - input: ref('int_sglt2_medications_all')
+    format: sql
+    rows: SELECT -2040 AS person_id,column1::DATE AS order_date,TRUE AS is_aspirin, TRUE AS is_p2y12_inhibitor,
+      TRUE AS is_clopidogrel,TRUE AS is_hf_licensed,TRUE AS is_statin, '0209000A0' AS bnf_code FROM VALUES ('2026-09-30'),('2026-09-30'),('2026-10-01'),('2026-11-01')
+  - input: ref('int_antiplatelet_medications_all')
+    format: sql
+    rows: SELECT -2040 AS person_id,column1::DATE AS order_date,TRUE AS is_aspirin, TRUE AS is_p2y12_inhibitor,
+      TRUE AS is_clopidogrel,TRUE AS is_hf_licensed,TRUE AS is_statin, '0209000A0' AS bnf_code FROM VALUES ('2026-09-30'),('2026-09-30'),('2026-10-01'),('2026-11-01')
+      UNION ALL SELECT -2040,'2026-03-30'::DATE,FALSE,TRUE,TRUE,FALSE,FALSE,'0209000C0' UNION ALL SELECT -2040,'2026-11-01'::DATE,FALSE,TRUE,FALSE,FALSE,FALSE,'0209000Y0'
+  - input: ref('int_lipid_lowering_medications_all')
+    format: sql
+    rows: SELECT -2040 AS person_id,column1::DATE AS order_date,TRUE AS is_aspirin, TRUE AS is_p2y12_inhibitor,
+      TRUE AS is_clopidogrel,TRUE AS is_hf_licensed,TRUE AS is_statin, '0209000A0' AS bnf_code FROM VALUES ('2026-09-30'),('2026-09-30'),('2026-10-01'),('2026-11-01')
+  - input: ref('int_anticoagulant_medications_all')
+    format: sql
+    rows: SELECT -2040 AS person_id,column1::DATE AS order_date,TRUE AS is_aspirin, TRUE AS is_p2y12_inhibitor,
+      TRUE AS is_clopidogrel,TRUE AS is_hf_licensed,TRUE AS is_statin, '0209000A0' AS bnf_code FROM VALUES ('2026-09-30'),('2026-09-30'),('2026-10-01'),('2026-11-01')
+  expect:
+    rows:
+    - person_id: -2040
+      reporting_date: '2026-09-30'
+      latest_ace_inhibitor_order_date: '2026-09-30'
+      latest_arb_order_date: '2026-09-30'
+      latest_beta_blocker_order_date: '2026-09-30'
+      latest_hf_licensed_beta_blocker_order_date: '2026-09-30'
+      latest_mra_order_date: '2026-09-30'
+      latest_sglt2_order_date: '2026-09-30'
+      latest_aspirin_order_date: '2026-09-30'
+      latest_p2y12_order_date: '2026-09-30'
+      latest_clopidogrel_order_date: '2026-09-30'
+      latest_antiplatelet_order_date: '2026-09-30'
+      latest_statin_order_date: '2026-09-30'
+      latest_anticoagulant_order_date: '2026-09-30'
+      latest_ras_order_date: '2026-09-30'
+      antiplatelet_chemical_count_in_period: 2
+    - person_id: -2040
+      reporting_date: '2026-10-31'
+      latest_ace_inhibitor_order_date: '2026-10-01'
+      latest_arb_order_date: '2026-10-01'
+      latest_beta_blocker_order_date: '2026-10-01'
+      latest_hf_licensed_beta_blocker_order_date: '2026-10-01'
+      latest_mra_order_date: '2026-10-01'
+      latest_sglt2_order_date: '2026-10-01'
+      latest_aspirin_order_date: '2026-10-01'
+      latest_p2y12_order_date: '2026-10-01'
+      latest_clopidogrel_order_date: '2026-10-01'
+      latest_antiplatelet_order_date: '2026-10-01'
+      latest_statin_order_date: '2026-10-01'
+      latest_anticoagulant_order_date: '2026-10-01'
+      latest_ras_order_date: '2026-10-01'
+      antiplatelet_chemical_count_in_period: 1
+  config:
+    tags:
+    - monthly-full
+    - nice-history

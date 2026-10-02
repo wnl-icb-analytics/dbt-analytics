@@ -1,0 +1,34 @@
+models:
+- name: int_nice_mi_profile_by_month
+  description: Myocardial infarction evidence, one row per registered, living, non-test person with MI_COD known
+    by the reporting date. Last 60 completed month-ends, recalculated using current rules and code lists. MI and
+    LVSD diagnoses use clinical and recorded dates; other evidence uses clinical or order dates through the reporting
+    date. Persistent ACE-I or aspirin intolerance applies from its first clinical date; temporary intolerance lasts
+    12 calendar months, including both endpoints. OSAL_COD records support aspirin taken over the counter. Therapy
+    dates remain available when stale; null means no evidence.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: earliest_mi_date
+    description: Earliest MI clinical date known by the reporting date; repeat MI does not remove older history.
+  - name: latest_mi_in_financial_year_date
+    description: Latest MI in the financial year to date; null when none.
+  - name: has_lvsd
+    description: HFLVSD_COD or REDEJCFRAC_COD diagnosis known by the reporting date.
+  - name: has_ace_inhibitor_intolerance
+    description: XACE_COD persistent or TXACE_COD in 12 months, used for ARB substitution, without removing denominator
+      members.
+  - name: has_aspirin_intolerance
+    description: XSAL_COD persistent or TXSAL_COD in 12 months, used for clopidogrel substitution.
+  - name: antiplatelet_chemical_count_in_period
+    description: Number of distinct nine-character BNF chemical prefixes ordered in the inclusive six months to
+      assessment. Strengths and products of one chemical count once. The IND125 lenient result also adds OTC aspirin
+      when no aspirin order is current.
