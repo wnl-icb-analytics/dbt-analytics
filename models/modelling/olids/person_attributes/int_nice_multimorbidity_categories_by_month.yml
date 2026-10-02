@@ -1,0 +1,183 @@
+models:
+  - name: int_nice_multimorbidity_categories_by_month
+    description: |
+      NICE IND207 category membership at each of the last 60 completed month-ends.
+      One row per person, reporting date and qualifying category. Register inputs
+      use the existing active monthly memberships. Additional diagnosis and
+      prescribing evidence retains inactive and deceased people; measures apply
+      the common active, non-test population and their age rules.
+
+      Uses the same reviewed category mapping as the current model. Additional
+      diagnoses, alcohol-disorder evidence and epilepsy exclusions require clinical
+      and recorded dates on or before the month-end, with clinical-date fallback
+      for a null recorded date. Substance misuse uses the latest known clinical
+      timestamp, QUALIFYING before RESOLVING at equal timestamps, then id descending.
+      Alcohol retains its event-age floor of 16. Chronic pain requires four distinct
+      analgesic issues or four antiepileptic issues in the inclusive preceding
+      12 months. Any known epilepsy diagnosis excludes only the antiepileptic route.
+      Four laxative issues in that interval supply DIGESTIVE evidence. Current
+      code lists and later source corrections can change recalculated history.
+      Diverticular disease remains unrepresented.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind207
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, reporting_date, category_code]
+    columns:
+      - name: person_id
+        description: Person with evidence in this category at the month-end.
+        data_tests: [not_null]
+      - name: category_code
+        description: Reviewed NICE IND207 category; contributes at most once per person and month-end.
+        data_tests: [not_null]
+      - name: has_existing_evidence
+        description: Category supported by existing project register or age-filtered alcohol-disorder evidence.
+      - name: has_additional_evidence
+        description: Category supported by supplemental IND207 diagnosis or prescribing rules.
+      - name: reporting_date
+        description: Completed month-end at which membership is evaluated.
+        data_tests: [not_null]
+
+
+unit_tests:
+- name: nice_multimorbidity_known_dates_state_and_prescribing_windows
+  model: int_nice_multimorbidity_categories_by_month
+  overrides:
+    macros:
+      nice_reference_dates: SELECT CAST(column1 AS DATE) AS reporting_date FROM (VALUES ('2024-03-31'),
+        ('2024-04-30'), ('2025-04-30'))
+  given:
+  - input: ref('dim_person')
+    format: sql
+    rows: |-
+      SELECT
+        column1 AS person_id
+      FROM (VALUES
+        (1),
+        (2),
+        (3),
+        (4),
+        (5),
+        (6),
+        (7),
+        (8),
+        (9),
+        (10),
+        (11),
+        (12))
+  - input: ref('int_alcohol_misuse_disorders')
+    format: sql
+    rows: |-
+      SELECT
+        9 AS person_id,
+        CAST('2024-03-01' AS TIMESTAMP) AS clinical_effective_date,
+        CAST('2024-04-02' AS TIMESTAMP) AS date_recorded
+  - input: ref('int_nice_multimorbidity_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT
+        6 AS person_id,
+        'DIGESTIVE' AS category_code,
+        CAST('2024-01-01' AS TIMESTAMP) AS clinical_effective_date,
+        CAST('2024-04-05' AS TIMESTAMP) AS date_recorded
+  - input: ref('int_substance_misuse_all')
+    format: sql
+    rows: |-
+      SELECT
+        column1 AS person_id,
+        CAST(column2 AS VARCHAR) AS id,
+        CAST(column3 AS TIMESTAMP) AS clinical_effective_date,
+        CAST(column4 AS TIMESTAMP) AS date_recorded,
+        column5 AS status
+      FROM (VALUES
+        (7, 's71', '2024-03-10', '2024-03-11', 'QUALIFYING'),
+        (7, 's72', '2024-03-20', '2024-04-10', 'RESOLVING'),
+        (8, 's81', '2024-03-10', '2024-03-10', 'QUALIFYING'),
+        (8, 's89', '2024-03-10', '2024-03-10', 'RESOLVING'),
+        (11, 's111', '2024-03-20', '2024-03-20', 'QUALIFYING'),
+        (11, 's112', '2024-02-20', '2024-04-20', 'RESOLVING'))
+  - input: ref('int_epilepsy_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT
+        column1 AS person_id,
+        CAST(column2 AS TIMESTAMP) AS clinical_effective_date,
+        CAST(column3 AS TIMESTAMP) AS date_recorded,
+        TRUE AS is_diagnosis_code
+      FROM (VALUES
+        (3, '2024-02-01', '2024-04-15'),
+        (4, '2020-01-01', '2020-01-01'))
+  - input: ref('int_ccms_medication_orders_all')
+    format: sql
+    rows: |-
+      SELECT
+        column1 AS person_id,
+        column2 AS medication_order_id,
+        CAST(column3 AS DATE) AS order_date,
+        column4 AS conditionid
+      FROM (VALUES
+        (2, 'p21', '2023-03-31', 5065),
+        (2, 'p22', '2024-03-01', 5065),
+        (2, 'p23', '2024-03-02', 5065),
+        (2, 'p24', '2024-03-31', 5065),
+        (3, 'p31', '2024-03-01', 5066),
+        (3, 'p32', '2024-03-02', 5066),
+        (3, 'p33', '2024-03-03', 5066),
+        (3, 'p34', '2024-03-31', 5066),
+        (4, 'p41', '2024-03-01', 5065),
+        (4, 'p42', '2024-03-02', 5065),
+        (4, 'p43', '2024-03-03', 5065),
+        (4, 'p44', '2024-03-31', 5065),
+        (5, 'p51', '2024-03-01', 5071),
+        (5, 'p51', '2024-03-01', 5071),
+        (5, 'p52', '2024-03-02', 5071),
+        (5, 'p53', '2024-03-03', 5071),
+        (5, 'p54', '2024-04-30', 5071),
+        (12, 'p121', '2024-03-01', 5066),
+        (12, 'p122', '2024-03-02', 5066),
+        (12, 'p123', '2024-03-03', 5066),
+        (12, 'p124', '2024-03-31', 5066))
+  - input: ref('fct_person_ltc_summary_by_month')
+    format: sql
+    rows: SELECT 10 AS person_id, reporting_date AS month_end_date, 'DM' AS condition_code, '2020-01-01'::TIMESTAMP
+      AS earliest_diagnosis_date, '2020-01-01'::TIMESTAMP AS latest_diagnosis_date FROM (SELECT CAST(column1
+      AS DATE) AS reporting_date FROM (VALUES ('2024-03-31'), ('2024-04-30'), ('2025-04-30')))
+  expect:
+    format: sql
+    rows: |-
+      SELECT
+        column1 AS person_id,
+        column3 AS category_code,
+        column4 AS has_existing_evidence,
+        column5 AS has_additional_evidence,
+        CAST(column2 AS DATE) AS reporting_date
+      FROM (VALUES
+        (10, '2024-03-31', 'DIABETES', TRUE, FALSE),
+        (10, '2024-04-30', 'DIABETES', TRUE, FALSE),
+        (10, '2025-04-30', 'DIABETES', TRUE, FALSE),
+        (2, '2024-03-31', 'CHRONIC_PAIN', FALSE, TRUE),
+        (3, '2024-03-31', 'CHRONIC_PAIN', FALSE, TRUE),
+        (4, '2024-03-31', 'CHRONIC_PAIN', FALSE, TRUE),
+        (4, '2024-04-30', 'CHRONIC_PAIN', FALSE, TRUE),
+        (5, '2024-04-30', 'DIGESTIVE', FALSE, TRUE),
+        (6, '2024-04-30', 'DIGESTIVE', FALSE, TRUE),
+        (6, '2025-04-30', 'DIGESTIVE', FALSE, TRUE),
+        (7, '2024-03-31', 'MENTAL_HEALTH', FALSE, TRUE),
+        (8, '2024-03-31', 'MENTAL_HEALTH', FALSE, TRUE),
+        (8, '2024-04-30', 'MENTAL_HEALTH', FALSE, TRUE),
+        (8, '2025-04-30', 'MENTAL_HEALTH', FALSE, TRUE),
+        (9, '2024-04-30', 'MENTAL_HEALTH', TRUE, FALSE),
+        (9, '2025-04-30', 'MENTAL_HEALTH', TRUE, FALSE),
+        (11, '2024-03-31', 'MENTAL_HEALTH', FALSE, TRUE),
+        (11, '2024-04-30', 'MENTAL_HEALTH', FALSE, TRUE),
+        (11, '2025-04-30', 'MENTAL_HEALTH', FALSE, TRUE),
+        (12, '2024-03-31', 'CHRONIC_PAIN', FALSE, TRUE),
+        (12, '2024-04-30', 'CHRONIC_PAIN', FALSE, TRUE))
+  config:
+    tags:
+    - monthly-full
+    - nice-history
