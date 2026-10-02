@@ -1,0 +1,79 @@
+models:
+  - name: obt_encounter_uec_quick_report
+    description: >-
+      NWL ECDS QuickReport review output. One row represents one ECDS
+      attendance. It retains the supported attendance fields and adds current
+      practice-group attribution, agreed mental-health flags and additive
+      reporting measures. PCN and neighbourhood describe the latest maintained
+      mapping for the practice recorded at the attendance; they are not
+      historical membership. The output retains Totally streaming records but
+      gives the agreed historical records an attendance_count of zero.
+    config:
+      meta:
+        owner:
+          name: Hana Ali
+    columns:
+      - name: visit_occurrence_id
+        description: Unique identifier for the ECDS attendance.
+        data_tests:
+          - unique
+          - not_null
+      - name: reg_practice_pcn_name_latest
+        description: >-
+          Latest maintained PCN name for the GP practice submitted on the
+          attendance. This is not the PCN membership at the attendance date.
+      - name: reg_practice_neighbourhood_name_latest
+        description: >-
+          Latest maintained integrated neighbourhood name for the GP practice
+          submitted on the attendance. This is not historical membership.
+      - name: is_mental_health_referral
+        description: >-
+          True when any referred-to-service record for the attendance has the
+          ECDS group Psychiatric.
+      - name: is_cyp_mental_health
+        description: >-
+          True for an attendance where age at arrival is under 18 and any
+          diagnosis is in the agreed mental-health code list, or the chief
+          complaint or injury intent is in its agreed code list.
+      - name: discharge_destination_ecds_group1
+        description: ECDS group for the submitted discharge destination code.
+      - name: is_admitted
+        description: >-
+          True when the discharge destination group is Admitted or Transfer,
+          or the discharge destination is one of the two agreed short-stay
+          service codes.
+      - name: is_non_admitted
+        description: >-
+          True when a mapped discharge destination is outside the admitted,
+          transfer and agreed short-stay categories. False includes missing or
+          unmapped discharge destinations.
+      - name: attendance_count
+        description: >-
+          Additive attendance measure. Usually 1; 0 for the agreed historical
+          Totally streaming records that were also counted at a co-located ED.
+      - name: admitted_count
+        description: Additive count of attendances classified as admitted.
+      - name: non_admitted_count
+        description: >-
+          Additive legacy-compatible non-admitted count. It is 0 where the
+          discharge destination is missing or has no ECDS group.
+      - name: over_12_hours_count
+        description: >-
+          Additive count of completed, unplanned, non-dead-on-arrival
+          attendances with submitted duration greater than 720 minutes. It is
+          calculated for every department type.
+      - name: within_12_hours_count
+        description: >-
+          Additive count of completed, unplanned, non-dead-on-arrival
+          attendances with submitted duration at or below 720 minutes. It is
+          calculated for every department type.
+      - name: over_72_hours_count
+        description: Additive count of attendances with submitted duration greater than 4,320 minutes.
+      - name: assessed_within_15_minutes_count
+        description: Additive count with submitted initial assessment time at or below 15 minutes.
+      - name: not_assessed_within_15_minutes_count
+        description: Additive count with submitted initial assessment time above 15 minutes.
+      - name: admitted_duration_minutes
+        description: Submitted attendance duration in minutes for attendances classified as admitted.
+      - name: non_admitted_duration_minutes
+        description: Submitted attendance duration in minutes for attendances not classified as admitted.
