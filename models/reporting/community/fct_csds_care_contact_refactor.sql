@@ -621,6 +621,23 @@ IMD_LOOKUP AS (
   after the structural conversion has been validated.
 ==============================================================================*/
 
+NATIONAL_GP AS (
+
+    SELECT
+        GP_PRACTICE_CODE,
+        GP_PRACTICE_NAME
+
+    FROM {{ ref('raw_reference_national_gp_practice_latest_list_sizes') }}
+
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY GP_PRACTICE_CODE
+        ORDER BY
+            LIST_SIZE_DATE DESC,
+            LAST_UPDATED DESC
+    ) = 1
+
+),
+
 CONTACT_ENRICHED AS (
 
     SELECT
@@ -648,6 +665,7 @@ CONTACT_ENRICHED AS (
         PRAC.PCN_CODE AS LEGACY_PCN_CODE,
         PRAC.PCN_NAME AS LEGACY_PCN_NAME,
         PRAC.PRACTICE_NAME AS LEGACY_PRACTICE_NAME,
+        NAT_GP.GP_PRACTICE_NAME AS NATIONAL_PRACTICE_NAME,
 
         PWP.WEIGHTED_PATIENTS_CORE AS LEGACY_WEIGHTED_LIST_SIZE,
         
@@ -670,7 +688,7 @@ CONTACT_ENRICHED AS (
         FACD.FIRST_CARE_CONTACT_DATE,
 
         NGH_RES.NEIGHBOURHOOD_NAME AS RESIDENCE_NEIGHBOURHOOD_NAME,
-        NGH_REG.NEIGHBOURHOOD_NAME AS PRACTICE_NEIGHBOURHOOD_NAME
+        PRAC.NEIGHBOURHOOD_NAME AS PRACTICE_NEIGHBOURHOOD_NAME
 
     FROM DATA_LAKE.CSDS_SIMPLE."tblCare_Contact" CCON
 
@@ -714,20 +732,16 @@ CONTACT_ENRICHED AS (
             = 'Activity_location_type_code'
 
     LEFT JOIN {{ ref('stg_reference_lookup_ncl_gp_practice') }} PRAC
-        ON PAT1.GPCODE = PRAC.GP_PRACTICE_CODE
+        ON PAT1.GPCODE = PRAC.GP_PRACTICE_CODE        
 
     LEFT JOIN DATA_LAKE.CSDS_SIMPLE."tblReferral" REF
         ON CCON."Unique_service_request_identifier"
             = REF."Unique_service_request_identifier"
        AND CCON."Unique_service_request_identifier" IS NOT NULL
 
-    LEFT JOIN DATA_LAKE__NCL.ANALYST_MANAGED.CSDS_LOOKUP CSLK5
-        ON LTRIM(
-            LEFT(REF."ServOrTeamTypeRefToCC_(Latest_List)_DV", 2),
-            '0#'
-        ) = CSLK5.CODE
-       AND CSLK5.SIMPLETABLE_FIELDNAME
-            = 'Service_or_team_type_referred_to_(Community_Care)'
+    LEFT JOIN {{ ref('csds_service_or_team_type') }} CSLK5
+        ON LPAD(LTRIM(LEFT(REF."ServOrTeamTypeRefToCC_(Latest_List)_DV",2),'0#'),2,'0') 
+            = LPAD(CSLK5.CODE, 2, '0')
 
     LEFT JOIN DATA_LAKE__NCL.ANALYST_MANAGED.CSDS_LOOKUP CSLK6
         ON CCON."Group_therapy_indicator" = CSLK6.CODE
@@ -737,11 +751,11 @@ CONTACT_ENRICHED AS (
         ON CCON."Unique_service_request_identifier"
             = FACD."Unique_service_request_identifier"
 
-    LEFT JOIN {{ ref('stg_reference_lookup_ncl_gp_practice') }} NGH_REG
-        ON PAT1.GPCODE = NGH_REG.GP_PRACTICE_CODE
-
     LEFT JOIN {{ ref('practice_weighted_population_current') }} PWP
         ON PAT1.GPCODE = PWP.PRACTICE_CODE
+
+    LEFT JOIN NATIONAL_GP NAT_GP
+        ON PAT1.GPCODE = NAT_GP.GP_PRACTICE_CODE
 
     LEFT JOIN DATA_LAKE__NCL.ANALYST_MANAGED.NCL_NEIGHBOURHOOD_LSOA_2021 NGH_RES
         ON PAT1."Lower_super_output_area_(Residence)"
@@ -757,6 +771,8 @@ CONTACT_ENRICHED AS (
   This avoids maintaining two partially duplicated CASE statements for the
   service code and name.
 ==============================================================================*/
+
+
 
 CONTACT_SERVICE_TYPE AS (
 
@@ -920,6 +936,7 @@ CONTACT_SERVICE_TYPE AS (
 
 ),
 
+
 /*==============================================================================
   15. FINAL OUTPUT
 ==============================================================================*/
@@ -995,6 +1012,7 @@ FINAL AS (
 
         COALESCE(
             LEGACY_PRACTICE_NAME,
+            NATIONAL_PRACTICE_NAME,
             'Non-NCL/Unknown/Invalid'
         ) AS GP_PRACTICE_NAME,
 
