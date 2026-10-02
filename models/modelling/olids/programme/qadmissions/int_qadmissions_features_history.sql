@@ -70,7 +70,7 @@
 
 {#- Placeholder index month-ends. Each must allow a full outcome horizon of
     complete SUS follow-up before it is used for validation. -#}
-{%- set index_dates = ['2022-01-31', '2023-01-31'] -%}
+{%- set index_dates = ['2022-01-31', '2023-01-31', '2026-09-30'] -%}
 
 {#- QOF register macros behind the dim_person_conditions flags used by the
     live model. Each macro is the strict as-at pair of its live
