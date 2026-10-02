@@ -1,4 +1,9 @@
 {% macro nice_indicator_status(reference='current') %}
+{#-
+    Combine the explicit current or monthly NICE status inputs.
+    Args: reference is current or by_month; every referenced member must exist.
+    Returns: person, indicator, date, age, practice, denominator, numerator and status columns.
+-#}
 {% if reference not in ['current', 'by_month'] %}
     {{ exceptions.raise_compiler_error('Unsupported NICE reference: ' ~ reference) }}
 {% endif %}
@@ -34,8 +39,7 @@ SELECT
     reporting_date,
     measurement_period_start,
     age,
-    {{ 'current_practice_code' if reference == 'current' else 'practice_code' }},
-    {{ 'current_practice_name' if reference == 'current' else 'practice_name' }},
+    {{ nice_practice_columns(none, reference) }},
     is_in_denominator,
     is_in_numerator,
     indicator_status

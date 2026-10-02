@@ -1,4 +1,9 @@
 {% macro nice_childhood_immunisation_union(reference='current') %}
+{#-
+    Combine the explicit NICE childhood members at their shared detail grain.
+    Args: reference is current or by_month; every referenced member must exist.
+    Returns: the childhood family columns, one person/indicator per reporting_date.
+-#}
 {% if reference not in ['current', 'by_month'] %}
     {{ exceptions.raise_compiler_error('Unsupported NICE reference: ' ~ reference) }}
 {% endif %}
@@ -22,8 +27,7 @@ SELECT
     measurement_period_start,
     age,
     condition_name,
-    {{ 'current_practice_code' if reference == 'current' else 'practice_code' }},
-    {{ 'current_practice_name' if reference == 'current' else 'practice_name' }},
+    {{ nice_practice_columns(none, reference) }},
     birth_date_approx,
     milestone_date,
     doses_in_window,
