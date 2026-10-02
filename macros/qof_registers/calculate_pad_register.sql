@@ -1,5 +1,5 @@
 {% macro calculate_pad_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_pad_register.sql. This macro is strict as-of; the live fact includes future-dated records. #}
+    {# Pair: fct_person_pad_register.sql. Clinical evidence is bounded by the reference date. #}
     {#
     Calculates PAD (Peripheral Arterial Disease) register status at one or more reference dates.
 

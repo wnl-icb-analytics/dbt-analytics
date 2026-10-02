@@ -61,7 +61,7 @@
     'hypertension': [(ref('int_hypertension_diagnoses_all'), 'clinical_effective_date')],
     'learning_disability': [(ref('int_learning_disability_diagnoses_all'), 'clinical_effective_date')],
     'ndh': [(ref('int_diabetes_diagnoses_all'), 'clinical_effective_date'), (ref('int_gestational_diabetes_diagnoses_all'), 'clinical_effective_date'), (ref('int_ndh_diagnoses_all'), 'clinical_effective_date')],
-    'obesity': [(ref('int_bmi_qof_all'), 'clinical_effective_date'), (ref('int_ethnicity_qof_all'), 'clinical_effective_date')],
+    'obesity': [(ref('int_bmi_qof_all'), 'clinical_effective_date'), (ref('int_obesity2_ethnicity_all'), 'clinical_effective_date')],
     'obesity2': [(ref('int_diabetes_diagnoses_all'), 'clinical_effective_date'), (ref('int_hypertension_diagnoses_all'), 'clinical_effective_date'), (ref('int_obesity2_bmi_all'), 'clinical_effective_date'), (ref('int_obesity2_diagnoses_all'), 'clinical_effective_date'), (ref('int_obesity2_ethnicity_all'), 'clinical_effective_date'), (ref('int_obesity2_lipid_lowering_medications_all'), 'order_date'), (ref('int_obesity2_lipids_all'), 'clinical_effective_date')],
     'osteoporosis': [(ref('int_dxa_scans_all'), 'clinical_effective_date'), (ref('int_fragility_fractures_all'), 'clinical_effective_date'), (ref('int_osteoporosis_diagnoses_all'), 'clinical_effective_date')],
     'pad': [(ref('int_pad_diagnoses_all'), 'clinical_effective_date')],
@@ -126,10 +126,9 @@
 Each live fact is compared with its macro at the date the live fact was evaluated
 (ltc_live_register_as_of): live facts apply CURRENT_DATE() and today's age at build
 time, and in merge-queue builds unchanged facts are read from an earlier prod build.
-The live facts also include records dated or entered after that date, which the macro
-does not. A mismatch is expected only for a person with such a record in the
-register's own sources (register_sources), so those people are left out of both
-directions. Every other mismatch is drift.
+Some live facts retain records dated or entered after that date, which the macro
+does not. People with such a record in the register's own sources
+(register_sources) are left out of both directions. Every other mismatch is drift.
 #}
 
 WITH mismatches AS (

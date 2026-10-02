@@ -1,12 +1,12 @@
 models:
   - name: fct_person_obesity_register
-    description: 'Obesity register for people aged 18+, using the QOF BMI thresholds.
-
-      One row per person whose latest valid BMI (5 to 400, recorded at any date) is 30 or
-      more, or 27.5 or more for Asian, Black, Arab, or mixed White and Asian or White and
-      Black ethnicity (int_ethnicity_qof_all.is_bame). Unlike QOF OBES_REG there is no 12-month
-      window: a person who has not been weighed recently keeps their last valid BMI, so
-      counts are higher than published QOF.'
+    description: >
+      Obesity register for people aged 18 or over using QOF v51 BMI thresholds.
+      One row per person whose latest valid BMI (5 to 400) dated on or before
+      today is at least 30, or at least 27.5 when the latest ETHALL*_COD or
+      ETHNICITYND_COD date equals the latest lower-threshold ethnicity date in
+      int_obesity2_ethnicity_all. There is no patient-table ethnicity fallback.
+      The local any-date BMI rule is retained rather than the QOF 12-month window.
 
     tests:
       - dbt_utils.at_least_one:
@@ -22,9 +22,11 @@ models:
           name_short: "Obesity"
           description_short: "QOF obesity register"
           description_long: >
-            Aged 18 or over with a latest valid BMI (any date) of 30 or more, or 27.5
-            or more for ethnic groups at higher cardiometabolic risk. Uses the QOF
-            thresholds and BMI clusters (BMIVAL_COD, BMI30_COD) but not the QOF
+            Aged 18 or over with a latest valid BMI dated on or before today of 30 or
+            more, or 27.5 or more for ethnic groups at higher cardiometabolic risk.
+            Uses the QOF
+            thresholds, PCD BMI clusters (BMIVAL_COD, BMI30_COD) and journal ethnicity
+            date-equality rule shared with OBES2_REG, but not the QOF
             12-month window, so it counts people with obesity rather than recent
             recording.
           is_qof: true
@@ -34,9 +36,11 @@ models:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
             - "QOF"
           code_clusters:
-            - cluster_id: "BMI_COD"
+            - cluster_id: "BMIVAL_COD"
               category: "INCLUSION"
-            - cluster_id: "ETH2016AI_COD"
+            - cluster_id: "BMI30_COD"
+              category: "INCLUSION"
+            - cluster_id: "ETHALLAI_COD"
               category: "REFINEMENT"
         owner:
           name: EddieDavison92

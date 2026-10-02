@@ -1,13 +1,13 @@
 {% macro calculate_osteoporosis_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_osteoporosis_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
+    {# Pair: fct_person_osteoporosis_register.sql. Clinical evidence is bounded by the reference date. #}
     {#
     Calculates Osteoporosis register status at one or more reference dates.
 
-    QOF Business Rules:
+    QOF v51 Business Rules:
     OSTEO1_REG (Age 50-74):
     - Fragility fracture on/after 1 April 2012
     - Osteoporosis diagnosis
-    - DXA confirmation (scan OR T-score ≤ -2.5)
+    - DXA confirmation (DXA_COD OR unrounded DXA2_COD T-score <= -2.5, no lower limit)
 
     OSTEO2_REG (Age 75+):
     - Fragility fracture on/after 1 April 2014
@@ -66,9 +66,9 @@
             reference_date,
             person_id,
             -- For OSTEO1_REG: fracture on/after 2012-04-01
-            MAX(CASE WHEN clinical_effective_date >= '2012-04-01' THEN 1 ELSE 0 END) = 1 AS has_fracture_post_2012,
+            MAX(CASE WHEN clinical_effective_date::DATE >= '2012-04-01' THEN 1 ELSE 0 END) = 1 AS has_fracture_post_2012,
             -- For OSTEO2_REG: fracture on/after 2014-04-01
-            MAX(CASE WHEN clinical_effective_date >= '2014-04-01' THEN 1 ELSE 0 END) = 1 AS has_fracture_post_2014
+            MAX(CASE WHEN clinical_effective_date::DATE >= '2014-04-01' THEN 1 ELSE 0 END) = 1 AS has_fracture_post_2014
         FROM fragility_fractures_filtered
         GROUP BY reference_date, person_id
     ),
@@ -79,8 +79,7 @@
             event.person_id,
             clinical_effective_date,
             is_dxa_scan_procedure,
-            is_dxa_t_score_measurement,
-            validated_t_score
+            confirms_osteoporosis_diagnosis
         FROM {{ ref('int_dxa_scans_all') }} AS event
         INNER JOIN reference_dates AS ref_date
             ON {{ ltc_register_known_by('event.clinical_effective_date', 'event.date_recorded', 'ref_date.reference_date') }}
@@ -91,7 +90,7 @@
             reference_date,
             person_id,
             MAX(CASE WHEN is_dxa_scan_procedure = TRUE THEN 1 ELSE 0 END) = 1 AS has_dxa_scan,
-            MAX(CASE WHEN is_dxa_t_score_measurement = TRUE AND validated_t_score <= -2.5 THEN 1 ELSE 0 END) = 1 AS has_valid_t_score
+            MAX(CASE WHEN confirms_osteoporosis_diagnosis THEN 1 ELSE 0 END) = 1 AS has_valid_t_score
         FROM dxa_scans_filtered
         GROUP BY reference_date, person_id
     ),

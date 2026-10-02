@@ -1,11 +1,11 @@
 {% macro calculate_learning_disability_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_learning_disability_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
+    {# Pair: fct_person_learning_disability_register.sql. Clinical evidence is bounded by the reference date. #}
     {#
     Calculates Learning Disability register status at one or more reference dates.
 
-    Business Logic (QOF v50):
+    Business Logic (QOF v51):
     - Has learning disability diagnosis (LD_COD)
-    - NOT excluded: no exclusion code (LDREM_COD) after latest diagnosis
+    - NOT excluded: no exclusion code (LDREM_COD) on or after latest diagnosis
     - No age restriction in QOF spec (includes all ages)
 
     Parameters:
@@ -53,10 +53,10 @@
             COALESCE(
                 -- Must have an LD diagnosis
                 diag.latest_diagnosis_date IS NOT NULL
-                -- Must not have been excluded after latest diagnosis
+                -- Must not have been excluded on or after latest diagnosis
                 AND (
                     diag.latest_exclusion_date IS NULL
-                    OR diag.latest_diagnosis_date > diag.latest_exclusion_date
+                    OR diag.latest_diagnosis_date::DATE > diag.latest_exclusion_date::DATE
                 ),
                 FALSE
             ) AS is_on_register,

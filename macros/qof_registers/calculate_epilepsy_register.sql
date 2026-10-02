@@ -1,12 +1,12 @@
 {% macro calculate_epilepsy_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_epilepsy_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
+    {# Pair: fct_person_epilepsy_register.sql. Clinical evidence is bounded by the reference date. #}
     {#
     Calculates Epilepsy register status at one or more reference dates.
 
     Business Logic:
     - Age ≥18 at reference date
-    - Active epilepsy diagnosis (latest diagnosis > latest resolution)
-    - Recent medication within 6 months from reference date
+    - Active epilepsy diagnosis (latest diagnosis date after the latest resolution date)
+    - Medication after reference date minus 6 months, up to the reference date
 
     Parameters:
         reference_date_expr: SQL expression for a single reference date (default: CURRENT_DATE())
@@ -64,7 +64,7 @@
             order_date
         FROM {{ ref('int_epilepsy_medications_all') }} AS meds
         INNER JOIN reference_dates AS ref_date
-            ON meds.order_date >= DATEADD('month', -6, ref_date.reference_date)
+            ON meds.order_date > DATEADD('month', -6, ref_date.reference_date)
             AND {{ ltc_register_known_by('meds.order_date', 'meds.date_recorded', 'ref_date.reference_date') }}
     ),
 
@@ -88,7 +88,7 @@
                 AND diag.earliest_diagnosis_date IS NOT NULL
                 AND (
                     diag.latest_resolved_date IS NULL
-                    OR diag.latest_diagnosis_date > diag.latest_resolved_date
+                    OR diag.latest_diagnosis_date::DATE > diag.latest_resolved_date::DATE
                 )
                 AND meds.recent_medication_count > 0,
                 FALSE

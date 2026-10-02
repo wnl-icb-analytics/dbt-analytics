@@ -1,5 +1,5 @@
 {% macro calculate_depression_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_depression_register.sql. This macro is strict as-of; the live fact includes future-dated records. #}
+    {# Pair: fct_person_depression_register.sql. This macro is strict as-of; the live fact uses evidence dated on or before today. #}
     {#
     Calculates Depression register status at one or more reference dates.
 
@@ -72,10 +72,10 @@
             COALESCE(
                 age.age >= 18
                 AND diag.earliest_diagnosis_date IS NOT NULL
-                AND diag.latest_diagnosis_date >= '2006-04-01'
+                AND diag.latest_diagnosis_date::DATE >= '2006-04-01'::DATE
                 AND (
                     diag.latest_resolved_date IS NULL
-                    OR diag.latest_diagnosis_date > diag.latest_resolved_date
+                    OR diag.latest_diagnosis_date::DATE > diag.latest_resolved_date::DATE
                 ),
                 FALSE
             ) AS is_on_register,

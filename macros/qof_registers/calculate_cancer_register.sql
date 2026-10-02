@@ -1,5 +1,5 @@
 {% macro calculate_cancer_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_cancer_register.sql. This macro is strict as-of; the live fact includes future-dated records. #}
+    {# Pair: fct_person_cancer_register.sql. This macro is strict as-of; the live fact uses evidence dated on or before today. #}
     {#
     Calculates Cancer register status at one or more reference dates.
 
@@ -55,7 +55,7 @@
             diag.latest_diagnosis_date
         FROM cancer_person_aggregates AS diag
         -- Dates cover all first/new episodes, as in the live fact; inclusion still starts in April 2003.
-        WHERE diag.latest_diagnosis_date >= '2003-04-01'
+        WHERE diag.latest_diagnosis_date::DATE >= '2003-04-01'::DATE
     )
 
     SELECT

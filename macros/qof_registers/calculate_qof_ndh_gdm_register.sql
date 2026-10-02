@@ -1,5 +1,5 @@
-{% macro calculate_qof_ndh_gdm_register(reference_date_expr='CURRENT_DATE()', reference_dates=none, include_future_records=false) %}
-    {# Pair: fct_person_qof_ndh_gdm_register.sql. The default is strict as-of with age at the reference date; the live fact includes future-dated records. #}
+{% macro calculate_qof_ndh_gdm_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
+    {# Pair: fct_person_qof_ndh_gdm_register.sql. Evidence is bounded by the reference date. #}
     {#
     Calculates QOF v51 NDH_REG status at one or more achievement dates.
 
@@ -8,14 +8,12 @@
     whose diabetes is resolved, or whose reporting-year/pre-year diagnosis has
     the required diabetes-resolution history.
 
-    PIT calls use the default strict as-of scope. The live fact retains future-dated records independently of this macro.
+    Evidence is bounded by each reference date.
 
     Parameters:
         reference_date_expr: SQL expression for a single reference date (default: CURRENT_DATE())
         reference_dates: query returning a reference_date column; evaluates every
             date it returns instead of reference_date_expr
-        include_future_records: retains the existing optional future-record scope
-            when true; PIT and history callers use the strict default
 
     Returns: one row per person with NDH or GDM evidence known by each reference date:
         reference_date, person_id, register_name, is_on_register,
@@ -55,11 +53,7 @@
             FALSE AS is_gestational_diabetes_code
         FROM {{ ref('int_ndh_diagnoses_all') }} AS diagnosis
         INNER JOIN reference_dates AS ref_date
-            {% if include_future_records %}
-            ON TRUE
-            {% else %}
             ON {{ ltc_register_known_by('diagnosis.clinical_effective_date', 'diagnosis.date_recorded', 'ref_date.reference_date') }}
-            {% endif %}
 
         UNION ALL
 
@@ -72,11 +66,7 @@
             TRUE AS is_gestational_diabetes_code
         FROM {{ ref('int_gestational_diabetes_diagnoses_all') }} AS diagnosis
         INNER JOIN reference_dates AS ref_date
-            {% if include_future_records %}
-            ON TRUE
-            {% else %}
             ON {{ ltc_register_known_by('diagnosis.clinical_effective_date', 'diagnosis.date_recorded', 'ref_date.reference_date') }}
-            {% endif %}
     ),
 
     diabetes_events AS (
@@ -88,11 +78,7 @@
             diagnosis.is_diabetes_resolved_code
         FROM {{ ref('int_diabetes_diagnoses_all') }} AS diagnosis
         INNER JOIN reference_dates AS ref_date
-            {% if include_future_records %}
-            ON TRUE
-            {% else %}
             ON {{ ltc_register_known_by('diagnosis.clinical_effective_date', 'diagnosis.date_recorded', 'ref_date.reference_date') }}
-            {% endif %}
     ),
 
     ndh_gdm_person_aggregates AS (
@@ -134,8 +120,8 @@
             MAX(CASE
                 WHEN
                     diabetes.is_general_diabetes_code
-                    AND diabetes.clinical_effective_date
-                        <= event.clinical_effective_date
+                    AND CAST(diabetes.clinical_effective_date AS DATE)
+                        <= CAST(event.clinical_effective_date AS DATE)
                     THEN diabetes.clinical_effective_date
             END) AS latest_diabetes_before_event,
             MAX(CASE
@@ -149,8 +135,9 @@
             ON event.person_id = diabetes.person_id
             AND event.reference_date = diabetes.reference_date
         WHERE
-            event.clinical_effective_date
-            >= parameter.quality_service_start_date
+            CAST(event.clinical_effective_date AS DATE)
+            >= CAST(parameter.quality_service_start_date AS DATE)
+            AND CAST(event.clinical_effective_date AS DATE) <= parameter.reference_date
         GROUP BY
             event.reference_date,
             event.person_id,
@@ -163,7 +150,7 @@
         FROM reporting_year_event_context
         WHERE
             latest_diabetes_before_event IS NULL
-            OR latest_diabetes_resolved_date > latest_diabetes_before_event
+            OR CAST(latest_diabetes_resolved_date AS DATE) > CAST(latest_diabetes_before_event AS DATE)
     ),
 
     before_reporting_year_events AS (
@@ -175,8 +162,8 @@
         INNER JOIN parameters AS parameter
             ON event.reference_date = parameter.reference_date
         WHERE
-            event.clinical_effective_date
-            < parameter.quality_service_start_date
+            CAST(event.clinical_effective_date AS DATE)
+            < CAST(parameter.quality_service_start_date AS DATE)
         GROUP BY event.reference_date, event.person_id
     ),
 
@@ -187,8 +174,8 @@
             MAX(CASE
                 WHEN
                     diabetes.is_general_diabetes_code
-                    AND diabetes.clinical_effective_date
-                        <= parameter.quality_service_start_date
+                    AND CAST(diabetes.clinical_effective_date AS DATE)
+                        <= CAST(parameter.quality_service_start_date AS DATE)
                     THEN diabetes.clinical_effective_date
             END) AS latest_diabetes_at_service_start,
             MAX(CASE
@@ -209,8 +196,8 @@
         FROM before_reporting_year_diabetes_context
         WHERE
             latest_diabetes_at_service_start IS NULL
-            OR latest_diabetes_resolved_date
-                > latest_diabetes_at_service_start
+            OR CAST(latest_diabetes_resolved_date AS DATE)
+                > CAST(latest_diabetes_at_service_start AS DATE)
     ),
 
     age_at_reference AS (
@@ -264,8 +251,8 @@
                 WHEN diabetes.earliest_diabetes_diagnosis_date IS NULL
                     THEN 2
                 WHEN
-                    diabetes.latest_diabetes_resolved_date
-                    > diabetes.latest_diabetes_diagnosis_date
+                    CAST(diabetes.latest_diabetes_resolved_date AS DATE)
+                    > CAST(diabetes.latest_diabetes_diagnosis_date AS DATE)
                     THEN 3
                 WHEN rule_4.person_id IS NOT NULL
                     THEN 4

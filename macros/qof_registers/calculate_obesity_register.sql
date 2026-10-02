@@ -1,5 +1,5 @@
 {% macro calculate_obesity_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_obesity_register.sql. This macro is strict as-of and derives age at the reference date; the live fact includes future-dated records. #}
+    {# Pair: fct_person_obesity_register.sql. Evidence is bounded by the reference date. #}
     {#
     Calculates Obesity register status at one or more reference dates.
 
@@ -72,12 +72,11 @@
     ethnicity_records AS (
         SELECT
             person_id,
-            is_bame,
+            is_lower_bmi_threshold_ethnicity,
             {{ ltc_known_date('clinical_effective_date', 'date_recorded') }} AS known_date,
-            -- Latest record: clinical date, then observation id and cluster, as in int_ethnicity_qof.
-            TO_VARCHAR(CAST(clinical_effective_date AS TIMESTAMP_NTZ), 'YYYY-MM-DD HH24:MI:SS.FF9')
-                || '|' || TO_VARCHAR(id) || '|' || cluster_id AS record_key
-        FROM {{ ref('int_ethnicity_qof_all') }}
+            -- Only the clinical date is compared, so it is the whole key.
+            TO_VARCHAR(CAST(clinical_effective_date AS DATE), 'YYYY-MM-DD') AS record_key
+        FROM {{ ref('int_obesity2_ethnicity_all') }}
         WHERE clinical_effective_date IS NOT NULL
     ),
 
@@ -85,16 +84,21 @@
         {{ ltc_latest_known_record("SELECT person_id, record_key, known_date FROM ethnicity_records") }}
     ),
 
+    latest_lower_threshold_ethnicity AS (
+        {{ ltc_latest_known_record("SELECT person_id, record_key, known_date FROM ethnicity_records WHERE is_lower_bmi_threshold_ethnicity") }}
+    ),
+
     ethnicity_data AS (
-        -- Latest QOF ethnicity record known by each reference date.
+        -- QOF v51: the lower threshold applies when a lower-threshold ethnicity is
+        -- recorded on the date of the latest ethnicity record.
         SELECT
             latest.reference_date,
             latest.person_id,
-            record.is_bame
+            COALESCE(latest.record_key = lower_threshold.record_key, FALSE) AS is_bame
         FROM latest_ethnicity AS latest
-        INNER JOIN ethnicity_records AS record
-            ON latest.person_id = record.person_id
-            AND latest.record_key = record.record_key
+        LEFT JOIN latest_lower_threshold_ethnicity AS lower_threshold
+            ON latest.person_id = lower_threshold.person_id
+            AND latest.reference_date = lower_threshold.reference_date
     ),
 
     age_at_reference AS (

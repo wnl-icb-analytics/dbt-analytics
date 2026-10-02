@@ -1,5 +1,5 @@
 {% macro calculate_diabetes_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_diabetes_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
+    {# Pair: fct_person_diabetes_register.sql. Clinical evidence is bounded by the reference date. #}
     {#
     Calculates Diabetes register status at one or more reference dates.
 
@@ -99,10 +99,10 @@
                     FALSE
                 ) = FALSE THEN NULL
                 WHEN diag.latest_type1_date IS NOT NULL
-                    AND (diag.latest_type2_date IS NULL OR diag.latest_type1_date >= diag.latest_type2_date)
+                    AND (diag.latest_type2_date IS NULL OR diag.latest_type1_date::DATE >= diag.latest_type2_date::DATE)
                     THEN 'Type 1'
                 WHEN diag.latest_type2_date IS NOT NULL
-                    AND (diag.latest_type1_date IS NULL OR diag.latest_type2_date > diag.latest_type1_date)
+                    AND (diag.latest_type1_date IS NULL OR diag.latest_type2_date::DATE > diag.latest_type1_date::DATE)
                     THEN 'Type 2'
                 ELSE 'Unknown'
             END AS diabetes_type,

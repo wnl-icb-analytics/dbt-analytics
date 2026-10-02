@@ -1,12 +1,11 @@
 {% macro calculate_cvd_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_cvd_register.sql. This macro is strict as-of; the live fact includes future-dated component membership. #}
+    {# Pair: fct_person_cvd_register.sql. Evidence is bounded by the reference date. #}
     {#
     Calculates QOF v51 CD_REG status at one or more reference dates by composing the CHD
     and stroke/TIA register macros.
 
-    Unlike its live sibling fct_person_cvd_register.sql, this macro is strictly
-    as-of: component evidence dated or recorded after each reference date is
-    excluded by the component macros.
+    Component evidence dated or recorded after each reference date is excluded
+    by the component macros.
 
     Parameters:
         reference_date_expr: SQL expression for a single reference date (default: CURRENT_DATE())

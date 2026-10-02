@@ -1,12 +1,12 @@
 {% macro calculate_asthma_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_asthma_register.sql. This macro is strict as-of and derives age at the reference date; the live fact includes future-dated records. #}
+    {# Pair: fct_person_asthma_register.sql. This macro is strict as-of; the live fact uses evidence dated on or before today. #}
     {#
     Calculates Asthma register status at one or more reference dates.
 
     Business Logic:
     - Age ≥5 at reference date
-    - Active asthma diagnosis (latest diagnosis > latest resolution)
-    - Recent asthma medication (within 12 months prior to reference date)
+    - Active asthma diagnosis (latest diagnosis date after the latest resolution date, or no resolution)
+    - Asthma medication after the 12-month boundary and on or before the reference date
 
     Parameters:
         reference_date_expr: SQL expression for a single reference date (default: CURRENT_DATE())
@@ -46,8 +46,8 @@
                 MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END) IS NOT NULL
                 AND (
                     MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END) IS NULL
-                    OR MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END)
-                       > MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END)
+                    OR MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END)::DATE
+                       > MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END)::DATE
                 ),
                 FALSE
             ) AS has_active_asthma_diagnosis
@@ -62,7 +62,7 @@
             MAX(med.order_date) AS latest_medication_date
         FROM {{ ref('int_asthma_medications_all') }} AS med
         INNER JOIN reference_dates AS ref_date
-            ON med.order_date >= ref_date.reference_date - INTERVAL '12 months'
+            ON med.order_date > DATEADD('month', -12, ref_date.reference_date)
             AND {{ ltc_register_known_by('med.order_date', 'med.date_recorded', 'ref_date.reference_date') }}
         GROUP BY ref_date.reference_date, med.person_id
     ),

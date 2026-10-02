@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_palliative_care_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- Clinical evidence is bounded by today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -20,7 +20,7 @@ Clinical Purpose:
 
 QOF Register Criteria (Complex Pattern):
 - Palliative care code (PALCARE_COD) on/after 1 April 2008
-- NOT marked as "no longer indicated" (PALCARENI_COD) after latest palliative care code
+- No "no longer indicated" code (PALCARENI_COD) on a later calendar date than latest care
 - No age restrictions for palliative care register
 - Important for end-of-life care quality measures
 
@@ -32,17 +32,17 @@ WITH palliative_care_diagnoses AS (
     SELECT
         person_id,
 
-        -- Register inclusion dates (after QOF start date)
+        -- Register inclusion dates (on or after QOF start date)
         MIN(CASE
             WHEN
                 is_palliative_care_code
-                AND clinical_effective_date >= DATE '2008-04-01'
+                AND clinical_effective_date::DATE >= DATE '2008-04-01'
                 THEN clinical_effective_date
         END) AS earliest_diagnosis_date,
         MAX(CASE
             WHEN
                 is_palliative_care_code
-                AND clinical_effective_date >= DATE '2008-04-01'
+                AND clinical_effective_date::DATE >= DATE '2008-04-01'
                 THEN clinical_effective_date
         END) AS latest_diagnosis_date,
 
@@ -60,7 +60,7 @@ WITH palliative_care_diagnoses AS (
         COUNT(CASE
             WHEN
                 is_palliative_care_code
-                AND clinical_effective_date >= DATE '2008-04-01'
+                AND clinical_effective_date::DATE >= DATE '2008-04-01'
                 THEN 1
         END) AS total_palliative_care_episodes,
         COUNT(CASE
@@ -94,6 +94,7 @@ WITH palliative_care_diagnoses AS (
         ARRAY_AGG(DISTINCT observation_id::VARCHAR) AS all_observation_ids
 
     FROM {{ ref('int_palliative_care_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -101,12 +102,12 @@ register_inclusion AS (
     SELECT
         pc.*,
 
-        -- QOF register logic: Palliative care after April 2008 + not marked as no longer indicated
+        -- Care on or after 1 April 2008, with no "no longer indicated" code on a later date
         COALESCE(
             latest_diagnosis_date IS NOT NULL
             AND (
                 latest_no_longer_indicated_date IS NULL
-                OR latest_no_longer_indicated_date <= latest_diagnosis_date
+                OR latest_no_longer_indicated_date::DATE <= latest_diagnosis_date::DATE
             ), FALSE
         ) AS is_on_register,
 
@@ -116,12 +117,12 @@ register_inclusion AS (
                 latest_diagnosis_date IS NOT NULL
                 AND (
                     latest_no_longer_indicated_date IS NULL
-                    OR latest_no_longer_indicated_date <= latest_diagnosis_date
+                    OR latest_no_longer_indicated_date::DATE <= latest_diagnosis_date::DATE
                 )
                 THEN 'Active palliative care'
             WHEN
                 latest_diagnosis_date IS NOT NULL
-                AND latest_no_longer_indicated_date > latest_diagnosis_date
+                AND latest_no_longer_indicated_date::DATE > latest_diagnosis_date::DATE
                 THEN 'Palliative care - no longer indicated'
             WHEN
                 earliest_diagnosis_date IS NOT NULL

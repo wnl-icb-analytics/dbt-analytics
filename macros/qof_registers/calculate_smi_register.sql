@@ -1,5 +1,5 @@
 {% macro calculate_smi_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_smi_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
+    {# Pair: fct_person_smi_register.sql. Evidence is bounded by the reference date. #}
     {#
     Calculates SMI (Severe Mental Illness) register status at one or more reference dates.
 

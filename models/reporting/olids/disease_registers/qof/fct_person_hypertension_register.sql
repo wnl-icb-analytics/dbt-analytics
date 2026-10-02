@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_hypertension_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- Clinical evidence is bounded by today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -8,7 +8,7 @@
 }}
 
 -- Hypertension Register (QOF Pattern 6: Complex Clinical Logic)
--- Business Logic: Active HTN diagnosis (QOF v50 HYP_REG, no age restriction) + Project-specific NICE-informed staging of the latest BP
+-- Business Logic: Unresolved HTN diagnosis (QOF v51 HYP_REG, no age restriction) + Project-specific NICE-informed staging of the latest BP
 -- Staging uses context-specific thresholds, not the NG136 diagnostic definition based on a confirmed ABPM/HBPM average.
 -- Complex Logic: BP staging varies by measurement context (Home/ABPM vs Clinic readings)
 
@@ -63,6 +63,7 @@ WITH hypertension_person_aggregates AS (
         ) AS all_resolved_concept_displays
 
     FROM {{ ref('int_hypertension_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -84,6 +85,7 @@ latest_bp_events AS (
         END AS bp_measurement_context
     FROM {{ ref('int_blood_pressure_latest') }}
     WHERE systolic_value IS NOT NULL AND diastolic_value IS NOT NULL
+        AND CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
 ),
 
 register_logic AS (
@@ -118,14 +120,14 @@ register_logic AS (
             WHEN diag.latest_diagnosis_date > diag.latest_resolved_date THEN TRUE -- Re-diagnosed after resolution
             ELSE FALSE -- Currently resolved
         END AS has_active_htn_diagnosis,
-        -- QOF v50 HYP_REG: unresolved hypertension diagnosis, no age restriction.
+        -- QOF v51 HYP_REG: unresolved hypertension diagnosis, no age restriction.
         -- Use >= : a resolution on/before the latest diagnosis does not resolve the register
         -- (HYPRES_DAT is the latest resolution STRICTLY after the latest diagnosis).
         COALESCE(
             diag.earliest_diagnosis_date IS NOT NULL -- Has HTN diagnosis
             AND (
                 diag.latest_resolved_date IS NULL -- Never resolved
-                OR diag.latest_diagnosis_date >= diag.latest_resolved_date -- not resolved after latest diagnosis
+                OR diag.latest_diagnosis_date::DATE >= diag.latest_resolved_date::DATE -- No resolution on a later date
             ), FALSE
         ) AS is_on_register,
 
