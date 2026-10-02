@@ -1,0 +1,153 @@
+unit_tests:
+- name: nice_history_depression_known_date_and_follow_up_cap
+  model: fct_person_depression_review_ind104_by_month
+  overrides:
+    macros:
+      nice_reference_dates: |-
+        SELECT column1::DATE AS reporting_date FROM VALUES ('2026-03-31'), ('2026-04-30'), ('2026-09-30')
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -9001::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 30::NUMBER AS age, '1996-06-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9001::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-06-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9001::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-06-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9006::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-06-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+  - input: ref('int_depression_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT -9001::NUMBER AS person_id, 'D1'::VARCHAR AS id, '2026-03-20'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-03-20'::DATE AS date_recorded, TRUE AS is_diagnosis_code, TRUE AS is_first_or_new_episode
+      UNION ALL
+      SELECT -9001::NUMBER AS person_id, 'D2'::VARCHAR AS id, '2026-02-20'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-09-01'::DATE AS date_recorded, TRUE AS is_diagnosis_code, TRUE AS is_first_or_new_episode
+      UNION ALL
+      SELECT -9006::NUMBER AS person_id, 'D3'::VARCHAR AS id, '2026-09-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-09-01'::DATE AS date_recorded, TRUE AS is_diagnosis_code, TRUE AS is_first_or_new_episode
+      UNION ALL
+      SELECT -9006::NUMBER AS person_id, 'D4'::VARCHAR AS id, '2026-08-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-09-15'::DATE AS date_recorded, TRUE AS is_diagnosis_code, TRUE AS is_first_or_new_episode
+  - input: ref('int_ltc_review_all')
+    format: sql
+    rows: |-
+      SELECT -9001::NUMBER AS person_id, '2026-04-02'::TIMESTAMP_NTZ AS clinical_effective_date, 'DEPRESSION_REVIEW'::VARCHAR AS review_type
+      UNION ALL
+      SELECT -9006::NUMBER AS person_id, '2026-09-11'::TIMESTAMP_NTZ AS clinical_effective_date, 'DEPRESSION_REVIEW'::VARCHAR AS review_type
+  expect:
+    rows:
+    - person_id: -9001
+      reporting_date: '2026-03-31'
+      diagnosis_date: '2026-03-20'
+      latest_review_date: null
+      is_in_numerator: false
+    - person_id: -9006
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-09-01'
+      latest_review_date: '2026-09-11'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_history_asthma_resolution_and_complete_review
+  model: fct_person_asthma_review_ind273_by_month
+  overrides:
+    macros:
+      nice_reference_dates: |-
+        SELECT '2026-09-30'::DATE AS reporting_date
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -9002::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-06-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -9003::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-06-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+  - input: ref('int_asthma_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT -9002::NUMBER AS person_id, '2025-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2025-01-01'::DATE AS date_recorded, TRUE AS is_diagnosis_code, FALSE AS is_resolved_code
+      UNION ALL
+      SELECT -9003::NUMBER AS person_id, '2025-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2025-01-01'::DATE AS date_recorded, TRUE AS is_diagnosis_code, FALSE AS is_resolved_code
+      UNION ALL
+      SELECT -9003::NUMBER AS person_id, '2025-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2025-01-01'::DATE AS date_recorded, FALSE AS is_diagnosis_code, TRUE AS is_resolved_code
+  - input: ref('int_nice_asthma_review_all')
+    format: sql
+    rows: |-
+      SELECT -9002::NUMBER AS person_id, '2026-07-01'::DATE AS review_date, TRUE AS has_review, TRUE AS is_complete_review
+      UNION ALL
+      SELECT -9002::NUMBER AS person_id, '2026-08-01'::DATE AS review_date, TRUE AS has_review, FALSE AS is_complete_review
+  expect:
+    rows:
+    - person_id: -9002
+      latest_review_date: '2026-08-01'
+      latest_record_date: '2026-07-01'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_history_childhood_distinct_doses_and_upper_boundary
+  model: int_childhood_immunisation_profile_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -9004::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 0::NUMBER AS age, '2026-01-30'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+  - input: ref('int_nice_childhood_immunisation_all')
+    format: sql
+    rows: |-
+      SELECT -9004::NUMBER AS person_id, '2026-03-01'::DATE AS event_date, 0::NUMBER AS age_at_event, 'DTAP_PRIMARY'::VARCHAR AS vaccine_group, 'Administration'::VARCHAR AS event_type
+      UNION ALL
+      SELECT -9004::NUMBER AS person_id, '2026-03-01'::DATE AS event_date, 0::NUMBER AS age_at_event, 'DTAP_PRIMARY'::VARCHAR AS vaccine_group, 'Administration_drug'::VARCHAR AS event_type
+      UNION ALL
+      SELECT -9004::NUMBER AS person_id, '2026-05-01'::DATE AS event_date, 0::NUMBER AS age_at_event, 'DTAP_PRIMARY'::VARCHAR AS vaccine_group, 'Administration'::VARCHAR AS event_type
+      UNION ALL
+      SELECT -9004::NUMBER AS person_id, '2026-07-01'::DATE AS event_date, 0::NUMBER AS age_at_event, 'DTAP_PRIMARY'::VARCHAR AS vaccine_group, 'Administration'::VARCHAR AS event_type
+      UNION ALL
+      SELECT -9004::NUMBER AS person_id, '2026-09-30'::DATE AS event_date, 0::NUMBER AS age_at_event, 'DTAP_PRIMARY'::VARCHAR AS vaccine_group, 'Administration'::VARCHAR AS event_type
+      UNION ALL
+      SELECT -9004::NUMBER AS person_id, '2026-10-01'::DATE AS event_date, 0::NUMBER AS age_at_event, 'DTAP_PRIMARY'::VARCHAR AS vaccine_group, 'Contraindicated'::VARCHAR AS event_type
+  expect:
+    rows:
+    - person_id: -9004
+      reporting_date: '2026-09-30'
+      dtap_doses_by_8_months: 3
+      has_dtap_contraindication: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_asthma_review_preceding_month_boundary
+  model: int_nice_asthma_review_all
+  given:
+  - input: ref('int_ltc_review_all')
+    format: sql
+    rows: |-
+      SELECT -9010::NUMBER AS person_id, '2026-09-30'::TIMESTAMP_NTZ AS clinical_effective_date, 'ASTHMA_REVIEW'::VARCHAR AS review_type
+      UNION ALL
+      SELECT -9010::NUMBER AS person_id, '2026-09-30'::TIMESTAMP_NTZ AS clinical_effective_date, 'ASTHMA_ACTION_PLAN'::VARCHAR AS review_type
+      UNION ALL
+      SELECT -9010::NUMBER AS person_id, '2026-08-30'::TIMESTAMP_NTZ AS clinical_effective_date, 'ASTHMA_EXACERBATION_COUNT'::VARCHAR AS review_type
+      UNION ALL
+      SELECT -9011::NUMBER AS person_id, '2026-09-30'::TIMESTAMP_NTZ AS clinical_effective_date, 'ASTHMA_REVIEW'::VARCHAR AS review_type
+      UNION ALL
+      SELECT -9011::NUMBER AS person_id, '2026-09-30'::TIMESTAMP_NTZ AS clinical_effective_date, 'ASTHMA_ACTION_PLAN'::VARCHAR AS review_type
+      UNION ALL
+      SELECT -9011::NUMBER AS person_id, '2026-08-31'::TIMESTAMP_NTZ AS clinical_effective_date, 'ASTHMA_EXACERBATION_COUNT'::VARCHAR AS review_type
+  expect:
+    rows:
+    - person_id: -9010
+      review_date: '2026-08-30'
+      is_complete_review: false
+    - person_id: -9010
+      review_date: '2026-09-30'
+      is_complete_review: false
+    - person_id: -9011
+      review_date: '2026-08-31'
+      is_complete_review: false
+    - person_id: -9011
+      review_date: '2026-09-30'
+      is_complete_review: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
