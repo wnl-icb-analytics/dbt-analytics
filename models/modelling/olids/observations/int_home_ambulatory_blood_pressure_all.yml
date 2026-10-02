@@ -1,0 +1,58 @@
+models:
+- name: int_home_ambulatory_blood_pressure_all
+  description: |
+    Home and ambulatory blood pressure evidence from PCD HOMEAMBBP_COD.
+    One row per observation for all people, including inactive and deceased
+    people. Valued readings and value-free procedure records both count.
+    Clinical dates follow the shared correction and missing-date sentinel;
+    consumers apply their own reporting-date and measurement windows.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: HOMEAMBBP_COD
+        source: PCD
+  columns:
+  - name: id
+    description: Observation identifier, unique across this one-cluster extraction.
+    data_tests:
+    - unique
+    - not_null
+  - name: person_id
+    description: Person with the monitoring record, regardless of current registration.
+  - name: clinical_effective_date
+    description: Corrected clinical timestamp; missing dates use 1 January 1900.
+  - name: concept_code
+    description: Recorded SNOMED CT concept code from HOMEAMBBP_COD.
+  - name: concept_display
+    description: Recorded label for the SNOMED CT concept.
+unit_tests:
+- name: nice_w1_home_bp_keeps_value_free_records
+  model: int_home_ambulatory_blood_pressure_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR AS id, -501::NUMBER AS person_id,
+        column2::TIMESTAMP_NTZ AS clinical_effective_date, column3::VARCHAR AS result_value,
+        'SYN_HOME'::VARCHAR AS mapped_concept_code, 'Synthetic monitoring'::VARCHAR AS mapped_concept_display
+        FROM VALUES ('SYN_PROCEDURE', '2026-08-01', NULL), ('SYN_READING', '2026-08-02', '120')
+  given: []
+  expect:
+    rows:
+    - id: SYN_PROCEDURE
+      person_id: -501
+      clinical_effective_date: '2026-08-01'
+      concept_code: SYN_HOME
+      concept_display: Synthetic monitoring
+    - id: SYN_READING
+      person_id: -501
+      clinical_effective_date: '2026-08-02'
+      concept_code: SYN_HOME
+      concept_display: Synthetic monitoring
+  config:
+    tags:
+    - monthly-full
+    - nice-history
