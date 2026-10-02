@@ -3,7 +3,8 @@ models:
   description: NICE IND319. People aged 18-39 whose latest measured BMIVAL_COD BMI in the inclusive preceding
     12 months is 23-27.4 kg/m^2, or 25-29.9 if the demographic ethnicity at R is White. Unknown and unrecorded
     ethnicity use the lower range. WTMGINT_COD advice between the BMI date and day 90 inclusive achieves
-    the indicator, capped at R. Later out-of-range BMI prevents fallback. BMI30_COD and calculated BMI
+    the indicator, capped at R. An invalid latest BMI is unassessable and excludes the person from the denominator.
+    A later invalid or out-of-range BMI prevents fallback. BMI30_COD and calculated BMI
     do not qualify. One row per eligible, registered, living, non-test person and month-end. Recalculated
     over the last 60 completed month-ends with current rules and code lists. Registration and practice
     follow the monthly spine. Birth and death dates are approximate; current gender and test flags apply
@@ -15,29 +16,6 @@ models:
       owner:
         name: EddieDavison92
       clinical_source: https://www.nice.org.uk/indicators/ind319
-      indicator:
-        id: IND319
-        type: MEASURE
-        category: LIFESTYLE
-        clinical_domain: Lifestyle
-        name_short: Weight advice
-        description_short: Weight management advice within 90 days after a qualifying measured BMI for
-          people aged 18-39
-        description_long: NICE IND319. People aged 18-39 whose latest measured BMIVAL_COD BMI in the inclusive
-          preceding 12 months is 23-27.4 kg/m^2, or 25-29.9 if demographic ethnicity at R is White. Unknown
-          and unrecorded ethnicity use the lower range. WTMGINT_COD advice between the BMI date and day
-          90 inclusive achieves the indicator, capped at R. Later out-of-range BMI prevents fallback.
-          BMI30_COD and calculated BMI do not qualify. One row per eligible, registered, living, non-test
-          person and month-end. Recalculated over the last 60 completed month-ends with current rules
-          and code lists. Registration and practice follow the monthly spine. Birth and death dates are
-          approximate; current gender and test flags apply retrospectively. Registers use clinical and
-          recorded dates; other evidence uses corrected clinical or order dates. Later corrections can
-          change earlier results. Personalised care adjustments are not applied.
-        is_qof: false
-        source_column: is_in_numerator
-        usage_contexts:
-        - NICE_GUIDANCE
-        sort_order: NICE_IND319
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:
@@ -68,7 +46,7 @@ models:
   - name: latest_bmi_date
     description: Latest measured BMIVAL_COD BMI date within the inclusive preceding 12 months.
   - name: bmi_value
-    description: Recorded BMI in kg/m^2. A later out-of-range value prevents fallback.
+    description: Recorded BMI in kg/m^2. An invalid latest value excludes the person; no older value replaces it.
   - name: is_recorded_white
     description: Ethnicity is White in the demographic interval containing R, start inclusive and end
       exclusive. False includes missing and unknown ethnicity.

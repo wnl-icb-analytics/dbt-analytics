@@ -1,4 +1,73 @@
 unit_tests:
+- name: nice_weight_profile_invalid_latest_prevents_fallback
+  model: int_nice_weight_profile_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          25::NUMBER AS age, '2001-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+          'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-521), (-522), (-523) AS people
+      CROSS JOIN (VALUES ('2026-08-31'), ('2026-09-30')) AS dates
+  - input: ref('int_bmi_qof_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS bmi_value,
+          column4 BETWEEN 5 AND 400 AS is_valid_bmi, 'BMIVAL_COD'::VARCHAR AS source_cluster_id
+      FROM VALUES
+          (-521, 'A', '2026-08-01', 25), (-521, 'Z', '2026-09-01', 0),
+          (-522, 'A', '2026-08-01', 25), (-522, 'A', '2026-09-01', 25),
+          (-522, 'Z', '2026-09-01', 401),
+          (-523, 'A', '2026-08-01', 25), (-523, 'Z', '2026-09-01', 30)
+  - input: ref('dim_person_demographics_historical')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS effective_start_date,
+          NULL::DATE AS effective_end_date, NULL::VARCHAR AS ethnicity_category WHERE FALSE
+  - input: ref('int_nice_weight_advice_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, '2026-08-02'::DATE AS clinical_effective_date
+      FROM VALUES (-521), (-522), (-523)
+  expect:
+    rows:
+    - {person_id: -521, reporting_date: '2026-08-31', bmi_date: '2026-08-01', bmi_value: 25, latest_weight_advice_date: '2026-08-02'}
+    - {person_id: -522, reporting_date: '2026-08-31', bmi_date: '2026-08-01', bmi_value: 25, latest_weight_advice_date: '2026-08-02'}
+    - {person_id: -523, reporting_date: '2026-08-31', bmi_date: '2026-08-01', bmi_value: 25, latest_weight_advice_date: '2026-08-02'}
+    - {person_id: -521, reporting_date: '2026-09-30', bmi_date: '2026-09-01', bmi_value: 0, latest_weight_advice_date: null}
+    - {person_id: -522, reporting_date: '2026-09-30', bmi_date: '2026-09-01', bmi_value: 401, latest_weight_advice_date: null}
+    - {person_id: -523, reporting_date: '2026-09-30', bmi_date: '2026-09-01', bmi_value: 30, latest_weight_advice_date: null}
+  config:
+    tags: [monthly-full, nice-history]
+- name: nice_ind319_invalid_latest_is_unassessable
+  model: fct_person_weight_management_advice_overweight_ind319_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          25::NUMBER AS age, '2001-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+          'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-521), (-522), (-523) AS people
+      CROSS JOIN (VALUES ('2026-08-31'), ('2026-09-30')) AS dates
+  - input: ref('int_nice_weight_profile_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          IFF(dates.column1::DATE = '2026-08-31'::DATE, '2026-08-01', '2026-09-01')::DATE AS bmi_date,
+          IFF(dates.column1::DATE = '2026-08-31'::DATE, 25, people.column2)::FLOAT AS bmi_value,
+          FALSE AS is_recorded_white, NULL::DATE AS latest_weight_advice_date
+      FROM VALUES (-521, 0), (-522, 401), (-523, 30) AS people
+      CROSS JOIN (VALUES ('2026-08-31'), ('2026-09-30')) AS dates
+  expect:
+    rows:
+    - {person_id: -521, reporting_date: '2026-08-31', is_in_denominator: true, is_in_numerator: false}
+    - {person_id: -522, reporting_date: '2026-08-31', is_in_denominator: true, is_in_numerator: false}
+    - {person_id: -523, reporting_date: '2026-08-31', is_in_denominator: true, is_in_numerator: false}
+  config:
+    tags: [monthly-full, nice-history]
 - name: nice_weight_profile_dates_ties_and_follow_up
   model: int_nice_weight_profile_by_month
   given:
