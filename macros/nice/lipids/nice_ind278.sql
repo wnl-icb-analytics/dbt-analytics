@@ -1,25 +1,47 @@
 {% macro nice_ind278(reference='current') %}
+{#-
+    Calculate NICE IND278 from paired CVD membership and latest lipid evidence.
+    Args: reference is current or by_month.
+    Returns: the IND278 detail projection, one eligible person per reporting_date.
+-#}
+-- NICE IND278: https://www.nice.org.uk/indicators/ind278
+-- Latest LDL or non-HDL in 12 months for secondary-prevention CVD, excluding FH and haemorrhagic stroke history.
 WITH cvd AS (
-{% if reference == 'current' %}
-    SELECT person_id, CURRENT_DATE()::DATE AS reporting_date,
-        has_chd, has_stroke_tia, has_pad, has_familial_hypercholesterolaemia, has_haemorrhagic_stroke
-    FROM {{ ref('int_cvd_secondary_prevention_population') }}
-{% else %}
-    SELECT person_id, reporting_date, has_chd, has_stroke_tia, has_pad,
-        has_familial_hypercholesterolaemia, has_haemorrhagic_stroke
-    FROM {{ ref('int_cvd_secondary_prevention_population_by_month') }}
-{% endif %}
+    SELECT
+        person_id,
+        reporting_date,
+        has_chd,
+        has_stroke_tia,
+        has_pad,
+        has_familial_hypercholesterolaemia,
+        has_haemorrhagic_stroke
+    FROM {{ nice_ref('int_cvd_secondary_prevention_population', reference) }}
 ),
+
 eligible_people AS (
-    SELECT population.person_id, population.reporting_date, population.age,
-        population.practice_code, population.practice_name,
-        cvd.has_chd, cvd.has_stroke_tia, cvd.has_pad
+    SELECT
+        population.person_id,
+        population.reporting_date,
+        population.age,
+        population.practice_code,
+        population.practice_name,
+        cvd.has_chd,
+        cvd.has_stroke_tia,
+        cvd.has_pad
     FROM cvd
-    INNER JOIN ({{ nice_reference_population(reference) }}) population
-        ON cvd.person_id = population.person_id AND cvd.reporting_date = population.reporting_date
-    WHERE NOT cvd.has_familial_hypercholesterolaemia AND NOT cvd.has_haemorrhagic_stroke
+    INNER JOIN ({{ nice_reference_population(reference) }}) AS population
+        ON cvd.person_id = population.person_id
+        AND cvd.reporting_date = population.reporting_date
+    -- Both exclusions apply to the whole person, even with overlapping CVD diagnoses.
+    WHERE NOT cvd.has_familial_hypercholesterolaemia
+        AND NOT cvd.has_haemorrhagic_stroke
 ),
-eligible_keys AS (SELECT DISTINCT person_id FROM eligible_people),
+
+eligible_keys AS (
+    SELECT DISTINCT person_id
+    FROM eligible_people
+),
+
 lipid_results AS (
     SELECT
         lipid.person_id,
@@ -38,7 +60,8 @@ lipid_results AS (
         1 AS same_day_priority,
         2.0 AS indicator_threshold
     FROM {{ ref('int_cholesterol_ldl_all') }} lipid
-    INNER JOIN eligible_keys eligible ON lipid.person_id = eligible.person_id
+    INNER JOIN eligible_keys AS eligible
+        ON lipid.person_id = eligible.person_id
     WHERE lipid.clinical_effective_date::DATE
         BETWEEN (SELECT MIN(DATEADD(month, -12, reporting_date)) FROM eligible_people)
             AND (SELECT MAX(reporting_date) FROM eligible_people)
@@ -62,25 +85,31 @@ lipid_results AS (
         2,
         2.6
     FROM {{ ref('int_cholesterol_non_hdl_all') }} lipid
-    INNER JOIN eligible_keys eligible ON lipid.person_id = eligible.person_id
+    INNER JOIN eligible_keys AS eligible
+        ON lipid.person_id = eligible.person_id
     WHERE lipid.clinical_effective_date::DATE
         BETWEEN (SELECT MIN(DATEADD(month, -12, reporting_date)) FROM eligible_people)
             AND (SELECT MAX(reporting_date) FROM eligible_people)
 ),
 
 daily_results AS (
-    SELECT * FROM lipid_results
-    -- LDL wins on the latest day. Invalid selected evidence cannot fall back.
+    SELECT *
+    FROM lipid_results
+    -- IND278 uses the last recorded result. Invalid evidence cannot be replaced by an older success.
+    -- LDL wins when LDL and non-HDL share the latest clinical day.
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY person_id, clinical_effective_date::DATE
         ORDER BY same_day_priority, clinical_effective_date DESC, observation_id DESC
     ) = 1
 ),
+
 last_recorded_result AS (
-    SELECT eligible.person_id, eligible.reporting_date,
+    SELECT
+        eligible.person_id,
+        eligible.reporting_date,
         result.* EXCLUDE (person_id)
-    FROM eligible_people eligible
-    ASOF JOIN daily_results result
+    FROM eligible_people AS eligible
+    ASOF JOIN daily_results AS result
         MATCH_CONDITION (eligible.reporting_date >= result.clinical_effective_date::DATE)
         ON eligible.person_id = result.person_id
 )
@@ -92,8 +121,7 @@ SELECT
     eligible.reporting_date AS reporting_date,
     DATEADD(month, -12, eligible.reporting_date) AS measurement_period_start,
     eligible.age,
-    eligible.practice_code AS {{ 'current_practice_code' if reference == 'current' else 'practice_code' }},
-    eligible.practice_name AS {{ 'current_practice_name' if reference == 'current' else 'practice_name' }},
+    {{ nice_practice_columns('eligible', reference) }},
     eligible.has_chd,
     eligible.has_stroke_tia,
     eligible.has_pad,
@@ -121,8 +149,10 @@ SELECT
         WHEN result.cholesterol_value <= result.indicator_threshold THEN 'ACHIEVED'
         ELSE 'ABOVE_TARGET'
     END AS indicator_status
-FROM eligible_people eligible
-LEFT JOIN last_recorded_result result ON eligible.person_id = result.person_id
+FROM eligible_people AS eligible
+-- Mask every stale payload field by keeping the lower window bound on the join.
+LEFT JOIN last_recorded_result AS result
+    ON eligible.person_id = result.person_id
     AND eligible.reporting_date = result.reporting_date
     AND result.clinical_effective_date::DATE >= DATEADD(month, -12, eligible.reporting_date)
 
