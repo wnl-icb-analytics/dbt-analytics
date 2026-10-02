@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_pad_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- Clinical evidence is bounded by today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -54,6 +54,7 @@ WITH pad_diagnoses AS (
         ARRAY_AGG(DISTINCT ID::VARCHAR) AS all_IDs
 
     FROM {{ ref('int_pad_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 

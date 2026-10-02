@@ -1,6 +1,5 @@
 -- Pair: macros/qof_registers/calculate_obesity_register.sql.
--- This live fact includes future-dated records. Its PIT pair is strict as-of
--- and derives age at the reference date rather than using current age.
+-- Evidence is bounded by today. The PIT pair evaluates supplied reference dates.
 
 {{
     config(
@@ -12,26 +11,64 @@
 -- Business Logic: Age ≥18 + BMI ≥30 OR (BAME + BMI ≥27.5)
 -- Complex Logic: Ethnicity-specific BMI thresholds for register inclusion
 
-WITH bmi_data AS (
+WITH bmi_records AS (
+    SELECT *
+    FROM {{ ref('int_bmi_qof_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
+),
+
+bmi_aggregates AS (
     SELECT
         person_id,
-        latest_bmi_date,
-        latest_valid_bmi_date,
-        latest_valid_bmi_value,
-        all_bmi_concept_codes,
-        all_bmi_concept_displays
-    FROM {{ ref('int_bmi_qof') }}
+        MAX(clinical_effective_date) AS latest_bmi_date,
+        MAX(CASE WHEN is_valid_bmi THEN clinical_effective_date END) AS latest_valid_bmi_date,
+        ARRAY_AGG(DISTINCT concept_code) AS all_bmi_concept_codes,
+        ARRAY_AGG(DISTINCT concept_display) AS all_bmi_concept_displays
+    FROM bmi_records
+    GROUP BY person_id
+),
+
+latest_valid_bmi AS (
+    SELECT
+        person_id,
+        bmi_value AS latest_valid_bmi_value
+    FROM bmi_records
+    WHERE is_valid_bmi = TRUE
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY person_id
+        ORDER BY clinical_effective_date DESC, id DESC, source_cluster_id DESC
+    ) = 1
+),
+
+bmi_data AS (
+    SELECT
+        bmi.*,
+        valid.latest_valid_bmi_value
+    FROM bmi_aggregates AS bmi
+    LEFT JOIN latest_valid_bmi AS valid ON bmi.person_id = valid.person_id
+),
+
+ethnicity_dates AS (
+    SELECT
+        person_id,
+        CAST(MAX(clinical_effective_date) AS DATE) AS latest_ethnicity_date,
+        CAST(MAX(CASE WHEN is_lower_bmi_threshold_ethnicity
+            THEN clinical_effective_date END) AS DATE) AS latest_bame_date,
+        ARRAY_AGG(DISTINCT concept_code) AS all_ethnicity_concept_codes,
+        ARRAY_AGG(DISTINCT concept_display) AS all_ethnicity_concept_displays
+    FROM {{ ref('int_obesity2_ethnicity_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
+    GROUP BY person_id
 ),
 
 ethnicity_data AS (
     SELECT
-        person_id,
-        is_bame,
-        latest_ethnicity_date,
-        latest_bame_date,
-        all_ethnicity_concept_codes,
-        all_ethnicity_concept_displays
-    FROM {{ ref('int_ethnicity_qof') }}
+        *,
+        COALESCE(
+            CAST(latest_ethnicity_date AS DATE) = CAST(latest_bame_date AS DATE),
+            FALSE
+        ) AS is_bame
+    FROM ethnicity_dates
 ),
 
 register_logic AS (

@@ -1,5 +1,5 @@
 {% macro calculate_obesity2_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_obesity2_register.sql. This macro is strict as-of and derives age at the reference date; the live fact includes future-dated records. #}
+    {# Pair: fct_person_obesity2_register.sql. Evidence is bounded by the reference date. #}
     {# QOF v51 OBES2 register evaluated strictly at the supplied date. #}
 
     {#
@@ -21,7 +21,7 @@
         SELECT ref_date.reference_date, event.*
         FROM {{ ref('int_obesity2_bmi_all') }} AS event
         INNER JOIN reference_dates AS ref_date
-            ON event.clinical_effective_date > DATEADD(month, -12, ref_date.reference_date)
+            ON CAST(event.clinical_effective_date AS DATE) > DATEADD(month, -12, ref_date.reference_date)
           AND {{ ltc_register_known_by('event.clinical_effective_date', 'event.date_recorded', 'ref_date.reference_date') }}
     ),
 
@@ -116,11 +116,11 @@
         SELECT ref_date.reference_date, event.*
         FROM {{ ref('int_obesity2_lipids_all') }} AS event
         INNER JOIN reference_dates AS ref_date
-            ON event.clinical_effective_date > DATEADD(month, -12, ref_date.reference_date)
+            ON CAST(event.clinical_effective_date AS DATE) > DATEADD(month, -12, ref_date.reference_date)
           AND {{ ltc_register_known_by('event.clinical_effective_date', 'event.date_recorded', 'ref_date.reference_date') }}
         QUALIFY ROW_NUMBER() OVER (
             PARTITION BY ref_date.reference_date, event.person_id, source_cluster_id
-            ORDER BY clinical_effective_date DESC, id DESC
+            ORDER BY CAST(clinical_effective_date AS DATE) DESC, id DESC
         ) = 1
     ),
 
@@ -194,8 +194,8 @@
             lipid.latest_hdl_date,
             lipid.latest_hdl_value,
             COALESCE(
-                eth.latest_ethnicity_date
-                    = eth.latest_lower_threshold_ethnicity_date,
+                CAST(eth.latest_ethnicity_date AS DATE)
+                    = CAST(eth.latest_lower_threshold_ethnicity_date AS DATE),
                 FALSE
             ) AS has_lower_bmi_threshold_ethnicity,
             diag.earliest_ascvd_date IS NOT NULL AS has_ascvd,
@@ -203,8 +203,8 @@
                 hyp.latest_hypertension_date IS NOT NULL
                 AND (
                     hyp.latest_hypertension_resolved_date IS NULL
-                    OR hyp.latest_hypertension_date
-                        >= hyp.latest_hypertension_resolved_date
+                    OR CAST(hyp.latest_hypertension_date AS DATE)
+                        >= CAST(hyp.latest_hypertension_resolved_date AS DATE)
                 ),
                 FALSE
             ) AS has_unresolved_hypertension,
@@ -228,8 +228,8 @@
                 dm.latest_type2_diabetes_date IS NOT NULL
                 AND (
                     dm.latest_diabetes_resolved_date IS NULL
-                    OR dm.latest_type2_diabetes_date
-                        >= dm.latest_diabetes_resolved_date
+                    OR CAST(dm.latest_type2_diabetes_date AS DATE)
+                        >= CAST(dm.latest_diabetes_resolved_date AS DATE)
                 ),
                 FALSE
             ) AS has_unresolved_type2_diabetes

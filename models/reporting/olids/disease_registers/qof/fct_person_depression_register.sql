@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_depression_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- This live fact uses evidence dated on or before today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -13,7 +13,7 @@
 Business Logic:
 - Age ≥18 years (QOF requirement)
 - Latest depression episode on/after 1 April 2006 (QOF date threshold)
-- Unresolved: latest_depression_date > latest_resolved_date OR no resolved code
+- Unresolved: latest depression date after latest resolved date OR no resolved code
 
 QOF Context:
 Used for depression quality measures including:
@@ -55,8 +55,8 @@ WITH depression_diagnoses AS (
             CASE
                 WHEN is_diagnosis_code AND is_first_or_new_episode THEN clinical_effective_date
             END
-        )
-        >= '2006-04-01'
+        )::DATE
+        >= '2006-04-01'::DATE
         AND (
             MAX(
                 CASE
@@ -67,12 +67,12 @@ WITH depression_diagnoses AS (
                 CASE
                     WHEN is_diagnosis_code AND is_first_or_new_episode THEN clinical_effective_date
                 END
-            )
+            )::DATE
             > MAX(
                 CASE
                     WHEN is_resolved_code THEN clinical_effective_date
                 END
-            )
+            )::DATE
         ), FALSE) AS has_active_depression_diagnosis,
 
         -- QOF temporal flags for recent first/new episodes
@@ -80,7 +80,7 @@ WITH depression_diagnoses AS (
             CASE
                 WHEN is_diagnosis_code AND is_first_or_new_episode THEN clinical_effective_date
             END
-        )
+        )::DATE
         >= CURRENT_DATE - INTERVAL '12 months',
         FALSE) AS has_episode_last_12m,
 
@@ -88,7 +88,7 @@ WITH depression_diagnoses AS (
             CASE
                 WHEN is_diagnosis_code AND is_first_or_new_episode THEN clinical_effective_date
             END
-        )
+        )::DATE
         >= CURRENT_DATE - INTERVAL '15 months',
         FALSE) AS has_episode_last_15m,
 
@@ -96,7 +96,7 @@ WITH depression_diagnoses AS (
             CASE
                 WHEN is_diagnosis_code AND is_first_or_new_episode THEN clinical_effective_date
             END
-        )
+        )::DATE
         >= CURRENT_DATE - INTERVAL '24 months',
         FALSE) AS has_episode_last_24m,
 
@@ -116,6 +116,7 @@ WITH depression_diagnoses AS (
         ) AS all_resolved_concept_codes
 
     FROM {{ ref('int_depression_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 

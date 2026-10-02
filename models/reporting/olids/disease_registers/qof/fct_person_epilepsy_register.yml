@@ -2,8 +2,10 @@ models:
   - name: fct_person_epilepsy_register
     description: >
       Disease Registers (QOF v51) epilepsy register. One row per person aged 18 or
-      over with unresolved EPIL_COD and epilepsy treatment in the preceding six
-      months. EP001 is retired; register extraction continues through the Disease
+      over with EPIL_COD and no EPILRES_COD on or after the latest EPIL_COD
+      date; a same-day resolution removes membership. Diagnosis evidence is dated on or before
+      today. EPILDRUG_COD treatment must be after today minus six months and on
+      or before today. EP001 is retired; register extraction continues through the Disease
       Registers service.
 
     tests:
@@ -28,8 +30,10 @@ models:
           description_short: "QOF epilepsy register"
           description_long: >
             Disease Registers (QOF v51) epilepsy register for patients aged 18 or
-            over with an unresolved EPIL_COD and EPILDRUG_COD in the preceding six
-            months. EP001 is retired, but extraction continues.
+            over with EPIL_COD dated on or before today and no EPILRES_COD on or
+            after the latest EPIL_COD date. A same-day resolution removes membership.
+            EPILDRUG_COD treatment must be after today minus six months and on or
+            before today. EP001 is retired, but extraction continues.
           is_qof: true
           qof_indicator: "EPIL001"
           source_column: "is_on_register"

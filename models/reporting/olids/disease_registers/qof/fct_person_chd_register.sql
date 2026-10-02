@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_chd_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- This live fact uses evidence dated on or before today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -41,6 +41,7 @@ WITH base_diagnoses AS (
 
     FROM {{ ref('int_chd_diagnoses_all') }}
     WHERE is_diagnosis_code = TRUE
+        AND CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 

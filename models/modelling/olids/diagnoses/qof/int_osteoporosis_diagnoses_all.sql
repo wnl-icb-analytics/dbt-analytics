@@ -15,12 +15,12 @@ Clinical Purpose:
 - Osteoporosis diagnosis tracking
 
 Key QOF Requirements:
-- Register inclusion: Osteoporosis diagnosis (OSTEO_COD) OR DXA confirmation
-- DXA confirmation handled via separate int_dxa_scans_all model
-- Combined logic applied in fact layer
+- Ages 50-74: OSTEO_COD, fracture on or after 1 April 2012 and DXA confirmation
+- Ages 75+: OSTEO_COD and fracture on or after 1 April 2014; no DXA requirement
+- Register models combine these diagnoses with fracture and DXA observations
 
 Note: DXA scans and T-scores are handled in separate int_dxa_scans_all model.
-The register logic combines clinical diagnosis with DXA confirmation in the fact layer.
+The register requires DXA confirmation only for ages 50-74.
 
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 This is OBSERVATION-LEVEL data - one row per osteoporosis observation.

@@ -1,10 +1,10 @@
 {% macro calculate_atrial_fibrillation_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_atrial_fibrillation_register.sql. This macro is strict as-of; the live fact includes future-dated records. #}
+    {# Pair: fct_person_atrial_fibrillation_register.sql. This macro is strict as-of; the live fact uses evidence dated on or before today. #}
     {#
     Calculates Atrial Fibrillation register status at one or more reference dates.
 
     Business Logic:
-    - Active AF diagnosis (latest diagnosis > latest resolution OR no resolution)
+    - Active AF diagnosis (latest diagnosis date after the latest resolution date OR no resolution)
     - No age restrictions
 
     Parameters:
@@ -51,7 +51,7 @@
             'Atrial Fibrillation' AS register_name,
             COALESCE(
                 diag.latest_diagnosis_date IS NOT NULL
-                AND (diag.latest_resolved_date IS NULL OR diag.latest_diagnosis_date > diag.latest_resolved_date),
+                AND (diag.latest_resolved_date IS NULL OR diag.latest_diagnosis_date::DATE > diag.latest_resolved_date::DATE),
                 FALSE
             ) AS is_on_register,
             diag.earliest_diagnosis_date,

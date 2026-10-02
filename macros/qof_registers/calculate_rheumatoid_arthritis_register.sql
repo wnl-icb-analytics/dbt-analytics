@@ -1,9 +1,9 @@
 {% macro calculate_rheumatoid_arthritis_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_rheumatoid_arthritis_register.sql. This macro is strict as-of; the live fact includes future-dated records. #}
+    {# Pair: fct_person_rheumatoid_arthritis_register.sql. Evidence is bounded by the reference date. #}
     {#
     Calculates Rheumatoid Arthritis register status at one or more reference dates.
 
-    QOF v50 RA_REG (CQRS 001):
+    QOF v51 RA_REG (CQRS 001):
     - PAT_AGE >= 16 at the achievement/reference date (NOT age at diagnosis)
     - RARTH_DAT ≠ Null (any RARTH_COD diagnosis; no resolution codes in RA)
 
@@ -46,8 +46,7 @@
         SELECT
             diag.reference_date,
             diag.person_id,
-            -- Completed years at the reference date (month-accurate, matching dim_person_age)
-            -- so a patient is not counted a year older before their birthday.
+            -- Month-based age calculation, matching dim_person_age.
             FLOOR(DATEDIFF('month', birth.birth_date_approx, diag.reference_date) / 12) AS age
         FROM ra_person_aggregates AS diag
         INNER JOIN {{ ref('dim_person_birth_death') }} AS birth

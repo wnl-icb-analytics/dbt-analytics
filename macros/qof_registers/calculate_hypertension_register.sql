@@ -1,11 +1,11 @@
 {% macro calculate_hypertension_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_hypertension_register.sql. This macro is strict as-of; the live fact includes future-dated records. #}
+    {# Pair: fct_person_hypertension_register.sql. Clinical evidence is bounded by the reference date. #}
     {#
     Calculates Hypertension register status at one or more reference dates.
 
-    QOF v50 HYP_REG (CQRS 001):
+    QOF v51 HYP_REG (CQRS 001):
     - HYPLAT_DAT ≠ Null AND HYPRES_DAT = Null: an unresolved hypertension diagnosis
-      (latest diagnosis after the latest resolution). NO age restriction - the register
+      (no resolution on a later calendar date). NO age restriction - the register
       is all-ages. PAT_AGE applies only to the BP-target indicator denominators, not here.
 
     Parameters:
@@ -54,12 +54,12 @@
             -- HYPRES_DAT is the latest resolution STRICTLY after the latest diagnosis, so a
             -- resolution on/before the latest diagnosis does not resolve the register: use >=.
             -- Explicit NULL check (no '1900-01-01' sentinel, which collided with null-dated
-            -- diagnosis codes coalesced to 1900). No age restriction per QOF v50.
+            -- diagnosis codes coalesced to 1900). No age restriction per QOF v51.
             COALESCE(
                 diag.latest_diagnosis_date IS NOT NULL
                 AND (
                     diag.latest_resolved_date IS NULL
-                    OR diag.latest_diagnosis_date >= diag.latest_resolved_date
+                    OR diag.latest_diagnosis_date::DATE >= diag.latest_resolved_date::DATE
                 ),
                 FALSE
             ) AS is_on_register,

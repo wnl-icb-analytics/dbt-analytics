@@ -1,5 +1,5 @@
 {% macro calculate_copd_register(reference_date_expr='CURRENT_DATE()', reference_dates=none) %}
-    {# Pair: fct_person_copd_register.sql. This macro is strict as-of and derives age at the reference date where used; the live fact includes future-dated records. #}
+    {# Pair: fct_person_copd_register.sql. This macro is strict as-of; the live fact uses evidence dated on or before today. #}
     {#
     Calculates COPD register status at one or more reference dates.
 
@@ -49,7 +49,7 @@
             diag.is_disorder_code
                 OR (
                     diag.is_admin_code
-                    AND diag.clinical_effective_date > DATEADD('year', -2, ref_date.reference_date)
+                    AND CAST(diag.clinical_effective_date AS DATE) > DATEADD('year', -2, ref_date.reference_date)
                 ) AS is_eligible_evidence
         FROM {{ ref('int_copd_diagnoses_all') }} AS diag
         INNER JOIN reference_dates AS ref_date
@@ -77,7 +77,7 @@
             ON agg.person_id = df.person_id
             AND agg.reference_date = df.reference_date
             AND df.is_eligible_evidence
-            AND agg.copdres_dat < df.clinical_effective_date
+            AND CAST(agg.copdres_dat AS DATE) < CAST(df.clinical_effective_date AS DATE)
         WHERE agg.copdres_dat IS NOT NULL
         GROUP BY agg.reference_date, agg.person_id
     ),
@@ -110,8 +110,7 @@
         FROM {{ ref('int_spirometry_all') }} AS spiro
         INNER JOIN reference_dates AS ref_date
             ON {{ ltc_register_known_by('spiro.clinical_effective_date', 'spiro.date_recorded', 'ref_date.reference_date') }}
-        WHERE spiro.is_valid_spirometry = TRUE
-          AND spiro.is_below_0_7 = TRUE
+        WHERE spiro.is_below_0_7 = TRUE
     ),
 
     -- Patients for Rules 2-4 (post-April 2023)
@@ -119,7 +118,7 @@
         SELECT *
         FROM eunrescopd_dat_calc
         WHERE eunrescopd_dat IS NOT NULL
-          AND eunrescopd_dat >= '2023-04-01'
+          AND CAST(eunrescopd_dat AS DATE) >= '2023-04-01'::DATE
     ),
 
     -- Rule 2: Spirometry within -93 to +186 days of diagnosis
@@ -131,8 +130,8 @@
         INNER JOIN spirometry_filtered AS sf
             ON pap.person_id = sf.person_id
             AND pap.reference_date = sf.reference_date
-            AND sf.spirometry_date >= DATEADD('day', -93, pap.eunrescopd_dat)
-            AND sf.spirometry_date <= DATEADD('day', 186, pap.eunrescopd_dat)
+            AND CAST(sf.spirometry_date AS DATE) >= DATEADD('day', -93, CAST(pap.eunrescopd_dat AS DATE))
+            AND CAST(sf.spirometry_date AS DATE) <= DATEADD('day', 186, CAST(pap.eunrescopd_dat AS DATE))
     ),
 
     -- Rule 3: Newly registered patients (last 12 months) with spirometry within -93 to +186 days of registration
@@ -142,13 +141,14 @@
             reg.person_id,
             reg.registration_start_date AS reg_dat
         FROM {{ ref('dim_person_historical_practice') }} AS reg
-        -- Registered as of the reference date (point-in-time), NOT is_current_registration
-        -- which reflects status today. Mirror the QOF GMS rule: registration started in the
-        -- 12 months up to the reference date and not ended (death-adjusted) by then.
+        -- REG_DAT is the latest registration start on or before the reference date, including closed registrations.
         INNER JOIN reference_dates AS ref_date
             ON reg.registration_start_date > ref_date.reference_date - INTERVAL '12 months'
             AND reg.registration_start_date <= ref_date.reference_date
-            AND (reg.effective_end_date IS NULL OR reg.effective_end_date > ref_date.reference_date)
+        QUALIFY ROW_NUMBER() OVER (
+            PARTITION BY ref_date.reference_date, reg.person_id
+            ORDER BY reg.registration_start_date DESC, reg.practice_id
+        ) = 1
     ),
 
     rule_3_qualifiers AS (
@@ -162,8 +162,8 @@
         INNER JOIN spirometry_filtered AS sf
             ON pap.person_id = sf.person_id
             AND pap.reference_date = sf.reference_date
-            AND sf.spirometry_date >= DATEADD('day', -93, nrp.reg_dat)
-            AND sf.spirometry_date <= DATEADD('day', 186, nrp.reg_dat)
+            AND CAST(sf.spirometry_date AS DATE) >= DATEADD('day', -93, nrp.reg_dat)
+            AND CAST(sf.spirometry_date AS DATE) <= DATEADD('day', 186, nrp.reg_dat)
         LEFT JOIN rule_2_qualifiers AS r2
             ON pap.person_id = r2.person_id
             AND pap.reference_date = r2.reference_date
@@ -183,7 +183,7 @@
             CASE
                 WHEN calc.eunrescopd_dat IS NULL THEN NULL
                 -- Rule 1: Pre-April 2023 automatic inclusion
-                WHEN calc.eunrescopd_dat < '2023-04-01' THEN 1
+                WHEN CAST(calc.eunrescopd_dat AS DATE) < '2023-04-01'::DATE THEN 1
                 WHEN r2.person_id IS NOT NULL THEN 2
                 WHEN r3.person_id IS NOT NULL THEN 3
                 -- Rule 4: all remaining post-April 2023 patients; no "unable to spirometry" code required
