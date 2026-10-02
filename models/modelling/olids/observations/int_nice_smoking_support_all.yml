@@ -1,0 +1,31 @@
+models:
+- name: int_nice_smoking_support_all
+  description: NICE smoking support under QOF v51 SMOK004, one row per source kind and source key. Includes
+    inactive and deceased people. Support is REFERSSSA_COD or PHARM_COD (PCD), or an observation or prescription
+    in the active PHARMDRUG refset 12465801000001106. Advice alone does not count. Observation dates use
+    the shared correction and undated sentinel; medication orders retain their clinical date. Event dates
+    are capped at the build date. Cross-cluster duplicates of one observation count once.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - source_kind
+        - source_key
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: REFERSSSA_COD,PHARM_COD
+        source: PCD
+  columns:
+  - name: source_kind
+    description: OBSERVATION or MEDICATION_ORDER; part of the source event key.
+  - name: source_key
+    description: Source observation or medication-order identifier; unique within source_kind.
+  - name: person_id
+    description: Person receiving referral or pharmacotherapy support.
+  - name: event_date
+    description: Corrected observation date or medication-order clinical date, on or before the build
+      date.
