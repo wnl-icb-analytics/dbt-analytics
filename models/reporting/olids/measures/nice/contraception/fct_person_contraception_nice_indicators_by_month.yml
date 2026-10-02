@@ -1,0 +1,33 @@
+models:
+- name: fct_person_contraception_nice_indicators_by_month
+  description: NICE contraception outcomes for IND117. One row per eligible, active, living, non-test
+    person, indicator and reporting date. Each indicator keeps its documented cohort and evidence rules.
+    No personalised care adjustments apply. Recalculated for the last 60 completed month-ends using current
+    rules and code lists. Registration and practice follow the monthly spine. Birth and death dates are
+    approximate; current gender and test flags apply retrospectively. Diagnoses use clinical and recorded
+    dates; other evidence uses clinical dates through month-end. Later corrections can change earlier
+    results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: age
+    description: Completed years at reporting date, based on the approximate birth date.
+  - name: practice_code
+    description: Registration practice ODS code at reporting date.
+  - name: practice_name
+    description: Registration practice name at reporting date.

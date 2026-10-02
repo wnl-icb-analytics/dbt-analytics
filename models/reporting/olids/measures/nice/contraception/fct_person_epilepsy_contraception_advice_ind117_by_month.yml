@@ -1,0 +1,82 @@
+models:
+- name: fct_person_epilepsy_contraception_advice_ind117_by_month
+  description: NICE IND117. One row per active, living, non-test woman aged 18 to 44 on the epilepsy register
+    at reporting date. The register requires an unresolved diagnosis and an EPILDRUG_COD order in (reporting
+    date minus six months, reporting date]. Sterilisation or hysterectomy recorded by reporting date excludes
+    the person, using NHSD_PRIMARY_CARE_DOMAIN_REFSETS/STERIL_COD and HYST2_COD. Achievement requires
+    EPILCC_COD contraception advice, EPILPA_COD pregnancy advice or EPILPCA_COD pre-conception advice
+    in the inclusive twelve months to reporting date. No personalised care adjustments apply. Recalculated
+    for the last 60 completed month-ends using current rules and code lists. Registration and practice
+    follow the monthly spine. Birth and death dates are approximate; current gender and test flags apply
+    retrospectively. Diagnoses use clinical and recorded dates; other evidence uses clinical dates through
+    month-end. Later corrections can change earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind117
+      indicator:
+        id: IND117
+        type: MEASURE
+        category: CONTRACEPTION
+        clinical_domain: CONTRACEPTION
+        name_short: Epilepsy contraception advice
+        description_short: NICE IND117. One row per active, living, non-test woman aged 18 to 44 on the
+          epilepsy register at reporting date. The register requires an unresolved diagnosis and an EPILDRUG_COD
+          order in (reporting date minus six months, reporting date]. Sterilisation or hysterectomy recorded
+          by reporting date excludes the person, using NHSD_PRIMARY_CARE_DOMAIN_REFSETS/STERIL_COD and
+          HYST2_COD. Achievement requires EPILCC_COD contraception advice, EPILPA_COD pregnancy advice
+          or EPILPCA_COD pre-conception advice in the inclusive twelve months to reporting date. No personalised
+          care adjustments apply. Recalculated for the last 60 completed month-ends using current rules
+          and code lists. Registration and practice follow the monthly spine. Birth and death dates are
+          approximate; current gender and test flags apply retrospectively. Diagnoses use clinical and
+          recorded dates; other evidence uses clinical dates through month-end. Later corrections can
+          change earlier results.
+        description_long: NICE IND117. One row per active, living, non-test woman aged 18 to 44 on the
+          epilepsy register at reporting date. The register requires an unresolved diagnosis and an EPILDRUG_COD
+          order in (reporting date minus six months, reporting date]. Sterilisation or hysterectomy recorded
+          by reporting date excludes the person, using NHSD_PRIMARY_CARE_DOMAIN_REFSETS/STERIL_COD and
+          HYST2_COD. Achievement requires EPILCC_COD contraception advice, EPILPA_COD pregnancy advice
+          or EPILPCA_COD pre-conception advice in the inclusive twelve months to reporting date. No personalised
+          care adjustments apply. Recalculated for the last 60 completed month-ends using current rules
+          and code lists. Registration and practice follow the monthly spine. Birth and death dates are
+          approximate; current gender and test flags apply retrospectively. Diagnoses use clinical and
+          recorded dates; other evidence uses clinical dates through month-end. Later corrections can
+          change earlier results.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND117
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: reporting_date
+    description: Date used for eligibility and evidence.
+  - name: measurement_period_start
+    description: Start of the stated cohort or evidence period; see the model description for boundary
+      inclusion.
+  - name: latest_record_date
+    description: Latest qualifying evidence date; null when no qualifying evidence exists.
+  - name: is_in_denominator
+    description: Always true for every row.
+  - name: is_in_numerator
+    description: Whether the complete indicator rule is met.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: age
+    description: Completed years at reporting date, based on the approximate birth date.
+  - name: practice_code
+    description: Registration practice ODS code at reporting date.
+  - name: practice_name
+    description: Registration practice name at reporting date.
