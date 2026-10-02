@@ -1,0 +1,60 @@
+models:
+- name: fct_person_ckd_new_diagnosis_egfr_ind233_by_month
+  description: |
+    NICE IND233. One row per eligible, active, living, non-test person and completed month-end.
+    People whose earliest coded CKD stage 3 to 5 diagnosis known at month-end is in the inclusive preceding 12 months. Achievement requires two valued eGFR tests at least 90 days apart, with the second in the inclusive 90 days before diagnosis. No follow-up grace period applies.
+
+    Recalculated at monthly refresh for the last 60 completed month-ends using today's
+    rules and code lists. Registration and practice use the existing monthly spine.
+    Registration start is inclusive; registration end and death dates are exclusive.
+    Overlapping registrations retain the spine's current-registration priority.
+    Birth and death dates are approximate. Missing birth dates prevent historical
+    active rows. Current gender and test flags apply retrospectively. CKD and other
+    register states use clinical and recorded dates. Other evidence uses its corrected
+    clinical or order date through month-end. Later corrections and code-list changes
+    can alter earlier results. Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind233
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at month-end under the monthly spine attribution.
+  - name: diagnosis_date
+    description: Earliest coded CKD stage 3 to 5 clinical date known by month-end, anchoring the diagnosis
+      window.
+  - name: latest_egfr_value
+    description: Latest eGFR in ml/min/1.73m2; null when none
+  - name: latest_acr_value
+    description: Latest urine ACR in mg/mmol; null when none
+  - name: latest_record_date
+    description: Date of the latest qualifying record in the period; null when none
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
