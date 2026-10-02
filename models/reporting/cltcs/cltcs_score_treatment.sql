@@ -1,4 +1,4 @@
-{{ config(materialized='table', tags=['cltcs']) }}
+{{ config(materialized='table', tags=['cltcs', 'daily']) }}
 
 -- Domain weights for the treatment score (each default 1 = equal weighting).
 {% set weight_biomarker_gaps = 1 %}
