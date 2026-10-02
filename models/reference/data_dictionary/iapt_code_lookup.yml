@@ -9,11 +9,15 @@ models:
       and upper(trim(code)). Code sets: source_of_referral, discharge_reason,
       discharge_reason_legacy, previous_diagnosed_condition_indicator,
       onward_referral_reason, appointment_type, psychotropic_medication_usage,
-      short_notice_cancellation_indicator, integrated_ltc_service_indicator
-      and coding_significance. discharge_reason_legacy is the retired IAPT
-      care spell end code list (valid until March 2020). Some of its codes
-      reuse current discharge reason values with different meanings, so use
-      it only for codes the current list lacks.
+      short_notice_cancellation_indicator, integrated_ltc_service_indicator,
+      coding_significance and statutory_sick_pay_indicator.
+      discharge_reason_legacy is the retired IAPT care spell end code list
+      (valid until March 2020). Some of its codes reuse current discharge
+      reason values with different meanings, so use it only for codes the
+      current list lacks. Descriptions come from the newest UKHFD revision;
+      category comes from the newest revision that supplies one, because
+      UKHFD's 2022 revision of the discharge reason list dropped the
+      category of every code.
     config: &owner
       meta:
         owner:
@@ -34,7 +38,11 @@ models:
       - name: short_description
         description: Newest published description limited to 60 characters.
       - name: category
-        description: Newest published category where supplied.
+        description: >-
+          Category from the newest UKHFD revision of the code that supplies
+          one, which can be older than the description. Null when no revision
+          has a category, such as source of referral G4, I1, I2, N1, N2, N4,
+          P1 and Q1.
       - name: notes
         description: Newest published notes where supplied.
       - name: valid_from_date
