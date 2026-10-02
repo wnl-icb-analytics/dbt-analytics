@@ -72,7 +72,7 @@ select
 from {{ ref('fct_mhsds_clinical_record') }} as s
 left join {{ ref('snomed_concept') }} as source_snomed
     on trim(s.clinical_code) = source_snomed.snomed_code
-    and s.coding_scheme_description like 'SNOMED CT%'
+    and upper(s.coding_scheme_description) like 'SNOMED CT%'
 left join {{ ref('snomed_concept') }} as mapped_snomed
     on s.standardised_snomed_code::varchar = mapped_snomed.snomed_code
 left join {{ ref('read_code') }} as read_mapping
