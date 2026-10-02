@@ -13,7 +13,7 @@ WITH profile AS (
         birth_date_approx,
         rotavirus_doses_by_24_weeks,
         has_rotavirus_contraindication
-    FROM {{ nice_ref('int_childhood_immunisation_profile', reference) }} AS profile
+    FROM {{ nice_ref('int_nice_childhood_immunisation_profile', reference) }} AS profile
 ),
 
 assessed AS (

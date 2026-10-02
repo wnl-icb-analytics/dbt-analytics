@@ -15,7 +15,7 @@ WITH profile AS (
         has_dtap_booster_1_to_5_years,
         has_mmr_contraindication,
         has_dtap_contraindication
-    FROM {{ nice_ref('int_childhood_immunisation_profile', reference) }} AS profile
+    FROM {{ nice_ref('int_nice_childhood_immunisation_profile', reference) }} AS profile
 ),
 
 assessed AS (

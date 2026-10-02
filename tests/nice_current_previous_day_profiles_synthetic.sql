@@ -3,7 +3,7 @@
 {% set childhood = nice_ind215('current') %}
 {% set cvd = nice_ind278('current') %}
 {% set replacements = {
-    'int_childhood_immunisation_profile': 'synthetic_childhood_profile',
+    'int_nice_childhood_immunisation_profile': 'synthetic_childhood_profile',
     'int_cvd_secondary_prevention_population': 'synthetic_cvd_profile',
     'dim_person_active_patients': 'synthetic_active',
     'dim_person_age': 'synthetic_age',

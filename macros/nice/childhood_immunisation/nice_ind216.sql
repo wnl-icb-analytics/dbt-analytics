@@ -13,7 +13,7 @@ WITH profile AS (
         birth_date_approx,
         mmr_doses_12_to_18_months,
         has_mmr_contraindication
-    FROM {{ nice_ref('int_childhood_immunisation_profile', reference) }} AS profile
+    FROM {{ nice_ref('int_nice_childhood_immunisation_profile', reference) }} AS profile
 ),
 
 assessed AS (

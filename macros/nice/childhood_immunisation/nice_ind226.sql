@@ -15,7 +15,7 @@ WITH profile AS (
         menb_primary_doses_by_12_months,
         menb_booster_doses_12_to_18_months,
         has_menb_contraindication
-    FROM {{ nice_ref('int_childhood_immunisation_profile', reference) }} AS profile
+    FROM {{ nice_ref('int_nice_childhood_immunisation_profile', reference) }} AS profile
 ),
 
 assessed AS (

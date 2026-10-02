@@ -13,7 +13,7 @@ WITH profile AS (
         birth_date_approx,
         menb_doses_by_8_months,
         has_menb_contraindication
-    FROM {{ nice_ref('int_childhood_immunisation_profile', reference) }} AS profile
+    FROM {{ nice_ref('int_nice_childhood_immunisation_profile', reference) }} AS profile
 ),
 
 assessed AS (
