@@ -1,0 +1,62 @@
+models:
+- name: fct_person_smi_bmi_ind83_by_month
+  description: |
+    NICE IND83: SMI BMI record. One row per registered, living, non-test person with schizophrenia,
+    bipolar affective disorder or another psychosis on the SMI register, excluding remission and
+    lithium therapy without an SMI diagnosis, assessed at the completed month-end.
+
+    Achievement requires any valid recorded BMI at any age or adult calculated BMI in the preceding
+    15 months (10 to 150 kg/m2 inclusive at all ages). Later or same-day invalid BMIs do not erase
+    valid evidence. Calculated BMI uses the weight date. Invalid-only evidence does not count.
+
+    Personalised care adjustments are not applied.
+
+    One row per eligible person and reporting_date for the last 60 completed month-ends.
+    Recalculated at monthly refresh using today's rules and code lists. Diagnosis and lithium
+    therapy state use clinical and recorded dates; other evidence uses its clinical or order date
+    through month-end. Later corrections and current code-list changes can alter earlier results.
+    Registration start is inclusive; registration end and death dates are exclusive. Practice
+    follows the existing monthly spine's current-registration priority when registrations overlap.
+    Birth and death dates are approximate; missing birth dates prevent historical active rows.
+    Current gender and test flags apply retrospectively.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind83
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS practice code at month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at month-end under the monthly spine attribution.
+  - name: latest_bmi_date
+    description: Date of the latest valid recorded BMI at any age or adult calculated BMI; null when none
+      is valid
+  - name: latest_record_date
+    description: Date of the latest qualifying record in the period; null when none
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
