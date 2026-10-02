@@ -1,0 +1,64 @@
+models:
+- name: fct_person_alcohol_ind201_by_month
+  description: |-
+    NICE IND201 alcohol screening in long-term conditions. One row per registered at the month-end, living, non-test person with coronary heart disease, atrial
+    fibrillation, heart failure, stroke or TIA, diabetes, or dementia, assessed on the
+    reporting month-end.
+
+    Achieved when FAST or AUDIT-C screening is recorded in the preceding two years. A
+    recorded assessment counts without a numeric score. Full AUDIT alone does not count.
+
+    Excludes any non-future ALCOHOL_MISUSE_DISORDERS record, at any age.
+
+    Personalised care adjustments are not applied.
+
+    One row per eligible person, indicator and completed month-end across the last 60 completed months. Recalculated at monthly refresh with today's rules and code lists. Diagnosis and register state use clinical and recorded dates; other evidence uses clinical or order dates through the month-end. Later corrections can change earlier results. Registration starts are inclusive; end and death dates are exclusive. Practice follows the established monthly spine, including its current-registration priority for overlaps. Birth and death dates are approximate; missing birth dates prevent historical active rows. Current gender and test-patient flags apply retrospectively.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind201
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at the month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at the reporting month-end under the established spine attribution.
+  - name: practice_name
+    description: Practice name at the reporting month-end under the established spine attribution.
+  - name: latest_alcohol_screen_date
+    description: Date of the latest FAST, AUDIT-C or AUDIT screen; null if none
+  - name: latest_alcohol_screen_tool
+    description: Tool used for the latest screen
+  - name: latest_alcohol_screen_score
+    description: Score of the latest screen; null when unscored
+  - name: latest_positive_alcohol_screen_date
+    description: Date of the latest FAST score of at least 3 or AUDIT-C score of at least 5; null if none
+  - name: latest_intervention_after_positive_screen_date
+    description: Date of the latest brief intervention within 3 months after the latest positive screen;
+      null if none
+  - name: latest_record_date
+    description: Date of the latest qualifying record in the period; null when none
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator at the reporting month-end
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
