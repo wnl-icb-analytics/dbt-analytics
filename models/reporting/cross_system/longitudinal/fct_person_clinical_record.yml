@@ -2,7 +2,8 @@ version: 2
 models:
 - name: fct_person_clinical_record
   description: One source clinical item across the available OLIDS, MHSDS, CSDS, SUS and ECDS histories. Retains
-    source coding positions and supported dates. Missing dates are not replaced by admission or appointment dates.
+    source coding positions and supported dates. ECDS observations and scored assessments retain separate rows,
+    raw values, units and tool codes. Missing dates are not replaced by admission or appointment dates.
     OLIDS medication orders retain statement context; statements do not create extra rows. The same clinical occurrence
     may appear in several feeds and is not deduplicated by person and time. Direct lookups sort by sk_patient_id,
     clinical_record_at and record ID. Midnight and period starts are sorting conventions; precision remains explicit.
@@ -57,10 +58,12 @@ models:
     description: Published assessment tool name. Null for clinical items without an assessment definition.
   - name: assessment_score_numeric
     description: Usable numeric assessment score under the source specification. Known non-score responses are excluded.
-      Use this instead of result_value_numeric for scoring.
+      Use this instead of result_value_numeric for scoring. ECDS scores remain null here until tool-specific
+      validation is implemented; their submitted values remain in result_value and result_value_numeric.
   - name: assessment_response_status
     description: 'Source assessment interpretation: enumerated_response, within_published_range, known_non_score,
-      value_missing, reference_not_available or response_unmatched. Null for other clinical items.'
+      value_missing, reference_not_available, response_unmatched or not_validated. ECDS uses not_validated
+      for supplied scores because numeric parsing does not check the tool-specific score domain. Null for other clinical items.'
   - name: is_assessment_response_non_score
     description: True for a published non-score response such as unable to assess. Null means the source has no
       matching response definition.

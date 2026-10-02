@@ -1,0 +1,48 @@
+version: 2
+models:
+- name: stg_ukhfd_ecds_code_sets
+  description: All ECDS technical output specification code-set history in UKHFD. One row per UKHFD unique
+    source row, including historical releases and sheets.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Unique UKHFD code-set row identifier.
+    data_tests:
+    - unique
+    - not_null
+  - name: sheet_name
+    description: Original ETOS sheet, including its release-specific section number.
+  - name: code_set_name
+    description: ETOS sheet name with the section number removed.
+  - name: snomed_code
+    description: Published SNOMED CT code.
+  - name: preferred_term
+    description: Published UK preferred term, falling back to older term columns.
+  - name: ecds_description
+    description: ETOS description or mnemonic.
+  - name: ecds_group1
+    description: Published ECDS group 1, which can be an abbreviation.
+  - name: ecds_group2
+    description: Published ECDS group 2; null when absent.
+  - name: ecds_group3
+    description: Published ECDS group 3; null when absent.
+  - name: notes
+    description: Published code notes.
+  - name: value_guidance
+    description: Published instructions for the observation value.
+  - name: valid_from
+    description: Code validity start recorded in that ETOS release.
+  - name: valid_to
+    description: Code validity end recorded in that ETOS release; null when absent.
+  - name: source_file_name
+    description: UKHFD source filename identifies the ETOS release.
+  - name: source_file_at
+    description: Timestamp prefix of the UKHFD filename; orders releases independently of bulk import
+      time.
+    data_tests:
+    - not_null
+  - name: source_imported_at
+    description: UKHFD import timestamp.

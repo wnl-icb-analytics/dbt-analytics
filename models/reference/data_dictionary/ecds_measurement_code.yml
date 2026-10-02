@@ -1,0 +1,45 @@
+version: 2
+models:
+- name: ecds_measurement_code
+  description: Latest available ETOS definition for each historical ECDS observation or assessment tool
+    code. One row per record type and SNOMED CT code. Retains retired codes for historical labelling;
+    matching does not establish validity at the clinical event date.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+    tags:
+    - daily
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - record_type
+        - snomed_code
+  columns:
+  - name: record_type
+    description: Observation or scored assessment ETOS code set.
+    data_tests:
+    - not_null
+  - name: snomed_code
+    description: Published SNOMED CT code.
+    data_tests:
+    - not_null
+  - name: preferred_term
+    description: Published UK preferred term, falling back to older term columns.
+  - name: ecds_description
+    description: ETOS description or mnemonic.
+  - name: ecds_group1
+    description: Published ECDS group 1, which can be an abbreviation.
+  - name: notes
+    description: Published code notes.
+  - name: valid_from
+    description: Code validity start recorded in that ETOS release.
+  - name: source_file_name
+    description: UKHFD source filename identifies the ETOS release.
+  - name: source_file_at
+    description: Timestamp prefix of the UKHFD filename; orders releases independently of bulk import
+      time.
+  - name: measurement_category
+    description: Readable assessment family from the ETOS group or nationally named 4AT and Rockwood tools;
+      observation categories use their published term. Null for unclassified tools.

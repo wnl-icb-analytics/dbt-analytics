@@ -13,6 +13,13 @@ macros:
       - name: source_record_type
         type: string
         description: Fixed source entity label used to select its stored watermark.
+          Omit when source_record_type_column is supplied.
+      - name: source_record_type_column
+        type: string
+        description: >-
+          Optional SQL expression giving each incoming row's source record type. When
+          supplied, every row is compared with the stored watermark for its own type,
+          so one input can carry several record types.
   - name: navigation_remove_withdrawn_records
     description: >-
       Incremental post-hook deleting destination rows whose logical key is absent
@@ -24,6 +31,8 @@ macros:
         description: >-
           Non-empty list of tuples containing the source record type, dbt model name
           and SQL key expression. Include every source type retained in the destination.
+          Use none as the record type when the model carries several types in its own
+          source_record_type column, so one read covers them all.
   - name: ers_remove_non_lifecycle_events
     description: >-
       Incremental post-hook removing e-RS referral actions whose current action code
