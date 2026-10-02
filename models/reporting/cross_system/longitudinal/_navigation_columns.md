@@ -1,9 +1,9 @@
 {% docs navigation_event_id %}
-Stable namespaced identifier for one source milestone. OLIDS retains its upstream UUID without a text prefix. A date correction keeps the same event ID; this is not an audit version ID.
+Stable namespaced identifier for one source milestone. OLIDS retains its upstream UUID without a text prefix. SUS and ECDS IDs are stable while the supplier keeps PRIMARYKEY_ID and change if a resubmission reissues it. A date correction keeps the same event ID; this is not an audit version ID.
 {% enddocs %}
 
 {% docs navigation_clinical_record_id %}
-Stable namespaced identifier for one clinical source record. OLIDS retains its upstream UUID without a text prefix in both outputs. On the event output, this is an explicitly linked clinical record, not a temporal match.
+Stable namespaced identifier for one clinical source record. OLIDS retains its upstream UUID without a text prefix in both outputs. SUS and ECDS IDs are stable while the supplier keeps PRIMARYKEY_ID and change if a resubmission reissues it. On the event output, this is an explicitly linked clinical record, not a temporal match.
 {% enddocs %}
 
 {% docs navigation_sk_patient_id %}

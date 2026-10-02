@@ -13,12 +13,18 @@ models consumed by the longitudinal clinical record.
 Both facts retain all delivered records. They preserve reported codes, text
 values, source approval flags and import identifiers. Numeric values are parsed
 separately as `NUMBER(38,9)`; parsing does not establish clinical validity. Raw
-text remains available when parsing fails or rounds a value. The source timestamps
+text remains available when parsing fails or rounds a value. `value_parse_status`
+uses the CSDS vocabulary: `numeric_rounded` marks values that lost digits beyond
+nine decimal places, and `numeric_format_unverified` marks forms other than a
+plain decimal, such as exponents. The source timestamps
 are already `TIMESTAMP_NTZ`, so the original timezone offset cannot be recovered.
 
 Attendance context comes from `obt_encounter_uec`. A missing attendance leaves
 its context null and sets `is_attendance_linked` to false. Distinct source
 sequences remain separate even when code, value, unit and timestamp match.
+IDs hash the supplied attendance key (`PRIMARYKEY_ID`) and source sequence. They
+are stable while the supplier keeps that key; a resubmission that reissues it
+produces new IDs.
 
 ## National definitions and reference data
 
@@ -52,9 +58,12 @@ values are not converted. An unmatched unit is not necessarily invalid because
 the finite reference does not cover every legal UCUM expression. Unrecognised
 local spellings require a source-backed alias definition, not case folding.
 
-ACVPU response labels follow the ETOS notes: A is Alert, C is Confused, V is
+ACVPU response labels come from `ecds_observation_response`, which reads the
+latest ETOS release's notes for each coded observation. The notes list each
+permitted response as `Label = "value"`: A is Alert, C is Confused, V is
 response to voice, P is response to painful stimulus and U is Unresponsive.
-Unrecognised responses retain their raw value without an inferred category.
+Matching is exact and case-sensitive after trimming whitespace. Unrecognised
+responses retain their raw value without an inferred category.
 No score severity thresholds or QuickReport measures are derived.
 
 ## Longitudinal integration
@@ -79,9 +88,14 @@ Clinical time is the observation's `observed_at` or the assessment's
 unknown. Attendance dates and delivery timestamps do not replace them.
 
 The adapter uses the existing parent-delivery watermark and withdrawal handling.
-Build the child facts before the adapter. A full refresh of the ECDS adapter is
-required on deployment because its stored schema gains result fields. Subsequent
-loads replay the boundary delivery; the existing monthly full refresh reconciles
+Single-valued attendance fields come from `int_sus_uec_attendance_clinical_item`,
+a view that reads the attendance once; the same view supplies their withdrawal
+check. This work (#1209) merges into `feat/longitudinal-adapters` before #1165
+reaches main, so production builds the ECDS adapter once, from scratch, with the
+other new adapters. That initial build needs no separate full refresh. dbt builds
+the child facts and the attendance item view first. A DEV table built before the
+result fields existed needs a full refresh because `on_schema_change` is `fail`.
+Subsequent loads replay the boundary delivery; the existing monthly full refresh reconciles
 older corrections and reference changes. Coordinate source and attendance refreshes
 before building the facts, since a refresh can replace attendance identifiers.
 Do not deduplicate a measurement against a score or related finding merely because
@@ -93,19 +107,19 @@ The subsequent [coverage and correctness review](ecds-measurement-review.md)
 separates source fidelity from clinical validity and records the refresh, unit
 and patient-linkage limitations found by profiling.
 
-The DEV build on 16 September 2026 preserved 62,256,079 observations and 42,857,394 scored
-assessments, matching their staging row counts. All records linked to an
+The DEV build on 16 September 2026 preserved about 62.3M observations and 42.9M
+scored assessments, matching their staging row counts. All records linked to an
 attendance. Grain tests passed at staging, reference and fact level.
 
-Two unmatched assessment codes account for 192,244 records: `1104051000000100`
+Two unmatched assessment codes account for about 192K records: `1104051000000100`
 and `1104331000000100`. Their similarity to NEWS2 codes does not authorise a
 correction. Confirm their origin and intended meaning with the source supplier
 before adding a mapping. Preserve both the reported code and any authorised
 correction if this is resolved upstream.
 
-The final facts resolve labels for 62,254,213 observations and 42,665,150
-assessments. The shared unit reference labels 15,085,697 observation records;
-26,875,912 have an unmatched reported unit and 20,294,470 have no reported unit.
+The final facts resolve labels for 99.997% of observations and 99.55% of
+assessments. The shared unit reference labels about 15.1M observation records
+(24%); about 26.9M have an unmatched reported unit and 20.3M have no reported unit.
 Missing units are expected for categorical ACVPU responses. Common unresolved
 spellings include `DEGC`, `BRMIN`, `MMHG` and `BPM`; none is silently converted
 into a case-sensitive UCUM code.
@@ -119,8 +133,8 @@ used the documented direct CLI commands with the tracked `dev` target.
 
 ## Clinical-record integration validation
 
-On 16 September 2026, the refreshed facts supplied 62,278,119 observations and
-42,874,509 scored assessments. The
+On 16 September 2026, the refreshed facts supplied about 62.3M observations and
+42.9M scored assessments. The
 [aggregate reconciliation](../analyses/acute/ecds_clinical_record_integration.sql)
 compared every source fact row with `fct_person_clinical_record`. Both record
 types had zero missing rows, unexpected rows or changed payloads. The comparison
@@ -130,10 +144,10 @@ It also checks that unvalidated ECDS scores do not populate the usable-score fie
 A separate comparison with current staging also found zero missing, extra or
 changed source records across both refreshed facts.
 
-All 2,598,813 observations and 1,325,165 assessments without a patient key remain
-in the clinical record. These rows are discoverable by source and attendance;
+All observations (about 2.6M) and assessments (about 1.3M) without a patient key
+remain in the clinical record. These rows are discoverable by source and attendance;
 they cannot support person-linked analysis until the source supplies linkage.
-The seven-type ECDS adapter contains 201,391,188 rows. Its full refresh took
+The ECDS adapter then contained about 201M rows. Its full refresh took
 63 seconds using the existing navigation warehouse hook. Adapter grain and
 SNOMED mapping checks passed, as did shared clinical-record grain and timestamp
 checks and the downstream coverage model's grain check.
@@ -144,6 +158,6 @@ existing models resolved both source-count reconciliation failures. Their SQL
 was not changed by this PR.
 
 The subsequent incremental replay took 127 seconds on the configured medium
-warehouse. Counts and whole-row fingerprints were unchanged across all seven
-record types and 201,391,188 rows, including both new types after the withdrawal
+warehouse. Counts and whole-row fingerprints were unchanged across every record
+type and about 201M rows, including both new types after the withdrawal
 hook ran. The replay build and its selected tests passed.
