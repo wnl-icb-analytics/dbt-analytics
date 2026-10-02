@@ -8,9 +8,10 @@
 {% set calculation = calculation | replace(ref('int_cholesterol_non_hdl_all') | string, 'synthetic_non_hdl') %}
 
 WITH synthetic_population AS (
-    SELECT -9005::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+    SELECT -9005::NUMBER AS person_id, column1::DATE AS reporting_date,
         30 AS age, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name,
         '1996-06-15'::DATE AS birth_date_approx, 'Female' AS gender
+    FROM VALUES ('2026-08-31'), ('2026-09-30'), ('2027-09-30')
 ),
 synthetic_cvd AS (
     SELECT person_id, reporting_date, TRUE AS has_chd, FALSE AS has_stroke_tia,
@@ -41,7 +42,15 @@ synthetic_non_hdl AS (
 actual AS ({{ calculation }})
 SELECT COUNT(*) AS rows_total
 FROM actual
-HAVING COUNT(*) <> 1 OR COUNT_IF(
-    latest_lipid_observation_id = 'SYN_L2' AND lipid_type = 'LDL cholesterol'
-    AND NOT is_in_numerator AND indicator_status = 'NOT_ASSESSABLE'
+HAVING COUNT(*) <> 3 OR COUNT_IF(
+    reporting_date = '2026-08-31' AND latest_lipid_observation_id = 'SYN_L1'
+    AND is_in_numerator AND indicator_status = 'ACHIEVED'
+) <> 1 OR COUNT_IF(
+    reporting_date = '2026-09-30' AND latest_lipid_observation_id = 'SYN_L2'
+    AND lipid_type = 'LDL cholesterol' AND NOT is_in_numerator
+    AND indicator_status = 'NOT_ASSESSABLE'
+) <> 1 OR COUNT_IF(
+    reporting_date = '2027-09-30' AND latest_lipid_observation_id IS NULL
+    AND latest_lipid_date IS NULL AND latest_lipid_value IS NULL
+    AND NOT is_in_numerator AND indicator_status = 'NOT_RECORDED_IN_PERIOD'
 ) <> 1
