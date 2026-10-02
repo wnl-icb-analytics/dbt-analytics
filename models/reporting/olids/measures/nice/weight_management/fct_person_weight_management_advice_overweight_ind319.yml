@@ -1,0 +1,79 @@
+models:
+- name: fct_person_weight_management_advice_overweight_ind319
+  description: NICE IND319. People aged 18-39 whose latest measured BMIVAL_COD BMI in the inclusive preceding
+    12 months is 23-27.4 kg/m^2, or 25-29.9 if the demographic ethnicity at R is White. Unknown and unrecorded
+    ethnicity use the lower range. WTMGINT_COD advice between the BMI date and day 90 inclusive achieves
+    the indicator, capped at R. Later out-of-range BMI prevents fallback. BMI30_COD and calculated BMI
+    do not qualify. One row per eligible, currently registered, living, non-test person on the build date.
+    Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind319
+      indicator:
+        id: IND319
+        type: MEASURE
+        category: LIFESTYLE
+        clinical_domain: Lifestyle
+        name_short: Weight advice
+        description_short: Weight management advice within 90 days after a qualifying measured BMI for
+          people aged 18-39
+        description_long: NICE IND319. People aged 18-39 whose latest measured BMIVAL_COD BMI in the inclusive
+          preceding 12 months is 23-27.4 kg/m^2, or 25-29.9 if demographic ethnicity at R is White. Unknown
+          and unrecorded ethnicity use the lower range. WTMGINT_COD advice between the BMI date and day
+          90 inclusive achieves the indicator, capped at R. Later out-of-range BMI prevents fallback.
+          BMI30_COD and calculated BMI do not qualify. One row per eligible, currently registered, living,
+          non-test person on the build date. Personalised care adjustments are not applied.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND319
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator at R.
+  - name: indicator_id
+    description: Published NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator title.
+  - name: reporting_date
+    description: Date R used for population, age and evidence; build date for current, completed month-end
+      for history.
+  - name: measurement_period_start
+    description: 'Start of the evidence window: inclusive for IND319 and IND320; exclusive for six-month
+      bone treatment.'
+  - name: age
+    description: Completed years at R from the approximate birth date.
+  - name: condition_name
+    description: Population used by the indicator.
+  - name: current_practice_code
+    description: Current registration practice ODS code.
+  - name: current_practice_name
+    description: Current registration practice name.
+  - name: latest_bmi_date
+    description: Latest measured BMIVAL_COD BMI date within the inclusive preceding 12 months.
+  - name: bmi_value
+    description: Recorded BMI in kg/m^2. A later out-of-range value prevents fallback.
+  - name: is_recorded_white
+    description: Ethnicity is White in the demographic interval containing R, start inclusive and end
+      exclusive. False includes missing and unknown ethnicity.
+  - name: bmi_lower_threshold
+    description: 'Inclusive BMI lower threshold: 25 if White recorded, otherwise 23 kg/m^2.'
+  - name: bmi_upper_threshold
+    description: 'Inclusive BMI upper threshold: 29.9 if White recorded, otherwise 27.4 kg/m^2.'
+  - name: latest_weight_advice_date
+    description: Latest WTMGINT_COD advice from BMI date through day 90 inclusive, capped at R.
+  - name: latest_record_date
+    description: Qualifying weight advice date; null without advice in the follow-up window.
+  - name: is_in_denominator
+    description: Always true. Personalised care adjustments are not applied.
+  - name: is_in_numerator
+    description: Whether the achievement rule is met at R.
+  - name: indicator_status
+    description: ACHIEVED or the accepted reason the rule is not met.

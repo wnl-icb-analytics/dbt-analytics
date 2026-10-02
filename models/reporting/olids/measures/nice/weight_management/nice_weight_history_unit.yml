@@ -1,0 +1,208 @@
+unit_tests:
+- name: nice_weight_profile_dates_ties_and_follow_up
+  model: int_nice_weight_profile_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          25::NUMBER AS age, '2001-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+          'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-501), (-502), (-503), (-504), (-505), (-506), (-507), (-508), (-509) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  - input: ref('int_bmi_qof_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::FLOAT AS bmi_value,
+          'BMIVAL_COD'::VARCHAR AS source_cluster_id
+      FROM VALUES
+          (-501, 'A', '2025-09-30', 23),
+          (-502, 'A', '2026-07-01', 25),
+          (-503, 'A', '2026-07-01', 27.4),
+          (-504, 'A', '2026-09-30', 23), (-504, 'Z', '2026-10-01', 24),
+          (-505, 'A', '2026-09-01', 25), (-505, 'Z', '2026-09-01', 30),
+          (-506, 'A', '2026-07-01', 25),
+          (-507, 'A', '2026-07-01', 25),
+          (-508, 'A', '2026-07-01', 25),
+          (-509, 'A', '2026-07-01', 25)
+  - input: ref('dim_person_demographics_historical')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS effective_start_date,
+          column3::DATE AS effective_end_date, column4::VARCHAR AS ethnicity_category
+      FROM VALUES (-502, '2026-01-01', '2026-09-30', 'Unknown'),
+          (-502, '2026-09-30', '2026-10-01', 'White'),
+          (-502, '2026-10-01', NULL, 'Unknown'),
+          (-503, '2026-01-01', NULL, 'Mixed'),
+          (-504, '2026-10-01', NULL, 'White')
+  - input: ref('int_nice_weight_advice_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date
+      FROM VALUES
+          (-501, '2025-09-30'), (-501, '2025-09-30'),
+          (-502, '2026-06-30'), (-503, '2026-09-29'), (-504, '2026-10-01'),
+          (-506, '2026-07-01'), (-507, '2026-09-30'), (-508, '2026-09-29'),
+          (-509, '2026-10-01')
+  expect:
+    rows:
+    - person_id: -501
+      reporting_date: '2026-09-30'
+      bmi_date: '2025-09-30'
+      bmi_value: 23
+      is_recorded_white: false
+      latest_weight_advice_date: '2025-09-30'
+    - person_id: -502
+      reporting_date: '2026-09-30'
+      bmi_date: '2026-07-01'
+      bmi_value: 25
+      is_recorded_white: true
+      latest_weight_advice_date: null
+    - person_id: -503
+      reporting_date: '2026-09-30'
+      bmi_date: '2026-07-01'
+      bmi_value: 27.4
+      is_recorded_white: false
+      latest_weight_advice_date: '2026-09-29'
+    - person_id: -504
+      reporting_date: '2026-09-30'
+      bmi_date: '2026-09-30'
+      bmi_value: 23
+      is_recorded_white: false
+      latest_weight_advice_date: null
+    - person_id: -505
+      reporting_date: '2026-09-30'
+      bmi_date: '2026-09-01'
+      bmi_value: 30
+      is_recorded_white: false
+      latest_weight_advice_date: null
+    - person_id: -506
+      reporting_date: '2026-09-30'
+      bmi_date: '2026-07-01'
+      bmi_value: 25
+      is_recorded_white: false
+      latest_weight_advice_date: '2026-07-01'
+    - person_id: -507
+      reporting_date: '2026-09-30'
+      bmi_date: '2026-07-01'
+      bmi_value: 25
+      is_recorded_white: false
+      latest_weight_advice_date: null
+    - person_id: -508
+      reporting_date: '2026-09-30'
+      bmi_date: '2026-07-01'
+      bmi_value: 25
+      is_recorded_white: false
+      latest_weight_advice_date: '2026-09-29'
+    - person_id: -509
+      reporting_date: '2026-09-30'
+      bmi_date: '2026-07-01'
+      bmi_value: 25
+      is_recorded_white: false
+      latest_weight_advice_date: null
+    - person_id: -501
+      reporting_date: '2026-10-31'
+      bmi_date: '2025-09-30'
+      bmi_value: 23
+      is_recorded_white: false
+      latest_weight_advice_date: '2025-09-30'
+    - person_id: -502
+      reporting_date: '2026-10-31'
+      bmi_date: '2026-07-01'
+      bmi_value: 25
+      is_recorded_white: false
+      latest_weight_advice_date: null
+    - person_id: -503
+      reporting_date: '2026-10-31'
+      bmi_date: '2026-07-01'
+      bmi_value: 27.4
+      is_recorded_white: false
+      latest_weight_advice_date: '2026-09-29'
+    - person_id: -504
+      reporting_date: '2026-10-31'
+      bmi_date: '2026-10-01'
+      bmi_value: 24
+      is_recorded_white: true
+      latest_weight_advice_date: '2026-10-01'
+    - person_id: -505
+      reporting_date: '2026-10-31'
+      bmi_date: '2026-09-01'
+      bmi_value: 30
+      is_recorded_white: false
+      latest_weight_advice_date: null
+    - person_id: -506
+      reporting_date: '2026-10-31'
+      bmi_date: '2026-07-01'
+      bmi_value: 25
+      is_recorded_white: false
+      latest_weight_advice_date: '2026-07-01'
+    - person_id: -507
+      reporting_date: '2026-10-31'
+      bmi_date: '2026-07-01'
+      bmi_value: 25
+      is_recorded_white: false
+      latest_weight_advice_date: null
+    - person_id: -508
+      reporting_date: '2026-10-31'
+      bmi_date: '2026-07-01'
+      bmi_value: 25
+      is_recorded_white: false
+      latest_weight_advice_date: '2026-09-29'
+    - person_id: -509
+      reporting_date: '2026-10-31'
+      bmi_date: '2026-07-01'
+      bmi_value: 25
+      is_recorded_white: false
+      latest_weight_advice_date: null
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind319_bmi_expiry_age_and_ethnicity_thresholds
+  model: fct_person_weight_management_advice_overweight_ind319_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          CASE WHEN people.column1 = -517 THEN 17 WHEN people.column1 = -518 THEN 40 ELSE 25 END AS age, '2001-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+          'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-511), (-512), (-513), (-514), (-515), (-516), (-517), (-518), (-519), (-520) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  - input: ref('int_nice_weight_profile_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          people.column2::DATE AS bmi_date, people.column3::FLOAT AS bmi_value,
+          people.column4::BOOLEAN AS is_recorded_white, NULL::DATE AS latest_weight_advice_date
+      FROM VALUES (-511, '2025-09-30', 23, FALSE), (-512, '2026-09-30', 27.4, FALSE),
+          (-513, '2026-10-01', 25, TRUE), (-514, '2026-09-30', 29.9, TRUE),
+          (-515, '2026-09-30', 27.5, FALSE), (-516, '2026-09-30', 24.9, TRUE),
+          (-517, '2026-09-30', 23, FALSE), (-518, '2026-09-30', 23, FALSE), (-519, '2026-09-30', 27.45, FALSE),
+          (-520, '2026-09-30', 29.95, TRUE) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  expect:
+    rows:
+    - person_id: -511
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -512
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -514
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -512
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+    - person_id: -513
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+    - person_id: -514
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history

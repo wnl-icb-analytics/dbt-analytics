@@ -1,0 +1,28 @@
+models:
+- name: int_nice_weight_profile
+  description: Measured BMI, dated ethnicity and subsequent weight-advice evidence for registered, living,
+    non-test people aged 18-39. One row per person on the build date.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: Person identifier.
+  - name: reporting_date
+    description: Date R used to cap evidence.
+  - name: bmi_date
+    description: Latest BMIVAL_COD measurement through R; null means none.
+  - name: bmi_value
+    description: Latest recorded BMI in kg/m^2.
+  - name: is_recorded_white
+    description: Ethnicity is White in the demographic interval containing R, start inclusive and end
+      exclusive. False includes missing and unknown ethnicity.
+  - name: latest_weight_advice_date
+    description: Latest WTMGINT_COD advice within 90 days after BMI inclusive, capped at R; null means
+      none.
