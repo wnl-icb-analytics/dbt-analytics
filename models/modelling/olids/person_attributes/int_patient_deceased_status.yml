@@ -6,7 +6,9 @@ models:
       final_date_of_death takes the registry date, then the PDS date, then the midpoint of
       the OLIDS death month. An OLIDS death with a year but no month gets no date and does
       not set is_deceased. OLIDS death month and year are shared across patient records
-      with the same sk_patient_id.
+      with the same sk_patient_id. PDS deaths come from the latest version of the
+      PDS person record, because a later version can reverse a death notification
+      or correct its date.
 
     config:
       meta:
@@ -45,7 +47,7 @@ models:
       - name: pds_death_status
         description: Death status from PDS (NULL if alive) 1 Informal, 2 Formal
       - name: pds_date_of_death
-        description: Date of death from PDS (NULL if alive)
+        description: Date of death on the latest PDS person record version (NULL if alive or the death was reversed)
       - name: reg_date_of_death
         description: Date of death from registry feed (NULL if alive)
       - name: final_date_of_death
