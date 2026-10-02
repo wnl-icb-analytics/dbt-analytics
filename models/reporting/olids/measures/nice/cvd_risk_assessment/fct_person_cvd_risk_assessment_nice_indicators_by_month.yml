@@ -1,6 +1,6 @@
 models:
 - name: fct_person_cvd_risk_assessment_nice_indicators_by_month
-  description: 'NICE cvd risk assessment results. One row per eligible person, indicator and completed
+  description: 'NICE CVD prevention results for IND108, IND112, IND161, IND181, IND269 and IND270. One row per eligible person, indicator and completed
     month-end. Each member retains its population, measurement window, exclusions and detail columns.
     Recalculated at monthly refresh for the last 60 completed month-ends using today''s rules and code
     lists. Registration and practice use the existing monthly spine: start inclusive, end and death exclusive,
@@ -30,7 +30,7 @@ models:
   - name: reporting_date
     description: Completed month-end used for eligibility and evidence; DATE, with no current-day row.
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: Start of the measurement or cohort period; IND112 excludes BP evidence on this boundary.
   - name: age
     description: Completed years at month-end from the approximate birth month.
   - name: condition_name
@@ -40,14 +40,14 @@ models:
   - name: practice_name
     description: Practice name at the month-end under the monthly spine attribution.
   - name: latest_risk_score
-    description: Latest valid QRISK score in percent; null if none Selected through the month-end; stale
-      detail remains available.
+    description: Latest valid QRISK score in percent through month-end. IND108 uses the selected latest
+      QRISK2/3 record, with null for a missing or invalid score. Stale detail remains available.
   - name: latest_risk_score_date
-    description: Date of the latest valid QRISK score Selected through the month-end; stale detail remains
-      available.
+    description: Date of the latest valid QRISK score through month-end. IND108 returns the selected
+      QRISK2/3 record date only when its score is valid. Stale detail remains available.
   - name: latest_risk_assessment_date
-    description: Date of the latest CVD risk assessment record, scored or not Selected through the month-end;
-      stale detail remains available.
+    description: Latest CVD risk assessment date through month-end, scored or not. IND108 selects QRISK2/3
+      only. Stale detail remains available.
   - name: is_in_denominator
     description: Always true; every row is an eligible person before personalised care adjustments
   - name: is_in_numerator
@@ -56,3 +56,5 @@ models:
     description: ACHIEVED or NOT_RECORDED_IN_PERIOD
   - name: new_diagnosis_date
     description: Earlier qualifying new diagnosis for IND161; null for other indicators.
+  - name: latest_bp_date
+    description: Latest complete paired BP date through month-end for IND112; null for other indicators.

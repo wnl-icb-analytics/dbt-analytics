@@ -1,0 +1,51 @@
+models:
+- name: fct_person_blood_pressure_cvd_prevention_ind112_by_month
+  description: NICE IND112. One row per active, living, non-test person aged 40 or over. Achievement requires
+    a complete paired BP record strictly after the date five years before R and on or before R. No clinical
+    exclusions or personalised care adjustments apply. The existing BP pair definition uses BP_COD, SYSBP_COD,
+    DIASBP_COD, HOMEBP_COD, ABPM_COD and HOMEAMBBP_COD. Implausible complete pairs still count as recording.
+    Recalculated monthly for the last 60 completed month-ends using current rules and code lists. Registration
+    and practice use the monthly spine, with start inclusive and end and death exclusive. Overlaps retain
+    its current-registration priority. Birth and death dates are approximate; missing birth dates prevent
+    historical active rows. Current gender and test flags apply retrospectively. Registers use clinical
+    and recorded dates known by month-end. Other evidence uses corrected clinical dates through month-end.
+    Later corrections and code-list changes can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind112
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Evaluation date, a DATE.
+  - name: measurement_period_start
+    description: Exclusive five-year evidence boundary; BP evidence on this date does not count.
+  - name: age
+    description: Completed years at R; history uses the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true. Rows contain eligible people only.
+  - name: is_in_numerator
+    description: Whether qualifying evidence falls within the indicator window through R.
+  - name: indicator_status
+    description: ACHIEVED when in the numerator, otherwise NOT_RECORDED_IN_PERIOD.
+  - name: practice_code
+    description: Practice ODS code at R under the established population attribution.
+  - name: practice_name
+    description: Practice name at R under the established population attribution.
+  - name: latest_bp_date
+    description: Latest complete paired BP clinical date through R; null when none. May be older than
+      five years.

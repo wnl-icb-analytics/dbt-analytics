@@ -1,0 +1,74 @@
+models:
+- name: fct_person_cvd_risk_assessment_rheumatoid_arthritis_ind108
+  description: NICE IND108. One row per active, living, non-test rheumatoid arthritis register member
+    aged 30 to 84 at R. Excludes CHD, stroke or TIA and familial hypercholesterolaemia register members
+    only. PAD, CKD, diabetes, frailty and treatment do not exclude anyone. Achievement requires a QRISK2
+    or QRISK3 record in the preceding 15 calendar months, both boundaries inclusive, from int_cvd_risk_assessment_all
+    (PCD CVDRISKASS_COD, CVDASS2_COD and QRISKSCORE_COD). These tools include RA. A numeric result is
+    not required; generic QRISK, JBS and Framingham do not count. Registers use RARTH_COD, CHD_COD, STRK_COD,
+    TIA_COD and FHYP_COD through the established register definitions. Personalised care adjustments are
+    not applied. Evaluated on the build date.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind108
+      indicator:
+        id: IND108
+        type: MEASURE
+        category: CARDIOVASCULAR
+        clinical_domain: Cardiometabolic
+        name_short: RA cardiovascular risk assessment
+        description_short: QRISK2 or QRISK3 assessment in 15 months for RA register members aged 30 to
+          84
+        description_long: NICE IND108. One row per active, living, non-test rheumatoid arthritis register
+          member aged 30 to 84 at R. Excludes CHD, stroke or TIA and familial hypercholesterolaemia register
+          members only. PAD, CKD, diabetes, frailty and treatment do not exclude anyone. Achievement requires
+          a QRISK2 or QRISK3 record in the preceding 15 calendar months, both boundaries inclusive, from
+          int_cvd_risk_assessment_all (PCD CVDRISKASS_COD, CVDASS2_COD and QRISKSCORE_COD). These tools
+          include RA. A numeric result is not required; generic QRISK, JBS and Framingham do not count.
+          Registers use RARTH_COD, CHD_COD, STRK_COD, TIA_COD and FHYP_COD through the established register
+          definitions. Personalised care adjustments are not applied. Evaluated on the build date.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND108
+  data_tests: []
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+    data_tests:
+    - not_null
+    - unique
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Evaluation date, a DATE.
+  - name: measurement_period_start
+    description: Inclusive start of the 15-month QRISK2/3 recording window.
+  - name: age
+    description: Completed years at R; history uses the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true. Rows contain eligible people only.
+  - name: is_in_numerator
+    description: Whether qualifying evidence falls within the indicator window through R.
+  - name: indicator_status
+    description: ACHIEVED when in the numerator, otherwise NOT_RECORDED_IN_PERIOD.
+  - name: current_practice_code
+    description: Practice ODS code at R under the established population attribution.
+  - name: current_practice_name
+    description: Practice name at R under the established population attribution.
+  - name: latest_risk_assessment_date
+    description: Latest QRISK2/3 clinical date through R, with or without a score; null when none. May
+      be older than 15 months.
+  - name: latest_risk_score
+    description: Numeric score in percent from the selected latest QRISK2/3 record; null when missing
+      or outside 0 to 100. No fallback to an older score.
+  - name: latest_risk_score_date
+    description: Clinical date of the selected QRISK2/3 record when its numeric score is in 0 to 100;
+      otherwise null.

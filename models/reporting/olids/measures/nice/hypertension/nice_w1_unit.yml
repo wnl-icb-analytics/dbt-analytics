@@ -1,0 +1,358 @@
+unit_tests:
+- name: nice_w1_ind121_fy_age_window_and_follow_up_cap
+  model: fct_person_urine_acr_hypertension_ind121_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    rows: |-
+      SELECT
+          column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-11, '2026-03-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-11, '2026-04-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-11, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-11, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-12, '2026-03-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-12, '2026-04-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-12, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-12, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-13, '2026-03-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-13, '2026-04-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-13, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-13, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-14, '2026-03-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-14, '2026-04-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-14, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-14, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-15, '2026-03-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-15, '2026-04-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-15, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-15, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-16, '2026-03-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-16, '2026-04-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-16, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-16, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-17, '2026-03-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-17, '2026-04-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-17, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-17, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-18, '2026-03-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-18, '2026-04-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-18, '2026-09-30', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-18, '2026-10-31', 50, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-19, '2026-03-31', 18, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-19, '2026-04-30', 18, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-19, '2026-09-30', 18, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-19, '2026-10-31', 18, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-20, '2026-03-31', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-20, '2026-04-30', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-20, '2026-09-30', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-20, '2026-10-31', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice')
+    format: sql
+  - input: ref('fct_person_hypertension_register_by_month')
+    rows: |-
+      SELECT
+          column1::NUMBER AS person_id,
+          column2::DATE AS month_end_date,
+          column3::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+          column4::TIMESTAMP_NTZ AS latest_diagnosis_date
+      FROM VALUES
+          (-11, '2026-04-30', '2026-04-01', '2026-04-01'),
+          (-11, '2026-09-30', '2026-04-01', '2026-04-01'),
+          (-11, '2026-10-31', '2026-04-01', '2026-04-01'),
+          (-12, '2026-04-30', '2026-04-01', '2026-04-01'),
+          (-12, '2026-09-30', '2026-04-01', '2026-04-01'),
+          (-12, '2026-10-31', '2026-04-01', '2026-04-01'),
+          (-13, '2026-04-30', '2026-04-01', '2026-04-01'),
+          (-13, '2026-09-30', '2026-04-01', '2026-04-01'),
+          (-13, '2026-10-31', '2026-04-01', '2026-04-01'),
+          (-14, '2026-04-30', '2026-04-01', '2026-04-01'),
+          (-14, '2026-09-30', '2026-04-01', '2026-04-01'),
+          (-14, '2026-10-31', '2026-04-01', '2026-04-01'),
+          (-15, '2026-09-30', '2026-08-31', '2026-08-31'),
+          (-15, '2026-10-31', '2026-08-31', '2026-08-31'),
+          (-16, '2026-03-31', '2026-03-31', '2026-03-31'),
+          (-16, '2026-04-30', '2026-03-31', '2026-03-31'),
+          (-16, '2026-09-30', '2026-03-31', '2026-03-31'),
+          (-16, '2026-10-31', '2026-03-31', '2026-03-31'),
+          (-17, '2026-03-31', '2025-04-01', '2025-04-01'),
+          (-17, '2026-04-30', '2025-04-01', '2025-04-01'),
+          (-17, '2026-09-30', '2025-04-01', '2025-04-01'),
+          (-17, '2026-10-31', '2025-04-01', '2025-04-01'),
+          (-18, '2026-03-31', '2025-03-31', '2025-03-31'),
+          (-18, '2026-04-30', '2025-03-31', '2025-03-31'),
+          (-18, '2026-09-30', '2025-03-31', '2025-03-31'),
+          (-18, '2026-10-31', '2025-03-31', '2025-03-31'),
+          (-19, '2026-04-30', '2026-04-01', '2026-04-01'),
+          (-19, '2026-09-30', '2026-04-01', '2026-04-01'),
+          (-19, '2026-10-31', '2026-04-01', '2026-04-01'),
+          (-20, '2026-04-30', '2026-04-01', '2026-04-01'),
+          (-20, '2026-09-30', '2026-04-01', '2026-04-01'),
+          (-20, '2026-10-31', '2026-04-01', '2026-04-01')
+    format: sql
+  - input: ref('int_urine_acr_all')
+    rows: |-
+      SELECT
+          column1::NUMBER AS person_id,
+          column2::VARCHAR AS id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column4::BOOLEAN AS is_acr_ratio
+      FROM VALUES
+          (-11, 'SYN_-11', '2026-01-01', TRUE),
+          (-12, 'SYN_-12', '2025-12-31', TRUE),
+          (-13, 'SYN_-13', '2026-07-01', TRUE),
+          (-14, 'SYN_-14', '2026-07-02', TRUE),
+          (-15, 'SYN_-15', '2026-10-01', TRUE),
+          (-16, 'SYN_-16', '2026-03-31', TRUE),
+          (-17, 'SYN_-17', '2025-04-01', TRUE),
+          (-20, 'SYN_-20', '2026-04-01', TRUE),
+          (-11, 'SYN_DUP', '2026-01-01', TRUE),
+          (-12, 'SYN_NON_ACR', '2026-04-01', FALSE)
+    format: sql
+  expect:
+    rows:
+    - person_id: -11
+      reporting_date: '2026-04-30'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: '2026-01-01'
+      is_in_numerator: true
+    - person_id: -11
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: '2026-01-01'
+      is_in_numerator: true
+    - person_id: -11
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: '2026-01-01'
+      is_in_numerator: true
+    - person_id: -12
+      reporting_date: '2026-04-30'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: null
+      is_in_numerator: false
+    - person_id: -12
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: null
+      is_in_numerator: false
+    - person_id: -12
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: null
+      is_in_numerator: false
+    - person_id: -13
+      reporting_date: '2026-04-30'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: null
+      is_in_numerator: false
+    - person_id: -13
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: '2026-07-01'
+      is_in_numerator: true
+    - person_id: -13
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: '2026-07-01'
+      is_in_numerator: true
+    - person_id: -14
+      reporting_date: '2026-04-30'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: null
+      is_in_numerator: false
+    - person_id: -14
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: null
+      is_in_numerator: false
+    - person_id: -14
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: null
+      is_in_numerator: false
+    - person_id: -15
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-08-31'
+      latest_acr_date: null
+      is_in_numerator: false
+    - person_id: -15
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-08-31'
+      latest_acr_date: '2026-10-01'
+      is_in_numerator: true
+    - person_id: -16
+      reporting_date: '2026-03-31'
+      diagnosis_date: '2026-03-31'
+      latest_acr_date: '2026-03-31'
+      is_in_numerator: true
+    - person_id: -17
+      reporting_date: '2026-03-31'
+      diagnosis_date: '2025-04-01'
+      latest_acr_date: '2025-04-01'
+      is_in_numerator: true
+    - person_id: -20
+      reporting_date: '2026-04-30'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: '2026-04-01'
+      is_in_numerator: true
+    - person_id: -20
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: '2026-04-01'
+      is_in_numerator: true
+    - person_id: -20
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-04-01'
+      latest_acr_date: '2026-04-01'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_w1_ind115_cumulative_cohort_and_inclusive_diagnosis_window
+  model: fct_person_home_ambulatory_bp_hypertension_ind115_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    rows: |-
+      SELECT
+          column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-31, '2026-09-30', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-31, '2026-10-31', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-32, '2026-09-30', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-32, '2026-10-31', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-33, '2026-09-30', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-33, '2026-10-31', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-34, '2026-09-30', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-34, '2026-10-31', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-35, '2026-09-30', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-35, '2026-10-31', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-36, '2026-09-30', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-36, '2026-10-31', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-37, '2026-09-30', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-37, '2026-10-31', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-38, '2026-09-30', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-38, '2026-10-31', 12, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice')
+    format: sql
+  - input: ref('fct_person_hypertension_register_by_month')
+    rows: |-
+      SELECT
+          column1::NUMBER AS person_id,
+          column2::DATE AS month_end_date,
+          column3::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+          column4::TIMESTAMP_NTZ AS latest_diagnosis_date
+      FROM VALUES
+          (-31, '2026-09-30', '2014-04-01', '2014-04-01'),
+          (-31, '2026-10-31', '2014-04-01', '2014-04-01'),
+          (-32, '2026-09-30', '2014-03-31', '2014-03-31'),
+          (-32, '2026-10-31', '2014-03-31', '2014-03-31'),
+          (-33, '2026-09-30', '2026-08-31', '2026-08-31'),
+          (-33, '2026-10-31', '2026-08-31', '2026-08-31'),
+          (-34, '2026-09-30', '2026-08-31', '2026-08-31'),
+          (-34, '2026-10-31', '2026-08-31', '2026-08-31'),
+          (-35, '2026-09-30', '2026-08-31', '2026-08-31'),
+          (-35, '2026-10-31', '2026-08-31', '2026-08-31'),
+          (-36, '2026-09-30', '2026-08-31', '2026-08-31'),
+          (-36, '2026-10-31', '2026-08-31', '2026-08-31'),
+          (-37, '2026-10-31', '2026-10-01', '2026-10-01'),
+          (-38, '2026-09-30', '2026-08-31', '2026-08-31'),
+          (-38, '2026-10-31', '2026-08-31', '2026-08-31')
+    format: sql
+  - input: ref('int_home_ambulatory_blood_pressure_all')
+    rows: |-
+      SELECT
+          column1::NUMBER AS person_id,
+          column2::VARCHAR AS id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date
+      FROM VALUES
+          (-31, 'SYN_-31', '2014-01-01'),
+          (-33, 'SYN_-33', '2026-05-31'),
+          (-34, 'SYN_-34', '2026-05-30'),
+          (-35, 'SYN_-35', '2026-08-31'),
+          (-36, 'SYN_-36', '2026-09-01'),
+          (-37, 'SYN_-37', '2026-10-01'),
+          (-33, 'SYN_DUP', '2026-05-31')
+    format: sql
+  expect:
+    rows:
+    - person_id: -31
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2014-04-01'
+      latest_home_ambulatory_bp_date: '2014-01-01'
+      is_in_numerator: true
+    - person_id: -31
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2014-04-01'
+      latest_home_ambulatory_bp_date: '2014-01-01'
+      is_in_numerator: true
+    - person_id: -33
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-08-31'
+      latest_home_ambulatory_bp_date: '2026-05-31'
+      is_in_numerator: true
+    - person_id: -33
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-08-31'
+      latest_home_ambulatory_bp_date: '2026-05-31'
+      is_in_numerator: true
+    - person_id: -34
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-08-31'
+      latest_home_ambulatory_bp_date: null
+      is_in_numerator: false
+    - person_id: -34
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-08-31'
+      latest_home_ambulatory_bp_date: null
+      is_in_numerator: false
+    - person_id: -35
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-08-31'
+      latest_home_ambulatory_bp_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -35
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-08-31'
+      latest_home_ambulatory_bp_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -36
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-08-31'
+      latest_home_ambulatory_bp_date: null
+      is_in_numerator: false
+    - person_id: -36
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-08-31'
+      latest_home_ambulatory_bp_date: null
+      is_in_numerator: false
+    - person_id: -37
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-10-01'
+      latest_home_ambulatory_bp_date: '2026-10-01'
+      is_in_numerator: true
+    - person_id: -38
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-08-31'
+      latest_home_ambulatory_bp_date: null
+      is_in_numerator: false
+    - person_id: -38
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-08-31'
+      latest_home_ambulatory_bp_date: null
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
