@@ -19,8 +19,9 @@
 
     Grain
       One row per active, non-deceased person in dim_person_demographics whose
-      recorded gender is Male or Female, age is between 18-100, townsend score is 
-      not null
+      recorded gender is Male or Female and age is between 18-100. bmi, town
+      and alcohol_cat6 are passed through as NULL when missing, so those
+      rows need handling at scoring.
 
     AGPL / ClinRisk attribution
       QAdmissions is published by ClinRisk Ltd under the GNU Affero General
@@ -141,6 +142,10 @@ emergency_admissions AS (
         LEAST(apc_nel_12mo, 3) AS hes_admitprior_cat
     FROM {{ ref('fct_person_sus_apc_recent') }}
 ),
+
+-- Lab features use the int_*_latest models, which exclude negative values and
+-- extreme outliers. int_qadmissions_features_history keeps extreme outliers,
+-- so c_hb, high_platelet and high_lft can differ between the two models.
 
 -- Lab thresholds from the qadmissions_lab_thresholds seed, pivoted to one row.
 lab_thresholds AS (
@@ -291,7 +296,8 @@ SELECT
 
     twn.townsend_score                                                     AS town,
 
-    COALESCE(alc.alcohol_cat6, 0)                                          AS alcohol_cat6,
+    -- NULL when there is no Full AUDIT score, for handling at scoring.
+    alc.alcohol_cat6                                                       AS alcohol_cat6,
 
     -- Ethnicity risk group 1..9. Persons with no ethnicity record
     -- default to 1 (NotRecorded -> 1 per QResearch).

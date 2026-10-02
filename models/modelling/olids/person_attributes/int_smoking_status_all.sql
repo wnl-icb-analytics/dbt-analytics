@@ -37,6 +37,7 @@ base_observations AS (
             THEN obs.date_recorded
             ELSE COALESCE(obs.clinical_effective_date, '1900-01-01')
         END AS clinical_effective_date,
+        obs.date_recorded,
         obs.mapped_concept_code AS concept_code,
         obs.mapped_concept_display AS code_description,
         codes.source_cluster_id,
@@ -53,6 +54,7 @@ SELECT
     person_id,
     ID,
     clinical_effective_date,
+    date_recorded,
     concept_code,
     code_description,
     source_cluster_id,

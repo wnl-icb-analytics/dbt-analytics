@@ -85,7 +85,7 @@ DIMENSIONS(
     demographics.neighbourhood_resident AS neighbourhood_resident COMMENT = 'Residence neighbourhood',
     demographics.ward_name AS ward_name COMMENT = 'Electoral ward name',
     demographics.imd_decile_25 AS imd_decile_25 COMMENT = 'IMD 2025 decile, where 1 is most deprived',
-    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile'
+    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown'''
 )
 
 METRICS(
