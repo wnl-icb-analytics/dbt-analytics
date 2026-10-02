@@ -1,0 +1,57 @@
+models:
+- name: fct_person_childhood_immunisation_ind215_by_month
+  description: NICE IND215. One row per eligible person, indicator and completed month-end. Babies reaching
+    approximate 8 months in (month-end minus 12 months, month-end]. At least three distinct DTP-containing
+    administration or vaccine order dates before 8 months. Contraindication history applies through the
+    month-end, retaining the current proxy without an authorised specific anaphylaxis definition. Recalculated
+    at monthly refresh for the last 60 completed month-ends using today's rules and code lists. Registration
+    and practice come from the existing monthly spine. Registration start is inclusive, end and death
+    dates exclusive. Overlapping registrations retain the spine's current-registration priority. Birth
+    and death dates are approximate; missing birth dates prevent historical active rows. Current gender
+    and test flags apply retrospectively. Diagnosis state uses both clinical and recorded dates. Other
+    evidence uses its clinical or order date through the month-end. Later corrections and current code-list
+    changes can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind215
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
+      row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at the month-end, calculated from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS practice code at the month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at the month-end under the monthly spine attribution.
+  - name: birth_date_approx
+    description: Approximate birth date (mid-month)
+  - name: milestone_date
+    description: Date the child reached the indicator's milestone age, which falls in the preceding 12
+      months
+  - name: doses_in_window
+    description: Distinct administration dates for the indicator's vaccine within its age window
+  - name: is_in_denominator
+    description: Always true; every row is an eligible child before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the child received the required doses within the age window
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

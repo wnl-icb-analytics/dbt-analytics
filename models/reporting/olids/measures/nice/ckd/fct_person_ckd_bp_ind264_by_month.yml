@@ -1,0 +1,73 @@
+models:
+- name: fct_person_ckd_bp_ind264_by_month
+  description: |
+    NICE IND264. One row per eligible, active, living, non-test person and completed month-end.
+    CKD register members with latest recorded ACR at least 70 mg/mmol and without moderate or severe frailty. The latest complete BP pair in the inclusive preceding 12 months must be strictly below 130/80 mmHg in clinic or 125/75 for home or ambulatory monitoring. Invalid latest complete pairs remain unassessable.
+
+    Recalculated at monthly refresh for the last 60 completed month-ends using today's
+    rules and code lists. Registration and practice use the existing monthly spine.
+    Registration start is inclusive; registration end and death dates are exclusive.
+    Overlapping registrations retain the spine's current-registration priority.
+    Birth and death dates are approximate. Missing birth dates prevent historical
+    active rows. Current gender and test flags apply retrospectively. CKD and other
+    register states use clinical and recorded dates. Other evidence uses its corrected
+    clinical or order date through month-end. Later corrections and code-list changes
+    can alter earlier results. Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind264
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at month-end under the monthly spine attribution.
+  - name: latest_frailty_severity
+    description: Latest coded frailty severity; null when none
+  - name: latest_acr_value
+    description: Latest urine ACR in mg/mmol; null when none
+  - name: latest_bp_date
+    description: Latest complete blood pressure pair on or before month-end, including stale evidence.
+      Null when none.
+  - name: latest_record_date
+    description: Date of the latest blood pressure reading when it falls in the preceding 12 months; null
+      otherwise
+  - name: is_valid_bp
+    description: Whether the selected complete pair is plausible; null when no complete pair exists
+  - name: latest_systolic_value
+    description: Latest systolic BP in mmHg; null when none
+  - name: latest_diastolic_value
+    description: Latest diastolic BP in mmHg; null when none
+  - name: applied_measurement_context
+    description: CLINIC or HBPM_ABPM for the latest reading; null when none
+  - name: indicator_systolic_threshold
+    description: Exclusive systolic threshold in mmHg applied to the latest reading; null when none
+  - name: indicator_diastolic_threshold
+    description: Exclusive diastolic threshold in mmHg applied to the latest reading; null when none
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the latest reading falls in the period and below both thresholds
+  - name: indicator_status
+    description: ACHIEVED, ABOVE_TARGET, NOT_ASSESSABLE or NOT_RECORDED_IN_PERIOD
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

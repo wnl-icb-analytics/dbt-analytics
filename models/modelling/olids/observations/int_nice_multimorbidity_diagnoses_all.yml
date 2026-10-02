@@ -1,0 +1,47 @@
+models:
+  - name: int_nice_multimorbidity_diagnoses_all
+    description: |
+      Additional NICE IND207 diagnosis evidence for all people, including inactive
+      and deceased people. One row per observation and source cluster, retaining
+      legitimate matches to several clusters. PCD supplies Crohn's disease,
+      ulcerative colitis and anorexia or bulimia disorder concepts. OpenCodelists
+      supplies unclassified inflammatory bowel disease, Bristol connective tissue
+      disorders and explicitly named bronchiectasis within the QCovid combined
+      cystic fibrosis/bronchiectasis set. Clinical dates use the shared observation
+      correction and stop at the build date. Recorded dates support known-date
+      history. No age, registration or lookback filter applies.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind207
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [id, cluster_id]
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: CROHNS_COD, ULCCOLITIS_COD, EATDISORDER_COD
+            source: PCD
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: BRISTOL/MULTIMORBIDITY_CONNECTIVE_TISSUE_DISORDER, QCOVID/HAS_CF_OR_BRONCHIECTASIS, OPENSAFELY/INFLAMMATORY_BOWEL_DISEASE_UNCLASSIFIED
+            source: OPENCODELISTS
+    columns:
+      - name: id
+        description: Source observation identifier; may occur in several clusters.
+        data_tests: [not_null]
+      - name: person_id
+        description: Person with this additional diagnosis evidence.
+      - name: clinical_effective_date
+        description: Corrected clinical timestamp of the diagnosis.
+      - name: date_recorded
+        description: Recorded timestamp; a null falls back to the clinical date for known-date history.
+      - name: cluster_id
+        description: Maintained source cluster used to assign the category.
+      - name: concept_code
+        description: Mapped SNOMED CT concept code.
+      - name: concept_display
+        description: Mapped SNOMED CT concept label.
+      - name: category_code
+        description: Additional DIGESTIVE, MENTAL_HEALTH, MUSCULOSKELETAL or RESPIRATORY category evidence.

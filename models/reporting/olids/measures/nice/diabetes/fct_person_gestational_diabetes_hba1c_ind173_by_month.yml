@@ -1,0 +1,54 @@
+models:
+- columns:
+  - description: Person in the indicator denominator
+    name: person_id
+  - description: NICE indicator identifier
+    name: indicator_id
+  - description: Published NICE indicator name
+    name: indicator_name
+  - description: Completed month-end at which eligibility and evidence are assessed.
+    name: reporting_date
+  - description: Inclusive start of the measurement period before the reporting date
+    name: measurement_period_start
+  - description: Completed years at month-end from the approximate birth month.
+    name: age
+  - description: Population defining the indicator
+    name: condition_name
+  - description: ODS practice code at month-end under the monthly spine attribution.
+    name: practice_code
+  - description: Practice name at month-end under the monthly spine attribution.
+    name: practice_name
+  - description: Date of the latest qualifying record in the period; null when none
+    name: latest_record_date
+  - description: Always true; every row is an eligible person before personalised care adjustments
+    name: is_in_denominator
+  - description: Whether the person meets the indicator on the reporting date
+    name: is_in_numerator
+  - description: ACHIEVED or the reason not achieved
+    name: indicator_status
+  config:
+    meta:
+      clinical_source: https://www.nice.org.uk/indicators/ind173
+      owner:
+        name: EddieDavison92
+  description: "NICE IND173. Annual HbA1c testing after gestational diabetes. One row per\nregistered\
+    \ at the month-end, living, non-test person on the gestational diabetes\nregister whose latest episode\
+    \ was more than 12 months ago, assessed on the\ncompleted month-end.\n\nAchievement requires an HbA1c\
+    \ test in the preceding 12 months. A numeric\nresult is not required.\n\nThe original NICE NM151 guidance\
+    \ resolves the current page's contradictory\nepisode timing. The existing exclusion of any diabetes\
+    \ diagnosis more than\n12 months old remains, even if later resolved. The pilot authority\npreviously\
+    \ cited for that separate exclusion has not been independently\nrecovered.\n\nPersonalised care adjustments\
+    \ are not applied.\n Recalculated for the last 60 completed month-ends using today's rules and code\
+    \ lists. Registration and practice use the existing monthly spine, with registration start inclusive\
+    \ and registration end and death exclusive. Overlapping registrations retain the spine's current-registration\
+    \ priority. Birth and death dates are approximate; missing birth dates prevent historical active rows.\
+    \ Current gender and test flags apply retrospectively. Diagnosis state uses clinical and recorded\
+    \ dates; test and BP evidence use their clinical dates through month-end. Later corrections can alter\
+    \ earlier results. Personalised care adjustments are not applied."
+  name: fct_person_gestational_diabetes_hba1c_ind173_by_month
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

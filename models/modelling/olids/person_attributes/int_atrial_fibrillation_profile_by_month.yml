@@ -1,0 +1,218 @@
+models:
+- name: int_atrial_fibrillation_profile_by_month
+  description: NICE AF evidence, one row per person and month-end on the AF register. Membership uses
+    active registration and diagnoses known by that date under the existing register rules. People who
+    have since left or died remain in earlier months; test patients are excluded by consuming indicators.
+    Holds latest stroke scores, separate lifetime/prior-period maxima, anticoagulant order dates and types,
+    exceptions and reviews. Invalid latest scores remain null without fallback. CHADS2 latest selection
+    stops before 1 April 2015. DOAC not-indicated evidence needs a valued TTR record of at least 65% in
+    six months. Covers the last 60 completed month-ends using current code lists and retained records.
+    Non-register evidence uses corrected clinical/order dates through the month-end, rather than a complete
+    reconstruction of recorded-date knowledge.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - data_tests:
+    - not_null
+    description: Person on the AF register.
+    name: person_id
+  - description: Earliest AF diagnosis date from the register.
+    name: earliest_af_diagnosis_date
+  - description: Value of the last recorded CHA2DS2-VASc assessment; null if absent or invalid. A later
+      invalid assessment does not fall back to an older score.
+    name: latest_chadsvasc_score
+  - description: Date of the latest CHA2DS2-VASc assessment.
+    name: latest_chadsvasc_date
+  - description: Value of the last CHADS2 assessment before 1 April 2015, following QOF v51; null if absent
+      or invalid.
+    name: latest_chads2_score
+  - description: Date of the last CHADS2 assessment before 1 April 2015.
+    name: latest_chads2_date
+  - description: Later of the last CHA2DS2-VASc assessment and the last CHADS2 assessment before 1 April
+      2015, as QOF v51 AF006 defines LCHADS_DAT.
+    name: latest_stroke_risk_score_date
+  - description: Value at latest_stroke_risk_score_date; null if absent or invalid. QOF v51 AF006 uses
+      this score for its previous-high-score exclusion.
+    name: latest_stroke_risk_score
+  - description: Highest valid CHA2DS2-VASc or CHADS2 score ever recorded.
+    name: max_stroke_risk_score_ever
+  - description: Highest CHADS2 or CHA2DS2-VASc score recorded before the preceding 12 months; null if
+      none. Historical summary only; IND127 uses latest_stroke_risk_score instead.
+    name: max_stroke_risk_score_before_period
+  - description: Date of the most recent oral anticoagulant order; null if never.
+    name: latest_anticoagulant_order_date
+  - description: 'Type of the latest oral anticoagulant order: DOAC, VKA or OTHER_ANTICOAGULANT. The highest
+      order identifier wins equal-date ties.'
+    name: latest_anticoagulant_type
+  - description: Date of the most recent DOAC order; null if never.
+    name: latest_doac_order_date
+  - description: Date of the most recent vitamin K antagonist order; null if never.
+    name: latest_vka_order_date
+  - description: Any allergy or adverse reaction to an oral anticoagulant recorded; persisting.
+    name: has_anticoagulant_adverse_reaction
+  - description: Any generic persisting oral anticoagulant contraindication in XORANTICOAGGENCON_COD.
+    name: has_anticoagulant_persisting_contraindication
+  - description: Date of the latest anticoagulation contraindicated or not tolerated record; null if none.
+    name: latest_anticoagulant_contraindicated_date
+  - description: Date of the latest anticoagulant declined record; null if none.
+    name: latest_anticoagulant_declined_date
+  - description: Any record of valvular AF, which NICE IND247 excludes from its DOAC success criterion.
+      Antiphospholipid syndrome is handled as a DOAC exception instead.
+    name: is_doac_ineligible
+  - description: A DOAC contraindication or antiphospholipid syndrome at any time, a DOAC decline in 12
+      months, or a not-indicated code in 12 months with latest non-null TTR at least 65% in six months,
+      following QOF v51 AF008.
+    name: has_doac_exception
+  - description: Date of the latest anticoagulant medication review or AF annual review record; null if
+      none.
+    name: latest_anticoagulant_review_date
+  - description: Reference date through which evidence is evaluated.
+    name: reporting_date
+unit_tests:
+- name: nice_history_af_invalid_latest_legacy_cutoff_and_ttr_expiry
+  model: int_atrial_fibrillation_profile_by_month
+  given:
+  - input: ref('fct_person_atrial_fibrillation_register_by_month')
+    format: sql
+    rows: 'SELECT -9502::NUMBER AS person_id, ''2026-03-31''::DATE AS month_end_date, ''2020-01-01''::TIMESTAMP_NTZ
+      AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date
+
+      UNION ALL
+
+      SELECT -9502::NUMBER AS person_id, ''2026-09-30''::DATE AS month_end_date, ''2020-01-01''::TIMESTAMP_NTZ
+      AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date
+
+      UNION ALL
+
+      SELECT -9506::NUMBER AS person_id, ''2026-03-31''::DATE AS month_end_date, ''2020-01-01''::TIMESTAMP_NTZ
+      AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date
+
+      UNION ALL
+
+      SELECT -9506::NUMBER AS person_id, ''2026-09-30''::DATE AS month_end_date, ''2020-01-01''::TIMESTAMP_NTZ
+      AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date'
+  - input: ref('int_stroke_risk_score_all')
+    format: sql
+    rows: 'SELECT -9502::NUMBER AS person_id, ''S1''::VARCHAR AS id, ''2015-03-31''::TIMESTAMP_NTZ AS
+      clinical_effective_date, 4::NUMBER AS score_value, ''CHADS2''::VARCHAR AS score_type
+
+      UNION ALL
+
+      SELECT -9502::NUMBER AS person_id, ''S2''::VARCHAR AS id, ''2015-04-01''::TIMESTAMP_NTZ AS clinical_effective_date,
+      6::NUMBER AS score_value, ''CHADS2''::VARCHAR AS score_type
+
+      UNION ALL
+
+      SELECT -9502::NUMBER AS person_id, ''S3''::VARCHAR AS id, ''2025-03-31''::TIMESTAMP_NTZ AS clinical_effective_date,
+      8::NUMBER AS score_value, ''CHA2DS2-VASc''::VARCHAR AS score_type
+
+      UNION ALL
+
+      SELECT -9502::NUMBER AS person_id, ''S4''::VARCHAR AS id, ''2026-03-20''::TIMESTAMP_NTZ AS clinical_effective_date,
+      NULL::NUMBER AS score_value, ''CHA2DS2-VASc''::VARCHAR AS score_type'
+  - input: ref('int_ttr_all')
+    format: sql
+    rows: 'SELECT -9502::NUMBER AS person_id, ''T1''::VARCHAR AS id, ''2025-09-30''::TIMESTAMP_NTZ AS
+      clinical_effective_date, ''65''::VARCHAR AS original_result_value, 65::FLOAT AS ttr_percentage
+
+      UNION ALL
+
+      SELECT -9502::NUMBER AS person_id, ''T2''::VARCHAR AS id, ''2026-03-22''::TIMESTAMP_NTZ AS clinical_effective_date,
+      NULL::VARCHAR AS original_result_value, NULL::FLOAT AS ttr_percentage
+
+      UNION ALL
+
+      SELECT -9502::NUMBER AS person_id, ''T4''::VARCHAR AS id, ''2026-03-30''::TIMESTAMP_NTZ AS clinical_effective_date,
+      ''65''::VARCHAR AS original_result_value, 65::FLOAT AS ttr_percentage
+
+      UNION ALL
+
+      SELECT -9502::NUMBER AS person_id, ''T5''::VARCHAR AS id, ''2026-03-31''::TIMESTAMP_NTZ AS clinical_effective_date,
+      NULL::VARCHAR AS original_result_value, NULL::FLOAT AS ttr_percentage
+
+      UNION ALL
+
+      SELECT -9506::NUMBER AS person_id, ''T6''::VARCHAR AS id, ''2025-09-30''::TIMESTAMP_NTZ AS clinical_effective_date,
+      ''65''::VARCHAR AS original_result_value, 65::FLOAT AS ttr_percentage
+
+      UNION ALL
+
+      SELECT -9502::NUMBER AS person_id, ''T3''::VARCHAR AS id, ''2026-04-01''::TIMESTAMP_NTZ AS clinical_effective_date,
+      ''non-numeric''::VARCHAR AS original_result_value, NULL::FLOAT AS ttr_percentage'
+  - input: ref('int_anticoagulant_medications_all')
+    format: sql
+    rows: 'SELECT -9502::NUMBER AS person_id, ''M1''::VARCHAR AS medication_order_id, ''2026-03-30''::DATE
+      AS order_date, ''VKA''::VARCHAR AS anticoagulant_type, FALSE AS is_doac, TRUE AS is_vka
+
+      UNION ALL
+
+      SELECT -9502::NUMBER AS person_id, ''M0''::VARCHAR AS medication_order_id, ''2026-04-01''::DATE
+      AS order_date, ''VKA''::VARCHAR AS anticoagulant_type, FALSE AS is_doac, TRUE AS is_vka
+
+      UNION ALL
+
+      SELECT -9502::NUMBER AS person_id, ''M2''::VARCHAR AS medication_order_id, ''2026-04-01''::DATE
+      AS order_date, ''DOAC''::VARCHAR AS anticoagulant_type, TRUE AS is_doac, FALSE AS is_vka'
+  - input: ref('int_anticoagulant_exception_all')
+    format: sql
+    rows: 'SELECT -9502::NUMBER AS person_id, ''X1''::VARCHAR AS id, ''2025-09-30''::TIMESTAMP_NTZ AS
+      clinical_effective_date, ''DOAC_NOT_INDICATED''::VARCHAR AS exception_type
+
+      UNION ALL
+
+      SELECT -9506::NUMBER AS person_id, ''X3''::VARCHAR AS id, ''2025-09-30''::TIMESTAMP_NTZ AS clinical_effective_date,
+      ''DOAC_NOT_INDICATED''::VARCHAR AS exception_type
+
+      UNION ALL
+
+      SELECT -9502::NUMBER AS person_id, ''X2''::VARCHAR AS id, ''2026-04-01''::TIMESTAMP_NTZ AS clinical_effective_date,
+      ''VALVULAR_AF''::VARCHAR AS exception_type'
+  - input: ref('int_anticoagulant_review_all')
+    format: sql
+    rows: SELECT -9502::NUMBER AS person_id, 'R1'::VARCHAR AS id, '2026-04-01'::TIMESTAMP_NTZ AS clinical_effective_date
+  expect:
+    rows:
+    - person_id: -9502
+      reporting_date: '2026-03-31'
+      latest_chadsvasc_score: null
+      latest_chads2_score: 4
+      latest_stroke_risk_score: null
+      max_stroke_risk_score_ever: 8
+      max_stroke_risk_score_before_period: 6
+      has_doac_exception: true
+      is_doac_ineligible: false
+      latest_anticoagulant_type: VKA
+      latest_doac_order_date: null
+      latest_anticoagulant_review_date: null
+    - person_id: -9502
+      reporting_date: '2026-09-30'
+      latest_chadsvasc_score: null
+      latest_chads2_score: 4
+      latest_stroke_risk_score: null
+      max_stroke_risk_score_ever: 8
+      max_stroke_risk_score_before_period: 8
+      has_doac_exception: false
+      is_doac_ineligible: true
+      latest_anticoagulant_type: DOAC
+      latest_doac_order_date: '2026-04-01'
+      latest_anticoagulant_review_date: '2026-04-01'
+    - person_id: -9506
+      reporting_date: '2026-03-31'
+      has_doac_exception: true
+      is_doac_ineligible: false
+    - person_id: -9506
+      reporting_date: '2026-09-30'
+      has_doac_exception: false
+      is_doac_ineligible: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history

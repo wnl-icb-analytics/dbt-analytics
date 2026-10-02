@@ -1,0 +1,65 @@
+models:
+- name: int_nice_review_evidence_by_month
+  description: NICE condition-review evidence. One row per active, living, non-test candidate person and
+    reference date. Candidates have a relevant condition register, unresolved NICE asthma diagnosis aged
+    5 or over, a first/new depression diagnosis, frailty, or at least four multimorbidity categories,
+    including people with no register membership. Latest review dates use clinical evidence on or before
+    the reference date. Cancer follow-up is the first review from the latest first/new register diagnosis
+    through the reference date, including reviews beyond twelve months. Depression follow-up stays in
+    IND104. Asthma completion uses the shared daily asthma review definition. Recalculated monthly for
+    the last 60 completed month-ends using current rules and code lists. Later corrections can alter past
+    results. Registration follows the established spine; birth/death dates are approximate and current
+    test flags apply retrospectively. Indicators apply their own windows.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  columns:
+  - name: person_id
+    description: Person identifier.
+  - name: reporting_date
+    description: Completed month-end at which evidence is assessed. DATE.
+  - name: latest_asthma_review_date
+    description: Date of the latest asthma review record; null if none.
+  - name: latest_complete_asthma_review_date
+    description: Date of the latest asthma review with a same-day written personalised plan and an exacerbation
+      count recorded within the preceding month, as QOF v51 AST015 defines; null if none.
+  - name: latest_copd_review_date
+    description: Date of the latest COPD review record; null if none.
+  - name: latest_copd_exacerbation_count_date
+    description: Date of the latest record of the number of COPD exacerbations (COPDEXACB_COD); null if
+      none.
+  - name: latest_heart_failure_review_date
+    description: Date of the latest heart failure review record; null if none.
+  - name: latest_rheumatoid_arthritis_review_date
+    description: Date of the latest rheumatoid arthritis annual review record; null if none.
+  - name: latest_ld_health_check_date
+    description: Date of the latest learning disability health check; null if none.
+  - name: latest_ld_health_action_plan_date
+    description: Date of the latest learning disability health action plan; null if none.
+  - name: latest_dementia_care_plan_date
+    description: Date of the latest dementia care plan or care plan review; null if none.
+  - name: latest_structured_medication_review_date
+    description: Date of the latest structured medication review; null if none.
+  - name: latest_falls_discussion_date
+    description: Date of the latest record of asking about falls; null if none.
+  - name: latest_mrc_dyspnoea_date
+    description: Date of the latest MRC dyspnoea scale record; null if none.
+  - name: latest_nyha_date
+    description: Date of the latest NYHA classification record; null if none.
+  - name: latest_thyroid_function_test_date
+    description: Date of the latest thyroid function test; null if none.
+  - name: latest_smi_care_plan_date
+    description: Date of the latest mental health care plan record; null if none.
+  - name: latest_medication_review_date
+    description: Date of the latest medication review, heart failure medication review or structured medication
+      review; null if none.
+  - name: first_cancer_care_review_after_diagnosis_date
+    description: Date of the first cancer care review on or after the latest first-or-new-episode cancer
+      diagnosis; null if none.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

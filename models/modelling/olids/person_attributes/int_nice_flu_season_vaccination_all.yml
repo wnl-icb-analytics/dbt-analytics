@@ -1,0 +1,30 @@
+models:
+- name: int_nice_flu_season_vaccination_all
+  description: NICE flu vaccination evidence at person/season grain for all people, including inactive
+    and deceased people. Seasons run from 1 August through 31 March, inclusive. April to July events are
+    excluded. No row means no vaccination evidence in that season. Consumers select the completed season
+    using nice_flu_season_year, including its 1 April switch; this input is not a campaign eligibility
+    population.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - season_year
+  columns:
+  - name: person_id
+    description: Person vaccinated in this season, regardless of current registration or vital status.
+  - name: season_year
+    description: Calendar year in which the 1 August season start falls.
+  - name: season_start_date
+    description: 1 August starting this NICE flu season.
+  - name: season_end_date
+    description: 31 March ending this NICE flu season.
+  - name: latest_vaccination_date
+    description: Latest administration or vaccine order date inside the closed season window.
+  - name: is_laiv
+    description: Whether any administration or order in the season is for live attenuated nasal vaccine.

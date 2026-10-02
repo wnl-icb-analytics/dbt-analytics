@@ -1,0 +1,75 @@
+models:
+- name: fct_person_smoking_ind156_by_month
+  description: |
+    NICE IND156: LTC smoking status recorded. One row per registered at month-end,
+    living, non-test person on the coronary heart disease, peripheral arterial
+    disease, stroke or TIA, hypertension, diabetes, COPD, chronic kidney disease or
+    asthma register, assessed on the completed month-end.
+
+    Achievement requires a smoking status record in the preceding 12 months. A person
+    whose latest status is never smoked also qualifies without a recent record if they
+    reach 26 by the reference financial year end. Their never-smoked record must be
+    after their 25th birthday and after their earliest qualifying diagnosis. The
+    optional three-year ex-smoker exception is not applied.
+
+    Personalised care adjustments are not applied.
+
+    Recalculated at monthly refresh for the last 60 completed month-ends using today's
+    rules and code lists, before personalised care adjustments. Registration and practice
+    use the established monthly spine: start is inclusive, end and death exclusive.
+    Overlapping registrations retain its current-registration priority. Birth and death
+    dates are approximate; missing birth dates prevent historical active rows. Current
+    gender and test flags apply retrospectively. Register state uses clinical and recorded
+    dates; other evidence uses its clinical or order date through month-end. Later data
+    corrections and code-list changes can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind156
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS code of the month-end registration practice
+  - name: practice_name
+    description: Name of the month-end registration practice
+  - name: latest_smoking_status
+    description: Latest recorded by month-end smoking status
+  - name: latest_smoking_status_date
+    description: Date of the latest smoking status record
+  - name: latest_never_smoked_date
+    description: Date of the latest never-smoked record; null if none
+  - name: latest_smoking_intervention_date
+    description: Date of the latest smoking cessation support record; null if none
+  - name: is_status_recorded_in_period
+    description: Whether a smoking status was recorded in the period (IND156)
+  - name: is_never_smoker_covered
+    description: Whether a never-smoker reaching 26 by the end of the financial year is covered by a never-smoked
+      record after their 25th birthday and after their earliest listed diagnosis (IND156)
+  - name: latest_record_date
+    description: Date of the latest qualifying record in the period; null when none
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
