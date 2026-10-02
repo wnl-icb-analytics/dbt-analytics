@@ -25,6 +25,7 @@ assessed AS (
         active.current_practice_name,
         population.latest_frailty_severity,
         bp.latest_bp_date,
+        bp.is_valid_bp,
         bp.latest_systolic_value,
         bp.latest_diastolic_value,
         bp.is_home_bp_event,
@@ -48,7 +49,7 @@ assessed AS (
     FROM indicator_population AS population
     INNER JOIN {{ ref('dim_person_active_patients') }} AS active
         ON population.person_id = active.person_id
-    LEFT JOIN {{ ref('fct_person_bp_control') }} AS bp
+    LEFT JOIN {{ ref('int_nice_blood_pressure_latest') }} AS bp
         ON population.person_id = bp.person_id
 ),
 
@@ -56,7 +57,8 @@ status AS (
     SELECT
         *,
         COALESCE(
-            latest_systolic_value < indicator_systolic_threshold
+            is_valid_bp
+            AND latest_systolic_value < indicator_systolic_threshold
             AND latest_diastolic_value < indicator_diastolic_threshold,
             FALSE
         ) AS is_latest_bp_within_indicator_target
@@ -75,6 +77,7 @@ SELECT
     current_practice_name,
     latest_frailty_severity,
     latest_bp_date,
+    is_valid_bp,
     CASE WHEN is_bp_recorded_in_last_12m THEN latest_bp_date END AS latest_record_date,
     latest_systolic_value,
     latest_diastolic_value,
@@ -90,6 +93,7 @@ SELECT
         AND is_latest_bp_within_indicator_target AS is_in_numerator,
     CASE
         WHEN NOT is_bp_recorded_in_last_12m THEN 'NOT_RECORDED_IN_PERIOD'
+        WHEN NOT is_valid_bp THEN 'NOT_ASSESSABLE'
         WHEN is_latest_bp_within_indicator_target THEN 'ACHIEVED'
         ELSE 'ABOVE_TARGET'
     END AS indicator_status

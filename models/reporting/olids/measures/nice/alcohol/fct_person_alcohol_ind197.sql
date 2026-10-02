@@ -11,7 +11,7 @@ WITH indicator_population AS (
         ON profile.person_id = age.person_id
     WHERE profile.earliest_hypertension_date BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
         AND profile.latest_positive_alcohol_screen_date IS NOT NULL
-        AND NOT profile.has_alcohol_disorder
+        AND NOT profile.has_nice_alcohol_disorder
 ),
 
 qualifying_interventions AS (

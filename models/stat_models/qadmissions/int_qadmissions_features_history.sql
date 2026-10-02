@@ -331,7 +331,7 @@ bmi_latest AS (
     ) = 1
 ),
 
--- Latest current, ex- or never-smoker code per person at each index date,
+-- Latest recorded smoking status per person at each index date,
 -- smoking_cat defined in final SELECT
 smoking_latest AS (
     SELECT
@@ -343,9 +343,17 @@ smoking_latest AS (
     INNER JOIN {{ ref('int_smoking_status_all') }} AS s
         ON s.clinical_effective_date <= i.end_date
         AND (s.date_recorded IS NULL OR CAST(s.date_recorded AS DATE) <= i.end_date)
+    -- Same selection as int_smoking_status_latest: calendar date, then specific status, then id.
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY i.end_date, s.person_id
-        ORDER BY s.clinical_effective_date DESC, s.id DESC
+        ORDER BY s.clinical_effective_date::DATE DESC,
+            CASE s.source_cluster_id
+                WHEN 'LSMOK_COD' THEN 1
+                WHEN 'EXSMOK_COD' THEN 2
+                WHEN 'NSMOK_COD' THEN 3
+                ELSE 4
+            END,
+            s.id DESC
     ) = 1
 ),
 

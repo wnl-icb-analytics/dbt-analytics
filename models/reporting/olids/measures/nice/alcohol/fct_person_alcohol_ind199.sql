@@ -12,7 +12,7 @@ WITH indicator_population AS (
     WHERE profile.earliest_depression_anxiety_date BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
         AND profile.latest_positive_alcohol_screen_date >= DATEADD(month, -12, CURRENT_DATE())
         AND age.age >= 10
-        AND NOT profile.has_alcohol_disorder
+        AND NOT profile.has_nice_alcohol_disorder
 ),
 
 qualifying_interventions AS (

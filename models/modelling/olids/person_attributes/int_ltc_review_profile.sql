@@ -13,10 +13,11 @@ plan, health check, MRC, NYHA and thyroid function test records, the latest new
 depression diagnosis with its 10-to-35-day review, the first cancer care review
 after the latest new cancer diagnosis, whether ethnicity is recorded, the
 latest blood pressure, lipid, glucose or HbA1c and alcohol consumption
-records, the SMI register detail (active diagnosis, lithium therapy, care
-plan, lithium levels) and the earliest cardiovascular disease and diabetes
-diagnoses, so each measure applies only its own population and window. No registration, living or test-patient filter; consumers join
-dim_person_active_patients.
+records, the SMI register detail (active diagnosis, care plan, lithium levels),
+current lithium therapy from medication orders and stop records independently
+of SMI diagnosis, and the earliest cardiovascular disease and diabetes
+diagnoses, so each measure applies only its own population and window. No
+registration, living or test-patient filter; consumers join dim_person_active_patients.
 
 The smoking-status LTC list (IND156, IND157) is CHD, PAD, stroke/TIA,
 hypertension, diabetes, COPD, CKD and asthma; IND97 adds severe mental illness. Multimorbidity follows NICE IND205: four or
@@ -160,10 +161,24 @@ smoking_intervention AS (
     GROUP BY person_id
 ),
 
-bmi AS (
-    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_bmi_date
+bmi_evidence AS (
+    SELECT person_id, clinical_effective_date::DATE AS bmi_date
     FROM {{ ref('int_bmi_all') }}
-    WHERE bmi_value IS NOT NULL
+    WHERE is_valid_bmi AND clinical_effective_date::DATE <= CURRENT_DATE()
+
+    UNION ALL
+
+    -- Valid recording has no age floor; BMI30_COD alone is not a measurement.
+    SELECT person_id, clinical_effective_date::DATE AS bmi_date
+    FROM {{ ref('int_bmi_qof_all') }}
+    WHERE source_cluster_id = 'BMIVAL_COD'
+        AND bmi_value BETWEEN 10 AND 150
+        AND clinical_effective_date::DATE <= CURRENT_DATE()
+),
+
+bmi AS (
+    SELECT person_id, MAX(bmi_date) AS latest_bmi_date
+    FROM bmi_evidence
     GROUP BY person_id
 ),
 
@@ -223,6 +238,12 @@ intervention_after_positive AS (
 alcohol_disorder AS (
     SELECT DISTINCT person_id
     FROM {{ ref('int_alcohol_misuse_disorders') }}
+),
+
+nice_alcohol_disorder AS (
+    SELECT DISTINCT person_id
+    FROM ({{ get_observations("'ALCOHOL_MISUSE_DISORDERS'") }}) AS observation
+    WHERE clinical_effective_date::DATE <= CURRENT_DATE()
 ),
 
 reviews AS (
@@ -347,17 +368,54 @@ cholesterol_hdl_ratio AS (
     GROUP BY person_id
 ),
 
+additional_lipid_evidence AS (
+    SELECT person_id, clinical_effective_date::DATE AS lipid_date
+    FROM {{ ref('int_cholesterol_hdl_all') }}
+    WHERE cholesterol_value IS NOT NULL
+
+    UNION ALL
+
+    SELECT person_id, clinical_effective_date::DATE AS lipid_date
+    FROM {{ ref('int_cholesterol_ldl_all') }}
+    WHERE cholesterol_value IS NOT NULL
+
+    UNION ALL
+
+    SELECT person_id, clinical_effective_date::DATE AS lipid_date
+    FROM {{ ref('int_cholesterol_non_hdl_all') }}
+    WHERE cholesterol_value IS NOT NULL
+
+    UNION ALL
+
+    SELECT person_id, clinical_effective_date::DATE AS lipid_date
+    FROM {{ ref('int_triglycerides_all') }}
+    WHERE triglycerides_value IS NOT NULL
+
+    UNION ALL
+
+    -- QOF v51 includes a completed lipid test without a numeric result.
+    SELECT person_id, clinical_effective_date::DATE AS lipid_date
+    FROM ({{ get_observations("'NONVALCHOL_COD'", source='PCD') }}) AS observation
+),
+
+additional_lipids AS (
+    SELECT person_id, MAX(lipid_date) AS latest_additional_lipid_date
+    FROM additional_lipid_evidence
+    WHERE lipid_date <= CURRENT_DATE()
+    GROUP BY person_id
+),
+
 hba1c AS (
     SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_hba1c_date
     FROM {{ ref('int_hba1c_all') }}
-    WHERE hba1c_original_value IS NOT NULL
+    WHERE clinical_effective_date::DATE <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
 blood_glucose AS (
     SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_blood_glucose_date
     FROM {{ ref('int_blood_glucose_all') }}
-    WHERE result_value IS NOT NULL
+    WHERE clinical_effective_date::DATE <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -374,10 +432,35 @@ alcohol_usage AS (
 ),
 
 smi_register AS (
-    SELECT person_id, has_active_smi_diagnosis, is_on_lithium, latest_diagnosis_date::DATE AS latest_smi_diagnosis_date,
+    SELECT person_id, has_active_smi_diagnosis, latest_diagnosis_date::DATE AS latest_smi_diagnosis_date,
         latest_resolved_date::DATE AS latest_smi_remission_date
     FROM {{ ref('fct_person_smi_register') }}
     WHERE is_on_register
+),
+
+lithium_stops AS (
+    SELECT person_id, MAX(clinical_effective_date::DATE) AS latest_stop_date
+    FROM ({{ get_observations("'LITSTP_COD'", source='PCD') }}) AS observation
+    WHERE clinical_effective_date <= CURRENT_DATE()
+        AND (date_recorded IS NULL OR date_recorded::DATE <= CURRENT_DATE())
+    GROUP BY person_id
+),
+
+recent_lithium AS (
+    SELECT person_id, MAX(order_date::DATE) AS latest_order_date
+    FROM {{ ref('int_lithium_medications_all') }}
+    WHERE order_date::DATE > DATEADD(month, -6, CURRENT_DATE())
+        AND order_date::DATE <= CURRENT_DATE()
+        AND (date_recorded IS NULL OR date_recorded::DATE <= CURRENT_DATE())
+    GROUP BY person_id
+),
+
+active_lithium AS (
+    -- Match the register's stop rule without requiring an SMI diagnosis.
+    SELECT lithium.person_id
+    FROM recent_lithium AS lithium
+    LEFT JOIN lithium_stops AS stops ON lithium.person_id = stops.person_id
+    WHERE stops.latest_stop_date IS NULL OR stops.latest_stop_date <= lithium.latest_order_date
 ),
 
 smi_care_plan AS (
@@ -447,7 +530,7 @@ SELECT
     c.earliest_diabetes_diagnosis_date,
     cvd.earliest_cvd_diagnosis_date,
     COALESCE(smi_register.has_active_smi_diagnosis, FALSE) AS has_active_smi_diagnosis,
-    COALESCE(smi_register.is_on_lithium, FALSE) AS is_on_lithium,
+    active_lithium.person_id IS NOT NULL AS is_on_lithium,
     smi_register.latest_smi_diagnosis_date,
     smi_register.latest_smi_remission_date,
     dyslipidaemia.person_id IS NOT NULL AS has_dyslipidaemia,
@@ -472,6 +555,7 @@ SELECT
     latest_positive.latest_positive_alcohol_screen_date,
     intervention_after_positive.latest_intervention_after_positive_screen_date,
     alcohol_disorder.person_id IS NOT NULL AS has_alcohol_disorder,
+    nice_alcohol_disorder.person_id IS NOT NULL AS has_nice_alcohol_disorder,
     reviews.latest_asthma_review_date,
     complete_asthma_review.latest_complete_asthma_review_date,
     reviews.latest_copd_review_date,
@@ -494,9 +578,9 @@ SELECT
     blood_pressure.latest_blood_pressure_date,
     cholesterol.latest_total_cholesterol_date,
     cholesterol_hdl_ratio.latest_cholesterol_hdl_ratio_date,
-    -- Any lipid record: total cholesterol or total cholesterol:HDL ratio
     GREATEST_IGNORE_NULLS(cholesterol.latest_total_cholesterol_date,
-        cholesterol_hdl_ratio.latest_cholesterol_hdl_ratio_date) AS latest_lipid_date,
+        cholesterol_hdl_ratio.latest_cholesterol_hdl_ratio_date,
+        additional_lipids.latest_additional_lipid_date) AS latest_lipid_date,
     GREATEST_IGNORE_NULLS(hba1c.latest_hba1c_date, blood_glucose.latest_blood_glucose_date) AS latest_glucose_or_hba1c_date,
     -- Any alcohol consumption record: units per week, usage status or a screening tool
     GREATEST_IGNORE_NULLS(alcohol_units.latest_alcohol_units_date, alcohol_usage.latest_alcohol_usage_date,
@@ -520,6 +604,7 @@ LEFT JOIN latest_screen ON person.person_id = latest_screen.person_id
 LEFT JOIN latest_positive ON person.person_id = latest_positive.person_id
 LEFT JOIN intervention_after_positive ON person.person_id = intervention_after_positive.person_id
 LEFT JOIN alcohol_disorder ON person.person_id = alcohol_disorder.person_id
+LEFT JOIN nice_alcohol_disorder ON person.person_id = nice_alcohol_disorder.person_id
 LEFT JOIN dyslipidaemia ON person.person_id = dyslipidaemia.person_id
 LEFT JOIN sleep_apnoea ON person.person_id = sleep_apnoea.person_id
 LEFT JOIN reviews ON person.person_id = reviews.person_id
@@ -534,11 +619,13 @@ LEFT JOIN ethnicity ON person.person_id = ethnicity.person_id
 LEFT JOIN blood_pressure ON person.person_id = blood_pressure.person_id
 LEFT JOIN cholesterol ON person.person_id = cholesterol.person_id
 LEFT JOIN cholesterol_hdl_ratio ON person.person_id = cholesterol_hdl_ratio.person_id
+LEFT JOIN additional_lipids ON person.person_id = additional_lipids.person_id
 LEFT JOIN hba1c ON person.person_id = hba1c.person_id
 LEFT JOIN blood_glucose ON person.person_id = blood_glucose.person_id
 LEFT JOIN alcohol_units ON person.person_id = alcohol_units.person_id
 LEFT JOIN alcohol_usage ON person.person_id = alcohol_usage.person_id
 LEFT JOIN smi_register ON person.person_id = smi_register.person_id
+LEFT JOIN active_lithium ON person.person_id = active_lithium.person_id
 LEFT JOIN smi_care_plan ON person.person_id = smi_care_plan.person_id
 LEFT JOIN lithium_level ON person.person_id = lithium_level.person_id
 LEFT JOIN cvd ON person.person_id = cvd.person_id

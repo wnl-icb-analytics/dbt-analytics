@@ -25,6 +25,13 @@ SELECT
     birth_date_approx,
     milestone_date,
     doses_in_window,
+    {% if indicator_model == 'fct_person_childhood_immunisation_ind226' %}
+    primary_doses_by_12_months,
+    booster_doses_12_to_18_months,
+    {% else %}
+    NULL::NUMBER AS primary_doses_by_12_months,
+    NULL::NUMBER AS booster_doses_12_to_18_months,
+    {% endif %}
     is_in_denominator,
     is_in_numerator,
     indicator_status

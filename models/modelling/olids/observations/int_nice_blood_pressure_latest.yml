@@ -1,0 +1,45 @@
+models:
+  - name: int_nice_blood_pressure_latest
+    description: |
+      Latest complete blood pressure pair for NICE control indicators. One row per
+      person with numeric systolic and diastolic components on or before the build date.
+      Components share a parent observation and date. Components without a parent
+      use the date-level maximum plausible systolic and maximum plausible diastolic,
+      which may combine different readings. Each component uses its unfiltered maximum
+      only when no value is plausible for that component on that date.
+
+      Incomplete single components are ignored. The latest complete-pair date is
+      selected before plausibility checks can exclude evidence. On that date, valid
+      pairs take precedence, with lowest systolic then lowest diastolic selected.
+      Within-day chronology is unavailable. If no pair on the latest date is valid,
+      the selected pair remains invalid, without falling back to an older date.
+      Valid ranges are 40-350 mmHg systolic and 20-200 mmHg diastolic, inclusive.
+      Existing valid-reading BP models retain their separate behaviour.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person with a complete numeric blood pressure pair
+        data_tests:
+          - not_null
+          - unique
+      - name: latest_bp_date
+        description: Latest date with a complete pair, including an implausible pair
+        data_tests:
+          - not_null
+      - name: latest_systolic_value
+        description: Selected systolic value in mmHg, retained even when implausible
+      - name: latest_diastolic_value
+        description: Selected diastolic value in mmHg, retained even when implausible
+      - name: is_valid_bp
+        description: Whether both selected components fall within the inclusive plausible ranges
+        data_tests:
+          - not_null
+      - name: is_home_bp_event
+        description: Whether the selected pair has home monitoring evidence
+      - name: is_abpm_bp_event
+        description: Whether the selected pair has ambulatory monitoring evidence
+      - name: applied_measurement_context
+        description: CLINIC or HBPM_ABPM context of the selected complete pair

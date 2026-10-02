@@ -2,14 +2,26 @@
 
 -- NICE IND273: https://www.nice.org.uk/indicators/ind273
 -- Asthma review in 12 months with a same-day written plan and an exacerbation count in the preceding month, for people aged 5 and over.
-WITH indicator_population AS (
+WITH asthma_diagnoses AS (
+    SELECT person_id
+    FROM {{ ref('int_asthma_diagnoses_all') }}
+    WHERE clinical_effective_date::DATE <= CURRENT_DATE()
+    GROUP BY person_id
+    HAVING MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date::DATE END) IS NOT NULL
+        AND (MAX(CASE WHEN is_resolved_code THEN clinical_effective_date::DATE END) IS NULL
+            OR MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date::DATE END)
+                > MAX(CASE WHEN is_resolved_code THEN clinical_effective_date::DATE END))
+),
+
+indicator_population AS (
     SELECT
         profile.*,
         age.age
     FROM {{ ref('int_ltc_review_profile') }} AS profile
+    INNER JOIN asthma_diagnoses ON profile.person_id = asthma_diagnoses.person_id
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
-    WHERE profile.has_asthma AND age.age >= 5
+    WHERE age.age >= 5
 ),
 
 assessed AS (

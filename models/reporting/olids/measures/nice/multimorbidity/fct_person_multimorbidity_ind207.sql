@@ -2,17 +2,29 @@
 
 -- NICE IND207: https://www.nice.org.uk/indicators/ind207
 -- Structured medication review in 12 months for people with moderate or severe coded frailty or conditions in four or more
--- NICE IND205 clusters.
-WITH indicator_population AS (
+-- NICE IND207 categories.
+WITH category_counts AS (
+    SELECT person_id, COUNT(*) AS multimorbidity_cluster_count
+    FROM {{ ref('int_nice_multimorbidity_categories') }}
+    GROUP BY person_id
+),
+
+indicator_population AS (
     SELECT
-        profile.*,
+        profile.person_id,
+        profile.ltc_count,
+        COALESCE(categories.multimorbidity_cluster_count, 0) AS multimorbidity_cluster_count,
+        profile.latest_frailty_severity,
+        profile.latest_structured_medication_review_date,
         age.age
     FROM {{ ref('int_ltc_review_profile') }} AS profile
+    LEFT JOIN category_counts AS categories
+        ON profile.person_id = categories.person_id
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON profile.person_id = age.person_id
     WHERE (
             profile.latest_frailty_severity IN ('Moderate', 'Severe')
-            OR profile.multimorbidity_cluster_count >= 4
+            OR categories.multimorbidity_cluster_count >= 4
         )
 ),
 

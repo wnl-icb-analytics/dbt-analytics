@@ -14,7 +14,7 @@ WITH indicator_population AS (
         ON profile.person_id = age.person_id
     WHERE DATEADD(year, 5, profile.birth_date_approx) > DATEADD(month, -12, CURRENT_DATE())
         AND DATEADD(year, 5, profile.birth_date_approx) <= CURRENT_DATE()
-        -- NICE excludes children with a contraindication to the vaccine
+        -- Current contraindication proxy for NICE confirmed-anaphylaxis exclusions.
         AND NOT profile.has_mmr_contraindication
 ),
 

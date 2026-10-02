@@ -15,7 +15,7 @@ WITH indicator_population AS (
         AND NOT COALESCE(ndh.has_diabetes_diagnosis AND NOT ndh.is_diabetes_resolved, FALSE)
 ),
 
--- Latest qualifying record in the period
+-- Test presence includes value-free tests; a numeric result is not required.
 latest_record AS (
     SELECT
         person_id,

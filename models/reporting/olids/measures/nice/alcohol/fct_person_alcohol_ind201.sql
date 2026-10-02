@@ -13,7 +13,7 @@ WITH indicator_population AS (
             profile.has_chd OR profile.has_atrial_fibrillation OR profile.has_heart_failure
             OR profile.has_stroke_tia OR profile.has_diabetes OR profile.has_dementia
         )
-        AND NOT profile.has_alcohol_disorder
+        AND NOT profile.has_nice_alcohol_disorder
 ),
 
 qualifying_screens AS (

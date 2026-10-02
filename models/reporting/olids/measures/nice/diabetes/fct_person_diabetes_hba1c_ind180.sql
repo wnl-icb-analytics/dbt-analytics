@@ -42,7 +42,8 @@ indicator_population AS (
         )
 ),
 
--- Last recorded HbA1c in the period; an invalid last result is not replaced by an older one
+-- Value-free and invalid latest tests remain unassessable, without fallback.
+-- On the latest date, a valid result is preferred over a value-free or invalid companion.
 last_hba1c AS (
     SELECT
         hba.person_id,
@@ -57,7 +58,7 @@ last_hba1c AS (
         BETWEEN DATEADD(month, -12, CURRENT_DATE()) AND CURRENT_DATE()
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY hba.person_id
-        ORDER BY hba.clinical_effective_date DESC, hba.id DESC
+        ORDER BY hba.clinical_effective_date::DATE DESC, hba.is_valid_hba1c DESC, hba.id DESC
     ) = 1
 ),
 
