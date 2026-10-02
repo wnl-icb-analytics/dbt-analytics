@@ -1,0 +1,117 @@
+models:
+- name: fct_person_myocardial_infarction_therapy_ind126
+  description: NICE IND126. One row per registered, living, non-test person in the denominator on the build
+    date. People with any MI_COD strictly more than 12 months before the reporting date, including those with
+    a later repeat MI. Achievement needs current ACE-I, or ARB with recorded ACE-I intolerance; aspirin, clopidogrel
+    with aspirin intolerance, or oral anticoagulant; statin; and a beta blocker when HFLVSD_COD or REDEJCFRAC_COD
+    is known. Current treatment is an inclusive six-calendar-month window, matching built therapy measures.
+    Aspirin includes OSAL_COD taken-treatment evidence. Temporary intolerance lasts 12 months; persistent intolerance
+    stands. Lenient detail allows any ARB and any antiplatelet or oral anticoagulant. Personalised care adjustments
+    and exception codes are not applied. Diagnoses use known dates; other evidence uses clinical or order dates
+    through the reporting date.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind126
+      indicator:
+        id: IND126
+        type: MEASURE
+        category: MYOCARDIAL_INFARCTION
+        clinical_domain: Cardiometabolic
+        name_short: Previous MI therapy
+        description_short: Previous MI therapy
+        description_long: NICE IND126. One row per registered, living, non-test person in the denominator on
+          the build date. People with any MI_COD strictly more than 12 months before the reporting date, including
+          those with a later repeat MI. Achievement needs current ACE-I, or ARB with recorded ACE-I intolerance;
+          aspirin, clopidogrel with aspirin intolerance, or oral anticoagulant; statin; and a beta blocker
+          when HFLVSD_COD or REDEJCFRAC_COD is known. Current treatment is an inclusive six-calendar-month
+          window, matching built therapy measures. Aspirin includes OSAL_COD taken-treatment evidence. Temporary
+          intolerance lasts 12 months; persistent intolerance stands. Lenient detail allows any ARB and any
+          antiplatelet or oral anticoagulant. Personalised care adjustments and exception codes are not applied.
+          Diagnoses use known dates; other evidence uses clinical or order dates through the reporting date.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND126
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: Person in the denominator.
+  - name: reporting_date
+    description: Assessment date; completed month-end in history.
+  - name: measurement_period_start
+    description: Start of the rolling cohort or treatment window, as described above.
+  - name: age
+    description: Age in years at the reporting date; historical birth dates are approximate.
+  - name: current_practice_code
+    description: ODS code of the registration practice at assessment.
+  - name: current_practice_name
+    description: Registration practice name at assessment.
+  - name: latest_record_date
+    description: Latest supporting evidence date through assessment; treatment measures may retain stale dates.
+  - name: is_in_denominator
+    description: Always true; personalised care adjustments are not applied.
+  - name: is_in_numerator
+    description: Whether every required component is met.
+  - name: indicator_status
+    description: ACHIEVED or the accepted reason for non-achievement.
+  - name: earliest_mi_date
+    description: Earliest mi date.
+  - name: latest_mi_date
+    description: Latest mi date.
+  - name: latest_mi_in_financial_year_date
+    description: Latest mi in financial year date.
+  - name: first_lvsd_date
+    description: First lvsd date.
+  - name: has_lvsd
+    description: Has lvsd.
+  - name: has_ace_inhibitor_intolerance
+    description: Has ace inhibitor intolerance.
+  - name: has_aspirin_intolerance
+    description: Has aspirin intolerance.
+  - name: latest_aspirin_record_date
+    description: Latest aspirin record date.
+  - name: latest_ace_inhibitor_order_date
+    description: Latest order through assessment; null means none.
+  - name: latest_arb_order_date
+    description: Latest order through assessment; null means none.
+  - name: latest_aspirin_order_date
+    description: Latest order through assessment; null means none.
+  - name: latest_p2y12_order_date
+    description: Latest order through assessment; null means none.
+  - name: latest_clopidogrel_order_date
+    description: Latest order through assessment; null means none.
+  - name: latest_antiplatelet_order_date
+    description: Latest order through assessment; null means none.
+  - name: latest_anticoagulant_order_date
+    description: Latest order through assessment; null means none.
+  - name: latest_statin_order_date
+    description: Latest order through assessment; null means none.
+  - name: latest_beta_blocker_order_date
+    description: Latest order through assessment; null means none.
+  - name: is_ace_inhibitor_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: is_arb_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: is_aspirin_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: is_p2y12_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: is_clopidogrel_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: is_antiplatelet_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: is_anticoagulant_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: is_statin_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: is_beta_blocker_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: is_in_numerator_lenient
+    description: Outcome with the documented lenient substitutions; does not affect the published numerator.

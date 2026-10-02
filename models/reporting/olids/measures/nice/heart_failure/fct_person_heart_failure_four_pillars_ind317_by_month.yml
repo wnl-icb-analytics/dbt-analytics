@@ -1,0 +1,62 @@
+models:
+- name: fct_person_heart_failure_four_pillars_ind317_by_month
+  description: 'NICE IND317. One row per registered, living, non-test person in the denominator at each of
+    the last 60 completed month-ends. History is recalculated with current rules and code lists. Approximate
+    age and practice follow the monthly spine. HF3 (is_on_hfref_register) members. All four pillars need treatment
+    in the inclusive six calendar months to the reporting date, matching built therapy measures: ACE-I, ARB
+    or ARNI; any beta blocker; spironolactone or eplerenone; and any SGLT2 inhibitor. Finerenone is excluded.
+    HF-licensed beta blocker status from NHS_DRUG_REFSETS/LBB_COD is detail only. Personalised care adjustments
+    and exception codes are not applied. Diagnoses use known dates; other evidence uses clinical or order dates
+    through the reporting date.'
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind317
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the denominator.
+  - name: reporting_date
+    description: Assessment date; completed month-end in history.
+  - name: measurement_period_start
+    description: Start of the rolling cohort or treatment window, as described above.
+  - name: age
+    description: Age in years at the reporting date; historical birth dates are approximate.
+  - name: practice_code
+    description: ODS code of the registration practice at assessment.
+  - name: practice_name
+    description: Registration practice name at assessment.
+  - name: latest_record_date
+    description: Latest supporting evidence date through assessment; treatment measures may retain stale dates.
+  - name: is_in_denominator
+    description: Always true; personalised care adjustments are not applied.
+  - name: is_in_numerator
+    description: Whether every required component is met.
+  - name: indicator_status
+    description: ACHIEVED or the accepted reason for non-achievement.
+  - name: latest_ras_order_date
+    description: Latest order through assessment; null means none.
+  - name: is_ras_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: latest_beta_blocker_order_date
+    description: Latest order through assessment; null means none.
+  - name: is_beta_blocker_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: latest_hf_licensed_beta_blocker_order_date
+    description: Latest order through assessment; null means none.
+  - name: is_hf_licensed_beta_blocker_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: latest_mra_order_date
+    description: Latest order through assessment; null means none.
+  - name: is_mra_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+  - name: latest_sglt2_order_date
+    description: Latest order through assessment; null means none.
+  - name: is_sglt2_in_period
+    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
