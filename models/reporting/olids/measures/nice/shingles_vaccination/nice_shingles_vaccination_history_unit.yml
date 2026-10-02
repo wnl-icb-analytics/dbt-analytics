@@ -1,0 +1,52 @@
+unit_tests:
+- name: nice_ind219_birthday_boundaries_first_dose_and_precampaign_proxy
+  model: fct_person_shingles_vaccination_ind219_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -12201::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 75::NUMBER AS age, '1951-03-31'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12201::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 75::NUMBER AS age, '1951-03-31'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12201::NUMBER AS person_id, '2027-03-31'::DATE AS reporting_date, 75::NUMBER AS age, '1951-03-31'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12202::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 75::NUMBER AS age, '1951-04-30'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12202::NUMBER AS person_id, '2026-04-30'::DATE AS reporting_date, 75::NUMBER AS age, '1951-04-30'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12203::NUMBER AS person_id, '2023-03-31'::DATE AS reporting_date, 75::NUMBER AS age, '1948-03-31'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+  - input: ref('int_shingles_vaccination_all')
+    format: sql
+    rows: |-
+      SELECT -12201::NUMBER AS person_id, '2021-03-30'::TIMESTAMP_NTZ AS clinical_effective_date, TRUE AS is_administered
+      UNION ALL
+      SELECT -12201::NUMBER AS person_id, '2021-03-31'::TIMESTAMP_NTZ AS clinical_effective_date, TRUE AS is_administered
+      UNION ALL
+      SELECT -12201::NUMBER AS person_id, '2026-03-31'::TIMESTAMP_NTZ AS clinical_effective_date, TRUE AS is_administered
+      UNION ALL
+      SELECT -12201::NUMBER AS person_id, '2026-04-01'::TIMESTAMP_NTZ AS clinical_effective_date, TRUE AS is_administered
+      UNION ALL
+      SELECT -12202::NUMBER AS person_id, '2026-04-30'::TIMESTAMP_NTZ AS clinical_effective_date, TRUE AS is_administered
+  expect:
+    rows:
+    - person_id: -12201
+      reporting_date: '2026-03-31'
+      first_dose_70_to_75_date: '2021-03-31'
+      is_in_numerator: true
+    - person_id: -12201
+      reporting_date: '2026-04-30'
+      first_dose_70_to_75_date: '2021-03-31'
+      is_in_numerator: true
+    - person_id: -12202
+      reporting_date: '2026-04-30'
+      first_dose_70_to_75_date: '2026-04-30'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+  overrides:
+    macros:
+      calculate_nice_immunosuppression: SELECT -12203::NUMBER AS person_id, '2023-03-31'::DATE AS reporting_date,
+        '2023-01-01'::TIMESTAMP_NTZ AS latest_evidence_date
