@@ -1,0 +1,53 @@
+models:
+  - name: int_pregnancy_episodes_all
+    description: 'One row per pregnancy episode per person, for all people with pregnancy or outcome observations.
+
+      Same-day codes are ordered pregnancy, delivery, then pregnancy loss. A pregnancy code starts a new episode when there is no prior code, the prior code is an outcome, or the prior code is more than pregnancy_episode_max_weeks earlier.
+      An outcome starts an orphan episode only when no pregnancy code was recorded within the preceding pregnancy_episode_max_weeks (default 42). Its start is back-dated by that duration.
+      Repeated outcomes within that duration of the latest pregnancy code join the episode; its outcome stays the earliest delivery or loss.
+      The episode ends at the earliest outcome or at start plus the maximum duration when no outcome is recorded. The end is capped at that maximum duration.'
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - episode_id
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "(outcome_type <> 'delivery' or delivery_date is not null) and (outcome_type <> 'pregnancy_loss' or loss_date is not null) and (outcome_type <> 'fallback_max_duration' or (delivery_date is null and loss_date is null))"
+    columns:
+      - name: person_id
+        description: 'Unique identifier for the person'
+        data_tests:
+          - not_null
+      - name: episode_id
+        description: 'Sequential episode number per person (1 = earliest recorded pregnancy episode)'
+        data_tests:
+          - not_null
+      - name: episode_start
+        description: 'Date of the earliest pregnancy code in the episode, or for orphan-outcome episodes (no pregnancy code) the outcome date back-dated by pregnancy_episode_max_weeks'
+        data_tests:
+          - not_null
+      - name: episode_end
+        description: 'Earliest delivery or loss code date, or start plus pregnancy_episode_max_weeks if neither is recorded; capped at start plus that duration'
+        data_tests:
+          - not_null
+      - name: outcome_type
+        description: 'How the episode ended: delivery, pregnancy_loss, or fallback_max_duration'
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - delivery
+                  - pregnancy_loss
+                  - fallback_max_duration
+      - name: delivery_date
+        description: 'Earliest delivery code date in the episode, if any'
+      - name: loss_date
+        description: 'Earliest pregnancy-loss code date in the episode, if any'
+      - name: is_orphan_outcome_episode
+        description: 'TRUE when no pregnancy code preceded the outcome and episode_start is back-dated. Indicates antenatal coding was absent in primary care for this episode.'
