@@ -1,0 +1,103 @@
+models:
+  - name: int_nice_blood_pressure_all
+    description: |
+      NICE blood pressure control evidence for all people, including inactive and
+      deceased people. One chosen complete numeric pair per person and clinical
+      date, on or before the build date. Components share a parent and date.
+      Unparented components use each component's maximum plausible value, or its
+      unfiltered maximum when no value is plausible. These may combine readings.
+      Incomplete pairs are ignored. Valid pairs win on a shared day, then lowest
+      systolic, lowest diastolic and reading id. Invalid-only days remain available
+      without fallback to older valid evidence. Plausible ranges are 40-350 mmHg
+      systolic and 20-200 mmHg diastolic, inclusive. Dates retain the shared BP
+      source correction. This is control evidence; valid-pair recording evidence
+      has a separate definition.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - reading_date
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: ABPM_COD, BP_COD, DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD, SYSBP_COD
+    columns:
+      - name: person_id
+        description: Person with a complete numeric pair, regardless of current registration or death.
+        data_tests:
+          - not_null
+      - name: reading_date
+        description: Corrected clinical date of the selected complete pair.
+        data_tests:
+          - not_null
+      - name: reading_id
+        description: Parent observation id, or NOPARENT for date-level unparented components.
+      - name: systolic_value
+        description: Selected systolic value in mmHg, retained when implausible.
+      - name: diastolic_value
+        description: Selected diastolic value in mmHg, retained when implausible.
+      - name: is_valid_bp
+        description: Both components fall within the inclusive plausible ranges.
+      - name: is_home_bp_event
+        description: The selected pair has home monitoring evidence.
+      - name: is_abpm_bp_event
+        description: The selected pair has ambulatory monitoring evidence.
+      - name: applied_measurement_context
+        description: CLINIC or HBPM_ABPM context of the selected complete pair.
+
+unit_tests:
+  - name: nice_bp_daily_pair_selection
+    model: int_nice_blood_pressure_all
+    given:
+      - input: ref('int_blood_pressure_observations_base')
+        format: sql
+        rows: |
+          SELECT
+              -9101::NUMBER AS person_id,
+              column1::DATE AS effective_date,
+              column2::VARCHAR AS parent_observation_id,
+              column3::FLOAT AS result_value,
+              column4::BOOLEAN AS is_systolic_row,
+              NOT column4::BOOLEAN AS is_diastolic_row,
+              column5::BOOLEAN AS is_home_bp_row,
+              column6::BOOLEAN AS is_abpm_bp_row
+          FROM VALUES
+              ('2026-08-01', 'SYN_A', 140, TRUE, FALSE, FALSE),
+              ('2026-08-01', 'SYN_A', 80, FALSE, FALSE, FALSE),
+              ('2026-08-01', 'SYN_B', 130, TRUE, TRUE, FALSE),
+              ('2026-08-01', 'SYN_B', 90, FALSE, TRUE, FALSE),
+              ('2026-08-01', 'SYN_C', 130, TRUE, FALSE, TRUE),
+              ('2026-08-01', 'SYN_C', 80, FALSE, FALSE, TRUE),
+              ('2026-08-01', 'SYN_D', 130, TRUE, FALSE, FALSE),
+              ('2026-08-01', 'SYN_D', 80, FALSE, FALSE, FALSE),
+              ('2026-08-01', 'SYN_INVALID', 10, TRUE, FALSE, FALSE),
+              ('2026-08-01', 'SYN_INVALID', 80, FALSE, FALSE, FALSE),
+              ('2026-08-02', NULL, 150, TRUE, TRUE, FALSE),
+              ('2026-08-02', NULL, 170, TRUE, TRUE, FALSE),
+              ('2026-08-02', NULL, 400, TRUE, TRUE, FALSE),
+              ('2026-08-02', NULL, 70, FALSE, TRUE, FALSE),
+              ('2026-08-02', NULL, 90, FALSE, TRUE, FALSE),
+              ('2026-08-02', NULL, 220, FALSE, TRUE, FALSE),
+              ('2026-08-03', 'SYN_INCOMPLETE', 110, TRUE, FALSE, FALSE),
+              ('2026-08-04', 'SYN_LOWER_BOUND', 40, TRUE, FALSE, FALSE),
+              ('2026-08-04', 'SYN_LOWER_BOUND', 20, FALSE, FALSE, FALSE),
+              ('2026-08-05', 'SYN_UPPER_BOUND', 350, TRUE, FALSE, FALSE),
+              ('2026-08-05', 'SYN_UPPER_BOUND', 200, FALSE, FALSE, FALSE),
+              ('2026-09-01', 'SYN_INVALID_ONLY', 400, TRUE, FALSE, FALSE),
+              ('2026-09-01', 'SYN_INVALID_ONLY', 250, FALSE, FALSE, FALSE),
+              ('2026-09-02', NULL, 400, TRUE, FALSE, FALSE),
+              ('2026-09-02', NULL, 500, TRUE, FALSE, FALSE),
+              ('2026-09-02', NULL, 220, FALSE, FALSE, FALSE),
+              ('2026-09-02', NULL, 250, FALSE, FALSE, FALSE)
+    expect:
+      rows:
+        - {person_id: -9101, reading_date: '2026-08-01', reading_id: SYN_C, systolic_value: 130, diastolic_value: 80, is_valid_bp: true, is_home_bp_event: false, is_abpm_bp_event: true, applied_measurement_context: HBPM_ABPM}
+        - {person_id: -9101, reading_date: '2026-08-02', reading_id: NOPARENT, systolic_value: 170, diastolic_value: 90, is_valid_bp: true, is_home_bp_event: true, is_abpm_bp_event: false, applied_measurement_context: HBPM_ABPM}
+        - {person_id: -9101, reading_date: '2026-08-04', reading_id: SYN_LOWER_BOUND, systolic_value: 40, diastolic_value: 20, is_valid_bp: true, is_home_bp_event: false, is_abpm_bp_event: false, applied_measurement_context: CLINIC}
+        - {person_id: -9101, reading_date: '2026-08-05', reading_id: SYN_UPPER_BOUND, systolic_value: 350, diastolic_value: 200, is_valid_bp: true, is_home_bp_event: false, is_abpm_bp_event: false, applied_measurement_context: CLINIC}
+        - {person_id: -9101, reading_date: '2026-09-01', reading_id: SYN_INVALID_ONLY, systolic_value: 400, diastolic_value: 250, is_valid_bp: false, is_home_bp_event: false, is_abpm_bp_event: false, applied_measurement_context: CLINIC}
+        - {person_id: -9101, reading_date: '2026-09-02', reading_id: NOPARENT, systolic_value: 500, diastolic_value: 250, is_valid_bp: false, is_home_bp_event: false, is_abpm_bp_event: false, applied_measurement_context: CLINIC}

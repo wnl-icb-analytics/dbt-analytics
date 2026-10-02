@@ -7,8 +7,9 @@ models:
       build date.
 
       Achievement requires the last recorded HbA1c in the preceding 12 months to
-      be valid and at or below 58 mmol/mol. An invalid last result is unassessable
-      and is not replaced by an older result.
+      be valid and at or below 58 mmol/mol. A value-free or invalid last result
+      is unassessable and is not replaced by an older result. A valid result on the
+      same date takes precedence.
 
       People with fructosamine but no HbA1c test in the period, or with maximum
       tolerated diabetes treatment recorded in the period, are excluded.
@@ -32,8 +33,9 @@ models:
             date.
 
             Achievement requires the last recorded HbA1c in the preceding 12 months to be
-            valid and at or below 58 mmol/mol. An invalid last result is unassessable and
-            is not replaced by an older result.
+            valid and at or below 58 mmol/mol. A value-free or invalid last result
+            is unassessable and is not replaced by an older result. A valid result on the
+            same date takes precedence.
 
             People with fructosamine but no HbA1c test in the period, or with maximum
             tolerated diabetes treatment recorded in the period, are excluded.
@@ -44,6 +46,10 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND179"
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "not is_hba1c_recorded_in_period or is_latest_hba1c_valid or (indicator_status = 'NOT_ASSESSABLE' and not is_in_numerator)"
     columns:
       - name: person_id
         description: Person in the indicator denominator
@@ -96,8 +102,9 @@ models:
       date.
 
       Achievement requires the last recorded HbA1c in the preceding 12 months to
-      be valid and at or below 75 mmol/mol. An invalid last result is unassessable
-      and is not replaced by an older result.
+      be valid and at or below 75 mmol/mol. A value-free or invalid last result
+      is unassessable and is not replaced by an older result. A valid result on the
+      same date takes precedence.
 
       People with fructosamine but no HbA1c test in the period, or with maximum
       tolerated diabetes treatment recorded in the period, are excluded.
@@ -120,8 +127,9 @@ models:
             diabetes register with moderate or severe frailty, assessed on the build date.
 
             Achievement requires the last recorded HbA1c in the preceding 12 months to be
-            valid and at or below 75 mmol/mol. An invalid last result is unassessable and
-            is not replaced by an older result.
+            valid and at or below 75 mmol/mol. A value-free or invalid last result
+            is unassessable and is not replaced by an older result. A valid result on the
+            same date takes precedence.
 
             People with fructosamine but no HbA1c test in the period, or with maximum
             tolerated diabetes treatment recorded in the period, are excluded.
@@ -132,6 +140,10 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND180"
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "not is_hba1c_recorded_in_period or is_latest_hba1c_valid or (indicator_status = 'NOT_ASSESSABLE' and not is_in_numerator)"
     columns:
       - name: person_id
         description: Person in the indicator denominator
@@ -183,9 +195,18 @@ models:
       to 79 on the diabetes register without moderate or severe frailty, assessed
       on the build date.
 
-      Achievement requires the latest blood pressure in the preceding 12 months to
+      Achievement requires the latest complete blood pressure pair in the preceding 12 months to
       be below 140/90 mmHg in clinic or 135/85 mmHg at home or by ambulatory
       monitoring. Both components must be strictly below their thresholds.
+
+      The latest date with a complete systolic/diastolic pair is used. Incomplete
+      single components are ignored. On that date, valid pairs take precedence, with
+      lowest systolic then lowest diastolic selected because within-day order is
+      unavailable. If no pair on that date is plausible (systolic 40-350 mmHg and
+      diastolic 20-200 mmHg, inclusive), the result is NOT_ASSESSABLE, without falling
+      back to an older pair. Unparented components use date-level maxima of plausible
+      values, which may combine different readings. Each component uses its
+      unfiltered maximum only when no plausible value exists on that date.
 
       People outside the age range or with an unknown age are excluded.
 
@@ -207,9 +228,18 @@ models:
             to 79 on the diabetes register without moderate or severe frailty, assessed on
             the build date.
 
-            Achievement requires the latest blood pressure in the preceding 12 months to
+            Achievement requires the latest complete blood pressure pair in the preceding 12 months to
             be below 140/90 mmHg in clinic or 135/85 mmHg at home or by ambulatory
             monitoring. Both components must be strictly below their thresholds.
+
+            The latest date with a complete systolic/diastolic pair is used. Incomplete
+            single components are ignored. On that date, valid pairs take precedence, with
+            lowest systolic then lowest diastolic selected because within-day order is
+            unavailable. If no pair on that date is plausible (systolic 40-350 mmHg and
+            diastolic 20-200 mmHg, inclusive), the result is NOT_ASSESSABLE, without falling
+            back to an older pair. Unparented components use date-level maxima of plausible
+            values, which may combine different readings. Each component uses its
+            unfiltered maximum only when no plausible value exists on that date.
 
             People outside the age range or with an unknown age are excluded.
 
@@ -244,9 +274,11 @@ models:
       - name: latest_frailty_severity
         description: Latest coded frailty severity from the frailty register; null when none recorded
       - name: latest_bp_date
-        description: Date of the latest valid paired blood pressure reading, regardless of period; null when none is recorded
+        description: Date of the latest complete blood pressure pair, regardless of period; null when none is recorded
       - name: latest_record_date
         description: Date of the latest reading when it falls in the period; null otherwise
+      - name: is_valid_bp
+        description: Whether the selected complete pair is plausible; null when no complete pair exists
       - name: latest_systolic_value
         description: Latest systolic blood pressure in mmHg
       - name: latest_diastolic_value
@@ -264,13 +296,17 @@ models:
       - name: is_bp_recorded_in_last_12m
         description: Whether the latest BP was recorded between measurement_period_start and the reporting date
       - name: is_latest_bp_within_indicator_target
-        description: Whether the latest BP is below both indicator thresholds, regardless of recording date
+        description: Whether the latest complete pair is valid and below both indicator thresholds, regardless of recording date
       - name: is_in_denominator
         description: Always true; every row is an eligible person before personalised care adjustments
       - name: is_in_numerator
         description: Whether the person meets the indicator on the reporting date
       - name: indicator_status
-        description: ACHIEVED or the reason not achieved
+        description: ACHIEVED, ABOVE_TARGET, NOT_ASSESSABLE or NOT_RECORDED_IN_PERIOD
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'ABOVE_TARGET', 'NOT_ASSESSABLE', 'NOT_RECORDED_IN_PERIOD']
   - name: fct_person_diabetes_acr_ind111
     description: |
       NICE IND111. Urine albumin:creatinine ratio testing in diabetes. One row per
@@ -436,7 +472,7 @@ models:
       assessed on the build date.
 
       Achievement requires an HbA1c or fasting plasma glucose test in the
-      preceding 12 months.
+      preceding 12 months. A numeric result is not required.
 
       People under 18 or with an unknown age are excluded. This NICE population
       does not include gestational diabetes alone.
@@ -460,7 +496,7 @@ models:
             diabetes, assessed on the build date.
 
             Achievement requires an HbA1c or fasting plasma glucose test in the preceding
-            12 months.
+            12 months. A numeric result is not required.
 
             People under 18 or with an unknown age are excluded. This NICE population does
             not include gestational diabetes alone.
@@ -479,7 +515,8 @@ models:
       register whose latest episode was more than 12 months ago, assessed on the
       build date.
 
-      Achievement requires an HbA1c test in the preceding 12 months.
+      Achievement requires an HbA1c test in the preceding 12 months. A numeric
+      result is not required.
 
       The original NICE NM151 guidance resolves the current page's contradictory
       episode timing. The existing exclusion of any diabetes diagnosis more than
@@ -505,7 +542,8 @@ models:
             gestational diabetes register whose latest episode was more than 12 months
             ago, assessed on the build date.
 
-            Achievement requires an HbA1c test in the preceding 12 months.
+            Achievement requires an HbA1c test in the preceding 12 months. A numeric
+            result is not required.
 
             The original NICE NM151 guidance resolves the current page's contradictory
             episode timing. The existing exclusion of any diabetes diagnosis more than 12
@@ -526,8 +564,9 @@ models:
       the build date.
 
       Achievement requires the last recorded HbA1c in the preceding 12 months to
-      be valid and at or below 58 mmol/mol. An invalid last result is unassessable
-      and is not replaced by an older result.
+      be valid and at or below 58 mmol/mol. A value-free or invalid last result
+      is unassessable and is not replaced by an older result. A valid result on the
+      same date takes precedence.
 
       People with fructosamine but no HbA1c test in the period, or with maximum
       tolerated diabetes treatment recorded in the period, are excluded. There is
@@ -551,8 +590,9 @@ models:
             diabetes register, assessed on the build date.
 
             Achievement requires the last recorded HbA1c in the preceding 12 months to be
-            valid and at or below 58 mmol/mol. An invalid last result is unassessable and
-            is not replaced by an older result.
+            valid and at or below 58 mmol/mol. A value-free or invalid last result
+            is unassessable and is not replaced by an older result. A valid result on the
+            same date takes precedence.
 
             People with fructosamine but no HbA1c test in the period, or with maximum
             tolerated diabetes treatment recorded in the period, are excluded. There is no
@@ -564,6 +604,10 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND165"
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "not is_hba1c_recorded_in_period or is_latest_hba1c_valid or (indicator_status = 'NOT_ASSESSABLE' and not is_in_numerator)"
     columns:
       - name: person_id
         description: Person in the indicator denominator
@@ -621,8 +665,9 @@ models:
       the build date.
 
       Achievement requires the last recorded HbA1c in the preceding 12 months to
-      be valid and at or below 64 mmol/mol. An invalid last result is unassessable
-      and is not replaced by an older result.
+      be valid and at or below 64 mmol/mol. A value-free or invalid last result
+      is unassessable and is not replaced by an older result. A valid result on the
+      same date takes precedence.
 
       People with fructosamine but no HbA1c test in the period, or with maximum
       tolerated diabetes treatment recorded in the period, are excluded. There is
@@ -646,8 +691,9 @@ models:
             diabetes register, assessed on the build date.
 
             Achievement requires the last recorded HbA1c in the preceding 12 months to be
-            valid and at or below 64 mmol/mol. An invalid last result is unassessable and
-            is not replaced by an older result.
+            valid and at or below 64 mmol/mol. A value-free or invalid last result
+            is unassessable and is not replaced by an older result. A valid result on the
+            same date takes precedence.
 
             People with fructosamine but no HbA1c test in the period, or with maximum
             tolerated diabetes treatment recorded in the period, are excluded. There is no
@@ -659,6 +705,10 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND135"
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "not is_hba1c_recorded_in_period or is_latest_hba1c_valid or (indicator_status = 'NOT_ASSESSABLE' and not is_in_numerator)"
     columns:
       - name: person_id
         description: Person in the indicator denominator
@@ -716,8 +766,9 @@ models:
       the build date.
 
       Achievement requires the last recorded HbA1c in the preceding 12 months to
-      be valid and at or below 75 mmol/mol. An invalid last result is unassessable
-      and is not replaced by an older result.
+      be valid and at or below 75 mmol/mol. A value-free or invalid last result
+      is unassessable and is not replaced by an older result. A valid result on the
+      same date takes precedence.
 
       People with fructosamine but no HbA1c test in the period, or with maximum
       tolerated diabetes treatment recorded in the period, are excluded. There is
@@ -741,8 +792,9 @@ models:
             diabetes register, assessed on the build date.
 
             Achievement requires the last recorded HbA1c in the preceding 12 months to be
-            valid and at or below 75 mmol/mol. An invalid last result is unassessable and
-            is not replaced by an older result.
+            valid and at or below 75 mmol/mol. A value-free or invalid last result
+            is unassessable and is not replaced by an older result. A valid result on the
+            same date takes precedence.
 
             People with fructosamine but no HbA1c test in the period, or with maximum
             tolerated diabetes treatment recorded in the period, are excluded. There is no
@@ -754,6 +806,10 @@ models:
           usage_contexts:
             - "NICE_GUIDANCE"
           sort_order: "NICE_IND136"
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "not is_hba1c_recorded_in_period or is_latest_hba1c_valid or (indicator_status = 'NOT_ASSESSABLE' and not is_in_numerator)"
     columns:
       - name: person_id
         description: Person in the indicator denominator
@@ -1073,7 +1129,8 @@ models:
       date.
 
       People with unresolved diabetes or an unknown age are excluded. An
-      invitation alone does not count.
+      invitation alone does not count. A same-day invitation does not erase a
+      referral or decline.
 
       Personalised care adjustments are not applied.
     config:
@@ -1098,7 +1155,8 @@ models:
             date.
 
             People with unresolved diabetes or an unknown age are excluded. An invitation
-            alone does not count.
+            alone does not count. A same-day invitation does not erase a referral or
+            decline.
 
             Measured before personalised care adjustments.
           is_qof: false
@@ -1131,7 +1189,7 @@ models:
       - name: diagnosis_date
         description: Diagnosis date anchoring the indicator window
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: Earliest qualifying referral or decline date on or after diagnosis; null if none
       - name: is_in_denominator
         description: Always true; every row is an eligible person before personalised care adjustments
       - name: is_in_numerator
@@ -1153,10 +1211,14 @@ models:
       Achievement requires all eight processes in the preceding 12 months: BMI,
       blood pressure, HbA1c, cholesterol, smoking status, foot examination, urine
       ACR and eGFR. The completed-process count shows how many are recorded.
+      BMI retains the existing valid recorded or calculated adult evidence and adds
+      valid numeric BMIVAL_COD recording for under-18s (10 to 150 kg/m2 inclusive),
+      excluding future dates.
 
       eGFR is required following NICE's February 2026 correction. Serum creatinine
-      alone does not count. ACR and eGFR tests count without numeric results. A
-      completed foot examination counts despite same-date or later declined,
+      alone does not count. HbA1c tests count with or without a numeric value and
+      regardless of result validity. ACR and eGFR tests count without numeric
+      results. A completed foot examination counts despite same-date or later declined,
       unsuitable or referral records.
 
       Personalised care adjustments are not applied.
@@ -1179,10 +1241,14 @@ models:
             Achievement requires all eight processes in the preceding 12 months: BMI,
             blood pressure, HbA1c, cholesterol, smoking status, foot examination, urine
             ACR and eGFR. The completed-process count shows how many are recorded.
+            BMI retains the existing valid recorded or calculated adult evidence and adds
+            valid numeric BMIVAL_COD recording for under-18s (10 to 150 kg/m2 inclusive),
+            excluding future dates.
 
             eGFR is required following NICE's February 2026 correction. Serum creatinine
-            alone does not count. ACR and eGFR tests count without numeric results. A
-            completed foot examination counts despite same-date or later declined,
+            alone does not count. HbA1c tests count with or without a numeric value and
+            regardless of result validity. ACR and eGFR tests count without numeric
+            results. A completed foot examination counts despite same-date or later declined,
             unsuitable or referral records.
 
             Measured before personalised care adjustments.

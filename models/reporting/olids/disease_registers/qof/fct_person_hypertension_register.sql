@@ -8,7 +8,8 @@
 }}
 
 -- Hypertension Register (QOF Pattern 6: Complex Clinical Logic)
--- Business Logic: Unresolved hypertension, all ages. Clinical staging uses latest BP with context-specific NICE thresholds
+-- Business Logic: Unresolved HTN diagnosis (QOF v51 HYP_REG, no age restriction) + Project-specific NICE-informed staging of the latest BP
+-- Staging uses context-specific thresholds, not the NG136 diagnostic definition based on a confirmed ABPM/HBPM average.
 -- Complex Logic: BP staging varies by measurement context (Home/ABPM vs Clinic readings)
 
 WITH hypertension_person_aggregates AS (
@@ -91,34 +92,29 @@ register_logic AS (
     SELECT
         diag.person_id,
 
-        -- No age restriction for the HTN register
         diag.earliest_diagnosis_date,
-
-        -- QOF register logic: active hypertension diagnosis required
         diag.latest_diagnosis_date,
-
-        -- Final register inclusion: unresolved hypertension, all ages
         diag.latest_resolved_date,
 
-        -- Clinical dates
+        -- Latest BP reading
         bp.latest_bp_date,
         bp.latest_bp_systolic_value,
         bp.latest_bp_diastolic_value,
-
-        -- Latest BP data from event-based structure
         bp.bp_measurement_context,
         bp.is_home_bp_event,
         bp.is_abpm_bp_event,
+
+        -- Traceability
         diag.all_hypertension_concept_codes,
         diag.all_hypertension_concept_displays,
         diag.all_resolved_concept_codes,
-
-        -- NICE Guidelines: Context-specific BP staging with different thresholds
         diag.all_resolved_concept_displays,
 
-        -- Traceability
         age.age,
+        -- Informational only: the register has no age restriction
         COALESCE(age.age >= 18, FALSE) AS meets_age_criteria,
+        -- Stricter than is_on_register: FALSE when the latest resolution is on
+        -- the same day as the latest diagnosis, although the person stays on the register
         CASE
             WHEN diag.latest_resolved_date IS NULL THEN TRUE -- Never resolved
             WHEN diag.latest_diagnosis_date > diag.latest_resolved_date THEN TRUE -- Re-diagnosed after resolution
@@ -135,7 +131,8 @@ register_logic AS (
             ), FALSE
         ) AS is_on_register,
 
-        -- Person demographics
+        -- Project-specific NICE-informed staging of the latest BP, with context-specific thresholds.
+        -- This is not the NG136 diagnostic definition based on a confirmed ABPM/HBPM average.
         CASE
             WHEN
                 bp.latest_bp_systolic_value IS NULL

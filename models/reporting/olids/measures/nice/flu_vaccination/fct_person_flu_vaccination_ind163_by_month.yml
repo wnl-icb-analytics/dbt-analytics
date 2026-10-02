@@ -1,0 +1,58 @@
+models:
+- name: fct_person_flu_vaccination_ind163_by_month
+  description: NICE IND163. One row per active, living, non-test eligible person and completed month-end.
+    Diabetes register members, excluding persisting flu contraindications by month-end and expiring contraindications
+    in the inclusive preceding 12 months. Achieved by vaccination in the selected closed 1 August to 31
+    March season. January-March selects the season starting two years earlier; April-December selects
+    the season starting one year earlier. NICE and QOF v51 do not settle the off-season rollover. Recalculated
+    for the last 60 completed month-ends with today's rules and code lists. Registration and practice
+    use the existing monthly spine. Registration starts are inclusive; ends and deaths are exclusive.
+    Overlapping registrations retain the spine's current-registration priority. Birth and death dates
+    are approximate; missing birth dates prevent historical active rows. Current gender and test flags
+    apply retrospectively. Diagnosis membership uses clinical and recorded dates; other evidence uses
+    its clinical or order date through month-end. Later corrections and code-list changes can alter earlier
+    results. Personalised care adjustments are not applied. The five-year source retention policy can
+    limit older evidence.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind163
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end at which eligibility and evidence are assessed.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at month-end under the shared spine attribution.
+  - name: practice_name
+    description: Practice name at month-end under the shared spine attribution.
+  - name: latest_vaccination_date
+    description: Latest vaccination date in the season window; null when none
+  - name: is_laiv
+    description: Whether a vaccination in the window was the live attenuated nasal vaccine; null when
+      none
+  - name: latest_record_date
+    description: Date of the latest qualifying record in the period; null when none
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

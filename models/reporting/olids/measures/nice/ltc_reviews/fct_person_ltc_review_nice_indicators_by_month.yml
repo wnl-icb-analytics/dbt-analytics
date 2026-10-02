@@ -1,0 +1,78 @@
+models:
+- name: fct_person_ltc_review_nice_indicators_by_month
+  description: LTC review NICE results. One row per eligible person, indicator and completed month-end.
+    Covers IND104, IND110, IND139, IND142, IND191, IND195, IND223, IND265, IND266 and IND273. Each member
+    retains its own population, review window and documented limitations. IND104 uses the financial year
+    starting 1 April; IND223 uses a 24-month diagnosis cohort with a 12-month review deadline. IND266
+    uses the historical ethnicity interval at month-end. Dementia codes do not establish the face-to-face
+    setting. An unachieved result may retain supporting review detail. Branches without a detail field
+    emit typed nulls. Recalculated at monthly refresh for the last 60 completed month-ends using today's
+    rules and code lists. Registration and practice come from the existing monthly spine. Registration
+    start is inclusive; registration end and death dates are exclusive. Overlapping registrations retain
+    the spine's current-registration priority. Birth and death dates are approximate; missing birth dates
+    prevent historical active rows. Current gender and test flags apply retrospectively. Register diagnosis
+    state uses clinical and recorded dates. Review and test evidence uses its clinical date through month-end.
+    Later corrections and current code-list changes can alter earlier results. Personalised care adjustments
+    are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end, calculated from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice code at month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at month-end under the monthly spine attribution.
+  - name: latest_review_date
+    description: Date of the latest review, care plan, health check or test record for the indicator;
+      null when none; typed null for branches that do not emit it
+  - name: latest_copd_exacerbation_count_date
+    description: Date of the latest record of the number of COPD exacerbations; null when none or not
+      applicable
+  - name: latest_mrc_dyspnoea_date
+    description: Date of the latest MRC dyspnoea grade; null when none; typed null for branches that do
+      not emit it
+  - name: latest_nyha_date
+    description: Date of the latest NYHA classification; null when none; typed null for branches that
+      do not emit it
+  - name: latest_medication_review_date
+    description: Date of the latest medication review of any coded type; null when none; typed null for
+      branches that do not emit it
+  - name: latest_health_action_plan_date
+    description: Date of the latest learning disability health action plan; null when none; typed null
+      for branches that do not emit it
+  - name: has_ethnicity_recorded
+    description: Whether an ethnicity category other than Unknown is recorded; typed null for branches
+      that do not emit it
+  - name: diagnosis_date
+    description: Diagnosis date anchoring the indicator window; null when none; typed null for branches
+      that do not emit it
+  - name: latest_record_date
+    description: Date of the latest qualifying record in the period; null when none
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD

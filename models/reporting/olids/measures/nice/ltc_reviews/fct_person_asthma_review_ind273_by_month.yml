@@ -1,0 +1,54 @@
+models:
+- name: fct_person_asthma_review_ind273_by_month
+  description: NICE IND273. One row per eligible person, indicator and completed month-end. People aged
+    5 and over with an unresolved NICE asthma diagnosis; no recent-medication requirement. Same-date resolution
+    wins. A review in the preceding 12 months needs a same-day action plan and exacerbation count in (review
+    minus one month, review]. An earlier complete review can qualify after a later incomplete review.
+    Recalculated at monthly refresh for the last 60 completed month-ends using today's rules and code
+    lists. Registration and practice come from the existing monthly spine. Registration start is inclusive,
+    end and death dates exclusive. Overlapping registrations retain the spine's current-registration priority.
+    Birth and death dates are approximate; missing birth dates prevent historical active rows. Current
+    gender and test flags apply retrospectively. Diagnosis state uses both clinical and recorded dates.
+    Other evidence uses its clinical or order date through the month-end. Later corrections and current
+    code-list changes can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind273
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
+      row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at the month-end, calculated from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS practice code at the month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at the month-end under the monthly spine attribution.
+  - name: latest_review_date
+    description: Latest asthma review date through the month-end, including incomplete or older reviews. Null when none.
+  - name: latest_record_date
+    description: Latest complete asthma review in the inclusive preceding 12 months. Null when none qualifies.
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

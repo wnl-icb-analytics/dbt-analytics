@@ -1,0 +1,73 @@
+models:
+- name: fct_person_childhood_immunisation_ind226_by_month
+  description: |
+    NICE IND226 MenB vaccination by 18 months. One row per eligible child and completed month-end.
+    The child must be registered, living and non-test at that date, with the approximate 18-month
+    milestone in (month-end minus 12 months, month-end].
+
+    Achieved with two primary MenB doses before 12 months and a booster from 12 months up to, but
+    not including, 18 months. This age split is the local interpretation of primary and booster
+    doses. Doses count distinct administration or vaccine order dates. Completed-year event age 0
+    identifies primary doses and age 1 identifies booster doses. Missing event age uses the
+    approximate first birthday. The 18-month upper boundary and population milestone use the
+    approximate birth date.
+
+    Excludes children with a contraindication record for the vaccine, as NICE specifies.
+
+    Recalculated at monthly refresh for the last 60 completed month-ends using today's rules and
+    code lists. Registration and practice use the existing monthly spine. Registration start is
+    inclusive; registration end and death dates are exclusive. Overlapping registrations retain the
+    spine's current-registration priority. Birth and death dates are approximate; missing birth
+    dates prevent historical active rows. Current gender and test flags apply retrospectively.
+    Diagnosis state uses clinical and recorded dates. Vaccine evidence uses clinical or order dates
+    through the month-end. Later corrections and code-list changes can alter earlier results.
+    Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind226
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+  - name: measurement_period_start
+    description: Exclusive lower boundary of the preceding 12-month milestone cohort.
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Registration practice at the month-end under the existing monthly spine attribution.
+  - name: practice_name
+    description: Registration practice at the month-end under the existing monthly spine attribution.
+  - name: birth_date_approx
+    description: Approximate birth date (mid-month)
+  - name: milestone_date
+    description: Date the child reached the indicator's milestone age, which falls in the preceding 12
+      months
+  - name: doses_in_window
+    description: Distinct administration dates for the indicator's vaccine within its age window
+  - name: is_in_denominator
+    description: Always true; every row is an eligible child before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the child received the required doses within the age window
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+  - name: primary_doses_by_12_months
+    description: Distinct MenB administration or vaccine order dates at completed-year event age 0; missing
+      event age uses the approximate first birthday.
+  - name: booster_doses_12_to_18_months
+    description: Distinct MenB administration or vaccine order dates at completed-year event age 1 and
+      before approximate 18 months; missing event age uses the approximate first birthday.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

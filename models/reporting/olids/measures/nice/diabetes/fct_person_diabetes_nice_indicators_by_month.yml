@@ -1,0 +1,60 @@
+models:
+- columns:
+  - description: Person in the indicator denominator
+    name: person_id
+  - description: NICE indicator identifier
+    name: indicator_id
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Completed month-end at which eligibility and evidence are assessed.
+  - name: measurement_period_start
+    description: Inclusive start of the member indicator's measurement period.
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the member indicator.
+  - name: practice_code
+    description: ODS practice code at month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at month-end under the monthly spine attribution.
+  - name: is_in_denominator
+    description: Always true. Every row is an eligible person before personalised care adjustments.
+  - name: is_in_numerator
+    description: Whether the person meets the member indicator at month-end.
+  - description: ACHIEVED, ABOVE_TARGET, NOT_ASSESSABLE, NOT_RECORDED_IN_PERIOD; IND134 also uses NOT_TREATED_IN_PERIOD
+      and NEVER_TREATED
+    name: indicator_status
+  - description: Date of the latest qualifying record for the indicator; null when none in the period
+    name: latest_record_date
+  - description: Last recorded HbA1c in mmol/mol for the HbA1c indicators; null for other indicators
+    name: latest_hba1c_value
+  - description: Inclusive HbA1c threshold in mmol/mol for the HbA1c indicators; null for other indicators
+    name: hba1c_threshold
+  - description: Latest systolic BP in mmHg for IND249; null for other indicators
+    name: latest_systolic_value
+  - description: Latest diastolic BP in mmHg for IND249; null for other indicators
+    name: latest_diastolic_value
+  - description: Latest coded frailty severity for the HbA1c and IND249 indicators; null for other indicators
+    name: latest_frailty_severity
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  description: Monthly NICE diabetes, NDH and gestational diabetes indicators. One row per eligible person,
+    indicator and completed month-end. Each member retains its documented population, threshold and measurement
+    window. Recalculated for the last 60 completed month-ends using today's rules and code lists. Registration
+    and practice use the existing monthly spine, with registration start inclusive and registration end
+    and death exclusive. Overlapping registrations retain the spine's current-registration priority. Birth
+    and death dates are approximate; missing birth dates prevent historical active rows. Current gender
+    and test flags apply retrospectively. Diagnosis state uses clinical and recorded dates; test and BP
+    evidence use their clinical dates through month-end. Later corrections can alter earlier results.
+    Personalised care adjustments are not applied.
+  name: fct_person_diabetes_nice_indicators_by_month

@@ -1,0 +1,34 @@
+models:
+- name: int_nice_flu_vaccination_all
+  description: NICE flu vaccination evidence for all people, including inactive and deceased people. One
+    row per source kind, source event and UKHSA_FLU cluster. FLUVAX_COD and LAIV_COD administrations and
+    FLURX_COD and LAIVRX_COD vaccine orders are retained without a campaign or season cut-off.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - source_kind
+        - source_event_id
+        - cluster_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: FLUVAX_COD,LAIV_COD,FLURX_COD,LAIVRX_COD
+        source: UKHSA_FLU
+  columns:
+  - name: person_id
+    description: Person with vaccination evidence, regardless of current registration or vital status.
+  - name: source_kind
+    description: OBSERVATION or MEDICATION_ORDER.
+  - name: source_event_id
+    description: Source observation or medication-order key. Unique with source kind and cluster.
+  - name: cluster_id
+    description: UKHSA_FLU administration or vaccine-order cluster.
+  - name: event_date
+    description: Clinical or order date. Observations retain get_observations date correction and undated
+      sentinel.
+  - name: is_laiv
+    description: Whether this event belongs to a live attenuated nasal vaccine cluster.

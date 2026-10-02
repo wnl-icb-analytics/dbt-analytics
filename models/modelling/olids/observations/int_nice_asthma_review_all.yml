@@ -1,0 +1,36 @@
+models:
+- name: int_nice_asthma_review_all
+  description: NICE asthma review components for all people, including inactive and deceased
+    people. One row per person and clinical date with a review, written action plan
+    or exacerbation count. is_complete_review requires a review and plan on that
+    date plus a count in (review date minus one month, review date], as QOF v51
+    AST015 specifies. Dates use the clinical evidence in int_ltc_review_all. No
+    registration or medication filter applies.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - review_date
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: REV_COD,WRITPASTP_COD,ASTEXACB_COD
+        source: PCD
+  columns:
+  - name: person_id
+    description: Person with asthma review evidence.
+  - name: review_date
+    description: Clinical date of the review component records.
+  - name: has_review
+    description: Whether an ASTHMA_REVIEW is recorded on this date.
+  - name: has_action_plan
+    description: Whether an ASTHMA_ACTION_PLAN is recorded on this date.
+  - name: has_exacerbation_count
+    description: Whether an ASTHMA_EXACERBATION_COUNT is recorded on this date.
+  - name: is_complete_review
+    description: Whether this review has the same-day plan and preceding-month count required by QOF v51
+      AST015.

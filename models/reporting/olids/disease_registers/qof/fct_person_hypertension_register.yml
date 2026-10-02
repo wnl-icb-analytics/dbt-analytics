@@ -1,10 +1,18 @@
 models:
   - name: fct_person_hypertension_register
-    description: 'QOF hypertension register for patients aged 18+ with active hypertension
-      diagnosis.
+    description: 'QOF v51 hypertension register (HYP_REG) for people of any age with
+      an unresolved hypertension diagnosis.
 
-      One row per person with latest HTN_COD > latest HTNRES_COD, including clinical
-      staging based on NICE-aligned BP thresholds.'
+      One row per person with a diagnosis and no resolution code, or whose latest
+      HTN_COD is on or after their latest HTNRES_COD, so a same-day resolution does
+      not remove them. Diagnosis, resolution and BP evidence is dated on or before today.
+
+      Project-specific, NICE-informed staging uses the latest paired BP reading,
+      not the NG136 diagnostic definition based on a confirmed ABPM/HBPM average.
+      Thresholds in mmHg (systolic or diastolic): Home/ABPM stage 1 >= 135 or >= 85,
+      stage 2 >= 155 or >= 95; clinic stage 1 >= 140 or >= 90, stage 2 >= 160 or >= 100.
+      Severe HTN in either context: systolic >= 180 or diastolic >= 120, assessed first;
+      stage 2 takes precedence over stage 1.'
 
     tests:
       - dbt_utils.at_least_one:
@@ -20,10 +28,15 @@ models:
           name_short: "Hypertension"
           description_short: "QOF hypertension register"
           description_long: >
-            Hypertension diagnosed using QOF criteria: Age ≥18 years with active hypertension  diagnosis
-            where latest HTN code is more recent than any resolution code. Includes  clinical
-            staging based on NICE-aligned BP thresholds with context-specific measurement  criteria
-            (Home/ABPM vs Clinic readings). Maps to QOF indicator HTN005 (Hypertension  Register).
+            Hypertension diagnosed using QOF v51 criteria: unresolved hypertension diagnosis at
+            any age, with no resolution code or where the latest HTN code is on or after
+            the latest resolution code.
+            Project-specific, NICE-informed staging uses the latest paired BP reading,
+            not the NG136 diagnostic definition based on a confirmed ABPM/HBPM average.
+            Thresholds in mmHg (systolic or diastolic): Home/ABPM stage 1 >= 135 or >= 85,
+            stage 2 >= 155 or >= 95; clinic stage 1 >= 140 or >= 90, stage 2 >= 160 or >= 100.
+            Severe HTN in either context: systolic >= 180 or diastolic >= 120, assessed first;
+            stage 2 takes precedence over stage 1. Maps to QOF indicator HTN005 (Hypertension Register).
             Uses HTN_COD for diagnosis codes and HTNRES_COD for resolution codes.
           is_qof: true
           qof_indicator: "HTN005"
@@ -68,8 +81,9 @@ models:
         description: 'Array of all hypertension concept displays for this patient'
 
       - name: meets_age_criteria
-        description: 'Flag indicating patient meets age criteria (≥18 years for hypertension
-          register)'
+        description: 'Age 18 or over. Informational only; the register has no age restriction.'
 
       - name: has_active_htn_diagnosis
-        description: 'Flag indicating patient has an active hypertension diagnosis'
+        description: 'TRUE when there is no resolution code (latest_resolved_date is null)
+          or the latest diagnosis is after the latest resolution. FALSE when the latest
+          resolution is on the same day as the latest diagnosis; those people stay on the register.'
