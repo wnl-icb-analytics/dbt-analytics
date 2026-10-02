@@ -12,8 +12,8 @@
             {% do ids.append(indicator.id) %}
         {% endif %}
     {% endfor %}
-    {% if ids | unique | list | length != 105 %}
-        {{ exceptions.raise_compiler_error('Expected 105 current NICE measure definitions.') }}
+    {% if ids | length != 128 or ids | unique | list | length != 128 %}
+        {{ exceptions.raise_compiler_error('Expected 128 unique current NICE measure definitions.') }}
     {% endif %}
 {% endif %}
 

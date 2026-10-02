@@ -20,7 +20,7 @@ The evidence figures in `Not built` rows describe coded activity in the close-ou
 | IND83 | Bipolar, schizophrenia and other psychoses: annual BMI recording | Built | `fct_person_smi_bmi_ind83` |
 | IND84 | Bipolar, schizophrenia and other psychoses: annual blood pressure | Built | `fct_person_smi_blood_pressure_ind84` |
 | IND85 | Bipolar, schizophrenia and other psychoses: cervical screening | Built | `fct_person_smi_cervical_screening_ind85` |
-| IND86 | Bipolar, schizophrenia and other psychoses: target organ damage | Built | `fct_person_lithium_creatinine_tsh_ind86` (wave 1; proposed model name) |
+| IND86 | Bipolar, schizophrenia and other psychoses: target organ damage | Built | `fct_person_lithium_renal_thyroid_monitoring_ind86` (wave 1; proposed model name) |
 | IND87 | Bipolar, schizophrenia and other psychoses: lithium levels in therapeutic range | Built | `fct_person_lithium_monitoring_ind87` |
 | IND88 | Diabetes: referral for structured education | Built | `fct_person_diabetes_structured_education_ind88` |
 | IND89 | Diabetes: annual dietary review | Planned | Diabetes: dietary review code list and agreed review definition. |
@@ -42,7 +42,7 @@ The evidence figures in `Not built` rows describe coded activity in the close-ou
 | IND105 | Diabetes: asking about erectile dysfunction | Not built | Erectile dysfunction enquiry coded for about 2.5% of men with diabetes in 15 months; coding has halved twice since 2019. |
 | IND106 | Diabetes: advice for erectile dysfunction | Not built | Erectile dysfunction advice or assessment coded for under 1% of men with diabetes and erectile dysfunction. |
 | IND107 | Rheumatoid arthritis: register | Register | `fct_person_rheumatoid_arthritis_register` |
-| IND108 | Rheumatoid arthritis: cardiovascular risk assessment | Built | `fct_person_cvd_risk_assessment_ra_ind108` (wave 1; proposed model name) |
+| IND108 | Rheumatoid arthritis: cardiovascular risk assessment | Built | `fct_person_cvd_risk_assessment_rheumatoid_arthritis_ind108` (wave 1; proposed model name) |
 | IND109 | Rheumatoid arthritis: fracture risk assessment | Not built | Fracture risk assessment recorded for about 2% of eligible people with rheumatoid arthritis. |
 | IND110 | Rheumatoid arthritis: annual review | Built | `fct_person_rheumatoid_arthritis_review_ind110` |
 | IND111 | Diabetes: annual albumin creatinine test | Built | `fct_person_diabetes_acr_ind111` |
@@ -151,7 +151,7 @@ The evidence figures in `Not built` rows describe coded activity in the close-ou
 | IND229 | Cardiovascular disease prevention: primary prevention with lipid lowering therapies | Built | `fct_person_lipid_lowering_therapy_ind229` |
 | IND230 | Cardiovascular disease prevention: secondary prevention with lipid lowering therapies | Built | `fct_person_lipid_lowering_therapy_ind230` |
 | IND231 | Kidney conditions: CKD and lipid lowering therapies | Built | `fct_person_lipid_lowering_therapy_ind231` |
-| IND232 | Kidney conditions: eGFR for long-term NSAID use | Built | `fct_person_ckd_nsaid_egfr_ind232` (wave 1; proposed model name) |
+| IND232 | Kidney conditions: eGFR for long-term NSAID use | Built | `fct_person_nsaid_egfr_ind232` (wave 1; proposed model name) |
 | IND233 | Kidney conditions: CKD and eGFR | Built | `fct_person_ckd_new_diagnosis_egfr_ind233` |
 | IND234 | Kidney conditions: CKD – eGFR and ACR | Built | `fct_person_ckd_new_diagnosis_tests_ind234` |
 | IND235 | Kidney conditions: CKD and blood pressure when ACR less than 70 | Built | `fct_person_ckd_bp_ind235` |
