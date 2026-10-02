@@ -15,7 +15,7 @@ WITH cvd AS (
         has_pad,
         has_familial_hypercholesterolaemia,
         has_haemorrhagic_stroke
-    FROM {{ nice_ref('int_cvd_secondary_prevention_population', reference) }}
+    FROM {{ nice_ref('int_cvd_secondary_prevention_population', reference) }} AS profile
 ),
 
 eligible_people AS (

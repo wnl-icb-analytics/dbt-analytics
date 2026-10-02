@@ -13,7 +13,7 @@ WITH profile AS (
         birth_date_approx,
         dtap_doses_by_8_months,
         has_dtap_contraindication
-    FROM {{ nice_ref('int_childhood_immunisation_profile', reference) }}
+    FROM {{ nice_ref('int_childhood_immunisation_profile', reference) }} AS profile
 ),
 
 assessed AS (
