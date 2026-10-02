@@ -1,13 +1,13 @@
 models:
   - name: int_nhse_olids_practice_registration_comparison
     description: |
-      OLIDS registered patients compared with the NHS England monthly "Patients Registered at a GP Practice" publication. One row per practice per monthly snapshot from October 2021, for practices that send data to OLIDS.
+      OLIDS registered patients compared with the NHS England monthly "Patients Registered at a GP Practice" publication. One row per practice per monthly snapshot within the last 60 months, for practices that send data to OLIDS.
 
       This is a monthly trend check between EMIS extracts, not the authority. OLIDS comes from EMIS, so int_emis_olids_practice_registration_comparison is the authoritative check. NHSE counts come from PDS after national processing, and PDS keeps some registrations that practices have closed.
 
       OLIDS counts are rebuilt as at each snapshot date from registration history: people with an open Regular registration who had not died by that date. Each person is counted at one practice, the registration with the latest start, as in dim_person_active_patients. NHSE counts come from PDS on the first of the month.
 
-      Snapshots start in October 2021 because patients who left a practice before then have no usable record in the OLIDS feed. Patients moved in a practice merger keep their original start date at the successor practice, so before a merger OLIDS counts them at the successor while NHSE counts them at the old practice. Counts for past dates also drift down as EMIS rewrites registration dates, as described in int_patient_registrations.
+      Snapshots cover the last 60 months because OLIDS keeps Left and Deceased registrations for five years; an older snapshot would miss patients who have since left. Patients moved in a practice merger keep their original start date at the successor practice, so before a merger OLIDS counts them at the successor while NHSE counts them at the old practice. Counts for past dates also drift down as EMIS rewrites registration dates, as described in int_patient_registrations.
 
       A practice meets the acceptance criteria when the difference is under 2% or under 5 people, the same thresholds as the EMIS and PDS comparisons. OLIDS usually runs slightly above NHSE because practice systems keep some patients that PDS has already removed, such as patients removed in list cleaning after moving away.
     config:

@@ -6,11 +6,11 @@
 }}
 
 with snapshots as (
-    -- OLIDS registration history is complete from about October 2021:
-    -- patients who left a practice before then have no usable record in the feed.
+    -- OLIDS keeps Left and Deceased registrations for five years, so only
+    -- snapshots within the last 60 months still hold everyone registered then.
     select distinct snapshot_date
     from {{ ref('practice_registered_patients') }}
-    where snapshot_date >= '2021-10-01'
+    where snapshot_date >= dateadd('month', -60, current_date)
 ),
 
 olids_registered as (
