@@ -67,11 +67,17 @@ models:
     description: mental_health for v2.0 submissions, iapt for v2.1, following the selected version's data set
       version. Null when no code is submitted.
   - name: source_of_referral_group
-    description: NHS England referral source group of source_of_referral_code from iapt_code_group, following
-      measures M002 to M018, M287 and M345, such as self_referral (B1), gp (A1) or other (M1-M8). The same groups
-      apply to the v2.0 mental health list. Null when no source is recorded or the code has no group.
+    description: UKHFD category of source_of_referral_code as a snake_case key, such as primary_health_care (A1-A4),
+      self_referral (B1, B2) or other (M1-M8). v2.1 codes take the category from the IAPT list in iapt_code_lookup;
+      v2.0 codes take it from the newest revision of the retired mental health list they were submitted against
+      (mhsds_source_of_referral_history). Case, spacing and punctuation are ignored, so the same group gets the same
+      key in both versions. v2.0 categories with no v2.1 counterpart, such as improving_access_to_psychological_therapies
+      (N1-N3), keep their own key. Null when no source is recorded or UKHFD gives the code no category, as for G4,
+      I1, I2, N1, N2, N4, P1 and Q1 in v2.1 and G4, I1, I2 and P1 in v2.0. NHS England's referral source measures
+      (M002 to M018) split some categories more finely and are not reproduced.
   - name: source_of_referral_group_name
-    description: Readable name of source_of_referral_group, such as Self referral.
+    description: UKHFD category name for source_of_referral_group, spelt as in the v2.1 IAPT list, such as
+      Self-Referral or Primary Health Care. A v2.0 category with no v2.1 counterpart keeps its own name.
   - name: discharge_reason_code
     description: Submitted discharge from IAPT service reason (end code), never inferred. Some referrals have a
       reason without a discharge date; the submitted reason is retained without inventing a discharge date or event.
@@ -86,12 +92,14 @@ models:
       discharge_reason_legacy means the retired care spell end code list. Null when unlabelled. A retired code has no
       published equivalent among current codes and must not be counted as one.
   - name: discharge_reason_group
-    description: Group of discharge_reason_code from iapt_code_group. not_assessed (50), seen_not_treated (10-17
-      and 95) or seen_and_treated (46-49 and 96), as grouped under I101250 in the IAPT v2.1 ETOS. Retired care spell
-      end codes take the group of their UKHFD category, such as 42 completed scheduled treatment in
-      seen_and_treated. Null when no reason is recorded or the code has no group.
+    description: UKHFD category of discharge_reason_code as a snake_case key. Current codes are
+      referred_but_not_seen (50), seen_but_not_taken_on_for_a_course_of_treatment (10-17 and 95) or
+      seen_and_taken_on_for_a_course_of_treatment (46-49 and 96), the groups under I101250 in the IAPT v2.1 ETOS.
+      Retired care spell end codes keep their own categories, assessed_only (15, 97) or assessed_and_treated (40-45,
+      98), and are not merged into the current groups. Null when no reason is recorded or the code has no category.
   - name: discharge_reason_group_name
-    description: Readable name of discharge_reason_group, such as Seen but not taken on for a course of treatment.
+    description: UKHFD category name for discharge_reason_group, such as Seen but not taken on for a course of
+      treatment.
   - name: previous_diagnosed_condition_code
     description: Whether the patient reports a recurrence of a previously diagnosed condition.
   - name: previous_diagnosed_condition_name
@@ -228,12 +236,16 @@ models:
     description: UKHFD label for employment_status_last_code.
   - name: statutory_sick_pay_first_code
     description: NHS England first statutory sick pay receipt indicator (I101D17) as supplied. Y yes, N no, U unknown
-      (person not sure), Z not stated (ETOS I004080). UKHFD holds no list for this item.
+      (person not sure), Z not stated (ETOS I004080).
+  - name: statutory_sick_pay_first_name
+    description: UKHFD label for statutory_sick_pay_first_code from iapt_code_lookup.
   - name: is_receiving_statutory_sick_pay_first
     description: TRUE for code Y and FALSE for N in statutory_sick_pay_first_code. Null for U, Z or no record, so
       unknown and not stated stay distinct from no.
   - name: statutory_sick_pay_last_code
     description: NHS England last statutory sick pay receipt indicator (I101D18), coded as statutory_sick_pay_first_code.
+  - name: statutory_sick_pay_last_name
+    description: UKHFD label for statutory_sick_pay_last_code from iapt_code_lookup.
   - name: is_receiving_statutory_sick_pay_last
     description: TRUE for code Y and FALSE for N in statutory_sick_pay_last_code; otherwise null.
   - name: psychotropic_medication_first_code

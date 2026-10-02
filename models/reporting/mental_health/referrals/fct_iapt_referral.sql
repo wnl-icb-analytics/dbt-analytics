@@ -69,16 +69,50 @@ with versions as (
     from latest as l
 )
 
--- The mental health list unions current and legacy definitions, so a code can appear twice.
-, mental_health_source_of_referral as (
+-- Groups are UKHFD categories. v2.0 codes use the retired mental health list v2.0 submitted against; the shared
+-- lookup prefers the MHSDS list, which has no category for H2. group_key folds case, spacing and punctuation, so
+-- "Self referral" and "Self-Referral" share a key and take the v2.1 spelling as group_name. A category with no v2.1
+-- counterpart keeps its own name.
+, categorised_codes as (
     select
-        code
-        , description
-    from {{ ref('mhsds_source_of_referral') }}
-    qualify row_number() over (
-        partition by code
-        order by is_currently_valid desc, definition_updated_at desc
-    ) = 1
+        code_set_name
+        , code
+        , trim(regexp_replace(lower(category), '[^a-z0-9]+', '_'), '_') as group_key
+        , regexp_replace(category, '^[[:space:]]+|[[:space:]]+$') as category
+    from {{ ref('iapt_code_lookup') }}
+    where code_set_name in ('source_of_referral', 'discharge_reason', 'discharge_reason_legacy')
+        and category is not null
+    union all
+    select
+        'source_of_referral_mental_health' as code_set_name
+        , code
+        , trim(regexp_replace(lower(category), '[^a-z0-9]+', '_'), '_') as group_key
+        , regexp_replace(category, '^[[:space:]]+|[[:space:]]+$') as category
+    from {{ ref('mhsds_source_of_referral_history') }}
+    where is_latest_definition
+        and source_code_set_name = 'Source_Of_Referral_For_Mental_Health'
+        and category is not null
+)
+
+, iapt_referral_source_groups as (
+    select
+        group_key
+        , min(category) as group_name
+    from categorised_codes
+    where code_set_name = 'source_of_referral'
+    group by group_key
+)
+
+, code_groups as (
+    select
+        c.code_set_name
+        , c.code
+        , c.group_key
+        , coalesce(v.group_name, c.category) as group_name
+    from categorised_codes as c
+    left join iapt_referral_source_groups as v
+        on c.code_set_name = 'source_of_referral_mental_health'
+        and c.group_key = v.group_key
 )
 
 select
@@ -103,7 +137,7 @@ select
         when o.dataset_version = '2.0' and o.source_of_referral_mh is not null then 'mental_health'
         when o.dataset_version = '2.1' and o.source_of_referral_iapt is not null then 'iapt'
     end as source_of_referral_code_set
-    , source_group.group_code as source_of_referral_group
+    , source_group.group_key as source_of_referral_group
     , source_group.group_name as source_of_referral_group_name
     , o.end_code as discharge_reason_code
     , coalesce(discharge.description, discharge_legacy.description) as discharge_reason_name
@@ -111,7 +145,7 @@ select
         when discharge.code is not null then 'discharge_reason'
         when discharge_legacy.code is not null then 'discharge_reason_legacy'
     end as discharge_reason_code_set
-    , discharge_group.group_code as discharge_reason_group
+    , discharge_group.group_key as discharge_reason_group
     , discharge_group.group_name as discharge_reason_group_name
     , o.prev_diag_cond_ind as previous_diagnosed_condition_code
     , previous_condition.description as previous_diagnosed_condition_name
@@ -188,10 +222,12 @@ select
     , o.employment_status_last as employment_status_last_code
     , employment_last.description as employment_status_last_name
     , o.sickpay_indicator_first as statutory_sick_pay_first_code
+    , sick_pay_first.description as statutory_sick_pay_first_name
     -- I004080 codes: Y receiving, N not receiving; U unknown and Z not stated stay null.
     , case upper(o.sickpay_indicator_first) when 'Y' then true when 'N' then false end
         as is_receiving_statutory_sick_pay_first
     , o.sickpay_indicator_last as statutory_sick_pay_last_code
+    , sick_pay_last.description as statutory_sick_pay_last_name
     , case upper(o.sickpay_indicator_last) when 'Y' then true when 'N' then false end
         as is_receiving_statutory_sick_pay_last
     , o.psychotropic_indicator_first as psychotropic_medication_first_code
@@ -231,7 +267,7 @@ left join {{ ref('iapt_code_lookup') }} as source_iapt
     on o.dataset_version = '2.1'
     and source_iapt.code_set_name = 'source_of_referral'
     and upper(o.source_of_referral_iapt) = source_iapt.code
-left join mental_health_source_of_referral as source_mh
+left join {{ ref('mhsds_source_of_referral') }} as source_mh
     on o.dataset_version = '2.0'
     and upper(o.source_of_referral_mh) = source_mh.code
 left join {{ ref('iapt_code_lookup') }} as discharge
@@ -242,11 +278,11 @@ left join {{ ref('iapt_code_lookup') }} as discharge_legacy
     on discharge.code is null
     and discharge_legacy.code_set_name = 'discharge_reason_legacy'
     and upper(o.end_code) = discharge_legacy.code
-left join {{ ref('iapt_code_group') }} as source_group
+left join code_groups as source_group
     on source_group.code_set_name
-        = iff(o.dataset_version = '2.0', 'source_of_referral_mental_health', 'source_of_referral_iapt')
+        = iff(o.dataset_version = '2.0', 'source_of_referral_mental_health', 'source_of_referral')
     and upper(o.source_of_referral_code) = source_group.code
-left join {{ ref('iapt_code_group') }} as discharge_group
+left join code_groups as discharge_group
     on discharge_group.code_set_name = iff(discharge.code is not null, 'discharge_reason', 'discharge_reason_legacy')
     and upper(o.end_code) = discharge_group.code
 left join {{ ref('iapt_code_group') }} as adsm_group
@@ -275,6 +311,12 @@ left join {{ ref('iapt_code_lookup') }} as psychotropic_first
 left join {{ ref('iapt_code_lookup') }} as psychotropic_last
     on psychotropic_last.code_set_name = 'psychotropic_medication_usage'
     and upper(o.psychotropic_indicator_last) = psychotropic_last.code
+left join {{ ref('iapt_code_lookup') }} as sick_pay_first
+    on sick_pay_first.code_set_name = 'statutory_sick_pay_indicator'
+    and upper(o.sickpay_indicator_first) = sick_pay_first.code
+left join {{ ref('iapt_code_lookup') }} as sick_pay_last
+    on sick_pay_last.code_set_name = 'statutory_sick_pay_indicator'
+    and upper(o.sickpay_indicator_last) = sick_pay_last.code
 left join {{ ref('iapt_code_lookup') }} as previous_condition
     on previous_condition.code_set_name = 'previous_diagnosed_condition_indicator'
     and upper(o.prev_diag_cond_ind) = previous_condition.code

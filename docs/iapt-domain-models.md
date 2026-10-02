@@ -274,7 +274,6 @@ window to reproduce a published figure.
 | `days_referral_to_first_treatment` | M032 to M035, M049 | Receipt to first treatment |
 | `is_first_treatment_within_6_weeks`, `_18_weeks` | M036, M037 | 42 and 126 days or fewer |
 | `days_first_to_second_treatment` | M046, M047 | First to second treatment |
-| `source_of_referral_group` | M002 to M018, M287, M345 | Referral source group |
 | `consultation_mechanism_group` | M1001 to M1020 | Delivery group of attended or unplanned contacts |
 | `fct_iapt_referral_period.waiting_state` | M029, M038 | Waiting for assessment or treatment at the period end |
 
@@ -301,10 +300,14 @@ Codes keep their submitted value next to a current UKHFD label.
 `iapt_code_lookup` holds the IAPT-specific code sets: source of referral,
 discharge reason, previous diagnosed condition, onward referral reason,
 appointment type, psychotropic medication usage, short-notice cancellation,
-integrated long-term condition service and presenting complaint coding
-significance. It keeps retired codes; `iapt_code_lookup_history` holds every
-UKHFD revision. Shared code sets come from their existing lookups. A code
-absent from UKHFD keeps a null label.
+integrated long-term condition service, presenting complaint coding
+significance and statutory sick pay. It keeps retired codes;
+`iapt_code_lookup_history` holds every UKHFD revision. Its category comes from
+the newest revision that supplies one: UKHFD's 2022 revision of the discharge
+reason list dropped every code's category and changed nothing else. Shared code
+sets come from their existing lookups, such as `mhsds_source_of_referral` for
+v2.0 referral sources and `consultation_mechanism`. A code absent from UKHFD
+keeps a null label.
 
 Two historical lists label codes that the current lists lack, and a code-set
 column records which list supplied each label:
@@ -313,9 +316,8 @@ column records which list supplied each label:
   code list, valid until March 2020 (`discharge_reason_legacy`). Examples are 42
   completed scheduled treatment and 44 referred to a non-IAPT service. The
   v2.0 specification deleted or replaced them in 2019 and published no
-  equivalent current code. `discharge_reason_code_set` marks them. They take
-  the discharge group of their UKHFD category (assessed only or assessed and
-  treated).
+  equivalent current code. `discharge_reason_code_set` marks them. They keep
+  their own UKHFD categories, assessed only or assessed and treated.
 - Consultation codes use only their own version's list: consultation medium
   for v2.0 and mechanism for v2.1. A code valid only in the other version, such
   as 03, 06 or 08 sent in v2.1, keeps its code but no label, and
@@ -323,15 +325,29 @@ column records which list supplied each label:
 
 ### Groups
 
-`iapt_code_group` is the maintained seed for code groups, one row per code set
-and code with the document that defines the group:
+Discharge reason and referral source groups are UKHFD categories. Each has a
+snake_case key (`_group`) and the category name (`_group_name`):
 
-- `discharge_reason_group`: `not_assessed` (50), `seen_not_treated` (10-17 and
-  95) and `seen_and_treated` (46-49 and 96), as grouped under I101250 in the
-  ETOS. It replaces the UKHFD category, which is null for every current code.
-- `source_of_referral_group`: NHS England's referral source measures, such as
-  `self_referral` (B1), `gp` (A1) and `other` (M1-M8). The same codes in the
-  v2.0 mental health list take the same groups.
+- `discharge_reason_group`: `referred_but_not_seen` (50),
+  `seen_but_not_taken_on_for_a_course_of_treatment` (10-17 and 95) and
+  `seen_and_taken_on_for_a_course_of_treatment` (46-49 and 96), the groups
+  under I101250 in the ETOS. Retired care spell end codes keep `assessed_only`
+  or `assessed_and_treated`; they are a fraction of a percent of discharges.
+- `source_of_referral_group`: the nine categories of the v2.1 IAPT list, such
+  as `self_referral` (B1, B2), `primary_health_care` (A1-A4) and `other`
+  (M1-M8). v2.0 codes take the category of the retired mental health list they
+  were submitted against. Keys ignore case and punctuation, so its
+  "Self referral" and "Local Authority and Other Public Services:" join the
+  v2.1 groups, and the name uses the v2.1 spelling. v2.0 categories with no v2.1
+  counterpart, such as improving access to psychological therapies (N1-N3),
+  keep their own. UKHFD gives no category to G4, I1, I2, N1, N2, N4, P1 and Q1
+  in the v2.1 list, so those stay ungrouped. NHS England's monthly measures
+  M002 to M018 split some categories more finely, for example general practice
+  (M003) within primary health care; that grouping is not reproduced.
+
+`iapt_code_group` is the maintained seed for groups UKHFD does not publish, one
+row per code set and code with the document that defines the group:
+
 - `consultation_mechanism_group`: `face_to_face`, `telephone`, `video`,
   `text_based`, `other` or `unknown`. Video is v2.0 code 03 (telemedicine) and
   v2.1 code 11, so it is continuous across versions. As in NHS England's M1009,
@@ -427,7 +443,8 @@ means a time was supplied, not that its clinical accuracy has been established.
 The history models and `stg_iapt_submission_header` are in
 `models/staging/commissioning/iapt/`, and the code lookups are
 `models/reference/data_dictionary/iapt_code_lookup.sql` and
-`iapt_code_lookup_history.sql`. Code groups are in the `iapt_code_group` seed.
+`iapt_code_lookup_history.sql`. Consultation groups and anxiety measure
+tokens are in the `iapt_code_group` seed.
 
 The two `int_` feeds use the column shape of the other source feeds, are full
 rebuilds and are clustered on patient key and sort timestamp. The event feed
