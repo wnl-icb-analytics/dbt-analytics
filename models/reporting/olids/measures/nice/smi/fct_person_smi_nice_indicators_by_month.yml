@@ -1,14 +1,15 @@
 models:
 - name: fct_person_smi_nice_indicators_by_month
   description: One row per eligible person, NICE SMI indicator and completed month-end for the last 60
-    completed months. Includes the fourteen existing SMI-family measures; lithium monitoring retains its
+    completed months. Includes fifteen SMI-family measures; lithium monitoring retains its
     independent therapy population. Each member keeps its documented population, evidence and window rules.
     Recalculated at monthly refresh using today's rules and code lists. Diagnosis state uses clinical
     and recorded dates; other evidence uses clinical or order dates through month-end. Practice follows
     the monthly spine, including its current-registration priority for overlapping registrations. Approximate
     birth and death dates, retrospective current gender and test flags, missing-birth-date exclusions
     and later source corrections limit historical interpretation. Supporting fields are null for members
-    that do not emit them.
+    that do not emit them. Includes IND86 for all current lithium users, with creatinine and TFT_COD thyroid
+    testing in nine months.
   config:
     meta:
       owner:
@@ -81,3 +82,7 @@ models:
     description: Whether the person meets the indicator on the reporting date
   - name: indicator_status
     description: ACHIEVED or NOT_RECORDED_IN_PERIOD; IND87 also uses NOT_ASSESSABLE and OUT_OF_RANGE
+  - name: latest_creatinine_date
+    description: Supporting detail from IND86; null for other members.
+  - name: latest_thyroid_function_test_date
+    description: Supporting detail from IND86; null for other members.

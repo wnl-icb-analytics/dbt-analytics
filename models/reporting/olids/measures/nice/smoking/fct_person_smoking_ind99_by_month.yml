@@ -1,0 +1,58 @@
+models:
+- name: fct_person_smoking_ind99_by_month
+  description: NICE IND99. One row per eligible registered, living, non-test person and completed month-end.
+    All current smokers aged 15+ at R. Support in the inclusive 24-month window through R uses REFERSSSA_COD,
+    PHARM_COD and PHARMDRUG_COD. Advice and declined care alone do not qualify. Smoking state is selected
+    before restricting to current smokers. Personalised care adjustments are not applied. Recalculated
+    monthly for 60 completed month-ends using today's rules and code lists. Registration starts are inclusive;
+    ends and deaths are exclusive. The established spine supplies age and practice. Approximate birth
+    and death dates and retrospective current test flags limit interpretation. Register and diagnosis
+    eligibility uses known dates; other evidence uses clinical or order dates through R. Later corrections
+    can change earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind99
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Evaluation date R.
+  - name: measurement_period_start
+    description: Inclusive window start.
+  - name: age
+    description: Age in completed years at R.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true for an eligible row.
+  - name: is_in_numerator
+    description: Whether the qualifying evidence is present at R.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: latest_record_date
+    description: Latest qualifying evidence date; null when not achieved.
+  - name: practice_code
+    description: ODS code of the registration practice at R.
+  - name: practice_name
+    description: Name of the registration practice at R.
+  - name: latest_smoking_status
+    description: Latest smoking state through R; same-day QOF status priority precedes highest id.
+  - name: latest_smoking_status_date
+    description: Clinical date of the selected smoking state.
+  - name: latest_never_smoked_date
+    description: Latest explicit never-smoked record through R; null when absent.
+  - name: latest_smoking_intervention_date
+    description: Latest QOF referral or pharmacotherapy evidence through R, including stale evidence;
+      null when absent.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

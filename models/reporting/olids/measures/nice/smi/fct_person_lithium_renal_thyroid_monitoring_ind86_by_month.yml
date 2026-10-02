@@ -1,0 +1,51 @@
+models:
+- name: fct_person_lithium_renal_thyroid_monitoring_ind86_by_month
+  description: 'NICE IND86. One row per eligible registered, living, non-test person and completed month-end.
+    Recalculated for 60 completed month-ends using current rules and code lists. The established spine
+    supplies registration, age and practice; approximate dates and retrospective test flags limit interpretation.
+    All current lithium users, regardless of SMI diagnosis. Uses the shared therapy definition: an order
+    strictly after R minus six calendar months through R, with known-date caps and no later stop. Both
+    CRE_COD and TFT_COD records must fall within the inclusive nine-month window through R. Records count
+    without numeric results. TFT_COD includes free T4 and T3 and is a broader proxy for TSH.'
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind86
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Evaluation date R.
+  - name: measurement_period_start
+    description: Inclusive window start.
+  - name: age
+    description: Age in completed years at R.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true for an eligible row.
+  - name: is_in_numerator
+    description: Whether the qualifying evidence is present at R.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: latest_record_date
+    description: Latest qualifying evidence date; null when not achieved.
+  - name: practice_code
+    description: ODS code of the registration practice at R.
+  - name: practice_name
+    description: Name of the registration practice at R.
+  - name: latest_creatinine_date
+    description: Latest CRE_COD record through R, including stale evidence.
+  - name: latest_thyroid_function_test_date
+    description: Latest TFT_COD record through R, including stale evidence.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

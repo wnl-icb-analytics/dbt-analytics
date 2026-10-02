@@ -1,0 +1,71 @@
+models:
+- name: fct_person_smoking_ind98
+  description: NICE IND98. One row per eligible registered, living, non-test person on the build date.
+    Current smokers with CHD, PAD, stroke or TIA, hypertension, diabetes, COPD, CKD, asthma or an SMI
+    diagnosis. SMI eligibility follows IND97 and includes remission. Support in the inclusive 12-month
+    window through R uses REFERSSSA_COD, PHARM_COD and PHARMDRUG_COD. Advice and declined care alone do
+    not qualify. Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind98
+      indicator:
+        id: IND98
+        type: MEASURE
+        category: LIFESTYLE
+        clinical_domain: Lifestyle
+        name_short: LTC and SMI smokers offered support
+        description_short: Current smokers with CHD, PAD, stroke or TIA, hypertension, diabetes, COPD,
+          CKD, asthma or an SMI diagnosis. SMI eligibility follows IND97 and includes remission. Support
+          in the inclusive 12-month window through R uses REFERSSSA_COD, PHARM_COD and PHARMDRUG_COD.
+          Advice and declined care alone do not qualify.
+        description_long: NICE IND98. One row per eligible registered, living, non-test person on the
+          build date. Current smokers with CHD, PAD, stroke or TIA, hypertension, diabetes, COPD, CKD,
+          asthma or an SMI diagnosis. SMI eligibility follows IND97 and includes remission. Support in
+          the inclusive 12-month window through R uses REFERSSSA_COD, PHARM_COD and PHARMDRUG_COD. Advice
+          and declined care alone do not qualify. Personalised care adjustments are not applied.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND98
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+    data_tests:
+    - not_null
+    - unique
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Evaluation date R.
+  - name: measurement_period_start
+    description: Inclusive window start.
+  - name: age
+    description: Age in completed years at R.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true for an eligible row.
+  - name: is_in_numerator
+    description: Whether the qualifying evidence is present at R.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: latest_record_date
+    description: Latest qualifying evidence date; null when not achieved.
+  - name: current_practice_code
+    description: ODS code of the registration practice at R.
+  - name: current_practice_name
+    description: Name of the registration practice at R.
+  - name: latest_smoking_status
+    description: Latest smoking state through R; same-day QOF status priority precedes highest id.
+  - name: latest_smoking_status_date
+    description: Clinical date of the selected smoking state.
+  - name: latest_never_smoked_date
+    description: Latest explicit never-smoked record through R; null when absent.
+  - name: latest_smoking_intervention_date
+    description: Latest QOF referral or pharmacotherapy evidence through R, including stale evidence;
+      null when absent.

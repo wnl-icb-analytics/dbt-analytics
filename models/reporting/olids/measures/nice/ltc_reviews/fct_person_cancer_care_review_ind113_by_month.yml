@@ -1,0 +1,59 @@
+models:
+- name: fct_person_cancer_care_review_ind113_by_month
+  description: NICE IND113. One row per eligible registered, living, non-test person and completed month-end.
+    Recalculated for 60 completed month-ends using current rules and code lists. The established spine
+    supplies registration, age and practice; approximate dates and retrospective test flags limit interpretation.
+    Cancer register members with a latest new diagnosis in the inclusive preceding 15 months. Non-melanoma
+    skin cancer is outside the register. Diagnosis date is the proxy for practice confirmation. A review
+    from diagnosis through three calendar months after diagnosis, capped at R, qualifies. Excludes people
+    with two CANINVITE_COD invitations at least seven days apart between diagnosis and the three-month
+    deadline, capped at R, and no MDRV_COD review after the first invitation through R.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind113
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Evaluation date R.
+  - name: measurement_period_start
+    description: Inclusive window start.
+  - name: age
+    description: Age in completed years at R.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true for an eligible row.
+  - name: is_in_numerator
+    description: Whether the qualifying evidence is present at R.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: latest_record_date
+    description: Latest qualifying evidence date; null when not achieved.
+  - name: practice_code
+    description: ODS code of the registration practice at R.
+  - name: practice_name
+    description: Name of the registration practice at R.
+  - name: diagnosis_date
+    description: Latest new cancer diagnosis known by R.
+  - name: latest_review_date
+    description: First cancer review on or after diagnosis through R, including late reviews.
+  - name: first_invitation_date
+    description: First CANINVITE_COD invitation within the three-month review window.
+  - name: last_invitation_date
+    description: Last CANINVITE_COD invitation within the three-month review window.
+  - name: is_excluded_invitation_non_response
+    description: Two invitations at least seven days apart without a later review through R. Excluded
+      people are omitted from this denominator-only measure; retained rows are false.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

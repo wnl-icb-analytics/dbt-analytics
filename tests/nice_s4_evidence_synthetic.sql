@@ -294,7 +294,9 @@ UNION ALL
 
 SELECT 'smoking' AS failed_rule
 FROM smoking
-HAVING COUNT(*) <> 6
+HAVING COUNT(*) <> 9
+    OR COUNT_IF(person_id = -9105) <> 0
+    OR COUNT_IF(person_id = -9106) <> 3
     OR COUNT_IF(reporting_date = '2026-03-31' AND latest_smoking_status = 'Current Smoker'
         AND latest_never_smoked_date = '2026-03-01'
         AND latest_smoking_intervention_date = '2026-03-31') <> 1

@@ -1,0 +1,66 @@
+models:
+- name: fct_person_learning_disability_thyroid_test_ind79
+  description: NICE IND79. One row per eligible registered, living, non-test person on the build date.
+    LD register members aged 18+ with a DS_COD diagnosis known by R, excluding the THY register (hypothyroidism).
+    A TFT_COD test in the inclusive 15-month window through R qualifies. TFT_COD also includes free T4
+    and T3, so it is a broader proxy for TSH. Dates may be present without numeric results. Personalised
+    care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind79
+      indicator:
+        id: IND79
+        type: MEASURE
+        category: REVIEW
+        clinical_domain: Learning disability
+        name_short: Down's syndrome thyroid testing
+        description_short: LD register members aged 18+ with a DS_COD diagnosis known by R, excluding
+          the THY register (hypothyroidism). A TFT_COD test in the inclusive 15-month window through R
+          qualifies. TFT_COD also includes free T4 and T3, so it is a broader proxy for TSH. Dates may
+          be present without numeric results.
+        description_long: NICE IND79. One row per eligible registered, living, non-test person on the
+          build date. LD register members aged 18+ with a DS_COD diagnosis known by R, excluding the THY
+          register (hypothyroidism). A TFT_COD test in the inclusive 15-month window through R qualifies.
+          TFT_COD also includes free T4 and T3, so it is a broader proxy for TSH. Dates may be present
+          without numeric results. Personalised care adjustments are not applied.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND79
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+    data_tests:
+    - not_null
+    - unique
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Evaluation date R.
+  - name: measurement_period_start
+    description: Inclusive window start.
+  - name: age
+    description: Age in completed years at R.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true for an eligible row.
+  - name: is_in_numerator
+    description: Whether the qualifying evidence is present at R.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: latest_record_date
+    description: Latest qualifying evidence date; null when not achieved.
+  - name: current_practice_code
+    description: ODS code of the registration practice at R.
+  - name: current_practice_name
+    description: Name of the registration practice at R.
+  - name: downs_syndrome_diagnosis_date
+    description: Earliest clinical DS_COD diagnosis known by R.
+  - name: latest_thyroid_function_test_date
+    description: Latest TFT_COD test through R, including stale evidence; null when absent.
