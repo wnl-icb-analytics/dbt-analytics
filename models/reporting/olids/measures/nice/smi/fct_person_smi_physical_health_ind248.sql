@@ -50,7 +50,7 @@ SELECT
     CURRENT_DATE() AS reporting_date,
     DATEADD(month, -12, CURRENT_DATE()) AS measurement_period_start,
     age,
-    'Severe mental illness (schizophrenia, bipolar affective disorder or other psychoses), including remission before personalised care adjustments' AS condition_name,
+    'Severe mental illness (schizophrenia, bipolar affective disorder or other psychoses, not in remission)' AS condition_name,
     current_practice_code,
     current_practice_name,
     latest_blood_pressure_date,

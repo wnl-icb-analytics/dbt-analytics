@@ -14,7 +14,7 @@ SELECT
     obs.mapped_concept_display AS concept_display
 FROM ({{ get_observations("'DPPOFF_COD'") }}) AS obs
 WHERE obs.clinical_effective_date IS NOT NULL
-    AND obs.clinical_effective_date <= CURRENT_DATE()
+    AND obs.clinical_effective_date::DATE <= CURRENT_DATE()
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY obs.person_id, obs.mapped_concept_code, obs.clinical_effective_date::DATE
     ORDER BY obs.id
