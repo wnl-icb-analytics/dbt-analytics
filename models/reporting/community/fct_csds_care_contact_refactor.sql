@@ -81,23 +81,6 @@ PATIENT_BASE AS (
 
 ),
 
-GP_LIST_SIZE AS (
-
-    SELECT
-        GP_PRACTICE_CODE,
-        GP_PRACTICE_NAME,
-        LIST_SIZE_VALUE,
-        LIST_SIZE_DATE,
-
-        ROW_NUMBER() OVER (
-            PARTITION BY GP_PRACTICE_CODE
-            ORDER BY LIST_SIZE_DATE DESC
-        ) AS RN
-
-    FROM {{ ref('raw_reference_national_gp_practice_latest_list_sizes') }}
-
-),
-
 /*==============================================================================
   2. VALID PATIENT ETHNICITY
 
@@ -666,7 +649,7 @@ CONTACT_ENRICHED AS (
         PRAC.PCN_NAME AS LEGACY_PCN_NAME,
         PRAC.PRACTICE_NAME AS LEGACY_PRACTICE_NAME,
 
-        GLS.LIST_SIZE_VALUE AS LEGACY_WEIGHTED_LIST_SIZE,
+        PWP.WEIGHTED_PATIENTS_CORE AS LEGACY_WEIGHTED_LIST_SIZE,
         
         GEN."Gender" AS LEGACY_GENDER_NAME,
 
@@ -733,10 +716,6 @@ CONTACT_ENRICHED AS (
     LEFT JOIN {{ ref('stg_reference_lookup_ncl_gp_practice') }} PRAC
         ON PAT1.GPCODE = PRAC.GP_PRACTICE_CODE
 
-    LEFT JOIN GP_LIST_SIZE GLS
-        ON PAT1.GPCODE = GLS.GP_PRACTICE_CODE
-        AND GLS.RN = 1
-
     LEFT JOIN DATA_LAKE.CSDS_SIMPLE."tblReferral" REF
         ON CCON."Unique_service_request_identifier"
             = REF."Unique_service_request_identifier"
@@ -760,6 +739,9 @@ CONTACT_ENRICHED AS (
 
     LEFT JOIN {{ ref('stg_reference_lookup_ncl_gp_practice') }} NGH_REG
         ON PAT1.GPCODE = NGH_REG.GP_PRACTICE_CODE
+
+    LEFT JOIN {{ ref('practice_weighted_population_current') }} PWP
+        ON PAT1.GPCODE = PWP.PRACTICE_CODE
 
     LEFT JOIN DATA_LAKE__NCL.ANALYST_MANAGED.NCL_NEIGHBOURHOOD_LSOA_2021 NGH_RES
         ON PAT1."Lower_super_output_area_(Residence)"
