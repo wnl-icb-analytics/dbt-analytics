@@ -1,0 +1,95 @@
+version: 2
+models:
+- name: fct_iapt_referral_period
+  description: >-
+    NHS Talking Therapies (IAPT data set) referral state in each accepted reporting month, one row per referral and
+    accepted submission. Open referrals are resubmitted every month, so a referral has a row for each month it was
+    reported; a referral that stops being submitted has no later rows and counts as closed. A referral is open at
+    period end when received by that date with no discharge by then. Its waiting state uses the NHS England first
+    assessment and first treatment dates supplied with that month's version. For a confirmed transfer successor
+    (int_iapt_referral_transfer), care recorded under the earlier provider code counts, so a course moved by a
+    provider code change is not shown as waiting again. Later accepted corrections can revise historical rows.
+    Select one reporting period for a snapshot; apply is_nhse_use_pathway when reconciling to NHS England.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: referral_period_id
+    description: Key for the referral and accepted submission.
+    data_tests:
+    - unique
+    - not_null
+  - name: referral_id
+    description: Provider-qualified referral identifier; joins to referral_id in fct_iapt_referral_summary.
+    data_tests:
+    - not_null
+  - name: source_row_id
+    description: IDS101 row supplying this period's referral state; changes with every submission.
+  - name: person_id
+    description: IAPT Person_ID on this period's referral row. Only comparable within IAPT.
+  - name: sk_patient_id
+    description: Cross-system pseudonymised NHS number key for person_id; null when the bridge has no value.
+  - name: provider_organisation_code
+    description: Submitting provider ODS code.
+  - name: provider_organisation_name
+    description: Latest name from the shared organisation reference.
+  - name: is_wnl_commissioner
+    description: TRUE when this period's derived ICB, derived sub-ICB or submitted commissioner is in
+      wnl_commissioner_icb_lookup; FALSE otherwise.
+  - name: source_icb_commissioner_code
+    description: NHS England derived commissioning ICB in this period.
+  - name: source_icb_commissioner_name
+    description: Latest name from the shared organisation reference.
+  - name: reporting_period_start_date
+    description: First day of the accepted reporting month.
+  - name: reporting_period_end_date
+    description: Last day of the accepted reporting month; the date state is evaluated at.
+    data_tests:
+    - not_null
+  - name: referral_received_date
+    description: Referral received date as reported in this period.
+  - name: referral_discharge_date
+    description: Service discharge date as reported in this period. Null when none was recorded by then.
+  - name: is_transfer_successor
+    description: TRUE when the referral continues an earlier one under a new provider code, as a confirmed transfer.
+  - name: first_assessment_date
+    description: NHS England first assessment date on this period's version, or the earliest under an earlier
+      provider code of a confirmed transfer chain.
+  - name: first_treatment_date
+    description: NHS England first treatment date on this period's version, or the earliest under an earlier
+      provider code of a confirmed transfer chain.
+  - name: last_treatment_date
+    description: Latest NHS England last treatment date on this period's version or under an earlier provider code
+      of a confirmed transfer chain.
+  - name: is_recorded_open_at_period_end
+    description: Received on or before the period end with no discharge on or before that date. Null when the
+      received date is missing.
+  - name: waiting_state
+    description: State at period end. ended when discharged by then; in_treatment when a first treatment is recorded;
+      awaiting_treatment when assessed but not yet treated; awaiting_assessment with neither; not_started when
+      received after the period end; referral_date_missing without a received date. NHS England's waiting for
+      treatment count (M038) is awaiting_assessment plus awaiting_treatment; waiting for assessment (M029) is
+      awaiting_assessment. Recorded evidence, not national waiting-list eligibility.
+    data_tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values: [ended, in_treatment, awaiting_treatment, awaiting_assessment, not_started, referral_date_missing]
+  - name: days_waiting_at_period_end
+    description: Calendar days from referral receipt to the period end for awaiting_assessment and awaiting_treatment
+      rows, as in NHS England measures M030 and M039 to M045. Null for other states.
+  - name: days_since_last_treatment
+    description: Calendar days from last_treatment_date to the period end for referrals open at period end, as in
+      M019 to M022. Null when closed or never treated.
+  - name: is_nhse_use_pathway
+    description: NHS England UsePathway_Flag on this period's version. NHS England's monthly measures filter it to
+      TRUE.
+  - name: submission_id
+    description: Accepted submission supplying this period.
+  - name: source_file_received_at
+    description: Time the portal received the file. Not a clinical time.
+  - name: file_type
+    description: Primary or Refresh.
+  - name: dataset_version
+    description: IAPT data set version of the submission.

@@ -1,0 +1,18 @@
+version: 2
+models:
+- name: stg_ukhfd_data_dictionary_iapt_code_lookup
+  description: UKHFD definition revisions for NHS Talking Therapies (IAPT data set) codes, one row per code set,
+    source attribute, code and effective timestamp. Includes retired codes, and the retired IAPT care spell end code
+    list as the separate code set discharge_reason_legacy.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - code_set_name
+        - source_code_set_name
+        - code
+        - source_effective_from_at

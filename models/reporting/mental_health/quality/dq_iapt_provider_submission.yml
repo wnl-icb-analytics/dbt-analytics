@@ -1,0 +1,113 @@
+version: 2
+models:
+- name: dq_iapt_provider_submission
+  description: >-
+    Delivery, volume and completeness checks for each NHS Talking Therapies (IAPT data set) provider and accepted
+    reporting month. Use it before comparing providers or months: it shows how recent a provider's data is, whether
+    an accepted Refresh holds far fewer rows than the Primary file it replaced, and how often referral source,
+    discharge reason and consultation mechanism are blank. Source record counts are rows retained in staging
+    before latest-version selection; file totals come from the IDS000 header and cover the whole file, which for
+    providers outside West and North London includes rows the warehouse feed does not hold. A missing month has no
+    row.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - provider_organisation_code
+        - reporting_period_end_date
+  columns:
+  - name: provider_organisation_code
+    description: Provider ODS code from the file header.
+    data_tests:
+    - not_null
+  - name: provider_organisation_name
+    description: Latest name from the shared organisation reference; null when unmatched.
+  - name: reporting_period_end_date
+    description: Last day of the accepted reporting month.
+    data_tests:
+    - not_null
+  - name: submission_id
+    description: Accepted submission for the month.
+  - name: file_type
+    description: Primary or Refresh. A Refresh is the last chance to correct the month.
+  - name: dataset_version
+    description: IAPT data set version of the accepted file.
+  - name: source_file_received_at
+    description: Time the portal received the accepted file.
+  - name: source_loaded_at
+    description: Time the accepted file's header reached the warehouse.
+  - name: days_period_end_to_file_received
+    description: Calendar days from the reporting period end to portal receipt. A Refresh arrives about a month
+      later than its Primary.
+  - name: days_file_received_to_loaded
+    description: Calendar days from portal receipt to warehouse load, the delay added by the data feed.
+  - name: n_referral_source_records
+    description: Accepted IDS101 rows retained in staging for the month, not newly received referrals.
+  - name: n_contact_source_records
+    description: Accepted IDS201 rows retained in staging, not contacts occurring in the month.
+  - name: n_activity_source_records
+    description: Accepted IDS202 care activity rows retained in staging.
+  - name: n_activity_assessment_source_records
+    description: Accepted IDS607 activity assessment rows retained in staging.
+  - name: file_total_ids101
+    description: IDS101 rows in the whole accepted file, from its header.
+  - name: file_total_ids201
+    description: IDS201 rows in the whole accepted file.
+  - name: file_total_ids202
+    description: IDS202 rows in the whole accepted file.
+  - name: file_total_ids607
+    description: IDS607 rows in the whole accepted file.
+  - name: primary_file_total_ids101
+    description: IDS101 rows in the superseded Primary file the accepted Refresh replaced, from its header. Null when
+      the accepted file is the Primary or no superseded Primary is held.
+  - name: primary_file_total_ids201
+    description: IDS201 rows in the superseded Primary file.
+  - name: primary_file_total_ids202
+    description: IDS202 rows in the superseded Primary file.
+  - name: primary_file_total_ids607
+    description: IDS607 rows in the superseded Primary file.
+  - name: referral_refresh_to_primary_ratio
+    description: file_total_ids101 divided by primary_file_total_ids101. Near 1 is normal.
+  - name: contact_refresh_to_primary_ratio
+    description: file_total_ids201 divided by primary_file_total_ids201.
+  - name: activity_refresh_to_primary_ratio
+    description: file_total_ids202 divided by primary_file_total_ids202.
+  - name: activity_assessment_refresh_to_primary_ratio
+    description: file_total_ids607 divided by primary_file_total_ids607.
+  - name: has_refresh_section_shortfall
+    description: TRUE when the accepted Refresh holds under half the referral, contact, activity or activity
+      assessment rows of the Primary it replaced, in a section where the Primary held at least 100. The Refresh
+      replaces the Primary in every model, so that month's activity is understated. In October 2026 this flagged
+      17 provider-months, including all three West London NHS Trust services (RKL07, RKL14, RKL42) in July
+      2024, whose Refresh kept about 5% of the Primary's contacts. Null when there is no superseded Primary.
+  - name: n_new_referrals
+    description: Referral rows in the accepted file received within the reporting month.
+  - name: new_referrals_missing_source_of_referral_ratio
+    description: Share of n_new_referrals with no source of referral. Null when there are none.
+  - name: n_discharges
+    description: Referral rows in the accepted file with a discharge date within the reporting month.
+  - name: discharges_missing_reason_ratio
+    description: Share of n_discharges with no discharge reason. Null when there are none.
+  - name: contacts_missing_consultation_mechanism_ratio
+    description: Share of contact rows with no consultation mechanism or medium. Null when there are none.
+  - name: is_source_of_referral_mostly_missing
+    description: TRUE when at least 20 referrals were received in the month and at least half lack a source of
+      referral. Comparisons by referral source exclude most of that provider-month's referrals.
+  - name: is_discharge_reason_mostly_missing
+    description: TRUE when at least 20 referrals were discharged in the month and at least half lack a discharge
+      reason.
+  - name: is_consultation_mechanism_mostly_missing
+    description: TRUE when the file has at least 20 contact rows and at least half lack a consultation mechanism.
+  - name: provider_latest_reporting_period_end_date
+    description: This provider's latest accepted reporting month.
+  - name: dataset_latest_reporting_period_end_date
+    description: Latest accepted reporting month for any provider.
+  - name: provider_months_behind_dataset
+    description: Calendar months between the provider's latest accepted month and the dataset's latest. Describes
+      relative freshness, not completeness.
+  - name: is_latest_provider_period
+    description: TRUE on each provider's latest accepted month; use it to select one row per provider.
