@@ -92,9 +92,7 @@ repeat_medication_arrays AS (
     -- Create arrays of medication objects that are current repeats
     SELECT
         person_id,
-        ARRAY_COMPACT(ARRAY_AGG(
-            OBJECT_CONSTRUCT('medication_name', medication_name)
-        ) WITHIN GROUP (ORDER BY medication_name)) AS medications_repeat,
+        ARRAY_AGG(DISTINCT medication_name)WITHIN GROUP (ORDER BY medication_name) AS medications_repeat, -- TO DO: add dose
         COUNT(*) AS unique_repeat_medication_count
     FROM repeat_medicines
     GROUP BY person_id
