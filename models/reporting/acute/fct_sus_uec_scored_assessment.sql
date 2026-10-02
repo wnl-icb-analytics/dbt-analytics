@@ -12,7 +12,7 @@ select
     , e.site_id
     , e.site_name
     , s.assessment_tool_code
-    , coalesce(r.preferred_term, c.preferred_term) as assessment_description
+    , coalesce(r.preferred_term, c.preferred_term) as assessment_tool_name
     , r.measurement_category
     , r.ecds_group1
     , case
@@ -25,13 +25,8 @@ select
     , r.source_file_name as code_reference_file
     , s.person_score
     , try_to_decimal(nullif(trim(s.person_score), ''), 38, 9) as person_score_numeric
-    , case
-        when nullif(trim(s.person_score), '') is null then 'not_recorded'
-        when try_to_decimal(trim(s.person_score), 38, 9) is not null then 'numeric'
-        else 'non_numeric_or_out_of_range'
-    end as value_parse_status
+    , {{ numeric_parse_status("nullif(trim(s.person_score), '')") }} as value_parse_status
     , s.validated_at
-
 from {{ ref('stg_sus_ecds_clinical_coded_scored_assessments') }} as s
 left join {{ ref('obt_encounter_uec') }} as e
     on s.visit_occurrence_id = e.visit_occurrence_id

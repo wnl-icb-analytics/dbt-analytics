@@ -24,6 +24,8 @@ with UCUM; the CSDS-specific aliases sit in the data dictionary.
 `DATA_DICTIONARY.ECDS_MEASUREMENT_CODE` holds the latest available ETOS
 definition per observation or scored assessment SNOMED code. It retains
 historical codes, readable assessment categories and the source release filename.
+`DATA_DICTIONARY.ECDS_OBSERVATION_RESPONSE` lists the categorical responses that
+the latest ETOS notes publish for a coded observation, such as the ACVPU letters.
 See [ECDS observations and scored assessments](ecds-observations-and-assessments.md)
 for record grains, national guidance and matching limits.
 

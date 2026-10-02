@@ -109,16 +109,18 @@ select 'observation_terminology' as profile, code_description_source,
  count_if(is_code_approved) as approved_rows, count_if(is_code_approved=false) as unapproved_rows,
  count_if(is_code_approved is null) as approval_missing,
  count_if(measurement_category is not null) as categorised,
- count_if(value_parse_status='numeric') as numeric_values,
- count_if(value_parse_status='not_recorded') as absent_values,
- count_if(value_parse_status='non_numeric_or_out_of_range') as text_or_unparseable
+ count_if(value_parse_status in ('numeric', 'numeric_rounded', 'numeric_format_unverified')) as numeric_values,
+ count_if(value_parse_status in ('numeric_rounded', 'numeric_format_unverified')) as numeric_values_rounded_or_unverified,
+ count_if(value_parse_status='value_missing') as absent_values,
+ count_if(value_parse_status='not_numeric_or_out_of_range') as text_or_unparseable
 from {{ ref('fct_sus_uec_observation') }} group by 2 order by records desc;
 
-select 'observation_code_profile' as profile, observation_code as code, observation_description as description,
+select 'observation_code_profile' as profile, observation_code as code, observation_name as description,
  code_description_source, measurement_category, count(*) as records,
  count(distinct visit_occurrence_id) as attendances,
- count_if(value_parse_status='numeric') as numeric_values,
- count_if(value_parse_status='not_recorded') as absent_values,
+ count_if(value_parse_status in ('numeric', 'numeric_rounded', 'numeric_format_unverified')) as numeric_values,
+ count_if(value_parse_status in ('numeric_rounded', 'numeric_format_unverified')) as numeric_values_rounded_or_unverified,
+ count_if(value_parse_status='value_missing') as absent_values,
  count_if(observation_value_numeric<0) as negative_values,
  count_if(observation_value_numeric!=trunc(observation_value_numeric)) as non_integer_values,
  round(approx_percentile(observation_value_numeric,0.01),3) as numeric_p01,
@@ -139,16 +141,18 @@ select 'assessment_terminology' as profile, code_description_source,
  count_if(is_code_approved) as approved_rows, count_if(is_code_approved=false) as unapproved_rows,
  count_if(is_code_approved is null) as approval_missing,
  count_if(measurement_category is not null) as categorised,
- count_if(value_parse_status='numeric') as numeric_values,
- count_if(value_parse_status='not_recorded') as absent_values,
- count_if(value_parse_status='non_numeric_or_out_of_range') as text_or_unparseable
+ count_if(value_parse_status in ('numeric', 'numeric_rounded', 'numeric_format_unverified')) as numeric_values,
+ count_if(value_parse_status in ('numeric_rounded', 'numeric_format_unverified')) as numeric_values_rounded_or_unverified,
+ count_if(value_parse_status='value_missing') as absent_values,
+ count_if(value_parse_status='not_numeric_or_out_of_range') as text_or_unparseable
 from {{ ref('fct_sus_uec_scored_assessment') }} group by 2 order by records desc;
 
-select 'assessment_code_profile' as profile, assessment_tool_code as code, assessment_description as description,
+select 'assessment_code_profile' as profile, assessment_tool_code as code, assessment_tool_name as description,
  code_description_source, measurement_category, count(*) as records,
  count(distinct visit_occurrence_id) as attendances,
- count_if(value_parse_status='numeric') as numeric_values,
- count_if(value_parse_status='not_recorded') as absent_values,
+ count_if(value_parse_status in ('numeric', 'numeric_rounded', 'numeric_format_unverified')) as numeric_values,
+ count_if(value_parse_status in ('numeric_rounded', 'numeric_format_unverified')) as numeric_values_rounded_or_unverified,
+ count_if(value_parse_status='value_missing') as absent_values,
  count_if(person_score_numeric<0) as negative_values,
  count_if(person_score_numeric!=trunc(person_score_numeric)) as non_integer_values,
  round(approx_percentile(person_score_numeric,0.01),3) as numeric_p01,
@@ -170,15 +174,15 @@ select 'unit_terminology' as profile, unit_match_status, unit_definition_source,
 from {{ ref('fct_sus_uec_observation') }} group by 2,3 order by records desc;
 
 select 'categorical_responses' as profile,
- case when categorical_value_description is not null then 'recognised_acvpu'
+ case when categorical_value_name is not null then 'recognised_acvpu'
       when nullif(trim(observation_value),'') is null then 'absent'
-      when value_parse_status='numeric' then 'numeric_in_acvpu'
+      when value_parse_status in ('numeric', 'numeric_rounded', 'numeric_format_unverified') then 'numeric_in_acvpu'
       else 'unrecognised_text' end as response_status, count(*) as records
 from {{ ref('fct_sus_uec_observation') }} where observation_code='1104441000000107'
 group by 2 order by records desc;
 
 select 'unit_by_observation' as profile, observation_code,
- observation_description, count(*) as records,
+ observation_name, count(*) as records,
  count_if(unit_match_status='not_recorded') as unit_missing,
  count_if(unit_match_status='unmatched') as unit_unmatched,
  count_if(unit_match_status in ('ucum_code','dictionary_symbol','known_alias')) as unit_resolved

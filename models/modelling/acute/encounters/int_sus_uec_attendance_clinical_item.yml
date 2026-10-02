@@ -1,0 +1,34 @@
+version: 2
+models:
+- name: int_sus_uec_attendance_clinical_item
+  description: Single-valued ECDS clinical fields recorded on the attendance, one row per attendance and field
+    with a recorded code. Fields are chief complaint, acuity, notifiable disease, and injury mechanism, intent and
+    place; absent codes emit no row. Injury fields take the recorded injury date and time; the others have no
+    supported clinical date. One narrow input for the ECDS clinical-record adapter's selection and withdrawal
+    checks. Alcohol or drug involvements have several rows per attendance and stay in int_sus_uec_injury_alcohol_drug.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - source_record_type
+        - source_record_id
+  columns:
+  - name: visit_occurrence_id
+    description: ECDS attendance key (PRIMARYKEY_ID); joins to obt_encounter_uec.
+  - name: source_record_type
+    description: 'Attendance field: chief_complaint, acuity, notifiable_disease, injury_mechanism, injury_intent
+      or injury_place.'
+  - name: source_record_id
+    description: The attendance key as text. Unique with source_record_type.
+  - name: item_code
+    description: SNOMED CT code as supplied on the attendance.
+  - name: item_name
+    description: Description of the code carried by obt_encounter_uec.
+  - name: item_date
+    description: Recorded injury date for injury fields; null for the others.
+  - name: item_time
+    description: Recorded injury time for injury fields; null for the others.

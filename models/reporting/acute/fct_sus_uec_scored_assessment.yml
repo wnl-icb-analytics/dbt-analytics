@@ -5,7 +5,8 @@ models:
     all delivered records without approval, value or date filtering. NEWS2 component scores and total
     scores remain separate records, alongside other assessment tools. Scores are not recalculated or assigned
     clinical severity thresholds. Unmatched attendances and codes are retained. Equal values and timestamps
-    do not collapse distinct source sequences.
+    do not collapse distinct source sequences. IDs are stable while the supplier keeps the attendance key
+    (PRIMARYKEY_ID); a resubmission that reissues it produces new IDs.
   config:
     tags:
     - daily
@@ -42,7 +43,7 @@ models:
     description: Attendance provider site name.
   - name: assessment_tool_code
     description: Reported SNOMED CT assessment tool or component code.
-  - name: assessment_description
+  - name: assessment_tool_name
     description: Latest available ETOS preferred term, falling back to the shared SNOMED CT reference.
       Null if unresolved.
   - name: measurement_category
@@ -63,8 +64,9 @@ models:
     description: Reported value parsed as NUMBER(38,9), rounded to nine decimal places. Null for absent
       or unparseable values; raw text remains authoritative. No unit conversion or clinical range validation.
   - name: value_parse_status
-    description: not_recorded, numeric or non_numeric_or_out_of_range. Numeric parsing is not a clinical
-      validity assessment.
+    description: value_missing, numeric, numeric_rounded (digits beyond nine decimal places were rounded),
+      numeric_format_unverified (parsed from a form other than a plain decimal) or not_numeric_or_out_of_range.
+      Numeric parsing is not a clinical validity assessment.
   - name: validated_at
     description: When a care professional validated the score. Source TIMESTAMP_NTZ; the original timezone
       offset is unavailable.

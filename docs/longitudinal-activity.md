@@ -83,7 +83,7 @@ MHSDS diagnosis and referral-assessment timestamps can lack their original
 submitted precision and offset. The shared clinical output retains the source
 date, marks precision `date` and uses a midnight sorting anchor. The source fact
 retains the stored timestamp, separately supplied date and inconsistency flags.
-See the [MHSDS source validation](mhsds-clinical-record-plan.md).
+See the [MHSDS clinical evidence](mhsds-clinical-records.md).
 
 Clock values remain as supplied in `timestamp_ntz`; the adapters do not convert
 them to UTC. Source offsets are not consistently available. A shared clock value
@@ -161,6 +161,8 @@ and record identity, so both outputs retain those upstream UUIDs without a text
 prefix. Changes to dates preserve milestone IDs
 when the underlying source key stays the same. e-RS slot identity itself includes
 the supplied slot timestamp, so a new slot is a different source record.
+SUS and ECDS IDs derive from the supplied `PRIMARYKEY_ID`. They are stable while
+the supplier keeps that key; a resubmission that reissues it produces new IDs.
 
 Use `source_model_name`, `source_record_type` and `source_record_id` for detail.
 Existing source key names remain available:

@@ -3,7 +3,7 @@
     unique_key=['source_record_type', 'source_record_id'], on_schema_change='fail',
     cluster_by=['sk_patient_id', 'coalesce(clinical_record_at, clinical_record_date::timestamp_ntz)'], tags=['person_clinical_record', 'daily'],
     pre_hook="{{ navigation_build_warehouse() }}",
-    post_hook=["{{ navigation_remove_withdrawn_records([('diagnosis', 'stg_sus_ecds_clinical_diagnoses_snomed', 'diagnosis_id'), ('treatment', 'stg_sus_ecds_clinical_treatments_snomed', 'source_record_id'), ('investigation', 'stg_sus_ecds_clinical_investigations_snomed', 'source_record_id'), ('comorbidity', 'stg_sus_ecds_clinical_comorbidities', 'source_record_id'), ('clinical_finding', 'stg_sus_ecds_clinical_coded_findings', 'source_record_id'), ('observation', 'fct_sus_uec_observation', 'observation_id'), ('scored_assessment', 'fct_sus_uec_scored_assessment', 'assessment_id'), ('chief_complaint', 'obt_encounter_uec', 'iff(chief_complaint_code is not null, visit_occurrence_id, null)'), ('acuity', 'obt_encounter_uec', 'iff(acuity is not null, visit_occurrence_id, null)'), ('notifiable_disease', 'obt_encounter_uec', 'iff(disease_notification_code is not null, visit_occurrence_id, null)'), ('injury_mechanism', 'obt_encounter_uec', 'iff(injury_mechanism_code is not null, visit_occurrence_id, null)'), ('injury_intent', 'obt_encounter_uec', 'iff(injury_intent_code is not null, visit_occurrence_id, null)'), ('injury_place', 'obt_encounter_uec', 'iff(place_of_injury_code is not null, visit_occurrence_id, null)'), ('injury_alcohol_drug_involvement', 'int_sus_uec_injury_alcohol_drug', 'involvement_id'), ('mental_health_legal_status', 'int_sus_uec_mental_health_legal_status', \"iff(legal_status_code not in ('98', '99'), legal_status_id, null)\")]) }}", "{{ navigation_build_warehouse(restore=true) }}"]
+    post_hook=["{{ navigation_remove_withdrawn_records([('diagnosis', 'stg_sus_ecds_clinical_diagnoses_snomed', 'diagnosis_id'), ('treatment', 'stg_sus_ecds_clinical_treatments_snomed', 'source_record_id'), ('investigation', 'stg_sus_ecds_clinical_investigations_snomed', 'source_record_id'), ('comorbidity', 'stg_sus_ecds_clinical_comorbidities', 'source_record_id'), ('clinical_finding', 'stg_sus_ecds_clinical_coded_findings', 'source_record_id'), ('observation', 'fct_sus_uec_observation', 'observation_id'), ('scored_assessment', 'fct_sus_uec_scored_assessment', 'assessment_id'), (none, 'int_sus_uec_attendance_clinical_item', 'source_record_id'), ('injury_alcohol_drug_involvement', 'int_sus_uec_injury_alcohol_drug', 'iff(involvement_code is not null, involvement_id, null)'), ('mental_health_legal_status', 'int_sus_uec_mental_health_legal_status', \"iff(legal_status_code not in ('98', '99'), legal_status_id, null)\")]) }}", "{{ navigation_build_warehouse(restore=true) }}"]
 ) }}
 
 with attendance as (
@@ -14,18 +14,6 @@ select
     p.organisation_name,
     p.start_date,
     p.end_date,
-    p.chief_complaint_code,
-    p.chief_complaint_desc,
-    p.acuity,
-    p.acuity_desc,
-    p.disease_notification_code,
-    p.disease_notification_desc,
-    p.injury_mechanism_code,
-    p.injury_mechanism_desc,
-    p.injury_intent_code,
-    p.injury_intent_desc,
-    p.place_of_injury_code,
-    p.place_of_injury_desc,
     p.injury_date,
     p.injury_time,
     delivery.source_received_at
@@ -33,39 +21,17 @@ from {{ ref('obt_encounter_uec') }} as p
 left join {{ ref('stg_sus_ecds_emergency_care') }} as delivery on p.visit_occurrence_id = delivery.primarykey_id
 ),
 
--- Single-valued attendance fields become one row per recorded code. Injury details take the recorded injury date.
+-- Single-valued attendance fields arrive as one row per recorded code; alcohol or drug involvements keep their own rows.
 attendance_items as (
-select visit_occurrence_id, 'chief_complaint'::varchar as item_type, visit_occurrence_id::varchar as source_record_id,
-    'obt_encounter_uec'::varchar as source_model_name, chief_complaint_code::varchar as code,
-    chief_complaint_desc::varchar as code_name, null::date as item_date, null::time as item_time
-from attendance where chief_complaint_code is not null
-{{ navigation_delivery_filter('source_received_at', 'chief_complaint') }}
+select visit_occurrence_id, source_record_type as item_type, source_record_id,
+    'obt_encounter_uec'::varchar as source_model_name, item_code as code, item_name as code_name, item_date, item_time
+from {{ ref('int_sus_uec_attendance_clinical_item') }}
 union all
-select visit_occurrence_id, 'acuity', visit_occurrence_id::varchar, 'obt_encounter_uec', acuity, acuity_desc, null::date, null::time
-from attendance where acuity is not null
-{{ navigation_delivery_filter('source_received_at', 'acuity') }}
-union all
-select visit_occurrence_id, 'notifiable_disease', visit_occurrence_id::varchar, 'obt_encounter_uec', disease_notification_code, disease_notification_desc, null::date, null::time
-from attendance where disease_notification_code is not null
-{{ navigation_delivery_filter('source_received_at', 'notifiable_disease') }}
-union all
-select visit_occurrence_id, 'injury_mechanism', visit_occurrence_id::varchar, 'obt_encounter_uec', injury_mechanism_code, injury_mechanism_desc, injury_date, injury_time
-from attendance where injury_mechanism_code is not null
-{{ navigation_delivery_filter('source_received_at', 'injury_mechanism') }}
-union all
-select visit_occurrence_id, 'injury_intent', visit_occurrence_id::varchar, 'obt_encounter_uec', injury_intent_code, injury_intent_desc, injury_date, injury_time
-from attendance where injury_intent_code is not null
-{{ navigation_delivery_filter('source_received_at', 'injury_intent') }}
-union all
-select visit_occurrence_id, 'injury_place', visit_occurrence_id::varchar, 'obt_encounter_uec', place_of_injury_code, place_of_injury_desc, injury_date, injury_time
-from attendance where place_of_injury_code is not null
-{{ navigation_delivery_filter('source_received_at', 'injury_place') }}
-union all
-select a.visit_occurrence_id, 'injury_alcohol_drug_involvement', i.involvement_id, 'int_sus_uec_injury_alcohol_drug', i.involvement_code, i.involvement_desc, a.injury_date, a.injury_time
+select i.visit_occurrence_id, 'injury_alcohol_drug_involvement', i.involvement_id, 'int_sus_uec_injury_alcohol_drug',
+    i.involvement_code, i.involvement_desc, a.injury_date, a.injury_time
 from {{ ref('int_sus_uec_injury_alcohol_drug') }} as i
 inner join attendance as a on i.visit_occurrence_id = a.visit_occurrence_id
 where i.involvement_code is not null
-{{ navigation_delivery_filter('a.source_received_at', 'injury_alcohol_drug_involvement') }}
 ),
 
 clinical_records as (
@@ -301,7 +267,7 @@ select
     iff(s.observed_at is null, 'unknown', 'timestamp')::varchar as clinical_time_precision,
     iff(s.observed_at is null, 'not_recorded', 'observed_at')::varchar as clinical_time_basis,
     s.observation_code::varchar as source_code,
-    s.observation_description::varchar as source_code_name,
+    s.observation_name::varchar as source_code_name,
     'SNOMED CT'::varchar as source_coding_system,
     s.organisation_id::varchar as provider_organisation_code,
     s.organisation_name::varchar as provider_organisation_name,
@@ -319,11 +285,11 @@ select
     null::varchar as qualifier_code,
     null::varchar as qualifier_name,
     s.observation_value::varchar as result_value,
-    s.categorical_value_description::varchar as result_value_name,
+    s.categorical_value_name::varchar as result_value_name,
     s.observation_value_numeric::number(38,9) as result_value_numeric,
     s.value_parse_status::varchar as result_value_parse_status,
     s.ucum_unit_code::varchar as result_unit_code,
-    s.unit_description::varchar as result_unit_name,
+    s.unit_name::varchar as result_unit_name,
     s.resolved_unit_symbol::varchar as result_unit_symbol,
     null::varchar as assessment_tool_name,
     null::varchar as assessment_response_status
@@ -344,7 +310,7 @@ select
     iff(s.validated_at is null, 'unknown', 'timestamp')::varchar as clinical_time_precision,
     iff(s.validated_at is null, 'not_recorded', 'validated_at')::varchar as clinical_time_basis,
     s.assessment_tool_code::varchar as source_code,
-    s.assessment_description::varchar as source_code_name,
+    s.assessment_tool_name::varchar as source_code_name,
     'SNOMED CT'::varchar as source_coding_system,
     s.organisation_id::varchar as provider_organisation_code,
     s.organisation_name::varchar as provider_organisation_name,
@@ -368,8 +334,8 @@ select
     null::varchar as result_unit_code,
     null::varchar as result_unit_name,
     null::varchar as result_unit_symbol,
-    s.assessment_description::varchar as assessment_tool_name,
-    iff(s.value_parse_status = 'not_recorded', 'value_missing', 'not_validated')::varchar as assessment_response_status
+    s.assessment_tool_name::varchar as assessment_tool_name,
+    iff(s.value_parse_status = 'value_missing', 'value_missing', 'not_validated')::varchar as assessment_response_status
 from {{ ref('fct_sus_uec_scored_assessment') }} as s
 left join {{ ref('obt_encounter_uec') }} as p on s.visit_occurrence_id = p.visit_occurrence_id
 left join {{ ref('stg_sus_ecds_emergency_care') }} as delivery on s.visit_occurrence_id = delivery.primarykey_id
@@ -463,6 +429,8 @@ select
     null::varchar as assessment_response_status
 from attendance_items as i
 inner join attendance as a on i.visit_occurrence_id = a.visit_occurrence_id
+where true
+{{ navigation_delivery_filter('a.source_received_at', source_record_type_column='i.item_type') }}
 )
 select
     {{ dbt_utils.generate_surrogate_key(['source_dataset', 'source_record_type', 'source_record_id']) }} as clinical_record_id,
