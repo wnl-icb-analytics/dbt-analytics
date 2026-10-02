@@ -20,20 +20,21 @@ models:
     config:
       meta:
         indicator:
-          id: "AST006"
+          id: "AST005"
           type: "CONDITION"
           category: "LTC"
           clinical_domain: "Respiratory"
           name_short: "Asthma"
-          description_short: "QOF asthma register"
+          description_short: "QOF 2025/26 asthma register"
           description_long: >
-            Asthma diagnosed using QOF v51 criteria: Age ≥5 years with an asthma diagnosis
-            and no resolution dated after the latest diagnosis. Treatment must be
-            prescribed after the date 12 months before today and on or before today. Maps to QOF
-            indicator AST006 (Asthma Register). Uses AST_COD for diagnosis codes and  ASTRES_COD
-            for resolution codes.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. Asthma diagnosed using QOF v51
+            criteria: Age ≥5 years with an asthma diagnosis and no resolution dated after the
+            latest diagnosis. Treatment must be prescribed after the date 12 months before today
+            and on or before today. QOF 2025/26 correspondence: AST005 (Asthma Register). Uses
+            AST_COD for diagnosis codes and  ASTRES_COD for resolution codes.
           is_qof: true
-          qof_indicator: "AST006"
+          qof_indicator: "AST005"
           source_column: "is_on_register"
           usage_contexts:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
@@ -43,5 +44,24 @@ models:
               category: "INCLUSION"
             - cluster_id: "ASTRES_COD"
               category: "RESOLUTION"
+        indicators:
+          - id: "IND186"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Respiratory"
+            name_short: "Asthma: register"
+            description_short: "NICE Asthma: register"
+            description_long: >
+              NICE register of people with an asthma diagnosis aged 5 or over. The model requires an
+              unresolved AST_COD diagnosis and ASTTRT_COD treatment in the preceding 12 months,
+              following QOF v51. NICE does not require treatment. The NICE-literal diagnosis
+              population is nice_asthma_diagnosis_population, already used by IND273; use that
+              population for NICE counts rather than this treatment-restricted flag. QOF 2025/26
+              correspondence is AST005; the QOF v51 register-establishment indicator is retired,
+              while the register extraction continues.
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "AST005"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92

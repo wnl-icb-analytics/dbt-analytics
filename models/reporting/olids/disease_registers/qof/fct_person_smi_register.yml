@@ -26,20 +26,21 @@ models:
     config:
       meta:
         indicator:
-          id: "MH003"
+          id: "MH001"
           type: "CONDITION"
           category: "LTC"
           clinical_domain: "Mental Health"
           name_short: "Serious Mental Illness"
-          description_short: "QOF serious mental illness register"
+          description_short: "QOF 2025/26 serious mental illness register"
           description_long: >
-            QOF v51 MH1 register for patients with an MH_COD diagnosis covering bipolar
-            disorder, schizophrenia and other psychoses. Remission does not remove a
-            diagnosed person. Codes in both MH_COD and MHREM_COD qualify; records only
-            in MHREM_COD do not. Evidence is dated on or before today. The former
-            MH2 lithium route is retired. No age restriction.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. QOF v51 MH1 register for patients
+            with an MH_COD diagnosis covering bipolar disorder, schizophrenia and other psychoses.
+            Remission does not remove a diagnosed person. Codes in both MH_COD and MHREM_COD
+            qualify; records only in MHREM_COD do not. Evidence is dated on or before today. The
+            former MH2 lithium route is retired. No age restriction.
           is_qof: true
-          qof_indicator: "MH003"
+          qof_indicator: "MH001"
           source_column: "is_on_register"
           usage_contexts:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
@@ -49,5 +50,42 @@ models:
               category: "INCLUSION"
             - cluster_id: "MHREM_COD"
               category: "RESOLUTION"
+        indicators:
+          - id: "IND257"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Mental Health"
+            name_short: "Bipolar, schizophrenia and other psychoses: register"
+            description_short: "NICE Bipolar, schizophrenia and other psychoses: register"
+            description_long: >
+              NICE register of people with schizophrenia, bipolar affective disorder or other
+              psychoses, with no exclusions or age restriction. The model uses MH_COD and retains
+              diagnosed people in remission. Remission-only codes do not qualify. No additional
+              filter is needed. QOF 2025/26 correspondence is MH001; the QOF v51
+              register-establishment indicator is retired, while the register extraction continues.
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "MH001"
+            usage_contexts: ["NICE_GUIDANCE"]
+          - id: "IND256"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Mental Health"
+            name_short: "Bipolar, schizophrenia and other psychoses: register (lithium therapy)"
+            description_short: "NICE Bipolar, schizophrenia and other psychoses: register (lithium therapy)"
+            description_long: >
+              NICE register of people with schizophrenia, bipolar affective disorder or other
+              psychoses, plus other people on lithium therapy. Count the union of this SMI register
+              and int_nice_ltc_population where is_on_lithium is true, deduplicated by person. The
+              six-month lithium treatment rule applies only to the lithium arm, not to
+              diagnosis-qualified people. The lithium input also applies the later LITSTP_COD stop
+              rule. This model follows QOF v51 MH1 and contains no lithium-only people, so
+              is_on_register alone does not supply the full NICE population. QOF 2025/26
+              correspondence is MH001; the QOF v51 register-establishment indicator is retired,
+              while the register extraction continues.
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "MH001"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92

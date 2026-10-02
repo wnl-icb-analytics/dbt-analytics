@@ -50,26 +50,26 @@ models:
     config:
       meta:
         indicator:
-          id: "COPD007"
+          id: "COPD015"
           type: "CONDITION"
           category: "LTC"
           clinical_domain: "Respiratory"
           name_short: "COPD"
-          description_short: "QOF COPD register"
+          description_short: "QOF 2025/26 COPD register"
           description_long: >
-            COPD register v107 per QOF v51 business rules. Rule 1: Automatic inclusion for
-            diagnoses before 01/04/2023. Rule 2: Post-April 2023 with spirometry FEV1/FVC
-            <0.7 within -93 to +186 days of diagnosis. Rule 3: Newly registered (last 12
-            months), using the latest registration start on or before today, with
-            spirometry within -93 to +186 days of that registration. Rule 4: All
-            remaining post-April 2023 diagnoses are included. COPDDIAG_COD disorder
-            codes count at any date on or before today. COPDPROC_COD administrative
-            codes count only after the two-year boundary and on or before today.
-            Spirometry uses an unrounded ratio <0.7 or a coded result, with no lower
-            limit. COPDRES_COD supplies resolved codes, and the
-            change means counts are not comparable with v50.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. COPD register v107 per QOF v51
+            business rules. Rule 1: Automatic inclusion for diagnoses before 01/04/2023. Rule 2:
+            Post-April 2023 with spirometry FEV1/FVC <0.7 within -93 to +186 days of diagnosis.
+            Rule 3: Newly registered (last 12 months), using the latest registration start on or
+            before today, with spirometry within -93 to +186 days of that registration. Rule 4:
+            All remaining post-April 2023 diagnoses are included. COPDDIAG_COD disorder codes
+            count at any date on or before today. COPDPROC_COD administrative codes count only
+            after the two-year boundary and on or before today. Spirometry uses an unrounded ratio
+            <0.7 or a coded result, with no lower limit. COPDRES_COD supplies resolved codes, and
+            the change means counts are not comparable with v50.
           is_qof: true
-          qof_indicator: "COPD007"
+          qof_indicator: "COPD015"
           source_column: "is_on_register"
           usage_contexts:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
@@ -81,5 +81,28 @@ models:
               category: "INCLUSION"
             - cluster_id: "COPDRES_COD"
               category: "RESOLUTION"
+        indicators:
+          - id: "IND190"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Respiratory"
+            name_short: "COPD: register"
+            description_short: "NICE COPD: register"
+            description_long: >
+              NICE register of COPD diagnosed before a specified start date, plus later diagnoses
+              confirmed by quality-assured post-bronchodilator FEV1/FVC below 0.7 within three
+              months either side of diagnosis. NICE leaves the start date unspecified. The model
+              follows QOF v51 with 1 April 2023, a -93/+186-day spirometry window and a
+              new-registrant route anchored on registration. Its rule 4 admits remaining post-2023
+              diagnoses without spirometry. Disorder codes count at any prior date; administrative
+              codes count only in the preceding two years. Spirometry accepts an unrounded ratio
+              below 0.7 or a coded result. The flag therefore supplies the broader QOF population,
+              not a NICE-strict spirometry population. QOF 2025/26 correspondence is COPD015; the
+              QOF v51 register-establishment indicator is retired, while the register extraction
+              continues.
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "COPD015"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92
