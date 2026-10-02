@@ -85,7 +85,7 @@ osteoporosis, PAD, palliative care and RA did not change from v50 to v51.
 v51 changes are implemented: asthma age 5, COPD disorder and administrative clusters, HF3 reduced ejection fraction,
 SMI without the lithium route, QOF NDH/GDM, obesity2 and CVD.
 Obesity reads ethnicity from the `ETHALL*_COD` clusters, as both v50 and v51 specify; it previously used `ETH2016*_COD`.
-With a 12-month BMI window this takes a QOF-style obesity register from 94.8% to 99.1% of the published 2025/26 register.
+The EMIS extract has no obesity register. On a 12-month window, this change takes obesity from 94.8% to 99.1% of the published 2025/26 register.
 
 Models in `qof/` have macros in `macros/qof_registers/`; others in `macros/ltc_registers/`.
 
@@ -133,18 +133,18 @@ Points to keep when changing a rule:
 - **Dates, not timestamps.** Prepared observation dates are timestamps and can carry a time, because `get_observations`
   substitutes the recorded timestamp when a clinical date is later. Membership comparisons cast to `DATE`.
 - **Same-day resolution.** Read literally, fields such as `AFIBRES_DAT = Latest > AFIBLAT_DAT` keep a person whose resolution
-  is on the same day as their latest diagnosis. Published QOF does not: against the 2025/26 practice registers, treating a same-day
-  resolution as resolving fits better (AF: 86 practices match exactly, against 73), most likely because GP systems order entries
-  within a day and a resolution follows its diagnosis. AF, asthma, CYP asthma, depression and epilepsy therefore need the latest
-  diagnosis after the latest resolution. CKD, diabetes, heart failure, hypertension and palliative care keep same-day membership;
-  published QOF gives no clear signal for them. LD and COPD follow their own field operators.
+  is on the same day as their latest diagnosis. EMIS does not: against the EMIS QOF extract, the literal reading takes AF practices
+  within 1% from 62% to 57%, asthma from 67% to 62% and epilepsy from 60% to 55%. GP systems most likely order entries within a day,
+  and a resolution follows its diagnosis. AF, asthma, CYP asthma, depression and epilepsy therefore need the latest diagnosis after
+  the latest resolution. CKD, diabetes, heart failure, hypertension and palliative care keep same-day membership.
+  LD and COPD follow their own field operators.
 - **Windows.** `> (ACHV_DAT - 12 months)` excludes the boundary day: `order_date > DATEADD('month', -12, reference_date)`.
 - **Evidence up to the reference date.** Live facts and macros only count evidence dated on or before the date evaluated.
 
 Where the spec cannot be applied literally:
 
-- **Episode type.** Cancer and depression use the latest "first or new" episode. Records with episode type "None" count as first or new:
-  that matches published QOF (99.7% and 99.9% of the 2025/26 registers), while excluding them gives 97.3% and 93.9%.
+- **Episode type.** Cancer and depression use the latest "first or new" episode. Records with episode type "None" count as first or new,
+  as EMIS counts them: 73% of practices are within 1% for cancer and 70% for depression, against 25% and 1% if "None" is excluded.
 - **Age.** OLIDS gives an approximate birth date (mid-month), so age in full years can be a month early or late.
 - **Patient-table ethnicity.** Obesity's `ETHBAMEPAT_ETHNIC` fallback reads the Patients table, which OLIDS does not expose. Journal ethnicity only.
 - **Retired codes.** Some inputs use `include_history=true` to add retired SNOMED predecessors of cluster codes.
@@ -184,8 +184,9 @@ Where the spec cannot be applied literally:
 9. Say in the PR that history changes: today's rules and codes are applied to all 60 month-ends, and no earlier rule version is kept.
 10. Build the changed models and their consumers on the `dev` target. Run the reconciliation, cluster, grain and history-coverage tests,
     plus the CVD, HF, NDH and obesity2 singular tests that apply.
-11. Evaluate the PIT views at 31 March with `--vars` and compare register sizes with published QOF for the same practices, as percentages.
-    Separate known definition gaps and record the PCD release used.
+11. Compare the PIT views with the EMIS QOF extract through `compare_emis_qof_vs_pit_registers` (and `_summary`), before and after
+    the change, using the share of practices within 1% and the model's pass rate. Load a new extract into
+    `raw_reference_emis_qof_v50_register_counts` and set `qof_reference_date` to its date. Record the PCD release used.
 
 ## Validation
 
@@ -196,29 +197,30 @@ It checks membership only, not descriptive fields or past months.
 Other singular tests cover the CVD union and qualifiers, HF same-day retention, clinical NDH against the summary,
 GDM-only exclusion from clinical NDH, and obesity2's BMI, comorbidity and dyslipidaemia evidence.
 
-Register sizes in the monthly history at 31 March 2026 against the published 2025/26 QOF registers, NCL practices
-(history as a percentage of QOF; share of practices with a register of 20 or more within 5%):
+`compare_emis_qof_vs_pit_registers` compares the PIT views with an EMIS QOF register extract taken on the `qof_reference_date`
+(4 November 2025, QOF v50 rules) for the practices whose registration counts match EMIS (`emis_olids_reg_pass_direct_care`).
+A practice passes within 2% or 5 people. Baseline with the v51 rules, 159 practices:
 
-| Register | % of QOF | Practices within 5% | | Register | % of QOF | Practices within 5% |
-|---|---|---|---|---|---|---|
-| AF | 99.7% | 98% | | HTN | 99.9% | 98% |
-| Asthma | 100.1% | 99% | | LD | 101.0% | 89% |
-| Cancer | 99.7% | 98% | | Obesity | 186.2% | 0% |
-| CHD | 100.0% | 99% | | Osteoporosis | 102.9% | 79% |
-| CKD | 100.3% | 96% | | PAD | 100.1% | 93% |
-| COPD | 106.6% | 57% | | Palliative care | 102.1% | 76% |
-| Dementia | 103.6% | 67% | | RA | 100.1% | 94% |
-| Depression | 99.9% | 96% | | SMI | 99.2% | 94% |
-| Diabetes | 99.7% | 99% | | Stroke/TIA | 100.1% | 98% |
-| Epilepsy | 99.8% | 96% | | | | |
+| Register | % of EMIS | Within 1% | Pass | | Register | % of EMIS | Within 1% | Pass |
+|---|---|---|---|---|---|---|---|---|
+| AF | 99.7% | 62% | 99% | | Hypertension | 99.9% | 88% | 97% |
+| Asthma | 100.0% | 67% | 96% | | LD | 100.3% | 48% | 99% |
+| Cancer | 99.7% | 73% | 95% | | Osteoporosis | 102.6% | 54% | 98% |
+| CHD | 99.5% | 57% | 94% | | PAD | 99.6% | 61% | 100% |
+| CKD | 100.3% | 60% | 89% | | Palliative care | 104.6% | 35% | 91% |
+| COPD | 97.2% | 6% | 45% | | RA | 100.2% | 54% | 100% |
+| Dementia | 103.7% | 24% | 87% | | SMI | 99.2% | 45% | 92% |
+| Depression | 100.0% | 70% | 91% | | Stroke/TIA | 99.6% | 43% | 96% |
+| Diabetes | 99.6% | 82% | 96% | | | | | |
+| Epilepsy | 99.8% | 60% | 100% | | | | | |
+| Heart failure | 99.6% | 41% | 97% | | | | | |
 
 Known gaps:
 
-- COPD is about 7% over from 2023/24: the v51 administrative codes count, while published years used v50. Administrative-only members are 6% to 11% of the register.
-- Obesity is over by design (any-date BMI rule). With a 12-month window it is 99.1% of QOF.
-- Dementia, osteoporosis and palliative care are 2% to 4% over, with wide practice spread. Their rules match v50 and v51 exactly, so the cause is in the data or cluster content; not yet explained.
+- COPD: the extract applies v50 rules; v51 changed the COPD clusters and fields.
+- Dementia, osteoporosis and palliative care run 3% to 5% over with wide practice spread. Their rules match v50 and v51 exactly,
+  so the cause is in the data or cluster content; not yet explained.
+- Codes entered after the reference date do not count. Letting them count lowers the share of practices within 1%.
 
-Earlier years run lower because of registration history: the person-month spine was 97.5% of QOF list size in 2022 and 99.7% in 2026,
-and the known-by rule removes a further 1% to 3% in 2022 (diagnoses entered after the year-end).
-Heart failure in 2022 to 2024 and depression in 2023/24 reflect QOF definition changes in those years.
-Re-derive these figures after an upgrade rather than treating them as tolerances.
+The monthly history drifts below current registers in earlier years because of registration history: the person-month spine was
+97.5% of the published QOF list size in March 2022 and 99.7% in March 2026, and the known-by rule removes a further 1% to 3% in 2022.

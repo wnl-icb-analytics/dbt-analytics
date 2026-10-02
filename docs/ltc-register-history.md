@@ -98,7 +98,7 @@ It checks mapping coverage, not non-empty membership at every date.
 
 `tests/ltc_register_fct_pit_reconciliation.sql` checks live facts against the same macros at their build-date reference,
 with population alignment and register-source exceptions for evidence not yet known. It does not directly compare monthly tables with live facts.
-See the [validation method and published-QOF table](ltc-registers.md#validation) for the populations and expected gaps.
+See [validation](ltc-registers.md#validation) for the comparison with the EMIS QOF extract and the expected gaps.
 
 At release (PR #1278), latest-month membership was 98.4% to 100.6% of the live registers on active patients.
 All 39 conditions had 60 months with no null or out-of-order dates.
