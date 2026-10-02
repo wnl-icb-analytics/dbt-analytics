@@ -5,7 +5,8 @@ models:
     all delivered records without approval, value or date filtering. Values and units remain as reported.
     The feed includes initial observations and is not a complete series of measurements during the attendance.
     Unmatched attendances and codes are retained. Equal values and timestamps do not collapse distinct
-    source sequences.
+    source sequences. IDs are stable while the supplier keeps the attendance key (PRIMARYKEY_ID); a resubmission
+    that reissues it produces new IDs.
   config:
     tags:
     - daily
@@ -42,7 +43,7 @@ models:
     description: Attendance provider site name.
   - name: observation_code
     description: Reported SNOMED CT observation code.
-  - name: observation_description
+  - name: observation_name
     description: Latest available ETOS preferred term, falling back to the shared SNOMED CT reference.
       Null if unresolved.
   - name: measurement_category
@@ -63,14 +64,15 @@ models:
     description: Reported value parsed as NUMBER(38,9), rounded to nine decimal places. Null for absent
       or unparseable values; raw text remains authoritative. No unit conversion or clinical range validation.
   - name: value_parse_status
-    description: not_recorded, numeric or non_numeric_or_out_of_range. Numeric parsing is not a clinical
-      validity assessment.
+    description: value_missing, numeric, numeric_rounded (digits beyond nine decimal places were rounded),
+      numeric_format_unverified (parsed from a form other than a plain decimal) or not_numeric_or_out_of_range.
+      Numeric parsing is not a clinical validity assessment.
   - name: observed_at
     description: When the observation was made or verified. Source TIMESTAMP_NTZ; the original timezone
       offset is unavailable.
   - name: ucum_unit_code
     description: Unmodified reported case-sensitive UCUM unit; missing units are not inferred.
-  - name: unit_description
+  - name: unit_name
     description: Published label from the shared unit reference for an exact-case code or established
       alias. Null if unresolved.
   - name: unit_quantity
@@ -78,9 +80,10 @@ models:
   - name: unit_match_status
     description: ucum_code, dictionary_symbol, known_alias, not_recorded or unmatched. Alias and dictionary
       matches do not certify UCUM validity.
-  - name: categorical_value_description
-    description: Published ACVPU response label for exact A, C, V, P or U after trimming whitespace. Null
-      for other observations or unrecognised responses; raw text is retained.
+  - name: categorical_value_name
+    description: Published response label from ecds_observation_response, matched on observation code and
+      the exact case-sensitive value after trimming whitespace, such as Alert for ACVPU A. Null for observations
+      without published responses or unrecognised responses; raw text is retained.
   - name: resolved_unit_symbol
     description: Symbol from the matched reference. UCUM only when unit_definition_source is UKHFD UCUM.
       The reported value is not converted.

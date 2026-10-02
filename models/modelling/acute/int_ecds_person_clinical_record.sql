@@ -267,7 +267,7 @@ select
     iff(s.observed_at is null, 'unknown', 'timestamp')::varchar as clinical_time_precision,
     iff(s.observed_at is null, 'not_recorded', 'observed_at')::varchar as clinical_time_basis,
     s.observation_code::varchar as source_code,
-    s.observation_description::varchar as source_code_name,
+    s.observation_name::varchar as source_code_name,
     'SNOMED CT'::varchar as source_coding_system,
     s.organisation_id::varchar as provider_organisation_code,
     s.organisation_name::varchar as provider_organisation_name,
@@ -285,11 +285,11 @@ select
     null::varchar as qualifier_code,
     null::varchar as qualifier_name,
     s.observation_value::varchar as result_value,
-    s.categorical_value_description::varchar as result_value_name,
+    s.categorical_value_name::varchar as result_value_name,
     s.observation_value_numeric::number(38,9) as result_value_numeric,
     s.value_parse_status::varchar as result_value_parse_status,
     s.ucum_unit_code::varchar as result_unit_code,
-    s.unit_description::varchar as result_unit_name,
+    s.unit_name::varchar as result_unit_name,
     s.resolved_unit_symbol::varchar as result_unit_symbol,
     null::varchar as assessment_tool_name,
     null::varchar as assessment_response_status
@@ -310,7 +310,7 @@ select
     iff(s.validated_at is null, 'unknown', 'timestamp')::varchar as clinical_time_precision,
     iff(s.validated_at is null, 'not_recorded', 'validated_at')::varchar as clinical_time_basis,
     s.assessment_tool_code::varchar as source_code,
-    s.assessment_description::varchar as source_code_name,
+    s.assessment_tool_name::varchar as source_code_name,
     'SNOMED CT'::varchar as source_coding_system,
     s.organisation_id::varchar as provider_organisation_code,
     s.organisation_name::varchar as provider_organisation_name,
@@ -334,8 +334,8 @@ select
     null::varchar as result_unit_code,
     null::varchar as result_unit_name,
     null::varchar as result_unit_symbol,
-    s.assessment_description::varchar as assessment_tool_name,
-    iff(s.value_parse_status = 'not_recorded', 'value_missing', 'not_validated')::varchar as assessment_response_status
+    s.assessment_tool_name::varchar as assessment_tool_name,
+    iff(s.value_parse_status = 'value_missing', 'value_missing', 'not_validated')::varchar as assessment_response_status
 from {{ ref('fct_sus_uec_scored_assessment') }} as s
 left join {{ ref('obt_encounter_uec') }} as p on s.visit_occurrence_id = p.visit_occurrence_id
 left join {{ ref('stg_sus_ecds_emergency_care') }} as delivery on s.visit_occurrence_id = delivery.primarykey_id

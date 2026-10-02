@@ -12,7 +12,7 @@ select
     , e.site_id
     , e.site_name
     , s.observation_code
-    , coalesce(r.preferred_term, c.preferred_term) as observation_description
+    , coalesce(r.preferred_term, c.preferred_term) as observation_name
     , r.measurement_category
     , r.ecds_group1
     , case
@@ -25,32 +25,19 @@ select
     , r.source_file_name as code_reference_file
     , s.observation_value
     , try_to_decimal(nullif(trim(s.observation_value), ''), 38, 9) as observation_value_numeric
-    , case
-        when nullif(trim(s.observation_value), '') is null then 'not_recorded'
-        when try_to_decimal(trim(s.observation_value), 38, 9) is not null then 'numeric'
-        else 'non_numeric_or_out_of_range'
-    end as value_parse_status
+    , {{ numeric_parse_status("nullif(trim(s.observation_value), '')") }} as value_parse_status
     , s.observed_at
     , s.ucum_unit_code
     , u.unit_symbol as resolved_unit_symbol
     , u.definition_source as unit_definition_source
-    , u.description as unit_description
+    , u.description as unit_name
     , u.quantity_name as unit_quantity
     , case
         when nullif(trim(s.ucum_unit_code), '') is null then 'not_recorded'
         when u.code is not null then u.match_type
         else 'unmatched'
     end as unit_match_status
-    -- ETOS ACVPU response labels. Other text remains in observation_value.
-    , case when s.observation_code = '1104441000000107' then
-        case trim(s.observation_value)
-            when 'A' then 'Alert'
-            when 'C' then 'Confused'
-            when 'V' then 'Voice (Patient Responds to Voice)'
-            when 'P' then 'Pain (Patient Responds to Painful Stimulus)'
-            when 'U' then 'Unresponsive'
-        end
-    end as categorical_value_description
+    , response.response_name as categorical_value_name
 from {{ ref('stg_sus_ecds_clinical_coded_observations') }} as s
 left join {{ ref('obt_encounter_uec') }} as e
     on s.visit_occurrence_id = e.visit_occurrence_id
@@ -60,3 +47,6 @@ left join {{ ref('snomed_concept') }} as c
     on s.observation_code = c.snomed_code
 left join {{ ref('clinical_unit_of_measurement') }} as u
     on trim(s.ucum_unit_code) = u.code
+left join {{ ref('ecds_observation_response') }} as response
+    on s.observation_code = response.observation_code
+    and trim(s.observation_value) = response.response_value
