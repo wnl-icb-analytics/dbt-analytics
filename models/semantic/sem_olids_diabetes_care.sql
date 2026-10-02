@@ -113,7 +113,7 @@ DIMENSIONS(
     demographics.age_band_5y AS age_band_5y COMMENT = '5-year age bands',
     demographics.age_band_10y AS age_band_10y COMMENT = '10-year age bands',
     demographics.age_band_nhs AS age_band_nhs COMMENT = 'NHS Digital standard age bands',
-    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category (Asian or Asian British, Black or Black British, Mixed, Other, White, Unknown)',
+    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category: Asian, Black, Mixed, Other, White, or Unknown',
     demographics.ethnicity_subcategory AS ethnicity_subcategory COMMENT = 'Ethnicity subcategory (detailed groupings)',
     demographics.main_language AS main_language COMMENT = 'Main spoken language (Not Recorded if unknown)',
     demographics.interpreter_needed AS interpreter_needed COMMENT = 'Whether interpreter is required',
@@ -135,7 +135,7 @@ DIMENSIONS(
     demographics.borough_resident AS borough_resident COMMENT = 'Residence borough',
     demographics.neighbourhood_resident AS neighbourhood_resident COMMENT = 'Residence neighbourhood',
     demographics.imd_decile_25 AS imd_decile_25 COMMENT = 'IMD 2025 decile (1=most deprived, 10=least)',
-    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile (1 - Most Deprived to 5 - Least Deprived, Unknown)'
+    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown'''
 )
 
 METRICS(
