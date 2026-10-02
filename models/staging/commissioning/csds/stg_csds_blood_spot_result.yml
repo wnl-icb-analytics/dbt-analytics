@@ -1,0 +1,39 @@
+version: 2
+models:
+- name: stg_csds_blood_spot_result_history
+  description: One CYP604 newborn blood spot result row from an accepted CSDS submission, with one outcome status
+    per screened condition. The same result repeats across reporting periods.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: cyp604_unique_id
+    description: Source table row identifier, unique across accepted submissions.
+    data_tests:
+    - not_null
+    - unique
+  - name: unique_submission_id
+    description: Accepted source submission supplying this occurrence.
+- name: stg_csds_blood_spot_result
+  description: Latest accepted CYP604 newborn blood spot result for each person, provider and card completion date,
+    the ETOS derivation key. A missing card date is part of the key. Rows missing a person or provider
+    keep each source occurrence.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: ETOS record key, with a source-row fallback when a required key field is missing.
+    data_tests:
+    - not_null
+    - unique
+  - name: cyp604_unique_id
+    description: Source row of the selected accepted occurrence.
+  - name: first_reported_period_end_date
+    description: Earliest accepted reporting period containing this key.
+  - name: last_reported_period_end_date
+    description: Latest accepted reporting period containing this key.
+  - name: accepted_source_record_count
+    description: Number of accepted source rows represented by the selected occurrence.

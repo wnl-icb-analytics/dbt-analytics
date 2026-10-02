@@ -6,7 +6,12 @@
     ('activity_type', 'raw_ukhfd_data_dictionary_csds_community_care_activity_type_legacy'),
     ('referral_closure_reason', 'raw_ukhfd_data_dictionary_mhsds_referral_closure_reason'),
     ('referral_closure_reason', 'raw_ukhfd_data_dictionary_csds_referral_closure_reason_legacy'),
-    ('referral_rejection_reason', 'raw_ukhfd_data_dictionary_mhsds_referral_rejection_reason')
+    ('referral_rejection_reason', 'raw_ukhfd_data_dictionary_mhsds_referral_rejection_reason'),
+    ('childhood_immunisation_type', 'raw_ukhfd_data_dictionary_childhood_immunisation_type'),
+    ('breastfeeding_status', 'raw_ukhfd_data_dictionary_breastfeeding_status'),
+    ('newborn_hearing_screening_outcome', 'raw_ukhfd_data_dictionary_newborn_hearing_screening_outcome'),
+    ('newborn_hearing_audiology_outcome', 'raw_ukhfd_data_dictionary_newborn_hearing_audiology_outcome'),
+    ('newborn_blood_spot_test_outcome_status', 'raw_ukhfd_data_dictionary_newborn_blood_spot_test_outcome_status')
 ] %}
 
 {% for code_set_name, raw_model_name in code_sets %}

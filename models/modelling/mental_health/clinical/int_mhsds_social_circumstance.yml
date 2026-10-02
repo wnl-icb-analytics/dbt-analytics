@@ -1,0 +1,23 @@
+version: 2
+models:
+- name: int_mhsds_social_circumstance
+  description: >-
+    Recorded MHS011 social circumstances with monthly restatements resolved. Each row is the latest
+    accepted record for a provider, person, SNOMED CT circumstance and recorded date. Records missing
+    any of these remain separate. The recorded date describes when the circumstance was noted, not
+    the period it applied.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Unique retained circumstance key, with a source-row fallback for incomplete keys.
+    data_tests:
+    - not_null
+    - unique
+  - name: recorded_date
+    description: Date of the stored recording timestamp, or the separately submitted recording date when
+      the timestamp is absent.
+  - name: accepted_source_record_count
+    description: Number of accepted source rows represented by the retained circumstance.

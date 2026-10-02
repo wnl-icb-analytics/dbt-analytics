@@ -232,8 +232,9 @@ Full UKHFD SNOMED description history adds no concept-identifier matches for
 the remaining records submitted as SNOMED CT. Read gaps have no case-only matches,
 and source clinical codes contain no outer padding. Some unlabelled CTV3 tokens
 occur in UKHFD migration maps, but a mapped target description is not the original
-Read term. This change does not relabel a submitted scheme or treat a migration
-map as an equivalent source description.
+Read term. A migration map is not treated as an equivalent source description.
+The later [Read scheme correction](#read-scheme-correction) moves only exact
+concept codes between Read v2 and CTV3.
 
 The 2,156,884 unresolved observation-unit records use 200 distinct tokens. Four
 numeric tokens account for 1,267,074 records; none matches UKHFD UCUM ConceptID
@@ -420,3 +421,115 @@ All 37,606,281 record keys remain unique. Aggregate fingerprints confirm that
 existing labels and mappings, submitted codes and values, units, clinical times
 and assessment results are unchanged. None of the new term labels receives a
 SNOMED mapping. Full-stack compilation passed all 6,912 nodes.
+
+
+## Child health, diagnosis and growth sections
+
+The fact also carries CYP502 childhood immunisations, CYP601 previous diagnoses,
+CYP603 newborn hearing screening, CYP604 newborn blood spot results, CYP605
+infant physical examinations, CYP606 to CYP608 provisional, primary and
+secondary diagnoses, CYP610 breastfeeding status and CYP611 weight, height and
+length. These sections previously had only generated raw models.
+
+Each restated section has a `_history` staging model with every accepted row
+and a latest model with one row per ETOS record key from the Complex
+Derivations sheet. The keys are person, provider, immunisation type and date
+(CYP502); person, provider, diagnosis and date (CYP601); person, provider,
+screening outcome and audiology dates (CYP603); person, provider and card date
+(CYP604); person, provider and examination date (CYP605); and referral,
+person, diagnosis and date (CYP606 to CYP608), with person added to the ETOS key
+so conflicting identities stay separate. The diagnosis keys also keep the
+submitted scheme; the empty source master and mapped diagnosis fields are not
+staged. Optional dates and outcomes are part of the key, so a missing
+value does not split restatements, except for CYP502 and CYP605: an undated
+immunisation or examination keeps each source occurrence. A missing person, provider, referral or code
+keeps each source occurrence. The latest row wins by reporting period, file
+receipt, submission and source row. CYP610 and CYP611 belong to a care activity
+and are not restated, so each accepted row is kept, as for CYP612.
+
+CYP502 shows why this matters. About 48M accepted rows reduce to about 3.5M
+immunisations. Providers resend the whole history: the median immunisation
+appears in 12 accepted periods, about 89% appear in every month between their
+first and last report, and about 71% were first reported more than a year after
+the immunisation date. A permanent test checks that each latest model
+represents every accepted history row.
+
+About 44% of CYP502 immunisations share person, provider and date with a CYP501
+coded immunisation, so the same vaccination is often submitted in both tables.
+CYP502 rows therefore use the separate type `childhood_immunisation` and do not
+change `immunisation` counts. Neither table is deduplicated against the other.
+
+Code-list labels come from the UKHFD NHS Data Dictionary dimensions for
+childhood immunisation type, breastfeeding status, newborn hearing screening
+and audiology outcome, and newborn blood spot outcome status, added to
+`csds_activity_code_lookup`. UKHFD has no infant physical examination result
+list. The CYP605IPE worksheet of CSDS ETOS v1.6.10 publishes one list for the
+hips, heart, eyes and testes results: 01 Satisfactory, 02 Problem Identified,
+03 Problem Suspected and NN Not examined. The `csds_infant_physical_examination_result`
+seed holds those values and the lookup adds them with `definition_source`
+`CSDS ETOS v1.6.10`; a UKHFD definition would take precedence. All submitted
+examination results now have a label. Diagnosis schemes use the shared
+`diagnosis_scheme` reference: 02 is ICD-10, 04 Read v2, 05 CTV3 and 06 SNOMED
+CT, resolved through the existing ICD-10, Read and SNOMED references.
+
+About half of CYP607 primary diagnoses lacked a label. Most of the gap was about
+180K rows submitted under Read v2 whose codes are not Read v2 terms; about 96%
+of them are CTV3 concept codes. The [Read scheme correction](#read-scheme-correction)
+resolves those in CTV3.
+
+Screening sections with several coded fields give one row per populated field.
+Blood spot rows use `newborn_blood_spot_` plus the screened condition and take
+the card completion date, which ETOS defines as the sample date. Examination
+rows use `infant_physical_examination_` plus the examined area. CSDS supplies
+no hearing screening date, so those outcomes are undated; only a handful of
+audiology outcomes are populated. CYP611 types are `person_weight`,
+`person_height` and `person_length`, with no code and the units ETOS fixes:
+kg, m and cm. Their label status is `defined_by_data_element`. Breastfeeding
+and growth rows inherit the same-submission contact time on the same terms as
+CYP612; the warehouse observation date stays separate.
+
+Referral-linked items now carry `is_referral_person_consistent`. The
+longitudinal adapter promotes a referral parent only when the referral does not
+name a different person, matching the event adapter.
+
+This work covers #1139 in substance. Newborn hearing screening has accepted
+history and latest staging, person linkage, provider names, UKHFD labels and
+documented null dates, but it sits in the clinical fact at one row per ETOS
+record rather than in a separate fact at one row per submitted row.
+
+## Read scheme correction
+
+Some CSDS records carry CTV3 codes under the Read v2 scheme, or the reverse.
+`read_code_scheme_correction` lists each code with no membership evidence in a
+Read scheme that is an exact Dictionary concept code in the other. Membership
+evidence is any Dictionary code or alternative with that scheme's flag, taken
+before `read_code` drops ambiguous alternatives, and any UKHFD Read v2 term or
+code, CTV3 concept or CTV3 term identifier. A code with any such evidence keeps
+its submitted scheme, even when it is unlabelled or also a concept in the other.
+
+`fct_csds_clinical_record` and `fct_csds_care_activity` both use this model, so
+their labels, Read SNOMED mappings and observation-unit aliases agree. The rule
+applies to diagnoses, immunisations, procedures, findings and observations. In
+the clinical fact `clinical_code_system` names the scheme used, and the
+longitudinal adapter's `source_coding_system` follows it.
+`submitted_clinical_code_system`, `coding_scheme_code` and `coding_scheme_name`
+keep the submitted scheme, and `is_clinical_code_system_corrected` marks the
+change. The activity fact keeps its submitted scheme codes.
+
+The shared-DEV build on 1 October 2026 corrected about 175K records:
+
+| Clinical record type | Corrected records | Direction | Labelled before | Labelled after |
+|---|---:|---|---:|---:|
+| Primary diagnosis | ~174K | Read v2 to CTV3 | 49.0% | 97.5% |
+| Immunisation | ~0.5K | Read v2 to CTV3 | 28.21% | 28.23% |
+
+No finding, observation, procedure or other diagnosis type met the rule. A first
+version tested only the codes `read_code` resolves. It also moved about 2.6K
+observations and a few procedures whose codes are ambiguous Dictionary
+alternatives in their submitted scheme; requiring no membership evidence keeps
+them in that scheme. The corrected primary diagnoses have no Dictionary SNOMED
+mapping, so their mapped fields stay empty. Record keys stayed unique.
+
+MHSDS has no equivalent gap. Of its ~34K Read v2 and CTV3 clinical records, none
+that is absent from its submitted scheme is an exact concept code in the other,
+so the MHSDS models are unchanged.
