@@ -256,4 +256,29 @@ SELECT
     is_in_numerator,
     indicator_status
 FROM {{ ref('fct_person_depression_review_ind104' if reference == 'current' else 'fct_person_depression_review_ind104' ~ '_by_month') }}
+
+UNION ALL
+
+SELECT
+    person_id,
+    indicator_id,
+    indicator_name,
+    reporting_date,
+    measurement_period_start,
+    age,
+    condition_name,
+    {{ nice_practice_columns(none, reference) }},
+    latest_thyroid_function_test_date AS latest_review_date,
+    NULL::DATE AS latest_copd_exacerbation_count_date,
+    NULL::DATE AS latest_mrc_dyspnoea_date,
+    NULL::DATE AS latest_nyha_date,
+    NULL::DATE AS latest_medication_review_date,
+    NULL::DATE AS latest_health_action_plan_date,
+    NULL::BOOLEAN AS has_ethnicity_recorded,
+    downs_syndrome_diagnosis_date AS diagnosis_date,
+    latest_record_date,
+    is_in_denominator,
+    is_in_numerator,
+    indicator_status
+FROM {{ ref('fct_person_learning_disability_thyroid_test_ind79' if reference == 'current' else 'fct_person_learning_disability_thyroid_test_ind79' ~ '_by_month') }}
 {% endmacro %}

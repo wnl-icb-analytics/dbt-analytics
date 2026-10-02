@@ -1,10 +1,12 @@
 {% macro nice_smoking_union(reference='current') %}
-{#- Combine the three smoking indicators at person/indicator/reporting-date grain. -#}
+{#- Combine the smoking indicators at person/indicator/reporting-date grain. -#}
 -- Common long-form interface for the NICE smoking indicator views.
 {% set indicator_models = [
     'fct_person_smoking_ind156',
     'fct_person_smoking_ind157',
-    'fct_person_smoking_ind97'
+    'fct_person_smoking_ind97',
+    'fct_person_smoking_ind98',
+    'fct_person_smoking_ind99'
 ] %}
 
 {% for indicator_model in indicator_models %}

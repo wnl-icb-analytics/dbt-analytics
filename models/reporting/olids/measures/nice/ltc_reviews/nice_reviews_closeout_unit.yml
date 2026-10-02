@@ -1,0 +1,79 @@
+unit_tests:
+- name: nice_w4_ind79_known_dates_thyroid_exclusion_and_expiry
+  model: fct_person_learning_disability_thyroid_test_ind79_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+
+      column3::NUMBER AS age, ''1980-01-01''::DATE AS birth_date_approx,
+
+      ''Female''::VARCHAR AS gender, ''SYNTHETIC''::VARCHAR AS practice_code,
+
+      ''Synthetic practice''::VARCHAR AS practice_name FROM VALUES
+
+      (-4101, ''2026-08-31'', 30), (-4101, ''2026-09-30'', 30),
+
+      (-4102, ''2026-09-30'', 30), (-4103, ''2026-09-30'', 30),
+
+      (-4104, ''2026-09-30'', 30), (-4105, ''2026-09-30'', 17),
+
+      (-4106, ''2026-09-30'', 18), (-4107, ''2026-09-30'', 30), (-4108, ''2026-09-30'', 30)'
+  - input: ref('fct_person_learning_disability_register_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date,
+
+      ''2020-01-01''::DATE AS earliest_diagnosis_date, ''2020-01-01''::DATE AS latest_diagnosis_date
+
+      FROM VALUES (-4101, ''2026-08-31''), (-4101, ''2026-09-30''), (-4102, ''2026-09-30''),
+
+      (-4103, ''2026-09-30''), (-4104, ''2026-09-30''), (-4105, ''2026-09-30''), (-4106, ''2026-09-30''), (-4107,
+      ''2026-09-30''), (-4108, ''2026-09-30'')'
+  - input: ref('fct_person_hypothyroidism_register_by_month')
+    format: sql
+    rows: SELECT -4102::NUMBER AS person_id, '2026-09-30'::DATE AS month_end_date, '2020-01-01'::DATE AS earliest_diagnosis_date,
+      '2020-01-01'::DATE AS latest_diagnosis_date
+  - input: ref('int_downs_syndrome_diagnoses_all')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date,
+
+      column3::DATE AS date_recorded FROM VALUES
+
+      (-4101, ''2000-01-01'', ''2000-01-01''), (-4101, ''2000-01-01'', ''2000-01-01''),
+
+      (-4102, ''2000-01-01'', NULL), (-4103, ''2000-01-01'', ''2026-10-01''),
+
+      (-4104, ''2026-10-01'', NULL), (-4105, ''2000-01-01'', NULL), (-4106, ''2000-01-01'', NULL), (-4107, ''2000-01-01'',
+      NULL), (-4108, ''2000-01-01'', NULL)'
+  - input: ref('int_nice_review_evidence_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+
+      column3::DATE AS latest_thyroid_function_test_date FROM VALUES
+
+      (-4101, ''2026-08-31'', ''2025-05-31''), (-4101, ''2026-09-30'', ''2025-05-31''),
+
+      (-4106, ''2026-09-30'', ''2025-06-30''), (-4107, ''2026-09-30'', ''2026-09-30''), (-4108, ''2026-09-30'',
+      ''2026-10-01'')'
+  expect:
+    rows:
+    - person_id: -4101
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -4101
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -4106
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -4107
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -4108
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+    - nice-w4-fixture
