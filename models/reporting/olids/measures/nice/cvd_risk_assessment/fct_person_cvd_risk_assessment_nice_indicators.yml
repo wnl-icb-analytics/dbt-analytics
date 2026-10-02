@@ -269,7 +269,7 @@ models:
 
   - name: fct_person_cvd_risk_assessment_nice_indicators
     description: |
-      NICE cardiovascular prevention results for IND112, IND161, IND181, IND269 and IND270.
+      NICE cardiovascular prevention results for IND108, IND112, IND161, IND181, IND269 and IND270.
       One row per eligible person and indicator on the build date, with risk scores,
       assessment dates, the latest paired BP date and achievement.
 
@@ -296,7 +296,7 @@ models:
         data_tests:
           - accepted_values:
               arguments:
-                values: ['IND269', 'IND270', 'IND181', 'IND161', 'IND112']
+                values: ['IND269', 'IND270', 'IND181', 'IND161', 'IND112', 'IND108']
       - name: indicator_status
         description: ACHIEVED or NOT_RECORDED_IN_PERIOD
         data_tests:
@@ -304,9 +304,9 @@ models:
               arguments:
                 values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
       - name: latest_risk_score
-        description: Latest valid QRISK score in percent; null if none
+        description: Latest valid QRISK score in percent; for IND108, the selected latest QRISK2/3 score or null if invalid or missing
       - name: latest_risk_assessment_date
-        description: Date of the latest CVD risk assessment record
+        description: Date of the latest CVD risk assessment record; IND108 selects QRISK2/3 only
       - name: latest_bp_date
         description: Latest complete paired BP date for IND112; null for risk assessment indicators
       - name: new_diagnosis_date
@@ -315,7 +315,7 @@ models:
   - name: fct_person_cvd_risk_assessment_nice_indicators_snapshot_input
     description: |
       Current NICE cardiovascular prevention results prepared for history tracking.
-      One row per eligible person and indicator for IND112, IND161, IND181, IND269 and IND270,
+      One row per eligible person and indicator for IND108, IND112, IND161, IND181, IND269 and IND270,
       with current practice, risk scores, assessment dates, the latest paired BP date and achievement.
 
       The snapshot records changes to these fields. Rolling reporting dates are omitted so
@@ -342,9 +342,9 @@ models:
       - name: current_practice_code
         description: ODS code of the current registration practice at the build.
       - name: latest_risk_score
-        description: Latest valid QRISK score in percent.
+        description: Latest valid QRISK score in percent; IND108 uses the selected latest QRISK2/3 record and leaves missing or invalid scores null.
       - name: latest_risk_assessment_date
-        description: Date of the latest CVD risk assessment record.
+        description: Date of the latest CVD risk assessment record; IND108 selects QRISK2/3 only.
       - name: latest_bp_date
         description: Latest complete paired BP date for IND112; null for risk assessment indicators.
       - name: is_in_numerator

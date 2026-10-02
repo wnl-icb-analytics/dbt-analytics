@@ -6,7 +6,8 @@
     'fct_person_cvd_risk_assessment_ind270',
     'fct_person_cvd_risk_assessment_ind181',
     'fct_person_cvd_risk_assessment_ind161',
-    'fct_person_blood_pressure_cvd_prevention_ind112'
+    'fct_person_blood_pressure_cvd_prevention_ind112',
+    'fct_person_cvd_risk_assessment_rheumatoid_arthritis_ind108'
 ] %}
 
 {% for indicator_model in indicator_models %}

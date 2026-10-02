@@ -1,0 +1,60 @@
+models:
+- name: fct_person_cvd_risk_assessment_rheumatoid_arthritis_ind108_by_month
+  description: NICE IND108. One row per active, living, non-test rheumatoid arthritis register member
+    aged 30 to 84 at R. Excludes CHD, stroke or TIA and familial hypercholesterolaemia register members
+    only. PAD, CKD, diabetes, frailty and treatment do not exclude anyone. Achievement requires a QRISK2
+    or QRISK3 record in the preceding 15 calendar months, both boundaries inclusive, from int_cvd_risk_assessment_all
+    (PCD CVDRISKASS_COD, CVDASS2_COD and QRISKSCORE_COD). These tools include RA. A numeric result is
+    not required; generic QRISK, JBS and Framingham do not count. Registers use RARTH_COD, CHD_COD, STRK_COD,
+    TIA_COD and FHYP_COD through the established register definitions. Personalised care adjustments are
+    not applied. Recalculated monthly for the last 60 completed month-ends using current rules and code
+    lists. Registration and practice use the monthly spine, with start inclusive and end and death exclusive.
+    Overlaps retain its current-registration priority. Birth and death dates are approximate; missing
+    birth dates prevent historical active rows. Current gender and test flags apply retrospectively. Registers
+    use clinical and recorded dates known by month-end. Other evidence uses corrected clinical dates through
+    month-end. Later corrections and code-list changes can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind108
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Evaluation date, a DATE.
+  - name: measurement_period_start
+    description: Inclusive start of the 15-month QRISK2/3 recording window.
+  - name: age
+    description: Completed years at R; history uses the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true. Rows contain eligible people only.
+  - name: is_in_numerator
+    description: Whether qualifying evidence falls within the indicator window through R.
+  - name: indicator_status
+    description: ACHIEVED when in the numerator, otherwise NOT_RECORDED_IN_PERIOD.
+  - name: practice_code
+    description: Practice ODS code at R under the established population attribution.
+  - name: practice_name
+    description: Practice name at R under the established population attribution.
+  - name: latest_risk_assessment_date
+    description: Latest QRISK2/3 clinical date through R, with or without a score; null when none. May
+      be older than 15 months.
+  - name: latest_risk_score
+    description: Numeric score in percent from the selected latest QRISK2/3 record; null when missing
+      or outside 0 to 100. No fallback to an older score.
+  - name: latest_risk_score_date
+    description: Clinical date of the selected QRISK2/3 record when its numeric score is in 0 to 100;
+      otherwise null.
