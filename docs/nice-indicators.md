@@ -7,6 +7,9 @@ Network and system indicators are out of scope.
 `Register` is a catalogue entry without a numerator; it does not imply an exact NICE population.
 Register filters and rule differences are in the model YAML and `def_indicator.description_long`.
 Register counts use currently registered, living, non-test people and the reporting date.
+IND237 and IND238 use the shared NG246 BMI categories, including calculated BMI.
+Lower thresholds apply only to recorded higher-risk ethnic groups; unknown ethnicity uses standard
+thresholds. This differs from the NICE wording, which lowers thresholds for everyone not recorded as White.
 `Planned` identifies later work that needs new or extended code lists, inputs or agreed rules.
 The evidence figures in `Not built` rows describe coded activity in the source data, not whether care was delivered.
 

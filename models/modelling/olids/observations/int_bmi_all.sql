@@ -154,48 +154,8 @@ SELECT
         ELSE FALSE
     END AS is_valid_bmi,
 
-    -- BMI categorisation (ethnicity-adjusted per NICE guidance)
-    CASE
-        WHEN bmi_value NOT BETWEEN 10 AND 150 THEN 'Invalid'
-        WHEN bmi_value < 18.5 THEN 'Underweight'
-        WHEN requires_lower_bmi_thresholds = TRUE THEN
-            CASE
-                WHEN bmi_value < 23 THEN 'Normal'
-                WHEN bmi_value < 27.5 THEN 'Overweight'
-                WHEN bmi_value < 32.5 THEN 'Obese Class I'
-                WHEN bmi_value < 37.5 THEN 'Obese Class II'
-                ELSE 'Obese Class III'
-            END
-        ELSE  -- Standard thresholds for other populations
-            CASE
-                WHEN bmi_value < 25 THEN 'Normal'
-                WHEN bmi_value < 30 THEN 'Overweight'
-                WHEN bmi_value < 35 THEN 'Obese Class I'
-                WHEN bmi_value < 40 THEN 'Obese Class II'
-                ELSE 'Obese Class III'
-            END
-    END AS bmi_category,
+    {{ bmi_category() }} AS bmi_category,
 
-    -- BMI risk sort key (ethnicity-adjusted, higher number = higher risk)
-    CASE
-        WHEN bmi_value NOT BETWEEN 10 AND 150 THEN 0  -- Invalid
-        WHEN bmi_value < 18.5 THEN 2  -- Underweight - Health risk
-        WHEN requires_lower_bmi_thresholds = TRUE THEN
-            CASE
-                WHEN bmi_value < 23 THEN 1  -- Normal - Baseline/lowest risk
-                WHEN bmi_value < 27.5 THEN 3  -- Overweight - Moderate risk
-                WHEN bmi_value < 32.5 THEN 4  -- Obese Class I - High risk
-                WHEN bmi_value < 37.5 THEN 5  -- Obese Class II - Higher risk
-                ELSE 6  -- Obese Class III - Highest risk
-            END
-        ELSE  -- Standard thresholds for other populations
-            CASE
-                WHEN bmi_value < 25 THEN 1  -- Normal - Baseline/lowest risk
-                WHEN bmi_value < 30 THEN 3  -- Overweight - Moderate risk
-                WHEN bmi_value < 35 THEN 4  -- Obese Class I - High risk
-                WHEN bmi_value < 40 THEN 5  -- Obese Class II - Higher risk
-                ELSE 6  -- Obese Class III - Highest risk
-            END
-    END AS bmi_risk_sort_key
+    {{ bmi_category(output='risk_sort_key') }} AS bmi_risk_sort_key
 
 FROM bmi_with_ethnicity
