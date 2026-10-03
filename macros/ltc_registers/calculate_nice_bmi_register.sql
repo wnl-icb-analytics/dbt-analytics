@@ -21,35 +21,21 @@ WITH reference_dates AS (
     SELECT DISTINCT person_id FROM population
 ), bmi_candidates AS (
     SELECT bmi.person_id, bmi.id, bmi.clinical_effective_date, bmi.date_recorded,
-        bmi.bmi_value, bmi.bmi_source
+        bmi.bmi_value, bmi.bmi_source, bmi.height_date_recorded
     FROM {{ ref('int_bmi_all') }} AS bmi
     INNER JOIN people ON bmi.person_id = people.person_id
     -- Older events cannot qualify at any requested date or supersede a newer result.
     WHERE bmi.clinical_effective_date::DATE > DATEADD(month, -12, (SELECT MIN(reference_date) FROM reference_dates))
-), heights AS (
-    -- Match the contributing height selected by int_bmi_all; its recorded date also bounds knowledge.
-    SELECT obs.person_id, obs.clinical_effective_date, obs.date_recorded
-    FROM ({{ get_observations("'HEIGHT'") }}) AS obs
-    INNER JOIN people ON obs.person_id = people.person_id
-    WHERE obs.clinical_effective_date IS NOT NULL
-        AND TRY_CAST(obs.result_value AS FLOAT) BETWEEN 50 AND 250
-        AND obs.age_at_event >= 18
-    QUALIFY ROW_NUMBER() OVER (
-        PARTITION BY obs.person_id, obs.clinical_effective_date ORDER BY obs.id DESC
-    ) = 1
 ), bmi_records AS (
     SELECT bmi.person_id, bmi.clinical_effective_date::DATE AS bmi_date,
         bmi.bmi_value, bmi.bmi_source,
         IFF(bmi.bmi_source = 'calculated',
             GREATEST({{ ltc_known_date('bmi.clinical_effective_date', 'bmi.date_recorded') }},
-                COALESCE(height.date_recorded::DATE, bmi.clinical_effective_date::DATE)),
+                COALESCE(bmi.height_date_recorded::DATE, bmi.clinical_effective_date::DATE)),
             {{ ltc_known_date('bmi.clinical_effective_date', 'bmi.date_recorded') }}) AS known_date,
         TO_VARCHAR(bmi.clinical_effective_date, 'YYYY-MM-DD HH24:MI:SS.FF9')
             || '|' || TO_VARCHAR(bmi.id) AS record_key
     FROM bmi_candidates AS bmi
-    ASOF JOIN heights AS height
-        MATCH_CONDITION (bmi.clinical_effective_date >= height.clinical_effective_date)
-        ON bmi.person_id = height.person_id
 ), latest_bmi AS (
     {{ ltc_latest_known_record('SELECT person_id, record_key, known_date FROM bmi_records') }}
 ), higher_risk_ethnicity AS (

@@ -25,7 +25,8 @@ WITH recorded_bmi AS (
         obs.mapped_concept_display AS concept_display,
         obs.cluster_id AS source_cluster_id,
         obs.result_value,
-        'recorded' AS bmi_source
+        'recorded' AS bmi_source,
+        NULL AS height_date_recorded
 
     FROM ({{ get_observations("'BMIVAL_COD'") }}) obs
     WHERE obs.clinical_effective_date IS NOT NULL
@@ -42,6 +43,7 @@ height_measurements AS (
         obs.person_id,
         obs.clinical_effective_date,
         obs.id,
+        obs.date_recorded,
         TRY_CAST(obs.result_value AS FLOAT) AS height_cm,
         obs.result_unit_display AS height_unit
     FROM ({{ get_observations("'HEIGHT'") }}) obs
@@ -91,7 +93,8 @@ calculated_bmi AS (
         'Calculated BMI from Height/Weight' AS concept_display,
         'CALCULATED' AS source_cluster_id,
         CAST(ROUND(w.weight_kg / ((h.height_cm / 100.0) * (h.height_cm / 100.0)), 2) AS VARCHAR(20)) AS result_value,
-        'calculated' AS bmi_source
+        'calculated' AS bmi_source,
+        h.date_recorded AS height_date_recorded
     FROM weight_measurements w
     ASOF JOIN height_measurements h
         MATCH_CONDITION (w.clinical_effective_date >= h.clinical_effective_date)
@@ -156,6 +159,7 @@ SELECT
 
     {{ bmi_category() }} AS bmi_category,
 
-    {{ bmi_category(output='risk_sort_key') }} AS bmi_risk_sort_key
+    {{ bmi_category(output='risk_sort_key') }} AS bmi_risk_sort_key,
+    height_date_recorded
 
 FROM bmi_with_ethnicity

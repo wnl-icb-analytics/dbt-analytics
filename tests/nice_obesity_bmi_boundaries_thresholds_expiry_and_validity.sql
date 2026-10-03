@@ -1,6 +1,5 @@
 {{ config(tags=['monthly-full', 'nice-history']) }}
 {% set calculation = calculate_nice_bmi_register('obesity', reference='by_month', reference_dates="SELECT column1::DATE AS reference_date FROM VALUES ('2026-09-30'), ('2026-10-31')") %}
-{% set calculation = calculation | replace(get_observations("'HEIGHT'") | string, 'SELECT * FROM synthetic_heights') %}
 {% set calculation = calculation | replace(ref('int_nice_reference_population_by_month') | string, 'synthetic_int_nice_reference_population_by_month') %}
 {% set calculation = calculation | replace(ref('int_bmi_all') | string, 'synthetic_int_bmi_all') %}
 {% set calculation = calculation | replace(ref('int_ethnicity_qof_all') | string, 'synthetic_int_ethnicity_qof_all') %}
@@ -15,7 +14,8 @@ CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
 ), synthetic_int_bmi_all AS (
 SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id,
     column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::TIMESTAMP_NTZ AS date_recorded,
-    column5::FLOAT AS bmi_value, column6::VARCHAR AS bmi_source
+    column5::FLOAT AS bmi_value, column6::VARCHAR AS bmi_source,
+    IFF(column1 = -730, '2026-10-01'::TIMESTAMP_NTZ, NULL::TIMESTAMP_NTZ) AS height_date_recorded
 FROM VALUES (-730, 'A', '2026-09-30', NULL, 30, 'calculated'),
     (-700, 'A', '2026-09-30', NULL, 30, 'recorded'),
     (-701, 'A', '2025-09-30', NULL, 30, 'recorded'),
@@ -62,8 +62,6 @@ FROM VALUES (-703, '2020-01-01', NULL, TRUE),
     (-726, '2020-01-01', NULL, TRUE),
     (-727, '2020-01-01', NULL, TRUE),
     (-728, '2020-01-01', NULL, TRUE)
-), synthetic_heights AS (
-SELECT column1::NUMBER AS person_id,column2::TIMESTAMP_NTZ AS clinical_effective_date,column3::TIMESTAMP_NTZ AS date_recorded, 'HEIGHT'::VARCHAR AS id, '180'::VARCHAR AS result_value,18::NUMBER AS age_at_event FROM VALUES (-713,'2026-08-01',NULL),(-721,'2026-08-01',NULL),(-730,'2026-08-01','2026-10-01'),(-706,'2026-08-01','2027-01-01')
 ), actual AS (
 SELECT person_id, reference_date AS month_end_date, bmi_source, requires_lower_bmi_thresholds, bmi_category, bmi_risk_sort_key FROM ({{ calculation }})
 ), expected AS (
