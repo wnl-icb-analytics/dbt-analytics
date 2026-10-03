@@ -11,13 +11,14 @@ WITH indicator_population AS (
         population.practice_code, population.practice_name
     FROM ({{ nice_reference_population(reference) }}) AS population
     INNER JOIN (
-        SELECT person_id, MIN(clinical_effective_date::DATE) AS first_fracture_date
+        SELECT person_id,
+            MIN({{ ltc_known_date('clinical_effective_date', 'date_recorded') }}) AS first_fracture_known_date
         FROM {{ ref('int_fragility_fractures_all') }}
         WHERE clinical_effective_date::DATE >= '2012-04-01'::DATE
         GROUP BY person_id
     ) AS fracture
         ON population.person_id = fracture.person_id
-        AND fracture.first_fracture_date <= population.reporting_date
+        AND fracture.first_fracture_known_date <= population.reporting_date
     WHERE population.age >= 75
 ), assessed AS (
     SELECT population.person_id, population.reporting_date, population.age,
