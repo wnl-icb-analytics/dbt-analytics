@@ -1,0 +1,27 @@
+models:
+- name: int_hiv_tests_all
+  description: Completed HIV antibody, antigen and screening tests. One row per observation for all people,
+    including inactive and deceased people.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: HIV_TEST_COD
+        source: ECL_CACHE
+  columns:
+  - name: id
+    description: Source observation identifier.
+    data_tests:
+    - not_null
+    - unique
+  - name: person_id
+    description: Person with the record.
+  - name: clinical_effective_date
+    description: Clinical date corrected by the observation extraction; consumers bound it at their reporting
+      date.
+  - name: source_cluster_id
+    description: Maintained code list supplying this evidence; overlapping memberships retain the first
+      name alphabetically.
