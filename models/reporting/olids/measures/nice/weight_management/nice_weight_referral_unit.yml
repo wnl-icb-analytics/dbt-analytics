@@ -511,6 +511,7 @@ unit_tests:
     tags:
     - monthly-full
     - nice-history
+# Changing evidence at two dates exposes cross-month joins and duplicate rows.
 - name: nice_weight_ind220_achievement_before_exclusions
   model: fct_person_weight_management_offer_obesity_ind220_by_month
   given:
@@ -518,17 +519,33 @@ unit_tests:
     format: sql
     rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE
       AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
-      FROM VALUES (-9501, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+      FROM VALUES (-9507, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
 
-      (-9502, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+      (-9507, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
 
-      (-9503, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+      (-9506, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
 
-      (-9504, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+      (-9506, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9505, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
 
       (-9505, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
 
-      (-9506, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice'')'
+      (-9504, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9504, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9503, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9503, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9502, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9502, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9501, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9501, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice'')'
   - input: ref('int_nice_weight_management_referral_evidence_by_month')
     format: sql
     rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE AS timely_referral_date,
@@ -536,35 +553,76 @@ unit_tests:
       column7::BOOLEAN AS is_currently_attending, ''2026-08-01''::DATE AS latest_bmi_date, 35::FLOAT AS bmi_value,
       ''recorded''::VARCHAR AS bmi_source, FALSE AS requires_lower_bmi_thresholds, ''Obese Class I''::VARCHAR AS
       bmi_category, NULL::DATE AS latest_referral_date, NULL::DATE AS latest_attendance_date, NULL::DATE AS latest_end_date
-      FROM VALUES (-9501, ''2026-09-30'', ''2026-08-01'', NULL, NULL, TRUE, TRUE),
+      FROM VALUES (-9501, ''2026-08-31'', NULL, NULL, NULL, FALSE, FALSE),
+
+      (-9501, ''2026-09-30'', ''2026-08-01'', NULL, NULL, TRUE, TRUE),
+
+      (-9502, ''2026-08-31'', NULL, NULL, NULL, FALSE, FALSE),
 
       (-9502, ''2026-09-30'', NULL, ''2026-08-01'', NULL, TRUE, TRUE),
 
+      (-9503, ''2026-08-31'', NULL, NULL, NULL, FALSE, FALSE),
+
       (-9503, ''2026-09-30'', NULL, NULL, ''2026-08-01'', FALSE, FALSE),
+
+      (-9504, ''2026-08-31'', NULL, ''2026-08-01'', NULL, FALSE, FALSE),
 
       (-9504, ''2026-09-30'', NULL, NULL, NULL, TRUE, FALSE),
 
+      (-9505, ''2026-08-31'', ''2026-08-01'', NULL, NULL, TRUE, FALSE),
+
       (-9505, ''2026-09-30'', NULL, NULL, NULL, FALSE, TRUE),
 
-      (-9506, ''2026-09-30'', NULL, NULL, NULL, FALSE, FALSE)'
+      (-9506, ''2026-08-31'', NULL, NULL, ''2026-08-01'', FALSE, FALSE),
+
+      (-9506, ''2026-09-30'', NULL, NULL, NULL, FALSE, FALSE),
+
+      (-9507, ''2026-08-31'', NULL, NULL, NULL, FALSE, FALSE),
+
+      (-9507, ''2026-09-30'', ''2026-09-01'', NULL, NULL, TRUE, TRUE)'
   expect:
     rows:
+    - person_id: -9501
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
     - person_id: -9501
       reporting_date: '2026-09-30'
       is_in_numerator: true
     - person_id: -9502
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9502
       reporting_date: '2026-09-30'
       is_in_numerator: true
     - person_id: -9503
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9503
       reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -9504
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -9505
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -9506
+      reporting_date: '2026-08-31'
       is_in_numerator: true
     - person_id: -9506
       reporting_date: '2026-09-30'
       is_in_numerator: false
+    - person_id: -9507
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9507
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
   config:
     tags:
     - monthly-full
     - nice-history
+# HTN membership starts for -9504 and ends for -9505; -9507 joins DM alone in September.
 - name: nice_weight_ind221_achievement_before_exclusions
   model: fct_person_weight_management_referral_obesity_htn_dm_ind221_by_month
   given:
@@ -572,17 +630,33 @@ unit_tests:
     format: sql
     rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE
       AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
-      FROM VALUES (-9501, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+      FROM VALUES (-9507, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
 
-      (-9502, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+      (-9507, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
 
-      (-9503, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+      (-9506, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
 
-      (-9504, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+      (-9506, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9505, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
 
       (-9505, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
 
-      (-9506, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice'')'
+      (-9504, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9504, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9503, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9503, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9502, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9502, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9501, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9501, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice'')'
   - input: ref('int_nice_weight_management_referral_evidence_by_month')
     format: sql
     rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE AS timely_referral_date,
@@ -590,38 +664,99 @@ unit_tests:
       column7::BOOLEAN AS is_currently_attending, ''2026-08-01''::DATE AS latest_bmi_date, 35::FLOAT AS bmi_value,
       ''recorded''::VARCHAR AS bmi_source, FALSE AS requires_lower_bmi_thresholds, ''Obese Class I''::VARCHAR AS
       bmi_category, NULL::DATE AS latest_referral_date, NULL::DATE AS latest_attendance_date, NULL::DATE AS latest_end_date
-      FROM VALUES (-9501, ''2026-09-30'', ''2026-08-01'', NULL, NULL, TRUE, TRUE),
+      FROM VALUES (-9501, ''2026-08-31'', NULL, NULL, NULL, FALSE, FALSE),
+
+      (-9501, ''2026-09-30'', ''2026-08-01'', NULL, NULL, TRUE, TRUE),
+
+      (-9502, ''2026-08-31'', NULL, NULL, NULL, FALSE, FALSE),
 
       (-9502, ''2026-09-30'', NULL, ''2026-08-01'', NULL, TRUE, TRUE),
 
+      (-9503, ''2026-08-31'', NULL, NULL, NULL, FALSE, FALSE),
+
       (-9503, ''2026-09-30'', NULL, NULL, ''2026-08-01'', FALSE, FALSE),
+
+      (-9504, ''2026-08-31'', NULL, ''2026-08-01'', NULL, FALSE, FALSE),
 
       (-9504, ''2026-09-30'', NULL, NULL, NULL, TRUE, FALSE),
 
+      (-9505, ''2026-08-31'', ''2026-08-01'', NULL, NULL, TRUE, FALSE),
+
       (-9505, ''2026-09-30'', NULL, NULL, NULL, FALSE, TRUE),
 
-      (-9506, ''2026-09-30'', NULL, NULL, NULL, FALSE, FALSE)'
+      (-9506, ''2026-08-31'', NULL, NULL, ''2026-08-01'', FALSE, FALSE),
+
+      (-9506, ''2026-09-30'', NULL, NULL, NULL, FALSE, FALSE),
+
+      (-9507, ''2026-08-31'', NULL, NULL, NULL, FALSE, FALSE),
+
+      (-9507, ''2026-09-30'', ''2026-09-01'', NULL, NULL, TRUE, TRUE)'
   - input: ref('fct_person_hypertension_register_by_month')
     format: sql
-    rows: SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS month_end_date, '2020-01-01'::DATE AS earliest_diagnosis_date,
-      '2020-01-01'::DATE AS latest_diagnosis_date FROM VALUES (-9501),(-9502),(-9503),(-9504),(-9505)
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, ''2020-01-01''::DATE AS earliest_diagnosis_date,
+      ''2020-01-01''::DATE AS latest_diagnosis_date FROM VALUES (-9501, ''2026-08-31''),
+
+      (-9501, ''2026-09-30''),
+
+      (-9502, ''2026-08-31''),
+
+      (-9502, ''2026-09-30''),
+
+      (-9503, ''2026-08-31''),
+
+      (-9503, ''2026-09-30''),
+
+      (-9504, ''2026-09-30''),
+
+      (-9505, ''2026-08-31'')'
   - input: ref('fct_person_diabetes_register_by_month')
     format: sql
-    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::DATE AS earliest_diagnosis_date,
-      NULL::DATE AS latest_diagnosis_date, NULL::VARCHAR AS diabetes_type, NULL::DATE AS earliest_type1_date, NULL::DATE
-      AS latest_type1_date, NULL::DATE AS earliest_type2_date, NULL::DATE AS latest_type2_date, NULL::DATE AS latest_resolved_date
-      WHERE FALSE
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, '2026-09-01'::DATE AS earliest_diagnosis_date,
+      '2026-09-01'::DATE AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::DATE AS earliest_type1_date,
+      NULL::DATE AS latest_type1_date, '2026-09-01'::DATE AS earliest_type2_date, '2026-09-01'::DATE AS latest_type2_date,
+      NULL::DATE AS latest_resolved_date FROM VALUES (-9507, '2026-09-30')
   expect:
     rows:
     - person_id: -9501
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+      has_hypertension: true
+      has_diabetes: false
+    - person_id: -9501
       reporting_date: '2026-09-30'
       is_in_numerator: true
+      has_hypertension: true
+      has_diabetes: false
+    - person_id: -9502
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+      has_hypertension: true
+      has_diabetes: false
+    - person_id: -9503
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+      has_hypertension: true
+      has_diabetes: false
     - person_id: -9503
       reporting_date: '2026-09-30'
       is_in_numerator: false
+      has_hypertension: true
+      has_diabetes: false
     - person_id: -9504
       reporting_date: '2026-09-30'
       is_in_numerator: false
+      has_hypertension: true
+      has_diabetes: false
+    - person_id: -9505
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+      has_hypertension: true
+      has_diabetes: false
+    - person_id: -9507
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      has_hypertension: false
+      has_diabetes: true
   config:
     tags:
     - monthly-full
