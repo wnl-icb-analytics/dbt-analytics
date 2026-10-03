@@ -74,6 +74,7 @@ first_evidence AS (
     SELECT
         evidence.person_id,
         MIN(IFF(evidence.is_fh_assessment, evidence.clinical_effective_date::DATE, NULL)) AS first_fh_assessment_date,
+        MIN(IFF(evidence.is_clinical_fh_diagnosis, evidence.clinical_effective_date::DATE, NULL)) AS first_clinical_fh_diagnosis_date,
         MIN(IFF(evidence.is_fh_referral, evidence.clinical_effective_date::DATE, NULL)) AS first_fh_referral_date,
         MIN(IFF(evidence.is_genetic_fh, evidence.clinical_effective_date::DATE, NULL)) AS first_genetic_fh_date,
         MIN(IFF(evidence.is_secondary_hyperlipidaemia_history, evidence.clinical_effective_date::DATE, NULL)) AS first_secondary_history_date
@@ -97,6 +98,7 @@ SELECT
     readings.latest_high_reading_date,
     readings.latest_high_cholesterol_value,
     IFF(evidence.first_fh_assessment_date <= readings.reporting_date, evidence.first_fh_assessment_date, NULL) AS first_fh_assessment_date,
+    IFF(evidence.first_clinical_fh_diagnosis_date <= readings.reporting_date, evidence.first_clinical_fh_diagnosis_date, NULL) AS first_clinical_fh_diagnosis_date,
     IFF(evidence.first_fh_referral_date <= readings.reporting_date, evidence.first_fh_referral_date, NULL) AS first_fh_referral_date,
     IFF(evidence.first_genetic_fh_date <= readings.reporting_date, evidence.first_genetic_fh_date, NULL) AS first_genetic_fh_date,
     secondary.diagnosis_date AS latest_secondary_hyperlipidaemia_date,

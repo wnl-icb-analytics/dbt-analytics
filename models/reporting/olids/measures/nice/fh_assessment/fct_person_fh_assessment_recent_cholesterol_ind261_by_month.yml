@@ -4,8 +4,9 @@ models:
     with valid total cholesterol above 7.5 mmol/L in 12 months, any age. Readings are strictly after 12 months
     before and on or before assessment; any qualifying reading counts. FH_ASSESS_COD, PCD SBROOME_COD, DULIPID_COD,
     POSSFH_COD, FH_REFER_COD, PCD FHYPGEN_COD, SECONDARY_HYPERLIPID_COD or SECONDARY_HYPERLIPID_HX_COD count
-    at any time through assessment. Generic REFLIPID_COD referrals do not count. Possible-FH codes count as
-    assessment and genetic evidence includes coded testing without verifying a positive result. No personalised
+    at any time through assessment. Generic REFLIPID_COD referrals do not count. Possible-FH codes and PCD
+    FHYP_COD clinical diagnoses count as assessment at any time through R. FH-specific referral codes only exist
+    from 2021. Genetic evidence includes coded testing without verifying a positive result. No personalised
     care adjustments apply. History is one row per person and month-end for the last 60 completed month-ends,
     recalculated with current rules and code lists. Approximate age and practice follow the monthly spine.
   config:
@@ -39,6 +40,9 @@ models:
       history at any time through assessment for IND261.
   - name: first_fh_assessment_date
     description: First clinical FH assessment or coded possible-FH result through assessment; null means none.
+  - name: first_clinical_fh_diagnosis_date
+    description: First PCD FHYP_COD clinical FH diagnosis through R; null means none. Counts as clinical
+      assessment even before the qualifying cholesterol reading.
   - name: first_fh_referral_date
     description: First FH-specific referral through assessment; generic lipid referrals do not count.
   - name: first_genetic_fh_date

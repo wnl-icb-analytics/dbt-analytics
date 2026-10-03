@@ -1,11 +1,12 @@
 models:
 - name: int_urine_blood_test_all
   description: Haematuria test evidence. One row per observation and code list for all people, including
-    inactive and deceased people. Uses ECL_CACHE URINE_BLOOD_TEST_COD and URINE_DIPSTICK_COD. Blood-specific
+    inactive and deceased people. Uses ECL_CACHE URINE_BLOOD_TEST_COD, URINE_DIPSTICK_COD and URINALYSIS_RESULT_COD. Blood-specific
     evidence includes negative and trace results, red-cell microscopy and microscopic haematuria findings.
-    Generic reagent-strip testing also counts but does not prove the blood analyte. Blood-specific codes
-    do not always encode the test method. Symptom-only haematuria and unspecified laboratory urinalysis
-    are excluded by the lists. Clinical dates use the shared correction and missing-date sentinel; consumers
+    Generic dipstick findings and method-unspecified urinalysis results also count, but do not prove the blood analyte. Blood-specific codes
+    do not always encode the test method. Symptom-only haematuria, requests, declines and generic urinalysis
+    headings are excluded by the lists. Clinical dates use the shared correction and missing-date sentinel;
+    consumers
     apply reporting windows.
   config:
     meta:
@@ -19,7 +20,7 @@ models:
         - cluster_id
   - cluster_ids_exist:
       arguments:
-        cluster_ids: URINE_BLOOD_TEST_COD, URINE_DIPSTICK_COD
+        cluster_ids: URINE_BLOOD_TEST_COD, URINE_DIPSTICK_COD, URINALYSIS_RESULT_COD
         source: ECL_CACHE
   columns:
   - name: id

@@ -207,3 +207,15 @@ The evidence figures in `Not built` rows describe coded activity in the source d
 | IND321 | Screening: cervical (25 to 64 years) | Built | `fct_person_cervical_screening_ind321` |
 | IND323 | Infections: scoring tools for sore throat | Not built | NICE counts diagnosis episodes; only about 4% of sore-throat diagnosis-days have a same-day score, and Pharmacy First records cannot be separated reliably. |
 | IND324 | Kidney conditions: CKD and SGLT2 inhibitors | Built | `fct_person_ckd_sglt2_therapy_ind324` |
+
+## Evidence scope
+
+Contraception advice includes IUD and sterilisation counselling, fertility education, written information, completed isotretinoin risk forms and diabetes preconception counselling. A single record cannot confirm every advice topic. LARC includes IUD counselling and injection discussion with unknown modality, plus written depot and IUS leaflets. IND149 still requires non-specific advice or both written and verbal evidence.
+
+IND89 accepts completed diabetes dietitian appointments. IND189 accepts second-hand smoke exposure history and household smoking status, including no smokers in the household.
+
+IND123 accepts ECG measurements and generic electrocardiography, including EMIS terms mapped from ECG monitoring; generic evidence does not prove 12 leads. IND122 accepts generic dipstick findings and method-unspecified urinalysis results without setting the blood-specific flag.
+
+IND260 and IND261 accept PCD FHYP_COD clinical FH diagnoses as clinical assessment at any time through the reporting date. Generic lipid referrals do not count. FH-specific referral codes only exist from 2021.
+
+Delivery evidence includes sex-of-baby-at-delivery and postpartum maternal blood-loss quantities. Episiotomy alone and the six-week check do not date delivery; women with a postnatal check but no delivery record remain outside IND178. AKI includes acute renal cortical and tubular necrosis, but warning-stage laboratory results alone do not record an episode. HIV evidence includes completed antibody and antigen tests or results, excluding offers, declines and monitoring.

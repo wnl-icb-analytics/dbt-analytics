@@ -13,12 +13,14 @@ WITH assessed AS (
         profile.latest_high_cholesterol_value AS qualifying_cholesterol_value,
         profile.age_at_earliest_qualifying_reading,
         profile.first_fh_assessment_date,
+        profile.first_clinical_fh_diagnosis_date,
         profile.first_fh_referral_date,
         profile.first_genetic_fh_date,
         profile.latest_secondary_hyperlipidaemia_date,
         profile.first_secondary_history_date,
         (profile.latest_secondary_hyperlipidaemia_date IS NOT NULL OR profile.first_secondary_history_date IS NOT NULL) AS has_qualifying_secondary_hyperlipidaemia,
         profile.first_fh_assessment_date IS NOT NULL
+            OR profile.first_clinical_fh_diagnosis_date IS NOT NULL
             OR profile.first_fh_referral_date IS NOT NULL
             OR profile.first_genetic_fh_date IS NOT NULL AS has_fh_evidence
     FROM {{ nice_ref('int_nice_fh_assessment', reference) }} AS profile
@@ -38,12 +40,13 @@ SELECT
     qualifying_reading_date,
     qualifying_cholesterol_value,
     first_fh_assessment_date,
+    first_clinical_fh_diagnosis_date,
     first_fh_referral_date,
     first_genetic_fh_date,
     latest_secondary_hyperlipidaemia_date,
     first_secondary_history_date,
     has_qualifying_secondary_hyperlipidaemia,
-    GREATEST_IGNORE_NULLS(first_fh_assessment_date, first_fh_referral_date, first_genetic_fh_date,
+    GREATEST_IGNORE_NULLS(first_fh_assessment_date, first_clinical_fh_diagnosis_date, first_fh_referral_date, first_genetic_fh_date,
         IFF(has_qualifying_secondary_hyperlipidaemia, latest_secondary_hyperlipidaemia_date, NULL), first_secondary_history_date)::DATE AS latest_record_date,
     TRUE AS is_in_denominator,
     has_fh_evidence OR has_qualifying_secondary_hyperlipidaemia AS is_in_numerator,

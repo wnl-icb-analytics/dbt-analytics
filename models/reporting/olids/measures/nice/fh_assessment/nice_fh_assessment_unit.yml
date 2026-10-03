@@ -14,13 +14,14 @@ unit_tests:
     format: sql
     rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date, column3::BOOLEAN AS is_fh_assessment,
       column4::BOOLEAN AS is_fh_referral, column5::BOOLEAN AS is_genetic_fh, column6::BOOLEAN AS is_secondary_hyperlipidaemia,
-      column7::BOOLEAN AS is_secondary_hyperlipidaemia_history FROM VALUES (-3101,'2020-01-01',FALSE,FALSE,FALSE,TRUE,FALSE),(-3101,'2020-01-01',FALSE,FALSE,FALSE,TRUE,FALSE),(-3101,'2026-10-01',TRUE,TRUE,TRUE,TRUE,TRUE),(-3102,'2026-09-30',FALSE,TRUE,FALSE,FALSE,FALSE),(-3104,'2019-01-01',FALSE,FALSE,FALSE,FALSE,TRUE),(-3106,'2026-10-01',TRUE,TRUE,TRUE,TRUE,TRUE)
+      column7::BOOLEAN AS is_secondary_hyperlipidaemia_history, person_id IN (-3101, -3106) AS is_clinical_fh_diagnosis FROM VALUES (-3101,'2020-01-01',FALSE,FALSE,FALSE,TRUE,FALSE),(-3101,'2020-01-01',FALSE,FALSE,FALSE,TRUE,FALSE),(-3101,'2026-10-01',TRUE,TRUE,TRUE,TRUE,TRUE),(-3102,'2026-09-30',FALSE,TRUE,FALSE,FALSE,FALSE),(-3104,'2019-01-01',FALSE,FALSE,FALSE,FALSE,TRUE),(-3106,'2026-10-01',TRUE,TRUE,TRUE,TRUE,TRUE)
   expect:
     rows:
     - person_id: -3101
       reporting_date: '2026-09-30'
       earliest_qualifying_reading_date: '2020-01-01'
       earliest_qualifying_cholesterol_value: 8
+      first_clinical_fh_diagnosis_date: '2020-01-01'
       age_at_earliest_qualifying_reading: 23
       latest_high_reading_date: '2025-10-01'
       latest_high_cholesterol_value: 8.2
@@ -33,6 +34,7 @@ unit_tests:
       reporting_date: '2026-10-31'
       earliest_qualifying_reading_date: '2020-01-01'
       earliest_qualifying_cholesterol_value: 8
+      first_clinical_fh_diagnosis_date: '2020-01-01'
       age_at_earliest_qualifying_reading: 23
       latest_high_reading_date: '2025-10-01'
       latest_high_cholesterol_value: 8.2
@@ -111,7 +113,7 @@ unit_tests:
   - input: ref('int_nice_reference_population_by_month')
     format: sql
     rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, 60 AS age, column3::DATE AS birth_date_approx,
-      'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name FROM VALUES (-3201,'2026-09-30','1960-01-01'),(-3202,'2026-09-30','1960-01-01'),(-3203,'2026-09-30','1960-01-01'),(-3204,'2026-09-30','1960-01-01'),(-3205,'2026-09-30','1960-01-01'),(-3206,'2026-09-30','1960-01-01'),(-3207,'2026-09-30','1960-01-01'),(-3208,'2026-09-30','1960-01-01'),(-3208,'2026-10-31','1960-01-01')
+      'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name FROM VALUES (-3201,'2026-09-30','1960-01-01'),(-3202,'2026-09-30','1960-01-01'),(-3203,'2026-09-30','1960-01-01'),(-3204,'2026-09-30','1960-01-01'),(-3205,'2026-09-30','1960-01-01'),(-3206,'2026-09-30','1960-01-01'),(-3207,'2026-09-30','1960-01-01'),(-3208,'2026-09-30','1960-01-01'),(-3208,'2026-10-31','1960-01-01'),(-3209,'2026-09-30','1960-01-01')
   - &id001
     input: ref('int_nice_fh_assessment_by_month')
     format: sql
@@ -119,7 +121,7 @@ unit_tests:
       10::NUMBER AS earliest_qualifying_cholesterol_value, 60::NUMBER AS age_at_earliest_qualifying_reading, column4::DATE
       AS latest_high_reading_date, 10::NUMBER AS latest_high_cholesterol_value, column5::DATE AS first_fh_assessment_date,
       column6::DATE AS first_fh_referral_date, column7::DATE AS first_genetic_fh_date, column8::DATE AS latest_secondary_hyperlipidaemia_date,
-      column9::DATE AS first_secondary_history_date FROM VALUES (-3201,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,NULL,'2020-01-01',NULL),(-3202,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,NULL,'2020-01-02',NULL),(-3203,'2026-09-30','2020-01-01','2026-09-30','2010-01-01',NULL,NULL,NULL,NULL),(-3204,'2026-09-30','2020-01-01','2026-09-30',NULL,'2010-01-01',NULL,NULL,NULL),(-3205,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,'2010-01-01',NULL,NULL),(-3206,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,NULL,NULL,'2010-01-01'),(-3207,'2026-09-30','2020-01-01','2025-09-30',NULL,NULL,NULL,NULL,NULL),(-3208,'2026-09-30','2020-01-01','2025-10-01',NULL,NULL,NULL,NULL,NULL),(-3208,'2026-10-31','2020-01-01','2025-10-01',NULL,NULL,NULL,NULL,NULL)
+      column9::DATE AS first_secondary_history_date, IFF(person_id IN (-3207, -3209), '2010-01-01'::DATE, NULL::DATE) AS first_clinical_fh_diagnosis_date FROM VALUES (-3201,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,NULL,'2020-01-01',NULL),(-3202,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,NULL,'2020-01-02',NULL),(-3203,'2026-09-30','2020-01-01','2026-09-30','2010-01-01',NULL,NULL,NULL,NULL),(-3204,'2026-09-30','2020-01-01','2026-09-30',NULL,'2010-01-01',NULL,NULL,NULL),(-3205,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,'2010-01-01',NULL,NULL),(-3206,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,NULL,NULL,'2010-01-01'),(-3207,'2026-09-30','2020-01-01','2025-09-30',NULL,NULL,NULL,NULL,NULL),(-3208,'2026-09-30','2020-01-01','2025-10-01',NULL,NULL,NULL,NULL,NULL),(-3208,'2026-10-31','2020-01-01','2025-10-01',NULL,NULL,NULL,NULL,NULL),(-3209,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,NULL,NULL,NULL)
   expect:
     rows:
     - person_id: -3201
@@ -142,13 +144,17 @@ unit_tests:
       is_in_numerator: false
     - person_id: -3207
       reporting_date: '2026-09-30'
-      is_in_numerator: false
+      is_in_numerator: true
     - person_id: -3208
       reporting_date: '2026-09-30'
       is_in_numerator: false
     - person_id: -3208
       reporting_date: '2026-10-31'
       is_in_numerator: false
+    - person_id: -3209
+      reporting_date: '2026-09-30'
+      first_clinical_fh_diagnosis_date: '2010-01-01'
+      is_in_numerator: true
   config:
     tags:
     - monthly-full
@@ -159,7 +165,7 @@ unit_tests:
   - input: ref('int_nice_reference_population_by_month')
     format: sql
     rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, 60 AS age, column3::DATE AS birth_date_approx,
-      'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name FROM VALUES (-3201,'2026-09-30','1960-01-01'),(-3202,'2026-09-30','1960-01-01'),(-3203,'2026-09-30','1960-01-01'),(-3204,'2026-09-30','1960-01-01'),(-3205,'2026-09-30','1960-01-01'),(-3206,'2026-09-30','1960-01-01'),(-3207,'2026-09-30','1960-01-01'),(-3208,'2026-09-30','1960-01-01'),(-3208,'2026-10-31','1960-01-01')
+      'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name FROM VALUES (-3201,'2026-09-30','1960-01-01'),(-3202,'2026-09-30','1960-01-01'),(-3203,'2026-09-30','1960-01-01'),(-3204,'2026-09-30','1960-01-01'),(-3205,'2026-09-30','1960-01-01'),(-3206,'2026-09-30','1960-01-01'),(-3207,'2026-09-30','1960-01-01'),(-3208,'2026-09-30','1960-01-01'),(-3208,'2026-10-31','1960-01-01'),(-3209,'2026-09-30','1960-01-01')
   - *id001
   expect:
     rows:
@@ -184,6 +190,10 @@ unit_tests:
     - person_id: -3208
       reporting_date: '2026-09-30'
       is_in_numerator: false
+    - person_id: -3209
+      reporting_date: '2026-09-30'
+      first_clinical_fh_diagnosis_date: '2010-01-01'
+      is_in_numerator: true
   config:
     tags:
     - monthly-full

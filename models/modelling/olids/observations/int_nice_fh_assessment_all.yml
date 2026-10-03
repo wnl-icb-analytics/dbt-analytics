@@ -17,14 +17,16 @@ models:
         source: ECL_CACHE
   - cluster_ids_exist:
       arguments:
-        cluster_ids: SBROOME_COD, DULIPID_COD, POSSFH_COD, FHYPGEN_COD
+        cluster_ids: SBROOME_COD, DULIPID_COD, POSSFH_COD, FHYPGEN_COD, FHYP_COD
         source: PCD
   columns:
   - name: clinical_effective_date
     description: Corrected clinical date from get_observations. Undated evidence uses its 1900 sentinel.
   - name: is_fh_assessment
     description: FH_ASSESS_COD or PCD SBROOME_COD, DULIPID_COD or POSSFH_COD. A possible-FH result counts as
-      assessment; other generic FH diagnoses do not.
+      assessment. Clinical FH diagnoses are recorded separately and also count for IND260 and IND261.
+  - name: is_clinical_fh_diagnosis
+    description: PCD FHYP_COD clinical FH diagnosis; counts as clinical assessment for IND260 and IND261.
   - name: is_fh_referral
     description: FH_REFER_COD only. Generic REFLIPID_COD referrals do not count.
   - name: is_genetic_fh
