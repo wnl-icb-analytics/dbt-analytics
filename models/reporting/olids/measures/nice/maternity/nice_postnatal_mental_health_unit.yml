@@ -1,0 +1,175 @@
+unit_tests:
+- name: nice_postnatal_delivery_episodes_known_dates_and_screening_boundaries
+  model: fct_person_postnatal_mental_health_ind178_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age,
+      column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code,
+      column7::VARCHAR AS practice_name FROM VALUES (-96401, '2026-09-30', 36, '1990-01-15', 'Female',
+      'SYNTHETIC', 'Synthetic practice'), (-96402, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC',
+      'Synthetic practice'), (-96403, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic
+      practice'), (-96404, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+      (-96405, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96406,
+      '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96407, '2026-09-30',
+      36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96408, '2026-09-30', 36, '1990-01-15',
+      'Female', 'SYNTHETIC', 'Synthetic practice'), (-96409, '2026-09-30', 36, '1990-01-15', 'Female',
+      'SYNTHETIC', 'Synthetic practice'), (-96410, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC',
+      'Synthetic practice'), (-96411, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic
+      practice'), (-96412, '2026-09-30', 36, '1990-01-15', 'Male', 'SYNTHETIC', 'Synthetic practice'),
+      (-96413, '2026-09-30', 36, '2014-09-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96414,
+      '2026-09-30', 36, '2014-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96415, '2026-09-30',
+      36, '1971-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96416, '2026-09-30', 36, '1970-01-15',
+      'Female', 'SYNTHETIC', 'Synthetic practice'), (-96417, '2026-09-30', 36, NULL, 'Female', 'SYNTHETIC',
+      'Synthetic practice'), (-96418, '2026-09-30', 36, '1970-09-15', 'Female', 'SYNTHETIC', 'Synthetic
+      practice'), (-96419, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+      (-96420, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96421,
+      '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96422, '2026-08-31',
+      36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96422, '2026-09-30', 36, '1990-01-15',
+      'Female', 'SYNTHETIC', 'Synthetic practice'), (-96423, '2026-08-31', 36, '1990-01-15', 'Female',
+      'SYNTHETIC', 'Synthetic practice'), (-96423, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC',
+      'Synthetic practice'), (-96424, '2026-08-31', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic
+      practice'), (-96424, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+      (-96425, '2026-08-31', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96425,
+      '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96426, '2026-08-31',
+      36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96426, '2026-09-30', 36, '1990-01-15',
+      'Female', 'SYNTHETIC', 'Synthetic practice'), (-96427, '2026-09-30', 36, '1990-01-15', 'Female',
+      'SYNTHETIC', 'Synthetic practice'), (-96428, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC',
+      'Synthetic practice')
+  - input: ref('int_maternal_deliveries_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date, column3::DATE
+      AS date_recorded FROM VALUES (-96401, '2026-01-01', NULL), (-96402, '2026-01-01', NULL), (-96403,
+      '2026-01-01', NULL), (-96404, '2026-01-01', NULL), (-96405, '2025-09-30', NULL), (-96406, '2026-06-10',
+      NULL), (-96407, '2026-06-11', NULL), (-96408, '2026-01-01', '2026-10-01'), (-96409, '2026-01-01',
+      NULL), (-96410, '2026-10-01', NULL), (-96411, '2026-01-01', '2026-09-30'), (-96412, '2026-01-01',
+      NULL), (-96413, '2026-01-01', NULL), (-96414, '2026-01-01', NULL), (-96415, '2026-01-01', NULL),
+      (-96416, '2026-01-01', NULL), (-96417, '2026-01-01', NULL), (-96418, '2026-01-01', NULL), (-96419,
+      '2026-01-01', NULL), (-96419, '2026-01-02', NULL), (-96419, '2026-06-30', NULL), (-96419, '2026-07-01',
+      NULL), (-96420, '2025-09-01', NULL), (-96420, '2026-01-01', NULL), (-96420, '2026-03-01', NULL),
+      (-96421, '2025-09-01', NULL), (-96421, '2026-02-28', NULL), (-96422, '2026-01-01', NULL), (-96422,
+      '2026-07-01', '2026-09-15'), (-96423, '2025-09-15', NULL), (-96424, '2026-01-01', '2026-09-01'),
+      (-96424, '2026-04-01', NULL), (-96424, '2026-05-01', NULL), (-96425, '2026-01-01', NULL), (-96425,
+      '2026-01-01', NULL), (-96426, '2025-10-01', NULL), (-96426, '2026-05-01', '2026-09-15'), (-96427,
+      '2026-05-01', '2026-04-01'), (-96428, '2026-01-01', NULL), (-96428, '2026-10-01', NULL)
+  - input: ref('int_mental_health_screening_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date FROM VALUES (-96401,
+      '2026-01-29'), (-96401, '2026-01-29'), (-96402, '2026-04-23'), (-96403, '2026-01-28'), (-96404,
+      '2026-04-24'), (-96406, '2026-07-08'), (-96409, '2026-10-01'), (-96420, '2026-03-29'), (-96422,
+      '2026-01-29'), (-96423, '2025-10-13'), (-96424, '2026-04-29'), (-96425, '2026-02-01'), (-96425,
+      '2026-02-15'), (-96426, '2025-10-29'), (-96427, '2026-05-29'), (-96428, '2026-01-29')
+  expect:
+    rows:
+    - person_id: -96401
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-01-01'
+      latest_record_date: '2026-01-29'
+      is_in_numerator: true
+    - person_id: -96402
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-01-01'
+      latest_record_date: '2026-04-23'
+      is_in_numerator: true
+    - person_id: -96403
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-01-01'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96404
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-01-01'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96406
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-06-10'
+      latest_record_date: '2026-07-08'
+      is_in_numerator: true
+    - person_id: -96409
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-01-01'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96411
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-01-01'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96414
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-01-01'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96415
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-01-01'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96418
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-01-01'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96420
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-03-01'
+      latest_record_date: '2026-03-29'
+      is_in_numerator: true
+    - person_id: -96422
+      reporting_date: '2026-08-31'
+      delivery_date: '2026-01-01'
+      latest_record_date: '2026-01-29'
+      is_in_numerator: true
+    - person_id: -96423
+      reporting_date: '2026-08-31'
+      delivery_date: '2025-09-15'
+      latest_record_date: '2025-10-13'
+      is_in_numerator: true
+    - person_id: -96424
+      reporting_date: '2026-08-31'
+      delivery_date: '2026-04-01'
+      latest_record_date: '2026-04-29'
+      is_in_numerator: true
+    - person_id: -96424
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-01-01'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96425
+      reporting_date: '2026-08-31'
+      delivery_date: '2026-01-01'
+      latest_record_date: '2026-02-15'
+      is_in_numerator: true
+    - person_id: -96425
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-01-01'
+      latest_record_date: '2026-02-15'
+      is_in_numerator: true
+    - person_id: -96426
+      reporting_date: '2026-08-31'
+      delivery_date: '2025-10-01'
+      latest_record_date: '2025-10-29'
+      is_in_numerator: true
+    - person_id: -96426
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-05-01'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96427
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-05-01'
+      latest_record_date: '2026-05-29'
+      is_in_numerator: true
+    - person_id: -96428
+      reporting_date: '2026-09-30'
+      delivery_date: '2026-01-01'
+      latest_record_date: '2026-01-29'
+      is_in_numerator: true
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS indicator_id, NULL::VARCHAR
+        AS indicator_name, NULL::DATE AS reporting_date, NULL::DATE AS measurement_period_start, NULL::NUMBER
+        AS age, NULL::VARCHAR AS condition_name, NULL::VARCHAR AS practice_code, NULL::VARCHAR AS practice_name,
+        NULL::DATE AS delivery_date, NULL::DATE AS latest_record_date, NULL::BOOLEAN AS is_in_denominator,
+        NULL::BOOLEAN AS is_in_numerator, NULL::VARCHAR AS indicator_status WHERE FALSE

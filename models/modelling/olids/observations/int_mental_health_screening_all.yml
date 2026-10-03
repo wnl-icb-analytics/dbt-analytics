@@ -1,0 +1,28 @@
+models:
+- name: int_mental_health_screening_all
+  description: Depression and anxiety screening evidence. One row per observation for all people, including
+    inactive and deceased people. DEPSCRN_COD and ANXSCRN_COD supply enquiry or screening evidence. A
+    maternal six-week examination alone is not screening evidence.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: DEPSCRN_COD, ANXSCRN_COD
+        source: PCD
+  columns:
+  - name: id
+    description: Source observation identifier.
+    data_tests:
+    - not_null
+    - unique
+  - name: person_id
+    description: Person with the record.
+  - name: clinical_effective_date
+    description: Clinical date corrected by the observation extraction; consumers bound it at their reporting
+      date.
+  - name: source_cluster_id
+    description: Maintained code list supplying screening evidence; overlapping memberships retain the
+      first name alphabetically.

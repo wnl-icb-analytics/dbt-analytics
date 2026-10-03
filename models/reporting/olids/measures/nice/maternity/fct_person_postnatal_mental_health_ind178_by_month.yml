@@ -1,0 +1,55 @@
+models:
+- name: fct_person_postnatal_mental_health_ind178_by_month
+  description: Postnatal mental health enquiry. One row per registered, living, non-test woman after her
+    latest delivery episode, at each completed month-end. Female delivery records qualify at ages 12 to
+    55 inclusive at their clinical date, using the approximate birth date. A new episode starts more than
+    180 days after the current episode's first record, not its previous record. Delivery date is the earliest
+    clinical date in that episode. Only records with clinical date on or before R and recorded date on
+    or before R (or null) enter episode grouping. The latest episode supplies the delivery date, which
+    must be in (R - 12 months, R - 16 weeks]. A DEPSCRN_COD or ANXSCRN_COD record from 4 to 16 weeks afterwards,
+    inclusive and on or before R, qualifies. A maternal six-week examination alone does not qualify. Personalised
+    care adjustments are not applied. Recalculated for the last 60 completed month-ends with current rules
+    and code lists. Registration and practice follow the monthly spine. Birth and death dates are approximate;
+    current gender and test flags apply retrospectively. Later corrections can change earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  columns:
+  - name: person_id
+    description: Woman in the indicator denominator.
+    data_tests:
+    - not_null
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published indicator subject.
+  - name: reporting_date
+    description: Completed month-end R.
+  - name: measurement_period_start
+    description: Exclusive lower boundary for the latest delivery, R minus 12 calendar months.
+  - name: age
+    description: Completed years at R; delivery eligibility uses age at the delivery record.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: practice_code
+    description: ODS code of the registration practice at R.
+  - name: practice_name
+    description: Name of the registration practice at R.
+  - name: delivery_date
+    description: Earliest clinical date of the latest known delivery episode; starts the postpartum window.
+  - name: latest_record_date
+    description: Latest qualifying mental health enquiry date 4 to 16 weeks after delivery; null when
+      none.
+  - name: is_in_denominator
+    description: Always true for each eligible row.
+  - name: is_in_numerator
+    description: Whether qualifying mental health enquiry evidence is present.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
