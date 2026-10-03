@@ -127,13 +127,18 @@ unit_tests:
         practice'), (-9725,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9725,'2026-09-30',60,'SYNTHETIC','Synthetic
         practice'), (-9726,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9726,'2026-09-30',60,'SYNTHETIC','Synthetic
         practice'), (-9727,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9727,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9728,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9728,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9729,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9729,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9730,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9730,'2026-09-30',60,'SYNTHETIC','Synthetic
         practice')
       nice_register: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE
         AS earliest_diagnosis_date FROM VALUES (-9721,'2026-08-31','2020-01-01'), (-9721,'2026-09-30','2020-01-01'),
         (-9722,'2026-08-31','2020-01-01'), (-9722,'2026-09-30','2020-01-01'), (-9723,'2026-08-31','2020-01-01'),
         (-9723,'2026-09-30','2020-01-01'), (-9724,'2026-08-31','2020-01-01'), (-9724,'2026-09-30','2020-01-01'),
         (-9725,'2026-08-31','2020-01-01'), (-9725,'2026-09-30','2020-01-01'), (-9726,'2026-08-31','2020-01-01'),
-        (-9726,'2026-09-30','2020-01-01'), (-9727,'2026-08-31','2020-01-01'), (-9727,'2026-09-30','2020-01-01')
+        (-9726,'2026-09-30','2020-01-01'), (-9727,'2026-08-31','2020-01-01'), (-9727,'2026-09-30','2020-01-01'),
+        (-9728,'2026-08-31','2020-01-01'), (-9728,'2026-09-30','2020-01-01'), (-9729,'2026-08-31','2020-01-01'),
+        (-9729,'2026-09-30','2020-01-01'), (-9730,'2026-08-31','2020-01-01'), (-9730,'2026-09-30','2020-01-01')
   given:
   - input: ref('int_nice_copd_observations_all')
     format: sql
@@ -146,7 +151,9 @@ unit_tests:
       (-9723,8,'2026-10-01','2026-10-01','ARDENS/SPO2_SATS_SATURATIONS',99,NULL,FALSE), (-9724,9,'2025-01-01','2025-01-01','FEV1_PCT_PRED_COD',30,'percent',FALSE),
       (-9724,10,'2025-01-01','2025-01-01','FEV1_PCT_PRED_COD',29,'percent',FALSE), (-9725,11,'2026-10-01','2026-10-01','COPD_COD',NULL,NULL,TRUE),
       (-9726,12,'2025-01-01','2025-01-01','FEV1_PCT_PRED_COD',29,NULL,FALSE), (-9727,13,'2020-01-01','2020-01-01','COPD_COD',NULL,NULL,TRUE),
-      (-9727,14,'2026-08-01','2026-08-01','ARDENS/SPO2_SATS_SATURATIONS',NULL,NULL,FALSE), (-9727,15,'2026-10-01','2026-10-01','ARDENS/SPO2_SATS_SATURATIONS',95,NULL,FALSE)
+      (-9727,14,'2026-08-01','2026-08-01','ARDENS/SPO2_SATS_SATURATIONS',NULL,NULL,FALSE), (-9727,15,'2026-10-01','2026-10-01','ARDENS/SPO2_SATS_SATURATIONS',95,NULL,FALSE),
+      (-9728,16,'2025-01-01','2025-01-01','FEV1_PCT_PRED_COD',4,'percent',FALSE), (-9729,17,'2025-01-01','2025-01-01','FEV1_PCT_PRED_COD',29,'percent',FALSE),
+      (-9729,18,'2026-08-01','2026-08-01','FEV1_PCT_PRED_COD',151,'percent',FALSE), (-9730,19,'2025-01-01','2025-01-01','FEV1_PCT_PRED_COD',5,'percent',FALSE)
   expect:
     rows:
     - person_id: -9721
@@ -171,6 +178,18 @@ unit_tests:
       reporting_date: '2026-08-31'
       is_in_numerator: false
     - person_id: -9727
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9729
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9729
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9730
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9730
       reporting_date: '2026-09-30'
       is_in_numerator: false
   config:

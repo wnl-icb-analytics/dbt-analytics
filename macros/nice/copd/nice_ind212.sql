@@ -13,7 +13,7 @@ WITH population AS (
 ), valid_percentages AS (
     SELECT person_id, event_date, result_value
     FROM {{ ref('int_nice_copd_observations_all') }}
-    WHERE evidence_type = 'FEV1_PCT_PRED_COD' AND result_value > 0
+    WHERE evidence_type = 'FEV1_PCT_PRED_COD' AND result_value BETWEEN 5 AND 150
         AND LOWER(TRIM(result_unit_display)) IN ('percent', '%')
     QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id, event_date ORDER BY observation_id DESC) = 1
 ), severity AS (
