@@ -5,7 +5,7 @@
     Returns: the IND122 detail columns, one person per reporting_date.
 -#}
 -- NICE IND122: https://www.nice.org.uk/indicators/ind122
--- Haematuria test within three months either side of hypertension diagnosis in the financial year for adults over 18, capped at the reporting date.
+-- Haematuria test within three months either side of hypertension diagnosis in the financial year, at any age, capped at the reporting date.
 WITH population AS (
     {{ nice_hypertension_new_diagnosis_population(reference) }}
 ),
@@ -33,7 +33,7 @@ SELECT
     population.reporting_date,
     {{ nice_financial_year_start('population.reporting_date') }} AS measurement_period_start,
     population.age,
-    'Hypertension newly diagnosed in the financial year, aged over 18' AS condition_name,
+    'Hypertension newly diagnosed in the financial year, any age' AS condition_name,
     {{ nice_practice_columns('population', reference) }},
     population.diagnosis_date,
     selected.latest_haematuria_test_date,

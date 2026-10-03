@@ -52,7 +52,8 @@ unit_tests:
           (-20, '2026-03-31', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
           (-20, '2026-04-30', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
           (-20, '2026-09-30', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
-          (-20, '2026-10-31', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice')
+          (-20, '2026-10-31', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-21, '2026-09-30', 17, '2009-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice')
     format: sql
   - input: ref('fct_person_hypertension_register_by_month')
     rows: |-
@@ -93,7 +94,8 @@ unit_tests:
           (-19, '2026-10-31', '2026-04-01', '2026-04-01'),
           (-20, '2026-04-30', '2026-04-01', '2026-04-01'),
           (-20, '2026-09-30', '2026-04-01', '2026-04-01'),
-          (-20, '2026-10-31', '2026-04-01', '2026-04-01')
+          (-20, '2026-10-31', '2026-04-01', '2026-04-01'),
+          (-21, '2026-09-30', '2026-04-01', '2026-04-01')
     format: sql
   - input: ref('int_ecg_all')
     rows: |-
@@ -110,6 +112,7 @@ unit_tests:
           (-15, 'SYN_-15', '2026-10-01', 'ECG_12LEAD_COD'),
           (-16, 'SYN_-16', '2026-03-31', 'ECG_12LEAD_COD'),
           (-17, 'SYN_-17', '2025-04-01', 'ECG_12LEAD_COD'),
+          (-19, 'SYN_-19', '2026-04-01', 'ECG_12LEAD_COD'),
           (-20, 'SYN_-20', '2026-04-01', 'ECG_12LEAD_COD'),
           (-11, 'SYN_DUP', '2026-01-01', 'ECG_12LEAD_COD'),
           (-12, 'SYN_GENERIC', '2026-04-01', 'ECG_GENERAL_COD')
@@ -230,6 +233,30 @@ unit_tests:
       is_in_numerator: true
       latest_ecg_date: '2026-04-01'
       has_12lead_ecg: true
+    - person_id: -19
+      reporting_date: '2026-04-30'
+      diagnosis_date: '2026-04-01'
+      is_in_numerator: true
+      latest_ecg_date: '2026-04-01'
+      has_12lead_ecg: true
+    - person_id: -19
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-04-01'
+      is_in_numerator: true
+      latest_ecg_date: '2026-04-01'
+      has_12lead_ecg: true
+    - person_id: -19
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-04-01'
+      is_in_numerator: true
+      latest_ecg_date: '2026-04-01'
+      has_12lead_ecg: true
+    - person_id: -21
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-04-01'
+      is_in_numerator: false
+      latest_ecg_date: null
+      has_12lead_ecg: false
   config:
     tags:
     - monthly-full
@@ -287,7 +314,8 @@ unit_tests:
           (-20, '2026-03-31', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
           (-20, '2026-04-30', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
           (-20, '2026-09-30', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
-          (-20, '2026-10-31', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice')
+          (-20, '2026-10-31', 19, '1976-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-21, '2026-09-30', 17, '2009-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice')
     format: sql
   - input: ref('fct_person_hypertension_register_by_month')
     rows: |-
@@ -328,7 +356,8 @@ unit_tests:
           (-19, '2026-10-31', '2026-04-01', '2026-04-01'),
           (-20, '2026-04-30', '2026-04-01', '2026-04-01'),
           (-20, '2026-09-30', '2026-04-01', '2026-04-01'),
-          (-20, '2026-10-31', '2026-04-01', '2026-04-01')
+          (-20, '2026-10-31', '2026-04-01', '2026-04-01'),
+          (-21, '2026-09-30', '2026-04-01', '2026-04-01')
     format: sql
   - input: ref('int_urine_blood_test_all')
     rows: |-
@@ -345,6 +374,7 @@ unit_tests:
           (-15, 'SYN_-15', '2026-10-01', 'URINE_BLOOD_TEST_COD'),
           (-16, 'SYN_-16', '2026-03-31', 'URINE_BLOOD_TEST_COD'),
           (-17, 'SYN_-17', '2025-04-01', 'URINE_BLOOD_TEST_COD'),
+          (-19, 'SYN_-19', '2026-04-01', 'URINE_BLOOD_TEST_COD'),
           (-20, 'SYN_-20', '2026-04-01', 'URINE_BLOOD_TEST_COD'),
           (-11, 'SYN_DUP', '2026-01-01', 'URINE_BLOOD_TEST_COD'),
           (-12, 'SYN_GENERIC', '2026-04-01', 'URINE_DIPSTICK_COD')
@@ -465,6 +495,30 @@ unit_tests:
       is_in_numerator: true
       latest_haematuria_test_date: '2026-04-01'
       has_blood_specific_test: true
+    - person_id: -19
+      reporting_date: '2026-04-30'
+      diagnosis_date: '2026-04-01'
+      is_in_numerator: true
+      latest_haematuria_test_date: '2026-04-01'
+      has_blood_specific_test: true
+    - person_id: -19
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-04-01'
+      is_in_numerator: true
+      latest_haematuria_test_date: '2026-04-01'
+      has_blood_specific_test: true
+    - person_id: -19
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-04-01'
+      is_in_numerator: true
+      latest_haematuria_test_date: '2026-04-01'
+      has_blood_specific_test: true
+    - person_id: -21
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-04-01'
+      is_in_numerator: false
+      latest_haematuria_test_date: null
+      has_blood_specific_test: false
   config:
     tags:
     - monthly-full

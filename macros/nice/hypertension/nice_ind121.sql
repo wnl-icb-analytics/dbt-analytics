@@ -8,6 +8,7 @@
 -- Urine ACR within three months either side of hypertension diagnosis in the financial year for adults over 18, capped at the reporting date.
 WITH population AS (
     {{ nice_hypertension_new_diagnosis_population(reference) }}
+    AND population.age > 18
 ),
 
 evidence AS (

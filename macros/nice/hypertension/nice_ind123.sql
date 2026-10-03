@@ -33,7 +33,7 @@ SELECT
     population.reporting_date,
     {{ nice_financial_year_start('population.reporting_date') }} AS measurement_period_start,
     population.age,
-    'Hypertension newly diagnosed in the financial year, aged over 18' AS condition_name,
+    'Hypertension newly diagnosed in the financial year, any age' AS condition_name,
     {{ nice_practice_columns('population', reference) }},
     population.diagnosis_date,
     selected.latest_ecg_date,
