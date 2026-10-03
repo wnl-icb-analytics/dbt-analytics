@@ -19,7 +19,7 @@
     Grain: One row per person (current state)
 
     Condition Registers:
-    Built to QOF Business Rules v50. QOF registers are marked below.
+    Built to QOF Business Rules v51. QOF registers are marked below.
     Conditions are grouped by clinical domain:
     - Cardiovascular (QOF): AF, CHD, HF, HTN, PAD
     - Respiratory (QOF): Asthma, COPD; (non-QOF): CYP Asthma
@@ -46,7 +46,7 @@ TABLES(
 
     conditions AS {{ ref('dim_person_conditions') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Boolean flags for all long-term conditions (QOF Business Rules v50) with summary counts and diabetes type classification',
+        COMMENT = 'Boolean flags for all long-term conditions (QOF Business Rules v51) with summary counts and diabetes type classification',
 
     status AS {{ ref('dim_person_status_summary') }}
         PRIMARY KEY (person_id)
@@ -137,7 +137,7 @@ DIMENSIONS(
     conditions.diabetes_type AS diabetes_type COMMENT = 'Diabetes type classification (Type 1, Type 2, Unknown, Not Diabetic). Type 1 takes precedence if both coded on same date.',
 
     -- Cardiovascular Conditions (QOF)
-    conditions.has_hypertension AS has_hypertension WITH SYNONYMS = ('HTN', 'high blood pressure') COMMENT = 'On hypertension register (QOF v50 HYP_REG, all ages): unresolved diagnosis, where a resolution on the same day as the latest diagnosis does not remove the person',
+    conditions.has_hypertension AS has_hypertension WITH SYNONYMS = ('HTN', 'high blood pressure') COMMENT = 'On hypertension register (QOF v51 HYP_REG, all ages): unresolved diagnosis, where a resolution on the same day as the latest diagnosis does not remove the person',
     conditions.has_coronary_heart_disease AS has_coronary_heart_disease WITH SYNONYMS = ('CHD', 'IHD', 'ischaemic heart disease') COMMENT = 'On CHD register (QOF)',
     conditions.has_heart_failure AS has_heart_failure WITH SYNONYMS = ('HF') COMMENT = 'On heart failure register (QOF)',
     conditions.has_atrial_fibrillation AS has_atrial_fibrillation WITH SYNONYMS = ('AF', 'AFib') COMMENT = 'On AF register (QOF)',
@@ -320,6 +320,6 @@ METRICS(
     status.polypharmacy_10plus_count AS COUNT(DISTINCT CASE WHEN status.is_polypharmacy_10plus THEN status.person_id END) COMMENT = 'Patients with 10+ medications'
 )
 
-COMMENT = 'OLIDS Population Health Semantic View - NCL registered population with demographics, all condition registers (QOF v50), diabetes type, vulnerability factors, and risk behaviours. Source: OLIDS (One London Integrated Data Set — primary care data from system suppliers, unified by the One London team). Grain: one row per person (current state). ESP 2013 weights available via age_band_esp for age-standardised rate calculation.'
+COMMENT = 'OLIDS Population Health Semantic View - NCL registered population with demographics, all condition registers (QOF v51), diabetes type, vulnerability factors, and risk behaviours. Source: OLIDS (One London Integrated Data Set — primary care data from system suppliers, unified by the One London team). Grain: one row per person (current state). ESP 2013 weights available via age_band_esp for age-standardised rate calculation.'
 AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is one row per person. Example: SELECT borough_resident, AGG(patient_count) FROM SEM_OLIDS_POPULATION WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce active diabetes people here and SGLT2 exposure in sem_olids_prescribing before joining. Use sk_patient_id, not person_id, for sem_sus_acute_activity, sem_cost_index and sem_resource_index. Use borough_registered for practice geography and borough_resident for residence. Prefer IMD 2025. Filter is_active = TRUE unless the user asks about inactive or deceased patients. age_band_esp and esp_proportion are ESP 2013 age-only weights for standardised rates.'
 AI_QUESTION_CATEGORIZATION 'Use this view for questions about: condition prevalence (all 40 conditions), diabetes type (T1/T2), demographics, multimorbidity, Cambridge Comorbidity Score (CCMS), vulnerability, smoking, polypharmacy, and population counts. CCMS (cambridge_comorbidity_score) is a continuous weighted score (higher = greater comorbidity burden, can be negative) with NO published risk bands and is NULL for under-16s — report it as a number or average, do not invent thresholds. For clinical biomarkers (BP, HbA1c, BMI, cholesterol) use sem_olids_observations. For serial/over-time biomarker readings use sem_olids_observations_history. For trends over time use sem_olids_trends. Questions needing cohorts from TWO domains (e.g. condition x medication, condition x biomarker control, condition x appointment access) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'

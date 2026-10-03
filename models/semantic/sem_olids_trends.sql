@@ -25,7 +25,7 @@
     - Financial year reporting
     - Age-standardised prevalence trends (via ESP 2013 weights)
 
-    Condition registers built to QOF Business Rules v50.
+    Monthly condition flags follow clinical episodes and do not apply QOF register rules.
 #}
 
 TABLES(
@@ -100,7 +100,7 @@ DIMENSIONS(
     trends.is_active AS is_active COMMENT = 'Active registration this month',
     trends.is_deceased AS is_deceased COMMENT = 'Deceased by this month',
 
-    -- Condition Prevalence Flags (QOF Business Rules v50)
+    -- Condition prevalence flags (clinical episodes, not QOF register rules)
     trends.has_ast AS has_ast WITH SYNONYMS = ('asthma') COMMENT = 'Has asthma this month (QOF)',
     trends.has_copd AS has_copd WITH SYNONYMS = ('COPD') COMMENT = 'Has COPD this month (QOF)',
     trends.has_htn AS has_htn WITH SYNONYMS = ('HTN', 'hypertension', 'high blood pressure') COMMENT = 'Has hypertension this month (QOF)',
@@ -224,6 +224,6 @@ METRICS(
     trends.average_age AS AVG(trends.age) COMMENT = 'Average age'
 )
 
-COMMENT = 'OLIDS Population Trends Semantic View - 60-month time series for condition prevalence, incidence, and multimorbidity trends. Source: OLIDS (One London Integrated Data Set). Condition registers built to QOF Business Rules v50. Grain: one row per person per month. age_band_esp available for grouping but ESP weights are not in this view — use sem_olids_population for age-standardised rates.'
+COMMENT = 'OLIDS Population Trends Semantic View - 60-month time series for condition prevalence, incidence, and multimorbidity trends. Source: OLIDS (One London Integrated Data Set). Monthly condition flags follow clinical episodes and do not apply QOF register rules. Grain: one row per person per month. age_band_esp available for grouping but ESP weights are not in this view — use sem_olids_population for age-standardised rates.'
 AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is person-month grain: align analysis_month before linkage. analysis_month is a month-END date; sem_cost_index.activity_month is a month-START date — align on DATE_TRUNC(month, ...), never raw date equality. Example: SELECT financial_year, AGG(patient_count), AGG(diabetes_prevalence) FROM SEM_OLIDS_TRENDS WHERE is_active = TRUE GROUP BY financial_year. Example linkage: reduce an aligned monthly cohort here and events in sem_olids_appointments before joining. Use financial_year or financial_quarter for UK reporting. is_active = TRUE is for active-registration cohorts; retain inactive historical non-deceased rows when asked. age_band_esp is available for grouping; ESP 2013 age-only weights are in sem_olids_population.'
 AI_QUESTION_CATEGORIZATION 'Use this view for questions about: trends over time, prevalence changes, incidence rates, year-on-year comparisons, financial year reporting, and monthly/quarterly analysis. For current state snapshots use sem_olids_population. For clinical biomarkers use sem_olids_observations. Questions needing cohorts from TWO domains (e.g. incidence x medication initiation) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'
