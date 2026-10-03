@@ -733,18 +733,15 @@ CONTACT_ENRICHED AS (
 
     LEFT JOIN {{ ref('attendance_status') }} CSLK1
         ON CCON."Attended_or_did_not_attend_code" = CSLK1.CODE
-       AND CSLK1.SOURCE_CODE_SET_NAME
-            = 'Attended_or_did_not_attend_code'
+       AND CSLK1.SOURCE_CODE_SET_NAME = 'Attendance_Status'
 
     LEFT JOIN {{ ref('consultation_mechanism') }} CSLK3
         ON CCON."Consultation_medium_used" = CSLK3.CODE
-       AND CSLK3.SOURCE_CODE_SET_NAME
-            = 'Consultation_medium_used'
+       AND CSLK3.SOURCE_CODE_SET_NAME = 'Consultation_Mechanism'
 
     LEFT JOIN {{ ref('activity_location_type') }} CSLK4
         ON CCON."Activity_location_type_code" = CSLK4.CODE
-       AND CSLK4.SOURCE_CODE_SET_NAME
-            = 'Activity_location_type_code'
+       AND CSLK4.SOURCE_CODE_SET_NAME = 'Activity_location_type_code'
 
     LEFT JOIN PRACTICE_CONTEXT PRAC_WNL
         ON PAT1.GPCODE = PRAC_WNL.PRACTICE_CODE    
@@ -774,9 +771,8 @@ CONTACT_ENRICHED AS (
     LEFT JOIN NATIONAL_GP NAT_GP
         ON PAT1.GPCODE = NAT_GP.GP_PRACTICE_CODE
 
-    LEFT JOIN DATA_LAKE__NCL.ANALYST_MANAGED.NCL_NEIGHBOURHOOD_LSOA_2021 NGH_RES
-        ON PAT1."Lower_super_output_area_(Residence)"
-            = NGH_RES.LSOA_2021_CODE
+    LEFT JOIN {{ ref('raw_reference_geo_neighbourhood_lsoa') }} NGH_RES
+        ON PAT1."Lower_super_output_area_(Residence)" = NGH_RES.LSOA_CODE
 
     WHERE CCON."Care_contact_date" >= '2021-04-01'
 
@@ -809,7 +805,7 @@ CONTACT_SERVICE_TYPE AS (
             WHEN LEFT(CE.REFERRAL_SERVICE_TYPE_CODE, 2) = '28'
                 THEN '57'
 
-            WHEN LEFT(CE.REFERRAL_SERVICE_TYPE_CODE, 1) = '4'
+            WHEN TRIM(CE.REFERRAL_SERVICE_TYPE_CODE) = '4'
                 THEN '04'
 
             WHEN CE."Organisation_identifier_(Code_of_provider)" = 'RKE'
