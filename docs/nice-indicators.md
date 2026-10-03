@@ -15,7 +15,7 @@ The evidence figures in `Not built` rows describe coded activity in the source d
 
 | ID | Title | Status | Where it lives or reason |
 |---|---|---|---|
-| IND78 | Contraception: advice for people taking anti-seizure medication | Planned | Contraception: needs topic-specific evidence of contraception, conception and pregnancy counselling. |
+| IND78 | Contraception: advice for people taking anti-seizure medication | Built | `fct_person_antiseizure_contraception_advice_ind78` |
 | IND79 | Learning disabilities: annual TSH test | Built | `fct_person_learning_disability_thyroid_test_ind79` |
 | IND80 | Dementia: target organ damage (new diagnoses) | Built | `fct_person_dementia_baseline_tests_ind80` |
 | IND81 | Diabetes: annual foot exam and risk classification | Built | `fct_person_diabetes_foot_risk_ind81` |
@@ -142,8 +142,8 @@ The evidence figures in `Not built` rows describe coded activity in the source d
 | IND217 | Immunisation: DTaP/IPV and MMR (5 years) | Built | `fct_person_childhood_immunisation_ind217` |
 | IND218 | Immunisation: MMR (5 years) | Built | `fct_person_childhood_immunisation_ind218` |
 | IND219 | Immunisation: shingles | Built | `fct_person_shingles_vaccination_ind219` |
-| IND220 | Weight management: referral to weight management programmes for obesity | Planned | Weight management: referral evidence and agreed attendance or referral exclusions. |
-| IND221 | Weight management: referral to weight management programmes for obesity (co-existing hypertension or diabetes) | Planned | Weight management: shared referral evidence and exclusions for people with hypertension or diabetes. |
+| IND220 | Weight management: referral to weight management programmes for obesity | Built | `fct_person_weight_management_offer_obesity_ind220` |
+| IND221 | Weight management: referral to weight management programmes for obesity (co-existing hypertension or diabetes) | Built | `fct_person_weight_management_referral_obesity_htn_dm_ind221` |
 | IND222 | Cancer: review within 3 months | Built | `fct_person_cancer_support_ind222` |
 | IND223 | Cancer: review within 12 months | Built | `fct_person_cancer_care_review_ind223` |
 | IND224 | Immunisation: rotavirus (24 weeks) | Built | `fct_person_childhood_immunisation_ind224` |
