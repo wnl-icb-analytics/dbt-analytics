@@ -1,0 +1,41 @@
+models:
+- name: fct_person_aki_register_by_month
+  description: Adults with a recorded AKI episode, one row per registered, living, non-test register member
+    at each completed month-end. Any AKI_COD episode or history known by R qualifies, with no expiry.
+    Both clinical and non-null recorded dates must be on or before R. Under-18s are excluded. AKI_COD
+    includes acute-on-chronic injury; risk and education alone do not qualify. Hospital episodes are only
+    visible when coded in GP records. Recalculated for the last 60 completed month-ends using current
+    rules, code lists and retained records. Registration and practice follow the monthly spine. Birth
+    and death dates are approximate; current test flags apply retrospectively. Later corrections can change
+    earlier membership.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - month_end_date
+  columns:
+  - name: person_id
+    description: Person identifier.
+    data_tests:
+    - not_null
+  - name: month_end_date
+    description: Reference date R used to assess membership.
+    data_tests:
+    - not_null
+  - name: age
+    description: Age in completed years at R, derived from approximate birth date.
+  - name: practice_code
+    description: Practice at R using the established active population or historical spine attribution.
+  - name: is_on_register
+    description: True for every row; only eligible register members are retained.
+  - name: earliest_diagnosis_date
+    description: Earliest qualifying diagnosis clinical date known by R. Includes history codes, so this
+      is a coded evidence date rather than a confirmed AKI episode date.
+  - name: latest_diagnosis_date
+    description: Latest qualifying diagnosis clinical date known by R. Includes history codes, so this
+      is a coded evidence date rather than a confirmed AKI episode date.

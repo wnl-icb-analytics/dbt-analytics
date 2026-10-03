@@ -1,0 +1,340 @@
+unit_tests:
+- name: aki_known_dates_age_and_multiplicity
+  model: fct_person_aki_register_by_month
+  overrides:
+    macros:
+      ltc_register_history_month_ends: SELECT column1::DATE AS reference_date FROM VALUES ('2026-09-30'), ('2026-10-31')
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          CASE WHEN people.column1 = -602 AND dates.column1 = '2026-09-30' THEN 17 ELSE 18 END AS age,
+          '2008-10-01'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+          'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-601), (-602), (-603), (-604), (-605), (-606), (-607), (-608), (-609) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+      WHERE NOT (people.column1 = -608 AND dates.column1 = '2026-10-31')
+  - input: ref('int_aki_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,
+          column3::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES (-601, '2026-09-30', '2026-10-01'), (-602, '2020-01-01', NULL),
+          (-603, '2026-10-01', NULL), (-604, '2020-01-01', NULL), (-605, '2027-01-01', NULL),
+          (-606, '2020-01-01', NULL), (-606, '2020-01-01', NULL), (-607, '2026-09-30', '2026-09-30'),
+          (-608, '2020-01-01', NULL), (-609, '2020-01-01', '2026-10-01'), (-609, '2026-09-01', NULL)
+  expect:
+    rows:
+    - person_id: -604
+      month_end_date: '2026-09-30'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2020-01-01'
+    - person_id: -606
+      month_end_date: '2026-09-30'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2020-01-01'
+    - person_id: -607
+      month_end_date: '2026-09-30'
+      earliest_diagnosis_date: '2026-09-30'
+      latest_diagnosis_date: '2026-09-30'
+    - person_id: -608
+      month_end_date: '2026-09-30'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2020-01-01'
+    - person_id: -609
+      month_end_date: '2026-09-30'
+      earliest_diagnosis_date: '2026-09-01'
+      latest_diagnosis_date: '2026-09-01'
+    - person_id: -601
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2026-09-30'
+      latest_diagnosis_date: '2026-09-30'
+    - person_id: -602
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2020-01-01'
+    - person_id: -603
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2026-10-01'
+      latest_diagnosis_date: '2026-10-01'
+    - person_id: -604
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2020-01-01'
+    - person_id: -606
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2020-01-01'
+    - person_id: -607
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2026-09-30'
+      latest_diagnosis_date: '2026-09-30'
+    - person_id: -609
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2026-09-01'
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: hypothyroidism_treatment_expiry_latest_diagnosis_and_known_dates
+  model: fct_person_nice_hypothyroidism_register_by_month
+  overrides:
+    macros:
+      ltc_register_history_month_ends: SELECT column1::DATE AS reference_date FROM VALUES ('2026-09-30'), ('2026-10-31')
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date, 50::NUMBER AS age, '1976-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-621), (-622), (-623), (-624), (-625), (-626), (-627), (-628), (-629), (-630), (-631), (-632) AS people CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  - input: ref('int_hypothyroidism_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::TIMESTAMP_NTZ AS date_recorded,
+          TRUE AS is_diagnosis_code
+      FROM VALUES (-621, 'A', '2020-01-01', NULL), (-622, 'A', '2020-01-01', NULL),
+          (-623, 'A', '2020-01-01', NULL), (-624, 'A', '2020-01-01', NULL),
+          (-625, 'A', '2020-01-01', NULL), (-626, 'A', '2020-01-01', '2026-10-01'),
+          (-627, 'A', '2026-08-01', NULL), (-627, 'Z', '2026-09-01', NULL),
+          (-628, 'A', '2026-08-01', NULL), (-628, 'Z', '2026-10-01', NULL),
+          (-629, 'Z', '2026-09-01', NULL), (-630, 'A', '2026-09-01', NULL),
+          (-631, 'Z', '2026-09-01', NULL), (-632, 'A', '2026-09-01', NULL)
+  - input: ref('int_subclinical_hypothyroidism_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES (-627, 'A', '2026-08-01', NULL), (-628, 'Z', '2026-10-01', NULL),
+          (-629, 'A', '2026-09-01', NULL), (-630, 'Z', '2026-09-01', NULL),
+          (-631, 'A', '2026-08-01', '2026-10-01'), (-632, 'Z', '2026-09-30', '2026-10-01')
+  - input: ref('int_levothyroxine_medications_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS order_date,
+          column3::DATE AS date_recorded
+      FROM VALUES (-621, '2026-03-30', NULL), (-622, '2026-03-31', NULL),
+          (-623, '2026-09-30', NULL), (-623, '2026-09-30', NULL),
+          (-624, '2026-10-01', NULL), (-625, '2026-09-30', '2026-10-01'),
+          (-626, '2026-09-30', NULL), (-627, '2026-09-30', NULL),
+          (-628, '2026-09-30', NULL), (-629, '2026-09-30', NULL),
+          (-630, '2026-09-30', NULL), (-631, '2026-09-30', NULL), (-632, '2026-09-30', NULL)
+  expect:
+    rows:
+    - person_id: -622
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-03-31'
+    - person_id: -623
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -627
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -628
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -629
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -631
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -623
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -624
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-10-01'
+    - person_id: -625
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -626
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -627
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -629
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -631
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -632
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-09-30'
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: overweight_bmi_boundaries_thresholds_expiry_and_validity
+  model: fct_person_nice_overweight_register_by_month
+  overrides:
+    macros:
+      ltc_register_history_month_ends: SELECT column1::DATE AS reference_date FROM VALUES ('2026-09-30'), ('2026-10-31')
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          IFF(people.column1 = -640, 17, 18)::NUMBER AS age,
+          '2008-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+          'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-640), (-641), (-642), (-643), (-644), (-645), (-646), (-647), (-648), (-649), (-650), (-651), (-652) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  - input: ref('int_nice_weight_profile_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          people.column2::DATE AS bmi_date, people.column3::FLOAT AS bmi_value,
+          people.column4::BOOLEAN AS is_recorded_white, NULL::DATE AS latest_weight_advice_date
+      FROM VALUES (-640, '2026-09-30', 30, FALSE), (-641, '2025-09-30', 30, FALSE),
+          (-642, '2025-10-01', 30, FALSE), (-643, '2026-09-30', 23, FALSE),
+          (-644, '2026-09-30', 25, TRUE), (-645, '2026-09-30', 27.5, FALSE),
+          (-646, '2026-09-30', 30, TRUE), (-647, '2026-09-30', 24.9, TRUE),
+          (-648, '2026-09-30', 401, FALSE), (-649, '2026-09-30', 0, FALSE),
+          (-650, '2026-10-01', 30, FALSE), (-651, '2026-09-30', 29.9, TRUE),
+          (-652, '2026-09-30', 27.4, FALSE) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  expect:
+    rows:
+    - person_id: -643
+      month_end_date: '2026-09-30'
+      bmi_threshold: 23
+    - person_id: -644
+      month_end_date: '2026-09-30'
+      bmi_threshold: 25
+    - person_id: -645
+      month_end_date: '2026-09-30'
+      bmi_threshold: 23
+    - person_id: -646
+      month_end_date: '2026-09-30'
+      bmi_threshold: 25
+    - person_id: -651
+      month_end_date: '2026-09-30'
+      bmi_threshold: 25
+    - person_id: -652
+      month_end_date: '2026-09-30'
+      bmi_threshold: 23
+    - person_id: -642
+      month_end_date: '2026-09-30'
+      bmi_threshold: 23
+    - person_id: -643
+      month_end_date: '2026-10-31'
+      bmi_threshold: 23
+    - person_id: -644
+      month_end_date: '2026-10-31'
+      bmi_threshold: 25
+    - person_id: -645
+      month_end_date: '2026-10-31'
+      bmi_threshold: 23
+    - person_id: -646
+      month_end_date: '2026-10-31'
+      bmi_threshold: 25
+    - person_id: -651
+      month_end_date: '2026-10-31'
+      bmi_threshold: 25
+    - person_id: -652
+      month_end_date: '2026-10-31'
+      bmi_threshold: 23
+    - person_id: -650
+      month_end_date: '2026-10-31'
+      bmi_threshold: 23
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: obesity_bmi_boundaries_thresholds_expiry_and_validity
+  model: fct_person_nice_obesity_register_by_month
+  overrides:
+    macros:
+      ltc_register_history_month_ends: SELECT column1::DATE AS reference_date FROM VALUES ('2026-09-30'), ('2026-10-31')
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          IFF(people.column1 = -640, 17, 18)::NUMBER AS age,
+          '2008-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+          'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-640), (-641), (-642), (-643), (-644), (-645), (-646), (-647), (-648), (-649), (-650), (-651), (-652) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  - input: ref('int_nice_weight_profile_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          people.column2::DATE AS bmi_date, people.column3::FLOAT AS bmi_value,
+          people.column4::BOOLEAN AS is_recorded_white, NULL::DATE AS latest_weight_advice_date
+      FROM VALUES (-640, '2026-09-30', 30, FALSE), (-641, '2025-09-30', 30, FALSE),
+          (-642, '2025-10-01', 30, FALSE), (-643, '2026-09-30', 23, FALSE),
+          (-644, '2026-09-30', 25, TRUE), (-645, '2026-09-30', 27.5, FALSE),
+          (-646, '2026-09-30', 30, TRUE), (-647, '2026-09-30', 24.9, TRUE),
+          (-648, '2026-09-30', 401, FALSE), (-649, '2026-09-30', 0, FALSE),
+          (-650, '2026-10-01', 30, FALSE), (-651, '2026-09-30', 29.9, TRUE),
+          (-652, '2026-09-30', 27.4, FALSE) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  expect:
+    rows:
+    - person_id: -645
+      month_end_date: '2026-09-30'
+      bmi_threshold: 27.5
+    - person_id: -646
+      month_end_date: '2026-09-30'
+      bmi_threshold: 30
+    - person_id: -642
+      month_end_date: '2026-09-30'
+      bmi_threshold: 27.5
+    - person_id: -645
+      month_end_date: '2026-10-31'
+      bmi_threshold: 27.5
+    - person_id: -646
+      month_end_date: '2026-10-31'
+      bmi_threshold: 30
+    - person_id: -650
+      month_end_date: '2026-10-31'
+      bmi_threshold: 27.5
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_weight_profile_covers_all_adults
+  model: int_nice_weight_profile_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, column2::NUMBER AS age, '2008-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-661,17),(-662,18),(-663,40),(-664,65)
+  - input: ref('int_bmi_qof_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,'SYNTHETIC'::VARCHAR AS id,'2026-09-30'::TIMESTAMP_NTZ AS clinical_effective_date,30::FLOAT AS bmi_value,'BMIVAL_COD'::VARCHAR AS source_cluster_id FROM VALUES (-661),(-662),(-663),(-664)
+  - input: ref('dim_person_demographics_historical')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id,NULL::DATE AS effective_start_date,NULL::DATE AS effective_end_date,NULL::VARCHAR AS ethnicity_category WHERE FALSE
+  - input: ref('int_nice_weight_advice_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id,NULL::DATE AS clinical_effective_date WHERE FALSE
+  expect:
+    rows:
+    - person_id: -662
+      reporting_date: '2026-09-30'
+      bmi_value: 30
+      is_recorded_white: false
+      latest_weight_advice_date: null
+    - person_id: -663
+      reporting_date: '2026-09-30'
+      bmi_value: 30
+      is_recorded_white: false
+      latest_weight_advice_date: null
+    - person_id: -664
+      reporting_date: '2026-09-30'
+      bmi_value: 30
+      is_recorded_white: false
+      latest_weight_advice_date: null
+  config:
+    tags:
+    - monthly-full
+    - nice-history

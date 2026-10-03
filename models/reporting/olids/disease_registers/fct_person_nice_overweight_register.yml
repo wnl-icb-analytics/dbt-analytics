@@ -1,0 +1,63 @@
+models:
+- name: fct_person_nice_overweight_register
+  description: NICE overweight-or-above, one row per registered, living, non-test adult register member
+    on the build date. Latest usable numeric BMIVAL_COD result in (R - 12 months, R] must be 23 kg/m^2 or above,
+    or 25 kg/m^2 or above if ethnicity is recorded as White. Includes people who also meet the obesity
+    threshold. Unknown or missing ethnicity uses 23. Ethnicity follows the demographic interval containing
+    R. Latest BMI follows int_bmi_qof_all. Value-free or unparseable records are not results and do not
+    block an earlier numeric result. A latest numeric value outside 5 to 400 kg/m^2 inclusive makes
+    the person unassessable; no older valid result is used. BMI30_COD alone does not provide a measured
+    value. BMI evidence uses clinical dates through R.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      indicators:
+      - id: IND237
+        type: NICE_REGISTER
+        category: LTC
+        clinical_domain: Metabolic
+        name_short: 'Weight management: overweight register'
+        description_short: 'Weight management: overweight register'
+        description_long: Latest usable numeric BMIVAL_COD result in (R - 12 months, R] must be 23 kg/m^2 or above,
+          or 25 kg/m^2 or above if ethnicity is recorded as White. Includes people who also meet the obesity
+          threshold. Unknown or missing ethnicity uses 23. Ethnicity follows the demographic interval
+          containing R. Latest BMI follows int_bmi_qof_all. Value-free or unparseable records are not
+          results and do not block an earlier numeric result. A latest numeric value outside 5 to
+          400 kg/m^2 inclusive makes the person unassessable; no older valid result is used. BMI30_COD
+          alone does not provide a measured value. BMI evidence uses clinical dates through R.
+        source_column: is_on_register
+        is_qof: false
+        qof_indicator: null
+        usage_contexts:
+        - NICE_GUIDANCE
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: Person identifier.
+    data_tests:
+    - not_null
+  - name: reporting_date
+    description: Reference date R used to assess membership.
+    data_tests:
+    - not_null
+  - name: age
+    description: Age in completed years at R, derived from approximate birth date.
+  - name: practice_code
+    description: Practice at R using the established active population or historical spine attribution.
+  - name: is_on_register
+    description: True for every row; only eligible register members are retained.
+  - name: latest_bmi_date
+    description: Clinical date of the latest usable numeric BMIVAL_COD result in (R - 12 months, R].
+  - name: bmi_value
+    description: Latest usable numeric BMIVAL_COD result in kg/m^2. A latest numeric value outside
+      5 to 400 inclusive excludes membership; value-free or unparseable records do not block an earlier result.
+  - name: is_recorded_white
+    description: True when ethnicity is White in the demographic interval containing R. False includes
+      unknown and missing ethnicity.
+  - name: bmi_threshold
+    description: Ethnicity-specific inclusion threshold in kg/m^2.

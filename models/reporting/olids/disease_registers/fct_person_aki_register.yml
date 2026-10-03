@@ -1,0 +1,53 @@
+models:
+- name: fct_person_aki_register
+  description: Adults with a recorded AKI episode, one row per registered, living, non-test register member
+    on the build date. Any AKI_COD episode or history known by R qualifies, with no expiry. Both clinical
+    and non-null recorded dates must be on or before R. Under-18s are excluded. AKI_COD includes acute-on-chronic
+    injury; risk and education alone do not qualify. Hospital episodes are only visible when coded in
+    GP records.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      indicators:
+      - id: IND174
+        type: NICE_REGISTER
+        category: LTC
+        clinical_domain: Renal
+        name_short: 'Kidney conditions: AKI register'
+        description_short: 'Kidney conditions: AKI register'
+        description_long: Any AKI_COD episode or history known by R qualifies, with no expiry. Both clinical
+          and non-null recorded dates must be on or before R. Under-18s are excluded. AKI_COD includes
+          acute-on-chronic injury; risk and education alone do not qualify. Hospital episodes are only
+          visible when coded in GP records.
+        source_column: is_on_register
+        is_qof: false
+        qof_indicator: null
+        usage_contexts:
+        - NICE_GUIDANCE
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: Person identifier.
+    data_tests:
+    - not_null
+  - name: reporting_date
+    description: Reference date R used to assess membership.
+    data_tests:
+    - not_null
+  - name: age
+    description: Age in completed years at R, derived from approximate birth date.
+  - name: practice_code
+    description: Practice at R using the established active population or historical spine attribution.
+  - name: is_on_register
+    description: True for every row; only eligible register members are retained.
+  - name: earliest_diagnosis_date
+    description: Earliest qualifying diagnosis clinical date known by R. Includes history codes, so this
+      is a coded evidence date rather than a confirmed AKI episode date.
+  - name: latest_diagnosis_date
+    description: Latest qualifying diagnosis clinical date known by R. Includes history codes, so this
+      is a coded evidence date rather than a confirmed AKI episode date.
