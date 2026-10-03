@@ -30,12 +30,15 @@ unit_tests:
       'SYNTHETIC', 'Synthetic practice'), (-96423, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC',
       'Synthetic practice'), (-96424, '2026-08-31', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic
       practice'), (-96424, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+      (-96424, '2026-07-31', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
       (-96425, '2026-08-31', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96425,
       '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96426, '2026-08-31',
       36, '1990-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-96426, '2026-09-30', 36, '1990-01-15',
       'Female', 'SYNTHETIC', 'Synthetic practice'), (-96427, '2026-09-30', 36, '1990-01-15', 'Female',
       'SYNTHETIC', 'Synthetic practice'), (-96428, '2026-09-30', 36, '1990-01-15', 'Female', 'SYNTHETIC',
       'Synthetic practice')
+  # The late January record changes September's episode start, but not July or August.
+  # June 30 is exactly 180 days after January 1 and stays in that episode.
   - input: ref('int_maternal_deliveries_all')
     format: sql
     rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date, column3::DATE
@@ -49,7 +52,8 @@ unit_tests:
       NULL), (-96420, '2025-09-01', NULL), (-96420, '2026-01-01', NULL), (-96420, '2026-03-01', NULL),
       (-96421, '2025-09-01', NULL), (-96421, '2026-02-28', NULL), (-96422, '2026-01-01', NULL), (-96422,
       '2026-07-01', '2026-09-15'), (-96423, '2025-09-15', NULL), (-96424, '2026-01-01', '2026-09-01'),
-      (-96424, '2026-04-01', NULL), (-96424, '2026-05-01', NULL), (-96425, '2026-01-01', NULL), (-96425,
+      (-96424, '2026-04-01', NULL), (-96424, '2026-05-01', NULL),
+      (-96424, '2026-06-30', NULL), (-96425, '2026-01-01', NULL), (-96425,
       '2026-01-01', NULL), (-96426, '2025-10-01', NULL), (-96426, '2026-05-01', '2026-09-15'), (-96427,
       '2026-05-01', '2026-04-01'), (-96428, '2026-01-01', NULL), (-96428, '2026-10-01', NULL)
   - input: ref('int_mental_health_screening_all')
@@ -125,6 +129,11 @@ unit_tests:
       reporting_date: '2026-08-31'
       delivery_date: '2025-09-15'
       latest_record_date: '2025-10-13'
+      is_in_numerator: true
+    - person_id: -96424
+      reporting_date: '2026-07-31'
+      delivery_date: '2026-04-01'
+      latest_record_date: '2026-04-29'
       is_in_numerator: true
     - person_id: -96424
       reporting_date: '2026-08-31'
