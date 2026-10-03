@@ -1,0 +1,21 @@
+models:
+  - name: stg_sus_ae_monthly_encounterdenormalised_daterange
+    description: 'Urgent and Emergency Care (UEC) attendances from SUS data.
+
+      One row per attendance.
+
+      '
+    config:
+      meta:
+        owner:
+          name: Poya Khalaj
+    columns:
+      - name: sk_encounter_id
+        description: Unique identifier for the attendance (sk_encounter_id)
+        data_tests:
+          - not_null
+          - unique
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

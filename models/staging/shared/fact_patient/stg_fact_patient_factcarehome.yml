@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: stg_fact_patient_factcarehome
+    description: >-
+      Patient care-home registrations with their effective periods, deduplicated
+      deterministically to one registration per patient, organisation and period
+      start using the latest detected source record.
+    config:
+      meta:
+        owner:
+          name: Commissioning Analytics
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - sk_organisation_id
+              - period_start
+    columns:
+      - name: sk_patient_id
+        description: Pseudonymised patient identifier.
+        data_tests:
+          - not_null
+      - name: sk_organisation_id
+        description: Care-home organisation identifier.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_dictionary_dbo_organisation')
+                field: sk_organisation_id
+      - name: period_start
+        description: Start of the care-home registration period.
+        data_tests:
+          - not_null
+      - name: period_end
+        description: End of the care-home registration period; null means open-ended.
