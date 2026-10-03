@@ -51,7 +51,7 @@ The evidence figures in `Not built` rows describe coded activity in the source d
 | IND114 | Dementia: named carer | Not built | OLIDS has no carer contact details; coded proxies cover about 11% with narrow codes or 53% with broad codes. |
 | IND115 | Hypertension: confirming diagnosis with HBPM or ABPM | Built | `fct_person_home_ambulatory_bp_hypertension_ind115` |
 | IND116 | Contraception: advice for people with diabetes | Planned | Contraception: advice code list for people with diabetes. |
-| IND117 | Contraception: advice for people with epilepsy | Built | `fct_person_epilepsy_contraception_advice_ind117` |
+| IND117 | Contraception: advice for people with epilepsy | Planned | Contraception: needs the contraception and pregnancy advice code list; the epilepsy-specific lists alone record about 1%. |
 | IND118 | Dementia: target organ damage (all patients) | Built | `fct_person_dementia_baseline_tests_ind118` |
 | IND119 | Learning disabilities: register | Register | `fct_person_learning_disability_register` |
 | IND120 | Diabetes: annual general practice checks | Built | `fct_person_diabetes_care_processes_ind120` |
@@ -123,8 +123,8 @@ The evidence figures in `Not built` rows describe coded activity in the source d
 | IND200 | Alcohol use: brief intervention for people with SMI | Built | `fct_person_alcohol_ind200` |
 | IND201 | Alcohol use: risk assessment for people with a long-term condition | Built | `fct_person_alcohol_ind201` |
 | IND202 | Alcohol use: brief intervention for people with a long-term condition | Built | `fct_person_alcohol_ind202` |
-| IND203 | Lipids disorders: FH assessment (29 years and under) | Planned | Familial hypercholesterolaemia: shared assessment evidence; age and reading window need agreement. |
-| IND204 | Lipids disorders: FH assessment (30 years and over) | Planned | Familial hypercholesterolaemia: shared assessment evidence; age and reading window need agreement. |
+| IND203 | Lipids disorders: FH assessment (29 years and under) | Not built | Narrower age-split version of IND260 with no reading window; IND260 covers FH assessment for high readings at any age. |
+| IND204 | Lipids disorders: FH assessment (30 years and over) | Not built | Narrower age-split version of IND260 with no reading window; IND260 covers FH assessment for high readings at any age. |
 | IND205 | Multiple long-term conditions: multimorbidity register | Register | `int_nice_multimorbidity_categories`. Count at least four distinct categories per active person aged 18+; tailored-approach route is uncoded. |
 | IND206 | Multiple long-term conditions: frailty register | Register | `fct_person_frailty_register`. Filter `age >= 65` and latest severity 'Moderate' or 'Severe'. |
 | IND207 | Multiple long-term conditions: medication review | Built | `fct_person_multimorbidity_ind207` |
