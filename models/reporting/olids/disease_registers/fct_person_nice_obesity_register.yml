@@ -1,11 +1,13 @@
 models:
 - name: fct_person_nice_obesity_register
   description: NICE obesity, one row per registered, living, non-test adult register member on the build
-    date. Latest measured BMIVAL_COD BMI in (R - 12 months, R] must be 27.5 kg/m^2 or above, or 30 kg/m^2
+    date. Latest usable numeric BMIVAL_COD result in (R - 12 months, R] must be 27.5 kg/m^2 or above, or 30 kg/m^2
     or above if ethnicity is recorded as White. Unknown or missing ethnicity uses 27.5. Ethnicity follows
-    the demographic interval containing R. Numeric validity is 5 to 400 kg/m^2 inclusive. An invalid latest
-    value is unassessable; no fallback to an older valid value. BMI30_COD alone does not provide a measured
-    value. BMI evidence uses clinical dates through R. This is separate from the shared QOF obesity register.
+    the demographic interval containing R. Latest BMI follows int_bmi_qof_all. Value-free or unparseable
+    records are not results and do not block an earlier numeric result. A latest numeric value outside
+    5 to 400 kg/m^2 inclusive makes the person unassessable; no older valid result is used. BMI30_COD
+    alone does not provide a measured value. BMI evidence uses clinical dates through R. This is separate
+    from the shared QOF obesity register.
   config:
     meta:
       owner:
@@ -17,12 +19,13 @@ models:
         clinical_domain: Metabolic
         name_short: 'Weight management: obesity register'
         description_short: 'Weight management: obesity register'
-        description_long: Latest measured BMIVAL_COD BMI in (R - 12 months, R] must be 27.5 kg/m^2 or
+        description_long: Latest usable numeric BMIVAL_COD result in (R - 12 months, R] must be 27.5 kg/m^2 or
           above, or 30 kg/m^2 or above if ethnicity is recorded as White. Unknown or missing ethnicity
-          uses 27.5. Ethnicity follows the demographic interval containing R. Numeric validity is 5 to
-          400 kg/m^2 inclusive. An invalid latest value is unassessable; no fallback to an older valid
-          value. BMI30_COD alone does not provide a measured value. BMI evidence uses clinical dates through
-          R. This is separate from the shared QOF obesity register.
+          uses 27.5. Ethnicity follows the demographic interval containing R. Latest BMI follows int_bmi_qof_all.
+          Value-free or unparseable records are not results and do not block an earlier numeric result.
+          A latest numeric value outside 5 to 400 kg/m^2 inclusive makes the person unassessable; no older
+          valid result is used. BMI30_COD alone does not provide a measured value. BMI evidence uses
+          clinical dates through R. This is separate from the shared QOF obesity register.
         source_column: is_on_register
         is_qof: false
         qof_indicator: null
@@ -49,9 +52,10 @@ models:
   - name: is_on_register
     description: True for every row; only eligible register members are retained.
   - name: latest_bmi_date
-    description: Clinical date of the latest measured BMI in (R - 12 months, R].
+    description: Clinical date of the latest usable numeric BMIVAL_COD result in (R - 12 months, R].
   - name: bmi_value
-    description: Latest measured BMI in kg/m^2. Invalid latest values exclude membership.
+    description: Latest usable numeric BMIVAL_COD result in kg/m^2. A latest numeric value outside
+      5 to 400 inclusive excludes membership; value-free or unparseable records do not block an earlier result.
   - name: is_recorded_white
     description: True when ethnicity is White in the demographic interval containing R. False includes
       unknown and missing ethnicity.
