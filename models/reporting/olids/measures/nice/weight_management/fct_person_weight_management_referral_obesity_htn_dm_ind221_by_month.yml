@@ -1,0 +1,67 @@
+models:
+- name: fct_person_weight_management_referral_obesity_htn_dm_ind221_by_month
+  description: 'Weight management referral. One row per eligible adult NICE obesity register member at
+    R. The person must also belong to the hypertension or diabetes register at R. The latest valid recorded
+    or calculated BMI known at R in (R minus twelve months, R] must be in an obese class, using shared
+    NG246 higher-risk ethnicity thresholds. Unknown ethnicity uses standard thresholds, unlike NICE wording.
+    Achievement requires WEIGHT_MGMT_REFERRAL_COD within 0 to 90 days inclusive after any valid obese-class
+    BMI known at R in that year, capped at R. NDPP and total diet replacement referrals do not count.
+    Exclusions apply only after achievement: WEIGHT_MGMT_ATTENDING_COD in (R minus twelve months, R] with
+    no strictly later WEIGHT_MGMT_ENDED_COD. Sparse exits and ends from another programme limit the attendance
+    proxy. Personalised care adjustments are not applied. Recalculated for 60 completed month-ends using
+    current rules and code lists. Registration, age and practice follow the monthly spine; current test
+    flags apply retrospectively. Later corrections can change earlier results.'
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind221
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: latest_bmi_date
+    description: Latest valid BMI known at R in (R minus twelve months, R], from the NICE obesity register.
+  - name: bmi_value
+    description: BMI in kg/m^2, valid range 10 to 150.
+  - name: bmi_source
+    description: Recorded BMI or calculated from weight and contributing height.
+  - name: requires_lower_bmi_thresholds
+    description: Higher-risk ethnicity known at R uses the shared NG246 lower thresholds. Unknown ethnicity
+      uses standard thresholds.
+  - name: bmi_category
+    description: Shared ethnicity-adjusted obese class at R.
+  - name: timely_referral_date
+    description: Latest referral within 0 to 90 days inclusive after any qualifying BMI in the year, capped
+      at R.
+  - name: timely_offer_date
+    description: Latest offer within the qualifying BMI follow-up window.
+  - name: timely_decline_date
+    description: Latest declined referral within the qualifying BMI follow-up window.
+  - name: latest_referral_date
+    description: Latest weight management referral in (R minus 24 months, R].
+  - name: latest_attendance_date
+    description: Latest attendance or commencement in (R minus twelve months, R].
+  - name: latest_end_date
+    description: Latest programme end in (R minus 24 months, R]; only ends later than attendance cancel
+      the attendance proxy.
+  - name: has_previous_referral
+    description: Referral in the preceding 24 months. IND220 excludes only non-achievers with this flag.
+  - name: is_currently_attending
+    description: Attendance in the preceding twelve months with no later programme end. Both measures
+      exclude only non-achievers with this flag.
+  - name: latest_record_date
+    description: Latest timely referral date.
+  - name: is_in_denominator
+    description: Always true after exclusions.
+  - name: is_in_numerator
+    description: Whether timely evidence meets this measure.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: has_hypertension
+    description: HTN register membership at R.
+  - name: has_diabetes
+    description: DM register membership at R.

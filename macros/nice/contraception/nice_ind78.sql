@@ -8,7 +8,7 @@
 WITH population AS (
     SELECT population.person_id, population.reporting_date, population.age,
         population.practice_code, population.practice_name,
-        evidence.latest_advice_date, evidence.latest_asm_date,
+        evidence.latest_asm_date,
         register.person_id IS NOT NULL AS has_epilepsy
     FROM ({{ nice_reference_population(reference) }}) AS population
     INNER JOIN {{ nice_ref('int_nice_contraception_evidence', reference) }} AS evidence
@@ -20,12 +20,34 @@ WITH population AS (
     WHERE population.gender = 'Female'
         AND population.age < 55
         AND evidence.latest_asm_date > DATEADD(month, -6, population.reporting_date)
+        AND evidence.latest_asm_date <= population.reporting_date
         AND (evidence.first_sterilisation_hysterectomy_date IS NULL
             OR evidence.first_sterilisation_hysterectomy_date > population.reporting_date)
+), contraception_daily AS (
+    SELECT person_id, event_date, id
+    FROM {{ ref('int_nice_reproductive_advice_topics_all') }}
+    WHERE is_contraception_topic
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id, event_date ORDER BY id DESC) = 1
+), pregnancy_daily AS (
+    SELECT person_id, event_date, id
+    FROM {{ ref('int_nice_reproductive_advice_topics_all') }}
+    WHERE is_pregnancy_topic
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id, event_date ORDER BY id DESC) = 1
 ), assessed AS (
     SELECT population.*,
-        IFF(latest_advice_date >= DATEADD(month, -12, reporting_date), latest_advice_date, NULL) AS latest_record_date
+        IFF(contraception.event_date >= DATEADD(month, -12, population.reporting_date),
+            contraception.event_date, NULL) AS latest_contraception_advice_date,
+        IFF(pregnancy.event_date >= DATEADD(month, -12, population.reporting_date),
+            pregnancy.event_date, NULL) AS latest_pregnancy_advice_date,
+        latest_contraception_advice_date IS NOT NULL AND latest_pregnancy_advice_date IS NOT NULL AS has_both_topics,
+        IFF(has_both_topics, GREATEST(latest_contraception_advice_date, latest_pregnancy_advice_date), NULL) AS latest_record_date
     FROM population
+    ASOF JOIN contraception_daily AS contraception
+        MATCH_CONDITION (population.reporting_date >= contraception.event_date)
+        ON population.person_id = contraception.person_id
+    ASOF JOIN pregnancy_daily AS pregnancy
+        MATCH_CONDITION (population.reporting_date >= pregnancy.event_date)
+        ON population.person_id = pregnancy.person_id
 )
 SELECT person_id, 'IND78' AS indicator_id,
     'Contraception advice for women taking antiseizure medication' AS indicator_name,
@@ -34,8 +56,9 @@ SELECT person_id, 'IND78' AS indicator_id,
     {{ nice_practice_columns('result', reference) }},
     latest_asm_date,
     has_epilepsy,
+    latest_contraception_advice_date, latest_pregnancy_advice_date,
     latest_record_date, TRUE AS is_in_denominator,
-    latest_record_date IS NOT NULL AS is_in_numerator,
-    IFF(latest_record_date IS NOT NULL, 'ACHIEVED', 'NOT_RECORDED_IN_PERIOD') AS indicator_status
+    has_both_topics AS is_in_numerator,
+    IFF(has_both_topics, 'ACHIEVED', 'NOT_RECORDED_IN_PERIOD') AS indicator_status
 FROM assessed AS result
 {% endmacro %}
