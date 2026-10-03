@@ -1,0 +1,47 @@
+models:
+- name: fct_person_maternity_nice_indicators
+  description: NICE maternity outcomes. One row per eligible, registered, living, non-test woman and indicator
+    at the build date. Includes IND178 after the latest delivery episode. See the member measure for delivery,
+    age and screening rules.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+  columns:
+  - name: person_id
+    description: Woman in the indicator denominator.
+    data_tests:
+    - not_null
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published indicator subject.
+  - name: reporting_date
+    description: Build date R.
+  - name: measurement_period_start
+    description: Exclusive lower boundary for the latest delivery, R minus 12 calendar months.
+  - name: age
+    description: Completed years at R; delivery eligibility uses age at the delivery record.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: current_practice_code
+    description: ODS code of the registration practice at R.
+  - name: current_practice_name
+    description: Name of the registration practice at R.
+  - name: delivery_date
+    description: Earliest clinical date of the latest known delivery episode; starts the postpartum window.
+  - name: latest_record_date
+    description: Latest qualifying mental health enquiry date 4 to 16 weeks after delivery; null when
+      none.
+  - name: is_in_denominator
+    description: Always true for each eligible row.
+  - name: is_in_numerator
+    description: Whether qualifying mental health enquiry evidence is present.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.

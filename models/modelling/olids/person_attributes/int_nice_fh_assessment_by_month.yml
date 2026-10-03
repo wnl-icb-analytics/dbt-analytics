@@ -1,0 +1,45 @@
+models:
+- name: int_nice_fh_assessment_by_month
+  description: Familial hypercholesterolaemia assessment profile. One row per active, living, non-test person
+    and month-end with a qualifying lifetime reading or high reading in 12 months. Validity and units follow
+    int_cholesterol_all. Lifetime thresholds use age at reading. Recent readings have no age restriction. Evidence
+    uses clinical dates through assessment. No personalised care adjustments apply. History covers 60 completed
+    month-ends with current rules and code lists; age and practice follow the monthly spine.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: earliest_qualifying_reading_date
+    description: Earliest valid total cholesterol above 7.5 mmol/L at age 0-29 or above 9.0 at age 30+, through
+      assessment. Null means no qualifying lifetime reading.
+  - name: earliest_qualifying_cholesterol_value
+    description: Total cholesterol in mmol/L at the earliest qualifying reading.
+  - name: age_at_earliest_qualifying_reading
+    description: Approximate completed years at the reading, from birth_date_approx using the monthly age convention.
+  - name: latest_high_reading_date
+    description: Latest valid total cholesterol above 7.5 mmol/L through assessment, any age. Highest observation
+      id breaks daily ties.
+  - name: latest_high_cholesterol_value
+    description: Total cholesterol in mmol/L at the latest high reading.
+  - name: first_fh_assessment_date
+    description: First clinical FH assessment or coded possible-FH result through assessment; null means none.
+  - name: first_clinical_fh_diagnosis_date
+    description: First PCD FHYP_COD clinical FH diagnosis through R; null means none. Counts as clinical
+      assessment even before the qualifying cholesterol reading.
+  - name: first_fh_referral_date
+    description: First FH-specific referral through assessment; generic lipid referrals do not count.
+  - name: first_genetic_fh_date
+    description: First PCD FHYPGEN_COD evidence through assessment; may represent genetic testing rather than
+      a confirmed diagnosis.
+  - name: latest_secondary_hyperlipidaemia_date
+    description: Latest explicit secondary lipid diagnosis through assessment. IND260 requires this strictly
+      after its earliest reading.
+  - name: first_secondary_history_date
+    description: First personal secondary-lipid history through assessment. IND261 only.

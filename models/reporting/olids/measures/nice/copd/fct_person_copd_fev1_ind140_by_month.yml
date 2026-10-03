@@ -1,0 +1,50 @@
+models:
+- name: fct_person_copd_fev1_ind140_by_month
+  description: FEV1 recording, one row per active, living, non-test COPD register member. FEV1_COD in
+    (R minus 12 months, R] counts with or without a numeric value. Includes observed percent predicted
+    and z-scores; excludes ratios, expected volumes and reversibility alone. No exclusions or personalised
+    care adjustments. Recalculated for the last 60 completed month-ends using today's rules and code lists.
+    Registration and practice use the monthly spine, with inclusive registration starts and exclusive
+    registration ends and death dates. Overlaps retain the spine's current-registration priority. Birth
+    and death dates are approximate; missing birth dates prevent historical active rows. Current gender
+    and test flags apply retrospectively. Diagnoses use clinical and recorded dates; other evidence uses
+    corrected clinical or order dates. Later corrections can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published indicator name.
+  - name: reporting_date
+    description: Date at which eligibility and evidence are assessed.
+  - name: measurement_period_start
+    description: Exclusive lower boundary of the measurement window.
+  - name: age
+    description: Completed years at reporting_date.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: latest_record_date
+    description: Latest qualifying numerator evidence date; null when the numerator is not met.
+  - name: is_in_denominator
+    description: Always true for emitted rows after the documented exclusions.
+  - name: is_in_numerator
+    description: Whether the numerator rule is met.
+  - name: indicator_status
+    description: ACHIEVED or the documented missing-evidence status.
+  - name: latest_fev1_date
+    description: Latest FEV1 recording in twelve months, regardless of result value.
+  - name: practice_code
+    description: ODS registration practice at reporting_date.
+  - name: practice_name
+    description: Registration practice name at reporting_date.

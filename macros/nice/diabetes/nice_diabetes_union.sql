@@ -25,7 +25,8 @@
     'fct_person_diabetes_foot_risk_ind81',
     'fct_person_diabetes_structured_education_ind88',
     'fct_person_ndh_prevention_programme_ind171',
-    'fct_person_diabetes_care_processes_ind120'
+    'fct_person_diabetes_care_processes_ind120',
+    'fct_person_diabetes_dietary_review_ind89'
 ] %}
 
 {% for indicator_model in indicator_models %}

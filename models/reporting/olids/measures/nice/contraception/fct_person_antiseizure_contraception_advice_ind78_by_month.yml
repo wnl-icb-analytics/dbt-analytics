@@ -1,0 +1,48 @@
+models:
+- name: fct_person_antiseizure_contraception_advice_ind78_by_month
+  description: Contraception advice. One row per active, living, non-test woman under 55 with an
+    EPILDRUG_COD order in (reporting date minus six months, reporting date]. Includes users without
+    epilepsy; has_epilepsy identifies EP register membership. Sterilisation or partial/complete
+    hysterectomy through the reporting date excludes the woman, using
+    NHSD_PRIMARY_CARE_DOMAIN_REFSETS/STERIL_COD and HYST2_COD. Advice uses ECL_CACHE CONTRACEP_ADV_COD
+    and LARC_ADV_COD plus PCD EPILCC_COD, EPILPA_COD and EPILPCA_COD. A single record in the inclusive
+    twelve months to the reporting date counts. These codes cannot verify topic coverage or tailoring to
+    pregnancy and contraceptive intentions. Unmapped local legacy advice remains outside validated lists.
+    Recalculated for 60 completed month-ends using current rules and code lists. Registration and
+    practice follow the monthly spine. Birth and death dates are approximate; current gender and test
+    flags apply retrospectively. Registers use clinical and recorded dates; other evidence uses clinical
+    dates through the reporting date. Later corrections can change earlier results. Held pending separate
+    evidence of counselling on contraception, conception and pregnancy. A single advice record cannot
+    demonstrate all three topics.
+  config:
+    enabled: false
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind78
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the denominator.
+  - name: reporting_date
+    description: Date used to assess eligibility and evidence.
+  - name: measurement_period_start
+    description: Reporting date minus twelve months. Advice includes this boundary.
+  - name: latest_record_date
+    description: Latest qualifying advice date; null means the advice rule is not met.
+  - name: is_in_denominator
+    description: Always true.
+  - name: is_in_numerator
+    description: Whether the advice rule is met.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: latest_asm_date
+    description: Latest antiseizure order through the reporting date.
+  - name: has_epilepsy
+    description: Whether the woman belongs to the epilepsy register at the reporting date; all antiseizure
+      users remain eligible.

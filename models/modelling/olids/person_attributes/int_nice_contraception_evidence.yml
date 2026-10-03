@@ -1,0 +1,37 @@
+models:
+- name: int_nice_contraception_evidence
+  description: Contraception evidence. One row per active, living, non-test woman under 55 at the build
+    date. Latest advice, LARC information, antiseizure medication and practice-issued oral/patch and EHC
+    dates, with the first sterilisation or hysterectomy date.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: Person identifier.
+  - name: reporting_date
+    description: Date used to cap clinical evidence.
+  - name: latest_advice_date
+    description: Latest advice clinical or order date on or before the reporting date. Null means no evidence;
+      stale dates remain visible.
+  - name: latest_larc_date
+    description: Latest larc clinical or order date on or before the reporting date. Null means no evidence;
+      stale dates remain visible.
+  - name: latest_asm_date
+    description: Latest asm clinical or order date on or before the reporting date. Null means no evidence;
+      stale dates remain visible.
+  - name: latest_oral_patch_date
+    description: Latest oral patch clinical or order date on or before the reporting date. Null means
+      no evidence; stale dates remain visible.
+  - name: latest_ehc_date
+    description: Latest ehc clinical or order date on or before the reporting date. Null means no evidence;
+      stale dates remain visible.
+  - name: first_sterilisation_hysterectomy_date
+    description: First clinical exclusion date, which can be after the reporting date. Exclusion takes
+      effect on that date.

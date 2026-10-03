@@ -1,0 +1,58 @@
+models:
+- name: fct_person_fh_assessment_historical_cholesterol_ind260_by_month
+  description: Familial hypercholesterolaemia assessment. One row per active, living, non-test person and month-end
+    with a qualifying lifetime cholesterol reading. The earliest valid total cholesterol must exceed 7.5 mmol/L
+    at age 29 or under, or 9.0 at age 30 or over. Age at reading uses approximate birth date. SECONDARY_HYPERLIPID_COD
+    counts strictly after that reading. FH_ASSESS_COD, PCD SBROOME_COD, DULIPID_COD, POSSFH_COD, FH_REFER_COD
+    or PCD FHYPGEN_COD count at any time through assessment. Possible-FH codes and PCD FHYP_COD clinical
+    diagnoses count as assessment at any time through R. FH-specific referral codes only exist from 2021.
+    Generic
+    REFLIPID_COD referrals and personal secondary-lipid history do not count. Genetic evidence includes coded
+    testing; a positive result is not verified. No personalised care adjustments apply. History is one row
+    per person and month-end for the last 60 completed month-ends, recalculated with current rules and code
+    lists. Approximate age and practice follow the monthly spine.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind260
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: reporting_date
+    description: Assessment date.
+  - name: measurement_period_start
+    description: 1 April 2026 for HF; earliest qualifying lifetime reading for IND260; 12 months before assessment
+      for IND261.
+  - name: latest_record_date
+    description: Supporting achievement evidence date through assessment; null means no qualifying evidence.
+  - name: is_in_denominator
+    description: Always true.
+  - name: is_in_numerator
+    description: Whether the required category or assessment evidence exists.
+  - name: qualifying_reading_date
+    description: Earliest qualifying lifetime reading for IND260; latest high reading in 12 months for IND261.
+  - name: qualifying_cholesterol_value
+    description: Total cholesterol in mmol/L at the selected qualifying reading.
+  - name: has_qualifying_secondary_hyperlipidaemia
+    description: Explicit secondary diagnosis strictly after the reading for IND260; diagnosis or personal
+      history at any time through assessment for IND261.
+  - name: first_fh_assessment_date
+    description: First clinical FH assessment or coded possible-FH result through assessment; null means none.
+  - name: first_clinical_fh_diagnosis_date
+    description: First PCD FHYP_COD clinical FH diagnosis through R; null means none. Counts as clinical
+      assessment even before the qualifying cholesterol reading.
+  - name: first_fh_referral_date
+    description: First FH-specific referral through assessment; generic lipid referrals do not count.
+  - name: first_genetic_fh_date
+    description: First PCD FHYPGEN_COD evidence through assessment; may represent genetic testing rather than
+      a confirmed diagnosis.
+  - name: latest_secondary_hyperlipidaemia_date
+    description: Latest explicit secondary lipid diagnosis through assessment. IND260 requires this strictly
+      after its earliest reading.
+  - name: age_at_earliest_qualifying_reading
+    description: Approximate completed years at the reading, from birth_date_approx using the monthly age convention.

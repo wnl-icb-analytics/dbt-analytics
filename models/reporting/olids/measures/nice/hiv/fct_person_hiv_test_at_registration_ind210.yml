@@ -1,0 +1,68 @@
+models:
+- name: fct_person_hiv_test_at_registration_ind210
+  description: HIV testing at registration. One row per registered, living, non-test person aged 16+ whose
+    registration started at least 3 and less than 15 months before R. Registration starts in (R -
+    15 months, R - 3 months]. HIV_COD and AIDS_COD diagnoses known before registration exclude the person.
+    A HIV_TEST_COD completed test from registration through three calendar months after it qualifies.
+    NCL is treated as entirely high-prevalence, so no area gate applies. This assumption must be reviewed
+    before widening geography. Mass registrations remain included.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind210
+      indicator:
+        id: IND210
+        type: MEASURE
+        category: REGISTRATION
+        clinical_domain: HIV
+        name_short: 'HIV: testing at registration'
+        description_short: Registration starts in (R - 15 months, R - 3 months]. HIV_COD and AIDS_COD
+          diagnoses known before registration exclude the person. A HIV_TEST_COD completed test from registration
+          through three calendar months after it qualifies. NCL is treated as entirely high-prevalence,
+          so no area gate applies. This assumption must be reviewed before widening geography. Mass registrations
+          remain included.
+        description_long: HIV testing at registration. One row per registered, living, non-test person
+          aged 16+ whose registration started at least 3 and less than 15 months before R. Registration
+          starts in (R - 15 months, R - 3 months]. HIV_COD and AIDS_COD diagnoses known before registration
+          exclude the person. A HIV_TEST_COD completed test from registration through three calendar months
+          after it qualifies. NCL is treated as entirely high-prevalence, so no area gate applies. This
+          assumption must be reviewed before widening geography. Mass registrations remain included.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND210
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+    data_tests:
+    - not_null
+    - unique
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published indicator subject.
+  - name: reporting_date
+    description: Evaluation date R, the build date.
+  - name: measurement_period_start
+    description: Exclusive lower boundary of the rolling eligibility or review window.
+  - name: age
+    description: Completed years at R.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: current_practice_code
+    description: ODS code of the registration practice at R.
+  - name: current_practice_name
+    description: Name of the registration practice at R.
+  - name: registration_start_date
+    description: Start of the registration attributed at R. The testing window begins on this date.
+  - name: latest_record_date
+    description: Latest qualifying evidence date in the specified window; null when no qualifying evidence
+      exists.
+  - name: is_in_denominator
+    description: Always true for each eligible row.
+  - name: is_in_numerator
+    description: Whether qualifying evidence is present in the specified window.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.

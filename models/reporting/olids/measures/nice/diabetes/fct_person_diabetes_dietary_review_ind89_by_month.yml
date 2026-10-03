@@ -1,0 +1,51 @@
+models:
+- name: fct_person_diabetes_dietary_review_ind89_by_month
+  description: Diabetes dietary review. One row per registered, living, non-test diabetes register member
+    at each completed month-end. A NUTRIASS_COD nutrition assessment, NHSD_PRIMARY_CARE_DOMAIN_REFSETS
+    DIETITIAN_COD contact or ECL_CACHE DM_DIET_REVIEW_COD review in (R - 15 months, R] qualifies.
+    DM_DIET_REVIEW_COD includes completed diabetes dietitian appointments. Advice,
+    education, referrals, offers and declines alone do not qualify. Professional competence cannot be
+    verified from these codes. No exclusions apply. History covers the last 60 completed month-ends and
+    is recalculated at monthly refresh using current rules and code lists. Approximate birth/death dates
+    and current gender/test flags limit historical interpretation. Diagnoses require clinical and recorded
+    dates known by R; other evidence uses clinical dates through R. Later corrections can alter earlier
+    results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published indicator subject.
+  - name: reporting_date
+    description: Completed month-end R. Recalculated for the last 60 completed month-ends using current
+      rules and code lists.
+  - name: measurement_period_start
+    description: Exclusive lower boundary of the rolling eligibility or review window.
+  - name: age
+    description: Completed years at R.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: practice_code
+    description: ODS code of the registration practice at R.
+  - name: practice_name
+    description: Name of the registration practice at R.
+  - name: latest_record_date
+    description: Latest qualifying evidence date in the specified window; null when no qualifying evidence
+      exists.
+  - name: is_in_denominator
+    description: Always true for each eligible row.
+  - name: is_in_numerator
+    description: Whether qualifying evidence is present in the specified window.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

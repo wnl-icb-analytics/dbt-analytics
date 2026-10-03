@@ -1,0 +1,30 @@
+models:
+- name: int_nice_larc_advice_all
+  description: LARC information and advice. One row per observation for all people, including inactive
+    and deceased people, from ECL_CACHE/LARC_ADV_COD. Future clinical dates are excluded. Maintained code
+    descriptions identify explicit verbal, written or leaflet evidence and non-specific LARC advice. IUD
+    counselling and contraception-injection discussions have unknown modality; depot and IUS leaflets are
+    written evidence. Other method education has unknown modality. Thread-checking, fitting, removal, declines
+    and advice not
+    indicated are outside the list.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: LARC_ADV_COD
+        source: ECL_CACHE
+  columns:
+  - name: advice_modality
+    description: NON_SPECIFIC, WRITTEN, VERBAL or UNKNOWN, from the maintained code description. Unknown
+      does not establish either specific modality.
+  - name: concept_display
+    description: Authoritative code description from the maintained list.
+  - name: event_date
+    description: Corrected clinical date.

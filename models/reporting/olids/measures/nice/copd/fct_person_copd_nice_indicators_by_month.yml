@@ -1,0 +1,74 @@
+models:
+- name: fct_person_copd_nice_indicators_by_month
+  description: NICE COPD assessment outcomes, one row per eligible COPD register member and indicator
+    at each completed month-end. Includes FEV1 recording, oxygen saturation for very severe COPD and pulmonary
+    rehabilitation offers after MRC grade 3+ with the documented exclusions. Each measure retains its
+    own population and evidence windows. Branch-specific fields are null when not applicable. Recalculated
+    for the last 60 completed month-ends using today's rules and code lists. Registration and practice
+    use the monthly spine, with inclusive registration starts and exclusive registration ends and death
+    dates. Overlaps retain the spine's current-registration priority. Birth and death dates are approximate;
+    missing birth dates prevent historical active rows. Current gender and test flags apply retrospectively.
+    Diagnoses use clinical and recorded dates; other evidence uses corrected clinical or order dates.
+    Later corrections can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published indicator name.
+  - name: reporting_date
+    description: Date at which eligibility and evidence are assessed.
+  - name: measurement_period_start
+    description: Exclusive lower boundary of the measurement window.
+  - name: age
+    description: Completed years at reporting_date.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: latest_record_date
+    description: Latest qualifying numerator evidence date; null when the numerator is not met.
+  - name: is_in_denominator
+    description: Always true for emitted rows after the documented exclusions.
+  - name: is_in_numerator
+    description: Whether the numerator rule is met.
+  - name: indicator_status
+    description: ACHIEVED or the documented missing-evidence status.
+  - name: latest_fev1_date
+    description: Latest FEV1 recording in twelve months, regardless of result value.
+  - name: latest_fev1_percent_date
+    description: Date of the latest valid percent-predicted FEV1 through R, without an expiry window.
+  - name: latest_fev1_percent
+    description: Latest valid FEV1 as percent predicted; below 30 establishes very severe COPD.
+  - name: latest_very_severe_code_date
+    description: Latest very severe COPD diagnosis known by R; null when none.
+  - name: latest_spo2_value
+    description: Numeric oxygen saturation result in the source units in twelve months; null when none.
+  - name: diagnosis_date
+    description: Earliest COPD register diagnosis date.
+  - name: mrc_date
+    description: First MRC grade 3+ date in the fifteen-month window.
+  - name: latest_offer_date
+    description: Latest offer or referral strictly after mrc_date and on or before R.
+  - name: first_invitation_date
+    description: First invitation in fifteen months.
+  - name: last_invitation_date
+    description: Last invitation in fifteen months.
+  - name: latest_response_date
+    description: Latest COPD review after the first invitation through R.
+  - name: is_excluded_invitation_non_response
+    description: Two invitations at least seven days apart without a later review; excludes the person.
+  - name: practice_code
+    description: ODS registration practice at reporting_date.
+  - name: practice_name
+    description: Practice name at reporting_date.

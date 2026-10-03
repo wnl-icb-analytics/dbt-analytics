@@ -8,7 +8,7 @@
     {{ exceptions.raise_compiler_error('Unsupported NICE reference: ' ~ reference) }}
 {% endif %}
 
--- IND278 and IND267 are standalone inputs, outside the family unions.
+-- IND278, IND267 and IND210 are standalone inputs, outside the family unions.
 
 {% set indicator_models = [
     'fct_person_bp_control_nice_indicators',
@@ -35,7 +35,12 @@
     'fct_person_shingles_vaccination_ind219',
     'fct_person_childhood_immunisation_nice_indicators',
     'fct_person_ltc_review_nice_indicators',
-    'fct_person_smi_nice_indicators'
+    'fct_person_smi_nice_indicators',
+    'fct_person_fh_assessment_nice_indicators',
+    'fct_person_copd_nice_indicators',
+    'fct_person_contraception_nice_indicators',
+    'fct_person_maternity_nice_indicators',
+    'fct_person_hiv_test_at_registration_ind210'
 ] %}
 
 {% for indicator_model in indicator_models %}
