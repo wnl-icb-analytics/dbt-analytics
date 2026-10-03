@@ -1,0 +1,27 @@
+models:
+- name: int_maternal_deliveries_all
+  description: Maternal delivery evidence. One row per DELIVERY_COD observation with a clinical date,
+    for all people including inactive and deceased people. Uses the approved delivery list without antepartum
+    stillbirth. The clinical date is preserved; recording dates do not substitute for delivery dates.
+    Consumers apply sex, age, known-date and episode rules.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: DELIVERY_COD
+        source: ECL_CACHE
+  columns:
+  - name: id
+    description: Source observation identifier.
+    data_tests:
+    - not_null
+    - unique
+  - name: person_id
+    description: Person with the record.
+  - name: clinical_effective_date
+    description: Original clinical date of the delivery record; null dates are excluded.
+  - name: date_recorded
+    description: Date this delivery record became known; null means no recording-date restriction.
