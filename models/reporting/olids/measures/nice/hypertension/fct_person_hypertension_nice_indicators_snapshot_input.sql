@@ -9,5 +9,9 @@ SELECT
     latest_acr_date,
     latest_home_ambulatory_bp_date,
     is_in_numerator,
-    indicator_status
+    indicator_status,
+    latest_ecg_date,
+    has_12lead_ecg,
+    latest_haematuria_test_date,
+    has_blood_specific_test
 FROM {{ ref('fct_person_hypertension_nice_indicators') }}

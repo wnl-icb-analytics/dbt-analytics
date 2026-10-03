@@ -1,0 +1,76 @@
+models:
+- name: fct_person_haematuria_test_hypertension_ind122
+  description: Haematuria test in hypertension (NICE IND122). One row per person on the active, living,
+    non-test HTN register, at any age, with earliest diagnosis in the financial year to date. Evidence
+    is dated from three calendar months before diagnosis through the earlier of three months after diagnosis
+    and R, inclusive. Uses ECL_CACHE URINE_BLOOD_TEST_COD or URINE_DIPSTICK_COD. Blood-specific evidence
+    includes negative and trace results, red-cell microscopy and microscopic haematuria findings. Generic
+    reagent-strip testing also counts but does not prove the blood analyte. Blood-specific codes do not
+    always encode the test method. Symptom-only haematuria and unspecified laboratory urinalysis are excluded
+    by the lists. No grace period or personalised care adjustments apply. Assessed on the build date.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind122
+      indicator:
+        id: IND122
+        type: MEASURE
+        category: CARDIOVASCULAR
+        clinical_domain: Cardiometabolic
+        name_short: Haematuria test around a new hypertension diagnosis
+        description_short: Haematuria test around a new hypertension diagnosis
+        description_long: Haematuria test in hypertension (NICE IND122). One row per person on the active,
+          living, non-test HTN register, at any age, with earliest diagnosis in the financial year to
+          date. Evidence is dated from three calendar months before diagnosis through the earlier of three
+          months after diagnosis and R, inclusive. Uses ECL_CACHE URINE_BLOOD_TEST_COD or URINE_DIPSTICK_COD.
+          Blood-specific evidence includes negative and trace results, red-cell microscopy and microscopic
+          haematuria findings. Generic reagent-strip testing also counts but does not prove the blood
+          analyte. Blood-specific codes do not always encode the test method. Symptom-only haematuria
+          and unspecified laboratory urinalysis are excluded by the lists. No grace period or personalised
+          care adjustments apply. Assessed on the build date.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND122
+  data_tests: []
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+    data_tests:
+    - not_null
+    - unique
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Evaluation date, a DATE.
+  - name: measurement_period_start
+    description: Inclusive 1 April start of the financial year containing R. Evidence windows are relative
+      to diagnosis.
+  - name: age
+    description: Completed years at R; history uses the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true. Rows contain eligible people only.
+  - name: is_in_numerator
+    description: Whether qualifying evidence falls within the indicator window through R.
+  - name: indicator_status
+    description: ACHIEVED when in the numerator, otherwise NOT_RECORDED_IN_PERIOD.
+  - name: current_practice_code
+    description: Practice ODS code at R under the established population attribution.
+  - name: current_practice_name
+    description: Practice name at R under the established population attribution.
+  - name: diagnosis_date
+    description: Earliest hypertension diagnosis date on the register at R; monthly anchors must be known
+      by R.
+  - name: latest_haematuria_test_date
+    description: Latest qualifying haematuria test date within the diagnosis window and through R; null
+      when none.
+  - name: has_blood_specific_test
+    description: Whether URINE_BLOOD_TEST_COD evidence occurs in the same diagnosis window through R;
+      false when absent. Generic dipstick records do not set this flag; true does not prove the reagent-strip
+      method.
