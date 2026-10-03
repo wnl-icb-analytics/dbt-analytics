@@ -30,12 +30,13 @@ candidate_keys AS (
     SELECT DISTINCT person_id FROM population
 ),
 orders AS (
+    -- NICE NG106 HFrEF MRAs are spironolactone and eplerenone.
     {% for name, model, flag in [
         ('ace_inhibitor', 'int_ace_inhibitor_medications_all', 'TRUE'),
         ('arb', 'int_arb_medications_all', 'TRUE'),
         ('beta_blocker', 'int_beta_blocker_medications_all', 'TRUE'),
         ('hf_licensed_beta_blocker', 'int_beta_blocker_medications_all', 'orders.is_hf_licensed'),
-        ('mra', 'int_mra_medications_all', 'TRUE'),
+        ('mra', 'int_mra_medications_all', 'orders.is_steroidal_mra'),
         ('sglt2', 'int_sglt2_medications_all', 'TRUE'),
         ('aspirin', 'int_antiplatelet_medications_all', 'orders.is_aspirin'),
         ('p2y12', 'int_antiplatelet_medications_all', 'orders.is_p2y12_inhibitor'),
