@@ -1,0 +1,59 @@
+models:
+- name: fct_person_ecg_hypertension_ind123_by_month
+  description: Resting ECG in hypertension (NICE IND123). One row per person and month-end on the active,
+    living, non-test HTN register, aged over 18, with earliest diagnosis in the financial year to date.
+    Evidence is dated from three calendar months before diagnosis through the earlier of three months
+    after diagnosis and R, inclusive. Uses ECL_CACHE ECG_12LEAD_COD or ECG_GENERAL_COD. Resting ECG procedures
+    and interpretations with unspecified lead count count alongside explicit resting 12-lead procedures.
+    Generic ECG evidence does not prove 12 leads. Referrals, exercise, ambulatory and single-lead ECGs
+    are excluded by the lists. No grace period or personalised care adjustments apply. Recalculated for
+    the last 60 completed month-ends. Registration and practice use the monthly spine; birth and death
+    dates are approximate. Current gender and test flags apply retrospectively. Hypertension diagnosis
+    and resolution must be known by month-end. Other evidence uses corrected clinical dates through R.
+    Later corrections and code-list changes can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind123
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Evaluation date, a DATE.
+  - name: measurement_period_start
+    description: Inclusive 1 April start of the financial year containing R. Evidence windows are relative
+      to diagnosis.
+  - name: age
+    description: Completed years at R; history uses the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true. Rows contain eligible people only.
+  - name: is_in_numerator
+    description: Whether qualifying evidence falls within the indicator window through R.
+  - name: indicator_status
+    description: ACHIEVED when in the numerator, otherwise NOT_RECORDED_IN_PERIOD.
+  - name: practice_code
+    description: Practice ODS code at R under the established population attribution.
+  - name: practice_name
+    description: Practice name at R under the established population attribution.
+  - name: diagnosis_date
+    description: Earliest hypertension diagnosis date on the register at R; monthly anchors must be known
+      by R.
+  - name: latest_ecg_date
+    description: Latest qualifying resting ECG date within the diagnosis window and through R; null when
+      none.
+  - name: has_12lead_ecg
+    description: Whether ECG_12LEAD_COD evidence occurs in the same diagnosis window through R; false
+      when absent. Generic ECG interpretations do not set this flag.
