@@ -1,0 +1,49 @@
+models:
+- name: fct_person_fh_assessment_nice_indicators
+  description: Familial hypercholesterolaemia assessment results. One row per eligible active, living, non-test
+    person and indicator on the build date. IND260 uses lifetime age-specific high readings; IND261 uses high
+    readings in 12 months. Member measures define evidence routes.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+  columns:
+  - name: reporting_date
+    description: Assessment date.
+  - name: measurement_period_start
+    description: 1 April 2026 for HF; earliest qualifying lifetime reading for IND260; 12 months before assessment
+      for IND261.
+  - name: latest_record_date
+    description: Supporting achievement evidence date through assessment; null means no qualifying evidence.
+  - name: is_in_denominator
+    description: Always true.
+  - name: is_in_numerator
+    description: Whether the required category or assessment evidence exists.
+  - name: qualifying_reading_date
+    description: Earliest qualifying lifetime reading for IND260; latest high reading in 12 months for IND261.
+  - name: qualifying_cholesterol_value
+    description: Total cholesterol in mmol/L at the selected qualifying reading.
+  - name: has_qualifying_secondary_hyperlipidaemia
+    description: Explicit secondary diagnosis strictly after the reading for IND260; diagnosis or personal
+      history at any time through assessment for IND261.
+  - name: first_fh_assessment_date
+    description: First clinical FH assessment or coded possible-FH result through assessment; null means none.
+  - name: first_fh_referral_date
+    description: First FH-specific referral through assessment; generic lipid referrals do not count.
+  - name: first_genetic_fh_date
+    description: First PCD FHYPGEN_COD evidence through assessment; may represent genetic testing rather than
+      a confirmed diagnosis.
+  - name: latest_secondary_hyperlipidaemia_date
+    description: Latest explicit secondary lipid diagnosis through assessment. IND260 requires this strictly
+      after its earliest reading.
+  - name: age_at_earliest_qualifying_reading
+    description: Approximate completed years at the earliest qualifying lifetime reading for IND260; null for
+      IND261.
+  - name: first_secondary_history_date
+    description: First personal secondary-lipid history through assessment for IND261; null for IND260.
