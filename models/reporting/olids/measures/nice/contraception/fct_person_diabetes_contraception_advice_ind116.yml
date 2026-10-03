@@ -1,0 +1,52 @@
+models:
+- name: fct_person_diabetes_contraception_advice_ind116
+  description: Contraception advice. One row per active, living, non-test woman aged 17 to 44 on the diabetes
+    register at the reporting date. No exclusions apply. Advice uses ECL_CACHE CONTRACEP_ADV_COD and LARC_ADV_COD
+    plus PCD SEXHEALTHINT_COD, EPILCC_COD, EPILPA_COD and EPILPCA_COD. A single record in the inclusive
+    twelve months to the reporting date counts. These codes cannot verify topic coverage or tailoring
+    to pregnancy and contraceptive intentions. SEXHEALTHINT_COD also includes referrals and declines;
+    this is a broad coded proxy. Unmapped local legacy advice remains outside validated lists.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind116
+      indicator:
+        id: IND116
+        type: MEASURE
+        category: CONTRACEPTION
+        clinical_domain: CONTRACEPTION
+        name_short: Contraception advice for women with diabetes
+        description_short: Contraception advice for women with diabetes
+        description_long: Contraception advice. One row per active, living, non-test woman aged 17 to
+          44 on the diabetes register at the reporting date. No exclusions apply. Advice uses ECL_CACHE
+          CONTRACEP_ADV_COD and LARC_ADV_COD plus PCD SEXHEALTHINT_COD, EPILCC_COD, EPILPA_COD and EPILPCA_COD.
+          A single record in the inclusive twelve months to the reporting date counts. These codes cannot
+          verify topic coverage or tailoring to pregnancy and contraceptive intentions. SEXHEALTHINT_COD
+          also includes referrals and declines; this is a broad coded proxy. Unmapped local legacy advice
+          remains outside validated lists.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND116
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: Person in the denominator.
+  - name: reporting_date
+    description: Date used to assess eligibility and evidence.
+  - name: measurement_period_start
+    description: Reporting date minus twelve months. Advice includes this boundary.
+  - name: latest_record_date
+    description: Latest qualifying advice date; null means the advice rule is not met.
+  - name: is_in_denominator
+    description: Always true.
+  - name: is_in_numerator
+    description: Whether the advice rule is met.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.

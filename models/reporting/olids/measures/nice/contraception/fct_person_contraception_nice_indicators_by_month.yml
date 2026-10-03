@@ -1,0 +1,57 @@
+models:
+- name: fct_person_contraception_nice_indicators_by_month
+  description: Contraception outcomes. One row per eligible, active, living, non-test woman, indicator
+    and reporting date for IND78, IND116, IND117, IND124, IND148 and IND149. Each measure retains its
+    documented population, exclusions and advice rules. Recalculated for 60 completed month-ends using
+    current rules and code lists. Registration and practice follow the monthly spine. Birth and death
+    dates are approximate; current gender and test flags apply retrospectively. Registers use clinical
+    and recorded dates; other evidence uses clinical dates through the reporting date. Later corrections
+    can change earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: age
+    description: Completed years at reporting date, based on the approximate birth date.
+  - name: practice_code
+    description: Registration practice ODS code at reporting date.
+  - name: practice_name
+    description: Registration practice name at reporting date.
+  - name: latest_asm_date
+    description: Indicator-specific supporting evidence; null for indicators where this field does not
+      apply.
+  - name: has_epilepsy
+    description: Indicator-specific supporting evidence; null for indicators where this field does not
+      apply.
+  - name: latest_oral_patch_date
+    description: Indicator-specific supporting evidence; null for indicators where this field does not
+      apply.
+  - name: latest_ehc_date
+    description: Indicator-specific supporting evidence; null for indicators where this field does not
+      apply.
+  - name: latest_non_specific_advice_date
+    description: Indicator-specific supporting evidence; null for indicators where this field does not
+      apply.
+  - name: latest_written_advice_date
+    description: Indicator-specific supporting evidence; null for indicators where this field does not
+      apply.
+  - name: latest_verbal_advice_date
+    description: Indicator-specific supporting evidence; null for indicators where this field does not
+      apply.
+  - name: has_unknown_modality_advice
+    description: Indicator-specific supporting evidence; null for indicators where this field does not
+      apply.
