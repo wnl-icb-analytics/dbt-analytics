@@ -1,5 +1,5 @@
 {#-
-    Select measured BMI, dated ethnicity and subsequent weight advice for people aged 18 to 39.
+    Select measured BMI, dated ethnicity and subsequent weight advice for adults.
     Args: reference is current or by_month.
     Returns: one eligible person per reporting_date with BMI, ethnicity and advice evidence.
 -#}
@@ -7,7 +7,7 @@
 WITH population AS (
     SELECT person_id, reporting_date
     FROM ({{ nice_reference_population(reference) }})
-    WHERE age BETWEEN 18 AND 39
+    WHERE age >= 18
 ), people AS (
     SELECT DISTINCT person_id FROM population
 ), bmi_daily AS (

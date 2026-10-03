@@ -1,0 +1,46 @@
+models:
+- name: fct_person_nice_hypothyroidism_register_by_month
+  description: NICE treated hypothyroidism, one row per registered, living, non-test register member of
+    any age at each completed month-end. HYPOTHY_COD or THY_COD diagnosis known by R, with a LEVOTHYROXINE_RX
+    order in (R - 6 months, R]. Clinical and non-null recorded dates must be on or before R. Excludes
+    people whose latest known thyroid diagnosis is in SUBCLIN_HYPOTHY_COD, including compensated disease.
+    Same-time diagnoses use the highest observation ID. Levothyroxine/liothyronine combinations count,
+    including generic combinations of unknown extract origin. Named thyroid extracts and liothyronine-only
+    products do not count. This is narrower than the shared hypothyroidism register; IND139 still uses
+    that shared register. Recalculated for the last 60 completed month-ends using current rules, code
+    lists and retained records. Registration and practice follow the monthly spine. Birth and death dates
+    are approximate; current test flags apply retrospectively. Later corrections can change earlier membership.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - month_end_date
+  columns:
+  - name: person_id
+    description: Person identifier.
+    data_tests:
+    - not_null
+  - name: month_end_date
+    description: Reference date R used to assess membership.
+    data_tests:
+    - not_null
+  - name: age
+    description: Age in completed years at R, derived from approximate birth date.
+  - name: practice_code
+    description: Practice at R using the established active population or historical spine attribution.
+  - name: is_on_register
+    description: True for every row; only eligible register members are retained.
+  - name: earliest_diagnosis_date
+    description: Earliest qualifying diagnosis clinical date known by R.
+  - name: latest_diagnosis_date
+    description: Latest qualifying diagnosis clinical date known by R.
+  - name: latest_thyroid_diagnosis_date
+    description: Latest hypothyroidism or subclinical diagnosis known by R, ordered by clinical timestamp
+      then highest observation ID.
+  - name: latest_levothyroxine_order_date
+    description: Latest qualifying levothyroxine-containing order in (R - 6 months, R], known by R.
