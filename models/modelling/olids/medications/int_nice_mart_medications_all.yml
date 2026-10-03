@@ -1,0 +1,26 @@
+models:
+- name: int_nice_mart_medications_all
+  description: MART-capable inhaler orders, one row per medication order for all people. ICS_FORMOTEROL_MART_RX
+    includes eligible strengths and devices, brands and exact predecessors. Triple therapy, maintenance-only
+    strengths and other combinations are excluded. Product membership alone does not establish MART. Orders
+    through the build date; inactive and deceased people are retained.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - medication_order_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: ICS_FORMOTEROL_MART_RX
+        source: ECL_CACHE
+  columns:
+  - name: person_id
+    description: Person with the evidence.
+  - name: medication_order_id
+    description: Source event identifier.
+  - name: order_date
+    description: Clinical calendar date; observations use the shared source-date correction.

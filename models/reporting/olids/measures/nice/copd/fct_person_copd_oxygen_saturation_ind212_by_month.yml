@@ -1,0 +1,59 @@
+models:
+- name: fct_person_copd_oxygen_saturation_ind212_by_month
+  description: Oxygen saturation recording, one row per active, living, non-test COPD register member
+    with very severe COPD. Very severe means the latest valid FEV1_PCT_PRED_COD result through R is below
+    30 percent, or the very severe diagnosis in COPD_COD is known by R. Valid percentage evidence has
+    a positive numeric value and percent or % units; missing or other units are not used. Select valid
+    results before daily de-duplication and latest-date selection; ties use the highest observation id.
+    Numerator requires a numeric ARDENS/SPO2_SATS_SATURATIONS value in (R minus 12 months, R]. No exclusions
+    or personalised care adjustments. Recalculated for the last 60 completed month-ends using today's
+    rules and code lists. Registration and practice use the monthly spine, with inclusive registration
+    starts and exclusive registration ends and death dates. Overlaps retain the spine's current-registration
+    priority. Birth and death dates are approximate; missing birth dates prevent historical active rows.
+    Current gender and test flags apply retrospectively. Diagnoses use clinical and recorded dates; other
+    evidence uses corrected clinical or order dates. Later corrections can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published indicator name.
+  - name: reporting_date
+    description: Date at which eligibility and evidence are assessed.
+  - name: measurement_period_start
+    description: Exclusive lower boundary of the measurement window.
+  - name: age
+    description: Completed years at reporting_date.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: latest_record_date
+    description: Latest qualifying numerator evidence date; null when the numerator is not met.
+  - name: is_in_denominator
+    description: Always true for emitted rows after the documented exclusions.
+  - name: is_in_numerator
+    description: Whether the numerator rule is met.
+  - name: indicator_status
+    description: ACHIEVED or the documented missing-evidence status.
+  - name: latest_fev1_percent_date
+    description: Date of the latest valid percent-predicted FEV1 through R, without an expiry window.
+  - name: latest_fev1_percent
+    description: Latest valid FEV1 as percent predicted; below 30 establishes very severe COPD.
+  - name: latest_very_severe_code_date
+    description: Latest very severe COPD diagnosis known by R; null when none.
+  - name: latest_spo2_value
+    description: Numeric oxygen saturation result in the source units in twelve months; null when none.
+  - name: practice_code
+    description: ODS registration practice at reporting_date.
+  - name: practice_name
+    description: Registration practice name at reporting_date.

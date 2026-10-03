@@ -99,6 +99,10 @@ unit_tests:
     format: sql
     rows: SELECT column1::NUMBER AS person_id, column2::DATE AS event_date FROM VALUES (-9611,'2025-09-30'), (-9612,'2026-09-30'),
       (-9612,'2026-10-01')
+  - input: ref('int_smoke_exposure_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS event_date FROM VALUES
+      (-9612,'2025-09-30'), (-9612,'2026-10-01')
   expect:
     rows:
     - person_id: -9611
@@ -111,8 +115,8 @@ unit_tests:
       is_in_numerator: false
     - person_id: -9612
       reporting_date: '2026-08-31'
-      latest_record_date: null
-      is_in_numerator: false
+      latest_record_date: '2025-09-30'
+      is_in_numerator: true
     - person_id: -9612
       reporting_date: '2026-09-30'
       latest_record_date: '2026-09-30'

@@ -1,0 +1,274 @@
+unit_tests:
+- name: nice_mart_age_regimen_window_expiry_and_date_join
+  model: fct_person_asthma_mart_ind316_by_month
+  overrides:
+    macros:
+      nice_asthma_diagnosis_population: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+        column3::NUMBER AS age, column4::VARCHAR AS practice_code, column5::VARCHAR AS practice_name FROM
+        VALUES (-9701,'2026-08-31',12,'SYNTHETIC','Synthetic practice'), (-9701,'2026-09-30',12,'SYNTHETIC','Synthetic
+        practice'), (-9702,'2026-08-31',11,'SYNTHETIC','Synthetic practice'), (-9702,'2026-09-30',11,'SYNTHETIC','Synthetic
+        practice'), (-9703,'2026-08-31',50,'SYNTHETIC','Synthetic practice'), (-9703,'2026-09-30',50,'SYNTHETIC','Synthetic
+        practice'), (-9704,'2026-08-31',50,'SYNTHETIC','Synthetic practice'), (-9704,'2026-09-30',50,'SYNTHETIC','Synthetic
+        practice'), (-9705,'2026-08-31',50,'SYNTHETIC','Synthetic practice'), (-9705,'2026-09-30',50,'SYNTHETIC','Synthetic
+        practice'), (-9706,'2026-08-31',50,'SYNTHETIC','Synthetic practice'), (-9706,'2026-09-30',50,'SYNTHETIC','Synthetic
+        practice')
+  given:
+  - input: ref('int_nice_asthma_risk_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::BOOLEAN AS is_higher_risk,
+      column4::DATE AS risk_period_start, column5::DATE AS risk_period_end, column6::NUMBER AS saba_inhaler_count,
+      column7::NUMBER AS oral_steroid_course_count, column8::DATE AS latest_asthma_admission_date, column9::BOOLEAN
+      AS has_high_saba_use, column10::BOOLEAN AS has_repeated_oral_steroids, column11::BOOLEAN AS has_asthma_admission
+      FROM VALUES (-9701,'2026-08-31',TRUE,'2024-09-30','2025-09-30',6,0,NULL,TRUE,FALSE,FALSE), (-9701,'2026-09-30',TRUE,'2024-09-30','2025-09-30',6,0,NULL,TRUE,FALSE,FALSE),
+      (-9702,'2026-08-31',TRUE,'2024-09-30','2025-09-30',6,0,NULL,TRUE,FALSE,FALSE), (-9702,'2026-09-30',TRUE,'2024-09-30','2025-09-30',6,0,NULL,TRUE,FALSE,FALSE),
+      (-9703,'2026-08-31',TRUE,'2024-09-30','2025-09-30',6,0,NULL,TRUE,FALSE,FALSE), (-9703,'2026-09-30',TRUE,'2024-09-30','2025-09-30',6,0,NULL,TRUE,FALSE,FALSE),
+      (-9704,'2026-08-31',TRUE,'2024-09-30','2025-09-30',6,0,NULL,TRUE,FALSE,FALSE), (-9704,'2026-09-30',TRUE,'2024-09-30','2025-09-30',6,0,NULL,TRUE,FALSE,FALSE),
+      (-9705,'2026-08-31',TRUE,'2024-09-30','2025-09-30',6,0,NULL,TRUE,FALSE,FALSE), (-9705,'2026-09-30',TRUE,'2024-09-30','2025-09-30',6,0,NULL,TRUE,FALSE,FALSE),
+      (-9706,'2026-08-31',FALSE,'2024-09-30','2025-09-30',6,0,NULL,TRUE,FALSE,FALSE), (-9706,'2026-09-30',TRUE,'2024-09-30','2025-09-30',6,0,NULL,TRUE,FALSE,FALSE)
+  - input: ref('int_nice_mart_medications_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS order_date FROM VALUES (-9701,'2025-09-30'),
+      (-9702,'2026-08-01'), (-9703,'2026-08-31'), (-9703,'2026-09-30'), (-9703,'2026-10-01'), (-9704,'2026-08-01'),
+      (-9705,'2026-10-01'), (-9706,'2026-08-01')
+  - input: ref('int_nice_mart_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS event_date FROM VALUES (-9701,'2020-01-01'),
+      (-9702,'2020-01-01'), (-9703,'2026-08-31'), (-9703,'2026-10-01'), (-9704,'2026-10-01'), (-9705,'2020-01-01'),
+      (-9706,'2020-01-01')
+  expect:
+    rows:
+    - person_id: -9701
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -9701
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9703
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -9703
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -9704
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9704
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9705
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9705
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9706
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_copd_fev1_boundaries_value_free_and_expiry
+  model: fct_person_copd_fev1_ind140_by_month
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+        column3::NUMBER AS age, column4::VARCHAR AS practice_code, column5::VARCHAR AS practice_name FROM
+        VALUES (-9711,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9711,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9712,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9712,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9713,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9713,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice')
+      nice_register: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE
+        AS earliest_diagnosis_date FROM VALUES (-9711,'2026-08-31','2020-01-01'), (-9711,'2026-09-30','2020-01-01'),
+        (-9712,'2026-08-31','2020-01-01'), (-9712,'2026-09-30','2020-01-01'), (-9713,'2026-08-31','2020-01-01'),
+        (-9713,'2026-09-30','2020-01-01')
+  given:
+  - input: ref('int_nice_copd_observations_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::NUMBER AS observation_id, column3::DATE AS event_date,
+      column4::DATE AS date_recorded, column5::VARCHAR AS evidence_type, column6::FLOAT AS result_value,
+      column7::VARCHAR AS result_unit_display, column8::BOOLEAN AS is_very_severe_copd FROM VALUES (-9711,1,'2025-09-30','2025-09-30','FEV1_COD',NULL,NULL,FALSE),
+      (-9712,2,'2026-09-30','2026-09-30','FEV1_COD',NULL,NULL,FALSE), (-9712,3,'2026-10-01','2026-10-01','FEV1_COD',NULL,NULL,FALSE),
+      (-9713,4,'2026-10-01','2026-10-01','FEV1_COD',NULL,NULL,FALSE)
+  expect:
+    rows:
+    - person_id: -9711
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -9711
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9712
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9712
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -9713
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9713
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_copd_severity_latest_valid_units_ties_known_date_and_saturation_expiry
+  model: fct_person_copd_oxygen_saturation_ind212_by_month
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+        column3::NUMBER AS age, column4::VARCHAR AS practice_code, column5::VARCHAR AS practice_name FROM
+        VALUES (-9721,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9721,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9722,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9722,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9723,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9723,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9724,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9724,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9725,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9725,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9726,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9726,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9727,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9727,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice')
+      nice_register: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE
+        AS earliest_diagnosis_date FROM VALUES (-9721,'2026-08-31','2020-01-01'), (-9721,'2026-09-30','2020-01-01'),
+        (-9722,'2026-08-31','2020-01-01'), (-9722,'2026-09-30','2020-01-01'), (-9723,'2026-08-31','2020-01-01'),
+        (-9723,'2026-09-30','2020-01-01'), (-9724,'2026-08-31','2020-01-01'), (-9724,'2026-09-30','2020-01-01'),
+        (-9725,'2026-08-31','2020-01-01'), (-9725,'2026-09-30','2020-01-01'), (-9726,'2026-08-31','2020-01-01'),
+        (-9726,'2026-09-30','2020-01-01'), (-9727,'2026-08-31','2020-01-01'), (-9727,'2026-09-30','2020-01-01')
+  given:
+  - input: ref('int_nice_copd_observations_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::NUMBER AS observation_id, column3::DATE AS event_date,
+      column4::DATE AS date_recorded, column5::VARCHAR AS evidence_type, column6::FLOAT AS result_value,
+      column7::VARCHAR AS result_unit_display, column8::BOOLEAN AS is_very_severe_copd FROM VALUES (-9721,1,'2025-01-01','2025-01-01','FEV1_PCT_PRED_COD',29,'percent',FALSE),
+      (-9721,2,'2026-09-01','2026-09-01','FEV1_PCT_PRED_COD',28,'liter',FALSE), (-9721,3,'2025-09-30','2025-09-30','ARDENS/SPO2_SATS_SATURATIONS',96,'percent',FALSE),
+      (-9722,4,'2025-01-01','2025-01-01','FEV1_PCT_PRED_COD',29,'percent',FALSE), (-9722,5,'2026-09-01','2026-09-01','FEV1_PCT_PRED_COD',30,'percent',FALSE),
+      (-9723,6,'2026-08-01','2026-09-01','COPD_COD',NULL,NULL,TRUE), (-9723,7,'2026-09-30','2026-09-30','ARDENS/SPO2_SATS_SATURATIONS',95,NULL,FALSE),
+      (-9723,8,'2026-10-01','2026-10-01','ARDENS/SPO2_SATS_SATURATIONS',99,NULL,FALSE), (-9724,9,'2025-01-01','2025-01-01','FEV1_PCT_PRED_COD',30,'percent',FALSE),
+      (-9724,10,'2025-01-01','2025-01-01','FEV1_PCT_PRED_COD',29,'percent',FALSE), (-9725,11,'2026-10-01','2026-10-01','COPD_COD',NULL,NULL,TRUE),
+      (-9726,12,'2025-01-01','2025-01-01','FEV1_PCT_PRED_COD',29,NULL,FALSE), (-9727,13,'2020-01-01','2020-01-01','COPD_COD',NULL,NULL,TRUE),
+      (-9727,14,'2026-08-01','2026-08-01','ARDENS/SPO2_SATS_SATURATIONS',NULL,NULL,FALSE), (-9727,15,'2026-10-01','2026-10-01','ARDENS/SPO2_SATS_SATURATIONS',95,NULL,FALSE)
+  expect:
+    rows:
+    - person_id: -9721
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -9721
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9722
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9723
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -9724
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9724
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9727
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9727
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_copd_mrc_expiry_offer_sequence_exclusions_invitations_and_response
+  model: fct_person_copd_pulmonary_rehabilitation_ind101_by_month
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+        column3::NUMBER AS age, column4::VARCHAR AS practice_code, column5::VARCHAR AS practice_name FROM
+        VALUES (-9731,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9731,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9732,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9732,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9733,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9733,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9734,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9734,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9735,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9735,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9736,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9736,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9737,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9737,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9738,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9738,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9739,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9739,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9740,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9740,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice'), (-9741,'2026-08-31',60,'SYNTHETIC','Synthetic practice'), (-9741,'2026-09-30',60,'SYNTHETIC','Synthetic
+        practice')
+      nice_register: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE
+        AS earliest_diagnosis_date FROM VALUES (-9731,'2026-08-31','2020-01-01'), (-9731,'2026-09-30','2020-01-01'),
+        (-9732,'2026-08-31','2020-01-01'), (-9732,'2026-09-30','2020-01-01'), (-9733,'2026-08-31','2020-01-01'),
+        (-9733,'2026-09-30','2020-01-01'), (-9734,'2026-08-31','2020-01-01'), (-9734,'2026-09-30','2020-01-01'),
+        (-9735,'2026-08-31','2020-01-01'), (-9735,'2026-09-30','2020-01-01'), (-9736,'2026-08-31','2020-01-01'),
+        (-9736,'2026-09-30','2020-01-01'), (-9737,'2026-08-31','2020-01-01'), (-9737,'2026-09-30','2020-01-01'),
+        (-9738,'2026-08-31','2020-01-01'), (-9738,'2026-09-30','2020-01-01'), (-9739,'2026-08-31','2020-01-01'),
+        (-9739,'2026-09-30','2020-01-01'), (-9740,'2026-08-31','2020-01-01'), (-9740,'2026-09-30','2020-01-01'),
+        (-9741,'2026-08-31','2020-01-01'), (-9741,'2026-09-30','2020-01-01')
+  given:
+  - input: ref('int_ltc_review_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date, column3::VARCHAR
+      AS review_type FROM VALUES (-9738,'2026-09-01','COPD_REVIEW')
+  - input: ref('int_nice_copd_observations_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::NUMBER AS observation_id, column3::DATE AS event_date,
+      column4::DATE AS date_recorded, column5::VARCHAR AS evidence_type, column6::FLOAT AS result_value,
+      column7::VARCHAR AS result_unit_display, column8::BOOLEAN AS is_very_severe_copd FROM VALUES (-9732,1,'2026-08-01','2026-08-01','PULREHAB_OFFERED_COD',NULL,NULL,FALSE),
+      (-9733,2,'2026-09-30','2026-09-30','PULREHAB_OFFERED_COD',NULL,NULL,FALSE), (-9733,3,'2026-10-01','2026-10-01','PULREHAB_OFFERED_COD',NULL,NULL,FALSE),
+      (-9736,4,'2026-08-01','2026-08-01','COPDINVITE_COD',NULL,NULL,FALSE), (-9736,5,'2026-08-08','2026-08-08','COPDINVITE_COD',NULL,NULL,FALSE),
+      (-9737,6,'2026-08-01','2026-08-01','COPDINVITE_COD',NULL,NULL,FALSE), (-9737,7,'2026-08-07','2026-08-07','COPDINVITE_COD',NULL,NULL,FALSE),
+      (-9738,8,'2026-08-01','2026-08-01','COPDINVITE_COD',NULL,NULL,FALSE), (-9738,9,'2026-08-08','2026-08-08','COPDINVITE_COD',NULL,NULL,FALSE),
+      (-9738,10,'2026-09-01','2026-09-01','COPDRV_COD',NULL,NULL,FALSE), (-9739,11,'2026-08-02','2026-08-02','PULREHAB_OFFERED_COD',NULL,NULL,FALSE),
+      (-9741,12,'2025-06-30','2025-06-30','COPDINVITE_COD',NULL,NULL,FALSE), (-9741,13,'2025-07-07','2025-07-07','COPDINVITE_COD',NULL,NULL,FALSE)
+  - input: ref('int_mrc_dyspnoea_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date, column3::NUMBER
+      AS mrc_grade FROM VALUES (-9732,'2026-08-01',3), (-9733,'2026-08-01',3), (-9734,'2026-08-01',3),
+      (-9735,'2026-08-01',3), (-9736,'2026-08-01',3), (-9737,'2026-08-01',3), (-9738,'2026-08-01',3),
+      (-9739,'2026-08-01',3), (-9741,'2026-08-01',3), (-9731,'2025-06-30',3), (-9740,'2026-10-01',3),
+      (-9732,'2026-09-01',2)
+  - input: ref('int_referral_pulmonary_rehab')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date, column3::VARCHAR
+      AS pr_obs_type FROM VALUES (-9731,'2025-07-01','Pulmonary Rehab Offered'), (-9734,'2026-07-31','Pulmonary
+      Rehab Attended'), (-9735,'2026-08-01','Pulmonary Rehab Unsuitable'), (-9739,'2026-08-01','Pulmonary
+      Rehab Attended'), (-9732,'2026-08-02','Pulmonary Rehab Declined')
+  expect:
+    rows:
+    - person_id: -9731
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -9732
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9732
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9733
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9733
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -9737
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9737
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9738
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9739
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -9739
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -9741
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
