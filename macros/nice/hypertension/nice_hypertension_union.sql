@@ -1,3 +1,8 @@
+{#-
+    Combine the NICE hypertension measures with their family detail columns.
+    Args: reference is current or by_month.
+    Returns: one eligible person and indicator per reporting_date.
+-#}
 {% macro nice_hypertension_union(reference='current') %}
 {% set members = [
     ('fct_person_urine_acr_hypertension_ind121', 'latest_acr_date'),

@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND317 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND317 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind317(reference='current') %}
+-- NICE IND317: https://www.nice.org.uk/indicators/ind317
+-- All four heart failure medication pillars within six months for reduced-ejection-fraction heart failure register members.
 WITH assessed AS (
     SELECT
         population.person_id,

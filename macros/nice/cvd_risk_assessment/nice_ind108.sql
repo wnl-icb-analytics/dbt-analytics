@@ -1,5 +1,11 @@
+{#-
+    Calculate NICE IND108 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND108 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind108(reference='current') %}
--- NICE IND108: QRISK2/3 includes rheumatoid arthritis in the risk calculation.
+-- NICE IND108: https://www.nice.org.uk/indicators/ind108
+-- QRISK2 or QRISK3 recorded within 15 months for rheumatoid arthritis members aged 30 to 84, excluding CHD, stroke, TIA and familial hypercholesterolaemia.
 WITH rheumatoid_arthritis AS (
     {{ nice_register('RA', reference) }}
 ),

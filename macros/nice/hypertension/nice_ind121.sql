@@ -1,5 +1,11 @@
+{#-
+    Calculate NICE IND121 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND121 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind121(reference='current') %}
--- NICE IND121: urine ACR within three months either side of a new hypertension diagnosis.
+-- NICE IND121: https://www.nice.org.uk/indicators/ind121
+-- Urine ACR within three months either side of hypertension diagnosis in the financial year for adults over 18, capped at the reporting date.
 WITH population AS (
     SELECT
         population.person_id,

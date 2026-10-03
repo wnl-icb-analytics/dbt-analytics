@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND86 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND86 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind86(reference='current') %}
+-- NICE IND86: https://www.nice.org.uk/indicators/ind86
+-- Creatinine and thyroid function tests within nine months for current lithium users, regardless of SMI diagnosis.
 WITH indicator_population AS (
     SELECT population.person_id, population.reporting_date, population.age,
         population.practice_code, population.practice_name

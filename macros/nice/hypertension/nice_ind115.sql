@@ -1,5 +1,11 @@
+{#-
+    Calculate NICE IND115 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND115 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind115(reference='current') %}
--- NICE IND115: any home or ambulatory BP record in three months before register entry.
+-- NICE IND115: https://www.nice.org.uk/indicators/ind115
+-- Home or ambulatory blood pressure evidence in the three months before hypertension diagnosis for diagnoses since 1 April 2014.
 WITH population AS (
     SELECT
         population.person_id,

@@ -1,3 +1,8 @@
+{#-
+    Combine the NICE dementia measures with their family detail columns.
+    Args: reference is current or by_month.
+    Returns: one eligible person and indicator per reporting_date.
+-#}
 {% macro nice_dementia_union(reference='current') %}
 SELECT
     person_id,

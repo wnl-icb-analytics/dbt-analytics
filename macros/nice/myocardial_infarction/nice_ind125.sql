@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND125 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND125 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind125(reference='current') %}
+-- NICE IND125: https://www.nice.org.uk/indicators/ind125
+-- Required medication classes in six months for people with myocardial infarction in the financial year, with documented substitutions and LVSD-dependent beta blockers.
 WITH assessed AS (
     SELECT
         profile.*,

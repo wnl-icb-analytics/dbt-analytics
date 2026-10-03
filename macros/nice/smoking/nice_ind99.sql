@@ -1,5 +1,9 @@
 {% macro nice_ind99(reference='current') %}
-{#- Calculate IND99 at person/reporting-date grain from paired smoking evidence. -#}
+{#-
+    Calculate NICE IND99 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND99 detail columns, one person per reporting_date.
+-#}
 -- NICE IND99: https://www.nice.org.uk/indicators/ind99
 -- Offer of smoking cessation support recorded in 24 months for current smokers aged 15+.
 WITH indicator_population AS (

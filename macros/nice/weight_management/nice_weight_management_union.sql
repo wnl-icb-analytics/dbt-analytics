@@ -1,3 +1,8 @@
+{#-
+    Combine the NICE weight management measures with their family detail columns.
+    Args: reference is current or by_month.
+    Returns: one eligible person and indicator per reporting_date.
+-#}
 {% macro nice_weight_management_union(reference='current') %}
 SELECT
     person_id,

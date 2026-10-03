@@ -1,5 +1,11 @@
+{#-
+    Calculate NICE IND112 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND112 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind112(reference='current') %}
--- NICE IND112: a complete BP pair in five years, with no clinical exclusions.
+-- NICE IND112: https://www.nice.org.uk/indicators/ind112
+-- A complete paired blood pressure record within five years for people aged 40 or over.
 WITH population AS (
     SELECT person_id, reporting_date, age, practice_code, practice_name
     FROM ({{ nice_reference_population(reference) }})

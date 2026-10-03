@@ -1,3 +1,8 @@
+{#-
+    Count SABA inhalers, steroid course days and GP-coded admissions in the asthma risk window.
+    Args: reference is current or by_month.
+    Returns: one eligible person per reporting_date with risk counts and flags.
+-#}
 {% macro calculate_nice_asthma_risk(reference='current') %}
 WITH population AS (
     SELECT person_id, reporting_date

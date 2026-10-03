@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND319 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND319 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind319(reference='current') %}
+-- NICE IND319: https://www.nice.org.uk/indicators/ind319
+-- Weight advice within 90 days of a qualifying measured BMI for people aged 18 to 39, using ethnicity-specific overweight thresholds.
 WITH assessed AS (
     SELECT population.person_id, population.reporting_date, population.age,
         population.practice_code, population.practice_name,

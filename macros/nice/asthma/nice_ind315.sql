@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND315 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND315 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind315(reference='current') %}
+-- NICE IND315: https://www.nice.org.uk/indicators/ind315
+-- Annual asthma review for members aged 6 or over with high SABA use, repeated steroid courses or GP-coded admissions in the preceding risk year.
 WITH reviews AS (
     {{ nice_ind273(reference) }}
 )

@@ -1,3 +1,8 @@
+{#-
+    Select measured BMI, dated ethnicity and subsequent weight advice for people aged 18 to 39.
+    Args: reference is current or by_month.
+    Returns: one eligible person per reporting_date with BMI, ethnicity and advice evidence.
+-#}
 {% macro calculate_nice_weight_profile(reference='current') %}
 WITH population AS (
     SELECT person_id, reporting_date

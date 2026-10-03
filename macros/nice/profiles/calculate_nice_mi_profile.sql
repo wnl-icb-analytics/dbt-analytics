@@ -1,3 +1,8 @@
+{#-
+    Select myocardial infarction, LVSD and medication intolerance evidence known at each reference date.
+    Args: reference is current or by_month.
+    Returns: one eligible person per reporting_date with diagnosis and intolerance evidence.
+-#}
 {% macro calculate_nice_mi_profile(reference='current') %}
 WITH population AS (
     {{ nice_reference_population(reference) }}

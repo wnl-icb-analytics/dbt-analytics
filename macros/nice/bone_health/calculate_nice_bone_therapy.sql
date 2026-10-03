@@ -1,3 +1,8 @@
+{#-
+    Select bone-sparing medication order evidence for the NICE bone health population.
+    Args: reference is current or by_month.
+    Returns: one eligible person per reporting_date with the latest bone-sparing order date.
+-#}
 {% macro calculate_nice_bone_therapy(reference='current') %}
 WITH population AS (
     SELECT person_id, reporting_date

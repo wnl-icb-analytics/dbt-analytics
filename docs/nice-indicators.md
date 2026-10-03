@@ -1,39 +1,39 @@
 # NICE general practice indicators
 
-This page records coverage of all 192 NICE general practice indicators for the NICE close-out, including the 24 wave 1 measures.
+This page records model coverage of all 192 NICE general practice indicators.
 Network and system indicators are out of scope.
 
-`Built` includes 105 measures on main and 24 assigned to wave 1; wave 1 names below are integration locations and depend on those packages passing validation.
+`Built` identifies indicators with a measure model in this project.
 `Register` is a catalogue entry without a numerator; it does not imply an exact NICE population.
 Register filters and rule differences are in the model YAML and `def_indicator.description_long`.
-Register counts use currently registered, living, non-test people and the appropriate reference date.
+Register counts use currently registered, living, non-test people and the reporting date.
 `Planned` identifies later work that needs new or extended code lists, inputs or agreed rules.
-The evidence figures in `Not built` rows describe coded activity in the close-out research, not whether care was delivered.
+The evidence figures in `Not built` rows describe coded activity in the source data, not whether care was delivered.
 
 | ID | Title | Status | Where it lives or reason |
 |---|---|---|---|
 | IND78 | Contraception: advice for people taking anti-seizure medication | Planned | Contraception: advice code list and sterilisation or hysterectomy evidence for anti-seizure medication users. |
-| IND79 | Learning disabilities: annual TSH test | Built | `fct_person_learning_disability_thyroid_test_ind79` (wave 1) |
-| IND80 | Dementia: target organ damage (new diagnoses) | Built | `fct_person_dementia_baseline_tests_ind80` (wave 1) |
+| IND79 | Learning disabilities: annual TSH test | Built | `fct_person_learning_disability_thyroid_test_ind79` |
+| IND80 | Dementia: target organ damage (new diagnoses) | Built | `fct_person_dementia_baseline_tests_ind80` |
 | IND81 | Diabetes: annual foot exam and risk classification | Built | `fct_person_diabetes_foot_risk_ind81` |
 | IND82 | Bipolar, schizophrenia and other psychoses: annual record of alcohol consumption | Built | `fct_person_smi_alcohol_ind82` |
 | IND83 | Bipolar, schizophrenia and other psychoses: annual BMI recording | Built | `fct_person_smi_bmi_ind83` |
 | IND84 | Bipolar, schizophrenia and other psychoses: annual blood pressure | Built | `fct_person_smi_blood_pressure_ind84` |
 | IND85 | Bipolar, schizophrenia and other psychoses: cervical screening | Built | `fct_person_smi_cervical_screening_ind85` |
-| IND86 | Bipolar, schizophrenia and other psychoses: target organ damage | Built | `fct_person_lithium_renal_thyroid_monitoring_ind86` (wave 1; proposed model name) |
+| IND86 | Bipolar, schizophrenia and other psychoses: target organ damage | Built | `fct_person_lithium_renal_thyroid_monitoring_ind86` |
 | IND87 | Bipolar, schizophrenia and other psychoses: lithium levels in therapeutic range | Built | `fct_person_lithium_monitoring_ind87` |
 | IND88 | Diabetes: referral for structured education | Built | `fct_person_diabetes_structured_education_ind88` |
 | IND89 | Diabetes: annual dietary review | Planned | Diabetes: dietary review code list and agreed review definition. |
 | IND90 | Osteoporosis: register | Register | `fct_person_osteoporosis_register` |
-| IND91 | Osteoporosis: bone sparing agents (50-74 years) | Built | `fct_person_bone_sparing_therapy_osteoporosis_ind91` (wave 1) |
-| IND92 | Osteoporosis: bone sparing agents (75 years and over) | Built | `fct_person_bone_sparing_therapy_fragility_fracture_ind92` (wave 1) |
+| IND91 | Osteoporosis: bone sparing agents (50-74 years) | Built | `fct_person_bone_sparing_therapy_osteoporosis_ind91` |
+| IND92 | Osteoporosis: bone sparing agents (75 years and over) | Built | `fct_person_bone_sparing_therapy_fragility_fracture_ind92` |
 | IND93 | Peripheral arterial disease: register | Register | `fct_person_pad_register` |
 | IND94 | Peripheral arterial disease: antiplatelets | Built | `fct_person_antithrombotic_therapy_ind94` |
 | IND95 | Hypertension: assessment of physical activity | Not built | GPPAQ recorded for about 5.5% of eligible people with hypertension in 15 months. |
 | IND96 | Hypertension: brief intervention to increase physical activity | Not built | GPPAQ reaches about 5.5% of the hypertension cohort; among recorded less-active people, intervention coding gives about 18% or 65% depending on code scope. |
 | IND97 | Smoking: smoking status for people with long-term conditions | Built | `fct_person_smoking_ind97` |
-| IND98 | Smoking: support and treatment for people with long-term conditions or SMI | Built | `fct_person_smoking_ind98` (wave 1) |
-| IND99 | Smoking: support and treatment (all patients) | Built | `fct_person_smoking_ind99` (wave 1) |
+| IND98 | Smoking: support and treatment for people with long-term conditions or SMI | Built | `fct_person_smoking_ind98` |
+| IND99 | Smoking: support and treatment (all patients) | Built | `fct_person_smoking_ind99` |
 | IND100 | Diabetes: register including type | Register | `fct_person_diabetes_register` |
 | IND101 | COPD: offered pulmonary rehabilitation | Planned | COPD: pulmonary rehabilitation offer codes and agreed offer definition. |
 | IND102 | Heart failure: referral for cardiac rehabilitation | Not built | Cardiac rehabilitation offers coded for about 1-2% of new HF; clinical exclusions are uncoded. |
@@ -42,25 +42,25 @@ The evidence figures in `Not built` rows describe coded activity in the close-ou
 | IND105 | Diabetes: asking about erectile dysfunction | Not built | Erectile dysfunction enquiry coded for about 2.5% of men with diabetes in 15 months; coding has halved twice since 2019. |
 | IND106 | Diabetes: advice for erectile dysfunction | Not built | Erectile dysfunction advice or assessment coded for under 1% of men with diabetes and erectile dysfunction. |
 | IND107 | Rheumatoid arthritis: register | Register | `fct_person_rheumatoid_arthritis_register` |
-| IND108 | Rheumatoid arthritis: cardiovascular risk assessment | Built | `fct_person_cvd_risk_assessment_rheumatoid_arthritis_ind108` (wave 1; proposed model name) |
+| IND108 | Rheumatoid arthritis: cardiovascular risk assessment | Built | `fct_person_cvd_risk_assessment_rheumatoid_arthritis_ind108` |
 | IND109 | Rheumatoid arthritis: fracture risk assessment | Not built | Fracture risk assessment recorded for about 2% of eligible people with rheumatoid arthritis. |
 | IND110 | Rheumatoid arthritis: annual review | Built | `fct_person_rheumatoid_arthritis_review_ind110` |
 | IND111 | Diabetes: annual albumin creatinine test | Built | `fct_person_diabetes_acr_ind111` |
-| IND112 | Cardiovascular disease prevention: blood pressure measurement every 5 years | Built | `fct_person_blood_pressure_cvd_prevention_ind112` (wave 1) |
-| IND113 | Cancer: 3-month review | Built | `fct_person_cancer_care_review_ind113` (wave 1; proposed model name) |
+| IND112 | Cardiovascular disease prevention: blood pressure measurement every 5 years | Built | `fct_person_blood_pressure_cvd_prevention_ind112` |
+| IND113 | Cancer: 3-month review | Built | `fct_person_cancer_care_review_ind113` |
 | IND114 | Dementia: named carer | Not built | OLIDS has no carer contact details; coded proxies cover about 11% with narrow codes or 53% with broad codes. |
-| IND115 | Hypertension: confirming diagnosis with HBPM or ABPM | Built | `fct_person_home_ambulatory_bp_hypertension_ind115` (wave 1) |
+| IND115 | Hypertension: confirming diagnosis with HBPM or ABPM | Built | `fct_person_home_ambulatory_bp_hypertension_ind115` |
 | IND116 | Contraception: advice for people with diabetes | Planned | Contraception: advice code list for people with diabetes. |
-| IND117 | Contraception: advice for people with epilepsy | Built | `fct_person_epilepsy_contraception_advice_ind117` (wave 1) |
-| IND118 | Dementia: target organ damage (all patients) | Built | `fct_person_dementia_baseline_tests_ind118` (wave 1) |
+| IND117 | Contraception: advice for people with epilepsy | Built | `fct_person_epilepsy_contraception_advice_ind117` |
+| IND118 | Dementia: target organ damage (all patients) | Built | `fct_person_dementia_baseline_tests_ind118` |
 | IND119 | Learning disabilities: register | Register | `fct_person_learning_disability_register` |
 | IND120 | Diabetes: annual general practice checks | Built | `fct_person_diabetes_care_processes_ind120` |
-| IND121 | Hypertension: urinary albumin for target organ damage | Built | `fct_person_urine_acr_hypertension_ind121` (wave 1) |
+| IND121 | Hypertension: urinary albumin for target organ damage | Built | `fct_person_urine_acr_hypertension_ind121` |
 | IND122 | Hypertension: haematuria for target organ damage | Planned | Hypertension: urine blood test code list and dated evidence. |
 | IND123 | Hypertension: ECG for target organ damage | Planned | Hypertension: resting or 12-lead ECG code list and dated evidence. |
 | IND124 | Contraception: advice for people with bipolar, schizophrenia or other psychoses | Planned | Contraception: advice code list and sterilisation or hysterectomy evidence for people with SMI. |
-| IND125 | Myocardial infarction: medication for MI in preceding 12 months | Built | `fct_person_myocardial_infarction_therapy_ind125` (wave 1) |
-| IND126 | Myocardial infarction: medication for MI more than 12 months ago | Built | `fct_person_myocardial_infarction_therapy_ind126` (wave 1) |
+| IND125 | Myocardial infarction: medication for MI in preceding 12 months | Built | `fct_person_myocardial_infarction_therapy_ind125` |
+| IND126 | Myocardial infarction: medication for MI more than 12 months ago | Built | `fct_person_myocardial_infarction_therapy_ind126` |
 | IND127 | Atrial fibrillation: annual stroke risk assessment | Built | `fct_person_atrial_fibrillation_ind127` |
 | IND128 | Atrial fibrillation: current treatment with anticoagulation | Built | `fct_person_atrial_fibrillation_ind128` |
 | IND129 | Kidney conditions: CKD register (3a to 5) | Register | `fct_person_ckd_register` |
@@ -111,10 +111,10 @@ The evidence figures in `Not built` rows describe coded activity in the close-ou
 | IND181 | Diabetes: CVD risk assessment | Built | `fct_person_cvd_risk_assessment_ind181` |
 | IND185 | Atrial fibrillation: register | Register | `fct_person_atrial_fibrillation_register`. Resolved AF is excluded by the model but included by NICE. |
 | IND186 | Asthma: register | Register | `fct_person_asthma_register`. QOF drug rule applies; NICE counts use `nice_asthma_diagnosis_population` as IND273 does. |
-| IND189 | Asthma: smoking status (under 19) | Built | `fct_person_asthma_smoking_status_ind189` (wave 1) |
+| IND189 | Asthma: smoking status (under 19) | Built | `fct_person_asthma_smoking_status_ind189` |
 | IND190 | COPD: register | Register | `fct_person_copd_register`. QOF spirometry windows and no-spirometry route differ from NICE. |
 | IND191 | COPD: annual review | Built | `fct_person_copd_review_ind191` |
-| IND192 | Heart failure: confirmation of diagnosis | Built | `fct_person_heart_failure_confirmation_ind192` (wave 1) |
+| IND192 | Heart failure: confirmation of diagnosis | Built | `fct_person_heart_failure_confirmation_ind192` |
 | IND195 | Heart failure: annual review | Built | `fct_person_heart_failure_review_ind195` |
 | IND196 | Alcohol use: risk assessment for people with hypertension | Built | `fct_person_alcohol_ind196` |
 | IND197 | Alcohol use: brief intervention for people with hypertension | Built | `fct_person_alcohol_ind197` |
@@ -151,7 +151,7 @@ The evidence figures in `Not built` rows describe coded activity in the close-ou
 | IND229 | Cardiovascular disease prevention: primary prevention with lipid lowering therapies | Built | `fct_person_lipid_lowering_therapy_ind229` |
 | IND230 | Cardiovascular disease prevention: secondary prevention with lipid lowering therapies | Built | `fct_person_lipid_lowering_therapy_ind230` |
 | IND231 | Kidney conditions: CKD and lipid lowering therapies | Built | `fct_person_lipid_lowering_therapy_ind231` |
-| IND232 | Kidney conditions: eGFR for long-term NSAID use | Built | `fct_person_nsaid_egfr_ind232` (wave 1; proposed model name) |
+| IND232 | Kidney conditions: eGFR for long-term NSAID use | Built | `fct_person_nsaid_egfr_ind232` |
 | IND233 | Kidney conditions: CKD and eGFR | Built | `fct_person_ckd_new_diagnosis_egfr_ind233` |
 | IND234 | Kidney conditions: CKD – eGFR and ACR | Built | `fct_person_ckd_new_diagnosis_tests_ind234` |
 | IND235 | Kidney conditions: CKD and blood pressure when ACR less than 70 | Built | `fct_person_ckd_bp_ind235` |
@@ -184,10 +184,10 @@ The evidence figures in `Not built` rows describe coded activity in the close-ou
 | IND264 | Kidney conditions: CKD and blood pressure when ACR 70 or more | Built | `fct_person_ckd_bp_ind264` |
 | IND265 | Learning disabilities: health checks and action plans | Built | `fct_person_learning_disability_health_check_ind265` |
 | IND266 | Learning disabilities: health checks, action plans and ethnicity | Built | `fct_person_learning_disability_health_check_ind266` |
-| IND267 | Cancer: faecal immunochemical testing | Built | `fct_person_colorectal_cancer_fit_ind267` (wave 1) |
+| IND267 | Cancer: faecal immunochemical testing | Built | `fct_person_colorectal_cancer_fit_ind267` |
 | IND269 | Cardiovascular disease prevention: risk assessment (general population) | Built | `fct_person_cvd_risk_assessment_ind269` |
 | IND270 | Cardiovascular disease prevention: risk assessment (modifiable risk factors) | Built | `fct_person_cvd_risk_assessment_ind270` |
-| IND272 | Asthma: objective tests | Built | `fct_person_asthma_objective_tests_ind272` (wave 1) |
+| IND272 | Asthma: objective tests | Built | `fct_person_asthma_objective_tests_ind272` |
 | IND273 | Asthma: annual review | Built | `fct_person_asthma_review_ind273` |
 | IND274 | Diabetes: lipid-lowering therapies for primary prevention of CVD (T2DM and 10% risk) | Built | `fct_person_lipid_lowering_therapy_ind274` |
 | IND275 | Diabetes: lipid-lowering therapies for primary prevention of CVD (40 years and over) | Built | `fct_person_lipid_lowering_therapy_ind275` |
@@ -195,11 +195,11 @@ The evidence figures in `Not built` rows describe coded activity in the close-ou
 | IND277 | Diabetes: T1DM and lipid-lowering therapies | Built | `fct_person_lipid_lowering_therapy_ind277` |
 | IND278 | Cardiovascular disease prevention: cholesterol treatment target (secondary prevention) | Built | `fct_person_cholesterol_control_ind278` |
 | IND287 | Cardiovascular disease prevention: lipid lowering therapy for people newly diagnosed with hypertension or T2DM | Built | `fct_person_lipid_lowering_therapy_ind287` |
-| IND315 | Asthma: annual review (higher risk patients) | Built | `fct_person_asthma_higher_risk_review_ind315` (wave 1) |
+| IND315 | Asthma: annual review (higher risk patients) | Built | `fct_person_asthma_higher_risk_review_ind315` |
 | IND316 | Asthma: MART (higher risk patients) | Planned | Asthma: ICS/formoterol and MART code lists, plus higher-risk evidence. |
-| IND317 | Heart failure: 4 pillars (HFrEF) | Built | `fct_person_heart_failure_four_pillars_ind317` (wave 1) |
+| IND317 | Heart failure: 4 pillars (HFrEF) | Built | `fct_person_heart_failure_four_pillars_ind317` |
 | IND318 | Heart failure: ejection fraction category | Planned | Heart failure: ejection fraction category code list and dated evidence. |
-| IND319 | Weight management: advice for people living with overweight (18 to 39 years) | Built | `fct_person_weight_management_advice_overweight_ind319` (wave 1) |
+| IND319 | Weight management: advice for people living with overweight (18 to 39 years) | Built | `fct_person_weight_management_advice_overweight_ind319` |
 | IND320 | Weight management: BMI recording (long term conditions) | Built | `fct_person_bmi_recording_ind320` |
 | IND321 | Screening: cervical (25 to 64 years) | Built | `fct_person_cervical_screening_ind321` |
 | IND323 | Infections: scoring tools for sore throat | Not built | NICE counts diagnosis episodes; only about 4% of sore-throat diagnosis-days have a same-day score, and Pharmacy First records cannot be separated reliably. |

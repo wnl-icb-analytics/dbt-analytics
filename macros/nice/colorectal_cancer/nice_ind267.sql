@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND267 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND267 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind267(reference='current') %}
+-- NICE IND267: https://www.nice.org.uk/indicators/ind267
+-- FIT recorded within 21 days before the latest urgent colorectal cancer referral in the preceding twelve months.
 WITH population AS ({{ nice_reference_population(reference) }}),
 daily_referral AS (
     SELECT person_id, event_date, id

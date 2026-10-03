@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND80 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND80 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind80(reference='current') %}
+-- NICE IND80: https://www.nice.org.uk/indicators/ind80
+-- Eight baseline blood tests within six months either side of a first dementia diagnosis in the financial year, capped at the reporting date.
 SELECT
     population.person_id,
     'IND80' AS indicator_id,

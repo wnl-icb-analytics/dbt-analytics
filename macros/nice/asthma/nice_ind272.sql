@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND272 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND272 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind272(reference='current') %}
+-- NICE IND272: https://www.nice.org.uk/indicators/ind272
+-- Age-specific objective tests within three months either side of a new unresolved asthma diagnosis, capped at the reporting date.
 WITH population AS (
     {{ nice_asthma_diagnosis_population(reference) }}
 ), known_events AS (

@@ -1,3 +1,8 @@
+{#-
+    Select latest medication evidence for heart failure and myocardial infarction populations.
+    Args: reference is current or by_month.
+    Returns: one eligible person per reporting_date with medication evidence dates.
+-#}
 {% macro calculate_nice_cardiac_therapy(reference='current') %}
 WITH reference_population AS (
     {{ nice_reference_population(reference) }}

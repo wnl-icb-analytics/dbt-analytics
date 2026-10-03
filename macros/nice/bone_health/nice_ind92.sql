@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND92 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND92 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind92(reference='current') %}
+-- NICE IND92: https://www.nice.org.uk/indicators/ind92
+-- Bone-sparing medication ordered in six months for people aged 75 or over with a fragility fracture since 1 April 2012.
 WITH indicator_population AS (
     SELECT population.person_id, population.reporting_date, population.age,
         population.practice_code, population.practice_name

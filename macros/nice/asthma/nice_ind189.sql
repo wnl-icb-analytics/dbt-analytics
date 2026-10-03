@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND189 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND189 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind189(reference='current') %}
+-- NICE IND189: https://www.nice.org.uk/indicators/ind189
+-- Smoking status recorded within twelve months for unresolved asthma diagnosis members aged 5 to 19.
 WITH population AS (
     SELECT * FROM ({{ nice_asthma_diagnosis_population(reference) }})
     WHERE age BETWEEN 5 AND 19

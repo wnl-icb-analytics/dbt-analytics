@@ -1,3 +1,8 @@
+{#-
+    Classify SABA and prednisolone orders and convert SABA dose quantities to inhaler counts.
+    Args: none.
+    Returns: one medication order with class flags and SABA inhaler count.
+-#}
 {% macro calculate_nice_asthma_risk_medications() %}
 WITH saba_codes AS (
     SELECT DISTINCT code
@@ -8,7 +13,7 @@ WITH saba_codes AS (
 SELECT m.person_id, m.medication_order_id, m.order_date::DATE AS order_date,
     m.bnf_code LIKE '0603020T0%' AS is_prednisolone,
     -- Quantities are doses: Accuhaler has 60, Turbohaler 100, other inhalers 200.
-    -- Retain the research convention of at least one device per matched order.
+    -- Count at least one device per matched SABA order, including missing quantities.
     IFF(s.code IS NOT NULL,
         GREATEST(1, ROUND(COALESCE(m.quantity_value, 0) /
             CASE WHEN m.medication_name ILIKE '%accuhaler%' THEN 60

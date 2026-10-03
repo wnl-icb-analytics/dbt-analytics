@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND79 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND79 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind79(reference='current') %}
+-- NICE IND79: https://www.nice.org.uk/indicators/ind79
+-- Thyroid testing within 15 months for adults with learning disability and Down's syndrome, excluding hypothyroidism register members.
 WITH eligible AS (
     SELECT
         population.person_id,

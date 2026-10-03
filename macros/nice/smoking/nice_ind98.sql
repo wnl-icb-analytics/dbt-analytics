@@ -1,5 +1,9 @@
 {% macro nice_ind98(reference='current') %}
-{#- Calculate IND98 at person/reporting-date grain from paired LTC and smoking inputs. -#}
+{#-
+    Calculate NICE IND98 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND98 detail columns, one person per reporting_date.
+-#}
 -- NICE IND98: https://www.nice.org.uk/indicators/ind98
 -- Offer of smoking cessation support in 12 months for current smokers with a listed LTC or SMI.
 WITH indicator_population AS (

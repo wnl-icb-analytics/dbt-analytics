@@ -1,5 +1,9 @@
 {% macro nice_cvd_risk_assessment_union(reference='current') %}
-{#- Combine the explicit family members at person/indicator/reporting-date grain. -#}
+{#-
+    Combine the NICE cvd risk assessment measures with their family detail columns.
+    Args: reference is current or by_month.
+    Returns: one eligible person and indicator per reporting_date.
+-#}
 -- Common long-form interface for NICE cardiovascular prevention indicators.
 {% set indicator_models = [
     'fct_person_cvd_risk_assessment_ind269',

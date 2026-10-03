@@ -1,5 +1,11 @@
+{#-
+    Calculate NICE IND232 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND232 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind232(reference='current') %}
 -- NICE IND232: https://www.nice.org.uk/indicators/ind232
+-- eGFR testing within twelve months for people outside the CKD register with at least twelve oral NSAID issue days in two years.
 WITH indicator_population AS (
     SELECT population.*
     FROM ({{ nice_reference_population(reference) }}) AS population

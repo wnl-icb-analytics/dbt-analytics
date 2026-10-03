@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND192 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND192 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind192(reference='current') %}
+-- NICE IND192: https://www.nice.org.uk/indicators/ind192
+-- Echo or specialist assessment within three months either side of heart failure diagnosis for diagnoses three to fifteen months before reporting.
 WITH candidates AS (
     SELECT
         population.person_id,

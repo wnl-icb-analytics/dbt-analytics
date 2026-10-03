@@ -1,3 +1,8 @@
+{#-
+    Assess eight baseline blood tests around the first known dementia diagnosis.
+    Args: reference is current or by_month.
+    Returns: one dementia register member per reporting_date with IND80 and IND118 test evidence.
+-#}
 {% macro calculate_nice_dementia_baseline_tests(reference='current') %}
 WITH population AS (
     -- The live register uses clinical dates only. Anchor tests to the first diagnosis known at R.

@@ -1,4 +1,11 @@
+{#-
+    Calculate NICE IND113 for its eligible population at each reference date.
+    Args: reference is current or by_month.
+    Returns: the IND113 detail columns, one person per reporting_date.
+-#}
 {% macro nice_ind113(reference='current') %}
+-- NICE IND113: https://www.nice.org.uk/indicators/ind113
+-- Cancer care review within three months of a new diagnosis in the preceding 15 months, excluding qualifying invitation non-response.
 WITH indicator_population AS (
     SELECT population.person_id, population.reporting_date, population.age,
         population.practice_code, population.practice_name,
