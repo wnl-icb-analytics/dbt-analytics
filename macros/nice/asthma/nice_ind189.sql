@@ -5,13 +5,17 @@
 -#}
 {% macro nice_ind189(reference='current') %}
 -- NICE IND189: https://www.nice.org.uk/indicators/ind189
--- Smoking status recorded within twelve months for unresolved asthma diagnosis members aged 5 to 19.
+-- Active or passive smoking status in twelve months for unresolved asthma members aged 5 to 19.
 WITH population AS (
     SELECT * FROM ({{ nice_asthma_diagnosis_population(reference) }})
     WHERE age BETWEEN 5 AND 19
 ), daily AS (
     SELECT person_id, event_date
-    FROM {{ ref('int_nice_smoking_recording_all') }}
+    FROM (
+        SELECT person_id, event_date FROM {{ ref('int_nice_smoking_recording_all') }}
+        UNION ALL
+        SELECT person_id, event_date FROM {{ ref('int_smoke_exposure_all') }}
+    )
     GROUP BY person_id, event_date
 ), evidence AS (
     SELECT p.*, e.event_date

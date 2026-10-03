@@ -6,7 +6,8 @@ models:
     current rules and code lists. Monthly spine registration start is inclusive; registration end and
     death dates are exclusive. Approximate birth/death dates, overlap priority and current test/gender
     flags constrain history. Diagnosis and resolution use clinical and recorded known dates; other evidence
-    uses clinical/order dates through R. Later corrections can change earlier results.
+    uses clinical/order dates through R. Later corrections can change earlier results. Includes IND316
+    MART-capable prescribing plus recorded MART regimen for higher-risk asthma aged 12+.
   config:
     meta:
       owner:
@@ -38,7 +39,7 @@ models:
   - name: is_in_numerator
     description: Whether the person meets the numerator rule.
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+    description: ACHIEVED, NOT_RECORDED_IN_PERIOD (no qualifying review, test or smoking record) or NOT_TREATED_IN_PERIOD (IND316: no MART prescription with a MART regimen code).
   - name: latest_record_date
     description: Latest qualifying evidence date; null when the numerator is not met.
   - name: practice_code
@@ -84,3 +85,7 @@ models:
     description: Latest IGE_COD record in the test window; null when absent.
   - name: eosinophil_or_fbc_date
     description: Latest EOS_COUNT or FBC_COD record in the test window; null when absent.
+  - name: latest_therapy_order_date
+    description: Latest MART-capable inhaler order in twelve months; null when none.
+  - name: latest_mart_date
+    description: Latest recorded MART regimen through R, without an expiry window.

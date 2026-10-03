@@ -5,6 +5,8 @@ SELECT
     indicator_id,
     current_practice_code,
     latest_record_date,
+    latest_therapy_order_date,
+    latest_mart_date,
     saba_inhaler_count,
     oral_steroid_course_count,
     latest_asthma_admission_date,

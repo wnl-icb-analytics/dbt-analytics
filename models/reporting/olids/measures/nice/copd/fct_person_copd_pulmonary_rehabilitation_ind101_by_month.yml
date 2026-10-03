@@ -1,0 +1,67 @@
+models:
+- name: fct_person_copd_pulmonary_rehabilitation_ind101_by_month
+  description: Pulmonary rehabilitation offers, one row per active, living, non-test COPD register member
+    with MRC grade 3+ in fifteen months after exclusions. The first MRC_COD grade 3+ in (R minus 15 months,
+    R] anchors the offer. PULRHBOFF_COD or PULREHAB_OFFERED_COD must be strictly after that record and
+    on or before R; PCD referral evidence includes retired SNOMED predecessors. Declines do not count.
+    Excludes PULRHBATT_COD attendance from diagnosis to before
+    the MRC record, any PULRHBPU_COD unsuitability through R, and two COPDINVITE_COD invitations in the
+    fifteen-month window at least seven days apart without a COPDRVW_COD review after the first invitation
+    through R. This coded unsuitability proxy cannot independently identify every clinical contraindication.
+    No other personalised care adjustments. Recalculated for the last 60 completed month-ends using today's
+    rules and code lists. Registration and practice use the monthly spine, with inclusive registration
+    starts and exclusive registration ends and death dates. Overlaps retain the spine's current-registration
+    priority. Birth and death dates are approximate; missing birth dates prevent historical active rows.
+    Current gender and test flags apply retrospectively. Diagnoses use clinical and recorded dates; other
+    evidence uses corrected clinical or order dates. Later corrections can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published indicator name.
+  - name: reporting_date
+    description: Date at which eligibility and evidence are assessed.
+  - name: measurement_period_start
+    description: Exclusive lower boundary of the measurement window.
+  - name: age
+    description: Completed years at reporting_date.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: latest_record_date
+    description: Latest qualifying numerator evidence date; null when the numerator is not met.
+  - name: is_in_denominator
+    description: Always true for emitted rows after the documented exclusions.
+  - name: is_in_numerator
+    description: Whether the numerator rule is met.
+  - name: indicator_status
+    description: ACHIEVED or the documented missing-evidence status.
+  - name: diagnosis_date
+    description: Earliest COPD register diagnosis date.
+  - name: mrc_date
+    description: First MRC grade 3+ date in the fifteen-month window.
+  - name: latest_offer_date
+    description: Latest offer or referral strictly after mrc_date and on or before R.
+  - name: first_invitation_date
+    description: First invitation in fifteen months.
+  - name: last_invitation_date
+    description: Last invitation in fifteen months.
+  - name: latest_response_date
+    description: Latest COPD review after the first invitation through R.
+  - name: is_excluded_invitation_non_response
+    description: Two invitations at least seven days apart without a later review; excludes the person.
+  - name: practice_code
+    description: ODS registration practice at reporting_date.
+  - name: practice_name
+    description: Registration practice name at reporting_date.

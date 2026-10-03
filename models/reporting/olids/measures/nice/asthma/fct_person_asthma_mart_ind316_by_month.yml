@@ -1,0 +1,72 @@
+models:
+- name: fct_person_asthma_mart_ind316_by_month
+  description: 'MART prescribing, one row per active, living, non-test person aged 12+ with unresolved
+    asthma and a prior-year risk factor. Uses the IND186 population and int_nice_asthma_risk: SABA at
+    least 6 inhalers, at least 2 distinct prednisolone order days, or a GP-coded asthma admission in (R
+    minus 24 months, R minus 12 months]. SUS admissions and emergency visits are omitted. Numerator requires
+    an ICS_FORMOTEROL_MART_RX order in (R minus 12 months, R] and MART_COD recorded on or before R. The
+    product list contains only MART-capable strengths and devices; product capability does not prove an
+    age-specific licence. No personalised care adjustments. Recalculated for the last 60 completed month-ends
+    using today''s rules and code lists. Registration and practice use the monthly spine, with inclusive
+    registration starts and exclusive registration ends and death dates. Overlaps retain the spine''s
+    current-registration priority. Birth and death dates are approximate; missing birth dates prevent
+    historical active rows. Current gender and test flags apply retrospectively. Diagnoses use clinical
+    and recorded dates; other evidence uses corrected clinical or order dates. Later corrections can alter
+    earlier results.'
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published indicator name.
+  - name: reporting_date
+    description: Date at which eligibility and evidence are assessed.
+  - name: measurement_period_start
+    description: Exclusive lower boundary of the measurement window.
+  - name: age
+    description: Completed years at reporting_date.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: latest_record_date
+    description: Latest qualifying numerator evidence date; null when the numerator is not met.
+  - name: is_in_denominator
+    description: Always true for emitted rows after the documented exclusions.
+  - name: is_in_numerator
+    description: Whether the numerator rule is met.
+  - name: indicator_status
+    description: ACHIEVED or the documented missing-evidence status.
+  - name: latest_therapy_order_date
+    description: Latest MART-capable inhaler order in twelve months; null when none.
+  - name: latest_mart_date
+    description: Latest recorded MART regimen through R, without an expiry window.
+  - name: risk_period_start
+    description: Exclusive start of the prior risk year.
+  - name: risk_period_end
+    description: Inclusive end of the prior risk year.
+  - name: saba_inhaler_count
+    description: SABA devices in the prior risk year, using the established quantity conversion.
+  - name: oral_steroid_course_count
+    description: Distinct prednisolone order days in the prior risk year.
+  - name: latest_asthma_admission_date
+    description: Latest GP-coded asthma admission in the prior risk year.
+  - name: has_high_saba_use
+    description: At least six SABA devices in the prior risk year.
+  - name: has_repeated_oral_steroids
+    description: At least two distinct prednisolone order days in the prior risk year.
+  - name: has_asthma_admission
+    description: GP-coded admission in the prior risk year.
+  - name: practice_code
+    description: ODS registration practice at reporting_date.
+  - name: practice_name
+    description: Registration practice name at reporting_date.

@@ -1,0 +1,25 @@
+models:
+- name: int_nice_mart_all
+  description: MART regimen recording, one row per observation for all people. MART_COD includes the recorded
+    or started regimen and its predecessor, excluding AIR alone, offers, declines and stopped regimens.
+    Corrected clinical dates through today; inactive and deceased people are retained.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - observation_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: MART_COD
+        source: ECL_CACHE
+  columns:
+  - name: person_id
+    description: Person with the evidence.
+  - name: observation_id
+    description: Source event identifier.
+  - name: event_date
+    description: Clinical calendar date; observations use the shared source-date correction.
