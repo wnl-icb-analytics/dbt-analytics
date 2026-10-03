@@ -35,7 +35,7 @@ WITH population AS (
     UNION ALL
     SELECT person_id, event_date, 'OFFERED'
     FROM {{ ref('int_nice_copd_observations_all') }}
-    WHERE evidence_type = 'PULREHAB_OFFERED_COD'
+    WHERE evidence_type IN ('PULREHAB_OFFERED_COD', 'PULRHBOFF_COD')
 ), rehab_evidence AS (
     SELECT p.person_id, p.reporting_date,
         MAX(IFF(e.event_type = 'OFFERED' AND e.event_date > p.mrc_date, e.event_date, NULL))
