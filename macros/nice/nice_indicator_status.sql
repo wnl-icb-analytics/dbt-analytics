@@ -8,7 +8,7 @@
     {{ exceptions.raise_compiler_error('Unsupported NICE reference: ' ~ reference) }}
 {% endif %}
 
--- IND278 is a standalone input, outside the lipid-therapy union.
+-- IND278 and IND267 are standalone inputs, outside the family unions.
 
 {% set indicator_models = [
     'fct_person_bp_control_nice_indicators',
@@ -19,8 +19,15 @@
     'fct_person_ckd_nice_indicators',
     'fct_person_cvd_risk_assessment_nice_indicators',
     'fct_person_atrial_fibrillation_nice_indicators',
+    'fct_person_hypertension_nice_indicators',
+    'fct_person_heart_failure_nice_indicators',
+    'fct_person_myocardial_infarction_nice_indicators',
+    'fct_person_dementia_nice_indicators',
+    'fct_person_asthma_nice_indicators',
+    'fct_person_bone_health_nice_indicators',
+    'fct_person_colorectal_cancer_fit_ind267',
     'fct_person_smoking_nice_indicators',
-    'fct_person_bmi_recording_ind320',
+    'fct_person_weight_management_nice_indicators',
     'fct_person_multimorbidity_nice_indicators',
     'fct_person_alcohol_nice_indicators',
     'fct_person_cervical_screening_nice_indicators',

@@ -5,7 +5,7 @@
           reference is current or by_month.
     Returns: person_id, reporting_date, condition_code, is_on_register,
              earliest_diagnosis_date, latest_diagnosis_date, plus the condition's
-             DM, SMI, CKD, FRAIL or NDH fields. Source timestamp precision is kept.
+             DM, SMI, CKD, HF, FRAIL or NDH fields. Source timestamp precision is kept.
 -#}
 {% set adapters = {
     'AF': ('fct_person_atrial_fibrillation_register', 'fct_person_atrial_fibrillation_register_by_month'),
@@ -54,6 +54,57 @@
 {% if reference not in ['current', 'by_month'] %}
     {{ exceptions.raise_compiler_error('Unsupported NICE reference: ' ~ reference) }}
 {% endif %}
+{% if condition_code == 'HF' %}
+WITH hf_members AS (
+    SELECT
+        person_id,
+        {% if reference == 'current' %}CURRENT_DATE()::DATE{% else %}month_end_date{% endif %} AS reporting_date,
+        earliest_diagnosis_date,
+        latest_diagnosis_date,
+        is_on_hfref_register
+    FROM {{ ref(adapters['HF'][0 if reference == 'current' else 1]) }}
+    {% if reference == 'current' %}WHERE is_on_register{% endif %}
+),
+known_hf AS (
+    SELECT
+        members.person_id,
+        members.reporting_date,
+        evidence.clinical_effective_date,
+        evidence.is_diagnosis_code,
+        MAX(IFF(evidence.is_resolved_code, evidence.clinical_effective_date, NULL)) OVER (
+            PARTITION BY members.person_id, members.reporting_date
+        ) AS latest_known_resolution_date
+    FROM hf_members AS members
+    INNER JOIN {{ ref('int_heart_failure_diagnoses_all') }} AS evidence
+        ON members.person_id = evidence.person_id
+        AND {{ ltc_register_known_by('evidence.clinical_effective_date', 'evidence.date_recorded', 'members.reporting_date') }}
+),
+hf_entry AS (
+    SELECT
+        person_id,
+        reporting_date,
+        MIN(clinical_effective_date) AS earliest_unresolved_diagnosis_date
+    FROM known_hf
+    WHERE is_diagnosis_code
+        -- HF diagnoses and resolutions on the same calendar date retain membership.
+        AND (latest_known_resolution_date IS NULL
+            OR clinical_effective_date::DATE >= latest_known_resolution_date::DATE)
+    GROUP BY person_id, reporting_date
+)
+SELECT
+    members.person_id,
+    members.reporting_date,
+    'HF' AS condition_code,
+    TRUE AS is_on_register,
+    members.earliest_diagnosis_date,
+    members.latest_diagnosis_date,
+    entry.earliest_unresolved_diagnosis_date,
+    members.is_on_hfref_register
+FROM hf_members AS members
+LEFT JOIN hf_entry AS entry
+    ON members.person_id = entry.person_id
+    AND members.reporting_date = entry.reporting_date
+{% else %}
 SELECT
     person_id,
     {% if reference == 'current' %}CURRENT_DATE()::DATE{% else %}month_end_date{% endif %} AS reporting_date,
@@ -101,5 +152,6 @@ SELECT
 FROM {{ ref(adapters[condition_code][0 if reference == 'current' else 1]) }}
 {% if reference == 'current' %}
 WHERE is_on_register
+{% endif %}
 {% endif %}
 {% endmacro %}

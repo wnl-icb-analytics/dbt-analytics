@@ -1,0 +1,70 @@
+models:
+- name: fct_person_urine_acr_hypertension_ind121
+  description: >-
+    Urine ACR in hypertension (NICE IND121). One row per active, living, non-test HTN register member
+    aged over 18 whose earliest hypertension diagnosis is in the financial year to date, from 1 April
+    through R inclusive. Achievement requires an ACR test from three calendar months before diagnosis
+    through the earlier of three months after diagnosis and R, inclusive. Uses the existing ACR
+    classification within PCD NDAALB_COD; a numeric result is not required. Hypertension membership uses
+    HYP_COD and HYPRES_COD. No grace period or personalised care adjustments apply. Evaluated on the
+    build date.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind121
+      indicator:
+        id: IND121
+        type: MEASURE
+        category: CARDIOVASCULAR
+        clinical_domain: Cardiometabolic
+        name_short: Urine ACR around a new hypertension diagnosis
+        description_short: Urine ACR around a new hypertension diagnosis
+        description_long: NICE IND121. One row per active, living, non-test HTN register member aged over
+          18 whose earliest hypertension diagnosis is in the financial year to date, from 1 April through
+          R inclusive. Achievement requires an ACR test from three calendar months before diagnosis through
+          the earlier of three months after diagnosis and R, inclusive. Uses the existing ACR classification
+          within PCD NDAALB_COD; a numeric result is not required. Hypertension membership uses HYP_COD
+          and HYPRES_COD. No grace period or personalised care adjustments apply. Evaluated on the build
+          date.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND121
+  data_tests: []
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator.
+    data_tests:
+    - not_null
+    - unique
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: reporting_date
+    description: Evaluation date, a DATE.
+  - name: measurement_period_start
+    description: Inclusive 1 April start of the financial year containing R. The ACR evidence window is
+      relative to diagnosis.
+  - name: age
+    description: Completed years at R; history uses the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true. Rows contain eligible people only.
+  - name: is_in_numerator
+    description: Whether qualifying evidence falls within the indicator window through R.
+  - name: indicator_status
+    description: ACHIEVED when in the numerator, otherwise NOT_RECORDED_IN_PERIOD.
+  - name: current_practice_code
+    description: Practice ODS code at R under the established population attribution.
+  - name: current_practice_name
+    description: Practice name at R under the established population attribution.
+  - name: diagnosis_date
+    description: Earliest hypertension diagnosis date on the register at R; monthly anchors must be known
+      by R.
+  - name: latest_acr_date
+    description: Latest qualifying ACR test date within the diagnosis window and through R; null when
+      none.

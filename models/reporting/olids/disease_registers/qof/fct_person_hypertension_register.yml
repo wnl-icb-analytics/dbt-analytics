@@ -21,25 +21,26 @@ models:
     config:
       meta:
         indicator:
-          id: "HTN005"
+          id: "HYP001"
           type: "CONDITION"
           category: "LTC"
           clinical_domain: "Cardiometabolic"
           name_short: "Hypertension"
-          description_short: "QOF hypertension register"
+          description_short: "QOF 2025/26 hypertension register"
           description_long: >
-            Hypertension diagnosed using QOF v51 criteria: unresolved hypertension diagnosis at
-            any age, with no resolution code or where the latest HTN code is on or after
-            the latest resolution code.
-            Project-specific, NICE-informed staging uses the latest paired BP reading,
-            not the NG136 diagnostic definition based on a confirmed ABPM/HBPM average.
-            Thresholds in mmHg (systolic or diastolic): Home/ABPM stage 1 >= 135 or >= 85,
-            stage 2 >= 155 or >= 95; clinic stage 1 >= 140 or >= 90, stage 2 >= 160 or >= 100.
-            Severe HTN in either context: systolic >= 180 or diastolic >= 120, assessed first;
-            stage 2 takes precedence over stage 1. Maps to QOF indicator HTN005 (Hypertension Register).
-            Uses HTN_COD for diagnosis codes and HTNRES_COD for resolution codes.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. Hypertension diagnosed using QOF
+            v51 criteria: unresolved hypertension diagnosis at any age, with no resolution code or
+            where the latest HTN code is on or after the latest resolution code. Project-specific,
+            NICE-informed staging uses the latest paired BP reading, not the NG136 diagnostic
+            definition based on a confirmed ABPM/HBPM average. Thresholds in mmHg (systolic or
+            diastolic): Home/ABPM stage 1 >= 135 or >= 85, stage 2 >= 155 or >= 95; clinic stage 1
+            >= 140 or >= 90, stage 2 >= 160 or >= 100. Severe HTN in either context: systolic >=
+            180 or diastolic >= 120, assessed first; stage 2 takes precedence over stage 1. QOF
+            2025/26 correspondence: HYP001 (Hypertension Register). Uses HTN_COD for diagnosis
+            codes and HTNRES_COD for resolution codes.
           is_qof: true
-          qof_indicator: "HTN005"
+          qof_indicator: "HYP001"
           source_column: "is_on_register"
           usage_contexts:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
@@ -50,6 +51,24 @@ models:
             - cluster_id: "HTNRES_COD"
               category: "RESOLUTION"
 
+        indicators:
+          - id: "IND255"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Cardiometabolic"
+            name_short: "Hypertension: register"
+            description_short: "NICE Hypertension: register"
+            description_long: >
+              NICE register of people with established hypertension, excluding those with a resolved
+              code after the latest diagnosis. The model uses unresolved HTN_COD at any age. The
+              latest diagnosis on or after HTNRES_COD qualifies. Blood-pressure staging is
+              descriptive and does not determine register membership. No additional filter is
+              needed. QOF 2025/26 correspondence is HYP001; the QOF v51 register-establishment
+              indicator is retired, while the register extraction continues.
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "HYP001"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92
     columns:

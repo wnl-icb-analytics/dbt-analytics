@@ -1,0 +1,62 @@
+models:
+- name: fct_person_asthma_nice_indicators_snapshot_input
+  description: NICE asthma snapshot input, one row per eligible person and indicator. Omits age and reporting-date-derived
+    window boundaries. Evidence, risk counts, practice and outcome changes open a new version.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+  columns:
+  - name: person_id
+    description: Person in the denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: is_in_numerator
+    description: Whether the person meets the numerator rule.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: latest_record_date
+    description: Latest qualifying evidence date; null when the numerator is not met.
+  - name: current_practice_code
+    description: ODS registration practice.
+  - name: saba_inhaler_count
+    description: Inhaler devices in the risk window. Doses divided by 60 for Accuhaler, 100 for Turbohaler,
+      otherwise 200, rounded to whole devices with a minimum of one per matched order.
+  - name: oral_steroid_course_count
+    description: Distinct prednisolone order days in the risk window, used as a proxy for oral steroid
+      courses.
+  - name: latest_asthma_admission_date
+    description: Latest GP-coded ASTADMSN_COD admission in the risk window; null when none.
+  - name: has_high_saba_use
+    description: At least six SABA inhalers in the risk window.
+  - name: has_repeated_oral_steroids
+    description: At least two distinct prednisolone order days in the risk window.
+  - name: has_asthma_admission
+    description: A GP-coded asthma admission in the risk window.
+  - name: latest_review_date
+    description: Latest review through reporting_date, including incomplete or stale reviews; null when
+      never recorded.
+  - name: diagnosis_date
+    description: Earliest known asthma diagnosis after the latest known resolution, using calendar dates.
+  - name: feno_date
+    description: Latest FENO_COD record in the diagnosis test window; null when absent.
+  - name: reversibility_date
+    description: Latest ASTSPIR_COD bronchodilator reversibility record in the test window; null when
+      absent.
+  - name: pefr_variability_date
+    description: Latest PEFRVAR_COD record in the test window; no spirometry-unavailability condition.
+      Null when absent.
+  - name: bronchial_challenge_date
+    description: Latest BRONCCHALENG_COD record in the test window; null when absent.
+  - name: skin_prick_date
+    description: Latest SKINTEST_COD record in the test window; null when absent.
+  - name: ige_date
+    description: Latest IGE_COD record in the test window; null when absent.
+  - name: eosinophil_or_fbc_date
+    description: Latest EOS_COUNT or FBC_COD record in the test window; null when absent.

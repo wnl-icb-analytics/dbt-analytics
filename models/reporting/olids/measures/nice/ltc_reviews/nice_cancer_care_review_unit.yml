@@ -1,0 +1,124 @@
+unit_tests:
+- name: nice_ind113_invitation_spacing_response_and_review_windows
+  model: fct_person_cancer_care_review_ind113_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age,
+      column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code,
+      column7::VARCHAR AS practice_name FROM VALUES (-4201, '2026-08-31', 40, '1980-01-01', 'Female',
+      'SYNTHETIC', 'Synthetic practice'), (-4201, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC',
+      'Synthetic practice'), (-4216, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic
+      practice'), (-4215, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+      (-4214, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-4213, '2026-09-30',
+      40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-4212, '2026-09-30', 40, '1980-01-01',
+      'Female', 'SYNTHETIC', 'Synthetic practice'), (-4211, '2026-09-30', 40, '1980-01-01', 'Female',
+      'SYNTHETIC', 'Synthetic practice'), (-4210, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC',
+      'Synthetic practice'), (-4209, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic
+      practice'), (-4208, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+      (-4207, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-4206, '2026-09-30',
+      40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-4205, '2026-09-30', 40, '1980-01-01',
+      'Female', 'SYNTHETIC', 'Synthetic practice'), (-4204, '2026-09-30', 40, '1980-01-01', 'Female',
+      'SYNTHETIC', 'Synthetic practice'), (-4203, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC',
+      'Synthetic practice'), (-4202, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic
+      practice'), (-4217, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+      (-4218, '2026-09-30', 40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice'), (-4219, '2026-09-30',
+      40, '1980-01-01', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::BOOLEAN AS has_cancer,
+      column4::DATE AS latest_cancer_diagnosis_date FROM VALUES (-4201, '2026-08-31', TRUE, '2025-05-31'),
+      (-4201, '2026-09-30', TRUE, '2025-05-31'), (-4216, '2026-09-30', TRUE, '2026-06-30'), (-4215, '2026-09-30',
+      TRUE, '2026-06-30'), (-4214, '2026-09-30', TRUE, '2026-06-30'), (-4213, '2026-09-30', TRUE, '2026-06-30'),
+      (-4212, '2026-09-30', TRUE, '2026-06-30'), (-4211, '2026-09-30', TRUE, '2026-06-30'), (-4210, '2026-09-30',
+      TRUE, '2026-06-30'), (-4209, '2026-09-30', TRUE, '2026-06-30'), (-4208, '2026-09-30', TRUE, '2026-06-30'),
+      (-4207, '2026-09-30', TRUE, '2026-06-30'), (-4206, '2026-09-30', TRUE, '2026-06-30'), (-4205, '2026-09-30',
+      TRUE, '2026-06-30'), (-4204, '2026-09-30', TRUE, '2026-06-30'), (-4203, '2026-09-30', TRUE, '2026-06-30'),
+      (-4202, '2026-09-30', TRUE, '2025-06-30'), (-4217, '2026-09-30', TRUE, '2026-10-01'), (-4218, '2026-09-30',
+      FALSE, '2026-06-30'), (-4219, '2026-09-30', TRUE, '2026-05-30')
+  - input: ref('int_nice_review_evidence_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE AS first_cancer_care_review_after_diagnosis_date
+      FROM VALUES (-4201, '2026-08-31', NULL), (-4201, '2026-09-30', NULL), (-4216, '2026-09-30', NULL),
+      (-4215, '2026-09-30', NULL), (-4214, '2026-09-30', '2026-06-29'), (-4213, '2026-09-30', '2026-10-01'),
+      (-4212, '2026-09-30', '2026-09-30'), (-4211, '2026-09-30', NULL), (-4210, '2026-09-30', '2026-06-30'),
+      (-4209, '2026-09-30', '2026-06-30'), (-4208, '2026-09-30', '2026-09-30'), (-4207, '2026-09-30',
+      NULL), (-4206, '2026-09-30', NULL), (-4205, '2026-09-30', NULL), (-4204, '2026-09-30', NULL), (-4203,
+      '2026-09-30', NULL), (-4202, '2026-09-30', NULL), (-4217, '2026-09-30', NULL), (-4218, '2026-09-30',
+      NULL), (-4219, '2026-09-30', '2026-09-01')
+  - input: ref('int_cancer_care_review_invitations_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date FROM VALUES (-4203,
+      '2026-07-01'), (-4203, '2026-07-07'), (-4204, '2026-07-01'), (-4204, '2026-07-08'), (-4205, '2026-07-01'),
+      (-4205, '2026-07-01'), (-4208, '2026-07-01'), (-4208, '2026-07-08'), (-4209, '2026-07-01'), (-4209,
+      '2026-07-08'), (-4210, '2026-07-01'), (-4210, '2026-07-08'), (-4211, '2026-07-01'), (-4211, '2026-07-08'),
+      (-4206, '2026-09-25'), (-4206, '2026-10-02'), (-4207, '2026-06-22'), (-4207, '2026-06-29'), (-4215,
+      '2026-09-23'), (-4215, '2026-09-30'), (-4216, '2026-09-24'), (-4216, '2026-10-01'), (-4219, '2026-06-01'),
+      (-4219, '2026-06-08')
+  - input: ref('int_ltc_review_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date, column3::VARCHAR
+      AS review_type FROM VALUES (-4208, '2026-10-01', 'CANCER_CARE_REVIEW'), (-4208, '2026-09-30', 'CANCER_CARE_REVIEW'),
+      (-4209, '2026-06-30', 'CANCER_CARE_REVIEW'), (-4209, '2026-07-09', 'CANCER_CARE_REVIEW'), (-4210,
+      '2026-06-30', 'CANCER_CARE_REVIEW'), (-4211, '2026-10-01', 'CANCER_CARE_REVIEW'), (-4212, '2026-09-30',
+      'CANCER_CARE_REVIEW'), (-4213, '2026-10-01', 'CANCER_CARE_REVIEW'), (-4214, '2026-06-29', 'CANCER_CARE_REVIEW'),
+      (-4219, '2026-09-01', 'CANCER_CARE_REVIEW')
+  expect:
+    rows:
+    - person_id: -4201
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+      is_excluded_invitation_non_response: false
+    - person_id: -4216
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_excluded_invitation_non_response: false
+    - person_id: -4214
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_excluded_invitation_non_response: false
+    - person_id: -4213
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_excluded_invitation_non_response: false
+    - person_id: -4212
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_excluded_invitation_non_response: false
+    - person_id: -4209
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_excluded_invitation_non_response: false
+    - person_id: -4208
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      is_excluded_invitation_non_response: false
+    - person_id: -4207
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_excluded_invitation_non_response: false
+    - person_id: -4206
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_excluded_invitation_non_response: false
+    - person_id: -4205
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_excluded_invitation_non_response: false
+    - person_id: -4203
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_excluded_invitation_non_response: false
+    - person_id: -4202
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_excluded_invitation_non_response: false
+    - person_id: -4219
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      is_excluded_invitation_non_response: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+    - nice-cancer-review-fixture

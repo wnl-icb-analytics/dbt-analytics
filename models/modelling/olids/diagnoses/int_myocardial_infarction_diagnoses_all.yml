@@ -1,0 +1,19 @@
+models:
+- name: int_myocardial_infarction_diagnoses_all
+  description: Myocardial infarction observations for all people, one row per observation from PCD MI_COD,
+    including retired predecessors. Clinical and recorded dates support diagnosis cohorts as known at a reporting
+    date.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: MI_COD
+        source: PCD
+  columns: []

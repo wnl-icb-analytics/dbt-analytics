@@ -1,0 +1,67 @@
+models:
+- name: fct_person_weight_management_nice_indicators_by_month
+  description: NICE weight management outcomes (IND319, IND320). One row per eligible, registered, living,
+    non-test person and indicator and completed month-end. Recalculated over the last 60 completed month-ends
+    with current rules and code lists. Registration and practice follow the monthly spine. Birth and death
+    dates are approximate; current gender and test flags apply retrospectively. Registers use clinical
+    and recorded dates; other evidence uses corrected clinical or order dates. Later corrections can change
+    earlier results. See member measures for population, window and evidence definitions. Personalised
+    care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator at R.
+  - name: indicator_id
+    description: Published NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator title.
+  - name: reporting_date
+    description: Date R used for population, age and evidence; build date for current, completed month-end
+      for history.
+  - name: measurement_period_start
+    description: 'Start of the evidence window: inclusive for IND319 and IND320; exclusive for six-month
+      bone treatment.'
+  - name: age
+    description: Completed years at R from the approximate birth date.
+  - name: condition_name
+    description: Population used by the indicator.
+  - name: latest_bmi_date
+    description: IND319 latest measured BMI in 12 months; IND320 latest valid recorded or calculated BMI
+      through R, including older evidence.
+  - name: bmi_value
+    description: IND319 measured BMI in kg/m^2; null for IND320.
+  - name: is_recorded_white
+    description: Ethnicity is White in the demographic interval containing R, start inclusive and end
+      exclusive. False includes missing and unknown ethnicity; null for IND320 in family outputs.
+  - name: bmi_lower_threshold
+    description: 'IND319 inclusive lower threshold in kg/m^2: 25 if White recorded, otherwise 23. Null
+      for IND320.'
+  - name: bmi_upper_threshold
+    description: 'IND319 inclusive upper threshold in kg/m^2: 29.9 if White recorded, otherwise 27.4.
+      Null for IND320.'
+  - name: latest_weight_advice_date
+    description: IND319 latest WTMGINT_COD advice from BMI date through day 90 inclusive, capped at R.
+      Null for IND320.
+  - name: latest_record_date
+    description: Qualifying advice date for IND319 or qualifying BMI date for IND320; null without evidence
+      in the relevant window.
+  - name: practice_code
+    description: Registration practice ODS code at month-end under the monthly spine.
+  - name: practice_name
+    description: Registration practice name at month-end under the monthly spine.
+  - name: is_in_denominator
+    description: Always true. Personalised care adjustments are not applied.
+  - name: is_in_numerator
+    description: Whether the achievement rule is met at R.
+  - name: indicator_status
+    description: ACHIEVED or the accepted reason the rule is not met.

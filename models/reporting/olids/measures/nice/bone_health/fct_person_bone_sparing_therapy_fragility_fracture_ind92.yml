@@ -1,0 +1,67 @@
+models:
+- name: fct_person_bone_sparing_therapy_fragility_fracture_ind92
+  description: >-
+    Bone-sparing therapy after fragility fracture (NICE IND92). One row per eligible person aged 75 or
+    over with a qualifying fragility fracture on the build date. People must be registered, living and
+    non-test. People aged 75 or over with FF_COD fragility fracture evidence on or after 1 April 2012
+    and through R. No osteoporosis diagnosis or DXA requirement. A NHS_DRUG_REFSETS/BSADRUG_COD order in
+    (R minus six months, R] achieves the indicator. Hospital therapy observations do not count.
+    Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind92
+      indicator:
+        id: IND92
+        type: MEASURE
+        category: BONE_HEALTH
+        clinical_domain: Musculoskeletal
+        name_short: Bone-sparing therapy
+        description_short: Bone-sparing medication ordered in six months after a qualifying fragility
+          fracture
+        description_long: NICE IND92. People aged 75 or over with FF_COD fragility fracture evidence on
+          or after 1 April 2012 and through R. No osteoporosis diagnosis or DXA requirement. A NHS_DRUG_REFSETS/BSADRUG_COD
+          order in (R minus six months, R] achieves the indicator. Hospital therapy observations do not
+          count. One row per eligible, currently registered, living, non-test person on the build date.
+          Personalised care adjustments are not applied.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator at R.
+  - name: indicator_id
+    description: Published NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator title.
+  - name: reporting_date
+    description: Date R used for population, age and evidence; build date for current, completed month-end
+      for history.
+  - name: measurement_period_start
+    description: Exclusive start of the six-month medication-order window.
+  - name: age
+    description: Completed years at R from the approximate birth date.
+  - name: condition_name
+    description: Population used by the indicator.
+  - name: current_practice_code
+    description: Current registration practice ODS code.
+  - name: current_practice_name
+    description: Current registration practice name.
+  - name: latest_bone_sparing_order_date
+    description: Latest bone-sparing order on or before the reporting date; may be outside six months.
+  - name: latest_record_date
+    description: Qualifying order date in (R minus six months, R]; null without current treatment.
+  - name: is_in_denominator
+    description: Always true. Personalised care adjustments are not applied.
+  - name: is_in_numerator
+    description: Whether the achievement rule is met at R.
+  - name: indicator_status
+    description: ACHIEVED or the accepted reason the rule is not met.

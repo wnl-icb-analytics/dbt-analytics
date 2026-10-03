@@ -1,6 +1,6 @@
 {% macro calculate_nice_smoking_evidence(reference='current') %}
 {#-
-    Select smoking state, never-smoked recording and QOF support for any LTC member or age 43 to 84.
+    Select smoking state, never-smoked recording and QOF support for any LTC member or age 15+.
     Args: reference is current or by_month.
     Returns: one candidate person per reporting_date with the named evidence fields.
     Clinical evidence is selected on or before reporting_date; indicators apply their windows.
@@ -26,7 +26,7 @@ candidates AS (
         ON population.person_id = ltc.person_id
         AND population.reporting_date = ltc.reporting_date
     WHERE ltc.person_id IS NOT NULL
-        OR population.age BETWEEN 43 AND 84
+        OR population.age >= 15
 ),
 
 candidate_people AS (

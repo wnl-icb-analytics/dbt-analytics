@@ -1,0 +1,76 @@
+models:
+- name: fct_person_asthma_higher_risk_review_ind315_by_month
+  description: >-
+    Review of higher-risk asthma (NICE IND315). One row per active, living, non-test person aged 6+ with
+    an unresolved IND186 asthma diagnosis and a higher-risk factor in (R minus 24 months, R minus 12
+    months]. Risk means at least six SABA inhalers from OPENSAFELY/SABA_INHALER_MEDICATIONS quantities,
+    two distinct prednisolone order days (BNF 0603020T0), or a GP-coded ASTADMSN_COD admission. SUS
+    admissions and emergency department visits are omitted pending linked evidence. The unchanged IND273
+    numerator requires a complete review in [R minus 12 months, R]: REV_COD review and WRITPASTP_COD
+    written plan on the same day, with ASTEXACB_COD exacerbation count in (review minus one month,
+    review]. Asthma control and inhaler technique are not separately required by the retained review
+    proxy. No treatment requirement or personalised care adjustments. Recalculated at monthly refresh
+    for the last 60 completed month-ends with current rules and code lists. Monthly spine registration
+    start is inclusive; registration end and death dates are exclusive. Approximate birth/death dates,
+    overlap priority and current test/gender flags constrain history. Diagnosis and resolution use
+    clinical and recorded known dates; other evidence uses clinical/order dates through R. Later
+    corrections can change earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind315
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published indicator name.
+  - name: reporting_date
+    description: Date at which eligibility and evidence are assessed.
+  - name: measurement_period_start
+    description: Start of the cohort or evidence period; see the model description for boundary inclusion.
+  - name: age
+    description: Completed years at reporting_date.
+  - name: condition_name
+    description: Population defining the indicator.
+  - name: is_in_denominator
+    description: Always true. Personalised care adjustments are not applied.
+  - name: is_in_numerator
+    description: Whether the person meets the numerator rule.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: latest_record_date
+    description: Latest qualifying evidence date; null when the numerator is not met.
+  - name: practice_code
+    description: ODS registration practice at reporting_date.
+  - name: practice_name
+    description: Registration practice name at reporting_date.
+  - name: risk_period_start
+    description: Exclusive start of the prior-year risk window.
+  - name: risk_period_end
+    description: Inclusive end of the prior-year risk window.
+  - name: saba_inhaler_count
+    description: Inhaler devices in the risk window. Doses divided by 60 for Accuhaler, 100 for Turbohaler,
+      otherwise 200, rounded to whole devices with a minimum of one per matched order.
+  - name: oral_steroid_course_count
+    description: Distinct prednisolone order days in the risk window, used as a proxy for oral steroid
+      courses.
+  - name: latest_asthma_admission_date
+    description: Latest GP-coded ASTADMSN_COD admission in the risk window; null when none.
+  - name: has_high_saba_use
+    description: At least six SABA inhalers in the risk window.
+  - name: has_repeated_oral_steroids
+    description: At least two distinct prednisolone order days in the risk window.
+  - name: has_asthma_admission
+    description: A GP-coded asthma admission in the risk window.
+  - name: latest_review_date
+    description: Latest review through reporting_date, including incomplete or stale reviews; null when
+      never recorded.

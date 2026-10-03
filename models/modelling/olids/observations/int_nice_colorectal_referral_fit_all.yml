@@ -1,0 +1,25 @@
+models:
+- name: int_nice_colorectal_referral_fit_all
+  description: Colorectal referral fit records from GICANREF_COD, FAECIMM_COD. One row per observation
+    and matching source cluster for all people, including inactive and deceased people. Future clinical
+    dates are excluded. FIT records with a PCD COLCANSCREV_COD bowel-screening result code are excluded.
+    Referral records are retained regardless of screening codes.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+        - source_cluster_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: GICANREF_COD, FAECIMM_COD, COLCANSCREV_COD
+        source: PCD
+  columns:
+  - name: event_date
+    description: Corrected clinical date.
+  - name: source_cluster_id
+    description: Existing cluster identifying the evidence.

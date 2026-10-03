@@ -1,0 +1,25 @@
+models:
+- name: int_nice_bone_therapy_by_month
+  description: Bone-sparing order evidence for registered, living, non-test people aged 50 or over. One
+    row per person and completed month-end. Recalculated over the last 60 completed month-ends with current
+    rules and code lists. Registration and practice follow the monthly spine. Birth and death dates are
+    approximate; current gender and test flags apply retrospectively. Registers use clinical and recorded
+    dates; other evidence uses corrected clinical or order dates. Later corrections can change earlier
+    results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person identifier.
+  - name: reporting_date
+    description: Date R used to cap evidence.
+  - name: latest_bone_sparing_order_date
+    description: Latest BSADRUG_COD order through R; null means no order.

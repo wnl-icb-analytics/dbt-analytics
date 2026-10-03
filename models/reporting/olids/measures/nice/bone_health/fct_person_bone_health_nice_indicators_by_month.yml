@@ -1,0 +1,51 @@
+models:
+- name: fct_person_bone_health_nice_indicators_by_month
+  description: NICE bone health outcomes (IND91, IND92). One row per eligible, registered, living, non-test
+    person and indicator and completed month-end. Recalculated over the last 60 completed month-ends with
+    current rules and code lists. Registration and practice follow the monthly spine. Birth and death
+    dates are approximate; current gender and test flags apply retrospectively. Registers use clinical
+    and recorded dates; other evidence uses corrected clinical or order dates. Later corrections can change
+    earlier results. See member measures for population, window and evidence definitions. Personalised
+    care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator at R.
+  - name: indicator_id
+    description: Published NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator title.
+  - name: reporting_date
+    description: Date R used for population, age and evidence; build date for current, completed month-end
+      for history.
+  - name: measurement_period_start
+    description: 'Start of the evidence window: inclusive for IND319 and IND320; exclusive for six-month
+      bone treatment.'
+  - name: age
+    description: Completed years at R from the approximate birth date.
+  - name: condition_name
+    description: Population used by the indicator.
+  - name: latest_bone_sparing_order_date
+    description: Latest bone-sparing order on or before R; may be outside six months.
+  - name: latest_record_date
+    description: Qualifying order date in (R minus six months, R]; null without current treatment.
+  - name: practice_code
+    description: Registration practice ODS code at month-end under the monthly spine.
+  - name: practice_name
+    description: Registration practice name at month-end under the monthly spine.
+  - name: is_in_denominator
+    description: Always true. Personalised care adjustments are not applied.
+  - name: is_in_numerator
+    description: Whether the achievement rule is met at R.
+  - name: indicator_status
+    description: ACHIEVED or the accepted reason the rule is not met.

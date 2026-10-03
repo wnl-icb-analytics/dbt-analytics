@@ -34,12 +34,13 @@ models:
           category: "LTC"
           clinical_domain: "Cardiovascular"
           name_short: "Heart Failure"
-          description_short: "QOF heart failure register"
+          description_short: "QOF 2025/26 heart failure register"
           description_long: >
-            QOF v51 HF1 contains patients with unresolved heart failure, using
-            evidence dated on or before today. HF3 is its
-            reduced-ejection-fraction-only subset and replaces the former HF2
-            LVSD-or-reduced-EF register. Uses HF_COD, HFRES_COD and REDEJCFRAC_COD.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. QOF v51 HF1 contains patients with
+            unresolved heart failure, using evidence dated on or before today. HF3 is its
+            reduced-ejection-fraction-only subset and replaces the former HF2 LVSD-or-reduced-EF
+            register. Uses HF_COD, HFRES_COD and REDEJCFRAC_COD.
           is_qof: true
           qof_indicator: "HF001"
           source_column: "is_on_register"
@@ -53,5 +54,23 @@ models:
               category: "RESOLUTION"
             - cluster_id: "REDEJCFRAC_COD"
               category: "INCLUSION"
+        indicators:
+          - id: "IND254"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Cardiovascular"
+            name_short: "Heart failure: register"
+            description_short: "NICE Heart failure: register"
+            description_long: >
+              NICE register of people aged 18 or over with heart failure, excluding people with a
+              resolved code after the latest diagnosis. Filter is_on_register = true and age >= 18.
+              The model uses HF_COD with no later HFRES_COD and includes all ages, so the age filter
+              is required. Use the full HF1 flag, not the is_on_hfref_register HF3 subset. QOF
+              2025/26 correspondence is HF001; the QOF v51 register-establishment indicator is
+              retired, while the register extraction continues.
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "HF001"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92

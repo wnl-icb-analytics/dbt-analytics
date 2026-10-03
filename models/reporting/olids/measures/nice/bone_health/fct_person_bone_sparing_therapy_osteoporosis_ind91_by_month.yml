@@ -1,0 +1,53 @@
+models:
+- name: fct_person_bone_sparing_therapy_osteoporosis_ind91_by_month
+  description: >-
+    Bone-sparing therapy in osteoporosis (NICE IND91). One row per eligible osteoporosis member aged 50
+    to 74 and month-end. People must be registered, living and non-test. People aged 50-74 with a
+    fragility fracture on or after 1 April 2012 and DXA-confirmed osteoporosis, using the OST register
+    known-date definition. A NHS_DRUG_REFSETS/BSADRUG_COD order in (R minus six months, R] achieves the
+    indicator. Hospital therapy observations do not count. Recalculated over the last 60 completed
+    month-ends with current rules and code lists. Registration and practice follow the monthly spine.
+    Birth and death dates are approximate; current gender and test flags apply retrospectively.
+    Registers use clinical and recorded dates; other evidence uses corrected clinical or order dates.
+    Later corrections can change earlier results. Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind91
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator at R.
+  - name: indicator_id
+    description: Published NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator title.
+  - name: reporting_date
+    description: Date R used for population, age and evidence; build date for current, completed month-end
+      for history.
+  - name: measurement_period_start
+    description: Exclusive start of the six-month medication-order window.
+  - name: age
+    description: Completed years at R from the approximate birth date.
+  - name: condition_name
+    description: Population used by the indicator.
+  - name: practice_code
+    description: Registration practice ODS code at month-end under the monthly spine.
+  - name: practice_name
+    description: Registration practice name at month-end under the monthly spine.
+  - name: latest_bone_sparing_order_date
+    description: Latest bone-sparing order on or before the reporting date; may be outside six months.
+  - name: latest_record_date
+    description: Qualifying order date in (R minus six months, R]; null without current treatment.
+  - name: is_in_denominator
+    description: Always true. Personalised care adjustments are not applied.
+  - name: is_in_numerator
+    description: Whether the achievement rule is met at R.
+  - name: indicator_status
+    description: ACHIEVED or the accepted reason the rule is not met.

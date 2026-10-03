@@ -1,7 +1,17 @@
 models:
 - name: fct_person_ckd_nice_indicators_by_month
-  description: |
-    Monthly NICE CKD outcomes for all eight family indicators. One row per eligible, active, living, non-test person, indicator and completed month-end. Each indicator retains its own denominator, threshold, status and measurement period. Detail fields that do not apply to a branch are typed nulls.
+  description: >-
+    NICE kidney outcomes, one row per eligible person, indicator and completed month-end. Includes
+    long-term oral NSAID users outside the CKD register. Each indicator retains its own denominator,
+    threshold, status and measurement period. Detail fields that do not apply to a branch are typed
+    nulls. Recalculated at monthly refresh for the last 60 completed month-ends using today's rules and
+    code lists. Registration and practice use the existing monthly spine. Registration start is
+    inclusive; registration end and death dates are exclusive. Overlapping registrations retain the
+    spine's current-registration priority. Birth and death dates are approximate. Missing birth dates
+    prevent historical active rows. Current gender and test flags apply retrospectively. CKD and other
+    register states use clinical and recorded dates. Other evidence uses its corrected clinical or order
+    date through month-end. Later corrections and code-list changes can alter earlier results.
+    Personalised care adjustments are not applied.
 
     Recalculated at monthly refresh for the last 60 completed month-ends using today's
     rules and code lists. Registration and practice use the existing monthly spine.
@@ -73,6 +83,8 @@ models:
     description: Exclusive systolic threshold in mmHg for the BP indicators; typed null for other branches
   - name: indicator_diastolic_threshold
     description: Exclusive diastolic threshold in mmHg for the BP indicators; typed null for other branches
+  - name: nsaid_issue_day_count
+    description: Distinct oral NSAID issue days in 24 months for IND232; null for other indicators.
   - name: latest_record_date
     description: Date of the latest qualifying record in the period; null when none
   - name: is_in_denominator

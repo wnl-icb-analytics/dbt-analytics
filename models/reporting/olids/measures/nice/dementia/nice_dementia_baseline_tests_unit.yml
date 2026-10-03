@@ -1,0 +1,77 @@
+unit_tests:
+- name: nice_dementia_ind80_cohort_boundaries
+  model: fct_person_dementia_baseline_tests_ind80_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-93101::NUMBER, '2026-03-31'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93101::NUMBER, '2026-04-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93102::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93103::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93104::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR)
+  - input: ref('int_nice_dementia_baseline_tests_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE AS diagnosis_date, column4::DATE AS ind80_fbc_date, column5::DATE AS ind80_calcium_date, column6::DATE AS ind80_glucose_date, column7::DATE AS ind80_renal_date, column8::DATE AS ind80_liver_date, column9::DATE AS ind80_thyroid_date, column10::DATE AS ind80_b12_date, column11::DATE AS ind80_folate_date, column12::DATE AS ind80_latest_record_date, column13::BOOLEAN AS has_ind80_all_tests
+      FROM VALUES
+          (-93101::NUMBER, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, TRUE::BOOLEAN),
+          (-93101::NUMBER, '2026-04-30'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, TRUE::BOOLEAN),
+          (-93102::NUMBER, '2026-09-30'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, TRUE::BOOLEAN),
+          (-93103::NUMBER, '2026-09-30'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, TRUE::BOOLEAN),
+          (-93104::NUMBER, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, TRUE::BOOLEAN)
+  expect:
+    rows:
+    - person_id: -93101
+      reporting_date: '2026-03-31'
+      is_in_numerator: true
+    - person_id: -93104
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_dementia_ind118_cohort_boundaries
+  model: fct_person_dementia_baseline_tests_ind118_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-93101::NUMBER, '2026-03-31'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93101::NUMBER, '2026-04-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93102::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93103::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93104::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR)
+  - input: ref('int_nice_dementia_baseline_tests_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE AS diagnosis_date, column4::DATE AS ind118_fbc_date, column5::DATE AS ind118_calcium_date, column6::DATE AS ind118_glucose_date, column7::DATE AS ind118_renal_date, column8::DATE AS ind118_liver_date, column9::DATE AS ind118_thyroid_date, column10::DATE AS ind118_b12_date, column11::DATE AS ind118_folate_date, column12::DATE AS ind118_latest_record_date, column13::BOOLEAN AS has_ind118_all_tests
+      FROM VALUES
+          (-93101::NUMBER, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, TRUE::BOOLEAN),
+          (-93101::NUMBER, '2026-04-30'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, '2026-03-31'::DATE, TRUE::BOOLEAN),
+          (-93102::NUMBER, '2026-09-30'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, '2014-04-01'::DATE, TRUE::BOOLEAN),
+          (-93103::NUMBER, '2026-09-30'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, '2014-03-31'::DATE, TRUE::BOOLEAN),
+          (-93104::NUMBER, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, '2026-09-30'::DATE, TRUE::BOOLEAN)
+  expect:
+    rows:
+    - person_id: -93101
+      reporting_date: '2026-03-31'
+      is_in_numerator: true
+    - person_id: -93101
+      reporting_date: '2026-04-30'
+      is_in_numerator: true
+    - person_id: -93102
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -93104
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history

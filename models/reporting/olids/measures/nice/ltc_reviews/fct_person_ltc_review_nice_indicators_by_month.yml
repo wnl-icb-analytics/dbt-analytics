@@ -1,9 +1,9 @@
 models:
 - name: fct_person_ltc_review_nice_indicators_by_month
   description: LTC review NICE results. One row per eligible person, indicator and completed month-end.
-    Covers IND104, IND110, IND139, IND142, IND191, IND195, IND223, IND265, IND266 and IND273. Each member
-    retains its own population, review window and documented limitations. IND104 uses the financial year
-    starting 1 April; IND223 uses a 24-month diagnosis cohort with a 12-month review deadline. IND266
+    Covers IND79, IND104, IND110, IND113, IND139, IND142, IND191, IND195, IND223, IND265, IND266 and IND273. Each
+    member retains its own population, review window and documented limitations. IND104 uses the financial
+    year starting 1 April; IND223 uses a 24-month diagnosis cohort with a 12-month review deadline. IND266
     uses the historical ethnicity interval at month-end. Dementia codes do not establish the face-to-face
     setting. An unachieved result may retain supporting review detail. Branches without a detail field
     emit typed nulls. Recalculated at monthly refresh for the last 60 completed month-ends using today's
@@ -13,7 +13,7 @@ models:
     prevent historical active rows. Current gender and test flags apply retrospectively. Register diagnosis
     state uses clinical and recorded dates. Review and test evidence uses its clinical date through month-end.
     Later corrections and current code-list changes can alter earlier results. Personalised care adjustments
-    are not applied.
+    are not applied. Includes IND113 with the NICE invitation non-response exclusion.
   config:
     meta:
       owner:
@@ -76,3 +76,9 @@ models:
     description: Whether the person meets the indicator on the reporting date
   - name: indicator_status
     description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+  - name: first_invitation_date
+    description: Supporting detail from IND113; null for other members.
+  - name: last_invitation_date
+    description: Supporting detail from IND113; null for other members.
+  - name: is_excluded_invitation_non_response
+    description: Supporting detail from IND113; null for other members.

@@ -1,0 +1,90 @@
+models:
+- name: fct_person_dementia_baseline_tests_ind118
+  description: >-
+    Dementia baseline tests (NICE IND118). One row per active, living, non-test person first diagnosed
+    with dementia on or after 1 April 2014. Achievement requires all eight baseline tests in the
+    inclusive twelve months ending at diagnosis. FBC, calcium, glucose (including HbA1c), renal, liver,
+    thyroid, B12 and folate tests use the lists documented in int_nice_dementia_baseline_tests_all.
+    FBC accepts a haemoglobin result (HB_COD), as glucose accepts HbA1c (NICE IND118).
+    Numeric results are not required. No personalised care adjustments apply. Lists are PCD FBC_COD,
+    HB_COD, CALC_COD, GLUC_COD, IFCCHBAM_COD, DCCTHBA1C_COD, UE_COD, CRE_COD, EGFR_COD, LFT_COD and
+    TFT_COD, and OPENCODELISTS ARDENS/B12_LEVEL and ARDENS/FOLATE_LEVEL.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind118
+      indicator:
+        id: IND118
+        type: MEASURE
+        category: DEMENTIA
+        clinical_domain: DEMENTIA
+        name_short: Dementia baseline tests
+        description_short: NICE IND118 dementia baseline tests. One row per active, living, non-test person
+          first diagnosed with dementia on or after 1 April 2014. Achievement requires all eight baseline
+          tests in the inclusive twelve months ending at diagnosis. FBC, calcium, glucose (including HbA1c),
+          renal, liver, thyroid, B12 and folate tests use the lists documented in int_nice_dementia_baseline_tests_all.
+          FBC accepts a haemoglobin result (HB_COD), as glucose accepts HbA1c (NICE IND118).
+          Numeric results are not required. No personalised care adjustments apply.
+        description_long: NICE IND118 dementia baseline tests. One row per active, living, non-test person
+          first diagnosed with dementia on or after 1 April 2014. Achievement requires all eight baseline
+          tests in the inclusive twelve months ending at diagnosis. FBC, calcium, glucose (including HbA1c),
+          renal, liver, thyroid, B12 and folate tests use the lists documented in int_nice_dementia_baseline_tests_all.
+          FBC accepts a haemoglobin result (HB_COD), as glucose accepts HbA1c (NICE IND118).
+          Numeric results are not required. No personalised care adjustments apply. Lists are PCD FBC_COD,
+          HB_COD, CALC_COD, GLUC_COD, IFCCHBAM_COD, DCCTHBA1C_COD, UE_COD, CRE_COD, EGFR_COD, LFT_COD
+          and TFT_COD, and OPENCODELISTS ARDENS/B12_LEVEL and ARDENS/FOLATE_LEVEL.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND118
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: reporting_date
+    description: Date used for eligibility and evidence.
+  - name: measurement_period_start
+    description: Start of the stated cohort or evidence period; see the model description for boundary
+      inclusion.
+  - name: latest_record_date
+    description: Latest qualifying evidence date; null when no qualifying evidence exists.
+  - name: is_in_denominator
+    description: Always true for every row.
+  - name: is_in_numerator
+    description: Whether the complete indicator rule is met.
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+  - name: diagnosis_date
+    description: First dementia diagnosis known by reporting date.
+  - name: fbc_date
+    description: Latest qualifying FBC or haemoglobin result (HB_COD); null when absent.
+  - name: calcium_date
+    description: Latest qualifying calcium test; null when absent.
+  - name: glucose_date
+    description: Latest qualifying glucose or HbA1c test (NICE IND118); null when absent.
+  - name: renal_date
+    description: Latest qualifying renal test; null when absent.
+  - name: liver_date
+    description: Latest qualifying liver test; null when absent.
+  - name: thyroid_date
+    description: Latest qualifying thyroid test; null when absent.
+  - name: b12_date
+    description: Latest qualifying b12 test; null when absent.
+  - name: folate_date
+    description: Latest qualifying folate test; null when absent.
+  - name: person_id
+    description: Person in the indicator denominator.
+  - name: indicator_id
+    description: NICE indicator identifier.
+  - name: indicator_name
+    description: Published NICE indicator name.
+  - name: age
+    description: Completed years at reporting date, based on the approximate birth date.
+  - name: current_practice_code
+    description: Registration practice ODS code at reporting date.
+  - name: current_practice_name
+    description: Registration practice name at reporting date.
