@@ -224,7 +224,7 @@ event; registration, survival, condition membership, age and exclusions are asse
 build date or month-end.
 
 These rules apply to IND80, IND88, IND104, IND113, IND121, IND122, IND123, IND149, IND161,
-IND196, IND197, IND198, IND199, IND200, IND202, IND222, IND223, IND234 and
+IND196, IND197, IND198, IND199, IND200, IND202, IND220, IND221, IND222, IND223, IND234 and
 IND319. IND178, IND192, IND210 and IND272 also require completed follow-up periods. IND104
 uses a rolling 12-month diagnosis cohort ending 35 days before the build date or month-end.
 Its start date is excluded and its end date is included.
