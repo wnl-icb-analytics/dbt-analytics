@@ -1,24 +1,23 @@
 models:
 - name: fct_person_nice_overweight_register_by_month
-  description: 'NICE overweight-or-above, one row per registered, living, non-test adult register member
-    at each completed month-end. Uses the shared int_bmi_all classification: Overweight or any obese class,
-    from the latest numeric recorded or calculated BMI in (R - 12 months, R]. BMI must be 10 to 150 kg/m^2
-    inclusive; an invalid latest numeric result excludes membership without an older valid fallback. Value-free
-    or unparseable records are not results. Calculated BMI uses adult weight and the latest prior adult
-    height, on the weight date; recorded BMI takes precedence on that date. Lower category thresholds
-    apply only to the NG246 higher-risk ethnic groups identified by int_ethnicity_cardiometabolic_risk,
-    using the equivalent int_ethnicity_qof_all.is_bame event flag. Any higher-risk record known by R takes
-    precedence over other ethnicity records. Unknown ethnicity uses standard thresholds. Overweight starts
-    at 23 kg/m^2 for higher-risk groups and 25 otherwise; obesity starts at 27.5 and 30 respectively.
-    This differs from the NICE indicator wording, which gives lower thresholds to everyone not recorded
-    as White. BMI and ethnicity require clinical and recorded dates on or before R; null recorded dates
-    use the clinical date. Calculated BMI becomes known only when both its weight and contributing height
-    are known. Age is assessed at R. BMI30_COD alone does not supply a numeric value. Recalculated for
-    the last 60 completed month-ends using current rules, code lists and retained records. Registration
-    and practice follow the monthly spine. Approximate birth and death dates and current test flags apply;
-    later corrections can change earlier membership.
-    History uses today''s BMI selection, so a later backdated height or recorded BMI can change
-    an earlier month''s calculated BMI.'
+  description: >-
+    Overweight or obesity register (NICE IND237). One row per register member per completed
+    month-end.
+
+
+    People registered at the month-end, aged 18 or over, qualify when their latest numeric
+    recorded or calculated BMI in the 12 months before the month-end indicates overweight or
+    obesity. Valid BMI is 10 to 150 kg/m^2 inclusive; an invalid latest result excludes
+    membership without an older valid fallback. Calculated BMI uses adult weight and the latest
+    prior adult height; recorded BMI takes precedence on the weight date. Calculated BMI counts
+    only once both weight and height are known. BMI30_COD without a number does not qualify.
+    Overweight starts at 23 kg/m^2 for NG246 higher-risk ethnic groups and 25 otherwise; obesity
+    starts at 27.5 and 30 respectively. Any higher-risk ethnicity known by the month-end takes
+    precedence; unknown ethnicity uses standard thresholds. NICE lowers thresholds for everyone
+    not recorded as White. BMI and ethnicity require clinical and recorded dates by the month-end; missing recorded dates use clinical dates. Birth and death dates are approximate.
+    Recalculated for each of the last 60 month-ends with current rules, code lists and records,
+    so later corrections can change past months. Based on NICE NG246. Code lists: BMIVAL_COD,
+    HEIGHT, WEIGHT.
   config:
     meta:
       owner:
@@ -35,28 +34,48 @@ models:
     data_tests:
     - not_null
   - name: month_end_date
-    description: Reference date R used to assess membership.
+    description: >-
+      Month-end used to assess register membership.
     data_tests:
     - not_null
   - name: age
-    description: Age in completed years at R, derived from approximate birth date.
+    description: >-
+      Age in completed years at the month-end, derived from approximate birth date.
   - name: practice_code
-    description: Practice at R using the established active population or historical spine attribution.
+    description: >-
+      Practice attributed from the monthly registration records at the month-end.
   - name: is_on_register
-    description: True for every row; only eligible register members are retained.
+    description: >-
+      True for every row; only eligible register members are included. Registration and
+      approximate death dates are assessed at the month-end; current test flags apply to all
+      months.
   - name: latest_bmi_date
-    description: Clinical date of the latest numeric recorded or calculated BMI known by R, within (R
-      - 12 months, R].
+    description: >-
+      Clinical date of the latest numeric recorded or calculated BMI known by the month-end, in
+      the preceding 12 months. The date exactly 12 months earlier is excluded; the month-end is
+      included. Clinical and recorded dates must both be on or before the month-end; missing
+      recorded dates use clinical dates. Calculated BMI counts only once both weight and
+      contributing height are known.
   - name: bmi_value
-    description: Selected BMI in kg/m^2, within 10 to 150 inclusive. An invalid latest numeric result
-      excludes membership; value-free or unparseable records are not results.
+    description: >-
+      Selected BMI in kg/m^2, between 10 and 150 inclusive. An invalid latest numeric result
+      excludes membership; records without a value or with an unparseable value are not results.
+      BMI30_COD alone does not supply a numeric value.
   - name: bmi_source
-    description: Recorded BMI or calculated BMI on the weight date using the latest prior adult height,
-      from int_bmi_all.
+    description: >-
+      Recorded BMI or calculated BMI on the weight date using the latest prior adult height,
+      from the shared BMI records. Recorded BMI takes precedence on that date. A later backdated
+      height or recorded BMI can change an earlier month's calculated BMI.
   - name: requires_lower_bmi_thresholds
-    description: True when any NG246 higher-risk ethnicity record is known by R. False includes unknown
+    description: >-
+      True when any NG246 higher-risk ethnicity record is known by the month-end, even if a
+      later record gives another ethnicity. Clinical and recorded dates must both be on or
+      before the month-end; missing recorded dates use clinical dates. False includes unknown
       ethnicity and uses standard thresholds.
   - name: bmi_category
-    description: Shared NG246 adult BMI category at R, using BMI and higher-risk ethnicity known by R.
+    description: >-
+      Shared NG246 adult BMI category at the month-end, using BMI and higher-risk ethnicity
+      known by the month-end. Overweight starts at 23 kg/m^2 for higher-risk groups and 25
+      otherwise; obesity starts at 27.5 and 30 respectively.
   - name: bmi_risk_sort_key
     description: 'Shared category risk order: overweight 3, obese class I 4, class II 5, class III 6.'
