@@ -1,0 +1,76 @@
+models:
+- name: fct_person_antithrombotic_therapy_ind133_by_month
+  description: "NICE IND133 antiplatelet or anticoagulant treatment after stroke or TIA. One row per registered,\
+    \ living, non-test person and completed month-end on the stroke or transient ischaemic\nattack (TIA)\
+    \ register with recorded non-haemorrhagic stroke or TIA, assessed on the\nbuild date.\n\nAchievement\
+    \ requires antiplatelet or oral anticoagulant treatment recorded in the\npreceding 12 months. Prescriptions,\
+    \ recorded over-the-counter salicylate use,\nclopidogrel prophylaxis and oral anticoagulant prophylaxis\
+    \ count.\n\nUnspecified stroke alone does not qualify; a separate haemorrhagic stroke does not\nremove\
+    \ qualifying non-haemorrhagic stroke or TIA. Excludes contraindications to all\nfour classes: salicylates,\
+    \ oral anticoagulants, clopidogrel and dipyridamole.\nPersisting contraindications count at any time\
+    \ and expiring contraindications for 12\nmonths.\n\nPersonalised care adjustments are not applied.\n\
+    \ Recalculated at monthly refresh for the last 60 completed month-ends using today's rules and code\
+    \ lists. Registration and practice use the existing monthly spine: start inclusive, end and death\
+    \ exclusive, with current-registration priority for overlaps. Birth and death dates are approximate;\
+    \ missing birth dates prevent historical active rows. Current gender and test flags apply retrospectively.\
+    \ Register and diagnosis state use clinical and recorded dates. Other evidence uses clinical or order\
+    \ dates through the month-end. Later corrections and code-list changes can alter earlier results.\
+    \ Personalised care adjustments are not applied."
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind133-stroke-and-ischaemic-attack-anti-platelet-or-anticoagulation
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence; DATE, with no current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at the month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at the month-end under the monthly spine attribution.
+  - name: latest_antiplatelet_order_date
+    description: Date of the most recent antiplatelet order; null if never ordered Selected through the
+      month-end; stale detail remains available.
+  - name: latest_anticoagulant_order_date
+    description: Date of the most recent oral anticoagulant order; null if never ordered Selected through
+      the month-end; stale detail remains available.
+  - name: latest_anticoagulant_type
+    description: DOAC, VKA or OTHER_ANTICOAGULANT for the selected oral anticoagulant order through the
+      month-end. Null when no order exists. The highest order id wins same-date ties under coordinator
+      ruling C4.
+  - name: latest_antiplatelet_record_date
+    description: Latest recorded OTC salicylate use (OSAL_COD) or clopidogrel prophylaxis (CLO_COD); null
+      if none Selected through the month-end; stale detail remains available.
+  - name: latest_anticoagulant_record_date
+    description: Latest oral anticoagulant prophylaxis record from ORANTICOAG_COD; null if none Selected
+      through the month-end; stale detail remains available.
+  - name: is_antiplatelet_in_period
+    description: Whether an antiplatelet order, OTC salicylate use or clopidogrel prophylaxis record falls
+      in the measurement period
+  - name: is_anticoagulant_in_period
+    description: Whether an oral anticoagulant order or prophylaxis record falls in the measurement period
+      for IND132 and IND133. IND94 uses orders only and excludes these from its denominator
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or the reason not achieved
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

@@ -1,0 +1,84 @@
+models:
+- name: fct_person_atrial_fibrillation_ind247_by_month
+  description: "NICE IND247 DOAC or vitamin K antagonist treatment in atrial fibrillation. One row\nper\
+    \ currently registered, living, non-test person on the atrial fibrillation\nregister with a latest\
+    \ CHA2DS2-VASc score of 2 or more, assessed at the month-end.\n\nAchievement requires a direct-acting\
+    \ oral anticoagulant (DOAC) prescription in the\npreceding six months. Valvular AF requires a vitamin\
+    \ K antagonist (VKA) instead.\nAntiphospholipid syndrome permits either treatment.\n\nA VKA also counts\
+    \ after a DOAC contraindication at any time, a DOAC decline in 12\nmonths, or a DOAC not-indicated\
+    \ record in 12 months with latest non-null time in\ntherapeutic range at least 65% in six months.\
+    \ QOF v51 AF008 defines these exception\nwindows.\n\nPersonalised care adjustments are not applied.\n\
+    \ Recalculated at monthly refresh for the last 60 completed month-ends using today's rules and code\
+    \ lists. Registration and practice use the existing monthly spine: start inclusive, end and death\
+    \ exclusive, with current-registration priority for overlaps. Birth and death dates are approximate;\
+    \ missing birth dates prevent historical active rows. Current gender and test flags apply retrospectively.\
+    \ Register and diagnosis state use clinical and recorded dates. Other evidence uses clinical or order\
+    \ dates through the month-end. Later corrections and code-list changes can alter earlier results.\
+    \ Personalised care adjustments are not applied."
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind247-atrial-fibrillation-doa-cs-and-vitamin-k-antagonists
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence; DATE, with no current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at the month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at the month-end under the monthly spine attribution.
+  - name: latest_chadsvasc_score
+    description: Last recorded CHA2DS2-VASc score, from 0 to 9; null when missing or invalid Selected
+      through the month-end; stale detail remains available.
+  - name: latest_chadsvasc_date
+    description: Date of the latest CHA2DS2-VASc assessment; null if none Selected through the month-end;
+      stale detail remains available.
+  - name: latest_chads2_score
+    description: Last CHADS2 score recorded before 1 April 2015, from 0 to 6; null when missing or invalid
+      Selected through the month-end; stale detail remains available.
+  - name: latest_anticoagulant_order_date
+    description: Date of the most recent oral anticoagulant order; null if never Selected through the
+      month-end; stale detail remains available.
+  - name: latest_anticoagulant_type
+    description: DOAC, VKA or OTHER_ANTICOAGULANT for the selected oral anticoagulant order through the
+      month-end. Null when no order exists. The highest order id wins same-date ties under coordinator
+      ruling C4.
+  - name: latest_doac_order_date
+    description: Date of the most recent DOAC order; null if never Selected through the month-end; stale
+      detail remains available.
+  - name: latest_vka_order_date
+    description: Date of the most recent vitamin K antagonist order; null if never Selected through the
+      month-end; stale detail remains available.
+  - name: is_doac_ineligible
+    description: Any record of valvular AF, which requires the VKA success criterion. Antiphospholipid
+      syndrome allows either DOAC or VKA success
+  - name: has_doac_exception
+    description: DOAC contraindication or antiphospholipid syndrome ever; DOAC declined in 12 months;
+      or DOAC not indicated in 12 months with latest non-null TTR at least 65% in six months
+  - name: latest_anticoagulant_review_date
+    description: Date of the latest anticoagulant medication review or AF annual review record; null if
+      none Selected through the month-end; stale detail remains available.
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or the reason not achieved
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

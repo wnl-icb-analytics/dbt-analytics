@@ -1,0 +1,39 @@
+models:
+- name: int_nice_alcohol_evidence
+  description: NICE alcohol evidence, one row per candidate person and current evaluation date. HTN, DEP,
+    ANX, SMI, CHD, AF, HF, STIA, DM or DEM register members, plus ages 10 to 17 with a first/new depression
+    diagnosis known by that date. The child route is a candidate superset; indicators apply resolution
+    state. Candidates use the common active, living, non-test NICE population. Clinical evidence is capped
+    at reporting_date. Dates remain available outside indicator windows; null dates mean no qualifying
+    evidence by that date.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Candidate person with potential NICE evidence uses.
+  - name: reporting_date
+    description: DATE at which candidate selection and evidence are assessed. Current stored dates are
+      relabelled by nice_ref on read.
+  - name: latest_alcohol_screen_date
+    description: Latest alcohol screen, including an assessment without a valid score.
+  - name: latest_alcohol_screen_tool
+    description: FAST, AUDIT-C or AUDIT, selected by timestamp then observation id within the latest day.
+  - name: latest_alcohol_screen_score
+    description: Valid score for the selected tool; null when missing or outside its valid range.
+  - name: is_latest_alcohol_screen_positive
+    description: FAST score at least 3, AUDIT-C at least 5 or AUDIT at least 8 within the valid tool range;
+      false when missing.
+  - name: latest_positive_alcohol_screen_date
+    description: Latest positive FAST or AUDIT-C screen. Full AUDIT does not qualify for this anchor.
+  - name: latest_intervention_after_positive_screen_date
+    description: Latest accepted intervention in [selected positive screen, selected positive screen plus
+      three calendar months], capped at reporting_date. Null when none. This uses the latest positive
+      screen; indicators needing any pair use int_nice_alcohol_screen_intervention.

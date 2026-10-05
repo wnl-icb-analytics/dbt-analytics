@@ -59,7 +59,7 @@ models:
           - not_null
           - accepted_values:
               arguments:
-                values:
+                values: &nice_indicator_status_values
                   - ACHIEVED
                   - ABOVE_TARGET
                   - NOT_RECORDED_IN_PERIOD
@@ -69,3 +69,67 @@ models:
                   - VKA_WITHOUT_DOAC_EXCEPTION
                   - DOAC_WHERE_VKA_INDICATED
                   - OUT_OF_RANGE
+
+  - name: fct_person_nice_indicator_status_by_month
+    description: |
+      Monthly NICE indicator results. One row per eligible person, indicator and
+      completed month-end, covering the last 60 completed months. People must be
+      registered, living and non-test at month-end and meet the indicator's
+      population rules. Includes achieved and unachieved results, without
+      personalised care adjustments. Family tables and individual measures
+      provide readings, thresholds and supporting evidence. Join def_indicator
+      on indicator_id for clinical definitions and categories.
+
+      Monthly refresh recalculates all dates using today's rules and code lists.
+      This is retained evidence assessed retrospectively, rather than the results
+      practices saw at the time. Register state uses clinical and recorded dates;
+      other evidence uses clinical or order dates through month-end. Later source
+      corrections and code-list changes can alter earlier results.
+
+      Registration and practice follow the existing monthly spine, including its
+      preference for current registrations when intervals overlap. Registration
+      start is inclusive; registration end and death dates are exclusive. Birth
+      and death dates are approximate. Missing birth dates prevent historical
+      active rows. Current gender and test flags apply retrospectively, and source
+      retention limits earlier coverage. Each indicator retains its documented
+      proxy limitations, including IND219's COVID immunosuppression proxy and
+      incomplete shingles-specific anaphylaxis exclusion. No current-day row is
+      included.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - indicator_id
+              - reporting_date
+    columns:
+      - name: person_id
+        description: Person in the indicator denominator at month-end.
+      - name: indicator_id
+        description: NICE indicator identifier, matching the 105 current measure definitions.
+      - name: indicator_name
+        description: Published NICE indicator name.
+      - name: reporting_date
+        description: Completed month-end on which population and evidence are assessed. DATE.
+      - name: measurement_period_start
+        description: Inclusive start of the indicator's rolling, financial-year or selected-season period.
+      - name: age
+        description: Completed years at month-end, calculated from the approximate birth month.
+      - name: practice_code
+        description: ODS code of the registration practice attributed at month-end.
+      - name: practice_name
+        description: Name of the registration practice attributed at month-end.
+      - name: is_in_denominator
+        description: Always true; an eligible person before personalised care adjustments.
+      - name: is_in_numerator
+        description: Whether the person meets the indicator at month-end.
+      - name: indicator_status
+        description: ACHIEVED when in the numerator; otherwise the same reason tokens as the current status table.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: *nice_indicator_status_values

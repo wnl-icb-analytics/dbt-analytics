@@ -1,0 +1,36 @@
+models:
+  - name: int_ccms_medication_orders_all
+    description: |
+      Medication orders matching the Cambridge Comorbidity Score dm+d list, one
+      row per order and matching CCMS condition. Includes inactive and deceased
+      people and all dates, including future-dated orders as in the existing
+      CCMS extraction. Orders without a clinical date are excluded. Consumers
+      apply their own date caps, lookback windows, age rules and condition definitions.
+      The same order may match several conditions; counts within a condition use
+      the medication order key. The extraction remains a view to preserve the
+      existing column types.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [medication_order_id, conditionid]
+    columns:
+      - name: person_id
+        description: Person receiving the medication order.
+        data_tests: [not_null]
+      - name: medication_order_id
+        description: Source OLIDS medication order identifier.
+        data_tests: [not_null]
+      - name: order_date
+        description: Clinical date of the medication order; no current lookback is applied.
+        data_tests: [not_null]
+      - name: mapped_concept_code
+        description: Mapped dm+d code matched to the Cambridge medication list.
+      - name: conditionid
+        description: Cambridge condition identifier supplied by the medication list.
+        data_tests: [not_null]
+      - name: conditionname
+        description: Cambridge condition label supplied by the medication list.

@@ -1,0 +1,49 @@
+models:
+- name: int_nice_physical_health_evidence
+  description: NICE physical health evidence, one row per candidate person and current evaluation date.
+    DM or SMI register members, or people with a lithium order in (reporting_date minus six months, reporting_date]
+    recorded by that date. Recent orders are a candidate superset; IND87 applies its stop rule independently
+    of SMI. Candidates use the common active, living, non-test NICE population. Clinical evidence is capped
+    at reporting_date. Dates remain available outside indicator windows; null dates mean no qualifying
+    evidence by that date.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Candidate person with potential NICE evidence uses.
+  - name: reporting_date
+    description: DATE at which candidate selection and evidence are assessed. Current stored dates are
+      relabelled by nice_ref on read.
+  - name: latest_bmi_date
+    description: Latest valid BMI recording (10 to 150 kg/m2), or valid adult calculated BMI. Coded BMI30
+      alone does not count.
+  - name: latest_blood_pressure_date
+    description: Latest valid complete systolic/diastolic pair under int_blood_pressure_all, distinct
+      from NICE BP-control result selection.
+  - name: latest_total_cholesterol_date
+    description: Latest total-cholesterol test with a numeric cholesterol_value.
+  - name: latest_cholesterol_hdl_ratio_date
+    description: Latest cholesterol/HDL ratio with a numeric ratio.
+  - name: latest_lipid_date
+    description: Latest numeric total, HDL, LDL, non-HDL, triglyceride or ratio test, or completed NONVALCHOL_COD
+      test without a numeric result.
+  - name: latest_glucose_or_hba1c_date
+    description: Latest performed blood-glucose or HbA1c test, including tests without numeric results.
+  - name: latest_alcohol_record_date
+    description: Latest alcohol units, usage or screening-tool record.
+  - name: latest_lithium_level_date
+    description: Latest serum lithium record. Timestamp, recorded-result flag and observation id decide
+      ties within the day.
+  - name: latest_lithium_level
+    description: Selected serum lithium result in mmol/L; null when no record or the selected record has
+      no numeric result.
+  - name: is_latest_lithium_level_in_range
+    description: Whether the selected lithium result is 0.4 to 1.0 mmol/L inclusive; false when missing.

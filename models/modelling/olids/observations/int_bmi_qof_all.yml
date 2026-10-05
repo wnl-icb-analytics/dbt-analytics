@@ -1,0 +1,40 @@
+models:
+  - name: int_bmi_qof_all
+    description: >
+      QOF BMI observations used by the obesity register: numeric BMI values
+      (BMIVAL_COD) and BMI30+ codes (BMI30_COD, read as 30). One row per observation
+      with a BMI value. is_valid_bmi marks values from 5 to 400.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: BMI30_COD, BMIVAL_COD
+            source: PCD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - id
+              - source_cluster_id
+    columns:
+      - name: id
+        description: Observation identifier.
+        data_tests:
+          - not_null
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: date_recorded
+        description: Date the observation was entered in the record.
+      - name: bmi_value
+        description: BMI in kg/m²; BMI30_COD codes are read as 30.
+      - name: is_valid_bmi
+        description: BMI between 5 and 400.
+      - name: is_bmi_30_plus
+        description: BMI30_COD code or BMI of 30 or more.
+      - name: is_bmi_27_5_plus
+        description: BMI of 27.5 or more; the obesity threshold for people from ethnic groups at higher cardiometabolic risk.
+      - name: is_bmi_25_plus
+        description: BMI of 25 or more.

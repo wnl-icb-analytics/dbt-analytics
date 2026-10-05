@@ -1,0 +1,37 @@
+models:
+  - name: int_substance_misuse_all
+    description: |
+      Classified ILLSUB_COD observations, one row per observation, for all people
+      including inactive and deceased people. No age floor applies. Clinical dates
+      use the shared observation correction and exclude future records at build.
+      The substance_misuse_illsub_status seed distinguishes qualifying misuse or
+      dependence from resolving negation, abstinence or remission. Unmapped codes
+      retain the reviewed QUALIFYING default; the existing seed-coverage test
+      detects missing classifications. Historical diagnosis state also uses the
+      recorded date. This model does not select a current status.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: ILLSUB_COD
+    columns:
+      - name: id
+        description: Source observation identifier.
+        data_tests: [not_null, unique]
+      - name: person_id
+        description: Person with this substance misuse observation.
+      - name: clinical_effective_date
+        description: Corrected clinical timestamp used to order the diagnosis state.
+      - name: date_recorded
+        description: Recorded timestamp; a null falls back to the clinical date for known-date selection.
+      - name: concept_code
+        description: Mapped SNOMED CT concept code used for seed classification.
+      - name: concept_display
+        description: Mapped SNOMED CT concept label.
+      - name: status
+        description: QUALIFYING or RESOLVING classification; QUALIFYING wins at an equal clinical timestamp.
+      - name: category
+        description: Seed category; null for a code absent from the classification seed.

@@ -40,7 +40,10 @@ select
     , referral_acuity
     , referral_acuity_desc
     , spec_comm_flag
-    , spec_comm
+    , spec_comm_code
+    , spec_comm_desc
+    , pss_service_line_code
+    , pss_service_line_desc
     , core_hrg_code
     , core_hrg_desc
     , core_hrg_chapter

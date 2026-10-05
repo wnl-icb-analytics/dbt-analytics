@@ -2,15 +2,15 @@ models:
   - name: fct_person_copd_register
     description: 'QOF COPD register v107 per v51 business rules.
 
-      One row per person on the COPD register. Disorder codes count at any date; administrative codes count only when recorded in the preceding two years. This breaks count comparability with v50. The register rules remain:
+      One row per person on the COPD register. Disorder codes count at any date on or before today; administrative codes count only when dated after the two-year boundary and on or before today. This breaks count comparability with v50. The register rules remain:
       
       Rule 1: Pre-April 2023 diagnosis - automatic inclusion
       
       Rule 2: Post-April 2023 + spirometry <0.7 within -93 to +186 days of diagnosis
       
-      Rule 3: Post-April 2023 + newly registered + spirometry <0.7 within -93 to +186 days of registration
+      Rule 3: Post-April 2023 + latest registration start in the last 12 months + spirometry <0.7 within -93 to +186 days of that registration
       
-      Rule 4: Post-April 2023 remaining - all included (no spirometry required)'
+      Rule 4: Post-April 2023 remaining - all included (no spirometry required). Spirometry evidence is dated on or before today and uses an unrounded ratio <0.7 or a coded result, with no lower limit.'
 
     tests:
       - dbt_utils.at_least_one:
@@ -60,10 +60,13 @@ models:
             COPD register v107 per QOF v51 business rules. Rule 1: Automatic inclusion for
             diagnoses before 01/04/2023. Rule 2: Post-April 2023 with spirometry FEV1/FVC
             <0.7 within -93 to +186 days of diagnosis. Rule 3: Newly registered (last 12
-            months) with spirometry within -93 to +186 days of registration. Rule 4: All
+            months), using the latest registration start on or before today, with
+            spirometry within -93 to +186 days of that registration. Rule 4: All
             remaining post-April 2023 diagnoses are included. COPDDIAG_COD disorder
-            codes count at any date. COPDPROC_COD administrative codes count only in
-            the preceding two years. COPDRES_COD supplies resolved codes, and the
+            codes count at any date on or before today. COPDPROC_COD administrative
+            codes count only after the two-year boundary and on or before today.
+            Spirometry uses an unrounded ratio <0.7 or a coded result, with no lower
+            limit. COPDRES_COD supplies resolved codes, and the
             change means counts are not comparable with v50.
           is_qof: true
           qof_indicator: "COPD007"

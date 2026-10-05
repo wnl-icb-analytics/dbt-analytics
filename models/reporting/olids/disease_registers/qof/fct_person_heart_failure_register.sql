@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_heart_failure_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- Clinical evidence is bounded by today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -98,6 +98,7 @@ WITH heart_failure_diagnoses AS (
         ) AS all_resolved_concept_codes
 
     FROM {{ ref('int_heart_failure_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 

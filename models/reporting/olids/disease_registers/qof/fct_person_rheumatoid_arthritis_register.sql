@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_rheumatoid_arthritis_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- Evidence is bounded by today. The PIT pair evaluates supplied reference dates.
 
 {{
     config(
@@ -17,7 +17,7 @@ Clinical Purpose:
 - Disease activity monitoring and treatment pathway identification
 - Inflammatory arthritis care pathway
 
-QOF v50 RA_REG (CQRS 001):
+QOF v51 RA_REG (CQRS 001):
 - Any RA diagnosis code (RARTH_COD)
 - Age ≥16 at the reference date (PAT_AGE at ACHV_DAT, not age at diagnosis)
 - No resolution codes (simple diagnosis-based register)
@@ -52,6 +52,7 @@ WITH ra_diagnoses AS (
         ARRAY_AGG(DISTINCT ID::VARCHAR) AS all_IDs
 
     FROM {{ ref('int_rheumatoid_arthritis_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -59,7 +60,7 @@ register_inclusion AS (
     SELECT
         rd.*,
 
-        -- Age at the reference date (current), per QOF PAT_AGE at ACHV_DAT
+        -- Age supplied by the current age dimension
         age.age AS age_at_reference,
 
         -- Age at first diagnosis (approximation, for analytics/traceability only)

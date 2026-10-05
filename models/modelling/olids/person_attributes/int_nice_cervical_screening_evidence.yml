@@ -1,0 +1,49 @@
+models:
+- name: int_nice_cervical_screening_evidence
+  description: NICE cervical screening and pregnancy evidence. One row per active, living, non-test female
+    person aged 25-64 and reference date. No screening, cervix-removal or pregnancy exclusion removes
+    a candidate; indicators apply their own exclusions and 42/60/66-month numerator windows. Completed
+    screening remains available after later declined or unsuitable records. Clinical screening dates are
+    capped at the reference day. Pregnancy timestamps retain the existing point-date midnight cap.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Female person aged 25-64 in the common active, living, non-test NICE population.
+  - name: reporting_date
+    description: Date at which age, population membership and evidence are assessed.
+  - name: latest_completed_date
+    description: Latest completed screen by the reference date, independently of later declined or unsuitable
+      records. Null means none.
+  - name: latest_screening_date
+    description: Latest clinical screening record of any type by the reference date. Null means none.
+  - name: programme_status
+    description: Supporting programme status using the existing unsuitable precedence and 1277-day interval
+      for ages 25-49 or 2007 days for ages 50-64. NICE indicators apply their own month-based numerator
+      windows.
+  - name: latest_unsuitable_date
+    description: Latest unsuitable-screening record by the reference date. Null means none.
+  - name: latest_declined_date
+    description: Latest declined-screening record by the reference date. Null means none.
+  - name: latest_non_response_date
+    description: Latest non-response-to-three-invitations record by the reference date. Consumers apply
+      their own strict lower screening-window boundary. Null means none.
+  - name: first_cervix_removal_date
+    description: First complete cervix removal by the reference date. Null means no removal yet.
+  - name: latest_pregnancy_date
+    description: Latest pregnancy-code timestamp at or before midnight on the reference date. Null means
+      none.
+  - name: latest_delivery_date
+    description: Latest delivery or pregnancy-outcome timestamp at or before midnight on the reference
+      date. Null means none.
+  - name: is_currently_pregnant
+    description: Pregnancy record in the preceding nine calendar months and strictly later than any delivery/outcome
+      record, matching the point-date pregnancy_status_history rule.

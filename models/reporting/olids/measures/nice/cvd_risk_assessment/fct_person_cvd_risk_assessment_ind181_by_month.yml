@@ -1,0 +1,60 @@
+models:
+- name: fct_person_cvd_risk_assessment_ind181_by_month
+  description: "NICE IND181 CVD risk assessment in type 2 diabetes. One row per currently\nregistered,\
+    \ living, non-test person aged 25 to 84 on the type 2 diabetes register\nwith no moderate or severe\
+    \ coded frailty and no statin prescription in the preceding\nsix months, assessed at the month-end.\n\
+    \nAchievement requires a cardiovascular disease (CVD) risk assessment in the preceding\nthree years.\
+    \ A coded assessment can count without a numeric score.\n\nExcludes established CVD, including haemorrhagic\
+    \ stroke, familial\nhypercholesterolaemia and stage 3 to 5 chronic kidney disease.\n\nPersonalised\
+    \ care adjustments are not applied.\n Recalculated at monthly refresh for the last 60 completed month-ends\
+    \ using today's rules and code lists. Registration and practice use the existing monthly spine: start\
+    \ inclusive, end and death exclusive, with current-registration priority for overlaps. Birth and death\
+    \ dates are approximate; missing birth dates prevent historical active rows. Current gender and test\
+    \ flags apply retrospectively. Register and diagnosis state use clinical and recorded dates. Other\
+    \ evidence uses clinical or order dates through the month-end. Later corrections and code-list changes\
+    \ can alter earlier results. Personalised care adjustments are not applied."
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind181-diabetes-cvd-risk-assessment
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence; DATE, with no current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at the month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at the month-end under the monthly spine attribution.
+  - name: latest_risk_score
+    description: Latest valid QRISK score in percent; null if none Selected through the month-end; stale
+      detail remains available.
+  - name: latest_risk_score_date
+    description: Date of the latest valid QRISK score Selected through the month-end; stale detail remains
+      available.
+  - name: latest_risk_assessment_date
+    description: Date of the latest CVD risk assessment record, scored or not Selected through the month-end;
+      stale detail remains available.
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether a risk assessment falls in the indicator's window
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

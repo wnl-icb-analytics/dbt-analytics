@@ -1,0 +1,67 @@
+models:
+- name: fct_person_childhood_immunisation_ind218_by_month
+  description: |
+    NICE IND218 MMR vaccination by age five. One row per eligible child and completed month-end. The
+    child must be registered, living and non-test at that date, with the approximate fifth birthday
+    in (month-end minus 12 months, month-end].
+
+    Achieved with at least one MMR or MMRV dose from the first birthday up to, but not including,
+    the fifth. Doses count distinct administration or vaccine order dates at source event ages 1 to
+    4 in completed years. Missing event age uses the approximate first and fifth birthdays. The
+    fifth-birthday population milestone still uses the approximate birth date.
+
+    Excludes recorded vaccine contraindications as the current proxy for confirmed anaphylaxis. No
+    authorised code sets for confirmed vaccine/component anaphylaxis or immunocompromise exist in
+    this project. The separate NICE immunocompromise exclusion remains incomplete.
+
+    Recalculated at monthly refresh for the last 60 completed month-ends using today's rules and
+    code lists. Registration and practice use the existing monthly spine. Registration start is
+    inclusive; registration end and death dates are exclusive. Overlapping registrations retain the
+    spine's current-registration priority. Birth and death dates are approximate; missing birth
+    dates prevent historical active rows. Current gender and test flags apply retrospectively.
+    Diagnosis state uses clinical and recorded dates. Vaccine evidence uses clinical or order dates
+    through the month-end. Later corrections and code-list changes can alter earlier results.
+    Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind218
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+  - name: measurement_period_start
+    description: Exclusive lower boundary of the preceding 12-month milestone cohort.
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Registration practice at the month-end under the existing monthly spine attribution.
+  - name: practice_name
+    description: Registration practice at the month-end under the existing monthly spine attribution.
+  - name: birth_date_approx
+    description: Approximate birth date (mid-month)
+  - name: milestone_date
+    description: Date the child reached the indicator's milestone age, which falls in the preceding 12
+      months
+  - name: doses_in_window
+    description: Distinct administration dates for the indicator's vaccine within its age window
+  - name: is_in_denominator
+    description: Always true; every row is an eligible child before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the child received the required doses within the age window
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

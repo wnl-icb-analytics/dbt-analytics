@@ -20,9 +20,9 @@ WITH base_observations AS (
         obs.date_recorded,
         -- Normalise: values >1 are percentages (e.g. 70 = 0.70)
         CASE
-            WHEN CAST(obs.result_value AS NUMBER(10,3)) > 1.0
-                THEN CAST(obs.result_value AS NUMBER(10,3)) / 100.0
-            ELSE CAST(obs.result_value AS NUMBER(10,3))
+            WHEN obs.result_value > 1.0
+                THEN obs.result_value / 100.0
+            ELSE obs.result_value
         END AS fev1_fvc_ratio,
         CAST(obs.result_value AS NUMBER(10,3)) AS fev1_fvc_ratio_raw,
         obs.result_unit_display,
@@ -31,7 +31,7 @@ WITH base_observations AS (
         obs.cluster_id AS source_cluster_id,
         obs.result_value AS original_result_value
 
-    FROM ({{ get_observations("'FEV1FVC_COD', 'FEV1FVCL70_COD'") }}) obs
+    FROM ({{ get_observations("'FEV1FVC_COD', 'FEV1FVCL70_COD'", source='PCD') }}) obs
     WHERE obs.clinical_effective_date IS NOT NULL
 )
 
