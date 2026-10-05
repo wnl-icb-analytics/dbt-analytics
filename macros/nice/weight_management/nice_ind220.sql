@@ -8,7 +8,7 @@
 WITH population AS (
     SELECT population.person_id, population.reporting_date, population.age,
         population.practice_code, population.practice_name,
-        evidence.latest_bmi_date, evidence.bmi_value, evidence.bmi_source,
+        evidence.latest_bmi_date, evidence.bmi_value, evidence.bmi_source, evidence.earliest_qualifying_bmi_date,
         evidence.requires_lower_bmi_thresholds, evidence.bmi_category,
         evidence.timely_referral_date, evidence.timely_offer_date, evidence.timely_decline_date,
         evidence.latest_referral_date, evidence.latest_attendance_date, evidence.latest_end_date,
@@ -24,9 +24,9 @@ WITH population AS (
     FROM population
 )
 SELECT person_id, 'IND220' AS indicator_id,
-    'Weight management referral offer for obesity' AS indicator_name,
+    'Weight management: referral to weight management programmes for obesity' AS indicator_name,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Obesity' AS condition_name,
+    age, 'Obesity, aged 18 or over' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     latest_bmi_date, bmi_value, bmi_source, requires_lower_bmi_thresholds, bmi_category,
     timely_referral_date, timely_offer_date, timely_decline_date,
@@ -35,6 +35,7 @@ SELECT person_id, 'IND220' AS indicator_id,
     latest_record_date, TRUE AS is_in_denominator, is_in_numerator,
     IFF(is_in_numerator, 'ACHIEVED', 'NOT_RECORDED_IN_PERIOD') AS indicator_status
 FROM assessed AS result
--- Achievement precedes exclusions, so timely referrals and programme starts cannot remove achievers.
-WHERE is_in_numerator OR (NOT is_currently_attending AND NOT has_previous_referral)
+-- Timely achievement overrides programme exclusions after the earliest follow-up window closes.
+WHERE DATEADD(day, 90, earliest_qualifying_bmi_date) <= reporting_date
+    AND (is_in_numerator OR (NOT is_currently_attending AND NOT has_previous_referral))
 {% endmacro %}

@@ -44,6 +44,16 @@ WITH population AS (
         AND bmi.known_date <= population.reporting_date
     WHERE {{ bmi_category('bmi.bmi_value', 'population.requires_lower_bmi_thresholds') }} LIKE 'Obese%'
     GROUP BY population.person_id, population.reporting_date, bmi.bmi_date
+), first_qualifying_bmi AS (
+    SELECT person_id, reporting_date,
+        {% if reference == 'current' %}
+        -- Current measures retain the evidence snapshot but assess cohort expiry today.
+        MIN(IFF(bmi_date > DATEADD(month, -12, CURRENT_DATE()::DATE), bmi_date, NULL))
+        {% else %}
+        MIN(bmi_date)
+        {% endif %} AS earliest_qualifying_bmi_date
+    FROM anchors
+    GROUP BY person_id, reporting_date
 ), timely AS (
     SELECT anchors.person_id, anchors.reporting_date,
         MAX(IFF(events.is_referral, events.event_date, NULL)) AS timely_referral_date,
@@ -73,6 +83,14 @@ WITH population AS (
 SELECT population.person_id, population.reporting_date,
     population.latest_bmi_date, population.bmi_value, population.bmi_source,
     population.requires_lower_bmi_thresholds, population.bmi_category,
+    -- The register supplies a qualifying BMI even when its event is absent from the retained input.
+    COALESCE(first_bmi.earliest_qualifying_bmi_date,
+        {% if reference == 'current' %}
+        IFF(population.latest_bmi_date > DATEADD(month, -12, CURRENT_DATE()::DATE)
+            AND population.latest_bmi_date <= CURRENT_DATE()::DATE, population.latest_bmi_date, NULL)
+        {% else %}
+        population.latest_bmi_date
+        {% endif %}) AS earliest_qualifying_bmi_date,
     timely.timely_referral_date, timely.timely_offer_date, timely.timely_decline_date,
     status_dates.latest_referral_date, status_dates.latest_attendance_date, status_dates.latest_end_date,
     status_dates.latest_referral_date IS NOT NULL AS has_previous_referral,
@@ -80,6 +98,8 @@ SELECT population.person_id, population.reporting_date,
         AND (status_dates.latest_end_date IS NULL OR status_dates.latest_end_date <= status_dates.latest_attendance_date)
         AS is_currently_attending
 FROM population
+LEFT JOIN first_qualifying_bmi AS first_bmi ON population.person_id = first_bmi.person_id
+    AND population.reporting_date = first_bmi.reporting_date
 LEFT JOIN timely ON population.person_id = timely.person_id
     AND population.reporting_date = timely.reporting_date
 LEFT JOIN status_dates ON population.person_id = status_dates.person_id
