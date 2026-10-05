@@ -1,10 +1,17 @@
 -- A selected definition without a category falls back to the newest category published for the code, e.g. H2,
 -- whose preferred MHSDS-list definition has none.
 with fallback_category as (
-    select code, max_by(category, source_effective_from_at) as category
+    select code, category
     from {{ ref('mhsds_source_of_referral_history') }}
     where category is not null
-    group by code
+    qualify row_number() over (
+        partition by code
+        order by
+            source_effective_from_at desc nulls last,
+            source_code_set_name = 'Source_Of_Referral_For_Mental_Health_Services_Data_Set' desc,
+            source_imported_at desc,
+            source_unique_key
+    ) = 1
 ),
 
 ranked as (
