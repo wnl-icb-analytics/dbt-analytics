@@ -1,28 +1,29 @@
 unit_tests:
 - name: nice_hiv_registration_cohort_known_dates_test_bounds_and_expiry
   model: fct_person_hiv_test_at_registration_ind210_by_month
+  overrides:
+    macros:
+      nice_reference_population: |-
+        SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age,
+        column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code,
+        column7::VARCHAR AS practice_name, column8::DATE AS registration_start_date FROM VALUES (-96101,
+        '2026-08-31', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2025-06-30'), (-96101,
+        '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2025-06-30'), (-96102,
+        '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2025-06-30'), (-96103,
+        '2026-09-30', 16, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96104,
+        '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-07-01'), (-96105,
+        '2026-09-30', 15, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96106,
+        '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96107,
+        '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96108,
+        '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96109,
+        '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96110,
+        '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96111,
+        '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96112,
+        '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96113,
+        '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-05-31'), (-96114,
+        '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-05-31'), (-96114,
+        '2026-08-31', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-05-31')
   given:
-  - input: ref('int_nice_reference_population_by_month')
-    format: sql
-    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age,
-      column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code,
-      column7::VARCHAR AS practice_name, column8::DATE AS registration_start_date FROM VALUES (-96101,
-      '2026-08-31', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2025-06-30'), (-96101,
-      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2025-06-30'), (-96102,
-      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2025-06-30'), (-96103,
-      '2026-09-30', 16, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96104,
-      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-07-01'), (-96105,
-      '2026-09-30', 15, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96106,
-      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96107,
-      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96108,
-      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96109,
-      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96110,
-      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96111,
-      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96112,
-      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96113,
-      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-05-31'), (-96114,
-      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-05-31'), (-96114,
-      '2026-08-31', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-05-31')
   - input: ref('int_hiv_diagnoses_all')
     format: sql
     rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date, column3::DATE
