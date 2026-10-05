@@ -8,6 +8,7 @@
 Indicator usage reference table.
 Tracks where each indicator is used (dashboards, reports, etc.).
 Simple mapping without additional details.
+The post-hook stores daily-grain history and repairs duplicate current versions.
 */
 
 {%- set metadata = extract_indicator_metadata() -%}

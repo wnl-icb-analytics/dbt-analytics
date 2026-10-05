@@ -85,7 +85,12 @@ foot_status AS (
         MAX(CASE WHEN source_cluster_id = 'CONABL_COD' THEN TRUE ELSE FALSE END) AS left_foot_absent,
         MAX(CASE WHEN source_cluster_id = 'CONABR_COD' THEN TRUE ELSE FALSE END) AS right_foot_absent,
         MAX(CASE WHEN source_cluster_id = 'AMPL_COD' THEN TRUE ELSE FALSE END) AS left_foot_amputated,
-        MAX(CASE WHEN source_cluster_id = 'AMPR_COD' THEN TRUE ELSE FALSE END) AS right_foot_amputated
+        MAX(CASE WHEN source_cluster_id = 'AMPR_COD' THEN TRUE ELSE FALSE END) AS right_foot_amputated,
+        -- History compares these first clinical dates with its reference date.
+        MIN(IFF(source_cluster_id = 'CONABL_COD', clinical_effective_date::DATE, NULL)) AS first_left_foot_absent_date,
+        MIN(IFF(source_cluster_id = 'CONABR_COD', clinical_effective_date::DATE, NULL)) AS first_right_foot_absent_date,
+        MIN(IFF(source_cluster_id = 'AMPL_COD', clinical_effective_date::DATE, NULL)) AS first_left_foot_amputated_date,
+        MIN(IFF(source_cluster_id = 'AMPR_COD', clinical_effective_date::DATE, NULL)) AS first_right_foot_amputated_date
     FROM foot_observations_tagged
     GROUP BY person_id
 ),
@@ -220,7 +225,11 @@ SELECT
         WHEN cd.left_foot_risk_level = 'Low' OR cd.right_foot_risk_level = 'Low' THEN 'Low Risk'
         WHEN cd.left_foot_checked OR cd.right_foot_checked THEN 'Risk Not Specified'
         ELSE 'No Valid Examination'
-    END AS diabetes_foot_risk_category
+    END AS diabetes_foot_risk_category,
+    fs.first_left_foot_absent_date,
+    fs.first_right_foot_absent_date,
+    fs.first_left_foot_amputated_date,
+    fs.first_right_foot_amputated_date
 
 FROM check_details cd
 LEFT JOIN foot_status fs ON cd.person_id = fs.person_id

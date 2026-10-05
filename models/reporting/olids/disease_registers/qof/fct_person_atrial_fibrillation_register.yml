@@ -2,8 +2,8 @@ models:
   - name: fct_person_atrial_fibrillation_register
     description: 'QOF atrial fibrillation register for patients with active AF diagnosis.
 
-      One row per person with latest AFIB_COD > latest AFIBRES_COD or no resolution
-      recorded.'
+      One row per person with an AFIB_COD diagnosis and no AFIBRES_COD on or
+      after that date. Evidence is dated on or before today; a same-date resolution removes membership.'
 
     tests:
       - dbt_utils.at_least_one:
@@ -20,8 +20,9 @@ models:
           description_short: "QOF atrial fibrillation register"
           description_long: >
             Atrial fibrillation diagnosed using QOF criteria: Active AF diagnosis
-            where  latest atrial fibrillation code is more recent than any resolution
-            code, or  no resolution recorded. No age restrictions apply. Maps to QOF
+            with no resolution on or after the latest AFIB_COD diagnosis date. Evidence
+            is dated on or before today; a same-date resolution removes membership.
+            No age restrictions apply. Maps to QOF
             indicator  AF006 (Atrial Fibrillation Register). Uses AFIB_COD for diagnosis
             codes and  AFIBRES_COD for resolution codes.
           is_qof: true

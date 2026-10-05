@@ -1,0 +1,33 @@
+models:
+- name: int_antithrombotic_treatment_all
+  description: Recorded OTC salicylate use, clopidogrel prophylaxis and oral anticoagulant prophylaxis
+    from PCD. One row per observation and cluster, including inactive and deceased people. Corrected clinical
+    dates between 1 January 1990 and the build date establish taken treatment for IND94/132/133, not anticoagulant
+    prescribing for AF.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+        - source_cluster_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: OSAL_COD,CLO_COD,ORANTICOAG_COD
+        source: PCD
+  columns:
+  - name: id
+    description: Source observation identifier.
+  - name: person_id
+    description: Person with this observation.
+  - name: clinical_effective_date
+    description: Clinical timestamp after shared source date correction.
+  - name: clinical_effective_date_raw
+    description: Original clinical timestamp; null means undated source evidence.
+  - name: date_recorded
+    description: Source recorded timestamp.
+  - name: source_cluster_id
+    description: PCD cluster establishing the recorded treatment.

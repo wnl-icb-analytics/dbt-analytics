@@ -1,6 +1,5 @@
 -- Pair: macros/qof_registers/calculate_obesity2_register.sql.
--- This live fact includes future-dated records. Its PIT pair is strict as-of
--- and derives age at the reference date rather than using current age.
+-- Evidence is bounded by today. The PIT pair evaluates supplied reference dates.
 
 {{
     config(
@@ -9,8 +8,8 @@
 }}
 
 /*
-QOF v51 OBES2 register. The live register intentionally includes future-dated
-records; pit_obesity2_register applies the same rules at a supplied date.
+QOF v51 OBES2 register, using evidence dated on or before today.
+pit_obesity2_register applies the same rules at a supplied date.
 */
 
 WITH bmi_status AS (
@@ -25,7 +24,8 @@ WITH bmi_status AS (
                 THEN clinical_effective_date
         END) AS latest_bmi_32_5_date
     FROM {{ ref('int_obesity2_bmi_all') }}
-    WHERE clinical_effective_date > DATEADD(month, -12, CURRENT_DATE())
+    WHERE CAST(clinical_effective_date AS DATE) > DATEADD(month, -12, CURRENT_DATE())
+        AND CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -37,6 +37,7 @@ ethnicity_status AS (
             WHEN is_lower_bmi_threshold_ethnicity THEN clinical_effective_date
         END) AS latest_lower_threshold_ethnicity_date
     FROM {{ ref('int_obesity2_ethnicity_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -49,6 +50,7 @@ obesity2_diagnosis_status AS (
             WHEN is_obstructive_sleep_apnoea_code THEN clinical_effective_date
         END) AS earliest_obstructive_sleep_apnoea_date
     FROM {{ ref('int_obesity2_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -60,6 +62,7 @@ hypertension_status AS (
         MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END)
             AS latest_hypertension_resolved_date
     FROM {{ ref('int_hypertension_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -71,16 +74,18 @@ diabetes_status AS (
         MAX(CASE WHEN is_diabetes_resolved_code THEN clinical_effective_date END)
             AS latest_diabetes_resolved_date
     FROM {{ ref('int_diabetes_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
 latest_lipid_tests AS (
     SELECT *
     FROM {{ ref('int_obesity2_lipids_all') }}
-    WHERE clinical_effective_date > DATEADD(month, -12, CURRENT_DATE())
+    WHERE CAST(clinical_effective_date AS DATE) > DATEADD(month, -12, CURRENT_DATE())
+        AND CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY person_id, source_cluster_id
-        ORDER BY clinical_effective_date DESC, id DESC
+        ORDER BY CAST(clinical_effective_date AS DATE) DESC, id DESC
     ) = 1
 ),
 
@@ -109,6 +114,7 @@ lipid_therapy_status AS (
         MAX(order_date) AS latest_lipid_therapy_date
     FROM {{ ref('int_obesity2_lipid_lowering_medications_all') }}
     WHERE order_date > DATEADD(month, -6, CURRENT_DATE())
+        AND order_date <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -135,7 +141,7 @@ criteria AS (
         lipid.latest_hdl_date,
         lipid.latest_hdl_value,
         COALESCE(
-            eth.latest_ethnicity_date = eth.latest_lower_threshold_ethnicity_date,
+            CAST(eth.latest_ethnicity_date AS DATE) = CAST(eth.latest_lower_threshold_ethnicity_date AS DATE),
             FALSE
         ) AS has_lower_bmi_threshold_ethnicity,
         diag.earliest_ascvd_date IS NOT NULL AS has_ascvd,
@@ -143,8 +149,8 @@ criteria AS (
             hyp.latest_hypertension_date IS NOT NULL
             AND (
                 hyp.latest_hypertension_resolved_date IS NULL
-                OR hyp.latest_hypertension_date
-                    >= hyp.latest_hypertension_resolved_date
+                OR CAST(hyp.latest_hypertension_date AS DATE)
+                    >= CAST(hyp.latest_hypertension_resolved_date AS DATE)
             ),
             FALSE
         ) AS has_unresolved_hypertension,
@@ -168,8 +174,8 @@ criteria AS (
             dm.latest_type2_diabetes_date IS NOT NULL
             AND (
                 dm.latest_diabetes_resolved_date IS NULL
-                OR dm.latest_type2_diabetes_date
-                    >= dm.latest_diabetes_resolved_date
+                OR CAST(dm.latest_type2_diabetes_date AS DATE)
+                    >= CAST(dm.latest_diabetes_resolved_date AS DATE)
             ),
             FALSE
         ) AS has_unresolved_type2_diabetes

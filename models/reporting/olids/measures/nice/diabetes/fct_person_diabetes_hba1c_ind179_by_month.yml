@@ -1,0 +1,69 @@
+models:
+- columns:
+  - description: Person in the indicator denominator
+    name: person_id
+  - description: NICE indicator identifier
+    name: indicator_id
+  - description: Published NICE indicator name
+    name: indicator_name
+  - description: Completed month-end at which eligibility and evidence are assessed.
+    name: reporting_date
+  - description: Inclusive start of the measurement period before the reporting date
+    name: measurement_period_start
+  - description: Completed years at month-end from the approximate birth month.
+    name: age
+  - description: Population defining the indicator
+    name: condition_name
+  - description: ODS practice code at month-end under the monthly spine attribution.
+    name: practice_code
+  - description: Practice name at month-end under the monthly spine attribution.
+    name: practice_name
+  - description: Latest coded frailty severity from the frailty register; null when none recorded
+    name: latest_frailty_severity
+  - description: Selected source observation; null when no HbA1c falls in the period
+    name: latest_hba1c_observation_id
+  - description: Date of the last recorded HbA1c in the period; null when none
+    name: latest_record_date
+  - description: Last recorded HbA1c in IFCC mmol/mol, converted from DCCT where needed; null when none
+      or unusable
+    name: latest_hba1c_value
+  - description: Whether the last recorded HbA1c is within the plausible range; false when none
+    name: is_latest_hba1c_valid
+  - description: Inclusive upper HbA1c threshold in mmol/mol for this indicator
+    name: indicator_threshold
+  - description: mmol/mol
+    name: threshold_unit
+  - description: Whether any HbA1c falls in the period, including invalid results
+    name: is_hba1c_recorded_in_period
+  - description: Always true; every row is an eligible person before personalised care adjustments
+    name: is_in_denominator
+  - description: Whether the person meets the indicator on the reporting date
+    name: is_in_numerator
+  - description: ACHIEVED or the reason not achieved
+    name: indicator_status
+  config:
+    meta:
+      clinical_source: https://www.nice.org.uk/indicators/ind179
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  description: "NICE IND179. HbA1c control at 58 mmol/mol in diabetes without moderate or\nsevere frailty.\
+    \ One row per registered at the month-end, living, non-test person on\nthe diabetes register without\
+    \ moderate or severe frailty, assessed on the\ncompleted month-end.\n\nAchievement requires the last\
+    \ recorded HbA1c in the preceding 12 months to\nbe valid and at or below 58 mmol/mol. A value-free\
+    \ or invalid last result\nis unassessable and is not replaced by an older result. A valid result on\
+    \ the\nsame date takes precedence.\n\nPeople with fructosamine but no HbA1c test in the period, or\
+    \ with maximum\ntolerated diabetes treatment recorded in the period, are excluded.\n\nPersonalised\
+    \ care adjustments are not applied.\n Recalculated for the last 60 completed month-ends using today's\
+    \ rules and code lists. Registration and practice use the existing monthly spine, with registration\
+    \ start inclusive and registration end and death exclusive. Overlapping registrations retain the spine's\
+    \ current-registration priority. Birth and death dates are approximate; missing birth dates prevent\
+    \ historical active rows. Current gender and test flags apply retrospectively. Diagnosis state uses\
+    \ clinical and recorded dates; test and BP evidence use their clinical dates through month-end. Later\
+    \ corrections can alter earlier results. Personalised care adjustments are not applied."
+  name: fct_person_diabetes_hba1c_ind179_by_month

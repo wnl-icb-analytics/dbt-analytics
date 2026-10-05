@@ -1,0 +1,60 @@
+models:
+- name: fct_person_ckd_ras_therapy_ind263_by_month
+  description: |
+    NICE IND263. One row per eligible, active, living, non-test person and completed month-end.
+    CKD register members with latest recorded ACR at least 70 mg/mmol and no diabetes. An ACE inhibitor or ARB order in the inclusive preceding six calendar months achieves the indicator.
+
+    Recalculated at monthly refresh for the last 60 completed month-ends using today's
+    rules and code lists. Registration and practice use the existing monthly spine.
+    Registration start is inclusive; registration end and death dates are exclusive.
+    Overlapping registrations retain the spine's current-registration priority.
+    Birth and death dates are approximate. Missing birth dates prevent historical
+    active rows. Current gender and test flags apply retrospectively. CKD and other
+    register states use clinical and recorded dates. Other evidence uses its corrected
+    clinical or order date through month-end. Later corrections and code-list changes
+    can alter earlier results. Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind263
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at month-end under the monthly spine attribution.
+  - name: latest_egfr_value
+    description: Latest eGFR in ml/min/1.73m2; null when none
+  - name: latest_acr_value
+    description: Latest urine ACR in mg/mmol; null when none
+  - name: latest_therapy_order_date
+    description: Latest counted therapy order on or before month-end, including stale evidence. Null when
+      never ordered by that date.
+  - name: latest_record_date
+    description: Date of the latest qualifying record in the period; null when none
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED, NOT_TREATED_IN_PERIOD (an order more than 6 months ago) or NEVER_TREATED
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

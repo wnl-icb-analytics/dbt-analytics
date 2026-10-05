@@ -8,15 +8,19 @@ models:
       obstructive sleep apnoea or severe mental illness, assessed on the build
       date.
 
-      Achievement requires a recorded BMI value in the preceding 12 months.
+      Achievement requires any valid recorded or calculated BMI in the preceding
+      12 months (10 to 150 kg/m2 inclusive), even if a later or same-day BMI is
+      invalid. A window containing only invalid BMIs is NOT_ASSESSABLE; no BMI
+      in the window is NOT_RECORDED_IN_PERIOD. Adult calculated BMI uses the
+      weight date and the latest preceding adult height.
 
       Dyslipidaemia follows QOF v51.3: lipid-lowering treatment in six months, or
       the latest result in 12 months with LDL at least 4.1 mmol/L, triglycerides
       at least 1.7 mmol/L, or HDL below 1.0 mmol/L for males or 1.3 mmol/L for
       females. Unknown sex cannot qualify through HDL alone. An invalid latest
       lipid result does not fall back to an older result. Non-diabetic
-      hyperglycaemia represents NICE's high-risk diabetes population; a validated
-      diabetes-risk score paired with raised glycaemia is not available.
+      hyperglycaemia is an incomplete proxy for NICE's high-risk diabetes population.
+      A validated diabetes-risk score paired with raised glycaemia is not available.
 
       Personalised care adjustments are not applied.
     config:
@@ -37,15 +41,19 @@ models:
             hypertension, PAD, heart failure, COPD, dyslipidaemia, learning disability,
             obstructive sleep apnoea or severe mental illness, assessed on the build date.
 
-            Achievement requires a recorded BMI value in the preceding 12 months.
+            Achievement requires any valid recorded or calculated BMI in the preceding
+            12 months (10 to 150 kg/m2 inclusive), even if a later or same-day BMI is
+            invalid. A window containing only invalid BMIs is NOT_ASSESSABLE; no BMI
+            in the window is NOT_RECORDED_IN_PERIOD. Adult calculated BMI uses the
+            weight date and the latest preceding adult height.
 
             Dyslipidaemia follows QOF v51.3: lipid-lowering treatment in six months, or
             the latest result in 12 months with LDL at least 4.1 mmol/L, triglycerides at
             least 1.7 mmol/L, or HDL below 1.0 mmol/L for males or 1.3 mmol/L for females.
             Unknown sex cannot qualify through HDL alone. An invalid latest lipid result
-            does not fall back to an older result. Non-diabetic hyperglycaemia represents
-            NICE's high-risk diabetes population; a validated diabetes-risk score paired
-            with raised glycaemia is not available.
+            does not fall back to an older result. Non-diabetic hyperglycaemia is an
+            incomplete proxy for NICE's high-risk diabetes population. A validated
+            diabetes-risk score paired with raised glycaemia is not available.
 
             Measured before personalised care adjustments.
           is_qof: false
@@ -76,15 +84,19 @@ models:
       - name: current_practice_name
         description: Name of the current registration practice
       - name: latest_bmi_date
-        description: Date of the latest BMI value, regardless of period; null if none
+        description: Date of the latest valid recorded or calculated BMI, regardless of period; null if none is valid
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: Date of the latest valid BMI in the period; null when none is valid
       - name: is_in_denominator
         description: Always true; every row is an eligible person before personalised care adjustments
       - name: is_in_numerator
         description: Whether the person meets the indicator on the reporting date
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: ACHIEVED for any valid BMI in the period, NOT_ASSESSABLE for invalid-only evidence, or NOT_RECORDED_IN_PERIOD for no BMI evidence
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_ASSESSABLE', 'NOT_RECORDED_IN_PERIOD']
 
   - name: fct_person_bmi_recording_ind320_snapshot_input
     description: |

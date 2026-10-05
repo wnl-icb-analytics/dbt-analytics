@@ -1,0 +1,59 @@
+models:
+- name: fct_person_shingles_vaccination_ind219_by_month
+  description: NICE IND219. One row per active, living, non-test eligible person and completed month-end.
+    People whose approximate 75th birthday is in (month-end minus 12 months, month-end]. Achieved by any
+    shingles administration between the approximate 70th and 75th birthdays, inclusive. Retains the earliest
+    qualifying dose even if a later dose is outside the window. Excludes the reconstructed current COVID
+    immunosuppression proxy at LEAST(month-end, configured autumn campaign audit end), including before
+    September 2024. This is not an authorised shingles-specific immunocompromise definition. The specified
+    anaphylaxis exclusion remains unimplemented. The 75th-birthday upper bound retains the local interpretation.
+    Recalculated for the last 60 completed month-ends with today's rules and code lists. Registration
+    and practice use the existing monthly spine. Registration starts are inclusive; ends and deaths are
+    exclusive. Overlapping registrations retain the spine's current-registration priority. Birth and death
+    dates are approximate; missing birth dates prevent historical active rows. Current gender and test
+    flags apply retrospectively. Diagnosis membership uses clinical and recorded dates; other evidence
+    uses its clinical or order date through month-end. Later corrections and code-list changes can alter
+    earlier results. Personalised care adjustments are not applied. The five-year source retention policy
+    can limit older evidence.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind219
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end at which eligibility and evidence are assessed.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at month-end under the shared spine attribution.
+  - name: practice_name
+    description: Practice name at month-end under the shared spine attribution.
+  - name: seventy_fifth_birthday
+    description: Approximate 75th birthday, which falls in the preceding 12 months
+  - name: first_dose_70_to_75_date
+    description: Earliest shingles vaccination between the 70th and 75th birthdays; null if none
+  - name: latest_record_date
+    description: Earliest qualifying shingles vaccination date; null if none
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

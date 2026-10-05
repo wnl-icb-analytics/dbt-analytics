@@ -1,0 +1,61 @@
+models:
+  - name: int_nice_multimorbidity_categories
+    description: |
+      NICE IND207 multimorbidity category membership on the build date. One row per
+      person, reporting date and qualifying category, without a registration, living or age filter.
+      Measures select their active population and count categories, not diagnoses.
+
+      Retains the existing project register definitions and alcohol-disorder flag.
+      Adds Crohn's disease and ulcerative colitis from PCD, unclassified inflammatory
+      bowel disease from OpenSAFELY, anorexia or bulimia
+      disorder concepts within PCD EATDISORDER_COD, substance misuse state from
+      classified ILLSUB observations, and the Bristol multimorbidity connective tissue
+      disorder set (RA, other inflammatory polyarthropathies and systemic connective
+      tissue disorders). Bronchiectasis uses explicitly named bronchiectasis concepts
+      within the QCovid combined cystic fibrosis/bronchiectasis set. Supplemental
+      diagnosis evidence must have both clinical and recorded dates on or before
+      the reporting date; a null recorded date uses the clinical date. It has no
+      lookback limit. Substance state uses the latest clinical timestamp known by
+      that date, with QUALIFYING winning equal-timestamp ties, then the highest id.
+      A later resolving record removes membership.
+
+      Chronic pain requires four distinct analgesic prescription issues or four
+      antiepileptic issues in the preceding 12 months. The latter route requires no
+      epilepsy diagnosis code at any date up to today, including diagnoses subsequently
+      resolved. Epilepsy does not exclude the analgesic route. Cambridge dm+d conditions
+      5065 and 5066 specify analgesics excluding migraine medicines and antiepileptics
+      excluding benzodiazepines. Constipation requires four laxative issues (Cambridge condition 5071) in the same inclusive
+      period. Future issues do not count. These reuse int_ccms_medication_orders_all
+      code sets without the Cambridge score's age floor or combined condition rules.
+
+      Diverticular disease remains unrepresented because no source-backed code set
+      was found. Register age/treatment restrictions and the existing alcohol flag's
+      event-age floor remain inherited limitations. Category coverage is conservative.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+        clinical_source: https://www.nice.org.uk/indicators/ind207
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, reporting_date, category_code]
+    columns:
+      - name: person_id
+        description: Person with evidence in this category.
+        data_tests:
+          - not_null
+      - name: category_code
+        description: NICE IND207 category; each category contributes at most once per person.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [CANCER, CHRONIC_PAIN, CIRCULATORY, DIABETES, DIGESTIVE, LEARNING_DISABILITY, MENTAL_HEALTH, MUSCULOSKELETAL, NEUROLOGICAL, RENAL, RESPIRATORY]
+      - name: has_existing_evidence
+        description: Whether the category is supported by the existing project registers or alcohol-disorder flag.
+      - name: has_additional_evidence
+        description: Whether the category is supported by the supplemental IND207 diagnosis or prescribing rules.
+      - name: reporting_date
+        description: Evaluation date stored when the current category table is built.
+        data_tests: [not_null]

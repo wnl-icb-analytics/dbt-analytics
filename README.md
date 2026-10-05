@@ -130,6 +130,8 @@ For general dbt learning: [dbt Fundamentals](https://learn.getdbt.com/courses/db
 | [Working with Sources](docs/working-with-sources.md) | Adding sources, regenerating raw models, and handling drift |
 | [SLAM Data](docs/slam-data-guide.md) | Source-to-staging methodology for the SLAM contract feeds |
 | [SUS Models](docs/sus-models.md) | Secondary care (SUS) model structure |
+| [LTC and QOF registers](docs/ltc-registers.md) | Rule locations, version inventory and QOF upgrade checks |
+| [Monthly LTC register history](docs/ltc-register-history.md) | Month-end membership, population, rebuilds and interpretation |
 
 Older learning guides now live in [docs/archive/](docs/archive/), superseded by the onboarding site.
 

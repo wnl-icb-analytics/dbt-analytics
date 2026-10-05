@@ -1,0 +1,86 @@
+models:
+- name: fct_person_bp_control_pad_ind246_by_month
+  description: |
+    NICE IND246 blood pressure control in peripheral arterial disease. One row per registered,
+    living, non-test person aged 80 or over on the peripheral arterial disease register at
+    each completed month-end. Achievement requires the latest complete paired blood pressure
+    reading in the preceding 12 months to be strictly below 150/90 mmHg in clinic or 145/85
+    mmHg at home or on ambulatory monitoring. Both systolic and diastolic values must meet the
+    target.
+
+    The latest complete paired day is selected; incomplete days do not displace it. Valid
+    pairs win on that day, then lowest systolic, lowest diastolic and reading id ascending. An
+    invalid-only latest complete day is unassessable without fallback. Unparented components
+    use the existing plausible daily maxima and may combine different readings. Stale readings
+    remain visible but cannot achieve. Both thresholds are strict; the inclusive
+    12-calendar-month window includes its endpoints.
+
+    Recalculated at monthly refresh for the last 60 completed month-ends using today's rules and code lists.
+    Register diagnoses must be clinically dated and recorded by the month-end; null recorded
+    dates do not block eligible evidence. BP uses the clinical date through the month-end,
+    without a recorded-date reconstruction. Registration and practice use the existing monthly
+    spine, with inclusive starts and exclusive registration ends and death dates. Overlapping
+    registrations retain the spine's current-registration priority. Birth and death dates are
+    approximate; missing birth dates prevent historical active rows. Current gender and test
+    flags apply retrospectively. Later corrections and code-list changes can alter earlier
+    results. Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind246-peripheral-arterial-disease-blood-pressure-80-years-and-over
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end at which eligibility and evidence are assessed. No current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period, 12 calendar months before the reporting date
+  - name: age
+    description: Completed years at the month-end, calculated from the approximate birth month.
+  - name: practice_code
+    description: ODS practice code at the month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at the month-end under the monthly spine attribution.
+  - name: condition_name
+    description: Disease register defining the indicator population
+  - name: latest_bp_date
+    description: Date of the latest complete paired blood pressure reading; null when none is recorded
+  - name: is_valid_bp
+    description: Whether the selected complete pair is plausible; null when no complete pair exists
+  - name: latest_systolic_value
+    description: Latest systolic blood pressure in mmHg
+  - name: latest_diastolic_value
+    description: Latest diastolic blood pressure in mmHg
+  - name: is_home_bp_event
+    description: Whether the latest reading was recorded using home monitoring
+  - name: is_abpm_bp_event
+    description: Whether the latest reading was recorded using ambulatory monitoring
+  - name: applied_measurement_context
+    description: Clinic or HBPM/ABPM context of the latest reading
+  - name: indicator_systolic_threshold
+    description: Exclusive systolic threshold in mmHg specified by this indicator
+  - name: indicator_diastolic_threshold
+    description: Exclusive diastolic threshold in mmHg specified by this indicator
+  - name: is_in_denominator
+    description: Always true; every row represents a person in the unadjusted denominator
+  - name: is_bp_recorded_in_last_12m
+    description: Whether the latest BP was recorded between measurement_period_start and the reporting
+      date
+  - name: is_latest_bp_within_indicator_target
+    description: Whether the latest complete pair is valid and below both indicator thresholds, regardless
+      of recording date
+  - name: is_in_numerator
+    description: Whether a BP in the preceding 12 months is below both indicator thresholds
+  - name: indicator_status
+    description: ACHIEVED, NOT_RECORDED_IN_PERIOD, NOT_ASSESSABLE or ABOVE_TARGET
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

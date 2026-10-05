@@ -1,0 +1,39 @@
+models:
+- name: int_nice_immunosuppression_all
+  description: Event evidence for the existing NICE IND219 COVID immunosuppression proxy. One row per
+    source kind, source event and evidence type, including inactive and deceased people. Diagnosis, medication,
+    administration and chemotherapy/radiotherapy evidence use the configured current autumn campaign terminology
+    version. No campaign membership, age floor or season date cut-off is applied. This operational proxy
+    is not an authorised shingles-specific immunocompromise definition and does not supply a specific
+    anaphylaxis exclusion.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - source_kind
+        - source_event_id
+        - evidence_type
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: IMMDX_COV_COD,IMMRX_COD,IMM_ADM_COD,DXT_CHEMO_COD
+        source: UKHSA_COVID
+        versioned: true
+  columns:
+  - name: source_kind
+    description: OBSERVATION or MEDICATION_ORDER.
+  - name: source_event_id
+    description: Source observation or medication-order key. Unique with source kind and evidence type.
+  - name: person_id
+    description: Person with proxy evidence, regardless of current registration or vital status.
+  - name: evidence_date
+    description: Corrected clinical timestamp or medication-order timestamp. Undated observations retain
+      the existing 1900-01-01 sentinel. No campaign date cut-off is applied here.
+  - name: evidence_type
+    description: 'UKHSA_COVID cluster: IMMDX_COV_COD, IMMRX_COD, IMM_ADM_COD or DXT_CHEMO_COD.'
+  - name: terminology_version
+    description: Version supplied by the configured current autumn COVID campaign, applied to all historical
+      evidence.

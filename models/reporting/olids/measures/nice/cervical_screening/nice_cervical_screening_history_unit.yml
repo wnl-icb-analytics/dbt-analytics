@@ -1,0 +1,216 @@
+unit_tests:
+- name: nice_ind176_screen_precedence_expiry_and_exclusions
+  model: fct_person_cervical_screening_ind176_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -12001::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12001::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12002::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12002::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12003::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12003::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12004::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12004::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+  - input: ref('int_nice_cervical_screening_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT -12001::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, '2023-03-30'::TIMESTAMP_NTZ AS latest_completed_date, '2026-09-01'::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, '2026-09-01'::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12001::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, '2023-03-30'::TIMESTAMP_NTZ AS latest_completed_date, '2026-09-01'::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, '2026-09-01'::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12002::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, '2023-03-30'::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, '2023-03-30'::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12002::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, '2023-03-30'::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, '2023-03-30'::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12003::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, NULL::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, TRUE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12003::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, NULL::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, TRUE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12004::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, NULL::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12004::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, NULL::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, '2026-10-01'::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+  expect:
+    rows:
+    - person_id: -12001
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -12002
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -12002
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+    - person_id: -12004
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind177_screen_precedence_expiry_and_exclusions
+  model: fct_person_cervical_screening_ind177_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -12001::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 55::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12001::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, 55::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12002::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 55::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12002::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, 55::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12003::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 55::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12003::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, 55::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12004::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 55::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12004::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, 55::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+  - input: ref('int_nice_cervical_screening_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT -12001::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, '2021-03-30'::TIMESTAMP_NTZ AS latest_completed_date, '2026-09-01'::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, '2026-09-01'::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12001::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, '2021-03-30'::TIMESTAMP_NTZ AS latest_completed_date, '2026-09-01'::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, '2026-09-01'::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12002::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, '2021-03-30'::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, '2021-03-30'::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12002::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, '2021-03-30'::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, '2021-03-30'::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12003::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, NULL::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, TRUE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12003::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, NULL::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, TRUE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12004::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, NULL::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12004::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, NULL::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, '2026-10-01'::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+  expect:
+    rows:
+    - person_id: -12001
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -12002
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -12002
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+    - person_id: -12004
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind321_screen_precedence_expiry_and_exclusions
+  model: fct_person_cervical_screening_ind321_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -12001::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12001::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12002::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12002::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12003::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12003::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12004::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      UNION ALL
+      SELECT -12004::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+  - input: ref('int_nice_cervical_screening_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT -12001::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, '2021-03-30'::TIMESTAMP_NTZ AS latest_completed_date, '2026-09-01'::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, '2026-09-01'::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12001::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, '2021-03-30'::TIMESTAMP_NTZ AS latest_completed_date, '2026-09-01'::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, '2026-09-01'::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12002::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, '2023-03-30'::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, '2023-03-30'::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12002::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, '2023-03-30'::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, '2023-03-30'::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12003::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, NULL::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, TRUE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12003::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, NULL::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, TRUE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12004::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, NULL::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+      UNION ALL
+      SELECT -12004::NUMBER AS person_id, '2026-10-31'::DATE AS reporting_date, NULL::TIMESTAMP_NTZ AS latest_completed_date, NULL::TIMESTAMP_NTZ AS latest_screening_date, 'Never Screened'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, '2026-10-01'::TIMESTAMP_NTZ AS first_cervix_removal_date, FALSE AS is_currently_pregnant
+  expect:
+    rows:
+    - person_id: -12001
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      latest_record_date: '2021-03-30'
+    - person_id: -12001
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+      latest_record_date: null
+    - person_id: -12002
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      latest_record_date: null
+    - person_id: -12002
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+      latest_record_date: null
+    - person_id: -12003
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      latest_record_date: null
+    - person_id: -12003
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+      latest_record_date: null
+    - person_id: -12004
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      latest_record_date: null
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind176_current_previous_day_profile
+  model: fct_person_cervical_screening_ind176
+  given:
+  - input: ref('dim_person_active_patients')
+    format: sql
+    rows: SELECT -12099::NUMBER AS person_id, 'SYNTHETIC'::VARCHAR AS current_practice_code, 'Synthetic practice'::VARCHAR
+      AS current_practice_name
+  - input: ref('dim_person_age')
+    format: sql
+    rows: SELECT -12099::NUMBER AS person_id, 30::NUMBER AS age, '1996-03-15'::DATE AS birth_date_approx
+  - input: ref('dim_person_demographics')
+    format: sql
+    rows: SELECT -12099::NUMBER AS person_id, 'Female'::VARCHAR AS gender
+  - input: ref('int_nice_cervical_screening_evidence')
+    format: sql
+    rows: SELECT -12099::NUMBER AS person_id, DATEADD(day,-1,CURRENT_DATE())::DATE AS reporting_date, DATEADD(month,-1,CURRENT_DATE())::TIMESTAMP_NTZ
+      AS latest_completed_date, DATEADD(month,-1,CURRENT_DATE())::TIMESTAMP_NTZ AS latest_screening_date, 'Up to
+      Date'::VARCHAR AS programme_status, NULL::TIMESTAMP_NTZ AS latest_non_response_date, NULL::TIMESTAMP_NTZ AS
+      first_cervix_removal_date, FALSE AS is_currently_pregnant
+  expect:
+    rows:
+    - person_id: -12099
+      is_in_numerator: true
+      indicator_status: ACHIEVED
+  config:
+    tags:
+    - monthly-full
+    - nice-history

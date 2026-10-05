@@ -1,0 +1,28 @@
+models:
+- name: int_nice_alcohol_misuse_all
+  description: NICE alcohol-disorder exclusion observations from ALCOHOL_MISUSE_DISORDERS, with no age-at-event
+    floor. One row per observation. Includes inactive and deceased people. Dates use the source correction
+    and undated sentinel from get_observations; future clinical dates are excluded at build time.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: ALCOHOL_MISUSE_DISORDERS
+  columns:
+  - name: id
+    description: Source observation key.
+    data_tests:
+    - unique
+    - not_null
+  - name: person_id
+    description: Person with the observation.
+  - name: clinical_effective_date
+    description: Corrected clinical timestamp; undated observations use the established 1900-01-01 sentinel.
+  - name: date_recorded
+    description: Source entry timestamp, nullable. NICE alcohol exclusions use the corrected clinical
+      date under the agreed history policy.
+  - name: source_cluster_id
+    description: Code cluster that supplied the observation.

@@ -1,0 +1,73 @@
+models:
+- name: fct_person_antithrombotic_therapy_ind94_by_month
+  description: "NICE IND94 antiplatelet treatment in peripheral arterial disease. One row per registered,\
+    \ living, non-test person and completed month-end on the peripheral arterial disease\nregister without\
+    \ an oral anticoagulant prescription in the preceding 15 months,\nassessed at the month-end.\n\nAchievement\
+    \ requires an antiplatelet prescription or recorded over-the-counter\nsalicylate use or clopidogrel\
+    \ prophylaxis in the preceding 15 months.\n\nThe 15-month window also defines current anticoagulant\
+    \ treatment for the exclusion.\nNICE does not specify a separate window for that exclusion.\n\nPersonalised\
+    \ care adjustments are not applied.\n Recalculated at monthly refresh for the last 60 completed month-ends\
+    \ using today's rules and code lists. Registration and practice use the existing monthly spine: start\
+    \ inclusive, end and death exclusive, with current-registration priority for overlaps. Birth and death\
+    \ dates are approximate; missing birth dates prevent historical active rows. Current gender and test\
+    \ flags apply retrospectively. Register and diagnosis state use clinical and recorded dates. Other\
+    \ evidence uses clinical or order dates through the month-end. Later corrections and code-list changes\
+    \ can alter earlier results. Personalised care adjustments are not applied."
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind94-peripheral-arterial-disease-antiplatelets
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence; DATE, with no current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at the month-end under the monthly spine attribution.
+  - name: practice_name
+    description: Practice name at the month-end under the monthly spine attribution.
+  - name: latest_antiplatelet_order_date
+    description: Date of the most recent antiplatelet order; null if never ordered Selected through the
+      month-end; stale detail remains available.
+  - name: latest_anticoagulant_order_date
+    description: Date of the most recent oral anticoagulant order; null if never ordered Selected through
+      the month-end; stale detail remains available.
+  - name: latest_anticoagulant_type
+    description: DOAC, VKA or OTHER_ANTICOAGULANT for the selected oral anticoagulant order through the
+      month-end. Null when no order exists. The highest order id wins same-date ties under coordinator
+      ruling C4.
+  - name: latest_antiplatelet_record_date
+    description: Latest recorded OTC salicylate use (OSAL_COD) or clopidogrel prophylaxis (CLO_COD); null
+      if none Selected through the month-end; stale detail remains available.
+  - name: latest_anticoagulant_record_date
+    description: Latest oral anticoagulant prophylaxis record from ORANTICOAG_COD; null if none Selected
+      through the month-end; stale detail remains available.
+  - name: is_antiplatelet_in_period
+    description: Whether an antiplatelet order, OTC salicylate use or clopidogrel prophylaxis record falls
+      in the measurement period
+  - name: is_anticoagulant_in_period
+    description: Whether an oral anticoagulant order or prophylaxis record falls in the measurement period
+      for IND132 and IND133. IND94 uses orders only and excludes these from its denominator
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or the reason not achieved
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

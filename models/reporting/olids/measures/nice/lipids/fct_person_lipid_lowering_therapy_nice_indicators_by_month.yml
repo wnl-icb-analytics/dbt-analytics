@@ -1,0 +1,519 @@
+models:
+- name: fct_person_lipid_lowering_therapy_ind230_by_month
+  description: NICE IND230. One row per eligible person and completed month-end. All populations are active,
+    living and non-test at that date. CHD, stroke or TIA, or PAD register members, excluding any haemorrhagic-stroke
+    history. Achievement requires a statin or qualifying non-statin lipid-lowering prescription in the
+    inclusive preceding six calendar months. The latest prescription detail remains visible after treatment
+    expires. Null prescription detail means no counted order by that date. Recalculated monthly for the
+    last 60 completed month-ends using today's rules and code lists. Registers use clinical and recorded
+    dates; other evidence uses its clinical or order date through the month-end. Later corrections can
+    change earlier results. Registration and practice follow the existing monthly spine, including its
+    current-registration priority for overlaps. Birth and death dates are approximate; missing birth dates
+    prevent historical active rows. Current gender and test flags apply retrospectively. Personalised
+    care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind230-cardiovascular-disease-prevention-secondary-prevention-with-lipid-lowering-therapies
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and the treatment window
+  - name: measurement_period_start
+    description: Inclusive start of the six-month treatment window, six calendar months before the reporting
+      date
+  - name: age
+    description: Completed years at the month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS code of the registration practice at the month-end
+  - name: practice_name
+    description: Name of the registration practice at the month-end
+  - name: latest_lipid_lowering_order_date
+    description: Date of the most recent counted lipid-lowering order; null if never treated
+  - name: latest_lipid_lowering_class
+    description: Class of the most recent counted order; null if never treated
+  - name: latest_lipid_lowering_product
+    description: BNF product name of the most recent counted order; null if never treated
+  - name: is_latest_lipid_lowering_statin
+    description: Whether the most recent counted order contains a statin; null if never treated
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether a counted lipid-lowering order falls in the six-month window
+  - name: indicator_status
+    description: ACHIEVED, NOT_TREATED_IN_PERIOD or NEVER_TREATED
+- name: fct_person_lipid_lowering_therapy_ind231_by_month
+  description: NICE IND231. One row per eligible person and completed month-end. All populations are active,
+    living and non-test at that date. Stage 3 to 5 CKD register members aged 18 or over, excluding any
+    haemorrhagic-stroke history. Achievement requires a statin or qualifying non-statin lipid-lowering
+    prescription in the inclusive preceding six calendar months. The latest prescription detail remains
+    visible after treatment expires. Null prescription detail means no counted order by that date. Recalculated
+    monthly for the last 60 completed month-ends using today's rules and code lists. Registers use clinical
+    and recorded dates; other evidence uses its clinical or order date through the month-end. Later corrections
+    can change earlier results. Registration and practice follow the existing monthly spine, including
+    its current-registration priority for overlaps. Birth and death dates are approximate; missing birth
+    dates prevent historical active rows. Current gender and test flags apply retrospectively. Personalised
+    care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind231-kidney-conditions-ckd-and-lipid-lowering-therapies
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and the treatment window
+  - name: measurement_period_start
+    description: Inclusive start of the six-month treatment window, six calendar months before the reporting
+      date
+  - name: age
+    description: Completed years at the month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS code of the registration practice at the month-end
+  - name: practice_name
+    description: Name of the registration practice at the month-end
+  - name: latest_lipid_lowering_order_date
+    description: Date of the most recent counted lipid-lowering order; null if never treated
+  - name: latest_lipid_lowering_class
+    description: Class of the most recent counted order; null if never treated
+  - name: latest_lipid_lowering_product
+    description: BNF product name of the most recent counted order; null if never treated
+  - name: is_latest_lipid_lowering_statin
+    description: Whether the most recent counted order contains a statin; null if never treated
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether a counted lipid-lowering order falls in the six-month window
+  - name: indicator_status
+    description: ACHIEVED, NOT_TREATED_IN_PERIOD or NEVER_TREATED
+- name: fct_person_lipid_lowering_therapy_ind276_by_month
+  description: NICE IND276. One row per eligible person and completed month-end. All populations are active,
+    living and non-test at that date. Diabetes register members who also belong to the CHD, stroke or
+    TIA, or PAD register, excluding any haemorrhagic-stroke history. Achievement requires a statin or
+    qualifying non-statin lipid-lowering prescription in the inclusive preceding six calendar months.
+    The latest prescription detail remains visible after treatment expires. Null prescription detail means
+    no counted order by that date. Recalculated monthly for the last 60 completed month-ends using today's
+    rules and code lists. Registers use clinical and recorded dates; other evidence uses its clinical
+    or order date through the month-end. Later corrections can change earlier results. Registration and
+    practice follow the existing monthly spine, including its current-registration priority for overlaps.
+    Birth and death dates are approximate; missing birth dates prevent historical active rows. Current
+    gender and test flags apply retrospectively. Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind276-diabetes-lipid-lowering-therapies-for-secondary-prevention-of-cvd
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and the treatment window
+  - name: measurement_period_start
+    description: Inclusive start of the six-month treatment window, six calendar months before the reporting
+      date
+  - name: age
+    description: Completed years at the month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS code of the registration practice at the month-end
+  - name: practice_name
+    description: Name of the registration practice at the month-end
+  - name: latest_lipid_lowering_order_date
+    description: Date of the most recent counted lipid-lowering order; null if never treated
+  - name: latest_lipid_lowering_class
+    description: Class of the most recent counted order; null if never treated
+  - name: latest_lipid_lowering_product
+    description: BNF product name of the most recent counted order; null if never treated
+  - name: is_latest_lipid_lowering_statin
+    description: Whether the most recent counted order contains a statin; null if never treated
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether a counted lipid-lowering order falls in the six-month window
+  - name: indicator_status
+    description: ACHIEVED, NOT_TREATED_IN_PERIOD or NEVER_TREATED
+- name: fct_person_lipid_lowering_therapy_ind277_by_month
+  description: NICE IND277. One row per eligible person and completed month-end. All populations are active,
+    living and non-test at that date. Type 1 diabetes register members aged over 40, excluding any haemorrhagic-stroke
+    history. Register membership supplies the diabetes type and its established tie rule. Achievement
+    requires a statin or qualifying non-statin lipid-lowering prescription in the inclusive preceding
+    six calendar months. The latest prescription detail remains visible after treatment expires. Null
+    prescription detail means no counted order by that date. Recalculated monthly for the last 60 completed
+    month-ends using today's rules and code lists. Registers use clinical and recorded dates; other evidence
+    uses its clinical or order date through the month-end. Later corrections can change earlier results.
+    Registration and practice follow the existing monthly spine, including its current-registration priority
+    for overlaps. Birth and death dates are approximate; missing birth dates prevent historical active
+    rows. Current gender and test flags apply retrospectively. Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind277-diabetes-t1-dm-and-lipid-lowering-therapies
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and the treatment window
+  - name: measurement_period_start
+    description: Inclusive start of the six-month treatment window, six calendar months before the reporting
+      date
+  - name: age
+    description: Completed years at the month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS code of the registration practice at the month-end
+  - name: practice_name
+    description: Name of the registration practice at the month-end
+  - name: latest_lipid_lowering_order_date
+    description: Date of the most recent counted lipid-lowering order; null if never treated
+  - name: latest_lipid_lowering_class
+    description: Class of the most recent counted order; null if never treated
+  - name: latest_lipid_lowering_product
+    description: BNF product name of the most recent counted order; null if never treated
+  - name: is_latest_lipid_lowering_statin
+    description: Whether the most recent counted order contains a statin; null if never treated
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether a counted lipid-lowering order falls in the six-month window
+  - name: indicator_status
+    description: ACHIEVED, NOT_TREATED_IN_PERIOD or NEVER_TREATED
+- name: fct_person_lipid_lowering_therapy_ind229_by_month
+  description: NICE IND229. One row per eligible person and completed month-end. All populations are active,
+    living and non-test at that date. People aged 25 to 84 whose last recorded eligible CVD risk score
+    is at least 10%, without established CVD including haemorrhagic stroke. An invalid selected score
+    does not qualify. Achievement requires a statin or qualifying non-statin lipid-lowering prescription
+    in the inclusive preceding six calendar months. The latest prescription detail remains visible after
+    treatment expires. Null prescription detail means no counted order by that date. Recalculated monthly
+    for the last 60 completed month-ends using today's rules and code lists. Registers use clinical and
+    recorded dates; other evidence uses its clinical or order date through the month-end. Later corrections
+    can change earlier results. Registration and practice follow the existing monthly spine, including
+    its current-registration priority for overlaps. Birth and death dates are approximate; missing birth
+    dates prevent historical active rows. Current gender and test flags apply retrospectively. Personalised
+    care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind229-cardiovascular-disease-prevention-primary-prevention-with-lipid-lowering-therapies
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and the treatment window
+  - name: measurement_period_start
+    description: Inclusive start of the six-month treatment window, six calendar months before the reporting
+      date
+  - name: age
+    description: Completed years at the month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS code of the registration practice at the month-end
+  - name: practice_name
+    description: Name of the registration practice at the month-end
+  - name: latest_lipid_lowering_order_date
+    description: Date of the most recent counted lipid-lowering order; null if never treated
+  - name: latest_lipid_lowering_class
+    description: Class of the most recent counted order; null if never treated
+  - name: latest_lipid_lowering_product
+    description: BNF product name of the most recent counted order; null if never treated
+  - name: is_latest_lipid_lowering_statin
+    description: Whether the most recent counted order contains a statin; null if never treated
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether a counted lipid-lowering order falls in the six-month window
+  - name: indicator_status
+    description: ACHIEVED, NOT_TREATED_IN_PERIOD or NEVER_TREATED
+- name: fct_person_lipid_lowering_therapy_ind274_by_month
+  description: NICE IND274. One row per eligible person and completed month-end. All populations are active,
+    living and non-test at that date. Type 2 diabetes register members aged 25 to 84 with any valid coded
+    CVD risk score of at least 10% in the inclusive preceding 12 months. Established CVD including haemorrhagic
+    stroke, and moderate or severe coded frailty, exclude the person. Achievement requires a statin or
+    qualifying non-statin lipid-lowering prescription in the inclusive preceding six calendar months.
+    The latest prescription detail remains visible after treatment expires. Null prescription detail means
+    no counted order by that date. Recalculated monthly for the last 60 completed month-ends using today's
+    rules and code lists. Registers use clinical and recorded dates; other evidence uses its clinical
+    or order date through the month-end. Later corrections can change earlier results. Registration and
+    practice follow the existing monthly spine, including its current-registration priority for overlaps.
+    Birth and death dates are approximate; missing birth dates prevent historical active rows. Current
+    gender and test flags apply retrospectively. Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind274-diabetes-lipid-lowering-therapies-for-primary-prevention-of-cvd-t2-dm-and-10-risk
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and the treatment window
+  - name: measurement_period_start
+    description: Inclusive start of the six-month treatment window, six calendar months before the reporting
+      date
+  - name: age
+    description: Completed years at the month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS code of the registration practice at the month-end
+  - name: practice_name
+    description: Name of the registration practice at the month-end
+  - name: latest_lipid_lowering_order_date
+    description: Date of the most recent counted lipid-lowering order; null if never treated
+  - name: latest_lipid_lowering_class
+    description: Class of the most recent counted order; null if never treated
+  - name: latest_lipid_lowering_product
+    description: BNF product name of the most recent counted order; null if never treated
+  - name: is_latest_lipid_lowering_statin
+    description: Whether the most recent counted order contains a statin; null if never treated
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether a counted lipid-lowering order falls in the six-month window
+  - name: indicator_status
+    description: ACHIEVED, NOT_TREATED_IN_PERIOD or NEVER_TREATED
+- name: fct_person_lipid_lowering_therapy_ind275_by_month
+  description: NICE IND275. One row per eligible person and completed month-end. All populations are active,
+    living and non-test at that date. Diabetes register members aged 40 or over, without established CVD
+    including haemorrhagic stroke or moderate or severe coded frailty. Type 2 diabetes with a low risk
+    score in the preceding 36 months is excluded unless a strictly later score reaches 10%. A high score
+    on the same date does not supersede the low score. Achievement requires a statin or qualifying non-statin
+    lipid-lowering prescription in the inclusive preceding six calendar months. The latest prescription
+    detail remains visible after treatment expires. Null prescription detail means no counted order by
+    that date. Recalculated monthly for the last 60 completed month-ends using today's rules and code
+    lists. Registers use clinical and recorded dates; other evidence uses its clinical or order date through
+    the month-end. Later corrections can change earlier results. Registration and practice follow the
+    existing monthly spine, including its current-registration priority for overlaps. Birth and death
+    dates are approximate; missing birth dates prevent historical active rows. Current gender and test
+    flags apply retrospectively. Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind275-diabetes-lipid-lowering-therapies-for-primary-prevention-of-cvd-40-years-and-over
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and the treatment window
+  - name: measurement_period_start
+    description: Inclusive start of the six-month treatment window, six calendar months before the reporting
+      date
+  - name: age
+    description: Completed years at the month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS code of the registration practice at the month-end
+  - name: practice_name
+    description: Name of the registration practice at the month-end
+  - name: latest_lipid_lowering_order_date
+    description: Date of the most recent counted lipid-lowering order; null if never treated
+  - name: latest_lipid_lowering_class
+    description: Class of the most recent counted order; null if never treated
+  - name: latest_lipid_lowering_product
+    description: BNF product name of the most recent counted order; null if never treated
+  - name: is_latest_lipid_lowering_statin
+    description: Whether the most recent counted order contains a statin; null if never treated
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether a counted lipid-lowering order falls in the six-month window
+  - name: indicator_status
+    description: ACHIEVED, NOT_TREATED_IN_PERIOD or NEVER_TREATED
+- name: fct_person_lipid_lowering_therapy_ind287_by_month
+  description: NICE IND287. One row per eligible person and completed month-end. All populations are active,
+    living and non-test at that date. People aged 25 to 84 whose first hypertension or type 2 diabetes
+    diagnosis falls in the inclusive preceding 12 months, with any valid coded CVD risk score of at least
+    10% in that period. Established CVD including haemorrhagic stroke, CKD, FH and type 1 diabetes exclude
+    the person. Achievement requires a statin or qualifying non-statin lipid-lowering prescription in
+    the inclusive preceding six calendar months. The latest prescription detail remains visible after
+    treatment expires. Null prescription detail means no counted order by that date. Recalculated monthly
+    for the last 60 completed month-ends using today's rules and code lists. Registers use clinical and
+    recorded dates; other evidence uses its clinical or order date through the month-end. Later corrections
+    can change earlier results. Registration and practice follow the existing monthly spine, including
+    its current-registration priority for overlaps. Birth and death dates are approximate; missing birth
+    dates prevent historical active rows. Current gender and test flags apply retrospectively. Personalised
+    care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind287-cardiovascular-disease-prevention-lipid-lowering-therapy-for-people-newly-diagnosed-with-hypertension-or-t2-dm
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and the treatment window
+  - name: measurement_period_start
+    description: Inclusive start of the six-month treatment window, six calendar months before the reporting
+      date
+  - name: age
+    description: Completed years at the month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS code of the registration practice at the month-end
+  - name: practice_name
+    description: Name of the registration practice at the month-end
+  - name: latest_lipid_lowering_order_date
+    description: Date of the most recent counted lipid-lowering order; null if never treated
+  - name: latest_lipid_lowering_class
+    description: Class of the most recent counted order; null if never treated
+  - name: latest_lipid_lowering_product
+    description: BNF product name of the most recent counted order; null if never treated
+  - name: is_latest_lipid_lowering_statin
+    description: Whether the most recent counted order contains a statin; null if never treated
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether a counted lipid-lowering order falls in the six-month window
+  - name: indicator_status
+    description: ACHIEVED, NOT_TREATED_IN_PERIOD or NEVER_TREATED
+- name: fct_person_lipid_lowering_therapy_nice_indicators_by_month
+  description: NICE lipid-lowering treatment results for IND229, IND230, IND231, IND274, IND275, IND276,
+    IND277 and IND287. One row per eligible person and indicator at the completed month-end, with lipid-lowering
+    prescriptions and achievement. Each indicator retains its own population, time window and clinical
+    criteria. A person can appear for several indicators. These results feed the combined NICE indicator
+    status model. Recalculated monthly for the last 60 completed month-ends using today's rules and code
+    lists. Registers use clinical and recorded dates; other evidence uses its clinical or order date through
+    the month-end. Later corrections can change earlier results. Registration and practice follow the
+    existing monthly spine, including its current-registration priority for overlaps. Birth and death
+    dates are approximate; missing birth dates prevent historical active rows. Current gender and test
+    flags apply retrospectively. Personalised care adjustments are not applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and the treatment window
+  - name: measurement_period_start
+    description: Inclusive start of the six-month treatment window, six calendar months before the reporting
+      date
+  - name: age
+    description: Completed years at the month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS code of the registration practice at the month-end
+  - name: practice_name
+    description: Name of the registration practice at the month-end
+  - name: latest_lipid_lowering_order_date
+    description: Date of the most recent counted lipid-lowering order; null if never treated
+  - name: latest_lipid_lowering_class
+    description: Class of the most recent counted order; null if never treated
+  - name: latest_lipid_lowering_product
+    description: BNF product name of the most recent counted order; null if never treated
+  - name: is_latest_lipid_lowering_statin
+    description: Whether the most recent counted order contains a statin; null if never treated
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether a counted lipid-lowering order falls in the six-month window
+  - name: indicator_status
+    description: ACHIEVED, NOT_TREATED_IN_PERIOD or NEVER_TREATED

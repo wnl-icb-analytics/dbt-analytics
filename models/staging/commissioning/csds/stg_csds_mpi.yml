@@ -1,41 +1,59 @@
 version: 2
-
 models:
-  - name: stg_csds_mpi
-    description: >
-      CSDS master patient index records. Grain: one row per person_id.
-      Population: CYP001 person records. Time semantics: the latest submitted
-      residence is retained, not residence at an event; period history is a
-      known refinement.
-    config:
-      meta:
-        owner:
-          name: Eddie Davison
+- name: stg_csds_mpi
+  description: Latest reported CSDS master patient index record for each person and provider. One row per
+    person_id and organisation_code_provider, the ETOS derivation key, selected by newest reporting period,
+    then file receipt, submission and source row. Includes the demographics, residence geography, death
+    and risk indicators as last reported by that provider. A person seen by several providers has one row
+    per provider; pick across providers explicitly. Period history is in stg_csds_mpi_history.
+  config:
+    meta:
+      owner:
+        name: Emily Baldwin
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - organisation_code_provider
+  - dbt_expectations.expect_table_row_count_to_be_between:
+      arguments:
+        min_value: 1
+  columns:
+  - name: cyp001_unique_id
+    description: Identifier of the selected CYP001 source row.
     data_tests:
-      - dbt_expectations.expect_table_row_count_to_be_between:
-          arguments:
-            min_value: 1
-    columns:
-      - name: person_id
-        description: CSDS person identifier.
-        data_tests:
-          - unique
-          - not_null
-      - name: lsoa21_residence
-        description: 2021 LSOA code for latest submitted residence.
-      - name: lsoa11_residence
-        description: 2011 LSOA code for latest submitted residence.
-      - name: local_authority_district
-        description: Local authority district of usual address.
-      - name: electoral_ward_of_usual_address
-        description: Electoral ward of usual address.
-      - name: sub_icb_of_residence
-        description: Sub-ICB location code of residence.
-      - name: person_stated_gender_code
-        description: Person-stated gender code.
-      - name: person_death_date
-        description: Person death date.
-      - name: dmic_ethnic_category_group
-        description: Derived ethnic category group.
-      - name: org_id
-        description: Provider organisation code.
+    - unique
+    - not_null
+  - name: person_id
+    description: CSDS person identifier.
+    data_tests:
+    - not_null
+  - name: organisation_code_provider
+    description: Supplied provider organisation code.
+    data_tests:
+    - not_null
+  - name: local_patient_identifier_extended
+    description: Provider-local patient identifier on the selected row.
+  - name: person_stated_gender_code
+    description: Supplied person stated gender code.
+  - name: ethnic_category
+    description: Supplied ethnic category code.
+  - name: dmic_ethnic_category_group
+    description: Ethnic category group derived by the source pipeline.
+  - name: lower_super_output_area_residence
+    description: Supplied 2021 LSOA of residence as last reported. Some providers still supply retired 2011 codes here.
+  - name: lower_super_output_area_residence_2011
+    description: Supplied 2011 LSOA of residence.
+  - name: local_authority_district_unitary_authority
+    description: Supplied local authority district of usual address.
+  - name: organisation_identifier_sub_icb_location_of_residence
+    description: Sub-ICB location of residence derived by the source pipeline.
+  - name: person_death_date
+    description: Supplied date of death.
+  - name: unique_submission_id
+    description: Accepted submission the selected row came from.
+  - name: effective_from
+    description: Date and time the submission portal received the selected file.
+  - name: reporting_period_end_date
+    description: Reporting period of the selected row.

@@ -6,25 +6,57 @@
 }}
 --define PPV clinical risk groups using COVID. PLUS Cochlear Implant and CSF leak specified in UKHSA rules.
 WITH PPV_clinical_risk_groups AS (
-select distinct person_id
+SELECT DISTINCT PERSON_ID FROM (
+SELECT PERSON_ID 
 FROM (
-SELECT person_id, subcohort as risk_group, reference_date
-    --from REPORTING.OLIDS_PROGRAMME.FCT_FLU_ELIGIBILITY
-    FROM {{ ref('fct_flu_eligibility') }}
-   WHERE subcohort 
-   in ('Chronic Respiratory Disease','Asplenia','Chronic Heart Disease','Chronic Kidney Disease','Diabetes','Chronic Liver Disease','Immunosuppression')
-   QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, RISK_GROUP ORDER BY REFERENCE_DATE DESC) = 1
+    SELECT
+        person_id,
+        campaign_id,
+        TO_DATE(REGEXP_SUBSTR(campaign_id, '[0-9]{4}') || '-09-01') AS valid_from,
+        DATEADD(DAY,-1,LEAD(TO_DATE(REGEXP_SUBSTR(campaign_id, '[0-9]{4}') || '-09-01')) 
+        OVER (PARTITION BY person_id ORDER BY campaign_id)) AS valid_to,
+        CASE
+            WHEN COALESCE(HAS_CRD, FALSE)
+              OR COALESCE(HAS_ASPLENIA, FALSE)
+              OR COALESCE(HAS_CHD, FALSE)
+              OR COALESCE(HAS_CKD, FALSE)
+              OR COALESCE(HAS_CLD, FALSE)
+              OR COALESCE(HAS_DIABETES, FALSE)
+              OR COALESCE(IS_IMMUNOSUPPRESSED, FALSE)
+            THEN TRUE
+            ELSE FALSE
+        END AS IN_PPV_CLINICAL_RISK_GROUP
+    FROM {{ ref('int_covid_flu_risk_group_flags') }}
+    --FROM MODELLING.OLIDS_PROGRAMME.INT_COVID_FLU_RISK_GROUP_FLAGS
+    WHERE campaign_id LIKE 'Flu%'
+) a WHERE  IN_PPV_CLINICAL_RISK_GROUP AND valid_to IS NULL
 
 UNION ALL
-SELECT person_id, 'Cochlear Implant' as risk_group, date(clinical_effective_date) as reference_date
+
+SELECT person_id
 FROM {{ ref('int_cochlear_implant_latest') }}
 --FROM MODELLING.OLIDS_OBSERVATIONS.INT_COCHLEAR_IMPLANT_LATEST  
 
 UNION ALL
-SELECT person_id, 'CSF Leak' as risk_group, date(clinical_effective_date) as reference_date
+
+SELECT person_id
 FROM {{ ref('int_csf_leak_latest')}}
 --FROM MODELLING.OLIDS_OBSERVATIONS.INT_CSF_LEAK_LATEST
-) a
+) b
+)
+-- RSV clinical risk is chronic respiratory disease or immunosuppression at any
+-- age. fct_flu_eligibility only publishes those subcohorts under 65, because
+-- everyone 65 and over qualifies for flu by age. The flags model reads the flu
+-- clinical intermediates before that gate. RSV_1D applies the 65-74 band at
+-- eligibility, not on this flag.
+,RSV_clinical_risk_groups AS (
+-- Current flu campaign only: the flags model has a row only where a person is
+-- in a clinical group that campaign, so a person's last row can be from an
+-- older season whose evidence has lapsed.
+SELECT DISTINCT person_id
+FROM {{ ref('int_covid_flu_risk_group_flags') }}
+WHERE campaign_id = '{{ flu_current_campaign() }}'
+    AND (COALESCE(has_crd, FALSE) OR COALESCE(is_immunosuppressed, FALSE))
 )
 
 SELECT DISTINCT
@@ -55,6 +87,8 @@ END AS TURN_65_AFTER_SEP_2023
 ,CASE WHEN imm.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_IMMUNOSUPPRESSED
 --PPV clinical risk group flag which includes immunosuppression but also other risk groups eligible for PPV
 ,CASE WHEN ppv.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IN_PPV_CLINICAL_RISK_GROUP
+-- RSV clinical risk flag: immunosuppression or chronic respiratory disease, any age.
+,CASE WHEN rsv.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IN_RSV_CLINICAL_RISK_GROUP
 ,CASE WHEN preg.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_PREGNANT
 ,dem.GENDER
 ,CASE
@@ -130,9 +164,21 @@ ELSE dem.MAIN_LANGUAGE END AS MAIN_LANGUAGE
 ,dem.PCN_NAME AS PRIMARY_CARE_NETWORK
 ,dem.PRACTICE_NAME AS GP_NAME
 ,dem.PRACTICE_CODE
-,COALESCE(la.LAD25_NM,'Unknown') as RESIDENTIAL_BOROUGH
+,COALESCE(dem.local_authority_name,'Unknown') as RESIDENTIAL_BOROUGH
 ,COALESCE(dem.NEIGHBOURHOOD_RESIDENT,'Unknown') as RESIDENTIAL_NEIGHBOURHOOD
-,COALESCE(la.RESIDENT_FLAG,'Unknown') as RESIDENTIAL_LOC
+,case
+    -- all NCL Boroughs
+    when dem.local_authority_code in ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019') then 'NCL'
+    -- all NWL Boroughs
+    when dem.local_authority_code in ('E09000005','E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033') then 'NWL'
+    --all NEL Boroughs
+    when dem.local_authority_code in ('E09000002','E09000001','E09000012','E09000016','E09000025','E09000026','E09000030','E09000031') then 'NEL'
+    when dem.local_authority_code like 'E09%' and dem.local_authority_code not in ('E09000003', 'E09000007', 'E09000010', 'E09000014', 'E09000019','E09000005', 
+        'E09000009','E09000013','E09000015','E09000017','E09000018','E09000020','E09000033','E09000002','E09000001','E09000012',
+        'E09000016','E09000025','E09000026','E09000030','E09000031') then 'Other London'
+    when dem.local_authority_code is null then 'Unknown'
+    else 'Outside London'
+    end as residential_loc
 ,dem.WARD_CODE
 ,dem.WARD_NAME
 ,dem.LSOA_CODE_21
@@ -140,12 +186,12 @@ ELSE dem.MAIN_LANGUAGE END AS MAIN_LANGUAGE
 ,dem.is_deceased
 FROM {{ ref('dim_person_demographics') }} dem
 LEFT JOIN {{ ref('dim_person_age') }} age using (PERSON_ID)
-LEFT JOIN {{ ref('stg_reference_lsoa21_ward25_lad25') }} la on la.LSOA21_CD = dem.LSOA_CODE_21
 --LEFT JOIN REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_CARE_HOME
 LEFT JOIN {{ ref('dim_person_care_home') }} ch using (PERSON_ID)
 LEFT JOIN (SELECT DISTINCT PERSON_ID FROM {{ ref('int_covid_immunosuppression') }}) imm on imm.person_id = dem.person_id
 --LEFT JOIN (SELECT DISTINCT PERSON_ID FROM MODELLING.OLIDS_PROGRAMME.INT_COVID_IMMUNOSUPPRESSION) imm on imm.person_id = dem.person_id
 LEFT JOIN PPV_clinical_risk_groups ppv on ppv.person_id = dem.person_id
+LEFT JOIN RSV_clinical_risk_groups rsv on rsv.person_id = dem.person_id
 LEFT JOIN (select person_id from {{ ref('fct_person_pregnancy_status') }} where is_child_bearing_age_12_55) preg on preg.person_id = dem.person_id
 --LEFT JOIN (select person_id from REPORTING.OLIDS_PERSON_STATUS.fct_person_pregnancy_status where is_child_bearing_age_12_55) preg on preg.person_id = dem.person_id
 WHERE dem.is_active 

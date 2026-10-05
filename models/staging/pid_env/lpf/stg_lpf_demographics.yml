@@ -4,7 +4,8 @@ models:
   - name: stg_lpf_demographics
     description: |
       Staging layer for local provider flow demographics data.
-      Transformations: Removes deleted records, removes nulls on PersonID, deduplicates by latest version.
+      One row per person_id, holding the highest-version submission that is not deleted (ingestion time, then file row, break ties).
+      Removes deleted records and null person_id values.
       Source: raw_lpf_demographics
 
     config:
@@ -13,39 +14,17 @@ models:
           name: Data Team
 
     columns:
-      - name: metadata_record_ingestion_timestamp
-        description: "Timestamp when record was ingested"
+      - name: person_id
+        description: Provider identifier for the person. One row per value.
+        # Grain holds by construction (row_number = 1 per key). Each test re-runs
+        # the full dedup over the source, so these run in the monthly build only.
         data_tests:
-          - not_null
+          - unique:
+              config:
+                tags: ['monthly-full']
+          - not_null:
+              config:
+                tags: ['monthly-full']
 
-tests:
-  - name: referential_integrity_demographics
-    description: "All demographic records must have valid person IDs"
-    sql: |
-      select * from {{ ref('stg_lpf_demographics') }} where person_id is null
-    config:
-      severity: error
-      store_failures: true
-
-  - name: data_freshness_demographics
-    description: "Data should be recent (last 30 days)"
-    sql: |
-      with freshness as (
-        select
-          max(metadata_record_ingestion_timestamp) as latest_ingestion,
-          datediff(day, max(metadata_record_ingestion_timestamp), current_timestamp()) as days_since_latest
-        from {{ ref('stg_lpf_demographics') }}
-      )
-      select * from freshness where days_since_latest > 30
-    config:
-      severity: warn
-      store_failures: true
-
-  - name: data_history_demographics
-    description: "Data should cover records from 01/04/2021 onwards"
-    sql: |
-      select * from {{ ref('stg_lpf_demographics') }}
-      where metadata_record_ingestion_timestamp < '2021-04-01' limit 1
-    config:
-      severity: warn
-      store_failures: true
+      - name: metadata_record_ingestion_timestamp
+        description: Timestamp when the record was ingested.

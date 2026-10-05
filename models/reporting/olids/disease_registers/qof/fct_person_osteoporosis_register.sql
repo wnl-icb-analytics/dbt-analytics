@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_osteoporosis_register.sql.
--- This live fact includes future-dated records. Its PIT pair is strict as-of
+-- Clinical evidence is bounded by today. Its PIT pair is strict as-of
 -- and derives age at the reference date where age is used.
 
 {{
@@ -18,12 +18,10 @@ Clinical Purpose:
 - Bone health monitoring
 - DXA scanning compliance
 
-QOF Register Criteria (Complex Pattern):
-- Age 50-74 years
-- AND ALL of the following:
-  1. Fragility fracture after April 2012
-  2. Osteoporosis diagnosis (OSTEO_COD)
-  3. DXA confirmation (DXA scan OR T-score ≤ -2.5)
+QOF v51 Register Criteria:
+- Ages 50-74: fracture on or after 1 April 2012, OSTEO_COD and DXA confirmation
+  (DXA_COD or an unrounded DXA2_COD T-score <= -2.5, with no lower limit)
+- Ages 75+: fracture on or after 1 April 2014 and OSTEO_COD; no DXA requirement
 
 Includes all patients meeting clinical criteria (active, deceased, deducted).
 This table provides one row per person for analytical use.
@@ -67,6 +65,7 @@ WITH osteoporosis_diagnoses AS (
         ARRAY_AGG(DISTINCT ID::VARCHAR) AS all_IDs
 
     FROM {{ ref('int_osteoporosis_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -76,10 +75,10 @@ dxa_data AS (
         COUNT(CASE WHEN is_dxa_scan_procedure THEN 1 END) > 0 AS has_dxa_scan,
         COUNT(CASE WHEN is_dxa_t_score_measurement THEN 1 END)
         > 0 AS has_dxa_t_score,
-        -- Check if ANY T-score measurement is ≤ -2.5 (per QOF spec: DXA2_VAL <= -2.5)
-        MAX(CASE WHEN is_dxa_t_score_measurement AND validated_t_score <= -2.5 THEN 1 ELSE 0 END) = 1 AS has_qualifying_t_score,
+        -- QOF confirmation uses the unrounded T-score, without the clinical range filter
+        MAX(CASE WHEN confirms_osteoporosis_diagnosis THEN 1 ELSE 0 END) = 1 AS has_qualifying_t_score,
         -- DXA2_DAT: earliest T-score measurement where value <= -2.5
-        MIN(CASE WHEN is_dxa_t_score_measurement AND validated_t_score <= -2.5 THEN clinical_effective_date END) AS earliest_qualifying_t_score_date,
+        MIN(CASE WHEN confirms_osteoporosis_diagnosis THEN clinical_effective_date END) AS earliest_qualifying_t_score_date,
         MIN(CASE WHEN is_dxa_scan_procedure THEN clinical_effective_date END)
             AS earliest_dxa_date,
         MAX(CASE WHEN is_dxa_scan_procedure THEN clinical_effective_date END)
@@ -101,6 +100,7 @@ dxa_data AS (
             DISTINCT CASE WHEN is_dxa_scan_procedure THEN concept_display END
         ) AS all_dxa_concept_displays
     FROM {{ ref('int_dxa_scans_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -109,9 +109,9 @@ fragility_fractures AS (
         person_id,
         COUNT(*) > 0 AS has_fragility_fracture,
         -- OSTEO1_REG: fracture on/after 2012-04-01 (int_ already filters >= 2012-04-01)
-        MAX(CASE WHEN clinical_effective_date >= '2012-04-01' THEN 1 ELSE 0 END) = 1 AS has_fracture_post_2012,
+        MAX(CASE WHEN clinical_effective_date::DATE >= '2012-04-01' THEN 1 ELSE 0 END) = 1 AS has_fracture_post_2012,
         -- OSTEO2_REG: fracture on/after 2014-04-01
-        MAX(CASE WHEN clinical_effective_date >= '2014-04-01' THEN 1 ELSE 0 END) = 1 AS has_fracture_post_2014,
+        MAX(CASE WHEN clinical_effective_date::DATE >= '2014-04-01' THEN 1 ELSE 0 END) = 1 AS has_fracture_post_2014,
         MIN(clinical_effective_date) AS earliest_fragility_fracture_date,
         MAX(clinical_effective_date) AS latest_fragility_fracture_date,
         COUNT(DISTINCT fracture_site) AS distinct_fracture_sites,
@@ -135,6 +135,7 @@ fragility_fractures AS (
         = 1 AS has_humerus_fracture
 
     FROM {{ ref('int_fragility_fractures_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -142,7 +143,7 @@ register_logic AS (
     SELECT
         diag.person_id,
 
-        -- Age restriction: 50-74 years for osteoporosis register
+        -- Age bands: 50-74 for OSTEO1, 75+ for OSTEO2
         diag.earliest_diagnosis_date,
 
         -- Component 1: Fragility fracture requirement
@@ -151,14 +152,14 @@ register_logic AS (
         -- Component 2: Osteoporosis diagnosis requirement
         diag.total_osteoporosis_episodes,
 
-        -- Component 3: DXA confirmation requirement (scan OR T-score ≤ -2.5)
+        -- Component 3: DXA confirmation for OSTEO1 (DXA_COD OR T-score <= -2.5)
         dxa.earliest_dxa_date,
 
         -- Additional component flags for transparency
         dxa.latest_dxa_date,
         dxa.earliest_dxa_t_score_date,
 
-        -- Complex register inclusion: Age + ALL three components required
+        -- Register inclusion applies the criteria for each age band
         dxa.latest_dxa_t_score_date,
         dxa.earliest_qualifying_t_score_date,
         frac.earliest_fragility_fracture_date,
@@ -191,7 +192,7 @@ register_logic AS (
             FALSE
         ) AS has_osteoporosis_diagnosis,
 
-        -- DXA confirmation (scan OR any T-score ≤ -2.5)
+        -- DXA confirmation (DXA_COD OR any unrounded DXA2_COD T-score <= -2.5)
         COALESCE(
             dxa.has_dxa_scan = TRUE OR dxa.has_qualifying_t_score = TRUE,
             FALSE

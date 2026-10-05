@@ -26,6 +26,23 @@ FROM {{ ref('stg_olids_patient') }}
 where death_year is not null
 group by all
 )
+-- Latest version of each PDS person record that has ever held a death date.
+-- A later version can reverse a death notification or correct its date, so an
+-- earlier version must not decide death.
+,pds_latest_person as (
+select
+sk_patient_id,
+death_status,
+date_of_death
+FROM {{ ref('stg_pds_person') }}
+where sk_patient_id in (
+    select sk_patient_id from {{ ref('stg_pds_person') }} where date_of_death is not null
+)
+qualify row_number() over (
+    partition by sk_patient_id
+    order by event_from_date desc, event_to_date desc nulls first, row_id desc
+) = 1
+)
 --Whole patient level population with all death records from OLIDS, PDS and Registries.
 ,POPULATION as (
 select 
@@ -69,8 +86,7 @@ pds.date_of_death as pds_date_of_death,
 NULL as reg_date_of_death
 --FROM MODELLING.DBT_STAGING.STG_OLIDS_PATIENT p
 FROM {{ ref('stg_olids_patient') }} p
---LEFT JOIN  MODELLING.DBT_STAGING.STG_PDS_PERSON pds on pds.sk_patient_id = p.sk_patient_id
-LEFT JOIN {{ ref('stg_pds_person') }} pds on pds.sk_patient_id = p.sk_patient_id
+LEFT JOIN pds_latest_person pds on pds.sk_patient_id = p.sk_patient_id
 where pds.date_of_death is not null 
 
 UNION

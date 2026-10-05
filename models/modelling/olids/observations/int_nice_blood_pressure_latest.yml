@@ -1,0 +1,86 @@
+models:
+  - name: int_nice_blood_pressure_latest
+    description: |
+      Latest complete blood pressure pair for NICE control indicators. One row per
+      active, living, non-test HTN/CHD/STIA/PAD/CKD/DM member with a complete
+      numeric pair on or before the reporting date. People without a complete pair
+      have no evidence row. Current and monthly inputs use the same calculation.
+      Components share a parent observation and date. Components without a parent
+      use the date-level maximum plausible systolic and maximum plausible diastolic,
+      which may combine different readings. Each component uses its unfiltered maximum
+      only when no value is plausible for that component on that date.
+
+      Incomplete single components are ignored. The latest complete-pair date is
+      selected before plausibility checks can exclude evidence. On that date, valid
+      pairs take precedence, with lowest systolic then lowest diastolic selected.
+      Within-day chronology is unavailable. If no pair on the latest date is valid,
+      the selected pair remains invalid, without falling back to an older date.
+      Valid ranges are 40-350 mmHg systolic and 20-200 mmHg diastolic, inclusive.
+      Existing valid-reading BP models retain their separate behaviour.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: reporting_date
+        description: Assessment date stored at build; nice_ref relabels current evidence to today for consumers.
+        data_tests:
+          - not_null
+      - name: person_id
+        description: Person with a complete numeric blood pressure pair
+        data_tests:
+          - not_null
+          - unique
+      - name: latest_bp_date
+        description: Latest date with a complete pair, including an implausible pair
+        data_tests:
+          - not_null
+      - name: latest_systolic_value
+        description: Selected systolic value in mmHg, retained even when implausible
+      - name: latest_diastolic_value
+        description: Selected diastolic value in mmHg, retained even when implausible
+      - name: is_valid_bp
+        description: Whether both selected components fall within the inclusive plausible ranges
+        data_tests:
+          - not_null
+      - name: is_home_bp_event
+        description: Whether the selected pair has home monitoring evidence
+      - name: is_abpm_bp_event
+        description: Whether the selected pair has ambulatory monitoring evidence
+      - name: applied_measurement_context
+        description: CLINIC or HBPM_ABPM context of the selected complete pair
+
+unit_tests:
+  - name: nice_bp_current_retains_previous_day_input
+    model: int_nice_blood_pressure_latest
+    overrides:
+      macros:
+        nice_register: SELECT -9101::NUMBER AS person_id, CURRENT_DATE()::DATE AS reporting_date
+        nice_reference_population: SELECT -9101::NUMBER AS person_id, CURRENT_DATE()::DATE AS reporting_date
+    given:
+      - input: ref('int_nice_blood_pressure_all')
+        format: sql
+        rows: |
+          SELECT
+              -9101::NUMBER AS person_id,
+              DATEADD(day, -1, CURRENT_DATE())::DATE AS reading_date,
+              'SYN_PREVIOUS_DAY'::VARCHAR AS reading_id,
+              130::FLOAT AS systolic_value,
+              80::FLOAT AS diastolic_value,
+              TRUE AS is_valid_bp,
+              FALSE AS is_home_bp_event,
+              FALSE AS is_abpm_bp_event,
+              'CLINIC'::VARCHAR AS applied_measurement_context
+    expect:
+      format: sql
+      rows: |
+        SELECT
+            -9101::NUMBER AS person_id,
+            DATEADD(day, -1, CURRENT_DATE())::DATE AS latest_bp_date,
+            130::FLOAT AS latest_systolic_value,
+            80::FLOAT AS latest_diastolic_value,
+            TRUE AS is_valid_bp,
+            FALSE AS is_home_bp_event,
+            FALSE AS is_abpm_bp_event,
+            'CLINIC'::VARCHAR AS applied_measurement_context,
+            CURRENT_DATE()::DATE AS reporting_date

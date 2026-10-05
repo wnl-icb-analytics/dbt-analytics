@@ -1,0 +1,75 @@
+models:
+- name: fct_person_bmi_recording_ind320_by_month
+  description: |
+    NICE IND320. Annual BMI recording for adults with specified long-term
+    conditions. One row per registered at month-end, living, non-test person aged
+    18 and over with CHD, stroke or TIA, diabetes, non-diabetic hyperglycaemia,
+    hypertension, PAD, heart failure, COPD, dyslipidaemia, learning disability,
+    obstructive sleep apnoea or severe mental illness, assessed on the completed month-end.
+
+    Achievement requires any valid recorded or calculated BMI in the preceding
+    12 months (10 to 150 kg/m2 inclusive), even if a later or same-day BMI is
+    invalid. A window containing only invalid BMIs is NOT_ASSESSABLE; no BMI
+    in the window is NOT_RECORDED_IN_PERIOD. Adult calculated BMI uses the
+    weight date and the latest preceding adult height.
+
+    Dyslipidaemia follows QOF v51.3: lipid-lowering treatment in six months, or
+    the latest result in 12 months with LDL at least 4.1 mmol/L, triglycerides
+    at least 1.7 mmol/L, or HDL below 1.0 mmol/L for males or 1.3 mmol/L for
+    females. Unknown sex cannot qualify through HDL alone. An invalid latest
+    lipid result does not fall back to an older result. Non-diabetic
+    hyperglycaemia is an incomplete proxy for NICE's high-risk diabetes population.
+    A validated diabetes-risk score paired with raised glycaemia is not available.
+
+    Personalised care adjustments are not applied.
+
+    Recalculated at monthly refresh for the last 60 completed month-ends using today's
+    rules and code lists, before personalised care adjustments. Registration and practice
+    use the established monthly spine: start is inclusive, end and death exclusive.
+    Overlapping registrations retain its current-registration priority. Birth and death
+    dates are approximate; missing birth dates prevent historical active rows. Current
+    gender and test flags apply retrospectively. Register state uses clinical and recorded
+    dates; other evidence uses its clinical or order date through month-end. Later data
+    corrections and code-list changes can alter earlier results.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind320
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: ODS code of the month-end registration practice
+  - name: practice_name
+    description: Name of the month-end registration practice
+  - name: latest_bmi_date
+    description: Date of the latest valid recorded or calculated BMI, regardless of period; null if none
+      is valid
+  - name: latest_record_date
+    description: Date of the latest valid BMI in the period; null when none is valid
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED for any valid BMI in the period, NOT_ASSESSABLE for invalid-only evidence, or
+      NOT_RECORDED_IN_PERIOD for no BMI evidence

@@ -224,14 +224,14 @@ DIMENSIONS(
     demographics.age_band_5y AS age_band_5y COMMENT = 'Current 5-year age band (drifts — use age_at_event for historical cohorting)',
     demographics.age_band_10y AS age_band_10y COMMENT = 'Current 10-year age band (drifts)',
     demographics.age_band_nhs AS age_band_nhs COMMENT = 'Current NHS standard age band (drifts)',
-    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category (Asian or Asian British, Black or Black British, Mixed, Other, White, Unknown)',
+    demographics.ethnicity_category AS ethnicity_category COMMENT = 'Ethnicity category: Asian, Black, Mixed, Other, White, or Unknown',
     demographics.is_active AS is_active COMMENT = 'Patient currently registered',
 
     -- Patient geography and deprivation (residence-based)
     demographics.borough_resident AS borough_resident COMMENT = 'Patient borough of residence',
     demographics.neighbourhood_resident AS neighbourhood_resident COMMENT = 'Patient NCL neighbourhood of residence',
     demographics.imd_decile_25 AS imd_decile_25 COMMENT = 'IMD 2025 decile (1=most deprived, 10=least). NULL if LSOA not mapped.',
-    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile (1 - Most Deprived to 5 - Least Deprived, Unknown)',
+    demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'IMD 2025 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown''',
 
     -- Lipid-regulating classification (only populated for BNF 2.12 orders)
     statins.lipid_lowering_class AS lipid_lowering_class COMMENT = 'Lipid-regulating product class (STATIN, STATIN_COMBINATION, EZETIMIBE, BEMPEDOIC_ACID, PCSK9_INHIBITOR, INCLISIRAN, FIBRATE, BILE_ACID_SEQUESTRANT, NICOTINIC_ACID, OMEGA_3, OTHER). Only for BNF 2.12 orders.',

@@ -4,7 +4,7 @@ models:
       Medications prescribed within the last 30 days and last year per person.
 
       Person-level snapshot of recent medication prescriptions with counts and active ingredient analysis.
-      Includes all medication orders (not just repeat prescriptions) from the last 30 days and last year.
+      Includes all medication orders (not just repeat prescriptions) from the last 30 days and last year, and separates current repeat medicines from non-repeat medicines.
 
       Active Ingredient Analysis:
       - Uses VTM (Virtual Therapeutic Moiety) from BNF/dm+d to identify unique active ingredients
@@ -28,6 +28,16 @@ models:
               arguments:
                 to: ref('dim_person')
                 field: person_id
+      - name: medications_repeat
+        description: Array of medication objects for medicines currently on repeat. A medicine is a current repeat when its latest repeat-authorised order (int_medication_orders_repeat_current) has not run out, based on order date plus duration (28 days if missing), and that order falls in the last year. Each object contains 'medication_name' only; prescription counts are omitted because only the latest repeat order is flagged. Empty array if none.
+        data_tests:
+          - not_null
+
+      - name: medications_non_repeat
+        description: Array of medication objects for last-year (365 days) medicines that are not current repeats, i.e. medications_recent_12mo with the medicines in medications_repeat removed (matched on medication name). Each object contains 'medication_name' and 'prescription_count' as in medications_recent_12mo. Empty array if none.
+        data_tests:
+          - not_null
+
       - name: medications_recent_30d
         description: Array of medication objects for prescriptions in last 30 days. Each object contains 'medication_name' and 'prescription_count'. Empty array if no medications in last 30 days.
         data_tests:
@@ -75,6 +85,13 @@ models:
                 min_value: 0
       - name: unique_active_ingredient_count_12mo
         description: Count of distinct active ingredients (VTMs) prescribed in the last year (365 days). Medications without VTM mapping are excluded from this count.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: unique_repeat_medication_count
+        description: Count of distinct medication names in medications_repeat (current repeat medicines whose latest order is within the last year).
         data_tests:
           - not_null
           - dbt_utils.accepted_range:

@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_stroke_tia_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- Evidence is bounded by today. The PIT pair evaluates supplied reference dates.
 
 {{
     config(
@@ -10,7 +10,7 @@
 
 /*
 Stroke and TIA register fact table - one row per person.
-Applies QOF stroke register inclusion criteria with resolution logic.
+Applies QOF v51 stroke register inclusion criteria.
 
 Clinical Purpose:
 - QOF stroke register for secondary prevention measures
@@ -18,8 +18,8 @@ Clinical Purpose:
 - Stroke care pathway monitoring
 
 QOF Register Criteria:
-- Person has stroke or TIA diagnosis code (STIA_COD)
-- Not resolved/removed by resolution codes (STIARES_COD)
+- Any STRK_COD or TIA_COD diagnosis on or before today
+- No resolution exclusion
 - No age restrictions
 - Lifelong condition register for secondary prevention
 
@@ -79,6 +79,7 @@ WITH stroke_tia_diagnoses AS (
             AS stroke_tia_diagnosis_displays
 
     FROM {{ ref('int_stroke_tia_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 

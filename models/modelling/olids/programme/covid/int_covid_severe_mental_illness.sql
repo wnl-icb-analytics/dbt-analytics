@@ -11,16 +11,14 @@ Eligible in 2024/25 campaigns; not eligible in 2025/26.
 */
 
 {{ config(
-    materialized='incremental',
-    incremental_strategy='delete+insert',
-    unique_key='campaign_id',
+    materialized='table',
     tags=['covid_flu']
 ) }}
 
 WITH all_campaigns AS (
     -- Every COVID campaign the models report on
     -- (campaign list: macros/config/covid_campaign_selection.sql)
-    {{ covid_build_campaigns() }}
+    {{ covid_reported_campaigns() }}
 ),
 
 -- Step 1: Find people with severe mental illness diagnosis (for all campaigns)

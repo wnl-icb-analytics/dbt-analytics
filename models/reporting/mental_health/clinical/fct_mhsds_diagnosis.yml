@@ -1,0 +1,35 @@
+version: 2
+models:
+- name: fct_mhsds_diagnosis
+  description: >-
+    Previous, provisional, primary and secondary diagnoses recorded in MHSDS. Each row is one
+    retained diagnosis evidence item from the shared clinical-record table. Includes records with
+    missing dates, descriptions, person details or other links. Repeated versions of the same fully
+    identified item are reduced to the latest accepted version; different codes and people remain
+    separate. Use this table to describe recorded diagnosis evidence, not to decide which diagnosis
+    is clinically current.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: diagnosis_record_id
+    description: Unique clinical-item key for the retained diagnosis evidence.
+    data_tests:
+    - not_null
+    - unique
+  - name: diagnosis_role
+    description: previous_diagnosis, provisional_diagnosis, primary_diagnosis or secondary_diagnosis.
+  - name: diagnosis_code
+    description: Submitted clinical code, interpreted using the accompanying coding scheme.
+  - name: diagnosis_description
+    description: Authoritative clinical label where available; null for missing or unmatched evidence.
+  - name: diagnosis_recorded_at
+    description: Recorded diagnosis time, or previous-diagnosis discussion time for MHS601. Read clinical_time_basis
+      and precision; null for undated evidence.
+  - name: coding_scheme_description
+    description: Authoritative description of the source coding scheme.
+  - name: person_id
+    description: Person recorded on the diagnosis, never replaced by the referral person.
+  - name: accepted_source_record_count
+    description: Number of accepted submitted occurrences represented by this retained clinical item.

@@ -1,0 +1,57 @@
+models:
+- name: fct_person_cervical_screening_nice_indicators_by_month
+  description: Monthly NICE cervical screening results. One row per eligible person, indicator and completed
+    month-end. Each member retains its own population, exclusions and evidence window. Recalculated for
+    the last 60 completed month-ends with today's rules and code lists. Registration and practice use
+    the existing monthly spine. Registration starts are inclusive; ends and deaths are exclusive. Overlapping
+    registrations retain the spine's current-registration priority. Birth and death dates are approximate;
+    missing birth dates prevent historical active rows. Current gender and test flags apply retrospectively.
+    Diagnosis membership uses clinical and recorded dates; other evidence uses its clinical or order date
+    through month-end. Later corrections and code-list changes can alter earlier results. Personalised
+    care adjustments are not applied. The five-year source retention policy can limit older evidence.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the indicator denominator
+  - name: indicator_id
+    description: NICE indicator identifier
+  - name: indicator_name
+    description: Published NICE indicator name
+  - name: reporting_date
+    description: Completed month-end at which eligibility and evidence are assessed.
+  - name: measurement_period_start
+    description: Inclusive start of the measurement period before the reporting date
+  - name: age
+    description: Completed years at month-end from the approximate birth month.
+  - name: condition_name
+    description: Population defining the indicator
+  - name: practice_code
+    description: Practice ODS code at month-end under the shared spine attribution.
+  - name: practice_name
+    description: Practice name at month-end under the shared spine attribution.
+  - name: latest_completed_date
+    description: Date of the latest completed cervical screening record, regardless of period; null if
+      never screened
+  - name: latest_screening_date
+    description: Date of the latest cervical screening record of any type; null when none
+  - name: programme_status
+    description: Programme status from the screening model (Up to Date, Overdue, Never Screened, Unsuitable,
+      Unknown)
+  - name: latest_record_date
+    description: Date of the latest qualifying record in the period; null when none
+  - name: is_in_denominator
+    description: Always true; every row is an eligible person before personalised care adjustments
+  - name: is_in_numerator
+    description: Whether the person meets the indicator on the reporting date
+  - name: indicator_status
+    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
