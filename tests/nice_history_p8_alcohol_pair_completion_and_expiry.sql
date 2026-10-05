@@ -66,7 +66,7 @@ synthetic_pairs AS (
         (-9821, '2024-01-01', NULL, NULL), (-9821, '2025-01-01', NULL, NULL),
         (-9822, '2024-01-01', '2024-01-15', '2024-03-01'),
         (-9823, '2024-01-01', '2024-04-01', '2024-04-01'),
-        (-9824, '2024-01-01', NULL, NULL)
+        (-9824, '2024-01-01', NULL, NULL), (-9825, '2024-01-31', NULL, NULL)
 ),
 synthetic_interventions AS (
     SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date,
@@ -87,10 +87,10 @@ SELECT '197' AS rule, COUNT(*) AS rows_total
 FROM actual_197
 HAVING EXISTS (SELECT 1 FROM actual_197
     GROUP BY person_id, reporting_date HAVING COUNT(*) <> 1)
-    OR COUNT(*) <> 6
-    OR COALESCE(COUNT_IF(is_in_numerator), 0) <> 5
-    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-01-31' AND latest_record_date = '2024-01-15'), 0) <> 1
-    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-03-31' AND latest_record_date = '2024-03-01'), 0) <> 1
+    OR COUNT(*) <> 4
+    OR COALESCE(COUNT_IF(is_in_numerator), 0) <> 3
+    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-01-31' AND latest_record_date = '2024-01-15'), 0) <> 0
+    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-03-31' AND latest_record_date = '2024-03-01'), 0) <> 0
     OR COALESCE(COUNT_IF(person_id = -9823 AND latest_record_date = '2024-04-01'), 0) <> 1
     OR COALESCE(COUNT_IF(person_id = -9824 AND NOT is_in_numerator AND latest_record_date IS NULL), 0) <> 1
 UNION ALL
@@ -98,10 +98,10 @@ SELECT '199' AS rule, COUNT(*) AS rows_total
 FROM actual_199
 HAVING EXISTS (SELECT 1 FROM actual_199
     GROUP BY person_id, reporting_date HAVING COUNT(*) <> 1)
-    OR COUNT(*) <> 7
-    OR COALESCE(COUNT_IF(is_in_numerator), 0) <> 4
-    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-01-31' AND latest_record_date = '2024-01-15'), 0) <> 1
-    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-03-31' AND latest_record_date = '2024-03-01'), 0) <> 1
+    OR COUNT(*) <> 4
+    OR COALESCE(COUNT_IF(is_in_numerator), 0) <> 2
+    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-01-31' AND latest_record_date = '2024-01-15'), 0) <> 0
+    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-03-31' AND latest_record_date = '2024-03-01'), 0) <> 0
     OR COALESCE(COUNT_IF(person_id = -9823 AND latest_record_date = '2024-04-01'), 0) <> 1
     OR COALESCE(COUNT_IF(person_id = -9824 AND NOT is_in_numerator AND latest_record_date IS NULL), 0) <> 1
     OR COALESCE(COUNT_IF(person_id = -9821 AND reporting_date = '2024-02-29' AND is_in_numerator), 0) <> 0
@@ -113,10 +113,10 @@ SELECT '200' AS rule, COUNT(*) AS rows_total
 FROM actual_200
 HAVING EXISTS (SELECT 1 FROM actual_200
     GROUP BY person_id, reporting_date HAVING COUNT(*) <> 1)
-    OR COUNT(*) <> 9
-    OR COALESCE(COUNT_IF(is_in_numerator), 0) <> 4
-    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-01-31' AND latest_record_date = '2024-01-15'), 0) <> 1
-    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-03-31' AND latest_record_date = '2024-03-01'), 0) <> 1
+    OR COUNT(*) <> 4
+    OR COALESCE(COUNT_IF(is_in_numerator), 0) <> 2
+    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-01-31' AND latest_record_date = '2024-01-15'), 0) <> 0
+    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-03-31' AND latest_record_date = '2024-03-01'), 0) <> 0
     OR COALESCE(COUNT_IF(person_id = -9823 AND latest_record_date = '2024-04-01'), 0) <> 1
     OR COALESCE(COUNT_IF(person_id = -9824 AND NOT is_in_numerator AND latest_record_date IS NULL), 0) <> 1
     OR COALESCE(COUNT_IF(person_id = -9821 AND reporting_date = '2024-02-29' AND is_in_numerator), 0) <> 0
@@ -128,10 +128,10 @@ SELECT '202' AS rule, COUNT(*) AS rows_total
 FROM actual_202
 HAVING EXISTS (SELECT 1 FROM actual_202
     GROUP BY person_id, reporting_date HAVING COUNT(*) <> 1)
-    OR COUNT(*) <> 11
-    OR COALESCE(COUNT_IF(is_in_numerator), 0) <> 6
-    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-01-31' AND latest_record_date = '2024-01-15'), 0) <> 1
-    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-03-31' AND latest_record_date = '2024-03-01'), 0) <> 1
+    OR COUNT(*) <> 9
+    OR COALESCE(COUNT_IF(is_in_numerator), 0) <> 4
+    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-01-31' AND latest_record_date = '2024-01-15'), 0) <> 0
+    OR COALESCE(COUNT_IF(person_id = -9822 AND reporting_date = '2024-03-31' AND latest_record_date = '2024-03-01'), 0) <> 0
     OR COALESCE(COUNT_IF(person_id = -9823 AND latest_record_date = '2024-04-01'), 0) <> 1
     OR COALESCE(COUNT_IF(person_id = -9824 AND NOT is_in_numerator AND latest_record_date IS NULL), 0) <> 1
     OR COALESCE(COUNT_IF(person_id = -9821 AND reporting_date = '2025-02-28' AND is_in_numerator), 0) <> 0

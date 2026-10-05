@@ -29,7 +29,7 @@ WITH population AS (
 SELECT a.person_id, 'IND189' AS indicator_id,
     'Asthma: smoking status (under 19)' AS indicator_name,
     a.reporting_date, DATEADD(month, -12, a.reporting_date) AS measurement_period_start,
-    a.age, 'Asthma (aged 5 to 19)' AS condition_name,
+    a.age, 'Asthma, aged 5 to 19' AS condition_name,
     {{ nice_practice_columns('a', reference) }},
     a.latest_record_date, TRUE AS is_in_denominator,
     a.latest_record_date IS NOT NULL AS is_in_numerator,

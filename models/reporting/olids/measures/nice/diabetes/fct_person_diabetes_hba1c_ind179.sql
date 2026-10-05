@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 -- NICE IND179: https://www.nice.org.uk/indicators/ind179
 -- Last HbA1c in 12 months at or below 58 mmol/mol, diabetes register without moderate or severe frailty.

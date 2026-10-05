@@ -1,10 +1,12 @@
 models:
 - name: int_nice_cardiac_therapy
-  description: Cardiac therapy evidence, one row per registered, living, non-test person and reporting date with
-    an HF register membership or MI_COD diagnosis known by that date. Assessed on the build date. Each therapy class
-    is selected independently by its latest order date from 1 January 1990 through assessment. No current-only flags
-    are used. Null means no order; stale dates remain available for indicators to assess. MRA includes spironolactone
-    and eplerenone only; finerenone is excluded. ARB includes ARNI. HF-licensed beta blocker uses OPENCODELISTS/NHS_DRUG_REFSETS/LBB_COD.
+  description: >-
+    Cardiac prescriptions for registered, living, non-test people with heart failure register
+    membership or a recorded myocardial infarction. One row per person on the build date. Each
+    drug class retains its latest order from 1 January 1990 through the build date, including
+    older treatment outside indicator windows. Mineralocorticoid receptor antagonists include
+    spironolactone and eplerenone, excluding finerenone. Angiotensin receptor blockers include
+    sacubitril/valsartan.
   config:
     meta:
       owner:
@@ -43,6 +45,8 @@ models:
   - name: latest_ras_order_date
     description: Latest independent therapy order through assessment; null when none.
   - name: antiplatelet_chemical_count_in_period
-    description: Number of distinct nine-character BNF chemical prefixes ordered in the inclusive six months to
-      assessment. Strengths and products of one chemical count once. The IND125 lenient result also adds OTC aspirin
-      when no aspirin order is current.
+    description: >-
+      Number of distinct nine-character BNF chemical prefixes ordered in the inclusive six
+      months to assessment. Strengths and products of one chemical count once. The IND125
+      alternative result also counts recorded over-the-counter aspirin when no aspirin
+      prescription is current.

@@ -1,13 +1,11 @@
 models:
 - name: int_nice_ltc_population
-  description: NICE LTC population inputs. One row per active, living, non-test candidate person and reference
-    date. Candidates have register membership, a first/new depression episode, coded frailty, independent
-    active lithium treatment, or alcohol-disorder, dyslipidaemia or obstructive sleep apnoea history.
-    Missing register flags are false and counts zero. The child depression route is ages 10-17 with unresolved
-    first/new episodes. Lithium requires an order strictly after six calendar months before the reference
-    date, no later stop, and both clinical and recorded dates on or before the reference date. Register
-    and depression state follow the known-date rule. Other lifetime history uses clinical dates. Evaluated
-    at the build date; indicators apply their own populations and windows.
+  description: >-
+    Long-term condition evidence for registered, living, non-test people. One row per candidate
+    person on the build date. Candidates have condition register membership, depression,
+    frailty, active lithium treatment, alcohol disorder, dyslipidaemia or obstructive sleep
+    apnoea. Missing flags are false and counts zero. Lithium requires treatment in the preceding
+    six months with no later stop; indicators apply their own population rules.
   config:
     meta:
       owner:
@@ -19,11 +17,11 @@ models:
     - unique
     - not_null
   - name: reporting_date
-    description: Current evaluation date stored at build time. nice_ref relabels this to the consumer
-      evaluation date.
+    description: >-
+      Build date on which population and evidence are assessed.
   - name: birth_date_approx
-    description: Approximate birth date from the reference population. Monthly rows use the established
-      spine.
+    description: >-
+      Approximate birth date used to assess age.
   - name: ltc_count
     description: Number of distinct project LTC registers the person is on.
   - name: multimorbidity_cluster_count
@@ -82,9 +80,10 @@ models:
     description: On the SMI register with a schizophrenia, bipolar or psychosis diagnosis not in remission;
       false for lithium-only or remitted people.
   - name: is_on_lithium
-    description: Lithium prescribed strictly after the six-calendar-month boundary through the reference
-      date, with no stop later than the latest order date. Both orders and stops must be known by the
-      reference date. A same-day stop does not exclude. Independent of SMI diagnosis.
+    description: >-
+      Lithium prescribed strictly after the six-calendar-month boundary through the reporting
+      date, with no stop later than the latest order date. Both orders and stops must be known
+      by the reporting date. A same-day stop does not exclude. Independent of SMI diagnosis.
   - name: latest_smi_diagnosis_date
     description: Latest SMI diagnosis code date from the register; after a remission this is the relapse
       date.
@@ -103,17 +102,20 @@ models:
   - name: earliest_hypertension_date
     description: Earliest hypertension diagnosis date; null if none.
   - name: earliest_depression_anxiety_date
-    description: Earliest qualifying depression or anxiety diagnosis at the reference date. Uses register
-      membership plus unresolved first/new depression episodes at ages 10-17. An older episode remains
-      the anchor after a later new episode. Null when neither route applies.
+    description: >-
+      Earliest qualifying depression or anxiety diagnosis on the reporting date. Uses register
+      membership plus unresolved first/new depression episodes at ages 10-17. An older episode
+      remains the anchor after a later new episode. Null when neither route applies.
   - name: latest_new_depression_diagnosis_date
-    description: Latest first/new depression episode known by the reference date, ordered by clinical
+    description: >-
+      Latest first/new depression episode known by the reporting date, ordered by clinical
       timestamp independently of register membership or subsequent resolution. Null if none.
   - name: latest_frailty_severity
     description: Latest coded frailty severity; null if none.
   - name: has_alcohol_disorder
-    description: Alcohol-related disease or disorder evidence recorded at age 16 or over, from int_alcohol_misuse_disorders.
-      Retained for existing consumers.
+    description: >-
+      Alcohol-related disease or disorder evidence recorded at age 16 or over.
   - name: has_nice_alcohol_disorder
-    description: Any non-future ALCOHOL_MISUSE_DISORDERS evidence, with no age restriction. NICE IND196
-      to IND202 use this exclusion; code membership matches the existing alcohol-disorder source.
+    description: >-
+      ALCOHOL_MISUSE_DISORDERS evidence by the reporting date, without an age restriction.
+      Used for exclusions in NICE IND196 to IND202.

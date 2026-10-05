@@ -33,7 +33,7 @@ SELECT
     reporting_date,
     DATEADD(year, -5, reporting_date) AS measurement_period_start,
     age,
-    'Aged 40 and over' AS condition_name,
+    'Aged 40 or over' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_bp_date,
     TRUE AS is_in_denominator,

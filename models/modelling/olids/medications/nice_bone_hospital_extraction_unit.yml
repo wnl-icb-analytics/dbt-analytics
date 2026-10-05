@@ -1,0 +1,85 @@
+unit_tests:
+- name: nice_bone_hospital_sources_types_brands_and_grain
+  model: int_bone_sparing_hospital_therapy_all
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: SELECT column1::VARCHAR AS code, column2::VARCHAR AS cluster_id, column3::VARCHAR AS source, 'Synthetic
+      cluster'::VARCHAR AS cluster_description, 'Synthetic therapy'::VARCHAR AS code_description FROM VALUES ('SYN_BSA_ZOL',
+      'BSA_COD', 'PCD'), ('SYN_BSA_IV', 'BSA_COD', 'PCD'), ('SYN_BSA_DEN', 'BSA_COD', 'PCD'), ('SYN_BSA_IBAN', 'BSA_COD',
+      'PCD'), ('SYN_BSA_OTHER', 'BSA_COD', 'PCD'), ('SYN_OTHER_SOURCE', 'BSA_COD', 'ECL_CACHE'), ('SYN_ZOL_BRAND',
+      'NHS_DRUG_REFSETS/BSADRUG_COD', 'OPENCODELISTS'), ('SYN_DEN_BRAND', 'NHS_DRUG_REFSETS/BSADRUG_COD', 'OPENCODELISTS'),
+      ('SYN_ORAL', 'NHS_DRUG_REFSETS/BSADRUG_COD', 'OPENCODELISTS')
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: SELECT column1::NUMBER AS id, column2::VARCHAR AS patient_id, column3::NUMBER AS person_id, column4::DATE
+      AS clinical_effective_date, column5::DATE AS date_recorded, column6::VARCHAR AS result_value, column7::VARCHAR
+      AS result_units_source_concept_id, column8::VARCHAR AS result_unit_code, column9::VARCHAR AS result_unit_display,
+      column10::VARCHAR AS result_text, column11::VARCHAR AS allergy_medication_name, column12::VARCHAR AS is_problem,
+      column13::VARCHAR AS is_review, column14::VARCHAR AS problem_end_date, column15::VARCHAR AS mapped_concept_id,
+      column16::VARCHAR AS mapped_concept_code, column17::VARCHAR AS mapped_concept_display, column18::VARCHAR AS
+      episodicity_source_concept_id, column19::VARCHAR AS age_at_event, column20::VARCHAR AS lds_transform_datetime
+      FROM VALUES ('-9891', NULL, '-9891', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      NULL, NULL, NULL, 'SYN_BSA_ZOL', 'Zoledronic acid therapy (procedure)', NULL, NULL, NULL), ('-9892', NULL,
+      '-9892', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SYN_BSA_IV',
+      'Intravenous bisphosphonate therapy (procedure)', NULL, NULL, NULL), ('-9893', NULL, '-9893', '2026-01-01',
+      '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SYN_BSA_DEN', 'Denosumab therapy
+      (procedure)', NULL, NULL, NULL), ('-9894', NULL, '-9894', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL,
+      NULL, NULL, NULL, NULL, NULL, NULL, 'SYN_BSA_IBAN', 'Ibandronic acid therapy (procedure)', NULL, NULL, NULL),
+      ('-9895', NULL, '-9895', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      NULL, 'SYN_BSA_OTHER', 'Teriparatide therapy (procedure)', NULL, NULL, NULL), ('-9896', NULL, '-9896', '2026-01-01',
+      '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SYN_OTHER_SOURCE', 'Zoledronic
+      acid therapy (procedure)', NULL, NULL, NULL), ('-9891', NULL, '-9891', '2026-01-01', '2026-01-01', NULL, NULL,
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SYN_BSA_ZOL', 'Zoledronic acid therapy (procedure)', NULL,
+      NULL, NULL)
+  - input: ref('stg_olids_medication_statement')
+    format: sql
+    rows: SELECT column1::VARCHAR AS bnf_chapter, column2::VARCHAR AS bnf_section, column3::VARCHAR AS bnf_code,
+      column4::NUMBER AS id, column5::VARCHAR AS patient_id, column6::DATE AS clinical_effective_date, column7::DATE
+      AS date_recorded, column8::VARCHAR AS medication_name, column9::VARCHAR AS dose, column10::VARCHAR AS quantity_value,
+      column11::VARCHAR AS quantity_unit, column12::VARCHAR AS authorisation_type_code, column13::VARCHAR AS authorisation_type_display,
+      column14::VARCHAR AS issue_method, column15::VARCHAR AS is_active, column16::VARCHAR AS cancellation_date,
+      column17::VARCHAR AS expiry_date, column18::VARCHAR AS age_at_event, column19::VARCHAR AS mapped_concept_code,
+      column20::VARCHAR AS mapped_concept_display, column21::VARCHAR AS bnf_name FROM VALUES (NULL, NULL, '0606020V0SYNTHETIC',
+      '-9891', 'SYNTHETIC_PATIENT', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      NULL, NULL, NULL, 'SYN_ZOL_BRAND', 'Aclasta synthetic branded therapy', NULL), (NULL, NULL, '0606020Z0SYNTHETIC',
+      '-9892', 'SYNTHETIC_PATIENT', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      NULL, NULL, NULL, 'SYN_DEN_BRAND', 'Prolia synthetic branded therapy', NULL), (NULL, NULL, '0606020ASYNTHETIC',
+      '-9893', 'SYNTHETIC_PATIENT', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      NULL, NULL, NULL, 'SYN_ORAL', 'Synthetic oral therapy', NULL), (NULL, NULL, '0606020V0SYNTHETIC', '-9891',
+      'SYNTHETIC_PATIENT', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+      NULL, 'SYN_ZOL_BRAND', 'Aclasta synthetic branded therapy', NULL)
+  - input: ref('int_patient_person_unique')
+    format: sql
+    rows: SELECT 'SYNTHETIC_PATIENT'::VARCHAR AS patient_id, -9891::NUMBER AS person_id, 'SYNTHETIC_KEY'::VARCHAR
+      AS sk_patient_id
+  expect:
+    rows:
+    - record_id: '-9891'
+      therapy_source: PCD_OBSERVATION
+      therapy_type: ZOLEDRONIC_ACID
+      coverage_months: 12
+    - record_id: '-9892'
+      therapy_source: PCD_OBSERVATION
+      therapy_type: INTRAVENOUS_BISPHOSPHONATE
+      coverage_months: 12
+    - record_id: '-9893'
+      therapy_source: PCD_OBSERVATION
+      therapy_type: DENOSUMAB
+      coverage_months: 6
+    - record_id: '-9894'
+      therapy_source: PCD_OBSERVATION
+      therapy_type: OTHER_BONE_SPARING_THERAPY
+      coverage_months: 6
+    - record_id: '-9895'
+      therapy_source: PCD_OBSERVATION
+      therapy_type: OTHER_BONE_SPARING_THERAPY
+      coverage_months: 6
+    - record_id: '-9891'
+      therapy_source: MEDICATION_STATEMENT
+      therapy_type: ZOLEDRONIC_ACID
+      coverage_months: 12
+    - record_id: '-9892'
+      therapy_source: MEDICATION_STATEMENT
+      therapy_type: DENOSUMAB
+      coverage_months: 6

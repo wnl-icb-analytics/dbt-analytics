@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 -- NICE IND137: https://www.nice.org.uk/indicators/ind137
 -- Retinal screening recorded in 12 months on the diabetes register.

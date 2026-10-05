@@ -1,17 +1,23 @@
 models:
 - name: fct_person_smoking_ind98_by_month
   description: >-
-    Smoking support with long-term conditions (NICE IND98). One row per eligible current smoker with a
-    listed long-term condition and month-end. People must be registered, living and non-test. Eligible
-    people are current smokers with CHD, PAD, stroke or TIA, hypertension, diabetes, COPD, CKD, asthma
-    or an SMI diagnosis. SMI eligibility follows IND97 and includes remission. Support in the inclusive
-    12-month window through R uses REFERSSSA_COD, PHARM_COD and PHARMDRUG_COD. Advice and declined care
-    alone do not qualify. Personalised care adjustments are not applied. Recalculated monthly for 60
-    completed month-ends using today's rules and code lists. Registration starts are inclusive; ends and
-    deaths are exclusive. The established spine supplies age and practice. Approximate birth and death
-    dates and retrospective current test flags limit interpretation. Register and diagnosis eligibility
-    uses known dates; other evidence uses clinical or order dates through R. Later corrections can
-    change earlier results.
+    Stop-smoking support offered to current smokers (NICE IND98). One row per person in the
+    denominator at each month-end.
+
+
+    People registered at the month-end whose latest smoking status is current smoker, on
+    coronary heart disease, peripheral arterial disease, stroke, transient ischaemic attack,
+    hypertension, diabetes, COPD, chronic kidney disease or asthma registers. Schizophrenia,
+    bipolar disorder and other psychoses count, including remission; lithium alone does not.
+    Achieved with a stop-smoking referral, drug treatment record or prescription in the 12
+    months before the month-end. Advice or declined care alone does not count. Smoking records
+    require recorded age of at least 11. No personalised care adjustments are applied.
+    Recalculated for each of the last 60 month-ends with current rules, code lists and records,
+    so later corrections can change past months. Based on NICE NG209. Code lists: CHD_COD,
+    PAD_COD, STRK_COD, TIA_COD, HYP_COD, HYPRES_COD, DM_COD, DMTYPE1_COD, DMTYPE2_COD,
+    DMRES_COD, COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, CKD_COD, CKD1AND2_COD, CKDRES_COD,
+    AST_COD, ASTRES_COD, MH_COD, LSMOK_COD, EXSMOK_COD, NSMOK_COD, SMOK_COD, REFERSSSA_COD,
+    PHARM_COD (PCD); PHARMDRUG_COD (NHS drug refset).
   config:
     meta:
       owner:
@@ -19,40 +25,39 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind98
   columns:
   - name: person_id
-    description: Person in the indicator denominator.
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name.
+    description: "NICE published indicator title."
   - name: reporting_date
-    description: Evaluation date R.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Inclusive window start.
+    description: "Inclusive start of the 12-month achievement window, or 24 months for IND99."
   - name: age
-    description: Age in completed years at R.
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
   - name: condition_name
-    description: Population defining the indicator.
+    description: "Short label for the denominator population."
   - name: is_in_denominator
-    description: Always true for an eligible row.
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
   - name: is_in_numerator
-    description: Whether the qualifying evidence is present at R.
+    description: "Whether the person meets the documented achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   - name: latest_record_date
-    description: Latest qualifying evidence date; null when not achieved.
+    description: "Latest qualifying smoking status or support date in the achievement window; can be null when achieved through the never-smoked exception."
   - name: practice_code
-    description: ODS code of the registration practice at R.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Name of the registration practice at R.
+    description: "Name of the registration practice at month-end."
   - name: latest_smoking_status
-    description: Latest smoking state through R; same-day QOF status priority precedes highest id.
+    description: "Latest recorded smoking status on or before the reporting date; null when none."
   - name: latest_smoking_status_date
-    description: Clinical date of the selected smoking state.
+    description: "Date of the latest smoking status on or before the reporting date; null when none."
   - name: latest_never_smoked_date
-    description: Latest explicit never-smoked record through R; null when absent.
+    description: "Latest explicit never-smoked record on or before the reporting date; null when none."
   - name: latest_smoking_intervention_date
-    description: Latest QOF referral or pharmacotherapy evidence through R, including stale evidence;
-      null when absent.
+    description: "Latest stop-smoking referral, drug treatment record or prescription on or before the reporting date, including evidence outside the achievement window; null when none."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

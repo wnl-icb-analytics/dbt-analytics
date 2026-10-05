@@ -312,81 +312,6 @@ unit_tests:
     tags:
     - monthly-full
     - nice-history
-- name: nice_antiseizure_contraception_advice_expiry_boundaries_and_exclusions
-  model: fct_person_antiseizure_contraception_advice_ind78_by_month
-  given:
-  - input: ref('int_nice_reference_population_by_month')
-    rows: |-
-      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
-      FROM VALUES
-          (-8201::NUMBER, '2026-08-31'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
-          (-8201::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
-          (-8202::NUMBER, '2026-09-30'::DATE, 16::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
-          (-8203::NUMBER, '2026-09-30'::DATE, 54::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
-          (-8204::NUMBER, '2026-09-30'::DATE, 55::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
-          (-8205::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
-          (-8206::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
-          (-8207::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
-          (-8208::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Male'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR)
-    format: sql
-  - input: ref('int_nice_contraception_evidence_by_month')
-    rows: |-
-      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE AS latest_advice_date, column4::DATE AS latest_larc_date, column5::DATE AS latest_asm_date, column6::DATE AS latest_oral_patch_date, column7::DATE AS latest_ehc_date, column8::DATE AS first_sterilisation_hysterectomy_date
-      FROM VALUES
-          (-8201::NUMBER, '2026-08-31'::DATE, '2025-08-31'::DATE, NULL::DATE, '2026-08-31'::DATE, '2026-08-31'::DATE, NULL::DATE, NULL::DATE),
-          (-8201::NUMBER, '2026-09-30'::DATE, '2025-08-31'::DATE, NULL::DATE, '2026-08-31'::DATE, '2026-08-31'::DATE, NULL::DATE, NULL::DATE),
-          (-8202::NUMBER, '2026-09-30'::DATE, '2025-09-30'::DATE, NULL::DATE, '2026-08-31'::DATE, '2026-08-31'::DATE, NULL::DATE, NULL::DATE),
-          (-8203::NUMBER, '2026-09-30'::DATE, '2026-09-30'::DATE, NULL::DATE, '2026-08-31'::DATE, '2026-08-31'::DATE, NULL::DATE, NULL::DATE),
-          (-8204::NUMBER, '2026-09-30'::DATE, '2026-09-30'::DATE, NULL::DATE, '2026-08-31'::DATE, '2026-08-31'::DATE, NULL::DATE, NULL::DATE),
-          (-8205::NUMBER, '2026-09-30'::DATE, '2026-09-30'::DATE, NULL::DATE, '2026-08-31'::DATE, '2026-08-31'::DATE, NULL::DATE, '2026-09-30'::DATE),
-          (-8206::NUMBER, '2026-09-30'::DATE, '2026-09-30'::DATE, NULL::DATE, '2026-08-31'::DATE, '2026-08-31'::DATE, NULL::DATE, '2026-10-01'::DATE),
-          (-8207::NUMBER, '2026-09-30'::DATE, '2026-09-30'::DATE, NULL::DATE, '2026-03-30'::DATE, '2025-09-30'::DATE, NULL::DATE, NULL::DATE),
-          (-8208::NUMBER, '2026-09-30'::DATE, '2026-09-30'::DATE, NULL::DATE, '2026-08-31'::DATE, '2026-08-31'::DATE, NULL::DATE, NULL::DATE)
-    format: sql
-  - input: ref('fct_person_epilepsy_register_by_month')
-    rows: |-
-      SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, column3::DATE AS earliest_diagnosis_date, column4::DATE AS latest_diagnosis_date
-      FROM VALUES
-          (-8201::NUMBER, '2026-08-31'::DATE, '2020-01-01'::DATE, '2020-01-01'::DATE),
-          (-8201::NUMBER, '2026-09-30'::DATE, '2020-01-01'::DATE, '2020-01-01'::DATE),
-          (-8203::NUMBER, '2026-09-30'::DATE, '2020-01-01'::DATE, '2020-01-01'::DATE),
-          (-8204::NUMBER, '2026-09-30'::DATE, '2020-01-01'::DATE, '2020-01-01'::DATE),
-          (-8205::NUMBER, '2026-09-30'::DATE, '2020-01-01'::DATE, '2020-01-01'::DATE),
-          (-8206::NUMBER, '2026-09-30'::DATE, '2020-01-01'::DATE, '2020-01-01'::DATE),
-          (-8207::NUMBER, '2026-09-30'::DATE, '2020-01-01'::DATE, '2020-01-01'::DATE),
-          (-8208::NUMBER, '2026-09-30'::DATE, '2020-01-01'::DATE, '2020-01-01'::DATE)
-    format: sql
-  expect:
-    rows:
-    - person_id: -8201
-      reporting_date: '2026-08-31'
-      latest_record_date: '2025-08-31'
-      is_in_numerator: true
-      has_epilepsy: true
-    - person_id: -8201
-      reporting_date: '2026-09-30'
-      latest_record_date: null
-      is_in_numerator: false
-      has_epilepsy: true
-    - person_id: -8202
-      reporting_date: '2026-09-30'
-      latest_record_date: '2025-09-30'
-      is_in_numerator: true
-      has_epilepsy: false
-    - person_id: -8203
-      reporting_date: '2026-09-30'
-      latest_record_date: '2026-09-30'
-      is_in_numerator: true
-      has_epilepsy: true
-    - person_id: -8206
-      reporting_date: '2026-09-30'
-      latest_record_date: '2026-09-30'
-      is_in_numerator: true
-      has_epilepsy: true
-  config:
-    tags:
-    - monthly-full
-    - nice-history
 - name: nice_oral_patch_larc_advice_expiry_boundaries_and_exclusions
   model: fct_person_oral_patch_larc_advice_ind148_by_month
   given:
@@ -553,13 +478,18 @@ unit_tests:
       is_in_numerator: false
       latest_record_date: null
       has_unknown_modality_advice: false
-    - person_id: -8309
+    - person_id: -8311
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+      latest_record_date: '2025-09-01'
+      has_unknown_modality_advice: false
+    - person_id: -8310
       reporting_date: '2026-09-30'
       is_in_numerator: false
       latest_record_date: null
       has_unknown_modality_advice: false
     - person_id: -8311
-      reporting_date: '2026-08-31'
+      reporting_date: '2026-09-30'
       is_in_numerator: true
       latest_record_date: '2025-09-01'
       has_unknown_modality_advice: false

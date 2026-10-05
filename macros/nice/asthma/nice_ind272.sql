@@ -65,7 +65,7 @@ WITH population AS (
 )
 SELECT a.person_id, 'IND272' AS indicator_id, 'Asthma: objective tests' AS indicator_name,
     a.reporting_date, DATEADD(month, -15, a.reporting_date) AS measurement_period_start,
-    a.age, 'Asthma (new unresolved diagnosis, aged 5 and over)' AS condition_name,
+    a.age, 'New asthma diagnosis, aged 5 or over' AS condition_name,
     {{ nice_practice_columns('a', reference) }},
     a.diagnosis_date, a.feno_date, a.reversibility_date, a.pefr_variability_date,
     a.bronchial_challenge_date, a.skin_prick_date, a.ige_date, a.eosinophil_or_fbc_date,

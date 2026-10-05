@@ -1,17 +1,13 @@
 models:
 - name: int_nice_childhood_immunisation_profile_by_month
-  description: NICE childhood vaccine evidence. One row per active non-test person and completed month-end
-    with the 24-week, 8-month, 18-month or fifth-birthday milestone in (month-end minus 12 months, month-end].
-    Distinct administration dates count within the established age windows. Source event age takes priority
-    for completed-year boundaries; approximate birth dates are the fallback. Contraindications apply through
-    the month-end. DTP and MMR retain existing proxies without an authorised specific anaphylaxis definition.
-    Recalculated at monthly refresh for the last 60 completed month-ends using today's rules and code
-    lists. Registration and practice come from the existing monthly spine. Registration start is inclusive,
-    end and death dates exclusive. Overlapping registrations retain the spine's current-registration priority.
-    Birth and death dates are approximate; missing birth dates prevent historical active rows. Current
-    gender and test flags apply retrospectively. Diagnosis state uses both clinical and recorded dates.
-    Other evidence uses its clinical or order date through the month-end. Later corrections and current
-    code-list changes can alter earlier results.
+  description: >-
+    Childhood vaccination evidence for registered, living, non-test children with a 24-week,
+    8-month, 18-month or fifth-birthday milestone in the 12 months before the month-end. One row
+    per child and month-end. Counts distinct administration or vaccine order dates. Birth dates
+    are approximate; recorded event age determines birthday boundaries when available.
+    Contraindication code lists provide proxies rather than confirmed vaccine-component
+    anaphylaxis. Recalculated for each of the last 60 month-ends with current rules, code lists
+    and records, so later corrections can change past months.
   config:
     meta:
       owner:
@@ -26,8 +22,8 @@ models:
   - name: person_id
     description: Child identifier.
   - name: reporting_date
-    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
-      row.
+    description: >-
+      Completed month-end on which population and evidence are assessed.
   - name: birth_date_approx
     description: Approximate birth date (mid-month).
   - name: dtap_doses_by_8_months

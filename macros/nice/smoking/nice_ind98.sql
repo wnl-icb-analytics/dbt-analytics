@@ -53,11 +53,11 @@ assessed AS (
 SELECT
     person_id,
     'IND98' AS indicator_id,
-    'Smoking: support and treatment for LTC or SMI' AS indicator_name,
+    'Smoking: support and treatment for people with long-term conditions or SMI' AS indicator_name,
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Current smoker with a long-term condition or SMI' AS condition_name,
+    'Smokers with long-term conditions or severe mental illness' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_smoking_status,
     latest_smoking_status_date,

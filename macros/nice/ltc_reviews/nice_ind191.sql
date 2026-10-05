@@ -4,6 +4,7 @@
     Args: reference is current or by_month.
     Returns: the IND191 detail projection, one eligible person per reporting_date.
 -#}
+-- QOF COPD010 permits separate assessment records.
 -- NICE IND191: https://www.nice.org.uk/indicators/ind191
 -- COPD review, exacerbation count and MRC dyspnoea assessment in 12 months for people on the COPD register.
 WITH indicator_population AS (

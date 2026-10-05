@@ -1,19 +1,15 @@
 models:
   - name: fct_person_nice_indicator_status
-    description: |
-      Current NICE indicator results. One row per eligible person and indicator,
-      assessed on the build date. People must be currently registered, living and
-      non-test, and meet the individual indicator's population rules.
+    description: >-
+      Current NICE indicator results. One row per person and indicator in the denominator on
+      the build date.
 
-      Includes achieved and unachieved results. indicator_status gives the reason
-      when the achievement rule is not met. Family tables and individual measures
-      provide the clinical readings, thresholds and supporting evidence.
 
-      Join def_indicator on indicator_id for names, categories and clinical
-      definitions. Measures count people meeting a rule; separate reports that
-      count individual care processes are outside this table.
-
-      Personalised care adjustments are not applied.
+      People must be currently registered, living and non-test and meet each indicator's
+      population rules. Includes achieved and unachieved results; personalised care
+      adjustments are not applied. Individual measures and family tables supply readings,
+      thresholds, exclusions and code lists. The indicator catalogue supplies names and
+      clinical definitions. Reports counting individual care processes are outside this table.
     config:
       meta:
         owner:
@@ -26,16 +22,19 @@ models:
               - indicator_id
     columns:
       - name: person_id
-        description: Person in the indicator denominator.
+        description: >-
+          Person in the indicator denominator on the build date.
         data_tests:
           - not_null
       - name: indicator_id
-        description: NICE indicator identifier, matching def_indicator. tests/nice_indicator_status_ids_defined.sql checks every id has a definition.
+        description: >-
+          NICE indicator identifier used in the indicator catalogue.
         data_tests:
           - not_null
           - accepted_values:
               arguments:
                 values: &nice_indicator_ids
+                  - IND78
                   - IND79
                   - IND80
                   - IND81
@@ -183,11 +182,15 @@ models:
                   - IND321
                   - IND324
       - name: indicator_name
-        description: Published NICE indicator name.
+        description: >-
+          Published NICE indicator title.
       - name: reporting_date
-        description: Build date on which eligibility and the measurement period are assessed.
+        description: >-
+          Build date on which eligibility and evidence are assessed.
       - name: measurement_period_start
-        description: Inclusive start of the indicator's measurement period; the length depends on the indicator.
+        description: >-
+          Start date of the indicator's assessment period. Its duration and whether this
+          boundary is included depend on the indicator.
       - name: age
         description: Age in years on the reporting date; null when no birth date is recorded.
       - name: current_practice_code
@@ -195,15 +198,19 @@ models:
       - name: current_practice_name
         description: Name of the current registration practice.
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments.
+        description: >-
+          Always true. The person meets the population rules before personalised care
+          adjustments.
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date.
+        description: >-
+          Whether the person meets the achievement rule on the reporting date.
       - name: indicator_status
-        description: >
-          ACHIEVED when in the numerator; otherwise the reason: ABOVE_TARGET,
-          NOT_RECORDED_IN_PERIOD, NOT_ASSESSABLE, NOT_TREATED_IN_PERIOD,
-          NEVER_TREATED, VKA_WITHOUT_DOAC_EXCEPTION, DOAC_WHERE_VKA_INDICATED or
-          OUT_OF_RANGE (latest result in the period outside the target range).
+        description: >-
+          ACHIEVED means the person meets the achievement rule. Other values describe why
+          they do not: ABOVE_TARGET, NOT_RECORDED_IN_PERIOD, NOT_ASSESSABLE,
+          NOT_TREATED_IN_PERIOD, NEVER_TREATED, VKA_WITHOUT_DOAC_EXCEPTION,
+          DOAC_WHERE_VKA_INDICATED or OUT_OF_RANGE. The indicator definition explains
+          which reasons apply.
         data_tests:
           - not_null
           - accepted_values:
@@ -220,30 +227,19 @@ models:
                   - OUT_OF_RANGE
 
   - name: fct_person_nice_indicator_status_by_month
-    description: |
-      Monthly NICE indicator results. One row per eligible person, indicator and
-      completed month-end, covering the last 60 completed months. People must be
-      registered, living and non-test at month-end and meet the indicator's
-      population rules. Includes achieved and unachieved results, without
-      personalised care adjustments. Family tables and individual measures
-      provide readings, thresholds and supporting evidence. Join def_indicator
-      on indicator_id for clinical definitions and categories.
+    description: >-
+      Monthly NICE indicator results. One row per eligible person, indicator and completed
+      month-end.
 
-      Monthly refresh recalculates all dates using today's rules and code lists.
-      This is retained evidence assessed retrospectively, rather than the results
-      practices saw at the time. Register state uses clinical and recorded dates;
-      other evidence uses clinical or order dates through month-end. Later source
-      corrections and code-list changes can alter earlier results.
 
-      Registration and practice follow the existing monthly spine, including its
-      preference for current registrations when intervals overlap. Registration
-      start is inclusive; registration end and death dates are exclusive. Birth
-      and death dates are approximate. Missing birth dates prevent historical
-      active rows. Current gender and test flags apply retrospectively, and source
-      retention limits earlier coverage. Each indicator retains its documented
-      proxy limitations, including IND219's COVID immunosuppression proxy and
-      incomplete shingles-specific anaphylaxis exclusion. No current-day row is
-      included.
+      People must be registered, living and non-test at month-end and meet each indicator's
+      population rules. Includes achieved and unachieved results; personalised care
+      adjustments are not applied. Individual measures and family tables supply readings,
+      thresholds, exclusions and code lists. The indicator catalogue supplies names and
+      clinical definitions. Birth and death dates are approximate; missing birth dates exclude
+      historical rows. Current gender and test flags apply retrospectively. Recalculated for
+      each of the last 60 month-ends with current rules, code lists and records, so later
+      corrections can change past months.
     config:
       meta:
         owner:
@@ -259,29 +255,44 @@ models:
       - name: person_id
         description: Person in the indicator denominator at month-end.
       - name: indicator_id
-        description: NICE indicator identifier, matching the 146 current measure definitions. IND318 has rows only from April 2026, when its fixed diagnosis cohort starts.
+        description: >-
+          NICE indicator identifier used in the indicator catalogue.
         data_tests:
           - accepted_values:
               arguments:
                 values: *nice_indicator_ids
       - name: indicator_name
-        description: Published NICE indicator name.
+        description: >-
+          Published NICE indicator title.
       - name: reporting_date
-        description: Completed month-end on which population and evidence are assessed. DATE.
+        description: >-
+          Completed month-end on which eligibility and evidence are assessed.
       - name: measurement_period_start
-        description: Inclusive start of the indicator's rolling, financial-year or selected-season period.
+        description: >-
+          Start date of the indicator's assessment period. Its duration and whether this
+          boundary is included depend on the indicator.
       - name: age
-        description: Completed years at month-end, calculated from the approximate birth month.
+        description: >-
+          Age in completed years on the reporting date, calculated from the approximate
+          birth month.
       - name: practice_code
         description: ODS code of the registration practice attributed at month-end.
       - name: practice_name
         description: Name of the registration practice attributed at month-end.
       - name: is_in_denominator
-        description: Always true; an eligible person before personalised care adjustments.
+        description: >-
+          Always true. The person meets the population rules before personalised care
+          adjustments.
       - name: is_in_numerator
-        description: Whether the person meets the indicator at month-end.
+        description: >-
+          Whether the person meets the achievement rule on the reporting date.
       - name: indicator_status
-        description: ACHIEVED when in the numerator; otherwise the same reason tokens as the current status table.
+        description: >-
+          ACHIEVED means the person meets the achievement rule. Other values describe why
+          they do not: ABOVE_TARGET, NOT_RECORDED_IN_PERIOD, NOT_ASSESSABLE,
+          NOT_TREATED_IN_PERIOD, NEVER_TREATED, VKA_WITHOUT_DOAC_EXCEPTION,
+          DOAC_WHERE_VKA_INDICATED or OUT_OF_RANGE. The indicator definition explains
+          which reasons apply.
         data_tests:
           - accepted_values:
               arguments:

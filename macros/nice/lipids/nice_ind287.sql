@@ -57,7 +57,7 @@ SELECT
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,
-    'Newly diagnosed hypertension or type 2 diabetes with CVD risk score 10% or more' AS condition_name,
+    'New hypertension or type 2 diabetes with raised risk' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_lipid_lowering_order_date,
     latest_lipid_lowering_class,

@@ -1,8 +1,13 @@
 models:
 - name: fct_person_heart_failure_nice_indicators_snapshot_input
-  description: NICE heart failure results for IND317, IND192 and IND318. One row per eligible active, living,
-    non-test person and indicator, excluding dates that advance on each build for change snapshots. Member
-    measures define eligibility and treatment rules. Personalised care adjustments are not applied.
+  description: >-
+    Heart failure evidence for change history (IND192, IND317, IND318). One row per eligible person
+    and indicator.
+
+
+    Records practice, supporting evidence and achievement from the build date. Reporting date and
+    measurement period start are omitted, so the passing of a day alone does not create a new
+    version. Eligibility and achievement follow the individual measures.
   config:
     meta:
       owner:
@@ -15,8 +20,15 @@ models:
         - indicator_id
   columns:
   - name: has_reduced_ef_category
-    description: Any reduced EF category known by assessment for IND318; null for other indicators.
+    description: >-
+      True when a reduced ejection fraction category is known by the reporting date, including a
+      category recorded before diagnosis. Null when this field does not apply to the indicator.
   - name: has_mildly_reduced_ef_category
-    description: Any mildly reduced EF category known by assessment for IND318; null for other indicators.
+    description: >-
+      True when a mildly reduced ejection fraction category is known by the reporting date,
+      including a category recorded before diagnosis. Null when this field does not apply to the
+      indicator.
   - name: has_preserved_ef_category
-    description: Any preserved or normal EF category known by assessment for IND318; null for other indicators.
+    description: >-
+      True when a preserved ejection fraction category is known by the reporting date, including a
+      category recorded before diagnosis. Null when this field does not apply to the indicator.

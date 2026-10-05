@@ -50,11 +50,11 @@ assessed AS (
 SELECT
     person_id,
     'IND130' AS indicator_id,
-    'Kidney conditions: CKD and renin-angiotensin system antagonists' AS indicator_name,
+    'Kidney conditions: CKD and renin–angiotensin system antagonists' AS indicator_name,
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,
-    'CKD with hypertension and proteinuria' AS condition_name,
+    'Kidney disease with hypertension and proteinuria' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     latest_acr_value,
     latest_egfr_value,

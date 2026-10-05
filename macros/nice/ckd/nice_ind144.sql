@@ -64,7 +64,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Chronic kidney disease' AS condition_name,
+    'Chronic kidney disease, stages 3 to 5' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_record_date,
     TRUE AS is_in_denominator,

@@ -66,7 +66,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Moderate or severe frailty, or conditions in four or more NICE multimorbidity categories' AS condition_name,
+    'Moderate or severe frailty, or multiple conditions' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     ltc_count,
     multimorbidity_cluster_count,

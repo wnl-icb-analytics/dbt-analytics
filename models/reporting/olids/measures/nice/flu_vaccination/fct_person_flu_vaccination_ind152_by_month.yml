@@ -1,17 +1,19 @@
 models:
 - name: fct_person_flu_vaccination_ind152_by_month
-  description: NICE IND152. One row per active, living, non-test eligible person and completed month-end.
-    CHD, stroke/TIA, diabetes or COPD register members. Diabetes membership starts at age 17. Contraindications
-    do not exclude. Achieved by vaccination in the selected closed 1 August to 31 March season. January-March
-    selects the season starting two years earlier; April-December selects the season starting one year
-    earlier. NICE and QOF v51 do not settle the off-season rollover. Recalculated for the last 60 completed
-    month-ends with today's rules and code lists. Registration and practice use the existing monthly spine.
-    Registration starts are inclusive; ends and deaths are exclusive. Overlapping registrations retain
-    the spine's current-registration priority. Birth and death dates are approximate; missing birth dates
-    prevent historical active rows. Current gender and test flags apply retrospectively. Diagnosis membership
-    uses clinical and recorded dates; other evidence uses its clinical or order date through month-end.
-    Later corrections and code-list changes can alter earlier results. Personalised care adjustments are
-    not applied. The five-year source retention policy can limit older evidence.
+  description: >-
+    Flu vaccination in several long-term conditions (NICE IND152). One row per person in the
+    denominator at each month-end.
+
+
+    People registered at the month-end on coronary heart disease, stroke, transient ischaemic
+    attack, diabetes or COPD registers. Achieved with flu vaccination in the last completed 1
+    August to 31 March season. The season changes on 1 April; March still uses the preceding
+    season. Diabetes register membership starts at 17. Vaccine contraindications remain
+    included. No personalised care adjustments are applied. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change past
+    months. Based on NICE NG103. Code lists: CHD_COD, STRK_COD, TIA_COD, DM_COD, DMTYPE1_COD,
+    DMTYPE2_COD, DMRES_COD, COPDDIAG_COD, COPDPROC_COD, COPDRES_COD (PCD); FLUVAX_COD, LAIV_COD,
+    FLURX_COD, LAIVRX_COD (UKHSA_FLU).
   config:
     meta:
       owner:
@@ -19,36 +21,35 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind152
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "NICE published indicator title."
   - name: reporting_date
-    description: Completed month-end at which eligibility and evidence are assessed.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "Inclusive start of the assessed flu season, 1 August."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the denominator population."
   - name: practice_code
-    description: Practice ODS code at month-end under the shared spine attribution.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Practice name at month-end under the shared spine attribution.
+    description: "Name of the registration practice at month-end."
   - name: latest_vaccination_date
-    description: Latest vaccination date in the season window; null when none
+    description: "Latest flu vaccination in the most recently completed 1 August to 31 March season; null when none."
   - name: is_laiv
-    description: Whether a vaccination in the window was the live attenuated nasal vaccine; null when
-      none
+    description: "Whether any vaccination in the assessed season was a live attenuated nasal vaccine; null when none."
   - name: latest_record_date
-    description: Date of the latest qualifying record in the period; null when none
+    description: "Latest flu vaccination in the most recently completed 1 August to 31 March season; null when none."
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the documented achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

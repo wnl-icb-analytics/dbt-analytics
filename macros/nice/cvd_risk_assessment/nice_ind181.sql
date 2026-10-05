@@ -49,7 +49,7 @@ SELECT
     reporting_date,
     DATEADD(month, -36, reporting_date) AS measurement_period_start,
     age,
-    'Type 2 diabetes not on a statin' AS condition_name,
+    'Type 2 diabetes without statin treatment, aged 25 to 84' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_risk_score,
     latest_risk_score_date,

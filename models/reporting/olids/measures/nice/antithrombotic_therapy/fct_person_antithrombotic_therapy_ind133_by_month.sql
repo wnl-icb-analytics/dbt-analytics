@@ -1,4 +1,4 @@
-{{ config(materialized='view', tags=['monthly-full', 'nice-history']) }}
+{{ config(materialized='table', cluster_by=['reporting_date', 'person_id'], tags=['monthly-full', 'nice-history']) }}
 
 -- NICE IND133: https://www.nice.org.uk/indicators/ind133
 -- Antiplatelet or oral anticoagulant evidence in 12 months for recorded non-haemorrhagic stroke or TIA.

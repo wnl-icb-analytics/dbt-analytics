@@ -44,9 +44,9 @@ assessed AS (
     LEFT JOIN test_dates AS test ON population.person_id = test.person_id
         AND population.reporting_date = test.reporting_date
 )
-SELECT person_id, 'IND86' AS indicator_id, 'Lithium therapy: creatinine and TSH monitoring' AS indicator_name,
+SELECT person_id, 'IND86' AS indicator_id, 'Bipolar, schizophrenia and other psychoses: target organ damage' AS indicator_name,
     reporting_date, DATEADD(month, -9, reporting_date) AS measurement_period_start,
-    age, 'Lithium therapy (prescribed in the preceding 6 months)' AS condition_name,
+    age, 'Current lithium therapy' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_creatinine_date, latest_thyroid_function_test_date,
     IFF(is_in_numerator, GREATEST(latest_creatinine_date, latest_thyroid_function_test_date), NULL) AS latest_record_date,

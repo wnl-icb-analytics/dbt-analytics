@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 -- NICE IND132: https://www.nice.org.uk/indicators/ind132
 -- Antiplatelet or oral anticoagulant evidence in 12 months on the CHD register.

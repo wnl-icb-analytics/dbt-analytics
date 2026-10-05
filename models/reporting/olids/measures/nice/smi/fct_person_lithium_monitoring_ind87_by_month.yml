@@ -1,30 +1,19 @@
 models:
 - name: fct_person_lithium_monitoring_ind87_by_month
-  description: |
-    NICE IND87: Lithium level in range. One row per registered, living, non-test person on lithium
-    therapy, independent of SMI diagnosis, assessed at the completed month-end. The latest
-    prescription must be strictly after the six-month boundary and up to month-end, with no
-    LITSTP_COD stop later than that order. Orders and stops must be known by month-end; a same-day
-    stop does not exclude.
+  description: >-
+    Serum lithium within the therapeutic range (NICE IND87). One row per person in the
+    denominator at each month-end.
 
-    Achievement requires the latest serum lithium record in the preceding 4 months to have a value
-    between 0.4 and 1.0 mmol/L inclusive. A latest record without a numeric value is NOT_ASSESSABLE;
-    a value outside the range is OUT_OF_RANGE.
 
-    The numerical range and use of the latest result are existing local interpretations. NICE IND87
-    does not define a numerical range or clearly settle latest versus any qualifying result. The
-    retired QOF MH010 rule is absent from v51, so v51 cannot resolve these choices.
-
-    Personalised care adjustments are not applied.
-
-    One row per eligible person and reporting_date for the last 60 completed month-ends.
-    Recalculated at monthly refresh using today's rules and code lists. Diagnosis and lithium
-    therapy state use clinical and recorded dates; other evidence uses its clinical or order date
-    through month-end. Later corrections and current code-list changes can alter earlier results.
-    Registration start is inclusive; registration end and death dates are exclusive. Practice
-    follows the existing monthly spine's current-registration priority when registrations overlap.
-    Birth and death dates are approximate; missing birth dates prevent historical active rows.
-    Current gender and test flags apply retrospectively.
+    People registered at the month-end prescribed lithium in the 6 months before the month-end,
+    without a later stop; a same-day stop does not exclude them. Prescriptions and stops must be
+    known by that date. Mental illness diagnosis is not required. Achieved when the latest serum
+    lithium result in the preceding 4 months is 0.4 to 1.0 mmol/L inclusive. Missing values are
+    unassessable; other values are out of range. NICE defines neither this local range nor
+    latest-result selection. No personalised care adjustments are applied. Recalculated for each
+    of the last 60 month-ends with current rules, code lists and records, so later corrections
+    can change past months. Based on NICE CG185. Code lists: LIT_COD; LITSTP_COD (PCD);
+    PINCER/LITH_LEV (OpenCodelists).
   config:
     meta:
       owner:
@@ -32,37 +21,43 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind87
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Person identifier for a member of the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+    description: "Month-end used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "4 months before the reporting date, included in the result window."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the denominator population."
   - name: practice_code
-    description: ODS practice code at month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice at the reporting month-end."
   - name: practice_name
-    description: Practice name at month-end under the monthly spine attribution.
+    description: "Name of the registration practice at the reporting month-end."
   - name: latest_lithium_level_date
-    description: Date of the latest serum lithium record of any value; null when none
+    description: >-
+      Latest serum lithium record on or before the reporting date, regardless of its value; null if
+      absent. It may be outside the achievement window.
   - name: latest_lithium_level
-    description: Latest serum lithium in mmol/L; null when the latest record has no value
+    description: >-
+      Serum lithium value in mmol/L from the latest record on or before the reporting date; null if
+      the record is absent or has no numeric value.
   - name: latest_record_date
-    description: Latest serum lithium record within four months, regardless of its value. Null when none
-      is in the window.
+    description: >-
+      Latest serum lithium record in the 4 months before the reporting date, inclusive, regardless
+      of its value; null if absent.
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED; NOT_RECORDED_IN_PERIOD when no serum lithium in the period; NOT_ASSESSABLE
-      when the latest record has no value; OUT_OF_RANGE otherwise
+    description: >-
+      ACHIEVED for an in-range latest lithium result; NOT_RECORDED_IN_PERIOD if absent from the
+      4-month window; NOT_ASSESSABLE if its value is missing; OUT_OF_RANGE otherwise.
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

@@ -1,18 +1,22 @@
 models:
 - name: fct_person_myocardial_infarction_therapy_ind125_by_month
   description: >-
-    Myocardial infarction therapy (NICE IND125). One row per eligible person with myocardial infarction
-    in the financial year and month-end. People must be registered, living and non-test. History is
-    recalculated with current rules and code lists. Approximate age and practice follow the monthly
-    spine. People with MI_COD in the financial year to date, including 1 April and the reporting date.
-    Achievement needs current ACE-I, or ARB with recorded ACE-I intolerance; aspirin plus a P2Y12
-    inhibitor; statin; and a beta blocker when HFLVSD_COD or REDEJCFRAC_COD is known. Current treatment
-    is an inclusive six-calendar-month window, matching built therapy measures. Aspirin includes
-    OSAL_COD taken-treatment evidence. Temporary intolerance lasts 12 months; persistent intolerance
-    stands. Lenient detail allows any ARB and any two antiplatelet BNF chemicals, including OTC aspirin
-    when no aspirin order is current. Personalised care adjustments and exception codes are not applied.
-    Diagnoses use known dates; other evidence uses clinical or order dates through the reporting date.
-    History covers the last 60 completed month-ends.
+    Medicines after myocardial infarction in the financial year (NICE IND125). One row per
+    person in the denominator at each month-end.
+
+
+    People registered at the month-end with myocardial infarction in the financial year from 1
+    April to the month-end, rather than a rolling year. Achieved with an ACE inhibitor, or ARB
+    with ACE inhibitor intolerance; aspirin and a P2Y12 inhibitor; a statin; and a beta blocker
+    if left ventricular systolic dysfunction is recorded. Prescriptions or recorded aspirin
+    treatment need to fall in the preceding 6 months. Temporary intolerance or contraindications
+    last 12 months; persistent records do not expire. The separate alternative accepts any ARB
+    and two antiplatelet chemicals, counting recorded aspirin separately without a recent
+    aspirin prescription. It does not affect achievement. No personalised care adjustments are
+    applied. Recalculated for each of the last 60 month-ends with current rules, code lists and
+    records, so later corrections can change past months. Based on NICE NG185. Code lists:
+    MI_COD, HFLVSD_COD, REDEJCFRAC_COD, OSAL_COD, XACE_COD, TXACE_COD, XSAL_COD, TXSAL_COD
+    (PCD); 0205051, 0205052, 0209, 020802, 0212, 0204 (BNF).
   config:
     meta:
       owner:
@@ -26,80 +30,133 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Person in the denominator.
+    description: "Person identifier for a member of the indicator denominator."
   - name: reporting_date
-    description: Assessment date; completed month-end in history.
+    description: "Month-end used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Financial-year start for the MI cohort.
+    description: "1 April at the start of the financial year containing the reporting date, included in the diagnosis cohort."
   - name: age
-    description: Age in years at the reporting date; historical birth dates are approximate.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: practice_code
-    description: ODS code of the registration practice at assessment.
+    description: "ODS code of the registration practice at the reporting month-end."
   - name: practice_name
-    description: Registration practice name at assessment.
+    description: "Name of the registration practice at the reporting month-end."
   - name: latest_record_date
-    description: Latest supporting evidence date through assessment; treatment measures may retain stale dates.
+    description: >-
+      Latest supporting prescription or aspirin treatment date on or before the reporting date; null
+      if absent. It may be outside the treatment window and does not prove all required medicines
+      are present.
   - name: is_in_denominator
-    description: Always true; personalised care adjustments are not applied.
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether every required component is met.
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or the accepted reason for non-achievement.
+    description: "ACHIEVED when all required medicines are present; otherwise NOT_TREATED_IN_PERIOD."
   - name: earliest_mi_date
-    description: Earliest mi date.
+    description: "Earliest myocardial infarction diagnosis with clinical and recorded dates known by the reporting date."
   - name: latest_mi_date
-    description: Latest mi date.
+    description: "Latest myocardial infarction diagnosis with clinical and recorded dates known by the reporting date."
   - name: latest_mi_in_financial_year_date
-    description: Latest mi in financial year date.
+    description: >-
+      Latest myocardial infarction diagnosis from 1 April of the financial year containing the
+      reporting date to that date, inclusive; null if absent.
   - name: first_lvsd_date
-    description: First lvsd date.
+    description: >-
+      Earliest left ventricular systolic dysfunction or reduced ejection fraction diagnosis known by
+      the reporting date; null if absent.
   - name: has_lvsd
-    description: Has lvsd.
+    description: >-
+      True when left ventricular systolic dysfunction or reduced ejection fraction is known by the
+      reporting date. A beta blocker is then required.
   - name: has_ace_inhibitor_intolerance
-    description: Has ace inhibitor intolerance.
+    description: >-
+      True when ACE inhibitor intolerance or contraindication is recorded by the reporting date.
+      Temporary records count for 12 months; persistent records have no expiry.
   - name: has_aspirin_intolerance
-    description: Has aspirin intolerance.
+    description: >-
+      True when aspirin intolerance or contraindication is recorded by the reporting date. Temporary
+      records count for 12 months; persistent records have no expiry.
   - name: latest_aspirin_record_date
-    description: Latest aspirin record date.
+    description: >-
+      Latest recorded aspirin treatment on or before the reporting date; null if absent. It may be
+      outside the treatment window.
   - name: latest_ace_inhibitor_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest ACE inhibitor prescription on or before the reporting date; null if absent. It may be
+      outside the treatment window.
   - name: latest_arb_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest ARB prescription on or before the reporting date; null if absent. It may be outside the
+      treatment window.
   - name: latest_aspirin_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest aspirin prescription on or before the reporting date; null if absent. It may be outside
+      the treatment window.
   - name: latest_p2y12_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest P2Y12 inhibitor prescription on or before the reporting date; null if absent. It may be
+      outside the treatment window.
   - name: latest_clopidogrel_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest clopidogrel prescription on or before the reporting date; null if absent. It may be
+      outside the treatment window.
   - name: latest_antiplatelet_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest antiplatelet prescription on or before the reporting date; null if absent. It may be
+      outside the treatment window.
   - name: latest_anticoagulant_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest oral anticoagulant prescription on or before the reporting date; null if absent. It may
+      be outside the treatment window.
   - name: latest_statin_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest statin prescription on or before the reporting date; null if absent. It may be outside
+      the treatment window.
   - name: latest_beta_blocker_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest beta blocker prescription on or before the reporting date; null if absent. It may be
+      outside the treatment window.
   - name: is_ace_inhibitor_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when a prescription for ACE inhibitor falls in the 6 months before the reporting date,
+      including both boundaries.
   - name: is_arb_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: "True when a prescription for ARB falls in the 6 months before the reporting date, including both boundaries."
   - name: is_aspirin_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when an aspirin prescription or recorded aspirin treatment falls in the 6 months before
+      the reporting date, including both boundaries.
   - name: is_p2y12_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when a prescription for P2Y12 inhibitor falls in the 6 months before the reporting date,
+      including both boundaries.
   - name: is_clopidogrel_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when a prescription for clopidogrel falls in the 6 months before the reporting date,
+      including both boundaries.
   - name: is_antiplatelet_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when a prescription for antiplatelet falls in the 6 months before the reporting date,
+      including both boundaries.
   - name: is_anticoagulant_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when a prescription for oral anticoagulant falls in the 6 months before the reporting
+      date, including both boundaries.
   - name: is_statin_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when a prescription for statin falls in the 6 months before the reporting date, including
+      both boundaries.
   - name: is_beta_blocker_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when a prescription for beta blocker falls in the 6 months before the reporting date,
+      including both boundaries.
   - name: is_in_numerator_lenient
-    description: Outcome with the documented lenient substitutions; does not affect the published numerator.
+    description: >-
+      Alternative result accepting any ARB and any two antiplatelet chemicals, plus recorded aspirin
+      treatment when no aspirin prescription is recent. Other requirements are unchanged; it does
+      not affect the main numerator.
   - name: antiplatelet_chemical_count_in_period
-    description: Number of distinct nine-character BNF chemical prefixes ordered in the inclusive six months to
-      assessment. Strengths and products of one chemical count once. The IND125 lenient result also adds OTC aspirin
-      when no aspirin order is current.
+    description: >-
+      Number of distinct antiplatelet chemicals prescribed in the 6 months before the reporting
+      date, including both boundaries. Chemicals use the first nine characters of the BNF code;
+      strengths and products of one chemical count once.

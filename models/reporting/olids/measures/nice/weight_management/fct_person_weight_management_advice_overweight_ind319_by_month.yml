@@ -1,18 +1,19 @@
 models:
 - name: fct_person_weight_management_advice_overweight_ind319_by_month
   description: >-
-    Weight advice for overweight adults (NICE IND319). One row per eligible person aged 18 to 39 with a
-    qualifying measured BMI and month-end. People must be registered, living and non-test. People aged
-    18-39 whose latest measured BMIVAL_COD BMI in the inclusive preceding 12 months is 23-27.4 kg/m^2,
-    or 25-29.9 if the demographic ethnicity at R is White. Unknown and unrecorded ethnicity use the
-    lower range. WTMGINT_COD advice between the BMI date and day 90 inclusive achieves the indicator,
-    capped at R. An invalid latest BMI is unassessable and excludes the person from the denominator. A
-    later invalid or out-of-range BMI prevents fallback. BMI30_COD and calculated BMI do not qualify.
-    Recalculated over the last 60 completed month-ends with current rules and code lists. Registration
-    and practice follow the monthly spine. Birth and death dates are approximate; current gender and
-    test flags apply retrospectively. Registers use clinical and recorded dates; other evidence uses
-    corrected clinical or order dates. Later corrections can change earlier results. Personalised care
-    adjustments are not applied.
+    Weight management advice for adults with overweight (NICE IND319). One row per person in the
+    denominator on the month-end.
+
+
+    People registered at the month-end aged 18 to 39 with latest measured BMI in the preceding
+    12 months of 23 to 27.4 kg/m2 inclusive, or 25 to 29.9 for recorded White ethnicity. Unknown
+    or missing ethnicity uses the lower range. The earliest qualifying BMI in that period must
+    be at least 90 days before the month-end. Achieved with weight management advice within 90
+    days from the latest BMI. Invalid or out-of-range latest BMI excludes them without using an
+    older result. Calculated BMI and obesity codes without measurements do not count. No
+    personalised care adjustments are applied. Recalculated for each of the last 60 month-ends
+    with current rules, code lists and records, so later corrections can change past months.
+    Based on NICE NG246. Code lists: BMIVAL_COD, WTMGINT_COD (PCD).
   config:
     meta:
       owner:
@@ -26,43 +27,40 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Person in the indicator denominator at R.
+    description: "Person identifier for someone in the indicator denominator."
   - name: indicator_id
-    description: Published NICE indicator identifier.
+    description: "Published NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator title.
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Date R used for population, age and evidence; build date for current, completed month-end
-      for history.
+    description: "Month-end used to assess the population, age and evidence."
   - name: measurement_period_start
-    description: 'Start of the evidence window: inclusive for IND319 and IND320; exclusive for six-month
-      bone treatment.'
+    description: "Inclusive start of the indicator measurement period before the reporting date."
   - name: age
-    description: Completed years at R from the approximate birth date.
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
   - name: condition_name
-    description: Population used by the indicator.
+    description: "Short label for the indicator denominator population."
   - name: practice_code
-    description: Registration practice ODS code at month-end under the monthly spine.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Registration practice name at month-end under the monthly spine.
+    description: "Name of the registration practice at month-end."
   - name: latest_bmi_date
-    description: Latest measured BMIVAL_COD BMI date within the inclusive preceding 12 months.
+    description: "Date of the latest measured BMI in the 12-month measurement period, including both boundary dates."
   - name: bmi_value
-    description: Recorded BMI in kg/m^2. An invalid latest value excludes the person; no older value replaces it.
+    description: "Body mass index in kg/m2."
   - name: is_recorded_white
-    description: Ethnicity is White in the demographic interval containing R, start inclusive and end
-      exclusive. False includes missing and unknown ethnicity.
+    description: "Whether ethnicity is recorded as White on the reporting date. False includes missing or unknown ethnicity."
   - name: bmi_lower_threshold
-    description: 'Inclusive BMI lower threshold: 25 if White recorded, otherwise 23 kg/m^2.'
+    description: "Inclusive lower BMI threshold in kg/m2 for IND319: 25 if ethnicity is recorded as White, otherwise 23."
   - name: bmi_upper_threshold
-    description: 'Inclusive BMI upper threshold: 29.9 if White recorded, otherwise 27.4 kg/m^2.'
+    description: "Inclusive upper BMI threshold in kg/m2 for IND319: 29.9 if ethnicity is recorded as White, otherwise 27.4."
   - name: latest_weight_advice_date
-    description: Latest WTMGINT_COD advice from BMI date through day 90 inclusive, capped at R.
+    description: "Latest weight management advice from the selected measured BMI date to 90 days afterwards, inclusive, by the reporting date; null when none is recorded."
   - name: latest_record_date
-    description: Qualifying weight advice date; null without advice in the follow-up window.
+    description: "Date of qualifying evidence retained within the indicator measurement or follow-up window; null when none is recorded."
   - name: is_in_denominator
-    description: Always true. Personalised care adjustments are not applied.
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether the achievement rule is met at R.
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or the accepted reason the rule is not met.
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."

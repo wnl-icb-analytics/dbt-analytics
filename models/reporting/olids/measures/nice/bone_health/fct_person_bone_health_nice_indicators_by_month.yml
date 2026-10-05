@@ -1,12 +1,15 @@
 models:
 - name: fct_person_bone_health_nice_indicators_by_month
-  description: NICE bone health outcomes (IND91, IND92). One row per eligible, registered, living, non-test
-    person and indicator and completed month-end. Recalculated over the last 60 completed month-ends with
-    current rules and code lists. Registration and practice follow the monthly spine. Birth and death
-    dates are approximate; current gender and test flags apply retrospectively. Registers use clinical
-    and recorded dates; other evidence uses corrected clinical or order dates. Later corrections can change
-    earlier results. See member measures for population, window and evidence definitions. Personalised
-    care adjustments are not applied.
+  description: >-
+    Bone health NICE indicator results (IND91, IND92). One row per person, indicator and
+    month-end.
+
+
+    Each indicator uses its own denominator, evidence window and exclusions, described in
+    the member measures. Clinical fields are null where they do not apply to an indicator.
+    No personalised care adjustments are applied. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months.
   config:
     meta:
       owner:
@@ -20,32 +23,30 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Person in the indicator denominator at R.
+    description: "Person identifier for someone in the indicator denominator."
   - name: indicator_id
-    description: Published NICE indicator identifier.
+    description: "Published NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator title.
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Date R used for population, age and evidence; build date for current, completed month-end
-      for history.
+    description: "Month-end used to assess the population, age and evidence."
   - name: measurement_period_start
-    description: 'Start of the evidence window: inclusive for IND319 and IND320; exclusive for six-month
-      bone treatment.'
+    description: "Start date of the indicator measurement period; inclusion of this date depends on the indicator."
   - name: age
-    description: Completed years at R from the approximate birth date.
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
   - name: condition_name
-    description: Population used by the indicator.
+    description: "Short label for the indicator denominator population."
   - name: latest_bone_sparing_order_date
-    description: Latest bone-sparing order on or before R; may be outside six months.
+    description: "Latest bone-sparing drug prescription by the reporting date; it may be outside the 6-month treatment window. Null when never prescribed. Null where the field does not apply to an indicator."
   - name: latest_record_date
-    description: Qualifying order date in (R minus six months, R]; null without current treatment.
+    description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
   - name: practice_code
-    description: Registration practice ODS code at month-end under the monthly spine.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Registration practice name at month-end under the monthly spine.
+    description: "Name of the registration practice at month-end."
   - name: is_in_denominator
-    description: Always true. Personalised care adjustments are not applied.
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether the achievement rule is met at R.
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or the accepted reason the rule is not met.
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."

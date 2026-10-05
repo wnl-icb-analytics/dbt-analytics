@@ -1,27 +1,25 @@
 models:
   - name: fct_person_multimorbidity_ind207
-    description: |
-      NICE IND207: Multimorbidity medication review. One row per currently registered,
-      living, non-test person with moderate or severe coded frailty, or conditions in
-      four or more NICE IND207 multimorbidity categories, assessed on the build date.
+    description: >-
+      Medication review with frailty or multimorbidity (NICE IND207). One row per person in the
+      denominator on the build date.
 
-      Achievement requires a structured medication review record in the preceding 12
-      months. The code does not independently establish use of an assessment tool or
-      shared decision making.
 
-      Counts each category once using int_nice_multimorbidity_categories. Chronic pain
-      requires four analgesic issues or four specified antiepileptic issues in the last
-      12 months. The antiepileptic route requires no epilepsy diagnosis code at any date
-      up to today, including diagnoses subsequently resolved.
-      Constipation requires four laxative issues. Supplemental diagnoses include Crohn's
-      disease, ulcerative colitis, unclassified inflammatory bowel disease,
-      anorexia or bulimia, current substance misuse,
-      bronchiectasis and the Bristol connective tissue disorder set.
-      Diverticular disease has no source-backed code set and remains omitted. Existing
-      register age/treatment restrictions and the alcohol flag's age floor remain.
-      Lithium therapy without an SMI diagnosis does not count as mental health evidence.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date with moderate or severe coded frailty, or at least
+      four NICE multimorbidity categories, each counted once. Achieved with a structured
+      medication review in the 12 months before the build date; codes cannot prove an assessment
+      tool or shared decision making. Chronic pain needs at least four analgesic prescriptions,
+      or at least four qualifying antiepileptic prescriptions without any epilepsy history,
+      including resolved diagnoses. Constipation needs at least four laxative prescriptions.
+      Both use 12-month windows. Crohn's disease, ulcerative colitis, unclassified inflammatory
+      bowel disease, anorexia, bulimia, current substance misuse, bronchiectasis and connective
+      tissue disorders count. Diverticular disease lacks a supported code list and is omitted.
+      Register age and treatment restrictions apply; alcohol misuse starts at 16. Lithium alone
+      without severe mental illness does not count. No personalised care adjustments are
+      applied. Based on NICE NG56. Code lists: STRUCTMEDRVW_COD, CROHNS_COD, ULCCOLITIS_COD,
+      EATDISORDER_COD, ILLSUB_COD (PCD); MULTIMORBIDITY_CONNECTIVE_TISSUE_DISORDER (BRISTOL);
+      HAS_CF_OR_BRONCHIECTASIS (QCOVID); INFLAMMATORY_BOWEL_DISEASE_UNCLASSIFIED (OPENSAFELY);
+      5065, 5066, 5071 (CCMS); contributing disease register code lists.
     config:
       meta:
         owner:
@@ -32,30 +30,26 @@ models:
           type: "MEASURE"
           category: "MULTIMORBIDITY"
           clinical_domain: "Geriatric"
-          name_short: "Multimorbidity medication review"
-          description_short: "Structured medication review in the preceding 12 months for people with frailty or multimorbidity (four or more condition clusters)"
-          description_long: |
-            Currently registered, living, non-test people with moderate or severe coded
-            frailty, or conditions in four or more NICE IND207 multimorbidity
-            categories.
-
-            Achievement requires a structured medication review record in the preceding
-            12 months. The code does not independently establish use of an assessment
-            tool or shared decision making.
-
-            Counts each category once using int_nice_multimorbidity_categories. Chronic
-            pain and constipation use four-issue prescribing rules in the last 12 months;
-            the antiepileptic pain route excludes epilepsy diagnosis codes at any date up to
-            today, including diagnoses subsequently resolved.
-            Supplemental diagnoses include Crohn's disease, ulcerative colitis,
-            unclassified inflammatory bowel disease, anorexia or bulimia, current
-            substance misuse, bronchiectasis and the Bristol
-            connective tissue disorder set. Diverticular disease remains omitted because
-            no source-backed code set was found. Existing register age/treatment
-            restrictions and the alcohol flag's age floor remain. Lithium therapy without
-            an SMI diagnosis does not count as a mental health condition.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Frailty or multimorbidity review"
+          description_short: "Structured medication review with frailty or multimorbidity."
+          description_long: >-
+            People registered on the build date with moderate or severe coded frailty, or at
+            least four NICE multimorbidity categories, each counted once. Achieved with a
+            structured medication review in the 12 months before the build date; codes cannot
+            prove an assessment tool or shared decision making. Chronic pain needs at least four
+            analgesic prescriptions, or at least four qualifying antiepileptic prescriptions
+            without any epilepsy history, including resolved diagnoses. Constipation needs at
+            least four laxative prescriptions. Both use 12-month windows. Crohn's disease,
+            ulcerative colitis, unclassified inflammatory bowel disease, anorexia, bulimia,
+            current substance misuse, bronchiectasis and connective tissue disorders count.
+            Diverticular disease lacks a supported code list and is omitted. Register age and
+            treatment restrictions apply; alcohol misuse starts at 16. Lithium alone without
+            severe mental illness does not count. No personalised care adjustments are applied.
+            Based on NICE NG56. Code lists: STRUCTMEDRVW_COD, CROHNS_COD, ULCCOLITIS_COD,
+            EATDISORDER_COD, ILLSUB_COD (PCD); MULTIMORBIDITY_CONNECTIVE_TISSUE_DISORDER
+            (BRISTOL); HAS_CF_OR_BRONCHIECTASIS (QCOVID);
+            INFLAMMATORY_BOWEL_DISEASE_UNCLASSIFIED (OPENSAFELY); 5065, 5066, 5071 (CCMS);
+            contributing disease register code lists.
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -63,55 +57,52 @@ models:
           sort_order: "NICE_IND207"
     columns: &multimorbidity_columns
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for someone in the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "Published NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
+        description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
       - name: condition_name
-        description: Population defining the indicator
+        description: "Short label for the indicator denominator population."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the current registration practice."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the current registration practice."
       - name: ltc_count
-        description: Number of distinct project long-term condition registers the person is on
+        description: "Number of disease registers to which the person belongs on the reporting date; this differs from the number of multimorbidity categories."
       - name: multimorbidity_cluster_count
-        description: Number of NICE IND207 categories represented, using int_nice_multimorbidity_categories for both indicators. Informational only for IND208.
+        description: "Number of NICE multimorbidity categories on the reporting date, counting each category once. Defines eligibility for IND207; information only for IND208."
       - name: latest_frailty_severity
-        description: Latest coded frailty severity; null if none
+        description: "Latest coded frailty severity by the reporting date; null when none is recorded."
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: "Date of qualifying evidence retained within the indicator measurement or follow-up window; null when none is recorded."
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true. Every row belongs to the denominator before personalised care adjustments."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the indicator achievement rule on the reporting date."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
 
   - name: fct_person_multimorbidity_ind208
-    description: |
-      NICE IND208: Frailty asked about falls. One row per currently registered, living,
-      non-test person aged 65 and over with moderate or severe coded frailty, assessed
-      on the build date.
+    description: >-
+      Falls enquiry in older adults with frailty (NICE IND208). One row per person in the
+      denominator on the build date.
 
-      Achievement requires a falls discussion or falls risk assessment record in the
-      preceding 12 months.
 
-      NICE requires enquiry about whether the person fell and the number and type of
-      falls. The available discussion and assessment codes do not establish each element
-      separately.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date aged 65 or over with moderate or severe coded frailty.
+      Achieved with a falls discussion or risk assessment in the 12 months before the build
+      date. Codes cannot prove enquiry covered the number and type of falls required by NICE. No
+      personalised care adjustments are applied. Based on NICE NG249. Code lists: FALLSDISC_COD,
+      FALRISKASS_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
     config:
       meta:
         owner:
@@ -122,20 +113,14 @@ models:
           type: "MEASURE"
           category: "MULTIMORBIDITY"
           clinical_domain: "Geriatric"
-          name_short: "Frailty asked about falls"
-          description_short: "Asked about falls in the preceding 12 months for people aged 65 and over with moderate or severe frailty"
-          description_long: |
-            Currently registered, living, non-test people aged 65 and over with moderate
-            or severe coded frailty.
-
-            Achievement requires a falls discussion or falls risk assessment record in
-            the preceding 12 months.
-
-            NICE requires enquiry about whether the person fell and the number and type
-            of falls. The available discussion and assessment codes do not establish
-            each element separately.
-
-            Assessed on the reporting date before personalised care adjustments.
+          name_short: "Frailty falls enquiry"
+          description_short: "Falls enquiry for people aged 65 or over with frailty."
+          description_long: >-
+            People registered on the build date aged 65 or over with moderate or severe coded
+            frailty. Achieved with a falls discussion or risk assessment in the 12 months before
+            the build date. Codes cannot prove enquiry covered the number and type of falls
+            required by NICE. No personalised care adjustments are applied. Based on NICE NG249.
+            Code lists: FALLSDISC_COD, FALRISKASS_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -144,15 +129,14 @@ models:
     columns: *multimorbidity_columns
 
   - name: fct_person_multimorbidity_nice_indicators
-    description: |
-      Multimorbidity and frailty NICE indicator results. One row per eligible person and
-      indicator on the build date. Covers IND207, IND208.
+    description: >-
+      Multimorbidity and frailty NICE indicator results (IND207, IND208). One row per person,
+      indicator and build date.
 
-      Each indicator retains its own population, evidence window and exclusions. The
-      individual indicator models define these rules. Results feed the combined NICE
-      indicator table and family history.
 
-      Personalised care adjustments are not applied.
+      Each indicator uses its own denominator, evidence window and exclusions, described in the
+      member measures. Clinical fields are null where they do not apply to an indicator. No
+      personalised care adjustments are applied.
     config:
       meta:
         owner:
@@ -165,37 +149,37 @@ models:
               - indicator_id
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Person identifier for someone in the indicator denominator."
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "Published NICE indicator identifier."
         data_tests:
           - accepted_values:
               arguments:
                 values: ['IND207', 'IND208']
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
         data_tests:
           - accepted_values:
               arguments:
                 values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
       - name: ltc_count
-        description: Number of distinct project long-term condition registers the person is on
+        description: "Number of disease registers to which the person belongs on the reporting date; this differs from the number of multimorbidity categories. Null where the field does not apply to an indicator."
       - name: multimorbidity_cluster_count
-        description: Number of NICE IND207 categories represented, using int_nice_multimorbidity_categories for both indicators. Informational only for IND208.
+        description: "Number of NICE multimorbidity categories on the reporting date, counting each category once. Defines eligibility for IND207; information only for IND208. Null where the field does not apply to an indicator."
       - name: latest_frailty_severity
-        description: Latest coded frailty severity; null if none
+        description: "Latest coded frailty severity by the reporting date; null when none is recorded. Null where the field does not apply to an indicator."
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
 
   - name: fct_person_multimorbidity_nice_indicators_snapshot_input
-    description: |
-      Current multimorbidity NICE indicator evidence for change history. One row per
-      person and indicator. Records the current practice, qualifying evidence and
-      outcome.
+    description: >-
+      Multimorbidity and frailty NICE indicator evidence for change history (IND207, IND208).
+      One row per person and indicator in the build-date denominator.
 
-      Reporting dates are omitted so a daily build alone does not create a new
-      historical version. Changes to recorded evidence, practice or achievement can
-      create a version in the family snapshot.
+
+      Retains practice, recorded evidence and achievement. Build-date fields are omitted so a
+      daily date change alone does not create a new history version. No personalised care
+      adjustments are applied.
     config:
       meta:
         owner:
@@ -208,24 +192,24 @@ models:
               - indicator_id
     columns:
       - name: person_id
-        description: Person identifier; part of the snapshot unique_key.
+        description: "Person identifier for someone in the indicator denominator."
         data_tests:
           - not_null
       - name: indicator_id
-        description: NICE indicator identifier; part of the snapshot unique_key.
+        description: "Published NICE indicator identifier."
         data_tests:
           - not_null
       - name: current_practice_code
-        description: ODS code of the current registration practice at the build.
+        description: "ODS code of the current registration practice."
       - name: latest_record_date
-        description: Date of the latest qualifying record; null when none in the period.
+        description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
       - name: is_in_numerator
-        description: Whether the person met the indicator at the build.
+        description: "Whether the person meets the indicator achievement rule on the reporting date."
       - name: indicator_status
-        description: Outcome label at the build.
+        description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
       - name: ltc_count
-        description: Number of LTC registers at the build.
+        description: "Number of disease registers to which the person belongs on the reporting date; this differs from the number of multimorbidity categories."
       - name: multimorbidity_cluster_count
-        description: Number of NICE IND207 categories at the build, using int_nice_multimorbidity_categories for both indicators. Informational only for IND208.
+        description: "Number of NICE multimorbidity categories on the reporting date, counting each category once. Defines eligibility for IND207; information only for IND208."
       - name: latest_frailty_severity
-        description: Latest coded frailty severity at the build.
+        description: "Latest coded frailty severity by the reporting date; null when none is recorded."

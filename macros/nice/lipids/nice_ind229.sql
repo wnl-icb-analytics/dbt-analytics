@@ -50,7 +50,7 @@ SELECT
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,
-    'CVD risk score 10% or more without CVD' AS condition_name,
+    'Raised cardiovascular risk without cardiovascular disease' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_lipid_lowering_order_date,
     latest_lipid_lowering_class,

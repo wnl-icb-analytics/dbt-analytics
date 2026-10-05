@@ -50,7 +50,7 @@ SELECT
     reporting_date,
     DATEADD(month, -60, reporting_date) AS measurement_period_start,
     age,
-    'General population aged 45 to 84' AS condition_name,
+    'Aged 45 to 84' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_risk_score,
     latest_risk_score_date,

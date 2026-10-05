@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 -- NICE IND120: https://www.nice.org.uk/indicators/ind120
 -- NICE corrected the renal process to eGFR creatinine measurement in February 2026.

@@ -43,11 +43,11 @@ result AS (
 SELECT
     person_id,
     'IND125' AS indicator_id,
-    'Myocardial infarction: medication for MI in the financial year to date' AS indicator_name,
+    'Myocardial infarction: medication for MI in preceding 12 months' AS indicator_name,
     reporting_date,
     {{ nice_financial_year_start('reporting_date') }} AS measurement_period_start,
     age,
-    'Myocardial infarction' AS condition_name,
+    'Myocardial infarction in the financial year' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     earliest_mi_date,
     latest_mi_date,

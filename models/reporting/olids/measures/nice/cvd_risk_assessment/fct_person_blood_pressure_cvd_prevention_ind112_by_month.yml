@@ -1,17 +1,17 @@
 models:
 - name: fct_person_blood_pressure_cvd_prevention_ind112_by_month
   description: >-
-    Blood pressure recording (NICE IND112). One row per active, living, non-test person aged 40 or over.
-    Achievement requires a complete paired BP record strictly after the date five years before R and on
-    or before R. No clinical exclusions or personalised care adjustments apply. The existing BP pair
-    definition uses BP_COD, SYSBP_COD, DIASBP_COD, HOMEBP_COD, ABPM_COD and HOMEAMBBP_COD. Implausible
-    complete pairs still count as recording. Recalculated monthly for the last 60 completed month-ends
-    using current rules and code lists. Registration and practice use the monthly spine, with start
-    inclusive and end and death exclusive. Overlaps retain its current-registration priority. Birth and
-    death dates are approximate; missing birth dates prevent historical active rows. Current gender and
-    test flags apply retrospectively. Registers use clinical and recorded dates known by month-end.
-    Other evidence uses corrected clinical dates through month-end. Later corrections and code-list
-    changes can alter earlier results.
+    Blood pressure recording for cardiovascular prevention (NICE IND112). One row per
+    person in the denominator at each month-end.
+
+
+    People registered at the month-end aged 40 or over. Achieved with a complete systolic
+    and diastolic blood pressure pair in the 5 years before the month-end. Implausible
+    complete pairs still count as a recording. No clinical exclusions apply. No
+    personalised care adjustments are applied. Based on NICE NG136. Recalculated for each
+    of the last 60 month-ends with current rules, code lists and records, so later
+    corrections can change past months. Code lists: BP_COD, SYSBP_COD, DIASBP_COD,
+    HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD.
   config:
     meta:
       owner:
@@ -25,29 +25,28 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Person in the indicator denominator.
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name.
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Evaluation date, a DATE.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Exclusive five-year evidence boundary; BP evidence on this date does not count.
+    description: "Exclusive start of the 5-year recording window before the reporting date; blood pressure evidence on this date does not count."
   - name: age
-    description: Completed years at R; history uses the approximate birth month.
+    description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
   - name: condition_name
-    description: Population defining the indicator.
+    description: "Short label for the population in the indicator denominator."
   - name: is_in_denominator
-    description: Always true. Rows contain eligible people only.
+    description: "Always true; each row is eligible before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether qualifying evidence falls within the indicator window through R.
+    description: "Whether the person meets the achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED when in the numerator, otherwise NOT_RECORDED_IN_PERIOD.
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
   - name: practice_code
-    description: Practice ODS code at R under the established population attribution.
+    description: "ODS code of the registration practice attributed at the reporting month-end."
   - name: practice_name
-    description: Practice name at R under the established population attribution.
+    description: "Name of the registration practice attributed at the reporting month-end."
   - name: latest_bp_date
-    description: Latest complete paired BP clinical date through R; null when none. May be older than
-      five years.
+    description: "Latest complete blood pressure pair through the reporting date for IND112; may be older than 5 years. Null when absent or for risk assessment indicators."

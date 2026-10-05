@@ -1,16 +1,17 @@
 models:
 - name: fct_person_heart_failure_confirmation_ind192_by_month
   description: >-
-    Heart failure diagnosis confirmation (NICE IND192). One row per eligible member with heart failure
-    diagnosed three to fifteen months ago and month-end. People must be registered, living and non-test.
-    History is recalculated with current rules and code lists. Approximate age and practice follow the
-    monthly spine. HF members whose earliest unresolved HF_COD diagnosis known by the reporting date is
-    strictly after 15 months before and on or before three months before that date. ECOG_COD
-    echocardiogram or specialist assessment must fall within the inclusive three months either side of
-    entry, capped at the reporting date. Diagnoses on the resolution calendar date remain unresolved,
-    matching the HF register. Personalised care adjustments and exception codes are not applied.
-    Diagnoses use known dates; other evidence uses clinical or order dates through the reporting date.
-    History covers the last 60 completed month-ends.
+    Heart failure diagnosis confirmation (NICE IND192). One row per person in the denominator at
+    each month-end.
+
+
+    People registered at the month-end on the heart failure register with an earliest unresolved
+    diagnosis 3 to 15 months before the month-end, allowing confirmation to finish. Diagnosis
+    must also be recorded by that date. A diagnosis on the resolution date remains unresolved.
+    Achieved with an echocardiogram or specialist assessment within 3 months before or after
+    diagnosis. No personalised care adjustments are applied. Recalculated for each of the last
+    60 month-ends with current rules, code lists and records, so later corrections can change
+    past months. Based on NICE NG106. Code lists: HF_COD, HFRES_COD, ECOG_COD (PCD).
   config:
     meta:
       owner:
@@ -24,24 +25,26 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Person in the denominator.
+    description: "Person identifier for a member of the indicator denominator."
   - name: reporting_date
-    description: Assessment date; completed month-end in history.
+    description: "Month-end used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Start of the rolling cohort or treatment window, as described above.
+    description: "15 months before the reporting date. Diagnoses on this boundary are excluded."
   - name: age
-    description: Age in years at the reporting date; historical birth dates are approximate.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: practice_code
-    description: ODS code of the registration practice at assessment.
+    description: "ODS code of the registration practice at the reporting month-end."
   - name: practice_name
-    description: Registration practice name at assessment.
+    description: "Name of the registration practice at the reporting month-end."
   - name: latest_record_date
-    description: Latest supporting evidence date through assessment; treatment measures may retain stale dates.
+    description: >-
+      Latest echocardiogram or specialist assessment from 3 months before to 3 months after
+      diagnosis, inclusive; null if absent.
   - name: is_in_denominator
-    description: Always true; personalised care adjustments are not applied.
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether every required component is met.
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or the accepted reason for non-achievement.
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   - name: diagnosis_date
-    description: Earliest unresolved HF diagnosis known by assessment.
+    description: "Earliest unresolved heart failure diagnosis with clinical and recorded dates known by the reporting date."

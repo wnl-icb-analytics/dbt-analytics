@@ -1,9 +1,11 @@
 models:
 - name: fct_person_asthma_nice_indicators
-  description: NICE asthma outcomes IND315, IND272 and IND189. One row per eligible person, indicator
-    and reporting date; populations and evidence windows differ by indicator. Detail columns not used
-    by an indicator are null. R is the build date. Includes IND316 MART-capable prescribing plus recorded
-    MART regimen for higher-risk asthma aged 12+.
+  description: >-
+    NICE asthma results. One row per person and indicator on the build date.
+
+
+    Includes IND189, IND272, IND315, IND316, with the eligibility, exclusions and achievement
+    rules documented for each indicator.
   config:
     meta:
       owner:
@@ -16,73 +18,66 @@ models:
         - indicator_id
   columns:
   - name: person_id
-    description: Person in the denominator.
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published indicator name.
+    description: "NICE published indicator title."
   - name: reporting_date
-    description: Date at which eligibility and evidence are assessed.
+    description: "Build date used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Start of the cohort or evidence period; see the model description for boundary inclusion.
+    description: "Start of the indicator cohort or evidence period; boundary inclusion follows the documented indicator rule."
   - name: age
-    description: Completed years at reporting_date.
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
   - name: condition_name
-    description: Population defining the indicator.
+    description: "Short label for the denominator population."
   - name: is_in_denominator
-    description: Always true. Personalised care adjustments are not applied.
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
   - name: is_in_numerator
-    description: Whether the person meets the numerator rule.
+    description: "Whether the person meets the documented achievement rule on the reporting date."
   - name: indicator_status
-    description: >
-      ACHIEVED, NOT_RECORDED_IN_PERIOD (no qualifying review, test or smoking record)
-      or NOT_TREATED_IN_PERIOD (IND316: no MART prescription with a MART regimen code).
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_TREATED_IN_PERIOD for IND316 or NOT_RECORDED_IN_PERIOD."
   - name: latest_record_date
-    description: Latest qualifying evidence date; null when the numerator is not met.
+    description: "Date of the latest qualifying evidence in the indicator window; null when none."
   - name: current_practice_code
-    description: ODS registration practice.
+    description: "ODS code of the registration practice on the build date."
   - name: current_practice_name
-    description: Registration practice name.
+    description: "Name of the registration practice on the build date."
   - name: risk_period_start
-    description: Exclusive start of the prior-year risk window.
+    description: "Exclusive start of the risk period, 24 months before the reporting date."
   - name: risk_period_end
-    description: Inclusive end of the prior-year risk window.
+    description: "Inclusive end of the risk period, 12 months before the reporting date."
   - name: saba_inhaler_count
-    description: Inhaler devices in the risk window. Doses divided by 60 for Accuhaler, 100 for Turbohaler,
-      otherwise 200, rounded to whole devices with a minimum of one per matched order.
+    description: "Short-acting reliever inhalers in the risk period. Prescription quantities are divided by 60 for Accuhaler, 100 for Turbohaler and 200 otherwise, rounded to whole inhalers with at least one per matching prescription."
   - name: oral_steroid_course_count
-    description: Distinct prednisolone order days in the risk window, used as a proxy for oral steroid
-      courses.
+    description: "Distinct prednisolone prescription dates in the risk period, used to estimate oral steroid courses."
   - name: latest_asthma_admission_date
-    description: Latest GP-coded ASTADMSN_COD admission in the risk window; null when none.
+    description: "Latest GP-recorded asthma admission in the risk period; null when none."
   - name: has_high_saba_use
-    description: At least six SABA inhalers in the risk window.
+    description: "Whether at least six short-acting reliever inhalers were prescribed in the risk period."
   - name: has_repeated_oral_steroids
-    description: At least two distinct prednisolone order days in the risk window.
+    description: "Whether prednisolone was prescribed on at least two distinct dates in the risk period."
   - name: has_asthma_admission
-    description: A GP-coded asthma admission in the risk window.
+    description: "Whether a GP-recorded asthma admission occurred in the risk period."
   - name: latest_review_date
-    description: Latest review through reporting_date, including incomplete or stale reviews; null when
-      never recorded.
+    description: "Latest asthma review on or before the reporting date, including incomplete reviews and reviews outside the achievement window; null when none."
   - name: diagnosis_date
-    description: Earliest known asthma diagnosis after the latest known resolution, using calendar dates.
+    description: "Earliest asthma diagnosis after the latest known resolution, using calendar dates."
   - name: feno_date
-    description: Latest FENO_COD record in the diagnosis test window; null when absent.
+    description: "Latest exhaled nitric oxide test in the diagnosis test window; null when none."
   - name: reversibility_date
-    description: Latest ASTSPIR_COD bronchodilator reversibility record in the test window; null when
-      absent.
+    description: "Latest bronchodilator reversibility test in the diagnosis test window; null when none."
   - name: pefr_variability_date
-    description: Latest PEFRVAR_COD record in the test window; no spirometry-unavailability condition.
-      Null when absent.
+    description: "Latest peak-flow variability record in the diagnosis test window; counts regardless of spirometry availability. Null when none."
   - name: bronchial_challenge_date
-    description: Latest BRONCCHALENG_COD record in the test window; null when absent.
+    description: "Latest bronchial challenge test in the diagnosis test window; null when none."
   - name: skin_prick_date
-    description: Latest SKINTEST_COD record in the test window; null when absent.
+    description: "Latest skin-prick test in the diagnosis test window; contributes to achievement at ages 5 to 16. Null when none."
   - name: ige_date
-    description: Latest IGE_COD record in the test window; null when absent.
+    description: "Latest immunoglobulin E test in the diagnosis test window; contributes at ages 5 to 16 only with an eosinophil count or full blood count. Null when none."
   - name: eosinophil_or_fbc_date
-    description: Latest EOS_COUNT or FBC_COD record in the test window; null when absent.
+    description: "Latest eosinophil count or full blood count in the diagnosis test window; null when none."
   - name: latest_therapy_order_date
-    description: Latest MART-capable inhaler order in twelve months; null when none.
+    description: "Latest maintenance and reliever therapy inhaler prescription in the 12-month achievement window; null when none."
   - name: latest_mart_date
-    description: Latest recorded MART regimen through R, without an expiry window.
+    description: "Latest recorded maintenance and reliever therapy regimen on or before the reporting date, with no expiry; null when none."

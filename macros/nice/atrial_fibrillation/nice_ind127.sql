@@ -48,7 +48,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Atrial fibrillation, excluding a previous stroke risk score of 2 or more without reassessment' AS condition_name,
+    'Atrial fibrillation eligible for stroke risk review' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_chadsvasc_score,
     latest_chadsvasc_date,
