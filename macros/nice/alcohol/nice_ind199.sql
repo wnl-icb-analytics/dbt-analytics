@@ -89,7 +89,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Newly diagnosed depression or anxiety with a positive alcohol screen' AS condition_name,
+    'New depression or anxiety with a positive alcohol screen' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     new_diagnosis_date,
     latest_alcohol_screen_date,
@@ -105,4 +105,11 @@ SELECT
         ELSE 'NOT_RECORDED_IN_PERIOD'
     END AS indicator_status
 FROM assessed
+WHERE EXISTS (
+        SELECT 1
+        FROM {{ ref('int_nice_alcohol_screen_intervention') }} AS screen
+        WHERE screen.person_id = assessed.person_id
+            AND screen.screen_date >= DATEADD(month, -12, assessed.reporting_date)
+            AND DATEADD(month, 3, screen.screen_date) <= assessed.reporting_date
+    )
 {% endmacro %}

@@ -15,6 +15,10 @@ unit_tests:
     rows: |-
       SELECT column1::NUMBER AS person_id, column2::DATE AS order_date
       FROM VALUES (-521, '2026-03-31'), (-521, '2026-03-31'), (-522, '2026-09-30'), (-522, '2026-10-01')
+  - input: ref('int_bone_sparing_hospital_therapy_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS therapy_date, NULL::NUMBER AS coverage_months WHERE FALSE
   expect:
     rows:
     - person_id: -521
@@ -49,7 +53,8 @@ unit_tests:
     format: sql
     rows: |-
       SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
-          people.column2::DATE AS latest_bone_sparing_order_date
+          people.column2::DATE AS latest_bone_sparing_order_date,
+          NULL::DATE AS latest_hospital_therapy_date, NULL::DATE AS latest_current_hospital_therapy_date
       FROM VALUES (-531, '2026-03-31'), (-532, '2026-03-30'), (-533, '2026-09-30'),
           (-534, '2026-09-30'), (-535, '2026-09-30') AS people
       CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
@@ -99,7 +104,8 @@ unit_tests:
     format: sql
     rows: |-
       SELECT -536::NUMBER AS person_id, column1::DATE AS reporting_date,
-          '2026-09-01'::DATE AS latest_bone_sparing_order_date
+          '2026-09-01'::DATE AS latest_bone_sparing_order_date,
+          NULL::DATE AS latest_hospital_therapy_date, NULL::DATE AS latest_current_hospital_therapy_date
       FROM VALUES ('2026-09-30'), ('2026-10-31')
   - input: ref('int_fragility_fractures_all')
     format: sql
@@ -132,7 +138,8 @@ unit_tests:
     format: sql
     rows: |-
       SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
-          people.column2::DATE AS latest_bone_sparing_order_date
+          people.column2::DATE AS latest_bone_sparing_order_date,
+          NULL::DATE AS latest_hospital_therapy_date, NULL::DATE AS latest_current_hospital_therapy_date
       FROM VALUES (-531, '2026-03-31'), (-532, '2026-03-30'), (-533, '2026-09-30'),
           (-534, '2026-09-30'), (-535, '2026-09-30') AS people
       CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates

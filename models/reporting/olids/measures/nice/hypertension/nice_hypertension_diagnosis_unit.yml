@@ -1,5 +1,5 @@
 unit_tests:
-- name: nice_ind121_fy_age_window_and_follow_up_cap
+- name: nice_ind121_rolling_cohort_age_and_evidence_window
   model: fct_person_urine_acr_hypertension_ind121_by_month
   given:
   - input: ref('int_nice_reference_population_by_month')
@@ -117,11 +117,6 @@ unit_tests:
   expect:
     rows:
     - person_id: -11
-      reporting_date: '2026-04-30'
-      diagnosis_date: '2026-04-01'
-      latest_acr_date: '2026-01-01'
-      is_in_numerator: true
-    - person_id: -11
       reporting_date: '2026-09-30'
       diagnosis_date: '2026-04-01'
       latest_acr_date: '2026-01-01'
@@ -132,22 +127,12 @@ unit_tests:
       latest_acr_date: '2026-01-01'
       is_in_numerator: true
     - person_id: -12
-      reporting_date: '2026-04-30'
-      diagnosis_date: '2026-04-01'
-      latest_acr_date: null
-      is_in_numerator: false
-    - person_id: -12
       reporting_date: '2026-09-30'
       diagnosis_date: '2026-04-01'
       latest_acr_date: null
       is_in_numerator: false
     - person_id: -12
       reporting_date: '2026-10-31'
-      diagnosis_date: '2026-04-01'
-      latest_acr_date: null
-      is_in_numerator: false
-    - person_id: -13
-      reporting_date: '2026-04-30'
       diagnosis_date: '2026-04-01'
       latest_acr_date: null
       is_in_numerator: false
@@ -162,11 +147,6 @@ unit_tests:
       latest_acr_date: '2026-07-01'
       is_in_numerator: true
     - person_id: -14
-      reporting_date: '2026-04-30'
-      diagnosis_date: '2026-04-01'
-      latest_acr_date: null
-      is_in_numerator: false
-    - person_id: -14
       reporting_date: '2026-09-30'
       diagnosis_date: '2026-04-01'
       latest_acr_date: null
@@ -176,32 +156,12 @@ unit_tests:
       diagnosis_date: '2026-04-01'
       latest_acr_date: null
       is_in_numerator: false
-    - person_id: -15
-      reporting_date: '2026-09-30'
-      diagnosis_date: '2026-08-31'
-      latest_acr_date: null
-      is_in_numerator: false
-    - person_id: -15
-      reporting_date: '2026-10-31'
-      diagnosis_date: '2026-08-31'
-      latest_acr_date: '2026-10-01'
-      is_in_numerator: true
-    - person_id: -16
-      reporting_date: '2026-03-31'
-      diagnosis_date: '2026-03-31'
-      latest_acr_date: '2026-03-31'
-      is_in_numerator: true
     - person_id: -17
       reporting_date: '2026-03-31'
       diagnosis_date: '2025-04-01'
       latest_acr_date: '2025-04-01'
       is_in_numerator: true
     - person_id: -20
-      reporting_date: '2026-04-30'
-      diagnosis_date: '2026-04-01'
-      latest_acr_date: '2026-04-01'
-      is_in_numerator: true
-    - person_id: -20
       reporting_date: '2026-09-30'
       diagnosis_date: '2026-04-01'
       latest_acr_date: '2026-04-01'
@@ -211,6 +171,31 @@ unit_tests:
       diagnosis_date: '2026-04-01'
       latest_acr_date: '2026-04-01'
       is_in_numerator: true
+    - person_id: -16
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-03-31'
+      is_in_numerator: true
+      latest_acr_date: '2026-03-31'
+    - person_id: -16
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-03-31'
+      is_in_numerator: true
+      latest_acr_date: '2026-03-31'
+    - person_id: -17
+      reporting_date: '2026-04-30'
+      diagnosis_date: '2025-04-01'
+      is_in_numerator: true
+      latest_acr_date: '2025-04-01'
+    - person_id: -18
+      reporting_date: '2026-03-31'
+      diagnosis_date: '2025-03-31'
+      is_in_numerator: false
+      latest_acr_date: null
+    - person_id: -18
+      reporting_date: '2026-04-30'
+      diagnosis_date: '2025-03-31'
+      is_in_numerator: false
+      latest_acr_date: null
   config:
     tags:
     - monthly-full

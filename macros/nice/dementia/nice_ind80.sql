@@ -5,15 +5,16 @@
 -#}
 {% macro nice_ind80(reference='current') %}
 -- NICE IND80: https://www.nice.org.uk/indicators/ind80
--- Eight baseline blood tests within six months either side of a first dementia diagnosis in the financial year, capped at the reporting date.
+-- Eight baseline blood tests within six months either side of a first dementia diagnosis.
+-- The rolling annual diagnosis cohort ends six months before the reporting date.
 SELECT
     population.person_id,
     'IND80' AS indicator_id,
-    'Dementia: baseline tests' AS indicator_name,
+    'Dementia: target organ damage (new diagnoses)' AS indicator_name,
     profile.reporting_date,
-    {{ nice_financial_year_start('profile.reporting_date') }} AS measurement_period_start,
+    DATEADD(month, -18, profile.reporting_date) AS measurement_period_start,
     population.age,
-    'Dementia' AS condition_name,
+    'Dementia diagnosed 18 to 6 months ago' AS condition_name,
     {{ nice_practice_columns('population', reference) }},
     profile.diagnosis_date,
     profile.ind80_fbc_date AS fbc_date,
@@ -32,5 +33,6 @@ FROM {{ nice_ref('int_nice_dementia_baseline_tests', reference) }} AS profile
 INNER JOIN ({{ nice_reference_population(reference) }}) AS population
     ON population.person_id = profile.person_id
     AND population.reporting_date = profile.reporting_date
-WHERE profile.diagnosis_date BETWEEN {{ nice_financial_year_start('profile.reporting_date') }} AND profile.reporting_date
+WHERE profile.diagnosis_date > DATEADD(month, -18, profile.reporting_date)
+    AND profile.diagnosis_date <= DATEADD(month, -6, profile.reporting_date)
 {% endmacro %}

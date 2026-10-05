@@ -48,7 +48,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Severe mental illness (schizophrenia, bipolar affective disorder or other psychoses, not in remission), aged 18 and over, without diabetes diagnosed more than 12 months ago' AS condition_name,
+    'Active severe mental illness, aged 18 or over' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_glucose_or_hba1c_date,
     latest_record_date,

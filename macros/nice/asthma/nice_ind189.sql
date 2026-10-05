@@ -5,7 +5,7 @@
 -#}
 {% macro nice_ind189(reference='current') %}
 -- NICE IND189: https://www.nice.org.uk/indicators/ind189
--- Smoking status recorded within twelve months for unresolved asthma diagnosis members aged 5 to 19.
+-- Smoking status in twelve months for unresolved asthma members aged 5 to 19.
 WITH population AS (
     SELECT * FROM ({{ nice_asthma_diagnosis_population(reference) }})
     WHERE age BETWEEN 5 AND 19
@@ -25,7 +25,7 @@ WITH population AS (
 SELECT a.person_id, 'IND189' AS indicator_id,
     'Asthma: smoking status (under 19)' AS indicator_name,
     a.reporting_date, DATEADD(month, -12, a.reporting_date) AS measurement_period_start,
-    a.age, 'Asthma (aged 5 to 19)' AS condition_name,
+    a.age, 'Asthma, aged 5 to 19' AS condition_name,
     {{ nice_practice_columns('a', reference) }},
     a.latest_record_date, TRUE AS is_in_denominator,
     a.latest_record_date IS NOT NULL AS is_in_numerator,

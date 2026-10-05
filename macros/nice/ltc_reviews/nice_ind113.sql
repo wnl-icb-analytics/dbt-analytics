@@ -5,7 +5,7 @@
 -#}
 {% macro nice_ind113(reference='current') %}
 -- NICE IND113: https://www.nice.org.uk/indicators/ind113
--- Cancer care review within three months of a new diagnosis in the preceding 15 months, excluding qualifying invitation non-response.
+-- Cancer care review within three months of a new diagnosis from 18 to 3 months before the reporting date, excluding qualifying invitation non-response.
 WITH indicator_population AS (
     SELECT population.person_id, population.reporting_date, population.age,
         population.practice_code, population.practice_name,
@@ -20,7 +20,7 @@ WITH indicator_population AS (
         AND population.reporting_date = review.reporting_date
     WHERE profile.has_cancer
         AND profile.latest_cancer_diagnosis_date
-            BETWEEN DATEADD(month, -15, population.reporting_date) AND population.reporting_date
+            BETWEEN DATEADD(month, -18, population.reporting_date) AND DATEADD(month, -3, population.reporting_date)
 ),
 invitation_dates AS (
     SELECT population.person_id, population.reporting_date,
@@ -59,9 +59,9 @@ assessed AS (
         ON population.person_id = response.person_id
         AND population.reporting_date = response.reporting_date
 )
-SELECT person_id, 'IND113' AS indicator_id, 'Cancer: review within 3 months' AS indicator_name,
-    reporting_date, DATEADD(month, -15, reporting_date) AS measurement_period_start,
-    age, 'Cancer diagnosed in the preceding 15 months' AS condition_name,
+SELECT person_id, 'IND113' AS indicator_id, 'Cancer: 3-month review' AS indicator_name,
+    reporting_date, DATEADD(month, -18, reporting_date) AS measurement_period_start,
+    age, 'Cancer diagnosed 18 to 3 months ago'::VARCHAR(43) AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     diagnosis_date, latest_review_date, first_invitation_date, last_invitation_date,
     is_excluded_invitation_non_response,

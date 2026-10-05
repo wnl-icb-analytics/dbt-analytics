@@ -51,7 +51,7 @@ SELECT
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,
-    'Atrial fibrillation with stroke risk score 2 or more' AS condition_name,
+    'Atrial fibrillation with raised stroke risk' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_chadsvasc_score,
     latest_chadsvasc_date,

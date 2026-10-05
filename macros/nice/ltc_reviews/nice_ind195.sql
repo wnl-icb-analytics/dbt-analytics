@@ -4,6 +4,7 @@
     Args: reference is current or by_month.
     Returns: the IND195 detail projection, one eligible person per reporting_date.
 -#}
+-- QOF HF007 permits separate assessment records.
 -- NICE IND195: https://www.nice.org.uk/indicators/ind195
 -- Heart failure review, NYHA assessment and medication review in 12 months for people on the heart failure register.
 WITH indicator_population AS (

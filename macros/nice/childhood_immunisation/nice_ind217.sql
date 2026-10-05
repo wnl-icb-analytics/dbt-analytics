@@ -47,7 +47,7 @@ SELECT
     assessed.reporting_date,
     DATEADD(month, -12, assessed.reporting_date) AS measurement_period_start,
     assessed.age,
-    'Children reaching 5 years in the preceding 12 months' AS condition_name,
+    'Children reaching 5 in the preceding 12 months' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     assessed.birth_date_approx,
     assessed.milestone_date,

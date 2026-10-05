@@ -72,7 +72,7 @@ SELECT
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,
-    'CKD with type 2 diabetes, or eGFR 20 to 59 on renin-angiotensin therapy (with ACR 22.6 or more at eGFR 45 to 59)' AS condition_name,
+    'Kidney disease with diabetes or reduced kidney function' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     latest_acr_value,
     latest_egfr_value,

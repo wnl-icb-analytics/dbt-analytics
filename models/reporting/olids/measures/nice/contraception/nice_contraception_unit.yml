@@ -1,0 +1,35 @@
+unit_tests:
+- name: nice_epilepsy_membership_known_date_and_therapy_expiry
+  model: fct_person_epilepsy_register_by_month
+  overrides:
+    macros:
+      ltc_register_history_month_ends: SELECT column1::DATE AS reference_date FROM VALUES ('2026-08-31'),
+        ('2026-09-30')
+  given:
+  - input: ref('int_epilepsy_diagnoses_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date, column3::DATE
+      AS date_recorded, TRUE AS is_diagnosis_code, FALSE AS is_resolved_code FROM VALUES (-8501, '2020-01-01',
+      '2026-09-15'), (-8502, '2020-01-01', '2020-01-01')
+  - input: ref('int_epilepsy_medications_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS order_date, column3::DATE AS date_recorded
+      FROM VALUES (-8501, '2026-08-31', '2026-08-31'), (-8502, '2026-03-15', '2026-03-15')
+  - input: ref('dim_person_birth_death')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, '1996-01-15'::DATE AS birth_date_approx FROM VALUES (-8501),
+      (-8502)
+  - input: ref('int_segmentation_person_month_spine')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id,column2::DATE AS month_end_date,'SYNTHETIC'::VARCHAR AS
+      practice_code,TRUE AS is_active FROM VALUES (-8501,'2026-08-31'),(-8501,'2026-09-30'),(-8502,'2026-08-31'),(-8502,'2026-09-30')
+  expect:
+    rows:
+    - person_id: -8501
+      month_end_date: '2026-09-30'
+    - person_id: -8502
+      month_end_date: '2026-08-31'
+  config:
+    tags:
+    - monthly-full
+    - nice-history

@@ -1,5 +1,5 @@
 {#-
-    Select measured BMI, dated ethnicity and subsequent weight advice for people aged 18 to 39.
+    Select measured BMI, dated ethnicity and subsequent weight advice for adults.
     Args: reference is current or by_month.
     Returns: one eligible person per reporting_date with BMI, ethnicity and advice evidence.
 -#}
@@ -7,7 +7,7 @@
 WITH population AS (
     SELECT person_id, reporting_date
     FROM ({{ nice_reference_population(reference) }})
-    WHERE age BETWEEN 18 AND 39
+    WHERE age >= 18
 ), people AS (
     SELECT DISTINCT person_id FROM population
 ), bmi_daily AS (
@@ -34,6 +34,17 @@ WITH population AS (
         AND demographics.effective_start_date <= population.reporting_date
         AND (demographics.effective_end_date IS NULL
             OR demographics.effective_end_date > population.reporting_date)
+), first_qualifying_bmi AS (
+    SELECT population.person_id, population.reporting_date, MIN(bmi.bmi_date) AS earliest_qualifying_bmi_date
+    FROM population
+    INNER JOIN selected_ethnicity AS ethnicity
+        ON population.person_id = ethnicity.person_id AND population.reporting_date = ethnicity.reporting_date
+    INNER JOIN bmi_daily AS bmi
+        ON population.person_id = bmi.person_id
+        AND bmi.bmi_date BETWEEN DATEADD(month, -12, population.reporting_date) AND population.reporting_date
+        AND bmi.bmi_value BETWEEN IFF(ethnicity.is_recorded_white, 25.0, 23.0)
+            AND IFF(ethnicity.is_recorded_white, 29.9, 27.4)
+    GROUP BY population.person_id, population.reporting_date
 ), advice_daily AS (
     SELECT advice.person_id, advice.clinical_effective_date::DATE AS advice_date
     FROM {{ ref('int_nice_weight_advice_all') }} AS advice
@@ -49,10 +60,12 @@ WITH population AS (
     GROUP BY bmi.person_id, bmi.reporting_date
 )
 SELECT bmi.person_id, bmi.reporting_date, bmi.bmi_date, bmi.bmi_value,
-    ethnicity.is_recorded_white, advice.latest_weight_advice_date
+    ethnicity.is_recorded_white, advice.latest_weight_advice_date, first_bmi.earliest_qualifying_bmi_date
 FROM selected_bmi AS bmi
 INNER JOIN selected_ethnicity AS ethnicity
     ON bmi.person_id = ethnicity.person_id AND bmi.reporting_date = ethnicity.reporting_date
 INNER JOIN advice
     ON bmi.person_id = advice.person_id AND bmi.reporting_date = advice.reporting_date
+LEFT JOIN first_qualifying_bmi AS first_bmi
+    ON bmi.person_id = first_bmi.person_id AND bmi.reporting_date = first_bmi.reporting_date
 {% endmacro %}

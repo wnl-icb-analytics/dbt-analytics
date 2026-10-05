@@ -65,7 +65,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Aged 65 and over with moderate or severe frailty' AS condition_name,
+    'Moderate or severe frailty, aged 65 or over' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     ltc_count,
     multimorbidity_cluster_count,

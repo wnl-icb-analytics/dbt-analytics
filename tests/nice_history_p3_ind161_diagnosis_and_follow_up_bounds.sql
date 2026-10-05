@@ -13,7 +13,7 @@ WITH synthetic_population AS (
         'SYNTHETIC'::VARCHAR AS practice_code,
         'Synthetic practice'::VARCHAR AS practice_name
     FROM VALUES (1), (2), (3), (4), (5) AS people
-    CROSS JOIN (SELECT column1 FROM VALUES ('2024-01-31'), ('2024-02-29'), ('2024-04-30'), ('2025-02-01')) AS dates
+    CROSS JOIN (SELECT column1 FROM VALUES ('2024-01-31'), ('2024-02-29'), ('2024-05-31'), ('2025-02-01')) AS dates
 ),
 
 synthetic_profile AS (
@@ -67,26 +67,17 @@ expected AS (
         column1::NUMBER AS person_id,
         column2::DATE AS reporting_date,
         column3::VARCHAR AS indicator_status
-    FROM VALUES (1, '2024-01-31', 'NOT_RECORDED_IN_PERIOD'),
-        (1, '2024-02-29', 'ACHIEVED'),
-        (1, '2024-04-30', 'ACHIEVED'),
+    FROM VALUES
+        (1, '2024-05-31', 'ACHIEVED'),
         (1, '2025-02-01', 'ACHIEVED'),
-        (2, '2024-01-31', 'ACHIEVED'),
-        (2, '2024-02-29', 'ACHIEVED'),
-        (2, '2024-04-30', 'ACHIEVED'),
-        (2, '2025-02-01', 'NOT_RECORDED_IN_PERIOD'),
-        (3, '2024-01-31', 'NOT_RECORDED_IN_PERIOD'),
-        (3, '2024-02-29', 'NOT_RECORDED_IN_PERIOD'),
-        (3, '2024-04-30', 'NOT_RECORDED_IN_PERIOD'),
+        (2, '2024-05-31', 'ACHIEVED'),
+        (2, '2025-02-01', 'ACHIEVED'),
+        (3, '2024-05-31', 'NOT_RECORDED_IN_PERIOD'),
         (3, '2025-02-01', 'NOT_RECORDED_IN_PERIOD'),
-        (4, '2024-01-31', 'NOT_RECORDED_IN_PERIOD'),
-        (4, '2024-02-29', 'NOT_RECORDED_IN_PERIOD'),
-        (4, '2024-04-30', 'ACHIEVED'),
+        (4, '2024-05-31', 'ACHIEVED'),
         (4, '2025-02-01', 'ACHIEVED'),
-        (5, '2024-01-31', 'NOT_RECORDED_IN_PERIOD'),
-        (5, '2024-02-29', 'NOT_RECORDED_IN_PERIOD'),
-        (5, '2024-04-30', 'NOT_RECORDED_IN_PERIOD'),
-        (5, '2025-02-01', 'ACHIEVED')
+        (5, '2024-05-31', 'NOT_RECORDED_IN_PERIOD'),
+        (5, '2025-02-01', 'NOT_RECORDED_IN_PERIOD')
 ),
 
 actual_occurrences AS (

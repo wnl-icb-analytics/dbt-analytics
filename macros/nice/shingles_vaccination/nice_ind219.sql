@@ -68,7 +68,7 @@ SELECT
     reporting_date AS reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Reached 75 in the preceding 12 months' AS condition_name,
+    'People reaching 75 in the preceding 12 months' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     seventy_fifth_birthday,
     first_dose_70_to_75_date,

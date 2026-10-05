@@ -10,7 +10,7 @@ WITH assessed AS (
     SELECT population.person_id, population.reporting_date, population.age,
         population.practice_code, population.practice_name,
         profile.bmi_date AS latest_bmi_date, profile.bmi_value,
-        profile.is_recorded_white, profile.latest_weight_advice_date,
+        profile.is_recorded_white, profile.latest_weight_advice_date, profile.earliest_qualifying_bmi_date,
         IFF(profile.is_recorded_white, 25.0, 23.0) AS bmi_lower_threshold,
         IFF(profile.is_recorded_white, 29.9, 27.4) AS bmi_upper_threshold
     FROM ({{ nice_reference_population(reference) }}) AS population
@@ -32,4 +32,5 @@ SELECT person_id, 'IND319' AS indicator_id,
     TRUE AS is_in_denominator, latest_weight_advice_date IS NOT NULL AS is_in_numerator,
     IFF(latest_weight_advice_date IS NOT NULL, 'ACHIEVED', 'NOT_RECORDED_IN_PERIOD') AS indicator_status
 FROM assessed
+WHERE DATEADD(day, 90, earliest_qualifying_bmi_date) <= reporting_date
 {% endmacro %}

@@ -49,7 +49,7 @@ SELECT
     reporting_date,
     DATEADD(month, -24, reporting_date) AS measurement_period_start,
     age,
-    'Current smoker aged 15+' AS condition_name,
+    'Current smokers, aged 15 or over' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_smoking_status,
     latest_smoking_status_date,

@@ -50,7 +50,7 @@ SELECT
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,
-    'CKD with ACR 70 mg/mmol or more, without diabetes' AS condition_name,
+    'Kidney disease with heavy albuminuria, without diabetes' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     latest_acr_value,
     latest_egfr_value,

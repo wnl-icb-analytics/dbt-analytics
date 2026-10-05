@@ -44,7 +44,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Atrial fibrillation on anticoagulation' AS condition_name,
+    'Atrial fibrillation on anticoagulation, aged over 18' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_chadsvasc_score,
     latest_chadsvasc_date,

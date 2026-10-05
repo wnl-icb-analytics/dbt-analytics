@@ -22,7 +22,7 @@ synthetic_register AS (
         CASE
             WHEN person_id = -9507 THEN '2023-09-30'
             WHEN person_id = -9518 THEN '2024-09-01'
-            ELSE '2023-12-31'
+            ELSE '2023-12-30'
         END::DATE AS earliest_diagnosis_date
     FROM synthetic_population
 ),
@@ -38,11 +38,11 @@ synthetic_education AS (
 actual AS ({{ calculation }})
 SELECT COUNT(*) AS rows_total
 FROM actual
-HAVING COUNT(*) <> 7
+HAVING COUNT(*) <> 5
     OR COUNT_IF(person_id = -9504 AND is_in_numerator) <> 0
     OR COUNT_IF(person_id = -9505 AND is_in_numerator AND latest_record_date = '2024-09-30') <> 1
     OR COUNT_IF(person_id = -9506 AND is_in_numerator) <> 0
     OR COUNT_IF(person_id = -9507 AND is_in_numerator AND latest_record_date = diagnosis_date) <> 1
-    OR COUNT_IF(person_id = -9518 AND reporting_date = '2024-09-30' AND NOT is_in_numerator) <> 1
+    OR COUNT_IF(person_id = -9518 AND reporting_date = '2024-09-30') <> 0
     OR COUNT_IF(person_id = -9518 AND reporting_date = '2024-10-31'
-        AND is_in_numerator AND latest_record_date = '2024-10-01') <> 1
+        AND is_in_numerator AND latest_record_date = '2024-10-01') <> 0

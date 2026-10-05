@@ -1,0 +1,80 @@
+unit_tests:
+- name: nice_weight_earliest_qualifying_bmi_preserves_latest_selection
+  model: int_nice_weight_profile_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30 AS age, '1996-01-15'::DATE
+      AS birth_date_approx, 'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS
+      practice_name FROM VALUES (-9801), (-9802), (-9803)
+  - input: ref('int_bmi_qof_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date,
+      column4::FLOAT AS bmi_value, 'BMIVAL_COD' AS source_cluster_id FROM VALUES (-9801, 'A', '2026-07-01',
+      25), (-9801, 'B', '2026-09-01', 25), (-9802, 'A', '2026-08-01', 24), (-9802, 'B', '2026-09-01',
+      25), (-9803, 'A', '2026-08-01', 25), (-9803, 'A', '2026-09-01', 25), (-9803, 'Z', '2026-09-01',
+      30)
+  - input: ref('dim_person_demographics_historical')
+    format: sql
+    rows: SELECT -9802 AS person_id, '2020-01-01'::DATE AS effective_start_date, NULL::DATE AS effective_end_date,
+      'White' AS ethnicity_category
+  - input: ref('int_nice_weight_advice_all')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date WHERE FALSE
+  expect:
+    rows:
+    - person_id: -9801
+      reporting_date: '2026-09-30'
+      bmi_date: '2026-09-01'
+      bmi_value: 25
+      earliest_qualifying_bmi_date: '2026-07-01'
+    - person_id: -9802
+      reporting_date: '2026-09-30'
+      bmi_date: '2026-09-01'
+      bmi_value: 25
+      earliest_qualifying_bmi_date: '2026-09-01'
+    - person_id: -9803
+      reporting_date: '2026-09-30'
+      bmi_date: '2026-09-01'
+      bmi_value: 30
+      earliest_qualifying_bmi_date: '2026-08-01'
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_weight_advice_cohort_lower_boundary
+  model: int_nice_weight_profile_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, 30 AS age, '1996-01-15'::DATE
+      AS birth_date_approx, 'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name
+      FROM VALUES (-9821), (-9822), (-9823)
+  - input: ref('int_bmi_qof_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date,
+      25::FLOAT AS bmi_value, 'BMIVAL_COD' AS source_cluster_id FROM VALUES (-9821, 'A', '2025-09-29'), (-9821,
+      'B', '2026-07-01'), (-9822, 'A', '2025-09-30'), (-9822, 'B', '2026-07-01'), (-9823, 'A', '2025-10-01'), (-9823,
+      'B', '2026-07-01')
+  - input: ref('dim_person_demographics_historical')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS effective_start_date, NULL::DATE AS effective_end_date,
+      NULL::VARCHAR AS ethnicity_category WHERE FALSE
+  - input: ref('int_nice_weight_advice_all')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date WHERE FALSE
+  expect:
+    rows:
+    - person_id: -9821
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-07-01'
+    - person_id: -9822
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2025-09-30'
+    - person_id: -9823
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2025-10-01'
+  config:
+    tags:
+    - monthly-full
+    - nice-history

@@ -51,7 +51,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Severe mental illness (schizophrenia, bipolar affective disorder or other psychoses, not in remission), aged 25 to 84, without CVD, CKD, familial hypercholesterolaemia or type 1 diabetes' AS condition_name,
+    'Active severe mental illness, aged 25 to 84' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_record_date,
     TRUE AS is_in_denominator,
