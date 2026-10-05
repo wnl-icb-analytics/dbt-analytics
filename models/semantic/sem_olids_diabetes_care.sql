@@ -86,7 +86,7 @@ DIMENSIONS(
     -- Triple target
     triple.diabetes_type AS diabetes_type COMMENT = 'Diabetes type (Type 1, Type 2, Unknown)',
     triple.hba1c_in_target_range AS hba1c_in_target_range COMMENT = 'Latest HbA1c <=58 mmol/mol (FALSE if never measured)',
-    triple.bp_in_target_range AS bp_in_target_range COMMENT = 'Latest BP <130/80 (NICE diabetes target; FALSE if never measured)',
+    triple.bp_in_target_range AS bp_in_target_range COMMENT = 'Latest BP <130/80 (local target for this measure; FALSE if never measured)',
     triple.cholesterol_in_target_range AS cholesterol_in_target_range COMMENT = 'Latest total cholesterol <5 mmol/L (FALSE if never measured)',
     triple.all_three_targets_met AS all_three_targets_met WITH SYNONYMS = ('triple target') COMMENT = 'All three treatment targets met (latest-ever values)',
     triple.hba1c_unit AS hba1c_unit COMMENT = 'Unit of the latest HbA1c value used for triple-target assessment',
