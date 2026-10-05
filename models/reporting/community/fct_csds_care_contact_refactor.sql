@@ -217,41 +217,42 @@ NATIONAL_ETHNICITY AS (
 OP_ETHNICITY AS (
 
     SELECT DISTINCT
-        A.PATIENT_ID AS SK_PATIENTID,
-        A.ETHNICITY_CODE,
-        A.ETHNICITY_NAME AS ETHNICITY_DESC,
+        A.SK_PATIENT_ID AS SK_PATIENTID,
+        A.ETHNICITY_AT_EVENT AS ETHNICITY_CODE,
+        A.ETHNICITY_DESC_AT_EVENT AS ETHNICITY_DESC,
         'FS_OP' AS DATASET,
         2 AS SOURCE_PRIORITY
 
-    FROM REPORTING.MAIN_DATA.OP A
+    FROM {{ ref('int_sus_op_appointment') }} A
 
     INNER JOIN (
 
         SELECT
-            PATIENT_ID,
-            MAX(PRIMARY_ID) AS PRIMARY_ID
+            SK_PATIENT_ID,
+            MAX(VISIT_OCCURRENCE_ID) AS VISIT_OCCURRENCE_ID
 
-        FROM REPORTING.MAIN_DATA.OP
+        FROM {{ ref('int_sus_op_appointment') }}
 
-        WHERE PATIENT_ID IS NOT NULL
-          AND PATIENT_ID <> 1
-          AND ETHNICITY_NAME IS NOT NULL
-          AND ETHNICITY_NAME NOT IN (
+        WHERE SK_PATIENT_ID IS NOT NULL
+          AND SK_PATIENT_ID <> 1
+          AND ETHNICITY_DESC_AT_EVENT IS NOT NULL
+          AND ETHNICITY_DESC_AT_EVENT NOT IN (
               'NOT STATED',
               'Unknown',
               'NOT STATED: Patient refused'
           )
 
-        GROUP BY PATIENT_ID
+        GROUP BY
+            SK_PATIENT_ID
 
     ) B
-        ON A.PATIENT_ID = B.PATIENT_ID
-       AND A.PRIMARY_ID = B.PRIMARY_ID
+        ON A.SK_PATIENT_ID = B.SK_PATIENT_ID
+       AND A.VISIT_OCCURRENCE_ID = B.VISIT_OCCURRENCE_ID
 
-    WHERE A.PATIENT_ID IS NOT NULL
-      AND A.PATIENT_ID <> 1
-      AND A.ETHNICITY_NAME IS NOT NULL
-      AND A.ETHNICITY_NAME NOT IN (
+    WHERE A.SK_PATIENT_ID IS NOT NULL
+      AND A.SK_PATIENT_ID <> 1
+      AND A.ETHNICITY_DESC_AT_EVENT IS NOT NULL
+      AND A.ETHNICITY_DESC_AT_EVENT NOT IN (
           'NOT STATED',
           'Unknown',
           'NOT STATED: Patient refused'
@@ -266,41 +267,42 @@ OP_ETHNICITY AS (
 IP_ETHNICITY AS (
 
     SELECT DISTINCT
-        A.PATIENT_ID AS SK_PATIENTID,
-        A.ETHNICITY_CODE,
-        A.ETHNICITY_NAME AS ETHNICITY_DESC,
+        A.SK_PATIENT_ID AS SK_PATIENTID,
+        A.ETHNICITY_AT_EVENT AS ETHNICITY_CODE,
+        A.ETHNICITY_DESC_AT_EVENT AS ETHNICITY_DESC,
         'FS_IP' AS DATASET,
         3 AS SOURCE_PRIORITY
 
-    FROM REPORTING.MAIN_DATA.IP A
+    FROM {{ ref('int_sus_apc_encounter') }} A
 
     INNER JOIN (
 
         SELECT
-            PATIENT_ID,
-            MAX(PRIMARY_ID) AS PRIMARY_ID
+            SK_PATIENT_ID,
+            MAX(VISIT_OCCURRENCE_ID) AS VISIT_OCCURRENCE_ID
 
-        FROM REPORTING.MAIN_DATA.IP
+        FROM {{ ref('int_sus_apc_encounter') }}
 
-        WHERE PATIENT_ID IS NOT NULL
-          AND PATIENT_ID <> 1
-          AND ETHNICITY_NAME IS NOT NULL
-          AND ETHNICITY_NAME NOT IN (
+        WHERE SK_PATIENT_ID IS NOT NULL
+          AND SK_PATIENT_ID <> 1
+          AND ETHNICITY_DESC_AT_EVENT IS NOT NULL
+          AND ETHNICITY_DESC_AT_EVENT NOT IN (
               'NOT STATED',
               'Unknown',
               'NOT STATED: Patient refused'
           )
 
-        GROUP BY PATIENT_ID
+        GROUP BY
+            SK_PATIENT_ID
 
     ) B
-        ON A.PATIENT_ID = B.PATIENT_ID
-       AND A.PRIMARY_ID = B.PRIMARY_ID
+        ON A.SK_PATIENT_ID = B.SK_PATIENT_ID
+       AND A.VISIT_OCCURRENCE_ID = B.VISIT_OCCURRENCE_ID
 
-    WHERE A.PATIENT_ID IS NOT NULL
-      AND A.PATIENT_ID <> 1
-      AND A.ETHNICITY_NAME IS NOT NULL
-      AND A.ETHNICITY_NAME NOT IN (
+    WHERE A.SK_PATIENT_ID IS NOT NULL
+      AND A.SK_PATIENT_ID <> 1
+      AND A.ETHNICITY_DESC_AT_EVENT IS NOT NULL
+      AND A.ETHNICITY_DESC_AT_EVENT NOT IN (
           'NOT STATED',
           'Unknown',
           'NOT STATED: Patient refused'
@@ -315,41 +317,42 @@ IP_ETHNICITY AS (
 ECDS_ETHNICITY AS (
 
     SELECT DISTINCT
-        A.PATIENT_ID AS SK_PATIENTID,
-        A.ETHNICITY_CODE,
-        A.ETHNICITY_NAME AS ETHNICITY_DESC,
+        A.SK_PATIENT_ID AS SK_PATIENTID,
+        A.ETHNICITY_AT_EVENT AS ETHNICITY_CODE,
+        A.ETHNICITY_DESC_AT_EVENT AS ETHNICITY_DESC,
         'FS_ECDS' AS DATASET,
         4 AS SOURCE_PRIORITY
 
-    FROM REPORTING.MAIN_DATA.ECDS A
+    FROM {{ ref('int_sus_uec_encounter') }} A
 
     INNER JOIN (
 
         SELECT
-            PATIENT_ID,
-            MAX(PRIMARY_ID) AS PRIMARY_ID
+            SK_PATIENT_ID,
+            MAX(VISIT_OCCURRENCE_ID) AS VISIT_OCCURRENCE_ID
 
-        FROM REPORTING.MAIN_DATA.ECDS
+        FROM {{ ref('int_sus_uec_encounter') }}
 
-        WHERE PATIENT_ID IS NOT NULL
-          AND PATIENT_ID <> 1
-          AND ETHNICITY_NAME IS NOT NULL
-          AND ETHNICITY_NAME NOT IN (
+        WHERE SK_PATIENT_ID IS NOT NULL
+          AND SK_PATIENT_ID <> 1
+          AND ETHNICITY_DESC_AT_EVENT IS NOT NULL
+          AND ETHNICITY_DESC_AT_EVENT NOT IN (
               'NOT STATED',
               'Unknown',
               'NOT STATED: Patient refused'
           )
 
-        GROUP BY PATIENT_ID
+        GROUP BY
+            SK_PATIENT_ID
 
     ) B
-        ON A.PATIENT_ID = B.PATIENT_ID
-       AND A.PRIMARY_ID = B.PRIMARY_ID
+        ON A.SK_PATIENT_ID = B.SK_PATIENT_ID
+       AND A.VISIT_OCCURRENCE_ID = B.VISIT_OCCURRENCE_ID
 
-    WHERE A.PATIENT_ID IS NOT NULL
-      AND A.PATIENT_ID <> 1
-      AND A.ETHNICITY_NAME IS NOT NULL
-      AND A.ETHNICITY_NAME NOT IN (
+    WHERE A.SK_PATIENT_ID IS NOT NULL
+      AND A.SK_PATIENT_ID <> 1
+      AND A.ETHNICITY_DESC_AT_EVENT IS NOT NULL
+      AND A.ETHNICITY_DESC_AT_EVENT NOT IN (
           'NOT STATED',
           'Unknown',
           'NOT STATED: Patient refused'
@@ -364,21 +367,21 @@ ECDS_ETHNICITY AS (
 FACT_ETHNICITY AS (
 
     SELECT DISTINCT
-        A."SK_PatientID" AS SK_PATIENTID,
-        B."BK_EthnicityCode" AS ETHNICITY_CODE,
-        B."EthnicityDesc" AS ETHNICITY_DESC,
+        A.SK_PATIENT_ID AS SK_PATIENTID,
+        B.BK_ETHNICITY_CODE AS ETHNICITY_CODE,
+        B.ETHNICITY_DESC,
         'FACT' AS DATASET,
         5 AS SOURCE_PRIORITY
 
-    FROM DATA_LAKE.FACT_PATIENT."FactProfile" A
+    FROM {{ ref('stg_fact_patient_factprofile') }} A
 
-    INNER JOIN "Dictionary"."dbo"."Ethnicity" B
-        ON A."SK_EthnicityID" = B."SK_EthnicityID"
+    INNER JOIN {{ ref('stg_dictionary_dbo_ethnicity') }} B
+        ON A.SK_ETHNICITY_ID = B.SK_ETHNICITY_ID
 
-    WHERE A."SK_DataSourceID" = 5
-      AND A."PeriodEnd" = '9999-12-31 00:00:00.000'
-      AND B."EthnicityDesc" IS NOT NULL
-      AND B."EthnicityDesc" NOT IN (
+    WHERE A.SK_DATA_SOURCE_ID = 5
+      AND A.PERIOD_END = '9999-12-31 00:00:00.000'
+      AND B.ETHNICITY_DESC IS NOT NULL
+      AND B.ETHNICITY_DESC NOT IN (
           'NOT STATED',
           'Unknown',
           'NOT STATED: Patient refused'
@@ -594,7 +597,7 @@ FIRST_ATTENDED_CONTACT_DATE AS (
 ),
 
 /*==============================================================================
-  12. IMD LOOKUP
+  12. IMD LOOKUPS
 
   Structural replacement for TMP_IMD.
 ==============================================================================*/
@@ -603,7 +606,7 @@ IMD_LOOKUP AS (
 
     SELECT *
 
-    FROM DATA_LAKE__NCL.ANALYST_MANAGED.IMD_2025
+    from {{ source('reference_analyst_managed', 'IMD_2025') }}
 
     WHERE REGEXP_LIKE(
         LOCAL_AUTHORITY_DISTRICT_NAME_2024,
@@ -741,7 +744,7 @@ CONTACT_ENRICHED AS (
 
     LEFT JOIN {{ ref('activity_location_type') }} CSLK4
         ON CCON."Activity_location_type_code" = CSLK4.CODE
-       AND CSLK4.SOURCE_CODE_SET_NAME = 'Activity_location_type_code'
+       AND CSLK4.SOURCE_CODE_SET_NAME = 'Activity_Location_Type_Code'
 
     LEFT JOIN PRACTICE_CONTEXT PRAC_WNL
         ON PAT1.GPCODE = PRAC_WNL.PRACTICE_CODE    
