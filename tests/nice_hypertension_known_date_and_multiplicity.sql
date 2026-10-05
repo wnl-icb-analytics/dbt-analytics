@@ -9,13 +9,15 @@
 {% set query115 = query115 | replace(nice_register('HTN', 'by_month') | string, 'SELECT * FROM synthetic_register') %}
 {% set query115 = query115 | replace(ref('int_home_ambulatory_blood_pressure_all') | string, 'synthetic_bp') %}
 
+-- Recent diagnoses remain absent from IND121 even when ACR is already recorded.
+-- November closes the August windows; late-recorded diagnoses still change the anchor.
 WITH synthetic_dates AS (
-    SELECT column1::DATE AS reporting_date FROM VALUES ('2026-09-30'), ('2026-10-31')
+    SELECT column1::DATE AS reporting_date FROM VALUES ('2026-09-30'), ('2026-10-31'), ('2026-11-30')
 ),
 synthetic_population AS (
     SELECT column1::NUMBER AS person_id, dates.reporting_date, 50 AS age,
         'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name
-    FROM VALUES (-901), (-902), (-903), (-904), (-905)
+    FROM VALUES (-901), (-902), (-903), (-904), (-905), (-906), (-907), (-908), (-909), (-910), (-911), (-912)
     CROSS JOIN synthetic_dates AS dates
 ),
 synthetic_diagnoses AS (
@@ -29,7 +31,15 @@ synthetic_diagnoses AS (
         (-903, '2026-10-01', '2026-09-01', TRUE),
         (-904, '2026-08-01', NULL, TRUE),
         (-905, '2026-08-01', '2026-08-01', TRUE),
-        (-905, '2026-10-01', '2026-09-01', FALSE)
+        (-905, '2026-10-01', '2026-09-01', FALSE),
+        (-906, '2026-08-01', '2026-08-01', TRUE),
+        (-906, '2026-05-01', '2026-10-01', TRUE),
+        (-907, '2026-06-30', NULL, TRUE),
+        (-908, '2026-07-01', '2026-07-01', TRUE),
+        (-909, '2025-06-30', '2025-06-30', TRUE),
+        (-910, '2026-06-15', '2026-06-15', TRUE),
+        (-911, '2026-08-01', '2026-08-01', TRUE),
+        (-912, '2025-07-01', '2025-07-01', TRUE)
 ),
 register_calculation AS ({{ register }}),
 synthetic_register AS (
@@ -40,7 +50,9 @@ synthetic_acr AS (
     SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,
         TRUE AS is_acr_ratio
     FROM VALUES (-901, '2026-04-01'), (-902, '2026-08-01'), (-903, '2026-10-01'),
-        (-904, '2026-08-01'), (-905, '2026-08-01')
+        (-904, '2026-08-01'), (-905, '2026-08-01'), (-904, '2026-08-01'),
+        (-906, '2026-08-02'), (-907, '2026-06-30'), (-907, '2026-06-30'),
+        (-908, '2026-07-01'), (-909, '2025-06-30'), (-912, '2025-07-01')
 ),
 synthetic_bp AS (SELECT person_id, clinical_effective_date FROM synthetic_acr),
 actual AS (
@@ -53,18 +65,52 @@ expected AS (
         column3::VARCHAR AS indicator_id, column4::DATE AS diagnosis_date, column5::BOOLEAN AS is_in_numerator
     FROM VALUES
         (-901, '2026-09-30', 'IND121', '2026-04-01', TRUE),
-        (-902, '2026-10-31', 'IND121', '2026-08-01', TRUE),
-        (-903, '2026-10-31', 'IND121', '2026-10-01', TRUE),
-        (-904, '2026-09-30', 'IND121', '2026-08-01', TRUE),
-        (-904, '2026-10-31', 'IND121', '2026-08-01', TRUE),
-        (-905, '2026-09-30', 'IND121', '2026-08-01', TRUE),
+        (-902, '2026-11-30', 'IND121', '2026-08-01', TRUE),
+        (-904, '2026-11-30', 'IND121', '2026-08-01', TRUE),
+        (-906, '2026-10-31', 'IND121', '2026-05-01', FALSE),
+        (-906, '2026-11-30', 'IND121', '2026-05-01', FALSE),
+        (-907, '2026-09-30', 'IND121', '2026-06-30', TRUE),
+        (-907, '2026-10-31', 'IND121', '2026-06-30', TRUE),
+        (-907, '2026-11-30', 'IND121', '2026-06-30', TRUE),
+        (-908, '2026-10-31', 'IND121', '2026-07-01', TRUE),
+        (-908, '2026-11-30', 'IND121', '2026-07-01', TRUE),
+        (-910, '2026-09-30', 'IND121', '2026-06-15', FALSE),
+        (-910, '2026-10-31', 'IND121', '2026-06-15', FALSE),
+        (-910, '2026-11-30', 'IND121', '2026-06-15', FALSE),
+        (-911, '2026-11-30', 'IND121', '2026-08-01', FALSE),
+        (-912, '2026-09-30', 'IND121', '2025-07-01', TRUE),
         (-901, '2026-09-30', 'IND115', '2026-04-01', TRUE),
         (-901, '2026-10-31', 'IND115', '2025-03-31', FALSE),
+        (-901, '2026-11-30', 'IND115', '2025-03-31', FALSE),
         (-902, '2026-10-31', 'IND115', '2026-08-01', TRUE),
+        (-902, '2026-11-30', 'IND115', '2026-08-01', TRUE),
         (-903, '2026-10-31', 'IND115', '2026-10-01', TRUE),
+        (-903, '2026-11-30', 'IND115', '2026-10-01', TRUE),
         (-904, '2026-09-30', 'IND115', '2026-08-01', TRUE),
         (-904, '2026-10-31', 'IND115', '2026-08-01', TRUE),
-        (-905, '2026-09-30', 'IND115', '2026-08-01', TRUE)
+        (-904, '2026-11-30', 'IND115', '2026-08-01', TRUE),
+        (-905, '2026-09-30', 'IND115', '2026-08-01', TRUE),
+        (-906, '2026-09-30', 'IND115', '2026-08-01', FALSE),
+        (-906, '2026-10-31', 'IND115', '2026-05-01', FALSE),
+        (-906, '2026-11-30', 'IND115', '2026-05-01', FALSE),
+        (-907, '2026-09-30', 'IND115', '2026-06-30', TRUE),
+        (-907, '2026-10-31', 'IND115', '2026-06-30', TRUE),
+        (-907, '2026-11-30', 'IND115', '2026-06-30', TRUE),
+        (-908, '2026-09-30', 'IND115', '2026-07-01', TRUE),
+        (-908, '2026-10-31', 'IND115', '2026-07-01', TRUE),
+        (-908, '2026-11-30', 'IND115', '2026-07-01', TRUE),
+        (-909, '2026-09-30', 'IND115', '2025-06-30', TRUE),
+        (-909, '2026-10-31', 'IND115', '2025-06-30', TRUE),
+        (-909, '2026-11-30', 'IND115', '2025-06-30', TRUE),
+        (-910, '2026-09-30', 'IND115', '2026-06-15', FALSE),
+        (-910, '2026-10-31', 'IND115', '2026-06-15', FALSE),
+        (-910, '2026-11-30', 'IND115', '2026-06-15', FALSE),
+        (-911, '2026-09-30', 'IND115', '2026-08-01', FALSE),
+        (-911, '2026-10-31', 'IND115', '2026-08-01', FALSE),
+        (-911, '2026-11-30', 'IND115', '2026-08-01', FALSE),
+        (-912, '2026-09-30', 'IND115', '2025-07-01', TRUE),
+        (-912, '2026-10-31', 'IND115', '2025-07-01', TRUE),
+        (-912, '2026-11-30', 'IND115', '2025-07-01', TRUE)
 ),
 actual_counts AS (SELECT *, COUNT(*) AS occurrences FROM actual GROUP BY ALL),
 expected_counts AS (SELECT *, COUNT(*) AS occurrences FROM expected GROUP BY ALL),
