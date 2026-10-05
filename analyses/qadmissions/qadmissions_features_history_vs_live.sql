@@ -8,21 +8,25 @@
 -- Usage: compile with dbt, then run the compiled query in Snowflake.
 --
 -- SET UP FIRST
---   1. Make sure the latest completed month-end (the spine's newest month,
---      LAST_DAY of last month) is in qadmissions_history_index_dates()
---      (macros/config/qadmissions_index_dates.sql). The check uses
---      MAX(end_date), so the older dates can stay.
+--   1. The check uses MAX(end_date), which must be the latest completed
+--      month-end. qadmissions_history_index_dates()
+--      (macros/config/qadmissions_index_dates.sql) covers January 2023 to
+--      December 2024, so for this check temporarily add the latest month to
+--      its WHERE clause:
+--        OR month_end_date = LAST_DAY(DATEADD('month', -1, CURRENT_DATE()))
+--      and remove it afterwards.
 --   2. Build both models from the same DEV inputs in ONE run, so source
 --      refreshes between builds don't show up as differences:
 --        dbt build -s qadmissions_input_features qadmissions_input_features_history
---      If int_date_spine, int_segmentation_person_month_spine or
---      int_segmentation_acute_activity_history were last built before the
+--      If int_date_spine, int_segmentation_person_month_spine,
+--      int_segmentation_acute_activity_history or the register histories it
+--      reads (fct_person_*_register_by_month) were last built before the
 --      month-end, rebuild them in the same run, or the history side will be
---      empty. The spine takes its month-ends from int_date_spine. If the history build fails on
+--      empty or stale. The spine takes its month-ends from int_date_spine. If the history build fails on
 --      DATE_RECORDED, another build has replaced an input without that
 --      column; rebuild the lab, *_COD_Q, smoking and alcohol _all inputs
 --      it reads in the same run.
---   3. Check that check_date is the month-end you added and that the
+--   3. Check that check_date is the latest completed month-end and that the
 --      population row has millions of people in both models.
 --
 -- COLUMNS

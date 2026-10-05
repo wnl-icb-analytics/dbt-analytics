@@ -10,10 +10,13 @@ models:
       risk score, and a score produced from it requires the ClinRisk
       disclaimer in the file header.
 
-      Grain: one row per person per index date. Index dates are month-ends
-      listed in the qadmissions_history_index_dates macro. 2026-09-30 is for
-      comparison with qadmissions_input_features only and has no outcome
-      follow-up, so it must not be used for outcome validation.
+      Grain: one row per person per index date. Index dates are every
+      month-end from January 2023 to December 2024, listed in the
+      qadmissions_history_index_dates macro. The table is rebuilt each month,
+      so these months can change as records are added or corrected. Only
+      months with a full
+      outcome horizon of complete SUS follow-up can be used for outcome
+      validation.
 
       Population at each index date: people registered and alive at that
       month-end, recorded as Male or Female, and aged 18-100 inclusive at
@@ -24,7 +27,8 @@ models:
       or before the index date and, where a recording date is held, entered
       on or before the index date, so codes entered retrospectively are not
       visible at earlier index dates. Disease register flags come from the
-      QOF register macros (macros/qof_registers), the as-at pairs of the
+      monthly register histories (fct_person_*_register_by_month), built with
+      the QOF register macros (macros/qof_registers), the as-at pairs of the
       live fct_person_*_register models behind dim_person_conditions.
 
       Two features take today's value at every index date: town (current
@@ -103,35 +107,35 @@ models:
 
       - name: b_af
         data_type: boolean
-        description: "On the atrial fibrillation QOF register at the index date (calculate_atrial_fibrillation_register)."
+        description: "On the atrial fibrillation QOF register at the index date (fct_person_atrial_fibrillation_register_by_month)."
 
       - name: b_ccf
         data_type: boolean
-        description: "On the heart failure QOF register at the index date (calculate_heart_failure_register)."
+        description: "On the heart failure QOF register at the index date (fct_person_heart_failure_register_by_month)."
 
       - name: b_anycancer
         data_type: boolean
-        description: "On the cancer QOF register at the index date (calculate_cancer_register)."
+        description: "On the cancer QOF register at the index date (fct_person_cancer_register_by_month)."
 
       - name: b_asthmacopd
         data_type: boolean
         description: >
           On the asthma OR COPD QOF register at the index date
-          (calculate_asthma_register, calculate_copd_register). Asthma
+          (fct_person_asthma_register_by_month, fct_person_copd_register_by_month). Asthma
           membership requires asthma medication in the 12 months before the
           index date.
 
       - name: b_epilepsy
         data_type: boolean
-        description: "On the epilepsy QOF register at the index date (calculate_epilepsy_register)."
+        description: "On the epilepsy QOF register at the index date (fct_person_epilepsy_register_by_month)."
 
       - name: b_renal
         data_type: boolean
-        description: "On the chronic kidney disease QOF register at the index date (calculate_ckd_register)."
+        description: "On the chronic kidney disease QOF register at the index date (fct_person_ckd_register_by_month)."
 
       - name: b_manicschiz
         data_type: boolean
-        description: "On the severe mental illness QOF register at the index date (calculate_smi_register)."
+        description: "On the severe mental illness QOF register at the index date (fct_person_smi_register_by_month)."
 
       - name: b_cvd
         data_type: boolean
@@ -142,11 +146,11 @@ models:
 
       - name: b_type1
         data_type: boolean
-        description: "On the diabetes QOF register at the index date with type classified as Type 1. 'Unknown' type maps to FALSE."
+        description: "On the diabetes QOF register at the index date with type classified as Type 1 (fct_person_diabetes_register_by_month). 'Unknown' type maps to FALSE."
 
       - name: b_type2
         data_type: boolean
-        description: "On the diabetes QOF register at the index date with type classified as Type 2. 'Unknown' type maps to FALSE."
+        description: "On the diabetes QOF register at the index date with type classified as Type 2 (fct_person_diabetes_register_by_month). 'Unknown' type maps to FALSE."
 
       - name: smoke_cat
         data_type: number
