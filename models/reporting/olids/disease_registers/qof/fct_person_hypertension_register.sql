@@ -8,9 +8,10 @@
 }}
 
 -- Hypertension Register (QOF Pattern 6: Complex Clinical Logic)
--- Business Logic: Unresolved HTN diagnosis (QOF v51 HYP_REG, no age restriction) + Project-specific NICE-informed staging of the latest BP
--- Staging uses context-specific thresholds, not the NG136 diagnostic definition based on a confirmed ABPM/HBPM average.
--- Complex Logic: BP staging varies by measurement context (Home/ABPM vs Clinic readings)
+-- Register: unresolved HTN diagnosis (QOF v51 HYP_REG, no age restriction).
+-- latest_bp_htn_stage classifies the latest paired reading by context (Home/ABPM vs clinic).
+-- Local thresholds, not a QOF rule and not NG136. Home/ABPM stage 2 here is 155/95;
+-- NG136 stage 2 ABPM/HBPM confirmation is 150/95, on a confirmed average.
 
 WITH hypertension_person_aggregates AS (
     SELECT
@@ -131,8 +132,8 @@ register_logic AS (
             ), FALSE
         ) AS is_on_register,
 
-        -- Project-specific NICE-informed staging of the latest BP, with context-specific thresholds.
-        -- This is not the NG136 diagnostic definition based on a confirmed ABPM/HBPM average.
+        -- Local staging of the latest paired BP (not a QOF rule, not NG136).
+        -- Home/ABPM stage 2 is >=155/95; NG136 ABPM/HBPM stage 2 confirmation is 150/95.
         CASE
             WHEN
                 bp.latest_bp_systolic_value IS NULL
