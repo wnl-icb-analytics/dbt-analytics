@@ -774,7 +774,7 @@ CONTACT_ENRICHED AS (
     LEFT JOIN NATIONAL_GP NAT_GP
         ON PAT1.GPCODE = NAT_GP.GP_PRACTICE_CODE
 
-    LEFT JOIN {{ ref('raw_reference_geo_neighbourhood_lsoa') }} NGH_RES
+    LEFT JOIN {{ source('reference_geo', 'NEIGHBOURHOOD_LSOA') }} NGH_RES
         ON PAT1."Lower_super_output_area_(Residence)" = NGH_RES.LSOA_CODE
 
     WHERE CCON."Care_contact_date" >= '2021-04-01'
