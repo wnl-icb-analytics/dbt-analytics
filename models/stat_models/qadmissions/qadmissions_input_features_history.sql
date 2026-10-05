@@ -413,15 +413,15 @@ liver_pancreatitis_flags AS (
     GROUP BY i.end_date, lp.person_id
 ),
 
--- Townsend score from the person's current LSOA, the same value at every
+-- Townsend score from the person's current 2011 LSOA, the same value at every
 -- index date. Address history is not held, so people who have moved since an
--- index date get their current area's score. NULL where the LSOA is missing
--- or does not bridge to a Townsend-mapped 2011 LSOA. One row per person.
+-- index date get their current area's score. NULL where there is no 2011 LSOA
+-- or it has no Townsend score. One row per person.
 townsend AS (
     SELECT
         person_id,
         townsend_score
-    FROM {{ ref('int_qadmissions_townsend') }}
+    FROM {{ ref('int_person_geography') }}
 ),
 
 -- Ethnicity risk group (1-9) from the person's latest recorded ethnicity, the

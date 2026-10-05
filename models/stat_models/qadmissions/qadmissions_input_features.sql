@@ -202,13 +202,13 @@ liver_pancreatitis_flags AS (
     FROM {{ ref('int_liver_pancreatitis_diagnoses_all') }}
 ),
 
--- Townsend Deprivation Score per person (NULL where the LSOA does not
--- bridge to a Townsend-mapped 2011 LSOA, e.g. non-English residence).
+-- Townsend Deprivation Score per person from their residential 2011 LSOA
+-- (NULL where there is no 2011 LSOA or it has no Townsend score).
 townsend AS (
     SELECT
         person_id,
         townsend_score
-    FROM {{ ref('int_qadmissions_townsend') }}
+    FROM {{ ref('int_person_geography') }}
 ),
 
 -- Alcohol category 0..5 derived from Full AUDIT scores. 
