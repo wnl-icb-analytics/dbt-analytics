@@ -13,8 +13,8 @@ WITH indicator_population AS (
     INNER JOIN ({{ nice_register('CAN', reference) }}) AS register
         ON population.person_id = register.person_id
         AND population.reporting_date = register.reporting_date
-    WHERE register.latest_diagnosis_date::DATE > DATEADD(month, -12, population.reporting_date)
-        AND register.latest_diagnosis_date::DATE <= population.reporting_date
+    WHERE register.latest_diagnosis_date::DATE > DATEADD(month, -15, population.reporting_date)
+        AND register.latest_diagnosis_date::DATE <= DATEADD(month, -3, population.reporting_date)
 ),
 support AS (
     SELECT population.person_id, population.reporting_date,
@@ -27,9 +27,9 @@ support AS (
     GROUP BY population.person_id, population.reporting_date
 )
 SELECT population.person_id, 'IND222' AS indicator_id,
-    'Cancer: discussion of primary care support within 3 months' AS indicator_name,
-    population.reporting_date, DATEADD(month, -12, population.reporting_date) AS measurement_period_start,
-    population.age, 'Cancer diagnosed in the preceding 12 months' AS condition_name,
+    'Cancer: review within 3 months' AS indicator_name,
+    population.reporting_date, DATEADD(month, -15, population.reporting_date) AS measurement_period_start,
+    population.age, 'Cancer diagnosed 15 to 3 months ago'::VARCHAR(43) AS condition_name,
     {{ nice_practice_columns('population', reference) }},
     population.diagnosis_date, support.latest_record_date,
     TRUE AS is_in_denominator, support.latest_record_date IS NOT NULL AS is_in_numerator,

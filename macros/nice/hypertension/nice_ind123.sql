@@ -5,7 +5,8 @@
     Returns: the IND123 detail columns, one person per reporting_date.
 -#}
 -- NICE IND123: https://www.nice.org.uk/indicators/ind123
--- Resting ECG within three months either side of diagnosis, capped at the reporting date; explicit 12-lead evidence is separate.
+-- Resting ECG within three months either side of diagnosis; explicit 12-lead evidence is separate.
+-- The rolling annual diagnosis cohort ends three months before the reporting date.
 WITH population AS (
     {{ nice_hypertension_new_diagnosis_population(reference) }}
 ),
@@ -31,9 +32,9 @@ SELECT
     'IND123' AS indicator_id,
     'Hypertension: ECG for target organ damage' AS indicator_name,
     population.reporting_date,
-    {{ nice_financial_year_start('population.reporting_date') }} AS measurement_period_start,
+    DATEADD(month, -15, population.reporting_date) AS measurement_period_start,
     population.age,
-    'Hypertension newly diagnosed in the financial year, any age' AS condition_name,
+    'New hypertension, any age'::VARCHAR(59) AS condition_name,
     {{ nice_practice_columns('population', reference) }},
     population.diagnosis_date,
     selected.latest_ecg_date,

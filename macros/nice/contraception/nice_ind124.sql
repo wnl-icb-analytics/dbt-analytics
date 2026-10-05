@@ -26,9 +26,9 @@ WITH population AS (
     FROM population
 )
 SELECT person_id, 'IND124' AS indicator_id,
-    'Contraception advice for women with SMI' AS indicator_name,
+    'Contraception: advice for people with bipolar, schizophrenia or other psychoses' AS indicator_name,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Women under 45 with active SMI' AS condition_name,
+    age, 'Women under 45 with active severe mental illness' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     latest_record_date, TRUE AS is_in_denominator,
     latest_record_date IS NOT NULL AS is_in_numerator,

@@ -29,9 +29,11 @@ WITH population AS (
             WHEN 'Pulmonary Rehab Attended' THEN 'ATTENDED'
             WHEN 'Pulmonary Rehab Unsuitable' THEN 'UNSUITABLE'
             WHEN 'Pulmonary Rehab Offered' THEN 'OFFERED'
+            WHEN 'Pulmonary Rehab Declined' THEN 'OFFERED'
         END AS event_type
     FROM {{ ref('int_referral_pulmonary_rehab') }}
-    WHERE pr_obs_type IN ('Pulmonary Rehab Attended', 'Pulmonary Rehab Unsuitable', 'Pulmonary Rehab Offered')
+    WHERE pr_obs_type IN ('Pulmonary Rehab Attended', 'Pulmonary Rehab Unsuitable',
+        'Pulmonary Rehab Offered', 'Pulmonary Rehab Declined')
     UNION ALL
     SELECT person_id, event_date, 'OFFERED'
     FROM {{ ref('int_nice_copd_observations_all') }}
@@ -75,7 +77,7 @@ WITH population AS (
 )
 SELECT person_id, 'IND101' AS indicator_id, 'COPD: offered pulmonary rehabilitation' AS indicator_name,
     reporting_date, DATEADD(month, -15, reporting_date) AS measurement_period_start,
-    age, 'COPD with MRC dyspnoea grade 3 or more' AS condition_name,
+    age, 'COPD with breathlessness grade 3 or more' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     diagnosis_date, mrc_date, latest_offer_date,
     first_invitation_date, last_invitation_date, latest_response_date, is_excluded_invitation_non_response,

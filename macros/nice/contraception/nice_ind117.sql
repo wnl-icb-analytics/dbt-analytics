@@ -26,9 +26,9 @@ WITH population AS (
     FROM population
 )
 SELECT person_id, 'IND117' AS indicator_id,
-    'Contraception advice for women with epilepsy' AS indicator_name,
+    'Contraception: advice for people with epilepsy' AS indicator_name,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Women aged 18 to 44 on the epilepsy register' AS condition_name,
+    age, 'Women with epilepsy, aged 18 to 44' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     latest_asm_date,
     latest_record_date, TRUE AS is_in_denominator,

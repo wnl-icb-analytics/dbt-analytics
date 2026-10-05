@@ -134,6 +134,66 @@ unit_tests:
   overrides:
     macros:
       nice_reference_dates: SELECT '2026-09-30'::DATE AS reporting_date
+- name: nice_149_completed_follow_up_cohort
+  model: fct_person_emergency_contraception_larc_advice_ind149_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7210, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_nice_contraception_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::DATE AS latest_ehc_date
+      FROM VALUES
+          (-7201, '2026-09-30', '2026-09-01'),
+          (-7202, '2026-09-30', '2026-09-01'),
+          (-7203, '2026-09-30', '2026-01-01'),
+          (-7204, '2026-09-30', '2026-08-30'),
+          (-7205, '2026-09-30', '2026-09-01'),
+          (-7207, '2026-09-30', '2026-08-31'),
+          (-7208, '2026-09-30', '2025-08-30'),
+          (-7209, '2026-09-30', '2025-08-31'),
+          (-7210, '2026-09-30', '2025-08-29')
+  - input: ref('int_nice_larc_advice_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS event_date,
+          column3::VARCHAR AS advice_modality
+      FROM VALUES
+          (-7202, '2026-09-10', 'NON_SPECIFIC'),
+          (-7203, '2026-01-10', 'NON_SPECIFIC')
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+    - person_id: -7209
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
 - name: nice_161_completed_follow_up_cohort
   model: fct_person_cvd_risk_assessment_ind161_by_month
   given:

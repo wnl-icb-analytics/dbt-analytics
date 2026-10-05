@@ -11,6 +11,7 @@ WITH population AS (
     INNER JOIN ({{ nice_register('COPD', reference) }}) r
         ON p.person_id = r.person_id AND p.reporting_date = r.reporting_date
 ), valid_percentages AS (
+    -- Filter valid percentages before selecting the latest date; highest observation id resolves same-day ties.
     SELECT person_id, event_date, result_value
     FROM {{ ref('int_nice_copd_observations_all') }}
     WHERE evidence_type = 'FEV1_PCT_PRED_COD' AND result_value BETWEEN 5 AND 150

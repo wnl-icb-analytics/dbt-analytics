@@ -15,7 +15,8 @@ WITH population AS (
         AND population.reporting_date = evidence.reporting_date
     WHERE population.gender = 'Female'
         AND population.age <= 54
-        AND evidence.latest_ehc_date > DATEADD(month, -12, population.reporting_date)
+        AND evidence.latest_ehc_date > DATEADD(month, -12, DATEADD(day, -31, population.reporting_date))
+        AND evidence.latest_ehc_date <= DATEADD(day, -31, population.reporting_date)
 ), assessed AS (
     SELECT population.person_id, population.reporting_date, population.age,
         population.practice_code, population.practice_name, population.latest_ehc_date,
@@ -39,9 +40,9 @@ WITH population AS (
     FROM assessed
 )
 SELECT person_id, 'IND149' AS indicator_id,
-    'LARC information after emergency hormonal contraception' AS indicator_name,
-    reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Women aged 54 or under using practice-issued emergency hormonal contraception' AS condition_name,
+    'Contraception: LARC for people using emergency contraception' AS indicator_name,
+    reporting_date, DATEADD(month, -12, DATEADD(day, -31, reporting_date)) AS measurement_period_start,
+    age, 'Women aged 54 or under using emergency contraception' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     latest_ehc_date,
     latest_non_specific_advice_date,
