@@ -1,16 +1,17 @@
 models:
 - name: fct_person_nsaid_egfr_ind232_by_month
   description: >-
-    eGFR testing with long-term NSAID use (NICE IND232). One row per active, living, non-test person
-    outside the CKD register with at least 12 distinct oral NSAID issue days in (reporting date minus 24
-    months, reporting date]. NHS_DRUG_REFSETS ORALNSAIDDRUG_COD defines oral NSAIDs. Same-day
-    prescriptions count once. Achievement requires a PCD EGFR_COD performed test in [reporting date
-    minus 12 months, reporting date], including tests without a numeric result. No personalised care
-    adjustments apply. Recalculated for the last 60 completed month-ends using current rules and code
-    lists. Registration and practice follow the monthly spine. Birth and death dates are approximate;
-    current gender and test flags apply retrospectively. CKD membership uses clinical and recorded
-    dates. Other evidence uses clinical or order dates through month-end. Later corrections can change
-    earlier results.
+    eGFR testing with long-term oral NSAID use (NICE IND232). One row per person in the
+    denominator at the month-end.
+
+
+    People registered at the month-end outside the CKD register with oral non-steroidal
+    anti-inflammatory drug (NSAID) prescriptions on at least 12 distinct days in the 24
+    months before the month-end. Several prescriptions on one day count once. Achieved
+    with an eGFR test in the last 12 months. No numeric result is needed. No personalised
+    care adjustments are applied. Based on NICE NG203. Recalculated for each of the last
+    60 month-ends with current rules, code lists and records, so later corrections can
+    change past months. Code lists: EGFR_COD (PCD); ORALNSAIDDRUG_COD (NHS drug refset).
   config:
     meta:
       owner:
@@ -24,34 +25,32 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Person in the indicator denominator.
+    description: "Person identifier for someone in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "Published NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name.
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Date used for eligibility and evidence.
+    description: "Month-end used to assess the population, age and evidence."
   - name: measurement_period_start
-    description: Inclusive start of the 12-month eGFR measurement period. The NSAID cohort uses a separate
-      24-month period with an exclusive start.
+    description: "Inclusive start of the indicator measurement period before the reporting date."
   - name: age
-    description: Completed years at reporting date; null when unavailable in current mode.
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
   - name: condition_name
-    description: Population defining the indicator.
+    description: "Short label for the indicator denominator population."
   - name: practice_code
-    description: Registration practice ODS code at reporting date.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Registration practice name at reporting date.
+    description: "Name of the registration practice at month-end."
   - name: nsaid_issue_day_count
-    description: Distinct oral NSAID issue days in the 24-month period; at least 12.
+    description: "Number of distinct days with an oral NSAID prescription in the last 24 months, excluding the first day; at least 12."
   - name: latest_therapy_order_date
-    description: Latest oral NSAID issue day in the 24-month period.
+    description: "Latest oral NSAID prescription date in the 24-month period used to establish long-term use."
   - name: latest_record_date
-    description: Latest performed eGFR test date in the 12-month period; null when absent. A numeric result
-      is not required.
+    description: "Date of qualifying evidence retained within the indicator measurement or follow-up window; null when none is recorded."
   - name: is_in_denominator
-    description: Always true for every row.
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether an eGFR test was performed in the 12-month period.
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."

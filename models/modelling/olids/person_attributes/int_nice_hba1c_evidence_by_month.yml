@@ -1,13 +1,12 @@
 models:
 - name: int_nice_hba1c_evidence_by_month
-  description: NICE hba1c evidence. One row per active, living, non-test person and completed month-end, restricted
-    to DM, NDH, gestational diabetes or SMI members. Evidence uses clinical or order dates through the reference
-    date. Null dates mean no evidence; stale dates remain available and indicators apply their own windows
-    and exclusions. Recalculated for the last 60 completed month-ends with today's code lists. Register membership
-    uses clinical and recorded dates. Registration follows the existing monthly spine, with inclusive starts
-    and exclusive end and death dates. Overlaps retain its current-registration priority. Birth and death dates
-    are approximate; missing birth dates prevent historical active rows. The current test flag applies retrospectively.
-    Later corrections and code-list changes can alter earlier results.
+  description: >-
+    HbA1c, fructosamine and maximum-tolerated treatment evidence for registered, living,
+    non-test people on diabetes, non-diabetic hyperglycaemia, gestational diabetes or severe
+    mental illness registers. One row per person and month-end. Evidence stops at the month-end;
+    indicators apply their own windows and exclusions. Null dates mean no evidence. Recalculated
+    for each of the last 60 month-ends with current rules, code lists and records, so later
+    corrections can change past months.
   config:
     meta:
       owner:
@@ -25,15 +24,18 @@ models:
           <= reporting_date)
   columns:
   - name: person_id
-    description: Person on a DM, NDH, gestational diabetes or SMI register at the reference date.
+    description: >-
+      Person on a DM, NDH, gestational diabetes or SMI register on the reporting date.
     data_tests:
     - not_null
   - name: reporting_date
-    description: Date at which candidate membership and evidence are assessed.
+    description: >-
+      Completed month-end on which population and evidence are assessed.
     data_tests:
     - not_null
   - name: latest_hba1c_observation_id
-    description: Selected HbA1c observation. Null if no test is dated by the reference date.
+    description: >-
+      Selected HbA1c observation. Null if no test is dated by the reporting date.
   - name: latest_hba1c_date
     description: Latest HbA1c clinical day, including value-free and invalid tests. Consumers apply their own
       measurement window.
@@ -44,8 +46,11 @@ models:
     description: Source validity of the selected result; false when evidence is missing. Valid results win
       same-day ties, then the highest observation id. A later invalid day prevents fallback.
   - name: latest_fructosamine_date
-    description: Latest fructosamine clinical day through the reference date, whether or not a numeric result
-      exists. Null means no evidence.
+    description: >-
+      Latest fructosamine clinical day through the reporting date, whether or not a numeric
+      result exists. Null means no evidence.
   - name: latest_dmmax_date
-    description: Latest DMMAX maximum-tolerated-diabetes-treatment clinical day through the reference date.
-      Null means no evidence. Indicators decide whether it excludes a person in their window.
+    description: >-
+      Latest DMMAX maximum-tolerated-diabetes-treatment clinical day through the reporting
+      date. Null means no evidence. Indicators decide whether it excludes a person in their
+      window.

@@ -1,12 +1,17 @@
 models:
 - name: fct_person_lithium_renal_thyroid_monitoring_ind86
   description: >-
-    Lithium renal and thyroid monitoring (NICE IND86). One row per eligible current lithium user on the
-    build date. People must be registered, living and non-test. All current lithium users, regardless of
-    SMI diagnosis. Uses the shared therapy definition: an order strictly after R minus six calendar
-    months through R, with known-date caps and no later stop. Both CRE_COD and TFT_COD records must fall
-    within the inclusive nine-month window through R. Records count without numeric results. TFT_COD
-    includes free T4 and T3 and is a broader proxy for TSH.
+    Kidney and thyroid monitoring during lithium therapy (NICE IND86). One row per person in the
+    denominator on the build date.
+
+
+    People registered on the build date prescribed lithium in the 6 months before the build
+    date, without a later stop; a same-day stop does not exclude them. Prescriptions and stops
+    must be known by that date. Mental illness diagnosis is not required. Achieved with
+    creatinine and thyroid function tests in the preceding 9 months. Numeric results are not
+    required. Free T4 and T3 codes count without proof of TSH testing. No personalised care
+    adjustments are applied. Based on NICE CG185. Code lists: LIT_COD; LITSTP_COD, CRE_COD,
+    TFT_COD (PCD).
   config:
     meta:
       owner:
@@ -17,18 +22,16 @@ models:
         type: MEASURE
         category: REVIEW
         clinical_domain: Mental health
-        name_short: 'Lithium therapy: creatinine and TSH monitoring'
-        description_short: 'All current lithium users, regardless of SMI diagnosis. Uses the shared therapy
-          definition: an order strictly after R minus six calendar months through R, with known-date caps
-          and no later stop. Both CRE_COD and TFT_COD records must fall within the inclusive nine-month
-          window through R. Records count without numeric results. TFT_COD includes free T4 and T3 and
-          is a broader proxy for TSH.'
-        description_long: 'NICE IND86. One row per eligible registered, living, non-test person on the
-          build date. All current lithium users, regardless of SMI diagnosis. Uses the shared therapy
-          definition: an order strictly after R minus six calendar months through R, with known-date caps
-          and no later stop. Both CRE_COD and TFT_COD records must fall within the inclusive nine-month
-          window through R. Records count without numeric results. TFT_COD includes free T4 and T3 and
-          is a broader proxy for TSH.'
+        name_short: "Lithium kidney and thyroid monitoring"
+        description_short: "Kidney and thyroid monitoring during lithium therapy."
+        description_long: >-
+          People registered on the build date prescribed lithium in the 6 months before the
+          build date, without a later stop; a same-day stop does not exclude them. Prescriptions
+          and stops must be known by that date. Mental illness diagnosis is not required.
+          Achieved with creatinine and thyroid function tests in the preceding 9 months. Numeric
+          results are not required. Free T4 and T3 codes count without proof of TSH testing. No
+          personalised care adjustments are applied. Based on NICE CG185. Code lists: LIT_COD;
+          LITSTP_COD, CRE_COD, TFT_COD (PCD).
         is_qof: false
         source_column: is_in_numerator
         usage_contexts:
@@ -36,35 +39,39 @@ models:
         sort_order: NICE_IND86
   columns:
   - name: person_id
-    description: Person in the indicator denominator.
+    description: "Person identifier for a member of the indicator denominator."
     data_tests:
     - not_null
     - unique
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name.
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Evaluation date R.
+    description: "Build date used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Inclusive window start.
+    description: "9 months before the reporting date, included in the test window."
   - name: age
-    description: Age in completed years at R.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: condition_name
-    description: Population defining the indicator.
+    description: "Short label for the denominator population."
   - name: is_in_denominator
-    description: Always true for an eligible row.
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether the qualifying evidence is present at R.
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   - name: latest_record_date
-    description: Latest qualifying evidence date; null when not achieved.
+    description: "Later of the creatinine and thyroid function test dates when both fall in the 9-month window; otherwise null."
   - name: current_practice_code
-    description: ODS code of the registration practice at R.
+    description: "ODS code of the registration practice at the reporting date."
   - name: current_practice_name
-    description: Name of the registration practice at R.
+    description: "Name of the registration practice at the reporting date."
   - name: latest_creatinine_date
-    description: Latest CRE_COD record through R, including stale evidence.
+    description: >-
+      Latest creatinine test record on or before the reporting date; null if absent. It may be
+      outside the achievement window.
   - name: latest_thyroid_function_test_date
-    description: Latest TFT_COD record through R, including stale evidence.
+    description: >-
+      Latest thyroid function test on or before the reporting date; null if absent. It may be
+      outside the achievement window.

@@ -1,7 +1,13 @@
 models:
 - name: fct_person_bone_health_nice_indicators_snapshot_input
-  description: Snapshot evidence for NICE bone health indicators. One row per eligible person and indicator;
-    excludes advancing build-date fields.
+  description: >-
+    Bone health NICE indicator evidence for change history (IND91, IND92). One row per
+    person and indicator in the build-date denominator.
+
+
+    Retains practice, recorded evidence and achievement. Build-date fields are omitted so
+    a daily date change alone does not create a new history version. No personalised care
+    adjustments are applied.
   config:
     meta:
       owner:
@@ -14,16 +20,16 @@ models:
         - indicator_id
   columns:
   - name: person_id
-    description: Person in the indicator denominator at R.
+    description: "Person identifier for someone in the indicator denominator."
   - name: indicator_id
-    description: Published NICE indicator identifier.
+    description: "Published NICE indicator identifier."
   - name: current_practice_code
-    description: Current registration practice ODS code.
+    description: "ODS code of the current registration practice."
   - name: latest_bone_sparing_order_date
-    description: Latest bone-sparing order on or before R; may be outside six months.
+    description: "Latest bone-sparing drug prescription by the reporting date; it may be outside the 6-month treatment window. Null when never prescribed."
   - name: latest_record_date
-    description: Qualifying order date in (R minus six months, R]; null without current treatment.
+    description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
   - name: is_in_numerator
-    description: Whether the achievement rule is met at R.
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or the accepted reason the rule is not met.
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."

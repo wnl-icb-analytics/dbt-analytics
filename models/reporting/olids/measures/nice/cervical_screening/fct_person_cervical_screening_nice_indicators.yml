@@ -1,19 +1,18 @@
 models:
   - name: fct_person_cervical_screening_ind176
-    description: |
-      NICE IND176 cervical screening at ages 25 to 49. One row per currently registered,
-      living, non-test woman aged 25 to 49, assessed on the build date.
+    description: >-
+      Cervical screening at ages 25 to 49 (NICE IND176). One row per person in the
+      denominator on the build date.
 
-      Achieved when an adequate cervical screening test is recorded in the preceding 42
-      months. Adequate screening uses the QOF SMEAR_COD definition.
 
-      Excludes women with a recorded complete cervix removal (NOCX_COD) and women who
-      are currently pregnant. Nonresponse to three invitations in the preceding 42
-      months excludes a woman only when no adequate screening test exists in that
-      interval. Completed screening takes precedence over nonresponse. Pregnancy status
-      accounts for subsequent delivery or outcome records.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date recorded as female and aged 25 to 49. Achieved
+      with an adequate cervical screening test in the 42 months before the build date.
+      Excludes complete cervix removal. Pregnancy and non-response to three invitations
+      in those 42 months exclude unless an adequate test exists in that period.
+      Pregnancy means a record in the last 9 months without delivery or outcome at the
+      same or a later time. No personalised care adjustments are applied. Based on
+      Public Health England NHS population screening reporting data definitions (2024).
+      Code lists: SMEAR_COD, NOCX_COD, CSPCAINVITE_COD, PREG_COD, PREGDEL_COD (PCD).
     config:
       meta:
         owner:
@@ -24,23 +23,19 @@ models:
           type: "MEASURE"
           category: "SCREENING"
           clinical_domain: "Prevention"
-          name_short: "Cervical screening 25 to 49"
-          description_short: "Cervical screening recorded in the preceding 3.5 years for women aged 25 to 49"
-          description_long: |
-            NICE IND176 cervical screening at ages 25 to 49. One row per currently
-            registered, living, non-test woman aged 25 to 49, assessed on the build date.
-
-            Achieved when an adequate cervical screening test is recorded in the preceding
-            42 months. Adequate screening uses the QOF SMEAR_COD definition.
-
-            Excludes women with a recorded complete cervix removal (NOCX_COD) and women
-            who are currently pregnant. Nonresponse to three invitations in the
-            preceding 42 months excludes a woman only when no adequate screening test
-            exists in that interval. Completed screening takes precedence over
-            nonresponse. Pregnancy status accounts for subsequent delivery or outcome
-            records.
-
-            Personalised care adjustments are not applied.
+          name_short: "Cervical screening, ages 25 to 49"
+          description_short: "Cervical screening at ages 25 to 49."
+          description_long: >-
+            People registered on the build date recorded as female and aged 25 to
+            49. Achieved with an adequate cervical screening test in the 42 months
+            before the build date. Excludes complete cervix removal. Pregnancy and
+            non-response to three invitations in those 42 months exclude unless an
+            adequate test exists in that period. Pregnancy means a record in the
+            last 9 months without delivery or outcome at the same or a later time.
+            No personalised care adjustments are applied. Based on Public Health
+            England NHS population screening reporting data definitions (2024).
+            Code lists: SMEAR_COD, NOCX_COD, CSPCAINVITE_COD, PREG_COD,
+            PREGDEL_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -48,56 +43,55 @@ models:
           sort_order: "NICE_IND176"
     columns: &cervical_columns
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Identifier of the person in the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "NICE published indicator title."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and achievement."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "Inclusive start of the 42-month screening window for IND176, or 66 months for IND177 and IND321."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
+        description: "Age in completed years on the reporting date; null when the birth date is missing."
       - name: condition_name
-        description: Population defining the indicator
+        description: "Short label for the denominator population."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice on the build date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice on the build date."
       - name: latest_completed_date
-        description: Date of the latest completed cervical screening record, regardless of period; null if never screened
+        description: "Latest adequate cervical screening test on or before the reporting date, including tests outside the achievement window; null when none."
       - name: latest_screening_date
-        description: Date of the latest cervical screening record of any type; null when none
+        description: "Latest cervical screening record of any type on or before the reporting date; null when none."
       - name: programme_status
-        description: Programme status from the screening model (Up to Date, Overdue, Never Screened, Unsuitable, Unknown)
+        description: "Screening programme status: Unsuitable, Never Screened, Up to Date or Overdue. Uses 1,277 days through age 49 and 2,007 days thereafter, so it can differ from indicator achievement."
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: "Latest adequate cervical screening test in the indicator achievement window; null when none."
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true; each row meets the documented eligibility and exclusion rules."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule on the reporting date."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
 
   - name: fct_person_cervical_screening_ind177
-    description: |
-      NICE IND177 cervical screening at ages 50 to 64. One row per currently registered,
-      living, non-test woman aged 50 to 64, assessed on the build date.
+    description: >-
+      Cervical screening at ages 50 to 64 (NICE IND177). One row per person in the
+      denominator on the build date.
 
-      Achieved when an adequate cervical screening test is recorded in the preceding 66
-      months. Adequate screening uses the QOF SMEAR_COD definition.
 
-      Excludes women with a recorded complete cervix removal (NOCX_COD) and women who
-      are currently pregnant. Nonresponse to three invitations in the preceding 66
-      months excludes a woman only when no adequate screening test exists in that
-      interval. Completed screening takes precedence over nonresponse. Pregnancy status
-      accounts for subsequent delivery or outcome records.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date recorded as female and aged 50 to 64. Achieved
+      with an adequate cervical screening test in the 66 months before the build date.
+      Excludes complete cervix removal. Pregnancy and non-response to three invitations
+      in those 66 months exclude unless an adequate test exists in that period.
+      Pregnancy means a record in the last 9 months without delivery or outcome at the
+      same or a later time. No personalised care adjustments are applied. Based on
+      Public Health England NHS population screening reporting data definitions (2024).
+      Code lists: SMEAR_COD, NOCX_COD, CSPCAINVITE_COD, PREG_COD, PREGDEL_COD (PCD).
     config:
       meta:
         owner:
@@ -108,23 +102,19 @@ models:
           type: "MEASURE"
           category: "SCREENING"
           clinical_domain: "Prevention"
-          name_short: "Cervical screening 50 to 64"
-          description_short: "Cervical screening recorded in the preceding 5.5 years for women aged 50 to 64"
-          description_long: |
-            NICE IND177 cervical screening at ages 50 to 64. One row per currently
-            registered, living, non-test woman aged 50 to 64, assessed on the build date.
-
-            Achieved when an adequate cervical screening test is recorded in the preceding
-            66 months. Adequate screening uses the QOF SMEAR_COD definition.
-
-            Excludes women with a recorded complete cervix removal (NOCX_COD) and women
-            who are currently pregnant. Nonresponse to three invitations in the
-            preceding 66 months excludes a woman only when no adequate screening test
-            exists in that interval. Completed screening takes precedence over
-            nonresponse. Pregnancy status accounts for subsequent delivery or outcome
-            records.
-
-            Personalised care adjustments are not applied.
+          name_short: "Cervical screening, ages 50 to 64"
+          description_short: "Cervical screening at ages 50 to 64."
+          description_long: >-
+            People registered on the build date recorded as female and aged 50 to
+            64. Achieved with an adequate cervical screening test in the 66 months
+            before the build date. Excludes complete cervix removal. Pregnancy and
+            non-response to three invitations in those 66 months exclude unless an
+            adequate test exists in that period. Pregnancy means a record in the
+            last 9 months without delivery or outcome at the same or a later time.
+            No personalised care adjustments are applied. Based on Public Health
+            England NHS population screening reporting data definitions (2024).
+            Code lists: SMEAR_COD, NOCX_COD, CSPCAINVITE_COD, PREG_COD,
+            PREGDEL_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -133,17 +123,17 @@ models:
     columns: *cervical_columns
 
   - name: fct_person_cervical_screening_ind321
-    description: |
-      NICE IND321 cervical screening at ages 25 to 64. One row per currently registered,
-      living, non-test woman aged 25 to 64, assessed on the build date.
+    description: >-
+      Cervical screening at ages 25 to 64 (NICE IND321). One row per person in the
+      denominator on the build date.
 
-      Achieved when an adequate cervical screening test is recorded in the preceding 66
-      months. Adequate screening uses the QOF SMEAR_COD definition.
 
-      Excludes women with a recorded complete cervix removal (NOCX_COD). Pregnancy and
-      nonresponse do not remove women from this pre-adjustment denominator.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date recorded as female and aged 25 to 64. Achieved
+      with an adequate cervical screening test in the 66 months before the build date.
+      Excludes complete cervix removal. Pregnancy and invitation non-response remain in
+      the denominator. No personalised care adjustments are applied. Based on NHS
+      England cervical screening programme overview (2025). Code lists: SMEAR_COD,
+      NOCX_COD (PCD).
     config:
       meta:
         owner:
@@ -154,19 +144,15 @@ models:
           type: "MEASURE"
           category: "SCREENING"
           clinical_domain: "Prevention"
-          name_short: "Cervical screening 25 to 64"
-          description_short: "Cervical screening recorded in the preceding 5.5 years for women aged 25 to 64"
-          description_long: |
-            NICE IND321 cervical screening at ages 25 to 64. One row per currently
-            registered, living, non-test woman aged 25 to 64, assessed on the build date.
-
-            Achieved when an adequate cervical screening test is recorded in the preceding
-            66 months. Adequate screening uses the QOF SMEAR_COD definition.
-
-            Excludes women with a recorded complete cervix removal (NOCX_COD). Pregnancy
-            and nonresponse do not remove women from this pre-adjustment denominator.
-
-            Personalised care adjustments are not applied.
+          name_short: "Cervical screening, ages 25 to 64"
+          description_short: "Cervical screening at ages 25 to 64."
+          description_long: >-
+            People registered on the build date recorded as female and aged 25 to
+            64. Achieved with an adequate cervical screening test in the 66 months
+            before the build date. Excludes complete cervix removal. Pregnancy and
+            invitation non-response remain in the denominator. No personalised
+            care adjustments are applied. Based on NHS England cervical screening
+            programme overview (2025). Code lists: SMEAR_COD, NOCX_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -175,14 +161,12 @@ models:
     columns: *cervical_columns
 
   - name: fct_person_cervical_screening_nice_indicators
-    description: |
-      Current NICE cervical screening results. One row per eligible person and indicator,
-      with eligibility assessed on the build date.
+    description: >-
+      NICE cervical screening results. One row per person and indicator on the build date.
 
-      Includes the family-specific evidence alongside the shared achievement status. Each
-      indicator defines its own population, time window and exclusions.
 
-      Personalised care adjustments are not applied.
+      Includes IND176, IND177, IND321, with the eligibility, exclusions and achievement rules
+      documented for each indicator.
     config:
       meta:
         owner:
@@ -195,35 +179,36 @@ models:
               - indicator_id
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Identifier of the person in the indicator denominator."
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
         data_tests:
           - accepted_values:
               arguments:
                 values: ['IND176', 'IND177', 'IND321']
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
                 values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
       - name: latest_completed_date
-        description: Date of the latest completed screening record; null if never screened
+        description: "Latest adequate cervical screening test on or before the reporting date, including tests outside the achievement window; null when none."
       - name: latest_screening_date
-        description: Date of the latest cervical screening record of any type; null when none
+        description: "Latest cervical screening record of any type on or before the reporting date; null when none."
       - name: programme_status
-        description: Programme status from the screening model
+        description: "Screening programme status: Unsuitable, Never Screened, Up to Date or Overdue. Uses 1,277 days through age 49 and 2,007 days thereafter, so it can differ from indicator achievement."
       - name: latest_record_date
-        description: Date of the latest completed screening in the period; null when none
+        description: "Latest adequate cervical screening test in the indicator achievement window; null when none."
 
   - name: fct_person_cervical_screening_nice_indicators_snapshot_input
-    description: |
-      NICE cervical screening results used for change history. One row per eligible person
-      and indicator.
+    description: >-
+      NICE cervical screening results. One row per person and indicator.
 
-      Excludes build-date fields so a new reporting date alone does not create a history
-      version. Clinical results and evidence retain the family definitions.
+
+      Includes IND176, IND177, IND321, with the eligibility, exclusions and achievement rules
+      documented for each indicator. Records achievement and evidence used to track changes in
+      clinical results.
     config:
       meta:
         owner:
@@ -236,20 +221,20 @@ models:
               - indicator_id
     columns:
       - name: person_id
-        description: Person identifier; part of the snapshot unique_key.
+        description: "Identifier of the person in the indicator denominator."
         data_tests:
           - not_null
       - name: indicator_id
-        description: NICE indicator identifier; part of the snapshot unique_key.
+        description: "NICE indicator identifier."
         data_tests:
           - not_null
       - name: current_practice_code
-        description: ODS code of the current registration practice at the build.
+        description: "ODS code of the registration practice on the build date."
       - name: is_in_numerator
-        description: Whether the person met the indicator at the build.
+        description: "Whether the person meets the documented achievement rule on the build date."
       - name: indicator_status
-        description: Outcome label at the build.
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
       - name: latest_completed_date
-        description: Date of the latest completed screening at the build.
+        description: "Latest adequate cervical screening test on or before the build date, including tests outside the achievement window; null when none."
       - name: latest_screening_date
-        description: Date of the latest cervical screening record of any type; null when none
+        description: "Latest cervical screening record of any type on or before the build date; null when none."

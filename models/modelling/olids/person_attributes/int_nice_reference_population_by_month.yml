@@ -1,13 +1,12 @@
 models:
 - name: int_nice_reference_population_by_month
-  description: NICE active, living, non-test population. One row per person and completed month-end. Recalculated
-    at monthly refresh for the last 60 completed month-ends using today's rules and code lists. Registration
-    and practice come from the existing monthly spine. Registration start is inclusive, end and death
-    dates exclusive. Overlapping registrations retain the spine's current-registration priority. Birth
-    and death dates are approximate; missing birth dates prevent historical active rows. Current gender
-    and test flags apply retrospectively. Diagnosis state uses both clinical and recorded dates. Other
-    evidence uses its clinical or order date through the month-end. Later corrections and current code-list
-    changes can alter earlier results.
+  description: >-
+    Registered, living, non-test people at each completed month-end. One row per person and
+    month-end. Registration starts are inclusive; registration ends and death dates are
+    exclusive. When registrations overlap, current registrations take priority. Birth and death
+    dates are approximate; missing birth dates exclude historical rows. Current gender and test
+    flags apply retrospectively. Recalculated for each of the last 60 month-ends with current
+    rules, code lists and records, so later corrections can change past months.
   config:
     meta:
       owner:
@@ -22,15 +21,19 @@ models:
   - name: person_id
     description: Person in the active non-test population.
   - name: reporting_date
-    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
-      row.
+    description: >-
+      Completed month-end on which population and evidence are assessed.
   - name: age
     description: Completed years at the month-end, calculated from the approximate birth month.
   - name: birth_date_approx
-    description: Approximate birth date used by the monthly spine.
+    description: >-
+      Approximate birth date used to assess age.
   - name: gender
-    description: Currently available gender applied retrospectively by the monthly spine.
+    description: >-
+      Currently available gender applied retrospectively from registration history.
   - name: practice_code
-    description: ODS practice code attributed by the monthly spine at the month-end.
+    description: >-
+      ODS practice code attributed from registration history at the month-end.
   - name: practice_name
-    description: Practice name attributed by the monthly spine at the month-end.
+    description: >-
+      Practice name attributed from registration history at the month-end.

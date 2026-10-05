@@ -1,18 +1,18 @@
 models:
 - name: fct_person_antithrombotic_therapy_ind94_by_month
-  description: "NICE IND94 antiplatelet treatment in peripheral arterial disease. One row per registered,\
-    \ living, non-test person and completed month-end on the peripheral arterial disease\nregister without\
-    \ an oral anticoagulant prescription in the preceding 15 months,\nassessed at the month-end.\n\nAchievement\
-    \ requires an antiplatelet prescription or recorded over-the-counter\nsalicylate use or clopidogrel\
-    \ prophylaxis in the preceding 15 months.\n\nThe 15-month window also defines current anticoagulant\
-    \ treatment for the exclusion.\nNICE does not specify a separate window for that exclusion.\n\nPersonalised\
-    \ care adjustments are not applied.\n Recalculated at monthly refresh for the last 60 completed month-ends\
-    \ using today's rules and code lists. Registration and practice use the existing monthly spine: start\
-    \ inclusive, end and death exclusive, with current-registration priority for overlaps. Birth and death\
-    \ dates are approximate; missing birth dates prevent historical active rows. Current gender and test\
-    \ flags apply retrospectively. Register and diagnosis state use clinical and recorded dates. Other\
-    \ evidence uses clinical or order dates through the month-end. Later corrections and code-list changes\
-    \ can alter earlier results. Personalised care adjustments are not applied."
+  description: >-
+    Antiplatelet treatment in peripheral arterial disease (NICE IND94). One row per person
+    in the denominator at each month-end.
+
+
+    People registered at the month-end on the peripheral arterial disease register without
+    an oral anticoagulant prescription in the 15 months before the month-end. Achieved
+    with an antiplatelet prescription, over-the-counter salicylate use or clopidogrel
+    prophylaxis in those 15 months. This window also defines the anticoagulant exclusion;
+    NICE gives no separate exclusion window. No personalised care adjustments are applied.
+    Based on NICE CG147. Recalculated for each of the last 60 month-ends with current
+    rules, code lists and records, so later corrections can change past months. Code
+    lists: OSAL_COD, CLO_COD, ORANTICOAG_COD (PCD); 0209, 020802 (BNF); PAD_COD (PCD).
   config:
     meta:
       owner:
@@ -20,51 +20,43 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind94-peripheral-arterial-disease-antiplatelets
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Completed month-end used for eligibility and evidence; DATE, with no current-day row.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "Inclusive start of the indicator measurement period before the reporting date."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
+    description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the population in the indicator denominator."
   - name: practice_code
-    description: Practice ODS code at the month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice attributed at the reporting month-end."
   - name: practice_name
-    description: Practice name at the month-end under the monthly spine attribution.
+    description: "Name of the registration practice attributed at the reporting month-end."
   - name: latest_antiplatelet_order_date
-    description: Date of the most recent antiplatelet order; null if never ordered Selected through the
-      month-end; stale detail remains available.
+    description: "Date of the latest antiplatelet prescription through the reporting date; null when none is recorded."
   - name: latest_anticoagulant_order_date
-    description: Date of the most recent oral anticoagulant order; null if never ordered Selected through
-      the month-end; stale detail remains available.
+    description: "Date of the latest oral anticoagulant prescription through the reporting date; null when none is recorded."
   - name: latest_anticoagulant_type
-    description: DOAC, VKA or OTHER_ANTICOAGULANT for the selected oral anticoagulant order through the
-      month-end. Null when no order exists. The highest order id wins same-date ties under coordinator
-      ruling C4.
+    description: "Drug type of the latest oral anticoagulant prescription: DOAC means direct-acting oral anticoagulant and VKA means vitamin K antagonist; null when none is recorded."
   - name: latest_antiplatelet_record_date
-    description: Latest recorded OTC salicylate use (OSAL_COD) or clopidogrel prophylaxis (CLO_COD); null
-      if none Selected through the month-end; stale detail remains available.
+    description: "Date of the latest recorded over-the-counter salicylate use or clopidogrel prophylaxis through the reporting date; null when absent."
   - name: latest_anticoagulant_record_date
-    description: Latest oral anticoagulant prophylaxis record from ORANTICOAG_COD; null if none Selected
-      through the month-end; stale detail remains available.
+    description: "Date of the latest oral anticoagulant prophylaxis record through the reporting date; null when absent."
   - name: is_antiplatelet_in_period
-    description: Whether an antiplatelet order, OTC salicylate use or clopidogrel prophylaxis record falls
-      in the measurement period
+    description: "Whether an antiplatelet prescription, over-the-counter salicylate use or clopidogrel prophylaxis record falls within the measurement period."
   - name: is_anticoagulant_in_period
-    description: Whether an oral anticoagulant order or prophylaxis record falls in the measurement period
-      for IND132 and IND133. IND94 uses orders only and excludes these from its denominator
+    description: "Whether an oral anticoagulant prescription or prophylaxis record falls within the period for IND132 and IND133. IND94 uses prescriptions only and excludes people prescribed anticoagulants in its period."
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true; each row is eligible before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or the reason not achieved
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

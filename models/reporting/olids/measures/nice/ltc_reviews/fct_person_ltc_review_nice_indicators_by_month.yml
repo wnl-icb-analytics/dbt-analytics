@@ -1,19 +1,16 @@
 models:
 - name: fct_person_ltc_review_nice_indicators_by_month
-  description: LTC review NICE results. One row per eligible person, indicator and completed month-end.
-    Covers IND79, IND104, IND110, IND113, IND139, IND142, IND191, IND195, IND223, IND265, IND266 and IND273. Each
-    member retains its own population, review window and documented limitations. IND104 uses the financial
-    year starting 1 April; IND223 uses a 24-month diagnosis cohort with a 12-month review deadline. IND266
-    uses the historical ethnicity interval at month-end. Dementia codes do not establish the face-to-face
-    setting. An unachieved result may retain supporting review detail. Branches without a detail field
-    emit typed nulls. Recalculated at monthly refresh for the last 60 completed month-ends using today's
-    rules and code lists. Registration and practice come from the existing monthly spine. Registration
-    start is inclusive; registration end and death dates are exclusive. Overlapping registrations retain
-    the spine's current-registration priority. Birth and death dates are approximate; missing birth dates
-    prevent historical active rows. Current gender and test flags apply retrospectively. Register diagnosis
-    state uses clinical and recorded dates. Review and test evidence uses its clinical date through month-end.
-    Later corrections and current code-list changes can alter earlier results. Personalised care adjustments
-    are not applied. Includes IND113 with the NICE invitation non-response exclusion.
+  description: >-
+    Long-term condition reviews indicator results (IND79, IND104, IND110, IND113, IND139,
+    IND142, IND191, IND195, IND223, IND265, IND266, IND273). One row per eligible
+    person, indicator and month-end.
+
+
+    People registered at the month-end in each indicator's denominator. Eligibility, exclusions
+    and achievement follow the individual measures. Supporting fields are null where an
+    indicator does not provide them. IND113 applies the invitation non-response exclusion.
+    Recalculated for each of the last 60 month-ends with current rules, code lists and records,
+    so later corrections can change past months.
   config:
     meta:
       owner:
@@ -27,58 +24,79 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Person identifier for a member of the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+    description: "Month-end used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: >-
+      Start of the diagnosis, prescription or evidence period for the indicator. Boundary inclusion
+      is defined in the individual measure.
   - name: age
-    description: Completed years at month-end, calculated from the approximate birth month.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the denominator population."
   - name: practice_code
-    description: Practice code at month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice at the reporting month-end."
   - name: practice_name
-    description: Practice name at month-end under the monthly spine attribution.
+    description: "Name of the registration practice at the reporting month-end."
   - name: latest_review_date
-    description: Date of the latest review, care plan, health check or test record for the indicator;
-      null when none; typed null for branches that do not emit it
+    description: >-
+      Latest review, care plan or health check on or before the reporting date; null if absent. It
+      may be outside the achievement window.
   - name: latest_copd_exacerbation_count_date
-    description: Date of the latest record of the number of COPD exacerbations; null when none or not
-      applicable
+    description: >-
+      Latest record of the number of COPD exacerbations on or before the reporting date; null if
+      absent. It may be outside the achievement window. Null when this field does not apply to the
+      indicator.
   - name: latest_mrc_dyspnoea_date
-    description: Date of the latest MRC dyspnoea grade; null when none; typed null for branches that do
-      not emit it
+    description: >-
+      Latest MRC breathlessness assessment on or before the reporting date; null if absent. It may
+      be outside the achievement window. Null when this field does not apply to the indicator.
   - name: latest_nyha_date
-    description: Date of the latest NYHA classification; null when none; typed null for branches that
-      do not emit it
+    description: >-
+      Latest New York Heart Association functional assessment on or before the reporting date; null
+      if absent. It may be outside the achievement window. Null when this field does not apply to
+      the indicator.
   - name: latest_medication_review_date
-    description: Date of the latest medication review of any coded type; null when none; typed null for
-      branches that do not emit it
+    description: >-
+      Latest general, heart failure or structured medication review on or before the reporting date;
+      null if absent. It may be outside the achievement window. Null when this field does not apply
+      to the indicator.
   - name: latest_health_action_plan_date
-    description: Date of the latest learning disability health action plan; null when none; typed null
-      for branches that do not emit it
+    description: >-
+      Latest learning disability health action plan on or before the reporting date; null if absent.
+      It may be outside the achievement window. Null when this field does not apply to the
+      indicator.
   - name: has_ethnicity_recorded
-    description: Whether an ethnicity category other than Unknown is recorded; typed null for branches
-      that do not emit it
+    description: >-
+      True when the ethnicity category at the reporting date is known. Missing, unknown and
+      not-stated ethnicity give false. Null when this field does not apply to the indicator.
   - name: diagnosis_date
-    description: Diagnosis date anchoring the indicator window; null when none; typed null for branches
-      that do not emit it
+    description: "Diagnosis date used to assess the indicator, as defined in the model description."
   - name: latest_record_date
-    description: Date of the latest qualifying record in the period; null when none
+    description: >-
+      Supporting evidence date for the indicator. Its meaning follows the individual measure; a date
+      alone does not prove achievement.
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   - name: first_invitation_date
-    description: Supporting detail from IND113; null for other members.
+    description: >-
+      First cancer review invitation from diagnosis day to 3 months afterwards, including both
+      boundaries; null if absent. Null when this field does not apply to the indicator.
   - name: last_invitation_date
-    description: Supporting detail from IND113; null for other members.
+    description: >-
+      Last cancer review invitation from diagnosis day to 3 months afterwards, including both
+      boundaries; null if absent. Null when this field does not apply to the indicator.
   - name: is_excluded_invitation_non_response
-    description: Supporting detail from IND113; null for other members.
+    description: >-
+      Always false for retained rows. People with two invitations at least 7 days apart and no
+      review after the first invitation by the reporting date are excluded. Null when this field
+      does not apply to the indicator.

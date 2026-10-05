@@ -1,14 +1,17 @@
 models:
 - name: fct_person_heart_failure_four_pillars_ind317
   description: >-
-    Four-pillar heart failure therapy (NICE IND317). One row per eligible reduced-ejection-fraction
-    heart failure member on the build date. People must be registered, living and non-test. HF3
-    (is_on_hfref_register) members. All four pillars need treatment in the inclusive six calendar months
-    to the reporting date, matching built therapy measures: ACE-I, ARB or ARNI; any beta blocker;
-    spironolactone or eplerenone; and any SGLT2 inhibitor. Finerenone is excluded. HF-licensed beta
-    blocker status from NHS_DRUG_REFSETS/LBB_COD is detail only. Personalised care adjustments and
-    exception codes are not applied. Diagnoses use known dates; other evidence uses clinical or order
-    dates through the reporting date.
+    Four classes of heart failure medicines (NICE IND317). One row per person in the denominator
+    on the build date.
+
+
+    People registered on the build date with heart failure with reduced ejection fraction.
+    Achieved with prescriptions for all four classes in the 6 months before the build date: ACE
+    inhibitor or angiotensin receptor blocker, any beta blocker, spironolactone or eplerenone,
+    and any SGLT2 inhibitor. Finerenone does not count. The heart-failure-licensed beta blocker
+    flag does not affect achievement. No personalised care adjustments are applied. Based on
+    NICE NG106. Code lists: HF_COD, HFLVSD_COD, REDEJCFRAC_COD (PCD); 0205051, 0205052, 0204,
+    0202030S0, 0202030X0 (BNF); SGLT2I_RX; LBB_COD (NHS drug refset).
   config:
     meta:
       owner:
@@ -19,15 +22,17 @@ models:
         type: MEASURE
         category: HEART_FAILURE
         clinical_domain: Cardiometabolic
-        name_short: HF four pillars
-        description_short: HF four pillars
-        description_long: 'NICE IND317. One row per registered, living, non-test person in the denominator
-          on the build date. HF3 (is_on_hfref_register) members. All four pillars need treatment in the inclusive
-          six calendar months to the reporting date, matching built therapy measures: ACE-I, ARB or ARNI; any
-          beta blocker; spironolactone or eplerenone; and any SGLT2 inhibitor. Finerenone is excluded. HF-licensed
-          beta blocker status from NHS_DRUG_REFSETS/LBB_COD is detail only. Personalised care adjustments and
-          exception codes are not applied. Diagnoses use known dates; other evidence uses clinical or order
-          dates through the reporting date.'
+        name_short: "Heart failure four medicine classes"
+        description_short: "Four classes of heart failure medicines."
+        description_long: >-
+          People registered on the build date with heart failure with reduced ejection fraction.
+          Achieved with prescriptions for all four classes in the 6 months before the build
+          date: ACE inhibitor or angiotensin receptor blocker, any beta blocker, spironolactone
+          or eplerenone, and any SGLT2 inhibitor. Finerenone does not count. The
+          heart-failure-licensed beta blocker flag does not affect achievement. No personalised
+          care adjustments are applied. Based on NICE NG106. Code lists: HF_COD, HFLVSD_COD,
+          REDEJCFRAC_COD (PCD); 0205051, 0205052, 0204, 0202030S0, 0202030X0 (BNF); SGLT2I_RX;
+          LBB_COD (NHS drug refset).
         is_qof: false
         source_column: is_in_numerator
         usage_contexts:
@@ -40,42 +45,65 @@ models:
         - person_id
   columns:
   - name: person_id
-    description: Person in the denominator.
+    description: "Person identifier for a member of the indicator denominator."
   - name: reporting_date
-    description: Assessment date; completed month-end in history.
+    description: "Build date used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Start of the rolling cohort or treatment window, as described above.
+    description: "6 months before the reporting date, included in the prescription window."
   - name: age
-    description: Age in years at the reporting date; historical birth dates are approximate.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: current_practice_code
-    description: ODS code of the registration practice at assessment.
+    description: "ODS code of the registration practice at the reporting date."
   - name: current_practice_name
-    description: Registration practice name at assessment.
+    description: "Name of the registration practice at the reporting date."
   - name: latest_record_date
-    description: Latest supporting evidence date through assessment; treatment measures may retain stale dates.
+    description: >-
+      Latest prescription date among the four required medicine classes on or before the reporting
+      date; null if absent. It may be outside the treatment window and does not prove all four
+      classes are present.
   - name: is_in_denominator
-    description: Always true; personalised care adjustments are not applied.
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether every required component is met.
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or the accepted reason for non-achievement.
+    description: "ACHIEVED when all required medicines are present; otherwise NOT_TREATED_IN_PERIOD."
   - name: latest_ras_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest ACE inhibitor or angiotensin receptor blocker prescription on or before the reporting
+      date; null if absent. It may be outside the treatment window.
   - name: is_ras_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when a prescription for ACE inhibitor or angiotensin receptor blocker falls in the 6
+      months before the reporting date, including both boundaries.
   - name: latest_beta_blocker_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest beta blocker prescription on or before the reporting date; null if absent. It may be
+      outside the treatment window.
   - name: is_beta_blocker_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when a prescription for beta blocker falls in the 6 months before the reporting date,
+      including both boundaries.
   - name: latest_hf_licensed_beta_blocker_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest heart-failure-licensed beta blocker prescription on or before the reporting date; null
+      if absent. It may be outside the treatment window.
   - name: is_hf_licensed_beta_blocker_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when a prescription for heart-failure-licensed beta blocker falls in the 6 months before
+      the reporting date, including both boundaries.
   - name: latest_mra_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest spironolactone or eplerenone prescription on or before the reporting date; null if
+      absent. It may be outside the treatment window.
   - name: is_mra_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when a prescription for spironolactone or eplerenone falls in the 6 months before the
+      reporting date, including both boundaries.
   - name: latest_sglt2_order_date
-    description: Latest order through assessment; null means none.
+    description: >-
+      Latest SGLT2 inhibitor prescription on or before the reporting date; null if absent. It may be
+      outside the treatment window.
   - name: is_sglt2_in_period
-    description: Whether this treatment has evidence in the inclusive six calendar months to assessment.
+    description: >-
+      True when a prescription for SGLT2 inhibitor falls in the 6 months before the reporting date,
+      including both boundaries.

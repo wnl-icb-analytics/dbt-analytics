@@ -1,14 +1,12 @@
 models:
 - name: int_nice_physical_health_evidence_by_month
-  description: NICE physical health evidence, one row per candidate person and completed month-end for
-    the last 60 completed months. DM or SMI register members, or people with a lithium order in (reporting_date
-    minus six months, reporting_date] recorded by that date. Recent orders are a candidate superset; IND87
-    applies its stop rule independently of SMI. Candidates use the common active, living, non-test NICE
-    population. Clinical evidence is capped at reporting_date. Dates remain available outside indicator
-    windows; null dates mean no qualifying evidence by that date. History is recalculated with current
-    rules and code lists; later corrections can change earlier results. Registration and age use the established
-    monthly spine, including approximate birth/death dates and its overlap priority. The current test-patient
-    flag applies retrospectively.
+  description: >-
+    Physical health evidence for registered, living, non-test people on diabetes or severe
+    mental illness registers, or with a lithium order in the preceding six months. One row per
+    candidate person and month-end. Evidence stops at the month-end. Indicators apply their own
+    windows and lithium stop rules; null dates mean no qualifying evidence. Recalculated for
+    each of the last 60 month-ends with current rules, code lists and records, so later
+    corrections can change past months.
   config:
     meta:
       owner:
@@ -21,10 +19,11 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Candidate person with potential NICE evidence uses.
+    description: >-
+      Person in the candidate population for NICE indicators.
   - name: reporting_date
-    description: DATE at which candidate selection and evidence are assessed. Current stored dates are
-      relabelled by nice_ref on read.
+    description: >-
+      Completed month-end on which population and evidence are assessed.
   - name: latest_bmi_date
     description: Latest valid BMI recording (10 to 150 kg/m2), or valid adult calculated BMI. Coded BMI30
       alone does not count.

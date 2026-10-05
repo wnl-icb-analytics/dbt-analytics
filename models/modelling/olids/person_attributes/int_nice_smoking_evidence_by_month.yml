@@ -1,14 +1,12 @@
 models:
 - name: int_nice_smoking_evidence_by_month
   description: >-
-    NICE smoking evidence, one row per active, living, non-test person and completed month-end. Includes
-    LTC register members and people aged 15 or over. Current smokers are not preselected before smoking
-    state is assessed. Candidates use the common active, living, non-test NICE population. Clinical
-    evidence is capped at reporting_date. Dates remain available outside indicator windows; null dates
-    mean no qualifying evidence by that date. History is recalculated with current rules and code lists;
-    later corrections can change earlier results. Registration and age use the established monthly
-    spine, including approximate birth/death dates and its overlap priority. The current test-patient
-    flag applies retrospectively. History covers the last 60 completed month-ends.
+    Smoking status and cessation support for registered, living, non-test long-term condition
+    register members or people aged 15 or over. One row per candidate person and month-end.
+    Smoking state is assessed without preselecting current smokers. Evidence stops at the
+    month-end; indicators apply their own windows. Null dates mean no qualifying evidence.
+    Recalculated for each of the last 60 month-ends with current rules, code lists and records,
+    so later corrections can change past months.
   config:
     meta:
       owner:
@@ -21,16 +19,18 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Candidate person with potential NICE evidence uses.
+    description: >-
+      Person in the candidate population for NICE indicators.
   - name: reporting_date
-    description: DATE at which candidate selection and evidence are assessed. Current stored dates are
-      relabelled by nice_ref on read.
+    description: >-
+      Completed month-end on which population and evidence are assessed.
   - name: latest_smoking_status
     description: Selected smoking state. LSMOK precedes EXSMOK, NSMOK and other status on the same calendar
       day, then highest observation id wins. Null when never recorded.
   - name: latest_smoking_status_date
-    description: Clinical calendar date of the selected smoking state, retaining the age-at-event 11+
-      source rule.
+    description: >-
+      Clinical calendar date of the selected smoking state, excluding records made before age
+      11.
   - name: latest_never_smoked_date
     description: Latest explicit NSMOK recording; a non-smoker with unknown history does not qualify.
   - name: latest_smoking_intervention_date

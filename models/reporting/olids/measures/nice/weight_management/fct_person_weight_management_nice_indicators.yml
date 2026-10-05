@@ -1,8 +1,13 @@
 models:
 - name: fct_person_weight_management_nice_indicators
-  description: NICE weight management outcomes (IND319, IND320). One row per eligible, registered, living,
-    non-test person and indicator on the build date. See member measures for population, window and evidence
-    definitions. Personalised care adjustments are not applied.
+  description: >-
+    Weight management NICE indicator results (IND319, IND320). One row per
+    person, indicator and build date.
+
+
+    Each indicator uses its own denominator, evidence window and exclusions, described in the
+    member measures. Clinical fields are null where they do not apply to an indicator. No
+    personalised care adjustments are applied.
   config:
     meta:
       owner:
@@ -15,48 +20,40 @@ models:
         - indicator_id
   columns:
   - name: person_id
-    description: Person in the indicator denominator at R.
+    description: "Person identifier for someone in the indicator denominator."
   - name: indicator_id
-    description: Published NICE indicator identifier.
+    description: "Published NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator title.
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Date R used for population, age and evidence; build date for current, completed month-end
-      for history.
+    description: "Build date used to assess the population, age and evidence."
   - name: measurement_period_start
-    description: 'Start of the evidence window: inclusive for IND319 and IND320; exclusive for six-month
-      bone treatment.'
+    description: "Start date of the indicator measurement period; inclusion of this date depends on the indicator."
   - name: age
-    description: Completed years at R from the approximate birth date.
+    description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
   - name: condition_name
-    description: Population used by the indicator.
+    description: "Short label for the indicator denominator population."
   - name: latest_bmi_date
-    description: IND319 latest measured BMI in 12 months; IND320 latest valid recorded or calculated BMI
-      through R, including older evidence.
+    description: "Latest BMI date retained by the indicator. IND319 uses measured BMI; IND320 allow calculated BMI. For IND320 this can be outside the 12-month window; null when no valid BMI is recorded."
   - name: bmi_value
-    description: IND319 measured BMI in kg/m^2; null for IND320.
+    description: "Body mass index in kg/m2. Null where the field does not apply to an indicator."
   - name: is_recorded_white
-    description: Ethnicity is White in the demographic interval containing R, start inclusive and end
-      exclusive. False includes missing and unknown ethnicity; null for IND320 in family outputs.
+    description: "Whether ethnicity is recorded as White on the reporting date. False includes missing or unknown ethnicity. Null where the field does not apply to an indicator."
   - name: bmi_lower_threshold
-    description: 'IND319 inclusive lower threshold in kg/m^2: 25 if White recorded, otherwise 23. Null
-      for IND320.'
+    description: "Inclusive lower BMI threshold in kg/m2 for IND319: 25 if ethnicity is recorded as White, otherwise 23. Null where the field does not apply to an indicator."
   - name: bmi_upper_threshold
-    description: 'IND319 inclusive upper threshold in kg/m^2: 29.9 if White recorded, otherwise 27.4.
-      Null for IND320.'
+    description: "Inclusive upper BMI threshold in kg/m2 for IND319: 29.9 if ethnicity is recorded as White, otherwise 27.4. Null where the field does not apply to an indicator."
   - name: latest_weight_advice_date
-    description: IND319 latest WTMGINT_COD advice from BMI date through day 90 inclusive, capped at R.
-      Null for IND320.
+    description: "Latest weight management advice from the selected measured BMI date to 90 days afterwards, inclusive, by the reporting date; null when none is recorded. Null where the field does not apply to an indicator."
   - name: latest_record_date
-    description: Qualifying advice date for IND319 or qualifying BMI date for IND320; null without evidence
-      in the relevant window.
+    description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
   - name: current_practice_code
-    description: Current registration practice ODS code.
+    description: "ODS code of the current registration practice."
   - name: current_practice_name
-    description: Current registration practice name.
+    description: "Name of the current registration practice."
   - name: is_in_denominator
-    description: Always true. Personalised care adjustments are not applied.
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether the achievement rule is met at R.
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or the accepted reason the rule is not met.
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."

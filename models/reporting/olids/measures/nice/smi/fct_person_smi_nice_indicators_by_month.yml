@@ -1,15 +1,16 @@
 models:
 - name: fct_person_smi_nice_indicators_by_month
-  description: One row per eligible person, NICE SMI indicator and completed month-end for the last 60
-    completed months. Includes fifteen SMI-family measures; lithium monitoring retains its
-    independent therapy population. Each member keeps its documented population, evidence and window rules.
-    Recalculated at monthly refresh using today's rules and code lists. Diagnosis state uses clinical
-    and recorded dates; other evidence uses clinical or order dates through month-end. Practice follows
-    the monthly spine, including its current-registration priority for overlapping registrations. Approximate
-    birth and death dates, retrospective current gender and test flags, missing-birth-date exclusions
-    and later source corrections limit historical interpretation. Supporting fields are null for members
-    that do not emit them. Includes IND86 for all current lithium users, with creatinine and TFT_COD thyroid
-    testing in nine months.
+  description: >-
+    Severe mental illness and lithium monitoring indicator results (IND82, IND83, IND84, IND85,
+    IND86, IND87, IND143, IND150, IND154, IND155, IND158, IND159, IND213, IND214, IND248). One
+    row per eligible person, indicator and month-end.
+
+
+    People registered at the month-end in each indicator's denominator. Eligibility, exclusions
+    and achievement follow the individual measures. Supporting fields are null where an
+    indicator does not provide them. Lithium measures include users without a mental illness
+    diagnosis; other measures exclude remission. Recalculated for each of the last 60 month-ends
+    with current rules, code lists and records, so later corrections can change past months.
   config:
     meta:
       owner:
@@ -23,66 +24,94 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Person identifier for a member of the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
-      row.
+    description: "Month-end used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: >-
+      Start of the diagnosis, prescription or evidence period for the indicator. Boundary inclusion
+      is defined in the individual measure.
   - name: age
-    description: Completed years at month-end, calculated from the approximate birth month.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the denominator population."
   - name: practice_code
-    description: Practice attribution at completed month-end under the existing monthly spine.
+    description: "ODS code of the registration practice at the reporting month-end."
   - name: practice_name
-    description: Practice attribution at completed month-end under the existing monthly spine.
+    description: "Name of the registration practice at the reporting month-end."
   - name: latest_blood_pressure_date
-    description: Date of the latest blood pressure reading; null when none; typed null for branches that
-      do not emit it
+    description: >-
+      Latest valid paired blood pressure reading on or before the reporting date; null if absent. It
+      may be outside the achievement window. Null when this field does not apply to the indicator.
   - name: latest_bmi_date
-    description: Date of the latest BMI with a value; null when none; typed null for branches that do
-      not emit it
+    description: >-
+      Latest valid recorded BMI, or calculated BMI for an adult, on or before the reporting date;
+      null if absent. It may be outside the achievement window. Null when this field does not apply
+      to the indicator.
   - name: latest_alcohol_record_date
-    description: Date of the latest alcohol consumption record (units, usage status or screening tool);
-      null when none; typed null for branches that do not emit it
+    description: >-
+      Latest alcohol units, usage status or screening record on or before the reporting date; null
+      if absent. It may be outside the achievement window. Null when this field does not apply to
+      the indicator.
   - name: latest_lipid_date
-    description: Date of the latest lipid record counted by the indicator; null when none; typed null
-      for branches that do not emit it
+    description: >-
+      Latest lipid result or completed lipid test counted by the indicator on or before the
+      reporting date; null if absent. It may be outside the achievement window. Null when this field
+      does not apply to the indicator.
   - name: latest_cholesterol_hdl_ratio_date
-    description: Date of the latest total cholesterol to HDL ratio with a value; null when none; typed
-      null for branches that do not emit it
+    description: >-
+      Latest total cholesterol to HDL ratio with a numeric value on or before the reporting date;
+      null if absent. It may be outside the achievement window. Null when this field does not apply
+      to the indicator.
   - name: latest_glucose_or_hba1c_date
-    description: Date of the latest HbA1c or blood glucose; null when none; typed null for branches that
-      do not emit it
+    description: >-
+      Latest blood glucose or HbA1c test on or before the reporting date, with or without a numeric
+      value; null if absent. It may be outside the achievement window. Null when this field does not
+      apply to the indicator.
   - name: latest_smoking_status_date
-    description: Date of the latest smoking status record; null when none; typed null for branches that
-      do not emit it
+    description: >-
+      Date of the latest smoking status on or before the reporting date; null if absent. It may be
+      outside the achievement window. Null when this field does not apply to the indicator.
   - name: checks_met_count
-    description: Number of the six physical health checks recorded in the preceding 12 months, 0 to 6;
-      typed null for branches that do not emit it
+    description: >-
+      Number of the six required health checks recorded in the 12 months before the reporting date,
+      including both boundaries. Values range from 0 to 6. Null when this field does not apply to
+      the indicator.
   - name: latest_smoking_status
-    description: Latest recorded smoking status; null when none; typed null for branches that do not emit
-      it
+    description: >-
+      Latest recorded smoking status on or before the reporting date; null if absent. Null when this
+      field does not apply to the indicator.
   - name: latest_lithium_level_date
-    description: Date of the latest serum lithium record of any value; null when none; typed null for
-      branches that do not emit it
+    description: >-
+      Latest serum lithium record on or before the reporting date, regardless of its value; null if
+      absent. It may be outside the achievement window. Null when this field does not apply to the
+      indicator.
   - name: latest_lithium_level
-    description: Latest serum lithium in mmol/L; null when the latest record has no value; typed null
-      for branches that do not emit it
+    description: >-
+      Serum lithium value in mmol/L from the latest record on or before the reporting date; null if
+      the record is absent or has no numeric value. Null when this field does not apply to the
+      indicator.
   - name: latest_record_date
-    description: Date of the latest qualifying record in the period; null when none
+    description: >-
+      Supporting evidence date for the indicator. Its meaning follows the individual measure; a date
+      alone does not prove achievement.
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD; IND87 also uses NOT_ASSESSABLE and OUT_OF_RANGE
+    description: >-
+      ACHIEVED or NOT_RECORDED_IN_PERIOD. IND87 also uses NOT_ASSESSABLE for a missing latest value
+      and OUT_OF_RANGE for a value outside the limits.
   - name: latest_creatinine_date
-    description: Supporting detail from IND86; null for other members.
+    description: >-
+      Latest creatinine test record on or before the reporting date; null if absent. It may be
+      outside the achievement window. Null when this field does not apply to the indicator.
   - name: latest_thyroid_function_test_date
-    description: Supporting detail from IND86; null for other members.
+    description: >-
+      Latest thyroid function test on or before the reporting date; null if absent. It may be
+      outside the achievement window. Null when this field does not apply to the indicator.

@@ -1,16 +1,21 @@
 models:
 - name: fct_person_cholesterol_control_ind278_by_month
-  description: NICE IND278. One row per eligible person, indicator and completed month-end. Eligible secondary-prevention
-    CVD members excluding FH and haemorrhagic-stroke history. Latest LDL or non-HDL in the inclusive preceding
-    12 months; LDL wins on a shared latest day, then timestamp and identifier. Invalid latest evidence
-    remains unassessable. Targets are <=2.0 mmol/L LDL or <=2.6 mmol/L non-HDL. Out-of-window result fields
-    are null. Recalculated at monthly refresh for the last 60 completed month-ends using today's rules
-    and code lists. Registration and practice come from the existing monthly spine. Registration start
-    is inclusive, end and death dates exclusive. Overlapping registrations retain the spine's current-registration
-    priority. Birth and death dates are approximate; missing birth dates prevent historical active rows.
-    Current gender and test flags apply retrospectively. Diagnosis state uses both clinical and recorded
-    dates. Other evidence uses its clinical or order date through the month-end. Later corrections and
-    current code-list changes can alter earlier results.
+  description: >-
+    Cholesterol control for secondary prevention (NICE IND278). One row per person in the
+    denominator at each month-end.
+
+
+    People registered at the month-end on coronary heart disease, stroke, transient ischaemic
+    attack or peripheral arterial disease registers. Familial hypercholesterolaemia or any
+    haemorrhagic stroke history excludes them, even with another qualifying condition. Achieved
+    when the latest cholesterol result in the 12 months before the month-end is valid and LDL at
+    most 2.0 mmol/L or non-HDL at most 2.6. LDL takes priority on the same day. An invalid
+    latest result is unassessable without using an older result. Missing units mean mmol/L and
+    trigger review; review flags do not affect achievement. No personalised care adjustments are
+    applied. Recalculated for each of the last 60 month-ends with current rules, code lists and
+    records, so later corrections can change past months. Based on NICE NG238. Code lists:
+    CHD_COD, STRK_COD, TIA_COD, PAD_COD, HSTRK_COD, FHYP_COD (PCD); LDLCCHOL_COD,
+    NONHDLCCHOL_COD.
   config:
     meta:
       owner:
@@ -18,78 +23,63 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind278-cardiovascular-disease-prevention-cholesterol-treatment-target-secondary-prevention
   columns:
   - name: person_id
-    description: Person in the unadjusted indicator denominator.
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier, IND278.
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name.
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
-      row.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Inclusive start date, 12 calendar months before the reporting date.
+    description: "Inclusive start of the indicator measurement period before the reporting date."
   - name: age
-    description: Completed years at the month-end, calculated from the approximate birth month.
+    description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
   - name: practice_code
-    description: ODS practice code at the month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice attributed at the reporting month-end."
   - name: practice_name
-    description: Practice name at the month-end under the monthly spine attribution.
+    description: "Name of the registration practice attributed at the reporting month-end."
   - name: has_chd
-    description: Whether the person qualifies through the CHD register by the reporting date.
+    description: "Whether the person is on the coronary heart disease register on the reporting date."
   - name: has_stroke_tia
-    description: Whether the person qualifies through the stroke/TIA register by the reporting date.
+    description: "Whether the person is on the stroke or transient ischaemic attack register on the reporting date."
   - name: has_pad
-    description: Whether the person qualifies through the PAD register by the reporting date.
+    description: "Whether the person is on the peripheral arterial disease register on the reporting date."
   - name: latest_lipid_observation_id
-    description: Selected source observation identifier; null if no result is recorded in the period.
+    description: "Source observation identifier of the selected LDL or non-HDL result in the 12-month window; null when no result is recorded."
   - name: latest_lipid_date
-    description: Clinical date of the selected result; null if no result is recorded in the period.
+    description: "Clinical date of the selected LDL or non-HDL result in the 12-month window; null when no result is recorded."
   - name: lipid_type
-    description: LDL cholesterol or Non-HDL cholesterol; null if no result is recorded in the period.
+    description: "LDL cholesterol or Non-HDL cholesterol for the selected result; null when no result is recorded."
   - name: latest_lipid_value
-    description: Selected candidate conversion in mmol/L, without rounding. Check is_latest_lipid_review_required.
-      Null for missing numeric values or unsupported units, and when no result is recorded. A result with
-      no recorded unit is kept as mmol/L and flagged for review.
+    description: "Selected cholesterol value in mmol/L without rounding. Null for missing values, unsupported units or no result. Missing units are assumed to be mmol/L and flagged for review."
   - name: latest_lipid_recorded_value
-    description: Numeric value received from OLIDS before our conversion. Null for a missing numeric value
-      or no recent observation. Not guaranteed to be the original laboratory value.
+    description: "Numeric value supplied by OLIDS before conversion; may differ from the original laboratory value. Null when no numeric result is available."
   - name: source_result_unit_display
-    description: Source unit concept label for the selected result. Null if unavailable.
+    description: "Source unit label for the selected result; null when unavailable."
   - name: mapped_result_unit_display
-    description: Mapped unit label supplied by OLIDS for the selected result. Null if unavailable.
+    description: "Mapped unit label supplied by OLIDS for the selected result; null when unavailable."
   - name: conversion_factor
-    description: Multiplier applied to the recorded value. Null when units cannot be converted or no recent
-      observation exists.
+    description: "Multiplier used to convert the recorded value to mmol/L; null when units cannot be converted or no result is recorded."
   - name: plausibility_status
-    description: Validity status of the selected result against the shared lipid ranges. Within valid
-      range means the result is assessable. Null when no recent observation exists.
+    description: "Whether the selected value is within the shared valid lipid range; null when no result is recorded in the 12-month window."
   - name: is_latest_lipid_review_required
-    description: Whether the selected result has a unit conversion, conflicting unit metadata, missing
-      or unsupported units, or a numeric plausibility concern. Null when no recent observation exists.
-      Does not change numerator membership or replace the selected observation with an older one. False
-      is not verified accuracy.
+    description: "Whether the selected result has a unit conversion, conflicting units, missing or unsupported units, or a plausibility concern; null when no result is recorded. The flag does not change achievement or select an older result; false does not prove accuracy."
   - name: unit_status
-    description: Unit interpretation from the observation model; null if no result is recorded in the
-      period.
+    description: "Unit interpretation of the selected cholesterol result; null when no result is recorded in the 12-month window."
   - name: indicator_threshold
-    description: Inclusive upper threshold in mmol/L for the selected lipid type; null if no result is
-      recorded.
+    description: "Inclusive upper cholesterol target in mmol/L: 2.0 for LDL or 2.6 for non-HDL; null when no result is recorded."
   - name: threshold_unit
-    description: Unit for the indicator threshold and standardised lipid value, mmol/L.
+    description: "mmol/L, the unit for the cholesterol target and standardised result."
   - name: is_in_denominator
-    description: Always true. Every row is an eligible person before personalised care adjustments.
+    description: "Always true; each row is eligible before personalised care adjustments."
   - name: is_lipid_recorded_in_last_12m
-    description: Whether an LDL or non-HDL observation exists in the inclusive measurement period, including
-      invalid results.
+    description: "Whether an LDL or non-HDL result is recorded in the 12-month window, including both boundary dates and invalid results."
   - name: is_latest_lipid_valid
-    description: Whether the selected result converts to a finite value within the inclusive 0.1-20 mmol/L
-      range. Convertible units are standardised to mmol/L; absent units are assumed to be mmol/L. False
-      when no result exists.
+    description: "Whether the selected result is finite and within 0.1 to 20 mmol/L, inclusive. Convertible units are standardised and missing units are assumed to be mmol/L; false when no result exists."
   - name: is_in_numerator
-    description: Whether the last recorded result in the period is valid and at or below its inclusive
-      target.
+    description: "Whether the person meets the achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED, ABOVE_TARGET, NOT_ASSESSABLE (latest result invalid) or NOT_RECORDED_IN_PERIOD.
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

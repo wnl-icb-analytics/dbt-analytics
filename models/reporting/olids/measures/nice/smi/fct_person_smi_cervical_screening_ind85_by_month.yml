@@ -1,27 +1,17 @@
 models:
 - name: fct_person_smi_cervical_screening_ind85_by_month
-  description: |
-    NICE IND85: SMI cervical screening 25 to 64. One row per registered at month-end, living, non-
-    test person recorded as female, aged 25 to 64, with schizophrenia, bipolar affective disorder or
-    another psychosis on the SMI register, excluding remission and lithium therapy without an SMI
-    diagnosis, assessed at the completed month-end.
+  description: >-
+    Cervical screening in severe mental illness, ages 25 to 64 (NICE IND85). One row per person
+    in the denominator at each month-end.
 
-    Achievement requires completed cervical screening in the preceding 5 years.
 
-    NICE lists no cervical screening exclusions for this indicator. Unsuitable-care and non-response
-    records do not remove women from the denominator. The active-SMI restriction follows the
-    existing QOF mental health interpretation; NICE does not explicitly exclude remission here.
-
-    Personalised care adjustments are not applied.
-
-    One row per eligible person and reporting_date for the last 60 completed month-ends.
-    Recalculated at monthly refresh using today's rules and code lists. Diagnosis and lithium
-    therapy state use clinical and recorded dates; other evidence uses its clinical or order date
-    through month-end. Later corrections and current code-list changes can alter earlier results.
-    Registration start is inclusive; registration end and death dates are exclusive. Practice
-    follows the existing monthly spine's current-registration priority when registrations overlap.
-    Birth and death dates are approximate; missing birth dates prevent historical active rows.
-    Current gender and test flags apply retrospectively.
+    People registered at the month-end who are women aged 25 to 64 with active schizophrenia,
+    bipolar disorder or other psychosis. Remission excludes them, although NICE does not
+    explicitly exclude it. Achieved with completed cervical screening in the 5 years before the
+    month-end. Unsuitable care and non-response do not exclude women. No personalised care
+    adjustments are applied. Recalculated for each of the last 60 month-ends with current rules,
+    code lists and records, so later corrections can change past months. Based on NICE CG178.
+    Code lists: MH_COD, MHREM_COD, SMEAR_COD (PCD).
   config:
     meta:
       owner:
@@ -29,31 +19,33 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind85
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Person identifier for a member of the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+    description: "Month-end used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "60 months before the reporting date, included in the screening window."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the denominator population."
   - name: practice_code
-    description: ODS practice code at month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice at the reporting month-end."
   - name: practice_name
-    description: Practice name at month-end under the monthly spine attribution.
+    description: "Name of the registration practice at the reporting month-end."
   - name: latest_record_date
-    description: Date of the latest qualifying record in the period; null when none
+    description: >-
+      Latest supporting evidence in the indicator window; null if absent. The model description
+      gives the achievement rule.
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

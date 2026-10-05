@@ -1,8 +1,11 @@
 models:
 - name: int_nice_weight_profile
   description: >-
-    Measured BMI, ethnicity and weight advice, one row per registered, living, non-test person aged 18
-    to 39 on the build date. Ethnicity is assessed at the reporting date; advice follows the BMI record.
+    Recorded BMI, ethnicity and weight advice for registered, living, non-test people aged 18 or
+    over. One row per person on the build date. The latest numeric BMI remains selected even if
+    outside the valid range of 5 to 400 kg/m^2, inclusive. Records without a usable numeric
+    value do not replace an earlier result. Advice follows the BMI; ethnicity is assessed on the
+    build date.
   config:
     meta:
       owner:
@@ -16,15 +19,26 @@ models:
   - name: person_id
     description: Person identifier.
   - name: reporting_date
-    description: Date R used to cap evidence.
+    description: >-
+      Build date on which population and evidence are assessed.
   - name: bmi_date
-    description: Latest BMIVAL_COD measurement through R; null means none.
+    description: >-
+      Date of the latest BMIVAL_COD record with a usable numeric value through the reporting
+      date; null means none.
   - name: bmi_value
-    description: Latest recorded numeric BMI in kg/m^2, including invalid values. IND319 excludes an invalid
-      latest value without falling back to an older result.
+    description: Latest usable numeric BMIVAL_COD value in kg/m^2, including values outside the valid
+      range. Value-free or unparseable records do not block an earlier numeric result. A latest numeric
+      value outside 5 to 400 inclusive makes the person unassessable for IND319;
+      no older valid result is used.
   - name: is_recorded_white
-    description: Ethnicity is White in the demographic interval containing R, start inclusive and end
-      exclusive. False includes missing and unknown ethnicity.
+    description: >-
+      Ethnicity is White in the demographic interval containing the reporting date, start
+      inclusive and end exclusive. False includes missing and unknown ethnicity.
   - name: latest_weight_advice_date
-    description: Latest WTMGINT_COD advice within 90 days after BMI inclusive, capped at R; null means
-      none.
+    description: >-
+      Latest WTMGINT_COD advice within 90 days after BMI inclusive, capped on the reporting
+      date; null means none.
+  - name: earliest_qualifying_bmi_date
+    description: >-
+      Earliest qualifying BMI in the measure cohort window on the reporting date; null when
+      none qualifies. Used for the 90-day deadline.

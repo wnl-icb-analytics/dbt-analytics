@@ -55,14 +55,16 @@ models:
             type: "NICE_REGISTER"
             category: "LTC"
             clinical_domain: "Mental Health"
-            name_short: "Bipolar, schizophrenia and other psychoses: register"
-            description_short: "NICE Bipolar, schizophrenia and other psychoses: register"
-            description_long: >
-              NICE register of people with schizophrenia, bipolar affective disorder or other
-              psychoses, with no exclusions or age restriction. The model uses MH_COD and retains
-              diagnosed people in remission. Remission-only codes do not qualify. No additional
-              filter is needed. QOF 2025/26 correspondence is MH001; the QOF v51
-              register-establishment indicator is retired, while the register extraction continues.
+            name_short: >-
+              Psychosis and bipolar disorder register
+            description_short: >-
+              People with schizophrenia, bipolar disorder or other psychoses,
+              including remission.
+            description_long: >-
+              Schizophrenia, bipolar affective disorder or other psychoses qualify at
+              any age. People with a diagnosis remain included during remission;
+              remission-only records do not qualify. Based on NICE CG178. Code list:
+              MH_COD.
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "MH001"
@@ -71,18 +73,19 @@ models:
             type: "NICE_REGISTER"
             category: "LTC"
             clinical_domain: "Mental Health"
-            name_short: "Bipolar, schizophrenia and other psychoses: register (lithium therapy)"
-            description_short: "NICE Bipolar, schizophrenia and other psychoses: register (lithium therapy)"
-            description_long: >
-              NICE register of people with schizophrenia, bipolar affective disorder or other
-              psychoses, plus other people on lithium therapy. Count the union of this SMI register
-              and int_nice_ltc_population where is_on_lithium is true, deduplicated by person. The
-              six-month lithium treatment rule applies only to the lithium arm, not to
-              diagnosis-qualified people. The lithium input also applies the later LITSTP_COD stop
-              rule. This model follows QOF v51 MH1 and contains no lithium-only people, so
-              is_on_register alone does not supply the full NICE population. QOF 2025/26
-              correspondence is MH001; the QOF v51 register-establishment indicator is retired,
-              while the register extraction continues.
+            name_short: >-
+              Psychosis, bipolar disorder or lithium
+            description_short: >-
+              People with schizophrenia, bipolar disorder or other psychoses, or
+              active lithium treatment.
+            description_long: >-
+              For NICE counts, include this diagnosis register and people with active
+              lithium treatment from the long-term condition population, counting each
+              person once. The diagnosis register alone omits lithium-only people.
+              Lithium needs treatment in the six months before the build date with no
+              later stop; diagnosis-qualified people do not need lithium treatment.
+              Based on NICE CG178. Code lists: MH_COD and LITSTP_COD; lithium
+              prescriptions come from the shared medication records.
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "MH001"
