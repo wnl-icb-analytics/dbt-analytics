@@ -31,8 +31,8 @@
 --
 -- Valueset notes:
 --   vs1 friendly name COLLIDES (woEX Sacubitril/Valsartan id 299f9e3b... vs final-search
---     "HF excluded" id 9228a15e...). Here the woEX copy is the named friendly form, which
---     the macro resolves to the woEX id; the final marker id is pinned only in int_ltc_lcs_cf_hf_61.
+--     "HF excluded" id 9228a15e...). The macro matches every list sharing a friendly name,
+--     so the woEX id is pinned here and the final-search id in int_ltc_lcs_cf_hf_61.
 --   vs2 (Entresto) and vs12 (Female) have no SNOMED expansion (0 mapped) but 1 source-path
 --     code each, so the medication macro matches Entresto via the source path; vs12 (an
 --     EMIS-internal gender attribute) is resolved from dim_person_gender, not the obs macro.
@@ -75,7 +75,7 @@ hf_base as (
 -- med_hf: Sacubitril/Valsartan (vs1) OR Entresto (vs2) OR Ivabradine/Eplerenone (vs3), 3m
 arm_med_hf as (
     select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("hf_case_finding_eligible_patients_vs1, hf_case_finding_eligible_patients_vs2, hf_case_finding_eligible_patients_vs3") }})
+    from ({{ get_ltc_lcs_medication_orders_latest("299f9e3b-bbab-c65e-c19e-9c531f91755a, hf_case_finding_eligible_patients_vs2, hf_case_finding_eligible_patients_vs3") }})
     where order_date >= dateadd(month, -3, current_date())
 ),
 
