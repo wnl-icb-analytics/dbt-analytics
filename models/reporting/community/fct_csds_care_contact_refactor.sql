@@ -757,7 +757,7 @@ CONTACT_ENRICHED AS (
         ON LPAD(LTRIM(LEFT(REF."ServOrTeamTypeRefToCC_(Latest_List)_DV",2),'0#'),2,'0') 
             = LPAD(CSLK5.CODE, 2, '0')
 
-    LEFT JOIN DATA_LAKE__NCL.ANALYST_MANAGED.CSDS_LOOKUP CSLK6
+    left join {{ source('reference_analyst_managed', 'CSDS_LOOKUP') }} CSLK6
         ON CCON."Group_therapy_indicator" = CSLK6.CODE
        AND CSLK6.CSDS_FIELDNAME = 'GROUP THERAPY INDICATOR'
 
