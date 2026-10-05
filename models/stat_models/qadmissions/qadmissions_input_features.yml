@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: int_qadmissions_features
+  - name: qadmissions_input_features
     description: >
       Input feature set for the QAdmissions 1-year emergency-admission risk
       model registered in Snowflake's model registry. One row per active,
@@ -12,7 +12,7 @@ models:
       input features that the registered model consumes. See the file
       header for the required ClinRisk disclaimer.
 
-      Documentation available: https://github.com/ncl-icb-analytics/dbt-ncl-analytics/blob/main/docs/model_documentation/int_qadmissions_features.md
+      Documentation available: https://github.com/ncl-icb-analytics/dbt-ncl-analytics/blob/main/docs/model_documentation/qadmissions_input_features.md
     config:
       meta:
         owner:
@@ -168,7 +168,7 @@ models:
           threshold from qadmissions_lab_thresholds seed, FALSE otherwise
           (including NULL haemoglobin). The latest value comes from
           int_haemoglobin_latest, which excludes negative values and extreme
-          outliers; int_qadmissions_features_history keeps extreme outliers,
+          outliers; qadmissions_input_features_history keeps extreme outliers,
           so the two models can differ.
         data_tests:
           - not_null
@@ -182,7 +182,7 @@ models:
           High liver-function-test flag. TRUE if any of ALT, GGT, or bilirubin
           exceeds its threshold from qadmissions_lab_thresholds seed, FALSE
           otherwise. The latest values come from int_lft_latest, which excludes
-          negative values and extreme outliers; int_qadmissions_features_history
+          negative values and extreme outliers; qadmissions_input_features_history
           keeps extreme outliers, so the two models can differ.
         data_tests:
           - not_null
@@ -197,7 +197,7 @@ models:
           threshold from qadmissions_lab_thresholds seed, FALSE otherwise
           (including NULL platelets). The latest value comes from
           int_platelets_latest, which excludes negative values and extreme
-          outliers; int_qadmissions_features_history keeps extreme outliers,
+          outliers; qadmissions_input_features_history keeps extreme outliers,
           so the two models can differ.
         data_tests:
           - not_null
@@ -256,7 +256,7 @@ models:
         data_type: number
         description: >
           QAdmissions alcohol category (0..5: NonDrinker, Trivial, Light,
-          Moderate, Heavy, VeryHeavy). Sourced from int_qadmissions_alcohol_category,
+          Moderate, Heavy, VeryHeavy). Sourced from qadmissions_alcohol_category,
           which derives cat6 from int_alcohol_audit_scores filtered to
           Full AUDIT and takes the highest cat6 ever recorded per person.
           NULL when the person has no valid Full AUDIT score, so missing
@@ -275,7 +275,7 @@ models:
           QAdmissions ethnicity risk group (1..9: 1=White/NotRecorded,
           2=Indian, 3=Pakistani, 4=Bangladeshi, 5=OtherAsian,
           6=BlackCaribbean, 7=BlackAfrican, 8=Chinese, 9=OtherEthnicGroup).
-          Sourced from int_qadmissions_ethrisk, which joins
+          Sourced from qadmissions_ethrisk, which joins
           dim_person_ethnicity to the qadmissions_eth2016_to_ethrisk9
           seed on `ethnicity_subcategory` text. The seed includes
           explicit "Not Recorded" / "Not Stated" / "Refused" /

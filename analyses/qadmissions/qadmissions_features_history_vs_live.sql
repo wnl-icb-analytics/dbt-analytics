@@ -1,7 +1,7 @@
 -- QAdmissions features: history model at its latest index date vs the live model.
 --
--- Sanity check for int_qadmissions_features_history. Run at the latest
--- month-end, the history logic should reproduce int_qadmissions_features
+-- Sanity check for qadmissions_input_features_history. Run at the latest
+-- month-end, the history logic should reproduce qadmissions_input_features
 -- apart from the known, explained differences listed under EXPECTED below.
 -- One query; every row is an aggregate count.
 --
@@ -14,7 +14,7 @@
 --      MAX(end_date), so the older dates can stay.
 --   2. Build both models from the same DEV inputs in ONE run, so source
 --      refreshes between builds don't show up as differences:
---        dbt build -s int_qadmissions_features int_qadmissions_features_history
+--        dbt build -s qadmissions_input_features qadmissions_input_features_history
 --      If int_date_spine, int_segmentation_person_month_spine or
 --      int_segmentation_acute_activity_history were last built before the
 --      month-end, rebuild them in the same run, or the history side will be
@@ -85,12 +85,12 @@
 
 WITH check_date AS (
     SELECT MAX(end_date) AS check_date
-    FROM {{ ref('int_qadmissions_features_history') }}
+    FROM {{ ref('qadmissions_input_features_history') }}
 ),
 
 history AS (
     SELECT h.*
-    FROM {{ ref('int_qadmissions_features_history') }} AS h
+    FROM {{ ref('qadmissions_input_features_history') }} AS h
     INNER JOIN check_date AS c
         ON h.end_date = c.check_date
 ),
@@ -108,7 +108,7 @@ paired AS (
         l.{{ f }}::VARCHAR AS live_{{ f }},
         h.{{ f }}::VARCHAR AS history_{{ f }}{{ ',' if not loop.last }}
         {%- endfor %}
-    FROM {{ ref('int_qadmissions_features') }} AS l
+    FROM {{ ref('qadmissions_input_features') }} AS l
     FULL OUTER JOIN history AS h
         ON l.person_id = h.person_id
 ),

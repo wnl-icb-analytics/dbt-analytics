@@ -23,7 +23,7 @@ Source
   Full AUDIT 0..40 bands map naturally to six categories.
 
 Score-to-category mapping (Full AUDIT 0..40 -> cat6), shared with
-int_qadmissions_features_history through the qadmissions_alcohol_cat6 macro:
+qadmissions_input_features_history through the qadmissions_alcohol_cat6 macro:
   0       -> 0  (NonDrinker)
   1..3    -> 1  (Trivial)
   4..7    -> 2  (Light)
@@ -38,7 +38,7 @@ Per-person aggregation
   for stability when multiple observations share the same cat6.
 
 Persons with no Full AUDIT record do not appear here; the consuming
-int_qadmissions_features model passes NULL through for them, to be handled
+qadmissions_input_features model passes NULL through for them, to be handled
 at scoring, rather than substituting 0 (NonDrinker).
 
 Grain: one row per person who has at least one valid Full AUDIT score.

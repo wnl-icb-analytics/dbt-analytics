@@ -10,12 +10,12 @@
 }}
 
 /*
-    int_qadmissions_features_history
-    --------------------------------
+    qadmissions_input_features_history
+    ----------------------------------
     Rebuilds the QAdmissions input features as they stood at historical index
     dates, so the model registered in Snowflake's model registry can be
     validated against later emergency admissions. The historical counterpart
-    of int_qadmissions_features. This model does not compute the risk score
+    of qadmissions_input_features. This model does not compute the risk score
     itself.
 
     Grain
@@ -38,7 +38,7 @@
       date: town (current LSOA, as address history is not held) and ethrisk
       (latest recorded ethnicity, as the QAdmissions paper did).
 
-    Differences from int_qadmissions_features
+    Differences from qadmissions_input_features
       Lab features keep extreme outliers; the live model reads the
       int_*_latest models, which exclude them. c_hb, high_platelet and
       high_lft can therefore differ even at the same date.
@@ -432,7 +432,7 @@ ethrisk_lookup AS (
     SELECT
         person_id,
         ethrisk
-    FROM {{ ref('int_qadmissions_ethrisk') }}
+    FROM {{ ref('qadmissions_ethrisk') }}
 )
 
 -- One row per eligible person per index date. The as-at feature CTEs are

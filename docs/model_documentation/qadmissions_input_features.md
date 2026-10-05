@@ -1,4 +1,4 @@
-# `int_qadmissions_features` — Design Summary
+# `qadmissions_input_features` — Design Summary
 
 An overview of the design decisions, deviations from the QAdmissions paper, and known areas that may need revisiting. 
 
@@ -8,7 +8,7 @@ The paper referenced throughout is Hippisley-Cox & Coupland, *BMJ Open* 2013;3:e
 
 ## Overview
 
-`int_qadmissions_features` produces one wide row per active, non-deceased adult (18..100) with known sex. Every column matches the input signature of the QAdmissions Cox model registered in Snowflake's model registry. 
+`qadmissions_input_features` produces one wide row per active, non-deceased adult (18..100) with known sex. Every column matches the input signature of the QAdmissions Cox model registered in Snowflake's model registry. 
 
 Grain: one row per `person_id`. Build flow:
 
@@ -28,8 +28,8 @@ dim_person_demographics (base spine)
   + int_vte_diagnoses_all          → b_vte
   + int_liver_pancreatitis_diagnoses_all     → b_liverpancreas
   + int_qadmissions_townsend       → town
-  + int_qadmissions_alcohol_category         → alcohol_cat6
-  + int_qadmissions_ethrisk        → ethrisk
+  + qadmissions_alcohol_category         → alcohol_cat6
+  + qadmissions_ethrisk        → ethrisk
   + constants                      → sha1 (=5, London), surv (=qadmissions_horizon_years var)
 ```
 
@@ -67,8 +67,8 @@ The features split into four groups based on where their codes come from.
 - `smoke_cat` ← `int_smoking_status_latest`
 - `hes_admitprior_cat` ← `fct_person_sus_apc_recent.apc_nel_12mo`
 - `town` ← `int_qadmissions_townsend` (joins `dim_person_demographics.lsoa_code_21` to `qadmissions_townsend_lsoa_2011` seed via `stg_reference_lsoa2011_lsoa2021` bridge)
-- `alcohol_cat6` ← `int_qadmissions_alcohol_category` (Full AUDIT scores from `int_alcohol_audit_scores`)
-- `ethrisk` ← `int_qadmissions_ethrisk` (`dim_person_ethnicity.ethnicity_subcategory` joined to `qadmissions_eth2016_to_ethrisk9` seed)
+- `alcohol_cat6` ← `qadmissions_alcohol_category` (Full AUDIT scores from `int_alcohol_audit_scores`)
+- `ethrisk` ← `qadmissions_ethrisk` (`dim_person_ethnicity.ethnicity_subcategory` joined to `qadmissions_eth2016_to_ethrisk9` seed)
 
 ---
 
@@ -118,7 +118,7 @@ If the eight `dim_person_conditions`-sourced features are ever switched to QAdmi
 
 ### Time limits on diagnoses
 
-Every diagnosis is "ever" — no time window applied. The `falls_flags` CTE in `int_qadmissions_features.sql` is a plain `SELECT DISTINCT person_id, TRUE FROM int_falls_observations_all`. The paper does not state a falls window in the methods text. Adding a 12-month window to `b_falls` (or to other diagnoses) would be a `WHERE clinical_effective_date >= DATEADD(day, -365, CURRENT_DATE())` in the relevant `_flags` CTE.
+Every diagnosis is "ever" — no time window applied. The `falls_flags` CTE in `qadmissions_input_features.sql` is a plain `SELECT DISTINCT person_id, TRUE FROM int_falls_observations_all`. The paper does not state a falls window in the methods text. Adding a 12-month window to `b_falls` (or to other diagnoses) would be a `WHERE clinical_effective_date >= DATEADD(day, -365, CURRENT_DATE())` in the relevant `_flags` CTE.
 
 ### Lab and observation time limits
 
@@ -132,7 +132,7 @@ Already capped at 12 months prior (per the paper's "emergency admissions in the 
 
 ## NULL handling
 
-The model needs a value for every feature in order to score a row. The features below currently allow NULL pass-through, which means rows with these NULLs cannot be scored until either the upstream data is populated or a default is added in `int_qadmissions_features.sql`.
+The model needs a value for every feature in order to score a row. The features below currently allow NULL pass-through, which means rows with these NULLs cannot be scored until either the upstream data is populated or a default is added in `qadmissions_input_features.sql`.
 
 **NULL pass-through (no default applied):**
 - `bmi`
@@ -165,7 +165,7 @@ Each `int_*_diagnoses_all` and `int_*_observations_all` model also has a `cluste
 
 1. **Add a 12-month window to `b_falls`** if the registered model under-fits or if clinical review prefers the recent interpretation. One-line change.
 2. **Document the LFT ULN values** with explicit clinical references in `seeds/qadmissions_lab_thresholds.yml`.
-3. **Promote `int_qadmissions_townsend`, `int_qadmissions_ethrisk`, `int_qadmissions_alcohol_category` out of `programme/qadmissions/`** if any non-QAdmissions analysis wants them — generic equivalents under `models/modelling/olids/person_attributes/`.
+3. **Promote `int_qadmissions_townsend`, `qadmissions_ethrisk`, `qadmissions_alcohol_category` out of `programme/qadmissions/`** if any non-QAdmissions analysis wants them — generic equivalents under `models/modelling/olids/person_attributes/`.
 4. **Decision on codelist usage**. Decide to either fully adopt the qadmissions codelists or create our own updated codelists for all features.
 
 

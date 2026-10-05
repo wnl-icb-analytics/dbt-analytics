@@ -1,18 +1,18 @@
 version: 2
 
 models:
-  - name: int_qadmissions_features_history
+  - name: qadmissions_input_features_history
     description: >
       QAdmissions input features rebuilt as they stood at historical index
       dates, for validating the QAdmissions model registered in Snowflake's
       model registry against later emergency admissions. The historical
-      counterpart of int_qadmissions_features: this model does NOT compute a
+      counterpart of qadmissions_input_features: this model does NOT compute a
       risk score, and a score produced from it requires the ClinRisk
       disclaimer in the file header.
 
       Grain: one row per person per index date. Index dates are month-ends
       listed in the qadmissions_history_index_dates macro. 2026-09-30 is for
-      comparison with int_qadmissions_features only and has no outcome
+      comparison with qadmissions_input_features only and has no outcome
       follow-up, so it must not be used for outcome validation.
 
       Population at each index date: people registered and alive at that
@@ -31,7 +31,7 @@ models:
       LSOA, as address history is not held) and ethrisk (latest recorded
       ethnicity, as the QAdmissions paper did).
 
-      Differences from int_qadmissions_features: lab features (c_hb,
+      Differences from qadmissions_input_features: lab features (c_hb,
       high_platelet, high_lft) keep extreme outliers, while the live model
       reads the int_*_latest models, which exclude them. These flags can
       therefore differ between the two models even at the same date. Prior
@@ -91,14 +91,14 @@ models:
 
       - name: sha1
         data_type: number
-        description: "Strategic Health Authority code. Constant 5 (London) for all NCL patients, as in int_qadmissions_features."
+        description: "Strategic Health Authority code. Constant 5 (London) for all NCL patients, as in qadmissions_input_features."
 
       - name: surv
         data_type: number
         description: >
           Prediction horizon in years passed to the registered QAdmissions
           model. Set by var('qadmissions_horizon_years'), default 1, shared
-          with int_qadmissions_features. The same value applies to every
+          with qadmissions_input_features. The same value applies to every
           index date; set it to match the validation horizon.
 
       - name: b_af
@@ -156,7 +156,7 @@ models:
           int_smoking_status_all) known by the index date: 3 = current smoker,
           1 = ex-smoker, 0 = never smoked or no record. Cigarettes per day are
           not captured, so categories 2, 4 and 5 are not produced and every
-          current smoker maps to 3, as in int_qadmissions_features. Same-day
+          current smoker maps to 3, as in qadmissions_input_features. Same-day
           codes are separated by observation id, where the live model's
           choice is arbitrary.
 
@@ -250,7 +250,7 @@ models:
           the index date: address history is not held, so people who have
           moved since the index date get their current area's score. NULL
           when no LSOA is recorded or it does not bridge to a Townsend-mapped
-          2011 LSOA, as in int_qadmissions_features.
+          2011 LSOA, as in qadmissions_input_features.
 
       - name: alcohol_cat6
         data_type: number
@@ -259,9 +259,9 @@ models:
           3 = Moderate, 4 = Heavy, 5 = VeryHeavy): the highest category from
           any valid Full AUDIT score (int_alcohol_audit_scores) known by the
           index date, banded by the qadmissions_alcohol_cat6 macro shared with
-          int_qadmissions_alcohol_category. AUDIT-C scores are not used. NULL
+          qadmissions_alcohol_category. AUDIT-C scores are not used. NULL
           when the person has no Full AUDIT score by the index date, as in
-          int_qadmissions_features, so it can be handled at scoring.
+          qadmissions_input_features, so it can be handled at scoring.
 
       - name: ethrisk
         data_type: number
@@ -270,6 +270,6 @@ models:
           Indian, 3 = Pakistani, 4 = Bangladeshi, 5 = Other Asian, 6 = Black
           Caribbean, 7 = Black African, 8 = Chinese, 9 = Other Ethnic Group)
           from the person's latest recorded ethnicity, via
-          int_qadmissions_ethrisk. Not as at the index date: the QAdmissions
+          qadmissions_ethrisk. Not as at the index date: the QAdmissions
           paper also used the latest recorded ethnicity, including records
           made after baseline. 1 when there is no mapped ethnicity.
