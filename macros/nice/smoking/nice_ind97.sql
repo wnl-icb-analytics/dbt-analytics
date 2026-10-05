@@ -70,7 +70,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Long-term condition (CHD, PAD, stroke/TIA, hypertension, diabetes, COPD, CKD, asthma or severe mental illness)' AS condition_name,
+    'Long-term condition or severe mental illness' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_smoking_status,
     latest_smoking_status_date,

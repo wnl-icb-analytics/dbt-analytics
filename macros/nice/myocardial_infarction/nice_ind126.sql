@@ -43,7 +43,7 @@ SELECT
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,
-    'Myocardial infarction' AS condition_name,
+    'Myocardial infarction more than 12 months ago' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     earliest_mi_date,
     latest_mi_date,

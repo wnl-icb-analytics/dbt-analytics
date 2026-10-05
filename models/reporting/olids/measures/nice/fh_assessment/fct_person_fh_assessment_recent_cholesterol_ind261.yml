@@ -1,13 +1,19 @@
 models:
 - name: fct_person_fh_assessment_recent_cholesterol_ind261
-  description: Familial hypercholesterolaemia assessment. One row per active, living, non-test person with
-    valid total cholesterol above 7.5 mmol/L in 12 months, any age. Readings are strictly after 12 months before
-    and on or before assessment; any qualifying reading counts. FH_ASSESS_COD, PCD SBROOME_COD, DULIPID_COD,
-    POSSFH_COD, FH_REFER_COD, PCD FHYPGEN_COD, SECONDARY_HYPERLIPID_COD or SECONDARY_HYPERLIPID_HX_COD count
-    at any time through assessment. Generic REFLIPID_COD referrals do not count. Possible-FH codes and PCD
-    FHYP_COD clinical diagnoses count as assessment at any time through R. FH-specific referral codes only exist
-    from 2021. Genetic evidence includes coded testing without verifying a positive result. No personalised
-    care adjustments apply. Assessed on the build date.
+  description: >-
+    Familial hypercholesterolaemia assessment after recent high cholesterol (NICE IND261). One
+    row per person in the denominator on the build date.
+
+
+    People registered on the build date of any age with valid total cholesterol above 7.5 mmol/L
+    in the 12 months before the build date; reports the latest high reading. Achieved with
+    recorded familial hypercholesterolaemia assessment, possible or clinical diagnosis, referral
+    or genetic evidence, or secondary hyperlipidaemia diagnosis or personal history at any time.
+    Genetic testing need not be positive. Generic lipid referrals do not count; familial
+    referral codes began in 2021. No personalised care adjustments are applied. Based on NICE
+    CG71. Code lists: CHOL2_COD, SBROOME_COD, DULIPID_COD, POSSFH_COD, FHYP_COD, FHYPGEN_COD
+    (PCD); FH_ASSESS_COD, FH_REFER_COD, SECONDARY_HYPERLIPID_COD, SECONDARY_HYPERLIPID_HX_COD
+    (ECL_CACHE).
   config:
     meta:
       owner:
@@ -18,17 +24,18 @@ models:
         type: MEASURE
         category: FH_ASSESSMENT
         clinical_domain: Cardiometabolic
-        name_short: 'Lipid disorders: FH assessment and diagnosis (new readings)'
-        description_short: 'Lipid disorders: FH assessment and diagnosis (new readings)'
-        description_long: Familial hypercholesterolaemia assessment. One row per active, living, non-test person
-          with valid total cholesterol above 7.5 mmol/L in 12 months, any age. Readings are strictly after
-          12 months before and on or before assessment; any qualifying reading counts. FH_ASSESS_COD, PCD SBROOME_COD,
-          DULIPID_COD, POSSFH_COD, FH_REFER_COD, PCD FHYPGEN_COD, SECONDARY_HYPERLIPID_COD or SECONDARY_HYPERLIPID_HX_COD
-          count at any time through assessment. Generic REFLIPID_COD referrals do not count. Possible-FH codes
-          and PCD FHYP_COD clinical diagnoses count as assessment at any time through R. FH-specific referral
-          codes only exist from 2021. Genetic evidence includes coded testing without verifying a positive
-          result.
-          No personalised care adjustments apply.
+        name_short: "Recent cholesterol assessment"
+        description_short: "Familial hypercholesterolaemia assessment after high cholesterol in the last 12 months"
+        description_long: >-
+          People registered on the build date of any age with valid total cholesterol above 7.5
+          mmol/L in the 12 months before the build date; reports the latest high reading.
+          Achieved with recorded familial hypercholesterolaemia assessment, possible or clinical
+          diagnosis, referral or genetic evidence, or secondary hyperlipidaemia diagnosis or
+          personal history at any time. Genetic testing need not be positive. Generic lipid
+          referrals do not count; familial referral codes began in 2021. No personalised care
+          adjustments are applied. Based on NICE CG71. Code lists: CHOL2_COD, SBROOME_COD,
+          DULIPID_COD, POSSFH_COD, FHYP_COD, FHYPGEN_COD (PCD); FH_ASSESS_COD, FH_REFER_COD,
+          SECONDARY_HYPERLIPID_COD, SECONDARY_HYPERLIPID_HX_COD (ECL_CACHE).
         is_qof: false
         source_column: is_in_numerator
         usage_contexts:
@@ -41,35 +48,30 @@ models:
         - person_id
   columns:
   - name: reporting_date
-    description: Assessment date.
+    description: "Build date used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: 1 April 2026 for HF; earliest qualifying lifetime reading for IND260; 12 months before assessment
-      for IND261.
+    description: "Earliest qualifying lifetime reading for IND260, or the exclusive boundary 12 months before the reporting date for IND261."
   - name: latest_record_date
-    description: Supporting achievement evidence date through assessment; null means no qualifying evidence.
+    description: "Latest assessment, diagnosis, referral or genetic evidence date used for achievement; null without qualifying evidence."
   - name: is_in_denominator
-    description: Always true.
+    description: "Always true; each row is eligible before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether the required category or assessment evidence exists.
+    description: "Whether the person meets the achievement rule on the reporting date."
   - name: qualifying_reading_date
-    description: Earliest qualifying lifetime reading for IND260; latest high reading in 12 months for IND261.
+    description: "Earliest qualifying lifetime cholesterol reading for IND260, or latest high reading in the 12-month window for IND261."
   - name: qualifying_cholesterol_value
-    description: Total cholesterol in mmol/L at the selected qualifying reading.
+    description: "Total cholesterol of the selected qualifying reading, in mmol/L."
   - name: has_qualifying_secondary_hyperlipidaemia
-    description: Explicit secondary diagnosis strictly after the reading for IND260; diagnosis or personal
-      history at any time through assessment for IND261.
+    description: "Whether secondary hyperlipidaemia qualifies. IND260 requires diagnosis after the earliest high reading; IND261 accepts diagnosis or personal history at any time through the reporting date."
   - name: first_fh_assessment_date
-    description: First clinical FH assessment or coded possible-FH result through assessment; null means none.
+    description: "First recorded familial hypercholesterolaemia assessment or possible diagnosis through the reporting date; null when absent."
   - name: first_clinical_fh_diagnosis_date
-    description: First PCD FHYP_COD clinical FH diagnosis through R; null means none. Counts as clinical
-      assessment even before the qualifying cholesterol reading.
+    description: "First clinical familial hypercholesterolaemia diagnosis through the reporting date; null when absent. Counts as assessment even before the qualifying cholesterol reading."
   - name: first_fh_referral_date
-    description: First FH-specific referral through assessment; generic lipid referrals do not count.
+    description: "First referral for familial hypercholesterolaemia assessment through the reporting date; null when absent. Generic lipid referrals do not count."
   - name: first_genetic_fh_date
-    description: First PCD FHYPGEN_COD evidence through assessment; may represent genetic testing rather than
-      a confirmed diagnosis.
+    description: "First genetic familial hypercholesterolaemia record through the reporting date; null when absent. Includes testing without confirmation of a positive result."
   - name: latest_secondary_hyperlipidaemia_date
-    description: Latest explicit secondary lipid diagnosis through assessment. IND260 requires this strictly
-      after its earliest reading.
+    description: "Latest secondary hyperlipidaemia diagnosis through the reporting date; null when absent. IND260 requires a date strictly after the earliest qualifying reading."
   - name: first_secondary_history_date
-    description: First personal secondary-lipid history through assessment. IND261 only.
+    description: "First personal secondary hyperlipidaemia history record through the reporting date for IND261; null when absent or not supplied by the indicator."

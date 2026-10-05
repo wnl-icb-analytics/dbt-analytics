@@ -1,22 +1,18 @@
 models:
 - name: fct_person_diabetes_foot_examination_ind160_by_month
-  description: |
-    NICE IND160. Annual foot sensation examination in diabetes.
-    One row per eligible person and completed month-end. The population is living,
-    non-test people registered at month-end on the diabetes register. Achievement
-    requires a monofilament test in the inclusive preceding 12 months. Other foot
-    checks do not count. The latest qualifying clinical day is reported; null means
-    no qualifying test.
+  description: >-
+    Foot sensation testing in diabetes (NICE IND160). One row per person in the
+    denominator at the month-end.
 
-    Recalculated at monthly refresh for the last 60 completed month-ends using today's
-    rules and code lists. Personalised care adjustments are not applied. Registration
-    and practice use the existing monthly spine; registration start is inclusive,
-    registration end and death exclusive. Overlapping registrations retain the spine's
-    current-registration priority. Birth and death dates are approximate; missing birth
-    dates prevent historical active rows. Current gender and test flags apply
-    retrospectively. Register diagnosis state uses clinical and recorded dates; other
-    evidence uses its clinical or order date through month-end. Later corrections and
-    changed code lists can alter earlier results.
+
+    People registered at the month-end on the diabetes register. Achieved with a performed
+    monofilament foot sensation test in the 12 months before the month-end. General foot
+    examinations, pulse checks, risk classifications and referrals alone do not count. A
+    performed test counts despite a decline or unsuitability on the same day. No
+    personalised care adjustments are applied. Based on NICE NG19. Recalculated for each
+    of the last 60 month-ends with current rules, code lists and records, so later
+    corrections can change past months. Code lists: FOOTEXAM_COD, FEDEC_COD, FEPU_COD
+    (PCD).
   config:
     meta:
       owner:
@@ -24,32 +20,31 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind160
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Person identifier for someone in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "Published NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
-      row.
+    description: "Month-end used to assess the population, age and evidence."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "Inclusive start of the indicator measurement period before the reporting date."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the indicator denominator population."
   - name: practice_code
-    description: Practice ODS code at month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Practice name at month-end under the monthly spine attribution.
+    description: "Name of the registration practice at month-end."
   - name: latest_record_date
-    description: Date of the latest qualifying record in the period; null when none
+    description: "Date of qualifying evidence retained within the indicator measurement or follow-up window; null when none is recorded."
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or the reason not achieved
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

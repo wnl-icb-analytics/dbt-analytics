@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 -- NICE IND139: https://www.nice.org.uk/indicators/ind139
 -- Thyroid function test recorded in 12 months for people on the hypothyroidism register.

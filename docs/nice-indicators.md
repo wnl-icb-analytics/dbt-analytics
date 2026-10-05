@@ -1,17 +1,22 @@
 # NICE general practice indicators
 
-This page records model coverage of all 192 NICE general practice indicators.
+This page lists the model coverage of all 192 NICE general practice indicators.
 Network and system indicators are out of scope.
 
-`Built` identifies indicators with a measure model in this project.
-`Register` is a catalogue entry without a numerator; it does not imply an exact NICE population.
-Register filters and rule differences are in the model YAML and `def_indicator.description_long`.
-Register counts use currently registered, living, non-test people and the reporting date.
+`Built` means the indicator has a measure model. Current results have one row per person and
+indicator in the denominator on the build date. Monthly results add the completed month-end.
+Both include achieved and unachieved results before personalised care adjustments.
+
+`Register` means a catalogue entry without a numerator. Its population can differ from NICE.
+The model descriptions and `def_indicator.description_long` explain the filters and differences.
+For NICE register counts, select registered, living, non-test people at the reporting date as well
+as each entry's clinical and age rules. Some register models retain inactive and deceased people.
 IND237 and IND238 use the shared NG246 BMI categories, including calculated BMI.
 Lower thresholds apply only to recorded higher-risk ethnic groups; unknown ethnicity uses standard
 thresholds. This differs from the NICE wording, which lowers thresholds for everyone not recorded as White.
-`Planned` identifies later work that needs new or extended code lists, inputs or agreed rules.
-The evidence figures in `Not built` rows describe coded activity in the source data, not whether care was delivered.
+`Planned` means further code lists, data or agreed rules are needed.
+Percentages in `Not built` rows describe coded activity. Missing coding does not establish that
+care was absent.
 
 | ID | Title | Status | Where it lives or reason |
 |---|---|---|---|
@@ -113,7 +118,7 @@ The evidence figures in `Not built` rows describe coded activity in the source d
 | IND180 | Diabetes: HbA1c 75 mmol/mol | Built | `fct_person_diabetes_hba1c_ind180` |
 | IND181 | Diabetes: CVD risk assessment | Built | `fct_person_cvd_risk_assessment_ind181` |
 | IND185 | Atrial fibrillation: register | Register | `fct_person_atrial_fibrillation_register`. Resolved AF is excluded by the model but included by NICE. |
-| IND186 | Asthma: register | Register | `fct_person_asthma_register`. QOF drug rule applies; NICE counts use `nice_asthma_diagnosis_population` as IND273 does. |
+| IND186 | Asthma: register | Register | `fct_person_asthma_register`. Requires treatment in the preceding 12 months. NICE counts use the diagnosis population used by IND273, without that treatment restriction. |
 | IND189 | Asthma: smoking status (under 19) | Built | `fct_person_asthma_smoking_status_ind189` |
 | IND190 | COPD: register | Register | `fct_person_copd_register`. QOF spirometry windows and no-spirometry route differ from NICE. |
 | IND191 | COPD: annual review | Built | `fct_person_copd_review_ind191` |
@@ -128,8 +133,8 @@ The evidence figures in `Not built` rows describe coded activity in the source d
 | IND202 | Alcohol use: brief intervention for people with a long-term condition | Built | `fct_person_alcohol_ind202` |
 | IND203 | Lipids disorders: FH assessment (29 years and under) | Not built | Narrower age-split version of IND260 with no reading window; IND260 covers FH assessment for high readings at any age. |
 | IND204 | Lipids disorders: FH assessment (30 years and over) | Not built | Narrower age-split version of IND260 with no reading window; IND260 covers FH assessment for high readings at any age. |
-| IND205 | Multiple long-term conditions: multimorbidity register | Register | `int_nice_multimorbidity_categories`. Count at least four distinct categories per active person aged 18+; tailored-approach route is uncoded. |
-| IND206 | Multiple long-term conditions: frailty register | Register | `fct_person_frailty_register`. Filter `age >= 65` and latest severity 'Moderate' or 'Severe'. |
+| IND205 | Multiple long-term conditions: multimorbidity register | Register | `int_nice_multimorbidity_categories`. Include registered, living, non-test people aged 18 or over with at least four distinct categories. The route based on an agreed tailored approach has no coded evidence. |
+| IND206 | Multiple long-term conditions: frailty register | Register | `fct_person_frailty_register`. Include register members aged 65 or over whose latest severity is 'Moderate' or 'Severe'. |
 | IND207 | Multiple long-term conditions: medication review | Built | `fct_person_multimorbidity_ind207` |
 | IND208 | Multiple long-term conditions: asking about falls | Built | `fct_person_multimorbidity_ind208` |
 | IND210 | HIV: testing at registration | Built | `fct_person_hiv_test_at_registration_ind210` |
@@ -209,6 +214,26 @@ The evidence figures in `Not built` rows describe coded activity in the source d
 | IND324 | Kidney conditions: CKD and SGLT2 inhibitors | Built | `fct_person_ckd_sglt2_therapy_ind324` |
 
 ## Evidence scope
+
+Follow-up indicators include people only when their follow-up deadline has been reached by the build
+date or month-end, whether or not they achieved. Where one diagnosis or event starts follow-up,
+the cohort ends one follow-up period before that date. Annual financial-year cohorts are assessed
+as rolling 12-month cohorts with this shifted end. Where several events can qualify, the earliest
+qualifying event must have a completed follow-up period. Achievement remains relative to the
+event; registration, survival, condition membership, age and exclusions are assessed on the
+build date or month-end.
+
+These rules apply to IND80, IND88, IND104, IND113, IND121, IND122, IND123, IND149, IND161,
+IND196, IND197, IND198, IND199, IND200, IND202, IND222, IND223, IND234 and
+IND319. IND178, IND192, IND210 and IND272 also require completed follow-up periods. IND104
+uses a rolling 12-month diagnosis cohort ending 35 days before the build date or month-end.
+Its start date is excluded and its end date is included.
+
+Monthly results are recalculated for each of the last 60 month-ends with current rules, code lists
+and records, so later corrections can change past months. They describe retained evidence assessed
+retrospectively. They are not a record of the results practices saw at the time. Birth and death
+dates are approximate; current gender and test flags apply retrospectively. Earlier months can
+have less evidence because source records are no longer retained.
 
 Contraception advice includes IUD and sterilisation counselling, fertility education, written information, completed isotretinoin risk forms and diabetes preconception counselling. A single record cannot confirm every advice topic. LARC includes IUD counselling and injection discussion with unknown modality, plus written depot and IUS leaflets. IND149 still requires non-specific advice or both written and verbal evidence.
 

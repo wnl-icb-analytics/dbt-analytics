@@ -50,7 +50,7 @@ WITH population AS (
         ON population.person_id = pregnancy.person_id
 )
 SELECT person_id, 'IND78' AS indicator_id,
-    'Contraception advice for women taking antiseizure medication' AS indicator_name,
+    'Contraception: advice for people taking anti-seizure medication' AS indicator_name,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age, 'Women under 55 taking antiseizure medication' AS condition_name,
     {{ nice_practice_columns('result', reference) }},

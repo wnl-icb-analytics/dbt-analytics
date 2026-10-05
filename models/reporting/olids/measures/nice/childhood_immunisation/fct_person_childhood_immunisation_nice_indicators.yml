@@ -1,19 +1,20 @@
 models:
   - name: fct_person_childhood_immunisation_ind215
-    description: |
-      NICE IND215 primary DTP vaccination. One row per currently registered, living,
-      non-test baby whose eighth-month milestone falls in the preceding 12 months,
-      assessed on the build date.
+    description: >-
+      DTP vaccination by 8 months (NICE IND215). One row per person in the denominator
+      on the build date.
 
-      Achieved with at least three DTP-containing doses before eight months of age. QOF
-      v51 permits 4-, 5- and 6-in-1 administrations or vaccine orders. Doses count
-      distinct administration or vaccine order dates, measured from the approximate birth
-      date.
 
-      Excludes recorded vaccine contraindications as the current proxy for confirmed
-      anaphylaxis. No authorised confirmed-anaphylaxis code set exists in this project.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date whose 8-month milestone, based on approximate
+      birth date, fell in the last 12 months. Achieved with at least three diphtheria,
+      tetanus and pertussis-containing doses before age 8 months. Doses count distinct
+      administration or vaccine order dates. Excludes recorded vaccine contraindications
+      as a substitute for confirmed anaphylaxis. No personalised care adjustments are
+      applied. Based on NICE NG218. Code lists: DTaP/IPV/Hib/HepB/6-in-1 and
+      dTaP/IPV/4-in-1 administration, drug and contraindication lists
+      (CHILDHOOD_IMMS_CODES); 4IN1VAC_COD, 5IN1VAC_COD, 6IN1VAC_COD, DTPCON_COD,
+      DTAPIPVCON_COD (PCD); 4IN1VACDRUG_COD, 5IN1VACDRUG_COD, 6IN1VACDRUG_COD (NHS drug
+      refset).
     config:
       meta:
         owner:
@@ -24,22 +25,20 @@ models:
           type: "MEASURE"
           category: "IMMUNISATION"
           clinical_domain: "Prevention"
-          name_short: "DTaP 3 doses by 8 months"
-          description_short: "Three DTP-containing doses before 8 months for babies reaching 8 months in the preceding 12 months"
-          description_long: |
-            NICE IND215 primary DTP vaccination. One row per currently registered, living,
-            non-test baby whose eighth-month milestone falls in the preceding 12 months,
-            assessed on the build date.
-
-            Achieved with at least three DTP-containing doses before eight months of age.
-            QOF v51 permits 4-, 5- and 6-in-1 administrations or vaccine orders. Doses
-            count distinct administration or vaccine order dates, measured from the
-            approximate birth date.
-
-            Excludes recorded vaccine contraindications as the current proxy for confirmed
-            anaphylaxis. No authorised confirmed-anaphylaxis code set exists in this project.
-
-            Personalised care adjustments are not applied.
+          name_short: "DTP: three doses by 8 months"
+          description_short: "DTP vaccination by 8 months."
+          description_long: >-
+            People registered on the build date whose 8-month milestone, based on
+            approximate birth date, fell in the last 12 months. Achieved with at
+            least three diphtheria, tetanus and pertussis-containing doses before
+            age 8 months. Doses count distinct administration or vaccine order
+            dates. Excludes recorded vaccine contraindications as a substitute for
+            confirmed anaphylaxis. No personalised care adjustments are applied.
+            Based on NICE NG218. Code lists: DTaP/IPV/Hib/HepB/6-in-1 and
+            dTaP/IPV/4-in-1 administration, drug and contraindication lists
+            (CHILDHOOD_IMMS_CODES); 4IN1VAC_COD, 5IN1VAC_COD, 6IN1VAC_COD,
+            DTPCON_COD, DTAPIPVCON_COD (PCD); 4IN1VACDRUG_COD, 5IN1VACDRUG_COD,
+            6IN1VACDRUG_COD (NHS drug refset).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -47,57 +46,55 @@ models:
           sort_order: "NICE_IND215"
     columns: &childhood_columns
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Identifier of the person in the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "NICE published indicator title."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and achievement."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "Exclusive start of the 12-month milestone cohort."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
+        description: "Age in completed years on the reporting date; null when the birth date is missing."
       - name: condition_name
-        description: Population defining the indicator
+        description: "Short label for the denominator population."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice on the build date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice on the build date."
       - name: birth_date_approx
-        description: Approximate birth date (mid-month)
+        description: "Approximate birth date, set to the middle of the recorded birth month."
       - name: milestone_date
-        description: Date the child reached the indicator's milestone age, which falls in the preceding 12 months
+        description: "Approximate date the child reached the required age milestone, in the 12-month eligibility window."
       - name: doses_in_window
-        description: Distinct administration dates for the indicator's vaccine within its age window
+        description: "Number of distinct vaccine administration or order dates in the indicator age window; for IND217 this counts MMR or MMRV doses only."
       - name: is_in_denominator
-        description: Always true; every row is an eligible child before personalised care adjustments
+        description: "Always true; each row meets the documented eligibility and exclusion rules."
       - name: is_in_numerator
-        description: Whether the child received the required doses within the age window
+        description: "Whether the person meets the documented achievement rule on the reporting date."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
 
   - name: fct_person_childhood_immunisation_ind216
-    description: |
-      NICE IND216 MMR vaccination by 18 months. One row per currently registered, living,
-      non-test child whose 18-month milestone falls in the preceding 12 months, assessed
+    description: >-
+      MMR vaccination by 18 months (NICE IND216). One row per person in the denominator
       on the build date.
 
-      Achieved with at least one MMR or MMRV dose from 12 months up to, but not
-      including, 18 months of age. Doses count distinct administration or vaccine
-      order dates. The first-birthday lower boundary uses source age in completed
-      years. Missing event age uses the approximate birth date. The 18-month upper
-      boundary and population milestone use the approximate birth date.
 
-      Excludes recorded vaccine contraindications as the current proxy for confirmed
-      anaphylaxis. No authorised code sets for confirmed vaccine/component anaphylaxis
-      or immunocompromise exist in this project. The separate NICE immunocompromise
-      exclusion remains incomplete.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date whose 18-month milestone, based on approximate
+      birth date, fell in the last 12 months. Achieved with at least one MMR or MMRV
+      dose from age 12 months to before 18 months. Doses count distinct administration
+      or vaccine order dates. Excludes recorded vaccine contraindications as a
+      substitute for confirmed anaphylaxis. Vaccination age uses recorded completed
+      years where available, otherwise approximate birthdays. The upper age limit uses
+      approximate birth date. NICE's separate immunocompromise exclusion is not fully
+      applied. No personalised care adjustments are applied. Based on NICE NG218. Code
+      lists: MMR and MMRV administration, drug and contraindication lists
+      (CHILDHOOD_IMMS_CODES); MMRVACDRUG_COD, MMRVVACDRUG_COD (NHS drug refset).
     config:
       meta:
         owner:
@@ -108,25 +105,21 @@ models:
           type: "MEASURE"
           category: "IMMUNISATION"
           clinical_domain: "Prevention"
-          name_short: "MMR 1 dose by 18 months"
-          description_short: "At least one MMR dose between 12 and 18 months for children reaching 18 months in the preceding 12 months"
-          description_long: |
-            NICE IND216 MMR vaccination by 18 months. One row per currently registered, living,
-            non-test child whose 18-month milestone falls in the preceding 12 months, assessed
-            on the build date.
-
-            Achieved with at least one MMR or MMRV dose from 12 months up to, but not
-            including, 18 months of age. Doses count distinct administration or vaccine
-            order dates. The first-birthday lower boundary uses source age in completed
-            years. Missing event age uses the approximate birth date. The 18-month upper
-            boundary and population milestone use the approximate birth date.
-
-            Excludes recorded vaccine contraindications as the current proxy for confirmed
-            anaphylaxis. No authorised code sets for confirmed vaccine/component anaphylaxis
-            or immunocompromise exist in this project. The separate NICE immunocompromise
-            exclusion remains incomplete.
-
-            Personalised care adjustments are not applied.
+          name_short: "MMR: one dose by 18 months"
+          description_short: "MMR vaccination by 18 months."
+          description_long: >-
+            People registered on the build date whose 18-month milestone, based on
+            approximate birth date, fell in the last 12 months. Achieved with at
+            least one MMR or MMRV dose from age 12 months to before 18 months.
+            Doses count distinct administration or vaccine order dates. Excludes
+            recorded vaccine contraindications as a substitute for confirmed
+            anaphylaxis. Vaccination age uses recorded completed years where
+            available, otherwise approximate birthdays. The upper age limit uses
+            approximate birth date. NICE's separate immunocompromise exclusion is
+            not fully applied. No personalised care adjustments are applied. Based
+            on NICE NG218. Code lists: MMR and MMRV administration, drug and
+            contraindication lists (CHILDHOOD_IMMS_CODES); MMRVACDRUG_COD,
+            MMRVVACDRUG_COD (NHS drug refset).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -135,25 +128,22 @@ models:
     columns: *childhood_columns
 
   - name: fct_person_childhood_immunisation_ind217
-    description: |
-      NICE IND217 preschool DTaP/IPV and MMR vaccination. One row per currently
-      registered, living, non-test child whose fifth birthday falls in the preceding 12
-      months, assessed on the build date.
+    description: >-
+      Preschool booster and MMR vaccination by age 5 (NICE IND217). One row per person
+      in the denominator on the build date.
 
-      Achieved with an explicitly coded DTaP/IPV booster and at least two MMR or MMRV
-      doses from the first birthday up to, but not including, the fifth. A generic
-      4-in-1 vaccine product does not establish booster administration. Doses count
-      distinct administration or vaccine order dates at source event ages 1 to 4 in
-      completed years. Missing event age uses the approximate first and fifth
-      birthdays. The fifth-birthday population milestone still uses the approximate
-      birth date.
 
-      Excludes recorded vaccine contraindications as the current proxy for confirmed
-      anaphylaxis. No authorised code sets for confirmed vaccine/component anaphylaxis
-      or immunocompromise exist in this project. The separate NICE immunocompromise
-      exclusion remains incomplete.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date whose fifth birthday, based on approximate
+      birth date, fell in the last 12 months. Achieved with an explicit DTaP/IPV booster
+      and at least two MMR or MMRV doses at ages 1 to 4. Doses count distinct
+      administration or vaccine order dates. Excludes recorded vaccine contraindications
+      as a substitute for confirmed anaphylaxis. Vaccination age uses recorded completed
+      years where available, otherwise approximate birthdays. A generic 4-in-1 product
+      alone does not establish a booster. NICE's separate immunocompromise exclusion is
+      not fully applied. No personalised care adjustments are applied. Based on NICE
+      NG218. Code lists: MMR and MMRV administration, drug and contraindication lists
+      (CHILDHOOD_IMMS_CODES); DTAPIPVVACBOOST_COD, DTAPIPVCON_COD, DTPCON_COD (PCD);
+      MMRVACDRUG_COD, MMRVVACDRUG_COD (NHS drug refset).
     config:
       meta:
         owner:
@@ -164,27 +154,22 @@ models:
           type: "MEASURE"
           category: "IMMUNISATION"
           clinical_domain: "Prevention"
-          name_short: "DTaP/IPV and 2 MMR by 5 years"
-          description_short: "Preschool booster and two MMR doses between 1 and 5 years for children reaching 5 in the preceding 12 months"
-          description_long: |
-            NICE IND217 preschool DTaP/IPV and MMR vaccination. One row per currently
-            registered, living, non-test child whose fifth birthday falls in the preceding 12
-            months, assessed on the build date.
-
-            Achieved with an explicitly coded DTaP/IPV booster and at least two MMR or MMRV
-            doses from the first birthday up to, but not including, the fifth. A generic
-            4-in-1 vaccine product does not establish booster administration. Doses count
-            distinct administration or vaccine order dates at source event ages 1 to 4 in
-            completed years. Missing event age uses the approximate first and fifth
-            birthdays. The fifth-birthday population milestone still uses the approximate
-            birth date.
-
-            Excludes recorded vaccine contraindications as the current proxy for confirmed
-            anaphylaxis. No authorised code sets for confirmed vaccine/component anaphylaxis
-            or immunocompromise exist in this project. The separate NICE immunocompromise
-            exclusion remains incomplete.
-
-            Personalised care adjustments are not applied.
+          name_short: "Preschool booster and two MMR doses"
+          description_short: "Preschool booster and MMR vaccination by age 5."
+          description_long: >-
+            People registered on the build date whose fifth birthday, based on
+            approximate birth date, fell in the last 12 months. Achieved with an
+            explicit DTaP/IPV booster and at least two MMR or MMRV doses at ages 1
+            to 4. Doses count distinct administration or vaccine order dates.
+            Excludes recorded vaccine contraindications as a substitute for
+            confirmed anaphylaxis. Vaccination age uses recorded completed years
+            where available, otherwise approximate birthdays. A generic 4-in-1
+            product alone does not establish a booster. NICE's separate
+            immunocompromise exclusion is not fully applied. No personalised care
+            adjustments are applied. Based on NICE NG218. Code lists: MMR and MMRV
+            administration, drug and contraindication lists
+            (CHILDHOOD_IMMS_CODES); DTAPIPVVACBOOST_COD, DTAPIPVCON_COD,
+            DTPCON_COD (PCD); MMRVACDRUG_COD, MMRVVACDRUG_COD (NHS drug refset).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -193,23 +178,20 @@ models:
     columns: *childhood_columns
 
   - name: fct_person_childhood_immunisation_ind218
-    description: |
-      NICE IND218 MMR vaccination by age five. One row per currently registered, living,
-      non-test child whose fifth birthday falls in the preceding 12 months, assessed on
+    description: >-
+      MMR vaccination by age 5 (NICE IND218). One row per person in the denominator on
       the build date.
 
-      Achieved with at least one MMR or MMRV dose from the first birthday up to, but
-      not including, the fifth. Doses count distinct administration or vaccine order
-      dates at source event ages 1 to 4 in completed years. Missing event age uses the
-      approximate first and fifth birthdays. The fifth-birthday population milestone
-      still uses the approximate birth date.
 
-      Excludes recorded vaccine contraindications as the current proxy for confirmed
-      anaphylaxis. No authorised code sets for confirmed vaccine/component anaphylaxis
-      or immunocompromise exist in this project. The separate NICE immunocompromise
-      exclusion remains incomplete.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date whose fifth birthday, based on approximate
+      birth date, fell in the last 12 months. Achieved with at least one MMR or MMRV
+      dose at ages 1 to 4. Doses count distinct administration or vaccine order dates.
+      Excludes recorded vaccine contraindications as a substitute for confirmed
+      anaphylaxis. Vaccination age uses recorded completed years where available,
+      otherwise approximate birthdays. NICE's separate immunocompromise exclusion is not
+      fully applied. No personalised care adjustments are applied. Based on NICE NG218.
+      Code lists: MMR and MMRV administration, drug and contraindication lists
+      (CHILDHOOD_IMMS_CODES); MMRVACDRUG_COD, MMRVVACDRUG_COD (NHS drug refset).
     config:
       meta:
         owner:
@@ -220,25 +202,20 @@ models:
           type: "MEASURE"
           category: "IMMUNISATION"
           clinical_domain: "Prevention"
-          name_short: "MMR 1 dose by 5 years"
-          description_short: "At least one MMR dose between 1 and 5 years for children reaching 5 in the preceding 12 months"
-          description_long: |
-            NICE IND218 MMR vaccination by age five. One row per currently registered, living,
-            non-test child whose fifth birthday falls in the preceding 12 months, assessed on
-            the build date.
-
-            Achieved with at least one MMR or MMRV dose from the first birthday up to, but
-            not including, the fifth. Doses count distinct administration or vaccine order
-            dates at source event ages 1 to 4 in completed years. Missing event age uses the
-            approximate first and fifth birthdays. The fifth-birthday population milestone
-            still uses the approximate birth date.
-
-            Excludes recorded vaccine contraindications as the current proxy for confirmed
-            anaphylaxis. No authorised code sets for confirmed vaccine/component anaphylaxis
-            or immunocompromise exist in this project. The separate NICE immunocompromise
-            exclusion remains incomplete.
-
-            Personalised care adjustments are not applied.
+          name_short: "MMR: one dose by age 5"
+          description_short: "MMR vaccination by age 5."
+          description_long: >-
+            People registered on the build date whose fifth birthday, based on
+            approximate birth date, fell in the last 12 months. Achieved with at
+            least one MMR or MMRV dose at ages 1 to 4. Doses count distinct
+            administration or vaccine order dates. Excludes recorded vaccine
+            contraindications as a substitute for confirmed anaphylaxis.
+            Vaccination age uses recorded completed years where available,
+            otherwise approximate birthdays. NICE's separate immunocompromise
+            exclusion is not fully applied. No personalised care adjustments are
+            applied. Based on NICE NG218. Code lists: MMR and MMRV administration,
+            drug and contraindication lists (CHILDHOOD_IMMS_CODES);
+            MMRVACDRUG_COD, MMRVVACDRUG_COD (NHS drug refset).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -247,19 +224,18 @@ models:
     columns: *childhood_columns
 
   - name: fct_person_childhood_immunisation_ind224
-    description: |
-      NICE IND224 rotavirus vaccination by 24 weeks. One row per currently registered,
-      living, non-test baby whose 24-week milestone falls in the preceding 12 months,
-      assessed on the build date.
+    description: >-
+      Rotavirus vaccination by 24 weeks (NICE IND224). One row per person in the
+      denominator on the build date.
 
-      Achieved with at least two rotavirus doses before 24 weeks of age. Doses count
-      distinct administration or vaccine order dates, measured from the approximate birth
-      date.
 
-      Excludes recorded rotavirus vaccination contraindication or history of vaccine
-      allergy, including PCD ROTAVACEXC_COD, as NICE specifies.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date whose 24-week milestone, based on approximate
+      birth date, fell in the last 12 months. Achieved with at least two rotavirus doses
+      before age 24 weeks. Doses count distinct administration or vaccine order dates.
+      Excludes recorded rotavirus contraindication or vaccine allergy. No personalised
+      care adjustments are applied. Based on NICE NG218. Code lists: Rotavirus
+      administration, drug and contraindication lists (CHILDHOOD_IMMS_CODES);
+      ROTAVACEXC_COD (PCD).
     config:
       meta:
         owner:
@@ -270,21 +246,17 @@ models:
           type: "MEASURE"
           category: "IMMUNISATION"
           clinical_domain: "Prevention"
-          name_short: "Rotavirus 2 doses by 24 weeks"
-          description_short: "Two rotavirus doses before 24 weeks for babies reaching 24 weeks in the preceding 12 months"
-          description_long: |
-            NICE IND224 rotavirus vaccination by 24 weeks. One row per currently
-            registered, living, non-test baby whose 24-week milestone falls in the
-            preceding 12 months, assessed on the build date.
-
-            Achieved with at least two rotavirus doses before 24 weeks of age. Doses count
-            distinct administration or vaccine order dates, measured from the approximate
-            birth date.
-
-            Excludes recorded rotavirus vaccination contraindication or history of vaccine
-            allergy, including PCD ROTAVACEXC_COD, as NICE specifies.
-
-            Personalised care adjustments are not applied.
+          name_short: "Rotavirus: two doses by 24 weeks"
+          description_short: "Rotavirus vaccination by 24 weeks."
+          description_long: >-
+            People registered on the build date whose 24-week milestone, based on
+            approximate birth date, fell in the last 12 months. Achieved with at
+            least two rotavirus doses before age 24 weeks. Doses count distinct
+            administration or vaccine order dates. Excludes recorded rotavirus
+            contraindication or vaccine allergy. No personalised care adjustments
+            are applied. Based on NICE NG218. Code lists: Rotavirus
+            administration, drug and contraindication lists
+            (CHILDHOOD_IMMS_CODES); ROTAVACEXC_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -293,18 +265,17 @@ models:
     columns: *childhood_columns
 
   - name: fct_person_childhood_immunisation_ind225
-    description: |
-      NICE IND225 MenB vaccination by eight months. One row per currently registered,
-      living, non-test baby whose eighth-month milestone falls in the preceding 12 months,
-      assessed on the build date.
+    description: >-
+      MenB vaccination by 8 months (NICE IND225). One row per person in the denominator
+      on the build date.
 
-      Achieved with at least two MenB doses before eight months of age. Doses count
-      distinct administration or vaccine order dates, measured from the approximate birth
-      date.
 
-      Excludes children with a contraindication record for the vaccine, as NICE specifies.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date whose 8-month milestone, based on approximate
+      birth date, fell in the last 12 months. Achieved with at least two meningitis B
+      doses before age 8 months. Doses count distinct administration or vaccine order
+      dates. Excludes recorded meningitis B vaccine contraindications. No personalised
+      care adjustments are applied. Based on NICE NG218. Code lists: MenB
+      administration, drug and contraindication lists (CHILDHOOD_IMMS_CODES).
     config:
       meta:
         owner:
@@ -315,21 +286,16 @@ models:
           type: "MEASURE"
           category: "IMMUNISATION"
           clinical_domain: "Prevention"
-          name_short: "MenB 2 doses by 8 months"
-          description_short: "Two MenB doses before 8 months for babies reaching 8 months in the preceding 12 months"
-          description_long: |
-            NICE IND225 MenB vaccination by eight months. One row per currently
-            registered, living, non-test baby whose eighth-month milestone falls in the
-            preceding 12 months, assessed on the build date.
-
-            Achieved with at least two MenB doses before eight months of age. Doses count
-            distinct administration or vaccine order dates, measured from the approximate
-            birth date.
-
-            Excludes children with a contraindication record for the vaccine, as NICE
-            specifies.
-
-            Personalised care adjustments are not applied.
+          name_short: "MenB: two doses by 8 months"
+          description_short: "MenB vaccination by 8 months."
+          description_long: >-
+            People registered on the build date whose 8-month milestone, based on
+            approximate birth date, fell in the last 12 months. Achieved with at
+            least two meningitis B doses before age 8 months. Doses count distinct
+            administration or vaccine order dates. Excludes recorded meningitis B
+            vaccine contraindications. No personalised care adjustments are
+            applied. Based on NICE NG218. Code lists: MenB administration, drug
+            and contraindication lists (CHILDHOOD_IMMS_CODES).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -338,21 +304,20 @@ models:
     columns: *childhood_columns
 
   - name: fct_person_childhood_immunisation_ind226
-    description: |
-      NICE IND226 MenB vaccination by 18 months. One row per currently registered, living,
-      non-test child whose 18-month milestone falls in the preceding 12 months, assessed
+    description: >-
+      MenB vaccination by 18 months (NICE IND226). One row per person in the denominator
       on the build date.
 
-      Achieved with two primary MenB doses before 12 months and a booster from 12 months
-      up to, but not including, 18 months. This age split is the local interpretation of
-      primary and booster doses. Doses count distinct administration or vaccine order
-      dates. Completed-year event age 0 identifies primary doses and age 1 identifies
-      booster doses. Missing event age uses the approximate first birthday. The
-      18-month upper boundary and population milestone use the approximate birth date.
 
-      Excludes children with a contraindication record for the vaccine, as NICE specifies.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date whose 18-month milestone, based on approximate
+      birth date, fell in the last 12 months. Achieved with at least two primary
+      meningitis B doses before age 1 and one booster from age 1 to before 18 months.
+      Doses count distinct administration or vaccine order dates. Excludes recorded
+      meningitis B vaccine contraindications. Vaccination age uses recorded completed
+      years where available, otherwise approximate birthdays. The upper age limit uses
+      approximate birth date. No personalised care adjustments are applied. Based on
+      NICE NG218. Code lists: MenB administration, drug and contraindication lists
+      (CHILDHOOD_IMMS_CODES).
     config:
       meta:
         owner:
@@ -363,25 +328,19 @@ models:
           type: "MEASURE"
           category: "IMMUNISATION"
           clinical_domain: "Prevention"
-          name_short: "MenB 3 doses by 18 months"
-          description_short: "Two primary MenB doses before 12 months and one booster from 12 months, all before 18 months of age. Contraindication exclusion applied."
-          description_long: |
-            NICE IND226 MenB vaccination by 18 months. One row per currently registered,
-            living, non-test child whose 18-month milestone falls in the preceding 12
-            months, assessed on the build date.
-
-            Achieved with two primary MenB doses before 12 months and a booster from 12
-            months up to, but not including, 18 months. This age split is the local
-            interpretation of primary and booster doses. Doses count distinct
-            administration or vaccine order dates. Completed-year event age 0 identifies
-            primary doses and age 1 identifies booster doses. Missing event age uses the
-            approximate first birthday. The 18-month upper boundary and population
-            milestone use the approximate birth date.
-
-            Excludes children with a contraindication record for the vaccine, as NICE
-            specifies.
-
-            Personalised care adjustments are not applied.
+          name_short: "MenB: primary doses and booster"
+          description_short: "MenB vaccination by 18 months."
+          description_long: >-
+            People registered on the build date whose 18-month milestone, based on
+            approximate birth date, fell in the last 12 months. Achieved with at
+            least two primary meningitis B doses before age 1 and one booster from
+            age 1 to before 18 months. Doses count distinct administration or
+            vaccine order dates. Excludes recorded meningitis B vaccine
+            contraindications. Vaccination age uses recorded completed years where
+            available, otherwise approximate birthdays. The upper age limit uses
+            approximate birth date. No personalised care adjustments are applied.
+            Based on NICE NG218. Code lists: MenB administration, drug and
+            contraindication lists (CHILDHOOD_IMMS_CODES).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -389,52 +348,50 @@ models:
           sort_order: "NICE_IND226"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Identifier of the person in the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "NICE published indicator title."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and achievement."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "Exclusive start of the 12-month milestone cohort."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
+        description: "Age in completed years on the reporting date; null when the birth date is missing."
       - name: condition_name
-        description: Population defining the indicator
+        description: "Short label for the denominator population."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice on the build date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice on the build date."
       - name: birth_date_approx
-        description: Approximate birth date (mid-month)
+        description: "Approximate birth date, set to the middle of the recorded birth month."
       - name: milestone_date
-        description: Date the child reached the indicator's milestone age, which falls in the preceding 12 months
+        description: "Approximate date the child reached the required age milestone, in the 12-month eligibility window."
       - name: doses_in_window
-        description: Distinct administration dates for the indicator's vaccine within its age window
+        description: "Number of distinct vaccine administration or order dates in the indicator age window; for IND217 this counts MMR or MMRV doses only."
       - name: is_in_denominator
-        description: Always true; every row is an eligible child before personalised care adjustments
+        description: "Always true; each row meets the documented eligibility and exclusion rules."
       - name: is_in_numerator
-        description: Whether the child received the required doses within the age window
+        description: "Whether the person meets the documented achievement rule on the reporting date."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
       - name: primary_doses_by_12_months
-        description: Distinct MenB administration or vaccine order dates at completed-year event age 0; missing event age uses the approximate first birthday.
+        description: "Distinct MenB administration or order dates at recorded age 0; missing event age uses the approximate first birthday."
       - name: booster_doses_12_to_18_months
-        description: Distinct MenB administration or vaccine order dates at completed-year event age 1 and before approximate 18 months; missing event age uses the approximate first birthday.
+        description: "Distinct MenB administration or order dates at recorded age 1 and before approximate age 18 months; missing event age uses the approximate first birthday."
 
   - name: fct_person_childhood_immunisation_nice_indicators
-    description: |
-      Current NICE childhood immunisation results. One row per eligible person and
-      indicator, with eligibility assessed on the build date.
+    description: >-
+      NICE childhood immunisation results. One row per person and indicator on the build date.
 
-      Includes the family-specific evidence alongside the shared achievement status. Each
-      indicator defines its own population, time window and exclusions.
 
-      Personalised care adjustments are not applied.
+      Includes IND215, IND216, IND217, IND218, IND224, IND225, IND226, with the eligibility,
+      exclusions and achievement rules documented for each indicator.
     config:
       meta:
         owner:
@@ -447,37 +404,38 @@ models:
               - indicator_id
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Identifier of the person in the indicator denominator."
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
         data_tests:
           - accepted_values:
               arguments:
                 values: ['IND215', 'IND216', 'IND217', 'IND218', 'IND224', 'IND225', 'IND226']
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
         data_tests:
           - accepted_values:
               arguments:
                 values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD']
       - name: birth_date_approx
-        description: Approximate birth date
+        description: "Approximate birth date, set to the middle of the recorded birth month."
       - name: milestone_date
-        description: Date the child reached the indicator's milestone age
+        description: "Approximate date the child reached the required age milestone, in the 12-month eligibility window."
       - name: doses_in_window
-        description: Distinct administration or vaccine order dates within the indicator's age window
+        description: "Number of distinct vaccine administration or order dates in the indicator age window; for IND217 this counts MMR or MMRV doses only."
       - name: primary_doses_by_12_months
-        description: Distinct MenB administration or vaccine order dates at completed-year event age 0; missing event age uses the approximate first birthday. Null for indicators other than IND226.
+        description: "Distinct MenB administration or order dates at recorded age 0; missing event age uses the approximate first birthday. Null for indicators other than IND226."
       - name: booster_doses_12_to_18_months
-        description: Distinct MenB administration or vaccine order dates at completed-year event age 1 and before approximate 18 months; missing event age uses the approximate first birthday. Null for indicators other than IND226.
+        description: "Distinct MenB administration or order dates at recorded age 1 and before approximate age 18 months; missing event age uses the approximate first birthday. Null for indicators other than IND226."
 
   - name: fct_person_childhood_immunisation_nice_indicators_snapshot_input
-    description: |
-      NICE childhood immunisation results used for change history. One row per eligible
-      person and indicator.
+    description: >-
+      NICE childhood immunisation results. One row per person and indicator.
 
-      Excludes build-date fields so a new reporting date alone does not create a history
-      version. Clinical results and evidence retain the family definitions.
+
+      Includes IND215, IND216, IND217, IND218, IND224, IND225, IND226, with the eligibility,
+      exclusions and achievement rules documented for each indicator. Records achievement and
+      evidence used to track changes in clinical results.
     config:
       meta:
         owner:
@@ -490,24 +448,24 @@ models:
               - indicator_id
     columns:
       - name: primary_doses_by_12_months
-        description: Distinct MenB administration or vaccine order dates at completed-year event age 0; missing event age uses the approximate first birthday. Null for indicators other than IND226.
+        description: "Distinct MenB administration or order dates at recorded age 0; missing event age uses the approximate first birthday. Null for indicators other than IND226."
       - name: booster_doses_12_to_18_months
-        description: Distinct MenB administration or vaccine order dates at completed-year event age 1 and before approximate 18 months; missing event age uses the approximate first birthday. Null for indicators other than IND226.
+        description: "Distinct MenB administration or order dates at recorded age 1 and before approximate age 18 months; missing event age uses the approximate first birthday. Null for indicators other than IND226."
       - name: person_id
-        description: Person identifier; part of the snapshot unique_key.
+        description: "Identifier of the person in the indicator denominator."
         data_tests:
           - not_null
       - name: indicator_id
-        description: NICE indicator identifier; part of the snapshot unique_key.
+        description: "NICE indicator identifier."
         data_tests:
           - not_null
       - name: current_practice_code
-        description: ODS code of the current registration practice at the build.
+        description: "ODS code of the registration practice on the build date."
       - name: is_in_numerator
-        description: Whether the person met the indicator at the build.
+        description: "Whether the person meets the documented achievement rule on the build date."
       - name: indicator_status
-        description: Outcome label at the build.
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
       - name: milestone_date
-        description: Date the child reached the milestone age.
+        description: "Approximate date the child reached the required age milestone, in the 12-month eligibility window."
       - name: doses_in_window
-        description: Doses within the age window at the build.
+        description: "Number of distinct vaccine administration or order dates in the indicator age window; for IND217 this counts MMR or MMRV doses only."

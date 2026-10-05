@@ -1,4 +1,4 @@
-{{ config(materialized='view', tags=['monthly-full', 'nice-history']) }}
+{{ config(materialized='table', cluster_by=['reporting_date', 'person_id'], tags=['monthly-full', 'nice-history']) }}
 
 -- NICE IND248: https://www.nice.org.uk/indicators/ind248
 -- All six physical health checks in 12 months for people with an active SMI diagnosis.

@@ -1,16 +1,17 @@
 models:
 - name: fct_person_postnatal_mental_health_ind178
-  description: Postnatal mental health enquiry. One row per registered, living, non-test woman after her
-    latest delivery episode, assessed at the build date R. Female delivery records qualify at ages 12
-    to 55 inclusive at their clinical date, using the approximate birth date. A new episode starts more
-    than 180 days after the current episode's first record, not its previous record. Delivery date is
-    the earliest clinical date in that episode. Only records with clinical date on or before R and recorded
-    date on or before R (or null) enter episode grouping. The latest episode supplies the delivery date,
-    which must be in (R - 12 months, R - 16 weeks]. A DEPSCRN_COD or ANXSCRN_COD record from 4 to 16 weeks
-    afterwards, inclusive and on or before R, qualifies. Sex-of-baby-at-delivery and postpartum maternal
-    blood-loss quantity codes can date delivery. A maternal six-week examination alone does not qualify; women
-    with a postnatal check but no delivery code remain outside the denominator. Personalised care adjustments
-    are not applied.
+  description: >-
+    Mental health enquiry after childbirth (NICE IND178). One row per person in the denominator
+    on the build date.
+
+
+    People registered on the build date who are women with a latest delivery 16 weeks to 12
+    months before the build date. Records must be known by then and dated at age 12 to 55
+    inclusive. Records within 180 days of an episode's first record form one delivery, dated by
+    that first record. Baby-sex or maternal blood-loss records can date delivery; a six-week
+    postnatal examination alone cannot. Achieved with a depression or anxiety enquiry 4 to 16
+    weeks after delivery. No personalised care adjustments are applied. Based on NICE CG192.
+    Code lists: DELIVERY_COD (ECL_CACHE); DEPSCRN_COD, ANXSCRN_COD (PCD).
   config:
     meta:
       owner:
@@ -21,21 +22,17 @@ models:
         type: MEASURE
         category: MATERNITY
         clinical_domain: Maternity
-        name_short: Postnatal mental health enquiry
-        description_short: Mental health enquiry 4 to 16 weeks after the latest delivery in the preceding
-          year, excluding women less than 16 weeks postpartum.
-        description_long: Postnatal mental health enquiry. One row per registered, living, non-test woman
-          after her latest delivery episode, assessed at the build date R. Female delivery records qualify
-          at ages 12 to 55 inclusive at their clinical date, using the approximate birth date. A new episode
-          starts more than 180 days after the current episode's first record, not its previous record.
-          Delivery date is the earliest clinical date in that episode. Only records with clinical date
-          on or before R and recorded date on or before R (or null) enter episode grouping. The latest
-          episode supplies the delivery date, which must be in (R - 12 months, R - 16 weeks]. A DEPSCRN_COD
-          or ANXSCRN_COD record from 4 to 16 weeks afterwards, inclusive and on or before R, qualifies.
-          Sex-of-baby-at-delivery and postpartum maternal blood-loss quantity codes can date delivery. A
-          maternal six-week examination alone does not qualify; women with a postnatal check but no delivery
-          code remain outside the denominator. Personalised care adjustments are not
-          applied.
+        name_short: "Postnatal mental health enquiry"
+        description_short: "Mental health enquiry after childbirth."
+        description_long: >-
+          People registered on the build date who are women with a latest delivery 16 weeks to
+          12 months before the build date. Records must be known by then and dated at age 12 to
+          55 inclusive. Records within 180 days of an episode's first record form one delivery,
+          dated by that first record. Baby-sex or maternal blood-loss records can date delivery;
+          a six-week postnatal examination alone cannot. Achieved with a depression or anxiety
+          enquiry 4 to 16 weeks after delivery. No personalised care adjustments are applied.
+          Based on NICE CG192. Code lists: DELIVERY_COD (ECL_CACHE); DEPSCRN_COD, ANXSCRN_COD
+          (PCD).
         is_qof: false
         source_column: is_in_numerator
         usage_contexts:
@@ -43,34 +40,33 @@ models:
         sort_order: NICE_IND178
   columns:
   - name: person_id
-    description: Woman in the indicator denominator.
+    description: "Person identifier for a member of the indicator denominator."
     data_tests:
     - not_null
     - unique
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published indicator subject.
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Build date R.
+    description: "Build date used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Exclusive lower boundary for the latest delivery, R minus 12 calendar months.
+    description: "12 months before the reporting date. Deliveries on this boundary are excluded."
   - name: age
-    description: Completed years at R; delivery eligibility uses age at the delivery record.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: condition_name
-    description: Population defining the indicator.
+    description: "Short label for the denominator population."
   - name: current_practice_code
-    description: ODS code of the registration practice at R.
+    description: "ODS code of the registration practice at the reporting date."
   - name: current_practice_name
-    description: Name of the registration practice at R.
+    description: "Name of the registration practice at the reporting date."
   - name: delivery_date
-    description: Earliest clinical date of the latest known delivery episode; starts the postpartum window.
+    description: "First clinical date of the latest known delivery episode, used to assess the postnatal enquiry period."
   - name: latest_record_date
-    description: Latest qualifying mental health enquiry date 4 to 16 weeks after delivery; null when
-      none.
+    description: "Latest mental health enquiry from 4 to 16 weeks after delivery, inclusive; null if absent."
   - name: is_in_denominator
-    description: Always true for each eligible row.
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether qualifying mental health enquiry evidence is present.
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."

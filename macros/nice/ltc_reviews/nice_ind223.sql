@@ -5,7 +5,7 @@
     Returns: the IND223 detail projection, one eligible person per reporting_date.
 -#}
 -- NICE IND223: https://www.nice.org.uk/indicators/ind223
--- Cancer care review within 12 months of the latest new cancer diagnosis for people diagnosed in the preceding 24 months; the register excludes non-melanoma skin cancer.
+-- Cancer care review within 12 months of the latest new cancer diagnosis for people diagnosed in the completed follow-up cohort; the register excludes non-melanoma skin cancer.
 WITH indicator_population AS (
     SELECT
         population.person_id,
@@ -23,8 +23,8 @@ WITH indicator_population AS (
         ON population.person_id = review.person_id
         AND population.reporting_date = review.reporting_date
     WHERE profile.has_cancer
-        AND profile.latest_cancer_diagnosis_date
-            BETWEEN DATEADD(month, -24, population.reporting_date) AND population.reporting_date
+        AND profile.latest_cancer_diagnosis_date > DATEADD(month, -36, population.reporting_date)
+        AND profile.latest_cancer_diagnosis_date <= DATEADD(month, -12, population.reporting_date)
 ),
 
 assessed AS (
@@ -49,9 +49,9 @@ SELECT
     'IND223' AS indicator_id,
     'Cancer: review within 12 months' AS indicator_name,
     reporting_date,
-    DATEADD(month, -24, reporting_date) AS measurement_period_start,
+    DATEADD(month, -36, reporting_date) AS measurement_period_start,
     age,
-    'Cancer diagnosed in the preceding 24 months' AS condition_name,
+    'Cancer diagnosed 36 to 12 months ago'::VARCHAR(43) AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     diagnosis_date,
     latest_review_date,

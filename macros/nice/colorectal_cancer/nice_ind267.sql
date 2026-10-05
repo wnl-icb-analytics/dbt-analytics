@@ -34,9 +34,9 @@ daily_referral AS (
         MATCH_CONDITION (eligible.referral_date >= fit.event_date)
         ON eligible.person_id = fit.person_id
 )
-SELECT person_id, 'IND267' AS indicator_id, 'Cancer: FIT before urgent colorectal referral' AS indicator_name,
+SELECT person_id, 'IND267' AS indicator_id, 'Cancer: faecal immunochemical testing' AS indicator_name,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Latest urgent suspected colorectal cancer referral in twelve months' AS condition_name,
+    age, 'Urgent suspected colorectal cancer referral' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     referral_date, referral_id, latest_record_date, TRUE AS is_in_denominator,
     latest_record_date IS NOT NULL AS is_in_numerator,

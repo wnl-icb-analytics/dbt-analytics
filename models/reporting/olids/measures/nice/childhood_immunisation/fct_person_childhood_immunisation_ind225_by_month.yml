@@ -1,23 +1,18 @@
 models:
 - name: fct_person_childhood_immunisation_ind225_by_month
-  description: |
-    NICE IND225 MenB vaccination by eight months. One row per eligible child and completed month-
-    end. The child must be registered, living and non-test at that date, with the approximate
-    8-month milestone in (month-end minus 12 months, month-end].
+  description: >-
+    MenB vaccination by 8 months (NICE IND225). One row per person in the denominator at
+    each month-end.
 
-    Achieved with at least two MenB doses before eight months of age. Doses count distinct
-    administration or vaccine order dates, measured from the approximate birth date.
 
-    Excludes children with a contraindication record for the vaccine, as NICE specifies.
-
-    Recalculated at monthly refresh for the last 60 completed month-ends using today's rules and
-    code lists. Registration and practice use the existing monthly spine. Registration start is
-    inclusive; registration end and death dates are exclusive. Overlapping registrations retain the
-    spine's current-registration priority. Birth and death dates are approximate; missing birth
-    dates prevent historical active rows. Current gender and test flags apply retrospectively.
-    Diagnosis state uses clinical and recorded dates. Vaccine evidence uses clinical or order dates
-    through the month-end. Later corrections and code-list changes can alter earlier results.
-    Personalised care adjustments are not applied.
+    People registered at the month-end whose 8-month milestone, based on approximate birth
+    date, fell in the last 12 months. Achieved with at least two meningitis B doses before
+    age 8 months. Doses count distinct administration or vaccine order dates. Excludes
+    recorded meningitis B vaccine contraindications. No personalised care adjustments are
+    applied. Based on NICE NG218. Recalculated for each of the last 60 month-ends with
+    current rules, code lists and records, so later corrections can change past months.
+    Code lists: MenB administration, drug and contraindication lists
+    (CHILDHOOD_IMMS_CODES).
   config:
     meta:
       owner:
@@ -25,36 +20,35 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind225
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "NICE published indicator title."
   - name: reporting_date
-    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Exclusive lower boundary of the preceding 12-month milestone cohort.
+    description: "Exclusive start of the 12-month milestone cohort."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the denominator population."
   - name: practice_code
-    description: Registration practice at the month-end under the existing monthly spine attribution.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Registration practice at the month-end under the existing monthly spine attribution.
+    description: "Name of the registration practice at month-end."
   - name: birth_date_approx
-    description: Approximate birth date (mid-month)
+    description: "Approximate birth date, set to the middle of the recorded birth month."
   - name: milestone_date
-    description: Date the child reached the indicator's milestone age, which falls in the preceding 12
-      months
+    description: "Approximate date the child reached the required age milestone, in the 12-month eligibility window."
   - name: doses_in_window
-    description: Distinct administration dates for the indicator's vaccine within its age window
+    description: "Number of distinct vaccine administration or order dates in the indicator age window; for IND217 this counts MMR or MMRV doses only."
   - name: is_in_denominator
-    description: Always true; every row is an eligible child before personalised care adjustments
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
   - name: is_in_numerator
-    description: Whether the child received the required doses within the age window
+    description: "Whether the person meets the documented achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

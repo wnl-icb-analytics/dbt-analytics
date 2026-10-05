@@ -58,7 +58,7 @@ SELECT
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,
-    'Diabetes aged 40 and over without CVD' AS condition_name,
+    'Diabetes without cardiovascular disease, aged 40 or over' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_lipid_lowering_order_date,
     latest_lipid_lowering_class,

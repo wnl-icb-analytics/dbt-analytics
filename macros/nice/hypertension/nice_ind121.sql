@@ -5,7 +5,8 @@
 -#}
 {% macro nice_ind121(reference='current') %}
 -- NICE IND121: https://www.nice.org.uk/indicators/ind121
--- Urine ACR within three months either side of hypertension diagnosis in the financial year for adults over 18, capped at the reporting date.
+-- Urine ACR within three months either side of diagnosis for adults over 18.
+-- The rolling annual diagnosis cohort ends three months before the reporting date.
 WITH population AS (
     {{ nice_hypertension_new_diagnosis_population(reference) }}
     AND population.age > 18
@@ -32,9 +33,9 @@ SELECT
     'IND121' AS indicator_id,
     'Hypertension: urinary albumin for target organ damage' AS indicator_name,
     population.reporting_date,
-    {{ nice_financial_year_start('population.reporting_date') }} AS measurement_period_start,
+    DATEADD(month, -15, population.reporting_date) AS measurement_period_start,
     population.age,
-    'Hypertension newly diagnosed in the financial year, aged over 18' AS condition_name,
+    'New hypertension, aged over 18'::VARCHAR(64) AS condition_name,
     {{ nice_practice_columns('population', reference) }},
     population.diagnosis_date,
     selected.latest_acr_date,

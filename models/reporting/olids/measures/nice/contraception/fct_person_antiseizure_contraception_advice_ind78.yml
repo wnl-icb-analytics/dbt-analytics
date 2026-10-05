@@ -1,13 +1,19 @@
 models:
 - name: fct_person_antiseizure_contraception_advice_ind78
-  description: Reproductive counselling. One row per active, living, non-test woman under 55 taking antiseizure
-    medication at R. An EPILDRUG_COD order in (R minus six months, R] defines treatment, including users
-    without epilepsy. has_epilepsy identifies EP register membership. Sterilisation or partial/complete
-    hysterectomy through R excludes the woman. Achievement requires both contraception-topic advice (ECL_CACHE
-    CONTRACEPTION_ADVICE_TOPIC_COD or PCD EPILCC_COD) and conception/pregnancy-topic advice (ECL_CACHE
-    PREGNANCY_ADVICE_TOPIC_COD or PCD EPILPA_COD/EPILPCA_COD) in [R minus twelve months, R]. One record
-    in both topic lists can meet both. Codes do not establish individual tailoring. Assessed at the build
-    date.
+  description: >-
+    Reproductive counselling during antiseizure treatment (NICE IND78). One row per person
+    in the denominator on the build date.
+
+
+    People registered on the build date recorded as women under 55 with an antiseizure
+    prescription in the last 6 months. Epilepsy diagnosis is not required. Excludes
+    sterilisation or partial or complete hysterectomy. Achieved with both contraception
+    advice and conception or pregnancy advice in the last 12 months. One record can cover
+    both topics. Codes do not establish individual tailoring. No personalised care
+    adjustments are applied. Based on NICE NG217. Code lists: EPILDRUG_COD;
+    CONTRACEPTION_ADVICE_TOPIC_COD, PREGNANCY_ADVICE_TOPIC_COD (ECL cache); EPILCC_COD,
+    EPILPA_COD, EPILPCA_COD (PCD); STERIL_COD, HYST2_COD (OpenCodelists, NHSD primary care
+    domain refsets).
   config:
     meta:
       owner:
@@ -18,16 +24,19 @@ models:
         type: MEASURE
         category: CONTRACEPTION
         clinical_domain: CONTRACEPTION
-        name_short: Reproductive counselling for antiseizure medication users
-        description_short: Reproductive counselling for antiseizure medication users
-        description_long: Reproductive counselling. One row per active, living, non-test woman under 55
-          taking antiseizure medication at R. An EPILDRUG_COD order in (R minus six months, R] defines
-          treatment, including users without epilepsy. has_epilepsy identifies EP register membership.
-          Sterilisation or partial/complete hysterectomy through R excludes the woman. Achievement requires
-          both contraception-topic advice (ECL_CACHE CONTRACEPTION_ADVICE_TOPIC_COD or PCD EPILCC_COD)
-          and conception/pregnancy-topic advice (ECL_CACHE PREGNANCY_ADVICE_TOPIC_COD or PCD EPILPA_COD/EPILPCA_COD)
-          in [R minus twelve months, R]. One record in both topic lists can meet both. Codes do not establish
-          individual tailoring. Assessed at the build date.
+        name_short: "Antiseizure reproductive counselling"
+        description_short: "Reproductive counselling during antiseizure treatment."
+        description_long: >-
+          People registered on the build date recorded as women under 55 with an
+          antiseizure prescription in the last 6 months. Epilepsy diagnosis is not
+          required. Excludes sterilisation or partial or complete hysterectomy.
+          Achieved with both contraception advice and conception or pregnancy advice
+          in the last 12 months. One record can cover both topics. Codes do not
+          establish individual tailoring. No personalised care adjustments are
+          applied. Based on NICE NG217. Code lists: EPILDRUG_COD;
+          CONTRACEPTION_ADVICE_TOPIC_COD, PREGNANCY_ADVICE_TOPIC_COD (ECL cache);
+          EPILCC_COD, EPILPA_COD, EPILPCA_COD (PCD); STERIL_COD, HYST2_COD
+          (OpenCodelists, NHSD primary care domain refsets).
         is_qof: false
         source_column: is_in_numerator
         usage_contexts:
@@ -40,27 +49,32 @@ models:
         - person_id
   columns:
   - name: person_id
-    description: Person in the denominator.
+    description: "Person identifier for a member of the indicator denominator."
   - name: reporting_date
-    description: Date used to assess eligibility and evidence.
+    description: "Build date used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Reporting date minus twelve months. Advice includes this boundary.
+    description: "12 months before the reporting date, included in both advice windows."
   - name: latest_record_date
-    description: Later of the two latest topic dates when both topics qualify; otherwise null.
+    description: >-
+      Later of the contraception and pregnancy advice dates when both topics qualify in the 12-month
+      window; otherwise null.
   - name: is_in_denominator
-    description: Always true.
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether the advice rule is met.
+    description: "True when the person meets the achievement rules in the model description."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   - name: latest_asm_date
-    description: Latest antiseizure order through the reporting date.
+    description: "Latest antiseizure prescription on or before the reporting date; null if absent."
   - name: has_epilepsy
-    description: Whether the woman belongs to the epilepsy register at the reporting date; all antiseizure
-      users remain eligible.
+    description: >-
+      True when the woman is on the epilepsy register at the reporting date. IND78 also includes
+      antiseizure users without epilepsy.
   - name: latest_contraception_advice_date
-    description: Latest contraception-topic advice in the inclusive twelve months to R; null means no
-      qualifying evidence.
+    description: >-
+      Latest contraception advice in the 12 months before the reporting date, including both
+      boundaries; null if absent.
   - name: latest_pregnancy_advice_date
-    description: Latest conception/pregnancy-topic advice in the inclusive twelve months to R; null means
-      no qualifying evidence.
+    description: >-
+      Latest conception or pregnancy advice in the 12 months before the reporting date, including
+      both boundaries; null if absent.

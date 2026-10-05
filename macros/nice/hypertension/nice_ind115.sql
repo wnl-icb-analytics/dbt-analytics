@@ -39,7 +39,7 @@ SELECT
     population.reporting_date,
     '2014-04-01'::DATE AS measurement_period_start,
     population.age,
-    'Hypertension diagnosed on or after 1 April 2014' AS condition_name,
+    'Hypertension diagnosed since 1 April 2014' AS condition_name,
     {{ nice_practice_columns('population', reference) }},
     population.diagnosis_date,
     selected.latest_home_ambulatory_bp_date,

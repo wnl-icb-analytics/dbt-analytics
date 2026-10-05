@@ -35,7 +35,7 @@ SELECT
     reporting_date,
     measurement_period_start,
     age,
-    'High cholesterol in the preceding 12 months' AS condition_name,
+    'High cholesterol in the last 12 months' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     qualifying_reading_date,
     qualifying_cholesterol_value,

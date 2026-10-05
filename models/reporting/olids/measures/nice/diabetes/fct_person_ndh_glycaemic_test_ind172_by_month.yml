@@ -1,49 +1,48 @@
 models:
 - columns:
-  - description: Person in the indicator denominator
+  - description: "Person identifier for someone in the indicator denominator."
     name: person_id
-  - description: NICE indicator identifier
+  - description: "Published NICE indicator identifier."
     name: indicator_id
-  - description: Published NICE indicator name
+  - description: "Published NICE indicator title."
     name: indicator_name
-  - description: Completed month-end at which eligibility and evidence are assessed.
+  - description: "Month-end used to assess the population, age and evidence."
     name: reporting_date
-  - description: Inclusive start of the measurement period before the reporting date
+  - description: "Inclusive start of the indicator measurement period before the reporting date."
     name: measurement_period_start
-  - description: Completed years at month-end from the approximate birth month.
+  - description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
     name: age
-  - description: Population defining the indicator
+  - description: "Short label for the indicator denominator population."
     name: condition_name
-  - description: ODS practice code at month-end under the monthly spine attribution.
+  - description: "ODS code of the registration practice at month-end."
     name: practice_code
-  - description: Practice name at month-end under the monthly spine attribution.
+  - description: "Name of the registration practice at month-end."
     name: practice_name
-  - description: Date of the latest qualifying record in the period; null when none
+  - description: "Date of qualifying evidence retained within the indicator measurement or follow-up window; null when none is recorded."
     name: latest_record_date
-  - description: Always true; every row is an eligible person before personalised care adjustments
+  - description: "Always true. Every row belongs to the denominator before personalised care adjustments."
     name: is_in_denominator
-  - description: Whether the person meets the indicator on the reporting date
+  - description: "Whether the person meets the indicator achievement rule on the reporting date."
     name: is_in_numerator
-  - description: ACHIEVED or the reason not achieved
+  - description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
     name: indicator_status
   config:
     meta:
       clinical_source: https://www.nice.org.uk/indicators/ind172
       owner:
         name: EddieDavison92
-  description: "NICE IND172. Annual glycaemic monitoring in non-diabetic hyperglycaemia. One\nrow per\
-    \ registered at the month-end, living, non-test person aged 18 and over on\nthe non-diabetic hyperglycaemia\
-    \ register without unresolved diabetes,\nassessed on the completed month-end.\n\nAchievement requires\
-    \ an HbA1c or fasting plasma glucose test in the\npreceding 12 months. A numeric result is not required.\n\
-    \nPeople under 18 or with an unknown age are excluded. This NICE population\ndoes not include gestational\
-    \ diabetes alone.\n\nPersonalised care adjustments are not applied.\n Recalculated for the last 60\
-    \ completed month-ends using today's rules and code lists. Registration and practice use the existing\
-    \ monthly spine, with registration start inclusive and registration end and death exclusive. Overlapping\
-    \ registrations retain the spine's current-registration priority. Birth and death dates are approximate;\
-    \ missing birth dates prevent historical active rows. Current gender and test flags apply retrospectively.\
-    \ Diagnosis state uses clinical and recorded dates; test and BP evidence use their clinical dates\
-    \ through month-end. Later corrections can alter earlier results. Personalised care adjustments are\
-    \ not applied."
+  description: >-
+    Glycaemic testing in non-diabetic hyperglycaemia (NICE IND172). One row per person in
+    the denominator at the month-end.
+
+
+    People registered at the month-end aged 18 or over on the non-diabetic hyperglycaemia
+    register without unresolved diabetes. Gestational diabetes alone does not qualify.
+    Achieved with HbA1c or fasting plasma glucose testing in the 12 months before the
+    month-end. No numeric result is needed. No personalised care adjustments are applied.
+    Based on NICE PH38. Recalculated for each of the last 60 month-ends with current
+    rules, code lists and records, so later corrections can change past months. Code
+    lists: IFCCHBAM_COD, DCCTHBA1C_COD, FASPLASGLUC_COD (PCD).
   name: fct_person_ndh_glycaemic_test_ind172_by_month
   data_tests:
   - dbt_utils.unique_combination_of_columns:

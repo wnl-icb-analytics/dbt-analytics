@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 -- NICE IND321: https://www.nice.org.uk/indicators/ind321
 -- Cervical screening recorded in 5.5 years for women aged 25 to 64; excludes people without a cervix.

@@ -63,7 +63,7 @@ SELECT
     reporting_date,
     DATEADD(month, -15, reporting_date) AS measurement_period_start,
     age,
-    'Learning disability with Down''s syndrome' AS condition_name,
+    'Learning disability with Down''s syndrome, adults' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     downs_syndrome_diagnosis_date,
     latest_thyroid_function_test_date,

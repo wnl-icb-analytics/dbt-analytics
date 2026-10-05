@@ -1,17 +1,17 @@
 models:
 - name: fct_person_learning_disability_thyroid_test_ind79_by_month
   description: >-
-    Learning disability thyroid testing (NICE IND79). One row per eligible adult learning disability
-    member with Down's syndrome and month-end. People must be registered, living and non-test. LD
-    register members aged 18+ with a DS_COD diagnosis known by R, excluding the THY register
-    (hypothyroidism). A TFT_COD test in the inclusive 15-month window through R qualifies. TFT_COD also
-    includes free T4 and T3, so it is a broader proxy for TSH. Dates may be present without numeric
-    results. Personalised care adjustments are not applied. Recalculated monthly for 60 completed
-    month-ends using today's rules and code lists. Registration starts are inclusive; ends and deaths
-    are exclusive. The established spine supplies age and practice. Approximate birth and death dates
-    and retrospective current test flags limit interpretation. Register and diagnosis eligibility uses
-    known dates; other evidence uses clinical or order dates through R. Later corrections can change
-    earlier results.
+    Thyroid testing in adults with Down's syndrome (NICE IND79). One row per person in the
+    denominator at each month-end.
+
+
+    People registered at the month-end aged 18 or over on the learning disability register with
+    Down's syndrome. Hypothyroidism excludes them. Achieved with a thyroid function test in the
+    15 months before the month-end. Numeric results are not required. Free T4 and T3 codes count
+    without proof of TSH testing. No personalised care adjustments are applied. Recalculated for
+    each of the last 60 month-ends with current rules, code lists and records, so later
+    corrections can change past months. Based on NICE NG145. Code lists: LD_COD, DS_COD,
+    THY_COD, TFT_COD (PCD).
   config:
     meta:
       owner:
@@ -19,35 +19,37 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind79
   columns:
   - name: person_id
-    description: Person in the indicator denominator.
+    description: "Person identifier for a member of the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name.
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Evaluation date R.
+    description: "Month-end used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Inclusive window start.
+    description: "15 months before the reporting date, included in the test window."
   - name: age
-    description: Age in completed years at R.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: condition_name
-    description: Population defining the indicator.
+    description: "Short label for the denominator population."
   - name: is_in_denominator
-    description: Always true for an eligible row.
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether the qualifying evidence is present at R.
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   - name: latest_record_date
-    description: Latest qualifying evidence date; null when not achieved.
+    description: "Latest thyroid function test in the 15-month window; null if absent."
   - name: practice_code
-    description: ODS code of the registration practice at R.
+    description: "ODS code of the registration practice at the reporting month-end."
   - name: practice_name
-    description: Name of the registration practice at R.
+    description: "Name of the registration practice at the reporting month-end."
   - name: downs_syndrome_diagnosis_date
-    description: Earliest clinical DS_COD diagnosis known by R.
+    description: "Earliest Down's syndrome diagnosis with clinical and recorded dates known by the reporting date."
   - name: latest_thyroid_function_test_date
-    description: Latest TFT_COD test through R, including stale evidence; null when absent.
+    description: >-
+      Latest thyroid function test on or before the reporting date; null if absent. It may be
+      outside the achievement window.
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

@@ -4,6 +4,7 @@
     Args: reference is current or by_month.
     Returns: one eligible person per reporting_date, with indicator detail.
 -#}
+-- The 0.4 to 1.0 mmol/L range and latest-result rule are local interpretations; NICE does not define them.
 -- NICE IND87: https://www.nice.org.uk/indicators/ind87
 -- Latest serum lithium recorded in 4 months and in the 0.4 to 1.0 mmol/L range for people on lithium therapy.
 WITH indicator_population AS (
@@ -51,7 +52,7 @@ SELECT
     reporting_date,
     DATEADD(month, -4, reporting_date) AS measurement_period_start,
     age,
-    'Lithium therapy (prescribed in the preceding 6 months)' AS condition_name,
+    'Current lithium therapy' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_lithium_level_date,
     latest_lithium_level,

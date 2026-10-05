@@ -5,7 +5,7 @@
     Returns: the indicator detail columns, one eligible person per reporting_date.
 -#}
 -- NICE IND173: https://www.nice.org.uk/indicators/ind173
--- HbA1c in 12 months for women whose latest gestational diabetes episode is more than 12 months old, excluding diabetes diagnosed more than 12 months ago (NICE pilot report reading).
+-- Episode timing follows NICE NM151; the separate diabetes-history exclusion has no independently recovered pilot source.
 WITH indicator_population AS (
     SELECT
         population.person_id,
@@ -52,7 +52,7 @@ SELECT
     reporting_date AS reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'History of gestational diabetes, latest episode more than 12 months ago' AS condition_name,
+    'Gestational diabetes more than 12 months ago' AS condition_name,
     {{ nice_practice_columns(none, reference) }},
     latest_record_date,
     TRUE AS is_in_denominator,

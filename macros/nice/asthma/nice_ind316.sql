@@ -35,7 +35,7 @@ WITH population AS (
 )
 SELECT person_id, 'IND316' AS indicator_id, 'Asthma: MART (higher risk patients)' AS indicator_name,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Higher-risk asthma (aged 12 or over)' AS condition_name,
+    age, 'Higher-risk asthma, aged 12 or over' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     risk_period_start, risk_period_end, saba_inhaler_count, oral_steroid_course_count,
     latest_asthma_admission_date, has_high_saba_use, has_repeated_oral_steroids, has_asthma_admission,

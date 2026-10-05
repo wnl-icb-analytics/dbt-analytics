@@ -1,8 +1,13 @@
 models:
 - name: fct_person_contraception_nice_indicators_snapshot_input
-  description: Current NICE contraception outcomes at the build date. One row per eligible, active, living,
-    non-test woman and indicator. Assessment date and measurement-period start are omitted so daily builds
-    do not create versions without a change in evidence, practice or outcome.
+  description: >-
+    Contraception advice evidence for change history (IND78, IND116, IND117, IND124, IND148,
+    IND149). One row per eligible person and indicator.
+
+
+    Records practice, supporting evidence and achievement from the build date. Reporting date and
+    measurement period start are omitted, so the passing of a day alone does not create a new
+    version. Eligibility and achievement follow the individual measures.
   config:
     meta:
       owner:
@@ -15,10 +20,14 @@ models:
         - indicator_id
   columns:
   - name: latest_contraception_advice_date
-    description: Latest contraception-topic advice in the inclusive twelve months to R; null means no
-      qualifying evidence.
+    description: >-
+      Latest contraception advice in the 12 months before the reporting date, including both
+      boundaries; null if absent. Null when this field does not apply to the indicator.
   - name: latest_pregnancy_advice_date
-    description: Latest conception/pregnancy-topic advice in the inclusive twelve months to R; null means
-      no qualifying evidence.
+    description: >-
+      Latest conception or pregnancy advice in the 12 months before the reporting date, including
+      both boundaries; null if absent. Null when this field does not apply to the indicator.
   - name: has_epilepsy
-    description: EP register membership for IND78; null for other indicators.
+    description: >-
+      True when the woman is on the epilepsy register at the reporting date. IND78 also includes
+      antiseizure users without epilepsy. Null when this field does not apply to the indicator.

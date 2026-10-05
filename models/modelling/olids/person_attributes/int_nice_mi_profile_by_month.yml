@@ -1,11 +1,12 @@
 models:
 - name: int_nice_mi_profile_by_month
-  description: Myocardial infarction evidence, one row per registered, living, non-test person with MI_COD known
-    by the reporting date. Last 60 completed month-ends, recalculated using current rules and code lists. MI and
-    LVSD diagnoses use clinical and recorded dates; other evidence uses clinical or order dates through the reporting
-    date. Persistent ACE-I or aspirin intolerance applies from its first clinical date; temporary intolerance lasts
-    12 calendar months, including both endpoints. OSAL_COD records support aspirin taken over the counter. Therapy
-    dates remain available when stale; null means no evidence.
+  description: >-
+    Myocardial infarction evidence for registered, living, non-test people with a recorded
+    diagnosis by the month-end. One row per person and month-end. Includes left ventricular
+    dysfunction, prescriptions, intolerance and over-the-counter aspirin. Persistent intolerance
+    continues from its first date; temporary intolerance lasts 12 calendar months, inclusive.
+    Null treatment dates mean no evidence. Recalculated for each of the last 60 month-ends with
+    current rules, code lists and records, so later corrections can change past months.
   config:
     meta:
       owner:
@@ -29,6 +30,8 @@ models:
   - name: has_aspirin_intolerance
     description: XSAL_COD persistent or TXSAL_COD in 12 months, used for clopidogrel substitution.
   - name: antiplatelet_chemical_count_in_period
-    description: Number of distinct nine-character BNF chemical prefixes ordered in the inclusive six months to
-      assessment. Strengths and products of one chemical count once. The IND125 lenient result also adds OTC aspirin
-      when no aspirin order is current.
+    description: >-
+      Number of distinct nine-character BNF chemical prefixes ordered in the inclusive six
+      months to assessment. Strengths and products of one chemical count once. The IND125
+      alternative result also counts recorded over-the-counter aspirin when no aspirin
+      prescription is current.

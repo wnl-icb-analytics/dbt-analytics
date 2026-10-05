@@ -1,8 +1,13 @@
 models:
 - name: fct_person_contraception_nice_indicators
-  description: Contraception outcomes. One row per eligible, active, living, non-test woman, indicator
-    and reporting date for IND78, IND116, IND117, IND124, IND148 and IND149. Assessed at the build date.
-    Each measure retains its documented population, exclusions and advice rules.
+  description: >-
+    Contraception advice indicator results (IND78, IND116, IND117, IND124, IND148,
+    IND149). One row per eligible person and indicator on the build date.
+
+
+    People registered on the build date in each indicator's denominator. Eligibility,
+    exclusions and achievement follow the individual measures. Supporting fields are null
+    where an indicator does not provide them.
   config:
     meta:
       owner:
@@ -15,43 +20,58 @@ models:
         - indicator_id
   columns:
   - name: person_id
-    description: Person in the indicator denominator.
+    description: "Person identifier for a member of the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name.
+    description: "Published NICE indicator title."
   - name: age
-    description: Completed years at reporting date, based on the approximate birth date.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: current_practice_code
-    description: Registration practice ODS code at reporting date.
+    description: "ODS code of the registration practice at the reporting date."
   - name: current_practice_name
-    description: Registration practice name at reporting date.
+    description: "Name of the registration practice at the reporting date."
   - name: latest_asm_date
-    description: Indicator-specific supporting evidence; null for indicators where this field does not
-      apply.
+    description: >-
+      Latest antiseizure prescription on or before the reporting date; null if absent. Null when
+      this field does not apply to the indicator.
   - name: latest_oral_patch_date
-    description: Indicator-specific supporting evidence; null for indicators where this field does not
-      apply.
+    description: >-
+      Latest practice-issued oral or patch contraceptive prescription on or before the reporting
+      date; null if absent. Null when this field does not apply to the indicator.
   - name: latest_ehc_date
-    description: Indicator-specific supporting evidence; null for indicators where this field does not
-      apply.
+    description: >-
+      Latest practice-issued emergency hormonal contraception prescription on or before the
+      reporting date. Null when this field does not apply to the indicator.
   - name: latest_non_specific_advice_date
-    description: Indicator-specific supporting evidence; null for indicators where this field does not
-      apply.
+    description: >-
+      Latest general advice about long-acting reversible contraception from the prescription day to
+      31 days afterwards, inclusive; null if absent. Null when this field does not apply to the
+      indicator.
   - name: latest_written_advice_date
-    description: Indicator-specific supporting evidence; null for indicators where this field does not
-      apply.
+    description: >-
+      Latest written advice or leaflet about long-acting reversible contraception from the
+      prescription day to 31 days afterwards, inclusive; null if absent. Null when this field does
+      not apply to the indicator.
   - name: latest_verbal_advice_date
-    description: Indicator-specific supporting evidence; null for indicators where this field does not
-      apply.
+    description: >-
+      Latest verbal advice about long-acting reversible contraception from the prescription day to
+      31 days afterwards, inclusive; null if absent. Null when this field does not apply to the
+      indicator.
   - name: has_unknown_modality_advice
-    description: Indicator-specific supporting evidence; null for indicators where this field does not
-      apply.
+    description: >-
+      True when method education with an unknown advice format occurs within the 31-day follow-up
+      period. It does not count towards achievement. Null when this field does not apply to the
+      indicator.
   - name: latest_contraception_advice_date
-    description: Latest contraception-topic advice in the inclusive twelve months to R; null means no
-      qualifying evidence.
+    description: >-
+      Latest contraception advice in the 12 months before the reporting date, including both
+      boundaries; null if absent. Null when this field does not apply to the indicator.
   - name: latest_pregnancy_advice_date
-    description: Latest conception/pregnancy-topic advice in the inclusive twelve months to R; null means
-      no qualifying evidence.
+    description: >-
+      Latest conception or pregnancy advice in the 12 months before the reporting date, including
+      both boundaries; null if absent. Null when this field does not apply to the indicator.
   - name: has_epilepsy
-    description: EP register membership for IND78; null for other indicators.
+    description: >-
+      True when the woman is on the epilepsy register at the reporting date. IND78 also includes
+      antiseizure users without epilepsy. Null when this field does not apply to the indicator.

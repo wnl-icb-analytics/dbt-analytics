@@ -1,0 +1,43 @@
+models:
+- name: int_bone_sparing_hospital_therapy_all
+  description: >-
+    Bone-sparing therapy recorded outside practice medication orders, one row per source record.
+    Includes PCD BSA_COD observations and NHS_DRUG_REFSETS/BSADRUG_COD medication statements for
+    zoledronic acid or denosumab, including branded products identified by BNF ingredient prefixes.
+    Retains inactive and deceased people and all dated records. Zoledronic acid and explicitly
+    intravenous bisphosphonates cover twelve months; denosumab and other therapy cover six months.
+    An unspecified ibandronic acid therapy observation does not establish intravenous administration.
+    Coverage is measured backwards from the reporting date, with an exclusive lower boundary.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns: [therapy_source, record_id]
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: BSA_COD
+        source: PCD
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: NHS_DRUG_REFSETS/BSADRUG_COD
+        source: OPENCODELISTS
+  columns:
+  - name: person_id
+    description: Person identifier.
+  - name: record_id
+    description: Source observation or medication statement identifier; unique with therapy_source.
+  - name: therapy_date
+    description: Corrected clinical observation date or medication statement date.
+  - name: therapy_source
+    description: PCD_OBSERVATION or MEDICATION_STATEMENT.
+  - name: therapy_type
+    description: Zoledronic acid, explicitly intravenous bisphosphonate, denosumab or other bone-sparing therapy.
+  - name: coverage_months
+    description: Months of treatment coverage used by NICE bone-health measures, twelve or six.
+  - name: mapped_concept_code
+    description: SNOMED CT concept code.
+  - name: mapped_concept_display
+    description: Authoritative concept display.

@@ -9,11 +9,11 @@
 SELECT
     population.person_id,
     'IND118' AS indicator_id,
-    'Dementia: baseline tests' AS indicator_name,
+    'Dementia: target organ damage (all patients)' AS indicator_name,
     profile.reporting_date,
     '2014-04-01'::DATE AS measurement_period_start,
     population.age,
-    'Dementia' AS condition_name,
+    'Dementia diagnosed since 1 April 2014' AS condition_name,
     {{ nice_practice_columns('population', reference) }},
     profile.diagnosis_date,
     profile.ind118_fbc_date AS fbc_date,

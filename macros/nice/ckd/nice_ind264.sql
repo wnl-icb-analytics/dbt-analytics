@@ -5,6 +5,7 @@
     Returns: the IND264 detail columns, one person per reporting_date.
 -#}
 -- NICE IND264: https://www.nice.org.uk/indicators/ind264
+-- Shared BP selection prefers valid pairs on the latest complete date, then lowest systolic/diastolic; unlinked components use daily maxima.
 -- Last BP in 12 months below 130/80 clinic or 125/75 home for people on the CKD register with a latest ACR of 70 mg/mmol or more, without moderate or severe frailty.
 WITH indicator_population AS (
     SELECT
@@ -71,7 +72,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'CKD with ACR 70 mg/mmol or more, without moderate or severe frailty' AS condition_name,
+    'Kidney disease with heavy albuminuria' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     latest_frailty_severity,
     latest_acr_value,

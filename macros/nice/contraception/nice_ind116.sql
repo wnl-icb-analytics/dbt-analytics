@@ -24,9 +24,9 @@ WITH population AS (
     FROM population
 )
 SELECT person_id, 'IND116' AS indicator_id,
-    'Contraception advice for women with diabetes' AS indicator_name,
+    'Contraception: advice for people with diabetes' AS indicator_name,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Women aged 17 to 44 on the diabetes register' AS condition_name,
+    age, 'Women with diabetes, aged 17 to 44' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     latest_record_date, TRUE AS is_in_denominator,
     latest_record_date IS NOT NULL AS is_in_numerator,

@@ -74,7 +74,7 @@ SELECT
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
     {{ nice_practice_columns('status', reference) }},
-    'Hypertension' AS condition_name,
+    'Hypertension, aged 80 or over' AS condition_name,
     latest_bp_date,
     is_valid_bp,
     latest_systolic_value,

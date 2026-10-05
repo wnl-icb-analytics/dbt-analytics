@@ -29,11 +29,11 @@ category_evidence AS (
 SELECT
     candidates.person_id,
     'IND318' AS indicator_id,
-    'Heart failure: EF category recorded' AS indicator_name,
+    'Heart failure: ejection fraction category' AS indicator_name,
     candidates.reporting_date,
     '2026-04-01'::DATE AS measurement_period_start,
     candidates.age,
-    'New heart failure diagnosis' AS condition_name,
+    'Heart failure diagnosed since 1 April 2026' AS condition_name,
     {{ nice_practice_columns('candidates', reference) }},
     candidates.diagnosis_date,
     evidence.has_reduced_ef_category,

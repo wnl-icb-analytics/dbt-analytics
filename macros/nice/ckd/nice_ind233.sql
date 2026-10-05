@@ -51,7 +51,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'CKD stage 3 to 5 diagnosed in the preceding 12 months' AS condition_name,
+    'New chronic kidney disease, stages 3 to 5' AS condition_name,
     {{ nice_practice_columns('result', reference) }},
     diagnosis_date,
     latest_egfr_value,

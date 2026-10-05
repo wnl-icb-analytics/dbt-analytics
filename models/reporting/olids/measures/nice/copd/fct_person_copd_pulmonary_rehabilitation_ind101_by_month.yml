@@ -1,19 +1,21 @@
 models:
 - name: fct_person_copd_pulmonary_rehabilitation_ind101_by_month
-  description: Pulmonary rehabilitation offers, one row per active, living, non-test COPD register member
-    with MRC grade 3+ in fifteen months after exclusions. The first MRC_COD grade 3+ in (R minus 15 months,
-    R] anchors the offer. PULRHBOFF_COD or PULREHAB_OFFERED_COD must be strictly after that record and
-    on or before R; PCD referral evidence includes retired SNOMED predecessors. Declines do not count.
-    Excludes PULRHBATT_COD attendance from diagnosis to before
-    the MRC record, any PULRHBPU_COD unsuitability through R, and two COPDINVITE_COD invitations in the
-    fifteen-month window at least seven days apart without a COPDRVW_COD review after the first invitation
-    through R. This coded unsuitability proxy cannot independently identify every clinical contraindication.
-    No other personalised care adjustments. Recalculated for the last 60 completed month-ends using today's
-    rules and code lists. Registration and practice use the monthly spine, with inclusive registration
-    starts and exclusive registration ends and death dates. Overlaps retain the spine's current-registration
-    priority. Birth and death dates are approximate; missing birth dates prevent historical active rows.
-    Current gender and test flags apply retrospectively. Diagnoses use clinical and recorded dates; other
-    evidence uses corrected clinical or order dates. Later corrections can alter earlier results.
+  description: >-
+    Pulmonary rehabilitation offered to people with COPD (NICE IND101). One row per person
+    in the denominator at each month-end.
+
+
+    People registered at the month-end on the COPD register with MRC breathlessness grade
+    at least 3 in the last 15 months. Achieved with an offer, referral or decline after
+    the first qualifying grade. Excludes rehabilitation attendance between diagnosis and
+    that grade, any recorded unsuitability, or two invitations at least seven days apart
+    in those 15 months without a review after the first. Recorded unsuitability does not
+    identify every clinical contraindication. No other personalised care adjustments are
+    applied. Based on NICE NG115. Recalculated for each of the last 60 month-ends with
+    current rules, code lists and records, so later corrections can change past months.
+    Code lists: COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, MRC_COD, PULRHBOFF_COD,
+    PULRHBDEC_COD, PULRHBATT_COD, PULRHBPU_COD, COPDINVITE_COD, COPDRVW_COD (PCD);
+    PULREHAB_OFFERED_COD (ECL cache).
   config:
     meta:
       owner:
@@ -26,42 +28,42 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Person in the indicator denominator.
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published indicator name.
+    description: "NICE published indicator title."
   - name: reporting_date
-    description: Date at which eligibility and evidence are assessed.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Exclusive lower boundary of the measurement window.
+    description: "Exclusive start of the indicator eligibility or evidence window."
   - name: age
-    description: Completed years at reporting_date.
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
   - name: condition_name
-    description: Population defining the indicator.
+    description: "Short label for the denominator population."
   - name: latest_record_date
-    description: Latest qualifying numerator evidence date; null when the numerator is not met.
+    description: "Date of the latest qualifying evidence in the indicator window; null when none."
   - name: is_in_denominator
-    description: Always true for emitted rows after the documented exclusions.
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
   - name: is_in_numerator
-    description: Whether the numerator rule is met.
+    description: "Whether the person meets the documented achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or the documented missing-evidence status.
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   - name: diagnosis_date
-    description: Earliest COPD register diagnosis date.
+    description: "Earliest COPD register diagnosis date."
   - name: mrc_date
-    description: First MRC grade 3+ date in the fifteen-month window.
+    description: "First Medical Research Council breathlessness grade of at least 3 in the 15-month eligibility window."
   - name: latest_offer_date
-    description: Latest offer or referral strictly after mrc_date and on or before R.
+    description: "Latest pulmonary rehabilitation offer, referral or recorded decline strictly after the qualifying breathlessness record and on or before the reporting date; null when none."
   - name: first_invitation_date
-    description: First invitation in fifteen months.
+    description: "First COPD invitation in the 15-month eligibility window; null when none."
   - name: last_invitation_date
-    description: Last invitation in fifteen months.
+    description: "Last COPD invitation in the 15-month eligibility window; null when none."
   - name: latest_response_date
-    description: Latest COPD review after the first invitation through R.
+    description: "Latest COPD review strictly after the first invitation and on or before the reporting date; null when none."
   - name: is_excluded_invitation_non_response
-    description: Two invitations at least seven days apart without a later review; excludes the person.
+    description: "Whether two invitations at least seven days apart had no subsequent review; always false for included people."
   - name: practice_code
-    description: ODS registration practice at reporting_date.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Registration practice name at reporting_date.
+    description: "Name of the registration practice at month-end."

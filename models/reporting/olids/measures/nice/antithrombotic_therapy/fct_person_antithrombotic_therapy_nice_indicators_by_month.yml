@@ -1,14 +1,15 @@
 models:
 - name: fct_person_antithrombotic_therapy_nice_indicators_by_month
-  description: 'NICE antithrombotic therapy results. One row per eligible person, indicator and completed
-    month-end. Each member retains its population, measurement window, exclusions and detail columns.
-    Recalculated at monthly refresh for the last 60 completed month-ends using today''s rules and code
-    lists. Registration and practice use the existing monthly spine: start inclusive, end and death exclusive,
-    with current-registration priority for overlaps. Birth and death dates are approximate; missing birth
-    dates prevent historical active rows. Current gender and test flags apply retrospectively. Register
-    and diagnosis state use clinical and recorded dates. Other evidence uses clinical or order dates through
-    the month-end. Later corrections and code-list changes can alter earlier results. Personalised care
-    adjustments are not applied.'
+  description: >-
+    Antiplatelet and anticoagulant treatment results. One row per person, indicator and
+    month-end.
+
+
+    Includes NICE IND94, NICE IND132, NICE IND133. Each indicator has its own denominator,
+    measurement window and exclusions. Supporting evidence accompanies the achievement
+    status. No personalised care adjustments are applied. Recalculated for each of the
+    last 60 month-ends with current rules, code lists and records, so later corrections
+    can change past months.
   config:
     meta:
       owner:
@@ -22,48 +23,40 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Completed month-end used for eligibility and evidence; DATE, with no current-day row.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "Inclusive start of the indicator measurement period before the reporting date."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
+    description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the population in the indicator denominator."
   - name: practice_code
-    description: Practice ODS code at the month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice attributed at the reporting month-end."
   - name: practice_name
-    description: Practice name at the month-end under the monthly spine attribution.
+    description: "Name of the registration practice attributed at the reporting month-end."
   - name: latest_antiplatelet_order_date
-    description: Date of the most recent antiplatelet order; null if never ordered Selected through the
-      month-end; stale detail remains available.
+    description: "Date of the latest antiplatelet prescription through the reporting date; null when none is recorded."
   - name: latest_anticoagulant_order_date
-    description: Date of the most recent oral anticoagulant order; null if never ordered Selected through
-      the month-end; stale detail remains available.
+    description: "Date of the latest oral anticoagulant prescription through the reporting date; null when none is recorded."
   - name: latest_anticoagulant_type
-    description: DOAC, VKA or OTHER_ANTICOAGULANT for the selected oral anticoagulant order through the
-      month-end. Null when no order exists. The highest order id wins same-date ties under coordinator
-      ruling C4.
+    description: "Drug type of the latest oral anticoagulant prescription: DOAC means direct-acting oral anticoagulant and VKA means vitamin K antagonist; null when none is recorded."
   - name: latest_antiplatelet_record_date
-    description: Latest recorded OTC salicylate use (OSAL_COD) or clopidogrel prophylaxis (CLO_COD); null
-      if none Selected through the month-end; stale detail remains available.
+    description: "Date of the latest recorded over-the-counter salicylate use or clopidogrel prophylaxis through the reporting date; null when absent."
   - name: latest_anticoagulant_record_date
-    description: Latest oral anticoagulant prophylaxis record from ORANTICOAG_COD; null if none Selected
-      through the month-end; stale detail remains available.
+    description: "Date of the latest oral anticoagulant prophylaxis record through the reporting date; null when absent."
   - name: is_antiplatelet_in_period
-    description: Whether an antiplatelet order, OTC salicylate use or clopidogrel prophylaxis record falls
-      in the measurement period
+    description: "Whether an antiplatelet prescription, over-the-counter salicylate use or clopidogrel prophylaxis record falls within the measurement period."
   - name: is_anticoagulant_in_period
-    description: Whether an oral anticoagulant order or prophylaxis record falls in the measurement period
-      for IND132 and IND133. IND94 uses orders only and excludes these from its denominator
+    description: "Whether an oral anticoagulant prescription or prophylaxis record falls within the period for IND132 and IND133. IND94 uses prescriptions only and excludes people prescribed anticoagulants in its period."
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true; each row is eligible before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or the reason not achieved
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."

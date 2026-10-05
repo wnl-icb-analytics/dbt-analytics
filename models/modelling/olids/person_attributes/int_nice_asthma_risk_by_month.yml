@@ -1,12 +1,12 @@
 models:
 - name: int_nice_asthma_risk_by_month
-  description: Asthma higher-risk profile, one row per active, living, non-test IND186 diagnosis member
-    aged 6+ and reporting date. Counts SABA inhalers, distinct prednisolone order days and GP asthma admissions
-    in (R minus 24 months, R minus 12 months]. No SUS evidence. Recalculated at monthly refresh for the last 60 completed
-    month-ends with current rules and code lists. Monthly spine registration start is inclusive; registration
-    end and death dates are exclusive. Approximate birth/death dates, overlap priority and current test/gender
-    flags constrain history. Diagnosis and resolution use clinical and recorded known dates; other evidence
-    uses clinical/order dates through R. Later corrections can change earlier results.
+  description: >-
+    Asthma risk factors for registered, living, non-test people aged 6 or over with an
+    unresolved asthma diagnosis. One row per person and month-end. Counts inhalers, prednisolone
+    order days and GP-coded admissions after the date 24 months before the month-end through the
+    date 12 months before it, inclusive. Hospital admissions not coded in GP records are absent.
+    Recalculated for each of the last 60 month-ends with current rules, code lists and records,
+    so later corrections can change past months.
   config:
     meta:
       owner:
@@ -21,7 +21,8 @@ models:
   - name: person_id
     description: Person aged 6+ with an unresolved IND186 diagnosis.
   - name: reporting_date
-    description: Date at which eligibility and prior-year risk are assessed.
+    description: >-
+      Completed month-end on which population and evidence are assessed.
   - name: risk_period_start
     description: Exclusive start of the prior-year risk window.
   - name: risk_period_end
