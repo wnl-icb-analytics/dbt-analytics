@@ -23,22 +23,24 @@ models:
         type: NICE_REGISTER
         category: LTC
         clinical_domain: Metabolic
-        name_short: 'Weight management: obesity register'
-        description_short: 'Weight management: obesity register'
-        description_long: 'Uses the shared int_bmi_all classification: any obese class, from the latest
-          numeric recorded or calculated BMI in (R - 12 months, R]. BMI must be 10 to 150 kg/m^2 inclusive;
-          an invalid latest numeric result excludes membership without an older valid fallback. Value-free
-          or unparseable records are not results. Calculated BMI uses adult weight and the latest prior
-          adult height, on the weight date; recorded BMI takes precedence on that date. Lower category
-          thresholds apply only to the NG246 higher-risk ethnic groups identified by int_ethnicity_cardiometabolic_risk,
-          using the equivalent int_ethnicity_qof_all.is_bame event flag. Any higher-risk record known
-          by R takes precedence over other ethnicity records. Unknown ethnicity uses standard thresholds.
-          Overweight starts at 23 kg/m^2 for higher-risk groups and 25 otherwise; obesity starts at 27.5
-          and 30 respectively. This differs from the NICE indicator wording, which gives lower thresholds
-          to everyone not recorded as White. BMI and ethnicity require clinical and recorded dates on
-          or before R; null recorded dates use the clinical date. Calculated BMI becomes known only when
-          both its weight and contributing height are known. Age is assessed at R. BMI30_COD alone does
-          not supply a numeric value.'
+        name_short: >-
+          Obesity register
+        description_short: >-
+          Adults whose latest numeric BMI in the preceding 12 months indicates obesity.
+        description_long: >-
+          People aged 18 or over qualify when their latest numeric recorded or calculated
+          BMI in the 12 months before the build date indicates obesity. Valid BMI is 10 to
+          150 kg/m^2, inclusive; an invalid latest result excludes membership without an
+          older valid fallback. Calculated BMI uses adult weight and the latest prior
+          adult height; recorded BMI takes precedence on a shared date. The threshold is
+          27.5 kg/m^2 for recorded NG246 higher-risk ethnic groups and 30 otherwise,
+          including unknown ethnicity. Any higher-risk ethnicity recorded by the build
+          date takes precedence over other ethnicity records. NICE lowers the threshold
+          for everyone not recorded as White. Clinical and recorded dates must be on or
+          before the build date; missing recorded dates use clinical dates. Calculated BMI
+          is available only when both weight and height are recorded. A BMI30_COD record
+          without a number does not qualify. Based on NICE NG246. Code list: BMIVAL_COD;
+          numeric BMI can also be calculated from weight and height.
         source_column: is_on_register
         is_qof: false
         qof_indicator: null

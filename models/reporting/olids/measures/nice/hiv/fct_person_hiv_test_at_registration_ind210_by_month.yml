@@ -1,50 +1,51 @@
 models:
 - name: fct_person_hiv_test_at_registration_ind210_by_month
-  description: HIV testing at registration. One row per registered, living, non-test person aged 16+ whose
-    registration started at least 3 and less than 15 months before R. Registration starts in (R - 15 months,
-    R - 3 months]. HIV_COD and AIDS_COD diagnoses known before registration exclude the person. A HIV_TEST_COD
-    completed test from registration through three calendar months after it qualifies. NCL is treated
-    as entirely high-prevalence, so no area gate applies. This assumption must be reviewed before widening
-    geography. Mass registrations remain included. History covers the last 60 completed month-ends and
-    is recalculated at monthly refresh using current rules and code lists. Approximate birth/death dates
-    and current gender/test flags limit historical interpretation. Diagnoses require clinical and recorded
-    dates known by R; other evidence uses clinical dates through R. Later corrections can alter earlier
-    results.
+  description: >-
+    HIV testing within 3 months of GP registration (NICE IND210). One row per person in the
+    denominator at each month-end.
+
+
+    People registered at the month-end aged 16 or over who registered 3 to 15 months before the
+    month-end, allowing testing to finish. HIV or AIDS diagnosed and known before registration
+    excludes the person. Achieved with a completed HIV test within 3 calendar months from
+    registration. North Central London is treated as a high-prevalence area without geographical
+    restrictions. Mass registrations count. No personalised care adjustments are applied.
+    Recalculated for each of the last 60 month-ends with current rules, code lists and records,
+    so later corrections can change past months. Based on NICE NG60. Code lists: HIV_COD,
+    AIDS_COD (PCD); HIV_TEST_COD (ECL_CACHE).
   config:
     meta:
       owner:
         name: EddieDavison92
   columns:
   - name: person_id
-    description: Person in the indicator denominator.
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published indicator subject.
+    description: "NICE published indicator title."
   - name: reporting_date
-    description: Completed month-end R. Recalculated for the last 60 completed month-ends using current
-      rules and code lists.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Exclusive lower boundary of the rolling eligibility or review window.
+    description: "Exclusive start of the 15-month registration cohort."
   - name: age
-    description: Completed years at R.
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
   - name: condition_name
-    description: Population defining the indicator.
+    description: "Short label for the denominator population."
   - name: practice_code
-    description: ODS code of the registration practice at R.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Name of the registration practice at R.
+    description: "Name of the registration practice at month-end."
   - name: registration_start_date
-    description: Start of the registration attributed at R. The testing window begins on this date.
+    description: "Start of the registration attributed on the reporting date; the HIV testing window begins on this date."
   - name: latest_record_date
-    description: Latest qualifying evidence date in the specified window; null when no qualifying evidence
-      exists.
+    description: "Date of the latest qualifying evidence in the indicator window; null when none."
   - name: is_in_denominator
-    description: Always true for each eligible row.
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
   - name: is_in_numerator
-    description: Whether qualifying evidence is present in the specified window.
+    description: "Whether the person meets the documented achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

@@ -1,10 +1,17 @@
 models:
 - name: fct_person_heart_failure_ef_category_ind318
-  description: Heart failure ejection-fraction recording. One row per active, living, non-test HF register
-    member with entry on or after 1 April 2026. Entry is the earliest unresolved HF diagnosis known by assessment.
-    Numerator is any HFREF_DX_COD, HFMREF_DX_COD, HFPEF_DX_COD or PCD REDEJCFRAC_COD known by assessment, including
-    earlier category records. Numeric ejection fraction, generic systolic or diastolic HF and improved EF alone
-    do not count. No personalised care adjustments apply. Assessed on the build date.
+  description: >-
+    Heart failure ejection fraction category recording (NICE IND318). One row per person in the
+    denominator on the build date.
+
+
+    People registered on the build date on the heart failure register with an earliest
+    unresolved diagnosis from 1 April 2026. Achieved with a recorded reduced, mildly reduced or
+    preserved ejection fraction category, even before diagnosis. Numeric ejection fraction,
+    generic systolic or diastolic heart failure, and improved ejection fraction alone do not
+    count. No personalised care adjustments are applied. Based on NICE NG106. Code lists:
+    HF_COD, HFRES_COD, REDEJCFRAC_COD (PCD); HFREF_DX_COD, HFMREF_DX_COD, HFPEF_DX_COD
+    (ECL_CACHE).
   config:
     meta:
       owner:
@@ -15,13 +22,16 @@ models:
         type: MEASURE
         category: HEART_FAILURE
         clinical_domain: Cardiometabolic
-        name_short: 'Heart failure: ejection fraction category'
-        description_short: 'Heart failure: ejection fraction category'
-        description_long: Heart failure ejection-fraction recording. One row per active, living, non-test HF
-          register member with entry on or after 1 April 2026. Entry is the earliest unresolved HF diagnosis
-          known by assessment. Numerator is any HFREF_DX_COD, HFMREF_DX_COD, HFPEF_DX_COD or PCD REDEJCFRAC_COD
-          known by assessment, including earlier category records. Numeric ejection fraction, generic systolic
-          or diastolic HF and improved EF alone do not count. No personalised care adjustments apply.
+        name_short: "Heart failure ejection fraction"
+        description_short: "Heart failure ejection fraction category recording."
+        description_long: >-
+          People registered on the build date on the heart failure register with an earliest
+          unresolved diagnosis from 1 April 2026. Achieved with a recorded reduced, mildly
+          reduced or preserved ejection fraction category, even before diagnosis. Numeric
+          ejection fraction, generic systolic or diastolic heart failure, and improved ejection
+          fraction alone do not count. No personalised care adjustments are applied. Based on
+          NICE NG106. Code lists: HF_COD, HFRES_COD, REDEJCFRAC_COD (PCD); HFREF_DX_COD,
+          HFMREF_DX_COD, HFPEF_DX_COD (ECL_CACHE).
         is_qof: false
         source_column: is_in_numerator
         usage_contexts:
@@ -34,21 +44,26 @@ models:
         - person_id
   columns:
   - name: reporting_date
-    description: Assessment date.
+    description: "Build date used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: 1 April 2026 for HF; earliest qualifying lifetime reading for IND260; 12 months before assessment
-      for IND261.
+    description: "1 April 2026, the first eligible diagnosis date."
   - name: latest_record_date
-    description: Supporting achievement evidence date through assessment; null means no qualifying evidence.
+    description: "Latest qualifying ejection fraction category known by the reporting date; null if absent."
   - name: is_in_denominator
-    description: Always true.
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether the required category or assessment evidence exists.
+    description: "Whether the person meets the documented achievement rule."
   - name: diagnosis_date
-    description: Earliest unresolved HF register-entry date known by assessment.
+    description: "Earliest unresolved heart failure diagnosis with clinical and recorded dates known by the reporting date."
   - name: has_reduced_ef_category
-    description: Any reduced category known by assessment.
+    description: >-
+      True when a reduced ejection fraction category is known by the reporting date, including a
+      category recorded before diagnosis.
   - name: has_mildly_reduced_ef_category
-    description: Any mildly reduced category known by assessment.
+    description: >-
+      True when a mildly reduced ejection fraction category is known by the reporting date,
+      including a category recorded before diagnosis.
   - name: has_preserved_ef_category
-    description: Any preserved or normal category known by assessment.
+    description: >-
+      True when a preserved ejection fraction category is known by the reporting date, including a
+      category recorded before diagnosis.

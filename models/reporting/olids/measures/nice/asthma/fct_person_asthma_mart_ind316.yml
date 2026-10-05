@@ -1,12 +1,20 @@
 models:
 - name: fct_person_asthma_mart_ind316
-  description: 'MART prescribing, one row per active, living, non-test person aged 12+ with unresolved
-    asthma and a prior-year risk factor. Uses the IND186 population and int_nice_asthma_risk: SABA at
-    least 6 inhalers, at least 2 distinct prednisolone order days, or a GP-coded asthma admission in (R
-    minus 24 months, R minus 12 months]. SUS admissions and emergency visits are omitted. Numerator requires
-    an ICS_FORMOTEROL_MART_RX order in (R minus 12 months, R] and MART_COD recorded on or before R. The
-    product list contains only MART-capable strengths and devices; product capability does not prove an
-    age-specific licence. No personalised care adjustments. R is the build date.'
+  description: >-
+    Maintenance and reliever therapy in higher-risk asthma (NICE IND316). One row per
+    person in the denominator on the build date.
+
+
+    People registered on the build date aged 12 or over with unresolved asthma and higher
+    risk 12 to 24 months before the build date: at least six short-acting reliever
+    inhalers, at least two distinct prednisolone prescription dates or a GP-recorded
+    asthma admission. Hospital admissions and emergency visits without GP records do not
+    count. Achieved with a maintenance and reliever inhaler prescription in the last 12
+    months and a recorded maintenance and reliever regimen, which has no expiry. Eligible
+    products do not establish an age-specific licence. No personalised care adjustments
+    are applied. Based on NICE NG245. Code lists: AST_COD, ASTRES_COD (PCD); ASTADMSN_COD
+    (PCD); OPENSAFELY/SABA_INHALER_MEDICATIONS (OpenCodelists); 0603020T0 (BNF);
+    ICS_FORMOTEROL_MART_RX, MART_COD (ECL cache).
   config:
     meta:
       owner:
@@ -17,16 +25,21 @@ models:
         type: MEASURE
         category: ASTHMA
         clinical_domain: Respiratory
-        name_short: 'Asthma: MART (higher risk patients)'
-        description_short: 'Asthma: MART (higher risk patients).'
-        description_long: 'MART prescribing, one row per active, living, non-test person aged 12+ with
-          unresolved asthma and a prior-year risk factor. Uses the IND186 population and int_nice_asthma_risk:
-          SABA at least 6 inhalers, at least 2 distinct prednisolone order days, or a GP-coded asthma
-          admission in (R minus 24 months, R minus 12 months]. SUS admissions and emergency visits are
-          omitted. Numerator requires an ICS_FORMOTEROL_MART_RX order in (R minus 12 months, R] and MART_COD
-          recorded on or before R. The product list contains only MART-capable strengths and devices;
-          product capability does not prove an age-specific licence. No personalised care adjustments.
-          R is the build date.'
+        name_short: "Higher-risk asthma MART prescribing"
+        description_short: "Maintenance and reliever therapy in higher-risk asthma."
+        description_long: >-
+          People registered on the build date aged 12 or over with unresolved asthma
+          and higher risk 12 to 24 months before the build date: at least six
+          short-acting reliever inhalers, at least two distinct prednisolone
+          prescription dates or a GP-recorded asthma admission. Hospital admissions
+          and emergency visits without GP records do not count. Achieved with a
+          maintenance and reliever inhaler prescription in the last 12 months and a
+          recorded maintenance and reliever regimen, which has no expiry. Eligible
+          products do not establish an age-specific licence. No personalised care
+          adjustments are applied. Based on NICE NG245. Code lists: AST_COD,
+          ASTRES_COD (PCD); ASTADMSN_COD (PCD); OPENSAFELY/SABA_INHALER_MEDICATIONS
+          (OpenCodelists); 0603020T0 (BNF); ICS_FORMOTEROL_MART_RX, MART_COD (ECL
+          cache).
         is_qof: false
         source_column: is_in_numerator
         usage_contexts:
@@ -39,48 +52,48 @@ models:
         - person_id
   columns:
   - name: person_id
-    description: Person in the indicator denominator.
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published indicator name.
+    description: "NICE published indicator title."
   - name: reporting_date
-    description: Date at which eligibility and evidence are assessed.
+    description: "Build date used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Exclusive lower boundary of the measurement window.
+    description: "Start of the indicator cohort or evidence period; boundary inclusion follows the documented indicator rule."
   - name: age
-    description: Completed years at reporting_date.
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
   - name: condition_name
-    description: Population defining the indicator.
+    description: "Short label for the denominator population."
   - name: latest_record_date
-    description: Latest qualifying numerator evidence date; null when the numerator is not met.
+    description: "Date of the latest qualifying evidence in the indicator window; null when none."
   - name: is_in_denominator
-    description: Always true for emitted rows after the documented exclusions.
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
   - name: is_in_numerator
-    description: Whether the numerator rule is met.
+    description: "Whether the person meets the documented achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or the documented missing-evidence status.
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_TREATED_IN_PERIOD for IND316 or NOT_RECORDED_IN_PERIOD."
   - name: latest_therapy_order_date
-    description: Latest MART-capable inhaler order in twelve months; null when none.
+    description: "Latest maintenance and reliever therapy inhaler prescription in the 12-month achievement window; null when none."
   - name: latest_mart_date
-    description: Latest recorded MART regimen through R, without an expiry window.
+    description: "Latest recorded maintenance and reliever therapy regimen on or before the reporting date, with no expiry; null when none."
   - name: risk_period_start
-    description: Exclusive start of the prior risk year.
+    description: "Exclusive start of the risk period, 24 months before the reporting date."
   - name: risk_period_end
-    description: Inclusive end of the prior risk year.
+    description: "Inclusive end of the risk period, 12 months before the reporting date."
   - name: saba_inhaler_count
-    description: SABA devices in the prior risk year, using the established quantity conversion.
+    description: "Short-acting reliever inhalers in the risk period. Prescription quantities are divided by 60 for Accuhaler, 100 for Turbohaler and 200 otherwise, rounded to whole inhalers with at least one per matching prescription."
   - name: oral_steroid_course_count
-    description: Distinct prednisolone order days in the prior risk year.
+    description: "Distinct prednisolone prescription dates in the risk period, used to estimate oral steroid courses."
   - name: latest_asthma_admission_date
-    description: Latest GP-coded asthma admission in the prior risk year.
+    description: "Latest GP-recorded asthma admission in the risk period; null when none."
   - name: has_high_saba_use
-    description: At least six SABA devices in the prior risk year.
+    description: "Whether at least six short-acting reliever inhalers were prescribed in the risk period."
   - name: has_repeated_oral_steroids
-    description: At least two distinct prednisolone order days in the prior risk year.
+    description: "Whether prednisolone was prescribed on at least two distinct dates in the risk period."
   - name: has_asthma_admission
-    description: GP-coded admission in the prior risk year.
+    description: "Whether a GP-recorded asthma admission occurred in the risk period."
   - name: current_practice_code
-    description: ODS registration practice at reporting_date.
+    description: "ODS code of the registration practice on the build date."
   - name: current_practice_name
-    description: Registration practice name at reporting_date.
+    description: "Name of the registration practice on the build date."

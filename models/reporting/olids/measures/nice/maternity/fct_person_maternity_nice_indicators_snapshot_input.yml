@@ -1,7 +1,13 @@
 models:
 - name: fct_person_maternity_nice_indicators_snapshot_input
-  description: NICE maternity snapshot evidence. One row per eligible woman and indicator at the build
-    date. Keeps delivery, qualifying enquiry, practice and outcome; excludes advancing assessment dates.
+  description: >-
+    Postnatal mental health evidence for change history (IND178). One row per eligible person and
+    indicator.
+
+
+    Records practice, supporting evidence and achievement from the build date. Reporting date and
+    measurement period start are omitted, so the passing of a day alone does not create a new
+    version. Eligibility and achievement follow the individual measures.
   config:
     meta:
       owner:
@@ -14,19 +20,22 @@ models:
         - indicator_id
   columns:
   - name: person_id
-    description: Woman in the indicator denominator.
+    description: "Person identifier for a member of the indicator denominator."
     data_tests:
     - not_null
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "NICE indicator identifier."
   - name: delivery_date
-    description: Earliest clinical date of the latest known delivery episode; starts the postpartum window.
+    description: >-
+      First clinical date of the latest known delivery episode, used to assess the postnatal enquiry
+      period. Null when this field does not apply to the indicator.
   - name: latest_record_date
-    description: Latest qualifying mental health enquiry date 4 to 16 weeks after delivery; null when
-      none.
+    description: >-
+      Supporting evidence date for the indicator. Its meaning follows the individual measure; a date
+      alone does not prove achievement.
   - name: is_in_numerator
-    description: Whether qualifying mental health enquiry evidence is present.
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   - name: current_practice_code
-    description: ODS code of the current registration practice.
+    description: "ODS code of the registration practice at the reporting date."

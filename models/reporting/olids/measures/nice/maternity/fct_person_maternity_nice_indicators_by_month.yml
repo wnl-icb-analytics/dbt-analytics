@@ -1,11 +1,14 @@
 models:
 - name: fct_person_maternity_nice_indicators_by_month
-  description: NICE maternity outcomes. One row per eligible, registered, living, non-test woman and indicator
-    at each completed month-end. Includes IND178 after the latest delivery episode. See the member measure
-    for delivery, age and screening rules. Recalculated for the last 60 completed month-ends with current
-    rules and code lists. Registration and practice follow the monthly spine. Birth and death dates are
-    approximate; current gender and test flags apply retrospectively. Later corrections can change earlier
-    results.
+  description: >-
+    Postnatal mental health indicator results (IND178). One row per eligible person, indicator
+    and month-end.
+
+
+    People registered at the month-end in each indicator's denominator. Eligibility, exclusions
+    and achievement follow the individual measures. Supporting fields are null where an
+    indicator does not provide them. Recalculated for each of the last 60 month-ends with
+    current rules, code lists and records, so later corrections can change past months.
   config:
     meta:
       owner:
@@ -19,33 +22,38 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Woman in the indicator denominator.
+    description: "Person identifier for a member of the indicator denominator."
     data_tests:
     - not_null
   - name: indicator_id
-    description: NICE indicator identifier.
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published indicator subject.
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Completed month-end R.
+    description: "Month-end used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Exclusive lower boundary for the latest delivery, R minus 12 calendar months.
+    description: >-
+      Start of the diagnosis, prescription or evidence period for the indicator. Boundary inclusion
+      is defined in the individual measure.
   - name: age
-    description: Completed years at R; delivery eligibility uses age at the delivery record.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: condition_name
-    description: Population defining the indicator.
+    description: "Short label for the denominator population."
   - name: practice_code
-    description: ODS code of the registration practice at R.
+    description: "ODS code of the registration practice at the reporting month-end."
   - name: practice_name
-    description: Name of the registration practice at R.
+    description: "Name of the registration practice at the reporting month-end."
   - name: delivery_date
-    description: Earliest clinical date of the latest known delivery episode; starts the postpartum window.
+    description: >-
+      First clinical date of the latest known delivery episode, used to assess the postnatal enquiry
+      period. Null when this field does not apply to the indicator.
   - name: latest_record_date
-    description: Latest qualifying mental health enquiry date 4 to 16 weeks after delivery; null when
-      none.
+    description: >-
+      Supporting evidence date for the indicator. Its meaning follows the individual measure; a date
+      alone does not prove achievement.
   - name: is_in_denominator
-    description: Always true for each eligible row.
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether qualifying mental health enquiry evidence is present.
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD.
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
