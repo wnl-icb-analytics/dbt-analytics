@@ -1,0 +1,41 @@
+version: 2
+models:
+  - name: stg_ukhfd_gp_practices_and_prescribing_ccs
+    description: >-
+      ODS epraccur file of GP practices and prescribing cost centres in
+      England and Wales, via UKHFD. One row per organisation per SCD version;
+      is_latest marks the current version. Status and GP practice role are
+      normalised across the legacy file codes and the ODS API codes used
+      since the ODS API switch.
+
+      Source: UKHFD.ODS.dim_GP_Practices_And_Prescribing_CCs_SCD
+      (source ukhfd_ods in models/sources/manual_ukhfd.yml).
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - organisation_code
+              - effective_from_at
+    columns:
+      - name: organisation_code
+        description: ODS code, trimmed and upper case.
+      - name: organisation_status
+        description: Active, Closed, Dormant or Proposed. ODS INACTIVE maps to Closed.
+      - name: source_status_code
+        description: Status as supplied - A/C/D/P in legacy rows, ACTIVE/INACTIVE/DORMANT in ODS API rows.
+      - name: source_prescribing_setting
+        description: Prescribing setting as supplied - legacy numeric code or ODS role code (e.g. RO76).
+      - name: is_gp_practice
+        description: True for GP practices (legacy setting 4 or ODS role RO76), false for other prescribing cost centres.
+      - name: sub_icb_code
+        description: Commissioner (sub-ICB location) code. Closed practices keep the commissioner at closure, often a former CCG code.
+      - name: icb_code
+        description: ICB code (ODS high level health geography).
+      - name: region_code
+        description: NHS England region code (ODS national grouping).
+      - name: is_latest
+        description: True on the current SCD version per organisation.

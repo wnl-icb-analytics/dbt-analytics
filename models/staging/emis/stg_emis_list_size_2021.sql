@@ -30,7 +30,7 @@ with source as (
 )
 
 select
-    gp.borough,
+    gp.registered_borough_name as borough,
     src.CODE as practice_code,
     src.GP_PRACTICE as practice_name,
     src.LIST_SIZE as list_size,
@@ -42,5 +42,6 @@ select
         try_to_date(src.EXTRACT_DATE)
     ) as extract_date
 from source as src
-left join {{ ref('stg_reference_lookup_ncl_gp_practice') }} as gp
-    on src.CODE = gp.gp_practice_code
+left join {{ ref('practice_wnl_active') }} as gp
+    on src.CODE = gp.practice_code
+    and gp.sub_icb_code = {{ ncl_sub_icb() }}
