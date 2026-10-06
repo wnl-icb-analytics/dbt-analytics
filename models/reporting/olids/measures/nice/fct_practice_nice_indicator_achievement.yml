@@ -1,14 +1,16 @@
 models:
   - name: fct_practice_nice_indicator_achievement
     description: >-
-      NICE achievement counts and percentages. One row per indicator, registration practice
-      and reporting date, assessed on the build date.
+      Current NICE achievement counts and percentages. One row per indicator and registration
+      practice on the build date.
 
 
-      The denominator counts currently registered, living patients who meet the indicator's
-      eligibility rules. The numerator counts those who meet its achievement rule, before
-      personalised care adjustments. Only practices with a denominator are included.
-      Sum numerator and denominator for totals rather than averaging percentages.
+      The denominator counts people registered on the build date who meet the indicator
+      population rules. The numerator counts those who meet its achievement rule. No
+      personalised care adjustments are applied. Only practices with a denominator are included.
+      Sum numerator and denominator for totals rather than averaging percentages. Practice
+      names, PCN and borough use the current mapping. The published NICE statement can differ
+      from the implemented rules; see the measure definition.
     config: &achievement_config
       meta:
         owner:
@@ -48,7 +50,9 @@ models:
       - name: name_short
         description: Short catalogue label for reports.
       - name: practice_code
-        description: ODS code of the patient's registration practice at the reporting date.
+        description: >-
+          ODS code of the registration practice attributed at the reporting date.
+
         data_tests:
           - not_null
       - name: practice_name
@@ -60,9 +64,14 @@ models:
       - name: borough
         description: Current practice borough from dim_practice.borough_registered; null if not mapped.
       - name: denominator
-        description: Number of eligible patients registered and living at the reporting date.
+        description: >-
+          Number of people in the indicator denominator at the reporting date, before
+          personalised care adjustments.
+
       - name: numerator
-        description: Number of denominator patients who meet the indicator's achievement rule.
+        description: >-
+          Number of people in the denominator who meet the implemented achievement rule.
+
       - name: not_achieved
         description: Denominator minus numerator, including results with missing or unassessable evidence.
       - name: achievement_pct
@@ -71,15 +80,16 @@ models:
   - name: fct_practice_nice_indicator_achievement_by_month
     description: >-
       Monthly NICE achievement counts and percentages. One row per indicator, registration
-      practice and reporting date for each of the last 60 completed month-ends.
+      practice and completed month-end.
 
 
-      The denominator counts patients registered and living at each month-end who meet the
-      indicator's eligibility rules. The numerator counts those who meet its achievement rule,
-      before personalised care adjustments. Only practices with a denominator are included.
-      Practice names, PCN and borough use the current mapping, not the historical mapping.
-      Sum numerator and denominator for totals rather than averaging percentages.
-      Recalculated with current rules, code lists and records, so later corrections can change
+      The denominator counts people registered at the month-end who meet the indicator
+      population rules. The numerator counts those who meet its achievement rule. No
+      personalised care adjustments are applied. Only practices with a denominator are included.
+      Sum numerator and denominator for totals rather than averaging percentages. Practice
+      names, PCN and borough use the current mapping. The published NICE statement can differ
+      from the implemented rules; see the measure definition. Recalculated for each of the last
+      60 month-ends with current rules, code lists and records, so later corrections can change
       past months.
     config: *achievement_config
     data_tests: *achievement_tests

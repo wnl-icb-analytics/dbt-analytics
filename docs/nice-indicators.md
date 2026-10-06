@@ -25,6 +25,8 @@ GROUP BY reporting_date, indicator_id, indicator_name;
 Measures, family tables, status tables and practice summaries carry `indicator_name`,
 `indicator_description` (NICE's published statement) and `denominator_description`
 (a short label for the denominator population).
+The published statement is verbatim and can differ from the implemented population or rules.
+Read the measure description or `def_indicator.description_long` for the rules used in results.
 
 ## Indicator coverage
 
@@ -34,11 +36,21 @@ Both include achieved and unachieved results before personalised care adjustment
 
 `Register` means a catalogue entry without a numerator. Its population can differ from NICE.
 The model descriptions and `def_indicator.description_long` explain the filters and differences.
-For NICE register counts, select registered, living, non-test people at the reporting date as well
-as each entry's clinical and age rules. Some register models retain inactive and deceased people.
+For NICE register counts, apply each entry's clinical and age rules and use people registered
+at the reporting date. The dedicated NICE hypothyroidism, overweight, obesity and AKI registers
+already apply the active-patient population. Shared registers can retain inactive and deceased
+people and need this filter separately.
+For current counts, use `dim_person_active_patients` to apply this population.
+IND206 also needs age 65 or over and latest coded severity Moderate or Severe. IND254 needs age
+18 or over. IND256 requires the diagnosis register plus people on active lithium treatment,
+counting each person once. The shared asthma register requires recent treatment, while IND186
+requires the diagnosis population. IND185 includes resolved atrial fibrillation in NICE's
+wording, but the shared register excludes it.
 IND237 and IND238 use the shared NG246 BMI categories, including calculated BMI.
 Lower thresholds apply only to recorded higher-risk ethnic groups; unknown ethnicity uses standard
 thresholds. This differs from the NICE wording, which lowers thresholds for everyone not recorded as White.
+The live autism, frailty and NDH registers can use future-dated records. Their monthly register
+models restrict evidence to what was known by month-end.
 `Planned` means further code lists, data or agreed rules are needed.
 Percentages in `Not built` rows describe coded activity. Missing coding does not establish that
 care was absent.

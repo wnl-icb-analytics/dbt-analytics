@@ -1,14 +1,14 @@
 models:
   - name: fct_person_heart_failure_register
-    description: >
-      QOF v51 heart failure registers. One row per person on HF1: the latest
-      HF_COD has no HFRES_COD on a later date. A same-day resolution does not
-      remove the diagnosis; comparisons use the date, not the time.
-      All diagnosis, resolution and reduced-EF evidence is dated on or before today.
-      is_on_hfref_register identifies the HF3 subset with a REDEJCFRAC_COD.
-      HF3 replaces HF2 and is not comparable with the former LVSD-or-reduced-EF
-      sub-register.
+    description: >-
+      Heart failure register (NICE IND254). One row per register member.
 
+
+      Registration status is not filtered. For NICE counts, select people registered on the
+      build date, aged 18 or over, on the full heart failure register. The model includes
+      younger people. A resolved code on a later date than the latest diagnosis removes
+      membership; same-day resolution retains it. NICE lists no resolution exclusion. Reduced-ejection- fraction membership is a subset and is not required. Based on NICE NG106. Code
+      lists: HF_COD, HFRES_COD (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -65,11 +65,11 @@ models:
               Adults with heart failure whose latest diagnosis has not been followed
               by resolution.
             description_long: >-
-              For NICE counts, select heart failure register members aged 18 or over.
-              The model includes younger people. A resolved code after the latest
-              diagnosis removes membership. Use the full heart failure population
-              rather than the reduced-ejection-fraction subset. Based on NICE NG106.
-              Code lists: HF_COD and HFRES_COD.
+              For NICE counts, select people registered on the build date, aged 18 or over, on
+              the full heart failure register. The model includes younger people. A resolved
+              code on a later date than the latest diagnosis removes membership; same-day
+              resolution retains it. NICE lists no resolution exclusion. Reduced-ejection-fraction membership is a subset and is not required. Based on NICE NG106. Code
+              lists: HF_COD, HFRES_COD (PCD).
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "HF001"

@@ -1,20 +1,19 @@
 models:
   - name: fct_person_nice_indicator_status
     description: >-
-      Current NICE indicator results. One row per person and indicator in the denominator on
-      the build date.
+      Current NICE indicator results. One row per person and indicator in the denominator on the
+      build date.
 
 
-      People must be currently registered, living and non-test and meet each indicator's
-      population rules. Includes achieved and unachieved results; personalised care
-      adjustments are not applied. Individual measures and family tables supply readings,
-      thresholds, exclusions and code lists. Measures supply the published indicator statement
-      and denominator label. The indicator catalogue supplies clinical classifications.
-      Reports counting individual care processes are outside this table.
-      Shared measure columns are person_id, indicator_id, indicator_name,
-      indicator_description, denominator_description, reporting_date,
-      measurement_period_start, age, practice, is_in_denominator, is_in_numerator
-      and indicator_status.
+      People registered on the build date meet each indicator's population rules. Includes
+      achieved and unachieved results. No personalised care adjustments are applied. Individual
+      measures and family tables supply readings, thresholds, exclusions and code lists.
+      Measures supply the denominator label and the published NICE statement. The statement can
+      differ from the implemented rules described in the measure. Clinical classifications use the current
+      catalogue. Register-only indicators and reports counting individual care processes are
+      outside this table. Shared measure columns are person_id, indicator_id, indicator_name,
+      indicator_description, denominator_description, reporting_date, measurement_period_start,
+      age, practice, is_in_denominator, is_in_numerator and indicator_status.
     config:
       meta:
         owner:
@@ -204,14 +203,20 @@ models:
           Build date on which eligibility and evidence are assessed.
       - name: measurement_period_start
         description: >-
-          Start date of the indicator's assessment period. Its duration and whether this
-          boundary is included depend on the indicator.
+          Indicator-specific date used as an assessment boundary. It can mark an evidence
+          window, a diagnosis or event cohort, or a fixed programme start. See the measure
+          definition for its meaning and whether the boundary is included.
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded.
+        description: >-
+          Age in years calculated from the approximate birth month at the reporting date; null
+          when birth date is missing.
+
       - name: current_practice_code
         description: ODS code of the current registration practice.
       - name: current_practice_name
-        description: Name of the current registration practice.
+        description: >-
+          Name of the current registration practice; null when no name is available.
+
       - name: is_in_denominator
         description: >-
           Always true. The person meets the population rules before personalised care
@@ -243,16 +248,17 @@ models:
 
   - name: fct_person_nice_indicator_status_by_month
     description: >-
-      Monthly NICE indicator results. One row per eligible person, indicator and completed
-      month-end.
+      Monthly NICE indicator results. One row per person in the denominator, indicator and
+      completed month-end.
 
 
-      People must be registered, living and non-test at month-end and meet each indicator's
-      population rules. Includes achieved and unachieved results; personalised care
-      adjustments are not applied. Individual measures and family tables supply readings,
-      thresholds, exclusions and code lists. Measures supply the published indicator statement
-      and denominator label. The indicator catalogue supplies clinical classifications.
-      Birth and death dates are approximate; missing birth dates exclude
+      People registered at the month-end meet each indicator's population rules. Includes
+      achieved and unachieved results. No personalised care adjustments are applied. Individual
+      measures and family tables supply readings, thresholds, exclusions and code lists.
+      Measures supply the denominator label and the published NICE statement. The statement can
+      differ from the implemented rules described in the measure. Clinical classifications use the current
+      catalogue. Register-only indicators and reports counting individual care processes are
+      outside this table. Birth and death dates are approximate; missing birth dates exclude
       historical rows. Current gender and test flags apply retrospectively. Recalculated for
       each of the last 60 month-ends with current rules, code lists and records, so later
       corrections can change past months.
@@ -293,16 +299,19 @@ models:
           Completed month-end on which eligibility and evidence are assessed.
       - name: measurement_period_start
         description: >-
-          Start date of the indicator's assessment period. Its duration and whether this
-          boundary is included depend on the indicator.
+          Indicator-specific date used as an assessment boundary. It can mark an evidence
+          window, a diagnosis or event cohort, or a fixed programme start. See the measure
+          definition for its meaning and whether the boundary is included.
       - name: age
         description: >-
-          Age in completed years on the reporting date, calculated from the approximate
-          birth month.
+          Age in years calculated from the approximate birth month at the month-end.
       - name: practice_code
         description: ODS code of the registration practice attributed at month-end.
       - name: practice_name
-        description: Name of the registration practice attributed at month-end.
+        description: >-
+          Name of the registration practice attributed at month-end; null when no name is
+          available.
+
       - name: is_in_denominator
         description: >-
           Always true. The person meets the population rules before personalised care
