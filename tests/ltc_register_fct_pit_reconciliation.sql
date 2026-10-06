@@ -1,3 +1,6 @@
+{#- Errors in production, where registers and their inputs build together. Warns elsewhere:
+    CI defers unselected parents to production, so live and recomputed registers can differ. -#}
+{{ config(severity='error' if target.name in ['prod', 'snowflake-prod'] else 'warn') }}
 {% set age_built_on = ltc_relation_built_on(ref('dim_person_age')) %}
 {% set as_of_cache = {} %}
 {% set register_pairs = [
