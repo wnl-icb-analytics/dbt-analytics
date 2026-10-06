@@ -5,19 +5,21 @@ models:
     denominator at the month-end.
 
 
-    People registered at the month-end aged 18 or over on the CKD stage 3 to 5 register
-    with type 2 diabetes, or latest eGFR 20 to 44 mL/min/1.73 m2, or latest eGFR 45 to 59
-    with latest urine ACR at least 22.6 mg/mmol. Outside type 2 diabetes, including
-    unknown type, eligibility also requires an ACE inhibitor or ARB prescription in the
-    last 6 months or contraindications to both. Latest eGFR below 20 excludes everyone;
-    unknown eGFR permits type 2 diabetes. Achieved with an SGLT2 inhibitor prescription in
-    the last 6 months; outside type 2 diabetes, ACE inhibitor or ARB treatment must
-    precede or coincide with the latest SGLT2 prescription, unless both classes are
-    contraindicated. No personalised care adjustments are applied. Based on NICE NG28.
-    Recalculated for each of the last 60 month-ends with current rules, code lists and
-    records, so later corrections can change past months. Code lists: CKD_COD,
-    CKD1AND2_COD, CKDRES_COD, EGFR_COD, NDAALB_COD, SGLT2I_RX (PCD); 0205051, 0205052
-    (BNF); XACE_COD, TXACE_COD, XAII_COD, TXAII_COD (PCD).
+    People registered at the month-end aged 18 or over on the CKD stage 3 to 5 register with
+    type 2 diabetes, or latest eGFR 20 to 44 mL/min/1.73 m2, or latest eGFR 45 to 59 with
+    latest urine ACR at least 22.6 mg/mmol. Outside type 2 diabetes, including unknown type,
+    eligibility also requires an ACE inhibitor or ARB prescription in the last 6 months or
+    contraindications to both classes, each persisting or recorded in the last 12 months.
+    Latest eGFR below 20 excludes everyone; missing or invalid latest eGFR permits type 2
+    diabetes. Kidney results have no lookback limit. Value-free ACR tests are ignored; invalid
+    numeric ACR is not replaced. Achieved with an SGLT2 inhibitor prescription in the last 6
+    months; outside type 2 diabetes, ACE inhibitor or ARB treatment must precede or coincide
+    with the latest SGLT2 prescription, unless both classes are contraindicated. No
+    personalised care adjustments are applied. Based on NICE NG28. Recalculated for each of
+    the last 60 month-ends with current rules, code lists and records, so later corrections
+    can change past months. Code lists: CKD_COD, CKD1AND2_COD, CKDRES_COD, EGFR_COD,
+    NDAALB_COD, SGLT2I_RX (PCD); 0205051, 0205052 (BNF); XACE_COD, TXACE_COD, XAII_COD,
+    TXAII_COD (PCD).
   config:
     meta:
       owner:
@@ -45,13 +47,13 @@ models:
   - name: practice_name
     description: "Name of the registration practice at month-end."
   - name: latest_egfr_value
-    description: "Latest eGFR in mL/min/1.73 m2; null when absent or invalid."
+    description: "eGFR from the latest numeric observation by the reporting date, in mL/min/1.73 m2, with no lookback limit. Null when absent or outside 1 to 200; a later invalid numeric result prevents fallback."
   - name: latest_acr_value
-    description: "Latest numeric urine albumin:creatinine ratio (ACR), in mg/mmol; null when absent or outside the accepted range."
+    description: "Latest numeric urine albumin:creatinine ratio (ACR) by the reporting date, in mg/mmol, with no lookback limit. Value-free tests are ignored. Null when no numeric test is recorded or its result is outside 0 to 9999.99."
   - name: latest_therapy_order_date
     description: "Date of the latest relevant medication prescription by the reporting date; it may be outside the treatment window. Null when never prescribed."
   - name: is_treatment_sequence_met
-    description: "Whether the person has type 2 diabetes, contraindications to both ACE inhibitors and ARBs, or a prescription for either class in the last 6 months on or before the latest SGLT2 prescription."
+    description: "Whether the person has type 2 diabetes, contraindications to both ACE inhibitors and ARBs, or a prescription for either class in the last 6 months on or before the latest SGLT2 prescription; null when missing diabetes type or prescription evidence leaves the rule unknown."
   - name: latest_record_date
     description: "Date of qualifying evidence retained within the indicator measurement or follow-up window; null when none is recorded."
   - name: is_in_denominator

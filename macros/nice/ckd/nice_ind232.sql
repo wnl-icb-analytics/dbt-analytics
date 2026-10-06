@@ -61,7 +61,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Long-term oral anti-inflammatory use, no kidney register' AS denominator_description,
+    'Long-term oral NSAID use, outside the CKD register' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     nsaid_issue_day_count,
     latest_therapy_order_date,
