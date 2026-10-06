@@ -37,7 +37,7 @@ SELECT
     candidates.reporting_date,
     DATEADD(month, -15, candidates.reporting_date) AS measurement_period_start,
     candidates.age,
-    'New unresolved heart failure diagnosis' AS denominator_description,
+    'Heart failure diagnosed 15 to 3 months ago' AS denominator_description,
     {{ nice_practice_columns('candidates', reference) }},
     candidates.diagnosis_date,
     confirmation.latest_record_date,
