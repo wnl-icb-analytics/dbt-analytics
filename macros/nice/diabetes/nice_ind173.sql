@@ -25,6 +25,8 @@ known_diabetes AS (
     SELECT
         population.person_id,
         population.reporting_date,
+        MIN(IFF(diabetes.is_diagnosis_code, diabetes.clinical_effective_date::DATE, NULL))
+            AS earliest_diagnosis_date,
         MAX(IFF(diabetes.is_diagnosis_code, diabetes.clinical_effective_date::DATE, NULL))
             AS latest_diagnosis_date,
         MAX(IFF(diabetes.is_resolved_code, diabetes.clinical_effective_date::DATE, NULL))
@@ -42,9 +44,10 @@ indicator_population AS (
     LEFT JOIN known_diabetes AS diabetes
         ON population.person_id = diabetes.person_id
         AND population.reporting_date = diabetes.reporting_date
-    -- Only the latest known diabetes diagnosis excludes; same-day resolution does not lift it.
-    WHERE diabetes.latest_diagnosis_date IS NULL
-        OR diabetes.latest_diagnosis_date >= DATEADD(month, -12, population.reporting_date)
+    -- Diabetes diagnosed more than 12 months before excludes unless a later code resolves it;
+    -- same-day resolution does not lift it.
+    WHERE diabetes.earliest_diagnosis_date IS NULL
+        OR diabetes.earliest_diagnosis_date >= DATEADD(month, -12, population.reporting_date)
         OR diabetes.latest_resolution_date > diabetes.latest_diagnosis_date
 ),
 
