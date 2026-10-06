@@ -48,7 +48,7 @@ SELECT
     reporting_date,
     DATEADD(month, -15, reporting_date) AS measurement_period_start,
     age,
-    'Rheumatoid arthritis' AS denominator_description,
+    'Rheumatoid arthritis, aged 16 or over' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_review_date,
     latest_record_date,

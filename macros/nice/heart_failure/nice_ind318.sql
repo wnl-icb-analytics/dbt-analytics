@@ -34,7 +34,7 @@ SELECT
     candidates.reporting_date,
     '2026-04-01'::DATE AS measurement_period_start,
     candidates.age,
-    'Heart failure diagnosed since 1 April 2026' AS denominator_description,
+    'Heart failure diagnosed on or after 1 April 2026' AS denominator_description,
     {{ nice_practice_columns('candidates', reference) }},
     candidates.diagnosis_date,
     evidence.has_reduced_ef_category,

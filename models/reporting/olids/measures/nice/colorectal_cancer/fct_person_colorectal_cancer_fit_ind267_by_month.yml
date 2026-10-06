@@ -1,18 +1,18 @@
 models:
 - name: fct_person_colorectal_cancer_fit_ind267_by_month
   description: >-
-    Faecal immunochemical testing before colorectal referral (NICE IND267). One row per
-    person in the denominator at each month-end.
+    Faecal immunochemical testing in people referred for suspected colorectal cancer (NICE
+    IND267). One row per person in the denominator at each month-end.
 
 
-    People registered at the month-end with an urgent suspected colorectal cancer referral
-    in the 12 months before the month-end. Only the latest referral is assessed, so this
-    counts people rather than every referral in NICE's specification. Achieved with a
-    faecal immunochemical test from 21 days before referral to referral day.
-    Bowel-screening result codes are excluded; generic test codes cannot distinguish
-    screening from diagnostic use. No personalised care adjustments are applied. Based on
-    NICE DG56. Recalculated for each of the last 60 month-ends with current rules, code
-    lists and records, so later corrections can change past months. Code lists:
+    People registered at the month-end with an urgent suspected colorectal cancer referral in
+    the 12 months before the month-end. Only the latest referral is assessed, so this counts
+    people rather than every referral in NICE's specification. Achieved with a faecal
+    immunochemical test from 21 days before referral to referral day. A test code counts
+    without a numeric result. Bowel-screening result codes are excluded; generic test codes
+    cannot distinguish screening from diagnostic use. No personalised care adjustments are
+    applied. Based on NICE DG56. Recalculated for each of the last 60 month-ends with current
+    rules, code lists and records, so later corrections can change past months. Code lists:
     GICANREF_COD, FAECIMM_COD, COLCANSCREV_COD (PCD).
   config:
     meta:
@@ -31,7 +31,9 @@ models:
   - name: measurement_period_start
     description: "12 months before the reporting date. Referrals on this boundary are excluded."
   - name: latest_record_date
-    description: "Latest faecal immunochemical test from 21 days before referral to referral day, inclusive; null if absent."
+    description: >-
+      Latest faecal immunochemical test code from 21 days before referral to referral day,
+      inclusive; null if absent. A numeric result is not required.
   - name: is_in_denominator
     description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
