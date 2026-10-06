@@ -645,7 +645,7 @@ PRACTICE_CONTEXT AS (
 
     SELECT
         *
-    FROM {{ ref('stg_reference_primary_care_pcn_membership_all') }}
+    FROM {{ source('reference_primary_care', 'PCN_MEMBERSHIP_ALL') }}
 
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY PRACTICE_CODE
