@@ -1,17 +1,17 @@
 models:
   - name: fct_person_ckd_ras_therapy_ind263
     description: >-
-      ACE inhibitor or ARB treatment with heavy albuminuria (NICE IND263). One row per
-      person in the denominator on the build date.
+      ACE inhibitor or ARB treatment with heavy albuminuria (NICE IND263). One row per person
+      in the denominator on the build date.
 
 
-      People registered on the build date aged 18 or over on the CKD stage 3 to 5
-      register without diabetes, with latest urine albumin:creatinine ratio (ACR) at
-      least 70 mg/mmol. Achieved with an ACE inhibitor or angiotensin receptor blocker
-      (ARB) prescription in the 6 months before the build date. A missing or invalid
-      latest numeric ACR excludes the person; an older result is not substituted. No
-      personalised care adjustments are applied. Based on NICE NG203. Code lists:
-      CKD_COD, CKD1AND2_COD, CKDRES_COD, NDAALB_COD (PCD); 0205051, 0205052 (BNF).
+      People registered on the build date aged 18 or over on the CKD stage 3 to 5 register
+      without diabetes, with latest urine albumin:creatinine ratio (ACR) at least 70 mg/mmol.
+      Achieved with an ACE inhibitor or angiotensin receptor blocker (ARB) prescription in the
+      6 months before the build date. The latest numeric ACR has no lookback limit; value-free
+      tests are ignored. An absent or invalid numeric result excludes; no older numeric result
+      is substituted. No personalised care adjustments are applied. Based on NICE NG203. Code
+      lists: CKD_COD, CKD1AND2_COD, CKDRES_COD, NDAALB_COD (PCD); 0205051, 0205052 (BNF).
     config:
       meta:
         owner:
@@ -22,17 +22,17 @@ models:
           type: "MEASURE"
           category: "KIDNEY"
           clinical_domain: "Cardiometabolic"
-          name_short: "Kidney disease treatment, higher ACR"
-          description_short: "ACE inhibitor or ARB treatment with heavy albuminuria (NICE IND263)."
+          name_short: "Kidney therapy, ACR 70 or above"
+          description_short: "ACE inhibitor or ARB treatment in kidney disease with ACR at least 70 mg/mmol, without diabetes."
           description_long: >-
-            People registered on the build date aged 18 or over on the CKD stage 3
-            to 5 register without diabetes, with latest urine albumin:creatinine
-            ratio (ACR) at least 70 mg/mmol. Achieved with an ACE inhibitor or
-            angiotensin receptor blocker (ARB) prescription in the 6 months before
-            the build date. A missing or invalid latest numeric ACR excludes the
-            person; an older result is not substituted. No personalised care
-            adjustments are applied. Based on NICE NG203. Code lists: CKD_COD,
-            CKD1AND2_COD, CKDRES_COD, NDAALB_COD (PCD); 0205051, 0205052 (BNF).
+            People registered on the build date aged 18 or over on the CKD stage 3 to 5
+            register without diabetes, with latest urine albumin:creatinine ratio (ACR) at
+            least 70 mg/mmol. Achieved with an ACE inhibitor or angiotensin receptor blocker
+            (ARB) prescription in the 6 months before the build date. The latest numeric ACR
+            has no lookback limit; value-free tests are ignored. An absent or invalid numeric
+            result excludes; no older numeric result is substituted. No personalised care
+            adjustments are applied. Based on NICE NG203. Code lists: CKD_COD, CKD1AND2_COD,
+            CKDRES_COD, NDAALB_COD (PCD); 0205051, 0205052 (BNF).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -63,9 +63,9 @@ models:
       - name: current_practice_name
         description: "Name of the current registration practice."
       - name: latest_egfr_value
-        description: "Latest eGFR in mL/min/1.73 m2; null when absent or invalid."
+        description: "eGFR from the latest numeric observation by the reporting date, in mL/min/1.73 m2, with no lookback limit. Null when absent or outside 1 to 200; a later invalid numeric result prevents fallback."
       - name: latest_acr_value
-        description: "Latest numeric urine albumin:creatinine ratio (ACR), in mg/mmol; null when absent or outside the accepted range."
+        description: "Latest numeric urine albumin:creatinine ratio (ACR) by the reporting date, in mg/mmol, with no lookback limit. Value-free tests are ignored. Null when no numeric test is recorded or its result is outside 0 to 9999.99."
       - name: latest_therapy_order_date
         description: "Date of the latest relevant medication prescription by the reporting date; it may be outside the treatment window. Null when never prescribed."
       - name: latest_record_date
@@ -150,9 +150,9 @@ models:
       - name: current_practice_name
         description: "Name of the current registration practice."
       - name: latest_egfr_value
-        description: "Latest eGFR in mL/min/1.73 m2; null when absent or invalid."
+        description: "eGFR from the latest numeric observation by the reporting date, in mL/min/1.73 m2, with no lookback limit. Null when absent or outside 1 to 200; a later invalid numeric result prevents fallback."
       - name: latest_acr_value
-        description: "Latest numeric urine albumin:creatinine ratio (ACR), in mg/mmol; null when absent or outside the accepted range."
+        description: "Latest numeric urine albumin:creatinine ratio (ACR) by the reporting date, in mg/mmol, with no lookback limit. Value-free tests are ignored. Null when no numeric test is recorded or its result is outside 0 to 9999.99."
       - name: latest_therapy_order_date
         description: "Date of the latest relevant medication prescription by the reporting date; it may be outside the treatment window. Null when never prescribed."
       - name: latest_record_date
@@ -171,22 +171,23 @@ models:
 
   - name: fct_person_ckd_sglt2_therapy_ind324
     description: >-
-      SGLT2 inhibitor treatment in kidney disease (NICE IND324). One row per person in
-      the denominator on the build date.
+      SGLT2 inhibitor treatment in kidney disease (NICE IND324). One row per person in the
+      denominator on the build date.
 
 
-      People registered on the build date aged 18 or over on the CKD stage 3 to 5
-      register with type 2 diabetes, or latest eGFR 20 to 44 mL/min/1.73 m2, or latest
-      eGFR 45 to 59 with latest urine ACR at least 22.6 mg/mmol. Outside type 2
-      diabetes, including unknown type, eligibility also requires an ACE inhibitor or
-      ARB prescription in the last 6 months or contraindications to both. Latest eGFR
-      below 20 excludes everyone; unknown eGFR permits type 2 diabetes. Achieved with an
-      SGLT2 inhibitor prescription in the last 6 months; outside type 2 diabetes, ACE
-      inhibitor or ARB treatment must precede or coincide with the latest SGLT2
-      prescription, unless both classes are contraindicated. No personalised care
-      adjustments are applied. Based on NICE NG28. Code lists: CKD_COD, CKD1AND2_COD,
-      CKDRES_COD, EGFR_COD, NDAALB_COD, SGLT2I_RX (PCD); 0205051, 0205052 (BNF);
-      XACE_COD, TXACE_COD, XAII_COD, TXAII_COD (PCD).
+      People registered on the build date aged 18 or over on the CKD stage 3 to 5 register
+      with type 2 diabetes, or latest eGFR 20 to 44 mL/min/1.73 m2, or latest eGFR 45 to 59
+      with latest urine ACR at least 22.6 mg/mmol. Outside type 2 diabetes, including unknown
+      type, eligibility also requires an ACE inhibitor or ARB prescription in the last 6
+      months or contraindications to both classes, each persisting or recorded in the last 12
+      months. Latest eGFR below 20 excludes everyone; missing or invalid latest eGFR permits
+      type 2 diabetes. Kidney results have no lookback limit. Value-free ACR tests are
+      ignored; invalid numeric ACR is not replaced. Achieved with an SGLT2 inhibitor
+      prescription in the last 6 months; outside type 2 diabetes, ACE inhibitor or ARB
+      treatment must precede or coincide with the latest SGLT2 prescription, unless both
+      classes are contraindicated. No personalised care adjustments are applied. Based on NICE
+      NG28. Code lists: CKD_COD, CKD1AND2_COD, CKDRES_COD, EGFR_COD, NDAALB_COD, SGLT2I_RX
+      (PCD); 0205051, 0205052 (BNF); XACE_COD, TXACE_COD, XAII_COD, TXAII_COD (PCD).
     config:
       meta:
         owner:
@@ -200,20 +201,20 @@ models:
           name_short: "Kidney disease SGLT2 treatment"
           description_short: "SGLT2 inhibitor treatment in kidney disease (NICE IND324)."
           description_long: >-
-            People registered on the build date aged 18 or over on the CKD stage 3
-            to 5 register with type 2 diabetes, or latest eGFR 20 to 44
-            mL/min/1.73 m2, or latest eGFR 45 to 59 with latest urine ACR at least
-            22.6 mg/mmol. Outside type 2 diabetes, including unknown type,
-            eligibility also requires an ACE inhibitor or ARB prescription in the
-            last 6 months or contraindications to both. Latest eGFR below 20
-            excludes everyone; unknown eGFR permits type 2 diabetes. Achieved with
-            an SGLT2 inhibitor prescription in the last 6 months; outside type 2
-            diabetes, ACE inhibitor or ARB treatment must precede or coincide with
-            the latest SGLT2 prescription, unless both classes are
-            contraindicated. No personalised care adjustments are applied. Based
-            on NICE NG28. Code lists: CKD_COD, CKD1AND2_COD, CKDRES_COD, EGFR_COD,
-            NDAALB_COD, SGLT2I_RX (PCD); 0205051, 0205052 (BNF); XACE_COD,
-            TXACE_COD, XAII_COD, TXAII_COD (PCD).
+            People registered on the build date aged 18 or over on the CKD stage 3 to 5
+            register with type 2 diabetes, or latest eGFR 20 to 44 mL/min/1.73 m2, or latest
+            eGFR 45 to 59 with latest urine ACR at least 22.6 mg/mmol. Outside type 2
+            diabetes, including unknown type, eligibility also requires an ACE inhibitor or
+            ARB prescription in the last 6 months or contraindications to both classes, each
+            persisting or recorded in the last 12 months. Latest eGFR below 20 excludes
+            everyone; missing or invalid latest eGFR permits type 2 diabetes. Kidney results
+            have no lookback limit. Value-free ACR tests are ignored; invalid numeric ACR is
+            not replaced. Achieved with an SGLT2 inhibitor prescription in the last 6 months;
+            outside type 2 diabetes, ACE inhibitor or ARB treatment must precede or coincide
+            with the latest SGLT2 prescription, unless both classes are contraindicated. No
+            personalised care adjustments are applied. Based on NICE NG28. Code lists:
+            CKD_COD, CKD1AND2_COD, CKDRES_COD, EGFR_COD, NDAALB_COD, SGLT2I_RX (PCD); 0205051,
+            0205052 (BNF); XACE_COD, TXACE_COD, XAII_COD, TXAII_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -244,13 +245,13 @@ models:
       - name: current_practice_name
         description: "Name of the current registration practice."
       - name: latest_egfr_value
-        description: "Latest eGFR in mL/min/1.73 m2; null when absent or invalid."
+        description: "eGFR from the latest numeric observation by the reporting date, in mL/min/1.73 m2, with no lookback limit. Null when absent or outside 1 to 200; a later invalid numeric result prevents fallback."
       - name: latest_acr_value
-        description: "Latest numeric urine albumin:creatinine ratio (ACR), in mg/mmol; null when absent or outside the accepted range."
+        description: "Latest numeric urine albumin:creatinine ratio (ACR) by the reporting date, in mg/mmol, with no lookback limit. Value-free tests are ignored. Null when no numeric test is recorded or its result is outside 0 to 9999.99."
       - name: latest_therapy_order_date
         description: "Date of the latest relevant medication prescription by the reporting date; it may be outside the treatment window. Null when never prescribed."
       - name: is_treatment_sequence_met
-        description: "Whether the person has type 2 diabetes, contraindications to both ACE inhibitors and ARBs, or a prescription for either class in the last 6 months on or before the latest SGLT2 prescription."
+        description: "Whether the person has type 2 diabetes, contraindications to both ACE inhibitors and ARBs, or a prescription for either class in the last 6 months on or before the latest SGLT2 prescription; null when missing diabetes type or prescription evidence leaves the rule unknown."
       - name: latest_record_date
         description: "Date of qualifying evidence retained within the indicator measurement or follow-up window; null when none is recorded."
       - name: is_in_denominator
@@ -271,16 +272,16 @@ models:
       denominator on the build date.
 
 
-      People registered on the build date aged 18 or over on the CKD stage 3 to 5
-      register with latest urine ACR at least 70 mg/mmol, without moderate or severe
-      frailty. Missing or invalid latest numeric ACR excludes; no older result is
-      substituted. Achieved when both values of the latest complete blood pressure
-      reading in the last 12 months are below 130/80 mmHg in clinic or 125/75 mmHg at
-      home or on ambulatory monitoring. Incomplete readings do not count; invalid latest
-      readings are unassessable, with no older reading substituted. No personalised care
-      adjustments are applied. Based on NICE NG203. Code lists: CKD_COD, CKD1AND2_COD,
-      CKDRES_COD, NDAALB_COD (PCD); BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD,
-      HOMEBP_COD, ABPM_COD (PCD).
+      People registered on the build date aged 18 or over on the CKD stage 3 to 5 register
+      with latest urine ACR at least 70 mg/mmol, without moderate or severe frailty. The
+      latest numeric ACR has no lookback limit; value-free tests are ignored. An invalid
+      numeric result excludes; no older numeric result is substituted. Achieved when both
+      values of the latest complete blood pressure reading in the last 12 months are below
+      130/80 mmHg in clinic or 125/75 mmHg at home or on ambulatory monitoring. Incomplete
+      readings do not count; invalid latest readings are unassessable, with no older reading
+      substituted. No personalised care adjustments are applied. Based on NICE NG203. Code
+      lists: CKD_COD, CKD1AND2_COD, CKDRES_COD, NDAALB_COD (PCD); BP_COD, SYSBP_COD,
+      DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD (PCD).
     config:
       meta:
         owner:
@@ -291,20 +292,20 @@ models:
           type: "MEASURE"
           category: "KIDNEY"
           clinical_domain: "Cardiometabolic"
-          name_short: "Kidney disease BP, higher ACR"
-          description_short: "Blood pressure control in kidney disease (NICE IND264)."
+          name_short: "Kidney BP, ACR 70 or above"
+          description_short: "Blood pressure control in kidney disease with ACR at least 70 mg/mmol."
           description_long: >-
-            People registered on the build date aged 18 or over on the CKD stage 3
-            to 5 register with latest urine ACR at least 70 mg/mmol, without
-            moderate or severe frailty. Missing or invalid latest numeric ACR
-            excludes; no older result is substituted. Achieved when both values of
-            the latest complete blood pressure reading in the last 12 months are
-            below 130/80 mmHg in clinic or 125/75 mmHg at home or on ambulatory
-            monitoring. Incomplete readings do not count; invalid latest readings
-            are unassessable, with no older reading substituted. No personalised
-            care adjustments are applied. Based on NICE NG203. Code lists:
-            CKD_COD, CKD1AND2_COD, CKDRES_COD, NDAALB_COD (PCD); BP_COD,
-            SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD (PCD).
+            People registered on the build date aged 18 or over on the CKD stage 3 to 5
+            register with latest urine ACR at least 70 mg/mmol, without moderate or severe
+            frailty. The latest numeric ACR has no lookback limit; value-free tests are
+            ignored. An invalid numeric result excludes; no older numeric result is
+            substituted. Achieved when both values of the latest complete blood pressure
+            reading in the last 12 months are below 130/80 mmHg in clinic or 125/75 mmHg at
+            home or on ambulatory monitoring. Incomplete readings do not count; invalid latest
+            readings are unassessable, with no older reading substituted. No personalised care
+            adjustments are applied. Based on NICE NG203. Code lists: CKD_COD, CKD1AND2_COD,
+            CKDRES_COD, NDAALB_COD (PCD); BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD,
+            HOMEBP_COD, ABPM_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -337,7 +338,7 @@ models:
       - name: latest_frailty_severity
         description: "Latest coded frailty severity by the reporting date; null when none is recorded."
       - name: latest_acr_value
-        description: "Latest numeric urine albumin:creatinine ratio (ACR), in mg/mmol; null when absent or outside the accepted range."
+        description: "Latest numeric urine albumin:creatinine ratio (ACR) by the reporting date, in mg/mmol, with no lookback limit. Value-free tests are ignored. Null when no numeric test is recorded or its result is outside 0 to 9999.99."
       - name: latest_bp_date
         description: "Date of the latest complete blood pressure reading by the reporting date; it may be outside the measurement period. Null when none is recorded."
       - name: latest_record_date
@@ -372,16 +373,16 @@ models:
       denominator on the build date.
 
 
-      People registered on the build date aged 18 or over on the CKD stage 3 to 5
-      register with latest urine ACR below 70 mg/mmol, without moderate or severe
-      frailty. Missing or invalid latest numeric ACR excludes; no older result is
-      substituted. Achieved when both values of the latest complete blood pressure
-      reading in the last 12 months are below 140/90 mmHg in clinic or 135/85 mmHg at
-      home or on ambulatory monitoring. Incomplete readings do not count; invalid latest
-      readings are unassessable, with no older reading substituted. No personalised care
-      adjustments are applied. Based on NICE NG203. Code lists: CKD_COD, CKD1AND2_COD,
-      CKDRES_COD, NDAALB_COD (PCD); BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD,
-      HOMEBP_COD, ABPM_COD (PCD).
+      People registered on the build date aged 18 or over on the CKD stage 3 to 5 register
+      with latest urine ACR below 70 mg/mmol, without moderate or severe frailty. The latest
+      numeric ACR has no lookback limit; value-free tests are ignored. An invalid numeric
+      result excludes; no older numeric result is substituted. Achieved when both values of
+      the latest complete blood pressure reading in the last 12 months are below 140/90 mmHg
+      in clinic or 135/85 mmHg at home or on ambulatory monitoring. Incomplete readings do not
+      count; invalid latest readings are unassessable, with no older reading substituted. No
+      personalised care adjustments are applied. Based on NICE NG203. Code lists: CKD_COD,
+      CKD1AND2_COD, CKDRES_COD, NDAALB_COD (PCD); BP_COD, SYSBP_COD, DIASBP_COD,
+      HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD (PCD).
     config:
       meta:
         owner:
@@ -392,20 +393,20 @@ models:
           type: "MEASURE"
           category: "KIDNEY"
           clinical_domain: "Cardiometabolic"
-          name_short: "Kidney disease BP, lower ACR"
-          description_short: "Blood pressure control in kidney disease (NICE IND235)."
+          name_short: "Kidney BP, ACR below 70"
+          description_short: "Blood pressure control in kidney disease with ACR below 70 mg/mmol."
           description_long: >-
-            People registered on the build date aged 18 or over on the CKD stage 3
-            to 5 register with latest urine ACR below 70 mg/mmol, without moderate
-            or severe frailty. Missing or invalid latest numeric ACR excludes; no
-            older result is substituted. Achieved when both values of the latest
-            complete blood pressure reading in the last 12 months are below 140/90
-            mmHg in clinic or 135/85 mmHg at home or on ambulatory monitoring.
-            Incomplete readings do not count; invalid latest readings are
-            unassessable, with no older reading substituted. No personalised care
-            adjustments are applied. Based on NICE NG203. Code lists: CKD_COD,
-            CKD1AND2_COD, CKDRES_COD, NDAALB_COD (PCD); BP_COD, SYSBP_COD,
-            DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD (PCD).
+            People registered on the build date aged 18 or over on the CKD stage 3 to 5
+            register with latest urine ACR below 70 mg/mmol, without moderate or severe
+            frailty. The latest numeric ACR has no lookback limit; value-free tests are
+            ignored. An invalid numeric result excludes; no older numeric result is
+            substituted. Achieved when both values of the latest complete blood pressure
+            reading in the last 12 months are below 140/90 mmHg in clinic or 135/85 mmHg at
+            home or on ambulatory monitoring. Incomplete readings do not count; invalid latest
+            readings are unassessable, with no older reading substituted. No personalised care
+            adjustments are applied. Based on NICE NG203. Code lists: CKD_COD, CKD1AND2_COD,
+            CKDRES_COD, NDAALB_COD (PCD); BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD,
+            HOMEBP_COD, ABPM_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -438,7 +439,7 @@ models:
       - name: latest_frailty_severity
         description: "Latest coded frailty severity by the reporting date; null when none is recorded."
       - name: latest_acr_value
-        description: "Latest numeric urine albumin:creatinine ratio (ACR), in mg/mmol; null when absent or outside the accepted range."
+        description: "Latest numeric urine albumin:creatinine ratio (ACR) by the reporting date, in mg/mmol, with no lookback limit. Value-free tests are ignored. Null when no numeric test is recorded or its result is outside 0 to 9999.99."
       - name: latest_bp_date
         description: "Date of the latest complete blood pressure reading by the reporting date; it may be outside the measurement period. Null when none is recorded."
       - name: latest_record_date
@@ -521,7 +522,7 @@ models:
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
-        description: "Inclusive start of the indicator measurement period before the reporting date."
+        description: "Inclusive start of the 12-month diagnosis cohort. The qualifying eGFR pair uses the separate window before diagnosis."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
       - name: denominator_description
@@ -533,9 +534,9 @@ models:
       - name: diagnosis_date
         description: "First recorded diagnosis date used to define the indicator population and follow-up window."
       - name: latest_egfr_value
-        description: "Latest eGFR in mL/min/1.73 m2; null when absent or invalid."
+        description: "eGFR from the latest numeric observation by the reporting date, in mL/min/1.73 m2, with no lookback limit. Null when absent or outside 1 to 200; a later invalid numeric result prevents fallback."
       - name: latest_acr_value
-        description: "Latest numeric urine albumin:creatinine ratio (ACR), in mg/mmol; null when absent or outside the accepted range."
+        description: "Latest numeric urine albumin:creatinine ratio (ACR) by the reporting date, in mg/mmol, with no lookback limit. Value-free tests are ignored. Null when no numeric test is recorded or its result is outside 0 to 9999.99."
       - name: latest_record_date
         description: "Second eGFR test date in the qualifying pair before diagnosis; null when no qualifying pair is recorded."
       - name: is_in_denominator
@@ -552,17 +553,17 @@ models:
 
   - name: fct_person_ckd_new_diagnosis_tests_ind234
     description: >-
-      eGFR and ACR testing around kidney disease diagnosis (NICE IND234). One row per
-      person in the denominator on the build date.
+      eGFR and ACR testing around kidney disease diagnosis (NICE IND234). One row per person
+      in the denominator on the build date.
 
 
-      People registered on the build date aged 18 or over on the CKD stage 3 to 5
-      register, first diagnosed in the 12-month period ending 90 days before the build
-      date. This gives everyone a completed 90-day follow-up. Achieved with both eGFR
-      and urine albumin:creatinine ratio (ACR) tests within 90 days before or after
-      diagnosis. eGFR needs a numeric result; ACR does not. No personalised care
-      adjustments are applied. Based on NICE NG203. Code lists: CKD_COD, CKD1AND2_COD,
-      CKDRES_COD, EGFR_COD, NDAALB_COD (PCD).
+      People registered on the build date aged 18 or over on the CKD stage 3 to 5 register,
+      first diagnosed in the 12-month period ending 90 days before the build date. Everyone
+      has completed 90 days of follow-up. This shifted cohort replaces NICE's preceding 12
+      months. Achieved with both eGFR and urine albumin:creatinine ratio (ACR) tests within 90
+      days before or after diagnosis. eGFR needs a numeric result; ACR does not. No
+      personalised care adjustments are applied. Based on NICE NG203. Code lists: CKD_COD,
+      CKD1AND2_COD, CKDRES_COD, EGFR_COD, NDAALB_COD (PCD).
     config:
       meta:
         owner:
@@ -576,14 +577,13 @@ models:
           name_short: "New kidney disease eGFR and ACR"
           description_short: "eGFR and ACR testing around kidney disease diagnosis (NICE IND234)."
           description_long: >-
-            People registered on the build date aged 18 or over on the CKD stage 3
-            to 5 register, first diagnosed in the 12-month period ending 90 days
-            before the build date. This gives everyone a completed 90-day
-            follow-up. Achieved with both eGFR and urine albumin:creatinine ratio
-            (ACR) tests within 90 days before or after diagnosis. eGFR needs a
-            numeric result; ACR does not. No personalised care adjustments are
-            applied. Based on NICE NG203. Code lists: CKD_COD, CKD1AND2_COD,
-            CKDRES_COD, EGFR_COD, NDAALB_COD (PCD).
+            People registered on the build date aged 18 or over on the CKD stage 3 to 5
+            register, first diagnosed in the 12-month period ending 90 days before the build
+            date. Everyone has completed 90 days of follow-up. This shifted cohort replaces
+            NICE's preceding 12 months. Achieved with both eGFR and urine albumin:creatinine
+            ratio (ACR) tests within 90 days before or after diagnosis. eGFR needs a numeric
+            result; ACR does not. No personalised care adjustments are applied. Based on NICE
+            NG203. Code lists: CKD_COD, CKD1AND2_COD, CKDRES_COD, EGFR_COD, NDAALB_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -616,9 +616,9 @@ models:
       - name: diagnosis_date
         description: "First recorded diagnosis date used to define the indicator population and follow-up window."
       - name: latest_egfr_value
-        description: "Latest eGFR in mL/min/1.73 m2; null when absent or invalid."
+        description: "eGFR from the latest numeric observation by the reporting date, in mL/min/1.73 m2, with no lookback limit. Null when absent or outside 1 to 200; a later invalid numeric result prevents fallback."
       - name: latest_acr_value
-        description: "Latest numeric urine albumin:creatinine ratio (ACR), in mg/mmol; null when absent or outside the accepted range."
+        description: "Latest numeric urine albumin:creatinine ratio (ACR) by the reporting date, in mg/mmol, with no lookback limit. Value-free tests are ignored. Null when no numeric test is recorded or its result is outside 0 to 9999.99."
       - name: latest_record_date
         description: "Later of the qualifying eGFR and ACR test dates around diagnosis; null unless both tests are recorded."
       - name: is_in_denominator
@@ -671,7 +671,7 @@ models:
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
-        description: "Start date of the indicator measurement period; inclusion of this date depends on the indicator."
+        description: "Start date of the indicator measurement or diagnosis cohort period; inclusion of this date depends on the indicator."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
       - name: denominator_description
@@ -681,9 +681,9 @@ models:
       - name: current_practice_name
         description: "Name of the current registration practice."
       - name: latest_egfr_value
-        description: "Latest eGFR in mL/min/1.73 m2; null when absent or invalid. Null where the field does not apply to an indicator."
+        description: "eGFR from the latest numeric observation by the reporting date, in mL/min/1.73 m2, with no lookback limit. Null when absent or outside 1 to 200; a later invalid numeric result prevents fallback. Null where the field does not apply to an indicator."
       - name: latest_acr_value
-        description: "Latest numeric urine albumin:creatinine ratio (ACR), in mg/mmol; null when absent or outside the accepted range. Null where the field does not apply to an indicator."
+        description: "Latest numeric urine albumin:creatinine ratio (ACR) by the reporting date, in mg/mmol, with no lookback limit. Value-free tests are ignored. Null when no numeric test is recorded or its result is outside 0 to 9999.99. Null where the field does not apply to an indicator."
       - name: latest_systolic_value
         description: "Systolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available. Null where the field does not apply to an indicator."
       - name: latest_diastolic_value
@@ -750,9 +750,9 @@ models:
       - name: latest_record_date
         description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
       - name: latest_egfr_value
-        description: "Latest eGFR in mL/min/1.73 m2; null when absent or invalid."
+        description: "eGFR from the latest numeric observation by the reporting date, in mL/min/1.73 m2, with no lookback limit. Null when absent or outside 1 to 200; a later invalid numeric result prevents fallback."
       - name: latest_acr_value
-        description: "Latest numeric urine albumin:creatinine ratio (ACR), in mg/mmol; null when absent or outside the accepted range."
+        description: "Latest numeric urine albumin:creatinine ratio (ACR) by the reporting date, in mg/mmol, with no lookback limit. Value-free tests are ignored. Null when no numeric test is recorded or its result is outside 0 to 9999.99."
       - name: latest_systolic_value
         description: "Systolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available."
       - name: latest_diastolic_value

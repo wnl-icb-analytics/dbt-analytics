@@ -26,9 +26,9 @@ models:
     name: latest_hba1c_observation_id
   - description: "Date of the last HbA1c test in the measurement period, including tests with missing or invalid results; null when none is recorded."
     name: latest_record_date
-  - description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed; null when absent or unusable."
+  - description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator. Null when no test or convertible result is available."
     name: latest_hba1c_value
-  - description: "Whether the last HbA1c in the measurement period has a usable result within the accepted range; false when no test is recorded."
+  - description: "Whether the selected HbA1c is valid: original IFCC 20 to 200 mmol/mol or DCCT 3 to 20%, inclusive. False when no test is recorded."
     name: is_latest_hba1c_valid
   - description: "Inclusive upper HbA1c threshold in mmol/mol."
     name: indicator_threshold
@@ -58,14 +58,14 @@ models:
     denominator at the month-end.
 
 
-    People registered at the month-end on the diabetes register. Achieved when the latest
-    HbA1c test in the last 12 months has a valid result at or below 64 mmol/mol. A missing
-    or invalid latest result is unassessable; no older result is substituted. Valid
-    results take priority on the same day. Excludes fructosamine without HbA1c testing in
-    that period, or maximum tolerated diabetes treatment recorded in that period. Frailty
-    does not exclude anyone. No personalised care adjustments are applied. Based on NICE
-    NG17. Recalculated for each of the last 60 month-ends with current rules, code lists
-    and records, so later corrections can change past months. Code lists: DM_COD,
-    DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD,
-    DMMAX_COD (PCD).
+    People registered at the month-end aged 17 or over on the diabetes register. Achieved when
+    the latest HbA1c test in the last 12 months has a valid result at or below 64 mmol/mol. A
+    missing or invalid latest result is unassessable; no older result is substituted. Valid
+    results take priority on the same day. Excludes fructosamine without HbA1c testing in that
+    period, or maximum tolerated diabetes treatment recorded in that period. Frailty and blood
+    test decline or exception codes do not exclude anyone. No personalised care adjustments
+    are applied. Based on NICE NG17. Recalculated for each of the last 60 month-ends with
+    current rules, code lists and records, so later corrections can change past months. Code
+    lists: DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD,
+    SERFRUC_COD, DMMAX_COD (PCD).
   name: fct_person_diabetes_hba1c_ind135_by_month

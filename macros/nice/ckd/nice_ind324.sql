@@ -73,7 +73,7 @@ SELECT
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,
-    'Kidney disease with diabetes or reduced kidney function' AS denominator_description,
+    'Kidney disease with type 2 diabetes or low kidney function' AS denominator_description,
     {{ nice_practice_columns('result', reference) }},
     latest_acr_value,
     latest_egfr_value,
