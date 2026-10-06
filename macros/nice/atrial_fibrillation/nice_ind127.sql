@@ -45,7 +45,7 @@ SELECT
     person_id,
     'IND127' AS indicator_id,
     'Atrial fibrillation: annual stroke risk assessment' AS indicator_name,
-    'The percentage of patients with atrial fibrillation in whom stroke risk has been assessed using the CHA 2 DS 2 -VASc score risk stratification scoring system in the preceding 12 months (excluding those patients with a previous CHADS 2 or CHA 2 DS 2 -VASc score of 2 or more).' AS indicator_description,
+    'The percentage of patients with atrial fibrillation in whom stroke risk has been assessed using the CHA2DS2-VASc score risk stratification scoring system in the preceding 12 months (excluding those patients with a previous CHADS2 or CHA2DS2-VASc score of 2 or more).' AS indicator_description,
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,

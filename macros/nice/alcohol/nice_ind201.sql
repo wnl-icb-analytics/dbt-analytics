@@ -69,7 +69,7 @@ SELECT
     person_id,
     'IND201' AS indicator_id,
     'Alcohol use: risk assessment for people with a long-term condition' AS indicator_name,
-    'Tools and resources History Download indicator (PDF) Overview Indicator On this page' AS indicator_description,
+    'The percentage of patients with one or more of the following conditions: CHD, atrial fibrillation, chronic heart failure, stroke or TIA, diabetes or dementia who have been screened for hazardous drinking using the FAST or AUDIT-C tool in the preceding 2 years.' AS indicator_description,
     reporting_date,
     DATEADD(month, -24, reporting_date) AS measurement_period_start,
     age,

@@ -48,7 +48,7 @@ SELECT
     person_id,
     'IND128' AS indicator_id,
     'Atrial fibrillation: current treatment with anticoagulation' AS indicator_name,
-    'In those patients with atrial fibrillation with a record of a CHA 2 DS 2 -VASc score of 2 or more, the percentage of patients who are currently treated with anticoagulation drug therapy.' AS indicator_description,
+    'In those patients with atrial fibrillation with a record of a CHA2DS2-VASc score of 2 or more, the percentage of patients who are currently treated with anticoagulation drug therapy.' AS indicator_description,
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,

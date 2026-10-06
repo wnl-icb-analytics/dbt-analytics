@@ -10,7 +10,7 @@ SELECT
     population.person_id,
     'IND118' AS indicator_id,
     'Dementia: target organ damage (all patients)' AS indicator_name,
-    'History Download indicator (PDF) Overview Indicator On this page' AS indicator_description,
+    'The percentage of patients with dementia (diagnosed on or after 1 April 2014) with a record of FBC, calcium, glucose, renal and liver function, thyroid function tests, serum vitamin B12 and folate levels recorded up to 12 months before entering on to the register.' AS indicator_description,
     profile.reporting_date,
     '2014-04-01'::DATE AS measurement_period_start,
     population.age,
