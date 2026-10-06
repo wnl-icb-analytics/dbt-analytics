@@ -5,8 +5,8 @@
     Returns: the indicator detail columns, one eligible person per reporting_date.
 -#}
 -- NICE IND173: https://www.nice.org.uk/indicators/ind173
--- Episode timing follows NICE NM151; the separate diabetes-history exclusion has no independently recovered pilot source.
-WITH indicator_population AS (
+-- Episode timing follows NICE NM151; diabetes resolution follows QOF NDH register rules.
+WITH gestational_population AS (
     SELECT
         population.person_id,
         population.reporting_date,
@@ -19,15 +19,33 @@ WITH indicator_population AS (
         AND population.reporting_date = register.reporting_date
     -- The latest episode is more than 12 months old; recent pregnancies have separate monitoring.
     WHERE register.latest_diagnosis_date::DATE < DATEADD(month, -12, population.reporting_date)
-        -- A later resolved diabetes code does not lift the diagnosis-history exclusion.
-        AND NOT EXISTS (
-            SELECT 1
-            FROM {{ ref('int_diabetes_diagnoses_all') }} AS diabetes
-            WHERE diabetes.person_id = population.person_id
-                AND diabetes.is_diagnosis_code
-                AND diabetes.clinical_effective_date::DATE < DATEADD(month, -12, population.reporting_date)
-                AND {{ ltc_register_known_by('diabetes.clinical_effective_date', 'diabetes.date_recorded', 'population.reporting_date') }}
-        )
+),
+
+known_diabetes AS (
+    SELECT
+        population.person_id,
+        population.reporting_date,
+        MAX(IFF(diabetes.is_diagnosis_code, diabetes.clinical_effective_date::DATE, NULL))
+            AS latest_diagnosis_date,
+        MAX(IFF(diabetes.is_resolved_code, diabetes.clinical_effective_date::DATE, NULL))
+            AS latest_resolution_date
+    FROM gestational_population AS population
+    INNER JOIN {{ ref('int_diabetes_diagnoses_all') }} AS diabetes
+        ON diabetes.person_id = population.person_id
+        AND {{ ltc_register_known_by('diabetes.clinical_effective_date', 'diabetes.date_recorded', 'population.reporting_date') }}
+    GROUP BY population.person_id, population.reporting_date
+),
+
+indicator_population AS (
+    SELECT population.*
+    FROM gestational_population AS population
+    LEFT JOIN known_diabetes AS diabetes
+        ON population.person_id = diabetes.person_id
+        AND population.reporting_date = diabetes.reporting_date
+    -- Only the latest known diabetes diagnosis excludes; same-day resolution does not lift it.
+    WHERE diabetes.latest_diagnosis_date IS NULL
+        OR diabetes.latest_diagnosis_date >= DATEADD(month, -12, population.reporting_date)
+        OR diabetes.latest_resolution_date > diabetes.latest_diagnosis_date
 ),
 
 assessed AS (

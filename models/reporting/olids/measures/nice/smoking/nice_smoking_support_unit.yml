@@ -216,32 +216,44 @@ unit_tests:
       FROM VALUES (-4101, ''2026-08-20''), (-4101, ''2026-09-20''), (-4101, ''2026-10-01''),
 
       (-4101, ''2026-08-20'')'
+  - input: ref('int_nice_smoking_unsuitability_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS event_date
+      FROM VALUES (-4101, '2026-08-20'), (-4101, '2026-09-20'),
+          (-4101, '2026-10-01'), (-4101, '2026-08-20')
   expect:
     rows:
     - person_id: -4101
       reporting_date: '2026-08-31'
       latest_smoking_status: Current Smoker
       latest_smoking_intervention_date: '2026-08-20'
+      latest_smoking_unsuitable_date: '2026-08-20'
     - person_id: -4101
       reporting_date: '2026-09-30'
       latest_smoking_status: Current Smoker
       latest_smoking_intervention_date: '2026-09-20'
+      latest_smoking_unsuitable_date: '2026-09-20'
     - person_id: -4102
       reporting_date: '2026-09-30'
       latest_smoking_status: Current Smoker
       latest_smoking_intervention_date: null
+      latest_smoking_unsuitable_date: null
     - person_id: -4103
       reporting_date: '2026-09-30'
       latest_smoking_status: Non Smoker
       latest_smoking_intervention_date: null
+      latest_smoking_unsuitable_date: null
     - person_id: -4104
       reporting_date: '2026-09-30'
       latest_smoking_status: null
       latest_smoking_intervention_date: null
+      latest_smoking_unsuitable_date: null
     - person_id: -4106
       reporting_date: '2026-09-30'
       latest_smoking_status: Current Smoker
       latest_smoking_intervention_date: null
+      latest_smoking_unsuitable_date: null
   config:
     tags:
     - monthly-full

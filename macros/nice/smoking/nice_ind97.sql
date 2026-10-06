@@ -14,7 +14,8 @@ WITH indicator_population AS (
         smoking.latest_smoking_status,
         smoking.latest_smoking_status_date,
         smoking.latest_never_smoked_date,
-        smoking.latest_smoking_intervention_date
+        smoking.latest_smoking_intervention_date,
+        smoking.latest_smoking_unsuitable_date
     FROM {{ nice_ref('int_nice_ltc_population', reference) }} AS profile
     INNER JOIN ({{ nice_reference_population(reference) }}) AS population
         ON profile.person_id = population.person_id
@@ -40,6 +41,7 @@ assessed AS (
         population.latest_smoking_status_date,
         population.latest_never_smoked_date,
         population.latest_smoking_intervention_date,
+        population.latest_smoking_unsuitable_date,
         COALESCE(population.latest_smoking_status_date >= DATEADD(month, -12, population.evaluation_date), FALSE) AS is_status_recorded_in_period,
         COALESCE(
             DATEADD(year, 26, population.birth_date_approx)
@@ -87,5 +89,12 @@ SELECT
         ELSE 'NOT_RECORDED_IN_PERIOD'
     END AS indicator_status
 FROM assessed
+-- QOF assesses achievement before unsuitability, so achievers remain in the denominator.
+WHERE is_in_numerator
+    OR NOT COALESCE(
+        latest_smoking_unsuitable_date > DATEADD(month, -12, reporting_date)
+        AND latest_smoking_unsuitable_date <= reporting_date,
+        FALSE
+    )
 
 {% endmacro %}
