@@ -1,24 +1,25 @@
 models:
 - name: fct_person_weight_management_referral_obesity_htn_dm_ind221_by_month
   description: >-
-    Weight management referrals with obesity and hypertension or diabetes (NICE IND221). One row
-    per person in the denominator on the month-end.
+    Weight management referrals with obesity and hypertension or diabetes (NICE IND221). One
+    row per person in the denominator on the month-end.
 
 
-    People registered at the month-end aged 18 or over on the hypertension or diabetes register.
-    Latest recorded or calculated BMI in the preceding 12 months must be 30 to 150 kg/m2
-    inclusive, or 27.5 to 150 for any recorded higher-risk ethnicity under NG246, even after a
-    later White record. Unknown ethnicity uses 30, unlike NICE. Invalid or non-obese latest BMI
-    excludes them without using an older result. The earliest qualifying BMI in that period must
-    be at least 90 days before the month-end. Achieved with a weight management referral within
-    90 days from any qualifying BMI. NHS Diabetes Prevention Programme and total diet
-    replacement referrals do not count. Non-achievers are excluded for attendance or
-    commencement in the last 12 months without a later programme end. Incomplete exits or other
-    programmes' ends can misclassify attendance. No personalised care adjustments are applied.
-    Recalculated for each of the last 60 month-ends with current rules, code lists and records,
-    so later corrections can change past months. Based on NICE NG246. Code lists:
-    WEIGHT_MGMT_REFERRAL_COD, WEIGHT_MGMT_ATTENDING_COD, WEIGHT_MGMT_ENDED_COD,
-    WEIGHT_MGMT_OFFERED (ECL_CACHE); WTMGREFDEC_COD, BMIVAL_COD, HEIGHT, WEIGHT (PCD).
+    People registered at the month-end aged 18 or over on the hypertension or diabetes
+    register. Latest recorded or calculated BMI in the preceding 12 months must be 30 to 150
+    kg/m2 inclusive, or 27.5 to 150 for any recorded higher-risk ethnicity under NG246, even
+    after a later White record. Unknown ethnicity uses 30, unlike NICE. Invalid or non-obese
+    latest BMI excludes them without using an older result. People enter the cohort 90 days
+    after the earliest qualifying BMI in that period; a later BMI can still have an unfinished
+    follow-up. Achieved with a weight management referral within 90 days from any qualifying
+    BMI. NHS Diabetes Prevention Programme and total diet replacement referrals do not count.
+    Non-achievers are excluded for attendance or commencement in the last 12 months without a
+    later programme end. Incomplete exits or other programmes' ends can misclassify
+    attendance. No personalised care adjustments are applied. Recalculated for each of the
+    last 60 month-ends with current rules, code lists and records, so later corrections can
+    change past months. Based on NICE NG246. Code lists: WEIGHT_MGMT_REFERRAL_COD,
+    WEIGHT_MGMT_ATTENDING_COD, WEIGHT_MGMT_ENDED_COD, WEIGHT_MGMT_OFFERED (ECL_CACHE);
+    WTMGREFDEC_COD, BMIVAL_COD, HEIGHT, WEIGHT (PCD).
   config:
     meta:
       owner:
@@ -31,6 +32,12 @@ models:
         - person_id
         - reporting_date
   columns:
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
   - name: latest_bmi_date
     description: "Date of the latest valid recorded or calculated BMI in the 12 months before the reporting date, excluding the first day."
   - name: bmi_value

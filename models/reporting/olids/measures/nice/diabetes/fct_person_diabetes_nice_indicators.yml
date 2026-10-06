@@ -1,19 +1,18 @@
 models:
   - name: fct_person_diabetes_hba1c_ind179
     description: >-
-      Diabetes HbA1c at or below 58 mmol/mol without moderate or severe frailty (NICE
-      IND179). One row per person in the denominator on the build date.
+      Diabetes HbA1c at or below 58 mmol/mol without moderate or severe frailty (NICE IND179).
+      One row per person in the denominator on the build date.
 
 
-      People registered on the build date on the diabetes register without moderate or
-      severe frailty. Achieved when the latest HbA1c test in the last 12 months has a
-      valid result at or below 58 mmol/mol. A missing or invalid latest result is
-      unassessable; no older result is substituted. Valid results take priority on the
-      same day. Excludes fructosamine without HbA1c testing in that period, or maximum
-      tolerated diabetes treatment recorded in that period. No personalised care
-      adjustments are applied. Based on NICE NG17. Code lists: DM_COD, DMTYPE1_COD,
-      DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD,
-      MODFRAIL_COD, SEVFRAIL_COD (PCD).
+      People registered on the build date aged 17 or over on the diabetes register without
+      moderate or severe frailty. Achieved when the latest HbA1c test in the last 12 months
+      has a valid result at or below 58 mmol/mol. A missing or invalid latest result is
+      unassessable; no older result is substituted. Valid results take priority on the same
+      day. Excludes fructosamine without HbA1c testing in that period, or maximum tolerated
+      diabetes treatment recorded in that period. No personalised care adjustments are
+      applied. Based on NICE NG17. Code lists: DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD,
+      IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
     config:
       meta:
         owner:
@@ -27,16 +26,15 @@ models:
           name_short: "HbA1c 58, no moderate or severe frailty"
           description_short: "Diabetes HbA1c at or below 58 mmol/mol without moderate or severe frailty (NICE IND179)."
           description_long: >-
-            People registered on the build date on the diabetes register without
-            moderate or severe frailty. Achieved when the latest HbA1c test in the
-            last 12 months has a valid result at or below 58 mmol/mol. A missing
-            or invalid latest result is unassessable; no older result is
-            substituted. Valid results take priority on the same day. Excludes
-            fructosamine without HbA1c testing in that period, or maximum
-            tolerated diabetes treatment recorded in that period. No personalised
-            care adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
-            DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD,
-            SERFRUC_COD, DMMAX_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
+            People registered on the build date aged 17 or over on the diabetes register
+            without moderate or severe frailty. Achieved when the latest HbA1c test in the
+            last 12 months has a valid result at or below 58 mmol/mol. A missing or invalid
+            latest result is unassessable; no older result is substituted. Valid results take
+            priority on the same day. Excludes fructosamine without HbA1c testing in that
+            period, or maximum tolerated diabetes treatment recorded in that period. No
+            personalised care adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
+            DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD,
+            DMMAX_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -56,14 +54,16 @@ models:
         description: "Published NICE indicator identifier."
       - name: indicator_name
         description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
         description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
-      - name: condition_name
-        description: "Short label for the indicator denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the current registration practice."
       - name: current_practice_name
@@ -75,9 +75,9 @@ models:
       - name: latest_record_date
         description: "Date of the last HbA1c test in the measurement period, including tests with missing or invalid results; null when none is recorded."
       - name: latest_hba1c_value
-        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed; null when absent or unusable."
+        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator. Null when no test or convertible result is available."
       - name: is_latest_hba1c_valid
-        description: "Whether the last HbA1c in the measurement period has a usable result within the accepted range; false when no test is recorded."
+        description: "Whether the selected HbA1c is valid: original IFCC 20 to 200 mmol/mol or DCCT 3 to 20%, inclusive. False when no test is recorded."
       - name: indicator_threshold
         description: "Inclusive upper HbA1c threshold in mmol/mol."
       - name: threshold_unit
@@ -92,19 +92,18 @@ models:
         description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
   - name: fct_person_diabetes_hba1c_ind180
     description: >-
-      Diabetes HbA1c at or below 75 mmol/mol with moderate or severe frailty (NICE
-      IND180). One row per person in the denominator on the build date.
+      Diabetes HbA1c at or below 75 mmol/mol with moderate or severe frailty (NICE IND180).
+      One row per person in the denominator on the build date.
 
 
-      People registered on the build date on the diabetes register with moderate or
-      severe frailty. Achieved when the latest HbA1c test in the last 12 months has a
-      valid result at or below 75 mmol/mol. A missing or invalid latest result is
-      unassessable; no older result is substituted. Valid results take priority on the
-      same day. Excludes fructosamine without HbA1c testing in that period, or maximum
-      tolerated diabetes treatment recorded in that period. No personalised care
-      adjustments are applied. Based on NICE NG17. Code lists: DM_COD, DMTYPE1_COD,
-      DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD,
-      MODFRAIL_COD, SEVFRAIL_COD (PCD).
+      People registered on the build date aged 17 or over on the diabetes register with
+      moderate or severe frailty. Achieved when the latest HbA1c test in the last 12 months
+      has a valid result at or below 75 mmol/mol. A missing or invalid latest result is
+      unassessable; no older result is substituted. Valid results take priority on the same
+      day. Excludes fructosamine without HbA1c testing in that period, or maximum tolerated
+      diabetes treatment recorded in that period. No personalised care adjustments are
+      applied. Based on NICE NG17. Code lists: DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD,
+      IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
     config:
       meta:
         owner:
@@ -118,16 +117,15 @@ models:
           name_short: "HbA1c 75, moderate or severe frailty"
           description_short: "Diabetes HbA1c at or below 75 mmol/mol with moderate or severe frailty (NICE IND180)."
           description_long: >-
-            People registered on the build date on the diabetes register with
-            moderate or severe frailty. Achieved when the latest HbA1c test in the
-            last 12 months has a valid result at or below 75 mmol/mol. A missing
-            or invalid latest result is unassessable; no older result is
-            substituted. Valid results take priority on the same day. Excludes
-            fructosamine without HbA1c testing in that period, or maximum
-            tolerated diabetes treatment recorded in that period. No personalised
-            care adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
-            DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD,
-            SERFRUC_COD, DMMAX_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
+            People registered on the build date aged 17 or over on the diabetes register with
+            moderate or severe frailty. Achieved when the latest HbA1c test in the last 12
+            months has a valid result at or below 75 mmol/mol. A missing or invalid latest
+            result is unassessable; no older result is substituted. Valid results take
+            priority on the same day. Excludes fructosamine without HbA1c testing in that
+            period, or maximum tolerated diabetes treatment recorded in that period. No
+            personalised care adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
+            DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD,
+            DMMAX_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -147,14 +145,16 @@ models:
         description: "Published NICE indicator identifier."
       - name: indicator_name
         description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
         description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
-      - name: condition_name
-        description: "Short label for the indicator denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the current registration practice."
       - name: current_practice_name
@@ -166,9 +166,9 @@ models:
       - name: latest_record_date
         description: "Date of the last HbA1c test in the measurement period, including tests with missing or invalid results; null when none is recorded."
       - name: latest_hba1c_value
-        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed; null when absent or unusable."
+        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator. Null when no test or convertible result is available."
       - name: is_latest_hba1c_valid
-        description: "Whether the last HbA1c in the measurement period has a usable result within the accepted range; false when no test is recorded."
+        description: "Whether the selected HbA1c is valid: original IFCC 20 to 200 mmol/mol or DCCT 3 to 20%, inclusive. False when no test is recorded."
       - name: indicator_threshold
         description: "Inclusive upper HbA1c threshold in mmol/mol."
       - name: threshold_unit
@@ -231,14 +231,16 @@ models:
         description: "Published NICE indicator identifier."
       - name: indicator_name
         description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
         description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
-      - name: condition_name
-        description: "Short label for the indicator denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the current registration practice."
       - name: current_practice_name
@@ -256,9 +258,9 @@ models:
       - name: latest_diastolic_value
         description: "Diastolic blood pressure of the selected complete pair, in mmHg; valid range 20 to 200, inclusive. Null when no pair is recorded. An invalid latest pair is unassessable; an older pair is not substituted."
       - name: is_home_bp_event
-        description: "Whether the selected complete blood pressure reading was recorded as home monitoring."
+        description: "Whether the selected complete blood pressure reading was recorded as home monitoring; null when no complete reading exists."
       - name: is_abpm_bp_event
-        description: "Whether the selected complete blood pressure reading was recorded as ambulatory monitoring."
+        description: "Whether the selected complete blood pressure reading was recorded as ambulatory monitoring; null when no complete reading exists."
       - name: applied_measurement_context
         description: "CLINIC for the clinic target or HBPM_ABPM for the home or ambulatory target; null when no complete reading exists."
       - name: indicator_systolic_threshold
@@ -281,15 +283,15 @@ models:
                 values: ['ACHIEVED', 'ABOVE_TARGET', 'NOT_ASSESSABLE', 'NOT_RECORDED_IN_PERIOD']
   - name: fct_person_diabetes_acr_ind111
     description: >-
-      Urine albumin:creatinine ratio testing in diabetes (NICE IND111). One row per
-      person in the denominator on the build date.
+      Urine albumin:creatinine ratio testing in diabetes (NICE IND111). One row per person in
+      the denominator on the build date.
 
 
-      People registered on the build date on the diabetes register. Achieved with a
-      urine albumin:creatinine ratio (ACR) test in the 15 months before the build date.
-      No numeric result is needed. Protein:creatinine ratio tests and albumin
-      measurements without a creatinine ratio do not count. No personalised care
-      adjustments are applied. Based on NICE NG17. Code lists: NDAALB_COD (PCD).
+      People registered on the build date aged 17 or over on the diabetes register. Achieved
+      with a urine albumin:creatinine ratio (ACR) test in the 15 months before the build date.
+      No numeric result is needed. Protein:creatinine ratio tests and albumin measurements
+      without a creatinine ratio do not count. No personalised care adjustments are applied.
+      Based on NICE NG17. Code lists: NDAALB_COD (PCD).
     config:
       meta:
         owner:
@@ -303,12 +305,11 @@ models:
           name_short: "Diabetes ACR testing"
           description_short: "Urine albumin:creatinine ratio testing in diabetes (NICE IND111)."
           description_long: >-
-            People registered on the build date on the diabetes register. Achieved
-            with a urine albumin:creatinine ratio (ACR) test in the 15 months
-            before the build date. No numeric result is needed. Protein:creatinine
-            ratio tests and albumin measurements without a creatinine ratio do not
-            count. No personalised care adjustments are applied. Based on NICE
-            NG17. Code lists: NDAALB_COD (PCD).
+            People registered on the build date aged 17 or over on the diabetes register.
+            Achieved with a urine albumin:creatinine ratio (ACR) test in the 15 months before
+            the build date. No numeric result is needed. Protein:creatinine ratio tests and
+            albumin measurements without a creatinine ratio do not count. No personalised care
+            adjustments are applied. Based on NICE NG17. Code lists: NDAALB_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -324,14 +325,16 @@ models:
         description: "Published NICE indicator identifier."
       - name: indicator_name
         description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
         description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
-      - name: condition_name
-        description: "Short label for the indicator denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the current registration practice."
       - name: current_practice_name
@@ -346,14 +349,14 @@ models:
         description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
   - name: fct_person_diabetes_retinal_screening_ind137
     description: >-
-      Retinal screening in diabetes (NICE IND137). One row per person in the denominator
-      on the build date.
+      Retinal screening in diabetes (NICE IND137). One row per person in the denominator on
+      the build date.
 
 
-      People registered on the build date on the diabetes register. Achieved with
-      completed retinal screening in the 12 months before the build date, regardless of
-      the screening programme interval. No personalised care adjustments are applied.
-      Based on NICE NG17. Code lists: RETSCREN_COD (PCD).
+      People registered on the build date aged 17 or over on the diabetes register. Achieved
+      with completed retinal screening in the 12 months before the build date, regardless of
+      the screening programme interval. No personalised care adjustments are applied. Based on
+      NICE NG17. Code lists: RETSCREN_COD (PCD).
     config:
       meta:
         owner:
@@ -367,11 +370,10 @@ models:
           name_short: "Diabetes retinal screening"
           description_short: "Retinal screening in diabetes (NICE IND137)."
           description_long: >-
-            People registered on the build date on the diabetes register. Achieved
-            with completed retinal screening in the 12 months before the build
-            date, regardless of the screening programme interval. No personalised
-            care adjustments are applied. Based on NICE NG17. Code lists:
-            RETSCREN_COD (PCD).
+            People registered on the build date aged 17 or over on the diabetes register.
+            Achieved with completed retinal screening in the 12 months before the build date,
+            regardless of the screening programme interval. No personalised care adjustments
+            are applied. Based on NICE NG17. Code lists: RETSCREN_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -380,16 +382,16 @@ models:
     columns: *record_columns
   - name: fct_person_diabetes_foot_examination_ind160
     description: >-
-      Foot sensation testing in diabetes (NICE IND160). One row per person in the
-      denominator on the build date.
+      Foot sensation testing in diabetes (NICE IND160). One row per person in the denominator
+      on the build date.
 
 
-      People registered on the build date on the diabetes register. Achieved with a
-      performed monofilament foot sensation test in the 12 months before the build date.
-      General foot examinations, pulse checks, risk classifications and referrals alone
-      do not count. A performed test counts despite a decline or unsuitability on the
-      same day. No personalised care adjustments are applied. Based on NICE NG19. Code
-      lists: FOOTEXAM_COD, FEDEC_COD, FEPU_COD (PCD).
+      People registered on the build date aged 17 or over on the diabetes register. Achieved
+      with a performed monofilament foot sensation test in the 12 months before the build
+      date. General foot examinations, pulse checks, risk classifications and referrals alone
+      do not count. A performed test counts despite a decline or unsuitability on the same
+      day. No personalised care adjustments are applied. Based on NICE NG19. Code lists:
+      FOOTEXAM_COD, FEDEC_COD, FEPU_COD (PCD).
     config:
       meta:
         owner:
@@ -403,13 +405,12 @@ models:
           name_short: "Diabetes foot sensation testing"
           description_short: "Foot sensation testing in diabetes (NICE IND160)."
           description_long: >-
-            People registered on the build date on the diabetes register. Achieved
-            with a performed monofilament foot sensation test in the 12 months
-            before the build date. General foot examinations, pulse checks, risk
-            classifications and referrals alone do not count. A performed test
-            counts despite a decline or unsuitability on the same day. No
-            personalised care adjustments are applied. Based on NICE NG19. Code
-            lists: FOOTEXAM_COD, FEDEC_COD, FEPU_COD (PCD).
+            People registered on the build date aged 17 or over on the diabetes register.
+            Achieved with a performed monofilament foot sensation test in the 12 months before
+            the build date. General foot examinations, pulse checks, risk classifications and
+            referrals alone do not count. A performed test counts despite a decline or
+            unsuitability on the same day. No personalised care adjustments are applied. Based
+            on NICE NG19. Code lists: FOOTEXAM_COD, FEDEC_COD, FEPU_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -460,12 +461,12 @@ models:
       denominator on the build date.
 
 
-      People registered on the build date on the gestational diabetes register whose
-      latest episode was more than 12 months before the build date. Any diabetes
-      diagnosis more than 12 months before that date excludes the person, even if
-      subsequently resolved. Achieved with HbA1c testing in the last 12 months. No
-      numeric result is needed. No personalised care adjustments are applied. Based on
-      NICE NG3. Code lists: GESTDIAB_COD, DM_COD, IFCCHBAM_COD, DCCTHBA1C_COD (PCD).
+      People registered on the build date on the gestational diabetes register whose latest
+      episode was more than 12 months before the build date. Diabetes diagnosed more than 12 months before excludes the person unless a later code resolves it.
+      Same-day resolution does not count. Achieved with HbA1c testing in the last 12 months.
+      No numeric result is needed. No sex filter is applied. No personalised care adjustments
+      are applied. Based on NICE NG3. Code lists: GESTDIAB_COD, DM_COD, DMTYPE1_COD,
+      DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD (PCD).
     config:
       meta:
         owner:
@@ -479,13 +480,12 @@ models:
           name_short: "Gestational diabetes history HbA1c"
           description_short: "HbA1c testing after gestational diabetes (NICE IND173)."
           description_long: >-
-            People registered on the build date on the gestational diabetes
-            register whose latest episode was more than 12 months before the build
-            date. Any diabetes diagnosis more than 12 months before that date
-            excludes the person, even if subsequently resolved. Achieved with
-            HbA1c testing in the last 12 months. No numeric result is needed. No
-            personalised care adjustments are applied. Based on NICE NG3. Code
-            lists: GESTDIAB_COD, DM_COD, IFCCHBAM_COD, DCCTHBA1C_COD (PCD).
+            People registered on the build date on the gestational diabetes register
+            whose latest episode was more than 12 months before the build date. Diabetes diagnosed more than 12 months before excludes the person unless a later code resolves it. Same-day resolution does not count.
+            Achieved with HbA1c testing in the last 12 months. No numeric result is
+            needed. No sex filter is applied. No personalised care adjustments are
+            applied. Based on NICE NG3. Code lists: GESTDIAB_COD, DM_COD, DMTYPE1_COD,
+            DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -498,14 +498,15 @@ models:
       denominator on the build date.
 
 
-      People registered on the build date on the diabetes register. Achieved when the
-      latest HbA1c test in the last 12 months has a valid result at or below 58
+      People registered on the build date aged 17 or over on the diabetes register. Achieved
+      when the latest HbA1c test in the last 12 months has a valid result at or below 58
       mmol/mol. A missing or invalid latest result is unassessable; no older result is
-      substituted. Valid results take priority on the same day. Excludes fructosamine
-      without HbA1c testing in that period, or maximum tolerated diabetes treatment
-      recorded in that period. Frailty does not exclude anyone. No personalised care
-      adjustments are applied. Based on NICE NG17. Code lists: DM_COD, DMTYPE1_COD,
-      DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD (PCD).
+      substituted. Valid results take priority on the same day. Excludes fructosamine without
+      HbA1c testing in that period, or maximum tolerated diabetes treatment recorded in that
+      period. Frailty and blood test decline or exception codes do not exclude anyone. No
+      personalised care adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
+      DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD
+      (PCD).
     config:
       meta:
         owner:
@@ -519,16 +520,15 @@ models:
           name_short: "Diabetes HbA1c 58"
           description_short: "Diabetes HbA1c at or below 58 mmol/mol (NICE IND165)."
           description_long: >-
-            People registered on the build date on the diabetes register. Achieved
-            when the latest HbA1c test in the last 12 months has a valid result at
-            or below 58 mmol/mol. A missing or invalid latest result is
-            unassessable; no older result is substituted. Valid results take
-            priority on the same day. Excludes fructosamine without HbA1c testing
-            in that period, or maximum tolerated diabetes treatment recorded in
-            that period. Frailty does not exclude anyone. No personalised care
-            adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
-            DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD,
-            SERFRUC_COD, DMMAX_COD (PCD).
+            People registered on the build date aged 17 or over on the diabetes register.
+            Achieved when the latest HbA1c test in the last 12 months has a valid result at or
+            below 58 mmol/mol. A missing or invalid latest result is unassessable; no older
+            result is substituted. Valid results take priority on the same day. Excludes
+            fructosamine without HbA1c testing in that period, or maximum tolerated diabetes
+            treatment recorded in that period. Frailty and blood test decline or exception
+            codes do not exclude anyone. No personalised care adjustments are applied. Based
+            on NICE NG17. Code lists: DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD,
+            IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -548,14 +548,16 @@ models:
         description: "Published NICE indicator identifier."
       - name: indicator_name
         description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
         description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
-      - name: condition_name
-        description: "Short label for the indicator denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the current registration practice."
       - name: current_practice_name
@@ -567,9 +569,9 @@ models:
       - name: latest_record_date
         description: "Date of the last HbA1c test in the measurement period, including tests with missing or invalid results; null when none is recorded."
       - name: latest_hba1c_value
-        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed; null when absent or unusable."
+        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator. Null when no test or convertible result is available."
       - name: is_latest_hba1c_valid
-        description: "Whether the last HbA1c in the measurement period has a usable result within the accepted range; false when no test is recorded."
+        description: "Whether the selected HbA1c is valid: original IFCC 20 to 200 mmol/mol or DCCT 3 to 20%, inclusive. False when no test is recorded."
       - name: indicator_threshold
         description: "Inclusive upper HbA1c threshold in mmol/mol."
       - name: threshold_unit
@@ -594,14 +596,15 @@ models:
       denominator on the build date.
 
 
-      People registered on the build date on the diabetes register. Achieved when the
-      latest HbA1c test in the last 12 months has a valid result at or below 64
+      People registered on the build date aged 17 or over on the diabetes register. Achieved
+      when the latest HbA1c test in the last 12 months has a valid result at or below 64
       mmol/mol. A missing or invalid latest result is unassessable; no older result is
-      substituted. Valid results take priority on the same day. Excludes fructosamine
-      without HbA1c testing in that period, or maximum tolerated diabetes treatment
-      recorded in that period. Frailty does not exclude anyone. No personalised care
-      adjustments are applied. Based on NICE NG17. Code lists: DM_COD, DMTYPE1_COD,
-      DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD (PCD).
+      substituted. Valid results take priority on the same day. Excludes fructosamine without
+      HbA1c testing in that period, or maximum tolerated diabetes treatment recorded in that
+      period. Frailty and blood test decline or exception codes do not exclude anyone. No
+      personalised care adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
+      DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD
+      (PCD).
     config:
       meta:
         owner:
@@ -615,16 +618,15 @@ models:
           name_short: "Diabetes HbA1c 64"
           description_short: "Diabetes HbA1c at or below 64 mmol/mol (NICE IND135)."
           description_long: >-
-            People registered on the build date on the diabetes register. Achieved
-            when the latest HbA1c test in the last 12 months has a valid result at
-            or below 64 mmol/mol. A missing or invalid latest result is
-            unassessable; no older result is substituted. Valid results take
-            priority on the same day. Excludes fructosamine without HbA1c testing
-            in that period, or maximum tolerated diabetes treatment recorded in
-            that period. Frailty does not exclude anyone. No personalised care
-            adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
-            DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD,
-            SERFRUC_COD, DMMAX_COD (PCD).
+            People registered on the build date aged 17 or over on the diabetes register.
+            Achieved when the latest HbA1c test in the last 12 months has a valid result at or
+            below 64 mmol/mol. A missing or invalid latest result is unassessable; no older
+            result is substituted. Valid results take priority on the same day. Excludes
+            fructosamine without HbA1c testing in that period, or maximum tolerated diabetes
+            treatment recorded in that period. Frailty and blood test decline or exception
+            codes do not exclude anyone. No personalised care adjustments are applied. Based
+            on NICE NG17. Code lists: DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD,
+            IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -644,14 +646,16 @@ models:
         description: "Published NICE indicator identifier."
       - name: indicator_name
         description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
         description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
-      - name: condition_name
-        description: "Short label for the indicator denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the current registration practice."
       - name: current_practice_name
@@ -663,9 +667,9 @@ models:
       - name: latest_record_date
         description: "Date of the last HbA1c test in the measurement period, including tests with missing or invalid results; null when none is recorded."
       - name: latest_hba1c_value
-        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed; null when absent or unusable."
+        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator. Null when no test or convertible result is available."
       - name: is_latest_hba1c_valid
-        description: "Whether the last HbA1c in the measurement period has a usable result within the accepted range; false when no test is recorded."
+        description: "Whether the selected HbA1c is valid: original IFCC 20 to 200 mmol/mol or DCCT 3 to 20%, inclusive. False when no test is recorded."
       - name: indicator_threshold
         description: "Inclusive upper HbA1c threshold in mmol/mol."
       - name: threshold_unit
@@ -690,14 +694,15 @@ models:
       denominator on the build date.
 
 
-      People registered on the build date on the diabetes register. Achieved when the
-      latest HbA1c test in the last 12 months has a valid result at or below 75
+      People registered on the build date aged 17 or over on the diabetes register. Achieved
+      when the latest HbA1c test in the last 12 months has a valid result at or below 75
       mmol/mol. A missing or invalid latest result is unassessable; no older result is
-      substituted. Valid results take priority on the same day. Excludes fructosamine
-      without HbA1c testing in that period, or maximum tolerated diabetes treatment
-      recorded in that period. Frailty does not exclude anyone. No personalised care
-      adjustments are applied. Based on NICE NG17. Code lists: DM_COD, DMTYPE1_COD,
-      DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD (PCD).
+      substituted. Valid results take priority on the same day. Excludes fructosamine without
+      HbA1c testing in that period, or maximum tolerated diabetes treatment recorded in that
+      period. Frailty and blood test decline or exception codes do not exclude anyone. No
+      personalised care adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
+      DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD
+      (PCD).
     config:
       meta:
         owner:
@@ -711,16 +716,15 @@ models:
           name_short: "Diabetes HbA1c 75"
           description_short: "Diabetes HbA1c at or below 75 mmol/mol (NICE IND136)."
           description_long: >-
-            People registered on the build date on the diabetes register. Achieved
-            when the latest HbA1c test in the last 12 months has a valid result at
-            or below 75 mmol/mol. A missing or invalid latest result is
-            unassessable; no older result is substituted. Valid results take
-            priority on the same day. Excludes fructosamine without HbA1c testing
-            in that period, or maximum tolerated diabetes treatment recorded in
-            that period. Frailty does not exclude anyone. No personalised care
-            adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
-            DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, IFCCHBAM_COD, DCCTHBA1C_COD,
-            SERFRUC_COD, DMMAX_COD (PCD).
+            People registered on the build date aged 17 or over on the diabetes register.
+            Achieved when the latest HbA1c test in the last 12 months has a valid result at or
+            below 75 mmol/mol. A missing or invalid latest result is unassessable; no older
+            result is substituted. Valid results take priority on the same day. Excludes
+            fructosamine without HbA1c testing in that period, or maximum tolerated diabetes
+            treatment recorded in that period. Frailty and blood test decline or exception
+            codes do not exclude anyone. No personalised care adjustments are applied. Based
+            on NICE NG17. Code lists: DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD,
+            IFCCHBAM_COD, DCCTHBA1C_COD, SERFRUC_COD, DMMAX_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -740,14 +744,16 @@ models:
         description: "Published NICE indicator identifier."
       - name: indicator_name
         description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
         description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
-      - name: condition_name
-        description: "Short label for the indicator denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the current registration practice."
       - name: current_practice_name
@@ -759,9 +765,9 @@ models:
       - name: latest_record_date
         description: "Date of the last HbA1c test in the measurement period, including tests with missing or invalid results; null when none is recorded."
       - name: latest_hba1c_value
-        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed; null when absent or unusable."
+        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator. Null when no test or convertible result is available."
       - name: is_latest_hba1c_valid
-        description: "Whether the last HbA1c in the measurement period has a usable result within the accepted range; false when no test is recorded."
+        description: "Whether the selected HbA1c is valid: original IFCC 20 to 200 mmol/mol or DCCT 3 to 20%, inclusive. False when no test is recorded."
       - name: indicator_threshold
         description: "Inclusive upper HbA1c threshold in mmol/mol."
       - name: threshold_unit
@@ -782,17 +788,17 @@ models:
 
   - name: fct_person_diabetes_ras_therapy_ind134
     description: >-
-      ACE inhibitor or ARB treatment in diabetes (NICE IND134). One row per person in
-      the denominator on the build date.
+      ACE inhibitor or ARB treatment in diabetes (NICE IND134). One row per person in the
+      denominator on the build date.
 
 
-      People registered on the build date on the diabetes register with recorded
-      proteinuria or microalbuminuria. Achieved with an ACE inhibitor or angiotensin
-      receptor blocker (ARB) prescription in the 6 months before the build date.
-      Excludes contraindications to both classes, each requiring a persisting record or
-      a temporary contraindication in the last 12 months. No personalised care
-      adjustments are applied. Based on NICE NG17. Code lists: PRT_COD, MAL_COD (PCD);
-      0205051, 0205052 (BNF); XACE_COD, TXACE_COD, XAII_COD, TXAII_COD (PCD).
+      People registered on the build date aged 17 or over on the diabetes register with
+      recorded proteinuria or microalbuminuria. Achieved with an ACE inhibitor or angiotensin
+      receptor blocker (ARB) prescription in the 6 months before the build date. Excludes
+      contraindications to both classes, each requiring a persisting record or a temporary
+      contraindication in the last 12 months. No personalised care adjustments are applied.
+      Based on NICE NG17. Code lists: PRT_COD, MAL_COD (PCD); 0205051, 0205052 (BNF);
+      XACE_COD, TXACE_COD, XAII_COD, TXAII_COD (PCD).
     config:
       meta:
         owner:
@@ -806,15 +812,13 @@ models:
           name_short: "Diabetes ACE inhibitor or ARB"
           description_short: "ACE inhibitor or ARB treatment in diabetes (NICE IND134)."
           description_long: >-
-            People registered on the build date on the diabetes register with
-            recorded proteinuria or microalbuminuria. Achieved with an ACE
-            inhibitor or angiotensin receptor blocker (ARB) prescription in the 6
-            months before the build date. Excludes contraindications to both
-            classes, each requiring a persisting record or a temporary
-            contraindication in the last 12 months. No personalised care
-            adjustments are applied. Based on NICE NG17. Code lists: PRT_COD,
-            MAL_COD (PCD); 0205051, 0205052 (BNF); XACE_COD, TXACE_COD, XAII_COD,
-            TXAII_COD (PCD).
+            People registered on the build date aged 17 or over on the diabetes register with
+            recorded proteinuria or microalbuminuria. Achieved with an ACE inhibitor or
+            angiotensin receptor blocker (ARB) prescription in the 6 months before the build
+            date. Excludes contraindications to both classes, each requiring a persisting
+            record or a temporary contraindication in the last 12 months. No personalised care
+            adjustments are applied. Based on NICE NG17. Code lists: PRT_COD, MAL_COD (PCD);
+            0205051, 0205052 (BNF); XACE_COD, TXACE_COD, XAII_COD, TXAII_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -830,14 +834,16 @@ models:
         description: "Published NICE indicator identifier."
       - name: indicator_name
         description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
         description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
-      - name: condition_name
-        description: "Short label for the indicator denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the current registration practice."
       - name: current_practice_name
@@ -862,15 +868,15 @@ models:
 
   - name: fct_person_diabetes_foot_risk_ind81
     description: >-
-      Foot examination and risk classification in diabetes (NICE IND81). One row per
-      person in the denominator on the build date.
+      Foot examination and risk classification in diabetes (NICE IND81). One row per person in
+      the denominator on the build date.
 
 
-      People registered on the build date on the diabetes register without a recorded
-      foot amputation. Achieved with a foot examination and risk classification in the
-      15 months before the build date. Both feet must be checked unless the other foot
-      is absent. No personalised care adjustments are applied. Based on NICE NG19. Code
-      lists: FOOTEXAM_COD, FRC_COD, CONABL_COD, CONABR_COD, AMPL_COD, AMPR_COD (PCD).
+      People registered on the build date aged 17 or over on the diabetes register without a
+      recorded foot amputation. Achieved with a foot examination and risk classification in
+      the 15 months before the build date. Both feet must be checked unless the other foot is
+      absent. No personalised care adjustments are applied. Based on NICE NG19. Code lists:
+      FOOTEXAM_COD, FRC_COD, CONABL_COD, CONABR_COD, AMPL_COD, AMPR_COD (PCD).
     config:
       meta:
         owner:
@@ -884,12 +890,12 @@ models:
           name_short: "Diabetes foot examination and risk"
           description_short: "Foot examination and risk classification in diabetes (NICE IND81)."
           description_long: >-
-            People registered on the build date on the diabetes register without a
-            recorded foot amputation. Achieved with a foot examination and risk
-            classification in the 15 months before the build date. Both feet must
-            be checked unless the other foot is absent. No personalised care
-            adjustments are applied. Based on NICE NG19. Code lists: FOOTEXAM_COD,
-            FRC_COD, CONABL_COD, CONABR_COD, AMPL_COD, AMPR_COD (PCD).
+            People registered on the build date aged 17 or over on the diabetes register
+            without a recorded foot amputation. Achieved with a foot examination and risk
+            classification in the 15 months before the build date. Both feet must be checked
+            unless the other foot is absent. No personalised care adjustments are applied.
+            Based on NICE NG19. Code lists: FOOTEXAM_COD, FRC_COD, CONABL_COD, CONABR_COD,
+            AMPL_COD, AMPR_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -905,14 +911,16 @@ models:
         description: "Published NICE indicator identifier."
       - name: indicator_name
         description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
         description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
-      - name: condition_name
-        description: "Short label for the indicator denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the current registration practice."
       - name: current_practice_name
@@ -935,15 +943,16 @@ models:
 
   - name: fct_person_diabetes_structured_education_ind88
     description: >-
-      Structured education referral after diabetes diagnosis (NICE IND88). One row per
-      person in the denominator on the build date.
+      Structured education referral after diabetes diagnosis (NICE IND88). One row per person
+      in the denominator on the build date.
 
 
-      People registered on the build date on the diabetes register first diagnosed 9 to
-      21 months before the build date, so every 9-month follow-up is complete. Achieved
-      with a structured education referral from diagnosis to 9 months afterwards.
-      Attendance or an offer alone does not count. No personalised care adjustments are
-      applied. Based on NICE NG17. Code lists: DM_COD, DSEP_COD (PCD).
+      People registered on the build date aged 17 or over on the diabetes register first
+      diagnosed in the 12-month period ending 9 months before the build date. Everyone has
+      completed 9 months of follow-up. This rolling cohort replaces NICE's April-to-March
+      diagnosis year. Achieved with a structured education referral from diagnosis to 9 months
+      afterwards. Attendance or an offer alone does not count. No personalised care
+      adjustments are applied. Based on NICE NG17. Code lists: DM_COD, DSEP_COD (PCD).
     config:
       meta:
         owner:
@@ -957,12 +966,13 @@ models:
           name_short: "Diabetes structured education referral"
           description_short: "Structured education referral after diabetes diagnosis (NICE IND88)."
           description_long: >-
-            People registered on the build date on the diabetes register first
-            diagnosed 9 to 21 months before the build date, so every 9-month
-            follow-up is complete. Achieved with a structured education referral
-            from diagnosis to 9 months afterwards. Attendance or an offer alone
-            does not count. No personalised care adjustments are applied. Based on
-            NICE NG17. Code lists: DM_COD, DSEP_COD (PCD).
+            People registered on the build date aged 17 or over on the diabetes register first
+            diagnosed in the 12-month period ending 9 months before the build date. Everyone
+            has completed 9 months of follow-up. This rolling cohort replaces NICE's
+            April-to-March diagnosis year. Achieved with a structured education referral from
+            diagnosis to 9 months afterwards. Attendance or an offer alone does not count. No
+            personalised care adjustments are applied. Based on NICE NG17. Code lists: DM_COD,
+            DSEP_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -978,14 +988,16 @@ models:
         description: "Published NICE indicator identifier."
       - name: indicator_name
         description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
         description: "Exclusive start of the diagnosis cohort window; tests or referrals use the separate follow-up window described for the indicator."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
-      - name: condition_name
-        description: "Short label for the indicator denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the current registration practice."
       - name: current_practice_name
@@ -1012,11 +1024,11 @@ models:
       denominator on the build date.
 
 
-      People registered on the build date aged 18 or over on the non-diabetic
-      hyperglycaemia register, first diagnosed in the last 12 months, without unresolved
-      diabetes. Achieved with an NHS Diabetes Prevention Programme referral made or
-      declined between diagnosis and the build date. An invitation alone does not count.
-      No personalised care adjustments are applied. Based on NICE PH38. Code lists:
+      People registered on the build date aged 18 or over on the non-diabetic hyperglycaemia
+      register, first diagnosed in the last 12 months, without unresolved diabetes. Achieved
+      with an NHS Diabetes Prevention Programme referral made or declined between diagnosis
+      and the build date. Invitations and referrals to local prevention programmes do not
+      count. No personalised care adjustments are applied. Based on NICE PH38. Code lists:
       NDH_COD, DPPOFF_COD (PCD); 1025321000000109, 1025301000000100 (SNOMED CT).
     config:
       meta:
@@ -1031,13 +1043,13 @@ models:
           name_short: "Diabetes prevention referral"
           description_short: "Diabetes prevention programme referral (NICE IND171)."
           description_long: >-
-            People registered on the build date aged 18 or over on the
-            non-diabetic hyperglycaemia register, first diagnosed in the last 12
-            months, without unresolved diabetes. Achieved with an NHS Diabetes
-            Prevention Programme referral made or declined between diagnosis and
-            the build date. An invitation alone does not count. No personalised
-            care adjustments are applied. Based on NICE PH38. Code lists: NDH_COD,
-            DPPOFF_COD (PCD); 1025321000000109, 1025301000000100 (SNOMED CT).
+            People registered on the build date aged 18 or over on the non-diabetic
+            hyperglycaemia register, first diagnosed in the last 12 months, without unresolved
+            diabetes. Achieved with an NHS Diabetes Prevention Programme referral made or
+            declined between diagnosis and the build date. Invitations and referrals to local
+            prevention programmes do not count. No personalised care adjustments are applied.
+            Based on NICE PH38. Code lists: NDH_COD, DPPOFF_COD (PCD); 1025321000000109,
+            1025301000000100 (SNOMED CT).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -1053,14 +1065,16 @@ models:
         description: "Published NICE indicator identifier."
       - name: indicator_name
         description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
         description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
-      - name: condition_name
-        description: "Short label for the indicator denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the current registration practice."
       - name: current_practice_name
@@ -1083,21 +1097,21 @@ models:
 
   - name: fct_person_diabetes_care_processes_ind120
     description: >-
-      Eight care processes in diabetes (NICE IND120). One row per person in the
-      denominator on the build date.
+      Eight care processes in diabetes (NICE IND120). One row per person in the denominator on
+      the build date.
 
 
-      People registered on the build date on the diabetes register. Achieved with all
-      eight processes in the 12 months before the build date: HbA1c, blood pressure,
-      total cholesterol, eGFR, urine ACR, foot examination, BMI and smoking status.
-      HbA1c, eGFR and ACR tests need no numeric result; total cholesterol and BMI need
-      valid results. A performed foot examination counts despite a later decline; one
-      foot suffices if the other is absent or amputated. No personalised care
-      adjustments are applied. Based on NICE NG28. Code lists: IFCCHBAM_COD,
-      DCCTHBA1C_COD, BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD,
-      CHOL2_COD, EGFR_COD, NDAALB_COD, FOOTEXAM_COD, AMPL_COD, AMPR_COD, CONABL_COD,
-      CONABR_COD, BMIVAL_COD, HEIGHT, WEIGHT, SMOK_COD, EXSMOK_COD, LSMOK_COD, NSMOK_COD
-      (PCD).
+      People registered on the build date aged 17 or over on the diabetes register. Achieved
+      with all eight processes in the 12 months before the build date: HbA1c, blood pressure,
+      total cholesterol, eGFR, urine ACR, foot examination, BMI and smoking status. HbA1c,
+      eGFR and ACR tests need no numeric result; total cholesterol, BMI and a complete blood
+      pressure pair need valid results. Recorded or adult calculated BMI counts, even with a
+      later invalid BMI. A performed foot examination counts despite a later decline; one foot
+      suffices if the other is absent or amputated. No personalised care adjustments are
+      applied. Based on NICE NG28. Code lists: IFCCHBAM_COD, DCCTHBA1C_COD, BP_COD, SYSBP_COD,
+      DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD, CHOL2_COD, EGFR_COD, NDAALB_COD,
+      FOOTEXAM_COD, AMPL_COD, AMPR_COD, CONABL_COD, CONABR_COD, BMIVAL_COD, HEIGHT, WEIGHT,
+      SMOK_COD, EXSMOK_COD, LSMOK_COD, NSMOK_COD (PCD).
     config:
       meta:
         owner:
@@ -1111,17 +1125,17 @@ models:
           name_short: "Diabetes eight care processes"
           description_short: "Eight care processes in diabetes (NICE IND120)."
           description_long: >-
-            People registered on the build date on the diabetes register. Achieved
-            with all eight processes in the 12 months before the build date:
-            HbA1c, blood pressure, total cholesterol, eGFR, urine ACR, foot
-            examination, BMI and smoking status. HbA1c, eGFR and ACR tests need no
-            numeric result; total cholesterol and BMI need valid results. A
-            performed foot examination counts despite a later decline; one foot
-            suffices if the other is absent or amputated. No personalised care
-            adjustments are applied. Based on NICE NG28. Code lists: IFCCHBAM_COD,
-            DCCTHBA1C_COD, BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD,
-            HOMEBP_COD, ABPM_COD, CHOL2_COD, EGFR_COD, NDAALB_COD, FOOTEXAM_COD,
-            AMPL_COD, AMPR_COD, CONABL_COD, CONABR_COD, BMIVAL_COD, HEIGHT,
+            People registered on the build date aged 17 or over on the diabetes register.
+            Achieved with all eight processes in the 12 months before the build date: HbA1c,
+            blood pressure, total cholesterol, eGFR, urine ACR, foot examination, BMI and
+            smoking status. HbA1c, eGFR and ACR tests need no numeric result; total
+            cholesterol, BMI and a complete blood pressure pair need valid results. Recorded
+            or adult calculated BMI counts, even with a later invalid BMI. A performed foot
+            examination counts despite a later decline; one foot suffices if the other is
+            absent or amputated. No personalised care adjustments are applied. Based on NICE
+            NG28. Code lists: IFCCHBAM_COD, DCCTHBA1C_COD, BP_COD, SYSBP_COD, DIASBP_COD,
+            HOMEAMBBP_COD, HOMEBP_COD, ABPM_COD, CHOL2_COD, EGFR_COD, NDAALB_COD,
+            FOOTEXAM_COD, AMPL_COD, AMPR_COD, CONABL_COD, CONABR_COD, BMIVAL_COD, HEIGHT,
             WEIGHT, SMOK_COD, EXSMOK_COD, LSMOK_COD, NSMOK_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
@@ -1138,14 +1152,16 @@ models:
         description: "Published NICE indicator identifier."
       - name: indicator_name
         description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess the population, age and evidence."
       - name: measurement_period_start
         description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
         description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
-      - name: condition_name
-        description: "Short label for the indicator denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the current registration practice."
       - name: current_practice_name
@@ -1188,6 +1204,12 @@ models:
               - person_id
               - indicator_id
     columns:
+      - name: indicator_name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: person_id
         description: "Person identifier for someone in the indicator denominator."
       - name: indicator_id
@@ -1201,7 +1223,7 @@ models:
       - name: latest_record_date
         description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
       - name: latest_hba1c_value
-        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed; null when absent or unusable. Null where the field does not apply to an indicator."
+        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator. Null when no test or convertible result is available. Null where the field does not apply to an indicator."
       - name: hba1c_threshold
         description: "Inclusive upper HbA1c threshold in mmol/mol; null for indicators without an HbA1c target. Null where the field does not apply to an indicator."
       - name: latest_systolic_value
@@ -1221,6 +1243,7 @@ models:
       Retains practice, recorded evidence and achievement. Build-date fields are omitted
       so a daily date change alone does not create a new history version. No
       personalised care adjustments are applied.
+      Labels join from def_indicator or the measure tables by indicator_id.
     config:
       meta:
         owner:
@@ -1249,7 +1272,7 @@ models:
       - name: latest_record_date
         description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
       - name: latest_hba1c_value
-        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed; null when absent or unusable."
+        description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator. Null when no test or convertible result is available."
       - name: latest_systolic_value
         description: "Systolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available."
       - name: latest_diastolic_value

@@ -9,10 +9,10 @@ models:
     psychosis; remission and lithium alone do not qualify. Achieved with valid BMI in the 15
     months before the month-end. Recorded BMI of 10 to 150 kg/m2 inclusive counts at any age;
     valid calculated BMI counts for adults using the weight date. Later invalid records do not
-    cancel earlier valid evidence. No personalised care adjustments are applied. Recalculated
-    for each of the last 60 month-ends with current rules, code lists and records, so later
-    corrections can change past months. Based on NICE CG178. Code lists: MH_COD, MHREM_COD,
-    BMIVAL_COD (PCD); HEIGHT, WEIGHT.
+    cancel earlier valid evidence. NICE does not explicitly exclude remission. No personalised
+    care adjustments are applied. Recalculated for each of the last 60 month-ends with current
+    rules, code lists and records, so later corrections can change past months. Based on NICE
+    CG178. Code lists: MH_COD, MHREM_COD, BMIVAL_COD (PCD); HEIGHT, WEIGHT.
   config:
     meta:
       owner:
@@ -25,14 +25,16 @@ models:
     description: "NICE indicator identifier."
   - name: indicator_name
     description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
   - name: reporting_date
     description: "Month-end used to assess eligibility and evidence."
   - name: measurement_period_start
     description: "15 months before the reporting date, included in the BMI window."
   - name: age
     description: "Age in completed years at the reporting date, based on the approximate birth date."
-  - name: condition_name
-    description: "Short label for the denominator population."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
   - name: practice_code
     description: "ODS code of the registration practice at the reporting month-end."
   - name: practice_name
@@ -43,8 +45,10 @@ models:
       null if absent. It may be outside the achievement window.
   - name: latest_record_date
     description: >-
-      Latest supporting evidence in the indicator window; null if absent. The model description
-      gives the achievement rule.
+      Latest valid recorded BMI or adult calculated BMI in the 15-month window; null if
+      absent. Earlier valid evidence survives a later invalid record.
+      Latest valid recorded BMI or adult calculated BMI in the 15-month window; null if
+      absent. Earlier valid evidence survives a later invalid record.
   - name: is_in_denominator
     description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator

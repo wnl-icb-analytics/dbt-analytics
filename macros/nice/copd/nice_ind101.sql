@@ -76,8 +76,9 @@ WITH population AS (
     LEFT JOIN responses r ON p.person_id = r.person_id AND p.reporting_date = r.reporting_date
 )
 SELECT person_id, 'IND101' AS indicator_id, 'COPD: offered pulmonary rehabilitation' AS indicator_name,
+'The percentage of patients with COPD and Medical Research Council (MRC) Dyspnoea Scale of 3 or more at any time in the preceding 15 months, with a subsequent record of an offer of referral to a pulmonary rehabilitation programme.' AS indicator_description,
     reporting_date, DATEADD(month, -15, reporting_date) AS measurement_period_start,
-    age, 'COPD with breathlessness grade 3 or more' AS condition_name,
+    age, 'COPD with breathlessness grade 3 or more' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     diagnosis_date, mrc_date, latest_offer_date,
     first_invitation_date, last_invitation_date, latest_response_date, is_excluded_invitation_non_response,

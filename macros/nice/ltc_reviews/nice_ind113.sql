@@ -60,8 +60,9 @@ assessed AS (
         AND population.reporting_date = response.reporting_date
 )
 SELECT person_id, 'IND113' AS indicator_id, 'Cancer: 3-month review' AS indicator_name,
+'The percentage of patients with cancer diagnosed within the preceding 15 months who have a review recorded as occurring within 3 months of the practice receiving confirmation of the diagnosis.' AS indicator_description,
     reporting_date, DATEADD(month, -18, reporting_date) AS measurement_period_start,
-    age, 'Cancer diagnosed 18 to 3 months ago'::VARCHAR(43) AS condition_name,
+    age, 'Cancer diagnosed 18 to 3 months ago'::VARCHAR(43) AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     diagnosis_date, latest_review_date, first_invitation_date, last_invitation_date,
     is_excluded_invitation_non_response,

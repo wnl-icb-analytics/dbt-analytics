@@ -9,3 +9,5 @@ Only people whose follow-up window has closed by the reporting date are included
 For BMI measures, the earliest qualifying BMI controls the deadline. IND319 still requires the latest measured BMI to qualify; an invalid or out-of-range latest BMI prevents fallback. Its advice remains assessed against that latest BMI.
 
 Use synthetic fixtures for temporal boundaries and aggregate-only warehouse checks. Development builds use the tracked `dev` target and existing `DEV__` layers. A worktree does not isolate warehouse objects.
+
+Snapshot inputs keep evidence and outcomes without labels. Labels join from `def_indicator` or the measure tables by `indicator_id`.

@@ -1,13 +1,15 @@
 models:
   - name: fct_person_smi_register
-    description: >
-      QOF v51 serious mental illness register. One row per person with an MH_COD
-      diagnosis dated on or before today, including codes also in MHREM_COD.
-      Remission does not exclude them and remission-only records do not
-      qualify. The retired MH2 lithium route is removed, so counts are not comparable
-      with the former combined register. Lithium fields remain informational for
-      diagnosis-qualified people.
+    description: >-
+      Psychosis and bipolar disorder register (NICE IND257). One row per register member.
 
+
+      Registration status is not filtered. Schizophrenia, bipolar affective disorder or other
+      psychoses qualify at any age. People with a diagnosis remain included during remission;
+      remission-only records do not qualify. The model does not include lithium-only people;
+      NICE IND256 needs the additional lithium population. Lithium fields describe treatment
+      only for diagnosis-qualified people. For NICE counts, select people registered on the
+      build date. Based on NICE CG178. Code lists: MH_COD (PCD).
     data_tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -61,10 +63,11 @@ models:
               People with schizophrenia, bipolar disorder or other psychoses,
               including remission.
             description_long: >-
-              Schizophrenia, bipolar affective disorder or other psychoses qualify at
-              any age. People with a diagnosis remain included during remission;
-              remission-only records do not qualify. Based on NICE CG178. Code list:
-              MH_COD.
+              Schizophrenia, bipolar affective disorder or other psychoses qualify at any age.
+              People with a diagnosis remain included during remission; remission-only records
+              do not qualify. Clinical evidence is dated by the build date. For NICE counts,
+              select people registered on the build date. Based on NICE CG178. Code lists:
+              MH_COD (PCD).
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "MH001"
@@ -75,17 +78,16 @@ models:
             clinical_domain: "Mental Health"
             name_short: >-
               Psychosis, bipolar disorder or lithium
-            description_short: >-
-              People with schizophrenia, bipolar disorder or other psychoses, or
-              active lithium treatment.
+            description_short: "NICE counts require this diagnosis register plus people on active lithium therapy."
             description_long: >-
-              For NICE counts, include this diagnosis register and people with active
-              lithium treatment from the long-term condition population, counting each
-              person once. The diagnosis register alone omits lithium-only people.
-              Lithium needs treatment in the six months before the build date with no
-              later stop; diagnosis-qualified people do not need lithium treatment.
-              Based on NICE CG178. Code lists: MH_COD and LITSTP_COD; lithium
-              prescriptions come from the shared medication records.
+              The NICE population includes people with schizophrenia, bipolar disorder or other
+              psychoses, and people on lithium therapy. For NICE counts, combine this diagnosis
+              register with people on active lithium treatment from the long-term condition
+              population and count each person once. The register alone omits lithium-only
+              people. Lithium requires a prescription in the 6 months before the build date with
+              no stop on a later date; a same-day stop retains treatment. Diagnosis-qualified
+              people do not need lithium. Select people registered on the build date. Based on
+              NICE CG178. Code lists: MH_COD, LITSTP_COD, LIT_COD (PCD).
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "MH001"

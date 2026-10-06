@@ -5,17 +5,15 @@ models:
     person in the denominator on the build date.
 
 
-    People registered on the build date with myocardial infarction in the financial year from 1
-    April to the build date, rather than a rolling year. Achieved with an ACE inhibitor, or ARB
-    with ACE inhibitor intolerance; aspirin and a P2Y12 inhibitor; a statin; and a beta blocker
-    if left ventricular systolic dysfunction is recorded. Prescriptions or recorded aspirin
-    treatment need to fall in the preceding 6 months. Temporary intolerance or contraindications
-    last 12 months; persistent records do not expire. The separate alternative accepts any ARB
-    and two antiplatelet chemicals, counting recorded aspirin separately without a recent
-    aspirin prescription. It does not affect achievement. No personalised care adjustments are
-    applied. Based on NICE NG185. Code lists: MI_COD, HFLVSD_COD, REDEJCFRAC_COD, OSAL_COD,
-    XACE_COD, TXACE_COD, XSAL_COD, TXSAL_COD (PCD); 0205051, 0205052, 0209, 020802, 0212, 0204
-    (BNF).
+    People registered on the build date with myocardial infarction in the financial year from
+    1 April to the build date, rather than NICE's preceding complete financial year. Achieved
+    with an ACE inhibitor, or ARB with ACE inhibitor intolerance; aspirin and a P2Y12
+    inhibitor; a statin; and a beta blocker if left ventricular systolic dysfunction is
+    recorded. Prescriptions or recorded aspirin treatment need to fall in the preceding 6
+    months. Temporary intolerance or contraindications last 12 months; persistent records do
+    not expire. No personalised care adjustments are applied. Based on NICE NG185. Code lists:
+    MI_COD, HFLVSD_COD, REDEJCFRAC_COD, OSAL_COD, XACE_COD, TXACE_COD, XSAL_COD, TXSAL_COD
+    (PCD); 0205051, 0205052, 0209, 020802, 0212, 0204 (BNF).
   config:
     meta:
       owner:
@@ -26,20 +24,20 @@ models:
         type: MEASURE
         category: MYOCARDIAL_INFARCTION
         clinical_domain: Cardiometabolic
-        name_short: "Recent heart attack medicines"
+        name_short: >-
+          Heart attack medicines, financial year
         description_short: "Medicines after myocardial infarction in the current financial year."
         description_long: >-
           People registered on the build date with myocardial infarction in the financial year
-          from 1 April to the build date, rather than a rolling year. Achieved with an ACE
-          inhibitor, or ARB with ACE inhibitor intolerance; aspirin and a P2Y12 inhibitor; a
-          statin; and a beta blocker if left ventricular systolic dysfunction is recorded.
-          Prescriptions or recorded aspirin treatment need to fall in the preceding 6 months.
-          Temporary intolerance or contraindications last 12 months; persistent records do not
-          expire. The separate alternative accepts any ARB and two antiplatelet chemicals,
-          counting recorded aspirin separately without a recent aspirin prescription. It does
-          not affect achievement. No personalised care adjustments are applied. Based on NICE
-          NG185. Code lists: MI_COD, HFLVSD_COD, REDEJCFRAC_COD, OSAL_COD, XACE_COD, TXACE_COD,
-          XSAL_COD, TXSAL_COD (PCD); 0205051, 0205052, 0209, 020802, 0212, 0204 (BNF).
+          from 1 April to the build date, rather than NICE's preceding complete financial
+          year. Achieved with an ACE inhibitor, or ARB with ACE inhibitor intolerance; aspirin
+          and a P2Y12 inhibitor; a statin; and a beta blocker if left ventricular systolic
+          dysfunction is recorded. Prescriptions or recorded aspirin treatment need to fall in
+          the preceding 6 months. Temporary intolerance or contraindications last 12 months;
+          persistent records do not expire. No personalised care adjustments are applied.
+          Based on NICE NG185. Code lists: MI_COD, HFLVSD_COD, REDEJCFRAC_COD, OSAL_COD,
+          XACE_COD, TXACE_COD, XSAL_COD, TXSAL_COD (PCD); 0205051, 0205052, 0209, 020802,
+          0212, 0204 (BNF).
         is_qof: false
         source_column: is_in_numerator
         usage_contexts:
@@ -51,6 +49,12 @@ models:
         combination_of_columns:
         - person_id
   columns:
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
   - name: person_id
     description: "Person identifier for a member of the indicator denominator."
   - name: reporting_date
@@ -65,9 +69,10 @@ models:
     description: "Name of the registration practice at the reporting date."
   - name: latest_record_date
     description: >-
-      Latest supporting prescription or aspirin treatment date on or before the reporting date; null
-      if absent. It may be outside the treatment window and does not prove all required medicines
-      are present.
+      Latest of ACE inhibitor, ARB, aspirin, P2Y12 inhibitor, oral anticoagulant, statin and
+      beta blocker prescription dates or recorded aspirin treatment; null if all absent.
+      Clopidogrel contributes as a P2Y12 inhibitor. May predate the
+      treatment window; does not prove achievement.
   - name: is_in_denominator
     description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator

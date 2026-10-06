@@ -48,8 +48,9 @@ WITH population AS (
         ON p.person_id = s.person_id
 )
 SELECT person_id, 'IND212' AS indicator_id, 'COPD: oxygen saturation recording' AS indicator_name,
+'The percentage of patients with very severe chronic obstructive pulmonary disease (COPD) with a record of oxygen saturation value within the preceding 12 months.' AS indicator_description,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Very severe COPD' AS condition_name, {{ nice_practice_columns('assessed', reference) }},
+    age, 'Very severe COPD' AS denominator_description, {{ nice_practice_columns('assessed', reference) }},
     latest_fev1_percent_date, latest_fev1_percent, latest_very_severe_code_date,
     latest_spo2_value, latest_record_date, TRUE AS is_in_denominator,
     latest_record_date IS NOT NULL AS is_in_numerator,

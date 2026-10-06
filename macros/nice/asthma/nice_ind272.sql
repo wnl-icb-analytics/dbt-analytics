@@ -64,8 +64,9 @@ WITH population AS (
     INNER JOIN evidence e ON p.person_id = e.person_id AND p.reporting_date = e.reporting_date
 )
 SELECT a.person_id, 'IND272' AS indicator_id, 'Asthma: objective tests' AS indicator_name,
+'The percentage of patients with a new diagnosis of asthma on or after (start date) with a record of an objective test between 3 months before or 3 months after diagnosis.' AS indicator_description,
     a.reporting_date, DATEADD(month, -15, a.reporting_date) AS measurement_period_start,
-    a.age, 'New asthma diagnosis, aged 5 or over' AS condition_name,
+    a.age, 'New asthma diagnosis, aged 5 or over' AS denominator_description,
     {{ nice_practice_columns('a', reference) }},
     a.diagnosis_date, a.feno_date, a.reversibility_date, a.pefr_variability_date,
     a.bronchial_challenge_date, a.skin_prick_date, a.ige_date, a.eosinophil_or_fbc_date,

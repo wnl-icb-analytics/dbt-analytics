@@ -30,8 +30,9 @@ WITH population AS (
 )
 SELECT person_id, 'IND221' AS indicator_id,
     'Weight management: referral to weight management programmes for obesity (co-existing hypertension or diabetes)' AS indicator_name,
+    'The percentage of patients with hypertension or diabetes and a BMI of 27.5 kg/m^2 or more (or 30 kg/m^2 or more if ethnicity is recorded as White) in the preceding 12 months who have been referred to a weight management programme within 90 days of the BMI being recorded.' AS indicator_description,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Obesity with hypertension or diabetes, aged 18 or over' AS condition_name,
+    age, 'Obesity with hypertension or diabetes, aged 18 or over' AS denominator_description,
     {{ nice_practice_columns('result', reference) }},
     latest_bmi_date, bmi_value, bmi_source, requires_lower_bmi_thresholds, bmi_category,
     timely_referral_date, timely_offer_date, timely_decline_date,

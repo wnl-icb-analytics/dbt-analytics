@@ -1,11 +1,16 @@
 models:
   - name: fct_person_cancer_register
-    description: >
-      Disease Registers (QOF v51) cancer register. One row per person with a
-      first or new CAN_COD episode on or after 1 April 2003 and on or before today.
-      Episode type "None" counts as first/new to match published QOF. CAN001 is retired;
-      register extraction continues through the Disease Registers service.
+    description: >-
+      Cancer register (NICE IND250). One row per register member.
 
+
+      Registration status is not filtered. First or new cancer episodes on or after 1 April 2003
+      qualify, following QOF rules. An episode type of "None" also counts as first or new. NICE
+      has no diagnosis-date floor and excludes non-melanotic skin cancer. The national cancer
+      list retains some skin squamous-cell carcinoma in situ codes; no extra exclusion applies.
+      Clinical evidence is dated by the build date. For NICE counts, select people registered on
+      the build date. Based on NICE cancer and patient experience guidance. Code lists: CAN_COD
+      (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -51,11 +56,13 @@ models:
             description_short: >-
               People with a first or new cancer diagnosis on or after 1 April 2003.
             description_long: >-
-              First or new cancer episodes on or after 1 April 2003 qualify, following
-              QOF rules. NICE has no diagnosis-date floor and excludes non-melanotic
-              skin cancer. The national cancer list retains some skin squamous-cell
-              carcinoma in situ codes; no extra exclusion applies. Based on NICE
-              cancer and patient experience guidance. Code list: CAN_COD.
+              First or new cancer episodes on or after 1 April 2003 qualify, following QOF
+              rules. An episode type of "None" also counts as first or new. NICE has no
+              diagnosis-date floor and excludes non-melanotic skin cancer. The national cancer
+              list retains some skin squamous-cell carcinoma in situ codes; no extra exclusion
+              applies. Clinical evidence is dated by the build date. For NICE counts, select
+              people registered on the build date. Based on NICE cancer and patient experience
+              guidance. Code lists: CAN_COD (PCD).
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "CAN001"

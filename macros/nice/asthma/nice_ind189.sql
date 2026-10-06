@@ -28,8 +28,9 @@ WITH population AS (
 )
 SELECT a.person_id, 'IND189' AS indicator_id,
     'Asthma: smoking status (under 19)' AS indicator_name,
+    'The percentage of patients with asthma on the register aged 19 or under, for whom there is a record of smoking status (active or passive) in the preceding 12 months.' AS indicator_description,
     a.reporting_date, DATEADD(month, -12, a.reporting_date) AS measurement_period_start,
-    a.age, 'Asthma, aged 5 to 19' AS condition_name,
+    a.age, 'Asthma, aged 5 to 19' AS denominator_description,
     {{ nice_practice_columns('a', reference) }},
     a.latest_record_date, TRUE AS is_in_denominator,
     a.latest_record_date IS NOT NULL AS is_in_numerator,

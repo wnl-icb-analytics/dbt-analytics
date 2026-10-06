@@ -24,8 +24,9 @@ WITH assessed AS (
 )
 SELECT person_id, 'IND319' AS indicator_id,
     'Weight management: advice for people living with overweight (18 to 39 years)' AS indicator_name,
+    'The percentage of patients aged 18 to 39 years with a BMI of 23 kg/m^2 to 27.4 kg/m^2 (or 25 kg/m^2 to 29.9 kg/m^2 if ethnicity is recorded as White) in the preceding 12 months who have been given weight management advice within 90 days of the BMI being recorded.' AS indicator_description,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Overweight, aged 18 to 39' AS condition_name,
+    age, 'Overweight, aged 18 to 39' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_bmi_date, bmi_value, is_recorded_white, bmi_lower_threshold, bmi_upper_threshold,
     latest_weight_advice_date, latest_weight_advice_date AS latest_record_date,
