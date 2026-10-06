@@ -2,7 +2,7 @@
     config(
         materialized='table',
         cluster_by=['end_date', 'person_id'],
-        tags=['qadmissions', 'risk_scores'],
+        tags=['qadmissions', 'risk_scores', 'monthly-full'],
         meta={
             'custom_message': 'QAdmissions feature set for Snowflake model registry. Derived from the QAdmissions 2013 v4.1 reference implementation (AGPL-3.0, ClinRisk Ltd). Displaying any score produced from these features requires the ClinRisk disclaimer.'
         }
@@ -10,17 +10,19 @@
 }}
 
 /*
-    int_qadmissions_features_history
-    --------------------------------
+    qadmissions_input_features_history
+    ----------------------------------
     Rebuilds the QAdmissions input features as they stood at historical index
     dates, so the model registered in Snowflake's model registry can be
     validated against later emergency admissions. The historical counterpart
-    of int_qadmissions_features. This model does not compute the risk score
+    of qadmissions_input_features. This model does not compute the risk score
     itself.
 
     Grain
-      One row per person per index date. Index dates are the month-ends in
-      the index_dates list below.
+      One row per person per index date. Index dates are every month-end
+      from January 2023 to December 2024, from
+      qadmissions_history_index_dates(). Each needs a full outcome horizon of
+      complete SUS follow-up before it is used for validation.
 
     Population at each index date
       Registered and alive at the month-end, recorded as Male or Female, and
@@ -31,14 +33,15 @@
       Every feature uses only evidence with a clinical date on or before the
       index date and, where a recording date is held, entered on or before
       it, so retrospectively entered codes are not visible at earlier index
-      dates. Disease register flags come from the QOF register macros
+      dates. Disease register flags come from the monthly register histories
+      (fct_person_*_register_by_month), built with the QOF register macros
       (macros/qof_registers), the as-at pairs of the live
       fct_person_*_register models behind dim_person_conditions.
       Two features are exceptions and take today's value at every index
       date: town (current LSOA, as address history is not held) and ethrisk
       (latest recorded ethnicity, as the QAdmissions paper did).
 
-    Differences from int_qadmissions_features
+    Differences from qadmissions_input_features
       Lab features keep extreme outliers; the live model reads the
       int_*_latest models, which exclude them. c_hb, high_platelet and
       high_lft can therefore differ even at the same date.
@@ -68,43 +71,35 @@
        lead to wrong patients being given the wrong treatment."
 */
 
-{#- Index month-ends, from macros/config/qadmissions_index_dates.sql, which a
-    test also reads to check every date has rows. Each needs a full outcome
-    horizon of complete SUS follow-up before it is used for validation.
-    2026-09-30 is for comparison with the live model only: it has no
-    follow-up and must not be used for outcome validation. -#}
-{%- set index_dates = qadmissions_history_index_dates() -%}
+{#- Condition codes of the registers behind the dim_person_conditions flags
+    used by the live model. Each monthly register history is looked up by code
+    in ltc_register_history_models(). Diabetes is read separately for its
+    type. CVD is not used: the QOF CVD register is CHD + stroke/TIA only, and
+    b_cvd also includes PAD. -#}
+{%- set qadmissions_register_codes = ['AF', 'HF', 'CAN', 'AST', 'COPD', 'EP', 'CKD', 'SMI', 'CHD', 'STIA', 'PAD'] -%}
+{%- set qadmissions_registers = [] -%}
+{%- for register_code, register_model in ltc_register_history_models() if register_code in qadmissions_register_codes -%}
+    {%- do qadmissions_registers.append((register_code, register_model)) -%}
+{%- endfor -%}
+{%- if qadmissions_registers | length != qadmissions_register_codes | length -%}
+    {{ exceptions.raise_compiler_error("qadmissions_input_features_history: not every QAdmissions register code was found in ltc_register_history_models()") }}
+{%- endif %}
 
-{#- QOF register macros behind the dim_person_conditions flags used by the
-    live model. Each macro is the strict as-at pair of its live
-    fct_person_*_register model. calculate_cvd_register is not used: it is
-    CHD + stroke/TIA only, and b_cvd also includes PAD. -#}
-{%- set qof_registers = [
-    ('AF',   calculate_atrial_fibrillation_register),
-    ('HF',   calculate_heart_failure_register),
-    ('CAN',  calculate_cancer_register),
-    ('AST',  calculate_asthma_register),
-    ('COPD', calculate_copd_register),
-    ('EP',   calculate_epilepsy_register),
-    ('CKD',  calculate_ckd_register),
-    ('SMI',  calculate_smi_register),
-    ('CHD',  calculate_chd_register),
-    ('STIA', calculate_stroke_tia_register),
-    ('PAD',  calculate_pad_register)
-] -%}
-
+-- Index month-ends (January 2023 to December 2024), from
+-- macros/config/qadmissions_index_dates.sql, which the index-dates test also
+-- reads.
 WITH index_dates AS (
-{%- for d in index_dates %}
-    {% if not loop.first %}UNION ALL{% endif %}
-    SELECT '{{ d }}'::DATE AS end_date
-{%- endfor %}
+    SELECT reference_date AS end_date
+    FROM (
+        {{ qadmissions_history_index_dates() }}
+    )
 ),
 
 -- Eligible population at each index date: registered and alive at the
 -- month-end, recorded as Male or Female, aged 18-100 at the month-end. Taken
 -- from the person-month spine rather than dim_person_demographics so that
--- people who later died or deregistered are kept. Index dates must be
--- month-ends inside the spine's rolling 60-month window, or they match no rows.
+-- people who later died or deregistered are kept. Index dates must be inside
+-- the spine's rolling 60-month window, or they match no rows.
 base_spine AS (
     SELECT
         s.month_end_date AS end_date,
@@ -121,23 +116,21 @@ base_spine AS (
 ),
 
 -- Register membership at each index date: one row per person, index date and
--- register they are on. Each branch runs one QOF register macro as at one
--- index date; the macros apply both clinical_effective_date and date_recorded
--- cut-offs and derive age at the reference date.
+-- register they are on. The monthly register histories hold only members, for
+-- people registered and alive at the month-end; their QOF register macros
+-- apply both clinical_effective_date and date_recorded cut-offs and derive age
+-- at the month-end. Each history covers 60 months, so only the index months
+-- are read.
 qof_register_history AS (
-{%- for d in index_dates %}
-{%- set outer_first = loop.first %}
-{%- for register_code, register_macro in qof_registers %}
-    {% if not (outer_first and loop.first) %}UNION ALL{% endif %}
+{%- for register_code, register_model in qadmissions_registers %}
+    {% if not loop.first %}UNION ALL{% endif %}
     SELECT
-        '{{ d }}'::DATE AS end_date,
+        reg.month_end_date AS end_date,
         reg.person_id,
         '{{ register_code }}' AS register_code
-    FROM (
-        {{ register_macro(reference_date_expr="'" ~ d ~ "'::DATE") }}
-    ) AS reg
-    WHERE reg.is_on_register
-{%- endfor %}
+    FROM {{ ref(register_model) }} AS reg
+    INNER JOIN index_dates AS i
+        ON reg.month_end_date = i.end_date
 {%- endfor %}
 ),
 
@@ -162,20 +155,16 @@ conditions AS (
     GROUP BY end_date, person_id
 ),
 
--- Diabetes register membership and type at each index date, from the as-at
--- pair of fct_person_diabetes_register. One row per person on the register.
+-- Diabetes register membership and type at each index date, from the monthly
+-- history of fct_person_diabetes_register. One row per person on the register.
 diabetes AS (
-{%- for d in index_dates %}
-    {% if not loop.first %}UNION ALL{% endif %}
     SELECT
-        '{{ d }}'::DATE AS end_date,
+        reg.month_end_date AS end_date,
         reg.person_id,
         reg.diabetes_type
-    FROM (
-        {{ calculate_diabetes_register(reference_date_expr="'" ~ d ~ "'::DATE") }}
-    ) AS reg
-    WHERE reg.is_on_register
-{%- endfor %}
+    FROM {{ ref('fct_person_diabetes_register_by_month') }} AS reg
+    INNER JOIN index_dates AS i
+        ON reg.month_end_date = i.end_date
 ),
 
 -- Medication orders across the five QAdmissions classes. Each row is one
@@ -413,15 +402,15 @@ liver_pancreatitis_flags AS (
     GROUP BY i.end_date, lp.person_id
 ),
 
--- Townsend score from the person's current LSOA, the same value at every
+-- Townsend score from the person's current 2011 LSOA, the same value at every
 -- index date. Address history is not held, so people who have moved since an
--- index date get their current area's score. NULL where the LSOA is missing
--- or does not bridge to a Townsend-mapped 2011 LSOA. One row per person.
+-- index date get their current area's score. NULL where there is no 2011 LSOA
+-- or it has no Townsend score. One row per person.
 townsend AS (
     SELECT
         person_id,
         townsend_score
-    FROM {{ ref('int_qadmissions_townsend') }}
+    FROM {{ ref('int_person_geography') }}
 ),
 
 -- Ethnicity risk group (1-9) from the person's latest recorded ethnicity, the
@@ -432,7 +421,7 @@ ethrisk_lookup AS (
     SELECT
         person_id,
         ethrisk
-    FROM {{ ref('int_qadmissions_ethrisk') }}
+    FROM {{ ref('qadmissions_ethrisk') }}
 )
 
 -- One row per eligible person per index date. The as-at feature CTEs are

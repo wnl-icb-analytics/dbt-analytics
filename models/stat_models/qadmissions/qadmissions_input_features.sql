@@ -10,8 +10,8 @@
 }}
 
 /*
-    int_qadmissions_features
-    ------------------------
+    qadmissions_input_features
+    --------------------------
     Assembles the input feature set consumed by the QAdmissions model registered
     in Snowflake's model registry. This model does not compute the risk score
     itself - it generates one row per eligible person with every feature
@@ -144,7 +144,7 @@ emergency_admissions AS (
 ),
 
 -- Lab features use the int_*_latest models, which exclude negative values and
--- extreme outliers. int_qadmissions_features_history keeps extreme outliers,
+-- extreme outliers. qadmissions_input_features_history keeps extreme outliers,
 -- so c_hb, high_platelet and high_lft can differ between the two models.
 
 -- Lab thresholds from the qadmissions_lab_thresholds seed, pivoted to one row.
@@ -202,13 +202,13 @@ liver_pancreatitis_flags AS (
     FROM {{ ref('int_liver_pancreatitis_diagnoses_all') }}
 ),
 
--- Townsend Deprivation Score per person (NULL where the LSOA does not
--- bridge to a Townsend-mapped 2011 LSOA, e.g. non-English residence).
+-- Townsend Deprivation Score per person from their residential 2011 LSOA
+-- (NULL where there is no 2011 LSOA or it has no Townsend score).
 townsend AS (
     SELECT
         person_id,
         townsend_score
-    FROM {{ ref('int_qadmissions_townsend') }}
+    FROM {{ ref('int_person_geography') }}
 ),
 
 -- Alcohol category 0..5 derived from Full AUDIT scores. 
@@ -217,7 +217,7 @@ alcohol AS (
     SELECT
         person_id,
         alcohol_cat6
-    FROM {{ ref('int_qadmissions_alcohol_category') }}
+    FROM {{ ref('qadmissions_alcohol_category') }}
 ),
 
 -- Ethrisk 1..9 derived from int_ethnicity_qof joined to the
@@ -227,7 +227,7 @@ ethrisk_lookup AS (
     SELECT
         person_id,
         ethrisk
-    FROM {{ ref('int_qadmissions_ethrisk') }}
+    FROM {{ ref('qadmissions_ethrisk') }}
 )
 
 SELECT
