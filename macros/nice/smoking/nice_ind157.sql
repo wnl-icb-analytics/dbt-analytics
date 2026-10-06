@@ -53,7 +53,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Current smokers with a long-term condition' AS denominator_description,
+    'Current smokers with listed long-term conditions' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_smoking_status,
     latest_smoking_status_date,

@@ -68,7 +68,7 @@ SELECT
     reporting_date AS reporting_date,
     DATE_FROM_PARTS({{ nice_flu_season_year('reporting_date') }}, 8, 1) AS measurement_period_start,
     age,
-    'Coronary heart disease, stroke, diabetes or COPD' AS denominator_description,
+    'Coronary heart disease, stroke or TIA, diabetes or COPD' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_vaccination_date,
     is_laiv,

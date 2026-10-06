@@ -58,7 +58,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Smokers with long-term conditions or severe mental illness' AS denominator_description,
+    'Smokers with listed conditions or severe mental illness' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_smoking_status,
     latest_smoking_status_date,

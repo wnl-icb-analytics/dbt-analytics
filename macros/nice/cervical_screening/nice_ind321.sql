@@ -36,7 +36,7 @@ SELECT
     reporting_date AS reporting_date,
     DATEADD(month, -66, reporting_date) AS measurement_period_start,
     age,
-    'Women aged 25 to 64' AS denominator_description,
+    'People recorded as female, aged 25 to 64' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_completed_date,
     latest_screening_date,

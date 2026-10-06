@@ -30,7 +30,7 @@ models:
   - name: reporting_date
     description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: "Start of the indicator cohort or evidence period; boundary inclusion follows the documented indicator rule."
+    description: "Start of the indicator window: 15 months before the reporting date for IND272, otherwise 12 months. The start date counts for IND315 only."
   - name: age
     description: "Age in completed years on the reporting date; null when the birth date is missing."
   - name: denominator_description
@@ -42,46 +42,46 @@ models:
   - name: indicator_status
     description: "ACHIEVED when the achievement rule is met; otherwise NOT_TREATED_IN_PERIOD for IND316 or NOT_RECORDED_IN_PERIOD."
   - name: latest_record_date
-    description: "Date of the latest qualifying evidence in the indicator window; null when none."
+    description: "Latest qualifying smoking record (IND189), test evidence (IND272), complete review (IND315) or inhaler prescription with a recorded regimen (IND316); null when not achieved."
   - name: practice_code
     description: "ODS code of the registration practice at month-end."
   - name: practice_name
     description: "Name of the registration practice at month-end."
   - name: risk_period_start
-    description: "Exclusive start of the risk period, 24 months before the reporting date."
+    description: "Exclusive start of the risk period, 24 months before the reporting date. Null for indicators other than IND315 and IND316."
   - name: risk_period_end
-    description: "Inclusive end of the risk period, 12 months before the reporting date."
+    description: "Inclusive end of the risk period, 12 months before the reporting date. Null for indicators other than IND315 and IND316."
   - name: saba_inhaler_count
-    description: "Short-acting reliever inhalers in the risk period. Prescription quantities are divided by 60 for Accuhaler, 100 for Turbohaler and 200 otherwise, rounded to whole inhalers with at least one per matching prescription."
+    description: "Short-acting reliever inhalers in the risk period. Prescription quantities are divided by 60 for Accuhaler, 100 for Turbohaler and 200 otherwise, rounded to whole inhalers with at least one per matching prescription. Null for indicators other than IND315 and IND316."
   - name: oral_steroid_course_count
-    description: "Distinct prednisolone prescription dates in the risk period, used to estimate oral steroid courses."
+    description: "Distinct prednisolone prescription dates in the risk period, used to estimate oral steroid courses. Null for indicators other than IND315 and IND316."
   - name: latest_asthma_admission_date
-    description: "Latest GP-recorded asthma admission in the risk period; null when none."
+    description: "Latest GP-recorded asthma admission in the risk period; null when none. Null for indicators other than IND315 and IND316."
   - name: has_high_saba_use
-    description: "Whether at least six short-acting reliever inhalers were prescribed in the risk period."
+    description: "Whether at least six short-acting reliever inhalers were prescribed in the risk period. Null for indicators other than IND315 and IND316."
   - name: has_repeated_oral_steroids
-    description: "Whether prednisolone was prescribed on at least two distinct dates in the risk period."
+    description: "Whether prednisolone was prescribed on at least two distinct dates in the risk period. Null for indicators other than IND315 and IND316."
   - name: has_asthma_admission
-    description: "Whether a GP-recorded asthma admission occurred in the risk period."
+    description: "Whether a GP-recorded asthma admission occurred in the risk period. Null for indicators other than IND315 and IND316."
   - name: latest_review_date
-    description: "Latest asthma review on or before the reporting date, including incomplete reviews and reviews outside the achievement window; null when none."
+    description: "Latest asthma review on or before the reporting date, including incomplete reviews and reviews outside the achievement window; null when none. Null for indicators other than IND315."
   - name: diagnosis_date
-    description: "Earliest asthma diagnosis after the latest known resolution, using calendar dates."
+    description: "Earliest asthma diagnosis after the latest known resolution, or first diagnosis when no resolution is recorded. Null for indicators other than IND272."
   - name: feno_date
-    description: "Latest exhaled nitric oxide test in the diagnosis test window; null when none."
+    description: "Latest exhaled nitric oxide test in the diagnosis test window; null when none. Null for indicators other than IND272."
   - name: reversibility_date
-    description: "Latest bronchodilator reversibility test in the diagnosis test window; null when none."
+    description: "Latest bronchodilator reversibility test in the diagnosis test window; null when none. Null for indicators other than IND272."
   - name: pefr_variability_date
-    description: "Latest peak-flow variability record in the diagnosis test window; counts regardless of spirometry availability. Null when none."
+    description: "Latest peak-flow variability record in the diagnosis test window; counts regardless of spirometry availability. Null when none. Null for indicators other than IND272."
   - name: bronchial_challenge_date
-    description: "Latest bronchial challenge test in the diagnosis test window; null when none."
+    description: "Latest bronchial challenge test in the diagnosis test window; null when none. Null for indicators other than IND272."
   - name: skin_prick_date
-    description: "Latest skin-prick test in the diagnosis test window; contributes to achievement at ages 5 to 16. Null when none."
+    description: "Latest skin-prick test in the diagnosis test window; contributes to achievement at ages 5 to 16. Null when none. Null for indicators other than IND272."
   - name: ige_date
-    description: "Latest immunoglobulin E test in the diagnosis test window; contributes at ages 5 to 16 only with an eosinophil count or full blood count. Null when none."
+    description: "Latest immunoglobulin E test in the diagnosis test window; contributes at ages 5 to 16 only with an eosinophil count or full blood count. Null when none. Null for indicators other than IND272."
   - name: eosinophil_or_fbc_date
-    description: "Latest eosinophil count or full blood count in the diagnosis test window; null when none."
+    description: "Latest eosinophil count or full blood count in the diagnosis test window; null when none. Null for indicators other than IND272."
   - name: latest_therapy_order_date
-    description: "Latest maintenance and reliever therapy inhaler prescription in the 12-month achievement window; null when none."
+    description: "Latest maintenance and reliever therapy inhaler prescription in the 12-month achievement window; null when none. Null for indicators other than IND316."
   - name: latest_mart_date
-    description: "Latest recorded maintenance and reliever therapy regimen on or before the reporting date, with no expiry; null when none."
+    description: "Latest recorded maintenance and reliever therapy regimen on or before the reporting date, with no expiry; null when none. Null for indicators other than IND316."
