@@ -1,0 +1,71 @@
+models:
+- name: fct_person_diabetes_dietary_review_ind89
+  description: >-
+    Dietary review in diabetes (NICE IND89). One row per person in the denominator on the
+    build date.
+
+
+    People registered on the build date on the diabetes register. Achieved with a
+    nutrition assessment, dietitian contact or diabetes dietary review in the 15 months
+    before the build date. Completed diabetes dietitian appointments count. Advice,
+    education, referrals, offers and declines alone do not. Codes cannot establish the
+    professional competence required by NICE. No personalised care adjustments are
+    applied. Based on NICE NG17. Code lists: NUTRIASS_COD (PCD);
+    NHSD_PRIMARY_CARE_DOMAIN_REFSETS/DIETITIAN_COD; DM_DIET_REVIEW_COD (ECL cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind89
+      indicator:
+        id: IND89
+        type: MEASURE
+        category: DIABETES_QUALITY
+        clinical_domain: Cardiometabolic
+        name_short: "Diabetes dietary review"
+        description_short: "Dietary review in diabetes (NICE IND89)."
+        description_long: >-
+          People registered on the build date on the diabetes register. Achieved
+          with a nutrition assessment, dietitian contact or diabetes dietary review
+          in the 15 months before the build date. Completed diabetes dietitian
+          appointments count. Advice, education, referrals, offers and declines
+          alone do not. Codes cannot establish the professional competence required
+          by NICE. No personalised care adjustments are applied. Based on NICE NG17.
+          Code lists: NUTRIASS_COD (PCD);
+          NHSD_PRIMARY_CARE_DOMAIN_REFSETS/DIETITIAN_COD; DM_DIET_REVIEW_COD (ECL
+          cache).
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND89
+  columns:
+  - name: person_id
+    description: "Person identifier for someone in the indicator denominator."
+    data_tests:
+    - not_null
+    - unique
+  - name: indicator_id
+    description: "Published NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: reporting_date
+    description: "Build date used to assess the population, age and evidence."
+  - name: measurement_period_start
+    description: "Exclusive start of the indicator measurement period before the reporting date."
+  - name: age
+    description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
+  - name: condition_name
+    description: "Short label for the indicator denominator population."
+  - name: current_practice_code
+    description: "ODS code of the current registration practice."
+  - name: current_practice_name
+    description: "Name of the current registration practice."
+  - name: latest_record_date
+    description: "Date of qualifying evidence retained within the indicator measurement or follow-up window; null when none is recorded."
+  - name: is_in_denominator
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."

@@ -52,7 +52,7 @@ SELECT
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,
-    'Type 2 diabetes with CVD risk score 10% or more' AS condition_name,
+    'Type 2 diabetes with raised cardiovascular risk' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_lipid_lowering_order_date,
     latest_lipid_lowering_class,

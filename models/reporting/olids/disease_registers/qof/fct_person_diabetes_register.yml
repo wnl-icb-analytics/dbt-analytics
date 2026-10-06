@@ -30,15 +30,16 @@ models:
           category: "LTC"
           clinical_domain: "Cardiometabolic"
           name_short: "Diabetes"
-          description_short: "QOF diabetes register (all types)"
+          description_short: "QOF 2025/26 diabetes register (all types)"
           description_long: >
-            Diabetes mellitus diagnosed using QOF criteria: Age ≥17 years with active diagnosis
-            where no resolution code is dated after the latest diabetes code. Includes
-            all diabetes types - Type 1, Type 2, and unspecified diabetes codes.
-            Evidence is dated on or before today. Type classification uses the
-            latest type code, with Type 1 taking precedence on the same date.
-            Maps to QOF indicator DM017 (Diabetes Register). Uses DM_COD (general),  DMTYPE1_COD
-            (Type 1), and DMTYPE2_COD (Type 2) cluster codes.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. Diabetes mellitus diagnosed using
+            QOF criteria: Age ≥17 years with active diagnosis where no resolution code is dated
+            after the latest diabetes code. Includes all diabetes types - Type 1, Type 2, and
+            unspecified diabetes codes. Evidence is dated on or before today. Type classification
+            uses the latest type code, with Type 1 taking precedence on the same date. QOF 2025/26
+            correspondence: DM017 (Diabetes Register). Uses DM_COD (general),  DMTYPE1_COD (Type
+            1), and DMTYPE2_COD (Type 2) cluster codes.
           is_qof: true
           qof_indicator: "DM017"
           source_column: "is_on_register"
@@ -54,6 +55,28 @@ models:
               category: "INCLUSION"
             - cluster_id: "DMRES_COD"
               category: "RESOLUTION"
+        indicators:
+          - id: "IND100"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Cardiometabolic"
+            name_short: >-
+              Diabetes register including type
+            description_short: >-
+              People aged 17 or over with unresolved diabetes, classified as Type 1,
+              Type 2 or Unknown.
+            description_long: >-
+              People aged 17 or over need an unresolved diabetes diagnosis. NICE has
+              no age or resolution exclusion. Type is Type 1, Type 2 or Unknown;
+              Unknown includes untyped diabetes and other types such as MODY or
+              secondary diabetes. The latest type code determines classification; Type
+              1 takes precedence on a shared date. Based on NICE NG28. Code list:
+              DM_COD, with diabetes type and resolved-code evidence from the shared
+              diabetes records.
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "DM017"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92
     columns:

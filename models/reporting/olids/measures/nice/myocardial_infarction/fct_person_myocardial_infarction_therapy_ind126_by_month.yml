@@ -1,0 +1,158 @@
+models:
+- name: fct_person_myocardial_infarction_therapy_ind126_by_month
+  description: >-
+    Medicines after myocardial infarction more than a year ago (NICE IND126). One row per person
+    in the denominator at each month-end.
+
+
+    People registered at the month-end with any myocardial infarction more than 12 months before
+    the month-end, even with a later repeat. Achieved with an ACE inhibitor, or ARB with ACE
+    inhibitor intolerance; aspirin, clopidogrel with aspirin intolerance, or oral anticoagulant;
+    a statin; and a beta blocker if left ventricular systolic dysfunction is recorded.
+    Prescriptions or recorded aspirin treatment need to fall in the preceding 6 months.
+    Temporary intolerance or contraindications last 12 months; persistent records do not expire.
+    The separate alternative accepts any ARB and any antiplatelet or oral anticoagulant. It does
+    not affect achievement. No personalised care adjustments are applied. Recalculated for each
+    of the last 60 month-ends with current rules, code lists and records, so later corrections
+    can change past months. Based on NICE NG185. Code lists: MI_COD, HFLVSD_COD, REDEJCFRAC_COD,
+    OSAL_COD, XACE_COD, TXACE_COD, XSAL_COD, TXSAL_COD (PCD); 0205051, 0205052, 0209, 020802,
+    0212, 0204 (BNF).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind126
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and evidence."
+  - name: measurement_period_start
+    description: >-
+      6 months before the reporting date, included in the treatment window. The diagnosis must be
+      more than 12 months earlier.
+  - name: age
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
+  - name: practice_code
+    description: "ODS code of the registration practice at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice at the reporting month-end."
+  - name: latest_record_date
+    description: >-
+      Latest supporting prescription or aspirin treatment date on or before the reporting date; null
+      if absent. It may be outside the treatment window and does not prove all required medicines
+      are present.
+  - name: is_in_denominator
+    description: "Always true. Each row is an eligible member of the denominator."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule."
+  - name: indicator_status
+    description: "ACHIEVED when all required medicines are present; otherwise NOT_TREATED_IN_PERIOD."
+  - name: earliest_mi_date
+    description: "Earliest myocardial infarction diagnosis with clinical and recorded dates known by the reporting date."
+  - name: latest_mi_date
+    description: "Latest myocardial infarction diagnosis with clinical and recorded dates known by the reporting date."
+  - name: latest_mi_in_financial_year_date
+    description: >-
+      Latest myocardial infarction diagnosis from 1 April of the financial year containing the
+      reporting date to that date, inclusive; null if absent.
+  - name: first_lvsd_date
+    description: >-
+      Earliest left ventricular systolic dysfunction or reduced ejection fraction diagnosis known by
+      the reporting date; null if absent.
+  - name: has_lvsd
+    description: >-
+      True when left ventricular systolic dysfunction or reduced ejection fraction is known by the
+      reporting date. A beta blocker is then required.
+  - name: has_ace_inhibitor_intolerance
+    description: >-
+      True when ACE inhibitor intolerance or contraindication is recorded by the reporting date.
+      Temporary records count for 12 months; persistent records have no expiry.
+  - name: has_aspirin_intolerance
+    description: >-
+      True when aspirin intolerance or contraindication is recorded by the reporting date. Temporary
+      records count for 12 months; persistent records have no expiry.
+  - name: latest_aspirin_record_date
+    description: >-
+      Latest recorded aspirin treatment on or before the reporting date; null if absent. It may be
+      outside the treatment window.
+  - name: latest_ace_inhibitor_order_date
+    description: >-
+      Latest ACE inhibitor prescription on or before the reporting date; null if absent. It may be
+      outside the treatment window.
+  - name: latest_arb_order_date
+    description: >-
+      Latest ARB prescription on or before the reporting date; null if absent. It may be outside the
+      treatment window.
+  - name: latest_aspirin_order_date
+    description: >-
+      Latest aspirin prescription on or before the reporting date; null if absent. It may be outside
+      the treatment window.
+  - name: latest_p2y12_order_date
+    description: >-
+      Latest P2Y12 inhibitor prescription on or before the reporting date; null if absent. It may be
+      outside the treatment window.
+  - name: latest_clopidogrel_order_date
+    description: >-
+      Latest clopidogrel prescription on or before the reporting date; null if absent. It may be
+      outside the treatment window.
+  - name: latest_antiplatelet_order_date
+    description: >-
+      Latest antiplatelet prescription on or before the reporting date; null if absent. It may be
+      outside the treatment window.
+  - name: latest_anticoagulant_order_date
+    description: >-
+      Latest oral anticoagulant prescription on or before the reporting date; null if absent. It may
+      be outside the treatment window.
+  - name: latest_statin_order_date
+    description: >-
+      Latest statin prescription on or before the reporting date; null if absent. It may be outside
+      the treatment window.
+  - name: latest_beta_blocker_order_date
+    description: >-
+      Latest beta blocker prescription on or before the reporting date; null if absent. It may be
+      outside the treatment window.
+  - name: is_ace_inhibitor_in_period
+    description: >-
+      True when a prescription for ACE inhibitor falls in the 6 months before the reporting date,
+      including both boundaries.
+  - name: is_arb_in_period
+    description: "True when a prescription for ARB falls in the 6 months before the reporting date, including both boundaries."
+  - name: is_aspirin_in_period
+    description: >-
+      True when an aspirin prescription or recorded aspirin treatment falls in the 6 months before
+      the reporting date, including both boundaries.
+  - name: is_p2y12_in_period
+    description: >-
+      True when a prescription for P2Y12 inhibitor falls in the 6 months before the reporting date,
+      including both boundaries.
+  - name: is_clopidogrel_in_period
+    description: >-
+      True when a prescription for clopidogrel falls in the 6 months before the reporting date,
+      including both boundaries.
+  - name: is_antiplatelet_in_period
+    description: >-
+      True when a prescription for antiplatelet falls in the 6 months before the reporting date,
+      including both boundaries.
+  - name: is_anticoagulant_in_period
+    description: >-
+      True when a prescription for oral anticoagulant falls in the 6 months before the reporting
+      date, including both boundaries.
+  - name: is_statin_in_period
+    description: >-
+      True when a prescription for statin falls in the 6 months before the reporting date, including
+      both boundaries.
+  - name: is_beta_blocker_in_period
+    description: >-
+      True when a prescription for beta blocker falls in the 6 months before the reporting date,
+      including both boundaries.
+  - name: is_in_numerator_lenient
+    description: >-
+      Alternative result accepting any ARB and any antiplatelet or oral anticoagulant. Other
+      requirements are unchanged; it does not affect the main numerator.

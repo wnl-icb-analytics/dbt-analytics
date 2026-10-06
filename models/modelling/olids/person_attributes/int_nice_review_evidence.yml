@@ -1,13 +1,11 @@
 models:
 - name: int_nice_review_evidence
-  description: NICE condition-review evidence. One row per active, living, non-test candidate person and
-    reference date. Candidates have a relevant condition register, unresolved NICE asthma diagnosis aged
-    5 or over, a first/new depression diagnosis, frailty, or at least four multimorbidity categories,
-    including people with no register membership. Latest review dates use clinical evidence on or before
-    the reference date. Cancer follow-up is the first review from the latest first/new register diagnosis
-    through the reference date, including reviews beyond twelve months. Depression follow-up stays in
-    IND104. Asthma completion uses the shared daily asthma review definition. Evaluated at the build date;
-    indicators apply their own populations and windows.
+  description: >-
+    Condition review evidence for registered, living, non-test people with relevant condition
+    registers, depression, frailty or at least four multimorbidity categories. One row per
+    candidate person on the build date. Includes unresolved asthma diagnoses from age 5, without
+    a treatment requirement. Dates stop at the build date; indicators apply their own
+    populations and windows. Null dates mean no evidence.
   config:
     meta:
       owner:
@@ -19,8 +17,8 @@ models:
     - unique
     - not_null
   - name: reporting_date
-    description: Current evaluation date stored at build time. nice_ref relabels this to the consumer
-      evaluation date.
+    description: >-
+      Build date on which population and evidence are assessed.
   - name: latest_asthma_review_date
     description: Date of the latest asthma review record; null if none.
   - name: latest_complete_asthma_review_date

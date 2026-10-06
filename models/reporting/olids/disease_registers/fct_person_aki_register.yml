@@ -1,0 +1,71 @@
+models:
+- name: fct_person_aki_register
+  description: >-
+    Acute kidney injury register (NICE IND174). One row per register member on the build date.
+
+
+    People registered on the build date, aged 18 or over, qualify with an AKI_COD episode or
+    history known by the build date, without expiry. Clinical and available recorded dates must
+    be on or before the build date. Includes acute-on-chronic injury, acute renal cortical
+    necrosis and acute tubular necrosis. Warning-stage results without a diagnosis code, risk or
+    education alone do not qualify. Hospital episodes need GP coding. Based on NICE NG148. Code
+    lists: AKI_COD (ECL cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      indicators:
+      - id: IND174
+        type: NICE_REGISTER
+        category: LTC
+        clinical_domain: Renal
+        name_short: >-
+          Acute kidney injury register
+        description_short: >-
+          Adults with a recorded acute kidney injury episode or history.
+        description_long: >-
+          People registered on the build date, aged 18 or over, qualify with an AKI_COD episode
+          or history known by the build date, without expiry. Clinical and available recorded
+          dates must be on or before the build date. Includes acute-on-chronic injury, acute
+          renal cortical necrosis and acute tubular necrosis. Warning-stage results without a
+          diagnosis code, risk or education alone do not qualify. Hospital episodes need GP
+          coding. Based on NICE NG148. Code lists: AKI_COD (ECL cache).
+        source_column: is_on_register
+        is_qof: false
+        qof_indicator: null
+        usage_contexts:
+        - NICE_GUIDANCE
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: Person identifier.
+    data_tests:
+    - not_null
+  - name: reporting_date
+    description: >-
+      Build date used to assess register membership.
+    data_tests:
+    - not_null
+  - name: age
+    description: >-
+      Age in completed years on the build date, derived from approximate birth date.
+  - name: practice_code
+    description: >-
+      Current practice attributed to the registered person on the build date.
+  - name: is_on_register
+    description: >-
+      True for every row; only eligible register members are included. Deceased people and test
+      records are excluded.
+  - name: earliest_diagnosis_date
+    description: >-
+      Earliest qualifying diagnosis clinical date known by the build date. Includes history
+      codes, so this is a coded evidence date rather than a confirmed acute kidney injury
+      episode date.
+  - name: latest_diagnosis_date
+    description: >-
+      Latest qualifying diagnosis clinical date known by the build date. Includes history codes,
+      so this is a coded evidence date rather than a confirmed acute kidney injury episode date.

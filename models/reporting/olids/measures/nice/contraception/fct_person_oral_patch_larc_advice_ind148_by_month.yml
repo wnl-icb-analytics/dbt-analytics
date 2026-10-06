@@ -1,0 +1,47 @@
+models:
+- name: fct_person_oral_patch_larc_advice_ind148_by_month
+  description: >-
+    Long-acting reversible contraception advice for oral or patch users (NICE IND148). One
+    row per person in the denominator at each month-end.
+
+
+    People registered at the month-end recorded as women aged 54 or under with an oral or
+    patch contraceptive prescription in the last 12 months. Only practice prescriptions
+    issued electronically, in print or by hand count. Outside-practice, over-the-counter
+    and missing issue methods do not count. Achieved with long-acting reversible
+    contraception advice in the last 12 months. NICE's advice and sexual health exception
+    exclusions are not applied because code lists are unavailable. No personalised care
+    adjustments are applied. Based on NICE CG30. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months. Code lists: CONTRACEP_COC_RX, CONTRACEP_POP_RX, CONTRACEP_PATCH_RX,
+    LARC_ADV_COD (ECL cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind148
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and evidence."
+  - name: measurement_period_start
+    description: "12 months before the reporting date. Prescriptions on this boundary are excluded; advice on it counts."
+  - name: latest_record_date
+    description: "Latest qualifying advice in the 12-month window; null if absent."
+  - name: is_in_denominator
+    description: "Always true. Each row is an eligible member of the denominator."
+  - name: is_in_numerator
+    description: "True when the person meets the achievement rules in the model description."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  - name: latest_oral_patch_date
+    description: >-
+      Latest practice-issued oral or patch contraceptive prescription on or before the reporting
+      date; null if absent.

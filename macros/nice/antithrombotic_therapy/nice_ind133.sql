@@ -159,7 +159,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Non-haemorrhagic stroke or TIA' AS condition_name,
+    'Non-haemorrhagic stroke or transient ischaemic attack' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_antiplatelet_order_date,
     latest_anticoagulant_order_date,

@@ -1,23 +1,13 @@
 models:
   - name: int_nice_multimorbidity_categories_by_month
-    description: |
-      NICE IND207 category membership at each of the last 60 completed month-ends.
-      One row per person, reporting date and qualifying category. Register inputs
-      use the existing active monthly memberships. Additional diagnosis and
-      prescribing evidence retains inactive and deceased people; measures apply
-      the common active, non-test population and their age rules.
-
-      Uses the same reviewed category mapping as the current model. Additional
-      diagnoses, alcohol-disorder evidence and epilepsy exclusions require clinical
-      and recorded dates on or before the month-end, with clinical-date fallback
-      for a null recorded date. Substance misuse uses the latest known clinical
-      timestamp, QUALIFYING before RESOLVING at equal timestamps, then id descending.
-      Alcohol retains its event-age floor of 16. Chronic pain requires four distinct
-      analgesic issues or four antiepileptic issues in the inclusive preceding
-      12 months. Any known epilepsy diagnosis excludes only the antiepileptic route.
-      Four laxative issues in that interval supply DIGESTIVE evidence. Current
-      code lists and later source corrections can change recalculated history.
-      Diverticular disease remains unrepresented.
+    description: >-
+      NICE multimorbidity category membership. One row per person, category and month-end,
+      without an age, registration or survival restriction. Categories combine condition
+      registers with additional diagnoses and treatment evidence; indicators count categories
+      rather than diagnoses. Diverticular disease is absent. Clinical and recorded dates limit
+      diagnosis evidence to information available by the month-end. Recalculated for each of
+      the last 60 month-ends with current rules, code lists and records, so later corrections
+      can change past months.
     config:
       meta:
         owner:
@@ -35,11 +25,14 @@ models:
         description: Reviewed NICE IND207 category; contributes at most once per person and month-end.
         data_tests: [not_null]
       - name: has_existing_evidence
-        description: Category supported by existing project register or age-filtered alcohol-disorder evidence.
+        description: >-
+          Whether condition register membership or alcohol-disorder evidence recorded at
+          age 16 or over supports the category.
       - name: has_additional_evidence
         description: Category supported by supplemental IND207 diagnosis or prescribing rules.
       - name: reporting_date
-        description: Completed month-end at which membership is evaluated.
+        description: >-
+          Completed month-end on which population and evidence are assessed.
         data_tests: [not_null]
 
 

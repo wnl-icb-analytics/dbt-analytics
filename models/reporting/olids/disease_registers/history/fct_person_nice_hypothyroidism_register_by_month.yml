@@ -1,0 +1,64 @@
+models:
+- name: fct_person_nice_hypothyroidism_register_by_month
+  description: >-
+    Treated hypothyroidism register (NICE IND138). One row per register member per completed
+    month-end.
+
+
+    People registered at the month-end, of any age, qualify with a hypothyroidism diagnosis and
+    a levothyroxine order in the 6 months before the month-end. Clinical and available recorded
+    dates must be on or before the month-end. A latest subclinical or compensated diagnosis
+    excludes membership. Same-time diagnoses use the highest observation ID.
+    Levothyroxine/liothyronine combinations count, including generic combinations of unknown
+    extract origin. Named thyroid extracts and liothyronine alone do not count. IND139 uses the
+    broader shared hypothyroidism register. Birth and death dates are approximate. Recalculated
+    for each of the last 60 month-ends with current rules, code lists and records, so later
+    corrections can change past months. Based on the NICE hypothyroidism clinical knowledge
+    summary. Code lists: HYPOTHY_COD, THY_COD; SUBCLIN_HYPOTHY_COD, LEVOTHYROXINE_RX (ECL
+    cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - month_end_date
+  columns:
+  - name: person_id
+    description: Person identifier.
+    data_tests:
+    - not_null
+  - name: month_end_date
+    description: >-
+      Month-end used to assess register membership.
+    data_tests:
+    - not_null
+  - name: age
+    description: >-
+      Age in completed years at the month-end, derived from approximate birth date.
+  - name: practice_code
+    description: >-
+      Practice attributed from the monthly registration records at the month-end.
+  - name: is_on_register
+    description: >-
+      True for every row; only eligible register members are included. Registration and
+      approximate death dates are assessed at the month-end; current test flags apply to all
+      months.
+  - name: earliest_diagnosis_date
+    description: >-
+      Earliest qualifying hypothyroidism diagnosis clinical date known by the month-end.
+  - name: latest_diagnosis_date
+    description: >-
+      Latest qualifying hypothyroidism diagnosis clinical date known by the month-end.
+  - name: latest_thyroid_diagnosis_date
+    description: >-
+      Clinical timestamp of the latest hypothyroidism or subclinical diagnosis known by the
+      month-end. Same-time diagnoses use the highest observation ID.
+  - name: latest_levothyroxine_order_date
+    description: >-
+      Latest qualifying levothyroxine-containing order in the 6 months before the month-end,
+      known by that date. The date exactly 6 months earlier is excluded; the month-end is
+      included. Missing recorded dates use the order date.

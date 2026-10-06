@@ -1,0 +1,38 @@
+unit_tests:
+  - name: nice_pulmonary_referral_predecessor_achievement
+    model: fct_person_copd_pulmonary_rehabilitation_ind101_by_month
+    overrides:
+      macros:
+        nice_reference_population: >-
+          SELECT -9751::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+          60::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code,
+          'Synthetic practice'::VARCHAR AS practice_name
+        nice_register: >-
+          SELECT -9751::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+          '2020-01-01'::DATE AS earliest_diagnosis_date
+    given:
+      - input: ref('int_nice_copd_observations_all')
+        format: sql
+        rows: >-
+          SELECT -9751::NUMBER AS person_id, -9751::NUMBER AS observation_id,
+          '2026-09-01'::DATE AS event_date, 'PULRHBOFF_COD'::VARCHAR AS evidence_type
+      - input: ref('int_mrc_dyspnoea_all')
+        format: sql
+        rows: >-
+          SELECT -9751::NUMBER AS person_id, '2026-08-01'::DATE AS clinical_effective_date,
+          3::NUMBER AS mrc_grade
+      - input: ref('int_referral_pulmonary_rehab')
+        format: sql
+        rows: >-
+          SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date,
+          NULL::VARCHAR AS pr_obs_type WHERE FALSE
+      - input: ref('int_ltc_review_all')
+        format: sql
+        rows: >-
+          SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date,
+          NULL::VARCHAR AS review_type WHERE FALSE
+    expect:
+      rows:
+        - {person_id: -9751, reporting_date: '2026-09-30', latest_offer_date: '2026-09-01', is_in_numerator: true}
+    config:
+      tags: [monthly-full, nice-history]

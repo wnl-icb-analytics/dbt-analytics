@@ -1,0 +1,84 @@
+models:
+- name: fct_person_nice_hypothyroidism_register
+  description: >-
+    Treated hypothyroidism register (NICE IND138). One row per register member on the build
+    date.
+
+
+    People registered on the build date, of any age, qualify with a hypothyroidism diagnosis and
+    a levothyroxine order in the 6 months before the build date. Clinical and available recorded
+    dates must be on or before the build date. A latest subclinical or compensated diagnosis
+    excludes membership. Same-time diagnoses use the highest observation ID.
+    Levothyroxine/liothyronine combinations count, including generic combinations of unknown
+    extract origin. Named thyroid extracts and liothyronine alone do not count. IND139 uses the
+    broader shared hypothyroidism register. Based on the NICE hypothyroidism clinical knowledge
+    summary. Code lists: HYPOTHY_COD, THY_COD; SUBCLIN_HYPOTHY_COD, LEVOTHYROXINE_RX (ECL
+    cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      indicators:
+      - id: IND138
+        type: NICE_REGISTER
+        category: LTC
+        clinical_domain: Endocrine
+        name_short: >-
+          Treated hypothyroidism register
+        description_short: >-
+          People with hypothyroidism and a levothyroxine prescription in the past 6 months.
+        description_long: >-
+          People registered on the build date, of any age, qualify with a hypothyroidism
+          diagnosis and a levothyroxine order in the 6 months before the build date. Clinical
+          and available recorded dates must be on or before the build date. A latest subclinical
+          or compensated diagnosis excludes membership. Same-time diagnoses use the highest
+          observation ID. Levothyroxine/liothyronine combinations count, including generic
+          combinations of unknown extract origin. Named thyroid extracts and liothyronine alone
+          do not count. IND139 uses the broader shared hypothyroidism register. Based on the
+          NICE hypothyroidism clinical knowledge summary. Code lists: HYPOTHY_COD, THY_COD;
+          SUBCLIN_HYPOTHY_COD, LEVOTHYROXINE_RX (ECL cache).
+        source_column: is_on_register
+        is_qof: false
+        qof_indicator: null
+        usage_contexts:
+        - NICE_GUIDANCE
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: Person identifier.
+    data_tests:
+    - not_null
+  - name: reporting_date
+    description: >-
+      Build date used to assess register membership.
+    data_tests:
+    - not_null
+  - name: age
+    description: >-
+      Age in completed years on the build date, derived from approximate birth date.
+  - name: practice_code
+    description: >-
+      Current practice attributed to the registered person on the build date.
+  - name: is_on_register
+    description: >-
+      True for every row; only eligible register members are included. Deceased people and test
+      records are excluded.
+  - name: earliest_diagnosis_date
+    description: >-
+      Earliest qualifying hypothyroidism diagnosis clinical date known by the build date.
+  - name: latest_diagnosis_date
+    description: >-
+      Latest qualifying hypothyroidism diagnosis clinical date known by the build date.
+  - name: latest_thyroid_diagnosis_date
+    description: >-
+      Clinical timestamp of the latest hypothyroidism or subclinical diagnosis known by the
+      build date. Same-time diagnoses use the highest observation ID.
+  - name: latest_levothyroxine_order_date
+    description: >-
+      Latest qualifying levothyroxine-containing order in the 6 months before the build date,
+      known by that date. The date exactly 6 months earlier is excluded; the build date is
+      included. Missing recorded dates use the order date.

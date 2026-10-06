@@ -1,11 +1,17 @@
 {% macro nice_cvd_risk_assessment_union(reference='current') %}
-{#- Combine the explicit family members at person/indicator/reporting-date grain. -#}
--- Common long-form interface for the NICE CVD risk assessment indicator views.
+{#-
+    Combine the NICE cvd risk assessment measures with their family detail columns.
+    Args: reference is current or by_month.
+    Returns: one eligible person and indicator per reporting_date.
+-#}
+-- Common long-form interface for NICE cardiovascular prevention indicators.
 {% set indicator_models = [
     'fct_person_cvd_risk_assessment_ind269',
     'fct_person_cvd_risk_assessment_ind270',
     'fct_person_cvd_risk_assessment_ind181',
-    'fct_person_cvd_risk_assessment_ind161'
+    'fct_person_cvd_risk_assessment_ind161',
+    'fct_person_blood_pressure_cvd_prevention_ind112',
+    'fct_person_cvd_risk_assessment_rheumatoid_arthritis_ind108'
 ] %}
 
 {% for indicator_model in indicator_models %}
@@ -18,10 +24,17 @@ SELECT
     age,
     condition_name,
     {{ nice_practice_columns(none, reference) }},
+    {% if indicator_model == 'fct_person_blood_pressure_cvd_prevention_ind112' %}
+    NULL::FLOAT AS latest_risk_score,
+    NULL::DATE AS latest_risk_score_date,
+    NULL::DATE AS latest_risk_assessment_date,
+    {% else %}
     latest_risk_score,
     latest_risk_score_date,
     latest_risk_assessment_date,
+    {% endif %}
     {% if indicator_model == 'fct_person_cvd_risk_assessment_ind161' %}new_diagnosis_date{% else %}NULL AS new_diagnosis_date{% endif %},
+    {% if indicator_model == 'fct_person_blood_pressure_cvd_prevention_ind112' %}latest_bp_date{% else %}NULL::DATE AS latest_bp_date{% endif %},
     is_in_denominator,
     is_in_numerator,
     indicator_status

@@ -251,7 +251,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Long-term condition on the NICE BMI recording list' AS condition_name,
+    'Long-term conditions, aged 18 or over' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_bmi_date,
     latest_record_date,

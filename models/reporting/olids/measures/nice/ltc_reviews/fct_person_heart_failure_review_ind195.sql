@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 -- NICE IND195: https://www.nice.org.uk/indicators/ind195
 -- Heart failure review, NYHA assessment and medication review in 12 months for people on the heart failure register.

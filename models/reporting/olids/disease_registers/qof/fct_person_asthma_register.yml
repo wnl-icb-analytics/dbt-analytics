@@ -20,20 +20,21 @@ models:
     config:
       meta:
         indicator:
-          id: "AST006"
+          id: "AST005"
           type: "CONDITION"
           category: "LTC"
           clinical_domain: "Respiratory"
           name_short: "Asthma"
-          description_short: "QOF asthma register"
+          description_short: "QOF 2025/26 asthma register"
           description_long: >
-            Asthma diagnosed using QOF v51 criteria: Age ≥5 years with an asthma diagnosis
-            and no resolution dated after the latest diagnosis. Treatment must be
-            prescribed after the date 12 months before today and on or before today. Maps to QOF
-            indicator AST006 (Asthma Register). Uses AST_COD for diagnosis codes and  ASTRES_COD
-            for resolution codes.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. Asthma diagnosed using QOF v51
+            criteria: Age ≥5 years with an asthma diagnosis and no resolution dated after the
+            latest diagnosis. Treatment must be prescribed after the date 12 months before today
+            and on or before today. QOF 2025/26 correspondence: AST005 (Asthma Register). Uses
+            AST_COD for diagnosis codes and  ASTRES_COD for resolution codes.
           is_qof: true
-          qof_indicator: "AST006"
+          qof_indicator: "AST005"
           source_column: "is_on_register"
           usage_contexts:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
@@ -43,5 +44,26 @@ models:
               category: "INCLUSION"
             - cluster_id: "ASTRES_COD"
               category: "RESOLUTION"
+        indicators:
+          - id: "IND186"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Respiratory"
+            name_short: >-
+              Asthma register
+            description_short: >-
+              People aged 5 or over with unresolved asthma and treatment in the
+              preceding 12 months.
+            description_long: >-
+              People aged 5 or over need an unresolved asthma diagnosis and treatment
+              in the 12 months before the build date, following QOF rules. NICE
+              requires the diagnosis without treatment. For NICE counts, use the
+              diagnosis population used by IND273. NICE IND186 has no underpinning
+              guideline recommendation. Code lists: AST_COD, ASTRES_COD and
+              ASTTRT_COD.
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "AST005"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92

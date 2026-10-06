@@ -1,0 +1,86 @@
+models:
+- name: fct_person_emergency_contraception_larc_advice_ind149
+  description: >-
+    Long-acting reversible contraception advice after emergency contraception (NICE
+    IND149). One row per person in the denominator on the build date.
+
+
+    People registered on the build date recorded as women aged 54 or under whose latest
+    emergency hormonal contraception prescription falls in the 12-month period ending 31
+    days before the build date, so follow-up is complete. Only practice prescriptions
+    issued electronically, in print or by hand count; outside-practice, over-the-counter
+    and missing issue methods do not. Achieved with general long-acting reversible
+    contraception advice, or both written and verbal advice, from prescription day to 31
+    days afterwards. Method education with unknown advice format does not count. No
+    personalised care adjustments are applied. Based on NICE CG30. Code lists:
+    CONTRACEP_EHC_RX, LARC_ADV_COD (ECL cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind149
+      indicator:
+        id: IND149
+        type: MEASURE
+        category: CONTRACEPTION
+        clinical_domain: CONTRACEPTION
+        name_short: "Emergency contraception advice"
+        description_short: "Long-acting reversible contraception advice after emergency contraception."
+        description_long: >-
+          People registered on the build date recorded as women aged 54 or under
+          whose latest emergency hormonal contraception prescription falls in the
+          12-month period ending 31 days before the build date, so follow-up is
+          complete. Only practice prescriptions issued electronically, in print or
+          by hand count; outside-practice, over-the-counter and missing issue
+          methods do not. Achieved with general long-acting reversible contraception
+          advice, or both written and verbal advice, from prescription day to 31
+          days afterwards. Method education with unknown advice format does not
+          count. No personalised care adjustments are applied. Based on NICE CG30.
+          Code lists: CONTRACEP_EHC_RX, LARC_ADV_COD (ECL cache).
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND149
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+  - name: reporting_date
+    description: "Build date used to assess eligibility and evidence."
+  - name: measurement_period_start
+    description: >-
+      Start of the 12-month prescription cohort ending 31 days before the reporting date.
+      Prescriptions on the start date are excluded.
+  - name: latest_record_date
+    description: >-
+      Latest general advice date, or the later of the written and verbal advice dates when both
+      exist, within the 31-day follow-up period; null if neither rule is met.
+  - name: is_in_denominator
+    description: "Always true. Each row is an eligible member of the denominator."
+  - name: is_in_numerator
+    description: "True when the person meets the achievement rules in the model description."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  - name: latest_ehc_date
+    description: "Latest practice-issued emergency hormonal contraception prescription on or before the reporting date."
+  - name: latest_non_specific_advice_date
+    description: >-
+      Latest general advice about long-acting reversible contraception from the prescription day to
+      31 days afterwards, inclusive; null if absent.
+  - name: latest_written_advice_date
+    description: >-
+      Latest written advice or leaflet about long-acting reversible contraception from the
+      prescription day to 31 days afterwards, inclusive; null if absent.
+  - name: latest_verbal_advice_date
+    description: >-
+      Latest verbal advice about long-acting reversible contraception from the prescription day to
+      31 days afterwards, inclusive; null if absent.
+  - name: has_unknown_modality_advice
+    description: >-
+      True when method education with an unknown advice format occurs within the 31-day follow-up
+      period. It does not count towards achievement.

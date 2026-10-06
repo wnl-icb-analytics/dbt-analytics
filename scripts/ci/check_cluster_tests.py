@@ -36,7 +36,7 @@ VALUESET_MACROS = {
 CODESET_REFS = ('stg_reference_combined_codesets', 'stg_reference_ukhsa_codecluster_versions')
 CALL_PATTERN = re.compile(r'\b(get_[a-z_]+)\s*\(')
 JINJA_BLOCK_PATTERN = re.compile(r'{{.*?}}|{%.*?%}', re.DOTALL)
-TOKEN_PATTERN = re.compile(r'[A-Za-z0-9_\-]+')
+TOKEN_PATTERN = re.compile(r'[A-Za-z0-9_\-/]+')
 QUOTED_PATTERN = re.compile(r"'([^']*)'")
 # cluster_id = 'X', UPPER(cc.cluster_id) = 'X', cluster_id IN ('X', 'Y')
 DIRECT_EQ_PATTERN = re.compile(r"\bcluster_id\s*\)?\s*=\s*'([^']+)'", re.IGNORECASE)

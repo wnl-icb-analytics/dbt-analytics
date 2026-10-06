@@ -1,16 +1,21 @@
 models:
 - name: fct_person_childhood_immunisation_ind215_by_month
-  description: NICE IND215. One row per eligible person, indicator and completed month-end. Babies reaching
-    approximate 8 months in (month-end minus 12 months, month-end]. At least three distinct DTP-containing
-    administration or vaccine order dates before 8 months. Contraindication history applies through the
-    month-end, retaining the current proxy without an authorised specific anaphylaxis definition. Recalculated
-    at monthly refresh for the last 60 completed month-ends using today's rules and code lists. Registration
-    and practice come from the existing monthly spine. Registration start is inclusive, end and death
-    dates exclusive. Overlapping registrations retain the spine's current-registration priority. Birth
-    and death dates are approximate; missing birth dates prevent historical active rows. Current gender
-    and test flags apply retrospectively. Diagnosis state uses both clinical and recorded dates. Other
-    evidence uses its clinical or order date through the month-end. Later corrections and current code-list
-    changes can alter earlier results.
+  description: >-
+    DTP vaccination by 8 months (NICE IND215). One row per person in the denominator at
+    each month-end.
+
+
+    People registered at the month-end whose 8-month milestone, based on approximate birth
+    date, fell in the last 12 months. Achieved with at least three diphtheria, tetanus and
+    pertussis-containing doses before age 8 months. Doses count distinct administration or
+    vaccine order dates. Excludes recorded vaccine contraindications as a substitute for
+    confirmed anaphylaxis. No personalised care adjustments are applied. Based on NICE
+    NG218. Recalculated for each of the last 60 month-ends with current rules, code lists
+    and records, so later corrections can change past months. Code lists:
+    DTaP/IPV/Hib/HepB/6-in-1 and dTaP/IPV/4-in-1 administration, drug and contraindication
+    lists (CHILDHOOD_IMMS_CODES); 4IN1VAC_COD, 5IN1VAC_COD, 6IN1VAC_COD, DTPCON_COD,
+    DTAPIPVCON_COD (PCD); 4IN1VACDRUG_COD, 5IN1VACDRUG_COD, 6IN1VACDRUG_COD (NHS drug
+    refset).
   config:
     meta:
       owner:
@@ -18,37 +23,35 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind215
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "NICE published indicator title."
   - name: reporting_date
-    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
-      row.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "Exclusive start of the 12-month milestone cohort."
   - name: age
-    description: Completed years at the month-end, calculated from the approximate birth month.
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the denominator population."
   - name: practice_code
-    description: ODS practice code at the month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Practice name at the month-end under the monthly spine attribution.
+    description: "Name of the registration practice at month-end."
   - name: birth_date_approx
-    description: Approximate birth date (mid-month)
+    description: "Approximate birth date, set to the middle of the recorded birth month."
   - name: milestone_date
-    description: Date the child reached the indicator's milestone age, which falls in the preceding 12
-      months
+    description: "Approximate date the child reached the required age milestone, in the 12-month eligibility window."
   - name: doses_in_window
-    description: Distinct administration dates for the indicator's vaccine within its age window
+    description: "Number of distinct vaccine administration or order dates in the indicator age window; for IND217 this counts MMR or MMRV doses only."
   - name: is_in_denominator
-    description: Always true; every row is an eligible child before personalised care adjustments
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
   - name: is_in_numerator
-    description: Whether the child received the required doses within the age window
+    description: "Whether the person meets the documented achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

@@ -1,0 +1,53 @@
+models:
+- name: fct_person_diabetes_dietary_review_ind89_by_month
+  description: >-
+    Dietary review in diabetes (NICE IND89). One row per person in the denominator at the
+    month-end.
+
+
+    People registered at the month-end on the diabetes register. Achieved with a nutrition
+    assessment, dietitian contact or diabetes dietary review in the 15 months before the
+    month-end. Completed diabetes dietitian appointments count. Advice, education,
+    referrals, offers and declines alone do not. Codes cannot establish the professional
+    competence required by NICE. No personalised care adjustments are applied. Based on
+    NICE NG17. Recalculated for each of the last 60 month-ends with current rules, code
+    lists and records, so later corrections can change past months. Code lists:
+    NUTRIASS_COD (PCD); NHSD_PRIMARY_CARE_DOMAIN_REFSETS/DIETITIAN_COD; DM_DIET_REVIEW_COD
+    (ECL cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  columns:
+  - name: person_id
+    description: "Person identifier for someone in the indicator denominator."
+  - name: indicator_id
+    description: "Published NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: reporting_date
+    description: "Month-end used to assess the population, age and evidence."
+  - name: measurement_period_start
+    description: "Exclusive start of the indicator measurement period before the reporting date."
+  - name: age
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
+  - name: condition_name
+    description: "Short label for the indicator denominator population."
+  - name: practice_code
+    description: "ODS code of the registration practice at month-end."
+  - name: practice_name
+    description: "Name of the registration practice at month-end."
+  - name: latest_record_date
+    description: "Date of qualifying evidence retained within the indicator measurement or follow-up window; null when none is recorded."
+  - name: is_in_denominator
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

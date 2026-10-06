@@ -1,0 +1,158 @@
+models:
+- name: fct_person_hypertension_nice_indicators
+  description: >-
+    Hypertension diagnosis confirmation and target organ tests results. One row per person and
+    indicator in the denominator on the build date.
+
+
+    Includes NICE IND115, NICE IND121, NICE IND122, NICE IND123. Each indicator has its own
+    denominator, measurement window and exclusions. Supporting evidence accompanies the
+    achievement status. No personalised care adjustments are applied.
+  config: &id001
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: reporting_date
+    description: "Build date used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Start of the diagnosis period: 1 April 2014, inclusive, for IND115; 15 months before the reporting date, exclusive, for IND121 to IND123. Test windows are relative to diagnosis."
+  - name: age
+    description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
+  - name: condition_name
+    description: "Short label for the population in the indicator denominator."
+  - name: is_in_denominator
+    description: "Always true; each row is eligible before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
+  - name: diagnosis_date
+    description: "Earliest hypertension diagnosis known on the reporting date."
+  - name: latest_acr_date
+    description: "Latest qualifying urine albumin-to-creatinine ratio test date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: latest_home_ambulatory_bp_date
+    description: "Latest qualifying home or ambulatory blood pressure monitoring date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: current_practice_code
+    description: "ODS code of the current registration practice."
+  - name: current_practice_name
+    description: "Name of the current registration practice."
+  - name: latest_ecg_date
+    description: "Latest qualifying resting ECG date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: has_12lead_ecg
+    description: "Whether explicit 12-lead ECG evidence is recorded within the diagnosis window. Generic resting ECG records do not set this flag; null for other indicators."
+  - name: latest_haematuria_test_date
+    description: "Latest qualifying blood-specific urine test, dipstick or urinalysis result date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: has_blood_specific_test
+    description: "Whether a blood-specific urine test is recorded within the diagnosis window. Generic dipstick or urinalysis results do not set this flag; true does not always prove the reagent-strip method. Null for other indicators."
+- name: fct_person_hypertension_nice_indicators_by_month
+  description: >-
+    Hypertension diagnosis confirmation and target organ tests results. One row per person,
+    indicator and month-end.
+
+
+    Includes NICE IND115, NICE IND121, NICE IND122, NICE IND123. Each indicator has its own
+    denominator, measurement window and exclusions. Supporting evidence accompanies the
+    achievement status. No personalised care adjustments are applied. Recalculated for each of
+    the last 60 month-ends with current rules, code lists and records, so later corrections can
+    change past months.
+  config: *id001
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Start of the diagnosis period: 1 April 2014, inclusive, for IND115; 15 months before the reporting date, exclusive, for IND121 to IND123. Test windows are relative to diagnosis."
+  - name: age
+    description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
+  - name: condition_name
+    description: "Short label for the population in the indicator denominator."
+  - name: is_in_denominator
+    description: "Always true; each row is eligible before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
+  - name: diagnosis_date
+    description: "Earliest hypertension diagnosis known on the reporting date."
+  - name: latest_acr_date
+    description: "Latest qualifying urine albumin-to-creatinine ratio test date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: latest_home_ambulatory_bp_date
+    description: "Latest qualifying home or ambulatory blood pressure monitoring date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: practice_code
+    description: "ODS code of the registration practice attributed at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice attributed at the reporting month-end."
+  - name: latest_ecg_date
+    description: "Latest qualifying resting ECG date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: has_12lead_ecg
+    description: "Whether explicit 12-lead ECG evidence is recorded within the diagnosis window. Generic resting ECG records do not set this flag; null for other indicators."
+  - name: latest_haematuria_test_date
+    description: "Latest qualifying blood-specific urine test, dipstick or urinalysis result date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: has_blood_specific_test
+    description: "Whether a blood-specific urine test is recorded within the diagnosis window. Generic dipstick or urinalysis results do not set this flag; true does not always prove the reagent-strip method. Null for other indicators."
+- name: fct_person_hypertension_nice_indicators_snapshot_input
+  description: >-
+    Hypertension diagnosis confirmation and target organ tests results used to track changes.
+    One row per person and indicator in the denominator on the build date.
+
+
+    Records eligibility, achievement and supporting evidence before personalised care
+    adjustments. Reporting-date fields are omitted so a date change alone does not create a new
+    history version.
+  config: *id001
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: is_in_numerator
+    description: "Whether the person meets the achievement rule on the build date."
+  - name: indicator_status
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
+  - name: diagnosis_date
+    description: "Earliest hypertension diagnosis known on the build date."
+  - name: latest_acr_date
+    description: "Latest qualifying urine albumin-to-creatinine ratio test date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: latest_home_ambulatory_bp_date
+    description: "Latest qualifying home or ambulatory blood pressure monitoring date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: current_practice_code
+    description: "ODS code of the current registration practice."
+  - name: latest_ecg_date
+    description: "Latest qualifying resting ECG date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: has_12lead_ecg
+    description: "Whether explicit 12-lead ECG evidence is recorded within the diagnosis window. Generic resting ECG records do not set this flag; null for other indicators."
+  - name: latest_haematuria_test_date
+    description: "Latest qualifying blood-specific urine test, dipstick or urinalysis result date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: has_blood_specific_test
+    description: "Whether a blood-specific urine test is recorded within the diagnosis window. Generic dipstick or urinalysis results do not set this flag; true does not always prove the reagent-strip method. Null for other indicators."

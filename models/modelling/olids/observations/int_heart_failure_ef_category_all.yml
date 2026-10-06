@@ -1,0 +1,32 @@
+models:
+- name: int_heart_failure_ef_category_all
+  description: Heart failure ejection-fraction category evidence. One row per observation for all recorded
+    people, from explicit category diagnoses or PCD REDEJCFRAC_COD.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: HFREF_DX_COD, HFMREF_DX_COD, HFPEF_DX_COD
+        source: ECL_CACHE
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: REDEJCFRAC_COD
+        source: PCD
+  columns:
+  - name: clinical_effective_date
+    description: Corrected clinical date from get_observations. Undated evidence uses its 1900 sentinel.
+  - name: is_reduced_ef
+    description: HFREF_DX_COD or PCD REDEJCFRAC_COD reduced category.
+  - name: is_mildly_reduced_ef
+    description: HFMREF_DX_COD mildly reduced category.
+  - name: is_preserved_ef
+    description: HFPEF_DX_COD preserved or normal category.
+  - name: date_recorded
+    description: Recorded timestamp used with clinical date to establish when diagnosis evidence was known.

@@ -65,7 +65,7 @@ SELECT
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,
-    'Chronic kidney disease' AS condition_name,
+    'Stage 3 to 5 kidney disease, aged 18 or over' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_lipid_lowering_order_date,
     latest_lipid_lowering_class,

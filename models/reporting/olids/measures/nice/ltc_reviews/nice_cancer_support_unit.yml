@@ -1,0 +1,76 @@
+unit_tests:
+- name: nice_cancer_support_cohort_expiry_calendar_deadline_and_cap
+  model: fct_person_cancer_support_ind222_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age,
+      column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code,
+      column7::VARCHAR AS practice_name, column8::DATE AS registration_start_date FROM VALUES (-96301,
+      '2026-08-31', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96301,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96302,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96303,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96304,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96305,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96306,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96307,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96308,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96309,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96310,
+      '2026-08-31', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96310,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30')
+  - input: ref('fct_person_cancer_register_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, column3::DATE AS earliest_diagnosis_date,
+      column4::DATE AS latest_diagnosis_date, column5::BOOLEAN AS is_on_register FROM VALUES (-96301,
+      '2026-08-31', '2025-09-01', '2025-09-01', TRUE), (-96301, '2026-09-30', '2025-09-01', '2025-09-01',
+      TRUE), (-96302, '2026-09-30', '2025-09-30', '2025-09-30', TRUE), (-96303, '2026-09-30', '2026-10-01',
+      '2026-10-01', TRUE), (-96304, '2026-09-30', '2026-06-30', '2026-06-30', TRUE), (-96305, '2026-09-30',
+      '2026-06-30', '2026-06-30', TRUE), (-96306, '2026-09-30', '2026-06-30', '2026-06-30', TRUE), (-96307,
+      '2026-09-30', '2026-08-31', '2026-08-31', TRUE), (-96308, '2026-09-30', '2026-05-31', '2026-05-31',
+      TRUE), (-96309, '2026-09-30', '2026-05-31', '2026-05-31', TRUE), (-96310, '2026-08-31', '2026-06-30',
+      '2026-06-30', TRUE), (-96310, '2026-09-30', '2026-06-30', '2026-06-30', TRUE)
+  - input: ref('int_cancer_support_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date FROM VALUES (-96301,
+      '2025-09-01'), (-96304, '2026-06-30'), (-96304, '2026-09-30'), (-96304, '2026-09-30'), (-96305,
+      '2026-06-29'), (-96306, '2026-10-01'), (-96307, '2026-10-01'), (-96308, '2026-08-31'), (-96309,
+      '2026-09-01'), (-96310, '2026-07-01'), (-96310, '2026-07-01')
+  expect:
+    rows:
+    - person_id: -96301
+      reporting_date: '2026-08-31'
+      latest_record_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -96304
+      reporting_date: '2026-09-30'
+      latest_record_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -96305
+      reporting_date: '2026-09-30'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96306
+      reporting_date: '2026-09-30'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96308
+      reporting_date: '2026-09-30'
+      latest_record_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -96309
+      reporting_date: '2026-09-30'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96310
+      reporting_date: '2026-09-30'
+      latest_record_date: '2026-07-01'
+      is_in_numerator: true
+    - person_id: -96301
+      reporting_date: '2026-09-30'
+      latest_record_date: '2025-09-01'
+      is_in_numerator: true
+    - person_id: -96302
+      reporting_date: '2026-09-30'
+      latest_record_date: null
+      is_in_numerator: false

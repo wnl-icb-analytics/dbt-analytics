@@ -1,0 +1,56 @@
+models:
+- name: fct_person_nsaid_egfr_ind232_by_month
+  description: >-
+    eGFR testing with long-term oral NSAID use (NICE IND232). One row per person in the
+    denominator at the month-end.
+
+
+    People registered at the month-end outside the CKD register with oral non-steroidal
+    anti-inflammatory drug (NSAID) prescriptions on at least 12 distinct days in the 24
+    months before the month-end. Several prescriptions on one day count once. Achieved
+    with an eGFR test in the last 12 months. No numeric result is needed. No personalised
+    care adjustments are applied. Based on NICE NG203. Recalculated for each of the last
+    60 month-ends with current rules, code lists and records, so later corrections can
+    change past months. Code lists: EGFR_COD (PCD); ORALNSAIDDRUG_COD (NHS drug refset).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind232
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Person identifier for someone in the indicator denominator."
+  - name: indicator_id
+    description: "Published NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: reporting_date
+    description: "Month-end used to assess the population, age and evidence."
+  - name: measurement_period_start
+    description: "Inclusive start of the indicator measurement period before the reporting date."
+  - name: age
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
+  - name: condition_name
+    description: "Short label for the indicator denominator population."
+  - name: practice_code
+    description: "ODS code of the registration practice at month-end."
+  - name: practice_name
+    description: "Name of the registration practice at month-end."
+  - name: nsaid_issue_day_count
+    description: "Number of distinct days with an oral NSAID prescription in the last 24 months, excluding the first day; at least 12."
+  - name: latest_therapy_order_date
+    description: "Latest oral NSAID prescription date in the 24-month period used to establish long-term use."
+  - name: latest_record_date
+    description: "Date of qualifying evidence retained within the indicator measurement or follow-up window; null when none is recorded."
+  - name: is_in_denominator
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."

@@ -40,7 +40,14 @@ SELECT
     CASE
         WHEN DATEDIFF(day, order_date, CURRENT_DATE()) <= 365 THEN TRUE
         ELSE FALSE
-    END AS is_recent_12m
+    END AS is_recent_12m,
+    EXISTS (
+        SELECT 1
+        FROM {{ ref('stg_reference_combined_codesets') }} AS codes
+        WHERE codes.source = 'OPENCODELISTS'
+            AND codes.cluster_id = 'NHS_DRUG_REFSETS/LBB_COD'
+            AND codes.code = base_orders.mapped_concept_code
+    ) AS is_hf_licensed
 
 FROM (
     {{ get_medication_orders(bnf_code='0204') }}

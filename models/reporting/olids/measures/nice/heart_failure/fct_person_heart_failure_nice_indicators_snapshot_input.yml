@@ -1,0 +1,34 @@
+models:
+- name: fct_person_heart_failure_nice_indicators_snapshot_input
+  description: >-
+    Heart failure evidence for change history (IND192, IND317, IND318). One row per eligible person
+    and indicator.
+
+
+    Records practice, supporting evidence and achievement from the build date. Reporting date and
+    measurement period start are omitted, so the passing of a day alone does not create a new
+    version. Eligibility and achievement follow the individual measures.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+  columns:
+  - name: has_reduced_ef_category
+    description: >-
+      True when a reduced ejection fraction category is known by the reporting date, including a
+      category recorded before diagnosis. Null when this field does not apply to the indicator.
+  - name: has_mildly_reduced_ef_category
+    description: >-
+      True when a mildly reduced ejection fraction category is known by the reporting date,
+      including a category recorded before diagnosis. Null when this field does not apply to the
+      indicator.
+  - name: has_preserved_ef_category
+    description: >-
+      True when a preserved ejection fraction category is known by the reporting date, including a
+      category recorded before diagnosis. Null when this field does not apply to the indicator.

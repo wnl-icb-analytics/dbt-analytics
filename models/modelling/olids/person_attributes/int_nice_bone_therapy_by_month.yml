@@ -1,0 +1,34 @@
+models:
+- name: int_nice_bone_therapy_by_month
+  description: >-
+    Bone-sparing prescriptions and hospital treatment for registered, living, non-test people
+    aged 50 or over. One row per person and month-end. Latest treatment dates remain available
+    outside indicator windows; null dates mean no qualifying evidence. Recalculated for each of
+    the last 60 month-ends with current rules, code lists and records, so later corrections can
+    change past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person identifier.
+  - name: reporting_date
+    description: >-
+      Completed month-end on which population and evidence are assessed.
+  - name: latest_bone_sparing_order_date
+    description: >-
+      Latest BSADRUG_COD order through the reporting date; null means no order.
+  - name: latest_hospital_therapy_date
+    description: >-
+      Latest hospital therapy on or before the reporting date; null means no hospital therapy.
+  - name: latest_current_hospital_therapy_date
+    description: >-
+      Latest hospital therapy within its six- or twelve-month coverage on the reporting date;
+      null means none currently covers the reporting date.

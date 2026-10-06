@@ -1,0 +1,454 @@
+unit_tests:
+- name: nice_dementia_windows_known_date_cap_and_multiplicity
+  model: int_nice_dementia_baseline_tests_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-93001::NUMBER, '2026-03-31'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93001::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93002::NUMBER, '2026-03-31'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93002::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93003::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93003::NUMBER, '2026-10-31'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93004::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93005::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93006::NUMBER, '2026-08-31'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93006::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93007::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93008::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93008::NUMBER, '2026-10-31'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR),
+          (-93009::NUMBER, '2026-09-30'::DATE, 30::NUMBER, '1996-01-15'::DATE, 'Female'::VARCHAR, 'SYNTHETIC'::VARCHAR, 'Synthetic practice'::VARCHAR)
+  - input: ref('fct_person_dementia_register_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, column3::TIMESTAMP_NTZ AS earliest_diagnosis_date, column4::TIMESTAMP_NTZ AS latest_diagnosis_date
+      FROM VALUES
+          (-93001::NUMBER, '2026-03-31'::DATE, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::TIMESTAMP_NTZ),
+          (-93001::NUMBER, '2026-09-30'::DATE, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::TIMESTAMP_NTZ),
+          (-93002::NUMBER, '2026-03-31'::DATE, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::TIMESTAMP_NTZ),
+          (-93002::NUMBER, '2026-09-30'::DATE, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::TIMESTAMP_NTZ),
+          (-93003::NUMBER, '2026-09-30'::DATE, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::TIMESTAMP_NTZ),
+          (-93003::NUMBER, '2026-10-31'::DATE, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::TIMESTAMP_NTZ),
+          (-93004::NUMBER, '2026-09-30'::DATE, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::TIMESTAMP_NTZ),
+          (-93005::NUMBER, '2026-09-30'::DATE, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::TIMESTAMP_NTZ),
+          (-93006::NUMBER, '2026-08-31'::DATE, '2026-03-01'::TIMESTAMP_NTZ, '2026-03-01'::TIMESTAMP_NTZ),
+          (-93006::NUMBER, '2026-09-30'::DATE, '2026-03-01'::TIMESTAMP_NTZ, '2026-03-01'::TIMESTAMP_NTZ),
+          (-93007::NUMBER, '2026-09-30'::DATE, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::TIMESTAMP_NTZ),
+          (-93008::NUMBER, '2026-09-30'::DATE, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::TIMESTAMP_NTZ),
+          (-93008::NUMBER, '2026-10-31'::DATE, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::TIMESTAMP_NTZ),
+          (-93009::NUMBER, '2026-09-30'::DATE, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::TIMESTAMP_NTZ)
+  - input: ref('int_dementia_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date, column3::DATE AS date_recorded, column4::BOOLEAN AS is_diagnosis_code
+      FROM VALUES
+          (-93001::NUMBER, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::DATE, TRUE::BOOLEAN),
+          (-93002::NUMBER, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::DATE, TRUE::BOOLEAN),
+          (-93003::NUMBER, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::DATE, TRUE::BOOLEAN),
+          (-93004::NUMBER, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::DATE, TRUE::BOOLEAN),
+          (-93005::NUMBER, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::DATE, TRUE::BOOLEAN),
+          (-93006::NUMBER, '2026-03-01'::TIMESTAMP_NTZ, '2026-09-15'::DATE, TRUE::BOOLEAN),
+          (-93007::NUMBER, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::DATE, TRUE::BOOLEAN),
+          (-93008::NUMBER, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::DATE, TRUE::BOOLEAN),
+          (-93008::NUMBER, '2025-01-01'::TIMESTAMP_NTZ, '2026-10-15'::DATE, TRUE::BOOLEAN),
+          (-93009::NUMBER, '2026-03-31'::TIMESTAMP_NTZ, '2026-03-31'::DATE, TRUE::BOOLEAN)
+  - input: ref('int_nice_dementia_baseline_tests_all')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id, column3::DATE AS event_date, column4::VARCHAR AS test_type
+      FROM VALUES
+          ('SYN_-93001_fbc'::VARCHAR, -93001::NUMBER, '2025-09-30'::DATE, 'fbc'::VARCHAR),
+          ('SYN_-93001_calcium'::VARCHAR, -93001::NUMBER, '2025-09-30'::DATE, 'calcium'::VARCHAR),
+          ('SYN_-93001_glucose'::VARCHAR, -93001::NUMBER, '2025-09-30'::DATE, 'glucose'::VARCHAR),
+          ('SYN_-93001_renal'::VARCHAR, -93001::NUMBER, '2025-09-30'::DATE, 'renal'::VARCHAR),
+          ('SYN_-93001_liver'::VARCHAR, -93001::NUMBER, '2025-09-30'::DATE, 'liver'::VARCHAR),
+          ('SYN_-93001_thyroid'::VARCHAR, -93001::NUMBER, '2025-09-30'::DATE, 'thyroid'::VARCHAR),
+          ('SYN_-93001_b12'::VARCHAR, -93001::NUMBER, '2025-09-30'::DATE, 'b12'::VARCHAR),
+          ('SYN_-93001_folate'::VARCHAR, -93001::NUMBER, '2025-09-30'::DATE, 'folate'::VARCHAR),
+          ('SYN_-93002_fbc'::VARCHAR, -93002::NUMBER, '2026-09-30'::DATE, 'fbc'::VARCHAR),
+          ('SYN_-93002_calcium'::VARCHAR, -93002::NUMBER, '2026-09-30'::DATE, 'calcium'::VARCHAR),
+          ('SYN_-93002_glucose'::VARCHAR, -93002::NUMBER, '2026-09-30'::DATE, 'glucose'::VARCHAR),
+          ('SYN_-93002_renal'::VARCHAR, -93002::NUMBER, '2026-09-30'::DATE, 'renal'::VARCHAR),
+          ('SYN_-93002_liver'::VARCHAR, -93002::NUMBER, '2026-09-30'::DATE, 'liver'::VARCHAR),
+          ('SYN_-93002_thyroid'::VARCHAR, -93002::NUMBER, '2026-09-30'::DATE, 'thyroid'::VARCHAR),
+          ('SYN_-93002_b12'::VARCHAR, -93002::NUMBER, '2026-09-30'::DATE, 'b12'::VARCHAR),
+          ('SYN_-93002_folate'::VARCHAR, -93002::NUMBER, '2026-09-30'::DATE, 'folate'::VARCHAR),
+          ('SYN_-93003_fbc'::VARCHAR, -93003::NUMBER, '2026-10-01'::DATE, 'fbc'::VARCHAR),
+          ('SYN_-93003_calcium'::VARCHAR, -93003::NUMBER, '2026-10-01'::DATE, 'calcium'::VARCHAR),
+          ('SYN_-93003_glucose'::VARCHAR, -93003::NUMBER, '2026-10-01'::DATE, 'glucose'::VARCHAR),
+          ('SYN_-93003_renal'::VARCHAR, -93003::NUMBER, '2026-10-01'::DATE, 'renal'::VARCHAR),
+          ('SYN_-93003_liver'::VARCHAR, -93003::NUMBER, '2026-10-01'::DATE, 'liver'::VARCHAR),
+          ('SYN_-93003_thyroid'::VARCHAR, -93003::NUMBER, '2026-10-01'::DATE, 'thyroid'::VARCHAR),
+          ('SYN_-93003_b12'::VARCHAR, -93003::NUMBER, '2026-10-01'::DATE, 'b12'::VARCHAR),
+          ('SYN_-93003_folate'::VARCHAR, -93003::NUMBER, '2026-10-01'::DATE, 'folate'::VARCHAR),
+          ('SYN_-93004_fbc'::VARCHAR, -93004::NUMBER, '2025-03-31'::DATE, 'fbc'::VARCHAR),
+          ('SYN_-93004_calcium'::VARCHAR, -93004::NUMBER, '2025-03-31'::DATE, 'calcium'::VARCHAR),
+          ('SYN_-93004_glucose'::VARCHAR, -93004::NUMBER, '2025-03-31'::DATE, 'glucose'::VARCHAR),
+          ('SYN_-93004_renal'::VARCHAR, -93004::NUMBER, '2025-03-31'::DATE, 'renal'::VARCHAR),
+          ('SYN_-93004_liver'::VARCHAR, -93004::NUMBER, '2025-03-31'::DATE, 'liver'::VARCHAR),
+          ('SYN_-93004_thyroid'::VARCHAR, -93004::NUMBER, '2025-03-31'::DATE, 'thyroid'::VARCHAR),
+          ('SYN_-93004_b12'::VARCHAR, -93004::NUMBER, '2025-03-31'::DATE, 'b12'::VARCHAR),
+          ('SYN_-93004_folate'::VARCHAR, -93004::NUMBER, '2025-03-31'::DATE, 'folate'::VARCHAR),
+          ('SYN_-93005_fbc'::VARCHAR, -93005::NUMBER, '2025-03-30'::DATE, 'fbc'::VARCHAR),
+          ('SYN_-93005_calcium'::VARCHAR, -93005::NUMBER, '2025-03-30'::DATE, 'calcium'::VARCHAR),
+          ('SYN_-93005_glucose'::VARCHAR, -93005::NUMBER, '2025-03-30'::DATE, 'glucose'::VARCHAR),
+          ('SYN_-93005_renal'::VARCHAR, -93005::NUMBER, '2025-03-30'::DATE, 'renal'::VARCHAR),
+          ('SYN_-93005_liver'::VARCHAR, -93005::NUMBER, '2025-03-30'::DATE, 'liver'::VARCHAR),
+          ('SYN_-93005_thyroid'::VARCHAR, -93005::NUMBER, '2025-03-30'::DATE, 'thyroid'::VARCHAR),
+          ('SYN_-93005_b12'::VARCHAR, -93005::NUMBER, '2025-03-30'::DATE, 'b12'::VARCHAR),
+          ('SYN_-93005_folate'::VARCHAR, -93005::NUMBER, '2025-03-30'::DATE, 'folate'::VARCHAR),
+          ('SYN_-93006_fbc'::VARCHAR, -93006::NUMBER, '2026-03-01'::DATE, 'fbc'::VARCHAR),
+          ('SYN_-93006_calcium'::VARCHAR, -93006::NUMBER, '2026-03-01'::DATE, 'calcium'::VARCHAR),
+          ('SYN_-93006_glucose'::VARCHAR, -93006::NUMBER, '2026-03-01'::DATE, 'glucose'::VARCHAR),
+          ('SYN_-93006_renal'::VARCHAR, -93006::NUMBER, '2026-03-01'::DATE, 'renal'::VARCHAR),
+          ('SYN_-93006_liver'::VARCHAR, -93006::NUMBER, '2026-03-01'::DATE, 'liver'::VARCHAR),
+          ('SYN_-93006_thyroid'::VARCHAR, -93006::NUMBER, '2026-03-01'::DATE, 'thyroid'::VARCHAR),
+          ('SYN_-93006_b12'::VARCHAR, -93006::NUMBER, '2026-03-01'::DATE, 'b12'::VARCHAR),
+          ('SYN_-93006_folate'::VARCHAR, -93006::NUMBER, '2026-03-01'::DATE, 'folate'::VARCHAR),
+          ('SYN_-93007_fbc'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'fbc'::VARCHAR),
+          ('SYN_DUP_-93007_fbc'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'fbc'::VARCHAR),
+          ('SYN_FUTURE_-93007_fbc'::VARCHAR, -93007::NUMBER, '2026-10-01'::DATE, 'fbc'::VARCHAR),
+          ('SYN_-93007_calcium'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'calcium'::VARCHAR),
+          ('SYN_DUP_-93007_calcium'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'calcium'::VARCHAR),
+          ('SYN_FUTURE_-93007_calcium'::VARCHAR, -93007::NUMBER, '2026-10-01'::DATE, 'calcium'::VARCHAR),
+          ('SYN_-93007_glucose'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'glucose'::VARCHAR),
+          ('SYN_DUP_-93007_glucose'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'glucose'::VARCHAR),
+          ('SYN_FUTURE_-93007_glucose'::VARCHAR, -93007::NUMBER, '2026-10-01'::DATE, 'glucose'::VARCHAR),
+          ('SYN_-93007_renal'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'renal'::VARCHAR),
+          ('SYN_DUP_-93007_renal'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'renal'::VARCHAR),
+          ('SYN_FUTURE_-93007_renal'::VARCHAR, -93007::NUMBER, '2026-10-01'::DATE, 'renal'::VARCHAR),
+          ('SYN_-93007_liver'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'liver'::VARCHAR),
+          ('SYN_DUP_-93007_liver'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'liver'::VARCHAR),
+          ('SYN_FUTURE_-93007_liver'::VARCHAR, -93007::NUMBER, '2026-10-01'::DATE, 'liver'::VARCHAR),
+          ('SYN_-93007_thyroid'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'thyroid'::VARCHAR),
+          ('SYN_DUP_-93007_thyroid'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'thyroid'::VARCHAR),
+          ('SYN_FUTURE_-93007_thyroid'::VARCHAR, -93007::NUMBER, '2026-10-01'::DATE, 'thyroid'::VARCHAR),
+          ('SYN_-93007_b12'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'b12'::VARCHAR),
+          ('SYN_DUP_-93007_b12'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'b12'::VARCHAR),
+          ('SYN_FUTURE_-93007_b12'::VARCHAR, -93007::NUMBER, '2026-10-01'::DATE, 'b12'::VARCHAR),
+          ('SYN_-93007_folate'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'folate'::VARCHAR),
+          ('SYN_DUP_-93007_folate'::VARCHAR, -93007::NUMBER, '2026-03-31'::DATE, 'folate'::VARCHAR),
+          ('SYN_FUTURE_-93007_folate'::VARCHAR, -93007::NUMBER, '2026-10-01'::DATE, 'folate'::VARCHAR),
+          ('SYN_-93008_fbc'::VARCHAR, -93008::NUMBER, '2026-03-31'::DATE, 'fbc'::VARCHAR),
+          ('SYN_-93008_calcium'::VARCHAR, -93008::NUMBER, '2026-03-31'::DATE, 'calcium'::VARCHAR),
+          ('SYN_-93008_glucose'::VARCHAR, -93008::NUMBER, '2026-03-31'::DATE, 'glucose'::VARCHAR),
+          ('SYN_-93008_renal'::VARCHAR, -93008::NUMBER, '2026-03-31'::DATE, 'renal'::VARCHAR),
+          ('SYN_-93008_liver'::VARCHAR, -93008::NUMBER, '2026-03-31'::DATE, 'liver'::VARCHAR),
+          ('SYN_-93008_thyroid'::VARCHAR, -93008::NUMBER, '2026-03-31'::DATE, 'thyroid'::VARCHAR),
+          ('SYN_-93008_b12'::VARCHAR, -93008::NUMBER, '2026-03-31'::DATE, 'b12'::VARCHAR),
+          ('SYN_-93008_folate'::VARCHAR, -93008::NUMBER, '2026-03-31'::DATE, 'folate'::VARCHAR),
+          ('SYN_-93009_fbc'::VARCHAR, -93009::NUMBER, '2026-03-31'::DATE, 'fbc'::VARCHAR),
+          ('SYN_-93009_calcium'::VARCHAR, -93009::NUMBER, '2026-03-31'::DATE, 'calcium'::VARCHAR),
+          ('SYN_-93009_glucose'::VARCHAR, -93009::NUMBER, '2026-03-31'::DATE, 'glucose'::VARCHAR),
+          ('SYN_-93009_renal'::VARCHAR, -93009::NUMBER, '2026-03-31'::DATE, 'renal'::VARCHAR),
+          ('SYN_-93009_liver'::VARCHAR, -93009::NUMBER, '2026-03-31'::DATE, 'liver'::VARCHAR),
+          ('SYN_-93009_thyroid'::VARCHAR, -93009::NUMBER, '2026-03-31'::DATE, 'thyroid'::VARCHAR),
+          ('SYN_-93009_b12'::VARCHAR, -93009::NUMBER, '2026-03-31'::DATE, 'b12'::VARCHAR)
+  expect:
+    rows:
+    - person_id: -93001
+      reporting_date: '2026-03-31'
+      diagnosis_date: '2026-03-31'
+      has_ind80_all_tests: true
+      has_ind118_all_tests: true
+      ind80_fbc_date: '2025-09-30'
+      ind80_calcium_date: '2025-09-30'
+      ind80_glucose_date: '2025-09-30'
+      ind80_renal_date: '2025-09-30'
+      ind80_liver_date: '2025-09-30'
+      ind80_thyroid_date: '2025-09-30'
+      ind80_b12_date: '2025-09-30'
+      ind80_folate_date: '2025-09-30'
+      ind80_latest_record_date: '2025-09-30'
+      ind118_fbc_date: '2025-09-30'
+      ind118_calcium_date: '2025-09-30'
+      ind118_glucose_date: '2025-09-30'
+      ind118_renal_date: '2025-09-30'
+      ind118_liver_date: '2025-09-30'
+      ind118_thyroid_date: '2025-09-30'
+      ind118_b12_date: '2025-09-30'
+      ind118_folate_date: '2025-09-30'
+      ind118_latest_record_date: '2025-09-30'
+    - person_id: -93001
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-03-31'
+      has_ind80_all_tests: true
+      has_ind118_all_tests: true
+      ind80_fbc_date: '2025-09-30'
+      ind80_calcium_date: '2025-09-30'
+      ind80_glucose_date: '2025-09-30'
+      ind80_renal_date: '2025-09-30'
+      ind80_liver_date: '2025-09-30'
+      ind80_thyroid_date: '2025-09-30'
+      ind80_b12_date: '2025-09-30'
+      ind80_folate_date: '2025-09-30'
+      ind80_latest_record_date: '2025-09-30'
+      ind118_fbc_date: '2025-09-30'
+      ind118_calcium_date: '2025-09-30'
+      ind118_glucose_date: '2025-09-30'
+      ind118_renal_date: '2025-09-30'
+      ind118_liver_date: '2025-09-30'
+      ind118_thyroid_date: '2025-09-30'
+      ind118_b12_date: '2025-09-30'
+      ind118_folate_date: '2025-09-30'
+      ind118_latest_record_date: '2025-09-30'
+    - person_id: -93002
+      reporting_date: '2026-03-31'
+      diagnosis_date: '2026-03-31'
+      has_ind80_all_tests: false
+      has_ind118_all_tests: false
+      ind80_fbc_date: null
+      ind80_calcium_date: null
+      ind80_glucose_date: null
+      ind80_renal_date: null
+      ind80_liver_date: null
+      ind80_thyroid_date: null
+      ind80_b12_date: null
+      ind80_folate_date: null
+      ind80_latest_record_date: null
+      ind118_fbc_date: null
+      ind118_calcium_date: null
+      ind118_glucose_date: null
+      ind118_renal_date: null
+      ind118_liver_date: null
+      ind118_thyroid_date: null
+      ind118_b12_date: null
+      ind118_folate_date: null
+      ind118_latest_record_date: null
+    - person_id: -93002
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-03-31'
+      has_ind80_all_tests: true
+      has_ind118_all_tests: false
+      ind80_fbc_date: '2026-09-30'
+      ind80_calcium_date: '2026-09-30'
+      ind80_glucose_date: '2026-09-30'
+      ind80_renal_date: '2026-09-30'
+      ind80_liver_date: '2026-09-30'
+      ind80_thyroid_date: '2026-09-30'
+      ind80_b12_date: '2026-09-30'
+      ind80_folate_date: '2026-09-30'
+      ind80_latest_record_date: '2026-09-30'
+      ind118_fbc_date: null
+      ind118_calcium_date: null
+      ind118_glucose_date: null
+      ind118_renal_date: null
+      ind118_liver_date: null
+      ind118_thyroid_date: null
+      ind118_b12_date: null
+      ind118_folate_date: null
+      ind118_latest_record_date: null
+    - person_id: -93003
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-03-31'
+      has_ind80_all_tests: false
+      has_ind118_all_tests: false
+      ind80_fbc_date: null
+      ind80_calcium_date: null
+      ind80_glucose_date: null
+      ind80_renal_date: null
+      ind80_liver_date: null
+      ind80_thyroid_date: null
+      ind80_b12_date: null
+      ind80_folate_date: null
+      ind80_latest_record_date: null
+      ind118_fbc_date: null
+      ind118_calcium_date: null
+      ind118_glucose_date: null
+      ind118_renal_date: null
+      ind118_liver_date: null
+      ind118_thyroid_date: null
+      ind118_b12_date: null
+      ind118_folate_date: null
+      ind118_latest_record_date: null
+    - person_id: -93003
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2026-03-31'
+      has_ind80_all_tests: false
+      has_ind118_all_tests: false
+      ind80_fbc_date: null
+      ind80_calcium_date: null
+      ind80_glucose_date: null
+      ind80_renal_date: null
+      ind80_liver_date: null
+      ind80_thyroid_date: null
+      ind80_b12_date: null
+      ind80_folate_date: null
+      ind80_latest_record_date: null
+      ind118_fbc_date: null
+      ind118_calcium_date: null
+      ind118_glucose_date: null
+      ind118_renal_date: null
+      ind118_liver_date: null
+      ind118_thyroid_date: null
+      ind118_b12_date: null
+      ind118_folate_date: null
+      ind118_latest_record_date: null
+    - person_id: -93004
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-03-31'
+      has_ind80_all_tests: false
+      has_ind118_all_tests: true
+      ind80_fbc_date: null
+      ind80_calcium_date: null
+      ind80_glucose_date: null
+      ind80_renal_date: null
+      ind80_liver_date: null
+      ind80_thyroid_date: null
+      ind80_b12_date: null
+      ind80_folate_date: null
+      ind80_latest_record_date: null
+      ind118_fbc_date: '2025-03-31'
+      ind118_calcium_date: '2025-03-31'
+      ind118_glucose_date: '2025-03-31'
+      ind118_renal_date: '2025-03-31'
+      ind118_liver_date: '2025-03-31'
+      ind118_thyroid_date: '2025-03-31'
+      ind118_b12_date: '2025-03-31'
+      ind118_folate_date: '2025-03-31'
+      ind118_latest_record_date: '2025-03-31'
+    - person_id: -93005
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-03-31'
+      has_ind80_all_tests: false
+      has_ind118_all_tests: false
+      ind80_fbc_date: null
+      ind80_calcium_date: null
+      ind80_glucose_date: null
+      ind80_renal_date: null
+      ind80_liver_date: null
+      ind80_thyroid_date: null
+      ind80_b12_date: null
+      ind80_folate_date: null
+      ind80_latest_record_date: null
+      ind118_fbc_date: null
+      ind118_calcium_date: null
+      ind118_glucose_date: null
+      ind118_renal_date: null
+      ind118_liver_date: null
+      ind118_thyroid_date: null
+      ind118_b12_date: null
+      ind118_folate_date: null
+      ind118_latest_record_date: null
+    - person_id: -93006
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-03-01'
+      has_ind80_all_tests: true
+      has_ind118_all_tests: true
+      ind80_fbc_date: '2026-03-01'
+      ind80_calcium_date: '2026-03-01'
+      ind80_glucose_date: '2026-03-01'
+      ind80_renal_date: '2026-03-01'
+      ind80_liver_date: '2026-03-01'
+      ind80_thyroid_date: '2026-03-01'
+      ind80_b12_date: '2026-03-01'
+      ind80_folate_date: '2026-03-01'
+      ind80_latest_record_date: '2026-03-01'
+      ind118_fbc_date: '2026-03-01'
+      ind118_calcium_date: '2026-03-01'
+      ind118_glucose_date: '2026-03-01'
+      ind118_renal_date: '2026-03-01'
+      ind118_liver_date: '2026-03-01'
+      ind118_thyroid_date: '2026-03-01'
+      ind118_b12_date: '2026-03-01'
+      ind118_folate_date: '2026-03-01'
+      ind118_latest_record_date: '2026-03-01'
+    - person_id: -93007
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-03-31'
+      has_ind80_all_tests: true
+      has_ind118_all_tests: true
+      ind80_fbc_date: '2026-03-31'
+      ind80_calcium_date: '2026-03-31'
+      ind80_glucose_date: '2026-03-31'
+      ind80_renal_date: '2026-03-31'
+      ind80_liver_date: '2026-03-31'
+      ind80_thyroid_date: '2026-03-31'
+      ind80_b12_date: '2026-03-31'
+      ind80_folate_date: '2026-03-31'
+      ind80_latest_record_date: '2026-03-31'
+      ind118_fbc_date: '2026-03-31'
+      ind118_calcium_date: '2026-03-31'
+      ind118_glucose_date: '2026-03-31'
+      ind118_renal_date: '2026-03-31'
+      ind118_liver_date: '2026-03-31'
+      ind118_thyroid_date: '2026-03-31'
+      ind118_b12_date: '2026-03-31'
+      ind118_folate_date: '2026-03-31'
+      ind118_latest_record_date: '2026-03-31'
+    - person_id: -93008
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-03-31'
+      has_ind80_all_tests: true
+      has_ind118_all_tests: true
+      ind80_fbc_date: '2026-03-31'
+      ind80_calcium_date: '2026-03-31'
+      ind80_glucose_date: '2026-03-31'
+      ind80_renal_date: '2026-03-31'
+      ind80_liver_date: '2026-03-31'
+      ind80_thyroid_date: '2026-03-31'
+      ind80_b12_date: '2026-03-31'
+      ind80_folate_date: '2026-03-31'
+      ind80_latest_record_date: '2026-03-31'
+      ind118_fbc_date: '2026-03-31'
+      ind118_calcium_date: '2026-03-31'
+      ind118_glucose_date: '2026-03-31'
+      ind118_renal_date: '2026-03-31'
+      ind118_liver_date: '2026-03-31'
+      ind118_thyroid_date: '2026-03-31'
+      ind118_b12_date: '2026-03-31'
+      ind118_folate_date: '2026-03-31'
+      ind118_latest_record_date: '2026-03-31'
+    - person_id: -93008
+      reporting_date: '2026-10-31'
+      diagnosis_date: '2025-01-01'
+      has_ind80_all_tests: false
+      has_ind118_all_tests: false
+      ind80_fbc_date: null
+      ind80_calcium_date: null
+      ind80_glucose_date: null
+      ind80_renal_date: null
+      ind80_liver_date: null
+      ind80_thyroid_date: null
+      ind80_b12_date: null
+      ind80_folate_date: null
+      ind80_latest_record_date: null
+      ind118_fbc_date: null
+      ind118_calcium_date: null
+      ind118_glucose_date: null
+      ind118_renal_date: null
+      ind118_liver_date: null
+      ind118_thyroid_date: null
+      ind118_b12_date: null
+      ind118_folate_date: null
+      ind118_latest_record_date: null
+    - person_id: -93009
+      reporting_date: '2026-09-30'
+      diagnosis_date: '2026-03-31'
+      has_ind80_all_tests: false
+      has_ind118_all_tests: false
+      ind80_fbc_date: '2026-03-31'
+      ind80_calcium_date: '2026-03-31'
+      ind80_glucose_date: '2026-03-31'
+      ind80_renal_date: '2026-03-31'
+      ind80_liver_date: '2026-03-31'
+      ind80_thyroid_date: '2026-03-31'
+      ind80_b12_date: '2026-03-31'
+      ind80_folate_date: null
+      ind80_latest_record_date: '2026-03-31'
+      ind118_fbc_date: '2026-03-31'
+      ind118_calcium_date: '2026-03-31'
+      ind118_glucose_date: '2026-03-31'
+      ind118_renal_date: '2026-03-31'
+      ind118_liver_date: '2026-03-31'
+      ind118_thyroid_date: '2026-03-31'
+      ind118_b12_date: '2026-03-31'
+      ind118_folate_date: null
+      ind118_latest_record_date: '2026-03-31'
+  config:
+    tags:
+    - monthly-full
+    - nice-history

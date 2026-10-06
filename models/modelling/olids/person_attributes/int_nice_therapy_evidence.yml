@@ -1,10 +1,10 @@
 models:
 - name: int_nice_therapy_evidence
-  description: NICE therapy evidence. One row per active, living, non-test person and current build date, restricted
-    to LTC members or people aged 25 to 84. Evidence uses clinical or order dates through the reference date.
-    Null dates mean no evidence; stale dates remain available and indicators apply their own windows and exclusions.
-    Use nice_ref when reading this stored input so its build date does not filter current membership after
-    midnight.
+  description: >-
+    Prescribing evidence for registered, living, non-test long-term condition register members
+    or people aged 25 to 84. One row per candidate person on the build date. Evidence stops at
+    the build date. Older treatment dates remain available; indicators apply their own windows
+    and exclusions. Null dates mean no qualifying evidence.
   config:
     meta:
       owner:
@@ -33,16 +33,20 @@ models:
           <= latest_sglt2_order_date
   columns:
   - name: person_id
-    description: Active, non-test LTC member or person aged 25 to 84 at the reference date.
+    description: >-
+      Active, non-test LTC member or person aged 25 to 84 on the reporting date.
     data_tests:
     - not_null
   - name: reporting_date
-    description: Date at which candidate membership and orders are assessed.
+    description: >-
+      Build date on which population and evidence are assessed.
     data_tests:
     - not_null
   - name: latest_lipid_lowering_order_date
-    description: Latest counted lipid-lowering order through the reference date. Includes statins, statin combinations,
-      ezetimibe, bempedoic acid, PCSK9 inhibitors, inclisiran, fibrates and bile acid sequestrants.
+    description: >-
+      Latest counted lipid-lowering order through the reporting date. Includes statins, statin
+      combinations, ezetimibe, bempedoic acid, PCSK9 inhibitors, inclisiran, fibrates and bile
+      acid sequestrants.
   - name: latest_lipid_lowering_order_id
     description: Selected counted lipid-lowering order id. Statins win ties on the same order date, then the
       highest order id.
@@ -57,29 +61,36 @@ models:
     description: Source intensity category of the selected lipid-lowering order; null for a non-statin or absent
       order.
   - name: latest_statin_order_date
-    description: Latest statin or statin-combination order through the reference date, selected independently
-      of non-statin orders.
+    description: >-
+      Latest statin or statin-combination order through the reporting date, selected
+      independently of non-statin orders.
   - name: first_lipid_lowering_order_date
-    description: Earliest counted lipid-lowering order dated by the reference date. Null supports a never-treated
-      classification.
+    description: >-
+      Earliest counted lipid-lowering order dated by the reporting date. Null supports a
+      never-treated classification.
   - name: latest_antiplatelet_order_date
-    description: Latest BNF 2.9 antiplatelet order from 1 January 1990 through the reference date. Recorded
-      taken-treatment evidence is separate.
-  - name: latest_anticoagulant_order_date
-    description: Latest BNF 2.8.2 oral anticoagulant order from 1 January 1990 through the reference date.
+    description: >-
+      Latest BNF 2.9 antiplatelet order from 1 January 1990 through the reporting date.
       Recorded taken-treatment evidence is separate.
+  - name: latest_anticoagulant_order_date
+    description: >-
+      Latest BNF 2.8.2 oral anticoagulant order from 1 January 1990 through the reporting
+      date. Recorded taken-treatment evidence is separate.
   - name: latest_anticoagulant_type
-    description: DOAC, VKA or OTHER_ANTICOAGULANT classification of the selected oral anticoagulant order.
-      The highest order id wins ties on the same order date. Coordinator ruling C4 accepts differences
-      confined to conflicting same-date types selected non-deterministically by the legacy MAX_BY rule.
+    description: >-
+      DOAC, VKA or OTHER_ANTICOAGULANT classification of the selected oral anticoagulant
+      order. The highest order id wins ties on the same order date.
   - name: latest_doac_order_date
-    description: Latest direct oral anticoagulant order from 1 January 1990 through the reference date, selected
-      independently of VKA orders.
+    description: >-
+      Latest direct oral anticoagulant order from 1 January 1990 through the reporting date,
+      selected independently of VKA orders.
   - name: latest_vka_order_date
-    description: Latest vitamin K antagonist order from 1 January 1990 through the reference date, selected
-      independently of DOAC orders.
+    description: >-
+      Latest vitamin K antagonist order from 1 January 1990 through the reporting date,
+      selected independently of DOAC orders.
   - name: latest_ras_order_date
-    description: Latest ACE inhibitor or ARB order from 1 January 1990 through the reference date.
+    description: >-
+      Latest ACE inhibitor or ARB order from 1 January 1990 through the reporting date.
   - name: latest_ras_order_id
     description: Selected RAS order id. The highest order id wins ties on the same order date.
   - name: latest_ras_class
@@ -87,7 +98,8 @@ models:
   - name: latest_ras_product
     description: BNF product name of the selected RAS order.
   - name: latest_sglt2_order_date
-    description: Latest SGLT2 inhibitor order from 1 January 1990 through the reference date.
+    description: >-
+      Latest SGLT2 inhibitor order from 1 January 1990 through the reporting date.
   - name: latest_sglt2_order_id
     description: Selected SGLT2 order id. The highest order id wins ties on the same order date.
   - name: latest_sglt2_drug
@@ -95,5 +107,6 @@ models:
   - name: latest_sglt2_product
     description: BNF product name of the selected SGLT2 order.
   - name: latest_ras_order_before_last_sglt2_date
-    description: Latest RAS order on or before the selected SGLT2 order. Retains the existing IND324 inclusion
-      of pre-1990 RAS orders. Null means no qualifying sequence.
+    description: >-
+      Latest RAS order on or before the selected SGLT2 order. Includes prescriptions before 1
+      January 1990. Null means no qualifying sequence.

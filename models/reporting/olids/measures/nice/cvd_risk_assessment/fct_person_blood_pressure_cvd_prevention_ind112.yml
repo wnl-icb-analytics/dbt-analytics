@@ -1,0 +1,67 @@
+models:
+- name: fct_person_blood_pressure_cvd_prevention_ind112
+  description: >-
+    Blood pressure recording for cardiovascular prevention (NICE IND112). One row per
+    person in the denominator on the build date.
+
+
+    People registered on the build date aged 40 or over. Achieved with a complete systolic
+    and diastolic blood pressure pair in the 5 years before the build date. Implausible
+    complete pairs still count as a recording. No clinical exclusions apply. No
+    personalised care adjustments are applied. Based on NICE NG136. Code lists: BP_COD,
+    SYSBP_COD, DIASBP_COD, HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind112
+      indicator:
+        id: IND112
+        type: MEASURE
+        category: CARDIOVASCULAR
+        clinical_domain: Cardiometabolic
+        name_short: "Blood pressure recording, aged 40+"
+        description_short: "Blood pressure recorded in the last 5 years for people aged 40 or over"
+        description_long: >-
+          People registered on the build date aged 40 or over. Achieved with a
+          complete systolic and diastolic blood pressure pair in the 5 years before
+          the build date. Implausible complete pairs still count as a recording. No
+          clinical exclusions apply. No personalised care adjustments are applied.
+          Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD,
+          HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD.
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND112
+  data_tests: []
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+    data_tests:
+    - not_null
+    - unique
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: reporting_date
+    description: "Build date used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Exclusive start of the 5-year recording window before the reporting date; blood pressure evidence on this date does not count."
+  - name: age
+    description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
+  - name: condition_name
+    description: "Short label for the population in the indicator denominator."
+  - name: is_in_denominator
+    description: "Always true; each row is eligible before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
+  - name: current_practice_code
+    description: "ODS code of the current registration practice."
+  - name: current_practice_name
+    description: "Name of the current registration practice."
+  - name: latest_bp_date
+    description: "Latest complete blood pressure pair through the reporting date for IND112; may be older than 5 years. Null when absent or for risk assessment indicators."

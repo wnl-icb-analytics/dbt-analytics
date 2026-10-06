@@ -1,0 +1,59 @@
+models:
+- name: fct_person_maternity_nice_indicators_by_month
+  description: >-
+    Postnatal mental health indicator results (IND178). One row per eligible person, indicator
+    and month-end.
+
+
+    People registered at the month-end in each indicator's denominator. Eligibility, exclusions
+    and achievement follow the individual measures. Supporting fields are null where an
+    indicator does not provide them. Recalculated for each of the last 60 month-ends with
+    current rules, code lists and records, so later corrections can change past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+    data_tests:
+    - not_null
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and evidence."
+  - name: measurement_period_start
+    description: >-
+      Start of the diagnosis, prescription or evidence period for the indicator. Boundary inclusion
+      is defined in the individual measure.
+  - name: age
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
+  - name: condition_name
+    description: "Short label for the denominator population."
+  - name: practice_code
+    description: "ODS code of the registration practice at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice at the reporting month-end."
+  - name: delivery_date
+    description: >-
+      First clinical date of the latest known delivery episode, used to assess the postnatal enquiry
+      period. Null when this field does not apply to the indicator.
+  - name: latest_record_date
+    description: >-
+      Supporting evidence date for the indicator. Its meaning follows the individual measure; a date
+      alone does not prove achievement.
+  - name: is_in_denominator
+    description: "Always true. Each row is an eligible member of the denominator."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."

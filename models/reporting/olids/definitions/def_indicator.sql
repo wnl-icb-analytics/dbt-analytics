@@ -19,10 +19,10 @@ WITH indicators AS (
         SELECT
             '{{ ind.indicator_id }}' AS indicator_id,
             '{{ ind.indicator_type }}' AS indicator_type,
-            '{{ ind.category | default("") }}' AS category,
-            '{{ ind.clinical_domain | default("") }}' AS clinical_domain,
-            '{{ ind.name_short }}' AS name_short,
-            '{{ ind.description_short }}' AS description_short,
+            '{{ ind.category | default("") | replace("'", "''") }}' AS category,
+            '{{ ind.clinical_domain | default("") | replace("'", "''") }}' AS clinical_domain,
+            '{{ ind.name_short | replace("'", "''") }}' AS name_short,
+            '{{ ind.description_short | replace("'", "''") }}' AS description_short,
             '{{ ind.description_long | replace("'", "''") }}' AS description_long,
             '{{ ind.source_model }}' AS source_model,
             '{{ ind.source_column }}' AS source_column,
@@ -36,7 +36,7 @@ WITH indicators AS (
             {% else %}
                 NULL AS qof_indicator,
             {% endif %}
-            '{{ ind.sort_order }}' AS sort_order,
+            '{{ ind.sort_order | replace("'", "''") }}' AS sort_order,
             CURRENT_TIMESTAMP() AS metadata_extracted_at
         {% if not loop.last %}UNION ALL{% endif %}
         {% endfor %}

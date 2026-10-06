@@ -1,29 +1,27 @@
 models:
 - name: fct_person_multimorbidity_ind207_by_month
-  description: |-
-    NICE IND207: Multimorbidity medication review. One row per registered at the month-end,
-    living, non-test person with moderate or severe coded frailty, or conditions in
-    four or more NICE IND207 multimorbidity categories, assessed on the reporting month-end.
+  description: >-
+    Medication review with frailty or multimorbidity (NICE IND207). One row per person in the
+    denominator on the month-end.
 
-    Achievement requires a structured medication review record in the preceding 12
-    months. The code does not independently establish use of an assessment tool or
-    shared decision making.
 
-    Counts each category once using int_nice_multimorbidity_categories. Chronic pain
-    requires four analgesic issues or four specified antiepileptic issues in the last
-    12 months. The antiepileptic route requires no epilepsy diagnosis code at any date
-    known by the reporting month-end, including diagnoses subsequently resolved.
-    Constipation requires four laxative issues. Supplemental diagnoses include Crohn's
-    disease, ulcerative colitis, unclassified inflammatory bowel disease,
-    anorexia or bulimia, current substance misuse,
-    bronchiectasis and the Bristol connective tissue disorder set.
-    Diverticular disease has no source-backed code set and remains omitted. Existing
-    register age/treatment restrictions and the alcohol flag's age floor remain.
-    Lithium therapy without an SMI diagnosis does not count as mental health evidence.
-
-    Personalised care adjustments are not applied.
-
-    One row per eligible person, indicator and completed month-end across the last 60 completed months. Recalculated at monthly refresh with today's rules and code lists. Diagnosis and register state use clinical and recorded dates; other evidence uses clinical or order dates through the month-end. Later corrections can change earlier results. Registration starts are inclusive; end and death dates are exclusive. Practice follows the established monthly spine, including its current-registration priority for overlaps. Birth and death dates are approximate; missing birth dates prevent historical active rows. Current gender and test-patient flags apply retrospectively.
+    People registered at the month-end with moderate or severe coded frailty, or at least four
+    NICE multimorbidity categories, each counted once. Achieved with a structured medication
+    review in the 12 months before the month-end; codes cannot prove an assessment tool or
+    shared decision making. Chronic pain needs at least four analgesic prescriptions, or at
+    least four qualifying antiepileptic prescriptions without any epilepsy history, including
+    resolved diagnoses. Constipation needs at least four laxative prescriptions. Both use
+    12-month windows. Crohn's disease, ulcerative colitis, unclassified inflammatory bowel
+    disease, anorexia, bulimia, current substance misuse, bronchiectasis and connective tissue
+    disorders count. Diverticular disease lacks a supported code list and is omitted. Register
+    age and treatment restrictions apply; alcohol misuse starts at 16. Lithium alone without
+    severe mental illness does not count. No personalised care adjustments are applied.
+    Recalculated for each of the last 60 month-ends with current rules, code lists and records,
+    so later corrections can change past months. Based on NICE NG56. Code lists:
+    STRUCTMEDRVW_COD, CROHNS_COD, ULCCOLITIS_COD, EATDISORDER_COD, ILLSUB_COD (PCD);
+    MULTIMORBIDITY_CONNECTIVE_TISSUE_DISORDER (BRISTOL); HAS_CF_OR_BRONCHIECTASIS (QCOVID);
+    INFLAMMATORY_BOWEL_DISEASE_UNCLASSIFIED (OPENSAFELY); 5065, 5066, 5071 (CCMS); contributing
+    disease register code lists.
   config:
     meta:
       owner:
@@ -31,38 +29,37 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind207
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Person identifier for someone in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "Published NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+    description: "Month-end used to assess the population, age and evidence."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "Inclusive start of the indicator measurement period before the reporting date."
   - name: age
-    description: Completed years at the month-end from the approximate birth month.
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the indicator denominator population."
   - name: practice_code
-    description: Practice ODS code at the reporting month-end under the established spine attribution.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Practice name at the reporting month-end under the established spine attribution.
+    description: "Name of the registration practice at month-end."
   - name: ltc_count
-    description: Number of distinct project long-term condition registers the person is on
+    description: "Number of disease registers to which the person belongs on the reporting date; this differs from the number of multimorbidity categories."
   - name: multimorbidity_cluster_count
-    description: Number of NICE IND207 categories represented, using int_nice_multimorbidity_categories
-      for both indicators. Informational only for IND208.
+    description: "Number of NICE multimorbidity categories on the reporting date, counting each category once. Defines eligibility for IND207; information only for IND208."
   - name: latest_frailty_severity
-    description: Latest coded frailty severity; null if none
+    description: "Latest coded frailty severity by the reporting date; null when none is recorded."
   - name: latest_record_date
-    description: Date of the latest qualifying record in the period; null when none
+    description: "Date of qualifying evidence retained within the indicator measurement or follow-up window; null when none is recorded."
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether the person meets the indicator at the reporting month-end
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

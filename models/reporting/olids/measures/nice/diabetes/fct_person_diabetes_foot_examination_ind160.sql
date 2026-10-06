@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 -- NICE IND160: https://www.nice.org.uk/indicators/ind160
 -- Monofilament foot sensation testing in 12 months on the diabetes register.

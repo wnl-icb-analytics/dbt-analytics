@@ -1,0 +1,64 @@
+models:
+- name: fct_person_smi_contraception_advice_ind124
+  description: >-
+    Reproductive advice for women with severe mental illness (NICE IND124). One row per
+    person in the denominator on the build date.
+
+
+    People registered on the build date recorded as women under 45 with active
+    schizophrenia, bipolar disorder or other psychosis. Excludes remission, sterilisation
+    or partial or complete hysterectomy. Achieved with pregnancy, conception or
+    contraception advice in the 12 months before the build date. A single record counts;
+    codes do not establish full topic coverage or tailoring to the woman's intentions. No
+    personalised care adjustments are applied. Based on NICE CG192. Code lists: MH_COD,
+    MHREM_COD (PCD); CONTRACEP_ADV_COD, LARC_ADV_COD (ECL cache); EPILCC_COD, EPILPA_COD,
+    EPILPCA_COD (PCD); STERIL_COD, HYST2_COD (OpenCodelists, NHSD primary care domain
+    refsets).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind124
+      indicator:
+        id: IND124
+        type: MEASURE
+        category: CONTRACEPTION
+        clinical_domain: CONTRACEPTION
+        name_short: "Mental illness reproductive advice"
+        description_short: "Reproductive advice for women with severe mental illness."
+        description_long: >-
+          People registered on the build date recorded as women under 45 with active
+          schizophrenia, bipolar disorder or other psychosis. Excludes remission,
+          sterilisation or partial or complete hysterectomy. Achieved with
+          pregnancy, conception or contraception advice in the 12 months before the
+          build date. A single record counts; codes do not establish full topic
+          coverage or tailoring to the woman's intentions. No personalised care
+          adjustments are applied. Based on NICE CG192. Code lists: MH_COD,
+          MHREM_COD (PCD); CONTRACEP_ADV_COD, LARC_ADV_COD (ECL cache); EPILCC_COD,
+          EPILPA_COD, EPILPCA_COD (PCD); STERIL_COD, HYST2_COD (OpenCodelists, NHSD
+          primary care domain refsets).
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND124
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+  - name: reporting_date
+    description: "Build date used to assess eligibility and evidence."
+  - name: measurement_period_start
+    description: "12 months before the reporting date, included in the advice window."
+  - name: latest_record_date
+    description: "Latest qualifying advice in the 12-month window; null if absent."
+  - name: is_in_denominator
+    description: "Always true. Each row is an eligible member of the denominator."
+  - name: is_in_numerator
+    description: "True when the person meets the achievement rules in the model description."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."

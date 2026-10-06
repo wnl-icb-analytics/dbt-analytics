@@ -1,31 +1,23 @@
 models:
 - name: fct_person_smoking_ind97_by_month
-  description: |
-    NICE IND97: LTC and SMI smoking status. One row per registered at month-end, living,
-    non-test person on the coronary heart disease, peripheral arterial disease, stroke
-    or TIA, hypertension, diabetes, COPD, chronic kidney disease or asthma register,
-    or with an SMI diagnosis on the SMI register, assessed on the completed month-end.
+  description: >-
+    Smoking status recorded for people with long-term conditions (NICE IND97). One row per
+    person in the denominator at each month-end.
 
-    Achievement requires a smoking status record in the preceding 12 months. A person
-    whose latest status is never smoked also qualifies without a recent record if they
-    reach 26 by the reference financial year end. Their never-smoked record must be
-    after their 25th birthday and after their earliest qualifying diagnosis. The
-    optional three-year ex-smoker exception is not applied.
 
-    SMI eligibility requires schizophrenia, bipolar affective disorder or another
-    psychosis; lithium therapy alone does not qualify. IND156 is the later indicator
-    that omits the SMI population.
-
-    Personalised care adjustments are not applied.
-
-    Recalculated at monthly refresh for the last 60 completed month-ends using today's
-    rules and code lists, before personalised care adjustments. Registration and practice
-    use the established monthly spine: start is inclusive, end and death exclusive.
-    Overlapping registrations retain its current-registration priority. Birth and death
-    dates are approximate; missing birth dates prevent historical active rows. Current
-    gender and test flags apply retrospectively. Register state uses clinical and recorded
-    dates; other evidence uses its clinical or order date through month-end. Later data
-    corrections and code-list changes can alter earlier results.
+    People registered at the month-end on coronary heart disease, peripheral arterial disease,
+    stroke, transient ischaemic attack, hypertension, diabetes, COPD, chronic kidney disease or
+    asthma registers. Schizophrenia, bipolar disorder and other psychoses count, including
+    remission; lithium alone does not. Achieved with smoking status in the 12 months before the
+    month-end, or latest never-smoked status recorded after both the 25th birthday and earliest
+    qualifying diagnosis if age reaches 26 by financial year-end. Birthdays use approximate
+    birth dates. The three-year ex-smoker exception is not applied. Smoking records require
+    recorded age of at least 11. No personalised care adjustments are applied. Recalculated for
+    each of the last 60 month-ends with current rules, code lists and records, so later
+    corrections can change past months. Based on NICE NG209. Code lists: CHD_COD, PAD_COD,
+    STRK_COD, TIA_COD, HYP_COD, HYPRES_COD, DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD,
+    COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, CKD_COD, CKD1AND2_COD, CKDRES_COD, AST_COD,
+    ASTRES_COD, MH_COD, LSMOK_COD, EXSMOK_COD, NSMOK_COD, SMOK_COD (PCD).
   config:
     meta:
       owner:
@@ -39,36 +31,36 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "NICE published indicator title."
   - name: reporting_date
-    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "Inclusive start of the 12-month achievement window, or 24 months for IND99."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the denominator population."
   - name: practice_code
-    description: ODS code of the month-end registration practice
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Name of the month-end registration practice
+    description: "Name of the registration practice at month-end."
   - name: latest_smoking_status
-    description: Latest recorded by month-end smoking status
+    description: "Latest recorded smoking status on or before the reporting date; null when none."
   - name: latest_smoking_status_date
-    description: Date of the latest smoking status record
+    description: "Date of the latest smoking status on or before the reporting date; null when none."
   - name: latest_never_smoked_date
-    description: Date of the latest never-smoked record; null if none
+    description: "Latest explicit never-smoked record on or before the reporting date; null when none."
   - name: latest_smoking_intervention_date
-    description: Date of the latest smoking cessation support record; null if none
+    description: "Latest stop-smoking referral, drug treatment record or prescription on or before the reporting date, including evidence outside the achievement window; null when none."
   - name: latest_record_date
-    description: Date of the latest qualifying record in the period; null when none
+    description: "Latest qualifying smoking status or support date in the achievement window; can be null when achieved through the never-smoked exception."
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the documented achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."

@@ -1,0 +1,249 @@
+unit_tests:
+- name: nice_ind98_bounds_expiry_and_date_grain
+  model: fct_person_smoking_ind98_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+
+      column3::NUMBER AS age, ''1980-01-01''::DATE AS birth_date_approx,
+
+      ''Female''::VARCHAR AS gender, ''SYNTHETIC''::VARCHAR AS practice_code,
+
+      ''Synthetic practice''::VARCHAR AS practice_name FROM VALUES
+
+      (-4101, ''2026-08-31'', 30), (-4101, ''2026-09-30'', 30),
+
+      (-4102, ''2026-09-30'', 30), (-4103, ''2026-09-30'', 30),
+
+      (-4104, ''2026-09-30'', 30), (-4105, ''2026-09-30'', 14),
+
+      (-4106, ''2026-09-30'', 15)'
+  - input: ref('int_nice_smoking_evidence_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+
+      ''Current Smoker''::VARCHAR AS latest_smoking_status,
+
+      ''2026-01-01''::DATE AS latest_smoking_status_date,
+
+      NULL::DATE AS latest_never_smoked_date,
+
+      column3::DATE AS latest_smoking_intervention_date FROM VALUES
+
+      (-4101, ''2026-08-31'', ''2025-08-31''),
+
+      (-4101, ''2026-09-30'', ''2025-08-31''),
+
+      (-4102, ''2026-09-30'', ''2025-09-30''),
+
+      (-4103, ''2026-09-30'', ''2026-09-30''),
+
+      (-4104, ''2026-09-30'', ''2026-10-01''),
+
+      (-4105, ''2026-09-30'', ''2026-09-30''),
+
+      (-4106, ''2026-09-30'', ''2026-09-30'')'
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+
+      ''1980-01-01''::DATE AS birth_date_approx,
+
+      FALSE AS has_chd, FALSE AS has_pad, FALSE AS has_stroke_tia,
+
+      FALSE AS has_hypertension, FALSE AS has_diabetes, FALSE AS has_copd,
+
+      FALSE AS has_ckd, FALSE AS has_asthma,
+
+      ''2020-01-01''::DATE AS earliest_smi_diagnosis_date FROM VALUES
+
+      (-4101, ''2026-08-31''), (-4101, ''2026-09-30''), (-4102, ''2026-09-30''),
+
+      (-4103, ''2026-09-30''), (-4104, ''2026-09-30''), (-4105, ''2026-09-30''),
+
+      (-4106, ''2026-09-30'')'
+  expect:
+    rows:
+    - person_id: -4101
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -4101
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -4102
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -4103
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -4104
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -4106
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -4105
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+    - nice-smoking-fixture
+- name: nice_ind99_bounds_expiry_and_date_grain
+  model: fct_person_smoking_ind99_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+
+      column3::NUMBER AS age, ''1980-01-01''::DATE AS birth_date_approx,
+
+      ''Female''::VARCHAR AS gender, ''SYNTHETIC''::VARCHAR AS practice_code,
+
+      ''Synthetic practice''::VARCHAR AS practice_name FROM VALUES
+
+      (-4101, ''2026-08-31'', 30), (-4101, ''2026-09-30'', 30),
+
+      (-4102, ''2026-09-30'', 30), (-4103, ''2026-09-30'', 30),
+
+      (-4104, ''2026-09-30'', 30), (-4105, ''2026-09-30'', 14),
+
+      (-4106, ''2026-09-30'', 15)'
+  - input: ref('int_nice_smoking_evidence_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+
+      ''Current Smoker''::VARCHAR AS latest_smoking_status,
+
+      ''2026-01-01''::DATE AS latest_smoking_status_date,
+
+      NULL::DATE AS latest_never_smoked_date,
+
+      column3::DATE AS latest_smoking_intervention_date FROM VALUES
+
+      (-4101, ''2026-08-31'', ''2024-08-31''),
+
+      (-4101, ''2026-09-30'', ''2024-08-31''),
+
+      (-4102, ''2026-09-30'', ''2024-09-30''),
+
+      (-4103, ''2026-09-30'', ''2026-09-30''),
+
+      (-4104, ''2026-09-30'', ''2026-10-01''),
+
+      (-4105, ''2026-09-30'', ''2026-09-30''),
+
+      (-4106, ''2026-09-30'', ''2026-09-30'')'
+  expect:
+    rows:
+    - person_id: -4101
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -4101
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -4102
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -4103
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -4104
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -4106
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+    - nice-smoking-fixture
+- name: nice_smoking_candidates_asof_and_ties
+  model: int_nice_smoking_evidence_by_month
+  overrides:
+    macros:
+      nice_ltc_summary: SELECT NULL::NUMBER AS person_id, NULL::DATE AS reporting_date WHERE FALSE
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+
+      column3::NUMBER AS age, ''1980-01-01''::DATE AS birth_date_approx,
+
+      ''Female''::VARCHAR AS gender, ''SYNTHETIC''::VARCHAR AS practice_code,
+
+      ''Synthetic practice''::VARCHAR AS practice_name FROM VALUES
+
+      (-4101, ''2026-08-31'', 30), (-4101, ''2026-09-30'', 30),
+
+      (-4102, ''2026-09-30'', 30), (-4103, ''2026-09-30'', 30),
+
+      (-4104, ''2026-09-30'', 30), (-4105, ''2026-09-30'', 14),
+
+      (-4106, ''2026-09-30'', 15)'
+  - input: ref('int_smoking_status_all')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id,
+
+      column3::DATE AS clinical_effective_date, column4::VARCHAR AS source_cluster_id,
+
+      column5::VARCHAR AS smoking_status, FALSE AS is_never_smoked_code FROM VALUES
+
+      (-4101, ''1'', ''2026-08-01'', ''LSMOK_COD'', ''Current Smoker''),
+
+      (-4101, ''2'', ''2026-09-01'', ''LSMOK_COD'', ''Current Smoker''),
+
+      (-4101, ''3'', ''2026-10-01'', ''EXSMOK_COD'', ''Ex Smoker''),
+
+      (-4102, ''3'', ''2026-09-30'', ''EXSMOK_COD'', ''Ex Smoker''),
+
+      (-4102, ''2'', ''2026-09-30'', ''LSMOK_COD'', ''Current Smoker''),
+
+      (-4103, ''1'', ''2026-09-30'', ''OTHER'', ''Ex Smoker''),
+
+      (-4103, ''2'', ''2026-09-30'', ''OTHER'', ''Non Smoker''),
+
+      (-4105, ''1'', ''2026-09-01'', ''LSMOK_COD'', ''Current Smoker''),
+
+      (-4106, ''1'', ''2026-09-01'', ''LSMOK_COD'', ''Current Smoker'')'
+  - input: ref('int_nice_smoking_support_all')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS event_date
+
+      FROM VALUES (-4101, ''2026-08-20''), (-4101, ''2026-09-20''), (-4101, ''2026-10-01''),
+
+      (-4101, ''2026-08-20'')'
+  expect:
+    rows:
+    - person_id: -4101
+      reporting_date: '2026-08-31'
+      latest_smoking_status: Current Smoker
+      latest_smoking_intervention_date: '2026-08-20'
+    - person_id: -4101
+      reporting_date: '2026-09-30'
+      latest_smoking_status: Current Smoker
+      latest_smoking_intervention_date: '2026-09-20'
+    - person_id: -4102
+      reporting_date: '2026-09-30'
+      latest_smoking_status: Current Smoker
+      latest_smoking_intervention_date: null
+    - person_id: -4103
+      reporting_date: '2026-09-30'
+      latest_smoking_status: Non Smoker
+      latest_smoking_intervention_date: null
+    - person_id: -4104
+      reporting_date: '2026-09-30'
+      latest_smoking_status: null
+      latest_smoking_intervention_date: null
+    - person_id: -4106
+      reporting_date: '2026-09-30'
+      latest_smoking_status: Current Smoker
+      latest_smoking_intervention_date: null
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+    - nice-smoking-fixture

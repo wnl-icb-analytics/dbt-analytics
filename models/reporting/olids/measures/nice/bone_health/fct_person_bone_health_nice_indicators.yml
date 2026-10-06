@@ -1,0 +1,49 @@
+models:
+- name: fct_person_bone_health_nice_indicators
+  description: >-
+    Bone health NICE indicator results (IND91, IND92). One row per person, indicator and
+    build date.
+
+
+    Each indicator uses its own denominator, evidence window and exclusions, described in
+    the member measures. Clinical fields are null where they do not apply to an indicator.
+    No personalised care adjustments are applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+  columns:
+  - name: person_id
+    description: "Person identifier for someone in the indicator denominator."
+  - name: indicator_id
+    description: "Published NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: reporting_date
+    description: "Build date used to assess the population, age and evidence."
+  - name: measurement_period_start
+    description: "Start date of the indicator measurement period; inclusion of this date depends on the indicator."
+  - name: age
+    description: "Completed years on the build date, based on the approximate birth date; null when age is unknown."
+  - name: condition_name
+    description: "Short label for the indicator denominator population."
+  - name: latest_bone_sparing_order_date
+    description: "Latest bone-sparing drug prescription by the reporting date; it may be outside the 6-month treatment window. Null when never prescribed. Null where the field does not apply to an indicator."
+  - name: latest_record_date
+    description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
+  - name: current_practice_code
+    description: "ODS code of the current registration practice."
+  - name: current_practice_name
+    description: "Name of the current registration practice."
+  - name: is_in_denominator
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."

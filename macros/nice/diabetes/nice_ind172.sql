@@ -78,7 +78,7 @@ SELECT
     reporting_date AS reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Non-diabetic hyperglycaemia' AS condition_name,
+    'Non-diabetic hyperglycaemia, aged 18 or over' AS condition_name,
     {{ nice_practice_columns(none, reference) }},
     latest_record_date,
     TRUE AS is_in_denominator,

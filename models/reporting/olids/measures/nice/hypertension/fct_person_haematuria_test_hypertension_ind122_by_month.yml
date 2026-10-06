@@ -1,0 +1,59 @@
+models:
+- name: fct_person_haematuria_test_hypertension_ind122_by_month
+  description: >-
+    Haematuria testing after hypertension diagnosis (NICE IND122). One row per person in the
+    denominator at each month-end.
+
+
+    People registered at the month-end of any age on the hypertension register, first diagnosed
+    3 to 15 months before the month-end. This rolling annual cohort replaces NICE's annual
+    diagnosis period and allows follow-up to finish. Achieved with a blood-specific urine test,
+    generic dipstick finding or urinalysis result within 3 calendar months before or after
+    diagnosis. Generic results do not prove blood testing; blood-specific codes may not prove
+    the method. Symptoms, requests, declines and generic urinalysis headings do not count. No
+    personalised care adjustments are applied. Recalculated for each of the last 60 month-ends
+    with current rules, code lists and records, so later corrections can change past months.
+    Based on NICE NG136. Code lists: URINE_BLOOD_TEST_COD, URINE_DIPSTICK_COD,
+    URINALYSIS_RESULT_COD (ECL_CACHE); HYP_COD, HYPRES_COD (PCD).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind122
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Start of the diagnosis period: 1 April 2014, inclusive, for IND115; 15 months before the reporting date, exclusive, for IND121 to IND123. Test windows are relative to diagnosis."
+  - name: age
+    description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
+  - name: condition_name
+    description: "Short label for the population in the indicator denominator."
+  - name: is_in_denominator
+    description: "Always true; each row is eligible before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
+  - name: practice_code
+    description: "ODS code of the registration practice attributed at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice attributed at the reporting month-end."
+  - name: diagnosis_date
+    description: "Earliest hypertension diagnosis known on the reporting date."
+  - name: latest_haematuria_test_date
+    description: "Latest qualifying blood-specific urine test, dipstick or urinalysis result date within the diagnosis window; null when absent or not applicable to the indicator."
+  - name: has_blood_specific_test
+    description: "Whether a blood-specific urine test is recorded within the diagnosis window. Generic dipstick or urinalysis results do not set this flag; true does not always prove the reagent-strip method. Null for other indicators."

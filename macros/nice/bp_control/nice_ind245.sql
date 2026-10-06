@@ -74,7 +74,7 @@ SELECT
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
     {{ nice_practice_columns('status', reference) }},
-    'Peripheral arterial disease' AS condition_name,
+    'Peripheral arterial disease, aged 79 or under' AS condition_name,
     latest_bp_date,
     is_valid_bp,
     latest_systolic_value,

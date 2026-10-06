@@ -4,6 +4,7 @@
     Args: reference is current or by_month.
     Returns: one eligible person per reporting_date, with the existing detail columns.
 -#}
+-- A valid earlier BMI remains evidence even when a later BMI is invalid.
 -- NICE IND248: https://www.nice.org.uk/indicators/ind248
 -- All six physical health checks in 12 months for people with an active SMI diagnosis.
 WITH indicator_population AS (
@@ -82,7 +83,7 @@ SELECT
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Severe mental illness (schizophrenia, bipolar affective disorder or other psychoses, not in remission)' AS condition_name,
+    'Active severe mental illness' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_blood_pressure_date,
     latest_bmi_date,

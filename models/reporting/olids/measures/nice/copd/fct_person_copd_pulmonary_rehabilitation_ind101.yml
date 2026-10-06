@@ -1,0 +1,91 @@
+models:
+- name: fct_person_copd_pulmonary_rehabilitation_ind101
+  description: >-
+    Pulmonary rehabilitation offered to people with COPD (NICE IND101). One row per person
+    in the denominator on the build date.
+
+
+    People registered on the build date on the COPD register with MRC breathlessness grade
+    at least 3 in the last 15 months. Achieved with an offer, referral or decline after
+    the first qualifying grade. Excludes rehabilitation attendance between diagnosis and
+    that grade, any recorded unsuitability, or two invitations at least seven days apart
+    in those 15 months without a review after the first. Recorded unsuitability does not
+    identify every clinical contraindication. No other personalised care adjustments are
+    applied. Based on NICE NG115. Code lists: COPDDIAG_COD, COPDPROC_COD, COPDRES_COD,
+    MRC_COD, PULRHBOFF_COD, PULRHBDEC_COD, PULRHBATT_COD, PULRHBPU_COD, COPDINVITE_COD,
+    COPDRVW_COD (PCD); PULREHAB_OFFERED_COD (ECL cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind101
+      indicator:
+        id: IND101
+        type: MEASURE
+        category: COPD
+        clinical_domain: Respiratory
+        name_short: "COPD pulmonary rehabilitation offer"
+        description_short: "Pulmonary rehabilitation offered to people with COPD."
+        description_long: >-
+          People registered on the build date on the COPD register with MRC
+          breathlessness grade at least 3 in the last 15 months. Achieved with an
+          offer, referral or decline after the first qualifying grade. Excludes
+          rehabilitation attendance between diagnosis and that grade, any recorded
+          unsuitability, or two invitations at least seven days apart in those 15
+          months without a review after the first. Recorded unsuitability does not
+          identify every clinical contraindication. No other personalised care
+          adjustments are applied. Based on NICE NG115. Code lists: COPDDIAG_COD,
+          COPDPROC_COD, COPDRES_COD, MRC_COD, PULRHBOFF_COD, PULRHBDEC_COD,
+          PULRHBATT_COD, PULRHBPU_COD, COPDINVITE_COD, COPDRVW_COD (PCD);
+          PULREHAB_OFFERED_COD (ECL cache).
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND101
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "NICE published indicator title."
+  - name: reporting_date
+    description: "Build date used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Exclusive start of the indicator eligibility or evidence window."
+  - name: age
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
+  - name: condition_name
+    description: "Short label for the denominator population."
+  - name: latest_record_date
+    description: "Date of the latest qualifying evidence in the indicator window; null when none."
+  - name: is_in_denominator
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  - name: diagnosis_date
+    description: "Earliest COPD register diagnosis date."
+  - name: mrc_date
+    description: "First Medical Research Council breathlessness grade of at least 3 in the 15-month eligibility window."
+  - name: latest_offer_date
+    description: "Latest pulmonary rehabilitation offer, referral or recorded decline strictly after the qualifying breathlessness record and on or before the reporting date; null when none."
+  - name: first_invitation_date
+    description: "First COPD invitation in the 15-month eligibility window; null when none."
+  - name: last_invitation_date
+    description: "Last COPD invitation in the 15-month eligibility window; null when none."
+  - name: latest_response_date
+    description: "Latest COPD review strictly after the first invitation and on or before the reporting date; null when none."
+  - name: is_excluded_invitation_non_response
+    description: "Whether two invitations at least seven days apart had no subsequent review; always false for included people."
+  - name: current_practice_code
+    description: "ODS code of the registration practice on the build date."
+  - name: current_practice_name
+    description: "Name of the registration practice on the build date."

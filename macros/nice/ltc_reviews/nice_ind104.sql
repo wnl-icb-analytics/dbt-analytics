@@ -5,7 +5,7 @@
     Returns: the IND104 detail projection, one eligible person per reporting_date.
 -#}
 -- NICE IND104: https://www.nice.org.uk/indicators/ind104
--- Depression review 10 to 35 days after a new diagnosis for adults diagnosed since 1 April, using QOF's interim annual reporting period.
+-- Depression review 10 to 35 days after a new diagnosis, with completed follow-up only.
 WITH reference_dates AS (
     SELECT reporting_date AS reference_date
     FROM ({{ nice_reference_dates(reference) }})
@@ -68,11 +68,9 @@ anchors AS (
     INNER JOIN new_depression AS diagnosis
         ON population.person_id = diagnosis.person_id
         AND population.reporting_date = diagnosis.reporting_date
-    -- Enter the financial-year cohort immediately, without a follow-up grace period.
     WHERE population.age >= 18
-        AND diagnosis.diagnosis_date
-            BETWEEN {{ nice_financial_year_start('population.reporting_date') }}
-                AND population.reporting_date
+        AND diagnosis.diagnosis_date > DATEADD(month, -12, DATEADD(day, -35, population.reporting_date))
+        AND diagnosis.diagnosis_date <= DATEADD(day, -35, population.reporting_date)
 ),
 
 follow_up AS (
@@ -96,9 +94,9 @@ SELECT
     'IND104' AS indicator_id,
     'Depression and anxiety: review within 10 to 35 days' AS indicator_name,
     anchor.reporting_date,
-    {{ nice_financial_year_start('anchor.reporting_date') }} AS measurement_period_start,
+    DATEADD(month, -12, DATEADD(day, -35, anchor.reporting_date)) AS measurement_period_start,
     anchor.age,
-    'New depression diagnosis since 1 April (aged 18 and over)' AS condition_name,
+    'New depression diagnosis, aged 18 or over'::VARCHAR(57) AS condition_name,
     {{ nice_practice_columns('anchor', reference) }},
     anchor.diagnosis_date,
     follow_up.latest_review_date,

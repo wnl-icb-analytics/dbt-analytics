@@ -72,7 +72,7 @@ SELECT
     reporting_date,
     DATEADD(month, -24, reporting_date) AS measurement_period_start,
     age,
-    'CHD, atrial fibrillation, heart failure, stroke/TIA, diabetes or dementia' AS condition_name,
+    'Long-term condition' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     latest_alcohol_screen_date,
     latest_alcohol_screen_tool,

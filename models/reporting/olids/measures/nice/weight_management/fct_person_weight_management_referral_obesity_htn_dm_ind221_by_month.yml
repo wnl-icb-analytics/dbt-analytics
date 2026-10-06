@@ -1,0 +1,71 @@
+models:
+- name: fct_person_weight_management_referral_obesity_htn_dm_ind221_by_month
+  description: >-
+    Weight management referrals with obesity and hypertension or diabetes (NICE IND221). One row
+    per person in the denominator on the month-end.
+
+
+    People registered at the month-end aged 18 or over on the hypertension or diabetes register.
+    Latest recorded or calculated BMI in the preceding 12 months must be 30 to 150 kg/m2
+    inclusive, or 27.5 to 150 for any recorded higher-risk ethnicity under NG246, even after a
+    later White record. Unknown ethnicity uses 30, unlike NICE. Invalid or non-obese latest BMI
+    excludes them without using an older result. The earliest qualifying BMI in that period must
+    be at least 90 days before the month-end. Achieved with a weight management referral within
+    90 days from any qualifying BMI. NHS Diabetes Prevention Programme and total diet
+    replacement referrals do not count. Non-achievers are excluded for attendance or
+    commencement in the last 12 months without a later programme end. Incomplete exits or other
+    programmes' ends can misclassify attendance. No personalised care adjustments are applied.
+    Recalculated for each of the last 60 month-ends with current rules, code lists and records,
+    so later corrections can change past months. Based on NICE NG246. Code lists:
+    WEIGHT_MGMT_REFERRAL_COD, WEIGHT_MGMT_ATTENDING_COD, WEIGHT_MGMT_ENDED_COD,
+    WEIGHT_MGMT_OFFERED (ECL_CACHE); WTMGREFDEC_COD, BMIVAL_COD, HEIGHT, WEIGHT (PCD).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind221
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: latest_bmi_date
+    description: "Date of the latest valid recorded or calculated BMI in the 12 months before the reporting date, excluding the first day."
+  - name: bmi_value
+    description: "Body mass index in kg/m2."
+  - name: bmi_source
+    description: "Whether BMI was recorded directly or calculated from weight and height."
+  - name: requires_lower_bmi_thresholds
+    description: "Whether any higher-risk ethnicity was recorded by the reporting date, even if followed by a White record. Uses the lower NG246 BMI thresholds; unknown ethnicity uses standard thresholds."
+  - name: bmi_category
+    description: "Obesity class after applying the ethnicity thresholds used by the indicator."
+  - name: timely_referral_date
+    description: "Latest weight management referral from any qualifying BMI date to 90 days afterwards, inclusive, by the reporting date; null when none is recorded."
+  - name: timely_offer_date
+    description: "Latest weight management referral offer from any qualifying BMI date to 90 days afterwards, inclusive, by the reporting date; null when none is recorded."
+  - name: timely_decline_date
+    description: "Latest declined weight management referral from any qualifying BMI date to 90 days afterwards, inclusive, by the reporting date; null when none is recorded."
+  - name: latest_referral_date
+    description: "Latest weight management referral in the last 24 months, excluding the first day; null when none is recorded."
+  - name: latest_attendance_date
+    description: "Latest weight management attendance or commencement in the last 12 months, excluding the first day; null when none is recorded."
+  - name: latest_end_date
+    description: "Latest weight management programme end in the last 24 months, excluding the first day; null when none is recorded. Only an end later than attendance cancels current attendance."
+  - name: has_previous_referral
+    description: "Whether a weight management referral is recorded in the last 24 months, excluding the first day. IND220 excludes people with this flag only if they have not achieved."
+  - name: is_currently_attending
+    description: "Whether weight management attendance or commencement is recorded in the last 12 months without a later programme end. IND220 and IND221 exclude these people only if they have not achieved."
+  - name: latest_record_date
+    description: "Date of qualifying evidence retained within the indicator measurement or follow-up window; null when none is recorded."
+  - name: is_in_denominator
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
+  - name: has_hypertension
+    description: "Whether the person belongs to the hypertension register on the reporting date."
+  - name: has_diabetes
+    description: "Whether the person belongs to the diabetes register on the reporting date."

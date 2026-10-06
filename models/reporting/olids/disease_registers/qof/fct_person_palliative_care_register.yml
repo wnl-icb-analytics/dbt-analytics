@@ -26,13 +26,13 @@ models:
           category: "LTC"
           clinical_domain: "Palliative Care"
           name_short: "Palliative Care"
-          description_short: "QOF palliative care register"
+          description_short: "QOF 2025/26 palliative care register"
           description_long: >
-            Disease Registers (QOF v51) palliative care register. Requires
-            PALCARE_COD from 1 April 2008 with no PALCARENI_COD on a later calendar
-            date than the latest care code; same-day codes retain membership.
-            Evidence is dated on or before today. PC001 is
-            retired, but extraction continues.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. Disease Registers (QOF v51)
+            palliative care register. Requires PALCARE_COD from 1 April 2008 with no PALCARENI_COD
+            on a later calendar date than the latest care code; same-day codes retain membership.
+            Evidence is dated on or before today. PC001 is retired, but extraction continues.
           is_qof: true
           qof_indicator: "PC001"
           source_column: "is_on_register"
@@ -44,5 +44,24 @@ models:
               category: "INCLUSION"
             - cluster_id: "PALCARENI_COD"
               category: "EXCLUSION"
+        indicators:
+          - id: "IND258"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Palliative Care"
+            name_short: >-
+              Palliative care register
+            description_short: >-
+              People with a palliative care need recorded on or after 1 April 2008.
+            description_long: >-
+              Palliative care need recorded on or after 1 April 2008 qualifies. A
+              later record that care is no longer needed removes membership; same-day
+              records retain it. NICE has no date floor or exclusions, so this flag
+              supplies a narrower population. Based on NICE NG142. Code lists:
+              PALCARE_COD and PALCARENI_COD.
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "PC001"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92

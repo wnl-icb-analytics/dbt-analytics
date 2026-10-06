@@ -1,17 +1,18 @@
 models:
 - name: fct_person_smi_smoking_support_ind155_by_month
-  description: NICE IND155. One row per eligible person and completed month-end. People with an active
-    SMI diagnosis whose latest smoking status at month-end is Current Smoker. Achievement requires an
-    offer of cessation support in the inclusive preceding twelve months, using the established referral
-    and pharmacotherapy evidence definition. Recalculated at monthly refresh for the last 60 completed
-    month-ends using today's rules and code lists. Registration and practice follow the existing monthly
-    spine, including its current-registration priority for overlaps. Registration start is inclusive;
-    registration end and death dates are exclusive. Birth and death dates are approximate; missing birth
-    dates prevent historical active rows. Current gender and test flags apply retrospectively. Diagnosis
-    state uses clinical and recorded dates. Other evidence uses its clinical or order date through month-end.
-    Later corrections and current code-list changes can alter earlier results. Remission excludes SMI
-    eligibility; independent lithium therapy does not establish SMI eligibility. Personalised care adjustments
-    are not applied.
+  description: >-
+    Stop-smoking support in severe mental illness (NICE IND155). One row per person in the
+    denominator at each month-end.
+
+
+    People registered at the month-end with active schizophrenia, bipolar disorder or other
+    psychosis whose latest smoking status is current smoker. Remission excludes them. Achieved
+    with a stop-smoking referral, pharmacotherapy record or prescription in the 12 months before
+    the month-end. Advice or declined care alone does not count. NICE does not explicitly
+    exclude remission. No personalised care adjustments are applied. Recalculated for each of
+    the last 60 month-ends with current rules, code lists and records, so later corrections can
+    change past months. Based on NICE CG178. Code lists: MH_COD, MHREM_COD, SMOK_COD,
+    REFERSSSA_COD, PHARM_COD (PCD); PHARMDRUG_COD (NHS drug refset).
   config:
     meta:
       owner:
@@ -19,36 +20,39 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind155
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Person identifier for a member of the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
-      row.
+    description: "Month-end used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "12 months before the reporting date, included in the support window."
   - name: age
-    description: Completed years at month-end, calculated from the approximate birth month.
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the denominator population."
   - name: practice_code
-    description: ODS practice code at month-end.
+    description: "ODS code of the registration practice at the reporting month-end."
   - name: practice_name
-    description: Practice name at month-end under the monthly spine attribution.
+    description: "Name of the registration practice at the reporting month-end."
   - name: latest_smoking_status
-    description: Latest recorded smoking status; null when none
+    description: "Latest recorded smoking status on or before the reporting date; null if absent."
   - name: latest_smoking_status_date
-    description: Date of the latest smoking status record; null when none
+    description: >-
+      Date of the latest smoking status on or before the reporting date; null if absent. It may be
+      outside the achievement window.
   - name: latest_record_date
-    description: Date of the latest qualifying record in the period; null when none
+    description: >-
+      Latest supporting evidence in the indicator window; null if absent. The model description
+      gives the achievement rule.
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

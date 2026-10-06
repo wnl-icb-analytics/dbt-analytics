@@ -1,31 +1,22 @@
 models:
 - name: fct_person_diabetes_care_processes_ind120_by_month
-  description: |
-    NICE IND120. Eight annual care processes in diabetes.
-    One row per eligible person and completed month-end. The population is living,
-    non-test people registered at month-end on the diabetes register. Achievement
-    requires all eight processes in the inclusive preceding 12 months: BMI, valid-pair
-    blood pressure, HbA1c, valid total cholesterol, smoking status, performed foot
-    examination, urine ACR and eGFR. The count is the number completed, from zero to eight.
-    HbA1c, ACR and eGFR tests count without numeric results. Serum creatinine alone
-    does not count, following NICE's February 2026 correction. BMI retains valid recorded
-    or calculated adult evidence and valid numeric BMIVAL_COD recording for under-18s
-    (10 to 150 kg/m2 inclusive). Age eligibility uses month-end age; calculated BMI
-    retains the source's adult height and weight restriction. A performed foot check
-    counts despite same-date or later declined, unsuitable or referral records. An
-    absent or amputated opposite foot counts once its first clinical date is reached
-    at month-end, even if that date follows the examination. The evidence date is
-    reported only when all eight processes are complete; otherwise it is null.
+  description: >-
+    Eight care processes in diabetes (NICE IND120). One row per person in the denominator
+    at the month-end.
 
-    Recalculated at monthly refresh for the last 60 completed month-ends using today's
-    rules and code lists. Personalised care adjustments are not applied. Registration
-    and practice use the existing monthly spine; registration start is inclusive,
-    registration end and death exclusive. Overlapping registrations retain the spine's
-    current-registration priority. Birth and death dates are approximate; missing birth
-    dates prevent historical active rows. Current gender and test flags apply
-    retrospectively. Register diagnosis state uses clinical and recorded dates; other
-    evidence uses its clinical or order date through month-end. Later corrections and
-    changed code lists can alter earlier results.
+
+    People registered at the month-end on the diabetes register. Achieved with all eight
+    processes in the 12 months before the month-end: HbA1c, blood pressure, total
+    cholesterol, eGFR, urine ACR, foot examination, BMI and smoking status. HbA1c, eGFR
+    and ACR tests need no numeric result; total cholesterol and BMI need valid results. A
+    performed foot examination counts despite a later decline; one foot suffices if the
+    other is absent or amputated. No personalised care adjustments are applied. Based on
+    NICE NG28. Recalculated for each of the last 60 month-ends with current rules, code
+    lists and records, so later corrections can change past months. Code lists:
+    IFCCHBAM_COD, DCCTHBA1C_COD, BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD,
+    ABPM_COD, CHOL2_COD, EGFR_COD, NDAALB_COD, FOOTEXAM_COD, AMPL_COD, AMPR_COD,
+    CONABL_COD, CONABR_COD, BMIVAL_COD, HEIGHT, WEIGHT, SMOK_COD, EXSMOK_COD, LSMOK_COD,
+    NSMOK_COD (PCD).
   config:
     meta:
       owner:
@@ -33,34 +24,33 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind120
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Person identifier for someone in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "Published NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
   - name: reporting_date
-    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
-      row.
+    description: "Month-end used to assess the population, age and evidence."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "Inclusive start of the indicator measurement period before the reporting date."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the indicator denominator population."
   - name: practice_code
-    description: Practice ODS code at month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Practice name at month-end under the monthly spine attribution.
+    description: "Name of the registration practice at month-end."
   - name: care_processes_completed_count
-    description: Number of the eight care processes recorded in the preceding 12 months, 0 to 8
+    description: "Number of the eight diabetes care processes recorded in the last 12 months, from 0 to 8."
   - name: latest_record_date
-    description: Latest qualifying process date when all eight processes are complete; null otherwise
+    description: "Latest date among the recorded care processes when all eight are completed; null when the indicator is not achieved."
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

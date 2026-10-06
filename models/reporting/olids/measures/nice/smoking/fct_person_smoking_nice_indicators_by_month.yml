@@ -1,23 +1,13 @@
 models:
 - name: fct_person_smoking_nice_indicators_by_month
-  description: |
-    Smoking status and support NICE indicator results. One row per eligible person and
-    indicator on the completed month-end. Covers IND97, IND156, IND157.
+  description: >-
+    Monthly NICE smoking results. One row per person and indicator at each month-end.
 
-    Each indicator retains its own population, evidence window and exclusions. The
-    individual indicator models define these rules. Results feed the combined NICE
-    indicator table and family history.
 
-    Personalised care adjustments are not applied.
-
-    Recalculated at monthly refresh for the last 60 completed month-ends using today's
-    rules and code lists, before personalised care adjustments. Registration and practice
-    use the established monthly spine: start is inclusive, end and death exclusive.
-    Overlapping registrations retain its current-registration priority. Birth and death
-    dates are approximate; missing birth dates prevent historical active rows. Current
-    gender and test flags apply retrospectively. Register state uses clinical and recorded
-    dates; other evidence uses its clinical or order date through month-end. Later data
-    corrections and code-list changes can alter earlier results.
+    Includes IND97, IND98, IND99, IND156, IND157, with the eligibility, exclusions and
+    achievement rules documented for each indicator. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change past
+    months.
   config:
     meta:
       owner:
@@ -31,34 +21,34 @@ models:
         - reporting_date
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "NICE published indicator title."
   - name: reporting_date
-    description: Completed month-end used for eligibility and the measurement period
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "Inclusive start of the 12-month achievement window, or 24 months for IND99."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
   - name: condition_name
-    description: Population defining the indicator
+    description: "Short label for the denominator population."
   - name: practice_code
-    description: ODS code of the month-end registration practice
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Name of the month-end registration practice
+    description: "Name of the registration practice at month-end."
   - name: latest_smoking_status
-    description: Latest recorded smoking status
+    description: "Latest recorded smoking status on or before the reporting date; null when none."
   - name: latest_smoking_status_date
-    description: Date of the latest smoking status record
+    description: "Date of the latest smoking status on or before the reporting date; null when none."
   - name: latest_smoking_intervention_date
-    description: Date of the latest smoking cessation support record; null if none
+    description: "Latest stop-smoking referral, drug treatment record or prescription on or before the reporting date, including evidence outside the achievement window; null when none."
   - name: latest_record_date
-    description: Date of the latest qualifying record in the period; null when none
+    description: "Latest qualifying smoking status or support date in the achievement window; can be null when achieved through the never-smoked exception."
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the documented achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."

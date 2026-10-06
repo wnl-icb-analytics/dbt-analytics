@@ -19,7 +19,7 @@
 WITH synthetic_population AS (
     SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
         16 AS age, 'SYN_PRACTICE' AS practice_code, 'Synthetic practice' AS practice_name
-    FROM (SELECT column1 FROM VALUES ('2024-01-31'), ('2024-04-30'), ('2025-01-31'), ('2025-02-28'), ('2026-05-31')) AS dates
+    FROM (SELECT column1 FROM VALUES ('2024-01-31'), ('2024-05-31'), ('2025-01-31'), ('2025-02-28'), ('2026-05-31')) AS dates
     CROSS JOIN (SELECT column1 FROM VALUES (-9810), (-9811)) AS people
 ),
 synthetic_ltc AS (
@@ -55,8 +55,8 @@ FROM actual_196
 HAVING EXISTS (SELECT 1 FROM actual_196
     GROUP BY person_id, reporting_date HAVING COUNT(*) <> 1)
     OR COUNT(*) <> 6
-    OR COALESCE(COUNT_IF(reporting_date = '2024-01-31' AND latest_record_date = '2023-10-31'), 0) <> 1
-    OR COALESCE(COUNT_IF(reporting_date IN ('2024-04-30', '2025-01-31') AND latest_record_date = '2024-04-30'), 0) <> 2
+    OR COALESCE(COUNT_IF(reporting_date = '2024-01-31' AND latest_record_date = '2023-10-31'), 0) <> 0
+    OR COALESCE(COUNT_IF(reporting_date IN ('2024-05-31', '2025-01-31', '2025-02-28') AND latest_record_date = '2024-04-30'), 0) <> 3
     OR COALESCE(COUNT_IF(person_id = -9811 AND NOT is_in_numerator AND latest_record_date IS NULL), 0) <> 3
 UNION ALL
 SELECT '198' AS rule, COUNT(*) AS rows_total
@@ -64,8 +64,8 @@ FROM actual_198
 HAVING EXISTS (SELECT 1 FROM actual_198
     GROUP BY person_id, reporting_date HAVING COUNT(*) <> 1)
     OR COUNT(*) <> 6
-    OR COALESCE(COUNT_IF(reporting_date = '2024-01-31' AND latest_record_date = '2023-10-31'), 0) <> 1
-    OR COALESCE(COUNT_IF(reporting_date IN ('2024-04-30', '2025-01-31') AND latest_record_date = '2024-04-30'), 0) <> 2
+    OR COALESCE(COUNT_IF(reporting_date = '2024-01-31' AND latest_record_date = '2023-10-31'), 0) <> 0
+    OR COALESCE(COUNT_IF(reporting_date IN ('2024-05-31', '2025-01-31', '2025-02-28') AND latest_record_date = '2024-04-30'), 0) <> 3
     OR COALESCE(COUNT_IF(person_id = -9811 AND NOT is_in_numerator AND latest_record_date IS NULL), 0) <> 3
 UNION ALL
 SELECT '201' AS rule, COUNT(*) AS rows_total

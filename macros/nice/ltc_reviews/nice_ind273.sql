@@ -68,7 +68,7 @@ SELECT
     assessed.reporting_date,
     DATEADD(month, -12, assessed.reporting_date) AS measurement_period_start,
     assessed.age,
-    'Asthma (aged 5 and over)' AS condition_name,
+    'Asthma, aged 5 or over' AS condition_name,
     {{ nice_practice_columns('assessed', reference) }},
     assessed.latest_review_date,
     assessed.latest_record_date,

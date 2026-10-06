@@ -1,0 +1,60 @@
+models:
+- name: fct_person_copd_oxygen_saturation_ind212_by_month
+  description: >-
+    Annual oxygen saturation recording in very severe COPD (NICE IND212). One row per
+    person in the denominator at each month-end.
+
+
+    People registered at the month-end on the COPD register with latest valid FEV1 below
+    30% of predicted or recorded very severe COPD. Valid FEV1 is 5% to 150% of predicted
+    with percent units and has no expiry. Achieved with numeric oxygen saturation in the
+    12 months before the month-end. No indicator exclusions apply. No personalised care
+    adjustments are applied. Based on NICE NG115. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months. Code lists: COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, COPD_COD (PCD);
+    FEV1_PCT_PRED_COD (ECL cache); ARDENS/SPO2_SATS_SATURATIONS (OpenCodelists).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "NICE published indicator title."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Exclusive start of the indicator eligibility or evidence window."
+  - name: age
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
+  - name: condition_name
+    description: "Short label for the denominator population."
+  - name: latest_record_date
+    description: "Date of the latest qualifying evidence in the indicator window; null when none."
+  - name: is_in_denominator
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  - name: latest_fev1_percent_date
+    description: "Date of the latest valid FEV1 percentage-predicted result on or before the reporting date, with no expiry; null when none."
+  - name: latest_fev1_percent
+    description: "Latest valid FEV1 as a percentage of predicted, between 5 and 150 inclusive; below 30 establishes very severe COPD. Null when none."
+  - name: latest_very_severe_code_date
+    description: "Latest very severe COPD diagnosis known by the reporting date; null when none."
+  - name: latest_spo2_value
+    description: "Latest numeric oxygen saturation in the 12-month achievement window, in the recorded units; null when none."
+  - name: practice_code
+    description: "ODS code of the registration practice at month-end."
+  - name: practice_name
+    description: "Name of the registration practice at month-end."

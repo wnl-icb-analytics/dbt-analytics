@@ -1,0 +1,51 @@
+models:
+- name: fct_person_fh_assessment_nice_indicators
+  description: >-
+    Familial hypercholesterolaemia assessment results. One row per person and indicator in the
+    denominator on the build date.
+
+
+    Includes NICE IND260, NICE IND261. Each indicator has its own denominator, measurement
+    window and exclusions. Supporting evidence accompanies the achievement status. No
+    personalised care adjustments are applied.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+  columns:
+  - name: reporting_date
+    description: "Build date used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Earliest qualifying lifetime reading for IND260, or the exclusive boundary 12 months before the reporting date for IND261."
+  - name: latest_record_date
+    description: "Latest assessment, diagnosis, referral or genetic evidence date used for achievement; null without qualifying evidence."
+  - name: is_in_denominator
+    description: "Always true; each row is eligible before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the achievement rule on the reporting date."
+  - name: qualifying_reading_date
+    description: "Earliest qualifying lifetime cholesterol reading for IND260, or latest high reading in the 12-month window for IND261."
+  - name: qualifying_cholesterol_value
+    description: "Total cholesterol of the selected qualifying reading, in mmol/L."
+  - name: has_qualifying_secondary_hyperlipidaemia
+    description: "Whether secondary hyperlipidaemia qualifies. IND260 requires diagnosis after the earliest high reading; IND261 accepts diagnosis or personal history at any time through the reporting date."
+  - name: first_fh_assessment_date
+    description: "First recorded familial hypercholesterolaemia assessment or possible diagnosis through the reporting date; null when absent."
+  - name: first_clinical_fh_diagnosis_date
+    description: "First clinical familial hypercholesterolaemia diagnosis through the reporting date; null when absent. Counts as assessment even before the qualifying cholesterol reading."
+  - name: first_fh_referral_date
+    description: "First referral for familial hypercholesterolaemia assessment through the reporting date; null when absent. Generic lipid referrals do not count."
+  - name: first_genetic_fh_date
+    description: "First genetic familial hypercholesterolaemia record through the reporting date; null when absent. Includes testing without confirmation of a positive result."
+  - name: latest_secondary_hyperlipidaemia_date
+    description: "Latest secondary hyperlipidaemia diagnosis through the reporting date; null when absent. IND260 requires a date strictly after the earliest qualifying reading."
+  - name: age_at_earliest_qualifying_reading
+    description: "Age in completed years at the earliest qualifying lifetime cholesterol reading, calculated from the approximate birth date; null when no such reading is known or the indicator does not supply it."
+  - name: first_secondary_history_date
+    description: "First personal secondary hyperlipidaemia history record through the reporting date for IND261; null when absent or not supplied by the indicator."
