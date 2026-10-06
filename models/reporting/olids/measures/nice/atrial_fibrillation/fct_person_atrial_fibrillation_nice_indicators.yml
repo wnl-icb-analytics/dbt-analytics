@@ -73,11 +73,11 @@ models:
       - name: latest_chadsvasc_date
         description: "Date of the latest CHA2DS2-VASc assessment through the reporting date, including assessments without a valid score; null when no assessment is recorded."
       - name: latest_chads2_score
-        description: "Score from the latest CHADS2 assessment before 1 April 2015, from 0 to 6; null when missing or invalid."
+        description: "Score from the latest CHADS2 assessment before 1 April 2015 and through the reporting date, from 0 to 6; null when absent, missing or invalid."
       - name: latest_anticoagulant_order_date
         description: "Date of the latest oral anticoagulant prescription through the reporting date; null when none is recorded."
       - name: latest_anticoagulant_type
-        description: "Drug type of the latest oral anticoagulant prescription: DOAC means direct-acting oral anticoagulant and VKA means vitamin K antagonist; null when none is recorded."
+        description: "Type of the latest oral anticoagulant prescription: DOAC means direct-acting oral anticoagulant, VKA means vitamin K antagonist, and OTHER_ANTICOAGULANT means another oral anticoagulant; null when none is recorded."
       - name: latest_doac_order_date
         description: "Date of the latest direct-acting oral anticoagulant prescription through the reporting date; null when absent."
       - name: latest_vka_order_date
@@ -145,16 +145,17 @@ models:
 
   - name: fct_person_atrial_fibrillation_ind127
     description: >-
-      Annual stroke risk assessment in atrial fibrillation (NICE IND127). One row per
-      person in the denominator on the build date.
+      Annual stroke risk assessment in atrial fibrillation (NICE IND127). One row per person
+      in the denominator on the build date.
 
 
-      People registered on the build date on the atrial fibrillation register. Achieved
-      with a CHA2DS2-VASc assessment in the 12 months before the build date. Excludes
-      people whose latest eligible stroke risk score is at least 2 and predates that
-      period. A later low score replaces an earlier high score. CHADS2 scores count only
-      before 1 April 2015. No personalised care adjustments are applied. Based on NICE
-      NG196. Code lists: AFIB_COD, AFIBRES_COD, CHADVASC_COD, CHAD_COD (PCD).
+      People registered on the build date on the atrial fibrillation register. Achieved with a
+      CHA2DS2-VASc assessment in the 12 months before the build date. Excludes people whose
+      latest eligible stroke risk score is at least 2 and predates that period. Only the
+      latest eligible assessment determines this exclusion; a later low or unscored assessment
+      replaces an earlier high score. CHADS2 scores count only before 1 April 2015. No
+      personalised care adjustments are applied. Based on NICE NG196. Code lists: AFIB_COD,
+      AFIBRES_COD, CHADVASC_COD, CHAD_COD (PCD).
     config:
       meta:
         owner:
@@ -168,14 +169,13 @@ models:
           name_short: "Atrial fibrillation stroke risk"
           description_short: "Stroke risk assessment in atrial fibrillation in the last 12 months"
           description_long: >-
-            People registered on the build date on the atrial fibrillation
-            register. Achieved with a CHA2DS2-VASc assessment in the 12 months
-            before the build date. Excludes people whose latest eligible stroke
-            risk score is at least 2 and predates that period. A later low score
-            replaces an earlier high score. CHADS2 scores count only before 1
-            April 2015. No personalised care adjustments are applied. Based on
-            NICE NG196. Code lists: AFIB_COD, AFIBRES_COD, CHADVASC_COD, CHAD_COD
-            (PCD).
+            People registered on the build date on the atrial fibrillation register. Achieved
+            with a CHA2DS2-VASc assessment in the 12 months before the build date. Excludes
+            people whose latest eligible stroke risk score is at least 2 and predates that
+            period. Only the latest eligible assessment determines this exclusion; a later low
+            or unscored assessment replaces an earlier high score. CHADS2 scores count only
+            before 1 April 2015. No personalised care adjustments are applied. Based on NICE
+            NG196. Code lists: AFIB_COD, AFIBRES_COD, CHADVASC_COD, CHAD_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -185,17 +185,16 @@ models:
 
   - name: fct_person_atrial_fibrillation_ind169
     description: >-
-      Anticoagulant review in atrial fibrillation (NICE IND169). One row per person in
-      the denominator on the build date.
+      Anticoagulant review in atrial fibrillation (NICE IND169). One row per person in the
+      denominator on the build date.
 
 
-      People registered on the build date aged over 18 on the atrial fibrillation
-      register with an oral anticoagulant prescription in the 6 months before the build
-      date. Achieved with an anticoagulant medication review or atrial fibrillation
-      annual review in the last 12 months. An annual review counts without proving
-      completion of all NICE review elements. No personalised care adjustments are
-      applied. Based on NICE NG196. Code lists: AFIB_COD, AFIBRES_COD,
-      ORANTICOAGREVW_COD, AFMON_COD (PCD); 020802 (BNF).
+      People registered on the build date aged over 18 on the atrial fibrillation register
+      with an oral anticoagulant prescription in the 6 months before the build date. Achieved
+      with an anticoagulant medication review or atrial fibrillation annual review in the last
+      12 months. Neither review code proves completion of all NICE review elements. No
+      personalised care adjustments are applied. Based on NICE NG196. Code lists: AFIB_COD,
+      AFIBRES_COD, ORANTICOAGREVW_COD, AFMON_COD (PCD); 020802 (BNF).
     config:
       meta:
         owner:
@@ -209,14 +208,13 @@ models:
           name_short: "Atrial fibrillation treatment review"
           description_short: "Anticoagulant review in atrial fibrillation in the last 12 months"
           description_long: >-
-            People registered on the build date aged over 18 on the atrial
-            fibrillation register with an oral anticoagulant prescription in the 6
-            months before the build date. Achieved with an anticoagulant
-            medication review or atrial fibrillation annual review in the last 12
-            months. An annual review counts without proving completion of all NICE
-            review elements. No personalised care adjustments are applied. Based
-            on NICE NG196. Code lists: AFIB_COD, AFIBRES_COD, ORANTICOAGREVW_COD,
-            AFMON_COD (PCD); 020802 (BNF).
+            People registered on the build date aged over 18 on the atrial fibrillation
+            register with an oral anticoagulant prescription in the 6 months before the build
+            date. Achieved with an anticoagulant medication review or atrial fibrillation
+            annual review in the last 12 months. Neither review code proves completion of all
+            NICE review elements. No personalised care adjustments are applied. Based on NICE
+            NG196. Code lists: AFIB_COD, AFIBRES_COD, ORANTICOAGREVW_COD, AFMON_COD (PCD);
+            020802 (BNF).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -307,7 +305,7 @@ models:
       - name: latest_anticoagulant_order_date
         description: "Date of the latest oral anticoagulant prescription through the build date; null when none is recorded."
       - name: latest_anticoagulant_type
-        description: "Drug type of the latest oral anticoagulant prescription: DOAC means direct-acting oral anticoagulant and VKA means vitamin K antagonist; null when none is recorded."
+        description: "Type of the latest oral anticoagulant prescription: DOAC means direct-acting oral anticoagulant, VKA means vitamin K antagonist, and OTHER_ANTICOAGULANT means another oral anticoagulant; null when none is recorded."
       - name: latest_anticoagulant_review_date
         description: "Date of the latest anticoagulant medication review or atrial fibrillation annual review through the build date; null when absent."
       - name: is_in_numerator
