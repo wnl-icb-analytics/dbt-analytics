@@ -1,21 +1,18 @@
 models:
   - name: fct_person_hypertension_register
-    description: 'QOF v51 hypertension register (HYP_REG) for people of any age with
-      an unresolved hypertension diagnosis.
+    description: >-
+      Hypertension register (NICE IND255). One row per register member.
 
-      One row per person with a diagnosis and no resolution code, or whose latest
-      HTN_COD is on or after their latest HTNRES_COD, so a same-day resolution does
-      not remove them. Diagnosis, resolution and BP evidence is dated on or before today.
 
-      latest_bp_htn_stage is a local classification of the latest paired BP
-      reading, by context (Home/ABPM or clinic). It is not a QOF rule and not
-      NG136. Home/ABPM stage 2 here is 155/95; NG136 stage 2 ABPM/HBPM
-      confirmation is 150/95, on a confirmed average rather than one reading.
-      Thresholds in mmHg (systolic or diastolic): Home/ABPM stage 1 >= 135 or >= 85,
-      stage 2 >= 155 or >= 95; clinic stage 1 >= 140 or >= 90, stage 2 >= 160 or >= 100.
-      Severe HTN in either context: systolic >= 180 or diastolic >= 120, assessed first;
-      stage 2 takes precedence over stage 1.'
-
+      Registration status is not filtered. Hypertension diagnoses qualify at any age when on or
+      after the latest resolved code. Blood pressure stage does not determine membership.
+      Clinical evidence is dated by the build date. For NICE counts, select people registered on
+      the build date. The latest paired blood pressure also has a local stage classification in
+      mmHg. Home or ambulatory stage 1 starts at 135 systolic or 85 diastolic, and stage 2 at
+      155 or 95; clinic thresholds are 140 or 90 and 160 or 100. Severe hypertension starts at
+      180 systolic or 120 diastolic in either context and takes precedence. This local
+      classification differs from NICE, whose home or ambulatory stage 2 threshold is 150/95 on
+      a confirmed average. Based on NICE NG136. Code lists: HTN_COD and HTNRES_COD (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -66,9 +63,10 @@ models:
             description_short: >-
               People of any age with unresolved hypertension.
             description_long: >-
-              Hypertension diagnoses qualify at any age when on or after the latest
-              resolved code. Blood pressure stage does not determine membership. Based
-              on NICE NG136. Code lists: HTN_COD and HTNRES_COD.
+              Hypertension diagnoses qualify at any age when on or after the latest resolved
+              code. Blood pressure stage does not determine membership. Clinical evidence is
+              dated by the build date. For NICE counts, select people registered on the build
+              date. Based on NICE NG136. Code lists: HTN_COD and HTNRES_COD (PCD).
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "HYP001"
@@ -83,7 +81,9 @@ models:
           - not_null
 
       - name: age
-        description: 'Current age of the patient'
+        description: >-
+          Age in years from the approximate birth month, at the build date or at death for
+          deceased people; null when birth date is missing.
 
       - name: is_on_register
         description: 'Flag indicating patient is on the hypertension QOF register'

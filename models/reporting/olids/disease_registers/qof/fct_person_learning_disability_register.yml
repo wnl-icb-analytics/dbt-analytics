@@ -1,19 +1,13 @@
 models:
   - name: fct_person_learning_disability_register
-    description: >
-      Disease Registers (QOF v51) learning disability register. One row per person
-      with LD_COD and no LDREM_COD on or after the latest diagnosis. There is no
-      age restriction. Evidence is dated on or before today; comparisons use
-      calendar dates. LD005 is retired; register extraction continues through the
-      Disease Registers service.
-      
-      Membership criteria:
-      - Has LD diagnosis (LD_COD)
-      - NOT excluded (no LDREM_COD on or after latest LD_COD)
-      - No age restriction (includes all ages per QOF spec)
-      
-      Use is_age_14_or_over column to filter for annual health check eligibility.
+    description: >-
+      Learning disability register (NICE IND119). One row per register member.
 
+
+      Registration status is not filtered. A learning disability diagnosis qualifies at any age.
+      A removal code on or after the latest diagnosis removes membership. Clinical evidence is
+      dated by the build date. For NICE counts, select people registered on the build date.
+      Based on NICE NG96. Code lists: LD_COD and LDREM_COD (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -65,9 +59,10 @@ models:
               People of any age with a learning disability diagnosis that has not been
               removed.
             description_long: >-
-              A learning disability diagnosis qualifies at any age. A removal code on
-              or after the latest diagnosis removes membership. Based on NICE NG96.
-              Code lists: LD_COD and LDREM_COD.
+              A learning disability diagnosis qualifies at any age. A removal code on or after
+              the latest diagnosis removes membership. Clinical evidence is dated by the build
+              date. For NICE counts, select people registered on the build date. Based on NICE
+              NG96. Code lists: LD_COD and LDREM_COD (PCD).
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "LD005"
