@@ -14,7 +14,7 @@ Clinical Purpose:
   (comparing like-for-like score state as-at a given date).
 
 Shape:
-- One row per patient (`sk_patient_id`).
+- One row per patient (`sk_patient_id`) per inclusion criteria.
 - Only the identifier, the scaled subdomain scores and the final
   age-adjusted score are carried, so the snapshot stays narrow rather than
   versioning the full wide score model (raw/clipped/0-100 intermediates).
@@ -41,6 +41,8 @@ Downstream:
 
 select
       sk_patient_id
+    , is_applicable_rule
+    , inclusion_rule
     -- scaled subdomain scores (cohort-relative z-scores)
     , scaled_score_biomarker_gaps
     , scaled_score_care_gaps

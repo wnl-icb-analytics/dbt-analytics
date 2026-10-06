@@ -14,7 +14,7 @@ Clinical Purpose:
   like-for-like score state as-at a given date).
 
 Shape:
-- One row per patient (`sk_patient_id`).
+- One row per patient (`sk_patient_id`) per inclusion criteria.
 - Only the identifier, the scaled subdomain scores, the care-home exclusion
   component and the final score are carried, so the snapshot stays narrow
   rather than versioning the full wide score model.
@@ -45,6 +45,8 @@ Downstream:
 
 select
       sk_patient_id
+    , is_applicable_rule
+    , inclusion_rule
     -- scaled subdomain scores (cohort-relative z-scores)
     , scaled_score_clinical_complexity
     , scaled_score_clinical_frailty

@@ -1,11 +1,11 @@
 {{
     config(
         materialized='table',
-        tags=['cltcs_secure_source'])
+        tags=['cltcs'])
 }}
 
 
-{% set in_scope_borough_list = ['Haringey', 'Barnet'] %}
+{% set in_scope_borough_list = ['Haringey'] %}
 {% set in_scope_neighbourhood_list = ['East Camden'] %}
 
 with in_scope_practice_list as (
@@ -30,7 +30,7 @@ select
       ip.practice_code
     , dp.practice_name
     , dp.borough_registered
-    , ap.active_patient_count
+
     -- area details
     , ip.neighbourhood_code as area_code
     , ip.neighbourhood_registered as area_name
@@ -42,4 +42,3 @@ select
     
 from in_scope_practice_list ip 
 left join {{ref('dim_practice')}} dp on dp.practice_code = ip.practice_code
-left join {{ref('fct_organisation_active_patients')}} ap on dp.organisation_id = ap.organisation_id

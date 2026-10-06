@@ -1,7 +1,26 @@
 {{ config(materialized='table', tags=['cltcs']) }}
-with inclusion_list as (
-    select *
+
+
+with spine as (
+    select sk_patient_id
+        , person_id
+        , neighbourhood_code
+        , practice_code
     from {{ ref('cltcs_adult_population') }}
+    where meets_original_criteria or meets_segment_7),
+
+inclusion_list as (
+    select sk_patient_id
+        , 'original_criteria' as inclusion_rule
+        , applicable_cohort = 'original_criteria' as is_applicable_rule
+    from {{ ref('cltcs_adult_population') }}
+    where meets_original_criteria
+    union all
+    select sk_patient_id
+        , 'segment_7'
+        , applicable_cohort = 'segment_7'
+    from {{ ref('cltcs_adult_population') }}
+    where meets_segment_7
 ),
 
 encoding_features as (
@@ -92,7 +111,7 @@ encoding_features as (
         case when asc_cld.has_sensory_support_hearing_impairment = true then 1 else 0 end as has_sensory_support_hearing_impairment_flag,
         case when asc_cld.has_sensory_support_dual_impairment = true then 1 else 0 end as has_sensory_support_dual_impairment_flag,
 
-    from inclusion_list il
+    from spine il
     left join {{ ref('dim_person_demographics') }} pd
         on il.person_id =pd.person_id
     left join {{ ref('dim_person_conditions') }} pc
@@ -179,20 +198,30 @@ domain_sub_scores as (
 from encoding_features
 ),
 
+cohort_sub_scores as(
+    select dss.*
+    , il.inclusion_rule
+    , il.is_applicable_rule
+    from inclusion_list il
+    inner join domain_sub_scores dss on il.sk_patient_id = dss.sk_patient_id
+),
+
 composite_scores as (
     select
         sk_patient_id,
         neighbourhood_code,
         practice_code,
+        inclusion_rule,
+        is_applicable_rule,
         age,
-        (score_clinical_complexity - avg(score_clinical_complexity) over (partition by neighbourhood_code)) / nullif(stddev(score_clinical_complexity) over (partition by neighbourhood_code), 0) as scaled_score_clinical_complexity,
-        (score_clinical_frailty - avg(score_clinical_frailty) over (partition by neighbourhood_code)) / nullif(stddev(score_clinical_frailty) over (partition by neighbourhood_code), 0) as scaled_score_clinical_frailty,
-        (score_medicines_management - avg(score_medicines_management) over (partition by neighbourhood_code)) / nullif(stddev(score_medicines_management) over (partition by neighbourhood_code), 0) as scaled_score_medicines_management,
-        (score_emergency_use - avg(score_emergency_use) over (partition by neighbourhood_code)) / nullif(stddev(score_emergency_use) over (partition by neighbourhood_code), 0) as scaled_score_emergency_use,
-        (score_wider_care_engagement - avg(score_wider_care_engagement) over (partition by neighbourhood_code)) / nullif(stddev(score_wider_care_engagement) over (partition by neighbourhood_code), 0) as scaled_score_wider_care_engagement,
-        (score_asc_indicators - avg(score_asc_indicators) over (partition by neighbourhood_code)) / nullif(stddev(score_asc_indicators) over (partition by neighbourhood_code), 0) as scaled_score_asc_indicators,
+        (score_clinical_complexity - avg(score_clinical_complexity) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_clinical_complexity) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_clinical_complexity,
+        (score_clinical_frailty - avg(score_clinical_frailty) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_clinical_frailty) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_clinical_frailty,
+        (score_medicines_management - avg(score_medicines_management) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_medicines_management) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_medicines_management,
+        (score_emergency_use - avg(score_emergency_use) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_emergency_use) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_emergency_use,
+        (score_wider_care_engagement - avg(score_wider_care_engagement) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_wider_care_engagement) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_wider_care_engagement,
+        (score_asc_indicators - avg(score_asc_indicators) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_asc_indicators) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_asc_indicators,
         score_exclusions
-    from domain_sub_scores ),
+    from cohort_sub_scores ),
 
 clipped_scores as (
     select
@@ -218,5 +247,5 @@ reweighted_scores as (
 -- theoretical -3/+3 bounds. Tied raw scores receive the same percentile.
 select *,
     round((raw_score_frailty + 3) / 6.0 * 100, 1) as score_frailty,
-    round(percent_rank() over (partition by neighbourhood_code order by raw_score_frailty) * 100, 1) as score_frailty_percentile
+    round(percent_rank() over (partition by neighbourhood_code, inclusion_rule order by raw_score_frailty) * 100, 1) as score_frailty_percentile
 from reweighted_scores

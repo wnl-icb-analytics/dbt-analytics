@@ -1,22 +1,99 @@
 models:
   - name: cltcs_score_treatment
-    description: "Treatment sub-score for C-LTCS cohort. One row per patient. Derived from QOF conditions, A&E/GP usage, polypharmacy, age and asthma/BP treatment flags."
+    description: >
+      C-LTCS treatment sub-score. One row per patient for each C-LTCS cohort the patient
+      meets, so a patient who meets both the original C-LTCS criteria and segment 7
+      (Adults with Complexity) has two rows. Covers adult registrants at practices in the
+      C-LTCS neighbourhood mapping who meet either cohort in any area, not only the
+      cohort that applies at their practice; cohort membership comes from
+      cltcs_adult_population. Six domain sub-scores (biomarker and monitoring gaps, care
+      gaps, complexity, medication burden, illness-related urgent and emergency care, and
+      barriers to treatment) are calculated once per patient from QOF conditions, LTC LCS
+      risk groups, A&E, admission and GP activity, polypharmacy, and asthma, diabetes, BP
+      and eGFR care flags. Each sub-score is then z-scored within the patient's
+      neighbourhood and cohort, so a patient's scores in the two cohorts are relative to
+      different comparison groups and should not be compared directly. Filter to
+      is_applicable_rule for the one score per patient used in case finding.
     config:
       meta:
         owner:
           name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - inclusion_rule
     columns:
       - name: sk_patient_id
         data_type: number
-        description: "Unique patient identifier (sk_patient_id from PDS via dim_person_demographics_basic)"
+        description: "Patient identifier (sk_patient_id from PDS via dim_person_demographics_basic). Appears once per cohort the patient meets."
         data_tests:
-          - unique
           - not_null
+
+      - name: inclusion_rule
+        data_type: varchar
+        description: >
+          Cohort this row is scored in. 'original_criteria' is the original C-LTCS
+          inclusion criteria; 'segment_7' is segment 7 (Adults with Complexity) from
+          fct_person_segment. The z-scores on this row are calculated against other
+          patients in the same cohort and neighbourhood.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - original_criteria
+                  - segment_7
+
+      - name: is_applicable_rule
+        data_type: boolean
+        description: >
+          True when inclusion_rule is the cohort that applies at the patient's practice:
+          the original criteria at legacy practices (cltcs_legacy_organisations) and
+          segment 7 everywhere else. At most one row per patient is true. False rows are
+          scores for the other cohort, kept for comparison between cohorts.
 
       - name: neighbourhood_code
         data_type: varchar
-        description: "Neighbourhood code (from stg_cltcs_emis_cltcs_local_mapping_nh_gp) used as the z-score scaling group. Null for practices outside the Haringey/Camden local mapping."
+        description: "C-LTCS neighbourhood code (from stg_cltcs_emis_cltcs_local_mapping_nh_gp). Together with inclusion_rule, it defines the group each z-score is calculated against."
+
+      - name: practice_code
+        data_type: varchar
+        description: "Registered GP practice ODS code."
+
+      - name: age
+        data_type: number
+        description: "Age in years from dim_person_demographics, used for the age multiplier. Null when unavailable, in which case no age adjustment is applied."
+
+      - name: scaled_score_biomarker_gaps
+        data_type: number
+        description: "Biomarker and monitoring gaps sub-score as a z-score within neighbourhood and cohort. Null when every patient in the group has the same sub-score."
+
+      - name: scaled_score_care_gaps
+        data_type: number
+        description: "Condition and prevention care gaps sub-score as a z-score within neighbourhood and cohort. Null when every patient in the group has the same sub-score."
+
+      - name: scaled_score_complexity
+        data_type: number
+        description: "Clinical complexity sub-score as a z-score within neighbourhood and cohort. Null when every patient in the group has the same sub-score."
+
+      - name: scaled_score_medication
+        data_type: number
+        description: "Medication burden sub-score as a z-score within neighbourhood and cohort. Null when every patient in the group has the same sub-score."
+
+      - name: scaled_score_illness_uec
+        data_type: number
+        description: "Illness-related urgent and emergency care sub-score as a z-score within neighbourhood and cohort. Null when every patient in the group has the same sub-score."
+
+      - name: scaled_score_barriers
+        data_type: number
+        description: "Barriers to treatment sub-score as a z-score within neighbourhood and cohort. Null when every patient in the group has the same sub-score."
+
+      - name: raw_score_treatment
+        data_type: number
+        description: "Weighted average of the six domain sub-scores after each is clipped to -3 to 3 and rescaled to 0-100, before the age multiplier. Domain weights default to 1 and are set in the model header."
 
       - name: score_treatment
         data_type: number
-        description: "Final treatment score, bounded to [1, 100]. Six z-scored, clipped subdomain scores are each rescaled to 0-100 and combined as a weighted average (domain weights default to 1/equal; set in the model header), then an age multiplier is applied: +15% max at age 18 (flat below 18), linear to neutral at 60, then up to -15% penalty from age 100+."
+        description: "Final treatment score for this cohort, bounded to 1-100: raw_score_treatment with an age multiplier applied (up to +15% at age 18, falling linearly to no adjustment at 60, then up to -15% from age 100). Relative to the patient's neighbourhood and cohort."
