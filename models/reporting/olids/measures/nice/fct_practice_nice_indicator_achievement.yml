@@ -1,0 +1,84 @@
+models:
+  - name: fct_practice_nice_indicator_achievement
+    description: >-
+      NICE achievement counts and percentages. One row per indicator, registration practice
+      and reporting date, assessed on the build date.
+
+
+      The denominator counts currently registered, living patients who meet the indicator's
+      eligibility rules. The numerator counts those who meet its achievement rule, before
+      personalised care adjustments. Only practices with a denominator are included.
+      Sum numerator and denominator for totals rather than averaging percentages.
+    config: &achievement_config
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests: &achievement_tests
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: ['indicator_id', 'practice_code', 'reporting_date']
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: 'numerator <= denominator'
+    columns: &achievement_columns
+      - name: reporting_date
+        description: Date of assessment; the build date for current results or a completed month-end for monthly results.
+        data_tests:
+          - not_null
+      - name: indicator_id
+        description: NICE indicator identifier in def_indicator.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('def_indicator')
+                field: indicator_id
+      - name: indicator_name
+        description: Published NICE indicator title from the person status table.
+      - name: programme
+        description: Programme from the indicator catalogue; NICE for these results.
+      - name: clinical_domain
+        description: Clinical domain from the current catalogue classification.
+      - name: clinical_subdomain
+        description: Condition name or clinical topic from the current catalogue classification.
+      - name: name_short
+        description: Short catalogue label for reports.
+      - name: description_short
+        description: One-line catalogue description.
+      - name: practice_code
+        description: ODS code of the patient's registration practice at the reporting date.
+        data_tests:
+          - not_null
+      - name: practice_name
+        description: Current practice name from dim_practice; null if the practice is not mapped.
+      - name: pcn_code
+        description: Current primary care network ODS code; null if not mapped.
+      - name: pcn_name
+        description: Current primary care network name; null if not mapped.
+      - name: borough
+        description: Current practice borough from dim_practice.borough_registered; null if not mapped.
+      - name: denominator
+        description: Number of eligible patients registered and living at the reporting date.
+      - name: numerator
+        description: Number of denominator patients who meet the indicator's achievement rule.
+      - name: not_achieved
+        description: Denominator minus numerator, including results with missing or unassessable evidence.
+      - name: achievement_pct
+        description: Numerator as a percentage of denominator, rounded to one decimal place.
+
+  - name: fct_practice_nice_indicator_achievement_by_month
+    description: >-
+      Monthly NICE achievement counts and percentages. One row per indicator, registration
+      practice and reporting date for each of the last 60 completed month-ends.
+
+
+      The denominator counts patients registered and living at each month-end who meet the
+      indicator's eligibility rules. The numerator counts those who meet its achievement rule,
+      before personalised care adjustments. Only practices with a denominator are included.
+      Practice names, PCN and borough use the current mapping, not the historical mapping.
+      Sum numerator and denominator for totals rather than averaging percentages.
+      Recalculated with current rules, code lists and records, so later corrections can change
+      past months.
+    config: *achievement_config
+    data_tests: *achievement_tests
+    columns: *achievement_columns

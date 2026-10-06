@@ -1,5 +1,12 @@
 # NICE regression checks
 
+The programme classification, practice summaries, status enrichment and archive migration have
+local unit tests with synthetic inputs. They do not connect to Snowflake:
+
+```powershell
+uv run --with duckdb --with jinja2 --with sqlglot python -m unittest discover -s scripts/qa/nice/tests -v
+```
+
 Clinical boundaries, record ordering and month-end rules for the NICE measures are covered by dbt
 tests: grain and accepted-value tests in the model YAML, native unit tests, and synthetic singular
 tests in `tests/nice*.sql` that call the calculation macros. They run when their models are selected.

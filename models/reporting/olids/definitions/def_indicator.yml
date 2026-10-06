@@ -3,7 +3,7 @@ models:
   - name: def_indicator
     description: >-
       Clinical indicator definitions, one row per indicator from model and column
-      YAML metadata. Includes descriptions, categories and usage contexts for reporting.
+      YAML metadata, with programme and clinical classification from indicator_classification.
     config:
       meta:
         owner:
@@ -12,18 +12,36 @@ models:
       - name: indicator_id
         description: Unique identifier for the indicator (e.g., COND_DM, 
           BRF_BMI)
-        tests:
+        data_tests:
           - not_null
           - unique
+          - relationships:
+              arguments:
+                to: ref('indicator_classification')
+                field: indicator_id
 
       - name: indicator_type
         description: High-level indicator classification
 
-      - name: category
-        description: Indicator category for grouping and filtering
+      - name: programme
+        description: Programme that owns the indicator, from indicator_classification.
+        data_tests:
+          - not_null
 
       - name: clinical_domain
-        description: Medical specialty or clinical area (for conditions)
+        description: >-
+          Clinical domain from indicator_classification or its LTC condition lookup.
+          YAML meta clinical_domain values are no longer used by the catalogue.
+        data_tests:
+          - not_null
+
+      - name: clinical_subdomain
+        description: LTC condition name for condition-specific indicators; otherwise the classification topic.
+        data_tests:
+          - not_null
+
+      - name: category
+        description: Indicator category for grouping and filtering
 
       - name: name_short
         description: Brief display name for dashboards and reports

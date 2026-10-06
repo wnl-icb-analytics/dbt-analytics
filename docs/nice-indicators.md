@@ -3,6 +3,27 @@
 This page lists the model coverage of all 192 NICE general practice indicators.
 Network and system indicators are out of scope.
 
+## Querying results
+
+Use the practice achievement tables for counts and percentages. Sum the numerator and
+denominator for totals rather than averaging practice percentages. Monthly results use the
+current PCN and borough mapping.
+
+```sql
+SELECT
+    reporting_date,
+    indicator_id,
+    indicator_name,
+    SUM(denominator) AS denominator,
+    SUM(numerator) AS numerator,
+    ROUND(100.0 * SUM(numerator) / SUM(denominator), 1) AS achievement_pct
+FROM REPORTING.OLIDS_MEASURES.FCT_PRACTICE_NICE_INDICATOR_ACHIEVEMENT
+WHERE programme = 'NICE'
+GROUP BY reporting_date, indicator_id, indicator_name;
+```
+
+## Indicator coverage
+
 `Built` means the indicator has a measure model. Current results have one row per person and
 indicator in the denominator on the build date. Monthly results add the completed month-end.
 Both include achieved and unachieved results before personalised care adjustments.
