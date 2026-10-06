@@ -42,13 +42,17 @@ with index_dates as (
     {%- endfor %}
 ),
 
--- Eligibility gate: who was in the control pool in the index_date's month.
+-- Eligibility gate: who was in the control pool in the index_date's month. The roster capture
+-- also carries the LTC LCS Model of Care stage and status for the month.
 spine as (
     select
         i.index_date,
         p.sk_patient_id,
         p.person_id,
-        p.neighbourhood_code
+        p.neighbourhood_code,
+        p.is_in_ltc_lcs_moc_base,
+        p.moc_stage_completed_label,
+        p.moc_pathway_status
     from index_dates i
     join {{ ref('cltcs_population_monthly_capture') }} p
       on p.snapshot_month = date_trunc('month', i.index_date)
@@ -158,8 +162,7 @@ risk_summary as (
     select f.sk_patient_id, f.index_date,
            d.chd_risk_group, d.ckd_risk_group, d.copd_risk_group, d.diabetes_risk_group,
            d.hf_risk_group, d.hypertension_risk_group, d.overall_risk_group,
-           d.overall_risk_rank, d.in_any_risk_group,
-           d.moc_stage_completed_label, d.moc_pathway_status
+           d.overall_risk_rank, d.in_any_risk_group
     from {{ temporal_join('spine', 'index_date', ref('fct_person_ltc_lcs_risk_summary_snapshot'),
                           join_key='person_id', join_type='left',
                           valid_from_col='dbt_valid_from', valid_to_col='dbt_valid_to') }}
@@ -508,8 +511,12 @@ select
     , coalesce(rs.overall_risk_group, 'None') as overall_risk_group
     , coalesce(rs.overall_risk_rank, 6) as overall_risk_rank
     , coalesce(rs.in_any_risk_group, false) as in_any_risk_group
-    , rs.moc_stage_completed_label
-    , rs.moc_pathway_status
+    -- Model of Care, as-at the captured month (population roster capture). NULL when not on the
+    -- MoC base population, or for months captured before MoC was added (is_in_ltc_lcs_moc_base
+    -- NULL, so unknown is distinguishable from not on MoC).
+    , s.is_in_ltc_lcs_moc_base
+    , s.moc_stage_completed_label
+    , s.moc_pathway_status
     -- waiting list counts + flag + arrays (captured monthly; values as-at the captured month)
     , zeroifnull(act.wl_current_total_count) as wl_total_count
     , zeroifnull(act.wl_current_distinct_providers_count) as wl_provider_count

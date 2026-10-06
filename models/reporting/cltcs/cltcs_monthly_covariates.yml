@@ -59,10 +59,12 @@ models:
         description: "Latest Rockwood frailty category as-at index_date, from int_rockwood_latest_snapshot; 'Unknown' when absent."
       - name: cambridge_comorbidity_score
         description: "Cambridge multimorbidity score as-at index_date. NULL = not computed."
+      - name: is_in_ltc_lcs_moc_base
+        description: "True if the patient was on the LTC LCS Model of Care (MoC) base population in the index_date's month, false if not; from cltcs_population_monthly_capture. NULL for months captured before MoC was added to the capture, when MoC status is unknown. Not a cltcs_cohort_data column: it separates unknown from not on MoC."
       - name: moc_stage_completed_label
-        description: "LTC-LCS Model of Care stage. Ride-along on the risk-summary snapshot (not a check_col), so it reflects the last risk-group version open and may lag index_date."
+        description: "Furthest LTC LCS Model of Care stage reached in the 12 months to the index_date's month, from cltcs_population_monthly_capture. NULL when not on the MoC base population or when MoC status is unknown (see is_in_ltc_lcs_moc_base)."
       - name: moc_pathway_status
-        description: "LTC-LCS Model of Care pathway status. Ride-along (see moc_stage_completed_label caveat)."
+        description: "State of the patient's LTC LCS Model of Care cycle in the index_date's month ('Not started', 'In progress', 'Cycle complete' or 'Declined'), from cltcs_population_monthly_capture. NULL when not on the MoC base population or when MoC status is unknown (see is_in_ltc_lcs_moc_base)."
       - name: score_activation
         description: "C-LTCS activation sub-score as-at index_date. Raw (unrounded) formula over rolling-12-month activity, read from cltcs_score_activation_snapshot."
       - name: score_coordination
