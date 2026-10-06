@@ -41,8 +41,9 @@ WITH population AS (
 )
 SELECT person_id, 'IND149' AS indicator_id,
     'Contraception: LARC for people using emergency contraception' AS indicator_name,
+    'The percentage of women, on the register, prescribed emergency hormonal contraception 1 or more times in the preceding 12 months by the contractor who have received information from the contractor about long acting reversible methods of contraception at the time of or within 1 month of the prescription.' AS indicator_description,
     reporting_date, DATEADD(month, -12, DATEADD(day, -31, reporting_date)) AS measurement_period_start,
-    age, 'Women aged 54 or under using emergency contraception' AS condition_name,
+    age, 'Women aged 54 or under using emergency contraception' AS denominator_description,
     {{ nice_practice_columns('result', reference) }},
     latest_ehc_date,
     latest_non_specific_advice_date,

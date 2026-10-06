@@ -22,6 +22,10 @@ WHERE programme = 'NICE'
 GROUP BY reporting_date, indicator_id, indicator_name;
 ```
 
+Measures, family tables, status tables and practice summaries carry `indicator_name`,
+`indicator_description` (NICE's published statement) and `denominator_description`
+(a short label for the denominator population).
+
 ## Indicator coverage
 
 `Built` means the indicator has a measure model. Current results have one row per person and

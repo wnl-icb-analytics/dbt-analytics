@@ -27,8 +27,9 @@ WITH population AS (
 )
 SELECT person_id, 'IND124' AS indicator_id,
     'Contraception: advice for people with bipolar, schizophrenia or other psychoses' AS indicator_name,
+    'The percentage of women with schizophrenia, bipolar affective disorder or other psychoses under the age of 45 years who have been given information and advice in the previous 12 months about pregnancy, conception or contraception tailored to their pregnancy and contraceptive intentions.' AS indicator_description,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Women under 45 with active severe mental illness' AS condition_name,
+    age, 'Women under 45 with active severe mental illness' AS denominator_description,
     {{ nice_practice_columns('result', reference) }},
     latest_record_date, TRUE AS is_in_denominator,
     latest_record_date IS NOT NULL AS is_in_numerator,

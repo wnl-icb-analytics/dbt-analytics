@@ -70,8 +70,9 @@ screening AS (
 )
 SELECT population.person_id, 'IND178' AS indicator_id,
     'Pregnancy and neonates: postnatal mental health' AS indicator_name,
+    'The percentage of women who have given birth in the preceding 12 months who have had an enquiry about their mental health between 4 to 16 weeks postpartum.' AS indicator_description,
     population.reporting_date, DATEADD(month, -12, population.reporting_date) AS measurement_period_start,
-    population.age, 'Women after their latest delivery episode' AS condition_name,
+    population.age, 'Women after their latest delivery episode' AS denominator_description,
     {{ nice_practice_columns('population', reference) }},
     population.delivery_date, screening.latest_record_date,
     TRUE AS is_in_denominator, screening.latest_record_date IS NOT NULL AS is_in_numerator,

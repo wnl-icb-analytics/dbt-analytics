@@ -5,6 +5,8 @@ WITH counts AS (
         reporting_date,
         indicator_id,
         MAX(indicator_name) AS indicator_name,
+        MAX(indicator_description) AS indicator_description,
+        MAX(denominator_description) AS denominator_description,
         practice_code,
         COUNT(*) AS denominator,
         SUM(CASE WHEN is_in_numerator THEN 1 ELSE 0 END) AS numerator
@@ -21,7 +23,8 @@ SELECT
     i.clinical_domain,
     i.clinical_subdomain,
     i.name_short,
-    i.description_short,
+    c.indicator_description,
+    c.denominator_description,
     c.practice_code,
     p.practice_name,
     p.pcn_code,
