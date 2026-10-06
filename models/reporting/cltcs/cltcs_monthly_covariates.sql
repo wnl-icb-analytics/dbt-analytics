@@ -103,7 +103,7 @@ conditions as (
 
 polypharmacy as (
     select f.sk_patient_id, f.index_date,
-           d.medication_count, d.medication_name_list,
+           d.medication_name_list,
            d.is_polypharmacy_5plus, d.is_polypharmacy_10plus
     from {{ temporal_join('spine', 'index_date', ref('fct_person_polypharmacy_current_snapshot'),
                           join_key='person_id', join_type='left',
@@ -300,9 +300,13 @@ asc_service as (
 
 -- Recent medications: rolling "recent" prescriptions, captured monthly (like activity/ASC);
 -- equijoin on the month, keyed on person_id (like the pregnancy/asthma joins).
+-- has_capture_row separates "no prescriptions in the year" (no row -> no repeats) from a row
+-- captured before the repeat columns existed (row present, repeat columns NULL -> unknown).
 meds as (
     select s.person_id, s.index_date,
-           m.medications_recent_12mo, m.unique_active_ingredient_count_12mo
+           m.person_id is not null as has_capture_row,
+           m.medications_recent_12mo, m.unique_active_ingredient_count_12mo,
+           m.medications_repeat, m.unique_repeat_medication_count
     from spine s
     left join {{ ref('cltcs_medications_monthly_capture') }} m
       on  m.person_id = s.person_id
@@ -513,14 +517,18 @@ select
     , coalesce(act.same_tfc_multiple_providers_flag, false) as has_same_tfc_multiple_providers_flag
     , coalesce(act.current_waiting_list_arrays, array_construct()) as current_waiting_list_arrays
     -- polypharmacy
-    , zeroifnull(poly.medication_count) as medication_count
     , case
         when poly.medication_name_list is null then null
         when array_size(poly.medication_name_list) = 0 then null
         else poly.medication_name_list
-      end as medication_name_list
+      end as poly_medication_name_list
     , coalesce(poly.is_polypharmacy_5plus, false) as is_polypharmacy_5plus
     , coalesce(poly.is_polypharmacy_10plus, false) as is_polypharmacy_10plus
+    -- current repeat medicines, as-at the captured month (cltcs_cohort_data's medication_count /
+    -- medication_name_list). 0 / empty when there is no capture row; NULL when the row was
+    -- captured before the repeat columns were added.
+    , case when med.has_capture_row then med.unique_repeat_medication_count else 0 end as medication_count
+    , case when med.has_capture_row then med.medications_repeat else array_construct() end as medication_name_list
     -- recent medications (last year), as-at the captured month
     , coalesce(med.medications_recent_12mo, array_construct()) as medications_recent_12mo
     , zeroifnull(med.unique_active_ingredient_count_12mo) as unique_active_ingredient_count_12mo
