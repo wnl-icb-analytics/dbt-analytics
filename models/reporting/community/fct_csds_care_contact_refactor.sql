@@ -645,7 +645,7 @@ PRACTICE_CONTEXT AS (
 
     SELECT
         *
-    FROM {{ source('reference_primary_care', 'PCN_MEMBERSHIP_ALL') }}
+    FROM {{ ref('stg_reference_primary_care_pcn_membership_all') }}
 
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY PRACTICE_CODE
@@ -774,8 +774,8 @@ CONTACT_ENRICHED AS (
     LEFT JOIN NATIONAL_GP NAT_GP
         ON PAT1.GPCODE = NAT_GP.GP_PRACTICE_CODE
 
-    LEFT JOIN {{ source('reference_geo', 'NEIGHBOURHOOD_LSOA') }} NGH_RES
-        ON PAT1."Lower_super_output_area_(Residence)" = NGH_RES.LSOA_CODE
+    LEFT JOIN {{ ref('stg_reference_wnl_neighbourhood_lsoa') }} NGH_RES
+        ON PAT1."Lower_super_output_area_(Residence)" = NGH_RES.LSOA_2021_CODE
 
     WHERE CCON."Care_contact_date" >= '2021-04-01'
 
