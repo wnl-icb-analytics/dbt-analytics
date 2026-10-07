@@ -47,7 +47,8 @@ synthetic_smoking AS (
         IFF(person_id = -7702, '2025-04-15', '2025-04-16')::DATE AS latest_smoking_status_date,
         latest_smoking_status_date AS latest_never_smoked_date,
         NULL::DATE AS latest_smoking_unsuitable_date,
-        NULL::DATE AS latest_smoking_intervention_date
+        NULL::DATE AS latest_smoking_intervention_date,
+        FALSE AS is_ex_smoker_covered
     FROM synthetic_population
 ),
 actual AS (

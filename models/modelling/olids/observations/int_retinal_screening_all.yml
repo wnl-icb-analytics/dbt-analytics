@@ -2,15 +2,16 @@ models:
   - name: int_retinal_screening_all
     description: 'Completed diabetes retinal screening procedures for eye care monitoring and QOF reporting.
 
-      One row per completed retinal screening using RETSCREN_COD cluster with result categorisation and diabetic retinopathy risk assessment.'
+      One row per retinal screening observation using PCD RETSCREN_COD completion or CVDRETSCRN_COD attendance evidence, with result categorisation and diabetic retinopathy risk assessment.'
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: RETSCREN_COD
+            cluster_ids: RETSCREN_COD, CVDRETSCRN_COD
+            source: PCD
     columns:
       - name: id
         description: Unique identifier for each retinal screening observation
