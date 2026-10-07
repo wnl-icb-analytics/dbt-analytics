@@ -630,7 +630,7 @@ NATIONAL_GP AS (
         GP_PRACTICE_CODE,
         GP_PRACTICE_NAME
 
-    FROM {{ source('reference_data_management', 'NATIONAL_GP_PRACTICE_LATEST_LIST_SIZES') }}
+    FROM {{ ref('stg_reference_national_gp_practice_latest_list_sizes') }}
 
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY GP_PRACTICE_CODE
