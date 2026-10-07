@@ -186,8 +186,8 @@ select
         else 'Unknown'
         end as discharge_destination_group
     , coalesce(
-        uec_activity_type_desc is not null
-        and uec_activity_type_code not in ('05', '06', '07')
+        coalesce(uec_activity_type_code, department_type)
+        in ('01', '02', '03', '04')
         and coalesce(attendance_category_code, '') not in ('04', '4', 'X')
         and coalesce(discharge_status_code, '') <> '63238001'
         , false
