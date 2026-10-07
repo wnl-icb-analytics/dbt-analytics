@@ -108,7 +108,7 @@ unit_tests:
     - person_id: -98306
       latest_frailty_severity: Moderate
       latest_diagnosis_date: '2026-09-01'
-- name: nice_register_smi_lithium_only_stops_expiry_and_remission
+- name: nice_register_smi_lithium_flags_and_diagnosis_membership
   model: fct_person_nice_smi_register
   config:
     tags:
@@ -130,41 +130,27 @@ unit_tests:
               column4::BOOLEAN AS is_resolved_code
               FROM VALUES (-98404, '2020-01-01', TRUE, FALSE), (-98404, '2026-09-02', FALSE, TRUE),
               (-98405, '2020-01-01', FALSE, TRUE), (-98406, '2020-01-01', TRUE, FALSE)
-  - input: ref('int_lithium_medications_all')
+  - input: ref('int_nice_ltc_population')
     format: sql
     rows: |-
-      SELECT column1::NUMBER AS person_id,
-              column2::DATE AS order_date, column3::DATE AS date_recorded
-              FROM VALUES (-98401, '2026-09-01', NULL), (-98401, '2026-09-01', NULL),
-              (-98402, '2026-09-01', NULL), (-98403, '2026-09-01', NULL),
-              (-98406, '2026-09-01', NULL), (-98407, '2026-03-30', NULL),
-              (-98408, '2026-03-31', NULL), (-98409, '2026-09-01', '2026-10-01')
-  - input: ref('int_lithium_stop_all')
-    format: sql
-    rows: |-
-      SELECT column1::NUMBER AS person_id,
-              column2::DATE AS clinical_effective_date, column3::DATE AS date_recorded
-              FROM VALUES (-98402, '2026-09-02', NULL), (-98403, '2026-09-01', NULL),
-              (-98406, '2026-09-02', NULL), (-98408, '2026-09-01', '2026-10-01')
+      SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date,
+              column3::BOOLEAN AS is_on_lithium
+              FROM VALUES (-98401, '2026-09-30', TRUE), (-98402, '2026-09-30', FALSE),
+              (-98403, '2026-09-30', TRUE), (-98404, '2026-09-30', FALSE),
+              (-98405, '2026-09-30', FALSE), (-98406, '2026-09-30', TRUE),
+              (-98407, '2026-09-30', FALSE), (-98408, '2026-08-31', TRUE),
+              (-98409, '2026-09-30', FALSE)
   expect:
     rows:
     - person_id: -98401
       has_smi_diagnosis: false
       is_on_lithium: true
-      latest_lithium_order_date: '2026-09-01'
     - person_id: -98403
       has_smi_diagnosis: false
       is_on_lithium: true
-      latest_lithium_order_date: '2026-09-01'
     - person_id: -98404
       has_smi_diagnosis: true
       is_on_lithium: false
-      latest_lithium_order_date: null
     - person_id: -98406
       has_smi_diagnosis: true
-      is_on_lithium: false
-      latest_lithium_order_date: null
-    - person_id: -98408
-      has_smi_diagnosis: false
       is_on_lithium: true
-      latest_lithium_order_date: '2026-03-31'

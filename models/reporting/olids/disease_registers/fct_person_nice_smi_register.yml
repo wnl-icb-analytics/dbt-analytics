@@ -7,13 +7,15 @@ models:
 
     People registered on the build date, of any age, qualify with schizophrenia, bipolar affective
     disorder or other psychoses, including remission, or active lithium treatment. Remission-only
-    records do not qualify as a diagnosis. Lithium requires an order strictly after the date
+    records do not qualify as a diagnosis. Lithium uses is_on_lithium from int_nice_ltc_population.
+    It requires an order strictly after the date
     six calendar months before the build date and on or before it, with no stop on a later calendar
     date; a same-day stop retains treatment. Both clinical and recorded dates must be known
     by the build date; missing recorded dates use the clinical or order date. Diagnosis-qualified
     people do not need lithium. Each person counts once. Based on NICE CG178 recommendation
-    1.5.3.1, CG155 and CG185 recommendation 1.2.10. Code lists: MH_COD, MHREM_COD, LIT_COD,
-    LITSTP_COD (PCD). Deceased people and test records are excluded.
+    1.5.3.1, CG155 and CG185 recommendation 1.2.10. Diagnosis code lists: MH_COD and MHREM_COD
+    (PCD). Lithium evidence uses the upstream LIT_COD medication and LITSTP_COD stop definitions.
+    Deceased people and test records are excluded.
   config:
     meta:
       owner:
@@ -30,13 +32,15 @@ models:
         description_long: >-
           People registered on the build date, of any age, qualify with schizophrenia, bipolar
           affective disorder or other psychoses, including remission, or active lithium treatment.
-          Remission-only records do not qualify as a diagnosis. Lithium requires an order strictly
+          Remission-only records do not qualify as a diagnosis. Lithium uses is_on_lithium from
+          int_nice_ltc_population. It requires an order strictly
           after the date six calendar months before the build date and on or before it, with
           no stop on a later calendar date; a same-day stop retains treatment. Both clinical
           and recorded dates must be known by the build date; missing recorded dates use the
           clinical or order date. Diagnosis-qualified people do not need lithium. Each person
           counts once. Based on NICE CG178 recommendation 1.5.3.1, CG155 and CG185 recommendation
-          1.2.10. Code lists: MH_COD, MHREM_COD, LIT_COD, LITSTP_COD (PCD).
+          1.2.10. Diagnosis code lists: MH_COD and MHREM_COD (PCD). Lithium evidence uses the
+          upstream LIT_COD medication and LITSTP_COD stop definitions.
         source_column: is_on_register
         is_qof: true
         qof_indicator: MH001
@@ -68,8 +72,8 @@ models:
       flag; remission-only evidence does not qualify.
   - name: is_on_lithium
     description: >-
-      Whether lithium is active under the shared six-calendar-month order and stop rule on the
-      build date.
+      Whether int_nice_ltc_population identifies active lithium under its six-calendar-month
+      order and stop rule on the build date.
   - name: latest_diagnosis_date
     description: >-
       Latest qualifying SMI diagnosis clinical timestamp known by the build date; null for lithium-only
@@ -78,7 +82,3 @@ models:
     description: >-
       Latest SMI remission clinical timestamp known by the build date; null when no remission
       is known.
-  - name: latest_lithium_order_date
-    description: >-
-      Latest active qualifying lithium order date known by the build date; null when the lithium
-      route does not qualify.
