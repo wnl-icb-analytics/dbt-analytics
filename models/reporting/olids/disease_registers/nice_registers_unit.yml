@@ -1,0 +1,170 @@
+unit_tests:
+- name: nice_register_af_includes_resolved_and_requires_known_diagnosis
+  model: fct_person_nice_atrial_fibrillation_register
+  config:
+    tags:
+    - nice-registers
+    - nice-validation
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+        column2::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code FROM VALUES (-98101, 50), (-98102,
+        50), (-98103, 50), (-98104, 50), (-98105, 50)
+      ltc_register_reference_dates: SELECT '2026-09-30'::DATE AS reference_date
+  given:
+  - input: ref('int_atrial_fibrillation_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,
+              column3::TIMESTAMP_NTZ AS date_recorded, column4::BOOLEAN AS is_diagnosis_code,
+              column5::BOOLEAN AS is_resolved_code
+              FROM VALUES (-98101, '2020-01-01', NULL, TRUE, FALSE),
+              (-98101, '2026-09-01', NULL, FALSE, TRUE),
+              (-98102, '2026-09-01', NULL, TRUE, FALSE),
+              (-98102, '2026-09-01', NULL, FALSE, TRUE),
+              (-98103, '2026-09-01', NULL, FALSE, TRUE),
+              (-98104, '2020-01-01', '2026-10-01', TRUE, FALSE),
+              (-98105, '2026-10-01', NULL, TRUE, FALSE)
+  expect:
+    rows:
+    - person_id: -98101
+      is_on_register: true
+      is_resolved: true
+    - person_id: -98102
+      is_on_register: true
+      is_resolved: true
+- name: nice_register_multimorbidity_four_categories_and_adult_boundary
+  model: fct_person_nice_multimorbidity_register
+  config:
+    tags:
+    - nice-registers
+    - nice-validation
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+        column2::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code FROM VALUES (-98201, 18), (-98202,
+        18), (-98203, 17)
+      ltc_register_reference_dates: SELECT '2026-09-30'::DATE AS reference_date
+  given:
+  - input: ref('int_nice_multimorbidity_categories')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+              '2026-09-30'::DATE AS reporting_date, column2::VARCHAR AS category_code
+              FROM VALUES (-98201, 'CANCER'), (-98201, 'CIRCULATORY'), (-98201, 'DIABETES'),
+              (-98202, 'CANCER'), (-98202, 'CIRCULATORY'), (-98202, 'DIABETES'), (-98202, 'RENAL'),
+              (-98203, 'CANCER'), (-98203, 'CIRCULATORY'), (-98203, 'DIABETES'), (-98203, 'RENAL')
+  expect:
+    rows:
+    - person_id: -98202
+      category_count: 4
+      has_cancer: true
+      has_chronic_pain: false
+      has_circulatory: true
+      has_diabetes: true
+      has_digestive: false
+      has_learning_disability: false
+      has_mental_health: false
+      has_musculoskeletal: false
+      has_neurological: false
+      has_renal: true
+      has_respiratory: false
+- name: nice_register_frailty_age_severity_latest_and_known_dates
+  model: fct_person_nice_frailty_register
+  config:
+    tags:
+    - nice-registers
+    - nice-validation
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+        column2::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code FROM VALUES (-98301, 64), (-98302,
+        65), (-98303, 65), (-98304, 70), (-98305, 70), (-98306, 70)
+      ltc_register_reference_dates: SELECT '2026-09-30'::DATE AS reference_date
+  given:
+  - input: ref('int_frailty_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id,
+              column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::TIMESTAMP_NTZ AS date_recorded,
+              TRUE AS is_diagnosis_code, column5::VARCHAR AS frailty_severity
+              FROM VALUES (-98301, 'A', '2026-09-01', NULL, 'Severe'),
+              (-98302, 'A', '2026-09-01', NULL, 'Mild'),
+              (-98303, 'A', '2026-09-01', NULL, 'Moderate'),
+              (-98304, 'A', '2026-09-01', NULL, 'Severe'),
+              (-98304, 'Z', '2026-09-02', NULL, 'Mild'),
+              (-98305, 'Z', '2026-09-01', NULL, 'Mild'),
+              (-98305, 'A', '2026-09-01', NULL, 'Severe'),
+              (-98306, 'A', '2026-09-01', NULL, 'Moderate'),
+              (-98306, 'Z', '2026-09-02', '2026-10-01', 'Mild')
+  expect:
+    rows:
+    - person_id: -98303
+      latest_frailty_severity: Moderate
+      latest_diagnosis_date: '2026-09-01'
+    - person_id: -98305
+      latest_frailty_severity: Severe
+      latest_diagnosis_date: '2026-09-01'
+    - person_id: -98306
+      latest_frailty_severity: Moderate
+      latest_diagnosis_date: '2026-09-01'
+- name: nice_register_smi_lithium_only_stops_expiry_and_remission
+  model: fct_person_nice_smi_register
+  config:
+    tags:
+    - nice-registers
+    - nice-validation
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+        column2::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code FROM VALUES (-98409, 40), (-98408,
+        40), (-98407, 40), (-98406, 40), (-98405, 40), (-98404, 40), (-98403, 40), (-98402, 40),
+        (-98401, 40)
+      ltc_register_reference_dates: SELECT '2026-09-30'::DATE AS reference_date
+  given:
+  - input: ref('int_smi_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,
+              NULL::TIMESTAMP_NTZ AS date_recorded, column3::BOOLEAN AS is_diagnosis_code,
+              column4::BOOLEAN AS is_resolved_code
+              FROM VALUES (-98404, '2020-01-01', TRUE, FALSE), (-98404, '2026-09-02', FALSE, TRUE),
+              (-98405, '2020-01-01', FALSE, TRUE), (-98406, '2020-01-01', TRUE, FALSE)
+  - input: ref('int_lithium_medications_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+              column2::DATE AS order_date, column3::DATE AS date_recorded
+              FROM VALUES (-98401, '2026-09-01', NULL), (-98401, '2026-09-01', NULL),
+              (-98402, '2026-09-01', NULL), (-98403, '2026-09-01', NULL),
+              (-98406, '2026-09-01', NULL), (-98407, '2026-03-30', NULL),
+              (-98408, '2026-03-31', NULL), (-98409, '2026-09-01', '2026-10-01')
+  - input: ref('int_lithium_stop_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+              column2::DATE AS clinical_effective_date, column3::DATE AS date_recorded
+              FROM VALUES (-98402, '2026-09-02', NULL), (-98403, '2026-09-01', NULL),
+              (-98406, '2026-09-02', NULL), (-98408, '2026-09-01', '2026-10-01')
+  expect:
+    rows:
+    - person_id: -98401
+      has_smi_diagnosis: false
+      is_on_lithium: true
+      latest_lithium_order_date: '2026-09-01'
+    - person_id: -98403
+      has_smi_diagnosis: false
+      is_on_lithium: true
+      latest_lithium_order_date: '2026-09-01'
+    - person_id: -98404
+      has_smi_diagnosis: true
+      is_on_lithium: false
+      latest_lithium_order_date: null
+    - person_id: -98406
+      has_smi_diagnosis: true
+      is_on_lithium: false
+      latest_lithium_order_date: null
+    - person_id: -98408
+      has_smi_diagnosis: false
+      is_on_lithium: true
+      latest_lithium_order_date: '2026-03-31'

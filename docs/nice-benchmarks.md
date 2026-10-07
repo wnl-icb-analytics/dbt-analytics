@@ -14,7 +14,12 @@ definitions are in [nice-indicators.md](nice-indicators.md).
 | Loose comparator: related figure only (retired indicator, pilot, study) | 44 |
 | No comparator | 3 |
 
-The 27 NICE registers in the catalogue are validated against QOF prevalence.
+QOF-equivalent registers match QOF prevalence. IND185, IND205, IND206 and IND256 follow
+NICE's own wider or different definitions. On 7 October 2026, among currently registered
+people, IND185 is 104.6% of the QOF AF register and IND256 is 100.6% of the QOF SMI register.
+IND205 has no QOF register comparator. IND206 is 41.1% of the shared coded frailty project
+register, which includes all ages and mild frailty and is not a QOF register. These percentages
+compare the current models on the same registered population.
 
 Confidence in the 94 validations, from checks practice by practice, by PCN and by borough:
 
