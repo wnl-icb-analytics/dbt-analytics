@@ -5,9 +5,10 @@
 }}
 
 /*
-All diabetes retinal screening programme completions with enhanced analytics features.
-Uses RETSCREN_COD and CVDRETSCRN_COD for completed screening and attendance
-(excludes declined, unsuitable, or referral codes).
+Diabetic retinopathy screening evidence with enhanced analytics features.
+Uses PCD RETSCREN_COD (NDA retinal screening) and CVDRETSCRN_COD (national screening
+evidence: retinal photography, digital screening and screener attendance). Excludes
+declined, unsuitable and referral codes.
 
 Enhanced Analytics Features:
 - Comprehensive screening result categorisation
@@ -26,7 +27,7 @@ SELECT
     obs.mapped_concept_display AS concept_display,
     obs.cluster_id AS source_cluster_id,
 
-    -- All records in this model represent completed screenings
+    -- Every record is evidence that retinal screening took place
     TRUE AS is_completed_screening,
     TRUE AS is_retinal_screening_code,
 

@@ -11,8 +11,8 @@ WITH expected AS (
     LEFT JOIN {{ ref('def_indicator') }} AS actual
         ON expected.indicator_id = actual.indicator_id
     WHERE actual.indicator_id IS NULL
-        OR actual.source_model <> UPPER(expected.source_model)
-        OR actual.source_column <> 'IS_ON_REGISTER'
-        OR actual.indicator_type <> 'NICE_REGISTER'
+        OR actual.source_model IS DISTINCT FROM UPPER(expected.source_model)
+        OR actual.source_column IS DISTINCT FROM 'IS_ON_REGISTER'
+        OR actual.indicator_type IS DISTINCT FROM 'NICE_REGISTER'
 )
 SELECT COUNT(*) AS failure_count FROM failures HAVING COUNT(*) > 0
