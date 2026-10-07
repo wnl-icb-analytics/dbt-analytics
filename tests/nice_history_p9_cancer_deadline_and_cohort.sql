@@ -5,6 +5,7 @@
 {% set calculation = calculation | replace(ref('int_nice_ltc_population_by_month') | string, 'synthetic_profile') %}
 {% set calculation = calculation | replace(ref('int_nice_review_evidence_by_month') | string, 'synthetic_reviews') %}
 
+
 WITH synthetic_population AS (
     SELECT
         -9902::NUMBER AS person_id,
@@ -28,7 +29,7 @@ synthetic_reviews AS (
 actual AS ({{ calculation }})
 SELECT COUNT(*) AS rows_total
 FROM actual
-HAVING COUNT(*) <> 3
+HAVING COUNT(*) <> 4
     OR COUNT_IF(reporting_date = '2023-09-30' AND is_in_numerator
         AND latest_record_date = '2023-09-30') <> 1
     OR COUNT_IF(reporting_date = '2023-10-31' AND NOT is_in_numerator

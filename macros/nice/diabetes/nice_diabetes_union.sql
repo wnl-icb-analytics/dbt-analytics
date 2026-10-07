@@ -25,7 +25,8 @@
     'fct_person_diabetes_foot_risk_ind81',
     'fct_person_diabetes_structured_education_ind88',
     'fct_person_ndh_prevention_programme_ind171',
-    'fct_person_diabetes_care_processes_ind120'
+    'fct_person_diabetes_care_processes_ind120',
+    'fct_person_diabetes_dietary_review_ind89'
 ] %}
 
 {% for indicator_model in indicator_models %}
@@ -33,10 +34,11 @@ SELECT
     person_id,
     indicator_id,
     indicator_name,
+    indicator_description,
     reporting_date,
     measurement_period_start,
     age,
-    condition_name,
+    denominator_description,
     {{ nice_practice_columns(none, reference) }},
     latest_record_date,
     {% if indicator_model in ['fct_person_diabetes_hba1c_ind179', 'fct_person_diabetes_hba1c_ind180', 'fct_person_diabetes_hba1c_ind165', 'fct_person_diabetes_hba1c_ind135', 'fct_person_diabetes_hba1c_ind136'] %}

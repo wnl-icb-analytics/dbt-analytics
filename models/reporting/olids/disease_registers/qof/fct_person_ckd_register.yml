@@ -1,18 +1,14 @@
 models:
   - name: fct_person_ckd_register
-    description: >
-      Disease Registers (QOF v51) chronic kidney disease register. One row per
-      person aged 18 or over with a CKD stage 3-5 diagnosis that has not been
-      superseded by stage 1-2 or resolved. CKD005 is retired; register extraction
-      continues through the Disease Registers service.
-      
-      Membership criteria:
-      - Has CKD Stage 3-5 diagnosis (CKD_COD)
-      - NOT downstaged to Stage 1-2 (no CKD1AND2_COD after latest CKD_COD)
-      - NOT resolved (no CKDRES_COD after latest CKD_COD)
-      A stage 1-2 or resolved code on the same date as the latest CKD_COD does
-      not remove the diagnosis. Evidence is dated on or before today.
+    description: >-
+      Chronic kidney disease G3a to G5 register (NICE IND129). One row per register member.
 
+
+      Registration status is not filtered. People aged 18 or over with chronic kidney disease
+      categories G3a to G5 qualify. Later stage 1 or 2 or resolved codes remove membership. NICE
+      lists no exclusions; these codes maintain the current G3a to G5 population. Clinical
+      evidence is dated by the build date. For NICE counts, select people registered on the
+      build date. Based on NICE NG203. Code lists: CKD_COD, CKD1AND2_COD and CKDRES_COD (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -41,12 +37,13 @@ models:
           category: "LTC"
           clinical_domain: "Nephrology"
           name_short: "Chronic Kidney Disease"
-          description_short: "QOF chronic kidney disease register"
+          description_short: "QOF 2025/26 chronic kidney disease register"
           description_long: >
-            Disease Registers (QOF v51) CKD register for patients aged 18 or over
-            with CKD stage 3-5 that has not been superseded by stage 1-2 or
-            resolved on a later date. Evidence is dated on or before today. CKD005 is
-            retired, but extraction continues.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. Disease Registers (QOF v51) CKD
+            register for patients aged 18 or over with CKD stage 3-5 that has not been superseded
+            by stage 1-2 or resolved on a later date. Evidence is dated on or before today. CKD005
+            is retired, but extraction continues.
           is_qof: true
           qof_indicator: "CKD005"
           source_column: "is_on_register"
@@ -60,5 +57,24 @@ models:
               category: "EXCLUSION"
             - cluster_id: "CKDRES_COD"
               category: "RESOLUTION"
+        indicators:
+          - id: "IND129"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Nephrology"
+            name_short: >-
+              Chronic kidney disease register
+            description_short: >-
+              People aged 18 or over with chronic kidney disease categories G3a to G5.
+            description_long: >-
+              People aged 18 or over with chronic kidney disease categories G3a to G5 qualify.
+              Later stage 1 or 2 or resolved codes remove membership. NICE lists no exclusions;
+              these codes maintain the current G3a to G5 population. Clinical evidence is dated
+              by the build date. For NICE counts, select people registered on the build date.
+              Based on NICE NG203. Code lists: CKD_COD, CKD1AND2_COD and CKDRES_COD (PCD).
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "CKD005"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92

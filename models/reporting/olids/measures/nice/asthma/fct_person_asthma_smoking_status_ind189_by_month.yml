@@ -1,0 +1,54 @@
+models:
+- name: fct_person_asthma_smoking_status_ind189_by_month
+  description: >-
+    Smoking status recorded for young people with asthma (NICE IND189). One row per person
+    in the denominator at each month-end.
+
+
+    People registered at the month-end aged 5 to 19 with unresolved asthma. Achieved with
+    active or passive smoking status recorded in the 12 months before the month-end.
+    Positive and negative passive exposure records count; advice and family smoking alone
+    do not. Recent asthma treatment is not required. No personalised care adjustments are
+    applied. Based on NICE NG245. Recalculated for each of the last 60 month-ends with
+    current rules, code lists and records, so later corrections can change past months.
+    Code lists: AST_COD, ASTRES_COD (PCD); SMOK_COD (PCD); SMOKE_EXPOSURE_COD (ECL cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind189
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "NICE published indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Exclusive start of the 12-month smoking-status window."
+  - name: age
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: is_in_denominator
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  - name: latest_record_date
+    description: "Date of the latest qualifying evidence in the indicator window; null when none."
+  - name: practice_code
+    description: "ODS code of the registration practice at month-end."
+  - name: practice_name
+    description: "Name of the registration practice at month-end."

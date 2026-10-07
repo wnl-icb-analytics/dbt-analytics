@@ -1,15 +1,16 @@
 models:
   - name: fct_person_osteoporosis_register
-    description: >
-      Disease Registers (QOF v51) osteoporosis register. One row per person on
-      OSTEO1_REG or OSTEO2_REG. OSTEO1 covers ages 50-74 with a fragility fracture
-      from 1 April 2012, OSTEO_COD and DXA confirmation (DXA_COD or an unrounded
-      DXA2_COD T-score <= -2.5, with no lower limit). Evidence is dated on or
-      before today. OSTEO2 covers ages 75 or
-      over with a fragility fracture from 1 April 2014 and OSTEO_COD. OST004 is
-      retired; register extraction continues through the Disease Registers service.
-      OSTEO2 has no DXA requirement.
+    description: >-
+      Osteoporosis with fragility fracture register (NICE IND90). One row per register member.
 
+
+      Registration status is not filtered. People aged 50 to 74 need osteoporosis, a fragility
+      fracture on or after 1 April 2012 and DXA confirmation. Confirmation is a coded DXA result of osteoporosis or
+      an unrounded T-score of -2.5 or less, without a lower validity limit. People aged 75 or
+      over need osteoporosis and a fragility fracture on or after 1 April 2014; no scan is
+      required. These age and fracture rules match NICE IND90. Clinical evidence is dated by the build date. For NICE
+      counts, select people registered on the build date. Based on NICE CG146. Code lists:
+      OSTEO_COD, FF_COD, DXA_COD, DXA2_COD (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -29,14 +30,15 @@ models:
           category: "LTC"
           clinical_domain: "Musculoskeletal"
           name_short: "Osteoporosis"
-          description_short: "QOF osteoporosis register"
+          description_short: "QOF 2025/26 osteoporosis register"
           description_long: >
-            Disease Registers (QOF v51) OSTEO1 and OSTEO2 registers. OSTEO1 requires
-            age 50-74, a fragility fracture from 1 April 2012, OSTEO_COD and DXA
-            confirmation (DXA_COD or an unrounded DXA2_COD T-score <= -2.5, with
-            no lower limit). OSTEO2 requires age 75 or over, a fragility fracture
-            from 1 April 2014 and OSTEO_COD, with no DXA requirement. Evidence is
-            dated on or before today. OST004 is retired, but extraction continues.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. Disease Registers (QOF v51) OSTEO1
+            and OSTEO2 registers. OSTEO1 requires age 50-74, a fragility fracture from 1 April
+            2012, OSTEO_COD and DXA confirmation (DXA_COD or an unrounded DXA2_COD T-score <=
+            -2.5, with no lower limit). OSTEO2 requires age 75 or over, a fragility fracture from
+            1 April 2014 and OSTEO_COD, with no DXA requirement. Evidence is dated on or before
+            today. OST004 is retired, but extraction continues.
           is_qof: true
           qof_indicator: "OST004"
           source_column: "is_on_register"
@@ -52,5 +54,25 @@ models:
               category: "INCLUSION"
             - cluster_id: "DXA2_COD"
               category: "INCLUSION"
+        indicators:
+          - id: "IND90"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Musculoskeletal"
+            name_short: >-
+              Osteoporosis register
+            description_short: "People aged 50 or over with osteoporosis and a qualifying fragility fracture."
+            description_long: >-
+              People aged 50 to 74 need osteoporosis, a fragility fracture on or after 1 April
+              2012 and DXA confirmation. Confirmation is a coded DXA result of osteoporosis or an unrounded T-score
+              of -2.5 or less, without a lower validity limit. People aged 75 or over need
+              osteoporosis and a fragility fracture on or after 1 April 2014; no scan is
+              required. These age and fracture rules match NICE IND90. Clinical evidence is dated by the build
+              date. For NICE counts, select people registered on the build date. Based on NICE
+              CG146. Code lists: OSTEO_COD, FF_COD, DXA_COD, DXA2_COD (PCD).
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "OST004"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92

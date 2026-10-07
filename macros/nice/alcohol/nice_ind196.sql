@@ -27,7 +27,8 @@ WITH indicator_population AS (
     LEFT JOIN {{ nice_ref('int_nice_alcohol_evidence', reference) }} AS evidence
         ON population.person_id = evidence.person_id
         AND population.reporting_date = evidence.reporting_date
-    WHERE profile.earliest_hypertension_date BETWEEN DATEADD(month, -12, population.reporting_date) AND population.reporting_date
+    WHERE profile.earliest_hypertension_date > DATEADD(month, -15, population.reporting_date)
+        AND profile.earliest_hypertension_date <= DATEADD(month, -3, population.reporting_date)
         AND NOT profile.has_nice_alcohol_disorder
 ),
 
@@ -70,10 +71,11 @@ SELECT
     person_id,
     'IND196' AS indicator_id,
     'Alcohol use: risk assessment for people with hypertension' AS indicator_name,
+    'The percentage of patients with a new diagnosis of hypertension in the preceding 12 months who have been screened for hazardous drinking using the FAST or AUDIT-C tool in the 3 months before or after the date of entry on the hypertension register.' AS indicator_description,
     reporting_date,
-    DATEADD(month, -12, reporting_date) AS measurement_period_start,
+    DATEADD(month, -15, reporting_date) AS measurement_period_start,
     age,
-    'Newly diagnosed hypertension' AS condition_name,
+    'New hypertension' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     new_diagnosis_date,
     latest_alcohol_screen_date,

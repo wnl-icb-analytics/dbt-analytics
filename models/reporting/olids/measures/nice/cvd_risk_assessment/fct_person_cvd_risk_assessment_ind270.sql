@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 -- NICE IND270: https://www.nice.org.uk/indicators/ind270
 -- CVD risk assessment recorded in 3 years for people aged 43 to 84 who smoke, have obesity, hypertension or a latest total cholesterol above 5 mmol/L; same exclusions as IND269.

@@ -1,25 +1,18 @@
 models:
 - name: fct_person_ndh_prevention_programme_ind171_by_month
-  description: |
-    NICE IND171. NHS Diabetes Prevention Programme referral in non-diabetic hyperglycaemia.
-    One row per eligible person and completed month-end. The population is living,
-    non-test adults aged 18 and over registered at month-end on the non-diabetic
-    hyperglycaemia register whose earliest diagnosis is in the inclusive preceding
-    12 months. Unresolved diabetes and unknown age are excluded. Achievement requires
-    a referral made or declined on or after diagnosis and no later than month-end.
-    An invitation alone does not count or erase a same-day referral or decline.
-    The first qualifying referral is reported. People enter immediately, without
-    a referral grace period.
+  description: >-
+    Diabetes prevention programme referral (NICE IND171). One row per person in the
+    denominator at the month-end.
 
-    Recalculated at monthly refresh for the last 60 completed month-ends using today's
-    rules and code lists. Personalised care adjustments are not applied. Registration
-    and practice use the existing monthly spine; registration start is inclusive,
-    registration end and death exclusive. Overlapping registrations retain the spine's
-    current-registration priority. Birth and death dates are approximate; missing birth
-    dates prevent historical active rows. Current gender and test flags apply
-    retrospectively. Register diagnosis state uses clinical and recorded dates; other
-    evidence uses its clinical or order date through month-end. Later corrections and
-    changed code lists can alter earlier results.
+
+    People registered at the month-end aged 18 or over on the non-diabetic hyperglycaemia
+    register, first diagnosed in the last 12 months, without unresolved diabetes. Achieved
+    with an NHS Diabetes Prevention Programme referral made or declined between diagnosis and
+    the month-end. Invitations and referrals to local prevention programmes do not count. No
+    personalised care adjustments are applied. Based on NICE PH38. Recalculated for each of
+    the last 60 month-ends with current rules, code lists and records, so later corrections
+    can change past months. Code lists: NDH_COD, DPPOFF_COD (PCD); 1025321000000109,
+    1025301000000100 (SNOMED CT).
   config:
     meta:
       owner:
@@ -27,34 +20,35 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind171
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Person identifier for someone in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "Published NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
   - name: reporting_date
-    description: Completed month-end at which eligibility and evidence are assessed. DATE; no current-day
-      row.
+    description: "Month-end used to assess the population, age and evidence."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "Inclusive start of the indicator measurement period before the reporting date."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
-  - name: condition_name
-    description: Population defining the indicator
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
   - name: practice_code
-    description: Practice ODS code at month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Practice name at month-end under the monthly spine attribution.
+    description: "Name of the registration practice at month-end."
   - name: diagnosis_date
-    description: Diagnosis date anchoring the indicator window
+    description: "First recorded diagnosis date used to define the indicator population and follow-up window."
   - name: latest_record_date
-    description: Earliest qualifying referral or decline date on or after diagnosis; null if none
+    description: "Date of the first qualifying referral after diagnosis within the indicator follow-up window; null when none is recorded."
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

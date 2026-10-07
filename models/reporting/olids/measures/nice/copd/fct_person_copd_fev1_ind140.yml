@@ -1,0 +1,75 @@
+models:
+- name: fct_person_copd_fev1_ind140
+  description: >-
+    Annual FEV1 recording in COPD (NICE IND140). One row per person in the denominator on
+    the build date.
+
+
+    People registered on the build date on the COPD register. Achieved with a forced
+    expiratory volume in one second (FEV1) record in the 12 months before the build date.
+    No numeric value is needed. Observed percentage-predicted results and z-scores count;
+    ratios, expected volumes and reversibility alone do not. No indicator exclusions
+    apply. No personalised care adjustments are applied. Based on NICE NG115. Code lists:
+    COPDDIAG_COD, COPDPROC_COD, COPDRES_COD (PCD); FEV1_COD (ECL cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind140
+      indicator:
+        id: IND140
+        type: MEASURE
+        category: COPD
+        clinical_domain: Respiratory
+        name_short: "COPD FEV1 recording"
+        description_short: "Annual FEV1 recording in COPD."
+        description_long: >-
+          People registered on the build date on the COPD register. Achieved with a
+          forced expiratory volume in one second (FEV1) record in the 12 months
+          before the build date. No numeric value is needed. Observed
+          percentage-predicted results and z-scores count; ratios, expected volumes
+          and reversibility alone do not. No indicator exclusions apply. No
+          personalised care adjustments are applied. Based on NICE NG115. Code
+          lists: COPDDIAG_COD, COPDPROC_COD, COPDRES_COD (PCD); FEV1_COD (ECL
+          cache).
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND140
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "NICE published indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Build date used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Exclusive start of the indicator eligibility or evidence window."
+  - name: age
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: latest_record_date
+    description: "Date of the latest qualifying evidence in the indicator window; null when none."
+  - name: is_in_denominator
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  - name: latest_fev1_date
+    description: "Latest FEV1 record in the 12-month achievement window, with or without a numeric result; null when none."
+  - name: current_practice_code
+    description: "ODS code of the registration practice on the build date."
+  - name: current_practice_name
+    description: "Name of the registration practice on the build date."

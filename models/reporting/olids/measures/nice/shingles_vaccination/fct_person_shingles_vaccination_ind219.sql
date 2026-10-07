@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 -- NICE IND219: https://www.nice.org.uk/indicators/ind219
 -- Shingles vaccination between the 70th and 75th birthdays for people who reached 75 in the preceding 12 months; excludes immunosuppressed people.

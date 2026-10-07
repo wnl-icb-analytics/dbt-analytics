@@ -1,10 +1,13 @@
 models:
   - name: fct_person_pad_register
-    description: >
-      Disease Registers (QOF v51) peripheral arterial disease register. One row
-      per person with PAD_COD dated on or before today. PAD001 is retired; register extraction continues
-      through the Disease Registers service.
+    description: >-
+      Peripheral arterial disease register (NICE IND93). One row per register member.
 
+
+      Registration status is not filtered. A peripheral arterial disease diagnosis qualifies at
+      any age, without a resolution rule or exclusions. Clinical evidence is dated by the build
+      date. For NICE counts, select people registered on the build date. Based on NICE CG147.
+      Code lists: PAD_COD (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -19,18 +22,19 @@ models:
     config:
       meta:
         indicator:
-          id: "PAD002"
+          id: "PAD001"
           type: "CONDITION"
           category: "LTC"
           clinical_domain: "Cardiovascular"
           name_short: "Peripheral Arterial Disease"
-          description_short: "QOF peripheral arterial disease register"
+          description_short: "QOF 2025/26 peripheral arterial disease register"
           description_long: >
-            Disease Registers (QOF v51) PAD register. Any PAD_COD dated on or before
-            today qualifies, with no age or resolution rule. PAD001 is retired,
-            but extraction continues.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. Disease Registers (QOF v51) PAD
+            register. Any PAD_COD dated on or before today qualifies, with no age or resolution
+            rule. PAD001 is retired, but extraction continues.
           is_qof: true
-          qof_indicator: "PAD002"
+          qof_indicator: "PAD001"
           source_column: "is_on_register"
           usage_contexts:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
@@ -38,5 +42,23 @@ models:
           code_clusters:
             - cluster_id: "PAD_COD"
               category: "INCLUSION"
+        indicators:
+          - id: "IND93"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Cardiovascular"
+            name_short: >-
+              Peripheral arterial disease register
+            description_short: >-
+              People of any age with a peripheral arterial disease diagnosis.
+            description_long: >-
+              A peripheral arterial disease diagnosis qualifies at any age, without a resolution
+              rule or exclusions. Clinical evidence is dated by the build date. For NICE counts,
+              select people registered on the build date. Based on NICE CG147. Code lists:
+              PAD_COD (PCD).
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "PAD001"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92

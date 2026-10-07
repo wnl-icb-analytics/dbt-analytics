@@ -1,0 +1,32 @@
+models:
+- name: int_nice_asthma_risk_medications_all
+  description: >-
+    Short-acting bronchodilator and prednisolone prescriptions. One row per medication order,
+    including inactive and deceased people. Inhaler counts estimate devices from doses: 60 per
+    Accuhaler, 100 per Turbohaler and 200 otherwise, rounded with at least one device per order.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - medication_order_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: OPENSAFELY/SABA_INHALER_MEDICATIONS
+        source: OPENCODELISTS
+  columns:
+  - name: person_id
+    description: Person receiving the issue.
+  - name: medication_order_id
+    description: Unique issue identifier.
+  - name: order_date
+    description: Clinical order calendar date.
+  - name: is_prednisolone
+    description: BNF 0603020T0 issue; distinct issue days proxy oral steroid courses.
+  - name: saba_inhaler_count
+    description: SABA inhaler devices in this order; zero for prednisolone-only orders. Doses divided
+      by 60 for Accuhaler, 100 for Turbohaler, otherwise 200, rounded to whole devices with a minimum
+      of one per matched SABA order.

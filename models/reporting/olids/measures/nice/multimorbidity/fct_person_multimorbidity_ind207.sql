@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 -- NICE IND207: https://www.nice.org.uk/indicators/ind207
 -- Structured medication review in 12 months for people with moderate or severe coded frailty or conditions in four or more

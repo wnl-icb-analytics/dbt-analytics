@@ -1,9 +1,14 @@
 models:
   - name: fct_person_chd_register
-    description: 'QOF coronary heart disease register for patients with CHD diagnosis.
+    description: >-
+      Coronary heart disease register (NICE IND251). One row per register member.
 
-      One row per person with CHD_COD dated on or before today (includes MI, angina, coronary atherosclerosis).'
 
+      Registration status is not filtered. Coronary heart disease diagnoses qualify at any age,
+      without a resolution rule. The code list excludes cardiac syndrome X but includes coronary
+      microvascular disease. Clinical evidence is dated by the build date. For NICE counts,
+      select people registered on the build date. Based on NICE NG185. Code lists: CHD_COD
+      (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -18,21 +23,22 @@ models:
     config:
       meta:
         indicator:
-          id: "CHD003"
+          id: "CHD001"
           type: "CONDITION"
           category: "LTC"
           clinical_domain: "Cardiovascular"
           name_short: "Coronary Heart Disease"
-          description_short: "QOF coronary heart disease register"
+          description_short: "QOF 2025/26 coronary heart disease register"
           description_long: >
-            Coronary heart disease diagnosed using QOF criteria: Any CHD diagnosis
-            code dated on or before today qualifies for register inclusion. CHD is considered a permanent
-            condition with  no resolution codes. Includes MI, angina, and coronary
-            atherosclerosis. Used  for secondary prevention medication monitoring
-            and cardiovascular risk  management. Maps to QOF indicator CHD003 (CHD
-            Register). Uses CHD_COD for  diagnosis codes.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. Coronary heart disease diagnosed
+            using QOF criteria: Any CHD diagnosis code dated on or before today qualifies for
+            register inclusion. CHD is considered a permanent condition with  no resolution codes.
+            Includes MI, angina, and coronary atherosclerosis. Used  for secondary prevention
+            medication monitoring and cardiovascular risk  management. QOF 2025/26 correspondence:
+            CHD001 (CHD Register). Uses CHD_COD for  diagnosis codes.
           is_qof: true
-          qof_indicator: "CHD003"
+          qof_indicator: "CHD001"
           source_column: "is_on_register"
           usage_contexts:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
@@ -40,5 +46,24 @@ models:
           code_clusters:
             - cluster_id: "CHD_COD"
               category: "INCLUSION"
+        indicators:
+          - id: "IND251"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Cardiovascular"
+            name_short: >-
+              Coronary heart disease register
+            description_short: >-
+              People with a recorded coronary heart disease diagnosis.
+            description_long: >-
+              Coronary heart disease diagnoses qualify at any age, without a resolution rule.
+              The code list excludes cardiac syndrome X but includes coronary microvascular
+              disease. Clinical evidence is dated by the build date. For NICE counts, select
+              people registered on the build date. Based on NICE NG185. Code lists: CHD_COD
+              (PCD).
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "CHD001"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92

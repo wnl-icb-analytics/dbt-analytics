@@ -118,6 +118,8 @@ SELECT
     eligible.person_id,
     'IND278' AS indicator_id,
     'Cardiovascular disease prevention: cholesterol treatment target (secondary prevention)' AS indicator_name,
+    'The percentage of patients with cardiovascular disease (CVD) in whom the last recorded LDL or non-HDL cholesterol level (measured in the preceding 12 months) is 2.0 mmol per litre or less for LDL cholesterol or 2.6 mmol per litre or less for non-HDL cholesterol.' AS indicator_description,
+    'Cardiovascular disease' AS denominator_description,
     eligible.reporting_date AS reporting_date,
     DATEADD(month, -12, eligible.reporting_date) AS measurement_period_start,
     eligible.age,

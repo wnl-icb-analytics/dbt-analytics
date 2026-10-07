@@ -1,0 +1,71 @@
+models:
+- name: fct_person_copd_pulmonary_rehabilitation_ind101_by_month
+  description: >-
+    Pulmonary rehabilitation offered to people with COPD (NICE IND101). One row per person
+    in the denominator at each month-end.
+
+
+    People registered at the month-end on the COPD register with MRC breathlessness grade
+    at least 3 in the last 15 months. Achieved with an offer, referral or decline after
+    the first qualifying grade. Excludes rehabilitation attendance between diagnosis and
+    that grade, any recorded unsuitability, or two invitations at least seven days apart
+    in those 15 months without a review after the first. Recorded unsuitability does not
+    identify every clinical contraindication. No other personalised care adjustments are
+    applied. Based on NICE NG115. Recalculated for each of the last 60 month-ends with
+    current rules, code lists and records, so later corrections can change past months.
+    Code lists: COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, MRC_COD, PULRHBOFF_COD,
+    PULRHBDEC_COD, PULRHBATT_COD, PULRHBPU_COD, COPDINVITE_COD, COPDRVW_COD (PCD);
+    PULREHAB_OFFERED_COD (ECL cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "NICE published indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Exclusive start of the indicator eligibility or evidence window."
+  - name: age
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: latest_record_date
+    description: "Date of the latest qualifying evidence in the indicator window; null when none."
+  - name: is_in_denominator
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  - name: diagnosis_date
+    description: "Earliest COPD register diagnosis date."
+  - name: mrc_date
+    description: "First Medical Research Council breathlessness grade of at least 3 in the 15-month eligibility window."
+  - name: latest_offer_date
+    description: "Latest pulmonary rehabilitation offer, referral or recorded decline strictly after the qualifying breathlessness record and on or before the reporting date; null when none."
+  - name: first_invitation_date
+    description: "First COPD invitation in the 15-month eligibility window; null when none."
+  - name: last_invitation_date
+    description: "Last COPD invitation in the 15-month eligibility window; null when none."
+  - name: latest_response_date
+    description: "Latest COPD review strictly after the first invitation and on or before the reporting date; null when none."
+  - name: is_excluded_invitation_non_response
+    description: "Whether two invitations at least seven days apart had no subsequent review; always false for included people."
+  - name: practice_code
+    description: "ODS code of the registration practice at month-end."
+  - name: practice_name
+    description: "Name of the registration practice at month-end."

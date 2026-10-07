@@ -1,0 +1,64 @@
+unit_tests:
+- name: nice_ind101_decline_after_mrc_only
+  model: fct_person_copd_pulmonary_rehabilitation_ind101_by_month
+  overrides:
+    macros:
+      nice_reference_population: |-
+        SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+            60::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+        FROM VALUES (-9811), (-9812), (-9813), (-9814), (-9815)
+      nice_register: |-
+        SELECT person_id, reporting_date, '2020-01-01'::DATE AS earliest_diagnosis_date FROM (SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+            60::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+        FROM VALUES (-9811), (-9812), (-9813), (-9814), (-9815))
+  given:
+  - input: ref('int_mrc_dyspnoea_all')
+    format: sql
+    rows: |-
+      SELECT person_id, '2026-08-01'::DATE AS clinical_effective_date, 3::NUMBER AS mrc_grade FROM (SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+          60::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-9811), (-9812), (-9813), (-9814), (-9815))
+  - input: ref('int_referral_pulmonary_rehab')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date,
+                  'Pulmonary Rehab Declined'::VARCHAR AS pr_obs_type FROM VALUES (-9811,'2026-09-01'),
+                  (-9811,'2026-09-01'), (-9812,'2026-07-31'), (-9813,'2026-08-01'), (-9814,'2026-10-01')
+  - input: ref('int_nice_copd_observations_all')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS event_date, NULL::VARCHAR AS evidence_type WHERE FALSE
+  - input: ref('int_ltc_review_all')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date, NULL::VARCHAR AS review_type
+      WHERE FALSE
+  expect:
+    rows:
+    - person_id: -9811
+      reporting_date: '2026-09-30'
+      latest_offer_date: '2026-09-01'
+      is_in_denominator: true
+      is_in_numerator: true
+    - person_id: -9812
+      reporting_date: '2026-09-30'
+      latest_offer_date: null
+      is_in_denominator: true
+      is_in_numerator: false
+    - person_id: -9813
+      reporting_date: '2026-09-30'
+      latest_offer_date: null
+      is_in_denominator: true
+      is_in_numerator: false
+    - person_id: -9814
+      reporting_date: '2026-09-30'
+      latest_offer_date: null
+      is_in_denominator: true
+      is_in_numerator: false
+    - person_id: -9815
+      reporting_date: '2026-09-30'
+      latest_offer_date: null
+      is_in_denominator: true
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history

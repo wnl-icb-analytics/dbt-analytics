@@ -5,6 +5,7 @@
     Returns: the IND235 detail columns, one person per reporting_date.
 -#}
 -- NICE IND235: https://www.nice.org.uk/indicators/ind235
+-- Shared BP selection prefers valid pairs on the latest complete date, then lowest systolic/diastolic; unlinked components use daily maxima.
 -- Last BP in 12 months below 140/90 clinic or 135/85 home for people on the CKD register with a latest ACR below 70 mg/mmol, without moderate or severe frailty.
 WITH indicator_population AS (
     SELECT
@@ -68,10 +69,11 @@ SELECT
     person_id,
     'IND235' AS indicator_id,
     'Kidney conditions: CKD and blood pressure when ACR less than 70' AS indicator_name,
+    'The percentage of patients on the CKD register and with an albumin to creatinine ratio (ACR) of less than 70 mg/mmol, without moderate or severe frailty, in whom the last blood pressure reading (measured in the preceding 12 months) is less than 135/85 mmHg if using ambulatory or home monitoring, or less than 140/90 mmHg if monitored in clinic.' AS indicator_description,
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'CKD with ACR below 70 mg/mmol, without moderate or severe frailty' AS condition_name,
+    'Kidney disease with a lower urine albumin ratio' AS denominator_description,
     {{ nice_practice_columns('result', reference) }},
     latest_frailty_severity,
     latest_acr_value,

@@ -1,3 +1,5 @@
+-- depends_on: {{ ref('def_indicator') }}
+
 {{ config(
     materialized='table',
     cluster_by=['indicator_id', 'sort_order', 'population_group'],

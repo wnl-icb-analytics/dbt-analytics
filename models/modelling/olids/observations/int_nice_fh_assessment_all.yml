@@ -1,0 +1,39 @@
+models:
+- name: int_nice_fh_assessment_all
+  description: >-
+    Familial hypercholesterolaemia assessment records. One row per observation for all recorded
+    people. Indicators apply their own population and date rules.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: FH_ASSESS_COD, FH_REFER_COD, SECONDARY_HYPERLIPID_COD, SECONDARY_HYPERLIPID_HX_COD
+        source: ECL_CACHE
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: SBROOME_COD, DULIPID_COD, POSSFH_COD, FHYPGEN_COD, FHYP_COD
+        source: PCD
+  columns:
+  - name: clinical_effective_date
+    description: Corrected clinical date from get_observations. Undated evidence uses its 1900 sentinel.
+  - name: is_fh_assessment
+    description: FH_ASSESS_COD or PCD SBROOME_COD, DULIPID_COD or POSSFH_COD. A possible-FH result counts as
+      assessment. Clinical FH diagnoses are recorded separately and also count for IND260 and IND261.
+  - name: is_clinical_fh_diagnosis
+    description: PCD FHYP_COD clinical FH diagnosis; counts as clinical assessment for IND260 and IND261.
+  - name: is_fh_referral
+    description: FH_REFER_COD only. Generic REFLIPID_COD referrals do not count.
+  - name: is_genetic_fh
+    description: PCD FHYPGEN_COD genetic diagnosis or genetic-test evidence; a code does not verify a positive
+      genetic result.
+  - name: is_secondary_hyperlipidaemia
+    description: SECONDARY_HYPERLIPID_COD explicit secondary lipid diagnosis.
+  - name: is_secondary_hyperlipidaemia_history
+    description: SECONDARY_HYPERLIPID_HX_COD personal history, accepted only for IND261.

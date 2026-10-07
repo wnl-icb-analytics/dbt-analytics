@@ -86,10 +86,11 @@ SELECT
     person_id,
     'IND199' AS indicator_id,
     'Alcohol use: brief intervention for people with depression or anxiety' AS indicator_name,
+    'The percentage of patients with a new diagnosis of depression or anxiety and a FAST score of 3 or more or AUDIT-C score of 5 or more in the preceding 12 months, who have received brief intervention to help them reduce their alcohol related risk within 3 months of the score being recorded.' AS indicator_description,
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Newly diagnosed depression or anxiety with a positive alcohol screen' AS condition_name,
+    'New depression or anxiety with a positive alcohol screen' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     new_diagnosis_date,
     latest_alcohol_screen_date,
@@ -105,4 +106,11 @@ SELECT
         ELSE 'NOT_RECORDED_IN_PERIOD'
     END AS indicator_status
 FROM assessed
+WHERE EXISTS (
+        SELECT 1
+        FROM {{ ref('int_nice_alcohol_screen_intervention') }} AS screen
+        WHERE screen.person_id = assessed.person_id
+            AND screen.screen_date >= DATEADD(month, -12, assessed.reporting_date)
+            AND DATEADD(month, 3, screen.screen_date) <= assessed.reporting_date
+    )
 {% endmacro %}

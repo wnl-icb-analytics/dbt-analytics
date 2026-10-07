@@ -1,18 +1,24 @@
 
 models:
   - name: def_indicator_summary
-    description: 'Combined view of indicators with usage and code counts.
+    description: >-
+      Indicator definitions with declared uses and code counts. One row per indicator.
 
-      User-friendly view joining indicators, usage contexts, and code statistics.
-      Primary interface for dashboards and applications needing indicator metadata
-      without complex joins.'
+
+      Contains programme, clinical classification, display labels, source model and column,
+      usage flags and counts of declared SNOMED inclusion and resolution codes. Indicators
+      without declared uses have null usage fields and flags. Missing code counts are zero. Use
+      def_indicator for the full definition.
+
     config:
       meta:
         owner:
           name: EddieDavison92
     columns:
       - name: indicator_id
-        description: Unique identifier for the indicator
+        description: >-
+          Indicator identifier used to link to def_indicator.
+
         tests:
           - not_null
           - unique
@@ -22,13 +28,23 @@ models:
         tests:
           - not_null
 
+      - name: programme
+        description: Programme that owns the indicator, from def_indicator.
+
+      - name: clinical_domain
+        description: >-
+          Clinical domain from the indicator classification list or the long-term condition
+          lookup.
+
+      - name: clinical_subdomain
+        description: >-
+          Long-term condition name for condition-specific indicators; otherwise the
+          classification topic.
+
       - name: category
         description: Indicator category for grouping
         tests:
           - not_null
-
-      - name: clinical_domain
-        description: Medical specialty or clinical area
 
       - name: name_short
         description: Brief display name
@@ -41,52 +57,80 @@ models:
           - not_null
 
       - name: source_model
-        description: dbt model containing this indicator's data
+        description: >-
+          Name of the model that supplies the indicator flag or result.
+
         tests:
           - not_null
 
       - name: source_column
-        description: Column name in the source model
+        description: >-
+          Column in source_model that supplies the indicator flag or result.
+
         tests:
           - not_null
 
       - name: is_qof
-        description: Whether this is a QOF indicator
+        description: >-
+          Whether the source definition has a Quality and Outcomes Framework correspondence.
+          This does not make NICE results QOF payment measures.
+
         tests:
           - not_null
 
       - name: qof_indicator
-        description: Specific QOF indicator code
+        description: >-
+          Corresponding QOF code; null when no QOF correspondence is declared. Retired codes can
+          remain as references.
 
       - name: usage_contexts
-        description: Comma-separated list of where indicator is used
+        description: >-
+          Declared usage contexts, sorted alphabetically and separated by commas; null when none
+          are declared.
 
       - name: in_pop_health_dashboard
-        description: Flag indicating usage in Population Health Needs Dashboard
+        description: >-
+          True when Population Health Needs Dashboard use is declared; false for other declared
+          uses, null when no uses are declared.
+
         tests:
           - not_null
 
       - name: in_qof
-        description: Flag indicating usage in QOF reporting
+        description: >-
+          True when QOF use is declared; false for other declared uses, null when no uses are
+          declared.
+
         tests:
           - not_null
 
       - name: inclusion_code_count
-        description: Number of SNOMED inclusion codes for this indicator
+        description: >-
+          Number of distinct SNOMED inclusion codes in declared code lists; zero when none
+          match.
+
         tests:
           - not_null
 
       - name: resolution_code_count
-        description: Number of SNOMED resolution codes for this indicator
+        description: >-
+          Number of distinct SNOMED resolution codes in declared code lists; zero when none
+          match.
+
         tests:
           - not_null
 
       - name: cluster_count
-        description: Number of distinct clusters defining this indicator
+        description: >-
+          Number of distinct declared code lists with matching SNOMED records; zero when none
+          match.
+
         tests:
           - not_null
 
       - name: metadata_extracted_at
-        description: Timestamp when metadata was extracted from YAML
+        description: >-
+          Timestamp when the catalogue table was built from indicator metadata.
+
         tests:
           - not_null

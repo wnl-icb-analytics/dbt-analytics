@@ -1,0 +1,85 @@
+models:
+- name: fct_person_antiseizure_contraception_advice_ind78
+  description: >-
+    Reproductive counselling for women under 55 prescribed antiseizure medicines (NICE IND78).
+    One row per person in the denominator on the build date.
+
+
+    People registered on the build date recorded as women under 55 with an antiseizure
+    prescription in the last 6 months. Epilepsy diagnosis is not required. Excludes
+    sterilisation or partial or complete hysterectomy. Achieved with both contraception advice
+    and conception or pregnancy advice in the last 12 months. One record can cover both
+    topics. Codes do not establish individual tailoring. No personalised care adjustments are
+    applied. Based on NICE NG217. Code lists: EPILDRUG_COD; CONTRACEPTION_ADVICE_TOPIC_COD,
+    PREGNANCY_ADVICE_TOPIC_COD (ECL cache); EPILCC_COD, EPILPA_COD, EPILPCA_COD (PCD);
+    STERIL_COD, HYST2_COD (OpenCodelists, NHSD primary care domain refsets).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind78
+      indicator:
+        id: IND78
+        type: MEASURE
+        category: CONTRACEPTION
+        clinical_domain: CONTRACEPTION
+        name_short: "Antiseizure reproductive counselling"
+        description_short: "Reproductive counselling during antiseizure treatment."
+        description_long: >-
+          People registered on the build date recorded as women under 55 with an
+          antiseizure prescription in the last 6 months. Epilepsy diagnosis is not
+          required. Excludes sterilisation or partial or complete hysterectomy.
+          Achieved with both contraception advice and conception or pregnancy advice
+          in the last 12 months. One record can cover both topics. Codes do not
+          establish individual tailoring. No personalised care adjustments are
+          applied. Based on NICE NG217. Code lists: EPILDRUG_COD;
+          CONTRACEPTION_ADVICE_TOPIC_COD, PREGNANCY_ADVICE_TOPIC_COD (ECL cache);
+          EPILCC_COD, EPILPA_COD, EPILPCA_COD (PCD); STERIL_COD, HYST2_COD
+          (OpenCodelists, NHSD primary care domain refsets).
+        is_qof: false
+        source_column: is_in_numerator
+        usage_contexts:
+        - NICE_GUIDANCE
+        sort_order: NICE_IND78
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+  columns:
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+  - name: reporting_date
+    description: "Build date used to assess eligibility and evidence."
+  - name: measurement_period_start
+    description: "12 months before the reporting date, included in both advice windows."
+  - name: latest_record_date
+    description: >-
+      Later of the contraception and pregnancy advice dates when both topics qualify in the 12-month
+      window; otherwise null.
+  - name: is_in_denominator
+    description: "Always true. Each row is an eligible member of the denominator."
+  - name: is_in_numerator
+    description: "True when the person meets the achievement rules in the model description."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  - name: latest_asm_date
+    description: "Latest antiseizure prescription on or before the reporting date; null if absent."
+  - name: has_epilepsy
+    description: >-
+      True when the woman is on the epilepsy register at the reporting date. IND78 also includes
+      antiseizure users without epilepsy.
+  - name: latest_contraception_advice_date
+    description: >-
+      Latest contraception advice in the 12 months before the reporting date, including both
+      boundaries; null if absent.
+  - name: latest_pregnancy_advice_date
+    description: >-
+      Latest conception or pregnancy advice in the 12 months before the reporting date, including
+      both boundaries; null if absent.

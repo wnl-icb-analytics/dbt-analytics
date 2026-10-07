@@ -1,17 +1,18 @@
 models:
   - name: fct_person_copd_register
-    description: 'QOF COPD register v107 per v51 business rules.
+    description: >-
+      Unresolved COPD register (NICE IND190). One row per register member.
 
-      One row per person on the COPD register. Disorder codes count at any date on or before today; administrative codes count only when dated after the two-year boundary and on or before today. This breaks count comparability with v50. The register rules remain:
-      
-      Rule 1: Pre-April 2023 diagnosis - automatic inclusion
-      
-      Rule 2: Post-April 2023 + spirometry <0.7 within -93 to +186 days of diagnosis
-      
-      Rule 3: Post-April 2023 + latest registration start in the last 12 months + spirometry <0.7 within -93 to +186 days of that registration
-      
-      Rule 4: Post-April 2023 remaining - all included (no spirometry required). Spirometry evidence is dated on or before today and uses an unrounded ratio <0.7 or a coded result, with no lower limit.'
 
+      Registration status is not filtered. People of any age qualify with unresolved COPD
+      evidence. Disorder diagnoses have no expiry; administrative codes must be in the 2 years
+      before the build date. A resolution removes membership until evidence on a later date.
+      Spirometry is optional, including for diagnoses on or after 1 April 2023. When present,
+      qualifying spirometry is an unrounded FEV1/FVC ratio below 0.7 or a coded result, from 93
+      days before to 186 days after diagnosis or recent registration. NICE requires post-bronchodilator confirmation around newer diagnoses. Clinical evidence is dated by the
+      build date. For NICE counts, select people registered on the build date. Based on NICE
+      NG115. Code lists: COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, FEV1FVC_COD, FEV1FVCL70_COD
+      (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -50,26 +51,26 @@ models:
     config:
       meta:
         indicator:
-          id: "COPD007"
+          id: "COPD015"
           type: "CONDITION"
           category: "LTC"
           clinical_domain: "Respiratory"
           name_short: "COPD"
-          description_short: "QOF COPD register"
+          description_short: "QOF 2025/26 COPD register"
           description_long: >
-            COPD register v107 per QOF v51 business rules. Rule 1: Automatic inclusion for
-            diagnoses before 01/04/2023. Rule 2: Post-April 2023 with spirometry FEV1/FVC
-            <0.7 within -93 to +186 days of diagnosis. Rule 3: Newly registered (last 12
-            months), using the latest registration start on or before today, with
-            spirometry within -93 to +186 days of that registration. Rule 4: All
-            remaining post-April 2023 diagnoses are included. COPDDIAG_COD disorder
-            codes count at any date on or before today. COPDPROC_COD administrative
-            codes count only after the two-year boundary and on or before today.
-            Spirometry uses an unrounded ratio <0.7 or a coded result, with no lower
-            limit. COPDRES_COD supplies resolved codes, and the
-            change means counts are not comparable with v50.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. COPD register v107 per QOF v51
+            business rules. Rule 1: Automatic inclusion for diagnoses before 01/04/2023. Rule 2:
+            Post-April 2023 with spirometry FEV1/FVC <0.7 within -93 to +186 days of diagnosis.
+            Rule 3: Newly registered (last 12 months), using the latest registration start on or
+            before today, with spirometry within -93 to +186 days of that registration. Rule 4:
+            All remaining post-April 2023 diagnoses are included. COPDDIAG_COD disorder codes
+            count at any date on or before today. COPDPROC_COD administrative codes count only
+            after the two-year boundary and on or before today. Spirometry uses an unrounded ratio
+            <0.7 or a coded result, with no lower limit. COPDRES_COD supplies resolved codes, and
+            the change means counts are not comparable with v50.
           is_qof: true
-          qof_indicator: "COPD007"
+          qof_indicator: "COPD015"
           source_column: "is_on_register"
           usage_contexts:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
@@ -81,5 +82,30 @@ models:
               category: "INCLUSION"
             - cluster_id: "COPDRES_COD"
               category: "RESOLUTION"
+        indicators:
+          - id: "IND190"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Respiratory"
+            name_short: >-
+              COPD register
+            description_short: >-
+              People meeting the QOF COPD diagnosis rules, including those without
+              spirometry.
+            description_long: >-
+              People of any age qualify with unresolved COPD evidence. Disorder diagnoses have
+              no expiry; administrative codes must be in the 2 years before the build date. A
+              resolution removes membership until evidence on a later date. Spirometry is
+              optional, including for diagnoses on or after 1 April 2023. When present,
+              qualifying spirometry is an unrounded FEV1/FVC ratio below 0.7 or a coded result,
+              from 93 days before to 186 days after diagnosis or recent registration. NICE
+              requires post-bronchodilator confirmation around newer diagnoses. Clinical
+              evidence is dated by the build date. For NICE counts, select people registered on
+              the build date. Based on NICE NG115. Code lists: COPDDIAG_COD, COPDPROC_COD,
+              COPDRES_COD, FEV1FVC_COD, FEV1FVCL70_COD (PCD).
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "COPD015"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92

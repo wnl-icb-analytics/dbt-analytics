@@ -1,3 +1,5 @@
+-- depends_on: {{ ref('def_indicator') }}
+
 {{ config(
     materialized='table',
     tags=['indicator_definitions'],

@@ -1,19 +1,21 @@
 models:
 - name: fct_person_atrial_fibrillation_ind128_by_month
-  description: "NICE IND128 anticoagulation in atrial fibrillation. One row per currently\nregistered,\
-    \ living, non-test person on the atrial fibrillation register with a\nlatest CHA2DS2-VASc score of\
-    \ 2 or more, or no CHA2DS2-VASc assessment and a latest\nCHADS2 score of 2 or more recorded before\
-    \ 1 April 2015, assessed at the month-end.\n\nAchievement requires an oral anticoagulant prescription\
-    \ in the preceding six months.\n\nExcludes a persisting oral anticoagulant contraindication at any\
-    \ time, or a\ncontraindication or intolerance recorded in the preceding 12 months. An invalid last\n\
-    score does not fall back to an older valid score.\n\nPersonalised care adjustments are not applied.\n\
-    \ Recalculated at monthly refresh for the last 60 completed month-ends using today's rules and code\
-    \ lists. Registration and practice use the existing monthly spine: start inclusive, end and death\
-    \ exclusive, with current-registration priority for overlaps. Birth and death dates are approximate;\
-    \ missing birth dates prevent historical active rows. Current gender and test flags apply retrospectively.\
-    \ Register and diagnosis state use clinical and recorded dates. Other evidence uses clinical or order\
-    \ dates through the month-end. Later corrections and code-list changes can alter earlier results.\
-    \ Personalised care adjustments are not applied."
+  description: >-
+    Anticoagulant treatment in atrial fibrillation (NICE IND128). One row per person in
+    the denominator at each month-end.
+
+
+    People registered at the month-end on the atrial fibrillation register with latest
+    CHA2DS2-VASc at least 2, or no CHA2DS2-VASc assessment and latest CHADS2 at least 2
+    recorded before 1 April 2015. Achieved with an oral anticoagulant prescription in the
+    last 6 months. Excludes anticoagulant allergy, adverse reaction or persisting
+    contraindication at any time, or contraindication or intolerance in the last 12
+    months. An invalid latest score cannot be replaced with an older valid score. No
+    personalised care adjustments are applied. Based on NICE NG196. Recalculated for each
+    of the last 60 month-ends with current rules, code lists and records, so later
+    corrections can change past months. Code lists: AFIB_COD, AFIBRES_COD, CHADVASC_COD,
+    CHAD_COD (PCD); ORANTICOAGADVERS_COD, XORANTICOAGGENCON_COD, TXORANTICOAGGENCON_COD
+    (PCD); 020802 (BNF).
   config:
     meta:
       owner:
@@ -21,60 +23,51 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind128-atrial-fibrillation-current-treatment-with-anticoagulation
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
   - name: reporting_date
-    description: Completed month-end used for eligibility and evidence; DATE, with no current-day row.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "Inclusive start of the indicator measurement period before the reporting date."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
-  - name: condition_name
-    description: Population defining the indicator
+    description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
   - name: practice_code
-    description: Practice ODS code at the month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice attributed at the reporting month-end."
   - name: practice_name
-    description: Practice name at the month-end under the monthly spine attribution.
+    description: "Name of the registration practice attributed at the reporting month-end."
   - name: latest_chadsvasc_score
-    description: Last recorded CHA2DS2-VASc score, from 0 to 9; null when missing or invalid Selected
-      through the month-end; stale detail remains available.
+    description: "Score from the latest CHA2DS2-VASc assessment through the reporting date, from 0 to 9; null when missing or invalid."
   - name: latest_chadsvasc_date
-    description: Date of the latest CHA2DS2-VASc assessment; null if none Selected through the month-end;
-      stale detail remains available.
+    description: "Date of the latest CHA2DS2-VASc assessment through the reporting date, including assessments without a valid score; null when no assessment is recorded."
   - name: latest_chads2_score
-    description: Last CHADS2 score recorded before 1 April 2015, from 0 to 6; null when missing or invalid
-      Selected through the month-end; stale detail remains available.
+    description: "Score from the latest CHADS2 assessment before 1 April 2015 and through the reporting date, from 0 to 6; null when absent, missing or invalid."
   - name: latest_anticoagulant_order_date
-    description: Date of the most recent oral anticoagulant order; null if never Selected through the
-      month-end; stale detail remains available.
+    description: "Date of the latest oral anticoagulant prescription through the reporting date; null when none is recorded."
   - name: latest_anticoagulant_type
-    description: DOAC, VKA or OTHER_ANTICOAGULANT for the selected oral anticoagulant order through the
-      month-end. Null when no order exists. The highest order id wins same-date ties under coordinator
-      ruling C4.
+    description: "Type of the latest oral anticoagulant prescription: DOAC means direct-acting oral anticoagulant, VKA means vitamin K antagonist, and OTHER_ANTICOAGULANT means another oral anticoagulant; null when none is recorded."
   - name: latest_doac_order_date
-    description: Date of the most recent DOAC order; null if never Selected through the month-end; stale
-      detail remains available.
+    description: "Date of the latest direct-acting oral anticoagulant prescription through the reporting date; null when absent."
   - name: latest_vka_order_date
-    description: Date of the most recent vitamin K antagonist order; null if never Selected through the
-      month-end; stale detail remains available.
+    description: "Date of the latest vitamin K antagonist prescription through the reporting date; null when absent."
   - name: is_doac_ineligible
-    description: Any record of valvular AF, which requires the VKA success criterion. Antiphospholipid
-      syndrome allows either DOAC or VKA success
+    description: "Whether valvular atrial fibrillation is recorded by the reporting date, requiring a vitamin K antagonist for IND247."
   - name: has_doac_exception
-    description: DOAC contraindication or antiphospholipid syndrome ever; DOAC declined in 12 months;
-      or DOAC not indicated in 12 months with latest non-null TTR at least 65% in six months
+    description: "Whether a vitamin K antagonist can count for IND247: DOAC contraindication or antiphospholipid syndrome at any time, DOAC declined in 12 months, or DOAC not indicated in 12 months with latest non-null time in therapeutic range at least 65% in 6 months, all through the reporting date."
   - name: latest_anticoagulant_review_date
-    description: Date of the latest anticoagulant medication review or AF annual review record; null if
-      none Selected through the month-end; stale detail remains available.
+    description: "Date of the latest anticoagulant medication review or atrial fibrillation annual review through the reporting date; null when absent."
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true; each row is eligible before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or the reason not achieved
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

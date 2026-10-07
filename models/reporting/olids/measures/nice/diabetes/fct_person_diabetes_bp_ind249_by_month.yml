@@ -1,83 +1,76 @@
 models:
 - columns:
-  - description: Person in the indicator denominator
+  - description: "Person identifier for someone in the indicator denominator."
     name: person_id
-  - description: NICE indicator identifier
+  - description: "Published NICE indicator identifier."
     name: indicator_id
-  - description: Published NICE indicator name
+  - description: "Published NICE indicator title."
     name: indicator_name
-  - description: Completed month-end at which eligibility and evidence are assessed.
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - description: "Month-end used to assess the population, age and evidence."
     name: reporting_date
-  - description: Inclusive start of the measurement period before the reporting date
+  - description: "Inclusive start of the indicator measurement period before the reporting date."
     name: measurement_period_start
-  - description: Completed years at month-end from the approximate birth month.
+  - description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
     name: age
-  - description: Population defining the indicator
-    name: condition_name
-  - description: ODS practice code at month-end under the monthly spine attribution.
+  - description: "Short description of the people in the denominator."
+    name: denominator_description
+  - description: "ODS code of the registration practice at month-end."
     name: practice_code
-  - description: Practice name at month-end under the monthly spine attribution.
+  - description: "Name of the registration practice at month-end."
     name: practice_name
-  - description: Latest coded frailty severity from the frailty register; null when none recorded
+  - description: "Latest coded frailty severity by the reporting date; null when none is recorded."
     name: latest_frailty_severity
-  - description: Date of the latest complete blood pressure pair, regardless of period; null when none
-      is recorded
+  - description: "Date of the latest complete blood pressure reading by the reporting date; it may be outside the measurement period. Null when none is recorded."
     name: latest_bp_date
-  - description: Date of the latest reading when it falls in the period; null otherwise
+  - description: "Date of the selected complete blood pressure reading in the 12-month measurement period; null when none is recorded in that period."
     name: latest_record_date
-  - description: Whether the selected complete pair is plausible; null when no complete pair exists
+  - description: "Whether the selected complete reading has systolic 40 to 350 mmHg and diastolic 20 to 200 mmHg, inclusive; null when no complete reading exists."
     name: is_valid_bp
-  - description: Latest systolic blood pressure in mmHg
+  - description: "Systolic blood pressure of the selected complete pair, in mmHg; valid range 40 to 350, inclusive. Null when no pair is recorded. An invalid latest pair is unassessable; an older pair is not substituted."
     name: latest_systolic_value
-  - description: Latest diastolic blood pressure in mmHg
+  - description: "Diastolic blood pressure of the selected complete pair, in mmHg; valid range 20 to 200, inclusive. Null when no pair is recorded. An invalid latest pair is unassessable; an older pair is not substituted."
     name: latest_diastolic_value
-  - description: Whether the latest reading was recorded using home monitoring
+  - description: "Whether the selected complete blood pressure reading was recorded as home monitoring; null when no complete reading exists."
     name: is_home_bp_event
-  - description: Whether the latest reading was recorded using ambulatory monitoring
+  - description: "Whether the selected complete blood pressure reading was recorded as ambulatory monitoring; null when no complete reading exists."
     name: is_abpm_bp_event
-  - description: Clinic or HBPM/ABPM context of the latest reading
+  - description: "CLINIC for the clinic target or HBPM_ABPM for the home or ambulatory target; null when no complete reading exists."
     name: applied_measurement_context
-  - description: Exclusive systolic threshold in mmHg specified by this indicator
+  - description: "Systolic blood pressure threshold in mmHg; the value must be strictly below this threshold. Null when no complete reading exists."
     name: indicator_systolic_threshold
-  - description: Exclusive diastolic threshold in mmHg specified by this indicator
+  - description: "Diastolic blood pressure threshold in mmHg; the value must be strictly below this threshold. Null when no complete reading exists."
     name: indicator_diastolic_threshold
-  - description: Whether the latest BP was recorded between measurement_period_start and the reporting
-      date
+  - description: "Whether the latest complete blood pressure reading falls in the 12 months before the reporting date, including both boundary dates."
     name: is_bp_recorded_in_last_12m
-  - description: Whether the latest complete pair is valid and below both indicator thresholds, regardless
-      of recording date
+  - description: "Whether the latest complete blood pressure reading is valid and both values are strictly below their thresholds, regardless of its date."
     name: is_latest_bp_within_indicator_target
-  - description: Always true; every row is an eligible person before personalised care adjustments
+  - description: "Always true. Every row belongs to the denominator before personalised care adjustments."
     name: is_in_denominator
-  - description: Whether the person meets the indicator on the reporting date
+  - description: "Whether the person meets the indicator achievement rule on the reporting date."
     name: is_in_numerator
-  - description: ACHIEVED, ABOVE_TARGET, NOT_ASSESSABLE or NOT_RECORDED_IN_PERIOD
+  - description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
     name: indicator_status
   config:
     meta:
       clinical_source: https://www.nice.org.uk/indicators/ind249
       owner:
         name: EddieDavison92
-  description: "NICE IND249. Blood pressure control in diabetes without moderate or severe\nfrailty. One\
-    \ row per registered at the month-end, living, non-test person aged 17\nto 79 on the diabetes register\
-    \ without moderate or severe frailty, assessed\non the completed month-end.\n\nAchievement requires\
-    \ the latest complete blood pressure pair in the preceding 12 months to\nbe below 140/90 mmHg in clinic\
-    \ or 135/85 mmHg at home or by ambulatory\nmonitoring. Both components must be strictly below their\
-    \ thresholds.\n\nThe latest date with a complete systolic/diastolic pair is used. Incomplete\nsingle\
-    \ components are ignored. On that date, valid pairs take precedence, with\nlowest systolic then lowest\
-    \ diastolic selected because within-day order is\nunavailable. If no pair on that date is plausible\
-    \ (systolic 40-350 mmHg and\ndiastolic 20-200 mmHg, inclusive), the result is NOT_ASSESSABLE, without\
-    \ falling\nback to an older pair. Unparented components use date-level maxima of plausible\nvalues,\
-    \ which may combine different readings. Each component uses its\nunfiltered maximum only when no plausible\
-    \ value exists on that date.\n\nPeople outside the age range or with an unknown age are excluded.\n\
-    \nPersonalised care adjustments are not applied.\n Recalculated for the last 60 completed month-ends\
-    \ using today's rules and code lists. Registration and practice use the existing monthly spine, with\
-    \ registration start inclusive and registration end and death exclusive. Overlapping registrations\
-    \ retain the spine's current-registration priority. Birth and death dates are approximate; missing\
-    \ birth dates prevent historical active rows. Current gender and test flags apply retrospectively.\
-    \ Diagnosis state uses clinical and recorded dates; test and BP evidence use their clinical dates\
-    \ through month-end. Later corrections can alter earlier results. Personalised care adjustments are\
-    \ not applied."
+  description: >-
+    Blood pressure control in diabetes (NICE IND249). One row per person in the
+    denominator at the month-end.
+
+
+    People registered at the month-end aged 17 to 79 on the diabetes register without
+    moderate or severe frailty. Achieved when both values of the latest complete blood
+    pressure reading in the last 12 months are below 140/90 mmHg in clinic or 135/85 mmHg
+    at home or on ambulatory monitoring. Incomplete readings do not count; invalid latest
+    readings are unassessable, with no older reading substituted. No personalised care
+    adjustments are applied. Based on NICE NG17. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months. Code lists: BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, HOMEBP_COD,
+    ABPM_COD (PCD).
   name: fct_person_diabetes_bp_ind249_by_month
   data_tests:
   - dbt_utils.unique_combination_of_columns:

@@ -4,6 +4,7 @@
     Args: reference is current or by_month.
     Returns: the IND195 detail projection, one eligible person per reporting_date.
 -#}
+-- QOF HF007 permits separate assessment records.
 -- NICE IND195: https://www.nice.org.uk/indicators/ind195
 -- Heart failure review, NYHA assessment and medication review in 12 months for people on the heart failure register.
 WITH indicator_population AS (
@@ -50,10 +51,11 @@ SELECT
     person_id,
     'IND195' AS indicator_id,
     'Heart failure: annual review' AS indicator_name,
+    'The percentage of patients with heart failure on the register, who had a review in the preceding 12 months, including an assessment of functional capacity (using the New York Heart Association classification) and a review of medication.' AS indicator_description,
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Heart failure' AS condition_name,
+    'Heart failure' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_review_date,
     latest_nyha_date,

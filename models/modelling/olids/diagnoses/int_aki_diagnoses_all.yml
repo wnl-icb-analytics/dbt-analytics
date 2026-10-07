@@ -1,0 +1,38 @@
+models:
+- name: int_aki_diagnoses_all
+  description: AKI episodes or history of AKI, one row per observation, for all people including inactive
+    and deceased people. All retained dates are included. AKI_COD includes acute-on-chronic injury and
+    history of AKI, acute renal cortical necrosis and acute tubular necrosis. AKI warning-stage results without
+    a diagnosis code are laboratory alerts and do not qualify. Risk, education, warning-stage results without a
+    diagnosis and chronic kidney disease
+    alone do not qualify. Hospital episodes count only when coded in the GP record.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: AKI_COD
+        source: ECL_CACHE
+  columns:
+  - name: id
+    description: Source event identifier.
+    data_tests:
+    - not_null
+  - name: person_id
+    description: Person identifier.
+  - name: date_recorded
+    description: Source recorded date; null means the clinical or order date determines when evidence
+      is known.
+  - name: clinical_effective_date
+    description: Prepared clinical date. A date after the recorded date uses the recorded date; an undated
+      record uses the established 1900-01-01 sentinel.
+  - name: concept_code
+    description: SNOMED CT code.
+  - name: concept_display
+    description: Authoritative SNOMED CT display.

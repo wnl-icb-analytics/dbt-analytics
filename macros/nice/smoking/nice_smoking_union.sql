@@ -1,10 +1,16 @@
 {% macro nice_smoking_union(reference='current') %}
-{#- Combine the three smoking indicators at person/indicator/reporting-date grain. -#}
+{#-
+    Combine the NICE smoking measures with their family detail columns.
+    Args: reference is current or by_month.
+    Returns: one eligible person and indicator per reporting_date.
+-#}
 -- Common long-form interface for the NICE smoking indicator views.
 {% set indicator_models = [
     'fct_person_smoking_ind156',
     'fct_person_smoking_ind157',
-    'fct_person_smoking_ind97'
+    'fct_person_smoking_ind97',
+    'fct_person_smoking_ind98',
+    'fct_person_smoking_ind99'
 ] %}
 
 {% for indicator_model in indicator_models %}
@@ -12,10 +18,11 @@ SELECT
     person_id,
     indicator_id,
     indicator_name,
+    indicator_description,
     reporting_date,
     measurement_period_start,
     age,
-    condition_name,
+    denominator_description,
     {{ nice_practice_columns(none, reference) }},
     latest_smoking_status,
     latest_smoking_status_date,
