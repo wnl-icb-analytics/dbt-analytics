@@ -172,7 +172,7 @@ care was absent.
 | IND202 | Alcohol use: brief intervention for people with a long-term condition | Built | `fct_person_alcohol_ind202` |
 | IND203 | Lipids disorders: FH assessment (29 years and under) | Not built | Narrower age-split version of IND260 with no reading window; IND260 covers FH assessment for high readings at any age. |
 | IND204 | Lipids disorders: FH assessment (30 years and over) | Not built | Narrower age-split version of IND260 with no reading window; IND260 covers FH assessment for high readings at any age. |
-| IND205 | Multiple long-term conditions: multimorbidity register | Register | `fct_person_nice_multimorbidity_register`. Adults with at least four condition categories: cancer, chronic pain, circulatory, diabetes, digestive, learning disability, mental health, musculoskeletal, neurological, renal and respiratory. |
+| IND205 | Multiple long-term conditions: multimorbidity register | Register | `fct_person_nice_multimorbidity_register`. Adults with conditions in at least 4 of 11 categories: cancer, chronic pain, circulatory, diabetes, digestive, learning disability, mental health, musculoskeletal, neurological, renal and respiratory. |
 | IND206 | Multiple long-term conditions: frailty register | Register | `fct_person_nice_frailty_register`. People aged 65 or over whose latest coded frailty is moderate or severe. |
 | IND207 | Multiple long-term conditions: medication review | Built | `fct_person_multimorbidity_ind207` |
 | IND208 | Multiple long-term conditions: asking about falls | Built | `fct_person_multimorbidity_ind208` |
