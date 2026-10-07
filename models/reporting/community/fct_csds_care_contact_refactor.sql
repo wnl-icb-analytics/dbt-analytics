@@ -606,7 +606,7 @@ IMD_LOOKUP AS (
 
     SELECT *
 
-    from {{ source('reference_analyst_managed', 'IMD_2025') }}
+    FROM {{ ref('stg_reference_imd_2025') }}
 
     WHERE REGEXP_LIKE(
         LOCAL_AUTHORITY_DISTRICT_NAME_2024,
