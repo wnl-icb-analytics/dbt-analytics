@@ -1,7 +1,8 @@
 # NICE general practice indicators
 
 This page lists the model coverage of all 192 NICE general practice indicators.
-Network and system indicators are out of scope.
+Network and system indicators are out of scope. Comparisons with published data are in
+[nice-benchmarks.md](nice-benchmarks.md).
 
 ## Querying results
 
