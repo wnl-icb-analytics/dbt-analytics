@@ -1,7 +1,11 @@
 
 models:
   - name: obt_encounter_uec
-    description: "Reporting layer for urgent and emergency care encounters from SUS data."
+    description: >-
+      Urgent and emergency care encounters from SUS data. One row represents
+      one ECDS attendance. Current PCN, neighbourhood and health borough fields
+      describe the latest maintained mapping for the practice submitted on the
+      attendance, not its membership at the attendance date.
     config:
       meta:
         owner:
@@ -262,6 +266,103 @@ models:
       - name: reg_practice_name_latest
         data_type: varchar
         description: "Latest national UKHFD name for reg_practice_at_event. The name is not effective-dated to the attendance."
+
+      - name: reg_practice_pcn_name_latest
+        data_type: varchar
+        description: Latest maintained PCN name for reg_practice_at_event; not historical membership.
+
+      - name: reg_practice_neighbourhood_name_latest
+        data_type: varchar
+        description: Latest maintained integrated neighbourhood name for reg_practice_at_event; not historical membership.
+
+      - name: reg_practice_health_borough_name_latest
+        data_type: varchar
+        description: Latest maintained WNL health borough for reg_practice_at_event; not historical membership.
+
+      - name: is_mental_health_referral
+        data_type: boolean
+        description: True when any referred-to-service record for the attendance has the ECDS group Psychiatric.
+
+      - name: is_cyp_mental_health
+        data_type: boolean
+        description: >-
+          True for an attendance where age at arrival is under 18 and a diagnosis
+          belongs to the ECDS Mental health group, the chief complaint belongs to
+          the ECDS Psychosocial / Behaviour change group, the historical deprecated
+          depressed chief-complaint code is present, or injury intent is intentional
+          self-harm.
+
+      - name: has_suspected_mental_health_diagnosis_only
+        data_type: boolean
+        description: >-
+          True when the person was under 18 at arrival, the attendance has a
+          diagnosis in the ECDS Mental health group and none of those diagnoses
+          is recorded as confirmed present.
+
+      - name: discharge_destination_ecds_group1
+        data_type: varchar
+        description: ECDS group for the submitted discharge destination code.
+
+      - name: is_admitted
+        data_type: boolean
+        description: >-
+          True when the discharge destination group is Admitted or Transfer, or
+          the destination is one of the two agreed short-stay service codes.
+
+      - name: is_non_admitted
+        data_type: boolean
+        description: >-
+          True when a mapped discharge destination is outside the admitted,
+          transfer and agreed short-stay categories. This includes hospital at
+          home. False includes missing or unmapped destinations.
+
+      - name: attendance_count
+        data_type: number
+        description: >-
+          Additive attendance measure. Usually 1; 0 for the agreed historical
+          Totally streaming records that were also counted at a co-located ED.
+
+      - name: admitted_count
+        data_type: number
+        description: Additive count of attendances classified as admitted.
+
+      - name: non_admitted_count
+        data_type: number
+        description: >-
+          Additive non-admitted count. It is 0 where the discharge destination
+          is missing or has no ECDS group. Hospital at home counts as non-admitted.
+
+      - name: over_12_hours_count
+        data_type: number
+        description: >-
+          Additive count of completed, unplanned, non-dead-on-arrival attendances
+          with submitted duration greater than 720 minutes.
+
+      - name: within_12_hours_count
+        data_type: number
+        description: >-
+          Additive count of completed, unplanned, non-dead-on-arrival attendances
+          with submitted duration at or below 720 minutes.
+
+      - name: over_72_hours_count
+        data_type: number
+        description: Additive count of attendances with submitted duration greater than 4,320 minutes.
+
+      - name: assessed_within_15_minutes_count
+        data_type: number
+        description: Additive count with submitted initial assessment time at or below 15 minutes.
+
+      - name: not_assessed_within_15_minutes_count
+        data_type: number
+        description: Additive count with submitted initial assessment time above 15 minutes.
+
+      - name: admitted_duration_minutes
+        data_type: number
+        description: Submitted attendance duration in minutes for attendances classified as admitted.
+
+      - name: non_admitted_duration_minutes
+        data_type: number
+        description: Submitted attendance duration in minutes for attendances classified as non-admitted.
 
       - name: visit_occurrence_type
         data_type: varchar
