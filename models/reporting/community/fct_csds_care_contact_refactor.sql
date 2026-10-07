@@ -609,7 +609,7 @@ IMD_LOOKUP AS (
     FROM {{ ref('stg_reference_imd2025') }}
 
     WHERE REGEXP_LIKE(
-        LOCAL_AUTHORITY_DISTRICT_NAME_2024,
+        local_authority_district_name_2024,
         'Barnet|Enfield|Camden|Islington|Haringey|Brent|Harrow|Hillingdon|Central London|West London|Hammersmith and Fulham|Hounslow|Ealing|Westminster|Kensington and Chelsea',
         'i'
     )
@@ -689,7 +689,7 @@ CONTACT_ENRICHED AS (
         
         GEN."Gender" AS LEGACY_GENDER_NAME,
 
-        IMD.INDEX_OF_MULTIPLE_DEPRIVATION_IMD_DECILE_WHERE_1_IS_MOST_DEPRIVED_10_PERCENT__OF_LSOAS
+        IMD.index_of_multiple_deprivation_decile
             AS IMD_DECILE,
 
         IMD.TOTAL_POPULATION_MID_2022 AS IMD_TOTAL_POPULATION,
