@@ -10,9 +10,13 @@ with mental_health_diagnosis_attendances as (
         , max(iff(diagnosis.qualifier = '410605003', 1, 0)) = 0
             as has_suspected_mental_health_diagnosis_only
     from {{ ref('stg_sus_ecds_clinical_diagnoses_snomed') }} as diagnosis
-    inner join {{ ref('stg_dictionary_ecds_diagnosis') }} as diagnosis_dictionary
-        on diagnosis.code = diagnosis_dictionary.snomed_code
-        and diagnosis_dictionary.ecds_group2 = 'Mental health'
+    -- NHSE Supplementary ECDS Analysis spec v3.3, section 7.1.3.
+    where diagnosis.code in (
+        '52448006', '2776000', '33449004', '72366004', '191736004'
+        , '371631005', '197480006', '35489007', '13746004', '58214004'
+        , '69322001', '44376007', '397923000', '30077003', '17226007'
+        , '50705009', '225624000'
+    )
     group by diagnosis.primarykey_id
 ),
 
@@ -152,33 +156,42 @@ select
     , practice.health_borough_name as reg_practice_health_borough_name_latest
     , referral.visit_occurrence_id is not null as is_mental_health_referral
     , coalesce(
-        age_at_event < 18
-        and (
-            diagnosis.visit_occurrence_id is not null
-            or chief_complaint_ecds_group1 = 'Psychosocial / Behaviour change'
-            -- Deprecated by ECDS but retained on historical attendances.
-            or chief_complaint_code = '272022009'
-            or injury_intent_code = '276853009'
+        diagnosis.visit_occurrence_id is not null
+        or chief_complaint_code in (
+            '248062006', '272022009', '366979004', '6471006'
+            , '48694002', '248020004', '7011001', '2073000'
         )
+        or injury_intent_code = '276853009'
         , false
-    ) as is_cyp_mental_health
+    ) as is_mental_health_related_attendance
     , coalesce(
-        age_at_event < 18
-        and diagnosis.has_suspected_mental_health_diagnosis_only
+        diagnosis.has_suspected_mental_health_diagnosis_only
         , false
     ) as has_suspected_mental_health_diagnosis_only
     , discharge_destination_dictionary.ecds_group1
         as discharge_destination_ecds_group1
+    , case
+        when discharge_destination_code in (
+            '306706006', '1066361000000104', '1066371000000106'
+            , '1066381000000108', '1066391000000105', '1066401000000108'
+            , '1874161000000104'
+        ) then 'Admitted'
+        when discharge_destination_code in (
+            '306689006', '306691003', '306694006', '306705005', '50861005'
+        ) then 'Non-admitted'
+        when discharge_destination_code in (
+            '305398007', '1066331000000109', '1066341000000100'
+            , '1066351000000102', '19712007', '183919006'
+        ) then 'Other'
+        else 'Unknown'
+        end as discharge_destination_group
     , coalesce(
-        discharge_destination_dictionary.ecds_group1 in ('Admitted', 'Transfer')
-        or discharge_destination_code in ('1066331000000109', '1066341000000100')
+        uec_activity_type_desc is not null
+        and uec_activity_type_code not in ('05', '06', '07')
+        and coalesce(attendance_category_code, '') not in ('04', '4', 'X')
+        and coalesce(discharge_status_code, '') <> '63238001'
         , false
-    ) as is_admitted
-    , coalesce(
-        discharge_destination_dictionary.ecds_group1 not in ('Admitted', 'Transfer')
-        and discharge_destination_code not in ('1066331000000109', '1066341000000100')
-        , false
-    ) as is_non_admitted
+    ) as is_unplanned_attendance
     , general_practitioner_code
     , general_practitioner_name
     , visit_occurrence_type
@@ -196,6 +209,10 @@ left join {{ ref('stg_dictionary_ecds_dischargedestination') }}
 
 select
     *
+    , coalesce(
+        age_at_event < 18 and is_mental_health_related_attendance
+        , false
+    ) as is_cyp_mental_health
     , case
         when site_id in ('AD915', 'AD904', 'AD906', 'NLO21', 'AD918', 'RY901')
             and department_type in ('3', '03')
@@ -203,29 +220,17 @@ select
             then 0
         else 1
         end as attendance_count
-    , iff(is_admitted, 1, 0) as admitted_count
-    , iff(is_non_admitted, 1, 0) as non_admitted_count
     , case
-        when duration > 720
-            and attendance_category_code not in ('04', '4', 'X')
-            and discharge_status_code <> '63238001'
-            and (end_date is not null or end_time is not null)
+        when is_unplanned_attendance
+            and duration > 720
+            and end_date is not null
+            and end_time is not null
             then 1
         else 0
         end as over_12_hours_count
-    , case
-        when duration <= 720
-            and attendance_category_code not in ('04', '4', 'X')
-            and discharge_status_code <> '63238001'
-            and (end_date is not null or end_time is not null)
-            then 1
-        else 0
-        end as within_12_hours_count
     , iff(duration > 4320, 1, 0) as over_72_hours_count
     , iff(initial_assessment_time_since_arrival <= 15, 1, 0)
         as assessed_within_15_minutes_count
     , iff(initial_assessment_time_since_arrival > 15, 1, 0)
         as not_assessed_within_15_minutes_count
-    , iff(is_admitted, duration, null) as admitted_duration_minutes
-    , iff(is_non_admitted, duration, null) as non_admitted_duration_minutes
 from encounters

@@ -286,35 +286,48 @@ models:
       - name: is_cyp_mental_health
         data_type: boolean
         description: >-
-          True for an attendance where age at arrival is under 18 and a diagnosis
-          belongs to the ECDS Mental health group, the chief complaint belongs to
-          the ECDS Psychosocial / Behaviour change group, the historical deprecated
-          depressed chief-complaint code is present, or injury intent is intentional
-          self-harm.
+          True when the person was under 18 at arrival and the attendance meets
+          the NHS England mental-health-related attendance definition in the
+          Supplementary ECDS Analysis Technical Specification v3.3.
+
+      - name: is_mental_health_related_attendance
+        data_type: boolean
+        description: >-
+          True when the attendance has a chief complaint, injury intent or
+          diagnosis code in the NHS England mental-health-related attendance
+          definition in the Supplementary ECDS Analysis Technical Specification
+          v3.3. This all-age flag includes suspected and confirmed diagnoses.
 
       - name: has_suspected_mental_health_diagnosis_only
         data_type: boolean
         description: >-
-          True when the person was under 18 at arrival, the attendance has a
-          diagnosis in the ECDS Mental health group and none of those diagnoses
-          is recorded as confirmed present.
+          True when the attendance has a diagnosis in the NHS England
+          mental-health-related diagnosis list and none of those diagnoses is
+          recorded as confirmed present. False also covers attendances without
+          a diagnosis from that list.
 
       - name: discharge_destination_ecds_group1
         data_type: varchar
         description: ECDS group for the submitted discharge destination code.
 
-      - name: is_admitted
-        data_type: boolean
+      - name: discharge_destination_group
+        data_type: varchar
         description: >-
-          True when the discharge destination group is Admitted or Transfer, or
-          the destination is one of the two agreed short-stay service codes.
+          NHS England 2025 discharge destination group: Admitted, Non-admitted,
+          Other or Unknown. Other includes mortuary, short stay, SDEC, hospital
+          at home, transfer and hospice. Unknown covers missing and unmapped codes.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Admitted', 'Non-admitted', 'Other', 'Unknown']
 
-      - name: is_non_admitted
+      - name: is_unplanned_attendance
         data_type: boolean
         description: >-
-          True when a mapped discharge destination is outside the admitted,
-          transfer and agreed short-stay categories. This includes hospital at
-          home. False includes missing or unmapped destinations.
+          True for the NHS England unplanned-attendance population: a valid ECDS
+          activity type other than SDEC, extended care or hot clinic, excluding
+          planned follow-ups and people recorded as dead on arrival. Missing
+          attendance category or discharge status does not itself exclude a row.
 
       - name: attendance_count
         data_type: number
@@ -322,47 +335,31 @@ models:
           Additive attendance measure. Usually 1; 0 for the agreed historical
           Totally streaming records that were also counted at a co-located ED.
 
-      - name: admitted_count
-        data_type: number
-        description: Additive count of attendances classified as admitted.
-
-      - name: non_admitted_count
-        data_type: number
-        description: >-
-          Additive non-admitted count. It is 0 where the discharge destination
-          is missing or has no ECDS group. Hospital at home counts as non-admitted.
-
       - name: over_12_hours_count
         data_type: number
         description: >-
-          Additive count of completed, unplanned, non-dead-on-arrival attendances
-          with submitted duration greater than 720 minutes.
-
-      - name: within_12_hours_count
-        data_type: number
-        description: >-
-          Additive count of completed, unplanned, non-dead-on-arrival attendances
-          with submitted duration at or below 720 minutes.
+          NHS England additive numerator for unplanned attendances with valid
+          departure date and time and submitted duration greater than 720 minutes.
+          Use is_unplanned_attendance with valid departure date and time as the
+          denominator.
 
       - name: over_72_hours_count
         data_type: number
-        description: Additive count of attendances with submitted duration greater than 4,320 minutes.
+        description: >-
+          Local additive measure. Counts an attendance when submitted duration is
+          greater than 4,320 minutes; missing duration counts as 0.
 
       - name: assessed_within_15_minutes_count
         data_type: number
-        description: Additive count with submitted initial assessment time at or below 15 minutes.
+        description: >-
+          Local additive measure. Counts an attendance when submitted initial
+          assessment time is at or below 15 minutes; missing time counts as 0.
 
       - name: not_assessed_within_15_minutes_count
         data_type: number
-        description: Additive count with submitted initial assessment time above 15 minutes.
-
-      - name: admitted_duration_minutes
-        data_type: number
-        description: Submitted attendance duration in minutes for attendances classified as admitted.
-
-      - name: non_admitted_duration_minutes
-        data_type: number
-        description: Submitted attendance duration in minutes for attendances classified as non-admitted.
+        description: >-
+          Local additive measure. Counts an attendance when submitted initial
+          assessment time is above 15 minutes; missing time counts as 0.
 
       - name: visit_occurrence_type
         data_type: varchar
