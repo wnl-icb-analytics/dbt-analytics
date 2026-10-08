@@ -1,14 +1,14 @@
 models:
   - name: fct_person_atrial_fibrillation_register
     description: >-
-      Unresolved atrial fibrillation register (NICE IND185). One row per register member.
+      Unresolved atrial fibrillation QOF register. One row per register member.
 
 
-      Registration status is not filtered. An atrial fibrillation diagnosis qualifies at any
-      age. A resolved code on or after the latest diagnosis removes membership. NICE includes
-      people with resolved atrial fibrillation, so this flag supplies a narrower population.
-      Clinical evidence is dated by the build date. For NICE counts, select people registered on
-      the build date. Based on NICE NG196. Code lists: AFIB_COD and AFIBRES_COD (PCD).
+      Registration status is not filtered. An atrial fibrillation diagnosis qualifies at
+      any age. A resolved code on or after the latest diagnosis removes membership.
+      Clinical evidence is dated by the build date. Code lists: AFIB_COD and AFIBRES_COD
+      (PCD). The NICE IND185 population, including resolved AF, is in
+      fct_person_nice_atrial_fibrillation_register.
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -42,26 +42,6 @@ models:
             - cluster_id: "AFIBRES_COD"
               category: "RESOLUTION"
 
-        indicators:
-          - id: "IND185"
-            type: "NICE_REGISTER"
-            category: "LTC"
-            clinical_domain: "Cardiovascular"
-            name_short: >-
-              Atrial fibrillation register
-            description_short: >-
-              People with atrial fibrillation whose latest diagnosis has not been
-              resolved.
-            description_long: >-
-              An atrial fibrillation diagnosis qualifies at any age. A resolved code on or after
-              the latest diagnosis removes membership. NICE includes people with resolved atrial
-              fibrillation, so this flag supplies a narrower population. Clinical evidence is
-              dated by the build date. For NICE counts, select people registered on the build
-              date. Based on NICE NG196. Code lists: AFIB_COD and AFIBRES_COD (PCD).
-            source_column: "is_on_register"
-            is_qof: true
-            qof_indicator: "AF001"
-            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92
     columns:

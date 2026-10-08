@@ -1,16 +1,16 @@
 models:
   - name: fct_person_frailty_register
     description: >-
-      Coded frailty register (NICE IND206). One row per register member.
+      Coded frailty project register. One row per register member.
 
 
-      Registration status is not filtered. The model includes all ages and coded mild, moderate
-      or severe frailty. Latest clinical timestamps determine severity; equal timestamps prefer
-      greater severity. No resolution rule applies. Future-dated findings can affect membership.
-      For NICE IND206, select people registered on the build date, aged 65 or over, with latest
-      severity Moderate or Severe. Calculated
-      electronic frailty index scores do not determine membership. Based on NICE NG56. Code
-      lists: MILDFRAIL_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
+      Registration status is not filtered. The model includes all ages and coded mild,
+      moderate or severe frailty. Latest clinical timestamps determine severity; equal
+      timestamps prefer greater severity. No resolution rule applies. Future-dated
+      findings can affect membership. Calculated electronic frailty index scores do not
+      determine membership. Code lists: MILDFRAIL_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
+      The registered, age 65 or over, moderate or severe population for NICE IND206 is in
+      fct_person_nice_frailty_register.
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -43,26 +43,6 @@ models:
             - cluster_id: "SEVFRAIL_COD"
               category: "INCLUSION"
 
-        indicators:
-          - id: "IND206"
-            type: "NICE_REGISTER"
-            category: "LTC"
-            clinical_domain: "Geriatric"
-            name_short: >-
-              Moderate or severe frailty register
-            description_short: "NICE counts require age 65 or over and latest coded frailty Moderate or Severe."
-            description_long: >-
-              For NICE counts, select people registered on the build date, aged 65 or over,
-              whose latest coded frailty is Moderate or Severe. The model also contains younger
-              people and mild frailty. Severity is coded, including Clinical Frailty Scale
-              levels 6 to 8, rather than calculated from the electronic frailty index. Latest
-              clinical timestamps determine severity; equal timestamps prefer greater severity.
-              Future-dated findings can affect the live register. Based on NICE NG56. Code
-              lists: MILDFRAIL_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
-            source_column: "is_on_register"
-            is_qof: false
-            qof_indicator: null
-            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92
     columns:

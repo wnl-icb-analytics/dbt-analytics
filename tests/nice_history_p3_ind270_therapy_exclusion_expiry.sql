@@ -4,7 +4,12 @@
 {% set query.sql = query.sql | replace(nice_reference_population('by_month') | string, 'SELECT * FROM synthetic_population') %}
 {% set query.sql = query.sql | replace(nice_ref('int_cvd_risk_profile', 'by_month') | string, 'synthetic_profile') %}
 
-WITH synthetic_population AS (
+{% set query.sql = query.sql | replace(ref('int_nice_fh_assessment_all') | string, 'synthetic_hypercholesterolaemia') %}
+
+WITH synthetic_hypercholesterolaemia AS (
+    SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date,
+        NULL::DATE AS date_recorded, FALSE AS is_hypercholesterolaemia WHERE FALSE
+), synthetic_population AS (
     SELECT
         people.column1::NUMBER AS person_id,
         dates.column1::DATE AS reporting_date,
