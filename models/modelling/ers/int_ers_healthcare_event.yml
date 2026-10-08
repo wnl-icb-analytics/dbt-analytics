@@ -1,10 +1,12 @@
 version: 2
 models:
 - name: int_ers_healthcare_event
-  description: ERS recorded healthcare milestones, one row per source record and milestone type. Primary milestones
-    remain when undated; optional milestones require a recorded date. Contacts do not imply attendance. Incremental
-    loads process newly received deliveries and replay the boundary delivery. Withdrawn source keys are removed
-    on each run. Monthly full refreshes reconcile earlier corrections and reference changes.
+  description: e-RS recorded healthcare milestones, one row per source record and milestone type. Referral-action
+    rows include only lifecycle action codes from ers_healthcare_event_type. Appointment-slot rows come from
+    fct_ers_appointment only when the latest_action_id join to fct_ers_referral_action succeeds. Appointments
+    without a matching latest action are omitted. Scheduled slots do not prove attendance. Incremental loads
+    process newly received deliveries and replay the boundary delivery. Withdrawn source keys are removed on
+    each run. Monthly full refreshes reconcile earlier corrections and reference changes.
   config:
     meta:
       owner:
@@ -27,7 +29,7 @@ models:
   - name: event_date
     description: '{{ doc(''navigation_event_date'') }}'
   - name: event_at
-    description: '{{ doc(''navigation_event_at'') }}'
+    description: '{{ doc(''navigation_adapter_event_at'') }}'
   - name: event_time_precision
     description: '{{ doc(''navigation_event_time_precision'') }}'
   - name: event_time_basis

@@ -83,7 +83,7 @@ MHSDS diagnosis and referral-assessment timestamps can lack their original
 submitted precision and offset. The shared clinical output retains the source
 date, marks precision `date` and uses a midnight sorting anchor. The source fact
 retains the stored timestamp, separately supplied date and inconsistency flags.
-See the [MHSDS source validation](mhsds-clinical-record-plan.md).
+See the [MHSDS clinical evidence](mhsds-clinical-records.md).
 
 Clock values remain as supplied in `timestamp_ntz`; the adapters do not convert
 them to UTC. Source offsets are not consistently available. A shared clock value
