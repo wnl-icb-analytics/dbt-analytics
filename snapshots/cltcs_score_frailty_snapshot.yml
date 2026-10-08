@@ -21,7 +21,7 @@ snapshots:
 
     config:
       strategy: check
-      unique_key: [sk_patient_id]
+      unique_key: [sk_patient_id, inclusion_rule]
       updated_at: table_refresh_date
       hard_deletes: invalidate
       check_cols:
@@ -30,6 +30,11 @@ snapshots:
     columns:
       - name: sk_patient_id
         description: "Unique patient identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: inclusion_rule
+        description: "C-LTCS cohort the score belongs to; part of the snapshot unique_key."
         data_tests:
           - not_null
 

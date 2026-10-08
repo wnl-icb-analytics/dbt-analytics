@@ -27,6 +27,7 @@ index_dates CTE) for production.
 */
 
 {%- set index_dates = ['2026-09-01'] -%}
+
 {#-
     v1: placeholder index dates for the logic test (both fall in the 2026-07 roster month).
     Driven by this Jinja list so the spine and the per-date pregnancy reconstruction below
@@ -34,6 +35,9 @@ index_dates CTE) for production.
     instead -- kept as a compile-time list because the pregnancy loop needs the dates at
     compile time (it cannot consume a runtime dbt_utils.date_spine).
 -#}
+
+{#- Cohort whose treatment and frailty scores the evaluation uses. -#}
+{%- set evaluation_inclusion_rule = 'original_criteria' -%}
 
 with index_dates as (
     {%- for d in index_dates %}
@@ -170,7 +174,7 @@ score_treatment as (
     from {{ temporal_join('spine', 'index_date', ref('cltcs_score_treatment_snapshot'),
                           join_key='sk_patient_id', join_type='left',
                           valid_from_col='dbt_valid_from', valid_to_col='dbt_valid_to') }}
-    where inclusion_rule = 'original_criteria'
+    where d.inclusion_rule = '{{ evaluation_inclusion_rule }}'
 ),
 
 score_frailty as (
@@ -178,7 +182,7 @@ score_frailty as (
     from {{ temporal_join('spine', 'index_date', ref('cltcs_score_frailty_snapshot'),
                           join_key='sk_patient_id', join_type='left',
                           valid_from_col='dbt_valid_from', valid_to_col='dbt_valid_to') }}
-    where inclusion_rule = 'original_criteria'
+    where d.inclusion_rule = '{{ evaluation_inclusion_rule }}'
 ),
 
 score_activation as (

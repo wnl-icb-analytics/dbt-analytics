@@ -50,8 +50,7 @@ with captured as (
         neighbourhood_code
     from {{ ref('cltcs_adult_population') }}
     where sk_patient_id is not null and sk_patient_id <> '1'
-    and applicable_cohort = 'original_criteria'
-    and is_case_finding_eligible = TRUE
+    and meets_original_criteria = TRUE
 )
 
 select * from captured

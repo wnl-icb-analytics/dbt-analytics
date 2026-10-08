@@ -45,7 +45,6 @@ Downstream:
 
 select
       sk_patient_id
-    , is_applicable_rule
     , inclusion_rule
     -- scaled subdomain scores (cohort-relative z-scores)
     , scaled_score_clinical_complexity
