@@ -5,7 +5,7 @@ with keyed as (
         *
         -- ETOS derivation key plus person, so conflicting identities stay separate; rows missing a required field keep their own occurrence.
         , {{ dbt_utils.generate_surrogate_key(['unique_service_request_identifier', 'person_id', 'diagnosis_scheme_code', 'diagnosis_code', 'diagnosis_date',
-            "iff(unique_service_request_identifier is null or diagnosis_scheme_code is null or diagnosis_code is null, cyp607_unique_id::varchar, null)"]) }} as source_record_id
+            "iff(unique_service_request_identifier is null or person_id is null or diagnosis_scheme_code is null or diagnosis_code is null, cyp607_unique_id::varchar, null)"]) }} as source_record_id
     from {{ ref('stg_csds_primary_diagnosis_history') }}
 )
 
