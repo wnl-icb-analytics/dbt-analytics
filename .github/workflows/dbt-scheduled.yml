@@ -225,7 +225,9 @@ jobs:
           DBT_TARGET: ${{ steps.plan.outputs.dbt_target }}
         run: |
           read -r -a dbt_args <<< "$DBT_ARGS"
-          dbt "${dbt_args[@]}" --target "$DBT_TARGET" --profiles-dir .
+          # Model, test and column metadata only changes on deploy, which
+          # uploads it. Run and test results still upload here.
+          dbt "${dbt_args[@]}" --target "$DBT_TARGET" --profiles-dir . --vars '{disable_dbt_artifacts_autoupload: true}'
 
       # Failure notifications ride the GitHub -> Teams app via issues (no
       # webhooks; NHS-tenant Teams blocks them). One open issue per run type,
