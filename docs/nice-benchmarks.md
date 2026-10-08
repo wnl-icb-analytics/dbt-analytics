@@ -85,10 +85,10 @@ something else.
 | IND112 | Cardiovascular disease prevention: blood pressure measurement every 5 years | QOF BP002 (2025/26, by practice) | 79.4% | 85.2% | -5.8 | -0.4 | Explained | NICE starts at age 40, QOF at 45. |
 | IND115 | Hypertension: confirming diagnosis with HBPM or ABPM | Network DES CVD-01 (Mar 2025, NCL) | 21.9% | 16.7% |  |  | Related figure only | The national figure covers follow-up of a raised reading, not confirmation of a new diagnosis. |
 | IND121 | Hypertension: urinary albumin for target organ damage | CVDPREVENT CVDP009HYP (Mar 2026, NCL) | 40.3% | 38.0% |  |  | Related figure only | The national figure covers everyone with hypertension; NICE looks at the time of a new diagnosis. |
-| IND122 | Hypertension: haematuria for target organ damage | NICE pilot (Oct 2013-Mar 2014, pilot) |  | 24.0% |  |  | Related figure only | Only a 20-practice NICE pilot from 2014 exists. |
-| IND123 | Hypertension: ECG for target organ damage | NICE pilot (Oct 2013-Mar 2014, pilot) |  | 35.0% |  |  | Related figure only | Only a 20-practice NICE pilot from 2014 exists. |
+| IND122 | Hypertension: haematuria for target organ damage | NICE pilot (Oct 2013-Mar 2014, pilot) | 12.5% (Mar 2026) | 24.0% |  |  | Related figure only | Only a 20-practice NICE pilot from 2014 exists. |
+| IND123 | Hypertension: ECG for target organ damage | NICE pilot (Oct 2013-Mar 2014, pilot) | 17.2% (Mar 2026) | 35.0% |  |  | Related figure only | Only a 20-practice NICE pilot from 2014 exists. |
 | IND125 | Myocardial infarction: medication for MI in preceding 12 months | MINAP eligible secondary-prevention discharge drugs (2022/23, England) | 40.3% | 81.0% |  |  | Related figure only | The national figure is medication at hospital discharge; ours is current GP prescribing. |
-| IND126 | Myocardial infarction: medication for MI more than 12 months ago | Retired QOF CHD006 (2013/14, NCL) |  | 72.9% |  |  | Related figure only | Retired from QOF in 2014, with a different definition. |
+| IND126 | Myocardial infarction: medication for MI more than 12 months ago | Retired QOF CHD006 (2013/14, NCL) | 44.9% (Mar 2026) | 72.9% |  |  | Related figure only | Retired from QOF in 2014, with a different definition. |
 | IND127 | Atrial fibrillation: annual stroke risk assessment | QOF AF006 (2025/26, by practice) | 94.5% | 94.6% | -0.1 |  | Matches |  |
 | IND128 | Atrial fibrillation: current treatment with anticoagulation | CVDPREVENT CVDP002AF (Mar 2026, by practice) | 90.9% | 89.6% | +1.3 |  | Matches |  |
 | IND131 | Immunisation: flu vaccine for people with CHD | UKHSA flu uptake: chronic heart disease (2024/25, London) | 61.1% | 31.5% | +29.6 | +0.9 | Explained | UKHSA publishes under-65s only, for London; ours includes all ages, and older people have higher uptake. |
@@ -113,7 +113,7 @@ something else.
 | IND278 | Cardiovascular disease prevention: cholesterol treatment target (secondary prevention) | CVDPREVENT CVDP012CHOL (Mar 2026, by practice) | 51.4% | 51.6% | -0.2 |  | Matches |  |
 | IND287 | Cardiovascular disease prevention: lipid lowering therapy for people newly diagnosed with hypertension or T2DM | Network DES CVD-13 (Mar 2025, NCL) | 55.1% | 53.5% |  |  | Related figure only | The national figure covers a general higher-risk group, not newly diagnosed people. |
 | IND317 | Heart failure: 4 pillars (HFrEF) | CVDPREVENT CVDP003HF (Mar 2026, by practice) | 45.5% | 46.1% | -0.6 |  | Matches |  |
-| IND318 | Heart failure: ejection fraction category | NICE CPRD HF ejection-fraction recording (Mar 2024, England) |  | 42.0% |  |  | Related figure only | Our measure covers diagnoses from April 2026, so there is no matching period yet. |
+| IND318 | Heart failure: ejection fraction category | NICE CPRD HF ejection-fraction recording (Mar 2024, England) | 54.1% (Oct 2026) | 42.0% |  |  | Related figure only | Our measure covers diagnoses from April 2026, so there is no matching period yet. |
 
 ### Renal
 
@@ -136,9 +136,9 @@ something else.
 |---|---|---|---:|---:|---:|---:|---|---|
 | IND81 | Diabetes: annual foot exam and risk classification | NDA foot surveillance (Mar 2026, by practice) | 82.1% | 77.4% | +4.8 | +1.1 | Explained | NICE allows 15 months for the foot check; the audit counts 12. |
 | IND88 | Diabetes: referral for structured education | QOF DM014 (2025/26, by practice) | 67.7% | 66.9% | +0.8 |  | Matches |  |
-| IND89 | Diabetes: annual dietary review | Retired QOF DM013 (2013/14, NCL) |  | 83.9% |  |  | Related figure only | Retired from QOF in 2014, when practices were paid for it. |
+| IND89 | Diabetes: annual dietary review | Retired QOF DM013 (2013/14, NCL) | 13.7% (Mar 2026) | 83.9% |  |  | Related figure only | Retired from QOF in 2014, when practices were paid for it. |
 | IND111 | Diabetes: annual albumin creatinine test | NDA urine albumin (Mar 2026, by practice) | 76.6% | 69.9% | +6.7 | +0.8 | Explained | NICE allows 15 months for the urine test; the audit counts 12. |
-| IND116 | Contraception: advice for people with diabetes | NICE pilot (Oct 2012-Mar 2013, pilot) |  | 1.5% |  |  | Related figure only | Only a 12-practice NICE pilot from 2013 exists. |
+| IND116 | Contraception: advice for people with diabetes | NICE pilot (Oct 2012-Mar 2013, pilot) | 9.0% (Mar 2026) | 1.5% |  |  | Related figure only | Only a 12-practice NICE pilot from 2013 exists. |
 | IND120 | Diabetes: annual general practice checks | NDA eight care processes (Mar 2026, by practice) | 58.6% | 59.1% | -0.5 |  | Matches |  |
 | IND134 | Diabetes: ACEi or ARBs | QOF DM006 (2025/26, by practice) | 88.5% | 78.2% | +10.4 | -0.1 | Explained | NICE leaves out people who cannot take these medicines; QOF's figure keeps them. |
 | IND135 | Diabetes: IFCC-HbA1c 64mmol/mol or less | QOF DM020 (2025/26, by practice) | 71.0% | 59.5% | +11.5 | +0.1 | Explained | NICE uses a 64 mmol/mol target for everyone; QOF uses 58 and leaves out moderate or severe frailty. |
@@ -171,11 +171,11 @@ something else.
 | ID | Indicator | Compared with | Ours | Published | Difference | With their rules | Result | Why they differ |
 |---|---|---|---:|---:|---:|---:|---|---|
 | IND101 | COPD: offered pulmonary rehabilitation | QOF COPD008 (2022/23, by practice) | 90.1% | 56.8% | +33.3 | +0.4 | Explained | NICE counts an offer (or a decline) after a breathlessness score in the last 15 months; QOF counted referrals in a shorter window. |
-| IND140 | COPD: FEV1 | Retired QOF COPD004 (FEV1 recording) (2018/19, NCL) |  | 79.4% |  |  | No comparator | No current published figure. The QOF indicator was retired in 2019. |
+| IND140 | COPD: FEV1 | Retired QOF COPD004 (FEV1 recording) (2018/19, NCL) | 7.2% (Mar 2026) | 79.4% |  |  | No comparator | No current published figure. The QOF indicator was retired in 2019. |
 | IND141 | Immunisation: flu vaccine for people with COPD | UKHSA flu uptake: chronic respiratory disease (2024/25, London) | 59.8% | 33.9% | +25.9 | +0.9 | Explained | UKHSA publishes under-65s only, for London; ours includes all ages, and older people have higher uptake. |
 | IND189 | Asthma: smoking status (under 19) | QOF AST008 (2025/26, by practice) | 47.1% | 70.0% | -23.0 | -0.1 | Explained | NICE includes everyone with asthma; QOF only those treated in the last year. |
 | IND191 | COPD: annual review | QOF COPD010 (2025/26, by practice) | 77.4% | 80.3% | -2.9 |  | Matches | Matches overall, but Enfield practices sit 5 to 9 points below QOF. The cause is not known. |
-| IND212 | COPD: oxygen saturation recording | Retired QOF COPD005 (oxygen saturation) (2018/19, NCL) |  | 96.0% |  |  | No comparator | No current published figure. The related QOF indicator was retired in 2019. |
+| IND212 | COPD: oxygen saturation recording | Retired QOF COPD005 (oxygen saturation) (2018/19, NCL) | 66.4% (Mar 2026) | 96.0% |  |  | No comparator | No current published figure. The related QOF indicator was retired in 2019. |
 | IND272 | Asthma: objective tests | QOF AST012 (2025/26, by practice) | 67.8% | 78.2% | -10.5 | -0.6 | Explained | QOF counts diagnoses since April 2025 from age 6, with its own list of tests. |
 | IND273 | Asthma: annual review | QOF AST007 (2025/26, by practice) | 34.6% | 67.1% | -32.5 | -0.3 | Explained | NICE includes everyone with asthma; QOF only those treated in the last year. |
 | IND315 | Asthma: annual review (higher risk patients) | NICE asthma testing report (2023/24, England) | 67.1% | 66.3% | +0.8 |  | Matches |  |
@@ -185,19 +185,19 @@ something else.
 
 | ID | Indicator | Compared with | Ours | Published | Difference | With their rules | Result | Why they differ |
 |---|---|---|---:|---:|---:|---:|---|---|
-| IND80 | Dementia: target organ damage (new diagnoses) | Retired QOF DEM005 (2018/19, NCL) |  | 63.4% |  |  | Related figure only | The QOF indicator was retired in 2019, before our data start. |
+| IND80 | Dementia: target organ damage (new diagnoses) | Retired QOF DEM005 (2018/19, NCL) | 50.9% (Mar 2026) | 63.4% |  |  | Related figure only | The QOF indicator was retired in 2019, before our data start. |
 | IND82 | Bipolar, schizophrenia and other psychoses: annual record of alcohol consumption | SMI health checks: alcohol (Jun 2026, by practice) | 85.6% | 78.0% | +7.6 | -0.2 | Explained | NICE allows 15 months; the national checks count 12. |
 | IND83 | Bipolar, schizophrenia and other psychoses: annual BMI recording | SMI health checks: BMI (Jun 2026, by practice) | 84.1% | 78.3% | +5.8 | -1.1 | Explained | NICE allows 15 months; the national checks count 12. |
 | IND84 | Bipolar, schizophrenia and other psychoses: annual blood pressure | SMI health checks: blood pressure (Jun 2026, by practice) | 84.4% | 78.2% | +6.2 | -0.6 | Explained | NICE allows 15 months; the national checks count 12. |
 | IND85 | Bipolar, schizophrenia and other psychoses: cervical screening | Retired QOF MH008 (Mar 2023, London) | 64.4% | 66.3% | -1.9 |  | Matches |  |
-| IND86 | Bipolar, schizophrenia and other psychoses: target organ damage | Retired QOF MH009 (2018/19, NCL) |  | 91.9% |  |  | Explained, not tested | Retired from QOF in 2019, before our data start. |
+| IND86 | Bipolar, schizophrenia and other psychoses: target organ damage | Retired QOF MH009 (2018/19, NCL) | 88.7% (Mar 2026) | 91.9% |  |  | Explained, not tested | Retired from QOF in 2019, before our data start. |
 | IND87 | Bipolar, schizophrenia and other psychoses: lithium levels in therapeutic range | Network DES lithium monitoring (Mar 2025, NCL) | 53.9% | 45.0% |  |  | Explained, not tested | The national figure counts lithium tests, not levels in range. NICE asks for a level every 4 months; guidance now allows 6 for stable patients. |
 | IND104 | Depression and anxiety: review within 10 to 35 days | QOF DEP004 (2025/26, NCL) | 18.8% | 22.0% |  |  | Explained, not tested | NICE asks for a review 10 to 35 days after diagnosis, QOF 10 to 56. We could not reproduce how QOF selects new episodes. |
-| IND118 | Dementia: target organ damage (all patients) | Retired QOF DEM005 (2018/19, NCL) |  | 63.4% |  |  | Related figure only | The retired QOF indicator covered new diagnoses only and ended in 2019. |
-| IND124 | Contraception: advice for people with bipolar, schizophrenia or other psychoses | NICE pilot (Oct 2013-Mar 2014, pilot) |  | 24.3% |  |  | Related figure only | Only a 20-practice NICE pilot from 2014 exists. |
+| IND118 | Dementia: target organ damage (all patients) | Retired QOF DEM005 (2018/19, NCL) | 57.3% (Mar 2026) | 63.4% |  |  | Related figure only | The retired QOF indicator covered new diagnoses only and ended in 2019. |
+| IND124 | Contraception: advice for people with bipolar, schizophrenia or other psychoses | NICE pilot (Oct 2013-Mar 2014, pilot) | 6.1% (Mar 2026) | 24.3% |  |  | Related figure only | Only a 20-practice NICE pilot from 2014 exists. |
 | IND142 | Dementia: care planning | Primary Care Dementia Data (Mar 2026, by practice) | 73.4% | 76.0% | -2.6 |  | Matches | Our dementia register is about 4% larger than the national one, with the same number of care plans. The cause is not known. |
 | IND143 | Bipolar, schizophrenia and other psychoses: care planning | QOF MH002 (2025/26, by practice) | 75.9% | 77.5% | -1.6 |  | Matches |  |
-| IND150 | Cardiovascular disease prevention: cardiovascular risk assessment for people with bipolar, schizophrenia or other psychoses | NICE pilot (Oct 2014-Mar 2015, pilot) |  | 36.1% |  |  | Related figure only | Only a 26-practice NICE pilot from 2015 exists. |
+| IND150 | Cardiovascular disease prevention: cardiovascular risk assessment for people with bipolar, schizophrenia or other psychoses | NICE pilot (Oct 2014-Mar 2015, pilot) | 35.0% (Mar 2026) | 36.1% |  |  | Related figure only | Only a 26-practice NICE pilot from 2015 exists. |
 | IND154 | Smoking: smoking status of people with bipolar, schizophrenia and other psychoses | SMI health checks: smoking (Mar 2026, by practice) | 90.8% | 83.9% | +6.9 | -0.4 | Explained | The national checks count any smoking record in 12 months; NICE also accepts never-smoked and long-standing ex-smoker records. |
 | IND155 | Smoking: support and treatment for people with bipolar, schizophrenia and other psychoses | QOF SMOK005 (LTC smoking support) (2025/26, NCL) | 79.2% | 80.4% |  |  | Related figure only | QOF combines several conditions; there is no published figure for severe mental illness alone. |
 | IND158 | Bipolar, schizophrenia and other psychoses: annual cholesterol | SMI health checks: cholesterol (Jun 2026, by practice) | 64.6% | 70.4% | -5.8 | -1.7 | Explained | NICE counts a cholesterol ratio test and leaves out people with heart disease; the national checks count any cholesterol test. |
@@ -231,8 +231,8 @@ something else.
 
 | ID | Indicator | Compared with | Ours | Published | Difference | With their rules | Result | Why they differ |
 |---|---|---|---:|---:|---:|---:|---|---|
-| IND91 | Osteoporosis: bone sparing agents (50-74 years) | Retired QOF OST002 (2018/19, NCL) |  | 63.6% |  |  | Explained, not tested | Retired from QOF in 2019, before our data start. NICE does not require a recorded osteoporosis diagnosis. |
-| IND92 | Osteoporosis: bone sparing agents (75 years and over) | Retired QOF OST005 (2018/19, NCL) |  | 54.0% |  |  | Explained, not tested | Retired from QOF in 2019. QOF required an osteoporosis diagnosis and counted fractures from 2014 only. |
+| IND91 | Osteoporosis: bone sparing agents (50-74 years) | Retired QOF OST002 (2018/19, NCL) | 36.9% (Mar 2026) | 63.6% |  |  | Explained, not tested | Retired from QOF in 2019, before our data start. NICE does not require a recorded osteoporosis diagnosis. |
+| IND92 | Osteoporosis: bone sparing agents (75 years and over) | Retired QOF OST005 (2018/19, NCL) | 24.2% (Mar 2026) | 54.0% |  |  | Explained, not tested | Retired from QOF in 2019. QOF required an osteoporosis diagnosis and counted fractures from 2014 only. |
 | IND108 | Rheumatoid arthritis: cardiovascular risk assessment | Retired QOF RA003 (Mar 2023, London) | 31.1% | 30.3% | +0.8 |  | Matches |  |
 | IND110 | Rheumatoid arthritis: annual review | QOF RA002 (2022/23, by practice) | 86.2% | 85.3% | +0.9 |  | Matches |  |
 
@@ -268,7 +268,7 @@ something else.
 | IND99 | Smoking: support and treatment (all patients) | QOF SMOK004 (2025/26, by practice) | 93.4% | 94.4% | -1.0 |  | Matches |  |
 | IND156 | Smoking: smoking status of people with long-term conditions | QOF SMOK002 (2025/26, by practice) | 91.7% | 93.0% | -1.3 |  | Matches |  |
 | IND157 | Smoking: support and treatment for people with long term conditions | QOF SMOK005 (2025/26, by practice) | 80.8% | 80.4% | +0.4 |  | Matches |  |
-| IND319 | Weight management: advice for people living with overweight (18 to 39 years) | England survey: overweight adults recalling GP advice (Oct 2018, England) |  | 12.6% |  |  | Related figure only | Only a 2018 survey of what patients recall exists. |
+| IND319 | Weight management: advice for people living with overweight (18 to 39 years) | England survey: overweight adults recalling GP advice (Oct 2018, England) | 8.4% (Mar 2026) | 12.6% |  |  | Related figure only | Only a 2018 survey of what patients recall exists. |
 | IND320 | Weight management: BMI recording (long term conditions) | NDA BMI recording (diabetes subgroup) (2025/26, by practice) | 85.7% | 85.7% | +0.0 |  | Matches | Compared for people with diabetes, about half of those covered. |
 
 ### Prevention and screening
@@ -290,19 +290,19 @@ something else.
 | ID | Indicator | Compared with | Ours | Published | Difference | With their rules | Result | Why they differ |
 |---|---|---|---:|---:|---:|---:|---|---|
 | IND78 | Contraception: advice for people taking anti-seizure medication | Retired QOF EP003 (Mar 2023, London) | 0.9% | 0.3% |  |  | Related figure only | Only a retired, sparsely reported London figure exists. Both show advice is rarely recorded. |
-| IND148 | Contraception: LARC for people on oral or patch contraceptives | Retired QOF CON002 (2018/19, NCL) |  | 39.9% |  |  | Related figure only | Retired from QOF in 2019, before our data start. |
-| IND149 | Contraception: LARC for people using emergency contraception | Retired QOF CON003 (2018/19, NCL) |  | 93.2% |  |  | Related figure only | Retired from QOF in 2019, when practices were paid for it. |
+| IND148 | Contraception: LARC for people on oral or patch contraceptives | Retired QOF CON002 (2018/19, NCL) | 22.3% (Mar 2026) | 39.9% |  |  | Related figure only | Retired from QOF in 2019, before our data start. |
+| IND149 | Contraception: LARC for people using emergency contraception | Retired QOF CON003 (2018/19, NCL) | 12.9% (Mar 2026) | 93.2% |  |  | Related figure only | Retired from QOF in 2019, when practices were paid for it. |
 | IND176 | Screening: cervical screening (25 to 49 years) | Cervical screening coverage 25-49 (Mar 2024, by practice) | 67.7% | 58.3% | +9.4 | +1.9 | Explained | NICE leaves out pregnant women and women who did not respond to invitations; the published figure keeps them. |
 | IND177 | Screening: cervical screening (50 to 64 years) | QOF CS006 (2025/26, by practice) | 78.3% | 73.7% | +4.5 | +0.4 | Explained | NICE leaves out women who did not respond to invitations; QOF's figure keeps them. |
 | IND178 | Pregnancy and neonates: postnatal mental health | CQC maternity survey: enough GP mental-health time (2025, England) | 13.9% | 75.8% |  |  | Related figure only | The national figure is a patient survey, not GP records. |
-| IND210 | HIV: testing at registration | NICE pilot (Dec 2018-Mar 2019, pilot) |  | 0.0% |  |  | Related figure only | Only an 8-practice NICE pilot exists. |
+| IND210 | HIV: testing at registration | NICE pilot (Dec 2018-Mar 2019, pilot) | 1.6% (Mar 2026) | 0.0% |  |  | Related figure only | Only an 8-practice NICE pilot exists. |
 | IND321 | Screening: cervical (25 to 64 years) | Cervical screening coverage 25-64 (Mar 2024, by practice) | 68.4% | 61.8% | +6.6 | +2.2 | Explained | NICE uses one 5.5-year interval; the published figure uses 3.5 years under 50, and NICE leaves out non-responders. |
 
 ### Maternity
 
 | ID | Indicator | Compared with | Ours | Published | Difference | With their rules | Result | Why they differ |
 |---|---|---|---:|---:|---:|---:|---|---|
-| IND173 | Diabetes: gestational diabetes annual HbA1c test | CPRD-HES annual glucose testing after GDM (GDM diagnoses 2000-18, England) |  | 23.9% |  |  | Related figure only | Only a published study of older cohorts exists. |
+| IND173 | Diabetes: gestational diabetes annual HbA1c test | CPRD-HES annual glucose testing after GDM (GDM diagnoses 2000-18, England) | 53.6% (Mar 2026) | 23.9% |  |  | Related figure only | Only a published study of older cohorts exists. |
 
 ### Familial hypercholesterolaemia
 
