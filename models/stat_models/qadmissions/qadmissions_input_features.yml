@@ -258,15 +258,17 @@ models:
           Moderate, Heavy, VeryHeavy). Sourced from qadmissions_alcohol_category,
           which derives cat6 from int_alcohol_audit_scores filtered to
           Full AUDIT and takes the highest cat6 ever recorded per person.
-          NULL when the person has no valid Full AUDIT score, so missing
-          alcohol status can be handled at scoring; the QAdmissions paper
-          imputed it rather than treating it as non-drinking.
+          0 (NonDrinker) when the person has no valid Full AUDIT score, the
+          same category a Full AUDIT score of 0 gives. Most people have no
+          Full AUDIT score, and the registered model rejects NULL. Note the
+          QAdmissions paper imputed missing alcohol status rather than
+          treating it as non-drinking, so scores for people without a score
+          assume they don't drink.
         data_tests:
+          - not_null
           - accepted_values:
               arguments:
                 values: [0, 1, 2, 3, 4, 5]
-              config:
-                where: "alcohol_cat6 IS NOT NULL"
 
       - name: ethrisk
         data_type: number
