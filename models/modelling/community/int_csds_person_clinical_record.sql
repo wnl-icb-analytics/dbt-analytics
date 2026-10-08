@@ -50,8 +50,9 @@ select
         when s.is_referral_person_consistent is distinct from false then s.referral_id::varchar
     end as parent_record_id,
     case
+        when parent_record_id is null then null
         when s.is_care_activity_linked and s.is_care_activity_person_consistent is distinct from false then 'care_activity'
-        when s.referral_id is not null and s.is_referral_person_consistent is distinct from false then 'referral'
+        else 'referral'
     end as parent_record_type,
     case parent_record_type
         when 'care_activity' then 'fct_csds_care_activity'

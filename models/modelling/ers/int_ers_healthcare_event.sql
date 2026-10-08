@@ -107,10 +107,8 @@ select
     priority_name,
     provider_organisation_code,
     provider_organisation_name,
-    case
-        when ods.organisation_code is not null then 'ODS'
-        when provider_organisation_code is not null then 'e-RS'
-    end as provider_code_authority,
+    -- e-RS PROVIDER_ORG_ID is an ODS code, whether or not the reference names it.
+    iff(provider_organisation_code is not null, 'ODS', null)::varchar as provider_code_authority,
     site_code,
     site_name,
     referring_organisation_code,
@@ -121,5 +119,3 @@ select
     'recorded_parent'::varchar as relationship_type,
     source_received_at
 from milestones
-left join {{ ref('organisation') }} as ods
-    on milestones.provider_organisation_code = ods.organisation_code
