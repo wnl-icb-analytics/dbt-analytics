@@ -180,10 +180,10 @@ select
     null::varchar as site_name,
     null::varchar as referring_organisation_code,
     null::varchar as referring_organisation_name,
-    iff(s.hospital_provider_spell_source_record_id is not null, 'hospital_provider_spell', null)::varchar as parent_record_type,
-    s.hospital_provider_spell_source_record_id::varchar as parent_record_id,
-    iff(s.hospital_provider_spell_source_record_id is not null, 'fct_mhsds_hospital_provider_spell', null)::varchar as parent_model_name,
-    iff(s.hospital_provider_spell_source_record_id is not null, 'recorded_parent', null)::varchar as relationship_type,
+    iff(iff((s.person_id = hs.person_id) is distinct from false, s.hospital_provider_spell_source_record_id, null) is not null, 'hospital_provider_spell', null)::varchar as parent_record_type,
+    iff((s.person_id = hs.person_id) is distinct from false, s.hospital_provider_spell_source_record_id, null)::varchar as parent_record_id,
+    iff(iff((s.person_id = hs.person_id) is distinct from false, s.hospital_provider_spell_source_record_id, null) is not null, 'fct_mhsds_hospital_provider_spell', null)::varchar as parent_model_name,
+    iff(iff((s.person_id = hs.person_id) is distinct from false, s.hospital_provider_spell_source_record_id, null) is not null, 'recorded_parent', null)::varchar as relationship_type,
     s.reporting_period_end_date::date as source_submission_period,
     s.source_file_received_at::timestamp_ntz as source_received_at,
     array_construct(
@@ -203,6 +203,7 @@ select
         )
     ) as milestones
 from {{ ref('fct_mhsds_ward_stay') }} as s
+left join {{ ref('fct_mhsds_hospital_provider_spell') }} as hs on s.hospital_provider_spell_source_record_id = hs.source_record_id
 where true
 {{ navigation_delivery_filter('s.source_file_received_at', 'ward_stay') }}
 )

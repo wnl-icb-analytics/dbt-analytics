@@ -58,11 +58,12 @@ select
     iff(mapped_code is not null, 'SNOMED CT', null)::varchar as mapped_coding_system,
     case
         when s.is_care_activity_linked and s.is_care_activity_person_consistent is distinct from false and s.is_care_activity_referral_consistent is distinct from false and s.is_care_activity_contact_consistent is distinct from false then s.care_activity_source_record_id::varchar
-        else s.referral_source_record_id::varchar
+        when (s.person_id = pr.person_id) is distinct from false then s.referral_source_record_id::varchar
     end as parent_record_id,
     case
+        when parent_record_id is null then null
         when s.is_care_activity_linked and s.is_care_activity_person_consistent is distinct from false and s.is_care_activity_referral_consistent is distinct from false and s.is_care_activity_contact_consistent is distinct from false then 'care_activity'
-        when s.referral_source_record_id is not null then 'referral'
+        else 'referral'
     end as parent_record_type,
     case parent_record_type
         when 'care_activity' then 'fct_mhsds_care_activity'
@@ -70,11 +71,14 @@ select
     end as parent_model_name,
     iff(parent_record_id is not null, 'recorded_parent', null)::varchar as relationship_type
 from {{ ref('fct_mhsds_clinical_record') }} as s
+left join {{ ref('fct_mhsds_referral') }} as pr
+    on s.referral_source_record_id = pr.source_record_id
 left join {{ ref('snomed_concept') }} as source_snomed
     on trim(s.clinical_code) = source_snomed.snomed_code
     and upper(s.coding_scheme_description) like 'SNOMED CT%'
 left join {{ ref('snomed_concept') }} as mapped_snomed
     on s.standardised_snomed_code::varchar = mapped_snomed.snomed_code
+    and (upper(s.coding_scheme_description) in ('ICD-10', 'OPCS-4')) is distinct from true
 left join {{ ref('read_code') }} as read_mapping
     on trim(s.clinical_code) = read_mapping.code
     and read_mapping.coding_system = case
