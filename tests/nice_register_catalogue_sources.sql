@@ -1,3 +1,6 @@
+{#- Errors in production, where the deploy rebuilds def_indicator first. Warns elsewhere: CI
+    defers the unchanged catalogue to production, which keeps the previous sources until deploy. -#}
+{{ config(severity='error' if target.name in ['prod', 'snowflake-prod'] else 'warn') }}
 WITH expected AS (
     SELECT column1::VARCHAR AS indicator_id, column2::VARCHAR AS source_model
     FROM VALUES
