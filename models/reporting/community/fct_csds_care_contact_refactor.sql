@@ -766,8 +766,7 @@ CONTACT_ENRICHED AS (
        AND CSLK6.CSDS_FIELDNAME = 'GROUP THERAPY INDICATOR'
 
     LEFT JOIN FIRST_ATTENDED_CONTACT_DATE FACD
-        ON CCON."Unique_service_request_identifier"
-            = FACD."Unique_service_request_identifier"
+        ON CCON."Unique_service_request_identifier" = FACD."Unique_service_request_identifier"
 
     LEFT JOIN {{ ref('practice_weighted_population_current') }} PWP
         ON PAT1.GPCODE = PWP.PRACTICE_CODE
