@@ -47,11 +47,12 @@ select
     iff(mapped_code is not null, 'SNOMED CT', null)::varchar as mapped_coding_system,
     case
         when s.is_care_activity_linked and s.is_care_activity_person_consistent is distinct from false then s.care_activity_source_record_id::varchar
-        else s.referral_id::varchar
+        when (s.person_id = pr.person_id) is distinct from false then s.referral_id::varchar
     end as parent_record_id,
     case
+        when parent_record_id is null then null
         when s.is_care_activity_linked and s.is_care_activity_person_consistent is distinct from false then 'care_activity'
-        when s.referral_id is not null then 'referral'
+        else 'referral'
     end as parent_record_type,
     case parent_record_type
         when 'care_activity' then 'fct_csds_care_activity'
@@ -59,6 +60,8 @@ select
     end as parent_model_name,
     iff(parent_record_id is not null, 'recorded_parent', null)::varchar as relationship_type
 from {{ ref('fct_csds_clinical_record') }} as s
+left join {{ ref('fct_csds_referral') }} as pr
+    on s.referral_id = pr.source_record_id
 left join {{ ref('snomed_concept') }} as source_snomed
     on trim(s.clinical_code) = source_snomed.snomed_code
     and s.clinical_code_system = 'SNOMED CT'
