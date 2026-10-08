@@ -38,6 +38,10 @@ Recorded event date. Interpret with event_time_precision: month and year values 
 Timeline sorting timestamp. Retains an established source clock time; otherwise uses midnight on the recorded date, or the first day of a recorded month or year. These anchors are presentation conventions, not observed times. Null only when no source date is available. Interpret with event_time_precision.
 {% enddocs %}
 
+{% docs navigation_adapter_event_at %}
+Source clock timestamp. Null when the source supplies only a date, month or year, or no date; the shared reporting view adds sorting anchors. Interpret with event_time_precision.
+{% enddocs %}
+
 {% docs navigation_event_time_precision %}
 Recorded precision: timestamp, date, month, year or unknown. Date-only records belong on their day but do not establish within-day ordering.
 {% enddocs %}
@@ -196,6 +200,10 @@ Recorded or source-validated clinical date. SUS diagnoses and other undated code
 
 {% docs navigation_clinical_record_at %}
 Timeline sorting timestamp. Retains an established source clock time; otherwise uses midnight on the clinical date, or the first day of a recorded month or year. These anchors do not establish within-day sequence or an exact day for a partial date. Undated records remain null; recording and encounter dates do not replace the clinical date.
+{% enddocs %}
+
+{% docs navigation_adapter_clinical_record_at %}
+Source clock timestamp. Null when the source supplies only a date, month or year, or no date; the shared reporting view adds sorting anchors. Interpret with clinical_time_precision.
 {% enddocs %}
 
 {% docs navigation_clinical_time_precision %}
