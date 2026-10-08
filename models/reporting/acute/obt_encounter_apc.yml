@@ -5,7 +5,9 @@ models:
       Admitted patient care from SUS for reporting, with one row per hospital
       spell, including open spells. Retains the encounter model's population,
       supplied discharge codes and length-of-stay adjustment. Missing dictionary
-      matches leave labels null without removing spells.
+      matches leave labels null without removing spells. Current PCN,
+      neighbourhood and health borough fields use the latest maintained mapping
+      for the practice recorded on the spell, not historical membership.
     config:
       meta:
         owner:
@@ -308,6 +310,18 @@ models:
       - name: reg_practice_at_event
         data_type: varchar
         description: "Patient registered GP practice at time of event"
+
+      - name: reg_practice_pcn_name_latest
+        data_type: varchar
+        description: Latest maintained PCN name for reg_practice_at_event; not historical membership.
+
+      - name: reg_practice_neighbourhood_name_latest
+        data_type: varchar
+        description: Latest maintained integrated neighbourhood name for reg_practice_at_event; not historical membership.
+
+      - name: reg_practice_health_borough_name_latest
+        data_type: varchar
+        description: Latest maintained WNL health borough for reg_practice_at_event; not historical membership.
 
       - name: visit_occurrence_type
         data_type: varchar

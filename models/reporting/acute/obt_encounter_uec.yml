@@ -1,7 +1,11 @@
 
 models:
   - name: obt_encounter_uec
-    description: "Reporting layer for urgent and emergency care encounters from SUS data."
+    description: >-
+      Urgent and emergency care encounters from SUS data. One row represents
+      one ECDS attendance. Current PCN, neighbourhood and health borough fields
+      describe the latest maintained mapping for the practice submitted on the
+      attendance, not its membership at the attendance date.
     config:
       meta:
         owner:
@@ -262,6 +266,106 @@ models:
       - name: reg_practice_name_latest
         data_type: varchar
         description: "Latest national UKHFD name for reg_practice_at_event. The name is not effective-dated to the attendance."
+
+      - name: reg_practice_pcn_name_latest
+        data_type: varchar
+        description: Latest maintained PCN name for reg_practice_at_event; not historical membership.
+
+      - name: reg_practice_neighbourhood_name_latest
+        data_type: varchar
+        description: Latest maintained integrated neighbourhood name for reg_practice_at_event; not historical membership.
+
+      - name: reg_practice_health_borough_name_latest
+        data_type: varchar
+        description: Latest maintained WNL health borough for reg_practice_at_event; not historical membership.
+
+      - name: is_mental_health_referral
+        data_type: boolean
+        description: >-
+          True when any referred-to-service record for the attendance has the
+          ECDS group Psychiatric. This records referral evidence; it is not the
+          proposed local mental-health classification, whose first-referral or
+          any-referral rule has not yet been agreed.
+
+      - name: is_cyp_mental_health
+        data_type: boolean
+        description: >-
+          True when the person was under 18 at arrival and the attendance meets
+          the NHS England mental-health-related attendance definition in the
+          Supplementary ECDS Analysis Technical Specification v3.3.
+
+      - name: is_mental_health_related_attendance
+        data_type: boolean
+        description: >-
+          True when the attendance has a chief complaint, injury intent or
+          diagnosis code in the NHS England mental-health-related attendance
+          definition in the Supplementary ECDS Analysis Technical Specification
+          v3.3. This all-age flag includes suspected and confirmed diagnoses.
+
+      - name: has_suspected_mental_health_diagnosis_only
+        data_type: boolean
+        description: >-
+          True when the attendance has a diagnosis in the NHS England
+          mental-health-related diagnosis list and none of those diagnoses is
+          recorded as confirmed present. False also covers attendances without
+          a diagnosis from that list.
+
+      - name: discharge_destination_ecds_group1
+        data_type: varchar
+        description: ECDS group for the submitted discharge destination code.
+
+      - name: discharge_destination_group
+        data_type: varchar
+        description: >-
+          NHS England 2025 discharge destination group: Admitted, Non-admitted,
+          Other or Unknown. Other includes mortuary, short stay, SDEC, hospital
+          at home, transfer and hospice. Unknown covers missing and unmapped codes.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Admitted', 'Non-admitted', 'Other', 'Unknown']
+
+      - name: is_unplanned_attendance
+        data_type: boolean
+        description: >-
+          True for the NHS England unplanned-attendance population: ECDS activity
+          type 01, 02, 03 or 04, excluding planned follow-ups and people recorded
+          as dead on arrival. Department type supplies the activity type when the
+          submitted activity type is missing, including for historical records.
+          Missing attendance category or discharge status does not itself exclude
+          a row.
+
+      - name: attendance_count
+        data_type: number
+        description: >-
+          Additive attendance measure. Usually 1; 0 for the agreed historical
+          Totally streaming records that were also counted at a co-located ED.
+
+      - name: over_12_hours_count
+        data_type: number
+        description: >-
+          NHS England additive numerator for unplanned attendances with valid
+          departure date and time and submitted duration greater than 720 minutes.
+          Use is_unplanned_attendance with valid departure date and time as the
+          denominator.
+
+      - name: over_72_hours_count
+        data_type: number
+        description: >-
+          Local additive measure. Counts an attendance when submitted duration is
+          greater than 4,320 minutes; missing duration counts as 0.
+
+      - name: assessed_within_15_minutes_count
+        data_type: number
+        description: >-
+          Local additive measure. Counts an attendance when submitted initial
+          assessment time is at or below 15 minutes; missing time counts as 0.
+
+      - name: not_assessed_within_15_minutes_count
+        data_type: number
+        description: >-
+          Local additive measure. Counts an attendance when submitted initial
+          assessment time is above 15 minutes; missing time counts as 0.
 
       - name: visit_occurrence_type
         data_type: varchar
