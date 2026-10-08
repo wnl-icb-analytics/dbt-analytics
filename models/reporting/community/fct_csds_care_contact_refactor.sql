@@ -606,10 +606,10 @@ IMD_LOOKUP AS (
 
     SELECT *
 
-    FROM {{ ref('stg_reference_imd2025') }}
+    FROM {{ ref('stg_reference_imd2025_for_csds') }}
 
     WHERE REGEXP_LIKE(
-        local_authority_district_name_2024,
+        LOCAL_AUTHORITY_DISTRICT_NAME_2024,
         'Barnet|Enfield|Camden|Islington|Haringey|Brent|Harrow|Hillingdon|Central London|West London|Hammersmith and Fulham|Hounslow|Ealing|Westminster|Kensington and Chelsea',
         'i'
     )
@@ -645,7 +645,7 @@ PRACTICE_CONTEXT AS (
 
     SELECT
         *
-    FROM {{ ref('stg_reference_primary_care_pcn_membership_all') }}
+    FROM {{ ref('practice_wnl_all') }}
 
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY PRACTICE_CODE
@@ -748,6 +748,7 @@ CONTACT_ENRICHED AS (
 
     LEFT JOIN PRACTICE_CONTEXT PRAC_WNL
         ON PAT1.GPCODE = PRAC_WNL.PRACTICE_CODE    
+        
     LEFT JOIN {{ ref('stg_reference_wnl_gp_practice_neighbourhood') }} PRAC_NGH
         ON PAT1.GPCODE = PRAC_NGH.PRACTICE_CODE
 
