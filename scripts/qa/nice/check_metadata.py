@@ -91,9 +91,41 @@ for key, node in measures.items():
         bool(meta.get("custom_message")), "inherited OLIDS data-use warning is missing"
     )
 
+register_models = {
+    "IND185": "fct_person_nice_atrial_fibrillation_register",
+    "IND205": "fct_person_nice_multimorbidity_register",
+    "IND206": "fct_person_nice_frailty_register",
+    "IND256": "fct_person_nice_smi_register",
+}
+registers = {}
+for node in nodes.values():
+    if node["resource_type"] != "model":
+        continue
+    meta = node["config"].get("meta", {})
+    for indicator in [meta.get("indicator", {}), *meta.get("indicators", [])]:
+        if indicator.get("type") != "NICE_REGISTER":
+            continue
+        indicator_id = indicator.get("id")
+        if indicator_id in registers:
+            errors.append(f"{indicator_id}: duplicate NICE register definition")
+        registers[indicator_id] = node["name"]
+        if indicator_id in register_models:
+            if node["name"] != register_models[indicator_id]:
+                errors.append(f"{indicator_id}: NICE register source model differs")
+            if indicator.get("source_column") != "is_on_register":
+                errors.append(f"{indicator_id}: register source must be is_on_register")
+            if "is_on_register" not in node.get("columns", {}):
+                errors.append(f"{indicator_id}: register membership flag is undocumented")
+if len(registers) != 27:
+    errors.append(f"Expected 27 NICE register definitions, found {len(registers)}")
+for indicator_id in register_models:
+    if indicator_id not in registers:
+        errors.append(f"{indicator_id}: NICE register definition is missing")
+
 if errors:
     print("\n".join(errors))
     raise SystemExit(1)
 print(
     f"PASS: {len(measures)} distinct NICE measures have catalogue metadata, documented source flags and roll-up lineage."
 )
+print("PASS: 27 distinct NICE registers; IND185, IND205, IND206 and IND256 use dedicated membership models.")

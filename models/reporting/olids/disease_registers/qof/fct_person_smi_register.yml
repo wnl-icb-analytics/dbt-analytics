@@ -1,15 +1,16 @@
 models:
   - name: fct_person_smi_register
     description: >-
-      Psychosis and bipolar disorder register (NICE IND257). One row per register member.
+      Psychosis and bipolar disorder QOF register (NICE IND257). One row per register
+      member.
 
 
-      Registration status is not filtered. Schizophrenia, bipolar affective disorder or other
-      psychoses qualify at any age. People with a diagnosis remain included during remission;
-      remission-only records do not qualify. The model does not include lithium-only people;
-      NICE IND256 needs the additional lithium population. Lithium fields describe treatment
-      only for diagnosis-qualified people. For NICE counts, select people registered on the
-      build date. Based on NICE CG178. Code lists: MH_COD (PCD).
+      Registration status is not filtered. Schizophrenia, bipolar affective disorder or
+      other psychoses qualify at any age. People with a diagnosis remain included during
+      remission; remission-only records do not qualify. Lithium fields describe treatment
+      only for diagnosis-qualified people. For IND257 counts, select people registered on
+      the build date. Based on NICE CG178. Code lists: MH_COD (PCD). The NICE IND256
+      population, including lithium-only people, is in fct_person_nice_smi_register.
     data_tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -68,26 +69,6 @@ models:
               do not qualify. Clinical evidence is dated by the build date. For NICE counts,
               select people registered on the build date. Based on NICE CG178. Code lists:
               MH_COD (PCD).
-            source_column: "is_on_register"
-            is_qof: true
-            qof_indicator: "MH001"
-            usage_contexts: ["NICE_GUIDANCE"]
-          - id: "IND256"
-            type: "NICE_REGISTER"
-            category: "LTC"
-            clinical_domain: "Mental Health"
-            name_short: >-
-              Psychosis, bipolar disorder or lithium
-            description_short: "NICE counts require this diagnosis register plus people on active lithium therapy."
-            description_long: >-
-              The NICE population includes people with schizophrenia, bipolar disorder or other
-              psychoses, and people on lithium therapy. For NICE counts, combine this diagnosis
-              register with people on active lithium treatment from the long-term condition
-              population and count each person once. The register alone omits lithium-only
-              people. Lithium requires a prescription in the 6 months before the build date with
-              no stop on a later date; a same-day stop retains treatment. Diagnosis-qualified
-              people do not need lithium. Select people registered on the build date. Based on
-              NICE CG178. Code lists: MH_COD, LITSTP_COD, LIT_COD (PCD).
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "MH001"

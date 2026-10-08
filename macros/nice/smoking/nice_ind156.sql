@@ -14,6 +14,7 @@ WITH indicator_population AS (
         smoking.latest_smoking_status,
         smoking.latest_smoking_status_date,
         smoking.latest_never_smoked_date,
+        smoking.is_ex_smoker_covered,
         smoking.latest_smoking_intervention_date
     FROM {{ nice_ref('int_nice_ltc_population', reference) }} AS profile
     INNER JOIN ({{ nice_reference_population(reference) }}) AS population
@@ -58,7 +59,7 @@ assessed AS (
             AND population.latest_never_smoked_date > DATEADD(year, 25, population.birth_date_approx)
             AND population.latest_never_smoked_date > population.earliest_smoking_ltc_diagnosis_date,
             FALSE
-        ) AS is_in_numerator
+        ) OR COALESCE(population.is_ex_smoker_covered, FALSE) AS is_in_numerator
     FROM indicator_population AS population
 )
 

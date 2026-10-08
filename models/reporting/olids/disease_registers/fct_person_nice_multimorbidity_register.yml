@@ -1,0 +1,112 @@
+models:
+- name: fct_person_nice_multimorbidity_register
+  description: >-
+    Multimorbidity register (NICE IND205). One row per register member on the build date.
+
+
+    People registered on the build date, aged 18 or over, qualify with at least four distinct
+    categories from the 11 NICE multimorbidity categories used by IND207. Each category counts
+    once. The route based on a clinical determination that tailored care would help has no coded
+    evidence and is not included. Diverticular disease is absent; contributing register age
+    and treatment rules and the alcohol event-age floor of 16 limit coverage. Evidence is assessed
+    on the build date using clinical and recorded dates. Based on NICE NG56, recommendations
+    1.1.1 and 1.3.1. Chronic pain requires at least four analgesic orders, or four qualifying
+    antiepileptic orders without epilepsy history, including resolved diagnoses. Constipation
+    requires at least four laxative orders. Both use the 12 months before the build date. Current
+    substance misuse counts. Code lists: CROHNS_COD, ULCCOLITIS_COD, EATDISORDER_COD, ILLSUB_COD
+    (PCD); MULTIMORBIDITY_CONNECTIVE_TISSUE_DISORDER (BRISTOL); HAS_CF_OR_BRONCHIECTASIS (QCOVID);
+    INFLAMMATORY_BOWEL_DISEASE_UNCLASSIFIED (OPENSAFELY); 5065, 5066, 5071 (CCMS); contributing
+    disease register code lists. Deceased people and test records are excluded.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      indicators:
+      - id: IND205
+        type: NICE_REGISTER
+        category: LTC
+        clinical_domain: Multimorbidity
+        name_short: Multimorbidity register
+        description_short: >-
+          Adults with conditions in at least 4 of 11 categories: cancer, chronic pain,
+          circulatory, diabetes, digestive, learning disability, mental health, musculoskeletal,
+          neurological, renal and respiratory.
+        description_long: >-
+          People registered on the build date, aged 18 or over, qualify with at least four distinct
+          categories from the 11 NICE multimorbidity categories used by IND207. Each category
+          counts once. The route based on a clinical determination that tailored care would
+          help has no coded evidence and is not included. Diverticular disease is absent; contributing
+          register age and treatment rules and the alcohol event-age floor of 16 limit coverage.
+          Evidence is assessed on the build date using clinical and recorded dates. Based on
+          NICE NG56, recommendations 1.1.1 and 1.3.1. Chronic pain requires at least four analgesic
+          orders, or four qualifying antiepileptic orders without epilepsy history, including
+          resolved diagnoses. Constipation requires at least four laxative orders. Both use
+          the 12 months before the build date. Current substance misuse counts. Code lists:
+          CROHNS_COD, ULCCOLITIS_COD, EATDISORDER_COD, ILLSUB_COD (PCD); MULTIMORBIDITY_CONNECTIVE_TISSUE_DISORDER
+          (BRISTOL); HAS_CF_OR_BRONCHIECTASIS (QCOVID); INFLAMMATORY_BOWEL_DISEASE_UNCLASSIFIED
+          (OPENSAFELY); 5065, 5066, 5071 (CCMS); contributing disease register code lists.
+        source_column: is_on_register
+        is_qof: false
+        qof_indicator: null
+        usage_contexts:
+        - NICE_GUIDANCE
+  columns:
+  - name: person_id
+    description: >-
+      Person identifier.
+    data_tests:
+    - unique
+    - not_null
+  - name: reporting_date
+    description: >-
+      Build date used to assess register membership.
+  - name: age
+    description: >-
+      Age in years from the approximate birth month on the build date; null when birth date
+      is missing.
+  - name: practice_code
+    description: >-
+      Current practice attributed to the registered person on the build date.
+  - name: is_on_register
+    description: >-
+      True for every row; only eligible register members are included.
+  - name: category_count
+    description: >-
+      Number of distinct qualifying condition categories on the build date; at least four for
+      every member.
+  - name: has_cancer
+    description: >-
+      Whether the person has evidence in the cancer category under the shared IND207 definition.
+  - name: has_chronic_pain
+    description: >-
+      Whether the person has evidence in the chronic pain category under the shared IND207 definition.
+  - name: has_circulatory
+    description: >-
+      Whether the person has evidence in the circulatory category under the shared IND207 definition.
+  - name: has_diabetes
+    description: >-
+      Whether the person has evidence in the diabetes category under the shared IND207 definition.
+  - name: has_digestive
+    description: >-
+      Whether the person has evidence in the digestive category under the shared IND207 definition.
+  - name: has_learning_disability
+    description: >-
+      Whether the person has evidence in the learning disability category under the shared IND207
+      definition.
+  - name: has_mental_health
+    description: >-
+      Whether the person has evidence in the mental health category under the shared IND207
+      definition.
+  - name: has_musculoskeletal
+    description: >-
+      Whether the person has evidence in the musculoskeletal category under the shared IND207
+      definition.
+  - name: has_neurological
+    description: >-
+      Whether the person has evidence in the neurological category under the shared IND207 definition.
+  - name: has_renal
+    description: >-
+      Whether the person has evidence in the renal category under the shared IND207 definition.
+  - name: has_respiratory
+    description: >-
+      Whether the person has evidence in the respiratory category under the shared IND207 definition.

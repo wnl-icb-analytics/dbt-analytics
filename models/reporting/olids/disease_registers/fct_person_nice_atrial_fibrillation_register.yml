@@ -1,0 +1,68 @@
+models:
+- name: fct_person_nice_atrial_fibrillation_register
+  description: >-
+    Atrial fibrillation register (NICE IND185). One row per register member on the build date.
+
+
+    People registered on the build date, of any age, qualify with any atrial fibrillation diagnosis
+    known by that date. Resolution does not remove membership. A resolution on or after the
+    latest diagnosis marks is_resolved as true. Clinical and recorded dates must be on or before
+    the build date; missing recorded dates use the clinical date. Based on NICE NG196. Code
+    lists: AFIB_COD and AFIBRES_COD (PCD). Deceased people and test records are excluded.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      indicators:
+      - id: IND185
+        type: NICE_REGISTER
+        category: LTC
+        clinical_domain: Cardiovascular
+        name_short: Atrial fibrillation register
+        description_short: >-
+          People with an atrial fibrillation diagnosis, including resolved atrial fibrillation.
+        description_long: >-
+          People registered on the build date, of any age, qualify with any atrial fibrillation
+          diagnosis known by that date. Resolution does not remove membership. A resolution
+          on or after the latest diagnosis marks is_resolved as true. Clinical and recorded
+          dates must be on or before the build date; missing recorded dates use the clinical
+          date. Based on NICE NG196. Code lists: AFIB_COD and AFIBRES_COD (PCD).
+        source_column: is_on_register
+        is_qof: true
+        qof_indicator: AF001
+        usage_contexts:
+        - NICE_GUIDANCE
+  columns:
+  - name: person_id
+    description: >-
+      Person identifier.
+    data_tests:
+    - unique
+    - not_null
+  - name: reporting_date
+    description: >-
+      Build date used to assess register membership.
+  - name: age
+    description: >-
+      Age in years from the approximate birth month on the build date; null when birth date
+      is missing.
+  - name: practice_code
+    description: >-
+      Current practice attributed to the registered person on the build date.
+  - name: is_on_register
+    description: >-
+      True for every row; only eligible register members are included.
+  - name: is_resolved
+    description: >-
+      Whether an AF resolution is on or after the latest diagnosis, comparing calendar dates.
+      Resolved people remain on this register.
+  - name: earliest_diagnosis_date
+    description: >-
+      Earliest AF diagnosis clinical timestamp known by the build date.
+  - name: latest_diagnosis_date
+    description: >-
+      Latest AF diagnosis clinical timestamp known by the build date.
+  - name: latest_resolved_date
+    description: >-
+      Latest AF resolution clinical timestamp known by the build date; null when no resolution
+      is known.
