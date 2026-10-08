@@ -221,6 +221,11 @@ select
         else 1
         end as attendance_count
     , case
+        when duration >= 240 then 'Y'
+        when duration < 240 then 'N'
+        else 'Unknown'
+        end as four_hour_breach_status
+    , case
         when is_unplanned_attendance
             and duration > 720
             and end_date is not null
