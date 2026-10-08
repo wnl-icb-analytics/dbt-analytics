@@ -40,5 +40,40 @@ class NavigationWarehouseTests(unittest.TestCase):
         self.assertEqual(self.render("DBT_ADMIN", False, execute=False), "")
 
 
+class NavigationDeliveryFilterTests(unittest.TestCase):
+    def render(self, incremental=True, execute=True):
+        root = Path(__file__).resolve().parents[2]
+        sql = (root / "macros/transformations/navigation_delivery_filter.sql").read_text()
+        self.queries = []
+
+        def run_query(query):
+            self.queries.append(query)
+            return SimpleNamespace(columns=[SimpleNamespace(values=lambda: ["2026-01-10 12:34:56.123456789"])])
+
+        template = Environment().from_string(sql + "{{ navigation_delivery_filter('s.received_at', 'contact') }}")
+        return template.render(
+            is_incremental=lambda: incremental, execute=execute,
+            this="fixture_target", run_query=run_query,
+        ).strip()
+
+    def test_increment_resolves_per_type_literal_and_replays_boundary_and_nulls(self):
+        self.assertEqual(
+            self.render(),
+            "and (s.received_at is null or s.received_at >= '2026-01-10 12:34:56.123456789'::timestamp_ntz)",
+        )
+        self.assertEqual(self.queries, [
+            "select to_varchar(coalesce(max(source_received_at), '1900-01-01'::timestamp_ntz), "
+            "'YYYY-MM-DD HH24:MI:SS.FF9') from fixture_target where source_record_type = 'contact'"
+        ])
+
+    def test_parse_uses_default_without_querying(self):
+        self.assertIn("'1900-01-01 00:00:00.000000000'::timestamp_ntz", self.render(execute=False))
+        self.assertEqual(self.queries, [])
+
+    def test_full_refresh_does_not_filter_or_query(self):
+        self.assertEqual(self.render(incremental=False), "")
+        self.assertEqual(self.queries, [])
+
+
 if __name__ == "__main__":
     unittest.main()

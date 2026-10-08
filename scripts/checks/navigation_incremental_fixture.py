@@ -8,6 +8,7 @@ then execute that file in one Snowflake session. All tables are temporary in the
 existing DEV schema. The final query returns aggregate checks, not clinical data.
 """
 from pathlib import Path
+from types import SimpleNamespace
 
 from jinja2 import Environment
 
@@ -23,24 +24,39 @@ macros = "\n".join(
 )
 
 
-def render(expression, incremental=True):
+def render(expression, incremental=True, watermarks=None):
+    def run_query(sql):
+        marker = f"navigation_fixture_watermark_{len(watermarks)}"
+        watermarks.append((marker, sql))
+        return SimpleNamespace(columns=[SimpleNamespace(values=lambda: [marker])])
+
     return Environment().from_string(macros + expression).render(
         is_incremental=lambda: incremental,
+        execute=True,
+        run_query=run_query,
         this=TARGET,
         ref=lambda name: SOURCE,
     ).strip()
 
 
-def selection(incremental=True):
+def selection(incremental=True, watermarks=None):
     return "\nunion all\n".join(
         f"select * from {SOURCE} where source_record_type = '{kind}' "
-        + render("{{ navigation_delivery_filter('source_received_at', '" + kind + "') }}", incremental)
+        + render("{{ navigation_delivery_filter('source_received_at', '" + kind + "') }}", incremental, watermarks)
         for kind in ("contact", "referral")
     )
 
 
 def increment():
-    print(f"create or replace temporary table {BATCH} as {selection()};")
+    watermarks = []
+    sql = f"create or replace temporary table {BATCH} as {selection(watermarks=watermarks)}"
+    statement = "'" + sql.replace("'", "''") + "'"
+    # Resolve the real macro queries before substituting their timestamp literals.
+    for marker, query in watermarks:
+        print(f"set {marker}=({query});")
+        statement = f"replace({statement}, '{marker}', ${marker})"
+    print(f"execute immediate $$ declare batch_sql varchar default {statement}; "
+          "begin execute immediate :batch_sql; end; $$;")
     # dbt delete+insert replaces every milestone of each delivered source key.
     print(f"delete from {TARGET} using {BATCH} where "
           f"{TARGET}.source_record_type={BATCH}.source_record_type and "
