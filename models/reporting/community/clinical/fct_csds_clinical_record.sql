@@ -92,9 +92,12 @@ with submitted as (
         , scale.specification_version as assessment_definition_version
         , response.response_description as clinical_value_description
         , response.is_non_score_response as is_assessment_response_non_score
-        , try_to_decimal(r.clinical_value, 38, 9) as clinical_value_numeric
+        -- ETOS C611030 uses 99.9 for an unknown length.
+        , r.clinical_record_type = 'person_length' and try_to_decimal(r.clinical_value, 38, 9) = 99.9 as is_clinical_value_unknown
+        , iff(is_clinical_value_unknown, null, try_to_decimal(r.clinical_value, 38, 9)) as clinical_value_numeric
         , case
             when r.clinical_value is null then 'value_missing'
+            when is_clinical_value_unknown then 'value_unknown'
             when clinical_value_numeric is null then 'not_numeric_or_out_of_range'
             when not regexp_like(trim(r.clinical_value), '[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)')
                 then 'numeric_format_unverified'

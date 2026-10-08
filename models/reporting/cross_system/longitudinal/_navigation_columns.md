@@ -251,7 +251,7 @@ Numeric representation at precision 38 and scale 9. Check result_value_parse_sta
 {% enddocs %}
 
 {% docs navigation_result_value_parse_status %}
-Source numeric parsing assessment. Rounded or out-of-range values remain identifiable, and the original result_value is retained.
+Source numeric parsing assessment. Rounded or out-of-range values remain identifiable, and the original result_value is retained. value_unknown marks a submitted placeholder meaning unknown, such as the CSDS 99.9 length; its numeric value is null.
 {% enddocs %}
 
 {% docs navigation_result_date %}
