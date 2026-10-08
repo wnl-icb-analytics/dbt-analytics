@@ -78,6 +78,7 @@ left join {{ ref('snomed_concept') }} as source_snomed
     and upper(s.coding_scheme_description) like 'SNOMED CT%'
 left join {{ ref('snomed_concept') }} as mapped_snomed
     on s.standardised_snomed_code::varchar = mapped_snomed.snomed_code
+    and (upper(s.coding_scheme_description) in ('ICD-10', 'OPCS-4')) is distinct from true
 left join {{ ref('read_code') }} as read_mapping
     on trim(s.clinical_code) = read_mapping.code
     and read_mapping.coding_system = case
