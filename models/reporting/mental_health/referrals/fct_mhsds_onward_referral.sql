@@ -10,7 +10,7 @@ with identified as (
 ), selected as (
     select *
         , count(*) over (partition by entity_id) as n_accepted_source_records
-        , min(reporting_period_end_date) over (partition by entity_id) as first_submission_period_end_date
+        , min(submission_period_end_date) over (partition by entity_id) as first_submission_period_end_date
     from identified
     qualify row_number() over (partition by entity_id order by submission_period_end_date desc nulls last, reporting_period_end_date desc nulls last, effective_from desc nulls last, uniq_submission_id desc, row_number desc nulls last, mhs105_uniq_id desc) = 1
 )
