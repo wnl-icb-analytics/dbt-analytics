@@ -112,7 +112,7 @@ jobs:
       SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE__USERNAME }}
       SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE__PASSPHRASE }}
       SNOWFLAKE_ROLE: DBT_ADMIN
-      SNOWFLAKE_WAREHOUSE: WH_WNL_ENGINEERING_M
+      SNOWFLAKE_WAREHOUSE: WH_WNL_ENGINEERING_ADAPTIVE
     steps:
       - name: Resolve run type
         id: plan
@@ -149,9 +149,6 @@ jobs:
 
           echo "run_type=$run_type" >> "$GITHUB_OUTPUT"
           echo "dbt_args=$dbt_args" >> "$GITHUB_OUTPUT"
-          if [ "$run_type" = "monthly-full-refresh" ]; then
-            echo "EFI2_HISTORY_WAREHOUSE=WH_WNL_OLIDS_L" >> "$GITHUB_ENV"
-          fi
           echo "dbt_target=$dbt_target" >> "$GITHUB_OUTPUT"
           echo "Run type: $run_type / dbt $dbt_args --target $dbt_target"
 
