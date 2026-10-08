@@ -263,9 +263,14 @@ models:
           3 = Moderate, 4 = Heavy, 5 = VeryHeavy): the highest category from
           any valid Full AUDIT score (int_alcohol_audit_scores) known by the
           index date, banded by the qadmissions_alcohol_cat6 macro shared with
-          qadmissions_alcohol_category. AUDIT-C scores are not used. NULL
-          when the person has no Full AUDIT score by the index date, as in
-          qadmissions_input_features, so it can be handled at scoring.
+          qadmissions_alcohol_category. AUDIT-C scores are not used. 0
+          (NonDrinker) when the person has no Full AUDIT score by the index
+          date, as in qadmissions_input_features.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2, 3, 4, 5]
 
       - name: ethrisk
         data_type: number
