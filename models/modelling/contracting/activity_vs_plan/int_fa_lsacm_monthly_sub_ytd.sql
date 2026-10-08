@@ -26,7 +26,8 @@ LEFT JOIN {{ ref('fa_lsacm_submission_dates') }} s on s.activity_year_month = TO
 --LEFT JOIN DEV__MODELLING.CONTRACTING.FA_LSACM_SUBMISSION_DATES s on s.activity_year_month = TO_CHAR(DATEADD(MONTH,r.financial_month + 2,TO_DATE(r.financial_year || '-01-01')),'YYYY-MM')
 WHERE r.feed = 'LSACM'
 AND LEFT(SPLIT_PART(r.file_name, '_', 2),3) in ('RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS')
-AND r.financial_year = (select max(financial_year) from STAGING.SDL.STG_SDL_META_FILE_REGISTRY)
+-- AND r.financial_year = (select max(financial_year) from STAGING.SDL.STG_SDL_META_FILE_REGISTRY where feed = 'LSACM')
+AND r.financial_month = (select max(financial_month) from {{ ref('stg_sdl_meta_file_registry') }} where feed = 'LSACM')
 --keep submission version history and all months for now. Latest version and latest financial month can be filtered for in downstream tables
 --QUALIFY ROW_NUMBER() OVER (PARTITION BY LEFT(SPLIT_PART(FILE_NAME, '_', 2),3),  FINANCIAL_MONTH  ORDER BY CREATED_DATETIME  DESC) =1
 )
