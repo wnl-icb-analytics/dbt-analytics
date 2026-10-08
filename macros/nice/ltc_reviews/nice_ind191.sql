@@ -4,6 +4,7 @@
     Args: reference is current or by_month.
     Returns: the IND191 detail projection, one eligible person per reporting_date.
 -#}
+-- QOF COPD010 permits separate assessment records.
 -- NICE IND191: https://www.nice.org.uk/indicators/ind191
 -- COPD review, exacerbation count and MRC dyspnoea assessment in 12 months for people on the COPD register.
 WITH indicator_population AS (
@@ -50,10 +51,11 @@ SELECT
     person_id,
     'IND191' AS indicator_id,
     'COPD: annual review' AS indicator_name,
+    'The percentage of patients with COPD on the register, who have had a review in the preceding 12 months, including a record of the number of exacerbations and an assessment of breathlessness using the Medical Research Council dyspnoea scale.' AS indicator_description,
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Chronic obstructive pulmonary disease' AS condition_name,
+    'Chronic obstructive pulmonary disease' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_review_date,
     latest_mrc_dyspnoea_date,

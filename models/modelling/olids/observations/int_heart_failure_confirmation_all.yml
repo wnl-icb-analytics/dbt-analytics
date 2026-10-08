@@ -1,0 +1,19 @@
+models:
+- name: int_heart_failure_confirmation_all
+  description: Echocardiogram or specialist assessment evidence for all people, one row per observation from
+    PCD ECOG_COD. The list includes echo procedures, results and specialist referral records accepted as assessment
+    evidence. Indicators apply diagnosis-relative windows.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: ECOG_COD
+        source: PCD
+  columns: []

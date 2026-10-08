@@ -43,6 +43,7 @@ synthetic_smoking AS (
     SELECT person_id, reporting_date, 'Current Smoker' AS latest_smoking_status,
         reporting_date AS latest_smoking_status_date,
         NULL::DATE AS latest_never_smoked_date,
+        NULL::DATE AS latest_smoking_unsuitable_date,
         reporting_date AS latest_smoking_intervention_date
     FROM synthetic_ltc
 ),

@@ -1,15 +1,16 @@
 models:
 - name: fct_person_dementia_care_plan_ind142_by_month
-  description: NICE IND142. One row per eligible person and completed month-end. People on the dementia
-    register. A care plan or review must be in the inclusive preceding 12 months and on or after the earliest
-    dementia diagnosis. The codes do not establish the face-to-face setting required by NICE. Recalculated
-    at monthly refresh for the last 60 completed month-ends using today's rules and code lists. Registration
-    and practice come from the existing monthly spine. Registration start is inclusive; registration end
-    and death dates are exclusive. Overlapping registrations retain the spine's current-registration priority.
-    Birth and death dates are approximate; missing birth dates prevent historical active rows. Current
-    gender and test flags apply retrospectively. Register diagnosis state uses clinical and recorded dates.
-    Review and test evidence uses its clinical date through month-end. Later corrections and current code-list
-    changes can alter earlier results. Personalised care adjustments are not applied.
+  description: >-
+    Care planning or care plan review in dementia (NICE IND142). One row per person in the
+    denominator at each month-end.
+
+
+    People registered at the month-end on the dementia register. Achieved with a dementia care
+    plan or plan review in the 12 months before the month-end, on or after first diagnosis. A
+    new plan counts without a review; codes do not prove NICE's required face-to-face setting.
+    No personalised care adjustments are applied. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months. Based on NICE NG97. Code lists: DEM_COD, DEMCP_COD, DEMCPRVW_COD (PCD).
   config:
     meta:
       owner:
@@ -17,35 +18,43 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind142
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Person identifier for a member of the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
   - name: reporting_date
-    description: Completed month-end used for eligibility and evidence. DATE; no current-day row.
+    description: "Month-end used to assess eligibility and evidence."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "12 months before the reporting date, included in the care plan window."
   - name: age
-    description: Completed years at month-end, calculated from the approximate birth month.
-  - name: condition_name
-    description: Population defining the indicator
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
   - name: practice_code
-    description: ODS practice code at month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice at the reporting month-end."
   - name: practice_name
-    description: Practice name at month-end under the monthly spine attribution.
+    description: "Name of the registration practice at the reporting month-end."
   - name: latest_review_date
-    description: Date of the latest review, care plan, health check or test record for the indicator;
-      null when none
+    description: >-
+      Latest dementia care plan or plan review on or before the reporting date; null if
+      absent. It may be older than the 12-month window or precede diagnosis.
+      Latest dementia care plan or plan review on or before the reporting date; null if
+      absent. It may be older than the 12-month window or precede diagnosis.
   - name: latest_record_date
-    description: Review, check or test date within its measurement window; null when none. Supporting
-      evidence alone does not establish all numerator components.
+    description: >-
+      Latest dementia care plan or plan review in the 12-month window; null if absent. A plan
+      before the first diagnosis does not achieve the indicator.
+      Latest dementia care plan or plan review in the 12-month window; null if absent. A plan
+      before the first diagnosis does not achieve the indicator.
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true. Each row is an eligible member of the denominator."
   - name: is_in_numerator
-    description: Whether the person meets the indicator on the reporting date
+    description: "Whether the person meets the documented achievement rule."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

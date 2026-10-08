@@ -24,8 +24,7 @@ WITH indicator_population AS (
     INNER JOIN ({{ nice_reference_population(reference) }}) AS population
         ON profile.person_id = population.person_id
         AND profile.reporting_date = population.reporting_date
-    WHERE profile.ckd_diagnosis_date
-        BETWEEN DATEADD(month, -12, population.reporting_date) AND population.reporting_date
+    WHERE profile.ckd_diagnosis_date > DATEADD(month, -12, DATEADD(day, -90, population.reporting_date)) AND profile.ckd_diagnosis_date <= DATEADD(day, -90, population.reporting_date)
 ),
 
 assessed AS (
@@ -49,11 +48,12 @@ assessed AS (
 SELECT
     person_id,
     'IND234' AS indicator_id,
-    'Kidney conditions: CKD - eGFR and ACR' AS indicator_name,
+    'Kidney conditions: CKD – eGFR and ACR' AS indicator_name,
+    'The percentage of patients with a new diagnosis of CKD stage G3a–G5 (on the register, within the preceding 12 months) who had eGFR and ACR (urine albumin to creatinine ratio) measurements recorded within 90 days before or after diagnosis.' AS indicator_description,
     reporting_date,
-    DATEADD(month, -12, reporting_date) AS measurement_period_start,
+    DATEADD(month, -12, DATEADD(day, -90, reporting_date)) AS measurement_period_start,
     age,
-    'CKD stage 3 to 5 diagnosed in the preceding 12 months' AS condition_name,
+    'New chronic kidney disease, stages 3 to 5'::VARCHAR(53) AS denominator_description,
     {{ nice_practice_columns('result', reference) }},
     diagnosis_date,
     latest_egfr_value,

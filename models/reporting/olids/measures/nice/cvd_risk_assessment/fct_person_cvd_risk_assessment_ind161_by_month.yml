@@ -1,20 +1,21 @@
 models:
 - name: fct_person_cvd_risk_assessment_ind161_by_month
-  description: "NICE IND161 CVD risk assessment at a new diagnosis. One row per currently\nregistered,\
-    \ living, non-test person aged 25 to 84 with newly recorded hypertension\nor type 2 diabetes in the\
-    \ preceding 12 months, assessed at the month-end.\n\nAchievement requires a cardiovascular disease\
-    \ (CVD) risk assessment within three\ncalendar months before or after the qualifying diagnosis. If\
-    \ both diagnoses are new,\nthe earlier qualifying date is used; NICE and QOF do not settle this local\
-    \ choice.\n\nExcludes established CVD, including haemorrhagic stroke, stage 3 to 5 chronic kidney\n\
-    disease, familial hypercholesterolaemia and type 1 diabetes. A coded assessment can\ncount without\
-    \ a numeric score.\n\nPersonalised care adjustments are not applied.\n Recalculated at monthly refresh\
-    \ for the last 60 completed month-ends using today's rules and code lists. Registration and practice\
-    \ use the existing monthly spine: start inclusive, end and death exclusive, with current-registration\
-    \ priority for overlaps. Birth and death dates are approximate; missing birth dates prevent historical\
-    \ active rows. Current gender and test flags apply retrospectively. Register and diagnosis state use\
-    \ clinical and recorded dates. Other evidence uses clinical or order dates through the month-end.\
-    \ Later corrections and code-list changes can alter earlier results. Personalised care adjustments\
-    \ are not applied."
+  description: >-
+    Cardiovascular risk assessment after a new diagnosis (NICE IND161). One row per person in
+    the denominator at each month-end.
+
+
+    People registered at the month-end aged 25 to 84 with first hypertension or type 2
+    diabetes diagnosis 3 to 15 months before the month-end, so follow-up is complete. Achieved
+    with cardiovascular risk assessment within 3 calendar months before or after diagnosis; no
+    numeric score or separate consultation record is needed. When both diagnoses qualify, the
+    earlier is used. Excludes established cardiovascular disease, including haemorrhagic
+    stroke, CKD stage 3 to 5, familial hypercholesterolaemia and type 1 diabetes. No
+    personalised care adjustments are applied. Based on NICE NG238. Recalculated for each of
+    the last 60 month-ends with current rules, code lists and records, so later corrections
+    can change past months. Code lists: CVDRISKASS_COD, CVDASS2_COD, QRISKSCORE_COD, CHD_COD,
+    STRK_COD, TIA_COD, PAD_COD, HSTRK_COD, CKD_COD, CKD1AND2_COD, CKDRES_COD, DM_COD,
+    DMTYPE1_COD, DMTYPE2_COD, DMRES_COD, FHYP_COD, HYP_COD, HYPRES_COD (PCD).
   config:
     meta:
       owner:
@@ -22,40 +23,39 @@ models:
       clinical_source: https://www.nice.org.uk/indicators/ind161-cardiovascular-disease-prevention-cardiovascular-risk-assessment-for-people-newly-diagnosed-with-hypertension-or-t2-dm
   columns:
   - name: person_id
-    description: Person in the indicator denominator
+    description: "Identifier of the person in the indicator denominator."
   - name: indicator_id
-    description: NICE indicator identifier
+    description: "NICE indicator identifier."
   - name: indicator_name
-    description: Published NICE indicator name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
   - name: reporting_date
-    description: Completed month-end used for eligibility and evidence; DATE, with no current-day row.
+    description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
-    description: Inclusive start of the measurement period before the reporting date
+    description: "Exclusive diagnosis boundary 15 months before the reporting date; the assessment window is relative to diagnosis."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
-  - name: condition_name
-    description: Population defining the indicator
+    description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
   - name: practice_code
-    description: Practice ODS code at the month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice attributed at the reporting month-end."
   - name: practice_name
-    description: Practice name at the month-end under the monthly spine attribution.
+    description: "Name of the registration practice attributed at the reporting month-end."
   - name: latest_risk_score
-    description: Latest valid QRISK score in percent; null if none Selected through the month-end; stale
-      detail remains available.
+    description: "Latest valid QRISK score through the reporting date, in percent; null when absent."
   - name: latest_risk_score_date
-    description: Date of the latest valid QRISK score Selected through the month-end; stale detail remains
-      available.
+    description: "Date of the latest valid QRISK score through the reporting date; null when absent."
   - name: latest_risk_assessment_date
-    description: Date of the latest CVD risk assessment record, scored or not Selected through the month-end;
-      stale detail remains available.
+    description: "Date of the latest cardiovascular risk assessment through the reporting date, scored or not; null when absent."
   - name: is_in_denominator
-    description: Always true; every row is an eligible person before personalised care adjustments
+    description: "Always true; each row is eligible before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether a risk assessment falls in the indicator's window
+    description: "Whether the person meets the achievement rule on the reporting date."
   - name: indicator_status
-    description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
   - name: new_diagnosis_date
-    description: Earlier of the qualifying hypertension and type 2 diabetes diagnosis dates in the period
+    description: "Earlier qualifying first hypertension or type 2 diabetes diagnosis date for IND161; null for other indicators."
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

@@ -1,20 +1,12 @@
 models:
   - name: int_nice_blood_pressure_latest_by_month
-    description: |
-      NICE blood pressure control evidence. One row per active, living, non-test
-      person and completed month-end with complete BP evidence on HTN, CHD,
-      stroke/TIA, PAD, CKD or diabetes registers. Selects the latest complete pair
-      on or before that date from
-      int_nice_blood_pressure_all. Invalid latest evidence remains selected;
-      incomplete days do not replace a complete pair. People without a complete
-      pair by that date have no evidence row. Indicators apply their own windows and
-      strict control thresholds. This is separate from valid-pair recording evidence.
-      Monthly refresh recalculates the last 60 completed month-ends using today's
-      rules and code lists. Registers use clinical and recorded dates; BP evidence
-      uses corrected clinical dates capped at the month-end. The existing spine
-      supplies historical activity. Approximate birth/death dates, missing birth
-      dates and the current test flag limit population reconstruction. Later data
-      corrections and code-list changes can alter earlier results.
+    description: >-
+      Latest complete blood pressure pair for people on hypertension, coronary heart disease,
+      stroke, peripheral arterial disease, kidney disease or diabetes registers. One row per
+      registered, living, non-test person with evidence by the month-end. An invalid latest
+      pair remains selected; an older valid pair does not replace it. People without a
+      complete pair have no row. Recalculated for each of the last 60 month-ends with current
+      rules, code lists and records, so later corrections can change past months.
     config:
       meta:
         owner:
@@ -31,7 +23,8 @@ models:
         data_tests:
           - not_null
       - name: reporting_date
-        description: Completed month-end at which evidence is selected, with no current-day row.
+        description: >-
+          Completed month-end on which population and evidence are assessed.
         data_tests:
           - not_null
       - name: latest_bp_date

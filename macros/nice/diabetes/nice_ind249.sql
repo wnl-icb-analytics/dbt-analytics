@@ -5,6 +5,7 @@
     Returns: the indicator detail columns, one eligible person per reporting_date.
 -#}
 -- NICE IND249: https://www.nice.org.uk/indicators/ind249
+-- Shared BP selection prefers valid pairs on the latest complete date, then lowest systolic/diastolic; unlinked components use daily maxima.
 -- Last BP in 12 months below 140/90 clinic or 135/85 home, diabetes register aged 17 to 79 without moderate or severe frailty.
 WITH indicator_population AS (
     SELECT
@@ -76,10 +77,11 @@ SELECT
     person_id,
     'IND249' AS indicator_id,
     'Diabetes: blood pressure (without moderate or severe frailty)' AS indicator_name,
+    'The percentage of patients with diabetes on the register, aged 79 years and under without moderate or severe frailty, in whom the last blood pressure reading (measured in the preceding 12 months) is less than 135/85 mmHg if using ambulatory or home monitoring, or less than 140/90 mmHg if measured in clinic.' AS indicator_description,
     reporting_date AS reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Diabetes without moderate or severe frailty' AS condition_name,
+    'Diabetes, aged 17 to 79, no moderate or severe frailty' AS denominator_description,
     {{ nice_practice_columns(none, reference) }},
     latest_frailty_severity,
     latest_bp_date,

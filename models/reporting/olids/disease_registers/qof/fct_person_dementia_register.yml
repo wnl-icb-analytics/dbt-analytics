@@ -1,9 +1,13 @@
 models:
   - name: fct_person_dementia_register
-    description: 'QOF dementia register for patients with dementia diagnosis.
+    description: >-
+      Dementia register (NICE IND252). One row per register member.
 
-      One row per person with DEM_COD dated on or before today (dementia is a permanent condition).'
 
+      Registration status is not filtered. A dementia diagnosis qualifies at any age, without a
+      resolution rule or exclusions. Clinical evidence is dated by the build date. For NICE
+      counts, select people registered on the build date. Based on NICE NG97. Code lists:
+      DEM_COD (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -23,15 +27,15 @@ models:
           category: "LTC"
           clinical_domain: "Mental Health"
           name_short: "Dementia"
-          description_short: "QOF dementia register"
+          description_short: "QOF 2025/26 dementia register"
           description_long: >
-            Dementia diagnosed using QOF criteria: Any dementia diagnosis dated on or
-            before today qualifies for
-            register inclusion. Dementia is considered a permanent condition with
-            no  resolution codes. No age restrictions apply. Used for dementia care
-            pathway  monitoring, cognitive health assessment, and memory service referral
-            tracking.  Maps to QOF indicator DEM001 (Dementia Register). Uses DEM_COD
-            for diagnosis codes.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. Dementia diagnosed using QOF
+            criteria: Any dementia diagnosis dated on or before today qualifies for register
+            inclusion. Dementia is considered a permanent condition with no  resolution codes. No
+            age restrictions apply. Used for dementia care pathway  monitoring, cognitive health
+            assessment, and memory service referral tracking.  QOF 2025/26 correspondence: DEM001
+            (Dementia Register). Uses DEM_COD for diagnosis codes.
           is_qof: true
           qof_indicator: "DEM001"
           source_column: "is_on_register"
@@ -41,5 +45,23 @@ models:
           code_clusters:
             - cluster_id: "DEM_COD"
               category: "INCLUSION"
+        indicators:
+          - id: "IND252"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Mental Health"
+            name_short: >-
+              Dementia register
+            description_short: >-
+              People of any age with a recorded dementia diagnosis.
+            description_long: >-
+              A dementia diagnosis qualifies at any age, without a resolution rule or
+              exclusions. Clinical evidence is dated by the build date. For NICE counts, select
+              people registered on the build date. Based on NICE NG97. Code lists: DEM_COD
+              (PCD).
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "DEM001"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92

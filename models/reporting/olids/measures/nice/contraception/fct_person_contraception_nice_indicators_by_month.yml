@@ -1,0 +1,84 @@
+models:
+- name: fct_person_contraception_nice_indicators_by_month
+  description: >-
+    Contraception advice indicator results (IND78, IND116, IND117, IND124, IND148,
+    IND149). One row per eligible person, indicator and month-end.
+
+
+    People registered at the month-end in each indicator's denominator. Eligibility,
+    exclusions and achievement follow the individual measures. Supporting fields are null
+    where an indicator does not provide them. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: age
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
+  - name: practice_code
+    description: "ODS code of the registration practice at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice at the reporting month-end."
+  - name: latest_asm_date
+    description: >-
+      Latest antiseizure prescription on or before the reporting date; null if absent. Null when
+      this field does not apply to the indicator.
+  - name: latest_oral_patch_date
+    description: >-
+      Latest practice-issued oral or patch contraceptive prescription on or before the reporting
+      date; null if absent. Null when this field does not apply to the indicator.
+  - name: latest_ehc_date
+    description: >-
+      Latest practice-issued emergency hormonal contraception prescription on or before the
+      reporting date. Null when this field does not apply to the indicator.
+  - name: latest_non_specific_advice_date
+    description: >-
+      Latest general advice about long-acting reversible contraception from the prescription day to
+      31 days afterwards, inclusive; null if absent. Null when this field does not apply to the
+      indicator.
+  - name: latest_written_advice_date
+    description: >-
+      Latest written advice or leaflet about long-acting reversible contraception from the
+      prescription day to 31 days afterwards, inclusive; null if absent. Null when this field does
+      not apply to the indicator.
+  - name: latest_verbal_advice_date
+    description: >-
+      Latest verbal advice about long-acting reversible contraception from the prescription day to
+      31 days afterwards, inclusive; null if absent. Null when this field does not apply to the
+      indicator.
+  - name: has_unknown_modality_advice
+    description: >-
+      True when method education with an unknown advice format occurs within the 31-day follow-up
+      period. It does not count towards achievement. Null when this field does not apply to the
+      indicator.
+  - name: latest_contraception_advice_date
+    description: >-
+      Latest contraception advice in the 12 months before the reporting date, including both
+      boundaries; null if absent. Null when this field does not apply to the indicator.
+  - name: latest_pregnancy_advice_date
+    description: >-
+      Latest conception or pregnancy advice in the 12 months before the reporting date, including
+      both boundaries; null if absent. Null when this field does not apply to the indicator.
+  - name: has_epilepsy
+    description: >-
+      True when the woman is on the epilepsy register at the reporting date. IND78 also includes
+      antiseizure users without epilepsy. Null when this field does not apply to the indicator.

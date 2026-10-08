@@ -32,6 +32,7 @@
 {% set alcohol_sql = alcohol_sql | replace(ref('fct_person_chd_register_by_month') | string, 'synthetic_register') %}
 {% set alcohol_sql = alcohol_sql | replace(ref('fct_person_atrial_fibrillation_register_by_month') | string, 'synthetic_register') %}
 {% set alcohol_sql = alcohol_sql | replace(ref('fct_person_heart_failure_register_by_month') | string, 'synthetic_register') %}
+{% set alcohol_sql = alcohol_sql | replace(ref('int_heart_failure_diagnoses_all') | string, 'synthetic_hf_diagnoses') %}
 {% set alcohol_sql = alcohol_sql | replace(ref('fct_person_stroke_tia_register_by_month') | string, 'synthetic_register') %}
 {% set alcohol_sql = alcohol_sql | replace(ref('fct_person_dementia_register_by_month') | string, 'synthetic_register') %}
 {% set alcohol_sql = alcohol_sql | replace(ref('int_depression_diagnoses_all') | string, 'synthetic_depression') %}
@@ -86,6 +87,7 @@ synthetic_register AS (
         '2020-01-01'::TIMESTAMP_NTZ AS latest_diagnosis_date,
         NULL::TIMESTAMP_NTZ AS latest_remission_date,
         NULL::TIMESTAMP_NTZ AS latest_resolved_date,
+        FALSE AS is_on_hfref_register,
         'Type 2' AS diabetes_type,
         NULL::TIMESTAMP_NTZ AS earliest_type1_date,
         NULL::TIMESTAMP_NTZ AS latest_type1_date,
@@ -93,6 +95,15 @@ synthetic_register AS (
         '2020-01-01'::TIMESTAMP_NTZ AS latest_type2_date
     FROM synthetic_population
     WHERE person_id IN (-9104, -9107, -9108)
+),
+
+synthetic_hf_diagnoses AS (
+    SELECT NULL::NUMBER AS person_id,
+        NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+        NULL::TIMESTAMP_NTZ AS date_recorded,
+        FALSE AS is_diagnosis_code,
+        FALSE AS is_resolved_code
+    WHERE FALSE
 ),
 
 synthetic_physical_register AS (
@@ -294,7 +305,9 @@ UNION ALL
 
 SELECT 'smoking' AS failed_rule
 FROM smoking
-HAVING COUNT(*) <> 6
+HAVING COUNT(*) <> 9
+    OR COUNT_IF(person_id = -9105) <> 0
+    OR COUNT_IF(person_id = -9106) <> 3
     OR COUNT_IF(reporting_date = '2026-03-31' AND latest_smoking_status = 'Current Smoker'
         AND latest_never_smoked_date = '2026-03-01'
         AND latest_smoking_intervention_date = '2026-03-31') <> 1

@@ -4,6 +4,7 @@
     Args: reference is current or by_month.
     Returns: one eligible person per reporting_date, with indicator detail.
 -#}
+-- A valid earlier BMI remains evidence even when a later BMI is invalid.
 -- NICE IND83: https://www.nice.org.uk/indicators/ind83
 -- BMI recorded in 15 months for people with an active SMI diagnosis.
 WITH indicator_population AS (
@@ -44,10 +45,11 @@ SELECT
     person_id,
     'IND83' AS indicator_id,
     'Bipolar, schizophrenia and other psychoses: annual BMI recording' AS indicator_name,
+    'The percentage of patients with schizophrenia, bipolar affective disorder and other psychoses who have a record of BMI in the preceding 15 months.' AS indicator_description,
     reporting_date,
     DATEADD(month, -15, reporting_date) AS measurement_period_start,
     age,
-    'Severe mental illness (schizophrenia, bipolar affective disorder or other psychoses, not in remission)' AS condition_name,
+    'Active severe mental illness' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_bmi_date,
     latest_record_date,

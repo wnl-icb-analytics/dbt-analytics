@@ -5,7 +5,7 @@
     Returns: the indicator detail columns, one eligible person per reporting_date.
 -#}
 -- NICE IND88: https://www.nice.org.uk/indicators/ind88
--- Referral to a structured education programme within 9 months of joining the diabetes register, for people diagnosed in the preceding 12 months.
+-- Referral to a structured education programme within 9 months of joining the diabetes register, for people diagnosed in the completed follow-up cohort.
 WITH indicator_population AS (
     SELECT
         population.person_id,
@@ -18,8 +18,8 @@ WITH indicator_population AS (
     INNER JOIN ({{ nice_register('DM', reference) }}) AS register
         ON population.person_id = register.person_id
         AND population.reporting_date = register.reporting_date
-    WHERE register.earliest_diagnosis_date::DATE
-        BETWEEN DATEADD(month, -12, population.reporting_date) AND population.reporting_date
+    WHERE register.earliest_diagnosis_date::DATE > DATEADD(month, -21, population.reporting_date)
+        AND register.earliest_diagnosis_date::DATE <= DATEADD(month, -9, population.reporting_date)
 ),
 
 first_referral AS (
@@ -56,10 +56,11 @@ SELECT
     person_id,
     'IND88' AS indicator_id,
     'Diabetes: referral for structured education' AS indicator_name,
+    'The percentage of patients newly diagnosed with diabetes, on the register, in the preceding 1 April to 31 March who have a record of being referred to a structured education programme within 9 months after entry on to the diabetes register.' AS indicator_description,
     reporting_date,
-    DATEADD(month, -12, reporting_date) AS measurement_period_start,
+    DATEADD(month, -21, reporting_date) AS measurement_period_start,
     age,
-    'Diabetes diagnosed in the preceding 12 months' AS condition_name,
+    'Diabetes diagnosed 9 to 21 months ago'::VARCHAR(45) AS denominator_description,
     {{ nice_practice_columns(none, reference) }},
     diagnosis_date,
     latest_record_date,

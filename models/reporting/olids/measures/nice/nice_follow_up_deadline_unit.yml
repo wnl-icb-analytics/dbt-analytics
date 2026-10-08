@@ -1,0 +1,979 @@
+unit_tests:
+- name: nice_88_completed_follow_up_cohort
+  model: fct_person_diabetes_structured_education_ind88_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7210, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('fct_person_diabetes_register_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS month_end_date,
+          column3::DATE AS earliest_diagnosis_date,
+          column4::DATE AS latest_diagnosis_date,
+          column5::VARCHAR AS diabetes_type,
+          column6::DATE AS earliest_type1_date,
+          column7::DATE AS latest_type1_date,
+          column8::DATE AS earliest_type2_date,
+          column9::DATE AS latest_type2_date,
+          column10::DATE AS latest_resolved_date
+      FROM VALUES
+          (-7201, '2026-09-30', '2026-09-01', '2026-09-01', NULL, NULL, NULL, NULL, NULL, NULL),
+          (-7202, '2026-09-30', '2026-09-01', '2026-09-01', NULL, NULL, NULL, NULL, NULL, NULL),
+          (-7203, '2026-09-30', '2025-12-01', '2025-12-01', NULL, NULL, NULL, NULL, NULL, NULL),
+          (-7204, '2026-09-30', '2025-12-30', '2025-12-30', NULL, NULL, NULL, NULL, NULL, NULL),
+          (-7205, '2026-09-30', '2026-09-01', '2026-09-01', NULL, NULL, NULL, NULL, NULL, NULL),
+          (-7207, '2026-09-30', '2025-12-31', '2025-12-31', NULL, NULL, NULL, NULL, NULL, NULL),
+          (-7208, '2026-09-30', '2024-12-30', '2024-12-30', NULL, NULL, NULL, NULL, NULL, NULL),
+          (-7209, '2026-09-30', '2024-12-31', '2024-12-31', NULL, NULL, NULL, NULL, NULL, NULL),
+          (-7210, '2026-09-30', '2024-12-29', '2024-12-29', NULL, NULL, NULL, NULL, NULL, NULL)
+  - input: ref('int_diabetes_structured_education_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS clinical_effective_date,
+          column3::VARCHAR AS record_type
+      FROM VALUES
+          (-7202, '2026-09-10', 'REFERRED'),
+          (-7203, '2025-12-10', 'REFERRED')
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+    - person_id: -7209
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_104_completed_follow_up_cohort
+  model: fct_person_depression_review_ind104_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-72010, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_depression_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::VARCHAR AS id,
+          column3::DATE AS clinical_effective_date,
+          column4::DATE AS date_recorded,
+          column5::BOOLEAN AS is_diagnosis_code,
+          column6::BOOLEAN AS is_first_or_new_episode
+      FROM VALUES
+          (-7201, 'SYNTHETIC1', '2026-09-01', '2026-09-01', TRUE, TRUE),
+          (-7202, 'SYNTHETIC2', '2026-09-01', '2026-09-01', TRUE, TRUE),
+          (-7203, 'SYNTHETIC3', '2026-07-01', '2026-07-01', TRUE, TRUE),
+          (-7204, 'SYNTHETIC4', '2026-08-26', '2026-08-26', TRUE, TRUE),
+          (-7205, 'SYNTHETIC5', '2026-09-01', '2026-09-01', TRUE, TRUE),
+          (-7205, 'EARLIER', '2026-07-01', '2026-07-01', TRUE, TRUE),
+          (-7207, 'SYNTHETIC7', '2026-08-27', '2026-08-27', TRUE, TRUE),
+          (-7208, 'SYNTHETIC8', '2025-08-26', '2025-08-26', TRUE, TRUE),
+          (-7209, 'SYNTHETIC9', '2025-08-27', '2025-08-27', TRUE, TRUE),
+          (-72010, 'SYNTHETIC10', '2025-08-25', '2025-08-25', TRUE, TRUE)
+  - input: ref('int_ltc_review_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS clinical_effective_date,
+          column3::VARCHAR AS review_type
+      FROM VALUES
+          (-7202, '2026-09-11', 'DEPRESSION_REVIEW'),
+          (-7203, '2026-07-11', 'DEPRESSION_REVIEW')
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+      measurement_period_start: '2025-08-26'
+    - person_id: -7209
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+  overrides:
+    macros:
+      nice_reference_dates: SELECT '2026-09-30'::DATE AS reporting_date
+- name: nice_149_completed_follow_up_cohort
+  model: fct_person_emergency_contraception_larc_advice_ind149_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7210, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_nice_contraception_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::DATE AS latest_ehc_date
+      FROM VALUES
+          (-7201, '2026-09-30', '2026-09-01'),
+          (-7202, '2026-09-30', '2026-09-01'),
+          (-7203, '2026-09-30', '2026-01-01'),
+          (-7204, '2026-09-30', '2026-08-30'),
+          (-7205, '2026-09-30', '2026-09-01'),
+          (-7207, '2026-09-30', '2026-08-31'),
+          (-7208, '2026-09-30', '2025-08-30'),
+          (-7209, '2026-09-30', '2025-08-31'),
+          (-7210, '2026-09-30', '2025-08-29')
+  - input: ref('int_nice_larc_advice_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS event_date,
+          column3::VARCHAR AS advice_modality
+      FROM VALUES
+          (-7202, '2026-09-10', 'NON_SPECIFIC'),
+          (-7203, '2026-01-10', 'NON_SPECIFIC')
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+    - person_id: -7209
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_161_completed_follow_up_cohort
+  model: fct_person_cvd_risk_assessment_ind161_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7210, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_cvd_risk_profile_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::DATE AS earliest_hypertension_date,
+          column4::DATE AS earliest_type2_diabetes_date,
+          column5::NUMBER AS latest_risk_score,
+          column6::DATE AS latest_risk_score_date,
+          column7::DATE AS latest_risk_assessment_date,
+          column8::BOOLEAN AS has_cvd_including_haemorrhagic_stroke,
+          column9::BOOLEAN AS has_ckd,
+          column10::BOOLEAN AS has_familial_hypercholesterolaemia,
+          column11::BOOLEAN AS has_type1_diabetes
+      FROM VALUES
+          (-7201, '2026-09-30', '2026-09-01', NULL, NULL, NULL, NULL, FALSE, FALSE, FALSE, FALSE),
+          (-7202, '2026-09-30', '2026-09-01', NULL, NULL, NULL, NULL, FALSE, FALSE, FALSE, FALSE),
+          (-7203, '2026-09-30', '2026-01-01', NULL, NULL, NULL, NULL, FALSE, FALSE, FALSE, FALSE),
+          (-7204, '2026-09-30', '2026-06-30', NULL, NULL, NULL, NULL, FALSE, FALSE, FALSE, FALSE),
+          (-7205, '2026-09-30', '2026-01-01', '2026-09-01', NULL, NULL, NULL, FALSE, FALSE, FALSE, FALSE),
+          (-7207, '2026-09-30', '2026-07-01', NULL, NULL, NULL, NULL, FALSE, FALSE, FALSE, FALSE),
+          (-7208, '2026-09-30', '2025-06-30', NULL, NULL, NULL, NULL, FALSE, FALSE, FALSE, FALSE),
+          (-7209, '2026-09-30', '2025-07-01', NULL, NULL, NULL, NULL, FALSE, FALSE, FALSE, FALSE),
+          (-7210, '2026-09-30', '2025-06-29', NULL, NULL, NULL, NULL, FALSE, FALSE, FALSE, FALSE)
+  - input: ref('int_cvd_risk_assessment_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS clinical_effective_date
+      FROM VALUES
+          (-7202, '2026-09-10'),
+          (-7203, '2026-01-10')
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+    - person_id: -7209
+      is_in_numerator: false
+    - person_id: -7205
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_196_completed_follow_up_cohort
+  model: fct_person_alcohol_ind196_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7210, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::BOOLEAN AS has_nice_alcohol_disorder,
+          column4::DATE AS earliest_hypertension_date
+      FROM VALUES
+          (-7201, '2026-09-30', FALSE, '2026-09-01'),
+          (-7202, '2026-09-30', FALSE, '2026-09-01'),
+          (-7203, '2026-09-30', FALSE, '2026-01-01'),
+          (-7204, '2026-09-30', FALSE, '2026-06-30'),
+          (-7205, '2026-09-30', FALSE, '2026-01-01'),
+          (-7207, '2026-09-30', FALSE, '2026-07-01'),
+          (-7208, '2026-09-30', FALSE, '2025-06-30'),
+          (-7209, '2026-09-30', FALSE, '2025-07-01'),
+          (-7210, '2026-09-30', FALSE, '2025-06-29')
+  - input: ref('int_nice_alcohol_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::DATE AS latest_intervention_after_positive_screen_date,
+          column4::DATE AS latest_positive_alcohol_screen_date,
+          column5::DATE AS latest_alcohol_screen_date,
+          column6::NUMBER AS latest_alcohol_screen_score,
+          column7::VARCHAR AS latest_alcohol_screen_tool
+      FROM VALUES
+          (-7201, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7202, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7203, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL),
+          (-7204, '2026-09-30', NULL, '2026-06-30', NULL, NULL, NULL),
+          (-7205, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7207, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL),
+          (-7208, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL),
+          (-7209, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL),
+          (-7210, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL)
+  - input: ref('int_alcohol_screening_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS clinical_effective_date,
+          column3::VARCHAR AS screening_tool
+      FROM VALUES
+          (-7202, '2026-09-10', 'FAST'),
+          (-7203, '2026-01-10', 'FAST')
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+    - person_id: -7209
+      is_in_numerator: false
+    - person_id: -7205
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_197_completed_follow_up_cohort
+  model: fct_person_alcohol_ind197_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7210, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::BOOLEAN AS has_nice_alcohol_disorder,
+          column4::DATE AS earliest_hypertension_date
+      FROM VALUES
+          (-7201, '2026-09-30', FALSE, '2026-09-01'),
+          (-7202, '2026-09-30', FALSE, '2026-09-01'),
+          (-7203, '2026-09-30', FALSE, '2026-01-01'),
+          (-7204, '2026-09-30', FALSE, '2026-06-30'),
+          (-7205, '2026-09-30', FALSE, '2026-09-01'),
+          (-7207, '2026-09-30', FALSE, '2026-01-01'),
+          (-7208, '2026-09-30', FALSE, '2026-01-01'),
+          (-7209, '2026-09-30', FALSE, '2026-01-01'),
+          (-7210, '2026-09-30', FALSE, '2026-01-01')
+  - input: ref('int_nice_alcohol_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::DATE AS latest_intervention_after_positive_screen_date,
+          column4::DATE AS latest_positive_alcohol_screen_date,
+          column5::DATE AS latest_alcohol_screen_date,
+          column6::NUMBER AS latest_alcohol_screen_score,
+          column7::VARCHAR AS latest_alcohol_screen_tool
+      FROM VALUES
+          (-7201, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7202, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7203, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL),
+          (-7204, '2026-09-30', NULL, '2026-06-30', NULL, NULL, NULL),
+          (-7205, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7207, '2026-09-30', NULL, '2026-07-01', NULL, NULL, NULL),
+          (-7208, '2026-09-30', NULL, '2025-09-30', NULL, NULL, NULL),
+          (-7209, '2026-09-30', NULL, '2025-10-01', NULL, NULL, NULL),
+          (-7210, '2026-09-30', NULL, '2025-09-29', NULL, NULL, NULL)
+  - input: ref('int_nice_alcohol_screen_intervention')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS screen_date,
+          column3::DATE AS first_intervention_date
+      FROM VALUES
+          (-7201, '2026-09-01', NULL),
+          (-7202, '2026-09-01', '2026-09-10'),
+          (-7203, '2026-01-01', '2026-01-10'),
+          (-7204, '2026-06-30', NULL),
+          (-7205, '2026-09-01', NULL),
+          (-7205, '2026-01-01', NULL),
+          (-7207, '2026-07-01', NULL),
+          (-7208, '2025-09-30', NULL),
+          (-7209, '2025-10-01', NULL),
+          (-7210, '2025-09-29', NULL)
+  - input: ref('int_alcohol_intervention')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS clinical_effective_date,
+          column3::VARCHAR AS alcohol_advice_services
+      FROM VALUES
+          (-7202, '2026-09-10', 'Yes'),
+          (-7203, '2026-01-10', 'Yes')
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+    - person_id: -7209
+      is_in_numerator: false
+    - person_id: -7205
+      is_in_numerator: false
+    - person_id: -7208
+      is_in_numerator: false
+    - person_id: -7210
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_198_completed_follow_up_cohort
+  model: fct_person_alcohol_ind198_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7210, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::BOOLEAN AS has_nice_alcohol_disorder,
+          column4::DATE AS earliest_depression_anxiety_date
+      FROM VALUES
+          (-7201, '2026-09-30', FALSE, '2026-09-01'),
+          (-7202, '2026-09-30', FALSE, '2026-09-01'),
+          (-7203, '2026-09-30', FALSE, '2026-01-01'),
+          (-7204, '2026-09-30', FALSE, '2026-06-30'),
+          (-7205, '2026-09-30', FALSE, '2026-01-01'),
+          (-7207, '2026-09-30', FALSE, '2026-07-01'),
+          (-7208, '2026-09-30', FALSE, '2025-06-30'),
+          (-7209, '2026-09-30', FALSE, '2025-07-01'),
+          (-7210, '2026-09-30', FALSE, '2025-06-29')
+  - input: ref('int_nice_alcohol_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::DATE AS latest_intervention_after_positive_screen_date,
+          column4::DATE AS latest_positive_alcohol_screen_date,
+          column5::DATE AS latest_alcohol_screen_date,
+          column6::NUMBER AS latest_alcohol_screen_score,
+          column7::VARCHAR AS latest_alcohol_screen_tool
+      FROM VALUES
+          (-7201, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7202, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7203, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL),
+          (-7204, '2026-09-30', NULL, '2026-06-30', NULL, NULL, NULL),
+          (-7205, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7207, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL),
+          (-7208, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL),
+          (-7209, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL),
+          (-7210, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL)
+  - input: ref('int_alcohol_screening_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS clinical_effective_date,
+          column3::VARCHAR AS screening_tool
+      FROM VALUES
+          (-7202, '2026-09-10', 'FAST'),
+          (-7203, '2026-01-10', 'FAST')
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+    - person_id: -7209
+      is_in_numerator: false
+    - person_id: -7205
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_199_completed_follow_up_cohort
+  model: fct_person_alcohol_ind199_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7210, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::BOOLEAN AS has_nice_alcohol_disorder,
+          column4::DATE AS earliest_depression_anxiety_date
+      FROM VALUES
+          (-7201, '2026-09-30', FALSE, '2026-09-01'),
+          (-7202, '2026-09-30', FALSE, '2026-09-01'),
+          (-7203, '2026-09-30', FALSE, '2026-01-01'),
+          (-7204, '2026-09-30', FALSE, '2026-06-30'),
+          (-7205, '2026-09-30', FALSE, '2026-09-01'),
+          (-7207, '2026-09-30', FALSE, '2026-01-01'),
+          (-7208, '2026-09-30', FALSE, '2026-01-01'),
+          (-7209, '2026-09-30', FALSE, '2026-01-01'),
+          (-7210, '2026-09-30', FALSE, '2026-01-01')
+  - input: ref('int_nice_alcohol_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::DATE AS latest_intervention_after_positive_screen_date,
+          column4::DATE AS latest_positive_alcohol_screen_date,
+          column5::DATE AS latest_alcohol_screen_date,
+          column6::NUMBER AS latest_alcohol_screen_score,
+          column7::VARCHAR AS latest_alcohol_screen_tool
+      FROM VALUES
+          (-7201, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7202, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7203, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL),
+          (-7204, '2026-09-30', NULL, '2026-06-30', NULL, NULL, NULL),
+          (-7205, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7207, '2026-09-30', NULL, '2026-07-01', NULL, NULL, NULL),
+          (-7208, '2026-09-30', NULL, '2025-09-30', NULL, NULL, NULL),
+          (-7209, '2026-09-30', NULL, '2025-10-01', NULL, NULL, NULL),
+          (-7210, '2026-09-30', NULL, '2025-09-29', NULL, NULL, NULL)
+  - input: ref('int_nice_alcohol_screen_intervention')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS screen_date,
+          column3::DATE AS first_intervention_date
+      FROM VALUES
+          (-7201, '2026-09-01', NULL),
+          (-7202, '2026-09-01', '2026-09-10'),
+          (-7203, '2026-01-01', '2026-01-10'),
+          (-7204, '2026-06-30', NULL),
+          (-7205, '2026-09-01', NULL),
+          (-7205, '2026-01-01', NULL),
+          (-7207, '2026-07-01', NULL),
+          (-7208, '2025-09-30', NULL),
+          (-7209, '2025-10-01', NULL),
+          (-7210, '2025-09-29', NULL)
+  - input: ref('int_alcohol_intervention')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS clinical_effective_date,
+          column3::VARCHAR AS alcohol_advice_services
+      FROM VALUES
+          (-7202, '2026-09-10', 'Yes'),
+          (-7203, '2026-01-10', 'Yes')
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+    - person_id: -7209
+      is_in_numerator: false
+    - person_id: -7205
+      is_in_numerator: false
+    - person_id: -7208
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_200_completed_follow_up_cohort
+  model: fct_person_alcohol_ind200_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7210, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::BOOLEAN AS has_nice_alcohol_disorder,
+          column4::DATE AS earliest_smi_diagnosis_date,
+          column5::BOOLEAN AS has_active_smi_diagnosis
+      FROM VALUES
+          (-7201, '2026-09-30', FALSE, '2026-09-01', TRUE),
+          (-7202, '2026-09-30', FALSE, '2026-09-01', TRUE),
+          (-7203, '2026-09-30', FALSE, '2026-01-01', TRUE),
+          (-7204, '2026-09-30', FALSE, '2026-06-30', TRUE),
+          (-7205, '2026-09-30', FALSE, '2026-09-01', TRUE),
+          (-7207, '2026-09-30', FALSE, '2026-01-01', TRUE),
+          (-7208, '2026-09-30', FALSE, '2026-01-01', TRUE),
+          (-7209, '2026-09-30', FALSE, '2026-01-01', TRUE),
+          (-7210, '2026-09-30', FALSE, '2026-01-01', TRUE)
+  - input: ref('int_nice_alcohol_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::DATE AS latest_intervention_after_positive_screen_date,
+          column4::DATE AS latest_positive_alcohol_screen_date,
+          column5::DATE AS latest_alcohol_screen_date,
+          column6::NUMBER AS latest_alcohol_screen_score,
+          column7::VARCHAR AS latest_alcohol_screen_tool
+      FROM VALUES
+          (-7201, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7202, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7203, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL),
+          (-7204, '2026-09-30', NULL, '2026-06-30', NULL, NULL, NULL),
+          (-7205, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7207, '2026-09-30', NULL, '2026-07-01', NULL, NULL, NULL),
+          (-7208, '2026-09-30', NULL, '2025-09-30', NULL, NULL, NULL),
+          (-7209, '2026-09-30', NULL, '2025-10-01', NULL, NULL, NULL),
+          (-7210, '2026-09-30', NULL, '2025-09-29', NULL, NULL, NULL)
+  - input: ref('int_nice_alcohol_screen_intervention')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS screen_date,
+          column3::DATE AS first_intervention_date
+      FROM VALUES
+          (-7201, '2026-09-01', NULL),
+          (-7202, '2026-09-01', '2026-09-10'),
+          (-7203, '2026-01-01', '2026-01-10'),
+          (-7204, '2026-06-30', NULL),
+          (-7205, '2026-09-01', NULL),
+          (-7205, '2026-01-01', NULL),
+          (-7207, '2026-07-01', NULL),
+          (-7208, '2025-09-30', NULL),
+          (-7209, '2025-10-01', NULL),
+          (-7210, '2025-09-29', NULL)
+  - input: ref('int_alcohol_intervention')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS clinical_effective_date,
+          column3::VARCHAR AS alcohol_advice_services
+      FROM VALUES
+          (-7202, '2026-09-10', 'Yes'),
+          (-7203, '2026-01-10', 'Yes')
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+    - person_id: -7209
+      is_in_numerator: false
+    - person_id: -7205
+      is_in_numerator: false
+    - person_id: -7208
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_202_completed_follow_up_cohort
+  model: fct_person_alcohol_ind202_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7210, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::BOOLEAN AS has_heart_failure,
+          column4::BOOLEAN AS has_chd,
+          column5::BOOLEAN AS has_stroke_tia,
+          column6::BOOLEAN AS has_nice_alcohol_disorder,
+          column7::BOOLEAN AS has_diabetes,
+          column8::BOOLEAN AS has_atrial_fibrillation,
+          column9::BOOLEAN AS has_dementia
+      FROM VALUES
+          (-7201, '2026-09-30', TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE),
+          (-7202, '2026-09-30', TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE),
+          (-7203, '2026-09-30', TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE),
+          (-7204, '2026-09-30', TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE),
+          (-7205, '2026-09-30', TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE),
+          (-7207, '2026-09-30', TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE),
+          (-7208, '2026-09-30', TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE),
+          (-7209, '2026-09-30', TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE),
+          (-7210, '2026-09-30', TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE)
+  - input: ref('int_nice_alcohol_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::DATE AS latest_intervention_after_positive_screen_date,
+          column4::DATE AS latest_positive_alcohol_screen_date,
+          column5::DATE AS latest_alcohol_screen_date,
+          column6::NUMBER AS latest_alcohol_screen_score,
+          column7::VARCHAR AS latest_alcohol_screen_tool
+      FROM VALUES
+          (-7201, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7202, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7203, '2026-09-30', NULL, '2026-01-01', NULL, NULL, NULL),
+          (-7204, '2026-09-30', NULL, '2026-06-30', NULL, NULL, NULL),
+          (-7205, '2026-09-30', NULL, '2026-09-01', NULL, NULL, NULL),
+          (-7207, '2026-09-30', NULL, '2026-07-01', NULL, NULL, NULL),
+          (-7208, '2026-09-30', NULL, '2024-09-30', NULL, NULL, NULL),
+          (-7209, '2026-09-30', NULL, '2024-10-01', NULL, NULL, NULL),
+          (-7210, '2026-09-30', NULL, '2024-09-29', NULL, NULL, NULL)
+  - input: ref('int_nice_alcohol_screen_intervention')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS screen_date,
+          column3::DATE AS first_intervention_date
+      FROM VALUES
+          (-7201, '2026-09-01', NULL),
+          (-7202, '2026-09-01', '2026-09-10'),
+          (-7203, '2026-01-01', '2026-01-10'),
+          (-7204, '2026-06-30', NULL),
+          (-7205, '2026-09-01', NULL),
+          (-7205, '2026-01-01', NULL),
+          (-7207, '2026-07-01', NULL),
+          (-7208, '2024-09-30', NULL),
+          (-7209, '2024-10-01', NULL),
+          (-7210, '2024-09-29', NULL)
+  - input: ref('int_alcohol_intervention')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS clinical_effective_date,
+          column3::VARCHAR AS alcohol_advice_services
+      FROM VALUES
+          (-7202, '2026-09-10', 'Yes'),
+          (-7203, '2026-01-10', 'Yes')
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+    - person_id: -7209
+      is_in_numerator: false
+    - person_id: -7205
+      is_in_numerator: false
+    - person_id: -7208
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_223_completed_follow_up_cohort
+  model: fct_person_cancer_care_review_ind223_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7206, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7210, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::BOOLEAN AS has_cancer,
+          column4::DATE AS latest_cancer_diagnosis_date
+      FROM VALUES
+          (-7201, '2026-09-30', TRUE, '2026-09-01'),
+          (-7202, '2026-09-30', TRUE, '2026-09-01'),
+          (-7203, '2026-09-30', TRUE, '2025-08-01'),
+          (-7204, '2026-09-30', TRUE, '2025-09-30'),
+          (-7205, '2026-09-30', TRUE, '2026-09-01'),
+          (-7206, '2026-09-30', TRUE, '2025-09-30'),
+          (-7207, '2026-09-30', TRUE, '2025-10-01'),
+          (-7208, '2026-09-30', TRUE, '2023-09-30'),
+          (-7209, '2026-09-30', TRUE, '2023-10-01'),
+          (-7210, '2026-09-30', TRUE, '2023-09-29')
+  - input: ref('int_nice_review_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::DATE AS first_cancer_care_review_after_diagnosis_date
+      FROM VALUES
+          (-7201, '2026-09-30', NULL),
+          (-7202, '2026-09-30', '2026-09-10'),
+          (-7203, '2026-09-30', '2025-08-10'),
+          (-7204, '2026-09-30', NULL),
+          (-7205, '2026-09-30', NULL),
+          (-7206, '2026-09-30', NULL),
+          (-7207, '2026-09-30', NULL),
+          (-7208, '2026-09-30', NULL),
+          (-7209, '2026-09-30', NULL),
+          (-7210, '2026-09-30', NULL)
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+    - person_id: -7209
+      is_in_numerator: false
+    - person_id: -7206
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_234_completed_follow_up_cohort
+  model: fct_person_ckd_new_diagnosis_tests_ind234_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::NUMBER AS age,
+          column4::DATE AS birth_date_approx,
+          column5::VARCHAR AS gender,
+          column6::VARCHAR AS practice_code,
+          column7::VARCHAR AS practice_name
+      FROM VALUES
+          (-7201, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7202, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7203, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7204, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7205, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7207, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7208, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7209, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice'),
+          (-7210, '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice')
+  - input: ref('int_ckd_profile_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          column2::DATE AS reporting_date,
+          column3::DATE AS ckd_diagnosis_date,
+          column4::DATE AS acr_within_90_days_of_diagnosis_date,
+          column5::DATE AS egfr_within_90_days_of_diagnosis_date,
+          column6::BOOLEAN AS has_acr_within_90_days_of_diagnosis,
+          column7::BOOLEAN AS has_egfr_within_90_days_of_diagnosis,
+          column8::NUMBER AS latest_acr_value,
+          column9::NUMBER AS latest_egfr_value
+      FROM VALUES
+          (-7201, '2026-09-30', '2026-09-01', NULL, NULL, FALSE, FALSE, NULL, NULL),
+          (-7202, '2026-09-30', '2026-09-01', '2026-09-10', '2026-09-10', TRUE, TRUE, NULL, NULL),
+          (-7203, '2026-09-30', '2026-01-01', '2026-01-10', '2026-01-10', TRUE, TRUE, NULL, NULL),
+          (-7204, '2026-09-30', '2026-07-02', NULL, NULL, FALSE, FALSE, NULL, NULL),
+          (-7205, '2026-09-30', '2026-01-01', NULL, NULL, FALSE, FALSE, NULL, NULL),
+          (-7207, '2026-09-30', '2026-07-03', NULL, NULL, FALSE, FALSE, NULL, NULL),
+          (-7208, '2026-09-30', '2025-07-02', NULL, NULL, FALSE, FALSE, NULL, NULL),
+          (-7209, '2026-09-30', '2025-07-03', NULL, NULL, FALSE, FALSE, NULL, NULL),
+          (-7210, '2026-09-30', '2025-07-01', NULL, NULL, FALSE, FALSE, NULL, NULL)
+  expect:
+    rows:
+    - person_id: -7203
+      is_in_numerator: true
+    - person_id: -7204
+      is_in_numerator: false
+    - person_id: -7209
+      is_in_numerator: false
+    - person_id: -7205
+      is_in_numerator: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history

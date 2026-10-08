@@ -60,5 +60,10 @@ select
     , lad_at_event
     , imd_at_event
     , reg_practice_at_event
+    , practice.pcn_name as reg_practice_pcn_name_latest
+    , practice.neighbourhood_name as reg_practice_neighbourhood_name_latest
+    , practice.health_borough_name as reg_practice_health_borough_name_latest
     , visit_occurrence_type
-from {{ ref('int_sus_op_encounter') }}
+from {{ ref('int_sus_op_encounter') }} as encounter
+left join {{ ref('practice_wnl_all') }} as practice
+    on encounter.reg_practice_at_event = practice.practice_code

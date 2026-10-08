@@ -29,13 +29,7 @@ with activity as (
         , pcn_code
         , pcn_name
         , registered_borough_name as practice_registered_borough
-    from {{ ref('stg_reference_primary_care_pcn_membership_all') }}
-    -- REVIEW: The lookup has no membership dates. If duplicate practice codes
-    -- emerge, prefer Active practice status before the PCN code tie-breaker.
-    qualify row_number() over (
-        partition by practice_code
-        order by iff(practice_status = 'Active', 0, 1), pcn_code
-    ) = 1
+    from {{ ref('practice_wnl_all') }}
 )
 
 -- national fallback for practices outside the WNL PCN lookup (out-of-area

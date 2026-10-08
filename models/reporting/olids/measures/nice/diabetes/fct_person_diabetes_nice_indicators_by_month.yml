@@ -1,41 +1,42 @@
 models:
 - columns:
-  - description: Person in the indicator denominator
+  - description: "Person identifier for someone in the indicator denominator."
     name: person_id
-  - description: NICE indicator identifier
+  - description: "Published NICE indicator identifier."
     name: indicator_id
   - name: indicator_name
-    description: Published NICE indicator name.
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
   - name: reporting_date
-    description: Completed month-end at which eligibility and evidence are assessed.
+    description: "Month-end used to assess the population, age and evidence."
   - name: measurement_period_start
-    description: Inclusive start of the member indicator's measurement period.
+    description: "Start date of the indicator measurement or diagnosis cohort period; inclusion of this date depends on the indicator."
   - name: age
-    description: Completed years at month-end from the approximate birth month.
-  - name: condition_name
-    description: Population defining the member indicator.
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
   - name: practice_code
-    description: ODS practice code at month-end under the monthly spine attribution.
+    description: "ODS code of the registration practice at month-end."
   - name: practice_name
-    description: Practice name at month-end under the monthly spine attribution.
+    description: "Name of the registration practice at month-end."
   - name: is_in_denominator
-    description: Always true. Every row is an eligible person before personalised care adjustments.
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
   - name: is_in_numerator
-    description: Whether the person meets the member indicator at month-end.
-  - description: ACHIEVED, ABOVE_TARGET, NOT_ASSESSABLE, NOT_RECORDED_IN_PERIOD; IND134 also uses NOT_TREATED_IN_PERIOD
-      and NEVER_TREATED
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
+  - description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
     name: indicator_status
-  - description: Date of the latest qualifying record for the indicator; null when none in the period
+  - description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
     name: latest_record_date
-  - description: Last recorded HbA1c in mmol/mol for the HbA1c indicators; null for other indicators
+  - description: "Last HbA1c result in the measurement period, in IFCC mmol/mol after conversion where needed. Invalid numeric results may remain present and do not achieve the indicator. Null when no test or convertible result is available. Null where the field does not apply to an indicator."
     name: latest_hba1c_value
-  - description: Inclusive HbA1c threshold in mmol/mol for the HbA1c indicators; null for other indicators
+  - description: "Inclusive upper HbA1c threshold in mmol/mol; null for indicators without an HbA1c target. Null where the field does not apply to an indicator."
     name: hba1c_threshold
-  - description: Latest systolic BP in mmHg for IND249; null for other indicators
+  - description: "Systolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available. Null where the field does not apply to an indicator."
     name: latest_systolic_value
-  - description: Latest diastolic BP in mmHg for IND249; null for other indicators
+  - description: "Diastolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available. Null where the field does not apply to an indicator."
     name: latest_diastolic_value
-  - description: Latest coded frailty severity for the HbA1c and IND249 indicators; null for other indicators
+  - description: "Latest coded frailty severity by the reporting date; null when none is recorded. Null where the field does not apply to an indicator."
     name: latest_frailty_severity
   config:
     meta:
@@ -48,13 +49,16 @@ models:
         - person_id
         - indicator_id
         - reporting_date
-  description: Monthly NICE diabetes, NDH and gestational diabetes indicators. One row per eligible person,
-    indicator and completed month-end. Each member retains its documented population, threshold and measurement
-    window. Recalculated for the last 60 completed month-ends using today's rules and code lists. Registration
-    and practice use the existing monthly spine, with registration start inclusive and registration end
-    and death exclusive. Overlapping registrations retain the spine's current-registration priority. Birth
-    and death dates are approximate; missing birth dates prevent historical active rows. Current gender
-    and test flags apply retrospectively. Diagnosis state uses clinical and recorded dates; test and BP
-    evidence use their clinical dates through month-end. Later corrections can alter earlier results.
-    Personalised care adjustments are not applied.
+  description: >-
+    Diabetes, non-diabetic hyperglycaemia and gestational diabetes NICE indicator results
+    (IND81, IND88, IND89, IND111, IND120, IND134, IND135, IND136, IND137, IND160, IND165,
+    IND171, IND172, IND173, IND179, IND180, IND249). One row per person, indicator and
+    month-end.
+
+
+    Each indicator uses its own denominator, evidence window and exclusions, described in
+    the member measures. Clinical fields are null where they do not apply to an indicator.
+    No personalised care adjustments are applied. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months.
   name: fct_person_diabetes_nice_indicators_by_month
