@@ -41,7 +41,7 @@ class NavigationWarehouseTests(unittest.TestCase):
 
 
 class NavigationDeliveryFilterTests(unittest.TestCase):
-    def render(self, incremental=True, execute=True):
+    def render(self, incremental=True, execute=True, call="'s.received_at', 'contact'"):
         root = Path(__file__).resolve().parents[2]
         sql = (root / "macros/transformations/navigation_delivery_filter.sql").read_text()
         self.queries = []
@@ -50,7 +50,7 @@ class NavigationDeliveryFilterTests(unittest.TestCase):
             self.queries.append(query)
             return SimpleNamespace(columns=[SimpleNamespace(values=lambda: ["2026-01-10 12:34:56.123456789"])])
 
-        template = Environment().from_string(sql + "{{ navigation_delivery_filter('s.received_at', 'contact') }}")
+        template = Environment().from_string(sql + "{{ navigation_delivery_filter(" + call + ") }}")
         return template.render(
             is_incremental=lambda: incremental, execute=execute,
             this="fixture_target", run_query=run_query,
@@ -73,6 +73,19 @@ class NavigationDeliveryFilterTests(unittest.TestCase):
     def test_full_refresh_does_not_filter_or_query(self):
         self.assertEqual(self.render(incremental=False), "")
         self.assertEqual(self.queries, [])
+
+    def test_type_column_compares_each_row_with_its_own_watermark(self):
+        call = "'i.received_at', source_record_type_column='i.item_type'"
+        for execute in (True, False):
+            sql = " ".join(self.render(execute=execute, call=call).split())
+            self.assertEqual(
+                sql,
+                "and ( i.received_at is null or i.received_at >= coalesce(( "
+                "select max(watermark.source_received_at) from fixture_target as watermark "
+                "where watermark.source_record_type = i.item_type ), '1900-01-01'::timestamp_ntz) )",
+            )
+            self.assertEqual(self.queries, [])
+        self.assertEqual(self.render(incremental=False, call=call), "")
 
 
 if __name__ == "__main__":
