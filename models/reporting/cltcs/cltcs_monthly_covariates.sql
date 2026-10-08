@@ -170,6 +170,7 @@ score_treatment as (
     from {{ temporal_join('spine', 'index_date', ref('cltcs_score_treatment_snapshot'),
                           join_key='sk_patient_id', join_type='left',
                           valid_from_col='dbt_valid_from', valid_to_col='dbt_valid_to') }}
+    where inclusion_rule = 'original_criteria'
 ),
 
 score_frailty as (
@@ -177,6 +178,7 @@ score_frailty as (
     from {{ temporal_join('spine', 'index_date', ref('cltcs_score_frailty_snapshot'),
                           join_key='sk_patient_id', join_type='left',
                           valid_from_col='dbt_valid_from', valid_to_col='dbt_valid_to') }}
+    where inclusion_rule = 'original_criteria'
 ),
 
 score_activation as (
