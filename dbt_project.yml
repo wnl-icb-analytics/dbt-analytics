@@ -64,7 +64,9 @@ models:
     +materialized: table
     +persist_docs:
       columns: true
-    +post-hook: ["{{ grant_ownership_with_copy() }}"]
+    +post-hook:
+      - "{{ grant_ownership_with_copy() }}"
+      - "{{ set_managed_by_tag() }}"
     +enabled: true
 
     # Raw layer - source data with minimal transformation
@@ -100,6 +102,9 @@ models:
       +post-hook:
         - "{{ add_model_comment() }}"
         - "{{ log_row_count() }}"
+      primary_care:
+        legacy:
+          +post-hook: ["{{ set_lifecycle_tag() }}"]
 
     # Modelling layer - business logic and transformations
     modelling:
@@ -232,7 +237,9 @@ seeds:
     +database: "DATA_LAKE__NCL"
     +schema: "DBT_SEEDS"
     +quote_columns: false
-    +post-hook: ["{{ add_model_comment() }}"]
+    +post-hook:
+      - "{{ add_model_comment() }}"
+      - "{{ set_managed_by_tag() }}"
 
     uec_site_label:
       +column_types:
@@ -338,4 +345,6 @@ snapshots:
   wnl_analytics:
     +database: "MODELLING"
     +target_schema: "DBT_SNAPSHOTS"
-    +post-hook: ["{{ add_model_comment() }}"]
+    +post-hook:
+      - "{{ add_model_comment() }}"
+      - "{{ set_managed_by_tag() }}"
