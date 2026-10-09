@@ -15,7 +15,7 @@
     ('family_care_plan_exclusion_reason', 'raw_ukhfd_data_dictionary_mhsds_family_care_plan_exclusion_reason'),
     ('gender_identity', 'raw_ukhfd_data_dictionary_mhsds_gender_identity'),
     ('gender_same_at_birth', 'raw_ukhfd_data_dictionary_mhsds_gender_same_at_birth'),
-    ('person_stated_gender', 'raw_ukhfd_data_dictionary_mhsds_person_stated_gender'),
+    ('person_stated_gender', 'stg_ukhfd_data_dictionary_mhsds_person_stated_gender'),
     ('group_session_type', 'raw_ukhfd_data_dictionary_mhsds_group_session_type'),
     ('drop_in_outcome', 'raw_ukhfd_data_dictionary_mhsds_drop_in_outcome'),
     ('indirect_activity_person_consulted', 'raw_ukhfd_data_dictionary_mhsds_indirect_activity_person_consulted'),
@@ -33,12 +33,12 @@
     ('waiting_time_measurement_type', 'raw_ukhfd_data_dictionary_mhsds_waiting_time_measurement_type')
 ] %}
 
-{% for code_set_name, raw_model_name in code_sets %}
+{% for code_set_name, model_name in code_sets %}
 select '{{ code_set_name }}' as code_set_name
-    , '{{ raw_model_name }}' as source_reference_model
+    , '{{ model_name }}' as source_reference_model
     , definitions.*
 from (
-    {{ select_ukhfd_data_dictionary_code_set(raw_model_name) }}
+    {% if model_name.startswith('stg_') %}select * from {{ ref(model_name) }}{% else %}{{ select_ukhfd_data_dictionary_code_set(model_name) }}{% endif %}
 ) as definitions
 {% if not loop.last %}union all{% endif %}
 {% endfor %}

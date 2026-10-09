@@ -21,7 +21,7 @@ select
     regexp_substr(trim(sheet_name), '^[0-9.]+') as code_set_number,
     trim(regexp_replace(trim(sheet_name), '^[0-9.]+\\s*', '')) as code_set_name,
     trim(snomed_code) as snomed_code,
-    trim(ecds_unique_id) = 'Code deprecated' as is_deprecated,
+    coalesce(trim(ecds_unique_id) = 'Code deprecated', false) as is_deprecated,
 
     {{ clean_ecds_etos_text('ecds_unique_id') }} as ecds_unique_id,
     {{ clean_ecds_etos_text('refset_unique_id') }} as refset_unique_id,
