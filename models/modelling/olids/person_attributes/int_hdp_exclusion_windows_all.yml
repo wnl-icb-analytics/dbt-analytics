@@ -1,0 +1,43 @@
+models:
+  - name: int_hdp_exclusion_windows_all
+    description: 'One row per exclusion window per person, covering all people with pregnancy episodes or hypertensive-disorder-of-pregnancy (HDP) codes.
+
+      Pregnancy episodes without an HDP code have reason pregnancy. Episodes with an HDP code have reason pregnancy_hdp and extend the episode end by hdp_postpartum_extension_weeks (default 8 weeks).
+      HDP codes outside every pregnancy window, including its postpartum extension, have reason hdp_standalone and run from the code date for the same extension.
+      Dates are inclusive. Windows can overlap and are not merged. Used to exclude observations during pregnancy and HDP-related periods.'
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - window_id
+    columns:
+      - name: person_id
+        description: 'Unique identifier for the person'
+        data_tests:
+          - not_null
+      - name: window_id
+        description: 'Sequential window number per person, ordered by window_start'
+        data_tests:
+          - not_null
+      - name: window_start
+        description: 'Start date of the exclusion window (inclusive)'
+        data_tests:
+          - not_null
+      - name: window_end
+        description: 'End date of the exclusion window (inclusive)'
+        data_tests:
+          - not_null
+      - name: reason
+        description: 'Why the window exists: pregnancy, pregnancy_hdp, or hdp_standalone'
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - pregnancy
+                  - pregnancy_hdp
+                  - hdp_standalone
