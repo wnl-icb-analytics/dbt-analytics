@@ -1,0 +1,475 @@
+version: 2
+
+# UKHFD code lists used by mental health and community services data. One staging
+# model per UKHFD table; reference models in REFERENCE.DATA_DICTIONARY publish them.
+
+models:
+  - name: stg_ukhfd_data_dictionary_mhsds_finding_scheme_in_use
+    description: UKHFD Finding Scheme In Use definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests: &grain_test
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [code, source_effective_from_at]
+    columns: &code_set_columns
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute name.
+        data_tests: [not_null]
+      - name: code
+        description: National code, upper-cased and trimmed.
+        data_tests: [not_null]
+      - name: description
+        description: Published code description.
+      - name: short_description
+        description: Published description limited to 60 characters.
+      - name: category
+        description: Published category where supplied.
+      - name: notes
+        description: Published notes where supplied.
+      - name: valid_from_date
+        description: Date from which the definition is valid.
+      - name: valid_to_date
+        description: Last date on which the definition is valid; null when open-ended.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_unique_key
+        description: UKHFD key for the code definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: source_created_at
+        description: Timestamp when UKHFD created the source row.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code, including retired codes.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition revision applies.
+      - name: source_effective_to_at
+        description: Timestamp until which the UKHFD definition revision applies; null for its newest revision.
+
+  - name: stg_ukhfd_data_dictionary_mhsds_observation_scheme_in_use
+    description: UKHFD Observation Scheme In Use definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_procedure_scheme_in_use
+    description: UKHFD Procedure Scheme In Use definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_csds_community_care_activity_type
+    description: UKHFD Community Care Activity Type definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_csds_community_care_activity_type_legacy
+    description: UKHFD retired Community Care Activity Type Code definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_referral_closure_reason
+    description: UKHFD Referral Closure Reason definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_csds_referral_closure_reason_legacy
+    description: UKHFD retired Referral Closure Reason For Community Care definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_referral_rejection_reason
+    description: UKHFD Referral Rejection Reason definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_clinical_response_priority
+    description: UKHFD Clinical Response Priority Type definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_reason_for_referral
+    description: UKHFD Reason For Referral To Mental Health definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_referring_care_professional_type
+    description: UKHFD Referring Care Professional Type Mental Health definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_referring_care_professional_staff_group
+    description: UKHFD Referring Care Professional Staff Group For Mental Health definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_referring_care_professional_staff_group_legacy
+    description: UKHFD retired Referring Care Professional Staff Group For Mental Health And Community Care definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_out_of_area_referral_reason
+    description: UKHFD Reason For Out Of Area Referral For Adult Acute Mental Health definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_administrative_category
+    description: UKHFD Administrative Category Code definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_care_contact_cancellation_reason
+    description: UKHFD Care Contact Cancellation Reason definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_care_contact_patient_therapy_mode
+    description: UKHFD Care Contact Patient Therapy Mode definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_care_contact_subject
+    description: UKHFD Care Contact Subject definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_consultation_medium_used
+    description: UKHFD Consultation Medium Used definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_consultation_type
+    description: UKHFD Consultation Type definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_group_therapy_indicator
+    description: UKHFD Group Therapy Indicator definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_interpreter_present_indicator
+    description: UKHFD Interpreter Present At Care Contact Indication Code definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_perinatal_partner_assessment_offer_indicator
+    description: UKHFD Community Perinatal Mental Health Partner Assessment Offer Indicator definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_place_of_safety_indicator
+    description: UKHFD Place Of Safety Indicator definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_planned_care_contact_indicator
+    description: UKHFD Planned Care Contact Indicator definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_reason_patient_no_imca
+    description: UKHFD Reason Patient Does Not Have Independent Mental Capacity Advocate definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_reason_patient_no_imha
+    description: UKHFD Reason Patient Does Not Have Independent Mental Health Advocate definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_reasonable_adjustment_made_indicator
+    description: UKHFD Reasonable Adjustment Made Indicator definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_care_professional_staff_group
+    description: UKHFD Care Professional Staff Group For Mental Health definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_professional_registration_body_code
+    description: UKHFD Professional Registration Body Code definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_care_professional_job_role_code
+    description: UKHFD Job Role Code definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_accommodation_status
+    description: UKHFD Accommodation Status Code definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_accommodation_type
+    description: UKHFD Accommodation Type definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_settled_accommodation
+    description: UKHFD Settled Accommodation Indicator definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_employment_status
+    description: UKHFD Employment Status For Mental Health definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_employment_status_general
+    description: UKHFD Employment Status definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_employment_contract_type
+    description: UKHFD Patient Primary Employment Contract Type For Mental Health definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_weekly_hours_worked
+    description: UKHFD Weekly Hours Worked definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_disability
+    description: UKHFD Disability Code definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_disability_impact
+    description: UKHFD Disability Impact Perception definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_care_plan_type
+    description: UKHFD Care Plan Type For Mental Health definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_care_plan_agreed_by
+    description: UKHFD Care Plan Agreed By definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_care_plan_content_agreed_by
+    description: UKHFD Care Plan Content Agreed By definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_family_care_plan_involvement
+    description: UKHFD Family Involved In Care Plan Indicator definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_family_care_plan_exclusion_reason
+    description: UKHFD Family Not Involved In Care Plan Reason definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_gender_identity
+    description: UKHFD Gender Identity Code definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_gender_same_at_birth
+    description: UKHFD Gender Identity Same At Birth Indicator definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_group_session_type
+    description: UKHFD Group Session Type For Mental Health definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_drop_in_outcome
+    description: UKHFD Mental Health Drop In Contact Outcome definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_indirect_activity_person_consulted
+    description: UKHFD Indirect Activity Person Consulted Type definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_community_treatment_order_end_reason
+    description: UKHFD Community Treatment Order End Reason definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_restrictive_intervention_reason
+    description: UKHFD Restrictive Intervention Reason definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_restrictive_intervention_type
+    description: UKHFD Restrictive Intervention Type definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_post_incident_review_held
+    description: UKHFD Restrictive Intervention Post Incident Review Held Indicator definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_post_incident_review_not_held_reason
+    description: UKHFD Restrictive Intervention Post Incident Review Not Held Reason For Patient definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_restraint_injury
+    description: UKHFD Restrictive Intervention Restraint Injury Indicator definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_leave_of_absence_end_reason
+    description: UKHFD Mental Health Leave Of Absence End Reason definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_absence_without_leave_end_reason
+    description: UKHFD Mental Health Absence Without Leave End Reason definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_escorted_leave
+    description: UKHFD Escorted Mental Health Leave Of Absence Indicator definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_discharge_readiness_delay_reason
+    description: UKHFD Mental Health Clinically Ready For Discharge Period Delay Reason definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_discharge_readiness_attribution
+    description: UKHFD Mental Health Clinically Ready For Discharge Period Attributable To Indication Code definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_waiting_time_measurement_type
+    description: UKHFD Waiting Time Measurement Type definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_planned_destination_of_discharge
+    description: UKHFD Planned Destination Of Discharge definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_ward_intended_sex_of_patients
+    description: UKHFD Ward Intended Sex Of Patients definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_ward_intended_clinical_care_intensity
+    description: UKHFD Ward Intended Clinical Care Intensity definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_ward_intended_age_group_for_mental_health
+    description: UKHFD Ward Intended Age Group For Mental Health definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_ward_setting_type_for_mental_health
+    description: UKHFD Ward Setting Type For Mental Health definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_ward_security_level
+    description: UKHFD Ward Security Level definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_locked_ward_indicator
+    description: UKHFD Locked Ward Indicator definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_csds_reason_for_referral
+    description: UKHFD Reason For Referral To Community Care definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_csds_referring_staff_group
+    description: UKHFD Care Professional Staff Group For Community Care definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_csds_waiting_time_measurement_type
+    description: UKHFD Waiting Time Measurement Type For Community Care definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns

@@ -99,10 +99,10 @@ left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(r.org_id_prov) = upper(provider.organisation_code)
 left join {{ ref('int_mhsds_organisation') }} as commissioner
     on upper(r.dm_icb_commissioner) = upper(commissioner.organisation_code)
-left join {{ ref('mhsds_referral_code_lookup') }} as reason
-    on r.prim_reason_referral_mh = reason.code and reason.code_set_name = 'primary_reason_for_referral'
-left join {{ ref('mhsds_referral_code_lookup') }} as priority
-    on r.clin_resp_priority_type = priority.code and priority.code_set_name = 'clinical_response_priority'
+left join {{ ref('mhsds_reason_for_referral') }} as reason
+    on r.prim_reason_referral_mh = reason.code
+left join {{ ref('nhs_dd_clinical_response_priority_type') }} as priority
+    on r.clin_resp_priority_type = priority.code
 left join {{ ref('mhsds_source_of_referral') }} as referral_source
     on r.source_of_referral_mh = referral_source.code
 left join {{ ref('stg_mhsds_service_or_team_details') }} as team

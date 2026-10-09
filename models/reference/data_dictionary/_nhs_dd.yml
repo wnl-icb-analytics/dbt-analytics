@@ -1,0 +1,1153 @@
+version: 2
+
+# NHS Data Model and Dictionary code lists from UKHFD. Latest models hold one row per
+# code ever published, with the newest UKHFD wording; history models hold every
+# UKHFD revision.
+
+models:
+  - name: nhs_dd_accommodation_status
+    description: >-
+      NHS Data Model and Dictionary Accommodation Status Code codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    columns: &latest_columns
+      - name: code
+        description: National code.
+        data_tests: [not_null, unique]
+      - name: description
+        description: Newest published description for the code.
+      - name: short_description
+        description: Newest published description limited to 60 characters.
+      - name: category
+        description: Newest published category where supplied.
+      - name: notes
+        description: Newest published notes where supplied.
+      - name: valid_from_date
+        description: Date from which the selected definition is valid.
+      - name: valid_to_date
+        description: Last date on which the selected definition is valid; null when open-ended.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute used for the definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: definition_updated_at
+        description: Timestamp from which the selected UKHFD definition revision applies.
+
+  - name: nhs_dd_accommodation_status_history
+    description: >-
+      Accommodation Status Code definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: &history_grain_test
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [source_code_set_name, code, source_effective_from_at]
+    columns: &history_columns
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute name.
+        data_tests: [not_null]
+      - name: code
+        description: National code.
+        data_tests: [not_null]
+      - name: description
+        description: Description in this definition revision.
+      - name: short_description
+        description: Description in this revision limited to 60 characters.
+      - name: category
+        description: Published category in this revision where supplied.
+      - name: notes
+        description: Published notes in this revision where supplied.
+      - name: valid_from_date
+        description: Date from which the definition is valid.
+      - name: valid_to_date
+        description: Last date on which the definition is valid; null when open-ended.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_unique_key
+        description: UKHFD key for the code definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: source_created_at
+        description: Timestamp when UKHFD created the source row.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code, including retired codes.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition revision applies.
+      - name: source_effective_to_at
+        description: Timestamp until which the UKHFD definition revision applies; null for its newest revision.
+
+  - name: nhs_dd_accommodation_type
+    description: >-
+      NHS Data Model and Dictionary Accommodation Type codes. One row per code ever published,
+      with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_accommodation_type_history
+    description: >-
+      Accommodation Type definition revisions from UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_activity_location_type
+    description: >-
+      NHS Data Model and Dictionary activity location type code list. One row per code ever
+      published, using the newest UKHFD definition; retired codes are kept for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_activity_location_type_history
+    description: >-
+      NHS Data Model and Dictionary activity location type definition revisions from UKHFD. One row
+      per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_administrative_category
+    description: >-
+      NHS Data Model and Dictionary Administrative Category Code codes. One row per code ever
+      published, with the newest UKHFD definition. Shows whether care is NHS, private or
+      amenity. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_administrative_category_history
+    description: >-
+      Administrative Category Code definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_admission_method
+    description: >-
+      NHS Data Model and Dictionary admission method codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_admission_method_history
+    description: >-
+      NHS Data Model and Dictionary admission method definition revisions from UKHFD.
+      One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_admission_source
+    description: >-
+      NHS Data Model and Dictionary admission source codes, combining Admission Source (from
+      April 2022) with the retired Source Of Admission. One row per code ever published. Where
+      a code is in both, the Admission Source definition is used. Legacy-only codes such as
+      39, 41, 54, 65 and 85 remain for historical activity; UKHFD still marks them currently
+      valid. Labels are the latest wording, not the wording at admission.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_admission_source_history
+    description: >-
+      Admission Source and retired Source Of Admission definition revisions from UKHFD.
+      One row per source code set, code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_attendance_status
+    description: >-
+      NHS Data Model and Dictionary attendance status code list. One row per code ever published,
+      using the newest UKHFD definition; retired codes are kept for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_attendance_status_history
+    description: >-
+      NHS Data Model and Dictionary attendance status definition revisions from UKHFD. One row per
+      code and UKHFD revision. Use the source effective timestamps to reproduce historic dictionary
+      wording; use valid dates to assess the published validity period.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_attended_or_did_not_attend
+    description: >-
+      NHS Data Model and Dictionary attended or did not attend codes, covering attendance,
+      late arrival, did not attend and cancellation by patient or provider. One row per code
+      ever published, with the newest UKHFD definition.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_attended_or_did_not_attend_history
+    description: >-
+      NHS Data Model and Dictionary attended or did not attend definition revisions from UKHFD.
+      One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_care_contact_cancellation_reason
+    description: >-
+      NHS Data Model and Dictionary Care Contact Cancellation Reason codes. One row per code
+      ever published, with the newest UKHFD definition. Retired codes remain for historical
+      joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_care_contact_cancellation_reason_history
+    description: >-
+      Care Contact Cancellation Reason definition revisions from UKHFD. One row per code and
+      UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_care_contact_patient_therapy_mode
+    description: >-
+      NHS Data Model and Dictionary Care Contact Patient Therapy Mode codes. One row per code
+      ever published, with the newest UKHFD definition. Retired codes remain for historical
+      joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_care_contact_patient_therapy_mode_history
+    description: >-
+      Care Contact Patient Therapy Mode definition revisions from UKHFD. One row per code and
+      UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_care_contact_subject
+    description: >-
+      NHS Data Model and Dictionary Care Contact Subject codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_care_contact_subject_history
+    description: >-
+      Care Contact Subject definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_care_plan_agreed_by
+    description: >-
+      NHS Data Model and Dictionary Care Plan Agreed By codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_care_plan_agreed_by_history
+    description: >-
+      Care Plan Agreed By definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_care_plan_content_agreed_by
+    description: >-
+      NHS Data Model and Dictionary Care Plan Content Agreed By codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_care_plan_content_agreed_by_history
+    description: >-
+      Care Plan Content Agreed By definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_child_protection_plan_indicator
+    description: >-
+      NHS Data Model and Dictionary Child Protection Plan Indication Code codes. One row per
+      code ever published, with the newest UKHFD definition. Retired codes remain for
+      historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_child_protection_plan_indicator_history
+    description: >-
+      Child Protection Plan Indication Code definition revisions from UKHFD. One row per code
+      and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_clinical_response_priority_type
+    description: >-
+      NHS Data Model and Dictionary Clinical Response Priority Type codes. One row per code
+      ever published, with the newest UKHFD definition. Retired codes remain for historical
+      joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_clinical_response_priority_type_history
+    description: >-
+      Clinical Response Priority Type definition revisions from UKHFD. One row per code and
+      UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_community_treatment_order_end_reason
+    description: >-
+      NHS Data Model and Dictionary Community Treatment Order End Reason codes. One row per
+      code ever published, with the newest UKHFD definition. Retired codes remain for
+      historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_community_treatment_order_end_reason_history
+    description: >-
+      Community Treatment Order End Reason definition revisions from UKHFD. One row per code
+      and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_consultation_mechanism
+    description: >-
+      NHS Data Model and Dictionary consultation mechanism code list. One row per code ever
+      published, using the newest UKHFD definition; retired codes are kept for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_consultation_mechanism_history
+    description: >-
+      NHS Data Model and Dictionary consultation mechanism definition revisions from UKHFD. One row
+      per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_consultation_medium_used
+    description: >-
+      NHS Data Model and Dictionary Consultation Medium Used codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_consultation_medium_used_history
+    description: >-
+      Consultation Medium Used definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_consultation_type
+    description: >-
+      NHS Data Model and Dictionary Consultation Type codes. One row per code ever published,
+      with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_consultation_type_history
+    description: >-
+      Consultation Type definition revisions from UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_diagnosis_scheme
+    description: >-
+      NHS Data Model and Dictionary diagnosis coding scheme code list. One row per code ever
+      published, using the newest UKHFD definition; retired codes are kept for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_diagnosis_scheme_history
+    description: >-
+      NHS Data Model and Dictionary diagnosis coding scheme definition revisions from UKHFD. One row
+      per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_disability
+    description: >-
+      NHS Data Model and Dictionary Disability Code codes. One row per code ever published,
+      with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_disability_history
+    description: >-
+      Disability Code definition revisions from UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_disability_impact_perception
+    description: >-
+      NHS Data Model and Dictionary Disability Impact Perception codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_disability_impact_perception_history
+    description: >-
+      Disability Impact Perception definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_discharge_destination
+    description: >-
+      NHS Data Model and Dictionary discharge destination code list. One row per code ever published
+      by UKHFD, preferring Destination Of Discharge over the legacy code set where codes overlap.
+      Uses the latest definition in each source; retired codes remain available for historical
+      activity. Labels are the latest wording, not wording as at discharge.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_discharge_destination_history
+    description: >-
+      NHS Data Model and Dictionary discharge destination definition revisions from UKHFD, covering
+      the modern and legacy code sets. One row per source code set, code and UKHFD revision.
+      Includes retired codes and all revisions; source effective timestamps describe definition
+      history.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_discharge_method
+    description: >-
+      NHS Data Model and Dictionary discharge method code list. One row per code ever published by
+      UKHFD, preferring Method Of Discharge over the legacy code set where codes overlap. Uses the
+      latest definition in each source; retired codes remain available for historical activity.
+      Labels are the latest wording, not wording as at discharge.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_discharge_method_history
+    description: >-
+      NHS Data Model and Dictionary discharge method definition revisions from UKHFD, covering the
+      modern and legacy code sets. One row per source code set, code and UKHFD revision. Includes
+      retired codes and all revisions; source effective timestamps describe definition history.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_ethnic_category
+    description: >-
+      Source NHS Data Model and Dictionary ethnic category code list. For analysis use
+      `ethnicity_2001` (2001 groups) or `ethnicity_2021` (ONS Census 2021 groups) instead.
+      One row per code: 16 ethnic categories, Z (not stated) and 99 (not known). Category
+      holds the 2001 broad group and is null for Z and 99. Recorded values may carry
+      trailing spaces; trim them before joining.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_ethnic_category_history
+    description: >-
+      Ethnic Category Code 2001 definition revisions from UKHFD, including revisions published
+      under the earlier name Ethnic Category Code before June 2020. One row per source code
+      set, code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_family_involved_in_care_plan_indicator
+    description: >-
+      NHS Data Model and Dictionary Family Involved In Care Plan Indicator codes. One row per
+      code ever published, with the newest UKHFD definition. Retired codes remain for
+      historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_family_involved_in_care_plan_indicator_history
+    description: >-
+      Family Involved In Care Plan Indicator definition revisions from UKHFD. One row per code
+      and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_family_not_involved_in_care_plan_reason
+    description: >-
+      NHS Data Model and Dictionary Family Not Involved In Care Plan Reason codes. One row per
+      code ever published, with the newest UKHFD definition. Retired codes remain for
+      historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_family_not_involved_in_care_plan_reason_history
+    description: >-
+      Family Not Involved In Care Plan Reason definition revisions from UKHFD. One row per
+      code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_finding_scheme
+    description: >-
+      NHS Data Model and Dictionary Finding Scheme In Use codes. One row per code ever
+      published, with the newest UKHFD definition. Identifies the coding scheme of a recorded
+      finding, such as ICD-10, Read or SNOMED CT. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_finding_scheme_history
+    description: >-
+      Finding Scheme In Use definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_first_attendance
+    description: >-
+      NHS Data Model and Dictionary first attendance codes, which show whether an outpatient
+      appointment is a first or follow-up attendance and whether it is face to face or remote.
+      One row per code ever published, with the newest UKHFD definition.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_first_attendance_history
+    description: >-
+      NHS Data Model and Dictionary first attendance definition revisions from UKHFD.
+      One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_gender_identity
+    description: >-
+      NHS Data Model and Dictionary Gender Identity Code codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_gender_identity_history
+    description: >-
+      Gender Identity Code definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_gender_identity_same_at_birth_indicator
+    description: >-
+      NHS Data Model and Dictionary Gender Identity Same At Birth Indicator codes. One row per
+      code ever published, with the newest UKHFD definition. Retired codes remain for
+      historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_gender_identity_same_at_birth_indicator_history
+    description: >-
+      Gender Identity Same At Birth Indicator definition revisions from UKHFD. One row per
+      code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_group_therapy_indicator
+    description: >-
+      NHS Data Model and Dictionary Group Therapy Indicator codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_group_therapy_indicator_history
+    description: >-
+      Group Therapy Indicator definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_indirect_activity_person_consulted_type
+    description: >-
+      NHS Data Model and Dictionary Indirect Activity Person Consulted Type codes. One row per
+      code ever published, with the newest UKHFD definition. Retired codes remain for
+      historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_indirect_activity_person_consulted_type_history
+    description: >-
+      Indirect Activity Person Consulted Type definition revisions from UKHFD. One row per
+      code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_interpreter_present_indicator
+    description: >-
+      NHS Data Model and Dictionary Interpreter Present At Care Contact Indication Code codes.
+      One row per code ever published, with the newest UKHFD definition. Retired codes remain
+      for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_interpreter_present_indicator_history
+    description: >-
+      Interpreter Present At Care Contact Indication Code definition revisions from UKHFD. One
+      row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_job_role
+    description: >-
+      NHS Data Model and Dictionary Job Role Code codes. One row per code ever published, with
+      the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_job_role_history
+    description: >-
+      Job Role Code definition revisions from UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_language
+    description: >-
+      NHS Data Model and Dictionary language code list: ISO 639-1 codes plus NHS
+      communication-method extensions. One row per code, using the newest UKHFD definition.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_language_history
+    description: >-
+      NHS Data Model and Dictionary language definition revisions from UKHFD, covering ISO 639-1
+      codes and NHS communication-method extensions. One row per source code set, code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_locked_ward_indicator
+    description: >-
+      NHS Data Model and Dictionary Locked Ward Indicator codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_locked_ward_indicator_history
+    description: >-
+      Locked Ward Indicator definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_looked_after_child_indicator
+    description: >-
+      NHS Data Model and Dictionary Looked After Child Indicator codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_looked_after_child_indicator_history
+    description: >-
+      Looked After Child Indicator definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_main_specialty
+    description: >-
+      NHS Data Model and Dictionary main specialty codes. One row per code ever published,
+      with the newest UKHFD definition. Category holds the published specialty group. Retired
+      codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_main_specialty_history
+    description: >-
+      NHS Data Model and Dictionary main specialty definition revisions from UKHFD.
+      One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_mental_health_admitted_patient_classification_type
+    description: >-
+      NHS Data Model and Dictionary mental health admitted patient classification type code list.
+      One row per code ever published, using the newest UKHFD definition.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_mental_health_admitted_patient_classification_type_history
+    description: >-
+      NHS Data Model and Dictionary mental health admitted patient classification type definition
+      revisions from UKHFD. One row per source code set, code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_observation_scheme
+    description: >-
+      NHS Data Model and Dictionary Observation Scheme In Use codes. One row per code ever
+      published, with the newest UKHFD definition. Identifies the coding scheme of a recorded
+      observation. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_observation_scheme_history
+    description: >-
+      Observation Scheme In Use definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_outpatient_attendance_outcome
+    description: >-
+      NHS Data Model and Dictionary outpatient attendance outcome codes, combining Out-Patient
+      Attendance Outcome (from April 2022) with the older Outcome Of Attendance. One row per
+      code; the current definition is used where a code is in both. Codes 1 to 3 keep their
+      meaning: discharged, follow-up booked, follow-up to be booked. Codes 4 and 5 move or
+      discharge the patient to a patient-initiated (personalised) follow-up pathway.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_outpatient_attendance_outcome_history
+    description: >-
+      Out-Patient Attendance Outcome and older Outcome Of Attendance definition revisions from
+      UKHFD. One row per source code set, code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_outpatient_source_of_referral
+    description: >-
+      NHS Data Model and Dictionary source of referral codes for outpatients. One row per code
+      ever published, with the newest UKHFD definition. Retired codes such as 08 remain for
+      historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_outpatient_source_of_referral_history
+    description: >-
+      NHS Data Model and Dictionary outpatient source of referral definition revisions from
+      UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_patient_classification
+    description: >-
+      NHS Data Model and Dictionary patient classification codes for admitted patient care,
+      such as ordinary admission and day case. One row per code ever published, with the
+      newest UKHFD definition.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_patient_classification_history
+    description: >-
+      NHS Data Model and Dictionary patient classification definition revisions from UKHFD.
+      One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_person_gender
+    description: >-
+      NHS Data Model and Dictionary person gender codes: 0 not known, 1 male, 2 female and 9
+      not specified. One row per code, with the newest UKHFD definition. Used by SUS admitted
+      patient and outpatient data; ECDS uses nhs_dd_person_stated_gender instead.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_person_gender_history
+    description: >-
+      NHS Data Model and Dictionary person gender definition revisions from UKHFD. One row per
+      code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_person_stated_gender
+    description: >-
+      NHS Data Model and Dictionary person stated gender codes: 1 male, 2 female, 9
+      indeterminate and X not known. One row per code, with the newest UKHFD definition.
+      Used by ECDS. SUS admitted patient and outpatient data use nhs_dd_person_gender instead.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_person_stated_gender_history
+    description: >-
+      NHS Data Model and Dictionary person stated gender definition revisions from UKHFD.
+      One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_place_of_safety_indicator
+    description: >-
+      NHS Data Model and Dictionary Place Of Safety Indicator codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_place_of_safety_indicator_history
+    description: >-
+      Place Of Safety Indicator definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_planned_care_contact_indicator
+    description: >-
+      NHS Data Model and Dictionary Planned Care Contact Indicator codes. One row per code
+      ever published, with the newest UKHFD definition. Retired codes remain for historical
+      joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_planned_care_contact_indicator_history
+    description: >-
+      Planned Care Contact Indicator definition revisions from UKHFD. One row per code and
+      UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_planned_discharge_destination
+    description: >-
+      NHS Data Model and Dictionary Planned Destination Of Discharge codes. One row per code
+      ever published, with the newest UKHFD definition. Combines Planned Destination Of
+      Discharge with the retired Discharge Destination code set; the current definition is
+      used where a code is in both. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_planned_discharge_destination_history
+    description: >-
+      Planned Destination Of Discharge definition revisions from UKHFD, including the retired
+      code set. One row per source code set, code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_priority_type
+    description: >-
+      NHS Data Model and Dictionary priority type codes: routine, urgent and two week wait.
+      One row per code ever published, with the newest UKHFD definition.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_priority_type_history
+    description: >-
+      NHS Data Model and Dictionary priority type definition revisions from UKHFD.
+      One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_procedure_scheme
+    description: >-
+      NHS Data Model and Dictionary Procedure Scheme In Use codes. One row per code ever
+      published, with the newest UKHFD definition. Identifies the coding scheme of a recorded
+      procedure. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_procedure_scheme_history
+    description: >-
+      Procedure Scheme In Use definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_professional_registration_body
+    description: >-
+      NHS Data Model and Dictionary Professional Registration Body Code codes. One row per
+      code ever published, with the newest UKHFD definition. Retired codes remain for
+      historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_professional_registration_body_history
+    description: >-
+      Professional Registration Body Code definition revisions from UKHFD. One row per code
+      and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_reason_patient_no_imca
+    description: >-
+      NHS Data Model and Dictionary Reason Patient Does Not Have Independent Mental Capacity
+      Advocate codes. One row per code ever published, with the newest UKHFD definition.
+      Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_reason_patient_no_imca_history
+    description: >-
+      Reason Patient Does Not Have Independent Mental Capacity Advocate definition revisions
+      from UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_reason_patient_no_imha
+    description: >-
+      NHS Data Model and Dictionary Reason Patient Does Not Have Independent Mental Health
+      Advocate codes. One row per code ever published, with the newest UKHFD definition.
+      Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_reason_patient_no_imha_history
+    description: >-
+      Reason Patient Does Not Have Independent Mental Health Advocate definition revisions
+      from UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_reasonable_adjustment_made_indicator
+    description: >-
+      NHS Data Model and Dictionary Reasonable Adjustment Made Indicator codes. One row per
+      code ever published, with the newest UKHFD definition. Retired codes remain for
+      historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_reasonable_adjustment_made_indicator_history
+    description: >-
+      Reasonable Adjustment Made Indicator definition revisions from UKHFD. One row per code
+      and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_referral_closure_reason
+    description: >-
+      NHS Data Model and Dictionary Referral Closure Reason codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_referral_closure_reason_history
+    description: >-
+      Referral Closure Reason definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_referral_rejection_reason
+    description: >-
+      NHS Data Model and Dictionary Referral Rejection Reason codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_referral_rejection_reason_history
+    description: >-
+      Referral Rejection Reason definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_restrictive_intervention_reason
+    description: >-
+      NHS Data Model and Dictionary Restrictive Intervention Reason codes. One row per code
+      ever published, with the newest UKHFD definition. Retired codes remain for historical
+      joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_restrictive_intervention_reason_history
+    description: >-
+      Restrictive Intervention Reason definition revisions from UKHFD. One row per code and
+      UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_restrictive_intervention_restraint_injury_indicator
+    description: >-
+      NHS Data Model and Dictionary Restrictive Intervention Restraint Injury Indicator codes.
+      One row per code ever published, with the newest UKHFD definition. Retired codes remain
+      for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_restrictive_intervention_restraint_injury_indicator_history
+    description: >-
+      Restrictive Intervention Restraint Injury Indicator definition revisions from UKHFD. One
+      row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_restrictive_intervention_review_held_indicator
+    description: >-
+      NHS Data Model and Dictionary Restrictive Intervention Post Incident Review Held
+      Indicator codes. One row per code ever published, with the newest UKHFD definition.
+      Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_restrictive_intervention_review_held_indicator_history
+    description: >-
+      Restrictive Intervention Post Incident Review Held Indicator definition revisions from
+      UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_restrictive_intervention_review_not_held_reason
+    description: >-
+      NHS Data Model and Dictionary Restrictive Intervention Post Incident Review Not Held
+      Reason For Patient codes. One row per code ever published, with the newest UKHFD
+      definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_restrictive_intervention_review_not_held_reason_history
+    description: >-
+      Restrictive Intervention Post Incident Review Not Held Reason For Patient definition
+      revisions from UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_restrictive_intervention_type
+    description: >-
+      NHS Data Model and Dictionary Restrictive Intervention Type codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_restrictive_intervention_type_history
+    description: >-
+      Restrictive Intervention Type definition revisions from UKHFD. One row per code and
+      UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_settled_accommodation_indicator
+    description: >-
+      NHS Data Model and Dictionary Settled Accommodation Indicator codes. One row per code
+      ever published, with the newest UKHFD definition. Retired codes remain for historical
+      joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_settled_accommodation_indicator_history
+    description: >-
+      Settled Accommodation Indicator definition revisions from UKHFD. One row per code and
+      UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_treatment_function
+    description: >-
+      NHS Data Model and Dictionary treatment function codes. One row per code ever published,
+      with the newest UKHFD definition. Category holds the published specialty group. Retired
+      codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_treatment_function_history
+    description: >-
+      NHS Data Model and Dictionary treatment function definition revisions from UKHFD.
+      One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_waiting_time_measurement_type
+    description: >-
+      NHS Data Model and Dictionary Waiting Time Measurement Type codes. One row per code ever
+      published, with the newest UKHFD definition. Community services use
+      csds_waiting_time_measurement_type instead. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_waiting_time_measurement_type_history
+    description: >-
+      Waiting Time Measurement Type definition revisions from UKHFD. One row per code and
+      UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_ward_intended_clinical_care_intensity
+    description: >-
+      NHS Data Model and Dictionary Ward Intended Clinical Care Intensity codes. One row per
+      code ever published, with the newest UKHFD definition. Retired codes remain for
+      historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_ward_intended_clinical_care_intensity_history
+    description: >-
+      Ward Intended Clinical Care Intensity definition revisions from UKHFD. One row per code
+      and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_ward_intended_sex
+    description: >-
+      NHS Data Model and Dictionary Ward Intended Sex Of Patients codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_ward_intended_sex_history
+    description: >-
+      Ward Intended Sex Of Patients definition revisions from UKHFD. One row per code and
+      UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_ward_security_level
+    description: >-
+      NHS Data Model and Dictionary Ward Security Level codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_ward_security_level_history
+    description: >-
+      Ward Security Level definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: nhs_dd_weekly_hours_worked
+    description: >-
+      NHS Data Model and Dictionary Weekly Hours Worked codes. One row per code ever
+      published, with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: nhs_dd_weekly_hours_worked_history
+    description: >-
+      Weekly Hours Worked definition revisions from UKHFD. One row per code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns

@@ -46,13 +46,13 @@ from selected as s
 left join {{ ref('stg_mhsds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as type_label
-    on upper(trim(s.restrictive_int_type::varchar)) = type_label.code and type_label.code_set_name = 'restrictive_intervention_type'
-left join {{ ref('mhsds_domain_code_lookup') }} as patient_label
-    on upper(trim(s.restraint_injury_patient::varchar)) = patient_label.code and patient_label.code_set_name = 'restraint_injury'
-left join {{ ref('mhsds_domain_code_lookup') }} as staff_label
-    on upper(trim(s.restraint_injury_care_pers::varchar)) = staff_label.code and staff_label.code_set_name = 'restraint_injury'
-left join {{ ref('mhsds_domain_code_lookup') }} as other_label
-    on upper(trim(s.restraint_injury_other_pers::varchar)) = other_label.code and other_label.code_set_name = 'restraint_injury'
+left join {{ ref('nhs_dd_restrictive_intervention_type') }} as type_label
+    on upper(trim(s.restrictive_int_type::varchar)) = type_label.code
+left join {{ ref('nhs_dd_restrictive_intervention_restraint_injury_indicator') }} as patient_label
+    on upper(trim(s.restraint_injury_patient::varchar)) = patient_label.code
+left join {{ ref('nhs_dd_restrictive_intervention_restraint_injury_indicator') }} as staff_label
+    on upper(trim(s.restraint_injury_care_pers::varchar)) = staff_label.code
+left join {{ ref('nhs_dd_restrictive_intervention_restraint_injury_indicator') }} as other_label
+    on upper(trim(s.restraint_injury_other_pers::varchar)) = other_label.code
 left join {{ ref('fct_mhsds_restrictive_intervention_incident') }} as i
     on s.uniq_restrictive_int_inc_id = i.incident_source_id and s.org_id_prov = i.provider_organisation_code
