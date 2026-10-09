@@ -1,3 +1,5 @@
+{{ config(materialized='ephemeral') }}
+
 select
     hrg_code,
     hrg_name,

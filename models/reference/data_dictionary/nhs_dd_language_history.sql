@@ -1,3 +1,5 @@
+{{ config(materialized='ephemeral') }}
+
 select *
 from (
     {{ select_data_dictionary_history('stg_ukhfd_other_iso_language_codes') }}

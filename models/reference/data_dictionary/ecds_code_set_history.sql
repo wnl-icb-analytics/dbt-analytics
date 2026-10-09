@@ -1,3 +1,5 @@
+{{ config(materialized='ephemeral') }}
+
 select *
 from {{ ref('stg_ukhfd_ecds_etos_code_sets') }}
 qualify row_number() over (
