@@ -19,9 +19,10 @@
 
     Grain
       One row per active, non-deceased person in dim_person_demographics whose
-      recorded gender is Male or Female and age is between 18-100. bmi, town
-      and alcohol_cat6 are passed through as NULL when missing, so those
-      rows need handling at scoring.
+      recorded gender is Male or Female and age is between 18-100. bmi and
+      town are passed through as NULL when missing, so those rows need
+      handling at scoring. alcohol_cat6 defaults to 0 (NonDrinker) when
+      there is no Full AUDIT score.
 
     AGPL / ClinRisk attribution
       QAdmissions is published by ClinRisk Ltd under the GNU Affero General
@@ -296,8 +297,10 @@ SELECT
 
     twn.townsend_score                                                     AS town,
 
-    -- NULL when there is no Full AUDIT score, for handling at scoring.
-    alc.alcohol_cat6                                                       AS alcohol_cat6,
+    -- 0 (NonDrinker) when there is no Full AUDIT score, the same category a
+    -- Full AUDIT score of 0 gives. Most people have none, and the model
+    -- rejects NULL.
+    COALESCE(alc.alcohol_cat6, 0)                                          AS alcohol_cat6,
 
     -- Ethnicity risk group 1..9. Persons with no ethnicity record
     -- default to 1 (NotRecorded -> 1 per QResearch).

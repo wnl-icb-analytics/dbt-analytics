@@ -25,11 +25,13 @@ Source
 Score-to-category mapping (Full AUDIT 0..40 -> cat6), shared with
 qadmissions_input_features_history through the qadmissions_alcohol_cat6 macro:
   0       -> 0  (NonDrinker)
-  1..3    -> 1  (Trivial)
-  4..7    -> 2  (Light)
-  8..15   -> 3  (Moderate)
-  16..19  -> 4  (Heavy)
-  20+     -> 5  (VeryHeavy)
+  >0..3   -> 1  (Trivial)
+  >3..7   -> 2  (Light)
+  >7..15  -> 3  (Moderate)
+  >15..19 -> 4  (Heavy)
+  >19     -> 5  (VeryHeavy)
+  The bands are continuous, so fractional scores (stored to 2 decimal
+  places) get a category too.
 
 Per-person aggregation
   Take the HIGHEST cat6 ever recorded for the person (precautionary -
@@ -38,8 +40,7 @@ Per-person aggregation
   for stability when multiple observations share the same cat6.
 
 Persons with no Full AUDIT record do not appear here; the consuming
-qadmissions_input_features model passes NULL through for them, to be handled
-at scoring, rather than substituting 0 (NonDrinker).
+qadmissions_input_features model gives them 0 (NonDrinker).
 
 Grain: one row per person who has at least one valid Full AUDIT score.
 */

@@ -495,9 +495,9 @@ SELECT
     -- Townsend score from the current LSOA; NULL passed through, as live.
     twn.townsend_score                                                     AS town,
 
-    -- Alcohol category. NULL when there is no Full AUDIT score by the index
-    -- date, for handling at scoring, as in the live model.
-    alc.alcohol_cat6                                                       AS alcohol_cat6,
+    -- Alcohol category. 0 (NonDrinker) when there is no Full AUDIT score by
+    -- the index date, as in the live model.
+    COALESCE(alc.alcohol_cat6, 0)                                          AS alcohol_cat6,
 
     -- Ethnicity risk group 1-9 from the latest recorded ethnicity. No match
     -- defaults to 1 (White / NotRecorded), as in the live model.
