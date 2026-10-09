@@ -35,6 +35,10 @@ select core.primarykey_id
         as patient_gp_registration_general_practitioner
     , nullif(upper(trim(commissioning_service_agreement_commissioner)), '')
         as commissioning_service_agreement_commissioner
+    , nullif(upper(trim(commissioning_commissioner_assignment_commissioner)), '')
+        as commissioning_commissioner_assignment_commissioner
+    , nullif(trim(commissioning_commissioner_assignment_flowchart_reference), '')
+        as commissioning_commissioner_assignment_flowchart_reference
     , case when provider.organisation_code is not null
         then core.attendance_location_hes_provider_3
         else left(core.attendance_location_hes_provider_3, 3)

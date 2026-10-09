@@ -251,6 +251,41 @@ select
         registrant_commissioner_exact.commissioner_name
         , registrant_commissioner_fallback.commissioner_name
     ) as assigned_commissioner_name_at_event
+    , core.commissioning_commissioner_assignment_commissioner
+        as cam_commissioner_code_at_event
+    , coalesce(
+        cam_commissioner_exact.commissioner_name
+        , cam_commissioner_fallback.commissioner_name
+    ) as cam_commissioner_name_at_event
+    , core.commissioning_commissioner_assignment_flowchart_reference
+        as cam_flowchart_reference_at_event
+    , core.commissioning_service_agreement_commissioner
+        as dscro_commissioner_code_at_event
+    , coalesce(
+        registrant_commissioner_exact.commissioner_name
+        , registrant_commissioner_fallback.commissioner_name
+    ) as dscro_commissioner_name_at_event
+    , coalesce(
+        core.commissioning_commissioner_assignment_commissioner
+        , core.commissioning_service_agreement_commissioner
+    ) as commissioner_code_at_event
+    , case
+        when core.commissioning_commissioner_assignment_commissioner is not null
+            then coalesce(
+                cam_commissioner_exact.commissioner_name
+                , cam_commissioner_fallback.commissioner_name
+            )
+        else coalesce(
+            registrant_commissioner_exact.commissioner_name
+            , registrant_commissioner_fallback.commissioner_name
+        )
+      end as commissioner_name_at_event
+    , case
+        when core.commissioning_commissioner_assignment_commissioner is not null
+            then 'CAM'
+        when core.commissioning_service_agreement_commissioner is not null
+            then 'DSCRO'
+      end as commissioner_source_at_event
 
     /* patient information at time of event */
     , core.patient_age_at_arrival as age_at_event
@@ -447,6 +482,17 @@ left join commissioner_codes as registrant_commissioner_fallback
     and right(core.commissioning_service_agreement_commissioner, 2) = '00'
     and left(core.commissioning_service_agreement_commissioner, 3)
     = registrant_commissioner_fallback.commissioner_code
+
+left join commissioner_codes as cam_commissioner_exact
+    on core.commissioning_commissioner_assignment_commissioner
+    = cam_commissioner_exact.commissioner_code
+
+left join commissioner_codes as cam_commissioner_fallback
+    on cam_commissioner_exact.commissioner_code is null
+    and length(core.commissioning_commissioner_assignment_commissioner) = 5
+    and right(core.commissioning_commissioner_assignment_commissioner, 2) = '00'
+    and left(core.commissioning_commissioner_assignment_commissioner, 3)
+    = cam_commissioner_fallback.commissioner_code
 
 left join treatment_function_codes as treatment_function
     on core.attendance_decision_to_admit_treatment_function_code = treatment_function.bk_specialty_code
