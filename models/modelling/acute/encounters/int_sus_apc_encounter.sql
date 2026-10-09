@@ -169,10 +169,10 @@ from {{ ref('stg_sus_apc_spell')}} as core
 left join {{ ref('stg_dictionary_ip_admissionmethods')}} as dict_adm_method
     ON core.spell_admission_method = dict_adm_method.bk_admission_method_code
 
-left join {{ ref('discharge_destination') }} as dict_discharge_destination
+left join {{ ref('nhs_dd_discharge_destination') }} as dict_discharge_destination
     on core.spell_discharge_destination = dict_discharge_destination.code
 
-left join {{ ref('discharge_method') }} as dict_discharge_method
+left join {{ ref('nhs_dd_discharge_method') }} as dict_discharge_method
     on core.spell_discharge_method = dict_discharge_method.code
 
 left join {{ ref('stg_dictionary_dbo_patientclassification')}} as dict_patient_class
