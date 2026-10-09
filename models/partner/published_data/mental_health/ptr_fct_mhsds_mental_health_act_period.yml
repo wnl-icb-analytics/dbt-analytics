@@ -1,0 +1,35 @@
+models:
+  - name: ptr_fct_mhsds_mental_health_act_period
+    description: >
+      Partner copy of fct_mhsds_mental_health_act_period, published to local authority
+      partners. No SQL filter: partner roles see only rows allowed by the PARTNER_POLICY
+      row access policy on sk_patient_id, which partner_mapping links to a borough
+      partner role when the patient is registered with a practice in, or resident in,
+      that borough. Rows without an sk_patient_id, or whose patient has no in-area
+      registered or residence borough, are visible to no partner. sk_patient_id is cast
+      to VARCHAR to match the policy; all other columns are as in
+      fct_mhsds_mental_health_act_period. Recorded periods of Mental Health Act legal
+      status. Each row is one period using its latest accepted version, including
+      unknown codes and missing person details. A period counts as current detention
+      when its code is classified as detention, it has no recorded end, it is unexpired
+      at the dataset observation date, and it was last reported within two calendar
+      months of that date. These are the existing project rules. Concurrent community
+      orders are not reclassified by this table.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: mental_health_act_period_id
+        description: >
+          MHSDS legal-status period identifier.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.

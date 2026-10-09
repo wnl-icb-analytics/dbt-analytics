@@ -1,0 +1,35 @@
+models:
+  - name: ptr_fct_mhsds_group_therapy_contact
+    description: >
+      Partner copy of fct_mhsds_group_therapy_contact, published to local authority
+      partners. No SQL filter: partner roles see only rows allowed by the PARTNER_POLICY
+      row access policy on sk_patient_id, which partner_mapping links to a borough
+      partner role when the patient is registered with a practice in, or resident in,
+      that borough. Rows without an sk_patient_id, or whose patient has no in-area
+      registered or residence borough, are visible to no partner. sk_patient_id is cast
+      to VARCHAR to match the policy; all other columns are as in
+      fct_mhsds_group_therapy_contact. Patient contacts marked as group therapy by
+      therapy mode 3 or the older group indicator Y. Each row is one latest
+      referral/contact pair. Includes attendance, non-attendance and cancellation
+      states; use is_attended for attended contacts. Missing person IDs remain present.
+      The contacts have no shared session identifier, so they cannot establish exact
+      session membership or be linked to anonymous MHS301 sessions. These contacts are
+      already included in fct_mhsds_care_contact.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: group_therapy_contact_id
+        description: >
+          Unique key at the documented grain.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.

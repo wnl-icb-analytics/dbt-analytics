@@ -1,0 +1,39 @@
+models:
+  - name: ptr_fct_csds_referral_period
+    description: >
+      Partner copy of fct_csds_referral_period, published to local authority partners.
+      No SQL filter: partner roles see only rows allowed by the PARTNER_POLICY row
+      access policy on sk_patient_id, which partner_mapping links to a borough partner
+      role when the patient is registered with a practice in, or resident in, that
+      borough. Rows without an sk_patient_id, or whose patient has no in-area registered
+      or residence borough, are visible to no partner. sk_patient_id is cast to VARCHAR
+      to match the policy; all other columns are as in fct_csds_referral_period. CSDS
+      referral state in each accepted submission. Each row is one referral and
+      submission. A referral is open at period end when it appears in that month's
+      submission, was received by that date, has no service discharge by then, and its
+      teams in that submission are not all closed or rejected. A referral that stops
+      being submitted counts as closed. Teams close only on a closure or rejection date,
+      because some submissions omit or truncate the team section. Attendance uses
+      contacts whose date and reporting period are both no later than the period end.
+      Later corrections can revise historical results. Community referrals such as
+      health visiting and school nursing legitimately stay open for years. An open
+      referral without attendance is evidence of waiting, not eligibility for a national
+      waiting-time standard.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: referral_period_id
+        description: >
+          Key for the referral and accepted submission.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.

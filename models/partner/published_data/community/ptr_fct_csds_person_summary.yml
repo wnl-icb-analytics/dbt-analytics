@@ -1,0 +1,36 @@
+models:
+  - name: ptr_fct_csds_person_summary
+    description: >
+      Partner copy of fct_csds_person_summary, published to local authority partners. No
+      SQL filter: partner roles see only rows allowed by the PARTNER_POLICY row access
+      policy on sk_patient_id, which partner_mapping links to a borough partner role
+      when the patient is registered with a practice in, or resident in, that borough.
+      Rows without an sk_patient_id, or whose patient has no in-area registered or
+      residence borough, are visible to no partner. sk_patient_id is cast to VARCHAR to
+      match the policy; all other columns are as in fct_csds_person_summary. Summary of
+      the CSDS evidence available for each identifiable person. Each row is one CSDS
+      person ID found in any modelled evidence, including people recorded only in
+      clinical or registration records. Use it to select cohorts and compare referrals,
+      current caseload, contacts and clinical records. Demographics come from the newest
+      period record across providers. The as_of_date is the latest accepted dataset
+      period; individual providers can be older. Twelve-month contact counts end on that
+      date. No qualifying evidence gives zero or false. National ID changes can split
+      one person's history across rows.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: person_id
+        description: >
+          CSDS person identifier.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.

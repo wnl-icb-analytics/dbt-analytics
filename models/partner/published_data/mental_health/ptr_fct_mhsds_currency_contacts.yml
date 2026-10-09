@@ -1,0 +1,33 @@
+models:
+  - name: ptr_fct_mhsds_currency_contacts
+    description: >
+      Partner copy of fct_mhsds_currency_contacts, published to local authority
+      partners. No SQL filter: partner roles see only rows allowed by the PARTNER_POLICY
+      row access policy on sk_patient_id, which partner_mapping links to a borough
+      partner role when the patient is registered with a practice in, or resident in,
+      that borough. Rows without an sk_patient_id, or whose patient has no in-area
+      registered or residence borough, are visible to no partner. sk_patient_id is cast
+      to VARCHAR to match the policy; all other columns are as in
+      fct_mhsds_currency_contacts. Costing classifications and proxy costs for eligible
+      patient contacts. Each row is one referral/contact pair outside the relevant
+      inpatient intervals. Both identifiers are needed because contact IDs can be reused
+      across referrals. Costs use the fiscal year containing the contact date. These are
+      currency-based estimates, not actual provider expenditure.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - uniq_serv_req_id
+              - uniq_care_cont_id

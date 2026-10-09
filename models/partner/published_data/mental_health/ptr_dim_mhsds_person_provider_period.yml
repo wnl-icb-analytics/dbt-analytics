@@ -1,0 +1,36 @@
+models:
+  - name: ptr_dim_mhsds_person_provider_period
+    description: >
+      Partner copy of dim_mhsds_person_provider_period, published to local authority
+      partners. No SQL filter: partner roles see only rows allowed by the PARTNER_POLICY
+      row access policy on sk_patient_id, which partner_mapping links to a borough
+      partner role when the patient is registered with a practice in, or resident in,
+      that borough. Rows without an sk_patient_id, or whose patient has no in-area
+      registered or residence borough, are visible to no partner. sk_patient_id is cast
+      to VARCHAR to match the policy; all other columns are as in
+      dim_mhsds_person_provider_period. Demographic details recorded for a person by a
+      provider in a reporting period. Each row is one identifiable person, provider and
+      accepted period. Use this table for historical breakdowns by age, ethnicity,
+      gender or deprivation. The newest submitted record is used within each provider
+      period, with conflicting records flagged. Differences between providers remain
+      separate, and current cross-system demographics do not replace submitted history.
+      IMD 2019 and IMD 2025 use fixed reference editions. Population access rates need
+      an external population denominator.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: person_provider_period_id
+        description: >
+          Key for the person, provider and reporting period.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.

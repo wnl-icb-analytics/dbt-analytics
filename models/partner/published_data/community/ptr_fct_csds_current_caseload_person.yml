@@ -1,0 +1,34 @@
+models:
+  - name: ptr_fct_csds_current_caseload_person
+    description: >
+      Partner copy of fct_csds_current_caseload_person, published to local authority
+      partners. No SQL filter: partner roles see only rows allowed by the PARTNER_POLICY
+      row access policy on sk_patient_id, which partner_mapping links to a borough
+      partner role when the patient is registered with a practice in, or resident in,
+      that borough. Rows without an sk_patient_id, or whose patient has no in-area
+      registered or residence borough, are visible to no partner. sk_patient_id is cast
+      to VARCHAR to match the policy; all other columns are as in
+      fct_csds_current_caseload_person. People with at least one open CSDS referral in
+      the dataset's latest accepted month. Each row is one person and provider, with
+      counts of open referrals and those without recorded attendance. Count distinct
+      person_id across providers because a person can appear at several. Open referrals
+      without a person ID remain in fct_csds_current_caseload_referral. Recorded
+      caseload, not confirmed active treatment.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: caseload_person_provider_id
+        description: >
+          Key for the person and provider.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.

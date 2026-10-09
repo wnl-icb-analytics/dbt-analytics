@@ -1,0 +1,37 @@
+models:
+  - name: ptr_fct_mhsds_latest_provider_caseload_referral
+    description: >
+      Partner copy of fct_mhsds_latest_provider_caseload_referral, published to local
+      authority partners. No SQL filter: partner roles see only rows allowed by the
+      PARTNER_POLICY row access policy on sk_patient_id, which partner_mapping links to
+      a borough partner role when the patient is registered with a practice in, or
+      resident in, that borough. Rows without an sk_patient_id, or whose patient has no
+      in-area registered or residence borough, are visible to no partner. sk_patient_id
+      is cast to VARCHAR to match the policy; all other columns are as in
+      fct_mhsds_latest_provider_caseload_referral. Open referrals from each provider's
+      latest accepted reporting period. Each row is one referral received by period end
+      with no rejection or discharge by that date. Includes referrals without an
+      attended contact, with no inactivity cut-off. Provider periods can differ or be
+      old; use the lag fields when comparing providers. Use
+      fct_mhsds_current_caseload_referral for a common dataset-latest month. Referrals
+      absent from a provider's latest submission are neither carried forward nor
+      declared discharged. Join team relationships using both submission and referral;
+      several teams may match. Eddie Davison owns the definition.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: referral_period_id
+        description: >
+          Unique open referral-period key.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.

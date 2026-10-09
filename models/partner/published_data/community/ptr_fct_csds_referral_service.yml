@@ -1,0 +1,35 @@
+models:
+  - name: ptr_fct_csds_referral_service
+    description: >
+      Partner copy of fct_csds_referral_service, published to local authority partners.
+      No SQL filter: partner roles see only rows allowed by the PARTNER_POLICY row
+      access policy on sk_patient_id, which partner_mapping links to a borough partner
+      role when the patient is registered with a practice in, or resident in, that
+      borough. Rows without an sk_patient_id, or whose patient has no in-area registered
+      or residence borough, are visible to no partner. sk_patient_id is cast to VARCHAR
+      to match the policy; all other columns are as in fct_csds_referral_service. One
+      latest reported CSDS service/team relationship per service request and nullable
+      local team identifier. Selects newest reporting period, then file receipt,
+      submission and source-row identifiers. Retains all teams, closure/rejection fields
+      and the selected row's person. Parent context comes from the same submission;
+      current referral demographics are not copied. Missing closure is not proof of an
+      active referral. Historical service deliveries remain in
+      stg_csds_service_type_history.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: source_record_id
+        description: >
+          Surrogate key of service request and nullable local team identifier.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.

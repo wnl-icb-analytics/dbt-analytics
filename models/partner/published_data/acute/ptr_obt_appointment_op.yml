@@ -1,0 +1,33 @@
+models:
+  - name: ptr_obt_appointment_op
+    description: >
+      Partner copy of obt_appointment_op, published to local authority partners. No SQL
+      filter: partner roles see only rows allowed by the PARTNER_POLICY row access
+      policy on sk_patient_id, which partner_mapping links to a borough partner role
+      when the patient is registered with a practice in, or resident in, that borough.
+      Rows without an sk_patient_id, or whose patient has no in-area registered or
+      residence borough, are visible to no partner. sk_patient_id is cast to VARCHAR to
+      match the policy; all other columns are as in obt_appointment_op. One row per
+      latest SUS outpatient appointment. Includes attended and non-attended activity,
+      appointments without a submitted appointment identifier, and appointments without
+      a linked patient key. Current PCN, neighbourhood and health borough fields use the
+      latest maintained mapping for the practice recorded on the appointment, not
+      historical membership.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: visit_occurrence_id
+        description: >
+          Primary key for the appointment within SUS
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.
