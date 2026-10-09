@@ -14,13 +14,13 @@ with ranked as (
         row_number() over (
             partition by code
             order by
-                -- Prefer the modern code set even when its code has retired.
-                source_code_set_name = 'Destination_Of_Discharge' desc,
+                -- Prefer the current 2001 code set over its retired predecessor.
+                source_code_set_name = 'Ethnic_Category_Code_2001' desc,
                 source_effective_from_at desc nulls last,
                 source_imported_at desc nulls last,
                 source_unique_key desc
         ) as definition_rank
-    from {{ ref('nhs_dd_discharge_destination_history') }}
+    from {{ ref('nhs_dd_ethnic_category_history') }}
     where is_latest_definition
 )
 

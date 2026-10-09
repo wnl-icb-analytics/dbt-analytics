@@ -1,0 +1,136 @@
+version: 2
+
+models:
+  - name: stg_ukhfd_data_dictionary_admission_method
+    description: UKHFD admission method definitions. One row per code and UKHFD definition revision.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests: &grain_test
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [code, source_effective_from_at]
+    columns: &code_set_columns
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute name.
+        data_tests: [not_null]
+      - name: code
+        description: National code, upper-cased and trimmed.
+        data_tests: [not_null]
+      - name: description
+        description: Published code description.
+      - name: short_description
+        description: Published description limited to 60 characters.
+      - name: category
+        description: Published category where supplied.
+      - name: notes
+        description: Published notes where supplied.
+      - name: valid_from_date
+        description: Date from which the definition is valid.
+      - name: valid_to_date
+        description: Last date on which the definition is valid; null when open-ended.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_unique_key
+        description: UKHFD key for the code definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: source_created_at
+        description: Timestamp when UKHFD created the source row.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code, including retired codes.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition revision applies.
+      - name: source_effective_to_at
+        description: Timestamp until which the UKHFD definition revision applies; null for its newest revision.
+
+  - name: stg_ukhfd_data_dictionary_admission_source
+    description: UKHFD admission source definitions, in use from April 2022. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_source_of_admission_legacy
+    description: UKHFD retired source of admission definitions, replaced by admission source from April 2022. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_main_specialty_code
+    description: UKHFD main specialty code definitions. One row per code and UKHFD definition revision, including retired codes.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_treatment_function_code
+    description: UKHFD treatment function code definitions. One row per code and UKHFD definition revision, including retired codes.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_priority_type
+    description: UKHFD priority type definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_mhsds_person_stated_gender
+    description: UKHFD person stated gender code definitions. One row per code and UKHFD definition revision. Not MHSDS-specific despite the source name.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_patient_classification
+    description: UKHFD admitted patient classification definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_outcome_of_attendance
+    description: UKHFD outcome of attendance definitions, replaced by out-patient attendance outcome from April 2022. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_first_attendance
+    description: UKHFD outpatient first attendance definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_attended_or_did_not_attend
+    description: UKHFD attended or did not attend definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_source_of_referral_for_out_patients
+    description: UKHFD outpatient source of referral definitions. One row per code and UKHFD definition revision, including retired codes.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_ethnic_category_code
+    description: UKHFD ethnic category code definitions up to June 2020, when the attribute was renamed Ethnic Category Code 2001. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_ethnic_category_code_2001
+    description: UKHFD Ethnic Category Code 2001 definitions, current from June 2020. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_out_patient_attendance_outcome
+    description: UKHFD out-patient attendance outcome definitions, in use from April 2022. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_person_gender_code
+    description: UKHFD person gender code definitions. One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns

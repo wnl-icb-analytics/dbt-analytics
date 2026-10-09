@@ -1,1 +1,1 @@
-{{ select_latest_data_dictionary_definitions('attendance_status_history') }}
+{{ select_latest_data_dictionary_definitions('nhs_dd_attendance_status_history') }}

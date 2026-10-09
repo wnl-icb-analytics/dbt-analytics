@@ -20,7 +20,7 @@ with ranked as (
                 source_imported_at desc nulls last,
                 source_unique_key desc
         ) as definition_rank
-    from {{ ref('discharge_method_history') }}
+    from {{ ref('nhs_dd_discharge_method_history') }}
     where is_latest_definition
 )
 

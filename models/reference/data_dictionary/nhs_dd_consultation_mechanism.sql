@@ -1,1 +1,1 @@
-{{ select_latest_data_dictionary_definitions('consultation_mechanism_history') }}
+{{ select_latest_data_dictionary_definitions('nhs_dd_consultation_mechanism_history') }}
