@@ -179,27 +179,20 @@ left join {{ ref('mhsds_service_or_team_type') }} as tt
 left join {{ ref('mhsds_service_or_team_intended_age_group') }} as intended_age_group
     on upper(trim(coalesce(r.serv_team_int_age_group, td.serv_team_int_age_group)))
         = intended_age_group.code
-left join {{ ref('mhsds_referral_code_lookup') }} as clinical_priority
+left join {{ ref('nhs_dd_clinical_response_priority_type') }} as clinical_priority
     on upper(trim(r.clin_resp_priority_type)) = clinical_priority.code
-    and clinical_priority.code_set_name = 'clinical_response_priority'
-left join {{ ref('mhsds_referral_code_lookup') }} as referral_reason
+left join {{ ref('mhsds_reason_for_referral') }} as referral_reason
     on upper(trim(r.prim_reason_referral_mh)) = referral_reason.code
-    and referral_reason.code_set_name = 'primary_reason_for_referral'
-left join {{ ref('mhsds_referral_code_lookup') }} as referrer_type
+left join {{ ref('mhsds_referring_care_professional_type') }} as referrer_type
     on upper(trim(r.referring_care_professional_type)) = referrer_type.code
-    and referrer_type.code_set_name = 'referring_care_professional_type'
-left join {{ ref('mhsds_referral_code_lookup') }} as referrer_staff_group
+left join {{ ref('mhsds_referring_care_professional_staff_group') }} as referrer_staff_group
     on upper(trim(r.referring_care_professional_staff_group)) = referrer_staff_group.code
-    and referrer_staff_group.code_set_name = 'referring_care_professional_staff_group'
-left join {{ ref('mhsds_referral_code_lookup') }} as rejection_reason
+left join {{ ref('nhs_dd_referral_rejection_reason') }} as rejection_reason
     on upper(trim(r.refer_reject_reason)) = rejection_reason.code
-    and rejection_reason.code_set_name = 'rejection_reason'
-left join {{ ref('mhsds_referral_code_lookup') }} as closure_reason
+left join {{ ref('nhs_dd_referral_closure_reason') }} as closure_reason
     on upper(trim(r.refer_clos_reason)) = closure_reason.code
-    and closure_reason.code_set_name = 'closure_reason'
-left join {{ ref('mhsds_referral_code_lookup') }} as out_of_area_reason
+left join {{ ref('mhsds_out_of_area_referral_reason') }} as out_of_area_reason
     on upper(trim(r.reason_oat)) = out_of_area_reason.code
-    and out_of_area_reason.code_set_name = 'out_of_area_referral_reason'
 left join {{ ref('int_mhsds_organisation') }} as source_commissioner
     on upper(r.org_id_comm) = upper(source_commissioner.organisation_code)
 left join {{ ref('int_mhsds_organisation') }} as provider

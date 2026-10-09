@@ -70,8 +70,14 @@ with labelled as (
             and r.source_table = 'CYP202' as is_assessment_code_in_activity_component
     from {{ ref('int_csds_clinical_record') }} as r
     left join {{ ref('stg_csds_bridging') }} as b on r.person_id = b.person_id
-    left join {{ ref('csds_activity_code_lookup') }} as scheme
-        on scheme.code_set_name = r.coding_scheme_kind || '_scheme'
+    left join (
+        select 'procedure' as coding_scheme_kind, code, description from {{ ref('nhs_dd_procedure_scheme') }}
+        union all
+        select 'finding', code, description from {{ ref('nhs_dd_finding_scheme') }}
+        union all
+        select 'observation', code, description from {{ ref('nhs_dd_observation_scheme') }}
+    ) as scheme
+        on scheme.coding_scheme_kind = r.coding_scheme_kind
         and trim(r.coding_scheme_code) = scheme.code
     left join {{ ref('snomed_concept') }} as snomed
         on trim(r.clinical_code) = snomed.snomed_code

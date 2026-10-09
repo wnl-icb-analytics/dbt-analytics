@@ -25,8 +25,8 @@ select
 from {{ ref('stg_mhsds_group_session') }} as s
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as session_label
-    on upper(trim(s.group_sess_type::varchar)) = session_label.code and session_label.code_set_name = 'group_session_type'
+left join {{ ref('mhsds_group_session_type') }} as session_label
+    on upper(trim(s.group_sess_type::varchar)) = session_label.code
 left join {{ ref('mhsds_service_or_team_type') }} as team on s.serv_team_type_ref_to_mh = team.code
 left join {{ ref('int_mhsds_organisation') }} as treatment_site
     on upper(s.site_id_of_treat) = upper(treatment_site.organisation_code)

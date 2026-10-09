@@ -218,9 +218,7 @@ left join assessments as a on p.person_id = a.person_id
 left join legal_status as m on p.person_id = m.person_id
 left join latest_detention as ld on p.person_id = ld.person_id
 left join patient_indicators as i on p.person_id = i.person_id
-left join {{ ref('mhsds_profile_code_lookup') }} as cpp
+left join {{ ref('nhs_dd_child_protection_plan_indicator') }} as cpp
     on i.child_protection_plan_status_code = cpp.code
-    and cpp.code_set_name = 'child_protection_plan_status'
-left join {{ ref('mhsds_profile_code_lookup') }} as lac
+left join {{ ref('nhs_dd_looked_after_child_indicator') }} as lac
     on i.looked_after_child_indicator_code = lac.code
-    and lac.code_set_name = 'looked_after_child_indicator'

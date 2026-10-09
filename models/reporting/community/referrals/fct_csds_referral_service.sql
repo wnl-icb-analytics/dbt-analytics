@@ -50,10 +50,10 @@ left join {{ ref('stg_csds_referral_history') }} as r
 left join {{ ref('stg_csds_bridging') }} as b on t.person_id = b.person_id
 left join {{ ref('csds_service_or_team_type') }} as team
     on trim(t.service_or_team_type_referred_to_community_care) = team.code
-left join {{ ref('csds_activity_code_lookup') }} as closure
-    on closure.code_set_name = 'referral_closure_reason' and upper(trim(t.referral_closure_reason)) = closure.code
-left join {{ ref('csds_activity_code_lookup') }} as rejection
-    on rejection.code_set_name = 'referral_rejection_reason' and upper(trim(t.referral_rejection_reason)) = rejection.code
+left join {{ ref('csds_referral_closure_reason') }} as closure
+    on upper(trim(t.referral_closure_reason)) = closure.code
+left join {{ ref('nhs_dd_referral_rejection_reason') }} as rejection
+    on upper(trim(t.referral_rejection_reason)) = rejection.code
 left join {{ ref('fct_csds_referral') }} as latest_parent
     on latest_parent.source_record_id = t.unique_service_request_identifier
 left join {{ ref('organisation') }} as provider
