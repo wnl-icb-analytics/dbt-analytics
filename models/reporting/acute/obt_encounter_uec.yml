@@ -244,6 +244,15 @@ models:
         data_type: varchar
         description: "Patient local authority district at time of event"
 
+      - name: residence_health_borough_name_at_event
+        data_type: varchar
+        description: >-
+          WNL legacy CCG area containing the patient's residence at the
+          attendance. Uses the supplied LSOA 2021 when present. Otherwise it
+          uses the LSOA 2011 only where every mapped 2021 successor belongs to
+          the same health borough. Null means the residence is outside WNL,
+          the LSOA is missing or invalid, or the older boundary is ambiguous.
+
       - name: imd_at_event
         data_type: varchar
         description: "Deprivation decile supplied on the ECDS attendance. The source IMD release is not documented."
@@ -515,6 +524,34 @@ models:
       - name: assigned_commissioner_name_at_event
         data_type: varchar
         description: "Latest dictionary name for the submitted service-agreement commissioner code."
+      - name: cam_commissioner_code_at_event
+        data_type: varchar
+        description: Commissioner assigned by the national ECDS Commissioner Assignment Method.
+      - name: cam_commissioner_name_at_event
+        data_type: varchar
+        description: Latest dictionary name for the CAM commissioner code.
+      - name: cam_flowchart_reference_at_event
+        data_type: varchar
+        description: SUS reference for the Commissioner Assignment Method route used.
+      - name: dscro_commissioner_code_at_event
+        data_type: varchar
+        description: Commissioner supplied through the service-agreement or DSCRO route.
+      - name: dscro_commissioner_name_at_event
+        data_type: varchar
+        description: Latest dictionary name for the DSCRO commissioner code.
+      - name: commissioner_code_at_event
+        data_type: varchar
+        description: CAM commissioner when supplied; otherwise the DSCRO commissioner.
+      - name: commissioner_name_at_event
+        data_type: varchar
+        description: Latest dictionary name for commissioner_code_at_event.
+      - name: commissioner_source_at_event
+        data_type: varchar
+        description: CAM when CAM supplied the commissioner; otherwise DSCRO when available.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [CAM, DSCRO]
       - name: patient_type_code_at_event
         data_type: varchar
         description: "Source ECDS patient-type code, such as ADU or CHI."

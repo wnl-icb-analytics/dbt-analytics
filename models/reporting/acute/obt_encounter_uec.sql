@@ -135,6 +135,14 @@ select
     , residence_area_name_at_event
     , assigned_commissioner_code_at_event
     , assigned_commissioner_name_at_event
+    , cam_commissioner_code_at_event
+    , cam_commissioner_name_at_event
+    , cam_flowchart_reference_at_event
+    , dscro_commissioner_code_at_event
+    , dscro_commissioner_name_at_event
+    , commissioner_code_at_event
+    , commissioner_name_at_event
+    , commissioner_source_at_event
     , age_at_event
     , patient_type_code_at_event
     , patient_type_desc_at_event
@@ -147,6 +155,7 @@ select
     , lsoa_11_at_event
     , lsoa_21_at_event
     , lad_at_event
+    , residence_health_borough_name_at_event
     , imd_at_event
     , deprivation_decile_at_event
     , reg_practice_at_event
