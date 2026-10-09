@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: hrg_code
+    description: >-
+      Healthcare Resource Group (HRG) codes from UKHFD's HRG payment lists, with HRG4 chapter and
+      subchapter labels. One row per HRG4 or HRG4+ code listed since 2010/11, with its newest name;
+      codes no longer listed are kept for historical joins. HRG3.5 codes are not included.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: hrg_code
+        description: HRG code.
+        data_tests: [not_null, unique]
+      - name: hrg_name
+        description: Newest listed HRG name.
+      - name: hrg_chapter_code
+        description: HRG4 chapter code, the first character of the HRG code.
+      - name: hrg_chapter
+        description: Newest chapter label from the HRG4+ grouper code-to-group files; null when none is published.
+      - name: hrg_subchapter_code
+        description: HRG4 subchapter code, the first two characters of the HRG code.
+      - name: hrg_subchapter
+        description: Newest subchapter label from the HRG4+ grouper code-to-group files; null when none is published.
+      - name: is_in_latest_payment_list
+        description: >-
+          TRUE when the code appears in UKHFD's newest HRG payment list (from the NHS Payment Scheme
+          workbooks). Codes the grouper still outputs can be absent, such as unbundled drug (XD) and
+          outpatient attendance (WF) HRGs from April 2026.
+      - name: first_listed_date
+        description: First day of the first financial year in which the code was in a payment list.
+      - name: last_listed_date
+        description: Last day on which the code was in a payment list; null when it is in the newest list.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source data.
+
+  - name: hrg_code_history
+    description: >-
+      HRG name and payment-list revisions from UKHFD. One row per HRG code and revision, where a
+      revision starts on 1 April when the name, source list or listing status changes. Join on
+      activity date between valid_from_date and valid_to_date for the name in use at the time.
+    config: *owner
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [hrg_code, valid_from_date]
+    columns:
+      - name: hrg_code
+        description: HRG code.
+        data_tests: [not_null]
+      - name: hrg_name
+        description: HRG name in this revision.
+      - name: is_listed
+        description: >-
+          FALSE when the code was absent from UKHFD's HRG payment list for this period. The grouper
+          may still output it.
+      - name: valid_from_date
+        description: >-
+          First day of the financial year from which the revision applies. The earliest revisions
+          start on 1 April 2010.
+        data_tests: [not_null]
+      - name: valid_to_date
+        description: Last day the revision applies; null for the newest revision.
+      - name: source_table_name
+        description: >-
+          UKHFD list the revision came from, such as HRG, APC_And_OPROC (admitted and outpatient
+          procedure prices), HRG_Exclusions (excluded from prices), AandE or Maternity_Prices.
+      - name: is_latest_revision
+        description: TRUE for the newest revision of the code, including codes no longer listed.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source data.

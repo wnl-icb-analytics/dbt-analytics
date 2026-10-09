@@ -1,11 +1,11 @@
 {% set code_sets = [
-    ('priority_type', 'raw_ukhfd_data_dictionary_priority_type'),
+    ('priority_type', 'stg_ukhfd_data_dictionary_priority_type'),
     ('reason_for_referral', 'raw_ukhfd_data_dictionary_csds_reason_for_referral'),
     ('referring_staff_group', 'raw_ukhfd_data_dictionary_csds_referring_staff_group'),
     ('waiting_time_measurement_type', 'raw_ukhfd_data_dictionary_csds_waiting_time_measurement_type')
 ] %}
 
-{% for code_set_name, raw_model_name in code_sets %}
+{% for code_set_name, model_name in code_sets %}
 select
     '{{ code_set_name }}' as code_set_name
     , definitions.source_code_set_name
@@ -23,6 +23,6 @@ select
     , definitions.is_latest_definition
     , definitions.source_effective_from_at
     , definitions.source_effective_to_at
-from ({{ select_ukhfd_data_dictionary_code_set(raw_model_name) }}) as definitions
+from ({% if model_name.startswith('stg_') %}select * from {{ ref(model_name) }}{% else %}{{ select_ukhfd_data_dictionary_code_set(model_name) }}{% endif %}) as definitions
 {% if not loop.last %}union all{% endif %}
 {% endfor %}

@@ -136,11 +136,11 @@ left join {{ ref('int_mhsds_care_contact_context') }} as ctx
     on c.mhs201_uniq_id = ctx.mhs201_uniq_id
 left join {{ ref('fct_mhsds_referral') }} as r
     on c.uniq_serv_req_id = r.source_record_id
-left join {{ ref('attendance_status') }} as ats
+left join {{ ref('nhs_dd_attendance_status') }} as ats
     on c.attend_status = ats.code
-left join {{ ref('consultation_mechanism') }} as cm
+left join {{ ref('nhs_dd_consultation_mechanism') }} as cm
     on c.cons_mechanism_mh = cm.code
-left join {{ ref('activity_location_type') }} as alt
+left join {{ ref('nhs_dd_activity_location_type') }} as alt
     on c.act_loc_type_code = alt.code
 left join {{ ref('mhsds_service_or_team_type') }} as tt
     on ctx.service_or_team_type_code = tt.code
@@ -173,7 +173,7 @@ left join {{ ref('mhsds_service_or_team_intended_age_group') }} as intended_age_
 left join {{ ref('mhsds_care_contact_code_lookup') }} as cancellation_reason
     on upper(trim(c.care_cont_cancel_reas)) = cancellation_reason.code
     and cancellation_reason.code_set_name = 'care_contact_cancellation_reason'
-left join {{ ref('language') }} as treatment_language
+left join {{ ref('nhs_dd_language') }} as treatment_language
     on upper(trim(c.language_code_treat)) = treatment_language.code
 left join {{ ref('mhsds_care_contact_code_lookup') }} as interpreter_present
     on upper(trim(c.interpreter_present_ind)) = interpreter_present.code
