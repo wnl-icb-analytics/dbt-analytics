@@ -4,14 +4,14 @@ models:
   - name: fct_person_resource_index_supplementary
     description: >
       Person-level cost and factor profile for supplementary resource-to-need
-      analysis. One row per person with WNL registration exposure in
-      the latest 12-month SLAM window. Costs combine patient-attributable SLAM
-      actuals with MHSDS and CSDS proxy costs. EPD is excluded because its
-      coverage does not reach the window. Aggregate rates must divide summed
+      analysis. One row per person in fct_person_resource_index, with the same
+      window and cost: patient-attributable SLAM and EPD actuals plus MHSDS and
+      CSDS proxy costs over the latest 12 months all four sources cover.
+      Aggregate rates must divide summed
       cost by summed person-years or weighted person-years; do not average the
       person-level rate columns. LTC fields are populated for NCL patients
       linked to OLIDS and remain null otherwise. Cost is split two ways, each
-      summing back to total_cost_12m: by feed (SLAM, MHSDS, CSDS) and by
+      summing back to total_cost_12m: by feed (SLAM, EPD, MHSDS, CSDS) and by
       service grouping (Crisis, Planned, Community, Mental Health, Unmapped).
     config:
       meta:
@@ -56,14 +56,18 @@ models:
       - name: has_one_or_more_ltcs
         description: TRUE for at least one LTC, FALSE for none, and null outside OLIDS coverage.
       - name: total_cost_12m
-        description: SLAM actual plus MHSDS and CSDS proxy cost in the analysis window, GBP.
+        description: >
+          SLAM and EPD actual plus MHSDS and CSDS proxy cost in the analysis
+          window, GBP. Equals actual_cost_12m in fct_person_resource_index.
         data_tests:
           - not_null
       - name: slam_cost_12m
         description: Patient-attributable SLAM actual cost, GBP.
-      - name: mhsds_proxy_cost_12m
+      - name: epd_cost_12m
+        description: EPD GP prescribing actual cost, GBP.
+      - name: mhsds_cost_12m
         description: MHSDS currency proxy cost, GBP.
-      - name: csds_proxy_cost_12m
+      - name: csds_cost_12m
         description: CSDS currency proxy cost, GBP.
       - name: crisis_cost_12m
         description: >
@@ -75,9 +79,11 @@ models:
           Planned service grouping, GBP. SLAM outpatients, elective,
           diagnostics, maternity, chemo, drugs and devices.
       - name: community_cost_12m
-        description: Community service grouping, GBP. SLAM community and therapies plus CSDS proxy cost.
+        description: >
+          Community service grouping, GBP. SLAM community and therapies, EPD
+          GP prescribing and CSDS proxy cost.
       - name: mental_health_cost_12m
-        description: Mental Health service grouping, GBP. All MHSDS proxy cost; equals mhsds_proxy_cost_12m.
+        description: Mental Health service grouping, GBP. All MHSDS proxy cost; equals mhsds_cost_12m.
       - name: unmapped_cost_12m
         description: >
           SLAM cost whose POD has no resolved service grouping, GBP. Kept so
@@ -111,7 +117,9 @@ models:
         data_tests:
           - not_null
       - name: window_end_month
-        description: Last month of the 12-month analysis window, anchored to SLAM completeness.
+        description: >
+          Last month of the 12-month analysis window: the latest month all four
+          cost sources cover.
         data_tests:
           - not_null
       - name: cost_scope
@@ -120,8 +128,8 @@ models:
       - dbt_utils.expression_is_true:
           arguments:
             expression: >-
-              abs(total_cost_12m - slam_cost_12m - mhsds_proxy_cost_12m
-              - csds_proxy_cost_12m) < 0.01
+              abs(total_cost_12m - slam_cost_12m - epd_cost_12m
+              - mhsds_cost_12m - csds_cost_12m) < 0.01
       # The service split must stay exhaustive: a new service_grouping that no
       # line claims would silently drop cost out of the split.
       - dbt_utils.expression_is_true:

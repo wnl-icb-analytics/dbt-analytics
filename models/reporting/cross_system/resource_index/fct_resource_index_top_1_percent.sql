@@ -8,6 +8,7 @@ the workbook uses both concepts. LTC rows use NCL OLIDS-covered patients only.
 
 The service split reports the warehouse service groupings (Crisis, Planned,
 Community, Mental Health, Unmapped), which sum to each cohort's total cost.
+EPD prescribing sits in Community.
 The *_cost_share columns give each line's share of its own cohort-category
 cost, so the Top 1% and Other 99% service mixes compare directly. The pack
 folds Mental Health into Crisis for its four reporting lines; that is a
@@ -71,8 +72,9 @@ aggregated as (
         sum(weighted_person_years) as weighted_person_years,
         sum(total_cost_12m) as total_cost_12m,
         sum(slam_cost_12m) as slam_cost_12m,
-        sum(mhsds_proxy_cost_12m) as mhsds_proxy_cost_12m,
-        sum(csds_proxy_cost_12m) as csds_proxy_cost_12m,
+        sum(epd_cost_12m) as epd_cost_12m,
+        sum(mhsds_cost_12m) as mhsds_cost_12m,
+        sum(csds_cost_12m) as csds_cost_12m,
         sum(crisis_cost_12m) as crisis_cost_12m,
         sum(planned_cost_12m) as planned_cost_12m,
         sum(community_cost_12m) as community_cost_12m,
@@ -143,10 +145,12 @@ pivoted as (
         max(iff(cost_cohort = 'Other 99%', total_cost_12m, null)) as other_99_total_cost,
         max(iff(cost_cohort = 'Top 1%', slam_cost_12m, null)) as top_1_slam_cost,
         max(iff(cost_cohort = 'Other 99%', slam_cost_12m, null)) as other_99_slam_cost,
-        max(iff(cost_cohort = 'Top 1%', mhsds_proxy_cost_12m, null)) as top_1_mhsds_proxy_cost,
-        max(iff(cost_cohort = 'Other 99%', mhsds_proxy_cost_12m, null)) as other_99_mhsds_proxy_cost,
-        max(iff(cost_cohort = 'Top 1%', csds_proxy_cost_12m, null)) as top_1_csds_proxy_cost,
-        max(iff(cost_cohort = 'Other 99%', csds_proxy_cost_12m, null)) as other_99_csds_proxy_cost,
+        max(iff(cost_cohort = 'Top 1%', epd_cost_12m, null)) as top_1_epd_cost,
+        max(iff(cost_cohort = 'Other 99%', epd_cost_12m, null)) as other_99_epd_cost,
+        max(iff(cost_cohort = 'Top 1%', mhsds_cost_12m, null)) as top_1_mhsds_cost,
+        max(iff(cost_cohort = 'Other 99%', mhsds_cost_12m, null)) as other_99_mhsds_cost,
+        max(iff(cost_cohort = 'Top 1%', csds_cost_12m, null)) as top_1_csds_cost,
+        max(iff(cost_cohort = 'Other 99%', csds_cost_12m, null)) as other_99_csds_cost,
         max(iff(cost_cohort = 'Top 1%', crisis_cost_12m, null)) as top_1_crisis_cost,
         max(iff(cost_cohort = 'Other 99%', crisis_cost_12m, null)) as other_99_crisis_cost,
         max(iff(cost_cohort = 'Top 1%', planned_cost_12m, null)) as top_1_planned_cost,

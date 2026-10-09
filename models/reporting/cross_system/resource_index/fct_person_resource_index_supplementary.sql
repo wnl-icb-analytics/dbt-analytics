@@ -2,13 +2,14 @@
 Person-level cost and factor profile for supplementary resource-to-need
 outputs.
 
-Grain: one person with WNL registration exposure in the latest 12-month SLAM
-window. Costs include patient-attributable SLAM actuals and MHSDS/CSDS proxy
-costs. EPD is excluded because its coverage does not reach the current window.
+Grain: one person in fct_person_resource_index. Window, population and cost
+follow that model: patient-attributable SLAM and EPD actuals plus MHSDS and
+CSDS proxy costs over the latest 12 months all four sources cover.
 
 Two complete splits of total_cost_12m, each summing back to it:
-  by feed    - slam_cost_12m + mhsds_proxy_cost_12m + csds_proxy_cost_12m
+  by feed    - slam + epd + mhsds + csds (from fct_person_resource_index)
   by service - crisis + planned + community + mental_health + unmapped
+EPD prescribing sits in the Community service grouping.
 The mh_* and csds_* columns break the mental health and community lines down
 further and are not additive with the five service lines.
 
@@ -29,17 +30,12 @@ with bounds as (
     select
         max(activity_month) as window_end_month,
         dateadd(month, -11, max(activity_month)) as window_start_month
-    from {{ ref('fct_person_cost_index_monthly') }}
-    where cost_source = 'SLAM'
+    from {{ ref('int_person_cost_index_actual_monthly') }}
 ),
 
 cost_12m as (
     select
         c.sk_patient_id,
-        sum(c.total_cost) as total_cost_12m,
-        sum(iff(c.cost_source = 'SLAM', c.total_cost, 0)) as slam_cost_12m,
-        sum(iff(c.cost_source = 'MHSDS', c.total_cost, 0)) as mhsds_proxy_cost_12m,
-        sum(iff(c.cost_source = 'CSDS', c.total_cost, 0)) as csds_proxy_cost_12m,
         sum(iff(c.service_grouping = 'Crisis', c.total_cost, 0)) as crisis_cost_12m,
         sum(iff(c.service_grouping = 'Planned', c.total_cost, 0)) as planned_cost_12m,
         sum(iff(c.service_grouping = 'Community', c.total_cost, 0)) as community_cost_12m,
@@ -94,10 +90,7 @@ cost_12m as (
     where c.activity_month between b.window_start_month and b.window_end_month
       and c.is_patient_attributable
       and c.sk_patient_id is not null
-      and (
-          (c.cost_source = 'SLAM' and c.cost_basis = 'actual')
-          or (c.cost_source in ('MHSDS', 'CSDS') and c.cost_basis = 'proxy')
-      )
+      and c.cost_source in ('SLAM', 'EPD', 'MHSDS', 'CSDS')
     group by c.sk_patient_id
 ),
 
@@ -165,10 +158,11 @@ profile as (
             coalesce(o.ltc_count, 0) >= 1,
             null
         ) as has_one_or_more_ltcs,
-        coalesce(c.total_cost_12m, 0) as total_cost_12m,
-        coalesce(c.slam_cost_12m, 0) as slam_cost_12m,
-        coalesce(c.mhsds_proxy_cost_12m, 0) as mhsds_proxy_cost_12m,
-        coalesce(c.csds_proxy_cost_12m, 0) as csds_proxy_cost_12m,
+        p.actual_cost_12m as total_cost_12m,
+        p.slam_cost_12m,
+        p.epd_cost_12m,
+        p.mhsds_cost_12m,
+        p.csds_cost_12m,
         coalesce(c.crisis_cost_12m, 0) as crisis_cost_12m,
         coalesce(c.planned_cost_12m, 0) as planned_cost_12m,
         coalesce(c.community_cost_12m, 0) as community_cost_12m,
@@ -219,5 +213,5 @@ select
         || r.factor_ethnicity_group || ' | '
         || r.gender || ' | '
         || r.factor_deprivation_group as factor_cell,
-    'SLAM actual + MHSDS proxy + CSDS proxy' as cost_scope
+    'SLAM actual + EPD actual + MHSDS proxy + CSDS proxy' as cost_scope
 from ranked as r
