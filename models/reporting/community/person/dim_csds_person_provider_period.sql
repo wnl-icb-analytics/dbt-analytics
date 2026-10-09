@@ -121,7 +121,7 @@ left join {{ ref('organisation') }} as provider
     on upper(trim(m.organisation_code_provider)) = provider.organisation_code
 left join {{ ref('mhsds_domain_code_lookup') }} as gender
     on gender.code_set_name = 'person_stated_gender' and upper(trim(m.person_stated_gender_code)) = upper(gender.code)
-left join {{ ref('nhs_ethnicity_2001') }} as ethnic on trim(m.ethnic_category) = ethnic.ethnicity_2001_code
+left join {{ ref('ethnicity_2001') }} as ethnic on trim(m.ethnic_category) = ethnic.ethnicity_2001_code
 left join {{ ref('stg_reference_imd2019') }} as imd19 on m.lower_super_output_area_residence_2011 = imd19.lsoacode
 left join {{ ref('stg_reference_imd2025') }} as imd25 on m.resolved_lsoa21_cd = imd25.lsoa_code_2021
 left join {{ ref('organisation') }} as residence_icb

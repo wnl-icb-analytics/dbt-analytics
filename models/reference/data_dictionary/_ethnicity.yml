@@ -1,0 +1,88 @@
+version: 2
+
+models:
+  - name: ethnicity_2001
+    description: >-
+      NHS ethnic category codes with their NHS Census 2001 labels and broad groups. One row per
+      code in `nhs_dd_ethnic_category`: 16 ethnic categories, Z (Not stated) and 99 (Not known).
+      Labels use the NHS Data Model and Dictionary
+      [Ethnic Category Code 2001](https://www.datadictionary.nhs.uk/attributes/ethnic_category_code_2001.html)
+      wording from UKHFD. Chinese (R) belongs to Other ethnic groups in this classification; use
+      `ethnicity_2021` for the 2021 Census grouping.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: ethnicity_2001_code
+        description: >-
+          NHS ethnic category code as recorded in national datasets. Recorded values may carry
+          trailing spaces; trim them before joining.
+        data_tests:
+          - not_null
+          - unique
+          - accepted_values:
+              arguments:
+                values: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S', 'Z', '99']
+      - name: ethnicity_2001_description
+        description: NHS Data Model and Dictionary label without the broad group, such as British or Chinese.
+      - name: ethnicity_2001_detailed_description
+        description: >-
+          Broad group and label, such as `White: British`. Not stated for Z and Not known for 99.
+        data_tests: [not_null]
+      - name: ethnicity_2001_broad_group
+        description: NHS Data Model and Dictionary broad group. Not stated for Z and Not known for 99.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - White
+                  - Mixed
+                  - Asian or Asian British
+                  - Black or Black British
+                  - Other ethnic groups
+                  - Not stated
+                  - Not known
+
+  - name: ethnicity_2021
+    description: >-
+      NHS ethnic category codes mapped to the ONS Census 2021 ethnic group classification. One row
+      per code in `nhs_dd_ethnic_category`, the codes recorded in SUS, MHSDS, CSDS and OLIDS today.
+      Labels follow the ONS
+      [Ethnic group variable: Census 2021](https://www.ons.gov.uk/census/census2021dictionary/variablesbytopic/ethnicgroupnationalidentitylanguageandreligionvariablescensus2021/ethnicgroup).
+      Chinese (R) moves to the Asian group. The 2021 Gypsy or Irish Traveller, Roma and Arab
+      categories have no NHS code: they are recorded within C and S. NHS England has not yet
+      published a national Ethnic Category 2021 code list.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: ethnic_category_code
+        description: >-
+          NHS ethnic category code as recorded in national datasets (the Ethnic Category Code 2001
+          code list). Recorded values may carry trailing spaces; trim them before joining.
+        data_tests: [not_null, unique]
+      - name: ethnicity_2021_category
+        description: >-
+          ONS Census 2021 ethnic group name, including its high-level group, such as
+          `Asian, Asian British or Asian Welsh: Chinese`. C maps to Other White, which here also
+          contains people the 2021 Census would class as Gypsy or Irish Traveller or Roma. S maps
+          to Any other ethnic group, which here also contains Arab. Not stated for Z and Not known
+          for 99.
+        data_tests: [not_null]
+      - name: ethnicity_2021_broad_group
+        description: ONS Census 2021 high-level ethnic group. Not stated for Z and Not known for 99.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Asian, Asian British or Asian Welsh
+                  - Black, Black British, Black Welsh, Caribbean or African
+                  - Mixed or Multiple ethnic groups
+                  - White
+                  - Other ethnic group
+                  - Not stated
+                  - Not known

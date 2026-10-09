@@ -61,7 +61,7 @@ Harness: `control-dbt-analytics`. Stable handles are model names, `ref()` names,
 H=./.cursor/skills/verify-dbt-analytics/bin/control-dbt-analytics
 
 # Static PR checks (no warehouse). Pass changed SQL, or a known-good fixture when proving the checkers.
-$H ci-static --files models/reference/data_dictionary/nhs_ethnicity_2001.sql
+$H ci-static --files models/reference/data_dictionary/ethnicity_2001.sql
 $H ci-static --base origin/main
 
 # Ownership workflow (new models vs base only).
@@ -69,10 +69,10 @@ $H capture -- python3 scripts/ownership/check_model_ownership.py \
   --author-name verify --base-branch origin/main --output /tmp/ownership-suggestions.json
 
 # Warehouse commands. Doctor must report ready-warehouse. Default target is dev.
-$H compile -- -s nhs_ethnicity_2001
-$H ls -- -s nhs_ethnicity_2001+
-$H build -- -s nhs_ethnicity_2001
-$H test -- -s nhs_ethnicity_2001
+$H compile -- -s ethnicity_2001
+$H ls -- -s ethnicity_2001+
+$H build -- -s ethnicity_2001
+$H test -- -s ethnicity_2001
 ```
 
 The helper refuses `dbt show` and production targets. Follow `PROJECT_CONVENTIONS.md`: smallest useful selection, then downstream only when consumers may change. `dbt show` is not a verification path here.
