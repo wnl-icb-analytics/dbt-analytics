@@ -80,6 +80,19 @@ lsoa_imd_2025 as (
     left join {{ ref('stg_reference_imd2025') }} as imd
         on bridge.new_lsoa_code = imd.lsoa_code_2021
     group by bridge.old_lsoa_code
+    ),
+lsoa_2011_health_borough as (
+    select
+        bridge.old_lsoa_code
+        , case
+            when count(*) = count(health_borough.health_borough_name)
+              and count(distinct health_borough.health_borough_name) = 1
+                then min(health_borough.health_borough_name)
+          end as unambiguous_health_borough_name
+    from {{ ref('stg_ukhfd_old_lsoa_to_new_lsoa_map') }} as bridge
+    left join {{ ref('wnl_health_borough_lsoa_2021') }} as health_borough
+        on bridge.new_lsoa_code = health_borough.lsoa_2021_code
+    group by bridge.old_lsoa_code
     )
 
 select
@@ -256,6 +269,11 @@ select
     , core.patient_usual_address_lsoa_11 as lsoa_11_at_event
     , core.patient_usual_address_lsoa_21 as lsoa_21_at_event
     , core.patient_usual_address_local_authority_district as lad_at_event
+    , case
+        when core.patient_usual_address_lsoa_21 is not null
+            then lsoa_21_health_borough.health_borough_name
+        else lsoa_11_health_borough.unambiguous_health_borough_name
+      end as residence_health_borough_name_at_event
     , core.patient_usual_address_index_of_multiple_deprivation_decile as imd_at_event
     , case
         when lsoa_21_imd.index_of_multiple_deprivation_decile is not null
@@ -446,3 +464,9 @@ left join {{ ref('stg_reference_imd2025') }} as lsoa_21_imd
 
 left join lsoa_imd_2025 as lsoa_imd
     on core.patient_usual_address_lsoa_11 = lsoa_imd.old_lsoa_code
+
+left join {{ ref('wnl_health_borough_lsoa_2021') }} as lsoa_21_health_borough
+    on core.patient_usual_address_lsoa_21 = lsoa_21_health_borough.lsoa_2021_code
+
+left join lsoa_2011_health_borough as lsoa_11_health_borough
+    on core.patient_usual_address_lsoa_11 = lsoa_11_health_borough.old_lsoa_code

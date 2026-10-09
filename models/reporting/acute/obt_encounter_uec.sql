@@ -147,6 +147,7 @@ select
     , lsoa_11_at_event
     , lsoa_21_at_event
     , lad_at_event
+    , residence_health_borough_name_at_event
     , imd_at_event
     , deprivation_decile_at_event
     , reg_practice_at_event
