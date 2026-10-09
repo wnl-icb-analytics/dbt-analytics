@@ -1,0 +1,1214 @@
+version: 2
+
+models:
+  - name: ecds_code_set_history
+    description: >-
+      ECDS ETOS code set members by release, from NHS England via UKHFD. One
+      row per code set, SNOMED code and ETOS release, from v2.0.0 (2018) to the
+      latest release held. ETOS (Enhanced Technical Output Specification) lists
+      the SNOMED codes allowed in each ECDS field. Use it to trace when codes and
+      descriptions changed; the ecds_<code set> models give one row per code.
+      v4.0.6 was loaded from two identical files and appears once.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [code_set_name, snomed_code, etos_version]
+    columns:
+      - name: etos_version
+        description: 'ETOS release version parsed from the file name, e.g. 4.0.8. The v3.0.0 draft is 3.0.0-draft; the v4 release is published as 4.'
+        data_tests: [not_null]
+      - name: etos_version_sort_key
+        description: 'Integer that sorts releases by version: major x 1,000,000 + minor x 10,000 + patch x 100 + fourth part. Missing parts count as 0.'
+      - name: is_draft_release
+        description: 'TRUE for the v3.0.0 draft release.'
+      - name: etos_release_date
+        description: 'Release date of the ETOS file. Orders releases.'
+        data_tests: [not_null]
+      - name: source_file_name
+        description: 'UKHFD import folder and ETOS file name.'
+      - name: code_set_number
+        description: 'Sheet number in this release, e.g. 26.4. Numbers change between releases.'
+      - name: code_set_name
+        description: 'Code set name as published without the sheet number, e.g. DISCHARGE DESTINATION. Stable across releases.'
+        data_tests: [not_null]
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [not_null]
+      - name: is_deprecated
+        description: 'TRUE when this release lists the code as deprecated. ETOS keeps deprecated codes in the code set so historical records still validate.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the code set entry. It can change between releases for the same SNOMED code; null for deprecated listings.'
+      - name: refset_unique_id
+        description: 'ETOS reference set abbreviation, e.g. DGD for discharge destination.'
+      - name: sort1
+        description: 'ETOS display sort key, level 1.'
+      - name: sort2
+        description: 'ETOS display sort key, level 2.'
+      - name: sort3
+        description: 'ETOS display sort key, level 3.'
+      - name: sort4
+        description: 'ETOS display sort key, level 4.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: ecds_group2
+        description: 'ETOS second-level grouping.'
+      - name: ecds_group3
+        description: 'ETOS third-level grouping.'
+      - name: ecds_description
+        description: 'ETOS display description of the code. Null for deprecated listings.'
+      - name: ecds_search_terms
+        description: 'ETOS search synonyms for the code.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term published in ETOS (v3.1.0 onwards).'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name published in ETOS (v3.1.0 onwards).'
+      - name: snomed_description
+        description: 'SNOMED fully specified name in releases before v3.1.0.'
+      - name: snomed_term
+        description: 'SNOMED term in early language code sets.'
+      - name: parent_snomed_code
+        description: 'Parent SNOMED code published for chief complaints before v3.1.0.'
+      - name: maps_to_self
+        description: 'TRUE when the chief complaint maps to itself; published before v3.1.0.'
+      - name: is_injury
+        description: 'ETOS Injury flag (Inj before v3.1.0). TRUE for injury codes.'
+      - name: is_same_day_emergency_care
+        description: 'ETOS SDEC flag (AEC before v3.1.0).'
+      - name: is_allergy
+        description: 'ETOS Allergy flag. TRUE for allergy diagnoses.'
+      - name: is_notifiable_disease
+        description: 'ETOS Notifiable Disease flag. TRUE for notifiable diseases.'
+      - name: is_valid_for_male
+        description: 'ETOS Male flag. TRUE when the code is valid for male patients; null where not supplied or N/A.'
+      - name: is_valid_for_female
+        description: 'ETOS Female flag. TRUE when the code is valid for female patients; null where not supplied or N/A.'
+      - name: is_ads
+        description: 'ETOS ADS flag on diagnosis codes, as published.'
+      - name: is_pain
+        description: 'ETOS Pain flag on chief complaint codes, as published.'
+      - name: is_chief_complaint_core_list
+        description: 'TRUE when the chief complaint is on the core list; published in v3.1.x only.'
+      - name: is_chief_complaint_max_list
+        description: 'TRUE when the chief complaint is on the maximum list; published in v3.1.x only.'
+      - name: core_list_snomed_code
+        description: 'Core-list chief complaint that this code rolls up to; published in v3.1.x only.'
+      - name: core_list_term_description
+        description: 'Description of the core-list chief complaint; published in v3.1.x only.'
+      - name: icd10_mapping
+        description: 'ETOS ICD-10 mapping for the diagnosis, with a dot after the third character (clean_icd10_code), e.g. S62.0.'
+      - name: icd10_description
+        description: 'Description of the mapped ICD-10 code.'
+      - name: icd11_mapping
+        description: 'ETOS ICD-11 mapping for the diagnosis.'
+      - name: icd11_description
+        description: 'Description of the mapped ICD-11 code.'
+      - name: comorbidity_icd10_codes
+        description: 'ICD-10 codes or patterns that define the comorbidity, as published, e.g. D62*,D63*.'
+      - name: is_charlson_comorbidity
+        description: 'TRUE when the comorbidity counts towards the Charlson comorbidity index.'
+      - name: is_elixhauser_comorbidity
+        description: 'TRUE when the comorbidity counts towards the Elixhauser comorbidity index.'
+      - name: cds10_mapping_diagnosis_condition
+        description: 'CDS A&E diagnosis condition mapping; published before v3.0.0.'
+      - name: cds10_mapping_sub_analysis_code
+        description: 'CDS A&E diagnosis sub-analysis mapping; published before v3.0.0.'
+      - name: cds10_mapping_anatomical_area
+        description: 'CDS A&E anatomical area mapping; published before v3.0.0.'
+      - name: cds_code_mapping_used_for_hrg_grouping
+        description: 'CDS code mapping used for HRG grouping.'
+      - name: cds_investigation_mapping_used_for_hrg_grouping
+        description: 'CDS A&E investigation code used for HRG grouping.'
+      - name: cds_treatment_mapping_used_for_hrg_grouping
+        description: 'CDS A&E treatment code used for HRG grouping.'
+      - name: pbr_category
+        description: 'Payment by Results category, as published. A few historic values were converted to dates in the source spreadsheet.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_notes
+        description: 'ETOS ECDS notes in early releases.'
+      - name: observation_value_notes
+        description: 'ETOS guidance for completing the observation value field.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS; supplied when the code is deprecated.'
+      - name: source_unique_key
+        description: 'UKHFD row key.'
+      - name: source_imported_at
+        description: 'Timestamp when UKHFD imported the ETOS release.'
+
+  - name: ecds_accessible_information_professional_required
+    description: >-
+      ECDS accessible information professional required codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_accommodation_status
+    description: >-
+      ECDS accommodation status codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_acuity
+    description: >-
+      ECDS acuity codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_arrival_mode
+    description: >-
+      ECDS arrival mode codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_attendance_source
+    description: >-
+      ECDS attendance source codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_chief_complaint
+    description: >-
+      ECDS chief complaint codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live. Includes the ETOS sex, injury and pain flags.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: is_valid_for_male
+        description: 'ETOS Male flag. TRUE when the code is valid for male patients; null where not supplied or N/A.'
+      - name: is_valid_for_female
+        description: 'ETOS Female flag. TRUE when the code is valid for female patients; null where not supplied or N/A.'
+      - name: is_injury
+        description: 'ETOS Injury flag (Inj before v3.1.0). TRUE for injury codes.'
+      - name: is_pain
+        description: 'ETOS Pain flag on chief complaint codes, as published.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_coded_assessment_tool_type
+    description: >-
+      ECDS coded assessment tool type codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_coded_finding
+    description: >-
+      ECDS coded finding codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: ecds_group2
+        description: 'ETOS second-level grouping.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_coded_observation
+    description: >-
+      ECDS coded observation codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_comorbidity
+    description: >-
+      ECDS comorbidity codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live. Includes the ICD-10 codes and Charlson and Elixhauser membership of each comorbidity.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: comorbidity_icd10_codes
+        description: 'ICD-10 codes or patterns that define the comorbidity, as published, e.g. D62*,D63*.'
+      - name: is_charlson_comorbidity
+        description: 'TRUE when the comorbidity counts towards the Charlson comorbidity index.'
+      - name: is_elixhauser_comorbidity
+        description: 'TRUE when the comorbidity counts towards the Elixhauser comorbidity index.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_diagnosis
+    description: >-
+      ECDS diagnosis codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live. Includes ICD-10 and ICD-11 mappings and the ETOS diagnosis flags.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: ecds_group2
+        description: 'ETOS second-level grouping.'
+      - name: ecds_group3
+        description: 'ETOS third-level grouping.'
+      - name: ecds_search_terms
+        description: 'ETOS search synonyms for the code.'
+      - name: icd10_mapping
+        description: 'ETOS ICD-10 mapping for the diagnosis, with a dot after the third character (clean_icd10_code), e.g. S62.0.'
+      - name: icd10_description
+        description: 'Description of the mapped ICD-10 code.'
+      - name: icd11_mapping
+        description: 'ETOS ICD-11 mapping for the diagnosis.'
+      - name: icd11_description
+        description: 'Description of the mapped ICD-11 code.'
+      - name: is_valid_for_male
+        description: 'ETOS Male flag. TRUE when the code is valid for male patients; null where not supplied or N/A.'
+      - name: is_valid_for_female
+        description: 'ETOS Female flag. TRUE when the code is valid for female patients; null where not supplied or N/A.'
+      - name: is_injury
+        description: 'ETOS Injury flag (Inj before v3.1.0). TRUE for injury codes.'
+      - name: is_allergy
+        description: 'ETOS Allergy flag. TRUE for allergy diagnoses.'
+      - name: is_notifiable_disease
+        description: 'ETOS Notifiable Disease flag. TRUE for notifiable diseases.'
+      - name: is_same_day_emergency_care
+        description: 'ETOS SDEC flag (AEC before v3.1.0).'
+      - name: is_ads
+        description: 'ETOS ADS flag on diagnosis codes, as published.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_diagnosis_qualifier
+    description: >-
+      ECDS diagnosis qualifier codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_discharge_destination
+    description: >-
+      ECDS discharge destination codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_discharge_follow_up
+    description: >-
+      ECDS discharge follow-up codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_discharge_information_given
+    description: >-
+      ECDS discharge information given codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live. ETOS dropped this code set after v3.1.1, so no code is in the latest release.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_discharge_status
+    description: >-
+      ECDS discharge status codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_injury_activity_status
+    description: >-
+      ECDS injury activity status codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_injury_activity_type
+    description: >-
+      ECDS injury activity type codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_injury_drug_alcohol
+    description: >-
+      ECDS injury drug and alcohol involvement codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_injury_intent
+    description: >-
+      ECDS injury intent codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_injury_mechanism
+    description: >-
+      ECDS injury mechanism codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_interpreter_language
+    description: >-
+      ECDS interpreter language codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_investigation
+    description: >-
+      ECDS investigation codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live. Includes Payment by Results category and CDS mappings used for HRG grouping.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: pbr_category
+        description: 'Payment by Results category, as published. A few historic values were converted to dates in the source spreadsheet.'
+      - name: cds_code_mapping_used_for_hrg_grouping
+        description: 'CDS code mapping used for HRG grouping.'
+      - name: cds_investigation_mapping_used_for_hrg_grouping
+        description: 'CDS A&E investigation code used for HRG grouping.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_place_of_injury
+    description: >-
+      ECDS place of injury codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_referred_to_service
+    description: >-
+      ECDS referred to service codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_safeguarding
+    description: >-
+      ECDS safeguarding concern codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_sickness_absence_category
+    description: >-
+      ECDS sickness absence category codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_spoken_language
+    description: >-
+      ECDS spoken language codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
+
+  - name: ecds_treatment
+    description: >-
+      ECDS treatment codes from the ECDS ETOS code sets (NHS England via UKHFD).
+      One row per SNOMED code ever published in the code set, including
+      deprecated and retired codes for historical joins. Descriptions come from
+      the newest release that lists the code as live. Most codes are published only as deprecated codes kept for historical data.
+    config: *owner
+    columns:
+      - name: snomed_code
+        description: 'SNOMED CT concept ID as text, matching the text codes in SUS ECDS. Cast before joining to numeric code columns.'
+        data_tests: [unique, not_null]
+      - name: ecds_description
+        description: 'ETOS display description from the newest release that lists the code as live. Null for codes published only as deprecated.'
+      - name: snomed_uk_preferred_term
+        description: 'SNOMED UK preferred term from the release that supplies the description, or the latest listing if the code was never live.'
+      - name: snomed_fully_specified_name
+        description: 'SNOMED fully specified name from the release that supplies the description. Uses snomed_description for releases before v3.1.0.'
+      - name: ecds_group1
+        description: 'ETOS top-level grouping of the code, e.g. Admitted or Discharged for discharge destination.'
+      - name: pbr_category
+        description: 'Payment by Results category, as published. A few historic values were converted to dates in the source spreadsheet.'
+      - name: cds_code_mapping_used_for_hrg_grouping
+        description: 'CDS code mapping used for HRG grouping.'
+      - name: cds_treatment_mapping_used_for_hrg_grouping
+        description: 'CDS A&E treatment code used for HRG grouping.'
+      - name: notes
+        description: 'ETOS notes on the code.'
+      - name: ecds_unique_id
+        description: 'ETOS identifier of the entry in the release that supplies the description. It can change between releases.'
+      - name: valid_from_date
+        description: 'Date from which the code is valid in ECDS, from the release that supplies the description.'
+      - name: valid_to_date
+        description: 'Last date the code is valid in ECDS, from the latest release that lists it; null while the code is live.'
+      - name: is_in_latest_release
+        description: 'TRUE when the latest ETOS release in UKHFD lists the code, including as deprecated.'
+      - name: is_deprecated
+        description: 'TRUE when the latest release that lists the code marks it as deprecated. Current codes have is_in_latest_release TRUE and is_deprecated FALSE.'
+      - name: first_etos_version
+        description: 'First ETOS release that lists the code.'
+      - name: last_etos_version
+        description: 'Latest ETOS release that lists the code.'
