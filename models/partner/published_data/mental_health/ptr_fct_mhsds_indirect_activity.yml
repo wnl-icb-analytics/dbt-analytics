@@ -21,6 +21,11 @@ models:
           name: Partner Manager
 
     columns:
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.
+
       - name: indirect_activity_id
         description: >
           Accepted MHS204 source occurrence identifier. Repeated monthly evidence is
@@ -29,7 +34,30 @@ models:
           - unique
           - not_null
 
-      - name: sk_patient_id
+      - name: duration_minutes
         description: >
-          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
-          access policy.
+          Recorded patient-perspective indirect activity duration in minutes. Do not
+          multiply by staff count.
+
+      - name: person_consulted_description
+        description: >
+          National description of the person consulted while the patient was absent.
+
+      - name: service_or_team_attribution_basis
+        description: >
+          Shared contact attribution rule: additional local pointer, legacy local
+          pointer, then v6 primary referral team in the same submission.
+
+      - name: is_duration_outside_one_day
+        description: >
+          Recorded duration is negative or exceeds 1,440 minutes. Missing duration is
+          not flagged.
+
+      - name: person_provider_period_id
+        description: >
+          Demographic key for this person, provider and reporting period.
+
+      - name: referral_period_id
+        description: >
+          Referral key within this accepted submission; a corresponding referral may be
+          absent.

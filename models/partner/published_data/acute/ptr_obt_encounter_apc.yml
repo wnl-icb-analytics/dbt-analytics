@@ -32,3 +32,307 @@ models:
         description: >
           Patient surrogate key stored as VARCHAR and matched exactly by the partner row
           access policy.
+
+      - name: source
+        description: >
+          Commissioning data source of record
+
+      - name: local_patient_identifier
+        description: >
+          Trust-provided patient id.
+
+      - name: organisation_id
+        description: >
+          Provider organisation identifier
+
+      - name: organisation_name
+        description: >
+          Provider organisation name
+
+      - name: site_id
+        description: >
+          Site identifier
+
+      - name: site_name
+        description: >
+          Site name
+
+      - name: start_date
+        description: >
+          Spell start date
+
+      - name: start_time
+        description: >
+          Spell start time
+
+      - name: end_date
+        description: >
+          Submitted spell discharge date. Null when SUS+ supplied no spell discharge
+          date.
+
+      - name: end_time
+        description: >
+          Spell end time
+
+      - name: estimated_discharge_date
+        description: >
+          Estimated discharge date for a closed spell with no submitted discharge date.
+          Uses the latest non-null submitted episode end date first, then admission date
+          plus the SUS+ grouper length of stay. Null for open spells and where neither
+          estimate can be calculated. This does not replace end_date and does not drive
+          point of delivery.
+
+      - name: has_estimated_discharge_date
+        description: >
+          True when estimated_discharge_date is populated. False does not mean a
+          submitted discharge date exists; inspect end_date separately.
+
+      - name: estimated_discharge_date_method
+        description: >
+          Method used for estimated_discharge_date: EPISODE_END_DATE for the latest
+          non-null submitted episode end date, or ADMISSION_PLUS_GROUPER_LOS for
+          admission date plus the SUS+ grouper length of stay. Null when no estimate is
+          present.
+
+      - name: duration
+        description: >
+          Length of stay in days. This value is an output of the grouper process and
+          represents the sum of the Episode Adjusted Durations for non-excluded episodes
+          in the spell.
+
+      - name: is_open_spell
+        description: >
+          Whether SUS+ supplied an open-spell indicator of 1 for the latest spell
+          record. This preserves the supplied status and is not inferred from a missing
+          discharge date. Null means no indicator was supplied.
+
+      - name: unadjusted_length_of_stay_days
+        description: >
+          SUS+-supplied length of stay before critical-care, rehabilitation,
+          palliative-care and delayed-discharge adjustments. Null means SUS+ supplied no
+          value.
+
+      - name: excess_bed_days
+        description: >
+          SUS+-supplied number of length-of-stay days above the tariff trim point. dbt
+          passes the spell-level value through without recalculation. Null means SUS+
+          supplied no value.
+
+      - name: duration_to_date
+        description: >
+          Calendar days from admission to the submitted discharge date. For a spell
+          explicitly marked open, calendar days from admission to the model build date.
+          Null for a closed spell without a submitted discharge date and where admission
+          date is missing.
+
+      - name: spell_admission_method
+        description: >
+          Method of admission of the spell (code)
+
+      - name: admission_method_name
+        description: >
+          Method of admission of the spell (name)
+
+      - name: admission_method_group
+        description: >
+          Group of admission method
+
+      - name: admission_patient_classification
+        description: >
+          Patient classification at admission
+
+      - name: pod
+        description: >
+          Point of delivery based on admission method, patient classification and
+          submitted spell dates. Emergency spells are NEL-ZLOS for same-day discharge
+          and NEL-LOS+1 for later discharge; the value is null when no submitted
+          discharge date exists. Other admission-based groups do not depend on discharge
+          date.
+
+      - name: discharge_destination_code
+        description: >
+          Supplied inpatient discharge destination code. Retained even when no
+          dictionary label matches; null means no code was supplied.
+
+      - name: discharge_destination_name
+        description: >
+          Latest UKHFD discharge destination label, including retired codes. The modern
+          Destination Of Discharge definition takes precedence over the legacy code set;
+          this is not the wording as at the discharge date. Null when the supplied code
+          is missing or has no matching label.
+
+      - name: discharge_method_code
+        description: >
+          Supplied inpatient discharge method code. Retained even when no dictionary
+          label matches; null means no code was supplied.
+
+      - name: discharge_method_name
+        description: >
+          Latest UKHFD discharge method label, including retired codes. The modern
+          Method Of Discharge definition takes precedence over the legacy code set; this
+          is not the wording as at the discharge date. Null when the supplied code is
+          missing or has no matching label.
+
+      - name: critical_care_days_for_length_of_stay
+        description: >
+          SUS+-derived critical-care days, calculated by SUS+ from submitted
+          critical-care activity for its length-of-stay adjustment. SUS+ subtracts
+          distinct critical-care days from episode duration. dbt passes through the
+          supplied spell-level value unchanged, without recalculation or further
+          subtraction from duration. This is not a financial amount or a measure of
+          critical-care occupancy. Null means no value was supplied.
+
+      - name: primary_diagnosis_code
+        description: >
+          Primary diagnosis code for the spell as derived by the HRG grouper
+
+      - name: secondary_diagnosis_code
+        description: >
+          Secondary diagnosis code for the spell as derived by the HRG grouper
+
+      - name: primary_treatment
+        description: >
+          Dominant procedure code for the spell as derived by the HRG grouper
+
+      - name: main_specialty_code
+        description: >
+          The specialty (code) in which the consultant is contracted or recognised,
+          derived from the dominant episode of the spell.
+
+      - name: main_specialty_name
+        description: >
+          The specialty (name) in which the consultant is contracted or recognised,
+          derived from the dominant episode of the spell.
+
+      - name: main_specialty_category
+        description: >
+          The specialty (category) in which the consultant is contracted or recognised,
+          derived from the dominant episode of the spell.
+
+      - name: treatment_function_code
+        description: >
+          Treatment function code for the specialised service within which the patient
+          is treated.
+
+      - name: treatment_function_code_desc
+        description: >
+          Treatment function description for the specialised service within which the
+          patient is treated.
+
+      - name: hrg_code
+        description: >
+          The spell level HRG returned by the grouper as a result of grouping
+          non-excluded episodes.
+
+      - name: core_hrg_desc
+        description: >
+          HRG description associated with the spell
+
+      - name: core_hrg_chapter
+        description: >
+          HRG chapter key associated with the spell
+
+      - name: core_hrg_chapter_desc
+        description: >
+          HRG chapter description associated with the spell
+
+      - name: spec_comm_flag
+        description: >
+          Specialised Commission Flag
+
+      - name: spec_comm_code
+        description: >
+          Specialised Commission Code
+
+      - name: spec_comm_desc
+        description: >
+          Specialised Commission description from the latest retained UKHFD lookup. Null
+          indicates there is no corresponding code or the code did not match in the
+          lookup.
+
+      - name: pss_service_line_code
+        description: >
+          Prescribed Specialised Services service line code
+
+      - name: pss_service_line_desc
+        description: >
+          Prescribed Specialised Services service line description from the latest
+          retained UKHFD lookup. Null indicates there is no corresponding code or the
+          code did not match in the lookup.
+
+      - name: type
+        description: >
+          An amalgamation of admission_type and sub_type where type = 'NON'.
+
+      - name: cost
+        description: >
+          The final calculated national price from SUS
+
+      - name: age_at_event
+        description: >
+          The age at the start of the dominant episode.
+
+      - name: gender_at_event
+        description: >
+          Patient gender code at time of event
+
+      - name: gender_desc_at_event
+        description: >
+          Patient gender description at time of event
+
+      - name: ethnicity_at_event
+        description: >
+          Patient ethnicity code at time of event
+
+      - name: ethnicity_desc_at_event
+        description: >
+          Patient ethnicity description at time of event
+
+      - name: postcode_district_at_event
+        description: >
+          The first part of the patient's postcode (outward code) at the time of the
+          event.
+
+      - name: lsoa_11_at_event
+        description: >
+          Patient LSOA 2011 of residence at the time of the spell. Populated across the
+          full history, so use it for trends that span April 2024.
+
+      - name: lsoa_21_at_event
+        description: >
+          Patient LSOA 2021 of residence at the time of the spell. Populated for spells
+          discharged from 1 April 2024 (about 96%); mostly null for earlier spells, so
+          use lsoa_11_at_event for trends that span that date. From April 2026 the value
+          comes from SUS+; before that it comes from the data lake's derivation, where
+          about 2.5% of values are not a 2021 successor of lsoa_11_at_event.
+
+      - name: lad_at_event
+        description: >
+          Patient local authority district at time of event
+
+      - name: imd_at_event
+        description: >
+          Patient index of multiple deprivation decile at time of event
+
+      - name: reg_practice_at_event
+        description: >
+          Patient registered GP practice at time of event
+
+      - name: reg_practice_pcn_name_latest
+        description: >
+          Latest maintained PCN name for reg_practice_at_event; not historical
+          membership.
+
+      - name: reg_practice_neighbourhood_name_latest
+        description: >
+          Latest maintained integrated neighbourhood name for reg_practice_at_event; not
+          historical membership.
+
+      - name: reg_practice_health_borough_name_latest
+        description: >
+          Latest maintained WNL health borough for reg_practice_at_event; not historical
+          membership.
+
+      - name: visit_occurrence_type
+        description: >
+          Type of visit occurrence

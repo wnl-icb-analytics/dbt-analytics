@@ -24,6 +24,11 @@ models:
           name: Partner Manager
 
     columns:
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.
+
       - name: community_treatment_order_id
         description: >
           Unique identifier at the documented model grain.
@@ -31,7 +36,52 @@ models:
           - unique
           - not_null
 
-      - name: sk_patient_id
+      - name: mental_health_act_period_id
         description: >
-          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
-          access policy.
+          Source MHS401 legal-status period associated with the order; links to the
+          recorded legal-status fact.
+
+      - name: order_start_date
+        description: >
+          Submitted order start date.
+
+      - name: order_end_date
+        description: >
+          Recorded end of the CTO period. A temporary hospital recall is recorded
+          separately and is not automatically the end of the order.
+
+      - name: order_expiry_date
+        description: >
+          Recorded expiry date, updated when an order is renewed. Does not alone prove
+          the order is currently in force.
+
+      - name: order_end_reason_code
+        description: >
+          Submitted order end reason code.
+
+      - name: order_end_reason_description
+        description: >
+          National label, including historical codes; null when no definition matches.
+
+      - name: n_accepted_source_records
+        description: >
+          Accepted submitted versions of this identity across all periods, including
+          repeats.
+
+      - name: is_identity_incomplete
+        description: >
+          A required identity component is missing; the source row is retained
+          separately.
+
+      - name: first_submission_period_end_date
+        description: >
+          First accepted reporting period containing this identity, not the clinical
+          start date.
+
+      - name: reporting_period_end_date
+        description: >
+          Period of the accepted source evidence; may be later than the clinical event.
+
+      - name: source_file_received_at
+        description: >
+          Source file receipt timestamp, not a clinical time.

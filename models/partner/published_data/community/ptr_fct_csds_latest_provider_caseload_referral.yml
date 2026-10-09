@@ -21,6 +21,11 @@ models:
           name: Partner Manager
 
     columns:
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.
+
       - name: referral_period_id
         description: >
           Key for the referral and accepted submission.
@@ -28,7 +33,25 @@ models:
           - unique
           - not_null
 
-      - name: sk_patient_id
+      - name: dataset_latest_reporting_period_end_date
         description: >
-          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
-          access policy.
+          Latest accepted reporting period for any provider.
+
+      - name: provider_months_behind_dataset
+        description: >
+          Calendar months between this provider's latest period and the dataset's latest
+          period.
+
+      - name: days_since_referral_received
+        description: >
+          Days from receipt to the provider's latest period end.
+
+      - name: days_since_last_attended_contact
+        description: >
+          Days from the last evidenced attended contact to period end; null without
+          attendance.
+
+      - name: recorded_caseload_contact_state
+        description: >
+          Whether attendance was evidenced in the latest provider period, only earlier,
+          or not at all.

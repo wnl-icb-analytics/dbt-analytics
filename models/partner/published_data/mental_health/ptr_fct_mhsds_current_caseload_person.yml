@@ -23,6 +23,11 @@ models:
           name: Partner Manager
 
     columns:
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.
+
       - name: caseload_person_provider_id
         description: >
           Person and provider key.
@@ -30,7 +35,16 @@ models:
           - unique
           - not_null
 
-      - name: sk_patient_id
+      - name: evidence_date
         description: >
-          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
-          access policy.
+          Dataset latest accepted reporting month. Providers without evidence in this
+          month are excluded, not assumed to have discharged patients.
+
+      - name: n_open_referrals
+        description: >
+          Open referrals for this person/provider at the evidence date.
+
+      - name: days_since_last_attended_contact
+        description: >
+          Days since last attended contact on any currently open referral; null when
+          none is evidenced.

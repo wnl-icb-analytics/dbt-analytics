@@ -23,6 +23,11 @@ models:
           name: Partner Manager
 
     columns:
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.
+
       - name: person_provider_period_id
         description: >
           Key for the person, provider and reporting period.
@@ -30,7 +35,60 @@ models:
           - unique
           - not_null
 
-      - name: sk_patient_id
+      - name: person_id
         description: >
-          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
-          access policy.
+          Recorded MHSDS identifier; identity changes can split an individual across
+          IDs.
+
+      - name: source_age_at_period_start
+        description: >
+          Source age in years at period start, including any source special values.
+
+      - name: source_age_at_period_end
+        description: >
+          Source age in years at period end, including any source special values.
+
+      - name: residence_imd_2019_decile
+        description: >
+          2019 IMD decile for the recorded 2011 LSOA. 1 is most deprived and 10 least
+          deprived. A fixed reference edition, not deprivation measured in the
+          submission month.
+
+      - name: residence_imd_2025_decile
+        description: >
+          2025 IMD decile for the recorded 2021 LSOA. 1 is most deprived and 10 least
+          deprived. This is retrospective area context for earlier submissions, not
+          historical deprivation state.
+
+      - name: legacy_person_stated_gender_code
+        description: >
+          Legacy recorded person-stated gender, kept separate from the newer
+          gender-identity field.
+
+      - name: gender_identity_code
+        description: >
+          Recorded gender identity; missing values are not filled from legacy gender.
+
+      - name: n_source_patient_records
+        description: >
+          Accepted MPI rows contributing to this person/provider/period.
+
+      - name: has_conflicting_demographic_records
+        description: >
+          Source rows disagree on at least one retained ethnicity, gender, age or LSOA
+          field.
+
+      - name: ethnicity_2001_code
+        description: >
+          Submitted 2001 ethnic category; missing or unknown values remain visible. The
+          2021 source field is unpopulated and omitted.
+
+      - name: residence_sub_icb_name
+        description: >
+          Authoritative organisation name for the corresponding source code; null when
+          the code is missing or unmatched.
+
+      - name: registration_sub_icb_name
+        description: >
+          Authoritative organisation name for the corresponding source code; null when
+          the code is missing or unmatched.
