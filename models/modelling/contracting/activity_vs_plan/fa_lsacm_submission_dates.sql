@@ -127,8 +127,9 @@ SELECT
             '/',RIGHT(YEAR(activity_month)::VARCHAR, 2))
 END AS financial_year,
     activity_month,
-    mod(month(activity_month) + 8, 12) + 1 as fy_submission_month_number,
     TO_CHAR(activity_month,'YYYY-MM') AS activity_year_month,
+    mod(month(activity_month) + 8, 12) + 1 as fy_submission_month_number,
+    TO_NUMBER(YEAR(activity_month)) AS submission_year,
     TO_CHAR(submission_date,'YYYY-MM') AS submission_month,
        submission_date,
 FROM submission_dates
