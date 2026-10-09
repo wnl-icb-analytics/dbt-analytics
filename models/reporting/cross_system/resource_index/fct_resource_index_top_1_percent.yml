@@ -1,0 +1,112 @@
+version: 2
+
+models:
+  - name: fct_resource_index_top_1_percent
+    description: >
+      Output-ready comparison of the costliest 1% with the other 99% by
+      gender, ethnicity, residence borough, deprivation, emergency care use
+      and LTC status. One row per breakdown dimension and category. Patient
+      shares and cost shares are both provided. Resource indices compare each
+      cohort-category cost per Core need-weighted head with the WNL mean.
+      LTC rows use NCL OLIDS-covered patients only. Each cohort's cost is also
+      split by service grouping, in GBP and as a share of that cohort's own
+      cost, so the two service mixes compare directly.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: dimension_order
+        description: Display order for workbook sections.
+        data_tests:
+          - not_null
+      - name: dimension
+        description: Breakdown dimension.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Overall
+                  - Gender
+                  - Ethnicity
+                  - Residence borough
+                  - Deprivation
+                  - Emergency care use
+                  - Long-term conditions
+      - name: category
+        description: Category within the breakdown dimension.
+        data_tests:
+          - not_null
+      - name: top_1_patients
+        description: Patients in the costliest 1% for the category.
+        data_tests:
+          - not_null
+      - name: other_99_patients
+        description: Patients in the other 99% for the category.
+        data_tests:
+          - not_null
+      - name: top_1_patient_share
+        description: Category share of people within the top-1% cohort.
+      - name: other_99_patient_share
+        description: Category share of people within the other-99% cohort.
+      - name: top_1_cost_share
+        description: Category share of cost within the top-1% cohort.
+      - name: other_99_cost_share
+        description: Category share of cost within the other-99% cohort.
+      - name: top_1_share_of_category_patients
+        description: Share of the category's patients who are in the costliest 1%.
+      - name: top_1_share_of_category_cost
+        description: Share of the category's combined cost held by the costliest 1%.
+      - name: top_1_resource_index
+        description: Top-1% category cost per weighted head divided by the WNL mean.
+      - name: other_99_resource_index
+        description: Other-99% category cost per weighted head divided by the WNL mean.
+      - name: top_1_crisis_cost
+        description: Top-1% cost in the Crisis service grouping, GBP.
+      - name: other_99_crisis_cost
+        description: Other-99% cost in the Crisis service grouping, GBP.
+      - name: top_1_planned_cost
+        description: Top-1% cost in the Planned service grouping, GBP.
+      - name: other_99_planned_cost
+        description: Other-99% cost in the Planned service grouping, GBP.
+      - name: top_1_community_cost
+        description: Top-1% cost in the Community service grouping, GBP.
+      - name: other_99_community_cost
+        description: Other-99% cost in the Community service grouping, GBP.
+      - name: top_1_mental_health_cost
+        description: Top-1% cost in the Mental Health service grouping, GBP.
+      - name: other_99_mental_health_cost
+        description: Other-99% cost in the Mental Health service grouping, GBP.
+      - name: top_1_unmapped_cost
+        description: Top-1% cost with no resolved service grouping, GBP.
+      - name: other_99_unmapped_cost
+        description: Other-99% cost with no resolved service grouping, GBP.
+      - name: top_1_crisis_cost_share
+        description: Crisis share of the top-1% cohort's cost in this category.
+      - name: other_99_crisis_cost_share
+        description: Crisis share of the other-99% cohort's cost in this category.
+      - name: top_1_planned_cost_share
+        description: Planned share of the top-1% cohort's cost in this category.
+      - name: other_99_planned_cost_share
+        description: Planned share of the other-99% cohort's cost in this category.
+      - name: top_1_community_cost_share
+        description: Community share of the top-1% cohort's cost in this category.
+      - name: other_99_community_cost_share
+        description: Community share of the other-99% cohort's cost in this category.
+      - name: top_1_mental_health_cost_share
+        description: Mental Health share of the top-1% cohort's cost in this category.
+      - name: other_99_mental_health_cost_share
+        description: Mental Health share of the other-99% cohort's cost in this category.
+      - name: top_1_unmapped_cost_share
+        description: Unmapped share of the top-1% cohort's cost in this category.
+      - name: other_99_unmapped_cost_share
+        description: Unmapped share of the other-99% cohort's cost in this category.
+      - name: denominator_note
+        description: Population qualification where a row does not cover all WNL patients.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - dimension
+              - category
