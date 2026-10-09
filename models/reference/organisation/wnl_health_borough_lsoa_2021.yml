@@ -1,0 +1,39 @@
+models:
+  - name: wnl_health_borough_lsoa_2021
+    description: >-
+      Lookup from 2021 Lower Layer Super Output Area to the eight West and
+      North West London health boroughs. One row represents one LSOA 2021 in
+      the WNL area. Health borough follows the former CCG geography confirmed
+      by Hana Ali for ECDS reporting; it is not the London local authority
+      classification. The names use the shared wnl_health_borough_name rule.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: lsoa_2021_code
+        description: ONS 2021 Lower Layer Super Output Area code.
+        data_tests:
+          - unique
+          - not_null
+      - name: health_borough_name
+        description: >-
+          WNL legacy CCG area containing the LSOA. Central London covers
+          Westminster and West London covers Kensington and Chelsea.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Brent
+                  - Central London
+                  - Ealing
+                  - Hammersmith & Fulham
+                  - Harrow
+                  - Hillingdon
+                  - Hounslow
+                  - West London
