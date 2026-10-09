@@ -4,7 +4,9 @@ models:
       Deceased status and approximate death date for each OLIDS patient_id, including
       patients with no death record, from OLIDS, PDS and registry deaths.
       final_date_of_death takes the registry date, then the PDS date, then the midpoint of
-      the OLIDS death month. An OLIDS death with a year but no month gets no date and does
+      the OLIDS death month. A registry or PDS date in or before the birth month is skipped
+      when another source dates the death later, as it is a mis-keyed birth date.
+      An OLIDS death with a year but no month gets no date and does
       not set is_deceased. OLIDS death month and year are shared across patient records
       with the same sk_patient_id. PDS deaths come from the latest version of the
       PDS person record, because a later version can reverse a death notification
@@ -53,5 +55,6 @@ models:
       - name: final_date_of_death
         description: > 
           Registry date of death where present, otherwise the PDS date, otherwise
-          the OLIDS approximate date.
+          the OLIDS approximate date. Skips a registry or PDS date in or before the
+          birth month when another source dates the death later.
      
