@@ -1,6 +1,5 @@
 -- Pair: macros/qof_registers/calculate_qof_ndh_gdm_register.sql.
--- This live fact includes future-dated records. Its PIT pair is strict as-of
--- and derives age at the reference date rather than using current age.
+-- Evidence is bounded by today. The PIT pair evaluates supplied reference dates.
 
 {{
     config(
@@ -16,8 +15,7 @@ NDH, impaired glucose tolerance and pre-diabetes require age 18 or over.
 Gestational diabetes qualifies at any age. The register then applies the five
 ordered diabetes-history rules from NDH_REG v102.
 
-The live fact retains future-dated records for compatibility with the existing
-fact family. The PIT view applies strict as-of filtering.
+Evidence dated after today is excluded.
 */
 
 WITH parameters AS (
@@ -36,6 +34,7 @@ ndh_gdm_events AS (
         TRUE AS is_any_ndh_type_code,
         FALSE AS is_gestational_diabetes_code
     FROM {{ ref('int_ndh_diagnoses_all') }} AS diagnosis
+    WHERE CAST(diagnosis.clinical_effective_date AS DATE) <= CURRENT_DATE()
 
     UNION ALL
 
@@ -46,6 +45,7 @@ ndh_gdm_events AS (
         FALSE AS is_any_ndh_type_code,
         TRUE AS is_gestational_diabetes_code
     FROM {{ ref('int_gestational_diabetes_diagnoses_all') }} AS diagnosis
+    WHERE CAST(diagnosis.clinical_effective_date AS DATE) <= CURRENT_DATE()
 ),
 
 diabetes_events AS (
@@ -55,6 +55,7 @@ diabetes_events AS (
         is_general_diabetes_code,
         is_diabetes_resolved_code
     FROM {{ ref('int_diabetes_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
 ),
 
 ndh_gdm_person_aggregates AS (
@@ -88,7 +89,7 @@ reporting_year_event_context AS (
         event.clinical_effective_date,
         MAX(CASE
             WHEN diabetes.is_general_diabetes_code
-                AND diabetes.clinical_effective_date <= event.clinical_effective_date
+                AND CAST(diabetes.clinical_effective_date AS DATE) <= CAST(event.clinical_effective_date AS DATE)
                 THEN diabetes.clinical_effective_date
         END) AS latest_diabetes_before_event,
         MAX(CASE WHEN diabetes.is_diabetes_resolved_code
@@ -98,7 +99,8 @@ reporting_year_event_context AS (
     CROSS JOIN parameters AS parameter
     LEFT JOIN diabetes_events AS diabetes
         ON event.person_id = diabetes.person_id
-    WHERE event.clinical_effective_date >= parameter.quality_service_start_date
+    WHERE CAST(event.clinical_effective_date AS DATE) >= CAST(parameter.quality_service_start_date AS DATE)
+        AND CAST(event.clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY event.person_id, event.id, event.clinical_effective_date
 ),
 
@@ -106,7 +108,7 @@ rule_4_qualifiers AS (
     SELECT DISTINCT person_id
     FROM reporting_year_event_context
     WHERE latest_diabetes_before_event IS NULL
-        OR latest_diabetes_resolved_date > latest_diabetes_before_event
+        OR CAST(latest_diabetes_resolved_date AS DATE) > CAST(latest_diabetes_before_event AS DATE)
 ),
 
 before_reporting_year_events AS (
@@ -115,7 +117,7 @@ before_reporting_year_events AS (
         MAX(event.clinical_effective_date) AS latest_diagnosis_date
     FROM ndh_gdm_events AS event
     CROSS JOIN parameters AS parameter
-    WHERE event.clinical_effective_date < parameter.quality_service_start_date
+    WHERE CAST(event.clinical_effective_date AS DATE) < CAST(parameter.quality_service_start_date AS DATE)
     GROUP BY event.person_id
 ),
 
@@ -124,7 +126,7 @@ before_reporting_year_diabetes_context AS (
         event.person_id,
         MAX(CASE
             WHEN diabetes.is_general_diabetes_code
-                AND diabetes.clinical_effective_date <= parameter.quality_service_start_date
+                AND CAST(diabetes.clinical_effective_date AS DATE) <= CAST(parameter.quality_service_start_date AS DATE)
                 THEN diabetes.clinical_effective_date
         END) AS latest_diabetes_at_service_start,
         MAX(CASE WHEN diabetes.is_diabetes_resolved_code
@@ -141,7 +143,7 @@ rule_5_qualifiers AS (
     SELECT person_id
     FROM before_reporting_year_diabetes_context
     WHERE latest_diabetes_at_service_start IS NULL
-        OR latest_diabetes_resolved_date > latest_diabetes_at_service_start
+        OR CAST(latest_diabetes_resolved_date AS DATE) > CAST(latest_diabetes_at_service_start AS DATE)
 ),
 
 register_logic AS (
@@ -167,8 +169,8 @@ register_logic AS (
         ) AS passes_entry_rule,
         CASE
             WHEN diabetes.earliest_diabetes_diagnosis_date IS NULL THEN 2
-            WHEN diabetes.latest_diabetes_resolved_date
-                > diabetes.latest_diabetes_diagnosis_date THEN 3
+            WHEN CAST(diabetes.latest_diabetes_resolved_date AS DATE)
+                > CAST(diabetes.latest_diabetes_diagnosis_date AS DATE) THEN 3
             WHEN rule_4.person_id IS NOT NULL THEN 4
             WHEN rule_5.person_id IS NOT NULL THEN 5
         END AS qualifying_rule
@@ -216,6 +218,7 @@ qualifying_diagnoses AS (
         diagnosis.is_pre_diabetes_diagnosis_code,
         FALSE AS is_gestational_diabetes_code
     FROM {{ ref('int_ndh_diagnoses_all') }} AS diagnosis
+    WHERE CAST(diagnosis.clinical_effective_date AS DATE) <= CURRENT_DATE()
 
     UNION ALL
 
@@ -230,6 +233,7 @@ qualifying_diagnoses AS (
         FALSE AS is_pre_diabetes_diagnosis_code,
         diagnosis.is_diagnosis_code AS is_gestational_diabetes_code
     FROM {{ ref('int_gestational_diabetes_diagnoses_all') }} AS diagnosis
+    WHERE CAST(diagnosis.clinical_effective_date AS DATE) <= CURRENT_DATE()
 ),
 
 diagnosis_details AS (
@@ -334,8 +338,8 @@ SELECT
     membership.earliest_diabetes_diagnosis_date IS NOT NULL
         AS has_diabetes_diagnosis,
     COALESCE(
-        membership.latest_diabetes_resolved_date
-            > membership.latest_diabetes_diagnosis_date,
+        CAST(membership.latest_diabetes_resolved_date AS DATE)
+            > CAST(membership.latest_diabetes_diagnosis_date AS DATE),
         FALSE
     ) AS is_diabetes_resolved,
     membership.earliest_diabetes_diagnosis_date,

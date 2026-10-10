@@ -1,0 +1,54 @@
+models:
+- columns:
+  - description: "Person identifier for someone in the indicator denominator."
+    name: person_id
+  - description: "Published NICE indicator identifier."
+    name: indicator_id
+  - description: "Published NICE indicator title."
+    name: indicator_name
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - description: "Month-end used to assess the population, age and evidence."
+    name: reporting_date
+  - description: "Inclusive start of the indicator measurement period before the reporting date."
+    name: measurement_period_start
+  - description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
+    name: age
+  - description: "Short description of the people in the denominator."
+    name: denominator_description
+  - description: "ODS code of the registration practice at month-end."
+    name: practice_code
+  - description: "Name of the registration practice at month-end."
+    name: practice_name
+  - description: "Date of the latest qualifying HbA1c or fasting plasma glucose test in the measurement period; null when none is recorded."
+    name: latest_record_date
+  - description: "Always true. Every row belongs to the denominator before personalised care adjustments."
+    name: is_in_denominator
+  - description: "Whether the person meets the indicator achievement rule on the reporting date."
+    name: is_in_numerator
+  - description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."
+    name: indicator_status
+  config:
+    meta:
+      clinical_source: https://www.nice.org.uk/indicators/ind172
+      owner:
+        name: EddieDavison92
+  description: >-
+    Glycaemic testing in non-diabetic hyperglycaemia (NICE IND172). One row per person in
+    the denominator at the month-end.
+
+
+    People registered at the month-end aged 18 or over on the non-diabetic hyperglycaemia
+    register without unresolved diabetes. Gestational diabetes alone does not qualify.
+    Achieved with HbA1c or fasting plasma glucose testing in the 12 months before the
+    month-end. No numeric result is needed. No personalised care adjustments are applied.
+    Based on NICE PH38. Recalculated for each of the last 60 month-ends with current
+    rules, code lists and records, so later corrections can change past months. Code
+    lists: IFCCHBAM_COD, DCCTHBA1C_COD, FASPLASGLUC_COD (PCD).
+  name: fct_person_ndh_glycaemic_test_ind172_by_month
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

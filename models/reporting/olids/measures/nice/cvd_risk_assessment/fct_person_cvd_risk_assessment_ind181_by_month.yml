@@ -1,0 +1,61 @@
+models:
+- name: fct_person_cvd_risk_assessment_ind181_by_month
+  description: >-
+    Cardiovascular risk assessment in type 2 diabetes (NICE IND181). One row per person in the
+    denominator at each month-end.
+
+
+    People registered at the month-end aged 25 to 84 on the type 2 diabetes register without
+    moderate or severe coded frailty or a statin prescription in the last 6 months. Achieved
+    with cardiovascular risk assessment in the last 3 years; no numeric score or separate
+    consultation record is needed. Excludes established cardiovascular disease, including
+    haemorrhagic stroke, familial hypercholesterolaemia and CKD stage 3 to 5. No personalised
+    care adjustments are applied. Based on NICE NG238. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months. Code lists: CVDRISKASS_COD, CVDASS2_COD, QRISKSCORE_COD, CHD_COD, STRK_COD,
+    TIA_COD, PAD_COD, HSTRK_COD, CKD_COD, CKD1AND2_COD, CKDRES_COD, DM_COD, DMTYPE1_COD,
+    DMTYPE2_COD, DMRES_COD, FHYP_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD); 0212 (BNF).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind181-diabetes-cvd-risk-assessment
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Inclusive start of the risk assessment window before the reporting date."
+  - name: age
+    description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: practice_code
+    description: "ODS code of the registration practice attributed at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice attributed at the reporting month-end."
+  - name: latest_risk_score
+    description: "Latest valid QRISK score through the reporting date, in percent; null when absent."
+  - name: latest_risk_score_date
+    description: "Date of the latest valid QRISK score through the reporting date; null when absent."
+  - name: latest_risk_assessment_date
+    description: "Date of the latest cardiovascular risk assessment through the reporting date, scored or not; null when absent."
+  - name: is_in_denominator
+    description: "Always true; each row is eligible before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

@@ -1,0 +1,51 @@
+models:
+- name: fct_person_childhood_immunisation_nice_indicators_by_month
+  description: >-
+    Monthly NICE childhood immunisation results. One row per person and indicator at each
+    month-end.
+
+
+    Includes IND215, IND216, IND217, IND218, IND224, IND225, IND226, with the eligibility,
+    exclusions and achievement rules documented for each indicator. Recalculated for each of the
+    last 60 month-ends with current rules, code lists and records, so later corrections can
+    change past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_status
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  - name: birth_date_approx
+    description: "Approximate birth date, set to the middle of the recorded birth month."
+  - name: milestone_date
+    description: "Approximate date the child reached the required age milestone, in the 12-month eligibility window."
+  - name: doses_in_window
+    description: "Number of distinct vaccine administration or order dates in the indicator age window, including zero when none. For IND217 this counts MMR or MMRV doses only; the booster is assessed separately."
+  - name: primary_doses_by_12_months
+    description: "Distinct MenB administration or order dates at recorded age 0; missing event age uses the approximate first birthday. Null for indicators other than IND226."
+  - name: booster_doses_12_to_18_months
+    description: "Distinct MenB administration or order dates at recorded age 1 and before approximate age 18 months; missing event age uses the approximate first birthday. Null for indicators other than IND226."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and achievement."
+  - name: practice_code
+    description: "ODS code of the registration practice at month-end."
+  - name: practice_name
+    description: "Name of the registration practice at month-end."

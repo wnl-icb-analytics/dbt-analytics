@@ -16,8 +16,8 @@ Costs remain in source pence; the cost model converts them to pounds.
     on_schema_change='fail'
 ) }}
 
-{% set complete_query %}
-with v2_periods as (
+{% set meds_input_ctes %}
+v2_periods as (
     select distinct processed_period from {{ ref('raw_epd_pc_medsv2') }}
 ), meds_input as (
     select
@@ -107,15 +107,11 @@ with v2_periods as (
         eps_prescription_id,
         uniq_submission_id
     from {{ ref('raw_epd_pc_medsv2') }} as source_rows
-), latest_submissions as (
-    select
-        processed_period as submission_period,
-        max(uniq_submission_id) as latest_submission_id
-    from meds_input
-    group by processed_period
 )
+{% endset %}
 
-select
+{# Every output column except is_latest_submission, in table order. #}
+{% set projected_columns %}
     -- Standard patient key across the two delivery versions.
     {{consistent_sk_patient_id_format('source_patient_key')}}      as sk_patient_id
 
@@ -174,6 +170,19 @@ select
     , bsa_prescription_id
     , eps_prescription_id
     , uniq_submission_id
+{% endset %}
+
+{% set complete_query %}
+with {{ meds_input_ctes }}, latest_submissions as (
+    select
+        processed_period as submission_period,
+        max(uniq_submission_id) as latest_submission_id
+    from meds_input
+    group by processed_period
+)
+
+select
+{{ projected_columns }}
 
     -- Latest-submission flag. The EPD feed restates each processing period as
     -- a full reload: most periods carry 2 near-identical submissions
@@ -200,14 +209,18 @@ left join latest_submissions
             "invocation_id": invocation_id,
             "operation": "compare_processing_periods"
         }) }} */
-        with incoming as (
-            {{ complete_query }}
+        with {{ meds_input_ctes }}, incoming as (
+            -- The flag derives from uniq_submission_id, which is hashed, so it
+            -- is left out on both sides. That avoids a second pass and a join.
+            select {{ projected_columns }}
+            from meds_input as meds
         ), source_periods as (
             select processed_period, count(*) as row_count, hash_agg(*) as content_hash
             from incoming
             group by processed_period
         ), target_periods as (
-            select processed_period, count(*) as row_count, hash_agg(*) as content_hash
+            select processed_period, count(*) as row_count,
+                hash_agg(* exclude is_latest_submission) as content_hash
             from {{ this }}
             group by processed_period
         )

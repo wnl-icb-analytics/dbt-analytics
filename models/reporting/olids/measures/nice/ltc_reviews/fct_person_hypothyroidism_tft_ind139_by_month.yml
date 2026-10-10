@@ -1,0 +1,64 @@
+models:
+- name: fct_person_hypothyroidism_tft_ind139_by_month
+  description: >-
+    Thyroid function testing in hypothyroidism (NICE IND139). One row per person in the
+    denominator at each month-end.
+
+
+    People registered at the month-end on the NICE IND138 hypothyroidism register, with
+    levothyroxine prescribed in the preceding 6 months and no latest subclinical
+    hypothyroidism diagnosis, without an added age restriction. Achieved with a thyroid
+    function test in the 12 months before the month-end. Numeric results are not required.
+    No personalised care adjustments are applied. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months. Based on the NICE clinical knowledge summary on hypothyroidism. Code
+    lists: THY_COD, TFT_COD (PCD); subclinical hypothyroidism and levothyroxine code lists
+    from the IND138 register.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind139
+  columns:
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and evidence."
+  - name: measurement_period_start
+    description: "12 months before the reporting date, included in the test window."
+  - name: age
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: practice_code
+    description: "ODS code of the registration practice at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice at the reporting month-end."
+  - name: latest_review_date
+    description: >-
+      Latest thyroid function test on or before the reporting date; null if absent. It may be
+      outside the achievement window.
+  - name: latest_record_date
+    description: >-
+      Latest thyroid function test in the 12-month window; null if absent. A numeric result is
+      not required.
+      Latest thyroid function test in the 12-month window; null if absent. A numeric result is
+      not required.
+  - name: is_in_denominator
+    description: "Always true. Each row is an eligible member of the denominator."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

@@ -2,7 +2,9 @@ models:
   - name: int_smi_diagnoses_all
     description: 'Serious mental illness diagnosis and remission observations for QOF register management.
 
-      One row per observation using MH_COD (diagnosis) and MHREM_COD (remission) clusters. Age restrictions ≥18 years typically applied downstream.'
+      One row per person, concept and clinical effective timestamp using PCD MH_COD
+      (diagnosis) and MHREM_COD (remission) clusters. Both flags can be true when
+      a code belongs to both clusters. The QOF register has no age restriction.'
     config:
       meta:
         owner:
@@ -29,7 +31,7 @@ models:
         description: 'QOF cluster identifier (MH_COD or MHREM_COD)'
 
       - name: is_diagnosis_code
-        description: 'Flag indicating SMI diagnosis code (MH_COD cluster)'
+        description: 'Whether the observation matches MH_COD, including codes also in MHREM_COD'
 
       - name: is_resolved_code
         description: 'Flag indicating SMI remission code (MHREM_COD cluster)'
@@ -37,7 +39,10 @@ models:
       - name: smi_observation_type
         description: 'Categorised SMI observation type (SMI Diagnosis or SMI Resolved)'
 
-    tests:
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, concept_code, clinical_effective_date]
       - dbt_utils.at_least_one:
           column_name: id
       - cluster_ids_exist:

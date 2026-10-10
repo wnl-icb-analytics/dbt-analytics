@@ -1,0 +1,84 @@
+models:
+  - name: ptr_fct_mhsds_care_plan_agreement
+    description: >
+      Partner copy of fct_mhsds_care_plan_agreement, published to local authority
+      partners. No SQL filter: partner roles see only rows allowed by the PARTNER_POLICY
+      row access policy on sk_patient_id, which partner_mapping links to a borough
+      partner role when the patient is registered with a practice in, or resident in,
+      that borough. Rows without an sk_patient_id, or whose patient has no in-area
+      registered or residence borough, are visible to no partner. sk_patient_id is cast
+      to VARCHAR to match the policy; all other columns are as in
+      fct_mhsds_care_plan_agreement. Recorded agreements to care plans. Each row is one
+      accepted MHS009 record, with agreement-party and family-involvement details.
+      Several parties can agree to a plan, and repeated period reports remain separate.
+      Missing agreement evidence does not mean disagreement.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.
+
+      - name: care_plan_agreement_id
+        description: >
+          Unique identifier at the documented model grain.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: care_plan_source_id
+        description: >
+          Submitted care plan source id.
+
+      - name: family_involvement_code
+        description: >
+          Submitted family involvement code.
+
+      - name: family_exclusion_reason_code
+        description: >
+          Submitted family exclusion reason code.
+
+      - name: legacy_content_agreed_by_code
+        description: >
+          Submitted legacy content agreed by code.
+
+      - name: agreed_by_code
+        description: >
+          Submitted agreed by code.
+
+      - name: legacy_content_agreed_date
+        description: >
+          Submitted legacy content agreed date.
+
+      - name: agreement_date
+        description: >
+          Submitted agreement date.
+
+      - name: family_involvement_description
+        description: >
+          National label, including historical codes; null when no definition matches.
+
+      - name: family_exclusion_reason_description
+        description: >
+          National label, including historical codes; null when no definition matches.
+
+      - name: legacy_content_agreed_by_description
+        description: >
+          National label, including historical codes; null when no definition matches.
+
+      - name: agreed_by_description
+        description: >
+          National label, including historical codes; null when no definition matches.
+
+      - name: reporting_period_end_date
+        description: >
+          Period of the accepted source evidence; may be later than the clinical event.
+
+      - name: source_file_received_at
+        description: >
+          Source file receipt timestamp, not a clinical time.

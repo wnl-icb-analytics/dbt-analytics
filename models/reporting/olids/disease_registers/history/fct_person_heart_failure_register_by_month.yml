@@ -1,0 +1,42 @@
+models:
+  - name: fct_person_heart_failure_register_by_month
+    description: >
+      Heart failure register at each completed month-end, on the rules of
+      fct_person_heart_failure_register: an HF_COD diagnosis with no HFRES_COD on a
+      later date; same-day resolution retains membership. HF3 also requires a
+      REDEJCFRAC_COD, with no age restriction.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: is_on_hfref_register
+        description: Whether a reduced ejection fraction code known by the month-end also qualifies the person for HF3.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+                quote: false
+      - name: earliest_diagnosis_date
+        description: Earliest heart failure diagnosis known by the month-end.
+      - name: latest_diagnosis_date
+        description: Latest heart failure diagnosis known by the month-end.
+      - name: latest_resolved_date
+        description: Latest heart failure resolved code known by the month-end.

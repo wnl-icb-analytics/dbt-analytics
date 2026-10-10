@@ -19,15 +19,32 @@ SELECT
 FROM ({{ get_observations("'FASPLASGLUC_COD','GLUC_COD'") }}) obs
 WHERE obs.clinical_effective_date IS NOT NULL 
 AND obs.clinical_effective_date <= CURRENT_DATE() -- No future dates
+),
+
+deduplicated AS (
+    SELECT *
+    FROM blood_gluc
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY person_id, concept_code, clinical_effective_date
+        ORDER BY person_id
+    ) = 1
+),
+
+fasting_codes AS (
+    SELECT DISTINCT code
+    FROM {{ ref('stg_reference_combined_codesets') }}
+    WHERE cluster_id = 'FASPLASGLUC_COD'
 )
---select all to then deduplicate by person, code and date
+
 select 
-person_id
-,clinical_effective_date
-,concept_code
-,concept_display
-,source_cluster_id
-,result_value
-,result_unit_display
-from blood_gluc
-QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, CONCEPT_CODE, CLINICAL_EFFECTIVE_DATE ORDER BY PERSON_ID) = 1
+glucose.person_id
+,glucose.clinical_effective_date
+,glucose.concept_code
+,glucose.concept_display
+-- Fasting membership is independent of which same-day observation survives.
+,CASE WHEN fasting.code IS NOT NULL THEN 'FASPLASGLUC_COD'
+    ELSE glucose.source_cluster_id END AS source_cluster_id
+,glucose.result_value
+,glucose.result_unit_display
+from deduplicated AS glucose
+LEFT JOIN fasting_codes AS fasting ON glucose.concept_code = fasting.code

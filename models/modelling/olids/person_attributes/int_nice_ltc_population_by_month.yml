@@ -1,0 +1,126 @@
+models:
+- name: int_nice_ltc_population_by_month
+  description: >-
+    Long-term condition evidence for registered, living, non-test people. One row per candidate
+    person and month-end. Candidates have condition register membership, depression, frailty,
+    active lithium treatment, alcohol disorder, dyslipidaemia or obstructive sleep apnoea.
+    Missing flags are false and counts zero. Lithium requires treatment in the preceding six
+    months with no later stop; indicators apply their own population rules. Recalculated for
+    each of the last 60 month-ends with current rules, code lists and records, so later
+    corrections can change past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  columns:
+  - name: person_id
+    description: Person identifier.
+  - name: reporting_date
+    description: >-
+      Completed month-end on which population and evidence are assessed.
+  - name: birth_date_approx
+    description: >-
+      Approximate birth date used to assess age.
+  - name: ltc_count
+    description: Number of distinct project LTC registers the person is on.
+  - name: multimorbidity_cluster_count
+    description: Number of register-derived NICE condition categories, plus age-16-or-over alcohol-disorder
+      history when no register mental-health category is present. Lithium without an SMI diagnosis does
+      not contribute. This count omits additional categories supplied by int_nice_multimorbidity_categories.
+  - name: has_chd
+    description: On the CHD register.
+  - name: has_pad
+    description: On the PAD register.
+  - name: has_stroke_tia
+    description: On the stroke/TIA register.
+  - name: has_hypertension
+    description: On the hypertension register.
+  - name: has_diabetes
+    description: On the diabetes register.
+  - name: has_ndh
+    description: On the non-diabetic hyperglycaemia register.
+  - name: has_copd
+    description: On the COPD register.
+  - name: has_ckd
+    description: On the CKD register.
+  - name: has_asthma
+    description: On the asthma or CYP asthma register.
+  - name: has_atrial_fibrillation
+    description: On the atrial fibrillation register.
+  - name: has_heart_failure
+    description: On the heart failure register.
+  - name: has_dementia
+    description: On the dementia register.
+  - name: has_depression
+    description: On the depression register.
+  - name: has_anxiety
+    description: On the anxiety register.
+  - name: has_smi
+    description: On the SMI register.
+  - name: has_learning_disability
+    description: On the learning disability register, including under 14s.
+  - name: has_rheumatoid_arthritis
+    description: On the rheumatoid arthritis register.
+  - name: has_hypothyroidism
+    description: On the hypothyroidism register.
+  - name: has_cancer
+    description: On the cancer register, which excludes non-melanoma skin cancer.
+  - name: latest_cancer_diagnosis_date
+    description: Latest first-or-new-episode cancer diagnosis date from the register; null if none.
+  - name: earliest_smi_diagnosis_date
+    description: Earliest severe mental illness register diagnosis date; null if none.
+  - name: earliest_dementia_diagnosis_date
+    description: Earliest dementia register diagnosis date; null if none.
+  - name: earliest_diabetes_diagnosis_date
+    description: Earliest diabetes register diagnosis date; null if none.
+  - name: earliest_cvd_diagnosis_date
+    description: Earliest CHD, stroke/TIA or PAD register diagnosis date; null if none.
+  - name: has_active_smi_diagnosis
+    description: On the SMI register with a schizophrenia, bipolar or psychosis diagnosis not in remission;
+      false for lithium-only or remitted people.
+  - name: is_on_lithium
+    description: >-
+      Lithium prescribed strictly after the six-calendar-month boundary through the reporting
+      date, with no stop later than the latest order date. Both orders and stops must be known
+      by the reporting date. A same-day stop does not exclude. Independent of SMI diagnosis.
+  - name: latest_smi_diagnosis_date
+    description: Latest SMI diagnosis code date from the register; after a remission this is the relapse
+      date.
+  - name: latest_smi_remission_date
+    description: Latest SMI remission code date from the register; null if never in remission.
+  - name: has_dyslipidaemia
+    description: Any dyslipidaemia diagnosis code from the local ECL cluster.
+  - name: has_obstructive_sleep_apnoea
+    description: Any obstructive sleep apnoea diagnosis code.
+  - name: earliest_smoking_ltc_diagnosis_date
+    description: Earliest diagnosis date across the CHD, PAD, stroke/TIA, hypertension, diabetes, COPD,
+      CKD and asthma registers; null if none.
+  - name: earliest_smoking_smi_ltc_diagnosis_date
+    description: Earliest diagnosis date across the IND156 registers plus severe mental illness; null
+      if none.
+  - name: earliest_hypertension_date
+    description: Earliest hypertension diagnosis date; null if none.
+  - name: earliest_depression_anxiety_date
+    description: >-
+      Earliest qualifying depression or anxiety diagnosis on the reporting date. Uses register
+      membership plus unresolved first/new depression episodes at ages 10-17. An older episode
+      remains the anchor after a later new episode. Null when neither route applies.
+  - name: latest_new_depression_diagnosis_date
+    description: >-
+      Latest first/new depression episode known by the reporting date, ordered by clinical
+      timestamp independently of register membership or subsequent resolution. Null if none.
+  - name: latest_frailty_severity
+    description: Latest coded frailty severity; null if none.
+  - name: has_alcohol_disorder
+    description: >-
+      Alcohol-related disease or disorder evidence recorded at age 16 or over.
+  - name: has_nice_alcohol_disorder
+    description: >-
+      ALCOHOL_MISUSE_DISORDERS evidence by the reporting date, without an age restriction.
+      Used for exclusions in NICE IND196 to IND202.
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

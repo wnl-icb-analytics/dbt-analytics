@@ -1,0 +1,279 @@
+models:
+- name: int_cvd_risk_profile_by_month
+  description: NICE cardiovascular risk evidence, one row per active, living, non-test person and month-end
+    aged 25-84 or on the DM/SMI registers. Holds separate latest valid QRISK and latest recorded coded
+    CVD score, lifetime and 12/36-month summaries, assessment dates, register exclusions, therapy, smoking
+    and latest valid total cholesterol. Invalid latest coded CVD scores remain null without fallback.
+    Registration and age follow the shared monthly population; approximate birth/death dates and the current
+    test flag constrain historical selection. Covers the last 60 completed month-ends using current code
+    lists and retained records. Non-register evidence uses corrected clinical/order dates through the
+    month-end, rather than a complete reconstruction of recorded-date knowledge.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - data_tests:
+    - not_null
+    description: Person identifier.
+    name: person_id
+  - description: Latest valid QRISK 10-year risk score in percent; null if none.
+    name: latest_risk_score
+  - description: Date of the latest valid QRISK score.
+    name: latest_risk_score_date
+  - description: QRISK, QRISK2 or QRISK3 for the latest score.
+    name: latest_risk_score_type
+  - description: Highest valid QRISK score ever recorded in percent.
+    name: max_risk_score_ever
+  - description: Highest valid QRISK score in the 12 months to the reporting date; null if none.
+    name: max_risk_score_12m
+  - description: Lowest valid QRISK score in the 36 months to the reporting date; null if none.
+    name: min_risk_score_36m
+  - description: Date of the latest CVD risk assessment record, scored or not.
+    name: latest_risk_assessment_date
+  - description: Last recorded numeric CVD risk assessment value in percent across coded tools; null when
+      absent or outside 0 to 100. An invalid last result does not fall back to an older score.
+    name: latest_cvd_risk_score
+  - description: Date of the last CVD risk assessment with a recorded result, including invalid results.
+    name: latest_cvd_risk_score_date
+  - description: Highest valid coded CVD risk score in percent in the preceding 12 months across permitted
+      assessment tools.
+    name: max_cvd_risk_score_12m
+  - description: Most recent CVD risk score below 10% in the preceding three years; null if none.
+    name: latest_low_cvd_risk_score_date_36m
+  - description: Most recent CVD risk score of at least 10% in the preceding three years; a date after
+      the latest low score cancels the IND275 low-score exclusion, following QOF v51 DM034.
+    name: latest_high_cvd_risk_score_date_36m
+  - description: On the CHD or PAD register, or the stroke/TIA register without haemorrhagic stroke history.
+    name: has_cvd
+  - description: On the CHD, PAD or stroke/TIA register, including haemorrhagic stroke; used where NICE
+      defines CVD as any stroke or TIA.
+    name: has_cvd_including_haemorrhagic_stroke
+  - description: On the familial hypercholesterolaemia register.
+    name: has_familial_hypercholesterolaemia
+  - description: On the CKD register (stage 3 to 5 by code).
+    name: has_ckd
+  - description: On the diabetes register.
+    name: has_diabetes
+  - description: Diabetes register type is Type 1.
+    name: has_type1_diabetes
+  - description: Diabetes register type is Type 2.
+    name: has_type2_diabetes
+  - description: Earliest type 2 diabetes code date from the register; null if none.
+    name: earliest_type2_diabetes_date
+  - description: On the hypertension register.
+    name: has_hypertension
+  - description: Earliest hypertension diagnosis date from the register; null if none.
+    name: earliest_hypertension_date
+  - description: Latest coded frailty severity; null if none.
+    name: latest_frailty_severity
+  - description: Date of the most recent counted lipid-lowering order; null if none.
+    name: latest_lipid_lowering_order_date
+  - description: Date of the most recent statin order; null if none.
+    name: latest_statin_order_date
+  - description: Latest smoking status is Current Smoker.
+    name: is_current_smoker
+  - description: On the obesity register.
+    name: has_obesity
+  - description: Latest valid total cholesterol in mmol/L through the reference date; null if none.
+    name: latest_total_cholesterol
+  - description: Date of the latest valid total cholesterol result through the reference date.
+    name: latest_total_cholesterol_date
+  - description: Reference date through which evidence is evaluated.
+    name: reporting_date
+unit_tests:
+- name: nice_history_cvd_valid_fallback_windows_and_smoking_ties
+  model: int_cvd_risk_profile_by_month
+  overrides:
+    macros:
+      nice_reference_dates: |
+        SELECT '2026-03-31'::DATE AS reporting_date
+        UNION ALL
+        SELECT '2026-09-30'::DATE AS reporting_date
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: 'SELECT -9503::NUMBER AS person_id, ''2026-03-31''::DATE AS reporting_date, 50::NUMBER AS age,
+      NULL::DATE AS birth_date_approx, NULL::VARCHAR AS gender, NULL::VARCHAR AS practice_code, NULL::VARCHAR
+      AS practice_name
+
+      UNION ALL
+
+      SELECT -9503::NUMBER AS person_id, ''2026-09-30''::DATE AS reporting_date, 50::NUMBER AS age, NULL::DATE
+      AS birth_date_approx, NULL::VARCHAR AS gender, NULL::VARCHAR AS practice_code, NULL::VARCHAR AS
+      practice_name
+
+      UNION ALL
+
+      SELECT -9504::NUMBER AS person_id, ''2026-03-31''::DATE AS reporting_date, 20::NUMBER AS age, NULL::DATE
+      AS birth_date_approx, NULL::VARCHAR AS gender, NULL::VARCHAR AS practice_code, NULL::VARCHAR AS
+      practice_name
+
+      UNION ALL
+
+      SELECT -9505::NUMBER AS person_id, ''2026-03-31''::DATE AS reporting_date, 20::NUMBER AS age, NULL::DATE
+      AS birth_date_approx, NULL::VARCHAR AS gender, NULL::VARCHAR AS practice_code, NULL::VARCHAR AS
+      practice_name'
+  - input: ref('fct_person_diabetes_register_by_month')
+    format: sql
+    rows: SELECT -9504::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, '2020-01-01'::TIMESTAMP_NTZ
+      AS earliest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type,
+      NULL::TIMESTAMP_NTZ AS earliest_type1_date, NULL::TIMESTAMP_NTZ AS latest_type1_date, NULL::TIMESTAMP_NTZ
+      AS earliest_type2_date, NULL::TIMESTAMP_NTZ AS latest_type2_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date
+  - input: ref('fct_person_smi_register_by_month')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+      NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_remission_date WHERE
+      FALSE
+  - input: ref('fct_person_familial_hypercholesterolaemia_register_by_month')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+      NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('fct_person_ckd_register_by_month')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+      NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::TIMESTAMP_NTZ AS latest_resolved_date, NULL::TIMESTAMP_NTZ
+      AS latest_stage_1_2_date WHERE FALSE
+  - input: ref('fct_person_hypertension_register_by_month')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+      NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('fct_person_frailty_register_by_month')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+      NULL::TIMESTAMP_NTZ AS latest_diagnosis_date, NULL::VARCHAR AS latest_frailty_severity WHERE FALSE
+  - input: ref('fct_person_obesity_register_by_month')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS month_end_date, NULL::TIMESTAMP_NTZ AS earliest_diagnosis_date,
+      NULL::TIMESTAMP_NTZ AS latest_diagnosis_date WHERE FALSE
+  - input: ref('int_qrisk_all')
+    format: sql
+    rows: 'SELECT -9503::NUMBER AS person_id, ''Q1''::VARCHAR AS id, ''2023-03-31''::TIMESTAMP_NTZ AS
+      clinical_effective_date, TRUE AS is_valid_qrisk, 5::FLOAT AS qrisk_score, ''QRISK3''::VARCHAR AS
+      qrisk_type
+
+      UNION ALL
+
+      SELECT -9503::NUMBER AS person_id, ''Q0''::VARCHAR AS id, ''2025-03-31''::TIMESTAMP_NTZ AS clinical_effective_date,
+      TRUE AS is_valid_qrisk, 80::FLOAT AS qrisk_score, ''QRISK3''::VARCHAR AS qrisk_type
+
+      UNION ALL
+
+      SELECT -9503::NUMBER AS person_id, ''Q2''::VARCHAR AS id, ''2026-03-01''::TIMESTAMP_NTZ AS clinical_effective_date,
+      TRUE AS is_valid_qrisk, 20::FLOAT AS qrisk_score, ''QRISK3''::VARCHAR AS qrisk_type
+
+      UNION ALL
+
+      SELECT -9503::NUMBER AS person_id, ''Q3''::VARCHAR AS id, ''2026-03-20''::TIMESTAMP_NTZ AS clinical_effective_date,
+      FALSE AS is_valid_qrisk, 999::FLOAT AS qrisk_score, ''QRISK3''::VARCHAR AS qrisk_type'
+  - input: ref('int_cvd_risk_assessment_all')
+    format: sql
+    rows: 'SELECT -9503::NUMBER AS person_id, ''C1''::VARCHAR AS id, ''2023-03-31''::TIMESTAMP_NTZ AS
+      clinical_effective_date, TRUE AS is_cvd_risk_score_code, ''5''::VARCHAR AS original_result_value,
+      5::FLOAT AS risk_score_value
+
+      UNION ALL
+
+      SELECT -9503::NUMBER AS person_id, ''C0''::VARCHAR AS id, ''2025-03-31''::TIMESTAMP_NTZ AS clinical_effective_date,
+      TRUE AS is_cvd_risk_score_code, ''80''::VARCHAR AS original_result_value, 80::FLOAT AS risk_score_value
+
+      UNION ALL
+
+      SELECT -9503::NUMBER AS person_id, ''C2''::VARCHAR AS id, ''2026-03-01''::TIMESTAMP_NTZ AS clinical_effective_date,
+      TRUE AS is_cvd_risk_score_code, ''20''::VARCHAR AS original_result_value, 20::FLOAT AS risk_score_value
+
+      UNION ALL
+
+      SELECT -9503::NUMBER AS person_id, ''C3''::VARCHAR AS id, ''2026-03-20''::TIMESTAMP_NTZ AS clinical_effective_date,
+      TRUE AS is_cvd_risk_score_code, ''999''::VARCHAR AS original_result_value, 999::FLOAT AS risk_score_value
+
+      UNION ALL
+
+      SELECT -9503::NUMBER AS person_id, ''C4''::VARCHAR AS id, ''2026-04-01''::TIMESTAMP_NTZ AS clinical_effective_date,
+      FALSE AS is_cvd_risk_score_code, NULL::VARCHAR AS original_result_value, NULL::FLOAT AS risk_score_value'
+  - input: ref('int_cholesterol_all')
+    format: sql
+    rows: 'SELECT -9503::NUMBER AS person_id, ''L1''::VARCHAR AS id, ''2026-03-01''::TIMESTAMP_NTZ AS
+      clinical_effective_date, TRUE AS is_valid_cholesterol, 4::FLOAT AS cholesterol_value
+
+      UNION ALL
+
+      SELECT -9503::NUMBER AS person_id, ''L2''::VARCHAR AS id, ''2026-04-01''::TIMESTAMP_NTZ AS clinical_effective_date,
+      FALSE AS is_valid_cholesterol, NULL::FLOAT AS cholesterol_value'
+  - input: ref('int_smoking_status_all')
+    format: sql
+    rows: 'SELECT -9503::NUMBER AS person_id, ''Z1''::VARCHAR AS id, ''2026-03-01''::TIMESTAMP_NTZ AS
+      clinical_effective_date, ''Current Smoker''::VARCHAR AS smoking_status, ''LSMOK_COD''::VARCHAR AS
+      source_cluster_id
+
+      UNION ALL
+
+      SELECT -9503::NUMBER AS person_id, ''Z2''::VARCHAR AS id, ''2026-03-01''::TIMESTAMP_NTZ AS clinical_effective_date,
+      ''Never Smoked''::VARCHAR AS smoking_status, ''NSMOK_COD''::VARCHAR AS source_cluster_id
+
+      UNION ALL
+
+      SELECT -9503::NUMBER AS person_id, ''Z3''::VARCHAR AS id, ''2026-04-01''::TIMESTAMP_NTZ AS clinical_effective_date,
+      ''Ex-Smoker''::VARCHAR AS smoking_status, ''EXSMOK_COD''::VARCHAR AS source_cluster_id'
+  - input: ref('int_cvd_secondary_prevention_population_by_month')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS reporting_date, NULL::BOOLEAN AS has_chd, NULL::BOOLEAN
+      AS has_pad, NULL::BOOLEAN AS has_stroke_tia, NULL::BOOLEAN AS has_haemorrhagic_stroke WHERE FALSE
+  - input: ref('int_nice_therapy_evidence_by_month')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS reporting_date, NULL::DATE AS latest_lipid_lowering_order_date,
+      NULL::DATE AS latest_statin_order_date WHERE FALSE
+  expect:
+    rows:
+    - person_id: -9503
+      reporting_date: '2026-03-31'
+      latest_risk_score: 20
+      max_risk_score_ever: 80
+      max_risk_score_12m: 80
+      min_risk_score_36m: 5
+      max_cvd_risk_score_12m: 80
+      latest_cvd_risk_score: null
+      latest_cvd_risk_score_date: '2026-03-20'
+      latest_risk_assessment_date: '2026-03-20'
+      latest_low_cvd_risk_score_date_36m: '2023-03-31'
+      latest_high_cvd_risk_score_date_36m: '2026-03-01'
+      latest_total_cholesterol: 4
+      is_current_smoker: true
+    - person_id: -9503
+      reporting_date: '2026-09-30'
+      latest_risk_score: 20
+      max_risk_score_ever: 80
+      max_risk_score_12m: 20
+      min_risk_score_36m: 20
+      max_cvd_risk_score_12m: 20
+      latest_cvd_risk_score: null
+      latest_cvd_risk_score_date: '2026-03-20'
+      latest_risk_assessment_date: '2026-04-01'
+      latest_low_cvd_risk_score_date_36m: null
+      latest_high_cvd_risk_score_date_36m: '2026-03-01'
+      latest_total_cholesterol: 4
+      is_current_smoker: false
+    - person_id: -9504
+      reporting_date: '2026-03-31'
+      latest_risk_score: null
+      max_risk_score_ever: null
+      max_risk_score_12m: null
+      min_risk_score_36m: null
+      max_cvd_risk_score_12m: null
+      latest_cvd_risk_score: null
+      latest_cvd_risk_score_date: null
+      latest_risk_assessment_date: null
+      latest_low_cvd_risk_score_date_36m: null
+      latest_high_cvd_risk_score_date_36m: null
+      latest_total_cholesterol: null
+      is_current_smoker: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history

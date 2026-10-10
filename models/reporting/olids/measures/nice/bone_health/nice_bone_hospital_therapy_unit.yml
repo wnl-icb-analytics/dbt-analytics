@@ -1,0 +1,241 @@
+unit_tests:
+- name: nice_bone_hospital_coverage_boundaries_and_multiple_treatments
+  model: int_nice_bone_therapy_by_month
+  overrides:
+    macros:
+      nice_reference_population: |-
+        SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+            75::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+        FROM VALUES (-9801), (-9802), (-9803), (-9804), (-9805), (-9806), (-9807), (-9808), (-9809)
+  given:
+  - input: ref('int_bone_sparing_medications_all')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS order_date WHERE FALSE
+  - input: ref('int_bone_sparing_hospital_therapy_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS therapy_date, column3::NUMBER AS coverage_months
+      FROM VALUES (-9801, '2025-10-30', 12), (-9801, '2025-10-30', 12), (-9802, '2025-08-30', 12),
+          (-9803, '2026-02-28', 6), (-9804, '2026-04-30', 6), (-9805, '2026-10-01', 12),
+          (-9806, '2025-09-30', 12), (-9807, '2025-10-30', 12), (-9807, '2026-02-28', 6),
+          (-9808, '2026-03-30', 6)
+  expect:
+    rows:
+    - person_id: -9801
+      reporting_date: '2026-09-30'
+      latest_hospital_therapy_date: '2025-10-30'
+      latest_current_hospital_therapy_date: '2025-10-30'
+    - person_id: -9802
+      reporting_date: '2026-09-30'
+      latest_hospital_therapy_date: '2025-08-30'
+      latest_current_hospital_therapy_date: null
+    - person_id: -9803
+      reporting_date: '2026-09-30'
+      latest_hospital_therapy_date: '2026-02-28'
+      latest_current_hospital_therapy_date: null
+    - person_id: -9804
+      reporting_date: '2026-09-30'
+      latest_hospital_therapy_date: '2026-04-30'
+      latest_current_hospital_therapy_date: '2026-04-30'
+    - person_id: -9805
+      reporting_date: '2026-09-30'
+      latest_hospital_therapy_date: null
+      latest_current_hospital_therapy_date: null
+    - person_id: -9806
+      reporting_date: '2026-09-30'
+      latest_hospital_therapy_date: '2025-09-30'
+      latest_current_hospital_therapy_date: null
+    - person_id: -9807
+      reporting_date: '2026-09-30'
+      latest_hospital_therapy_date: '2026-02-28'
+      latest_current_hospital_therapy_date: '2025-10-30'
+    - person_id: -9808
+      reporting_date: '2026-09-30'
+      latest_hospital_therapy_date: '2026-03-30'
+      latest_current_hospital_therapy_date: null
+    - person_id: -9809
+      reporting_date: '2026-09-30'
+      latest_hospital_therapy_date: null
+      latest_current_hospital_therapy_date: null
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind91_hospital_therapy_achievement_and_expiry
+  model: fct_person_bone_sparing_therapy_osteoporosis_ind91_by_month
+  overrides:
+    macros:
+      nice_reference_population: |-
+        SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+            60::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+        FROM VALUES (-9801), (-9802), (-9803), (-9804), (-9805), (-9806), (-9807), (-9808), (-9809)
+      nice_register: |-
+        SELECT person_id, reporting_date FROM (SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+            60::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+        FROM VALUES (-9801), (-9802), (-9803), (-9804), (-9805), (-9806), (-9807), (-9808), (-9809))
+  given:
+  - input: ref('int_nice_bone_therapy_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+              NULL::DATE AS latest_bone_sparing_order_date, column2::DATE AS latest_hospital_therapy_date,
+              column3::DATE AS latest_current_hospital_therapy_date FROM VALUES (-9801, '2025-10-30', '2025-10-30'), (-9802, '2025-08-30', NULL), (-9803, '2026-02-28', NULL), (-9804, '2026-04-30', '2026-04-30'), (-9805, NULL, NULL), (-9806, '2025-09-30', NULL), (-9807, '2026-02-28', '2025-10-30'), (-9808, '2026-03-30', NULL), (-9809, NULL, NULL)
+  expect:
+    rows:
+    - person_id: -9801
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: true
+      latest_hospital_therapy_date: '2025-10-30'
+      latest_record_date: '2025-10-30'
+      indicator_status: ACHIEVED
+    - person_id: -9802
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: false
+      latest_hospital_therapy_date: '2025-08-30'
+      latest_record_date: null
+      indicator_status: NOT_TREATED_IN_PERIOD
+    - person_id: -9803
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: false
+      latest_hospital_therapy_date: '2026-02-28'
+      latest_record_date: null
+      indicator_status: NOT_TREATED_IN_PERIOD
+    - person_id: -9804
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: true
+      latest_hospital_therapy_date: '2026-04-30'
+      latest_record_date: '2026-04-30'
+      indicator_status: ACHIEVED
+    - person_id: -9805
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: false
+      latest_hospital_therapy_date: null
+      latest_record_date: null
+      indicator_status: NEVER_TREATED
+    - person_id: -9806
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: false
+      latest_hospital_therapy_date: '2025-09-30'
+      latest_record_date: null
+      indicator_status: NOT_TREATED_IN_PERIOD
+    - person_id: -9807
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: true
+      latest_hospital_therapy_date: '2026-02-28'
+      latest_record_date: '2025-10-30'
+      indicator_status: ACHIEVED
+    - person_id: -9808
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: false
+      latest_hospital_therapy_date: '2026-03-30'
+      latest_record_date: null
+      indicator_status: NOT_TREATED_IN_PERIOD
+    - person_id: -9809
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: false
+      latest_hospital_therapy_date: null
+      latest_record_date: null
+      indicator_status: NEVER_TREATED
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind92_hospital_therapy_achievement_and_expiry
+  model: fct_person_bone_sparing_therapy_fragility_fracture_ind92_by_month
+  overrides:
+    macros:
+      nice_reference_population: |-
+        SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+            75::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+        FROM VALUES (-9801), (-9802), (-9803), (-9804), (-9805), (-9806), (-9807), (-9808), (-9809)
+  given:
+  - input: ref('int_nice_bone_therapy_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+              NULL::DATE AS latest_bone_sparing_order_date, column2::DATE AS latest_hospital_therapy_date,
+              column3::DATE AS latest_current_hospital_therapy_date FROM VALUES (-9801, '2025-10-30', '2025-10-30'), (-9802, '2025-08-30', NULL), (-9803, '2026-02-28', NULL), (-9804, '2026-04-30', '2026-04-30'), (-9805, NULL, NULL), (-9806, '2025-09-30', NULL), (-9807, '2026-02-28', '2025-10-30'), (-9808, '2026-03-30', NULL), (-9809, NULL, NULL)
+  - input: ref('int_fragility_fractures_all')
+    format: sql
+    rows: |-
+      SELECT person_id, '2020-01-01'::DATE AS clinical_effective_date, '2020-01-01'::DATE AS date_recorded FROM (SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date,
+          75::NUMBER AS age, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-9801), (-9802), (-9803), (-9804), (-9805), (-9806), (-9807), (-9808), (-9809))
+  expect:
+    rows:
+    - person_id: -9801
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: true
+      latest_hospital_therapy_date: '2025-10-30'
+      latest_record_date: '2025-10-30'
+      indicator_status: ACHIEVED
+    - person_id: -9802
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: false
+      latest_hospital_therapy_date: '2025-08-30'
+      latest_record_date: null
+      indicator_status: NOT_TREATED_IN_PERIOD
+    - person_id: -9803
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: false
+      latest_hospital_therapy_date: '2026-02-28'
+      latest_record_date: null
+      indicator_status: NOT_TREATED_IN_PERIOD
+    - person_id: -9804
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: true
+      latest_hospital_therapy_date: '2026-04-30'
+      latest_record_date: '2026-04-30'
+      indicator_status: ACHIEVED
+    - person_id: -9805
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: false
+      latest_hospital_therapy_date: null
+      latest_record_date: null
+      indicator_status: NEVER_TREATED
+    - person_id: -9806
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: false
+      latest_hospital_therapy_date: '2025-09-30'
+      latest_record_date: null
+      indicator_status: NOT_TREATED_IN_PERIOD
+    - person_id: -9807
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: true
+      latest_hospital_therapy_date: '2026-02-28'
+      latest_record_date: '2025-10-30'
+      indicator_status: ACHIEVED
+    - person_id: -9808
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: false
+      latest_hospital_therapy_date: '2026-03-30'
+      latest_record_date: null
+      indicator_status: NOT_TREATED_IN_PERIOD
+    - person_id: -9809
+      reporting_date: '2026-09-30'
+      is_in_denominator: true
+      is_in_numerator: false
+      latest_hospital_therapy_date: null
+      latest_record_date: null
+      indicator_status: NEVER_TREATED
+  config:
+    tags:
+    - monthly-full
+    - nice-history

@@ -39,9 +39,11 @@ reconstructable, so a full refresh drops the table and re-seeds ONLY the current
 deleting every previously captured month. The same hazard applies to the sibling
 cltcs_*_monthly_capture models.
 
-Only the two 12-month columns (medications_recent_12mo, unique_active_ingredient_count_12mo)
-are consumed by cltcs_monthly_covariates; the 30-day columns and sibling 12-month counts are
-captured for future use.
+cltcs_monthly_covariates consumes the two 12-month columns (medications_recent_12mo,
+unique_active_ingredient_count_12mo) and the current-repeat columns (medications_repeat,
+unique_repeat_medication_count); the 30-day columns, sibling 12-month counts and
+medications_non_repeat are captured for future use. The repeat columns were added after the
+capture began: months captured before then hold NULL for them (not reconstructable).
 */
 
 with captured as (
@@ -53,8 +55,11 @@ with captured as (
         -- consumed by cltcs_monthly_covariates
         medications_recent_12mo,
         unique_active_ingredient_count_12mo,
+        medications_repeat,
+        unique_repeat_medication_count,
 
         -- captured for future use (not surfaced in the panel)
+        medications_non_repeat,
         total_prescriptions_12mo,
         unique_medication_count_12mo,
         medications_recent_30d,

@@ -1,0 +1,22 @@
+snapshots:
+- name: fct_person_hiv_test_at_registration_ind210_snapshot
+  relation: ref('fct_person_hiv_test_at_registration_ind210_snapshot_input')
+  description: HIV testing at registration history. One version per eligible new registrant when registration,
+    practice, qualifying test or outcome changes. People leaving the denominator are invalidated.
+  config:
+    strategy: check
+    unique_key:
+    - person_id
+    - indicator_id
+    check_cols: all
+    hard_deletes: invalidate
+  columns:
+  - name: person_id
+    data_tests:
+    - not_null
+  - name: indicator_id
+    data_tests:
+    - not_null
+  - name: dbt_valid_from
+    data_tests:
+    - not_null

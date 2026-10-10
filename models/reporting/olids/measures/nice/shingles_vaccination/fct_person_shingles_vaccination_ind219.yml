@@ -1,20 +1,22 @@
 models:
   - name: fct_person_shingles_vaccination_ind219
-    description: |
-      NICE IND219 shingles vaccination by age 75. One row per currently registered,
-      living, non-test person whose 75th birthday falls in the preceding 12 months,
-      assessed on the build date.
+    description: >-
+      Shingles vaccination by age 75 (NICE IND219). One row per person in the
+      denominator on the build date.
 
-      Achieved when shingles vaccination is recorded between the 70th and 75th birthdays,
-      including both dates. An earlier qualifying dose still counts when a later dose
-      falls outside this window. Age windows use the approximate birth date.
 
-      Excludes people flagged as immunosuppressed by the adult immunisation population.
-      The specified anaphylaxis exclusion is not implemented: a generic shingles
-      contraindication code does not identify anaphylaxis. The 75th-birthday upper bound
-      remains a local interpretation.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date whose approximate 75th birthday fell in the 12
+      months before the build date. Achieved with at least one shingles vaccination
+      between approximate 70th and 75th birthdays, including both dates.
+      Immunosuppression uses the current autumn COVID campaign definition, assessed at
+      the earlier of the build date and campaign audit-end date, and excludes people
+      with any immunosuppressive diagnosis, or treatment or chemotherapy in the
+      preceding 6 months, or an immunosuppressive procedure in the preceding 3 years.
+      This substitutes for a shingles-specific definition. NICE's anaphylaxis exclusion
+      is not applied. No personalised care adjustments are applied. Based on the NICE
+      Shingles clinical knowledge summary. Code lists: SHVACGP_COD, SHVACOHP_COD,
+      SHVACGP1_COD, SHVACGP2_COD (PCD); IMMDX_COV_COD, IMMRX_COD, IMM_ADM_COD,
+      DXT_CHEMO_COD (UKHSA_COVID).
     config:
       meta:
         owner:
@@ -25,24 +27,21 @@ models:
           type: "MEASURE"
           category: "IMMUNISATION"
           clinical_domain: "Prevention"
-          name_short: "Shingles vaccination by 75"
-          description_short: "Shingles vaccination between 70 and 75 for people who reached 75 in the preceding 12 months"
-          description_long: |
-            NICE IND219 shingles vaccination by age 75. One row per currently registered,
-            living, non-test person whose 75th birthday falls in the preceding 12 months,
-            assessed on the build date.
-
-            Achieved when shingles vaccination is recorded between the 70th and 75th
-            birthdays, including both dates. An earlier qualifying dose still counts when
-            a later dose falls outside this window. Age windows use the approximate birth
-            date.
-
-            Excludes people flagged as immunosuppressed by the adult immunisation
-            population. The specified anaphylaxis exclusion is not implemented: a generic
-            shingles contraindication code does not identify anaphylaxis. The
-            75th-birthday upper bound remains a local interpretation.
-
-            Personalised care adjustments are not applied.
+          name_short: "Shingles vaccination by age 75"
+          description_short: "Shingles vaccination by age 75."
+          description_long: >-
+            People registered on the build date whose approximate 75th birthday fell in
+            the 12 months before the build date. Achieved with at least one shingles
+            vaccination between approximate 70th and 75th birthdays, including both
+            dates. Immunosuppression uses the current autumn COVID campaign definition,
+            assessed at the earlier of the build date and campaign audit-end date, and
+            excludes people with any immunosuppressive diagnosis, or treatment or
+            chemotherapy in the preceding 6 months, or an immunosuppressive procedure in
+            the preceding 3 years. This substitutes for a shingles-specific definition.
+            NICE's anaphylaxis exclusion is not applied. No personalised care
+            adjustments are applied. Based on the NICE Shingles clinical knowledge
+            summary. Code lists: SHVACGP_COD, SHVACOHP_COD, SHVACGP1_COD, SHVACGP2_COD
+            (PCD); IMMDX_COV_COD, IMMRX_COD, IMM_ADM_COD, DXT_CHEMO_COD (UKHSA_COVID).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -50,61 +49,65 @@ models:
           sort_order: "NICE_IND219"
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Identifier of the person in the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "NICE published indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Build date used for eligibility and the measurement period
+        description: "Build date used to assess eligibility and achievement."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period before the reporting date
+        description: "Exclusive start of the 12-month milestone cohort."
       - name: age
-        description: Age in years on the reporting date; null when no birth date is recorded
-      - name: condition_name
-        description: Population defining the indicator
+        description: "Age in completed years on the reporting date; null when the birth date is missing."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the registration practice on the build date."
       - name: current_practice_name
-        description: Name of the current registration practice
+        description: "Name of the registration practice on the build date."
       - name: seventy_fifth_birthday
-        description: Approximate 75th birthday, which falls in the preceding 12 months
+        description: "Approximate 75th birthday in the 12-month eligibility window."
       - name: first_dose_70_to_75_date
-        description: Earliest shingles vaccination between the 70th and 75th birthdays; null if none
+        description: "Earliest shingles vaccination between the approximate 70th and 75th birthdays, including both dates; null when none."
       - name: latest_record_date
-        description: Date of the latest qualifying record in the period; null when none
+        description: "Earliest shingles vaccination between the approximate 70th and 75th birthdays, including both dates; null when none."
       - name: is_in_denominator
-        description: Always true; every row is an eligible person before personalised care adjustments
+        description: "Always true; each row meets the documented eligibility and exclusion rules."
       - name: is_in_numerator
-        description: Whether the person meets the indicator on the reporting date
+        description: "Whether the person meets the documented achievement rule on the reporting date."
       - name: indicator_status
-        description: ACHIEVED or NOT_RECORDED_IN_PERIOD
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
 
   - name: fct_person_shingles_vaccination_ind219_snapshot_input
-    description: |
-      NICE shingles vaccination results used for change history. One row per eligible
-      person and indicator.
+    description: >-
+      NICE shingles vaccination results. One row per person and indicator.
 
-      Excludes build-date fields so a new reporting date alone does not create a history
-      version. Clinical results and evidence retain the family definitions.
+
+      Includes IND219, with the eligibility, exclusions and achievement rules documented for
+      each indicator. Records achievement and evidence used to track changes in clinical
+      results.
+      Labels join from def_indicator or the measure tables by indicator_id.
     config:
       meta:
         owner:
           name: EddieDavison92
     columns:
       - name: person_id
-        description: Person identifier; snapshot unique_key.
+        description: "Identifier of the person in the indicator denominator."
         data_tests:
           - unique
           - not_null
       - name: current_practice_code
-        description: ODS code of the current registration practice at the build.
+        description: "ODS code of the registration practice on the build date."
       - name: is_in_numerator
-        description: Whether the person met the indicator at the build.
+        description: "Whether the person meets the documented achievement rule on the build date."
       - name: indicator_status
-        description: Outcome label at the build.
+        description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
       - name: first_dose_70_to_75_date
-        description: Earliest qualifying shingles vaccination date at the build.
+        description: "Earliest shingles vaccination between the approximate 70th and 75th birthdays, including both dates; null when none."

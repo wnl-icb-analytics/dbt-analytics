@@ -25,7 +25,8 @@ WITH recorded_bmi AS (
         obs.mapped_concept_display AS concept_display,
         obs.cluster_id AS source_cluster_id,
         obs.result_value,
-        'recorded' AS bmi_source
+        'recorded' AS bmi_source,
+        NULL AS height_date_recorded
 
     FROM ({{ get_observations("'BMIVAL_COD'") }}) obs
     WHERE obs.clinical_effective_date IS NOT NULL
@@ -42,6 +43,7 @@ height_measurements AS (
         obs.person_id,
         obs.clinical_effective_date,
         obs.id,
+        obs.date_recorded,
         TRY_CAST(obs.result_value AS FLOAT) AS height_cm,
         obs.result_unit_display AS height_unit
     FROM ({{ get_observations("'HEIGHT'") }}) obs
@@ -91,7 +93,8 @@ calculated_bmi AS (
         'Calculated BMI from Height/Weight' AS concept_display,
         'CALCULATED' AS source_cluster_id,
         CAST(ROUND(w.weight_kg / ((h.height_cm / 100.0) * (h.height_cm / 100.0)), 2) AS VARCHAR(20)) AS result_value,
-        'calculated' AS bmi_source
+        'calculated' AS bmi_source,
+        h.date_recorded AS height_date_recorded
     FROM weight_measurements w
     ASOF JOIN height_measurements h
         MATCH_CONDITION (w.clinical_effective_date >= h.clinical_effective_date)
@@ -154,48 +157,9 @@ SELECT
         ELSE FALSE
     END AS is_valid_bmi,
 
-    -- BMI categorisation (ethnicity-adjusted per NICE guidance)
-    CASE
-        WHEN bmi_value NOT BETWEEN 10 AND 150 THEN 'Invalid'
-        WHEN bmi_value < 18.5 THEN 'Underweight'
-        WHEN requires_lower_bmi_thresholds = TRUE THEN
-            CASE
-                WHEN bmi_value < 23 THEN 'Normal'
-                WHEN bmi_value < 27.5 THEN 'Overweight'
-                WHEN bmi_value < 32.5 THEN 'Obese Class I'
-                WHEN bmi_value < 37.5 THEN 'Obese Class II'
-                ELSE 'Obese Class III'
-            END
-        ELSE  -- Standard thresholds for other populations
-            CASE
-                WHEN bmi_value < 25 THEN 'Normal'
-                WHEN bmi_value < 30 THEN 'Overweight'
-                WHEN bmi_value < 35 THEN 'Obese Class I'
-                WHEN bmi_value < 40 THEN 'Obese Class II'
-                ELSE 'Obese Class III'
-            END
-    END AS bmi_category,
+    {{ bmi_category() }} AS bmi_category,
 
-    -- BMI risk sort key (ethnicity-adjusted, higher number = higher risk)
-    CASE
-        WHEN bmi_value NOT BETWEEN 10 AND 150 THEN 0  -- Invalid
-        WHEN bmi_value < 18.5 THEN 2  -- Underweight - Health risk
-        WHEN requires_lower_bmi_thresholds = TRUE THEN
-            CASE
-                WHEN bmi_value < 23 THEN 1  -- Normal - Baseline/lowest risk
-                WHEN bmi_value < 27.5 THEN 3  -- Overweight - Moderate risk
-                WHEN bmi_value < 32.5 THEN 4  -- Obese Class I - High risk
-                WHEN bmi_value < 37.5 THEN 5  -- Obese Class II - Higher risk
-                ELSE 6  -- Obese Class III - Highest risk
-            END
-        ELSE  -- Standard thresholds for other populations
-            CASE
-                WHEN bmi_value < 25 THEN 1  -- Normal - Baseline/lowest risk
-                WHEN bmi_value < 30 THEN 3  -- Overweight - Moderate risk
-                WHEN bmi_value < 35 THEN 4  -- Obese Class I - High risk
-                WHEN bmi_value < 40 THEN 5  -- Obese Class II - Higher risk
-                ELSE 6  -- Obese Class III - Highest risk
-            END
-    END AS bmi_risk_sort_key
+    {{ bmi_category(output='risk_sort_key') }} AS bmi_risk_sort_key,
+    height_date_recorded
 
 FROM bmi_with_ethnicity
