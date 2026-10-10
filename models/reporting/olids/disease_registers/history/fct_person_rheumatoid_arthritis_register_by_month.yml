@@ -1,0 +1,31 @@
+models:
+  - name: fct_person_rheumatoid_arthritis_register_by_month
+    description: >
+      Rheumatoid arthritis register at each completed month-end, on the QOF
+      rules of fct_person_rheumatoid_arthritis_register: aged 16 or over with a
+      RARTH_COD diagnosis. There are no resolution codes.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: earliest_diagnosis_date
+        description: Earliest rheumatoid arthritis diagnosis known by the month-end.
+      - name: latest_diagnosis_date
+        description: Latest rheumatoid arthritis diagnosis known by the month-end.

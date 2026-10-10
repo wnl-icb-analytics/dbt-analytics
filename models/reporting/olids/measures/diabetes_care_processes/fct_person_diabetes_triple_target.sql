@@ -43,7 +43,7 @@ SELECT
     -- Target achievement flags
     COALESCE(hba.meets_qof_target, FALSE) AS hba1c_in_target_range,
 
-    -- BP target: <130/80 mmHg for diabetes patients (NICE guidelines)
+    -- Local BP target for this measure: systolic <130 and diastolic <80 mmHg.
     (
         bp.systolic_value IS NOT NULL AND bp.diastolic_value IS NOT NULL
         AND bp.systolic_value < 130 AND bp.diastolic_value < 80

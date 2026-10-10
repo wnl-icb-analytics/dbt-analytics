@@ -1,7 +1,11 @@
 models:
   - name: int_referral_ndpp_all
-    description: 'NHS Diabetes Prevention Programme outcomes using PCD REFSET DPPOFF_COD. One row per person per date. Includes invitations and declines.'
-    tests:
+    description: >
+      NHS Diabetes Prevention Programme events using PCD REFSET DPPOFF_COD.
+      One row per person, concept code and clinical date, including inactive and
+      deceased people. Includes referrals, declines and invitations through the
+      build date. Different event types on the same date are retained independently.
+    data_tests:
       - cluster_ids_exist:
           arguments:
             cluster_ids: DPPOFF_COD
@@ -9,6 +13,7 @@ models:
           arguments:
             combination_of_columns:
               - person_id
+              - concept_code
               - clinical_effective_date
     config:
       meta:
@@ -17,9 +22,13 @@ models:
     columns:
       - name: person_id
         description: 'Patient identifier'
-        tests:
+        data_tests:
           - not_null
       - name: clinical_effective_date
         description: 'Date of NDPP event'
-        tests:
+        data_tests:
           - not_null
+      - name: concept_code
+        description: SNOMED CT concept code identifying a referral, decline or invitation.
+      - name: concept_display
+        description: OLIDS mapped label for the NDPP event concept.

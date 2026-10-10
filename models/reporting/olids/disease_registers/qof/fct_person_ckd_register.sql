@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_ckd_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- This live fact uses evidence dated on or before today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -67,6 +67,7 @@ WITH ckd_diagnoses AS (
         ) AS all_resolved_concept_codes
 
     FROM {{ ref('int_ckd_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 

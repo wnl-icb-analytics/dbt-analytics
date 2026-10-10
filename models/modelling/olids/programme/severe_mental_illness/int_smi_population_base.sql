@@ -11,7 +11,7 @@
 WITH smi_diagnoses AS (
     SELECT
         person_id,
-        MAX(CASE WHEN is_diagnosis_code THEN clinical_effective_date END)
+        MAX(CASE WHEN is_diagnosis_code AND NOT is_resolved_code THEN clinical_effective_date END)
             AS latest_diagnosis_date,
         MAX(CASE WHEN is_resolved_code THEN clinical_effective_date END)
             AS latest_resolved_date

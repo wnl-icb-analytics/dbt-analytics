@@ -1,0 +1,42 @@
+models:
+- name: int_nice_alcohol_evidence_by_month
+  description: >-
+    Alcohol screening and intervention evidence for registered, living, non-test people with
+    relevant long-term conditions, or aged 10 to 17 with a first or new depression diagnosis.
+    One row per candidate person and month-end. Evidence stops at the month-end; indicators
+    apply their own windows and depression resolution rules. Null dates mean no qualifying
+    evidence. Recalculated for each of the last 60 month-ends with current rules, code lists and
+    records, so later corrections can change past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: >-
+      Person in the candidate population for NICE indicators.
+  - name: reporting_date
+    description: >-
+      Completed month-end on which population and evidence are assessed.
+  - name: latest_alcohol_screen_date
+    description: Latest alcohol screen, including an assessment without a valid score.
+  - name: latest_alcohol_screen_tool
+    description: FAST, AUDIT-C or AUDIT, selected by timestamp then observation id within the latest day.
+  - name: latest_alcohol_screen_score
+    description: Valid score for the selected tool; null when missing or outside its valid range.
+  - name: is_latest_alcohol_screen_positive
+    description: FAST score at least 3, AUDIT-C at least 5 or AUDIT at least 8 within the valid tool range;
+      false when missing.
+  - name: latest_positive_alcohol_screen_date
+    description: Latest positive FAST or AUDIT-C screen. Full AUDIT does not qualify for this anchor.
+  - name: latest_intervention_after_positive_screen_date
+    description: >-
+      Latest accepted intervention from the selected positive screen through three calendar
+      months later, inclusive, capped at reporting_date. Null when none. This uses the latest
+      positive screen; indicators needing any pair use int_nice_alcohol_screen_intervention.

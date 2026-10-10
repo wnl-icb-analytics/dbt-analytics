@@ -13,11 +13,10 @@ Clinical Purpose:
 - QOF cancer register data collection
 - Cancer care pathway monitoring
 - Oncology treatment tracking
-- Resolution/remission status tracking
 
 QOF Context:
-Cancer register includes persons with cancer diagnosis codes who have not
-been resolved/in remission. Resolution logic applied in downstream fact models.
+Cancer register includes first/new cancer episodes on or after 1 April 2003.
+It has no resolution or remission exclusion.
 No specific age restrictions for cancer register.
 
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
@@ -40,7 +39,7 @@ SELECT
     -- Cancer-specific flags (observation-level only)
     CASE WHEN obs.cluster_id = 'CAN_COD' THEN TRUE ELSE FALSE END AS is_diagnosis_code,
 
-    -- QOF: CAN_DAT is "latest first or new episode" — exclude reviews/ended
+    -- CAN_DAT uses first/new episodes. Episode type "None" counts because it matches published QOF.
     CASE
         WHEN ecm.source_display IN ('Review', 'Ended', 'Changed', 'Evolved', 'Flare Up') THEN FALSE
         ELSE TRUE

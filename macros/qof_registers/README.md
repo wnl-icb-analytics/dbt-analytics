@@ -1,78 +1,28 @@
-# QOF Register Calculation Macros
+# QOF register calculation macros
 
-Macros for calculating QOF disease register status at a given reference date.
+Each `calculate_<register>_register` macro evaluates membership at one or more reference dates.
+Non-QOF and clinical NDH macros live in `macros/ltc_registers/`.
 
-## Pattern
+## Pattern and callers
 
-Each macro:
-1. Accepts `reference_date_expr` parameter (defaults to `CURRENT_DATE()`)
-2. Assumes `active_registrations` CTE exists with (person_id, practice_code)
-3. Filters diagnosis/observation data to reference date
-4. Applies condition-specific business rules
-5. Returns (person_id, practice_code, register_name, is_on_register)
+- `reference_date_expr` supplies one date and defaults to `CURRENT_DATE()`.
+  `reference_dates` instead supplies a query returning a `reference_date` column.
+- Events count once their clinical or order date and any recorded date are on or before the reference date.
+  A null recorded date does not block an event (`ltc_register_known_by`).
+- Age-restricted rules derive age at the reference date from the approximate birth date.
+- Outputs have one row per person and reference date with returned evidence, including `is_on_register` and condition fields.
+  Filter the membership flag when counting register members.
 
-## Example Structure
+PIT views in `models/reporting/olids/disease_registers/qof_pit/` call the macros with `get_reference_date()`,
+a deprecated wrapper around `qof_reference_date()`. Its default is the `2025-11-04` EMIS extract date in `dbt_project.yml`.
+Monthly models in `history/` pass the last 60 completed month-ends from `ltc_register_history_month_ends()`.
+`tests/ltc_register_fct_pit_reconciliation.sql` compares the macros with live facts at their build-date reference.
 
-{% raw %}
-```sql
-{% macro calculate_{condition}_register(reference_date_expr='CURRENT_DATE()') %}
-    {#
-    Calculates {Condition} register status at a given reference date.
+Macros read modelling event models (`int_*_all`) through `ref()`, with demographic inputs where used.
+They do not query staging observations directly. `calculate_cvd_register` composes the CHD and stroke/TIA macros.
+Live `fct_person_*_register` facts hold a second copy of each rule and do not call these macros.
+Change both copies together; live facts also retain future-dated evidence and use current age where required.
 
-    Business Logic:
-    - [List criteria]
-
-    Parameters:
-        reference_date_expr: SQL expression for reference date (default: CURRENT_DATE())
-
-    Returns: CTE with person_id, practice_code, register_name, is_on_register
-
-    Assumes: active_registrations CTE exists with (person_id, practice_code)
-    #}
-
-    WITH {condition}_diagnoses_filtered AS (
-        SELECT person_id, ...
-        FROM {{ ref('int_{condition}_diagnoses_all') }}
-        WHERE clinical_effective_date <= {{ reference_date_expr }}
-    ),
-
-    -- Aggregate, apply business rules
-
-    {condition}_register_logic AS (
-        SELECT
-            ar.person_id,
-            ar.practice_code,
-            '{Condition Display Name}' AS register_name,
-            COALESCE(..., FALSE) AS is_on_register
-        FROM active_registrations ar
-        LEFT JOIN ...
-    )
-
-    SELECT person_id, practice_code, register_name, is_on_register
-    FROM {condition}_register_logic
-
-{% endmacro %}
-```
-{% endraw %}
-
-## Register Types
-
-### Simple (Diagnosis Only, Lifelong)
-- CHD, Cancer, Stroke/TIA, PAD, Heart Failure, Atrial Fibrillation, Palliative Care
-- Logic: Presence of diagnosis = on register
-- No resolution codes or age restrictions
-
-### Age Restricted
-- Diabetes (≥17), Asthma (≥6), CKD (≥18), Depression (≥18), Epilepsy (≥18), Rheumatoid Arthritis (≥16)
-- Hypertension (≤79) - upper age limit
-- Logic: Age threshold + active diagnosis
-
-### External Validation Required
-- Asthma (requires medication in last 12 months)
-- COPD (complex spirometry rules)
-- Logic: Diagnosis + supporting data
-
-### Complex Business Rules
-- COPD (Rules 1-4 with date bifurcation)
-- Diabetes (Type classification)
-- Obesity (BMI-based, not diagnosis codes)
+See [LTC and QOF registers](../../docs/ltc-registers.md) for the version inventory and upgrade checklist,
+[condition definitions](../../docs/model_documentation/olids_ltc_condition_definitions.md) for membership,
+and [monthly history](../../docs/ltc-register-history.md) for population and date limits.

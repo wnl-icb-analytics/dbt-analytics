@@ -1,0 +1,61 @@
+models:
+- name: fct_person_cervical_screening_ind321_by_month
+  description: >-
+    Cervical screening at ages 25 to 64 (NICE IND321). One row per person in the
+    denominator at each month-end.
+
+
+    People registered at the month-end recorded as female and aged 25 to 64. Achieved
+    with an adequate cervical screening test in the 66 months before the month-end.
+    Excludes complete cervix removal. Pregnancy and invitation non-response remain in
+    the denominator. No personalised care adjustments are applied. Based on NHS England
+    cervical screening programme overview (2025). Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can
+    change past months. Code lists: SMEAR_COD, NOCX_COD (PCD); CSPU_COD, CSDEC_COD,
+    CSPCAINVITE_COD for programme status and screening history (PCD).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind321
+  columns:
+  - name: person_id
+    description: "Identifier of the person in the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "NICE published indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and achievement."
+  - name: measurement_period_start
+    description: "Inclusive start of the 42-month screening window for IND176, or 66 months for IND177 and IND321."
+  - name: age
+    description: "Age in completed years on the reporting date; null when the birth date is missing."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: practice_code
+    description: "ODS code of the registration practice at month-end."
+  - name: practice_name
+    description: "Name of the registration practice at month-end."
+  - name: latest_completed_date
+    description: "Latest adequate cervical screening test on or before the reporting date, including tests outside the achievement window; null when none."
+  - name: latest_screening_date
+    description: "Latest cervical screening record of any type on or before the reporting date; null when none."
+  - name: programme_status
+    description: "Unsuitable when an unsuitability record has no completed screening at the same or a later time; otherwise Never Screened, Up to Date or Overdue. Uses 1,277 days through age 49 and 2,007 days thereafter, so it can differ from indicator achievement. CSPU_COD supplies unsuitability."
+  - name: latest_record_date
+    description: "Latest adequate cervical screening test in the indicator achievement window; null when none."
+  - name: is_in_denominator
+    description: "Always true; each row meets the documented eligibility and exclusion rules."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the achievement rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

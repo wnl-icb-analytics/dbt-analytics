@@ -27,9 +27,15 @@ Behaviour:
 - append strategy = pure INSERT: existing history is never rewritten.
 
 Membership is captured, not derived: a patient absent from a later month's roster left the
-pool that month; reappearing is a re-entry. Only stable identity + geography are carried
-(person_id, neighbourhood_code); covariates are read as-at elsewhere from the SCD2 snapshots,
-never from here.
+pool that month; reappearing is a re-entry. Identity + geography are carried (person_id,
+neighbourhood_code). Most covariates are read as-at elsewhere from the SCD2 snapshots; the
+exception is the LTC LCS Model of Care (MoC) stage and status, captured here per month from
+fct_person_ltc_lcs_risk_summary. The risk-summary snapshot only versions on risk-group
+changes, so MoC progress between those changes is not recorded there.
+
+MoC columns were added after the capture began: rows captured before then hold NULL for all
+three, including is_in_ltc_lcs_moc_base. From then on, is_in_ltc_lcs_moc_base is false and the
+MoC columns NULL for patients not on the LTC LCS MoC base population.
 
 Population: cltcs_adult_population (sentinel sk_patient_ids excluded).
 Grain: one row per (sk_patient_id, snapshot_month).
@@ -45,11 +51,18 @@ with captured as (
     select
         date_trunc('month', current_date())::date as snapshot_month,
         current_timestamp()::timestamp_ntz        as captured_at,
-        sk_patient_id,
-        person_id,
-        neighbourhood_code
-    from {{ ref('cltcs_adult_population') }}
-    where sk_patient_id is not null and sk_patient_id <> '1'
+        p.sk_patient_id,
+        p.person_id,
+        p.neighbourhood_code,
+
+        -- LTC LCS Model of Care, as-at the captured month
+        rs.person_id is not null as is_in_ltc_lcs_moc_base,
+        rs.moc_stage_completed_label,
+        rs.moc_pathway_status
+    from {{ ref('cltcs_adult_population') }} p
+    left join {{ ref('fct_person_ltc_lcs_risk_summary') }} rs
+        on rs.person_id = p.person_id
+    where p.sk_patient_id is not null and p.sk_patient_id <> '1'
 )
 
 select * from captured

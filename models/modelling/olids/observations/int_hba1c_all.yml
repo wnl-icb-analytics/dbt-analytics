@@ -1,13 +1,21 @@
 models:
   - name: int_hba1c_all
-    description: 'HbA1c measurements for diabetes diagnosis, monitoring and management with dual unit support.
-
-      One row per HbA1c observation handling both IFCC (mmol/mol) and DCCT (%) measurement types with clinical categorisation and QOF target achievement flags.'
+    description: >
+      HbA1c test history for all people, including inactive and deceased people.
+      One row per observation id and source cluster, with an effective date no later
+      than the build date. Includes IFCCHBAM_COD and DCCTHBA1C_COD tests without
+      numeric results. Missing or non-numeric results have null standardised values
+      and false validity. IFCC values use mmol/mol and DCCT values use percent.
+      Consumers assessing control must check validity; test-presence measures may
+      use every retained observation.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "hba1c_original_value is not null or not is_valid_hba1c"
       - cluster_ids_exist:
           arguments:
             cluster_ids: DCCTHBA1C_COD, IFCCHBAM_COD
@@ -33,7 +41,7 @@ models:
               arguments:
                 values: ['IFCC', 'DCCT', 'UNKNOWN']
       - name: is_valid_hba1c
-        description: Flag indicating if HbA1c value is within valid range for its measurement type
+        description: Whether the result is numeric and within 20-200 mmol/mol for IFCC or 3-20 percent for DCCT; false for missing or non-numeric results
         data_tests:
           - not_null
           - accepted_values:

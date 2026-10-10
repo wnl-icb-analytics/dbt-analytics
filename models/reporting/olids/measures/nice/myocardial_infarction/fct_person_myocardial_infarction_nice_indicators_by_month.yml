@@ -1,0 +1,29 @@
+models:
+- name: fct_person_myocardial_infarction_nice_indicators_by_month
+  description: >-
+    Myocardial infarction indicator results (IND125, IND126). One row per eligible person,
+    indicator and month-end.
+
+
+    People registered at the month-end in each indicator's denominator. Eligibility, exclusions
+    and achievement follow the individual measures. Supporting fields are null where an
+    indicator does not provide them. Recalculated for each of the last 60 month-ends with
+    current rules, code lists and records, so later corrections can change past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+    - name: indicator_name
+      description: "Published NICE indicator title."
+    - name: indicator_description
+      description: "NICE's published statement of the indicator."
+    - name: denominator_description
+      description: "Short description of the people in the denominator."

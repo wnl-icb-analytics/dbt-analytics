@@ -47,7 +47,9 @@ FROM {{ ref('int_hba1c_all') }} b
 --FROM MODELLING.OLIDS_OBSERVATIONS.INT_HBA1C_ALL b
 INNER JOIN {{ ref('int_smi_population_historical')  }} p USING (PERSON_ID)
 --INNER JOIN MODELLING.OLIDS_PROGRAMME.INT_SMI_POPULATION_HISTORICAL p USING (PERSON_ID)
-where clinical_effective_date <= (select MAX(analysis_month) from {{ ref('int_smi_population_historical') }}) 
+-- Preserve the historical check's recorded-result requirement.
+where b.original_result_value IS NOT NULL
+AND clinical_effective_date <= (select MAX(analysis_month) from {{ ref('int_smi_population_historical') }})
 --where clinical_effective_date <= (select MAX(analysis_month) from MODELLING.OLIDS_PROGRAMME.INT_SMI_POPULATION_HISTORICAL) 
 QUALIFY row_num = 1
 

@@ -1,19 +1,18 @@
 models:
   - name: fct_person_bp_control_hypertension_ind239
-    description: |
-      NICE IND239 blood pressure control in hypertension. One row per currently
-      registered, living, non-test person aged 79 or under on the hypertension register,
-      assessed on the build date.
+    description: >-
+      Blood pressure control in hypertension for people aged 79 or under (NICE IND239). One
+      row per person in the denominator on the build date.
 
-      Achievement requires the latest valid paired blood pressure reading in the preceding
-      12 months to be strictly below 140/90 mmHg in clinic or 135/85 mmHg at home or on
-      ambulatory monitoring. Both systolic and diastolic values must meet the target.
 
-      The shared blood pressure input selects the lowest valid paired reading on each day.
-      A newer incomplete or implausible reading does not replace an older valid pair. This
-      input differs from a literal last-recorded-reading definition.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date aged 79 or under on the hypertension register.
+      Achieved when both values of the latest complete blood pressure pair in the last 12
+      months are below 140/90 mmHg in clinic or 135/85 mmHg at home or on ambulatory
+      monitoring. Incomplete readings are ignored; an invalid latest pair is unassessable,
+      with no older pair substituted. Validity and same-day selection rules are described
+      under latest_systolic_value and latest_diastolic_value. No personalised care adjustments
+      are applied. Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD, HOMEBP_COD,
+      ABPM_COD, HOMEAMBBP_COD; HYP_COD, HYPRES_COD (PCD).
     config:
       meta:
         owner:
@@ -24,24 +23,19 @@ models:
           type: "MEASURE"
           category: "CARDIOVASCULAR"
           clinical_domain: "Cardiometabolic"
-          name_short: "Hypertension BP control, 79 and under"
-          description_short: "Hypertension BP target achieved in the preceding 12 months for people aged 79 or under"
-          description_long: |
-            NICE IND239 blood pressure control in hypertension. One row per currently
-            registered, living, non-test person aged 79 or under on the hypertension
-            register, assessed on the build date.
-
-            Achievement requires the latest valid paired blood pressure reading in the
-            preceding 12 months to be strictly below 140/90 mmHg in clinic or 135/85 mmHg
-            at home or on ambulatory monitoring. Both systolic and diastolic values must
-            meet the target.
-
-            The shared blood pressure input selects the lowest valid paired reading on
-            each day. A newer incomplete or implausible reading does not replace an older
-            valid pair. This input differs from a literal last-recorded-reading
-            definition.
-
-            Personalised care adjustments are not applied.
+          name_short: "Hypertension BP, 79 or under"
+          description_short: "Blood pressure below the NICE target in hypertension, aged 79 or under"
+          description_long: >-
+            People registered on the build date aged 79 or under on the
+            hypertension register. Achieved when both values of the latest
+            complete blood pressure pair in the last 12 months are below 140/90
+            mmHg in clinic or 135/85 mmHg at home or on ambulatory monitoring.
+            Incomplete readings are ignored; an invalid latest pair is
+            unassessable, with no older pair substituted. Validity and same-day
+            selection rules are described under latest_systolic_value and
+            latest_diastolic_value. No personalised care adjustments are applied.
+            Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD,
+            HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD; HYP_COD, HYPRES_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -49,68 +43,75 @@ models:
           sort_order: "NICE_IND239"
     columns: &indicator_columns
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Identifier of the person in the indicator denominator."
         data_tests:
           - not_null
           - unique
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Date on which age and the 12-month measurement period are assessed
+        description: "Build date used to assess eligibility and achievement."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period, 12 calendar months before the reporting date
+        description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
-        description: Age in years on the reporting date
+        description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the current registration practice."
       - name: current_practice_name
-        description: Name of the current registration practice
-      - name: condition_name
-        description: Disease register defining the indicator population
+        description: "Name of the current registration practice."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: latest_bp_date
-        description: Date of the latest valid paired blood pressure reading; null when none is recorded
+        description: "Date of the latest complete blood pressure pair through the reporting date; may precede the measurement window. Null when absent."
+      - name: is_valid_bp
+        description: "Whether the selected complete pair has systolic 40 to 350 mmHg and diastolic 20 to 200 mmHg, inclusive; null when no pair exists."
       - name: latest_systolic_value
-        description: Latest systolic blood pressure in mmHg
+        description: "Systolic blood pressure of the selected complete pair, in mmHg; valid range 40 to 350, inclusive. On the latest date, valid pairs take priority, then the lowest systolic and diastolic values. Components without a shared reading identifier use the highest plausible value for each component on that date, or the highest recorded value if none is plausible, and may combine different readings. Null when no pair is recorded."
       - name: latest_diastolic_value
-        description: Latest diastolic blood pressure in mmHg
+        description: "Diastolic blood pressure of the selected complete pair, in mmHg; valid range 20 to 200, inclusive. On the latest date, valid pairs take priority, then the lowest systolic and diastolic values. Components without a shared reading identifier use the highest plausible value for each component on that date, or the highest recorded value if none is plausible, and may combine different readings. Null when no pair is recorded."
       - name: is_home_bp_event
-        description: Whether the latest reading was recorded using home monitoring
+        description: "Whether the selected blood pressure pair has home monitoring evidence."
       - name: is_abpm_bp_event
-        description: Whether the latest reading was recorded using ambulatory monitoring
+        description: "Whether the selected blood pressure pair has ambulatory monitoring evidence."
       - name: applied_measurement_context
-        description: Clinic or HBPM/ABPM context of the latest reading
+        description: "CLINIC for clinic readings or HBPM_ABPM for home or ambulatory readings; determines which target applies."
       - name: indicator_systolic_threshold
-        description: Exclusive systolic threshold in mmHg specified by this indicator
+        description: "Systolic target in mmHg for this indicator and reading type. Achievement requires a value strictly below it; null when no pair exists."
       - name: indicator_diastolic_threshold
-        description: Exclusive diastolic threshold in mmHg specified by this indicator
+        description: "Diastolic target in mmHg for this indicator and reading type. Achievement requires a value strictly below it; null when no pair exists."
       - name: is_in_denominator
-        description: Always true; every row represents a person in the unadjusted denominator
+        description: "Always true; each row is eligible before personalised care adjustments."
       - name: is_bp_recorded_in_last_12m
-        description: Whether the latest BP was recorded between measurement_period_start and the reporting date
+        description: "Whether the selected complete pair was recorded in the 12 months before the reporting date, including both boundary dates."
       - name: is_latest_bp_within_indicator_target
-        description: Whether the latest BP is below both indicator thresholds, regardless of recording date
+        description: "Whether the selected complete pair is valid and strictly below both indicator targets, regardless of its date."
       - name: is_in_numerator
-        description: Whether a BP in the preceding 12 months is below both indicator thresholds
+        description: "Whether the person meets the achievement rule on the reporting date."
       - name: indicator_status
-        description: ACHIEVED, NOT_RECORDED_IN_PERIOD or ABOVE_TARGET
+        description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD', 'NOT_ASSESSABLE', 'ABOVE_TARGET']
 
   - name: fct_person_bp_control_hypertension_ind240
-    description: |
-      NICE IND240 blood pressure control in hypertension. One row per currently
-      registered, living, non-test person aged 80 or over on the hypertension register,
-      assessed on the build date.
+    description: >-
+      Blood pressure control in hypertension for people aged 80 or over (NICE IND240). One row
+      per person in the denominator on the build date.
 
-      Achievement requires the latest valid paired blood pressure reading in the preceding
-      12 months to be strictly below 150/90 mmHg in clinic or 145/85 mmHg at home or on
-      ambulatory monitoring. Both systolic and diastolic values must meet the target.
 
-      The shared blood pressure input selects the lowest valid paired reading on each day.
-      A newer incomplete or implausible reading does not replace an older valid pair. This
-      input differs from a literal last-recorded-reading definition.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date aged 80 or over on the hypertension register.
+      Achieved when both values of the latest complete blood pressure pair in the last 12
+      months are below 150/90 mmHg in clinic or 145/85 mmHg at home or on ambulatory
+      monitoring. Incomplete readings are ignored; an invalid latest pair is unassessable,
+      with no older pair substituted. Validity and same-day selection rules are described
+      under latest_systolic_value and latest_diastolic_value. No personalised care adjustments
+      are applied. Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD, HOMEBP_COD,
+      ABPM_COD, HOMEAMBBP_COD; HYP_COD, HYPRES_COD (PCD).
     config:
       meta:
         owner:
@@ -121,24 +122,19 @@ models:
           type: "MEASURE"
           category: "CARDIOVASCULAR"
           clinical_domain: "Cardiometabolic"
-          name_short: "Hypertension BP control, 80 and over"
-          description_short: "Hypertension BP target achieved in the preceding 12 months for people aged 80 or over"
-          description_long: |
-            NICE IND240 blood pressure control in hypertension. One row per currently
-            registered, living, non-test person aged 80 or over on the hypertension
-            register, assessed on the build date.
-
-            Achievement requires the latest valid paired blood pressure reading in the
-            preceding 12 months to be strictly below 150/90 mmHg in clinic or 145/85 mmHg
-            at home or on ambulatory monitoring. Both systolic and diastolic values must
-            meet the target.
-
-            The shared blood pressure input selects the lowest valid paired reading on
-            each day. A newer incomplete or implausible reading does not replace an older
-            valid pair. This input differs from a literal last-recorded-reading
-            definition.
-
-            Personalised care adjustments are not applied.
+          name_short: "Hypertension BP, 80 or over"
+          description_short: "Blood pressure below the NICE target in hypertension, aged 80 or over"
+          description_long: >-
+            People registered on the build date aged 80 or over on the
+            hypertension register. Achieved when both values of the latest
+            complete blood pressure pair in the last 12 months are below 150/90
+            mmHg in clinic or 145/85 mmHg at home or on ambulatory monitoring.
+            Incomplete readings are ignored; an invalid latest pair is
+            unassessable, with no older pair substituted. Validity and same-day
+            selection rules are described under latest_systolic_value and
+            latest_diastolic_value. No personalised care adjustments are applied.
+            Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD,
+            HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD; HYP_COD, HYPRES_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -147,20 +143,19 @@ models:
     columns: *indicator_columns
 
   - name: fct_person_bp_control_chd_ind241
-    description: |
-      NICE IND241 blood pressure control in coronary heart disease. One row per currently
-      registered, living, non-test person aged 79 or under on the coronary heart disease
-      register, assessed on the build date.
+    description: >-
+      Blood pressure control in coronary heart disease for people aged 79 or under (NICE
+      IND241). One row per person in the denominator on the build date.
 
-      Achievement requires the latest valid paired blood pressure reading in the preceding
-      12 months to be strictly below 140/90 mmHg in clinic or 135/85 mmHg at home or on
-      ambulatory monitoring. Both systolic and diastolic values must meet the target.
 
-      The shared blood pressure input selects the lowest valid paired reading on each day.
-      A newer incomplete or implausible reading does not replace an older valid pair. This
-      input differs from a literal last-recorded-reading definition.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date aged 79 or under on the coronary heart disease
+      register. Achieved when both values of the latest complete blood pressure pair in the
+      last 12 months are below 140/90 mmHg in clinic or 135/85 mmHg at home or on ambulatory
+      monitoring. Incomplete readings are ignored; an invalid latest pair is unassessable,
+      with no older pair substituted. Validity and same-day selection rules are described
+      under latest_systolic_value and latest_diastolic_value. No personalised care adjustments
+      are applied. Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD, HOMEBP_COD,
+      ABPM_COD, HOMEAMBBP_COD; CHD_COD (PCD).
     config:
       meta:
         owner:
@@ -171,24 +166,19 @@ models:
           type: "MEASURE"
           category: "CARDIOVASCULAR"
           clinical_domain: "Cardiometabolic"
-          name_short: "CHD BP control, 79 and under"
-          description_short: "CHD BP target achieved in the preceding 12 months for people aged 79 or under"
-          description_long: |
-            NICE IND241 blood pressure control in coronary heart disease. One row per
-            currently registered, living, non-test person aged 79 or under on the coronary
-            heart disease register, assessed on the build date.
-
-            Achievement requires the latest valid paired blood pressure reading in the
-            preceding 12 months to be strictly below 140/90 mmHg in clinic or 135/85 mmHg
-            at home or on ambulatory monitoring. Both systolic and diastolic values must
-            meet the target.
-
-            The shared blood pressure input selects the lowest valid paired reading on
-            each day. A newer incomplete or implausible reading does not replace an older
-            valid pair. This input differs from a literal last-recorded-reading
-            definition.
-
-            Personalised care adjustments are not applied.
+          name_short: "Coronary disease BP, 79 or under"
+          description_short: "Blood pressure below the NICE target in coronary heart disease, aged 79 or under"
+          description_long: >-
+            People registered on the build date aged 79 or under on the coronary
+            heart disease register. Achieved when both values of the latest
+            complete blood pressure pair in the last 12 months are below 140/90
+            mmHg in clinic or 135/85 mmHg at home or on ambulatory monitoring.
+            Incomplete readings are ignored; an invalid latest pair is
+            unassessable, with no older pair substituted. Validity and same-day
+            selection rules are described under latest_systolic_value and
+            latest_diastolic_value. No personalised care adjustments are applied.
+            Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD,
+            HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD; CHD_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -197,20 +187,19 @@ models:
     columns: *indicator_columns
 
   - name: fct_person_bp_control_chd_ind242
-    description: |
-      NICE IND242 blood pressure control in coronary heart disease. One row per currently
-      registered, living, non-test person aged 80 or over on the coronary heart disease
-      register, assessed on the build date.
+    description: >-
+      Blood pressure control in coronary heart disease for people aged 80 or over (NICE
+      IND242). One row per person in the denominator on the build date.
 
-      Achievement requires the latest valid paired blood pressure reading in the preceding
-      12 months to be strictly below 150/90 mmHg in clinic or 145/85 mmHg at home or on
-      ambulatory monitoring. Both systolic and diastolic values must meet the target.
 
-      The shared blood pressure input selects the lowest valid paired reading on each day.
-      A newer incomplete or implausible reading does not replace an older valid pair. This
-      input differs from a literal last-recorded-reading definition.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date aged 80 or over on the coronary heart disease
+      register. Achieved when both values of the latest complete blood pressure pair in the
+      last 12 months are below 150/90 mmHg in clinic or 145/85 mmHg at home or on ambulatory
+      monitoring. Incomplete readings are ignored; an invalid latest pair is unassessable,
+      with no older pair substituted. Validity and same-day selection rules are described
+      under latest_systolic_value and latest_diastolic_value. No personalised care adjustments
+      are applied. Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD, HOMEBP_COD,
+      ABPM_COD, HOMEAMBBP_COD; CHD_COD (PCD).
     config:
       meta:
         owner:
@@ -221,24 +210,19 @@ models:
           type: "MEASURE"
           category: "CARDIOVASCULAR"
           clinical_domain: "Cardiometabolic"
-          name_short: "CHD BP control, 80 and over"
-          description_short: "CHD BP target achieved in the preceding 12 months for people aged 80 or over"
-          description_long: |
-            NICE IND242 blood pressure control in coronary heart disease. One row per
-            currently registered, living, non-test person aged 80 or over on the coronary
-            heart disease register, assessed on the build date.
-
-            Achievement requires the latest valid paired blood pressure reading in the
-            preceding 12 months to be strictly below 150/90 mmHg in clinic or 145/85 mmHg
-            at home or on ambulatory monitoring. Both systolic and diastolic values must
-            meet the target.
-
-            The shared blood pressure input selects the lowest valid paired reading on
-            each day. A newer incomplete or implausible reading does not replace an older
-            valid pair. This input differs from a literal last-recorded-reading
-            definition.
-
-            Personalised care adjustments are not applied.
+          name_short: "Coronary disease BP, 80 or over"
+          description_short: "Blood pressure below the NICE target in coronary heart disease, aged 80 or over"
+          description_long: >-
+            People registered on the build date aged 80 or over on the coronary
+            heart disease register. Achieved when both values of the latest
+            complete blood pressure pair in the last 12 months are below 150/90
+            mmHg in clinic or 145/85 mmHg at home or on ambulatory monitoring.
+            Incomplete readings are ignored; an invalid latest pair is
+            unassessable, with no older pair substituted. Validity and same-day
+            selection rules are described under latest_systolic_value and
+            latest_diastolic_value. No personalised care adjustments are applied.
+            Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD,
+            HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD; CHD_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -247,20 +231,19 @@ models:
     columns: *indicator_columns
 
   - name: fct_person_bp_control_stroke_tia_ind243
-    description: |
-      NICE IND243 blood pressure control in stroke or transient ischaemic attack (TIA).
-      One row per currently registered, living, non-test person aged 79 or under on the
-      stroke or transient ischaemic attack (TIA) register, assessed on the build date.
+    description: >-
+      Blood pressure control in stroke or transient ischaemic attack for people aged 79 or
+      under (NICE IND243). One row per person in the denominator on the build date.
 
-      Achievement requires the latest valid paired blood pressure reading in the preceding
-      12 months to be strictly below 140/90 mmHg in clinic or 135/85 mmHg at home or on
-      ambulatory monitoring. Both systolic and diastolic values must meet the target.
 
-      The shared blood pressure input selects the lowest valid paired reading on each day.
-      A newer incomplete or implausible reading does not replace an older valid pair. This
-      input differs from a literal last-recorded-reading definition.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date aged 79 or under on the stroke or transient
+      ischaemic attack register. Achieved when both values of the latest complete blood
+      pressure pair in the last 12 months are below 140/90 mmHg in clinic or 135/85 mmHg at
+      home or on ambulatory monitoring. Incomplete readings are ignored; an invalid latest
+      pair is unassessable, with no older pair substituted. Validity and same-day selection
+      rules are described under latest_systolic_value and latest_diastolic_value. No
+      personalised care adjustments are applied. Based on NICE NG136. Code lists: BP_COD,
+      SYSBP_COD, DIASBP_COD, HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD; STRK_COD, TIA_COD (PCD).
     config:
       meta:
         owner:
@@ -271,25 +254,19 @@ models:
           type: "MEASURE"
           category: "CARDIOVASCULAR"
           clinical_domain: "Cardiometabolic"
-          name_short: "Stroke and TIA BP control, 79 and under"
-          description_short: "Stroke and TIA BP target achieved in the preceding 12 months for people aged 79 or under"
-          description_long: |
-            NICE IND243 blood pressure control in stroke or transient ischaemic attack
-            (TIA). One row per currently registered, living, non-test person aged 79 or
-            under on the stroke or transient ischaemic attack (TIA) register, assessed on
-            the build date.
-
-            Achievement requires the latest valid paired blood pressure reading in the
-            preceding 12 months to be strictly below 140/90 mmHg in clinic or 135/85 mmHg
-            at home or on ambulatory monitoring. Both systolic and diastolic values must
-            meet the target.
-
-            The shared blood pressure input selects the lowest valid paired reading on
-            each day. A newer incomplete or implausible reading does not replace an older
-            valid pair. This input differs from a literal last-recorded-reading
-            definition.
-
-            Personalised care adjustments are not applied.
+          name_short: "Stroke BP, 79 or under"
+          description_short: "Blood pressure below the NICE target in stroke or TIA, aged 79 or under"
+          description_long: >-
+            People registered on the build date aged 79 or under on the stroke or
+            transient ischaemic attack register. Achieved when both values of the
+            latest complete blood pressure pair in the last 12 months are below
+            140/90 mmHg in clinic or 135/85 mmHg at home or on ambulatory
+            monitoring. Incomplete readings are ignored; an invalid latest pair is
+            unassessable, with no older pair substituted. Validity and same-day
+            selection rules are described under latest_systolic_value and
+            latest_diastolic_value. No personalised care adjustments are applied.
+            Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD,
+            HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD; STRK_COD, TIA_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -298,20 +275,19 @@ models:
     columns: *indicator_columns
 
   - name: fct_person_bp_control_stroke_tia_ind244
-    description: |
-      NICE IND244 blood pressure control in stroke or transient ischaemic attack (TIA).
-      One row per currently registered, living, non-test person aged 80 or over on the
-      stroke or transient ischaemic attack (TIA) register, assessed on the build date.
+    description: >-
+      Blood pressure control in stroke or transient ischaemic attack for people aged 80 or
+      over (NICE IND244). One row per person in the denominator on the build date.
 
-      Achievement requires the latest valid paired blood pressure reading in the preceding
-      12 months to be strictly below 150/90 mmHg in clinic or 145/85 mmHg at home or on
-      ambulatory monitoring. Both systolic and diastolic values must meet the target.
 
-      The shared blood pressure input selects the lowest valid paired reading on each day.
-      A newer incomplete or implausible reading does not replace an older valid pair. This
-      input differs from a literal last-recorded-reading definition.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date aged 80 or over on the stroke or transient ischaemic
+      attack register. Achieved when both values of the latest complete blood pressure pair in
+      the last 12 months are below 150/90 mmHg in clinic or 145/85 mmHg at home or on
+      ambulatory monitoring. Incomplete readings are ignored; an invalid latest pair is
+      unassessable, with no older pair substituted. Validity and same-day selection rules are
+      described under latest_systolic_value and latest_diastolic_value. No personalised care
+      adjustments are applied. Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD,
+      HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD; STRK_COD, TIA_COD (PCD).
     config:
       meta:
         owner:
@@ -322,25 +298,19 @@ models:
           type: "MEASURE"
           category: "CARDIOVASCULAR"
           clinical_domain: "Cardiometabolic"
-          name_short: "Stroke and TIA BP control, 80 and over"
-          description_short: "Stroke and TIA BP target achieved in the preceding 12 months for people aged 80 or over"
-          description_long: |
-            NICE IND244 blood pressure control in stroke or transient ischaemic attack
-            (TIA). One row per currently registered, living, non-test person aged 80 or
-            over on the stroke or transient ischaemic attack (TIA) register, assessed on
-            the build date.
-
-            Achievement requires the latest valid paired blood pressure reading in the
-            preceding 12 months to be strictly below 150/90 mmHg in clinic or 145/85 mmHg
-            at home or on ambulatory monitoring. Both systolic and diastolic values must
-            meet the target.
-
-            The shared blood pressure input selects the lowest valid paired reading on
-            each day. A newer incomplete or implausible reading does not replace an older
-            valid pair. This input differs from a literal last-recorded-reading
-            definition.
-
-            Personalised care adjustments are not applied.
+          name_short: "Stroke BP, 80 or over"
+          description_short: "Blood pressure below the NICE target in stroke or TIA, aged 80 or over"
+          description_long: >-
+            People registered on the build date aged 80 or over on the stroke or
+            transient ischaemic attack register. Achieved when both values of the
+            latest complete blood pressure pair in the last 12 months are below
+            150/90 mmHg in clinic or 145/85 mmHg at home or on ambulatory
+            monitoring. Incomplete readings are ignored; an invalid latest pair is
+            unassessable, with no older pair substituted. Validity and same-day
+            selection rules are described under latest_systolic_value and
+            latest_diastolic_value. No personalised care adjustments are applied.
+            Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD,
+            HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD; STRK_COD, TIA_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -349,20 +319,19 @@ models:
     columns: *indicator_columns
 
   - name: fct_person_bp_control_pad_ind245
-    description: |
-      NICE IND245 blood pressure control in peripheral arterial disease. One row per
-      currently registered, living, non-test person aged 79 or under on the peripheral
-      arterial disease register, assessed on the build date.
+    description: >-
+      Blood pressure control in peripheral arterial disease for people aged 79 or under (NICE
+      IND245). One row per person in the denominator on the build date.
 
-      Achievement requires the latest valid paired blood pressure reading in the preceding
-      12 months to be strictly below 140/90 mmHg in clinic or 135/85 mmHg at home or on
-      ambulatory monitoring. Both systolic and diastolic values must meet the target.
 
-      The shared blood pressure input selects the lowest valid paired reading on each day.
-      A newer incomplete or implausible reading does not replace an older valid pair. This
-      input differs from a literal last-recorded-reading definition.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date aged 79 or under on the peripheral arterial disease
+      register. Achieved when both values of the latest complete blood pressure pair in the
+      last 12 months are below 140/90 mmHg in clinic or 135/85 mmHg at home or on ambulatory
+      monitoring. Incomplete readings are ignored; an invalid latest pair is unassessable,
+      with no older pair substituted. Validity and same-day selection rules are described
+      under latest_systolic_value and latest_diastolic_value. No personalised care adjustments
+      are applied. Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD, HOMEBP_COD,
+      ABPM_COD, HOMEAMBBP_COD; PAD_COD (PCD).
     config:
       meta:
         owner:
@@ -373,24 +342,19 @@ models:
           type: "MEASURE"
           category: "CARDIOVASCULAR"
           clinical_domain: "Cardiometabolic"
-          name_short: "PAD BP control, 79 and under"
-          description_short: "PAD BP target achieved in the preceding 12 months for people aged 79 or under"
-          description_long: |
-            NICE IND245 blood pressure control in peripheral arterial disease. One row per
-            currently registered, living, non-test person aged 79 or under on the
-            peripheral arterial disease register, assessed on the build date.
-
-            Achievement requires the latest valid paired blood pressure reading in the
-            preceding 12 months to be strictly below 140/90 mmHg in clinic or 135/85 mmHg
-            at home or on ambulatory monitoring. Both systolic and diastolic values must
-            meet the target.
-
-            The shared blood pressure input selects the lowest valid paired reading on
-            each day. A newer incomplete or implausible reading does not replace an older
-            valid pair. This input differs from a literal last-recorded-reading
-            definition.
-
-            Personalised care adjustments are not applied.
+          name_short: "Peripheral artery BP, 79 or under"
+          description_short: "Blood pressure below the NICE target in peripheral arterial disease, aged 79 or under"
+          description_long: >-
+            People registered on the build date aged 79 or under on the peripheral
+            arterial disease register. Achieved when both values of the latest
+            complete blood pressure pair in the last 12 months are below 140/90
+            mmHg in clinic or 135/85 mmHg at home or on ambulatory monitoring.
+            Incomplete readings are ignored; an invalid latest pair is
+            unassessable, with no older pair substituted. Validity and same-day
+            selection rules are described under latest_systolic_value and
+            latest_diastolic_value. No personalised care adjustments are applied.
+            Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD,
+            HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD; PAD_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -399,20 +363,19 @@ models:
     columns: *indicator_columns
 
   - name: fct_person_bp_control_pad_ind246
-    description: |
-      NICE IND246 blood pressure control in peripheral arterial disease. One row per
-      currently registered, living, non-test person aged 80 or over on the peripheral
-      arterial disease register, assessed on the build date.
+    description: >-
+      Blood pressure control in peripheral arterial disease for people aged 80 or over (NICE
+      IND246). One row per person in the denominator on the build date.
 
-      Achievement requires the latest valid paired blood pressure reading in the preceding
-      12 months to be strictly below 150/90 mmHg in clinic or 145/85 mmHg at home or on
-      ambulatory monitoring. Both systolic and diastolic values must meet the target.
 
-      The shared blood pressure input selects the lowest valid paired reading on each day.
-      A newer incomplete or implausible reading does not replace an older valid pair. This
-      input differs from a literal last-recorded-reading definition.
-
-      Personalised care adjustments are not applied.
+      People registered on the build date aged 80 or over on the peripheral arterial disease
+      register. Achieved when both values of the latest complete blood pressure pair in the
+      last 12 months are below 150/90 mmHg in clinic or 145/85 mmHg at home or on ambulatory
+      monitoring. Incomplete readings are ignored; an invalid latest pair is unassessable,
+      with no older pair substituted. Validity and same-day selection rules are described
+      under latest_systolic_value and latest_diastolic_value. No personalised care adjustments
+      are applied. Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD, HOMEBP_COD,
+      ABPM_COD, HOMEAMBBP_COD; PAD_COD (PCD).
     config:
       meta:
         owner:
@@ -423,24 +386,19 @@ models:
           type: "MEASURE"
           category: "CARDIOVASCULAR"
           clinical_domain: "Cardiometabolic"
-          name_short: "PAD BP control, 80 and over"
-          description_short: "PAD BP target achieved in the preceding 12 months for people aged 80 or over"
-          description_long: |
-            NICE IND246 blood pressure control in peripheral arterial disease. One row per
-            currently registered, living, non-test person aged 80 or over on the
-            peripheral arterial disease register, assessed on the build date.
-
-            Achievement requires the latest valid paired blood pressure reading in the
-            preceding 12 months to be strictly below 150/90 mmHg in clinic or 145/85 mmHg
-            at home or on ambulatory monitoring. Both systolic and diastolic values must
-            meet the target.
-
-            The shared blood pressure input selects the lowest valid paired reading on
-            each day. A newer incomplete or implausible reading does not replace an older
-            valid pair. This input differs from a literal last-recorded-reading
-            definition.
-
-            Personalised care adjustments are not applied.
+          name_short: "Peripheral artery BP, 80 or over"
+          description_short: "Blood pressure below the NICE target in peripheral arterial disease, aged 80 or over"
+          description_long: >-
+            People registered on the build date aged 80 or over on the peripheral
+            arterial disease register. Achieved when both values of the latest
+            complete blood pressure pair in the last 12 months are below 150/90
+            mmHg in clinic or 145/85 mmHg at home or on ambulatory monitoring.
+            Incomplete readings are ignored; an invalid latest pair is
+            unassessable, with no older pair substituted. Validity and same-day
+            selection rules are described under latest_systolic_value and
+            latest_diastolic_value. No personalised care adjustments are applied.
+            Based on NICE NG136. Code lists: BP_COD, SYSBP_COD, DIASBP_COD,
+            HOMEBP_COD, ABPM_COD, HOMEAMBBP_COD; PAD_COD (PCD).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -449,16 +407,15 @@ models:
     columns: *indicator_columns
 
   - name: fct_person_bp_control_nice_indicators
-    description: |
-      NICE blood pressure control results for IND239 to IND246. One row per eligible
-      person and indicator on the build date, with blood pressure readings, targets and
-      achievement.
+    description: >-
+      Blood pressure control results. One row per person and indicator in the
+      denominator on the build date.
 
-      Each indicator retains its own population, time window and clinical criteria. A
-      person can appear for several indicators. These results feed the combined NICE
-      indicator status model.
 
-      Personalised care adjustments are not applied.
+      Includes NICE IND239, NICE IND240, NICE IND241, NICE IND242, NICE IND243, NICE
+      IND244, NICE IND245, NICE IND246. Each indicator has its own denominator,
+      measurement window and exclusions. Supporting evidence accompanies the achievement
+      status. No personalised care adjustments are applied.
     config:
       meta:
         owner:
@@ -471,52 +428,54 @@ models:
               - indicator_id
     columns:
       - name: person_id
-        description: Person in the indicator denominator
+        description: "Identifier of the person in the indicator denominator."
       - name: indicator_id
-        description: NICE indicator identifier
+        description: "NICE indicator identifier."
       - name: indicator_status
-        description: ACHIEVED, NOT_RECORDED_IN_PERIOD or ABOVE_TARGET
+        description: "ACHIEVED when the indicator is met; otherwise the recorded reason it is not met."
         data_tests:
           - accepted_values:
               arguments:
-                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD', 'ABOVE_TARGET']
+                values: ['ACHIEVED', 'NOT_RECORDED_IN_PERIOD', 'NOT_ASSESSABLE', 'ABOVE_TARGET']
       - name: indicator_name
-        description: Published NICE indicator name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
-        description: Date on which age and the 12-month measurement period are assessed
+        description: "Build date used to assess eligibility and achievement."
       - name: measurement_period_start
-        description: Inclusive start of the measurement period, 12 calendar months before the reporting date
+        description: "Inclusive start of the indicator measurement period before the reporting date."
       - name: age
-        description: Age in years on the reporting date
+        description: "Age in completed years on the reporting date, calculated from the approximate birth date; null when unknown."
       - name: current_practice_code
-        description: ODS code of the current registration practice
+        description: "ODS code of the current registration practice."
       - name: current_practice_name
-        description: Name of the current registration practice
-      - name: condition_name
-        description: Disease register defining the indicator population
+        description: "Name of the current registration practice."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: latest_bp_date
-        description: Date of the latest valid paired blood pressure reading; null when none is recorded
+        description: "Date of the latest complete blood pressure pair through the reporting date; may precede the measurement window. Null when absent."
+      - name: is_valid_bp
+        description: "Whether the selected complete pair has systolic 40 to 350 mmHg and diastolic 20 to 200 mmHg, inclusive; null when no pair exists."
       - name: latest_systolic_value
-        description: Latest systolic blood pressure in mmHg
+        description: "Systolic blood pressure of the selected complete pair, in mmHg; null when no pair is recorded."
       - name: latest_diastolic_value
-        description: Latest diastolic blood pressure in mmHg
+        description: "Diastolic blood pressure of the selected complete pair, in mmHg; null when no pair is recorded."
       - name: is_home_bp_event
-        description: Whether the latest reading was recorded using home monitoring
+        description: "Whether the selected blood pressure pair has home monitoring evidence."
       - name: is_abpm_bp_event
-        description: Whether the latest reading was recorded using ambulatory monitoring
+        description: "Whether the selected blood pressure pair has ambulatory monitoring evidence."
       - name: applied_measurement_context
-        description: Clinic or HBPM/ABPM context of the latest reading
+        description: "CLINIC for clinic readings or HBPM_ABPM for home or ambulatory readings; determines which target applies."
       - name: indicator_systolic_threshold
-        description: Exclusive systolic threshold in mmHg specified by the indicator
+        description: "Systolic target in mmHg for this indicator and reading type. Achievement requires a value strictly below it; null when no pair exists."
       - name: indicator_diastolic_threshold
-        description: Exclusive diastolic threshold in mmHg specified by the indicator
+        description: "Diastolic target in mmHg for this indicator and reading type. Achievement requires a value strictly below it; null when no pair exists."
       - name: is_in_denominator
-        description: Always true; every row represents a person in the unadjusted denominator
+        description: "Always true; each row is eligible before personalised care adjustments."
       - name: is_bp_recorded_in_last_12m
-        description: Whether the latest BP was recorded between measurement_period_start and the reporting date
+        description: "Whether the selected complete pair was recorded in the 12 months before the reporting date, including both boundary dates."
       - name: is_latest_bp_within_indicator_target
-        description: Whether the latest BP is below both indicator thresholds, regardless of recording date
+        description: "Whether the selected complete pair is valid and strictly below both indicator targets, regardless of its date."
       - name: is_in_numerator
-        description: Whether a BP in the preceding 12 months is below both indicator thresholds
-      - name: indicator_status
-        description: ACHIEVED, NOT_RECORDED_IN_PERIOD or ABOVE_TARGET
+        description: "Whether the person meets the achievement rule on the reporting date."

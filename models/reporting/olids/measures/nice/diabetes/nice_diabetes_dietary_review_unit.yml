@@ -1,0 +1,57 @@
+unit_tests:
+- name: nice_diabetes_dietary_review_bounds_expiry_and_multiplicity
+  model: fct_person_diabetes_dietary_review_ind89_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age,
+      column4::DATE AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code,
+      column7::VARCHAR AS practice_name, column8::DATE AS registration_start_date FROM VALUES (-96201,
+      '2026-08-31', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96201,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96202,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96203,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96204,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96205,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30'), (-96206,
+      '2026-09-30', 40, '1986-01-15', 'Female', 'SYNTHETIC', 'Synthetic practice', '2026-06-30')
+  - input: ref('fct_person_diabetes_register_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, column3::DATE AS earliest_diagnosis_date,
+      column4::DATE AS latest_diagnosis_date, column5::BOOLEAN AS is_on_register, NULL::VARCHAR AS diabetes_type,
+      NULL::DATE AS earliest_type1_date, NULL::DATE AS latest_type1_date, NULL::DATE AS earliest_type2_date,
+      NULL::DATE AS latest_type2_date, NULL::DATE AS latest_resolved_date FROM VALUES (-96201, '2026-08-31',
+      '2020-01-01', '2020-01-01', TRUE), (-96201, '2026-09-30', '2020-01-01', '2020-01-01', TRUE), (-96202,
+      '2026-09-30', '2020-01-01', '2020-01-01', TRUE), (-96203, '2026-09-30', '2020-01-01', '2020-01-01',
+      TRUE), (-96204, '2026-09-30', '2020-01-01', '2020-01-01', TRUE), (-96205, '2026-09-30', '2020-01-01',
+      '2020-01-01', TRUE)
+  - input: ref('int_diabetes_dietary_reviews_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date FROM VALUES (-96201,
+      '2025-06-30'), (-96202, '2025-06-30'), (-96203, '2025-07-01'), (-96204, '2026-09-30'), (-96204,
+      '2026-09-30'), (-96205, '2026-10-01'), (-96206, '2026-09-30')
+  expect:
+    rows:
+    - person_id: -96201
+      reporting_date: '2026-08-31'
+      latest_record_date: '2025-06-30'
+      is_in_numerator: true
+    - person_id: -96201
+      reporting_date: '2026-09-30'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96202
+      reporting_date: '2026-09-30'
+      latest_record_date: null
+      is_in_numerator: false
+    - person_id: -96203
+      reporting_date: '2026-09-30'
+      latest_record_date: '2025-07-01'
+      is_in_numerator: true
+    - person_id: -96204
+      reporting_date: '2026-09-30'
+      latest_record_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -96205
+      reporting_date: '2026-09-30'
+      latest_record_date: null
+      is_in_numerator: false

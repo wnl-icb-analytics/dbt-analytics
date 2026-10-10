@@ -12,10 +12,10 @@ Note: Working with dummy data so geographic information may be limited/placehold
 */
 
 SELECT
-    gp_practice_code AS practice_code,
-    practice_name AS practice_name,
-    borough AS local_authority,
+    practice_code,
+    practice_name,
+    registered_borough_name AS local_authority,
     neighbourhood_name AS neighbourhood_registered,
     neighbourhood_code
-FROM {{ ref('stg_reference_lookup_ncl_gp_practice') }}
-WHERE gp_practice_code IS NOT NULL
+FROM {{ ref('practice_wnl_active') }}
+WHERE sub_icb_code = {{ ncl_sub_icb() }}

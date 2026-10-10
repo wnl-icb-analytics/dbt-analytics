@@ -16,7 +16,8 @@ efficient storage and accurate historical tracking.
 Example output for a patient:
 - 2020-01-15 to 2021-08-10: 4 medications (not polypharmacy)
 - 2021-08-11 to 2023-03-05: 5 medications (polypharmacy starts)
-- 2023-03-06 to NULL: 6 medications (current)
+- 2023-03-06 to 2026-11-02: 6 medications (current; valid_to is always
+  set, and periods can start in the future as current issues run out)
 
 Grain: One row per person per distinct medication count period
 */
@@ -121,8 +122,32 @@ scd_smoothed AS (
         OR prev_medication_count IS NULL
 ),
 
+scd_stable AS (
+    -- Stable change points (3+ days or final period)
+    SELECT
+        person_id,
+        event_date,
+        medication_count
+    FROM scd_smoothed
+    WHERE DATEDIFF(day, event_date, COALESCE(next_event_date, CURRENT_DATE())) >= 3
+        OR next_event_date IS NULL  -- Keep the final period
+),
+
+scd_merged AS (
+    -- Dropping a short dip leaves the points either side with the same count;
+    -- keep the first of each run so every row is a distinct count period.
+    SELECT
+        person_id,
+        event_date,
+        medication_count
+    FROM scd_stable
+    QUALIFY medication_count IS DISTINCT FROM LAG(medication_count) OVER (
+        PARTITION BY person_id
+        ORDER BY event_date
+    )
+),
+
 scd_compressed AS (
-    -- Compress to stable periods (3+ days or final period)
     SELECT
         person_id,
         event_date AS valid_from,
@@ -133,9 +158,7 @@ scd_compressed AS (
         medication_count,
         medication_count >= 5 AS is_polypharmacy_5plus,
         medication_count >= 10 AS is_polypharmacy_10plus
-    FROM scd_smoothed
-    WHERE DATEDIFF(day, event_date, COALESCE(next_event_date, CURRENT_DATE())) >= 3
-        OR next_event_date IS NULL  -- Keep the final period
+    FROM scd_merged
 )
 
 SELECT

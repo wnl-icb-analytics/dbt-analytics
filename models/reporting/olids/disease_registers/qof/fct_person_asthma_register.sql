@@ -1,6 +1,5 @@
 -- Pair: macros/qof_registers/calculate_asthma_register.sql.
--- This live fact includes future-dated records. Its PIT pair is strict as-of
--- and derives age at the reference date rather than using current age.
+-- This live fact uses evidence dated on or before today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -9,7 +8,8 @@
 }}
 
 -- Asthma Register (QOF Pattern 3: Complex QOF Register with External Validation)
--- Business Logic: Age ≥5 + Active asthma diagnosis (latest AST_COD > latest ASTRES_COD) + Recent asthma medication (last 12 months)
+-- Age ≥5, no resolution on or after the latest diagnosis date, and treatment in the last 12 months.
+-- Treatment excludes the 12-month boundary and includes today.
 -- External Validation: Requires medication confirmation to ensure active asthma management
 
 WITH asthma_diagnoses AS (
@@ -41,12 +41,12 @@ WITH asthma_diagnoses AS (
                 CASE
                     WHEN is_diagnosis_code THEN clinical_effective_date
                 END
-            )
+            )::DATE
             > MAX(
                 CASE
                     WHEN is_resolved_code THEN clinical_effective_date
                 END
-            )
+            )::DATE
         ), FALSE) AS has_active_asthma_diagnosis,
 
         -- Traceability arrays
@@ -64,6 +64,7 @@ WITH asthma_diagnoses AS (
         ) AS all_resolved_concept_displays
 
     FROM {{ ref('int_asthma_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -76,7 +77,8 @@ asthma_medications AS (
         MAX(mapped_concept_display) AS latest_asthma_medication_concept_display,
         COUNT(*) AS recent_asthma_medication_count
     FROM {{ ref('int_asthma_medications_all') }}
-    WHERE order_date >= CURRENT_DATE() - INTERVAL '12 months'
+    WHERE order_date > DATEADD('month', -12, CURRENT_DATE())
+        AND order_date <= CURRENT_DATE()
     GROUP BY person_id
 ),
 

@@ -1,0 +1,34 @@
+models:
+- name: int_ttr_all
+  description: Time in therapeutic range observations from PCD TTR_COD. One row per observation, including
+    inactive and deceased people. Retains value-free and non-numeric records; the AF profile selects the
+    latest record with a non-null original result in six calendar months. Numeric percentages are not
+    range-filtered, preserving the reviewed definition.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: TTR_COD
+        source: PCD
+  columns:
+  - name: id
+    description: Source observation identifier.
+  - name: person_id
+    description: Person with this observation.
+  - name: clinical_effective_date
+    description: Clinical timestamp after shared source date correction.
+  - name: clinical_effective_date_raw
+    description: Original clinical timestamp; null means undated source evidence.
+  - name: date_recorded
+    description: Source recorded timestamp.
+  - name: original_result_value
+    description: Original result text; null means no recorded value.
+  - name: ttr_percentage
+    description: Numeric time in therapeutic range percentage; null when absent or non-numeric.

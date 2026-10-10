@@ -1,16 +1,16 @@
 models:
   - name: fct_person_frailty_register
-    description: >
-      Frailty register from coded frailty severity. One row per person with any
-      code in the PCD clusters MILDFRAIL_COD, MODFRAIL_COD or SEVFRAIL_COD, which
-      cover the graded frailty findings and Clinical Frailty Scale levels 4 to 8.
-      latest_frailty_severity is the severity of the most recent coded finding,
-      with the more severe code winning a same-day tie, so GMS contract and NICE
-      measures that split on moderate or severe frailty can read it directly.
-      Frailty has no resolved codes. No age restriction is applied beyond a
-      recorded birth date. Calculated frailty scores such as eFI2 are separate
-      models.
+    description: >-
+      Coded frailty project register. One row per register member.
 
+
+      Registration status is not filtered. The model includes all ages and coded mild,
+      moderate or severe frailty. Latest clinical timestamps determine severity; equal
+      timestamps prefer greater severity. No resolution rule applies. Future-dated
+      findings can affect membership. Calculated electronic frailty index scores do not
+      determine membership. Code lists: MILDFRAIL_COD, MODFRAIL_COD, SEVFRAIL_COD (PCD).
+      The registered, age 65 or over, moderate or severe population for NICE IND206 is in
+      fct_person_nice_frailty_register.
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -52,11 +52,17 @@ models:
           - unique
           - not_null
       - name: age
-        description: Age in years at the build date.
+        description: >-
+          Age in years from the approximate birth month, at the build date or at death for
+          deceased people; null when birth date is missing.
+
       - name: is_on_register
         description: Always true; every row is a person with a coded frailty severity.
       - name: latest_frailty_severity
-        description: Severity of the most recent coded frailty finding. On the same date the more severe code wins, then the higher observation ID.
+        description: >-
+          Severity of the latest coded finding by clinical timestamp. Equal timestamps prefer
+          greater severity, then the higher observation ID.
+
         data_tests:
           - not_null
           - accepted_values:
