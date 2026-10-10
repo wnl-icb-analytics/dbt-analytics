@@ -1,14 +1,15 @@
 {{
     config(
-        materialized='table',
-        tags=['utility', 'date_spine'],
-        cluster_by=['month_start_date']
+        materialized='view',
+        tags=['utility', 'date_spine']
     )
 }}
 
--- Date Spine Utility Table
--- Provides comprehensive date dimensions for temporal analysis
--- Creates a monthly spine going back 10 years with all date helper columns pre-calculated
+-- Date Spine Utility View
+-- Provides date dimensions for temporal analysis
+-- Monthly spine of the last 120 completed months with date helper columns.
+-- A view, so its months and relative flags always follow CURRENT_DATE: a table
+-- built before the 1st of a month would leave its consumers a month behind.
 
 WITH date_range AS (
     -- Generate monthly dates for 10 years (120 months)

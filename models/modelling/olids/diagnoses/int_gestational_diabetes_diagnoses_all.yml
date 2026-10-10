@@ -19,12 +19,13 @@ models:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.at_least_one:
           column_name: id
       - cluster_ids_exist:
           arguments:
             cluster_ids: GESTDIAB_COD
+            source: PCD
     columns:
       - name: id
         description: 'Unique identifier for the clinical observation'
@@ -35,6 +36,8 @@ models:
         description: 'Unique identifier for the person'
       - name: clinical_effective_date
         description: 'Date when the gestational diabetes observation was recorded'
+      - name: date_recorded
+        description: 'Date the observation was entered in the record; null when the source gives none.'
       - name: concept_code
         description: 'Clinical code for the gestational diabetes diagnosis'
       - name: concept_display

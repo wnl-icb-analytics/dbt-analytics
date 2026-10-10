@@ -1,0 +1,45 @@
+version: 2
+models:
+  - name: stg_reference_primary_care_practice_history
+    description: >-
+      SCD2 history of WNL GP practice details maintained in the primary care
+      org manager app. One row per practice per version; valid_to is null on
+      the current version and is exclusive. Covers practices the app curates
+      for sub-ICBs 93C (North Central London) and W2U3Z (North West London),
+      including closed practices.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - practice_code
+              - valid_from
+    columns:
+      - name: practice_code
+        description: GP practice ODS code.
+      - name: practice_status
+        description: Active, Dormant, Proposed, Closed or Retired.
+      - name: health_borough_name
+        description: >-
+          Legacy CCG area used as the familiar health borough; not a London
+          local authority. Defaults from the registered local authority when
+          the app has not assigned one.
+      - name: registered_borough_name
+        description: Local authority associated with the practice's registered population in ODS.
+      - name: geographic_borough_name
+        description: Local authority containing the practice site.
+      - name: is_isa_accepted
+        description: Information sharing agreement accepted. Null means not recorded.
+      - name: lsoa_code
+        description: LSOA containing the practice site. Mostly 2021 codes; a few rows still carry 2011 codes.
+      - name: msoa_code
+        description: MSOA containing the practice site.
+      - name: valid_from
+        description: Date this version became effective.
+      - name: valid_to
+        description: Date this version was superseded (exclusive). Null on the current version.
+      - name: is_current
+        description: True on the current version (valid_to is null).

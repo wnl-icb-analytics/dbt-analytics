@@ -25,17 +25,19 @@ FROM {{ ref('int_csf_leak_latest')}}
 --FROM MODELLING.OLIDS_OBSERVATIONS.INT_CSF_LEAK_LATEST
 ) a
 )
---September 2026 add new group for RSV clinical risk groups which includes immunosuppression and chronic lung disease.
+-- RSV clinical risk is chronic respiratory disease or immunosuppression at any
+-- age. fct_flu_eligibility only publishes those subcohorts under 65, because
+-- everyone 65 and over qualifies for flu by age. The flags model reads the flu
+-- clinical intermediates before that gate. RSV_1D applies the 65-74 band at
+-- eligibility, not on this flag.
 ,RSV_clinical_risk_groups AS (
-select distinct person_id
-FROM (
-SELECT person_id, subcohort as risk_group, reference_date
-    --from REPORTING.OLIDS_PROGRAMME.FCT_FLU_ELIGIBILITY
-    FROM {{ ref('fct_flu_eligibility') }}
-   WHERE subcohort 
-   in ('Chronic Respiratory Disease','Immunosuppression')
-   QUALIFY ROW_NUMBER() OVER (PARTITION BY PERSON_ID, RISK_GROUP ORDER BY REFERENCE_DATE DESC) = 1
-   ) a
+-- Current flu campaign only: the flags model has a row only where a person is
+-- in a clinical group that campaign, so a person's last row can be from an
+-- older season whose evidence has lapsed.
+SELECT DISTINCT person_id
+FROM {{ ref('int_covid_flu_risk_group_flags') }}
+WHERE campaign_id = '{{ flu_current_campaign() }}'
+    AND (COALESCE(has_crd, FALSE) OR COALESCE(is_immunosuppressed, FALSE))
 )
 --Using the person_demographics for anyone over the age of 60 who has been ever been registered with an NCL practice (active or inactive) n~200,000
 --Creating a base table for vaccinations for this population to be joined against in further analysis n~2.5 million rows 
@@ -54,6 +56,7 @@ END AS TURN_65_AFTER_SEP_2023
 --general immunosuppression flag for Shingles programme eligibility
 ,CASE WHEN imm.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_IMMUNOSUPPRESSED
 ,CASE WHEN ppv.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IN_PPV_CLINICAL_RISK_GROUP
+-- RSV clinical risk flag: immunosuppression or chronic respiratory disease, any age.
 ,CASE WHEN rsv.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IN_RSV_CLINICAL_RISK_GROUP
 ,CASE WHEN preg.PERSON_ID IS NOT NULL THEN TRUE ELSE FALSE END AS IS_PREGNANT
 ,CASE

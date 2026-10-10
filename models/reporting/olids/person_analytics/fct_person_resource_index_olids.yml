@@ -6,8 +6,8 @@ models:
       only), enriched with OLIDS primary-care context - Cambridge
       comorbidity score, LTC register count, frailty severity, GP
       appointment cost (PSSRU nominal) and OLIDS-estimated prescribing.
-      actual_cost_12m is SLAM acute only (EPD held out of the resource
-      index while stale). Same person grain as the base fact;
+      actual_cost_12m is SLAM + EPD + MHSDS + CSDS from the base fact;
+      whole-person cost adds GP appointments. Same person grain as the base fact;
       has_olids_record flags patients with an OLIDS link. Cut resource
       index by morbidity (score bands, LTC count, frailty) x deprivation
       quintile for the NCL pack.
@@ -31,15 +31,11 @@ models:
         description: Mild / Moderate / Severe; null when not on the frailty register.
       - name: gp_appointment_cost_12m
         description: Attended GP appointment cost over the window (PSSRU nominal GBP). Additive.
-      - name: total_cost_incl_gp_appointments_12m
-        description: actual_cost_12m + GP appointment cost (GBP).
-        data_tests:
-          - not_null
       - name: olids_prescribing_cost_12m_modelled
-        description: Full-window prescribing from OLIDS estimated_cost (GBP, validated vs EPD to 0.4%).
+        description: Full-window prescribing from OLIDS estimated_cost (GBP, validated vs EPD to 0.4%). Cross-check only; EPD in actual_cost_12m is the counted prescribing cost.
       - name: olids_prescription_orders_12m
         description: OLIDS medication orders in the window.
       - name: total_cost_whole_person_12m
-        description: actual (SLAM) + OLIDS-modelled prescribing + GP appointments (GBP). The whole-person headline.
+        description: actual_cost_12m + GP appointment cost (GBP). The whole-person headline.
         data_tests:
           - not_null

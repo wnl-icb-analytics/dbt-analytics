@@ -1,0 +1,26 @@
+models:
+- name: int_nice_smoking_unsuitability_all
+  description: >-
+    Smoking-care unsuitability records from PCD SMOKPCAPU_COD. One row per observation,
+    including inactive and deceased people, through the build date. NICE indicators
+    apply their own population, achievement and exclusion windows.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - observation_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: SMOKPCAPU_COD
+        source: PCD
+  columns:
+  - name: person_id
+    description: Person with smoking-care unsuitability recorded.
+  - name: observation_id
+    description: Unique source observation.
+  - name: event_date
+    description: Clinical calendar date of the unsuitability record.

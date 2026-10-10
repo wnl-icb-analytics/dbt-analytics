@@ -1,0 +1,43 @@
+models:
+- name: int_nice_reference_population_by_month
+  description: >-
+    Registered, living, non-test people at each completed month-end. One row per person and
+    month-end. Registration starts are inclusive; registration ends and death dates are
+    exclusive. When registrations overlap, current registrations take priority. Birth and death
+    dates are approximate; missing birth dates exclude historical rows. Current gender and test
+    flags apply retrospectively. Recalculated for each of the last 60 month-ends with current
+    rules, code lists and records, so later corrections can change past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: Person in the active non-test population.
+  - name: reporting_date
+    description: >-
+      Completed month-end on which population and evidence are assessed.
+  - name: age
+    description: Completed years at the month-end, calculated from the approximate birth month.
+  - name: birth_date_approx
+    description: >-
+      Approximate birth date used to assess age.
+  - name: gender
+    description: >-
+      Currently available gender applied retrospectively from registration history.
+  - name: practice_code
+    description: >-
+      ODS practice code attributed from registration history at the month-end.
+  - name: practice_name
+    description: >-
+      Practice name attributed from registration history at the month-end.
+  - name: registration_start_date
+    description: >-
+      Start of the registration attributed at the month-end, from registration history. Null
+      when unavailable.

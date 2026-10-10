@@ -6,7 +6,9 @@ with events as (
     select
         person_id,
         clinical_effective_date
-    from ({{ get_ltc_lcs_observations_latest("careplan_sharing_completed_vs1") }})
+    -- careplan_sharing_completed_vs1 by GUID: the friendly name also matches two
+    -- "Chronic disease initial assessment" value sets from other reports
+    from ({{ get_ltc_lcs_observations_latest("53bb7013-ac13-56dd-ec35-5425a5e6f2f7,1e4b1d73-eaed-7e8d-da5e-0a77ca874c17") }})
     where clinical_effective_date >= dateadd(month, -12, current_date())
       and clinical_effective_date <= current_date()
 )

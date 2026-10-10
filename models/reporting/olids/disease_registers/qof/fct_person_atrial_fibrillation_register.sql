@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_atrial_fibrillation_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- This live fact uses evidence dated on or before today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -8,7 +8,7 @@
 }}
 
 -- Atrial Fibrillation Register
--- Business Logic: Active AF diagnosis (latest AFIB_COD > latest AFIBRES_COD OR no resolution recorded)
+-- Business Logic: Active AF diagnosis (latest AFIB_COD date after latest AFIBRES_COD date OR no resolution recorded)
 -- No age restrictions or medication validation requirements
 
 WITH af_diagnoses AS (
@@ -33,10 +33,10 @@ WITH af_diagnoses AS (
             ) IS NULL
             OR MAX(
                 CASE WHEN is_diagnosis_code THEN clinical_effective_date END
-            )
+            )::DATE
             > MAX(
                 CASE WHEN is_resolved_code THEN clinical_effective_date END
-            )
+            )::DATE
         ), FALSE) AS has_active_af_diagnosis,
 
         -- Traceability arrays
@@ -48,6 +48,7 @@ WITH af_diagnoses AS (
         ) AS all_af_concept_displays
 
     FROM {{ ref('int_atrial_fibrillation_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 

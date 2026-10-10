@@ -1,0 +1,2 @@
+{{ config(materialized='table', cluster_by=['reporting_date', 'person_id'], tags=['monthly-full', 'nice-history']) }}
+{{ calculate_nice_cvd_secondary_prevention_population('by_month') }}

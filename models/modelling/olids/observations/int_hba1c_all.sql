@@ -20,7 +20,7 @@ WITH base_observations AS (
         CASE 
             WHEN TRY_CAST(obs.result_value AS FLOAT) > 1000 THEN NULL  -- Likely data error
             WHEN TRY_CAST(obs.result_value AS FLOAT) < 0 THEN NULL     -- Negative values invalid
-            ELSE CAST(obs.result_value AS NUMBER(10,2))
+            ELSE CAST(TRY_CAST(obs.result_value AS FLOAT) AS NUMBER(10,2))
         END AS hba1c_original_value,
         obs.result_unit_display,
         obs.mapped_concept_code AS concept_code,
@@ -45,7 +45,6 @@ WITH base_observations AS (
     FROM ({{ get_observations("'IFCCHBAM_COD', 'DCCTHBA1C_COD'") }}) obs
     WHERE obs.clinical_effective_date IS NOT NULL
     AND obs.clinical_effective_date <= CURRENT_DATE() -- No future dates
-      AND obs.result_value IS NOT NULL
       
 )
 

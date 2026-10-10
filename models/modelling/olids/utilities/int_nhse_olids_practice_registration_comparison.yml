@@ -1,0 +1,43 @@
+models:
+  - name: int_nhse_olids_practice_registration_comparison
+    description: |
+      OLIDS registered patients compared with the NHS England monthly "Patients Registered at a GP Practice" publication. One row per practice per monthly snapshot within the last 60 months, for practices that send data to OLIDS.
+
+      This is a monthly trend check between EMIS extracts, not the authority. OLIDS comes from EMIS, so int_emis_olids_practice_registration_comparison is the authoritative check. NHSE counts come from PDS after national processing, and PDS keeps some registrations that practices have closed.
+
+      OLIDS counts are rebuilt as at each snapshot date from registration history: people with an open Regular registration who had not died by that date. Each person is counted at one practice, the registration with the latest start, as in dim_person_active_patients. NHSE counts come from PDS on the first of the month.
+
+      Snapshots cover the last 60 months because OLIDS keeps Left and Deceased registrations for five years; an older snapshot would miss patients who have since left. Patients moved in a practice merger keep their original start date at the successor practice, so before a merger OLIDS counts them at the successor while NHSE counts them at the old practice. Counts for past dates also drift down as EMIS rewrites registration dates, as described in int_patient_registrations.
+
+      There is no pass or fail flag because NHSE is not the authority. OLIDS usually runs slightly above NHSE because practice systems keep some patients that PDS has already removed, such as patients removed in list cleaning after moving away.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [practice_code, snapshot_date]
+    columns:
+      - name: snapshot_date
+        description: NHSE publication snapshot date, the first of the month. OLIDS counts are rebuilt as at this date.
+      - name: practice_code
+        description: GP practice ODS code.
+      - name: practice_name
+        description: Practice name from dim_practice.
+      - name: borough
+        description: Registered borough from dim_practice.
+      - name: nhse_registered_patients
+        description: Patients registered at the practice in the NHSE publication. NULL when the practice is missing from that month's publication.
+      - name: olids_registered_patients
+        description: People with an open Regular registration at the practice in OLIDS on the snapshot date, each counted at one practice only. Ties on start date go to the later patient record, then the later episode.
+      - name: difference
+        description: OLIDS minus NHSE, positive when OLIDS has more patients. NULL when NHSE is missing.
+      - name: absolute_difference
+        description: Absolute value of difference.
+      - name: percent_difference
+        description: Difference as a percentage of the NHSE count. NULL when NHSE is missing or zero.
+      - name: absolute_percent_difference
+        description: Absolute value of percent_difference.
+      - name: is_latest_snapshot
+        description: TRUE for rows from the most recent NHSE snapshot in the table.

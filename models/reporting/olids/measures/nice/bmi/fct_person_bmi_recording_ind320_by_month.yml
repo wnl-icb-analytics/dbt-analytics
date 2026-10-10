@@ -1,0 +1,65 @@
+models:
+- name: fct_person_bmi_recording_ind320_by_month
+  description: >-
+    BMI recording in adults with long-term conditions (NICE IND320). One row per person in the
+    denominator at the month-end.
+
+
+    People registered at the month-end aged 18 or over with coronary heart disease, stroke or
+    TIA, diabetes, non-diabetic hyperglycaemia, hypertension, peripheral arterial disease,
+    heart failure, COPD, dyslipidaemia, learning disability, obstructive sleep apnoea or
+    schizophrenia, bipolar disorder or other psychoses on the severe mental illness register.
+    Achieved with any valid recorded or calculated BMI of 10 to 150 kg/m2 in the last 12
+    months, despite a later invalid result. Calculations use the weight date and latest
+    preceding adult height. Dyslipidaemia means lipid-lowering treatment in the last 6 months,
+    or latest valid LDL at least 4.1, triglycerides at least 1.7, or HDL below 1.0 for men or
+    1.3 for women in the last 12 months, all in mmol/L. A later invalid lipid result prevents
+    fallback for that lipid. These QOF v51.3 limits complete NICE's incomplete definition.
+    Non-diabetic hyperglycaemia only partly covers NICE's high-risk diabetes population
+    because validated risk scores paired with raised glycaemia are unavailable. No
+    personalised care adjustments are applied. Based on NICE NG246. Recalculated for each of
+    the last 60 month-ends with current rules, code lists and records, so later corrections
+    can change past months. Code lists: BMIVAL_COD, HEIGHT, WEIGHT, LDLCCHOL_COD,
+    HDLCCHOL_COD, TRIGLYC_COD (PCD); 0212 (BNF).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+      clinical_source: https://www.nice.org.uk/indicators/ind320
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Person identifier for someone in the indicator denominator."
+  - name: indicator_id
+    description: "Published NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Month-end used to assess the population, age and evidence."
+  - name: measurement_period_start
+    description: "Inclusive start of the indicator measurement period before the reporting date."
+  - name: age
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: practice_code
+    description: "ODS code of the registration practice at month-end."
+  - name: practice_name
+    description: "Name of the registration practice at month-end."
+  - name: latest_bmi_date
+    description: "Latest valid recorded or calculated BMI date by the reporting date; it may be outside the 12-month measurement period. Null when none is recorded."
+  - name: latest_record_date
+    description: "Date of the latest qualifying valid recorded or calculated BMI in the measurement period; null when none is recorded."
+  - name: is_in_denominator
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."

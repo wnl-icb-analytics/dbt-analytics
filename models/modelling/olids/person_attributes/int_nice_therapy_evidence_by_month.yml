@@ -1,0 +1,114 @@
+models:
+- name: int_nice_therapy_evidence_by_month
+  description: >-
+    Prescribing evidence for registered, living, non-test long-term condition register members
+    or people aged 25 to 84. One row per candidate person and month-end. Evidence stops at the
+    month-end. Older treatment dates remain available; indicators apply their own windows and
+    exclusions. Null dates mean no qualifying evidence. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change past
+    months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  - dbt_utils.expression_is_true:
+      arguments:
+        expression: (latest_lipid_lowering_order_date is null or latest_lipid_lowering_order_date::date <=
+          reporting_date) and (latest_statin_order_date is null or latest_statin_order_date::date <= reporting_date)
+          and (first_lipid_lowering_order_date is null or first_lipid_lowering_order_date::date <= reporting_date)
+          and (latest_antiplatelet_order_date is null or latest_antiplatelet_order_date::date <= reporting_date)
+          and (latest_anticoagulant_order_date is null or latest_anticoagulant_order_date::date <= reporting_date)
+          and (latest_doac_order_date is null or latest_doac_order_date::date <= reporting_date) and (latest_vka_order_date
+          is null or latest_vka_order_date::date <= reporting_date) and (latest_ras_order_date is null or latest_ras_order_date::date
+          <= reporting_date) and (latest_sglt2_order_date is null or latest_sglt2_order_date::date <= reporting_date)
+          and (latest_ras_order_before_last_sglt2_date is null or latest_ras_order_before_last_sglt2_date::date
+          <= reporting_date)
+  - dbt_utils.expression_is_true:
+      arguments:
+        expression: latest_ras_order_before_last_sglt2_date is null or latest_ras_order_before_last_sglt2_date
+          <= latest_sglt2_order_date
+  columns:
+  - name: person_id
+    description: >-
+      Active, non-test LTC member or person aged 25 to 84 on the reporting date.
+    data_tests:
+    - not_null
+  - name: reporting_date
+    description: >-
+      Completed month-end on which population and evidence are assessed.
+    data_tests:
+    - not_null
+  - name: latest_lipid_lowering_order_date
+    description: >-
+      Latest counted lipid-lowering order through the reporting date. Includes statins, statin
+      combinations, ezetimibe, bempedoic acid, PCSK9 inhibitors, inclisiran, fibrates and bile
+      acid sequestrants.
+  - name: latest_lipid_lowering_order_id
+    description: Selected counted lipid-lowering order id. Statins win ties on the same order date, then the
+      highest order id.
+  - name: latest_lipid_lowering_class
+    description: Class assigned by int_lipid_lowering_medications_all to the selected counted order.
+  - name: latest_lipid_lowering_product
+    description: BNF product name of the selected lipid-lowering order.
+  - name: is_latest_lipid_lowering_statin
+    description: Whether the selected lipid-lowering order is a statin or statin combination. Null when no
+      counted order exists.
+  - name: latest_statin_intensity
+    description: Source intensity category of the selected lipid-lowering order; null for a non-statin or absent
+      order.
+  - name: latest_statin_order_date
+    description: >-
+      Latest statin or statin-combination order through the reporting date, selected
+      independently of non-statin orders.
+  - name: first_lipid_lowering_order_date
+    description: >-
+      Earliest counted lipid-lowering order dated by the reporting date. Null supports a
+      never-treated classification.
+  - name: latest_antiplatelet_order_date
+    description: >-
+      Latest BNF 2.9 antiplatelet order from 1 January 1990 through the reporting date.
+      Recorded taken-treatment evidence is separate.
+  - name: latest_anticoagulant_order_date
+    description: >-
+      Latest BNF 2.8.2 oral anticoagulant order from 1 January 1990 through the reporting
+      date. Recorded taken-treatment evidence is separate.
+  - name: latest_anticoagulant_type
+    description: >-
+      DOAC, VKA or OTHER_ANTICOAGULANT classification of the selected oral anticoagulant
+      order. The highest order id wins ties on the same order date.
+  - name: latest_doac_order_date
+    description: >-
+      Latest direct oral anticoagulant order from 1 January 1990 through the reporting date,
+      selected independently of VKA orders.
+  - name: latest_vka_order_date
+    description: >-
+      Latest vitamin K antagonist order from 1 January 1990 through the reporting date,
+      selected independently of DOAC orders.
+  - name: latest_ras_order_date
+    description: >-
+      Latest ACE inhibitor or ARB order from 1 January 1990 through the reporting date.
+  - name: latest_ras_order_id
+    description: Selected RAS order id. The highest order id wins ties on the same order date.
+  - name: latest_ras_class
+    description: ACE_INHIBITOR or ARB classification of the selected RAS order.
+  - name: latest_ras_product
+    description: BNF product name of the selected RAS order.
+  - name: latest_sglt2_order_date
+    description: >-
+      Latest SGLT2 inhibitor order from 1 January 1990 through the reporting date.
+  - name: latest_sglt2_order_id
+    description: Selected SGLT2 order id. The highest order id wins ties on the same order date.
+  - name: latest_sglt2_drug
+    description: Drug classification from int_sglt2_medications_all for the selected SGLT2 order.
+  - name: latest_sglt2_product
+    description: BNF product name of the selected SGLT2 order.
+  - name: latest_ras_order_before_last_sglt2_date
+    description: >-
+      Latest RAS order on or before the selected SGLT2 order. Includes prescriptions before 1
+      January 1990. Null means no qualifying sequence.

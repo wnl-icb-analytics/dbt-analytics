@@ -1,15 +1,22 @@
 models:
   - name: def_indicator_usage
-    description: 'Usage contexts for each indicator.
+    description: >-
+      Declared reporting uses of clinical indicators. One row per indicator and usage context.
 
-      Tracks where indicators are used across dashboards, reports, and programmes. Use this table to understand where indicators are used in dashboards and reports.'
+
+      Contexts identify dashboards, reports or programmes named in indicator metadata. An
+      indicator without a declared context has no row; this table does not measure actual query
+      activity.
+
     config:
       meta:
         owner:
           name: EddieDavison92
     columns:
       - name: indicator_id
-        description: Foreign key linking to def_indicator table
+        description: >-
+          Indicator identifier used to link to def_indicator.
+
         tests:
           - not_null
           - relationships:
@@ -22,6 +29,8 @@ models:
           - not_null
 
       - name: metadata_extracted_at
-        description: Timestamp when metadata was extracted from YAML
+        description: >-
+          Timestamp when the catalogue table was built from indicator metadata.
+
         tests:
           - not_null

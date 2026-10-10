@@ -1,0 +1,678 @@
+unit_tests:
+- name: aki_known_dates_age_and_multiplicity
+  model: fct_person_aki_register_by_month
+  overrides:
+    macros:
+      ltc_register_history_month_ends: SELECT column1::DATE AS reference_date FROM VALUES ('2026-09-30'), ('2026-10-31')
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          CASE WHEN people.column1 = -602 AND dates.column1 = '2026-09-30' THEN 17 ELSE 18 END AS age,
+          '2008-10-01'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+          'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-601), (-602), (-603), (-604), (-605), (-606), (-607), (-608), (-609) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+      WHERE NOT (people.column1 = -608 AND dates.column1 = '2026-10-31')
+  - input: ref('int_aki_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,
+          column3::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES (-601, '2026-09-30', '2026-10-01'), (-602, '2020-01-01', NULL),
+          (-603, '2026-10-01', NULL), (-604, '2020-01-01', NULL), (-605, '2027-01-01', NULL),
+          (-606, '2020-01-01', NULL), (-606, '2020-01-01', NULL), (-607, '2026-09-30', '2026-09-30'),
+          (-608, '2020-01-01', NULL), (-609, '2020-01-01', '2026-10-01'), (-609, '2026-09-01', NULL)
+  expect:
+    rows:
+    - person_id: -604
+      month_end_date: '2026-09-30'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2020-01-01'
+    - person_id: -606
+      month_end_date: '2026-09-30'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2020-01-01'
+    - person_id: -607
+      month_end_date: '2026-09-30'
+      earliest_diagnosis_date: '2026-09-30'
+      latest_diagnosis_date: '2026-09-30'
+    - person_id: -608
+      month_end_date: '2026-09-30'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2020-01-01'
+    - person_id: -609
+      month_end_date: '2026-09-30'
+      earliest_diagnosis_date: '2026-09-01'
+      latest_diagnosis_date: '2026-09-01'
+    - person_id: -601
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2026-09-30'
+      latest_diagnosis_date: '2026-09-30'
+    - person_id: -602
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2020-01-01'
+    - person_id: -603
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2026-10-01'
+      latest_diagnosis_date: '2026-10-01'
+    - person_id: -604
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2020-01-01'
+    - person_id: -606
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2020-01-01'
+    - person_id: -607
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2026-09-30'
+      latest_diagnosis_date: '2026-09-30'
+    - person_id: -609
+      month_end_date: '2026-10-31'
+      earliest_diagnosis_date: '2020-01-01'
+      latest_diagnosis_date: '2026-09-01'
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: hypothyroidism_treatment_expiry_latest_diagnosis_and_known_dates
+  model: fct_person_nice_hypothyroidism_register_by_month
+  overrides:
+    macros:
+      ltc_register_history_month_ends: SELECT column1::DATE AS reference_date FROM VALUES ('2026-09-30'), ('2026-10-31')
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date, 50::NUMBER AS age, '1976-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-621), (-622), (-623), (-624), (-625), (-626), (-627), (-628), (-629), (-630), (-631), (-632) AS people CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  - input: ref('int_hypothyroidism_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::TIMESTAMP_NTZ AS date_recorded,
+          TRUE AS is_diagnosis_code
+      FROM VALUES (-621, 'A', '2020-01-01', NULL), (-622, 'A', '2020-01-01', NULL),
+          (-623, 'A', '2020-01-01', NULL), (-624, 'A', '2020-01-01', NULL),
+          (-625, 'A', '2020-01-01', NULL), (-626, 'A', '2020-01-01', '2026-10-01'),
+          (-627, 'A', '2026-08-01', NULL), (-627, 'Z', '2026-09-01', NULL),
+          (-628, 'A', '2026-08-01', NULL), (-628, 'Z', '2026-10-01', NULL),
+          (-629, 'Z', '2026-09-01', NULL), (-630, 'A', '2026-09-01', NULL),
+          (-631, 'Z', '2026-09-01', NULL), (-632, 'A', '2026-09-01', NULL)
+  - input: ref('int_subclinical_hypothyroidism_diagnoses_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id,
+          column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::TIMESTAMP_NTZ AS date_recorded
+      FROM VALUES (-627, 'A', '2026-08-01', NULL), (-628, 'Z', '2026-10-01', NULL),
+          (-629, 'A', '2026-09-01', NULL), (-630, 'Z', '2026-09-01', NULL),
+          (-631, 'A', '2026-08-01', '2026-10-01'), (-632, 'Z', '2026-09-30', '2026-10-01')
+  - input: ref('int_levothyroxine_medications_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS order_date,
+          column3::DATE AS date_recorded
+      FROM VALUES (-621, '2026-03-30', NULL), (-622, '2026-03-31', NULL),
+          (-623, '2026-09-30', NULL), (-623, '2026-09-30', NULL),
+          (-624, '2026-10-01', NULL), (-625, '2026-09-30', '2026-10-01'),
+          (-626, '2026-09-30', NULL), (-627, '2026-09-30', NULL),
+          (-628, '2026-09-30', NULL), (-629, '2026-09-30', NULL),
+          (-630, '2026-09-30', NULL), (-631, '2026-09-30', NULL), (-632, '2026-09-30', NULL)
+  expect:
+    rows:
+    - person_id: -622
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-03-31'
+    - person_id: -623
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -627
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -628
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -629
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -631
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -623
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -624
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-10-01'
+    - person_id: -625
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -626
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -627
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -629
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -631
+      month_end_date: '2026-10-31'
+      latest_levothyroxine_order_date: '2026-09-30'
+    - person_id: -632
+      month_end_date: '2026-09-30'
+      latest_levothyroxine_order_date: '2026-09-30'
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: overweight_bmi_boundaries_thresholds_expiry_and_validity
+  model: fct_person_nice_overweight_register_by_month
+  overrides:
+    macros:
+      ltc_register_history_month_ends: SELECT column1::DATE AS reference_date FROM VALUES ('2026-09-30'),
+        ('2026-10-31')
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: "SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,\n    IFF(people.column1\
+      \ = -700 AND dates.column1 = '2026-09-30', 17, 18)::NUMBER AS age,\n    '2008-10-01'::DATE AS birth_date_approx,\
+      \ 'Female'::VARCHAR AS gender,\n    'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR\
+      \ AS practice_name\nFROM VALUES (-730), (-729), (-728), (-727), (-726), (-725), (-724), (-723),\
+      \ (-722), (-721), (-720), (-719), (-718), (-717), (-716), (-715), (-714), (-713), (-712), (-711),\
+      \ (-710), (-709), (-708), (-707), (-706), (-705), (-704), (-703), (-702), (-701), (-700) AS people\n\
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates"
+  - input: ref('int_bmi_all')
+    format: sql
+    rows: "SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id,\n    column3::TIMESTAMP_NTZ AS\
+      \ clinical_effective_date, column4::TIMESTAMP_NTZ AS date_recorded,\n    column5::FLOAT AS bmi_value,\
+      \ column6::VARCHAR AS bmi_source,\n    IFF(column1 = -730, '2026-10-01'::TIMESTAMP_NTZ, NULL::TIMESTAMP_NTZ)\n\
+      \    AS height_date_recorded\nFROM VALUES (-730, 'A', '2026-09-30', NULL, 30, 'calculated'),\n\
+      \    (-700, 'A', '2026-09-30', NULL, 30, 'recorded'),\n    (-701, 'A', '2025-09-30', NULL, 30, 'recorded'),\n\
+      \    (-702, 'A', '2025-10-01', NULL, 30, 'recorded'),\n    (-703, 'A', '2026-09-30', NULL, 23, 'recorded'),\n\
+      \    (-704, 'A', '2026-09-30', NULL, 25, 'recorded'),\n    (-705, 'A', '2026-09-30', NULL, 27.5,\
+      \ 'recorded'),\n    (-706, 'A', '2026-09-30', NULL, 30, 'recorded'),\n    (-707, 'A', '2026-09-30',\
+      \ NULL, 24.9, 'recorded'),\n    (-708, 'A', '2026-08-01', NULL, 30, 'recorded'),\n    (-708, 'Z',\
+      \ '2026-09-30', NULL, 151, 'recorded'),\n    (-709, 'A', '2026-09-30', NULL, 9.9, 'recorded'),\n\
+      \    (-710, 'A', '2026-10-01', NULL, 30, 'recorded'),\n    (-711, 'A', '2026-09-30', NULL, 29.9,\
+      \ 'recorded'),\n    (-712, 'A', '2026-09-30', NULL, 27.4, 'recorded'),\n    (-713, 'A', '2026-09-30',\
+      \ NULL, 30, 'calculated'),\n    (-714, 'A', '2026-09-30', NULL, 23, 'recorded'),\n    (-715, 'A',\
+      \ '2026-09-30', NULL, 24, 'recorded'),\n    (-716, 'A', '2026-09-30', NULL, 28, 'recorded'),\n \
+      \   (-717, 'A', '2026-09-30', '2026-10-01', 30, 'recorded'),\n    (-718, 'A', '2027-01-01', NULL,\
+      \ 30, 'recorded'),\n    (-719, 'A', '2026-09-30', NULL, 35, 'recorded'),\n    (-719, 'Z', '2026-09-30',\
+      \ NULL, 22, 'recorded'),\n    (-720, 'A', '2026-09-30', NULL, 23, 'recorded'),\n    (-721, 'A',\
+      \ '2026-09-30', NULL, 150.1, 'calculated'),\n    (-722, 'A', '2026-09-30', NULL, 150, 'recorded'),\n\
+      \    (-723, 'A', '2026-09-30', NULL, 10, 'recorded'),\n    (-724, 'A', '2026-09-30', NULL, 35, 'recorded'),\n\
+      \    (-725, 'A', '2026-09-30', NULL, 40, 'recorded'),\n    (-726, 'A', '2026-09-30', NULL, 32.5,\
+      \ 'recorded'),\n    (-727, 'A', '2026-09-30', NULL, 37.5, 'recorded'),\n    (-728, 'A', '2026-09-30',\
+      \ NULL, 27.49, 'recorded'),\n    (-729, 'A', '2026-09-30', NULL, 29.99, 'recorded')"
+  - input: ref('int_ethnicity_qof_all')
+    format: sql
+    rows: "SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,\n \
+      \   column3::TIMESTAMP_NTZ AS date_recorded, column4::BOOLEAN AS is_bame\nFROM VALUES (-703, '2020-01-01',\
+      \ NULL, TRUE),\n    (-705, '2020-01-01', NULL, TRUE),\n    (-712, '2020-01-01', NULL, TRUE),\n \
+      \   (-715, '2026-10-01', NULL, TRUE),\n    (-716, '2020-01-01', '2026-10-01', TRUE),\n    (-720,\
+      \ '2020-01-01', NULL, TRUE),\n    (-720, '2026-09-30', NULL, FALSE),\n    (-726, '2020-01-01', NULL,\
+      \ TRUE),\n    (-727, '2020-01-01', NULL, TRUE),\n    (-728, '2020-01-01', NULL, TRUE)"
+  expect:
+    rows:
+    - person_id: -729
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -728
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -727
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class III
+      bmi_risk_sort_key: 6
+    - person_id: -726
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class II
+      bmi_risk_sort_key: 5
+    - person_id: -725
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class III
+      bmi_risk_sort_key: 6
+    - person_id: -724
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class II
+      bmi_risk_sort_key: 5
+    - person_id: -722
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class III
+      bmi_risk_sort_key: 6
+    - person_id: -720
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -716
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -713
+      month_end_date: '2026-09-30'
+      bmi_source: calculated
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -712
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -711
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -706
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -705
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -704
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -703
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -702
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -730
+      month_end_date: '2026-10-31'
+      bmi_source: calculated
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -729
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -728
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -727
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class III
+      bmi_risk_sort_key: 6
+    - person_id: -726
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class II
+      bmi_risk_sort_key: 5
+    - person_id: -725
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class III
+      bmi_risk_sort_key: 6
+    - person_id: -724
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class II
+      bmi_risk_sort_key: 5
+    - person_id: -722
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class III
+      bmi_risk_sort_key: 6
+    - person_id: -720
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -717
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -716
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -715
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -713
+      month_end_date: '2026-10-31'
+      bmi_source: calculated
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -712
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -711
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -710
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -706
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -705
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -704
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -703
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Overweight
+      bmi_risk_sort_key: 3
+    - person_id: -700
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: obesity_bmi_boundaries_thresholds_expiry_and_validity
+  model: fct_person_nice_obesity_register_by_month
+  overrides:
+    macros:
+      ltc_register_history_month_ends: SELECT column1::DATE AS reference_date FROM VALUES ('2026-09-30'),
+        ('2026-10-31')
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: "SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,\n    IFF(people.column1\
+      \ = -700 AND dates.column1 = '2026-09-30', 17, 18)::NUMBER AS age,\n    '2008-10-01'::DATE AS birth_date_approx,\
+      \ 'Female'::VARCHAR AS gender,\n    'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR\
+      \ AS practice_name\nFROM VALUES (-730), (-729), (-728), (-727), (-726), (-725), (-724), (-723),\
+      \ (-722), (-721), (-720), (-719), (-718), (-717), (-716), (-715), (-714), (-713), (-712), (-711),\
+      \ (-710), (-709), (-708), (-707), (-706), (-705), (-704), (-703), (-702), (-701), (-700) AS people\n\
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates"
+  - input: ref('int_bmi_all')
+    format: sql
+    rows: "SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id,\n    column3::TIMESTAMP_NTZ AS\
+      \ clinical_effective_date, column4::TIMESTAMP_NTZ AS date_recorded,\n    column5::FLOAT AS bmi_value,\
+      \ column6::VARCHAR AS bmi_source,\n    IFF(column1 = -730, '2026-10-01'::TIMESTAMP_NTZ, NULL::TIMESTAMP_NTZ)\n\
+      \    AS height_date_recorded\nFROM VALUES (-730, 'A', '2026-09-30', NULL, 30, 'calculated'),\n\
+      \    (-700, 'A', '2026-09-30', NULL, 30, 'recorded'),\n    (-701, 'A', '2025-09-30', NULL, 30, 'recorded'),\n\
+      \    (-702, 'A', '2025-10-01', NULL, 30, 'recorded'),\n    (-703, 'A', '2026-09-30', NULL, 23, 'recorded'),\n\
+      \    (-704, 'A', '2026-09-30', NULL, 25, 'recorded'),\n    (-705, 'A', '2026-09-30', NULL, 27.5,\
+      \ 'recorded'),\n    (-706, 'A', '2026-09-30', NULL, 30, 'recorded'),\n    (-707, 'A', '2026-09-30',\
+      \ NULL, 24.9, 'recorded'),\n    (-708, 'A', '2026-08-01', NULL, 30, 'recorded'),\n    (-708, 'Z',\
+      \ '2026-09-30', NULL, 151, 'recorded'),\n    (-709, 'A', '2026-09-30', NULL, 9.9, 'recorded'),\n\
+      \    (-710, 'A', '2026-10-01', NULL, 30, 'recorded'),\n    (-711, 'A', '2026-09-30', NULL, 29.9,\
+      \ 'recorded'),\n    (-712, 'A', '2026-09-30', NULL, 27.4, 'recorded'),\n    (-713, 'A', '2026-09-30',\
+      \ NULL, 30, 'calculated'),\n    (-714, 'A', '2026-09-30', NULL, 23, 'recorded'),\n    (-715, 'A',\
+      \ '2026-09-30', NULL, 24, 'recorded'),\n    (-716, 'A', '2026-09-30', NULL, 28, 'recorded'),\n \
+      \   (-717, 'A', '2026-09-30', '2026-10-01', 30, 'recorded'),\n    (-718, 'A', '2027-01-01', NULL,\
+      \ 30, 'recorded'),\n    (-719, 'A', '2026-09-30', NULL, 35, 'recorded'),\n    (-719, 'Z', '2026-09-30',\
+      \ NULL, 22, 'recorded'),\n    (-720, 'A', '2026-09-30', NULL, 23, 'recorded'),\n    (-721, 'A',\
+      \ '2026-09-30', NULL, 150.1, 'calculated'),\n    (-722, 'A', '2026-09-30', NULL, 150, 'recorded'),\n\
+      \    (-723, 'A', '2026-09-30', NULL, 10, 'recorded'),\n    (-724, 'A', '2026-09-30', NULL, 35, 'recorded'),\n\
+      \    (-725, 'A', '2026-09-30', NULL, 40, 'recorded'),\n    (-726, 'A', '2026-09-30', NULL, 32.5,\
+      \ 'recorded'),\n    (-727, 'A', '2026-09-30', NULL, 37.5, 'recorded'),\n    (-728, 'A', '2026-09-30',\
+      \ NULL, 27.49, 'recorded'),\n    (-729, 'A', '2026-09-30', NULL, 29.99, 'recorded')"
+  - input: ref('int_ethnicity_qof_all')
+    format: sql
+    rows: "SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,\n \
+      \   column3::TIMESTAMP_NTZ AS date_recorded, column4::BOOLEAN AS is_bame\nFROM VALUES (-703, '2020-01-01',\
+      \ NULL, TRUE),\n    (-705, '2020-01-01', NULL, TRUE),\n    (-712, '2020-01-01', NULL, TRUE),\n \
+      \   (-715, '2026-10-01', NULL, TRUE),\n    (-716, '2020-01-01', '2026-10-01', TRUE),\n    (-720,\
+      \ '2020-01-01', NULL, TRUE),\n    (-720, '2026-09-30', NULL, FALSE),\n    (-726, '2020-01-01', NULL,\
+      \ TRUE),\n    (-727, '2020-01-01', NULL, TRUE),\n    (-728, '2020-01-01', NULL, TRUE)"
+  expect:
+    rows:
+    - person_id: -727
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class III
+      bmi_risk_sort_key: 6
+    - person_id: -726
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class II
+      bmi_risk_sort_key: 5
+    - person_id: -725
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class III
+      bmi_risk_sort_key: 6
+    - person_id: -724
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class II
+      bmi_risk_sort_key: 5
+    - person_id: -722
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class III
+      bmi_risk_sort_key: 6
+    - person_id: -713
+      month_end_date: '2026-09-30'
+      bmi_source: calculated
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -706
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -705
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -702
+      month_end_date: '2026-09-30'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -730
+      month_end_date: '2026-10-31'
+      bmi_source: calculated
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -727
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class III
+      bmi_risk_sort_key: 6
+    - person_id: -726
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class II
+      bmi_risk_sort_key: 5
+    - person_id: -725
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class III
+      bmi_risk_sort_key: 6
+    - person_id: -724
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class II
+      bmi_risk_sort_key: 5
+    - person_id: -722
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class III
+      bmi_risk_sort_key: 6
+    - person_id: -717
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -716
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -713
+      month_end_date: '2026-10-31'
+      bmi_source: calculated
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -710
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -706
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -705
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: true
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+    - person_id: -700
+      month_end_date: '2026-10-31'
+      bmi_source: recorded
+      requires_lower_bmi_thresholds: false
+      bmi_category: Obese Class I
+      bmi_risk_sort_key: 4
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_weight_profile_covers_all_adults
+  model: int_nice_weight_profile_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, '2026-09-30'::DATE AS reporting_date, column2::NUMBER AS age, '2008-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-661,17),(-662,18),(-663,40),(-664,65)
+  - input: ref('int_bmi_qof_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,'SYNTHETIC'::VARCHAR AS id,'2026-09-30'::TIMESTAMP_NTZ AS clinical_effective_date,30::FLOAT AS bmi_value,'BMIVAL_COD'::VARCHAR AS source_cluster_id FROM VALUES (-661),(-662),(-663),(-664)
+  - input: ref('dim_person_demographics_historical')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id,NULL::DATE AS effective_start_date,NULL::DATE AS effective_end_date,NULL::VARCHAR AS ethnicity_category WHERE FALSE
+  - input: ref('int_nice_weight_advice_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id,NULL::DATE AS clinical_effective_date WHERE FALSE
+  expect:
+    rows:
+    - person_id: -662
+      reporting_date: '2026-09-30'
+      bmi_value: 30
+      is_recorded_white: false
+      latest_weight_advice_date: null
+    - person_id: -663
+      reporting_date: '2026-09-30'
+      bmi_value: 30
+      is_recorded_white: false
+      latest_weight_advice_date: null
+    - person_id: -664
+      reporting_date: '2026-09-30'
+      bmi_value: 30
+      is_recorded_white: false
+      latest_weight_advice_date: null
+  config:
+    tags:
+    - monthly-full
+    - nice-history

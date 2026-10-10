@@ -1,0 +1,303 @@
+unit_tests:
+- name: nice_port_egfr_reporting_day_and_value_free_test
+  model: int_egfr_test_all
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS code, column2::VARCHAR AS cluster_id, column3::VARCHAR AS source, column4::VARCHAR AS cluster_description, column5::VARCHAR AS code_description
+      FROM VALUES
+          ('SYN_EGFR', 'EGFR_COD', 'PCD', 'Synthetic', 'Synthetic'),
+          ('SYN_CREAT', 'CREAT_COD', 'PCD', 'Synthetic', 'Synthetic')
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, column2::VARCHAR AS patient_id, column3::NUMBER AS person_id, column4::TIMESTAMP_NTZ AS clinical_effective_date, column5::TIMESTAMP_NTZ AS date_recorded, column6::VARCHAR AS result_value, column7::VARCHAR AS mapped_concept_code, column8::VARCHAR AS mapped_concept_display, column9::VARCHAR AS result_units_source_concept_id, column10::VARCHAR AS result_unit_code, column11::VARCHAR AS result_unit_display, column12::VARCHAR AS result_text, column13::VARCHAR AS allergy_medication_name, column14::VARCHAR AS mapped_concept_id, column15::VARCHAR AS episodicity_source_concept_id, column16::BOOLEAN AS is_problem, column17::BOOLEAN AS is_review, column18::TIMESTAMP_NTZ AS problem_end_date, column19::TIMESTAMP_NTZ AS lds_transform_datetime, column20::NUMBER AS age_at_event
+      FROM VALUES
+          ('SYN_OLD', 'SYN_P', -98001, '2024-01-01', '2024-01-02', '80', 'SYN_EGFR', 'Synthetic eGFR', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_NO_VALUE', 'SYN_P', -98001, '2024-01-02', '2024-01-03', NULL, 'SYN_EGFR', 'Synthetic eGFR', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_NOON', 'SYN_P', -98001, DATEADD(hour, 12, DATEADD(day, 0, CURRENT_DATE()::TIMESTAMP_NTZ)), DATEADD(hour, 18, DATEADD(day, 0, CURRENT_DATE()::TIMESTAMP_NTZ)), '80', 'SYN_EGFR', 'Synthetic eGFR', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_FUTURE', 'SYN_P', -98001, DATEADD(hour, 12, DATEADD(day, 1, CURRENT_DATE()::TIMESTAMP_NTZ)), DATEADD(hour, 18, DATEADD(day, 1, CURRENT_DATE()::TIMESTAMP_NTZ)), '80', 'SYN_EGFR', 'Synthetic eGFR', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_CREAT', 'SYN_P', -98001, '2024-01-01', '2024-01-02', '80', 'SYN_CREAT', 'Synthetic creatinine', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+  expect:
+    rows:
+    - clinical_effective_date: '2024-01-01 00:00:00'
+      is_result_recorded: true
+    - clinical_effective_date: '2024-01-02 00:00:00'
+      is_result_recorded: false
+    - clinical_effective_date: '{{ run_started_at.strftime(''%Y-%m-%d'') }} 12:00:00'
+      is_result_recorded: true
+  overrides:
+    macros:
+      # Fusion 2.0.6 probes unmocked SQL and cannot parse UUID columns.
+      # Supply types for the empty schema probe; actual SQL still uses mocked inputs.
+      get_empty_subquery_sql: |-
+        SELECT NULL::VARCHAR AS id, NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::BOOLEAN AS is_result_recorded WHERE FALSE
+- name: nice_port_alcohol_pair_requires_positive_fast_or_auditc_by_reporting_day
+  model: int_nice_alcohol_screen_intervention
+  given:
+  - input: ref('int_alcohol_screening_all')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, column2::VARCHAR AS source_cluster_id, column3::NUMBER AS person_id, column4::TIMESTAMP_NTZ AS clinical_effective_date, column5::VARCHAR AS screening_tool, column6::FLOAT AS score_value
+      FROM VALUES
+          ('SYN_FAST', 'FAST_COD', -98001, '2024-01-01', 'FAST', 3),
+          ('SYN_AUDITC', 'AUDITC_COD', -98001, '2024-01-02', 'AUDIT-C', 5),
+          ('SYN_FAST_LOW', 'FAST_COD', -98001, '2024-01-03', 'FAST', 2),
+          ('SYN_AUDITC_LOW', 'AUDITC_COD', -98001, '2024-01-04', 'AUDIT-C', 4),
+          ('SYN_AUDIT', 'AUDIT_COD', -98001, '2024-01-05', 'AUDIT', 20),
+          ('SYN_FUTURE', 'FAST_COD', -98001, '2999-01-01', 'FAST', 3)
+  - input: ref('int_alcohol_intervention')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::VARCHAR AS alcohol_advice_services WHERE FALSE
+  expect:
+    rows:
+    - source_cluster_id: FAST_COD
+    - source_cluster_id: AUDITC_COD
+  overrides:
+    macros:
+      # Fusion 2.0.6 probes unmocked SQL and cannot parse UUID columns.
+      # Supply types for the empty schema probe; actual SQL still uses mocked inputs.
+      get_empty_subquery_sql: |-
+        SELECT NULL::VARCHAR AS screening_observation_id, NULL::VARCHAR AS source_cluster_id, NULL::NUMBER AS person_id, NULL::DATE AS screen_date, NULL::VARCHAR AS screening_tool, NULL::FLOAT AS score_value, NULL::DATE AS latest_intervention_date, NULL::DATE AS first_intervention_date WHERE FALSE
+- name: nice_port_asthma_requires_same_day_plan_and_preceding_month_count
+  model: int_nice_asthma_review_all
+  given:
+  - input: ref('int_ltc_review_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date, column3::VARCHAR AS review_type
+      FROM VALUES
+          (-98011, '2024-09-01', 'ASTHMA_REVIEW'),
+          (-98011, '2024-09-01', 'ASTHMA_ACTION_PLAN'),
+          (-98011, '2024-08-02', 'ASTHMA_EXACERBATION_COUNT'),
+          (-98012, '2024-09-01', 'ASTHMA_REVIEW'),
+          (-98012, '2024-09-01', 'ASTHMA_EXACERBATION_COUNT'),
+          (-98013, '2024-09-01', 'ASTHMA_REVIEW'),
+          (-98013, '2024-09-02', 'ASTHMA_ACTION_PLAN'),
+          (-98013, '2024-09-01', 'ASTHMA_EXACERBATION_COUNT'),
+          (-98014, '2024-09-01', 'ASTHMA_REVIEW'),
+          (-98014, '2024-09-01', 'ASTHMA_ACTION_PLAN'),
+          (-98014, '2024-08-01', 'ASTHMA_EXACERBATION_COUNT'),
+          (-98015, '2024-09-01', 'ASTHMA_REVIEW'),
+          (-98015, '2024-09-01', 'ASTHMA_ACTION_PLAN'),
+          (-98015, '2024-09-02', 'ASTHMA_EXACERBATION_COUNT'),
+          (-98016, '2024-06-01', 'ASTHMA_REVIEW'),
+          (-98016, '2024-06-01', 'ASTHMA_ACTION_PLAN'),
+          (-98016, '2024-06-01', 'ASTHMA_EXACERBATION_COUNT'),
+          (-98016, '2024-09-01', 'ASTHMA_REVIEW'),
+          (-98017, '2024-09-01', 'ASTHMA_REVIEW'),
+          (-98017, '2024-09-01', 'ASTHMA_REVIEW'),
+          (-98017, '2024-09-01', 'ASTHMA_ACTION_PLAN'),
+          (-98017, '2024-09-01', 'ASTHMA_EXACERBATION_COUNT')
+  expect:
+    rows:
+    - person_id: -98017
+      review_date: '2024-09-01'
+      is_complete_review: true
+    - person_id: -98016
+      review_date: '2024-06-01'
+      is_complete_review: true
+    - person_id: -98016
+      review_date: '2024-09-01'
+      is_complete_review: false
+    - person_id: -98015
+      review_date: '2024-09-01'
+      is_complete_review: false
+    - person_id: -98015
+      review_date: '2024-09-02'
+      is_complete_review: false
+    - person_id: -98014
+      review_date: '2024-08-01'
+      is_complete_review: false
+    - person_id: -98014
+      review_date: '2024-09-01'
+      is_complete_review: false
+    - person_id: -98013
+      review_date: '2024-09-01'
+      is_complete_review: false
+    - person_id: -98013
+      review_date: '2024-09-02'
+      is_complete_review: false
+    - person_id: -98012
+      review_date: '2024-09-01'
+      is_complete_review: false
+    - person_id: -98011
+      review_date: '2024-08-02'
+      is_complete_review: false
+    - person_id: -98011
+      review_date: '2024-09-01'
+      is_complete_review: true
+- name: nice_port_smoking_support_referrals_active_drugs_and_date_correction
+  model: int_nice_smoking_support_all
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS code, column2::VARCHAR AS cluster_id, column3::VARCHAR AS source, column4::VARCHAR AS cluster_description, column5::VARCHAR AS code_description
+      FROM VALUES
+          ('SYN_REF', 'REFERSSSA_COD', 'PCD', 'Synthetic', 'Synthetic'),
+          ('SYN_PHARM', 'PHARM_COD', 'PCD', 'Synthetic', 'Synthetic'),
+          ('SYN_ADVICE', 'SMOKINGINT_COD', 'PCD', 'Synthetic', 'Synthetic'),
+          ('SYN_DECLINE', 'SMOKPCADEC_COD', 'PCD', 'Synthetic', 'Synthetic')
+  - input: ref('stg_nhsd_snomed_sct_refset_simple')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS ref_set_id, column2::BOOLEAN AS active, column3::VARCHAR AS referenced_component_id
+      FROM VALUES
+          ('12465801000001106', TRUE, 'SYN_DRUG'),
+          ('12465801000001106', FALSE, 'SYN_INACTIVE'),
+          ('1', TRUE, 'SYN_OTHER')
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, column2::VARCHAR AS patient_id, column3::NUMBER AS person_id, column4::TIMESTAMP_NTZ AS clinical_effective_date, column5::TIMESTAMP_NTZ AS date_recorded, column6::VARCHAR AS result_value, column7::VARCHAR AS mapped_concept_code, column8::VARCHAR AS mapped_concept_display, column9::VARCHAR AS result_units_source_concept_id, column10::VARCHAR AS result_unit_code, column11::VARCHAR AS result_unit_display, column12::VARCHAR AS result_text, column13::VARCHAR AS allergy_medication_name, column14::VARCHAR AS mapped_concept_id, column15::VARCHAR AS episodicity_source_concept_id, column16::BOOLEAN AS is_problem, column17::BOOLEAN AS is_review, column18::TIMESTAMP_NTZ AS problem_end_date, column19::TIMESTAMP_NTZ AS lds_transform_datetime, column20::NUMBER AS age_at_event
+      FROM VALUES
+          ('SYN_0', 'SYN_P', -98020, '2024-09-01', '2024-09-01', NULL, 'SYN_REF', 'Synthetic support', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_1', 'SYN_P', -98021, '2024-09-01', '2024-09-01', NULL, 'SYN_PHARM', 'Synthetic support', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_2', 'SYN_P', -98022, '2024-09-01', '2024-09-01', NULL, 'SYN_ADVICE', 'Synthetic support', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_3', 'SYN_P', -98023, '2024-09-01', '2024-09-01', NULL, 'SYN_DECLINE', 'Synthetic support', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_4', 'SYN_P', -98024, '2024-09-01', '2024-09-01', NULL, 'SYN_DRUG', 'Synthetic support', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_5', 'SYN_P', -98025, '2024-09-01', '2024-09-01', NULL, 'SYN_INACTIVE', 'Synthetic support', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_6', 'SYN_P', -98026, '2024-09-01', '2024-09-01', NULL, 'SYN_OTHER', 'Synthetic support', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_7', 'SYN_P', -98027, '2999-01-01', '2024-09-01', NULL, 'SYN_DRUG', 'Synthetic support', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_8', 'SYN_P', -98028, '2999-01-01', '2999-01-01', NULL, 'SYN_DRUG', 'Synthetic support', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_9', 'SYN_P', -98029, '2999-01-01', '2999-01-01', NULL, 'SYN_REF', 'Synthetic support', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_10', 'SYN_P', -98030, DATEADD(hour, 14, CURRENT_DATE()::TIMESTAMP_NTZ), DATEADD(hour, 18, CURRENT_DATE()::TIMESTAMP_NTZ), NULL, 'SYN_REF', 'Synthetic support', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id, column2::VARCHAR AS patient_id, column3::NUMBER AS person_id, column4::TIMESTAMP_NTZ AS clinical_effective_date, column5::VARCHAR AS mapped_concept_code, column6::NUMBER AS age_at_event
+      FROM VALUES
+          ('SYN_M1', 'SYN_PM1', -98040, '2024-09-01', 'SYN_DRUG', NULL),
+          ('SYN_M2', 'SYN_PM2', -98041, '2999-01-01', 'SYN_DRUG', NULL),
+          ('SYN_M3', 'SYN_PM3', -98042, '2024-09-01', 'SYN_INACTIVE', NULL),
+          ('SYN_M4', 'SYN_PM4', -98043, DATEADD(hour, 14, CURRENT_DATE()::TIMESTAMP_NTZ), 'SYN_DRUG', NULL)
+  - input: ref('int_patient_person_unique')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS patient_id, column2::NUMBER AS person_id
+      FROM VALUES
+          ('SYN_PM1', -98040),
+          ('SYN_PM2', -98041),
+          ('SYN_PM3', -98042),
+          ('SYN_PM4', -98043)
+  expect:
+    rows:
+    - source_key: SYN_0
+    - source_key: SYN_1
+    - source_key: SYN_4
+    - source_key: SYN_7
+    - source_key: SYN_10
+    - source_key: SYN_M1
+    - source_key: SYN_M4
+- name: nice_port_childhood_dtp_formulations_active_drugs_and_explicit_booster
+  model: int_nice_childhood_immunisation_all
+  given:
+  - input: ref('stg_reference_childhood_imms_codes')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS snomedconceptid, column2::VARCHAR AS vaccine, column3::VARCHAR AS proposedcluster
+      FROM VALUES
+          ('SYN6', 'DTaP/IPV/Hib/HepB/6-in-1', '6IN1_ADM'),
+          ('SYN6DRUG', 'DTaP/IPV/Hib/HepB/6-in-1', '6IN1_DRUG'),
+          ('SYNDECLINE', 'DTaP/IPV/Hib/HepB/6-in-1', '6IN1_DEC'),
+          ('SYN4DRUG', 'dTaP/IPV/4-in-1', '4IN1_DRUG')
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS code, column2::VARCHAR AS cluster_id, column3::VARCHAR AS source, column4::VARCHAR AS cluster_description, column5::VARCHAR AS code_description
+      FROM VALUES
+          ('SYN4', '4IN1VAC_COD', 'PCD', 'Synthetic', 'Synthetic'),
+          ('SYN5', '5IN1VAC_COD', 'PCD', 'Synthetic', 'Synthetic'),
+          ('SYN6', '6IN1VAC_COD', 'PCD', 'Synthetic', 'Synthetic'),
+          ('SYNBOOST', 'DTAPIPVVACBOOST_COD', 'PCD', 'Synthetic', 'Synthetic')
+  - input: ref('stg_nhsd_snomed_sct_refset_simple')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS ref_set_id, column2::BOOLEAN AS active, column3::VARCHAR AS referenced_component_id
+      FROM VALUES
+          ('72381000001103', TRUE, 'SYN5DRUG'),
+          ('72381000001103', FALSE, 'SYNOLD')
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS mapped_concept_code, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::NUMBER AS age_at_event
+      FROM VALUES
+          (-98050, 'SYN4', '2024-01-01', 0),
+          (-98056, 'SYN5', '2024-01-01', 0),
+          (-98057, 'SYN6', '2024-01-01', 0),
+          (-98058, 'SYNDECLINE', '2024-01-01', 0),
+          (-98050, 'SYN6', '2999-01-01', 0),
+          (-98051, 'SYNBOOST', '2024-01-01', 4)
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS mapped_concept_code, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::NUMBER AS age_at_event
+      FROM VALUES
+          (-98052, 'SYN6DRUG', '2024-01-01', 0),
+          (-98053, 'SYN5DRUG', '2024-01-01', 0),
+          (-98054, 'SYNOLD', '2024-01-01', 0),
+          (-98055, 'SYN4DRUG', '2024-01-01', 4)
+  expect:
+    rows:
+    - person_id: -98050
+      vaccine_group: DTAP_PRIMARY
+      event_type: Administration
+    - person_id: -98056
+      vaccine_group: DTAP_PRIMARY
+      event_type: Administration
+    - person_id: -98057
+      vaccine_group: DTAP_PRIMARY
+      event_type: Administration
+    - person_id: -98051
+      vaccine_group: DTAP_BOOSTER
+      event_type: Administration
+    - person_id: -98052
+      vaccine_group: DTAP_PRIMARY
+      event_type: Administration_drug
+    - person_id: -98053
+      vaccine_group: DTAP_PRIMARY
+      event_type: Administration_drug
+    - person_id: -98055
+      vaccine_group: DTAP_PRIMARY
+      event_type: Administration_drug
+- name: nice_port_alcohol_screening_tool_and_positive_thresholds
+  model: int_alcohol_screening_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date, column4::VARCHAR AS cluster_id, column5::VARCHAR AS result_value, column6::VARCHAR AS mapped_concept_code, column7::VARCHAR AS mapped_concept_display
+        FROM VALUES
+            (-98090, 'SYN_0', '2024-09-01', 'AUDIT_COD', '8', 'SYNTHETIC', 'Synthetic screening'),
+            (-98091, 'SYN_1', '2024-08-01', 'FAST_COD', '3', 'SYNTHETIC', 'Synthetic screening'),
+            (-98092, 'SYN_2', '2024-08-01', 'AUDITC_COD', '5', 'SYNTHETIC', 'Synthetic screening'),
+            (-98093, 'SYN_3', '2024-09-01', 'FAST_COD', '2', 'SYNTHETIC', 'Synthetic screening'),
+            (-98094, 'SYN_4', '2024-09-01', 'AUDITC_COD', '4', 'SYNTHETIC', 'Synthetic screening'),
+            (-98095, 'SYN_5', '2024-07-01', 'FAST_COD', '3', 'SYNTHETIC', 'Synthetic screening'),
+            (-98095, 'SYN_6', '2024-09-01', 'AUDIT_COD', '8', 'SYNTHETIC', 'Synthetic screening')
+  given: []
+  expect:
+    rows:
+    - screening_tool: AUDIT
+      score_value: 8
+      is_positive_screen: true
+    - screening_tool: FAST
+      score_value: 3
+      is_positive_screen: true
+    - screening_tool: AUDIT-C
+      score_value: 5
+      is_positive_screen: true
+    - screening_tool: FAST
+      score_value: 2
+      is_positive_screen: false
+    - screening_tool: AUDIT-C
+      score_value: 4
+      is_positive_screen: false
+    - screening_tool: FAST
+      score_value: 3
+      is_positive_screen: true
+    - screening_tool: AUDIT
+      score_value: 8
+      is_positive_screen: true

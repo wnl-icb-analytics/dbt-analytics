@@ -1,0 +1,33 @@
+models:
+  - name: fct_person_osteoporosis_register_by_month
+    description: >
+      Osteoporosis register at each completed month-end, on the QOF rules of
+      fct_person_osteoporosis_register. Ages 50-74 require a fragility fracture
+      from 1 April 2012, an osteoporosis diagnosis and a DXA scan or T-score at
+      or below -2.5; ages 75 or over require a fracture from 1 April 2014 and an
+      osteoporosis diagnosis.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: earliest_diagnosis_date
+        description: Earliest osteoporosis diagnosis known by the month-end.
+      - name: latest_diagnosis_date
+        description: Latest osteoporosis diagnosis known by the month-end.

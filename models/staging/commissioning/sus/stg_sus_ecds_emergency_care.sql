@@ -122,7 +122,9 @@ select core.primarykey_id
     , patient_usual_address_postcode_pseudo
     , patient_usual_address_postcode_district
     , patient_usual_address_lsoa_11
-    , derived.dmic_lsoa2021 as patient_usual_address_lsoa_21
+    -- SUS+ LSOA 2021 from April 2026 activity; DMIC fills April 2024 to March 2026.
+    , coalesce(core.patient_usual_address_lsoa_21, derived.dmic_lsoa2021)
+        as patient_usual_address_lsoa_21
     , patient_usual_address_local_authority_district
     , patient_usual_address_index_of_multiple_deprivation_decile
     , patient_gp_registration_general_practice

@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_dementia_register.sql.
--- This live fact includes future-dated records; its PIT pair is strict as-of.
+-- This live fact uses evidence dated on or before today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -69,6 +69,7 @@ WITH dementia_diagnoses AS (
         ARRAY_CONSTRUCT() AS all_resolved_concept_codes  -- No resolved codes for dementia
 
     FROM {{ ref('int_dementia_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 )
 

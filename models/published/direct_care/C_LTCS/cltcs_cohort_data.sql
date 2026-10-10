@@ -206,16 +206,17 @@ select il.patient_id
     ,coalesce(wl.same_tfc_multiple_providers_flag, false) as has_same_tfc_multiple_providers_flag
     ,coalesce(wl.current_waiting_list_arrays, array_construct()) as current_waiting_list_arrays
     -- polypharmacy, high risk drugs, suspected non-adherence
-    ,zeroifnull(polyp.medication_count) as medication_count
     ,CASE 
         WHEN polyp.medication_name_list IS NULL THEN NULL
         WHEN ARRAY_SIZE(polyp.medication_name_list) = 0 THEN NULL
         ELSE polyp.medication_name_list
-      END as medication_name_list
+      END as poly_medication_name_list
     ,coalesce(polyp.is_polypharmacy_5plus, false) as is_polypharmacy_5plus
     ,coalesce(polyp.is_polypharmacy_10plus, false) as is_polypharmacy_10plus
     , zeroifnull(TO_NUMBER(main_language_flag)) + zeroifnull(TO_NUMBER(has_severe_mental_illness)) + zeroifnull(TO_NUMBER(has_learning_disability)) + zeroifnull(TO_NUMBER(has_asc_service)) as attendance_difficulty_score
-    -- Recent medications (last 30 days and last year)
+    -- Recent and active repeat medications (last 30 days and last year)
+    , zeroifnull(rm.unique_repeat_medication_count) as medication_count
+    , COALESCE(rm.medications_repeat, ARRAY_CONSTRUCT()) as medication_name_list -- TO DO: change to more descriptive name when can update app and pull through non-repeat lists for export function
     ,coalesce(rm.medications_recent_12mo, array_construct()) as medications_recent_12mo
     ,zeroifnull(rm.unique_active_ingredient_count_12mo) as unique_active_ingredient_count_12mo
     -- Current referrals

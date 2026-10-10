@@ -1,0 +1,115 @@
+version: 2
+
+models:
+  - name: practice_wnl_all
+    description: >-
+      WNL GP practices curated in the primary care org manager app, one row per
+      practice in any status, with current PCN and neighbourhood. Use
+      practice_wnl_active for open practices only.
+
+      Covers practices the app maintains for sub-ICBs 93C and W2U3Z, including
+      closed practices, so activity that references a closed practice still
+      joins. Practice details, PCN membership and neighbourhood mapping come
+      from the current rows of the app's SCD2 history tables. Practices
+      outside WNL are in practice_national_all.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns: &practice_wnl_columns
+      - name: practice_code
+        description: GP practice ODS code.
+        data_tests:
+          - unique
+          - not_null
+      - name: practice_name
+        description: Practice name as curated in the app, usually a shortened ODS name.
+      - name: practice_status
+        description: Active, Dormant, Proposed, Closed or Retired.
+      - name: sub_icb_code
+        description: Sub-ICB location the practice belongs to - 93C (North Central London) or W2U3Z (North West London).
+      - name: health_borough_name
+        description: >-
+          Legacy CCG area used as the familiar health borough; not a London local
+          authority. West London and Central London are the health boroughs for
+          Kensington and Chelsea and Westminster.
+      - name: registered_borough_name
+        description: Local authority associated with the practice's registered population in ODS.
+      - name: geographic_borough_name
+        description: Local authority containing the practice site.
+      - name: pcn_code
+        description: Current PCN. Null when the practice has no PCN membership.
+      - name: pcn_name_with_borough
+        description: PCN name prefixed with the health borough for grouped display.
+      - name: neighbourhood_code
+        description: >-
+          Current neighbourhood (Integrated Neighbourhood Team), 3-letter borough
+          code plus number, e.g. BAR01. Null when unmapped.
+      - name: neighbourhood_code_legacy
+        description: Superseded WNL N-code for the neighbourhood, kept for legacy joins.
+      - name: is_isa_accepted
+        description: Information sharing agreement accepted. Null means not recorded.
+      - name: lsoa_code
+        description: LSOA containing the practice site. Mostly 2021 codes; a few rows still carry 2011 codes.
+      - name: msoa_code
+        description: MSOA containing the practice site.
+      - name: ods_first_created_at
+        description: When ODS first created the practice record.
+      - name: ods_last_updated_at
+        description: When ODS last updated the practice record.
+      - name: details_valid_from
+        description: Date the current version of the practice details took effect in the app.
+
+  - name: practice_wnl_active
+    description: >-
+      Open WNL GP practices curated in the primary care org manager app, one
+      row per practice with practice_status Active, with current PCN and
+      neighbourhood. Same columns as practice_wnl_all.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns: *practice_wnl_columns
+
+  - name: pcn_wnl_active
+    description: >-
+      Active WNL Primary Care Networks curated in the primary care org manager
+      app, one row per PCN, with the number of active member practices.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: pcn_code
+        description: PCN ODS code.
+        data_tests:
+          - unique
+          - not_null
+      - name: pcn_name_with_borough
+        description: PCN name prefixed with the health borough for grouped display.
+      - name: health_borough_name
+        description: Legacy CCG area used as the familiar health borough; not a London local authority.
+      - name: active_member_practice_count
+        description: Active practices whose current PCN membership is this PCN.
+
+  - name: neighbourhood_wnl_active
+    description: >-
+      Active WNL neighbourhoods (Integrated Neighbourhood Teams) curated in the
+      primary care org manager app, one row per neighbourhood, with the number
+      of active member practices.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: neighbourhood_code
+        description: Neighbourhood code, 3-letter borough code plus number, e.g. BAR01.
+        data_tests:
+          - unique
+          - not_null
+      - name: neighbourhood_code_legacy
+        description: Superseded WNL N-code, kept for legacy joins.
+      - name: health_borough_name
+        description: Legacy CCG area used as the familiar health borough; not a London local authority.
+      - name: active_member_practice_count
+        description: Active practices currently mapped to this neighbourhood.
