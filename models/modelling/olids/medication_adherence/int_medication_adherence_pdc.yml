@@ -1,0 +1,156 @@
+models:
+  - name: int_medication_adherence_pdc
+    description: >
+      Rolling PDC (Proportion of Days Covered) per person, drug and monthly
+      12-month window, plus an overall PDC over each (person, drug) refill
+      chain. Port of MedicationTableSnowpark.compute_pdc_rolling
+      (window_length=12, pdc_type=2 dynamic exposure denominator,
+      exclusive=True) with all drug classes in one table. Two column
+      families: the faithful columns (pdc, covered_days, window_days,
+      overall_pdc, total_exposure_days) replicate the AIC measure exactly,
+      including the last-order quirk and its projection of unobserved future
+      supply; the *_corrected columns fix both — the final order's supply
+      counts, and all supply and the corrected denominators are
+      right-censored at as_at_date. That aligns the corrected family with
+      PDC2 (Prieto-Merino et al. 2021). Exposure is still not bounded to the
+      window frame in either family (documented in the model header).
+      as_at_date is derived from the data, not the clock, and is emitted as
+      a column. One row per (person_id, drug_name, window_start); windows
+      with no qualifying orders carry NULL exposure / covered_days / pdc.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - drug_name
+              - window_start
+      # Both bounds derive from overall_start (+ offset / + offset + 12
+      # months), so day-of-month clamping can differ between them (e.g.
+      # overall_start 31 Jan: window_start clamps to 28 Feb, window_end to
+      # 29 Feb in a leap year) — assert the month distance, which clamping
+      # never affects, rather than exact dateadd equality.
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "datediff(month, window_start, window_end) = window_length_months"
+      # Where the exposure ends at or before the observation date, censoring
+      # is a no-op and corrected differs from faithful only by the quirk fix
+      # (which removes a subtraction), so corrected can never be lower.
+      # Rows whose exposure runs past as_at_date are exempt: censoring
+      # legitimately removes covered days the faithful figure counts.
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: >
+              pdc_corrected >= pdc or pdc is null or pdc_corrected is null
+              or exposure_end > as_at_date
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: >
+              overall_pdc_corrected >= overall_pdc
+              or overall_pdc is null or overall_pdc_corrected is null
+              or overall_end > as_at_date
+      # Censoring can only shorten the corrected denominators
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: >
+              window_days_corrected is null or window_days_corrected <= window_days
+      # PDC is uncapped by design (>1 possible with overlapping supply);
+      # warn on pathological values rather than block
+      - dbt_utils.expression_is_true:
+          config:
+            severity: warn
+          arguments:
+            expression: "pdc <= 1.5 or pdc is null"
+    columns:
+      - name: person_id
+        description: Person identifier.
+        tests:
+          - not_null
+      - name: drug_name
+        description: Drug grouping key (see int_medication_adherence_orders for grain caveat).
+        tests:
+          - not_null
+      - name: drug_class
+        description: Adherence drug class label.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - RAAS
+                  - Beta-blocker
+                  - Calcium-channel blocker
+                  - Non-insulin anti-diabetic
+                  - Lipid lowering drugs
+      - name: window_start
+        description: Window start — overall_start plus N months (person-anchored, not calendar-aligned).
+        tests:
+          - not_null
+      - name: window_end
+        description: Window end — window_start plus 12 months (exclusive bound in the order join).
+        tests:
+          - not_null
+      - name: exposure_start
+        description: First order date within the window (pdc_type=2 denominator start). NULL when the window has no qualifying orders.
+      - name: exposure_end
+        description: Last order end date within the window. NULL when the window has no qualifying orders.
+      - name: covered_days
+        description: Net covered days in the window, faithful variant (can be negative via the last-order quirk; counts supply projected past the build date).
+      - name: covered_days_corrected
+        description: >
+          Net covered days with the last-order quirk fixed and all supply
+          right-censored at as_at_date (the stockpile subtraction is censored
+          the same way).
+      - name: window_days
+        description: >
+          Exposure span in days — the faithful pdc_type=2 denominator. Can
+          extend beyond the window frame (overhang) and past as_at_date.
+          NULL for empty windows.
+      - name: window_days_corrected
+        description: Exposure span truncated at as_at_date — the denominator for pdc_corrected. Never exceeds window_days.
+      - name: pdc
+        description: Faithful PDC — covered_days / window_days when covered_days > 0, else NULL. Uncapped; reproduces the AIC measure including the last-order quirk.
+      - name: pdc_corrected
+        description: >
+          PDC2 (Prieto-Merino et al. 2021) over the exposure span — last
+          order's supply counts and everything is right-censored at
+          as_at_date, so unobserved days enter neither numerator nor
+          denominator. Exposure is not bounded to the window frame. >= pdc
+          except where the exposure runs past as_at_date.
+      - name: overall_start
+        description: First order date of the (person, drug) chain.
+        tests:
+          - not_null
+      - name: overall_end
+        description: Last order end date of the (person, drug) chain.
+        tests:
+          - not_null
+      - name: total_exposure_days
+        description: Days from overall_start to overall_end — the faithful overall denominator. Can extend past as_at_date.
+        tests:
+          - not_null
+      - name: total_exposure_days_corrected
+        description: Days from overall_start to overall_end truncated at as_at_date — the denominator for overall_pdc_corrected.
+        tests:
+          - not_null
+      - name: overall_pdc
+        description: Faithful overall PDC across the full chain span (guarded only on total_exposure_days > 0, so it can be <= 0).
+      - name: overall_pdc_corrected
+        description: Overall PDC2 across the chain span — quirk fixed and right-censored at as_at_date.
+      - name: as_at_date
+        description: >
+          Observation cutoff used for the corrected family: least(max order
+          date in the source, current_date), or the pinned value of var
+          medication_adherence_as_at_date. Data-derived, so a rebuild on
+          unchanged data reproduces the same numbers.
+        tests:
+          - not_null
+      - name: pdc_type
+        description: Constant 2 (dynamic exposure-window denominator), as run in the original.
+      - name: exclusive
+        description: Constant TRUE — early-refill overlap subtracted, strict window upper bound.
+      - name: window_length_months
+        description: Constant 12.
