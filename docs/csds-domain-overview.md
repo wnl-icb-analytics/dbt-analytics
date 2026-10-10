@@ -48,7 +48,7 @@ flowchart TD
 | What was the referral state in a past month? | `fct_csds_referral_period` | Open state and attendance evidence at each accepted period end. |
 | Which teams were involved? | `fct_csds_referral_service` | Latest referral/team relationships, each with its own closure or rejection. |
 | What care took place? | `fct_csds_care_contact`, `fct_csds_care_activity` | Contacts in all attendance states with delivering team and GP practice; activities within contacts. |
-| What clinical detail was recorded? | `fct_csds_clinical_record` | Immunisations, assessment responses, procedures, findings and observations. |
+| What clinical detail was recorded? | `fct_csds_clinical_record` | Immunisations, diagnoses, newborn hearing and blood spot screening, infant physical examinations, breastfeeding, growth measurements, assessment responses, procedures, findings and observations. |
 | How quickly were people seen? | `fct_csds_referral_to_treatment_period` | Submitted clocks, including the two-hour urgent community response. |
 | How recent is each provider's data? | `dq_csds_provider_submission`, `fct_csds_latest_provider_caseload_referral` | Provider submission dates and lag; open referrals in each provider's latest month. |
 | What do contacts cost? | `fct_csds_currency_contacts` | NHSE community currency and proxy cost per contact. See the [currency guide](csds-currency-models.md). |
@@ -175,6 +175,5 @@ school nursing referrals legitimately stay open for years. Some providers only
 resend referrals with activity that month, so their caseload is understated.
 Assessment rows are responses, not completed questionnaires.
 
-Sections not yet modelled include group sessions, staff details, child health
-screening (newborn hearing, blood spot, infant physical examination),
-breastfeeding, safeguarding and special educational needs.
+Sections not yet modelled include group sessions, staff details, safeguarding
+and special educational needs.

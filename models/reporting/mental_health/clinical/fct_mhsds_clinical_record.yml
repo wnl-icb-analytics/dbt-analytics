@@ -3,11 +3,13 @@ models:
 - name: fct_mhsds_clinical_record
   description: >-
     Recorded clinical evidence across the accepted MHSDS history. Each row is a diagnosis,
-    presenting complaint, assessment response or populated clinical component of a care activity.
+    presenting complaint, social circumstance, assessment response or populated clinical component
+    of a care activity.
     Different diagnosis codes and person IDs remain separate. Repeated fully identified diagnoses
     use their latest accepted version; undated diagnoses and referral/activity assessment responses
     remain separate source occurrences. Historical clustering responses use the latest version for
-    each source assessment and concept. Labels and response-status fields distinguish recognised,
+    each source assessment and concept. Social circumstances use the latest version for each provider,
+    person, code and recorded date. Labels and response-status fields distinguish recognised,
     missing and unmatched values. These rows are clinical items, not visits, completed
     questionnaires or clinically current conditions.
   config:
@@ -27,8 +29,8 @@ models:
     - not_null
     - unique
   - name: clinical_record_type
-    description: Previous, provisional, primary or secondary diagnosis; referral or activity assessment; procedure,
-      finding or observation.
+    description: Previous, provisional, primary or secondary diagnosis; presenting complaint; social circumstance;
+      referral, activity or clustering assessment; procedure, finding or observation.
   - name: clinical_code
     description: Original diagnosis, assessment observable, procedure, finding or observation code.
   - name: clinical_description
@@ -72,7 +74,7 @@ models:
   - name: clinical_time_basis
     description: Meaning and source of clinical time. Previous diagnoses use discussion time; MHS606 uses completion.
       Activity components and MHS607 inherit the linked activity date; source_derived_activity_date identifies
-      a date-only fallback without a submitted contact date.
+      a date-only fallback without a submitted contact date. Social circumstances use their recording time.
   - name: clinical_time_precision
     description: date, timestamp inherited from a contact, or stored_timestamp_precision_unknown when the original
       precision was lost upstream.
@@ -163,10 +165,10 @@ models:
     description: TRUE when the diagnosis's source parent, scheme, code and time appear under different national
       person identifiers. Those identities are retained separately.
   - name: source_timestamp
-    description: Diagnosis or MHS606 timestamp as stored in the source pipeline, without its original offset.
+    description: Diagnosis, MHS606 or MHS011 timestamp as stored in the source pipeline, without its original offset.
       Null for inherited contact timing.
   - name: source_derived_date
-    description: Separate source-pipeline date for diagnoses and MHS606. Retained to expose discrepancies.
+    description: Separate source date for diagnoses, MHS606 and MHS011. Retained to expose discrepancies.
   - name: is_source_date_inconsistent
     description: TRUE when a populated stored timestamp and separate derived date disagree on calendar date.
   - name: has_source_date_sentinel

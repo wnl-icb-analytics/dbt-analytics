@@ -10,7 +10,7 @@ TABLES(
     activities AS {{ ref('fct_csds_care_activity') }}
         PRIMARY KEY (source_record_id) COMMENT = 'Accepted care activity occurrences within contacts, one per submission and activity identifier. Repeated monthly submissions remain separate. Activities are detail of contacts, not separate encounters.',
     clinical AS {{ ref('fct_csds_clinical_record') }}
-        PRIMARY KEY (source_record_id) COMMENT = 'Retained clinical items: coded immunisations, referral and activity assessment responses, and procedures, findings and observations recorded on activities. Assessment rows are responses, not completed questionnaires.',
+        PRIMARY KEY (source_record_id) COMMENT = 'Retained clinical items: immunisations, diagnoses, newborn screening and infant examination results, breastfeeding status, growth measurements, referral and activity assessment responses, and procedures, findings and observations recorded on activities. Assessment rows are responses, not completed questionnaires.',
     referral_periods AS {{ ref('fct_csds_referral_period') }}
         PRIMARY KEY (referral_period_id) COMMENT = 'Referral state in each accepted submission. Open at period end when submitted that month, received, not discharged, and its teams in that submission are not all closed or rejected. A referral no longer submitted counts as closed; teams close only on a closure or rejection date, and a referral with no submitted team can stay open. Select one reporting period for a snapshot. Health visiting and school nursing referrals legitimately stay open for years.',
     caseload_referrals AS {{ ref('fct_csds_current_caseload_referral') }}
@@ -86,8 +86,8 @@ DIMENSIONS(
     activities.activity_type AS activity_type_name COMMENT = 'Community care activity type description.',
     activities.activities_is_wnl_commissioner AS is_wnl_commissioner COMMENT = 'The activity''s own same-submission contact is commissioned by West and North London. Filter true for WNL activity.',
     activities.activity_contact_date AS care_contact_date COMMENT = 'Date of the contact the activity belongs to; activities have no separate date.',
-    clinical.clinical_record_type AS clinical_record_type COMMENT = 'immunisation, referral_assessment, activity_assessment, procedure, finding or observation.',
-    clinical.clinical_code_system AS clinical_code_system COMMENT = 'Coding system of the submitted clinical code.',
+    clinical.clinical_record_type AS clinical_record_type COMMENT = 'Clinical item type, such as immunisation, childhood_immunisation, primary_diagnosis, newborn_hearing_screening, newborn_blood_spot_ plus the condition, breastfeeding_status, person_weight, referral_assessment, procedure, finding or observation.',
+    clinical.clinical_code_system AS clinical_code_system COMMENT = 'Coding system of the clinical code. Read v2 and CTV3 codes submitted under the wrong Read scheme take the scheme they belong to.',
     clinical.clinical_date AS clinical_date COMMENT = 'Recorded or inherited date of the clinical item.',
     clinical.clinical_label_status AS clinical_label_status COMMENT = 'Whether the submitted code found a label. Reference availability is not clinical validity.',
     referral_periods.referral_periods_provider_code AS provider_organisation_code COMMENT = 'Provider reporting the referral in this period.',

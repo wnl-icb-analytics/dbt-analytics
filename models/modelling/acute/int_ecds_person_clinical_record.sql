@@ -3,7 +3,7 @@
     unique_key=['source_record_type', 'source_record_id'], on_schema_change='fail',
     cluster_by=['sk_patient_id', 'coalesce(clinical_record_at, clinical_record_date::timestamp_ntz)'], tags=['person_clinical_record', 'daily'],
     pre_hook="{{ navigation_build_warehouse() }}",
-    post_hook=["{{ navigation_remove_withdrawn_records([('diagnosis', 'stg_sus_ecds_clinical_diagnoses_snomed', 'diagnosis_id'), ('treatment', 'stg_sus_ecds_clinical_treatments_snomed', 'source_record_id'), ('investigation', 'stg_sus_ecds_clinical_investigations_snomed', 'source_record_id'), ('comorbidity', 'stg_sus_ecds_clinical_comorbidities', 'source_record_id'), ('clinical_finding', 'stg_sus_ecds_clinical_coded_findings', 'source_record_id'), ('observation', 'fct_sus_uec_observation', 'observation_id'), ('scored_assessment', 'fct_sus_uec_scored_assessment', 'assessment_id'), (none, 'int_sus_uec_attendance_clinical_item', 'source_record_id'), ('injury_alcohol_drug_involvement', 'int_sus_uec_injury_alcohol_drug', 'iff(involvement_code is not null, involvement_id, null)')]) }}", "{{ navigation_build_warehouse(restore=true) }}"]
+    post_hook=["{{ navigation_remove_withdrawn_records([('diagnosis', 'stg_sus_ecds_clinical_diagnoses_snomed', 'diagnosis_id'), ('treatment', 'stg_sus_ecds_clinical_treatments_snomed', 'source_record_id'), ('investigation', 'stg_sus_ecds_clinical_investigations_snomed', 'source_record_id'), ('comorbidity', 'stg_sus_ecds_clinical_comorbidities', 'source_record_id'), ('clinical_finding', 'stg_sus_ecds_clinical_coded_findings', 'source_record_id'), ('observation', 'fct_sus_uec_observation', 'observation_id'), ('scored_assessment', 'fct_sus_uec_scored_assessment', 'assessment_id'), (none, 'int_sus_uec_attendance_clinical_item', 'source_record_id'), ('injury_alcohol_drug_involvement', 'int_sus_uec_injury_alcohol_drug', 'iff(involvement_code is not null, involvement_id, null)'), ('mental_health_legal_status', 'int_sus_uec_mental_health_legal_status', \"iff(legal_status_code not in ('98', '99'), legal_status_id, null)\")]) }}", "{{ navigation_build_warehouse(restore=true) }}"]
 ) }}
 
 with attendance as (
@@ -343,6 +343,54 @@ where true
 {{ navigation_delivery_filter('delivery.source_received_at', 'scored_assessment') }}
 union all
 select
+    p.sk_patient_id::varchar as sk_patient_id,
+    'ECDS'::varchar as source_dataset,
+    'mental_health_legal_status'::varchar as source_record_type,
+    s.legal_status_id::varchar as source_record_id,
+    'int_sus_uec_mental_health_legal_status'::varchar as source_model_name,
+    'mental_health_legal_status'::varchar as clinical_record_type,
+    s.legal_status_start_date::date as clinical_record_date,
+    case
+        when s.legal_status_start_date is null then 'unknown'
+        when s.legal_status_start_at is not null then 'timestamp'
+        else 'date'
+    end::varchar as clinical_time_precision,
+    iff(s.legal_status_start_date is null, 'not_recorded', 'legal_status_assignment_start')::varchar as clinical_time_basis,
+    s.legal_status_code::varchar as source_code,
+    s.legal_status_desc::varchar as source_code_name,
+    'NHS Data Dictionary: Mental Health Act Legal Status Classification Code'::varchar as source_coding_system,
+    p.organisation_id::varchar as provider_organisation_code,
+    p.organisation_name::varchar as provider_organisation_name,
+    'ODS'::varchar as provider_code_authority,
+    s.visit_occurrence_id::varchar as parent_record_id,
+    'emergency_care_attendance'::varchar as parent_record_type,
+    'obt_encounter_uec'::varchar as parent_model_name,
+    'recorded_parent'::varchar as relationship_type,
+    null::boolean as is_primary_diagnosis,
+    null::number as coding_position,
+    p.start_date::date as parent_start_date,
+    p.end_date::date as parent_end_date,
+    delivery.source_received_at::timestamp_ntz as source_received_at,
+    s.legal_status_start_at::timestamp_ntz as clinical_record_at,
+    null::varchar as qualifier_code,
+    null::varchar as qualifier_name,
+    null::varchar as result_value,
+    null::varchar as result_value_name,
+    null::number(38,9) as result_value_numeric,
+    null::varchar as result_value_parse_status,
+    null::varchar as result_unit_code,
+    null::varchar as result_unit_name,
+    null::varchar as result_unit_symbol,
+    null::varchar as assessment_tool_name,
+    null::varchar as assessment_response_status
+from {{ ref('int_sus_uec_mental_health_legal_status') }} as s
+left join {{ ref('obt_encounter_uec') }} as p on s.visit_occurrence_id = p.visit_occurrence_id
+left join {{ ref('stg_sus_ecds_emergency_care') }} as delivery on s.visit_occurrence_id = delivery.primarykey_id
+-- 98 (not applicable) and 99 (not known) are placeholders, not legal statuses; the int keeps them.
+where s.legal_status_code not in ('98', '99')
+{{ navigation_delivery_filter('delivery.source_received_at', 'mental_health_legal_status') }}
+union all
+select
     a.sk_patient_id::varchar as sk_patient_id,
     'ECDS'::varchar as source_dataset,
     i.item_type::varchar as source_record_type,
@@ -428,3 +476,4 @@ select
 from clinical_records
 left join {{ ref('snomed_concept') }} as source_snomed
     on trim(clinical_records.source_code) = source_snomed.snomed_code
+    and clinical_records.source_coding_system = 'SNOMED CT'

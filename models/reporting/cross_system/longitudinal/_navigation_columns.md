@@ -167,7 +167,7 @@ Entity type of the explicit recorded parent. Other submitted links and consisten
 {% enddocs %}
 
 {% docs navigation_parent_record_id %}
-Recorded parent key in parent_model_name. A recorded link does not establish causality, attendance or a journey. Clinical activity links with conflicting person identifiers are not promoted.
+Recorded parent key in parent_model_name. A recorded link does not establish causality, attendance or a journey. Activity and referral links naming a different person are not promoted.
 {% enddocs %}
 
 {% docs navigation_parent_model_name %}
@@ -223,7 +223,7 @@ Latest supported reference or source description of the clinical code. Historica
 {% enddocs %}
 
 {% docs navigation_source_coding_system %}
-Source clinical coding system or its source-supplied label. Keep source and mapped codes separate.
+Coding system of the source code, or its source-supplied label. Keep source and mapped codes separate. CSDS gives the Read scheme the code belongs to: a code submitted as Read v2 or CTV3 that is absent from that scheme but an exact concept code in the other takes the other scheme. fct_csds_clinical_record keeps the submitted scheme.
 {% enddocs %}
 
 {% docs navigation_mapped_code %}
@@ -251,7 +251,7 @@ Numeric representation at precision 38 and scale 9. Check result_value_parse_sta
 {% enddocs %}
 
 {% docs navigation_result_value_parse_status %}
-Source numeric parsing assessment. Rounded or out-of-range values remain identifiable, and the original result_value is retained.
+Source numeric parsing assessment. Rounded or out-of-range values remain identifiable, and the original result_value is retained. value_unknown marks a submitted placeholder meaning unknown, such as the CSDS 99.9 length; its numeric value is null.
 {% enddocs %}
 
 {% docs navigation_result_date %}
