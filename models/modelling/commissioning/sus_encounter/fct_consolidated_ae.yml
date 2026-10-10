@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: fct_consolidated_ae
+    description: >
+      Consolidated SUS A&E activity, migrated from the SQL Server view
+      dbo.consolidated_view_ae.
+
+      Grain: one row per attendance (sk_encounter_id).
+
+      Duplicate attendances (z_commissioning_access = 2) are excluded; in-area
+      and out-of-area activity both flow through.
+
+      The legacy vintage flag (proc_consolidate2.flag_current) is deliberately
+      NOT applied -- see the header comment in the model for the reasoning. In
+      short: the flag chose between the current, rec and postrec versions of
+      SUS, only current still exists, and applying the filter would drop about
+      two thirds of the history.
+
+      INHERITED PARITY ISSUES from fct_sus_ae_monthly -- all documented there,
+      all awaiting sign-off from the SUS reporting owner:
+        * z_pod_level_4 misses em_department_type = '3'
+        * z_commissioning_access is recomputed rather than historical
+    config:
+      meta:
+        owner:
+          name: Commissioning Analytics
+    columns:
+      - name: sk_encounter_id
+        description: >
+          Surrogate key for the attendance. One row per value -- this is the
+          model's grain, and the tests below are the fan-out guard for the
+          provider merger join.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: z_commissioning_access
+        description: >
+          Commissioning access flag, inherited from fct_sus_ae_monthly. Only
+          values 0 and 1 reach this model; 2 (duplicate) is filtered out.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+      - name: organisation_code_code_of_provider_merged
+        description: >
+          Provider organisation code with mergers applied, from the legacy
+          scalar function dbo.getProvMerge. Returns the replacement code where
+          the provider has been merged, otherwise the original code. Null when
+          the attendance has no submitted provider code: the legacy view only
+          dropped those rows because of its join to proc_consolidate2, and that
+          filter is not reproduced here.
+
+          NOTE: the merger lookup is retroactive. The legacy function had
+          date-aware logic so that a merger applied only from the period it took
+          effect, but that logic was commented out, so merged providers are
+          renamed across their entire history. Reproduced as-is.
+
+      - name: organisation_code_code_of_provider
+        description: >
+          Provider organisation code as submitted, truncated to three characters
+          upstream. See organisation_code_code_of_provider_merged for the
+          post-merger code.
+
+      - name: applicable_costing_period
+        description: >
+          Costing period the activity falls into. The legacy view required this
+          to be non-null in order to join to the control table; that constraint
+          is not reproduced here, so rows with a null costing period now flow
+          through where previously they were dropped.

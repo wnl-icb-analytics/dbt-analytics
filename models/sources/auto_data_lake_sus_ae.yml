@@ -1,0 +1,1017 @@
+version: 2
+sources:
+- name: sus_ae_monthly
+  database: '"DATA_LAKE"'
+  schema: '"SUS_AE"'
+  description: SUS Monthly emergency care attendances and activity
+  tables:
+  - name: Encounter
+    identifier: '"Encounter"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: RowID
+      data_type: TEXT
+    - name: SK_SUSDataMartID
+      data_type: NUMBER(38,0)
+    - name: ActivityPeriod
+      data_type: NUMBER(38,0)
+  - name: EncounterAttribution
+    identifier: '"EncounterAttribution"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: ProviderCode_SollisDerived
+      data_type: TEXT
+    - name: CommissionerCode_SollisDerived
+      data_type: TEXT
+    - name: ProviderCode_ProviderDerived
+      data_type: TEXT
+    - name: CommissionerCode_ProviderDerived
+      data_type: TEXT
+    - name: CommissionerCode_DerivedFromGPCode
+      data_type: TEXT
+    - name: CommissionerCode_DerivedFromPracticeCode
+      data_type: TEXT
+    - name: SUSCommissionerCode_DerivedFromResidence
+      data_type: TEXT
+    - name: ActivityPeriod
+      data_type: NUMBER(38,0)
+  - name: EncounterBilling
+    identifier: '"EncounterBilling"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: SK_ServiceProviderID
+      data_type: NUMBER(38,0)
+    - name: SK_CommissionerID
+      data_type: NUMBER(38,0)
+    - name: ScheduleCode
+      data_type: TEXT
+    - name: ContractSuffix
+      data_type: TEXT
+    - name: EncounterRowID
+      data_type: TEXT
+    - name: TotalCost
+      data_type: FLOAT
+    - name: MFFApplied
+      data_type: FLOAT
+    - name: IsShortStay
+      data_type: BOOLEAN
+    - name: LongStayPayment
+      data_type: FLOAT
+    - name: ServiceAdjustmentApplied
+      data_type: FLOAT
+    - name: CriticalCareDayCount
+      data_type: NUMBER(38,0)
+    - name: ApplicableTariff
+      data_type: FLOAT
+    - name: SK_Date
+      data_type: NUMBER(38,0)
+    - name: BaseCost
+      data_type: FLOAT
+    - name: Schedule_Description
+      data_type: TEXT
+    - name: POD_Description
+      data_type: TEXT
+    - name: LocalCostCode
+      data_type: TEXT
+    - name: PBR_FINAL_TARIFF
+      data_type: FLOAT
+    - name: SK_TariffTypeID
+      data_type: NUMBER(38,0)
+    - name: Is_Pbr
+      data_type: BOOLEAN
+    - name: HRG_Code
+      data_type: TEXT
+    - name: ActivityPeriod
+      data_type: NUMBER(38,0)
+  - name: EncounterBillingAttribution
+    identifier: '"EncounterBillingAttribution"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: Provider_CommissionerCode
+      data_type: TEXT
+    - name: Provider_PracticeCode
+      data_type: TEXT
+    - name: SUS_CommissionerCode_GPPractice
+      data_type: TEXT
+    - name: SUS_CommissionerCode_Residence
+      data_type: TEXT
+    - name: SUS_PracticeCode
+      data_type: TEXT
+    - name: SOLLIS_CommissionerCode
+      data_type: TEXT
+    - name: DWH_CommissionerCode
+      data_type: TEXT
+    - name: DWH_PracticeCode
+      data_type: TEXT
+    - name: Provider_GMPCode
+      data_type: TEXT
+    - name: SK_CommissionerID_DWH_Commissioner
+      data_type: NUMBER(38,0)
+    - name: SK_ServiceProviderID_DWH_Practice
+      data_type: NUMBER(38,0)
+    - name: ActivityPeriod
+      data_type: NUMBER(38,0)
+  - name: EncounterBillingRepriced
+    identifier: '"EncounterBillingRepriced"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: SK_CostingAlgorithmID
+      data_type: NUMBER(38,0)
+    - name: SK_SUSDataMartID
+      data_type: NUMBER(38,0)
+    - name: Month_Of_Attendance
+      data_type: NUMBER(38,0)
+    - name: Provider_Code
+      data_type: TEXT
+    - name: Purchaser_Code
+      data_type: TEXT
+    - name: Contract_Suffix
+      data_type: TEXT
+    - name: Base_Cost
+      data_type: FLOAT
+    - name: MFF_Applied
+      data_type: NUMBER(38,18)
+    - name: Total_Cost
+      data_type: FLOAT
+    - name: POD_Description
+      data_type: TEXT
+    - name: Schedule_Description
+      data_type: TEXT
+    - name: LocalCostCode
+      data_type: TEXT
+    - name: HRG_Code
+      data_type: TEXT
+    - name: AE_Department_Type
+      data_type: TEXT
+  - name: EncounterCareProfessional
+    identifier: '"EncounterCareProfessional"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: Sequence_Number
+      data_type: NUMBER(38,0)
+    - name: Code
+      data_type: TEXT
+    - name: SK_Issuer_Code_ID
+      data_type: NUMBER(38,0)
+    - name: Tier
+      data_type: TEXT
+    - name: Discharge_Responsibility_Indicator
+      data_type: TEXT
+    - name: Is_Approved
+      data_type: BOOLEAN
+  - name: EncounterClinicalHistory
+    identifier: '"EncounterClinicalHistory"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: Sequence_Number
+      data_type: NUMBER(38,0)
+    - name: Code
+      data_type: TEXT
+    - name: Is_Approved
+      data_type: BOOLEAN
+  - name: EncounterDenormalised
+    identifier: '"EncounterDenormalised"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: dv_Extract_Type
+      data_type: TEXT
+    - name: dv_Query_ID
+      data_type: TEXT
+    - name: dv_FinYear
+      data_type: TEXT
+    - name: dv_FinMonth
+      data_type: NUMBER(38,0)
+    - name: dv_Activity_Period_Date
+      data_type: NUMBER(38,0)
+    - name: CDS_Record_Type
+      data_type: TEXT
+    - name: Generated_Record_ID
+      data_type: TEXT
+    - name: Spell_Identifier
+      data_type: TEXT
+    - name: Unique_CDS_Identifier
+      data_type: TEXT
+    - name: EM_Attendance_Number
+      data_type: TEXT
+    - name: Arrival_Date
+      data_type: TIMESTAMP_NTZ
+    - name: Arrival_Time
+      data_type: TIMESTAMP_NTZ
+    - name: EM_Referral_Source
+      data_type: TEXT
+    - name: EM_Mode_of_Arrival
+      data_type: TEXT
+    - name: EM_Department_Type
+      data_type: TEXT
+    - name: EM_Attendance_Category
+      data_type: TEXT
+    - name: EM_Incident_Location_Type
+      data_type: TEXT
+    - name: EM_Patient_Group
+      data_type: TEXT
+    - name: EM_Staff_Member_Code
+      data_type: TEXT
+    - name: dv_EM_Initial_Assessment_Date
+      data_type: TIMESTAMP_NTZ
+    - name: EM_Initial_Assessment_Time
+      data_type: TIMESTAMP_NTZ
+    - name: EM_Time_Seen_for_Treatment
+      data_type: TIMESTAMP_NTZ
+    - name: dv_EM_Date_Seen_for_Treatment
+      data_type: TIMESTAMP_NTZ
+    - name: dv_EM_Attendance_Conclusion_Date
+      data_type: TIMESTAMP_NTZ
+    - name: EM_Attendance_Conclusion_Time
+      data_type: TIMESTAMP_NTZ
+    - name: EM_Attendance_Disposal
+      data_type: TEXT
+    - name: EM_Departure_Date
+      data_type: TIMESTAMP_NTZ
+    - name: EM_Departure_Time
+      data_type: TIMESTAMP_NTZ
+    - name: dv_EM_Conclusion_Waiting_Time
+      data_type: NUMBER(38,0)
+    - name: EM_Duration_Time
+      data_type: NUMBER(38,0)
+    - name: dv_EM_Treatment_Wait_Time
+      data_type: NUMBER(38,0)
+    - name: Number_Diagnosis
+      data_type: NUMBER(38,0)
+    - name: Number_Procedures
+      data_type: NUMBER(38,0)
+    - name: SK_PatientID
+      data_type: NUMBER(38,0)
+    - name: DW_NHS_Number
+      data_type: TEXT
+    - name: CCG_NHS_Number
+      data_type: TEXT
+    - name: Local_Patient_Identifier
+      data_type: TEXT
+    - name: Carer_Support_Indicator
+      data_type: TEXT
+    - name: Ethnic_Category_Code
+      data_type: TEXT
+    - name: Age_At_CDS_Activity_Date
+      data_type: NUMBER(38,0)
+    - name: Gender_Code
+      data_type: TEXT
+    - name: Postcode_of_Usual_Address
+      data_type: NUMBER(38,0)
+    - name: dv_LSOA
+      data_type: TEXT
+    - name: Registered_GMP_Code_Original_Data
+      data_type: TEXT
+    - name: GP_Practice_Code
+      data_type: TEXT
+    - name: GP_Practice_Code_Original_Data
+      data_type: TEXT
+    - name: Provider_Reference_No
+      data_type: TEXT
+    - name: Commissioner_Reference_No
+      data_type: TEXT
+    - name: Commissioning_Serial_No_Agreement_No
+      data_type: TEXT
+    - name: NHS_Service_Agreement_Line_No
+      data_type: TEXT
+    - name: Organisation_Code_Code_of_Provider
+      data_type: TEXT
+    - name: Provider_Site_Code
+      data_type: TEXT
+    - name: Organisation_Code_Code_of_Commissioner
+      data_type: TEXT
+    - name: Organisation_Code_PCT_of_Residence
+      data_type: TEXT
+    - name: PCT_Derived_from_GP_Practice
+      data_type: TEXT
+    - name: Patient_Postcode_Derived_PCT
+      data_type: TEXT
+    - name: PCT_of_Residence_Original
+      data_type: TEXT
+    - name: PCT_Responsible
+      data_type: TEXT
+    - name: dv_CCAM_SWL
+      data_type: TEXT
+    - name: dv_Commissioner_Code_of_Residence
+      data_type: NUMBER(38,0)
+    - name: dv_Purchaser_ID
+      data_type: TEXT
+    - name: dv_Contract_Suffix
+      data_type: TEXT
+    - name: dv_CostMethodDescription
+      data_type: TEXT
+    - name: Core_HRG
+      data_type: TEXT
+    - name: dv_HRG
+      data_type: TEXT
+    - name: dv_Local_Cost_Code
+      data_type: TEXT
+    - name: dv_Reason_for_Difference
+      data_type: TEXT
+    - name: dv_IsPBR
+      data_type: BOOLEAN
+    - name: dv_Base_Cost
+      data_type: NUMBER(38,18)
+    - name: dv_MFF_Index_Applied
+      data_type: FLOAT
+    - name: Tariff_Initial_Amount_National
+      data_type: NUMBER(38,0)
+    - name: Tariff_Pre_MFF_Adjusted_National
+      data_type: NUMBER(38,0)
+    - name: Applied_MFF_National
+      data_type: NUMBER(38,18)
+    - name: Tariff_Total_Payment_National
+      data_type: NUMBER(38,0)
+    - name: PBR_Final_Tariff
+      data_type: FLOAT
+    - name: dv_Total_Cost_Inc_MFF
+      data_type: NUMBER(38,18)
+    - name: EM_Diagnosis_First
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_1
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_2
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_3
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_4
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_5
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_6
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_7
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_8
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_9
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_10
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_11
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_12
+      data_type: TEXT
+    - name: EM_Investigation_First
+      data_type: TEXT
+    - name: EM_Investigation_Second_1
+      data_type: TEXT
+    - name: EM_Investigation_Second_2
+      data_type: TEXT
+    - name: EM_Investigation_Second_3
+      data_type: TEXT
+    - name: EM_Investigation_Second_4
+      data_type: TEXT
+    - name: EM_Investigation_Second_5
+      data_type: TEXT
+    - name: EM_Investigation_Second_6
+      data_type: TEXT
+    - name: EM_Investigation_Second_7
+      data_type: TEXT
+    - name: EM_Investigation_Second_8
+      data_type: TEXT
+    - name: EM_Investigation_Second_9
+      data_type: TEXT
+    - name: EM_Investigation_Second_10
+      data_type: TEXT
+    - name: EM_Investigation_Second_11
+      data_type: TEXT
+    - name: EM_Investigation_Second_12
+      data_type: TEXT
+    - name: EM_Treatment_First
+      data_type: TEXT
+    - name: EM_Treatment_Second_1
+      data_type: TEXT
+    - name: EM_Treatment_Second_2
+      data_type: TEXT
+    - name: EM_Treatment_Second_3
+      data_type: TEXT
+    - name: EM_Treatment_Second_4
+      data_type: TEXT
+    - name: EM_Treatment_Second_5
+      data_type: TEXT
+    - name: EM_Treatment_Second_6
+      data_type: TEXT
+    - name: EM_Treatment_Second_7
+      data_type: TEXT
+    - name: EM_Treatment_Second_8
+      data_type: TEXT
+    - name: EM_Treatment_Second_9
+      data_type: TEXT
+    - name: EM_Treatment_Second_10
+      data_type: TEXT
+    - name: EM_Treatment_Second_11
+      data_type: TEXT
+    - name: EM_Treatment_Second_12
+      data_type: TEXT
+  - name: EncounterDenormalised_DateRange
+    identifier: '"EncounterDenormalised_DateRange"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: dv_Extract_Type
+      data_type: TEXT
+    - name: dv_Query_ID
+      data_type: TEXT
+    - name: dv_FinYear
+      data_type: TEXT
+    - name: dv_FinMonth
+      data_type: NUMBER(38,0)
+    - name: dv_Activity_Period_Date
+      data_type: NUMBER(38,0)
+    - name: CDS_Record_Type
+      data_type: TEXT
+    - name: Generated_Record_ID
+      data_type: TEXT
+    - name: Spell_Identifier
+      data_type: TEXT
+    - name: Unique_CDS_Identifier
+      data_type: TEXT
+    - name: EM_Attendance_Number
+      data_type: TEXT
+    - name: Arrival_Date
+      data_type: TIMESTAMP_NTZ
+    - name: Arrival_Time
+      data_type: TIMESTAMP_NTZ
+    - name: EM_Referral_Source
+      data_type: TEXT
+    - name: EM_Mode_of_Arrival
+      data_type: TEXT
+    - name: EM_Department_Type
+      data_type: TEXT
+    - name: EM_Attendance_Category
+      data_type: TEXT
+    - name: EM_Incident_Location_Type
+      data_type: TEXT
+    - name: EM_Patient_Group
+      data_type: TEXT
+    - name: EM_Staff_Member_Code
+      data_type: TEXT
+    - name: dv_EM_Initial_Assessment_Date
+      data_type: TIMESTAMP_NTZ
+    - name: EM_Initial_Assessment_Time
+      data_type: TIMESTAMP_NTZ
+    - name: EM_Time_Seen_for_Treatment
+      data_type: TIMESTAMP_NTZ
+    - name: dv_EM_Date_Seen_for_Treatment
+      data_type: TIMESTAMP_NTZ
+    - name: dv_EM_Attendance_Conclusion_Date
+      data_type: TIMESTAMP_NTZ
+    - name: EM_Attendance_Conclusion_Time
+      data_type: TIMESTAMP_NTZ
+    - name: EM_Attendance_Disposal
+      data_type: TEXT
+    - name: EM_Departure_Date
+      data_type: TIMESTAMP_NTZ
+    - name: EM_Departure_Time
+      data_type: TIMESTAMP_NTZ
+    - name: dv_EM_Conclusion_Waiting_Time
+      data_type: NUMBER(38,0)
+    - name: EM_Duration_Time
+      data_type: NUMBER(38,0)
+    - name: dv_EM_Treatment_Wait_Time
+      data_type: NUMBER(38,0)
+    - name: Number_Diagnosis
+      data_type: NUMBER(38,0)
+    - name: Number_Procedures
+      data_type: NUMBER(38,0)
+    - name: SK_PatientID
+      data_type: NUMBER(38,0)
+    - name: DW_NHS_Number
+      data_type: TEXT
+    - name: CCG_NHS_Number
+      data_type: TEXT
+    - name: Local_Patient_Identifier
+      data_type: TEXT
+    - name: Carer_Support_Indicator
+      data_type: TEXT
+    - name: Ethnic_Category_Code
+      data_type: TEXT
+    - name: Age_At_CDS_Activity_Date
+      data_type: NUMBER(38,0)
+    - name: Gender_Code
+      data_type: TEXT
+    - name: Postcode_of_Usual_Address
+      data_type: NUMBER(38,0)
+    - name: dv_LSOA
+      data_type: TEXT
+    - name: Registered_GMP_Code_Original_Data
+      data_type: TEXT
+    - name: GP_Practice_Code
+      data_type: TEXT
+    - name: GP_Practice_Code_Original_Data
+      data_type: TEXT
+    - name: Provider_Reference_No
+      data_type: TEXT
+    - name: Commissioner_Reference_No
+      data_type: TEXT
+    - name: Commissioning_Serial_No_Agreement_No
+      data_type: TEXT
+    - name: NHS_Service_Agreement_Line_No
+      data_type: TEXT
+    - name: Organisation_Code_Code_of_Provider
+      data_type: TEXT
+    - name: Provider_Site_Code
+      data_type: TEXT
+    - name: Organisation_Code_Code_of_Commissioner
+      data_type: TEXT
+    - name: Organisation_Code_PCT_of_Residence
+      data_type: TEXT
+    - name: PCT_Derived_from_GP_Practice
+      data_type: TEXT
+    - name: Patient_Postcode_Derived_PCT
+      data_type: TEXT
+    - name: PCT_of_Residence_Original
+      data_type: TEXT
+    - name: PCT_Responsible
+      data_type: TEXT
+    - name: dv_CCAM_SWL
+      data_type: TEXT
+    - name: dv_Commissioner_Code_of_Residence
+      data_type: NUMBER(38,0)
+    - name: dv_Purchaser_ID
+      data_type: TEXT
+    - name: dv_Contract_Suffix
+      data_type: TEXT
+    - name: dv_CostMethodDescription
+      data_type: TEXT
+    - name: Core_HRG
+      data_type: TEXT
+    - name: dv_HRG
+      data_type: TEXT
+    - name: dv_Local_Cost_Code
+      data_type: TEXT
+    - name: dv_Reason_for_Difference
+      data_type: TEXT
+    - name: dv_IsPBR
+      data_type: BOOLEAN
+    - name: dv_Base_Cost
+      data_type: NUMBER(38,18)
+    - name: dv_MFF_Index_Applied
+      data_type: FLOAT
+    - name: Tariff_Initial_Amount_National
+      data_type: NUMBER(38,0)
+    - name: Tariff_Pre_MFF_Adjusted_National
+      data_type: NUMBER(38,0)
+    - name: Applied_MFF_National
+      data_type: NUMBER(38,18)
+    - name: Tariff_Total_Payment_National
+      data_type: NUMBER(38,0)
+    - name: PBR_Final_Tariff
+      data_type: FLOAT
+    - name: dv_Total_Cost_Inc_MFF
+      data_type: NUMBER(38,18)
+    - name: EM_Diagnosis_First
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_1
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_2
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_3
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_4
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_5
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_6
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_7
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_8
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_9
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_10
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_11
+      data_type: TEXT
+    - name: EM_Diagnosis_Second_12
+      data_type: TEXT
+    - name: EM_Investigation_First
+      data_type: TEXT
+    - name: EM_Investigation_Second_1
+      data_type: TEXT
+    - name: EM_Investigation_Second_2
+      data_type: TEXT
+    - name: EM_Investigation_Second_3
+      data_type: TEXT
+    - name: EM_Investigation_Second_4
+      data_type: TEXT
+    - name: EM_Investigation_Second_5
+      data_type: TEXT
+    - name: EM_Investigation_Second_6
+      data_type: TEXT
+    - name: EM_Investigation_Second_7
+      data_type: TEXT
+    - name: EM_Investigation_Second_8
+      data_type: TEXT
+    - name: EM_Investigation_Second_9
+      data_type: TEXT
+    - name: EM_Investigation_Second_10
+      data_type: TEXT
+    - name: EM_Investigation_Second_11
+      data_type: TEXT
+    - name: EM_Investigation_Second_12
+      data_type: TEXT
+    - name: EM_Treatment_First
+      data_type: TEXT
+    - name: EM_Treatment_Second_1
+      data_type: TEXT
+    - name: EM_Treatment_Second_2
+      data_type: TEXT
+    - name: EM_Treatment_Second_3
+      data_type: TEXT
+    - name: EM_Treatment_Second_4
+      data_type: TEXT
+    - name: EM_Treatment_Second_5
+      data_type: TEXT
+    - name: EM_Treatment_Second_6
+      data_type: TEXT
+    - name: EM_Treatment_Second_7
+      data_type: TEXT
+    - name: EM_Treatment_Second_8
+      data_type: TEXT
+    - name: EM_Treatment_Second_9
+      data_type: TEXT
+    - name: EM_Treatment_Second_10
+      data_type: TEXT
+    - name: EM_Treatment_Second_11
+      data_type: TEXT
+    - name: EM_Treatment_Second_12
+      data_type: TEXT
+  - name: EncounterDetail
+    identifier: '"EncounterDetail"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: StartDate
+      data_type: TIMESTAMP_NTZ
+    - name: EndDate
+      data_type: TIMESTAMP_NTZ
+    - name: SK_ArrivalModeID
+      data_type: NUMBER(38,0)
+    - name: SK_AttendanceCategoryID
+      data_type: NUMBER(38,0)
+    - name: SK_AttendanceDisposalID
+      data_type: NUMBER(38,0)
+    - name: SK_IncidentLocationTypeID
+      data_type: NUMBER(38,0)
+    - name: SK_SourceOfReferralID
+      data_type: NUMBER(38,0)
+    - name: InitialAssessmentTime
+      data_type: TIMESTAMP_NTZ
+    - name: TreatmentTime
+      data_type: TIMESTAMP_NTZ
+    - name: AttendanceConclusionTime
+      data_type: TIMESTAMP_NTZ
+    - name: SK_AandEDepartmentNameID
+      data_type: NUMBER(38,0)
+    - name: PrimaryInvestigation
+      data_type: TEXT
+    - name: PrimaryDiagnosis
+      data_type: TEXT
+    - name: PrimaryTreatment
+      data_type: TEXT
+    - name: DiagnosisSchemeICD
+      data_type: TEXT
+    - name: PrimaryDiagnosisICD
+      data_type: TEXT
+    - name: DiagnosisSchemeRead
+      data_type: TEXT
+    - name: PrimaryDiagnosisRead
+      data_type: TEXT
+    - name: DiagType
+      data_type: TEXT
+    - name: InvestigationType
+      data_type: TEXT
+    - name: TreatmentType
+      data_type: TEXT
+    - name: SK_ServiceProviderID
+      data_type: NUMBER(38,0)
+    - name: SK_PatientID
+      data_type: NUMBER(38,0)
+    - name: SK_StaffID
+      data_type: NUMBER(38,0)
+    - name: EncounterStartDateTime
+      data_type: TIMESTAMP_NTZ
+    - name: EncounterEndDateTime
+      data_type: TIMESTAMP_NTZ
+    - name: SK_CommissionerID
+      data_type: NUMBER(38,0)
+    - name: Patient_group
+      data_type: TEXT
+    - name: HRG4_Code
+      data_type: TEXT
+    - name: DeleteEncounter
+      data_type: BOOLEAN
+    - name: SK_AgeBandID
+      data_type: NUMBER(38,0)
+    - name: SK_Commissioner_PCTID
+      data_type: NUMBER(38,0)
+    - name: Staff_Member_Code
+      data_type: TEXT
+    - name: Unique_CDS_Identifier
+      data_type: TEXT
+    - name: SK_DepartmentTypeID
+      data_type: NUMBER(38,0)
+    - name: PASHospitalNumber
+      data_type: TEXT
+    - name: COMMISSIONER_SERIAL_NO
+      data_type: TEXT
+    - name: PROVIDER_REFERENCE_NO
+      data_type: TEXT
+    - name: AGREEMENT_LINE_NO
+      data_type: TEXT
+    - name: Local_Site_Code
+      data_type: TEXT
+    - name: AE_Attendance_No
+      data_type: TEXT
+    - name: SK_Org_CommissionerID
+      data_type: NUMBER(38,0)
+    - name: SK_Org_ServiceProviderID
+      data_type: NUMBER(38,0)
+    - name: PbROrSEM
+      data_type: TEXT
+    - name: CDS_Record_Type
+      data_type: TEXT
+  - name: EncounterDetail_ECDS
+    identifier: '"EncounterDetail_ECDS"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Attendance_Category
+      data_type: TEXT
+    - name: Emergency_Care_Attendance_Source_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Attendance_Source_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Emergency_Care_Arrival_Mode_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Arrival_Mode_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Accommodation_Status_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Accommodation_Status_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Preferred_Spoken_Language_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Preferred_Spoken_Language_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Accessible_Information_Professional_Required_Code_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Accessible_Information_Professional_Required_Code_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Interpreter_Language_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Interpreter_Language_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Overseas_Visitor_Charging_Category_At_CDS_Activity_Date
+      data_type: TEXT
+    - name: SK_Emergency_Care_Attendance_Source_For_Organistion_Site_Identifier_ID
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Acuity_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Acuity_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Emergency_Care_Chief_Complaint_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Chief_Complaint_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Emergency_Care_Chief_Complaint_Extended
+      data_type: TEXT
+    - name: Emergency_Care_Place_Of_Injury_Latitude
+      data_type: FLOAT
+    - name: Emergency_Care_Place_Of_Injury_Longitude
+      data_type: FLOAT
+    - name: Emergency_Care_Place_Of_Injury_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Place_Of_Injury_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Emergency_Care_Injury_Activity_Status_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Injury_Activity_Status_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Emergency_Care_Injury_Intend_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Injury_Intend_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Emergency_Care_Injury_Mechanism_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Injury_Mechanism_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Emergency_Care_Injury_Activity_Type_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Injury_Activity_Type_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Emergency_Care_Injury_Date
+      data_type: TIMESTAMP_NTZ
+    - name: Emergency_Care_Injury_Time
+      data_type: TIMESTAMP_NTZ
+    - name: Decided_To_Admit_Date
+      data_type: TIMESTAMP_NTZ
+    - name: Decided_To_Admit_Time
+      data_type: TIMESTAMP_NTZ
+    - name: Activity_Treatment_Function_Code_Decision_To_Admit
+      data_type: TEXT
+    - name: Emergency_Care_Discharge_Status_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Discharge_Status_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Emergency_Care_Discharge_Destination_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Discharge_Destination_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: SK_Organisation_Site_Identifier_Discharge_From_Emergency_Care_ID
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Discharge_Follow_Up_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Discharge_Follow_Up_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Emergency_Care_Discharge_Information_Given_SNOMED_CT
+      data_type: NUMBER(38,0)
+    - name: Emergency_Care_Discharge_Information_Given_SNOMED_CT_Is_Approved
+      data_type: BOOLEAN
+    - name: Chief_Complaint_CQUIN_Expected
+      data_type: BOOLEAN
+    - name: Chief_Complaint_CQUIN_Completed
+      data_type: BOOLEAN
+    - name: Chief_Complaint_CQUIN_Valid
+      data_type: BOOLEAN
+    - name: Primary_Diagnosis_CQUIN_Expected
+      data_type: BOOLEAN
+    - name: Primary_Diagnosis_CQUIN_Completed
+      data_type: BOOLEAN
+    - name: Primary_Diagnosis_CQUIN_Valid
+      data_type: BOOLEAN
+  - name: EncounterDiagnosis
+    identifier: '"EncounterDiagnosis"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: DiagnosisNumber
+      data_type: NUMBER(38,0)
+    - name: DiagnosisCode
+      data_type: TEXT
+    - name: ActivityPeriod
+      data_type: NUMBER(38,0)
+  - name: EncounterDiagnosisSNOMED
+    identifier: '"EncounterDiagnosisSNOMED"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: Sequence_Number
+      data_type: NUMBER(38,0)
+    - name: Code
+      data_type: NUMBER(38,0)
+    - name: Qualifier
+      data_type: NUMBER(38,0)
+    - name: Qualifier_Is_Approved
+      data_type: BOOLEAN
+    - name: Coded_Clinical_Entry_Sequence_Number
+      data_type: NUMBER(38,0)
+    - name: Is_Approved
+      data_type: BOOLEAN
+  - name: EncounterInjurySubstance
+    identifier: '"EncounterInjurySubstance"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: Sequence_Number
+      data_type: NUMBER(38,0)
+    - name: InjuryAlcoholOrDrugInvolvement_SNOMEDCT
+      data_type: NUMBER(38,0)
+    - name: Is_Approved
+      data_type: BOOLEAN
+  - name: EncounterInvestigation
+    identifier: '"EncounterInvestigation"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: InvestigationNumber
+      data_type: NUMBER(38,0)
+    - name: InvestigationCode
+      data_type: TEXT
+    - name: ActivityPeriod
+      data_type: NUMBER(38,0)
+  - name: EncounterInvestigationSNOMED
+    identifier: '"EncounterInvestigationSNOMED"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: Sequence_Number
+      data_type: NUMBER(38,0)
+    - name: Code
+      data_type: NUMBER(38,0)
+    - name: Date
+      data_type: TIMESTAMP_NTZ
+    - name: Time
+      data_type: TIMESTAMP_NTZ
+    - name: Is_Approved
+      data_type: BOOLEAN
+  - name: EncounterLegalStatus
+    identifier: '"EncounterLegalStatus"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: Sequence_Number
+      data_type: NUMBER(38,0)
+    - name: SK_MentalHealthLegalStatus_ID
+      data_type: NUMBER(38,0)
+    - name: Assignment_Period_Start_Date
+      data_type: TIMESTAMP_NTZ
+    - name: Assignment_Period_Start_Time
+      data_type: TIMESTAMP_NTZ
+    - name: Expiry_Date
+      data_type: TIMESTAMP_NTZ
+    - name: Expiry_Time
+      data_type: TIMESTAMP_NTZ
+    - name: Is_Approved
+      data_type: BOOLEAN
+  - name: EncounterPatient
+    identifier: '"EncounterPatient"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: SK_GenderID
+      data_type: NUMBER(38,0)
+    - name: SK_EthnicityID
+      data_type: NUMBER(38,0)
+    - name: SK_PostcodeID
+      data_type: NUMBER(38,0)
+    - name: SK_PracticeID
+      data_type: NUMBER(38,0)
+    - name: Date_of_Birth
+      data_type: TIMESTAMP_NTZ
+    - name: Age
+      data_type: NUMBER(38,0)
+    - name: SK_Org_PracticeID
+      data_type: NUMBER(38,0)
+    - name: WardCode
+      data_type: TEXT
+    - name: LSOACode
+      data_type: TEXT
+  - name: EncounterReferral
+    identifier: '"EncounterReferral"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: Sequence_Number
+      data_type: NUMBER(38,0)
+    - name: Code
+      data_type: NUMBER(38,0)
+    - name: Activity_Service_Request_Date
+      data_type: TIMESTAMP_NTZ
+    - name: Activity_Service_Request_Time
+      data_type: TIMESTAMP_NTZ
+    - name: Assessment_Date
+      data_type: TIMESTAMP_NTZ
+    - name: Assessment_Time
+      data_type: TIMESTAMP_NTZ
+    - name: Is_Approved
+      data_type: BOOLEAN
+  - name: EncounterSafeguarding
+    identifier: '"EncounterSafeguarding"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: Sequence_Number
+      data_type: NUMBER(38,0)
+    - name: Code
+      data_type: NUMBER(38,0)
+    - name: Is_Approved
+      data_type: BOOLEAN
+  - name: EncounterTreatment
+    identifier: '"EncounterTreatment"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: TreatmentNumber
+      data_type: NUMBER(38,0)
+    - name: TreatmentCode
+      data_type: TEXT
+    - name: ProcedureDate
+      data_type: TIMESTAMP_NTZ
+    - name: ActivityPeriod
+      data_type: NUMBER(38,0)
+  - name: EncounterTreatmentSNOMED
+    identifier: '"EncounterTreatmentSNOMED"'
+    columns:
+    - name: SK_EncounterID
+      data_type: NUMBER(38,0)
+    - name: Sequence_Number
+      data_type: NUMBER(38,0)
+    - name: Code
+      data_type: NUMBER(38,0)
+    - name: Date
+      data_type: TIMESTAMP_NTZ
+    - name: Time
+      data_type: TIMESTAMP_NTZ
+    - name: Is_Approved
+      data_type: BOOLEAN

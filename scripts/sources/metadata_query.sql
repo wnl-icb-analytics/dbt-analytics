@@ -83,6 +83,51 @@ WITH schema_metadata AS (
   
   UNION ALL
   
+    -- sus_ae_monthly: SUS Monthly emergency care attendances and activity
+  SELECT 
+    'DATA_LAKE' as database_name,
+    'SUS_AE' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "DATA_LAKE".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'SUS_AE'
+  
+  UNION ALL
+  
+    -- sus_op_monthly: SUS Monthly outpatient appointments and activity
+  SELECT 
+    'DATA_LAKE' as database_name,
+    'SUS_OP' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "DATA_LAKE".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'SUS_OP'
+  
+  UNION ALL
+  
+    -- sus_apc_monthly: SUS Monthly admitted patient care episodes and procedures
+  SELECT 
+    'DATA_LAKE' as database_name,
+    'SUS_IP' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "DATA_LAKE".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'SUS_IP'
+  
+  UNION ALL
+  
     -- sus_ecds: SUS emergency care attendances and activity
   SELECT 
     'DATA_LAKE' as database_name,
@@ -605,21 +650,6 @@ WITH schema_metadata AS (
     ordinal_position
   FROM "DATA_LAKE__NCL".INFORMATION_SCHEMA.COLUMNS
   WHERE table_schema = 'ANALYST_MANAGED'
-  
-  UNION ALL
-  
-    -- pod_group_manager: POD Group Manager app - governed POD group mappings
-  SELECT 
-    'DATA_LAKE__NCL' as database_name,
-    'POD_GROUP_MANAGER' as schema_name,
-    table_name,
-    column_name,
-    data_type,
-    numeric_precision,
-    numeric_scale,
-    ordinal_position
-  FROM "DATA_LAKE__NCL".INFORMATION_SCHEMA.COLUMNS
-  WHERE table_schema = 'POD_GROUP_MANAGER'
   
   UNION ALL
   
