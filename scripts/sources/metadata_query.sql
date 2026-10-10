@@ -608,7 +608,7 @@ WITH schema_metadata AS (
   
   UNION ALL
   
-    -- reference_analyst_managed: Analyst-managed reference datasets and business rules
+    -- reference_analyst_managed: Analyst-managed reference datasets and business rules. TURNAROUND_TIMES_RAW is not in this source; use int_tat_turnaround_times.
   SELECT 
     'DATA_LAKE__NCL' as database_name,
     'ANALYST_MANAGED' as schema_name,

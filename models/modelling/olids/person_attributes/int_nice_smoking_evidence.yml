@@ -1,0 +1,46 @@
+models:
+- name: int_nice_smoking_evidence
+  description: >-
+    Smoking status, cessation support and smoking-care unsuitability for registered, living,
+    non-test long-term condition register members or people aged 15 or over. One row per candidate person on the build date.
+    Smoking state is assessed without preselecting current smokers. Evidence stops at the build
+    date; indicators apply their own windows. Null dates mean no qualifying evidence.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date
+  columns:
+  - name: is_ex_smoker_covered
+    description: >-
+      Latest status is ex-smoker, the last record is over 12 months old, and ex-smoker
+      status was recorded in three consecutive financial years without a smoker record
+      during or after those records. Only evidence known by the reporting date counts.
+      IND154 and IND156 count this allowance; IND97 does not.
+  - name: person_id
+    description: >-
+      Person in the candidate population for NICE indicators.
+  - name: reporting_date
+    description: >-
+      Build date on which population and evidence are assessed.
+  - name: latest_smoking_status
+    description: Selected smoking state. LSMOK precedes EXSMOK, NSMOK and other status on the same calendar
+      day, then highest observation id wins. Null when never recorded.
+  - name: latest_smoking_status_date
+    description: >-
+      Clinical calendar date of the selected smoking state, excluding records made before age
+      11.
+  - name: latest_never_smoked_date
+    description: Latest explicit NSMOK recording; a non-smoker with unknown history does not qualify.
+  - name: latest_smoking_intervention_date
+    description: Latest QOF SMOK004 referral or pharmacotherapy observation or medication order. Advice
+      alone does not qualify.
+  - name: latest_smoking_unsuitable_date
+    description: >-
+      Latest SMOKPCAPU_COD clinical calendar date on or before the reporting date.
+      Null when none is recorded; IND97 applies its 12-month exclusion after achievement.

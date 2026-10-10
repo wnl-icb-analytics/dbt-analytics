@@ -2,8 +2,10 @@ version: 2
 models:
   - name: int_eosinophil_count
     description: >
-      Blood eosinophil count observations with unit standardisation and data quality flags.
-      One row per observation using the EOS_COUNT cluster. Applies the standardise_count_observation
+      Blood eosinophil count results from the EOS_COUNT cluster, with unit standardisation and
+      data quality flags. One row per distinct result: where the same result (person, clinical
+      date, value, unit and concept) was entered more than once, only the earliest entry is kept
+      (earliest date_recorded, then lowest id). Applies the standardise_count_observation
       macro to infer correct units and values (conversions attempted only when a value is implausibly
       high; out-of-range values pass through unchanged), then categorises by clinical severity.
       Standard unit: 10*9/L.

@@ -5,7 +5,7 @@
         cluster_by=['person_id', 'clinical_effective_date'])
 }}
 
-/* Journal ethnicity inputs used by QOF OBES2. */
+/* Journal ethnicity inputs used by QOF OBES_REG and OBES2_REG. */
 
 SELECT
     obs.id,

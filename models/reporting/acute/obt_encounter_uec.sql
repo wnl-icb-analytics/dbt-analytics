@@ -1,9 +1,32 @@
 {{
     config(
-        materialized='view'
+        materialized='table'
     )
 }}
 
+with mental_health_diagnosis_attendances as (
+    select
+        diagnosis.primarykey_id as visit_occurrence_id
+        , max(iff(diagnosis.qualifier = '410605003', 1, 0)) = 0
+            as has_suspected_mental_health_diagnosis_only
+    from {{ ref('stg_sus_ecds_clinical_diagnoses_snomed') }} as diagnosis
+    -- NHSE Supplementary ECDS Analysis spec v3.3, section 7.1.3.
+    where diagnosis.code in (
+        '52448006', '2776000', '33449004', '72366004', '191736004'
+        , '371631005', '197480006', '35489007', '13746004', '58214004'
+        , '69322001', '44376007', '397923000', '30077003', '17226007'
+        , '50705009', '225624000'
+    )
+    group by diagnosis.primarykey_id
+),
+
+psychiatric_referral_attendances as (
+    select distinct visit_occurrence_id
+    from {{ ref('int_sus_uec_referred_to_service') }}
+    where referred_to_service_ecds_group1 = 'Psychiatric'
+),
+
+encounters as (
 select
     visit_occurrence_id
     , sk_patient_id
@@ -128,7 +151,86 @@ select
     , deprivation_decile_at_event
     , reg_practice_at_event
     , reg_practice_name_latest
+    , practice.pcn_name as reg_practice_pcn_name_latest
+    , practice.neighbourhood_name as reg_practice_neighbourhood_name_latest
+    , practice.health_borough_name as reg_practice_health_borough_name_latest
+    , referral.visit_occurrence_id is not null as is_mental_health_referral
+    , coalesce(
+        diagnosis.visit_occurrence_id is not null
+        or chief_complaint_code in (
+            '248062006', '272022009', '366979004', '6471006'
+            , '48694002', '248020004', '7011001', '2073000'
+        )
+        or injury_intent_code = '276853009'
+        , false
+    ) as is_mental_health_related_attendance
+    , coalesce(
+        diagnosis.has_suspected_mental_health_diagnosis_only
+        , false
+    ) as has_suspected_mental_health_diagnosis_only
+    , discharge_destination_dictionary.ecds_group1
+        as discharge_destination_ecds_group1
+    , case
+        when discharge_destination_code in (
+            '306706006', '1066361000000104', '1066371000000106'
+            , '1066381000000108', '1066391000000105', '1066401000000108'
+            , '1874161000000104'
+        ) then 'Admitted'
+        when discharge_destination_code in (
+            '306689006', '306691003', '306694006', '306705005', '50861005'
+        ) then 'Non-admitted'
+        when discharge_destination_code in (
+            '305398007', '1066331000000109', '1066341000000100'
+            , '1066351000000102', '19712007', '183919006'
+        ) then 'Other'
+        else 'Unknown'
+        end as discharge_destination_group
+    , coalesce(
+        coalesce(uec_activity_type_code, department_type)
+        in ('01', '02', '03', '04')
+        and coalesce(attendance_category_code, '') not in ('04', '4', 'X')
+        and coalesce(discharge_status_code, '') <> '63238001'
+        , false
+    ) as is_unplanned_attendance
     , general_practitioner_code
     , general_practitioner_name
     , visit_occurrence_type
-from {{ ref('int_sus_uec_encounter') }}
+from {{ ref('int_sus_uec_encounter') }} as encounter
+left join mental_health_diagnosis_attendances as diagnosis
+    using (visit_occurrence_id)
+left join psychiatric_referral_attendances as referral
+    using (visit_occurrence_id)
+left join {{ ref('practice_wnl_all') }} as practice
+    on encounter.reg_practice_at_event = practice.practice_code
+left join {{ ref('stg_dictionary_ecds_dischargedestination') }}
+    as discharge_destination_dictionary
+    on encounter.discharge_destination_code = discharge_destination_dictionary.snomed_code
+)
+
+select
+    *
+    , coalesce(
+        age_at_event < 18 and is_mental_health_related_attendance
+        , false
+    ) as is_cyp_mental_health
+    , case
+        when site_id in ('AD915', 'AD904', 'AD906', 'NLO21', 'AD918', 'RY901')
+            and department_type in ('3', '03')
+            and discharge_status_code in ('1077031000000103', '1077781000000101')
+            then 0
+        else 1
+        end as attendance_count
+    , case
+        when is_unplanned_attendance
+            and duration > 720
+            and end_date is not null
+            and end_time is not null
+            then 1
+        else 0
+        end as over_12_hours_count
+    , iff(duration > 4320, 1, 0) as over_72_hours_count
+    , iff(initial_assessment_time_since_arrival <= 15, 1, 0)
+        as assessed_within_15_minutes_count
+    , iff(initial_assessment_time_since_arrival > 15, 1, 0)
+        as not_assessed_within_15_minutes_count
+from encounters

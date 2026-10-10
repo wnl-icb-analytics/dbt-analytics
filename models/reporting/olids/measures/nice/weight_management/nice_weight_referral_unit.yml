@@ -1,0 +1,769 @@
+unit_tests:
+- name: nice_weight_referral_anchors_windows_known_dates_and_attendance
+  model: int_nice_weight_management_referral_evidence_by_month
+  overrides:
+    macros:
+      get_observations: SELECT -9416::NUMBER AS person_id, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+        '2026-10-01'::DATE AS date_recorded, 'HEIGHT'::VARCHAR AS id, '180'::VARCHAR AS result_value, 18::NUMBER
+        AS age_at_event
+  given:
+  - input: ref('fct_person_nice_obesity_register_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, column3::DATE AS latest_bmi_date,
+      column4::FLOAT AS bmi_value, column5::VARCHAR AS bmi_source, column6::BOOLEAN AS requires_lower_bmi_thresholds,
+      column7::VARCHAR AS bmi_category FROM VALUES (-9420, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE,
+      ''Obese Class I''),
+
+      (-9420, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9419, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9419, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9418, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9418, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9417, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9417, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9416, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9416, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9415, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9415, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9414, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', TRUE, ''Obese Class I''),
+
+      (-9414, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', TRUE, ''Obese Class I''),
+
+      (-9413, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9413, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9412, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9412, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9411, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9411, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9410, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9410, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9409, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9409, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9408, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9408, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9407, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9407, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9406, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9406, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9405, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9405, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9404, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9404, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9403, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9403, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9402, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9402, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9401, ''2026-08-31'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I''),
+
+      (-9401, ''2026-09-30'', ''2026-08-01'', 35, ''recorded'', FALSE, ''Obese Class I'')'
+  - input: ref('int_bmi_all')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::TIMESTAMP_NTZ AS clinical_effective_date,
+      column4::DATE AS date_recorded, column5::FLOAT AS bmi_value, column6::VARCHAR AS bmi_source FROM VALUES (-9420,
+      ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''recorded''),
+
+      (-9420, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9419, ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''recorded''),
+
+      (-9419, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9418, ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''recorded''),
+
+      (-9418, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9417, ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''recorded''),
+
+      (-9417, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9416, ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''calculated''),
+
+      (-9416, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9415, ''BMI'', ''2026-06-02'', ''2026-06-02'', 28, ''recorded''),
+
+      (-9415, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9414, ''BMI'', ''2026-06-02'', ''2026-06-02'', 28, ''recorded''),
+
+      (-9414, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9413, ''BMI'', ''2026-06-02'', ''2026-06-02'', 9, ''recorded''),
+
+      (-9413, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9412, ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''recorded''),
+
+      (-9412, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9411, ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''recorded''),
+
+      (-9411, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9410, ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''recorded''),
+
+      (-9410, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9409, ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''recorded''),
+
+      (-9409, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9408, ''BMI'', ''2026-06-02'', ''2026-10-01'', 35, ''recorded''),
+
+      (-9408, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9407, ''BMI'', ''2026-09-30'', ''2026-09-30'', 35, ''recorded''),
+
+      (-9407, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9406, ''BMI'', ''2025-09-30'', ''2025-09-30'', 35, ''recorded''),
+
+      (-9406, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9405, ''BMI'', ''2025-08-31'', ''2025-08-31'', 35, ''recorded''),
+
+      (-9405, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9404, ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''recorded''),
+
+      (-9404, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded''),
+
+      (-9403, ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''recorded''),
+
+      (-9402, ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''recorded''),
+
+      (-9401, ''BMI'', ''2026-06-02'', ''2026-06-02'', 35, ''recorded''),
+
+      (-9401, ''LATER'', ''2026-08-01'', ''2026-08-01'', 35, ''recorded'')'
+  - input: ref('int_nice_weight_management_events_all')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::VARCHAR AS id, column3::DATE AS event_date, column4::BOOLEAN
+      AS is_referral, column5::BOOLEAN AS is_offer, column6::BOOLEAN AS is_decline, column7::BOOLEAN AS is_attendance,
+      column8::BOOLEAN AS is_end FROM VALUES (-9401, ''0'', ''2026-06-02'', TRUE, FALSE, FALSE, FALSE, FALSE),
+
+      (-9401, ''1'', ''2026-06-02'', TRUE, FALSE, FALSE, FALSE, FALSE),
+
+      (-9402, ''2'', ''2026-08-31'', FALSE, TRUE, FALSE, FALSE, FALSE),
+
+      (-9403, ''3'', ''2026-09-01'', FALSE, FALSE, TRUE, FALSE, FALSE),
+
+      (-9404, ''4'', ''2026-06-01'', FALSE, TRUE, FALSE, FALSE, FALSE),
+
+      (-9405, ''5'', ''2025-08-31'', FALSE, TRUE, FALSE, FALSE, FALSE),
+
+      (-9406, ''6'', ''2025-09-30'', FALSE, TRUE, FALSE, FALSE, FALSE),
+
+      (-9407, ''7'', ''2026-10-01'', FALSE, TRUE, FALSE, FALSE, FALSE),
+
+      (-9408, ''8'', ''2026-06-02'', FALSE, TRUE, FALSE, FALSE, FALSE),
+
+      (-9409, ''9'', ''2024-09-30'', TRUE, FALSE, FALSE, FALSE, FALSE),
+
+      (-9410, ''10'', ''2024-10-01'', TRUE, FALSE, FALSE, FALSE, FALSE),
+
+      (-9411, ''11'', ''2025-09-01'', FALSE, FALSE, FALSE, TRUE, FALSE),
+
+      (-9412, ''12'', ''2025-09-30'', FALSE, FALSE, FALSE, TRUE, FALSE),
+
+      (-9412, ''13'', ''2026-09-30'', FALSE, FALSE, FALSE, FALSE, TRUE),
+
+      (-9413, ''14'', ''2026-06-02'', FALSE, TRUE, FALSE, FALSE, FALSE),
+
+      (-9414, ''15'', ''2026-06-02'', FALSE, TRUE, FALSE, FALSE, FALSE),
+
+      (-9415, ''16'', ''2026-06-02'', FALSE, TRUE, FALSE, FALSE, FALSE),
+
+      (-9416, ''17'', ''2026-06-02'', FALSE, TRUE, FALSE, FALSE, FALSE),
+
+      (-9417, ''18'', ''2026-08-01'', TRUE, FALSE, FALSE, FALSE, FALSE),
+
+      (-9417, ''19'', ''2026-08-02'', FALSE, FALSE, FALSE, TRUE, FALSE),
+
+      (-9418, ''20'', ''2026-08-01'', FALSE, FALSE, FALSE, TRUE, FALSE),
+
+      (-9418, ''21'', ''2026-08-01'', FALSE, FALSE, FALSE, FALSE, TRUE),
+
+      (-9419, ''22'', ''2026-08-02'', FALSE, FALSE, FALSE, TRUE, FALSE),
+
+      (-9419, ''23'', ''2026-08-01'', FALSE, FALSE, FALSE, FALSE, TRUE),
+
+      (-9420, ''24'', ''2026-08-01'', FALSE, FALSE, FALSE, TRUE, FALSE),
+
+      (-9420, ''25'', ''2026-08-02'', FALSE, FALSE, FALSE, FALSE, TRUE)'
+  expect:
+    rows:
+    - person_id: -9420
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9420
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9419
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: true
+    - person_id: -9419
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: true
+    - person_id: -9418
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: true
+    - person_id: -9418
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: true
+    - person_id: -9417
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: '2026-08-01'
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: true
+      is_currently_attending: true
+    - person_id: -9417
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: '2026-08-01'
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: true
+      is_currently_attending: true
+    - person_id: -9416
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9416
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9415
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9415
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9414
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: '2026-06-02'
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9414
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: '2026-06-02'
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9413
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9413
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9412
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: true
+    - person_id: -9412
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9411
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: true
+    - person_id: -9411
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9410
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: true
+      is_currently_attending: false
+    - person_id: -9410
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: true
+      is_currently_attending: false
+    - person_id: -9409
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: true
+      is_currently_attending: false
+    - person_id: -9409
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9408
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9408
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9407
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9407
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9406
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2025-09-30'
+      timely_referral_date: null
+      timely_offer_date: '2025-09-30'
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9406
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9405
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9405
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-08-01'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9404
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9404
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9403
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9403
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9402
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: '2026-08-31'
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9402
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: null
+      timely_offer_date: '2026-08-31'
+      timely_decline_date: null
+      has_previous_referral: false
+      is_currently_attending: false
+    - person_id: -9401
+      reporting_date: '2026-08-31'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: '2026-06-02'
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: true
+      is_currently_attending: false
+    - person_id: -9401
+      reporting_date: '2026-09-30'
+      earliest_qualifying_bmi_date: '2026-06-02'
+      timely_referral_date: '2026-06-02'
+      timely_offer_date: null
+      timely_decline_date: null
+      has_previous_referral: true
+      is_currently_attending: false
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+# Changing evidence at two dates exposes cross-month joins and duplicate rows.
+- name: nice_weight_ind220_achievement_before_exclusions
+  model: fct_person_weight_management_offer_obesity_ind220_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE
+      AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES (-9507, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9507, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9506, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9506, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9505, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9505, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9504, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9504, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9503, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9503, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9502, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9502, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9501, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9501, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice'')'
+  - input: ref('int_nice_weight_management_referral_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT fixture.*, '2026-01-01'::DATE AS earliest_qualifying_bmi_date FROM (SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE AS timely_referral_date, column4::DATE AS timely_offer_date, column5::DATE AS timely_decline_date, column6::BOOLEAN AS has_previous_referral, column7::BOOLEAN AS is_currently_attending, '2026-08-01'::DATE AS latest_bmi_date, 35::FLOAT AS bmi_value, 'recorded'::VARCHAR AS bmi_source, FALSE AS requires_lower_bmi_thresholds, 'Obese Class I'::VARCHAR AS bmi_category, NULL::DATE AS latest_referral_date, NULL::DATE AS latest_attendance_date, NULL::DATE AS latest_end_date FROM VALUES (-9501, '2026-08-31', NULL, NULL, NULL, FALSE, FALSE),
+      (-9501, '2026-09-30', '2026-08-01', NULL, NULL, TRUE, TRUE),
+      (-9502, '2026-08-31', NULL, NULL, NULL, FALSE, FALSE),
+      (-9502, '2026-09-30', NULL, '2026-08-01', NULL, TRUE, TRUE),
+      (-9503, '2026-08-31', NULL, NULL, NULL, FALSE, FALSE),
+      (-9503, '2026-09-30', NULL, NULL, '2026-08-01', FALSE, FALSE),
+      (-9504, '2026-08-31', NULL, '2026-08-01', NULL, FALSE, FALSE),
+      (-9504, '2026-09-30', NULL, NULL, NULL, TRUE, FALSE),
+      (-9505, '2026-08-31', '2026-08-01', NULL, NULL, TRUE, FALSE),
+      (-9505, '2026-09-30', NULL, NULL, NULL, FALSE, TRUE),
+      (-9506, '2026-08-31', NULL, NULL, '2026-08-01', FALSE, FALSE),
+      (-9506, '2026-09-30', NULL, NULL, NULL, FALSE, FALSE),
+      (-9507, '2026-08-31', NULL, NULL, NULL, FALSE, FALSE),
+      (-9507, '2026-09-30', '2026-09-01', NULL, NULL, TRUE, TRUE)) AS fixture
+  expect:
+    rows:
+    - person_id: -9501
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9501
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -9502
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9502
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -9503
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9503
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -9504
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -9505
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -9506
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+    - person_id: -9506
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -9507
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+    - person_id: -9507
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+# HTN membership starts for -9504 and ends for -9505; -9507 joins DM alone in September.
+- name: nice_weight_ind221_achievement_before_exclusions
+  model: fct_person_weight_management_referral_obesity_htn_dm_ind221_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::NUMBER AS age, column4::DATE
+      AS birth_date_approx, column5::VARCHAR AS gender, column6::VARCHAR AS practice_code, column7::VARCHAR AS practice_name
+      FROM VALUES (-9507, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9507, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9506, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9506, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9505, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9505, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9504, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9504, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9503, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9503, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9502, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9502, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9501, ''2026-08-31'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice''),
+
+      (-9501, ''2026-09-30'', 30, ''1996-01-15'', ''Female'', ''SYNTHETIC'', ''Synthetic practice'')'
+  - input: ref('int_nice_weight_management_referral_evidence_by_month')
+    format: sql
+    rows: |-
+      SELECT fixture.*, '2026-01-01'::DATE AS earliest_qualifying_bmi_date FROM (SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE AS timely_referral_date, column4::DATE AS timely_offer_date, column5::DATE AS timely_decline_date, column6::BOOLEAN AS has_previous_referral, column7::BOOLEAN AS is_currently_attending, '2026-08-01'::DATE AS latest_bmi_date, 35::FLOAT AS bmi_value, 'recorded'::VARCHAR AS bmi_source, FALSE AS requires_lower_bmi_thresholds, 'Obese Class I'::VARCHAR AS bmi_category, NULL::DATE AS latest_referral_date, NULL::DATE AS latest_attendance_date, NULL::DATE AS latest_end_date FROM VALUES (-9501, '2026-08-31', NULL, NULL, NULL, FALSE, FALSE),
+      (-9501, '2026-09-30', '2026-08-01', NULL, NULL, TRUE, TRUE),
+      (-9502, '2026-08-31', NULL, NULL, NULL, FALSE, FALSE),
+      (-9502, '2026-09-30', NULL, '2026-08-01', NULL, TRUE, TRUE),
+      (-9503, '2026-08-31', NULL, NULL, NULL, FALSE, FALSE),
+      (-9503, '2026-09-30', NULL, NULL, '2026-08-01', FALSE, FALSE),
+      (-9504, '2026-08-31', NULL, '2026-08-01', NULL, FALSE, FALSE),
+      (-9504, '2026-09-30', NULL, NULL, NULL, TRUE, FALSE),
+      (-9505, '2026-08-31', '2026-08-01', NULL, NULL, TRUE, FALSE),
+      (-9505, '2026-09-30', NULL, NULL, NULL, FALSE, TRUE),
+      (-9506, '2026-08-31', NULL, NULL, '2026-08-01', FALSE, FALSE),
+      (-9506, '2026-09-30', NULL, NULL, NULL, FALSE, FALSE),
+      (-9507, '2026-08-31', NULL, NULL, NULL, FALSE, FALSE),
+      (-9507, '2026-09-30', '2026-09-01', NULL, NULL, TRUE, TRUE)) AS fixture
+  - input: ref('fct_person_hypertension_register_by_month')
+    format: sql
+    rows: 'SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, ''2020-01-01''::DATE AS earliest_diagnosis_date,
+      ''2020-01-01''::DATE AS latest_diagnosis_date FROM VALUES (-9501, ''2026-08-31''),
+
+      (-9501, ''2026-09-30''),
+
+      (-9502, ''2026-08-31''),
+
+      (-9502, ''2026-09-30''),
+
+      (-9503, ''2026-08-31''),
+
+      (-9503, ''2026-09-30''),
+
+      (-9504, ''2026-09-30''),
+
+      (-9505, ''2026-08-31'')'
+  - input: ref('fct_person_diabetes_register_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS month_end_date, '2026-09-01'::DATE AS earliest_diagnosis_date,
+      '2026-09-01'::DATE AS latest_diagnosis_date, 'Type 2'::VARCHAR AS diabetes_type, NULL::DATE AS earliest_type1_date,
+      NULL::DATE AS latest_type1_date, '2026-09-01'::DATE AS earliest_type2_date, '2026-09-01'::DATE AS latest_type2_date,
+      NULL::DATE AS latest_resolved_date FROM VALUES (-9507, '2026-09-30')
+  expect:
+    rows:
+    - person_id: -9501
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+      has_hypertension: true
+      has_diabetes: false
+    - person_id: -9501
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      has_hypertension: true
+      has_diabetes: false
+    - person_id: -9502
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+      has_hypertension: true
+      has_diabetes: false
+    - person_id: -9503
+      reporting_date: '2026-08-31'
+      is_in_numerator: false
+      has_hypertension: true
+      has_diabetes: false
+    - person_id: -9503
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      has_hypertension: true
+      has_diabetes: false
+    - person_id: -9504
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+      has_hypertension: true
+      has_diabetes: false
+    - person_id: -9505
+      reporting_date: '2026-08-31'
+      is_in_numerator: true
+      has_hypertension: true
+      has_diabetes: false
+    - person_id: -9507
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+      has_hypertension: false
+      has_diabetes: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history

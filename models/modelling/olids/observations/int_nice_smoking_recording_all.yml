@@ -1,0 +1,26 @@
+models:
+- name: int_nice_smoking_recording_all
+  description: >-
+    Smoking status records from PCD SMOK_COD. One row per observation, including inactive and
+    deceased people, through the build date. No age-at-event restriction applies. Passive
+    exposure is not supplied by this list.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - observation_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: SMOK_COD
+        source: PCD
+  columns:
+  - name: person_id
+    description: Person with smoking status recorded.
+  - name: observation_id
+    description: Unique source observation.
+  - name: event_date
+    description: Corrected clinical calendar date.

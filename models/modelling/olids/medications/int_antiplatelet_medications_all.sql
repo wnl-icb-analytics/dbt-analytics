@@ -29,10 +29,9 @@ SELECT
 
     -- P2Y12 inhibitor classification (for dual antiplatelet therapy)
     CASE
-        WHEN bnf_code LIKE '0209000510%' THEN TRUE  -- CLOPIDOGREL
-        WHEN bnf_code LIKE '0209000525%' THEN TRUE  -- PRASUGREL
-        WHEN bnf_code LIKE '0209000530%' THEN TRUE  -- TICAGRELOR
-        WHEN bnf_code LIKE '0209000535%' THEN TRUE  -- TICLOPIDINE
+        WHEN bnf_code LIKE '0209000C0%' THEN TRUE
+        WHEN bnf_code LIKE '0209000Y0%' THEN TRUE
+        WHEN bnf_code LIKE '0209000Z0%' THEN TRUE
         ELSE FALSE
     END AS is_p2y12_inhibitor,
 
@@ -50,7 +49,9 @@ SELECT
     CASE
         WHEN DATEDIFF(day, order_date, CURRENT_DATE()) <= 365 THEN TRUE
         ELSE FALSE
-    END AS is_recent_12m
+    END AS is_recent_12m,
+    bnf_code LIKE '0209000A0%' AS is_aspirin,
+    bnf_code LIKE '0209000C0%' AS is_clopidogrel
 
 FROM (
     {{ get_medication_orders(bnf_code='0209') }}

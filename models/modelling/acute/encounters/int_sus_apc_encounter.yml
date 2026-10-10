@@ -225,9 +225,21 @@ models:
         data_type: varchar
         description: "Specialised Commission Flag"
 
-      - name: spec_comm
+      - name: spec_comm_code
         data_type: varchar
         description: "Specialised Commission Code"
+
+      - name: spec_comm_desc
+        data_type: varchar
+        description: "Specialised Commission description from the latest retained UKHFD lookup. Null indicates there is no corresponding code or the code did not match in the lookup."
+
+      - name: pss_service_line_code
+        data_type: varchar
+        description: "Prescribed Specialised Services service line code"
+
+      - name: pss_service_line_desc
+        data_type: varchar
+        description: "Prescribed Specialised Services service line description from the latest retained UKHFD lookup. Null indicates there is no corresponding code or the code did not match in the lookup."
 
       - name: type
         data_type: varchar
@@ -273,8 +285,9 @@ models:
           Patient LSOA 2021 of residence at the time of the spell. Populated
           for spells discharged from 1 April 2024 (about 96%); mostly null for
           earlier spells, so use lsoa_11_at_event for trends that span that
-          date. About 2% of values from April 2024 lie in a different local
-          authority from lsoa_11_at_event.
+          date. From April 2026 the value comes from SUS+; before that it
+          comes from the data lake's derivation, where about 2.5% of values
+          are not a 2021 successor of lsoa_11_at_event.
 
       - name: lad_at_event
         data_type: varchar

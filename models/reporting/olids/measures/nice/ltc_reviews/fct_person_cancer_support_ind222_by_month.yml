@@ -1,0 +1,56 @@
+models:
+- name: fct_person_cancer_support_ind222_by_month
+  description: >-
+    Primary care support discussion after cancer diagnosis (NICE IND222). One row per person
+    in the denominator at each month-end.
+
+
+    People registered at the month-end on the cancer register with a latest new diagnosis 3 to
+    15 months before the month-end, a 12-month cohort ending 3 months earlier so follow-up is
+    complete, rather than NICE's preceding 12 months. Non-melanoma skin cancer is excluded.
+    Achieved with a cancer support discussion within 3 months from diagnosis. A cancer care
+    review alone does not count. No personalised care adjustments are applied. Recalculated
+    for each of the last 60 month-ends with current rules, code lists and records, so later
+    corrections can change past months. Based on NICE CG138. Code lists: CAN_COD (PCD);
+    CANCER_SUPPORT_COD (ECL cache).
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  columns:
+  - name: person_id
+    description: "Person identifier for a member of the indicator denominator."
+  - name: indicator_id
+    description: "NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Month-end used to assess eligibility and evidence."
+  - name: measurement_period_start
+    description: "15 months before the reporting date. Diagnoses on this boundary are excluded."
+  - name: age
+    description: "Age in completed years at the reporting date, based on the approximate birth date."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: practice_code
+    description: "ODS code of the registration practice at the reporting month-end."
+  - name: practice_name
+    description: "Name of the registration practice at the reporting month-end."
+  - name: diagnosis_date
+    description: "Latest first or new cancer diagnosis known by the reporting date within the eligible diagnosis cohort."
+  - name: latest_record_date
+    description: "Latest cancer support discussion from diagnosis day to 3 months afterwards, inclusive; null if absent."
+  - name: is_in_denominator
+    description: "Always true. Each row is an eligible member of the denominator."
+  - name: is_in_numerator
+    description: "Whether the person meets the documented achievement rule."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise NOT_RECORDED_IN_PERIOD."
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - reporting_date

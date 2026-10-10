@@ -1,11 +1,19 @@
 ﻿models:
   - name: int_smi_hc_check_time_series
-    description: Intermediate table holding aggregated completied health check metrics by 
-      for the SMI population each analysis month. Multiple lines per person
+    description: >
+      Health check completion for the historical SMI population, one row per person
+      and analysis month. HbA1c evidence requires a recorded result value, including
+      implausible results; value-free HbA1c tests do not count in this historical series.
     config:
       meta:
         owner:
           name: KateHomer55
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - analysis_month
     columns:
       - name: person_id
         description: Unique identifier for the person

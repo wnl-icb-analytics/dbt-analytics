@@ -66,11 +66,14 @@ select core.primarykey_id
     , core.spell_commissioning_grouping_core_hrg
     , core.spell_commissioning_tariff_calculation_final_price
     , core.spell_commissioning_pss_grouping_national_programme_code -- spec comm
+    , core.spell_commissioning_pss_grouping_prescribed_service_line_code
 
     /* patient info at time of event  */
     , core.spell_patient_residence_derived_postcode_district
     , core.spell_patient_residence_derived_lsoa_11
-    , derived.dmic_lsoa2021 as spell_patient_residence_derived_lsoa_21
+    -- SUS+ LSOA 2021 from April 2026 activity; DMIC fills April 2024 to March 2026.
+    , coalesce(core.spell_patient_residence_derived_lsoa_21, derived.dmic_lsoa2021)
+        as spell_patient_residence_derived_lsoa_21
     , core.spell_patient_residence_residence_ccg
     , core.spell_patient_residence_derived_local_authority_district
     , core.spell_patient_residence_derived_index_of_multiple_deprivation_decile

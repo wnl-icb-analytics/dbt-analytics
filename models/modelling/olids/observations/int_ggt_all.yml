@@ -2,10 +2,13 @@ version: 2
 models:
   - name: int_ggt_all
     description: >
-      GGT (gamma-glutamyl transferase) observations with unit standardisation and data quality flags.
-      One row per observation using the GGT_LFT_COD cluster. Applies a value-first standardisation
-      workflow via the standardise_count_observation macro to infer correct units and values,
-      then categorises by clinical severity. Standard unit: [IU]/L.
+      GGT (gamma-glutamyl transferase) results from the GGT_LFT_COD cluster, with unit
+      standardisation and data quality flags. One row per distinct result: where the same
+      result (person, clinical date, value, unit and concept) was entered more than once, only
+      the earliest entry is kept (earliest date_recorded, then lowest id), so date_recorded is
+      when the result was first entered. Applies a value-first standardisation workflow via
+      the standardise_count_observation macro to infer correct units and values, then
+      categorises by clinical severity. Standard unit: [IU]/L.
     config:
       meta:
         owner:
@@ -36,6 +39,12 @@ models:
         description: Date of observation
         data_tests:
           - not_null
+      - name: date_recorded
+        description: >
+          Date the result was first entered in the source system. Where the
+          same result was entered more than once, the earliest dated entry is
+          kept. Use with clinical_effective_date for point-in-time views, as a
+          result can be back-dated. NULL when no entry has a recorded date.
       - name: concept_code
         description: SNOMED code for the observation
       - name: code_description

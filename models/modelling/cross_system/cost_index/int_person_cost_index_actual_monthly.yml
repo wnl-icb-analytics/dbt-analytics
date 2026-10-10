@@ -2,8 +2,11 @@ version: 2
 models:
   - name: int_person_cost_index_actual_monthly
     description: >
-      Per-person patient-attributable actual spend by month, from monthly cost
-      index adapters.
+      Per-person patient-attributable spend by month for the resource index.
+      One row per patient per month with any cost. Sums SLAM, EPD, MHSDS and
+      CSDS from fct_person_cost_index_monthly; MHSDS and CSDS are proxy-priced.
+      GP appointments are excluded because only NCL has person-level data.
+      Limited to months covered by all four sources.
     config:
       meta:
         owner:
@@ -18,9 +21,17 @@ models:
         data_tests:
           - not_null
       - name: actual_cost
-        description: Patient-attributable actual spend in the month (GBP).
+        description: Patient-attributable spend in the month across all four sources (GBP).
         data_tests:
           - not_null
+      - name: slam_cost
+        description: SLAM acute and community actual cost (GBP).
+      - name: epd_cost
+        description: EPD GP prescribing actual cost (GBP).
+      - name: mhsds_cost
+        description: MHSDS mental health proxy cost (GBP).
+      - name: csds_cost
+        description: CSDS community contact proxy cost (GBP).
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

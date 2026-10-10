@@ -1,7 +1,16 @@
 models:
   - name: int_adult_imms_dose_count
-    description: Intermediate table holding historical imms population aged 60+ and any vaccinations associated with 
-      them and the practice they were registered.
+    description: >
+      Retained administered PPV, shingles and RSV doses per person aged 18+, registered or not,
+      for monthly counts. One row per person. Covers PPV_1, SHING_1 and SHING_1B for
+      shingles dose 1, SHING_2 and SHING_2B for dose 2, and RSV_1. Each dose has a month
+      label, YYYYMM sort key and fiscal year, null when no dose is recorded. Carries current
+      practice and the demographic and risk flags from int_adult_imms_dose_base. Selects
+      the latest retained date across the listed variants for each dose. Historical
+      shingles events retain the first administration for dose 1 and the second for dose 2
+      per vaccine ID, so these need not be the latest administrations. No age 60+ or
+      additional date-window filter applies. Future-dated events are excluded upstream.
+      Deceased people are included; their demographic age is age at death when known.
 
     config:
       meta:

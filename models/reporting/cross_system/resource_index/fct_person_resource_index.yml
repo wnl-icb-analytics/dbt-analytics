@@ -5,8 +5,11 @@ models:
       Resource index at person level (indirect age-sex standardisation on a
       person-time basis). One row per patient with WNL registration exposure
       in the rolling 12-month cost window - including the deceased and the
-      deducted, attributed to their window practice. actual = 12-month
-      patient-attributable spend; expected = empirical WNL age-sex
+      deducted, attributed to their window practice. The window ends at the
+      latest month covered by SLAM, EPD, MHSDS and CSDS. actual = 12-month
+      patient-attributable spend across those four sources (MHSDS and CSDS
+      are proxy-priced); GP appointments are excluded because NWL has no
+      person-level GP data. expected = empirical WNL age-sex
       cost-per-month rate x months registered. resource_index =
       sum(actual) / sum(expected) for any cut (never average the ratio).
       Also carries the UKHFD Core need basis. weighted_months_12m apportions
@@ -46,9 +49,17 @@ models:
       - name: registered_sub_icb_code
         description: Registered sub-ICB of the window practice (93C = NCL, W2U3Z = NWL).
       - name: actual_cost_12m
-        description: Patient-attributable spend over the window (GBP).
+        description: Patient-attributable spend over the window (GBP). Sum of the four source columns below.
         data_tests:
           - not_null
+      - name: slam_cost_12m
+        description: SLAM acute and community actual cost over the window (GBP).
+      - name: epd_cost_12m
+        description: EPD GP prescribing actual cost over the window (GBP).
+      - name: mhsds_cost_12m
+        description: MHSDS mental health proxy cost over the window (GBP).
+      - name: csds_cost_12m
+        description: CSDS community contact proxy cost over the window (GBP).
       - name: expected_cost_12m
         description: Age-sex band cost-per-month rate x months registered (GBP).
         data_tests:

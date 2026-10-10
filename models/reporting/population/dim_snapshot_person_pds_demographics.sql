@@ -45,9 +45,9 @@ select
         dict_pcn.stp_code as icb_code,
         dict_pcn.stp_name as icb_name,
         case 
-            when (icb_code != '{{self_icb_code}}' and gp_lu.borough is null) then 'Non-NCL Borough'
+            when (icb_code != '{{self_icb_code}}' and gp_lu.registered_borough_name is null) then 'Non-NCL Borough'
             when (icb_code = '{{self_icb_code}}' and dict_gp.end_date is not null) then 'Unknown due to closed practice'
-            else coalesce(gp_lu.borough, reg_bor_backup.borough, 'Unknown')
+            else coalesce(gp_lu.registered_borough_name, reg_bor_backup.borough, 'Unknown')
         end as registered_borough,
         nb_reg.neighbourhood_code as registered_neighbourhood_code,
         case
@@ -105,12 +105,14 @@ on pds.practice_code = dict_gp.organisation_code
 left join {{ref('stg_dictionary_dbo_organisationmatrixpracticeview')}} as dict_pcn
 on dict_gp.sk_organisation_id = dict_pcn.sk_organisation_id_practice
 
-left join {{ref('stg_reference_lookup_ncl_gp_practice')}} gp_lu
-on pds.practice_code = gp_lu.gp_practice_code
+left join {{ref('practice_wnl_active')}} gp_lu
+on pds.practice_code = gp_lu.practice_code
+and gp_lu.sub_icb_code = {{ ncl_sub_icb() }}
 
 left join (
-        select distinct pcn_code, borough
-        from {{ref('stg_reference_lookup_ncl_gp_practice')}} 
+        select distinct pcn_code, registered_borough_name as borough
+        from {{ref('practice_wnl_active')}}
+        where sub_icb_code = {{ ncl_sub_icb() }}
 ) reg_bor_backup
 on gp_lu.pcn_code = reg_bor_backup.pcn_code
 

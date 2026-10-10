@@ -1,7 +1,17 @@
 ﻿models:
   - name: int_adult_imms_person_level
-    description: Intermediate table holding vaccination Status for Adults. 
-      Multiple lines per person, one for each vaccine dose received
+    description: >
+      Current PPV, shingles and RSV status for registered, living adults aged 18+ with an
+      adult immunisation status record. One row per person. Gives status, date and age at
+      event for PPV dose 1, shingles doses 1 and 2 and RSV dose 1, plus housebound status
+      and SMI and dementia register membership. Only currently eligible schedule rows
+      contribute. Where a person has statuses for more than one schedule
+      variant, the status for their cohort wins. PPV uses clinical risk group, shingles uses
+      the turned-65 flag and immunosuppression, and RSV uses care home residence and
+      pregnancy and clinical risk. Date and age fields take the maximum recorded value
+      across the listed variants, so they can come from a different variant than the
+      status. RSV status includes RSV_1D, but RSV date and age fields use only RSV_1,
+      RSV_1B and RSV_1C.
     config:
       meta:
         owner:

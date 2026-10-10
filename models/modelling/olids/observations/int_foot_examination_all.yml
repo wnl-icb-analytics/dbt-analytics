@@ -15,6 +15,10 @@ models:
       and in the code arrays for traceability. Feeds QOF DM012 style foot
       checks and NICE IND81 and IND160. has_monofilament_test distinguishes
       the monofilament foot sensation subset needed by IND160.
+      First absent/amputated dates use the same corrected clinical dates,
+      including the shared 1900 fallback for a missing clinical date. History
+      compares these dates with its reference date. Existing all-time flags and
+      examination statuses retain their current meaning.
     config:
       meta:
         owner:
@@ -76,3 +80,60 @@ models:
         description: "Unsuitable, Declined, Complete - Both Feet, Complete with the other foot missing, Partial, Referred - Not Examined, or Not Done."
       - name: diabetes_foot_risk_category
         description: "Combined risk category from the foot risk levels: Ulcerated (High Risk), High Risk, Moderate Risk, Low Risk, Risk Not Specified or No Valid Examination."
+      - name: first_left_foot_absent_date
+        description: First corrected clinical date of CONABL_COD evidence; null without a matched record. History applies the absence only on or after this date.
+      - name: first_right_foot_absent_date
+        description: First corrected clinical date of CONABR_COD evidence; null without a matched record. History applies the absence only on or after this date.
+      - name: first_left_foot_amputated_date
+        description: First corrected clinical date of AMPL_COD evidence; null without a matched record. History applies the amputation only on or after this date.
+      - name: first_right_foot_amputated_date
+        description: First corrected clinical date of AMPR_COD evidence; null without a matched record. History applies the amputation only on or after this date.
+
+unit_tests:
+  - name: nice_foot_first_state_dates
+    model: int_foot_examination_all
+    overrides:
+      macros:
+        get_observations: |
+          SELECT
+              column1::VARCHAR AS id,
+              column2::NUMBER AS person_id,
+              column3::TIMESTAMP_NTZ AS clinical_effective_date,
+              column4::VARCHAR AS cluster_id,
+              column5::VARCHAR AS code_description,
+              column4::VARCHAR AS mapped_concept_code,
+              column5::VARCHAR AS mapped_concept_display
+          FROM VALUES
+              ('SYNTHETIC1', -9901, '2024-03-01', 'FOOTEXAM_COD', 'Monofilament examination left foot'),
+              ('SYNTHETIC2', -9901, '2024-04-01', 'AMPR_COD', 'Amputation right foot'),
+              ('SYNTHETIC3', -9901, '2024-05-01', 'AMPR_COD', 'Amputation right foot'),
+              ('SYNTHETIC4', -9902, '2024-03-01', 'FOOTEXAM_COD', 'Monofilament examination left foot')
+    given: []
+    expect:
+      rows:
+        - person_id: -9901
+          clinical_effective_date: '2024-03-01 00:00:00'
+          first_right_foot_amputated_date: '2024-04-01'
+          first_left_foot_amputated_date: null
+          first_left_foot_absent_date: null
+          first_right_foot_absent_date: null
+        - person_id: -9901
+          clinical_effective_date: '2024-04-01 00:00:00'
+          first_right_foot_amputated_date: '2024-04-01'
+          first_left_foot_amputated_date: null
+          first_left_foot_absent_date: null
+          first_right_foot_absent_date: null
+        - person_id: -9901
+          clinical_effective_date: '2024-05-01 00:00:00'
+          first_right_foot_amputated_date: '2024-04-01'
+          first_left_foot_amputated_date: null
+          first_left_foot_absent_date: null
+          first_right_foot_absent_date: null
+        - person_id: -9902
+          clinical_effective_date: '2024-03-01 00:00:00'
+          first_right_foot_amputated_date: null
+          first_left_foot_amputated_date: null
+          first_left_foot_absent_date: null
+          first_right_foot_absent_date: null
+    config:
+      tags: [monthly-full, nice-history]
