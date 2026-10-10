@@ -2,22 +2,34 @@ version: 2
 models:
   - name: fct_person_cost_index_monthly
     description: |
-      Patient-level spend by month and service grouping. Canonical cost index
-      for WNL resource analysis. Full-history union of the SLAM
-      actual-cost spine (int_cost_index_slam_activity_monthly, WNL = NCL+NWL, from 2021-04)
-      with EPD prescribing (int_cost_index_epd_prescribing_monthly, from 2018-04
-      and about 12 months behind SLAM), MHSDS inpatient and contacts, and CSDS
-      community contacts. MHSDS and CSDS are proxy-costed from the NHSE 26/27
-      currency price schedule (deflated + MFF). Grain: patient x month x service_grouping x service x
+      Monthly patient-level cost and activity for WNL resource analysis
+      (NCL and NWL). SLAM supplies agreed actual provider costs, not national
+      tariff prices; EPD supplies actual reimbursed GP prescribing costs.
+      MHSDS supplies mental health inpatient bed days and crisis and community
+      contacts; CSDS supplies community health contacts. MHSDS and CSDS costs
+      are proxy estimates based on activity and NHS England 2026/27 currency
+      prices, adjusted for the activity financial year using the GDP deflator
+      and provider market forces factor. Currency means an activity category
+      used for pricing. Grain: patient x month x service_grouping x service x
       is_patient_attributable x cost_basis x cost_source x activity_unit.
 
-      Pending unions (sources identified): GP appointments (OLIDS) and
-      high-cost drugs/devices PLD.
+      Retains available history for each source, with no rolling window or
+      restriction to shared months. SLAM starts in April 2021 and excludes
+      its latest incomplete submitted month. Source coverage and delivery lag
+      differ; check int_cost_index_source_coverage for month ranges by source
+      and cost basis. GP appointments and separate high-cost drugs/devices
+      patient-level feeds are not included.
 
-      Filter is_patient_attributable for per-patient cuts. MH/community
-      provider block payments inside SLAM are mostly not patient-attributable,
-      so patient-attributable cuts do not double count; whole-system totals
-      mixing SLAM block lines with these proxy sources may double count.
+      Includes unidentified SLAM activity and non-patient-attributable costs.
+      Filter is_patient_attributable = TRUE and exclude null sk_patient_id
+      for analysis of identified patients. Do not sum across sources or mix
+      actual and proxy costs without checking overlap. SLAM mental health and
+      community block payments may cover the same care as MHSDS and CSDS proxy
+      costs. The attributable flag does not establish that sources are mutually
+      exclusive. Keep unlike activity units separate.
+
+      This model is patient-level and applies no small-number suppression.
+      Aggregate outputs and apply small-number suppression before sharing.
     config:
       meta:
         owner:
@@ -26,36 +38,67 @@ models:
       - name: sk_patient_id
         description: DMIC pseudonymised NHS number (NULL for unidentified SLAM activity).
       - name: activity_month
-        description: First of the calendar month.
+        description: >
+          First day of the month: SLAM financial period, EPD prescribing
+          processing period, or MHSDS/CSDS activity month. Coverage differs
+          by source; check int_cost_index_source_coverage before comparisons.
         data_tests:
           - not_null
       - name: service_grouping
-        description: Crisis / Community / Mental Health / Planned / Excluded / Unmapped.
+        description: >
+          Crisis, Community, Mental Health, Planned, Excluded or Unmapped.
+          MHSDS is Mental Health; EPD and CSDS are Community. Unmapped means
+          no SLAM service mapping was found.
         data_tests:
           - not_null
       - name: service
-        description: Governed POD group, GP Prescriptions, MH activity, or Community Health Contact.
+        description: >
+          Mapped SLAM point-of-delivery group, GP Prescriptions (EPD),
+          MH Inpatient, MH Crisis Contact or MH Community Contact (MHSDS),
+          or Community Health Contact (CSDS).
       - name: is_patient_attributable
-        description: FALSE for SLAM CQUIN / transport / block-and-adjustment groups.
+        description: >
+          FALSE for SLAM groups such as CQUIN, transport and block/adjustment
+          costs. All EPD, MHSDS and CSDS rows are TRUE. Filter TRUE and exclude
+          null patient keys for identified-patient analysis. This flag does
+          not establish that sources are mutually exclusive.
       - name: cost_basis
-        description: "Cost basis: actual, proxy, nominal, or tariff."
+        description: >
+          actual for SLAM agreed provider costs and EPD actual reimbursed GP
+          prescribing costs; proxy for MHSDS and CSDS currency-priced activity
+          estimates. Do not mix actual and proxy costs without checking overlap.
         data_tests:
           - not_null
       - name: cost_source
-        description: SLAM, EPD, MHSDS, or CSDS — provenance of the cost.
+        description: >
+          Contributing dataset: SLAM (agreed actual provider costs), EPD
+          (actual reimbursed GP prescribing costs), MHSDS (mental health
+          inpatient and contact proxy costs), or CSDS (community contact proxy
+          costs). Do not sum across sources without checking overlap.
         data_tests:
           - not_null
           - accepted_values:
               arguments:
                 values: [SLAM, EPD, MHSDS, CSDS]
       - name: activity_unit
-        description: Unit counted in total_activity, such as slam_activity or prescription_item.
+        description: >
+          Unit for total_activity: slam_activity (SLAM), prescription_item
+          (EPD), bed_day (MHSDS inpatient), or contact (MHSDS/CSDS). Keep
+          unlike units separate.
         data_tests:
           - not_null
       - name: total_cost
-        description: Spend for the grain, £.
+        description: >
+          Cost in GBP for this row: SLAM and EPD actual costs, or MHSDS and
+          CSDS currency-priced proxy estimates. Do not sum across sources or
+          mix actual and proxy costs without checking overlap, particularly
+          SLAM block payments and MHSDS/CSDS proxy costs.
       - name: total_activity
-        description: Activity count / prescription items for the grain.
+        description: >
+          Source activity for this row, in activity_unit. Keep SLAM activity,
+          prescription items, bed days and contacts separate. MHSDS and CSDS
+          count all contact rows, including non-costed contacts; sources may
+          overlap and do not necessarily count distinct events.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

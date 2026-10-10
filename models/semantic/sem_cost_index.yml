@@ -3,19 +3,60 @@ version: 2
 models:
   - name: sem_cost_index
     description: |
-      Cost Index semantic view. Grain is patient x month x service grouping x
-      service x attributable flag x cost basis x source x activity unit.
-      It includes SLAM actual cost from 2021-04 and EPD prescribing from
-      2018-04; EPD is about 12 months behind SLAM.
+      Monthly patient-level cost and activity for the WNL footprint (NCL and
+      NWL). The cost table is fct_person_cost_index_monthly. One row represents
+      patient x activity month x service grouping x service x attributable flag
+      x cost basis x cost source x activity unit. It retains available history
+      for each source, including SLAM rows without an identified patient and
+      costs that cannot be attributed to patients.
 
-      Filter is_patient_attributable for patient-level analysis. The latest
-      incomplete SLAM month is excluded, so recent combined totals are
-      asymmetric. About 1.5% of cost is Unmapped service.
+      SLAM supplies agreed actual provider costs, not national tariff prices.
+      EPD supplies actual reimbursed GP prescribing costs. MHSDS supplies
+      mental health inpatient bed days and crisis and community contacts.
+      CSDS supplies community health contacts. MHSDS and CSDS costs are proxy
+      estimates based on activity and NHS England 2026/27 currency prices,
+      adjusted for the activity financial year using the GDP deflator and
+      provider market forces factor. Currency means an activity category used
+      for pricing. cost_basis is actual for SLAM and EPD, and proxy for MHSDS
+      and CSDS; cost_source identifies the contributing dataset.
 
-      Exposes sk_patient_id for aggregate-only CTE joins to
-      sem_olids_population. Never return sk_patient_id in final results.
+      activity_month is the first day of the month: SLAM uses its financial
+      period, EPD its prescribing processing period, and MHSDS and CSDS their
+      activity dates. SLAM starts in April 2021 and excludes its latest
+      incomplete submitted month. Source coverage and delivery lag differ;
+      this view does not restrict months to shared coverage. Check
+      int_cost_index_source_coverage for month ranges by source and cost basis.
 
-      Table: fct_person_cost_index_monthly.
+      service_grouping includes Planned, Crisis, Community, Mental Health,
+      Excluded and Unmapped. Unmapped means no SLAM service mapping was found.
+      service identifies the mapped SLAM point-of-delivery group, GP
+      Prescriptions, MH Inpatient, MH Crisis Contact, MH Community Contact or
+      Community Health Contact. Filter is_patient_attributable = TRUE and
+      exclude null sk_patient_id for analysis of identified patients. The flag
+      excludes SLAM groups such as CQUIN, transport and block/adjustment costs;
+      EPD, MHSDS and CSDS rows are marked patient-attributable.
+
+      total_cost sums costs in GBP within the selected source and cost basis.
+      Do not sum across sources or mix actual and proxy costs without checking
+      overlap. SLAM mental health and community block payments may cover the
+      same care as MHSDS and CSDS proxy costs. The attributable flag does not
+      establish that sources are mutually exclusive.
+
+      total_activity sums the source activity in activity_unit: slam_activity
+      for SLAM, prescription_item for EPD, bed_day for MHSDS inpatient care,
+      and contact for MHSDS and CSDS contacts. Do not add unlike units or assume
+      sources count distinct events. Contact counts include non-costed contacts.
+      patient_count counts distinct non-null sk_patient_id in the selection;
+      a patient can appear in several services, sources and months, so group
+      counts are not additive and row counts are not patient counts.
+
+      sk_patient_id is a pseudonymised linkage key for joins to
+      sem_olids_population. Reduce each input to one row per patient or aligned
+      patient-month before joining. Align month-start activity_month with
+      month-end sem_olids_trends.analysis_month using DATE_TRUNC(month, ...).
+      Never return sk_patient_id in final results. This view is patient-level
+      and applies no small-number suppression. Aggregate outputs and apply
+      small-number suppression before sharing.
     config:
       materialized: semantic_view
       schema: SEMANTIC
