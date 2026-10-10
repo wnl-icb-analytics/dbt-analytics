@@ -1,0 +1,200 @@
+unit_tests:
+- name: nice_fh_profile_thresholds_ties_and_evidence_caps
+  model: int_nice_fh_assessment_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, 60 AS age, column3::DATE AS birth_date_approx,
+      'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name FROM VALUES (-3101,'2026-09-30','1997-01-01'),(-3101,'2026-10-31','1997-01-01'),(-3102,'2026-09-30','1996-01-01'),(-3103,'2026-09-30','1997-01-01'),(-3104,'2026-09-30','1960-01-01'),(-3105,'2026-09-30','1960-01-01'),(-3106,'2026-09-30','1960-01-01'),(-3107,'2026-09-30','1997-01-01'),(-3108,'2026-09-30','1996-01-01')
+  - input: ref('int_cholesterol_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::NUMBER AS id, column3::DATE AS clinical_effective_date,
+      column4::NUMBER(10,2) AS cholesterol_value, column5::BOOLEAN AS is_valid_cholesterol FROM VALUES (-3101,1,'2020-01-01',8,TRUE),(-3101,2,'2025-10-01',8,TRUE),(-3101,3,'2025-10-01',8.2,TRUE),(-3101,4,'2026-11-01',10,TRUE),(-3102,5,'2026-09-30',9,TRUE),(-3103,6,'2026-09-30',7.5,TRUE),(-3104,7,'2020-01-01',9.1,TRUE),(-3104,8,'2026-09-30',15,FALSE),(-3105,9,'2026-10-01',10,TRUE),(-3106,10,'2026-09-30',10,TRUE),(-3107,11,'2026-09-30',8,TRUE),(-3108,12,'2026-09-30',9.1,TRUE)
+  - input: ref('int_nice_fh_assessment_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date, column3::BOOLEAN AS is_fh_assessment,
+      column4::BOOLEAN AS is_fh_referral, column5::BOOLEAN AS is_genetic_fh, column6::BOOLEAN AS is_secondary_hyperlipidaemia,
+      column7::BOOLEAN AS is_secondary_hyperlipidaemia_history, person_id IN (-3101, -3106) AS is_clinical_fh_diagnosis FROM VALUES (-3101,'2020-01-01',FALSE,FALSE,FALSE,TRUE,FALSE),(-3101,'2020-01-01',FALSE,FALSE,FALSE,TRUE,FALSE),(-3101,'2026-10-01',TRUE,TRUE,TRUE,TRUE,TRUE),(-3102,'2026-09-30',FALSE,TRUE,FALSE,FALSE,FALSE),(-3104,'2019-01-01',FALSE,FALSE,FALSE,FALSE,TRUE),(-3106,'2026-10-01',TRUE,TRUE,TRUE,TRUE,TRUE)
+  expect:
+    rows:
+    - person_id: -3101
+      reporting_date: '2026-09-30'
+      earliest_qualifying_reading_date: '2020-01-01'
+      earliest_qualifying_cholesterol_value: 8
+      first_clinical_fh_diagnosis_date: '2020-01-01'
+      age_at_earliest_qualifying_reading: 23
+      latest_high_reading_date: '2025-10-01'
+      latest_high_cholesterol_value: 8.2
+      first_fh_assessment_date: null
+      first_fh_referral_date: null
+      first_genetic_fh_date: null
+      latest_secondary_hyperlipidaemia_date: '2020-01-01'
+      first_secondary_history_date: null
+    - person_id: -3101
+      reporting_date: '2026-10-31'
+      earliest_qualifying_reading_date: '2020-01-01'
+      earliest_qualifying_cholesterol_value: 8
+      first_clinical_fh_diagnosis_date: '2020-01-01'
+      age_at_earliest_qualifying_reading: 23
+      latest_high_reading_date: '2025-10-01'
+      latest_high_cholesterol_value: 8.2
+      first_fh_assessment_date: '2026-10-01'
+      first_fh_referral_date: '2026-10-01'
+      first_genetic_fh_date: '2026-10-01'
+      latest_secondary_hyperlipidaemia_date: '2026-10-01'
+      first_secondary_history_date: '2026-10-01'
+    - person_id: -3102
+      reporting_date: '2026-09-30'
+      earliest_qualifying_reading_date: null
+      earliest_qualifying_cholesterol_value: null
+      age_at_earliest_qualifying_reading: null
+      latest_high_reading_date: '2026-09-30'
+      latest_high_cholesterol_value: 9
+      first_fh_referral_date: '2026-09-30'
+      first_fh_assessment_date: null
+      first_genetic_fh_date: null
+      latest_secondary_hyperlipidaemia_date: null
+      first_secondary_history_date: null
+    - person_id: -3104
+      reporting_date: '2026-09-30'
+      earliest_qualifying_reading_date: '2020-01-01'
+      earliest_qualifying_cholesterol_value: 9.1
+      age_at_earliest_qualifying_reading: 60
+      latest_high_reading_date: '2020-01-01'
+      latest_high_cholesterol_value: 9.1
+      first_secondary_history_date: '2019-01-01'
+      first_fh_assessment_date: null
+      first_fh_referral_date: null
+      first_genetic_fh_date: null
+      latest_secondary_hyperlipidaemia_date: null
+    - person_id: -3106
+      reporting_date: '2026-09-30'
+      earliest_qualifying_reading_date: '2026-09-30'
+      earliest_qualifying_cholesterol_value: 10
+      age_at_earliest_qualifying_reading: 66
+      latest_high_reading_date: '2026-09-30'
+      latest_high_cholesterol_value: 10
+      first_fh_assessment_date: null
+      first_fh_referral_date: null
+      first_genetic_fh_date: null
+      latest_secondary_hyperlipidaemia_date: null
+      first_secondary_history_date: null
+    - person_id: -3107
+      reporting_date: '2026-09-30'
+      earliest_qualifying_reading_date: '2026-09-30'
+      earliest_qualifying_cholesterol_value: 8
+      age_at_earliest_qualifying_reading: 29
+      latest_high_reading_date: '2026-09-30'
+      latest_high_cholesterol_value: 8
+      first_fh_assessment_date: null
+      first_fh_referral_date: null
+      first_genetic_fh_date: null
+      latest_secondary_hyperlipidaemia_date: null
+      first_secondary_history_date: null
+    - person_id: -3108
+      reporting_date: '2026-09-30'
+      earliest_qualifying_reading_date: '2026-09-30'
+      earliest_qualifying_cholesterol_value: 9.1
+      age_at_earliest_qualifying_reading: 30
+      latest_high_reading_date: '2026-09-30'
+      latest_high_cholesterol_value: 9.1
+      first_fh_assessment_date: null
+      first_fh_referral_date: null
+      first_genetic_fh_date: null
+      latest_secondary_hyperlipidaemia_date: null
+      first_secondary_history_date: null
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind260_secondary_dates_and_reading_window
+  model: fct_person_fh_assessment_historical_cholesterol_ind260_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, 60 AS age, column3::DATE AS birth_date_approx,
+      'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name FROM VALUES (-3201,'2026-09-30','1960-01-01'),(-3202,'2026-09-30','1960-01-01'),(-3203,'2026-09-30','1960-01-01'),(-3204,'2026-09-30','1960-01-01'),(-3205,'2026-09-30','1960-01-01'),(-3206,'2026-09-30','1960-01-01'),(-3207,'2026-09-30','1960-01-01'),(-3208,'2026-09-30','1960-01-01'),(-3208,'2026-10-31','1960-01-01'),(-3209,'2026-09-30','1960-01-01')
+  - &id001
+    input: ref('int_nice_fh_assessment_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, column3::DATE AS earliest_qualifying_reading_date,
+      10::NUMBER AS earliest_qualifying_cholesterol_value, 60::NUMBER AS age_at_earliest_qualifying_reading, column4::DATE
+      AS latest_high_reading_date, 10::NUMBER AS latest_high_cholesterol_value, column5::DATE AS first_fh_assessment_date,
+      column6::DATE AS first_fh_referral_date, column7::DATE AS first_genetic_fh_date, column8::DATE AS latest_secondary_hyperlipidaemia_date,
+      column9::DATE AS first_secondary_history_date, IFF(person_id IN (-3207, -3209), '2010-01-01'::DATE, NULL::DATE) AS first_clinical_fh_diagnosis_date FROM VALUES (-3201,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,NULL,'2020-01-01',NULL),(-3202,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,NULL,'2020-01-02',NULL),(-3203,'2026-09-30','2020-01-01','2026-09-30','2010-01-01',NULL,NULL,NULL,NULL),(-3204,'2026-09-30','2020-01-01','2026-09-30',NULL,'2010-01-01',NULL,NULL,NULL),(-3205,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,'2010-01-01',NULL,NULL),(-3206,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,NULL,NULL,'2010-01-01'),(-3207,'2026-09-30','2020-01-01','2025-09-30',NULL,NULL,NULL,NULL,NULL),(-3208,'2026-09-30','2020-01-01','2025-10-01',NULL,NULL,NULL,NULL,NULL),(-3208,'2026-10-31','2020-01-01','2025-10-01',NULL,NULL,NULL,NULL,NULL),(-3209,'2026-09-30','2020-01-01','2026-09-30',NULL,NULL,NULL,NULL,NULL)
+  expect:
+    rows:
+    - person_id: -3201
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -3202
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -3203
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -3204
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -3205
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -3206
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -3207
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -3208
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -3208
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+    - person_id: -3209
+      reporting_date: '2026-09-30'
+      first_clinical_fh_diagnosis_date: '2010-01-01'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind261_secondary_dates_and_reading_window
+  model: fct_person_fh_assessment_recent_cholesterol_ind261_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS reporting_date, 60 AS age, column3::DATE AS birth_date_approx,
+      'Female' AS gender, 'SYNTHETIC' AS practice_code, 'Synthetic practice' AS practice_name FROM VALUES (-3201,'2026-09-30','1960-01-01'),(-3202,'2026-09-30','1960-01-01'),(-3203,'2026-09-30','1960-01-01'),(-3204,'2026-09-30','1960-01-01'),(-3205,'2026-09-30','1960-01-01'),(-3206,'2026-09-30','1960-01-01'),(-3207,'2026-09-30','1960-01-01'),(-3208,'2026-09-30','1960-01-01'),(-3208,'2026-10-31','1960-01-01'),(-3209,'2026-09-30','1960-01-01')
+  - *id001
+  expect:
+    rows:
+    - person_id: -3201
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -3202
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -3203
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -3204
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -3205
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -3206
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - person_id: -3208
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - person_id: -3209
+      reporting_date: '2026-09-30'
+      first_clinical_fh_diagnosis_date: '2010-01-01'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history

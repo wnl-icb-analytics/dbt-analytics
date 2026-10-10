@@ -1,0 +1,23 @@
+version: 2
+models:
+  - name: stg_reference_primary_care_practice_pcn_history
+    description: >-
+      SCD2 history of WNL practice to PCN membership from the primary care org
+      manager app, backfilled from ODS relationships. One row per practice per
+      membership version; valid_to is null on the current version and is
+      exclusive.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - practice_code
+              - valid_from
+    columns:
+      - name: ods_relationship_id
+        description: ODS OrganisationRelationship identifier for memberships backfilled from ODS.
+      - name: is_current
+        description: True on the current version (valid_to is null).

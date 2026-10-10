@@ -1,0 +1,33 @@
+models:
+  - name: fct_person_ndh_register_by_month
+    description: >
+      Clinical NDH register at each completed month-end, on the rules of
+      fct_person_ndh_register: aged 18 or over with NDH_COD, IGT_COD or PRD_COD
+      evidence and either no diabetes diagnosis or a diabetes resolution strictly
+      later than the latest diabetes diagnosis. Gestational diabetes alone never
+      adds a row.
+      {{ doc('ltc_register_by_month_scope') }}
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - month_end_date
+    columns:
+      - name: person_id
+        data_tests:
+          - not_null
+      - name: month_end_date
+        description: "{{ doc('ltc_register_by_month_month_end_date') }}"
+        data_tests:
+          - not_null
+      - name: practice_code
+        description: "{{ doc('ltc_register_by_month_practice_code') }}"
+      - name: earliest_diagnosis_date
+        description: Earliest NDH, impaired glucose tolerance or pre-diabetes evidence known by the month-end.
+      - name: latest_diagnosis_date
+        description: Latest NDH, impaired glucose tolerance or pre-diabetes evidence known by the month-end.

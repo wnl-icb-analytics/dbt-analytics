@@ -1,0 +1,29 @@
+version: 2
+models:
+  - name: stg_reference_primary_care_pcn_history
+    description: >-
+      SCD2 history of WNL Primary Care Networks from the primary care org
+      manager app, including ODS name changes and open and close events. One
+      row per PCN per version; valid_to is null on the current version and is
+      exclusive. The ODS former-name backfill left zero-length versions
+      (valid_from = valid_to); they cover no dates and are kept as supplied.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - pcn_code
+              - valid_from
+              - valid_to
+    columns:
+      - name: pcn_name_with_borough
+        description: PCN name prefixed with the health borough for grouped display.
+      - name: health_borough_name
+        description: >-
+          Legacy CCG area used as the familiar health borough. Defaults from
+          the registered local authority when the app has not assigned one.
+      - name: is_current
+        description: True on the current version (valid_to is null).

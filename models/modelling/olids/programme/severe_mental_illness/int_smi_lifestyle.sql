@@ -44,7 +44,7 @@ s.person_id
 ,IFF(s.LATEST_SMOKING_DATE >= DATEADD('month', -12, CURRENT_DATE), 'Yes', 'No') AS smok_last_12m
 ,CASE
 WHEN s.SMOKING_STATUS = 'Current Smoker' THEN 'Yes' 
-WHEN s.SMOKING_STATUS in ('Ex-Smoker','Never Smoked') THEN 'No'
+WHEN s.SMOKING_STATUS in ('Ex-Smoker','Never Smoked','Non-Smoker (History Unknown)') THEN 'No'
 END AS smoker_flag
 --FROM REPORTING.OLIDS_PERSON_STATUS.FCT_PERSON_SMOKING_STATUS s
 FROM {{ ref('fct_person_smoking_status') }} s

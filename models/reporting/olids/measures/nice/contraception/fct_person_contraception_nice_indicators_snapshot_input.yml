@@ -1,0 +1,34 @@
+models:
+- name: fct_person_contraception_nice_indicators_snapshot_input
+  description: >-
+    Contraception advice evidence for change history (IND78, IND116, IND117, IND124, IND148,
+    IND149). One row per eligible person and indicator.
+
+
+    Records practice, supporting evidence and achievement from the build date. Reporting date and
+    measurement period start are omitted, so the passing of a day alone does not create a new
+    version. Eligibility and achievement follow the individual measures.
+    Labels join from def_indicator or the measure tables by indicator_id.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+  columns:
+  - name: latest_contraception_advice_date
+    description: >-
+      Latest contraception advice in the 12 months before the reporting date, including both
+      boundaries; null if absent. Null when this field does not apply to the indicator.
+  - name: latest_pregnancy_advice_date
+    description: >-
+      Latest conception or pregnancy advice in the 12 months before the reporting date, including
+      both boundaries; null if absent. Null when this field does not apply to the indicator.
+  - name: has_epilepsy
+    description: >-
+      True when the woman is on the epilepsy register at the reporting date. IND78 also includes
+      antiseizure users without epilepsy. Null when this field does not apply to the indicator.

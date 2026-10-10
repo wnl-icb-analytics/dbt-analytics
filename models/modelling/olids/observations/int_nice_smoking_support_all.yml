@@ -1,0 +1,30 @@
+models:
+- name: int_nice_smoking_support_all
+  description: >-
+    Smoking cessation referrals and pharmacotherapy. One row per source type and source event,
+    including inactive and deceased people, through the build date. Advice alone does not count.
+    Code lists: PCD REFERSSSA_COD and PHARM_COD; PHARMDRUG refset 12465801000001106.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - source_kind
+        - source_key
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: REFERSSSA_COD,PHARM_COD
+        source: PCD
+  columns:
+  - name: source_kind
+    description: OBSERVATION or MEDICATION_ORDER; part of the source event key.
+  - name: source_key
+    description: Source observation or medication-order identifier; unique within source_kind.
+  - name: person_id
+    description: Person receiving referral or pharmacotherapy support.
+  - name: event_date
+    description: Corrected observation date or medication-order clinical date, on or before the build
+      date.

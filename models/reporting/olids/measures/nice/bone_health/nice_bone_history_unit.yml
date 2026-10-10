@@ -1,0 +1,162 @@
+unit_tests:
+- name: nice_bone_therapy_upper_boundary_and_daily_multiplicity
+  model: int_nice_bone_therapy_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          75::NUMBER AS age, '2001-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+          'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-521), (-522) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  - input: ref('int_bone_sparing_medications_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS order_date
+      FROM VALUES (-521, '2026-03-31'), (-521, '2026-03-31'), (-522, '2026-09-30'), (-522, '2026-10-01')
+  - input: ref('int_bone_sparing_hospital_therapy_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS therapy_date, NULL::NUMBER AS coverage_months WHERE FALSE
+  expect:
+    rows:
+    - person_id: -521
+      reporting_date: '2026-09-30'
+      latest_bone_sparing_order_date: '2026-03-31'
+    - person_id: -521
+      reporting_date: '2026-10-31'
+      latest_bone_sparing_order_date: '2026-03-31'
+    - person_id: -522
+      reporting_date: '2026-09-30'
+      latest_bone_sparing_order_date: '2026-09-30'
+    - person_id: -522
+      reporting_date: '2026-10-31'
+      latest_bone_sparing_order_date: '2026-10-01'
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind92_fracture_boundary_treatment_expiry_and_age
+  model: fct_person_bone_sparing_therapy_fragility_fracture_ind92_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          people.column2::NUMBER AS age, '1950-01-15'::DATE AS birth_date_approx,
+          'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code,
+          'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-531, 75), (-532, 75), (-533, 74), (-534, 75), (-535, 75) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  - input: ref('int_nice_bone_therapy_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          people.column2::DATE AS latest_bone_sparing_order_date,
+          NULL::DATE AS latest_hospital_therapy_date, NULL::DATE AS latest_current_hospital_therapy_date
+      FROM VALUES (-531, '2026-03-31'), (-532, '2026-03-30'), (-533, '2026-09-30'),
+          (-534, '2026-09-30'), (-535, '2026-09-30') AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  - input: ref('int_fragility_fractures_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::DATE AS clinical_effective_date,
+          column2::DATE AS date_recorded
+      FROM VALUES (-531, '2012-04-01'), (-531, '2012-04-01'), (-532, '2012-04-01'),
+          (-533, '2012-04-01'), (-534, '2012-03-31'), (-535, '2026-10-01')
+  expect:
+    rows:
+    - &id001
+      person_id: -531
+      reporting_date: '2026-09-30'
+      is_in_numerator: true
+    - &id002
+      person_id: -532
+      reporting_date: '2026-09-30'
+      is_in_numerator: false
+    - &id003
+      person_id: -531
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+    - &id004
+      person_id: -532
+      reporting_date: '2026-10-31'
+      is_in_numerator: false
+    - person_id: -535
+      reporting_date: '2026-10-31'
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind92_late_recorded_fracture
+  model: fct_person_bone_sparing_therapy_fragility_fracture_ind92_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT -536::NUMBER AS person_id, column1::DATE AS reporting_date, 75::NUMBER AS age,
+          '1950-01-15'::DATE AS birth_date_approx, 'Female'::VARCHAR AS gender,
+          'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES ('2026-09-30'), ('2026-10-31')
+  - input: ref('int_nice_bone_therapy_by_month')
+    format: sql
+    rows: |-
+      SELECT -536::NUMBER AS person_id, column1::DATE AS reporting_date,
+          '2026-09-01'::DATE AS latest_bone_sparing_order_date,
+          NULL::DATE AS latest_hospital_therapy_date, NULL::DATE AS latest_current_hospital_therapy_date
+      FROM VALUES ('2026-09-30'), ('2026-10-31')
+  - input: ref('int_fragility_fractures_all')
+    format: sql
+    rows: |-
+      SELECT -536::NUMBER AS person_id, '2026-08-15'::DATE AS clinical_effective_date,
+          '2026-10-01'::DATE AS date_recorded
+  expect:
+    rows:
+    - person_id: -536
+      reporting_date: '2026-10-31'
+      is_in_denominator: true
+      is_in_numerator: true
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+- name: nice_ind91_register_age_and_treatment_expiry
+  model: fct_person_bone_sparing_therapy_osteoporosis_ind91_by_month
+  given:
+  - input: ref('int_nice_reference_population_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          people.column2::NUMBER AS age, '1950-01-15'::DATE AS birth_date_approx,
+          'Female'::VARCHAR AS gender, 'SYNTHETIC'::VARCHAR AS practice_code,
+          'Synthetic practice'::VARCHAR AS practice_name
+      FROM VALUES (-531, 50), (-532, 74), (-533, 49), (-534, 75), (-535, 60) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  - input: ref('int_nice_bone_therapy_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS reporting_date,
+          people.column2::DATE AS latest_bone_sparing_order_date,
+          NULL::DATE AS latest_hospital_therapy_date, NULL::DATE AS latest_current_hospital_therapy_date
+      FROM VALUES (-531, '2026-03-31'), (-532, '2026-03-30'), (-533, '2026-09-30'),
+          (-534, '2026-09-30'), (-535, '2026-09-30') AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  - input: ref('fct_person_osteoporosis_register_by_month')
+    format: sql
+    rows: |-
+      SELECT people.column1::NUMBER AS person_id, dates.column1::DATE AS month_end_date,
+          '2020-01-01'::DATE AS earliest_diagnosis_date, '2020-01-01'::DATE AS latest_diagnosis_date
+      FROM VALUES (-531), (-532), (-533), (-534) AS people
+      CROSS JOIN (VALUES ('2026-09-30'), ('2026-10-31')) AS dates
+  expect:
+    rows:
+    - *id001
+    - *id002
+    - *id003
+    - *id004
+  config:
+    tags:
+    - monthly-full
+    - nice-history

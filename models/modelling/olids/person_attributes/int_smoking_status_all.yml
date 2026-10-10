@@ -1,18 +1,45 @@
 models:
   - name: int_smoking_status_all
-    description: 'Smoking status observations for QOF tracking and cardiovascular risk stratification.
-
-      One row per smoking status observation using LSMOK_COD, EXSMOK_COD, and NSMOK_COD clusters with current, ex-smoker, and never-smoked classification.'
+    description: >-
+      Recorded smoking status for all people, including inactive and deceased people.
+      One row per observation from LSMOK_COD, EXSMOK_COD or NSMOK_COD, plus
+      SMOK_COD concept 405746006. Overlapping cluster membership is resolved in
+      favour of a specific status before observations are selected.
+      Includes observations dated no later than today with age at event at least 11, to exclude
+      parent smoking records on children's records. Specific clusters identify
+      current smokers, ex-smokers and people who have never smoked. SNOMED CT
+      405746006 identifies a current non-smoker with unknown past history, not a
+      never-smoker. Pack-years and unknown-consumption codes that do not state a
+      smoking status are excluded.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: EXSMOK_COD, LSMOK_COD, NSMOK_COD
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - id
-              - source_cluster_id
+            cluster_ids: SMOK_COD, EXSMOK_COD, LSMOK_COD, NSMOK_COD
+    columns:
+      - name: id
+        description: Observation identifier, unique after resolving cluster overlaps.
+        data_tests:
+          - not_null
+          - unique
+      - name: date_recorded
+        description: Date the observation was entered in the source system.
+      - name: source_cluster_id
+        description: Specific status cluster where available, otherwise SMOK_COD for 405746006.
+      - name: smoking_status
+        description: >-
+          Recorded status. Non-Smoker (History Unknown) means currently not smoking
+          without evidence of whether the person smoked previously.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Current Smoker', 'Ex-Smoker', 'Never Smoked', 'Non-Smoker (History Unknown)']
+      - name: is_never_smoked_code
+        description: True only for NSMOK_COD; unknown past history is false.
+      - name: has_smoking_history
+        description: >-
+          True when the code establishes current or past smoking. False means no
+          such evidence in this observation, not proof that the person never smoked.

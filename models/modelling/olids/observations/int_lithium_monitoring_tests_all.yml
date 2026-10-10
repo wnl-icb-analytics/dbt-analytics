@@ -1,0 +1,31 @@
+models:
+- name: int_lithium_monitoring_tests_all
+  description: Creatinine and thyroid function test records from PCD CRE_COD, TFT_COD. One row per observation
+    and code list for all people, including inactive and deceased people. Clinical dates use get_observations
+    corrections. Tests count with or without numeric results; TFT_COD includes free T4 and T3 and is a
+    broader proxy for TSH. Consumers bound evidence at their reporting date.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: CRE_COD, TFT_COD
+        source: PCD
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+        - source_cluster_id
+  columns:
+  - name: id
+    description: Source observation identifier.
+    data_tests:
+    - not_null
+  - name: person_id
+    description: Person with the record.
+  - name: clinical_effective_date
+    description: Corrected clinical evidence date.
+  - name: source_cluster_id
+    description: PCD code list identifying the evidence.

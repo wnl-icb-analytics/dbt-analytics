@@ -1,5 +1,5 @@
 -- Pair: macros/qof_registers/calculate_epilepsy_register.sql.
--- This live fact includes future-dated records. Its PIT pair is strict as-of
+-- Clinical evidence is bounded by today. Its PIT pair is strict as-of
 -- and derives age at the reference date where age is used.
 
 {{
@@ -9,7 +9,7 @@
 }}
 
 -- Epilepsy Register (QOF Pattern 3: Complex QOF Register with External Validation)
--- Business Logic: Age ≥18 + Active epilepsy diagnosis (latest EPIL_COD > latest EPILRES_COD) + Recent epilepsy medication (last 6 months)
+-- Business Logic: Age ≥18 + No epilepsy resolution on or after the latest diagnosis date + Medication after six months ago, up to today
 -- External Validation: Requires medication confirmation to ensure active epilepsy management
 
 WITH epilepsy_diagnoses AS (
@@ -47,12 +47,12 @@ WITH epilepsy_diagnoses AS (
                 CASE
                     WHEN is_diagnosis_code THEN clinical_effective_date
                 END
-            )
+            )::DATE
             > MAX(
                 CASE
                     WHEN is_resolved_code THEN clinical_effective_date
                 END
-            )
+            )::DATE
         ), FALSE) AS has_active_epilepsy_diagnosis,
 
         -- Traceability arrays
@@ -69,6 +69,7 @@ WITH epilepsy_diagnoses AS (
         ) AS all_resolved_concept_codes
 
     FROM {{ ref('int_epilepsy_diagnoses_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 ),
 
@@ -82,7 +83,8 @@ epilepsy_medications AS (
             AS latest_epilepsy_medication_concept_display,
         COUNT(*) AS recent_epilepsy_medication_count
     FROM {{ ref('int_epilepsy_medications_all') }}
-    WHERE order_date >= CURRENT_DATE() - INTERVAL '6 months'
+    WHERE order_date > DATEADD('month', -6, CURRENT_DATE())
+        AND order_date <= CURRENT_DATE()
     GROUP BY person_id
 ),
 

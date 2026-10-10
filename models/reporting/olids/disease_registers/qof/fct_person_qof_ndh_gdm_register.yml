@@ -6,8 +6,8 @@ models:
       glucose tolerance or pre-diabetes, and people of any age with gestational
       diabetes. The five NDH_REG diabetes-history rules determine membership.
       This model is the QOF denominator, not a clinical NDH diagnosis cohort.
-      As with the existing live fact family, future-dated evidence is retained;
-      use pit_qof_ndh_gdm_register for strict as-of membership.
+      All diagnosis and resolution evidence is dated on or before today.
+      Resolution must be strictly after the relevant diabetes diagnosis date.
     config:
       meta:
         indicator:
@@ -20,7 +20,8 @@ models:
           description_long: >
             QOF v51 NDH_REG v102. NDH_COD, IGT_COD and PRD_COD require age 18
             or over; GESTDIAB_COD provides an any-age route. Diabetes history
-            is evaluated by the ordered NDH_REG rules.
+            is evaluated by the ordered NDH_REG rules using calendar dates on or
+            before today.
           is_qof: true
           qof_indicator: "NDH001"
           source_column: "is_on_register"

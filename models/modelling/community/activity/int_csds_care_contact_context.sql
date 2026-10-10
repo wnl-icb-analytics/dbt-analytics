@@ -130,13 +130,20 @@ with contact as (
         and c.unique_service_request_identifier = r.unique_service_request_identifier
 )
 
+, contact_date as (
+    select distinct
+        person_id
+        , care_contact_date
+    from contact
+)
+
 -- Several providers can report the same registration period; the newest report wins.
 , practice_at_contact as (
     select
-        c.unique_service_request_identifier
-        , c.unique_care_contact_identifier
+        c.person_id
+        , c.care_contact_date
         , gp.general_medical_practice_code_patient_registration as practice_code
-    from contact as c
+    from contact_date as c
     inner join {{ ref('stg_csds_gp_registration') }} as gp
         on c.person_id = gp.person_id
         -- a registration without a start date covers any date up to its end
@@ -146,7 +153,7 @@ with contact as (
             or c.care_contact_date < gp.end_date_gmp_patient_registration
         )
     qualify row_number() over (
-        partition by c.unique_service_request_identifier, c.unique_care_contact_identifier
+        partition by c.person_id, c.care_contact_date
         order by gp.start_date_gmp_patient_registration desc nulls last, gp.reporting_period_end_date desc nulls last,
             gp.effective_from desc nulls last, gp.unique_submission_id::number desc, gp.cyp002_unique_id::number desc
     ) = 1
@@ -185,7 +192,7 @@ inner join team as t
     on c.unique_service_request_identifier = t.unique_service_request_identifier
     and c.unique_care_contact_identifier = t.unique_care_contact_identifier
 left join practice_at_contact as at_contact
-    on c.unique_service_request_identifier = at_contact.unique_service_request_identifier
-    and c.unique_care_contact_identifier = at_contact.unique_care_contact_identifier
+    on c.person_id = at_contact.person_id
+    and equal_null(c.care_contact_date, at_contact.care_contact_date)
 left join latest_gp_registration as latest
     on c.person_id = latest.person_id

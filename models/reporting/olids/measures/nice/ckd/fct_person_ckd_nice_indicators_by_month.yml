@@ -1,0 +1,77 @@
+models:
+- name: fct_person_ckd_nice_indicators_by_month
+  description: >-
+    Kidney disease and long-term oral NSAID use NICE indicator results (IND130, IND144,
+    IND232, IND233, IND234, IND235, IND263, IND264, IND324). One row per person, indicator
+    and month-end.
+
+
+    Each indicator uses its own denominator, evidence window and exclusions, described in
+    the member measures. Clinical fields are null where they do not apply to an indicator.
+    No personalised care adjustments are applied. Recalculated for each of the last 60
+    month-ends with current rules, code lists and records, so later corrections can change
+    past months.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - indicator_id
+        - reporting_date
+  columns:
+  - name: person_id
+    description: "Person identifier for someone in the indicator denominator."
+  - name: indicator_id
+    description: "Published NICE indicator identifier."
+  - name: indicator_name
+    description: "Published NICE indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
+  - name: reporting_date
+    description: "Month-end used to assess the population, age and evidence."
+  - name: measurement_period_start
+    description: "Start date of the indicator measurement or diagnosis cohort period; inclusion of this date depends on the indicator."
+  - name: age
+    description: "Completed years on the month-end, based on the approximate birth date; null when age is unknown."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
+  - name: practice_code
+    description: "ODS code of the registration practice at month-end."
+  - name: practice_name
+    description: "Name of the registration practice at month-end."
+  - name: latest_egfr_value
+    description: "eGFR from the latest numeric observation by the reporting date, in mL/min/1.73 m2, with no lookback limit. Null when absent or outside 1 to 200; a later invalid numeric result prevents fallback. Null where the field does not apply to an indicator."
+  - name: latest_acr_value
+    description: "Latest numeric urine albumin:creatinine ratio (ACR) by the reporting date, in mg/mmol, with no lookback limit. Value-free tests are ignored. Null when no numeric test is recorded or its result is outside 0 to 9999.99. Null where the field does not apply to an indicator."
+  - name: latest_systolic_value
+    description: "Systolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available. Null where the field does not apply to an indicator."
+  - name: latest_diastolic_value
+    description: "Diastolic blood pressure from the selected complete reading, in mmHg; null when no complete reading is available. Null where the field does not apply to an indicator."
+  - name: latest_frailty_severity
+    description: "Latest coded frailty severity by the reporting date; null when none is recorded. Null where the field does not apply to an indicator."
+  - name: latest_therapy_order_date
+    description: "Date of the latest relevant medication prescription by the reporting date; it may be outside the treatment window. Null when never prescribed. Null where the field does not apply to an indicator."
+  - name: diagnosis_date
+    description: "First recorded diagnosis date used to define the indicator population and follow-up window. Null where the field does not apply to an indicator."
+  - name: latest_bp_date
+    description: "Date of the latest complete blood pressure reading by the reporting date; it may be outside the measurement period. Null when none is recorded. Null where the field does not apply to an indicator."
+  - name: applied_measurement_context
+    description: "CLINIC for the clinic target or HBPM_ABPM for the home or ambulatory target; null when no complete reading exists. Null where the field does not apply to an indicator."
+  - name: indicator_systolic_threshold
+    description: "Systolic blood pressure threshold in mmHg; the value must be strictly below this threshold. Null when no complete reading exists. Null where the field does not apply to an indicator."
+  - name: indicator_diastolic_threshold
+    description: "Diastolic blood pressure threshold in mmHg; the value must be strictly below this threshold. Null when no complete reading exists. Null where the field does not apply to an indicator."
+  - name: nsaid_issue_day_count
+    description: "Number of distinct days with an oral NSAID prescription in the last 24 months, excluding the first day; at least 12. Null where the field does not apply to an indicator."
+  - name: latest_record_date
+    description: "Evidence date retained by the indicator; see each measure for its test, referral or treatment rule. Null when no qualifying evidence is retained."
+  - name: is_in_denominator
+    description: "Always true. Every row belongs to the denominator before personalised care adjustments."
+  - name: is_in_numerator
+    description: "Whether the person meets the indicator achievement rule on the reporting date."
+  - name: indicator_status
+    description: "ACHIEVED when the numerator rule is met; otherwise the reason it is not met."

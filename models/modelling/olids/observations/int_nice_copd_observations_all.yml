@@ -1,0 +1,48 @@
+models:
+- name: int_nice_copd_observations_all
+  description: >-
+    COPD assessment records. One row per observation and evidence type, including inactive and
+    deceased people, through the build date. Includes FEV1, percentage predicted, oxygen
+    saturation, very severe diagnosis, review invitations and pulmonary rehabilitation offers or
+    referrals. FEV1 excludes ratios, expected volumes and reversibility alone; units are
+    retained for interpretation.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - observation_id
+        - evidence_type
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: FEV1_COD, FEV1_PCT_PRED_COD, PULREHAB_OFFERED_COD
+        source: ECL_CACHE
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: COPD_COD, COPDINVITE_COD, PULRHBOFF_COD
+        source: PCD
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: ARDENS/SPO2_SATS_SATURATIONS
+        source: OPENCODELISTS
+  columns:
+  - name: person_id
+    description: Person with the evidence.
+  - name: observation_id
+    description: Source event identifier.
+  - name: event_date
+    description: Clinical calendar date; observations use the shared source-date correction.
+  - name: evidence_type
+    description: Maintained code-list identifier.
+  - name: date_recorded
+    description: Recording date used to cap diagnosis knowledge.
+  - name: result_value
+    description: Numeric result in the supplied units; null when no numeric result.
+  - name: result_unit_display
+    description: Source unit label; missing or incompatible units cannot establish numeric very severe
+      COPD.
+  - name: is_very_severe_copd
+    description: Whether COPD_COD supplies the authoritative very severe COPD label.

@@ -40,18 +40,12 @@ WITH classified_observations AS (
         obs.id,
         obs.person_id,
         obs.clinical_effective_date,
-        obs.mapped_concept_code AS concept_code,
-        obs.mapped_concept_display AS concept_display,
-        -- Codes present in the cluster but absent from the seed default to
-        -- QUALIFYING (the refset is diagnosis-led, so misuse is the safer
-        -- default). Drift is caught loudly by the seed coverage test rather
-        -- than silently changing who qualifies.
-        COALESCE(s.status, 'QUALIFYING') AS status,
-        s.category
+        obs.concept_code,
+        obs.concept_display,
+        obs.status,
+        obs.category
 
-    FROM ({{ get_observations("'ILLSUB_COD'") }}) AS obs
-    LEFT JOIN {{ ref('substance_misuse_illsub_status') }} AS s
-        ON obs.mapped_concept_code = s.snomed_code
+    FROM {{ ref('int_substance_misuse_all') }} AS obs
     WHERE obs.clinical_effective_date IS NOT NULL
         AND obs.clinical_effective_date <= CURRENT_DATE()  -- No future dates
 ),

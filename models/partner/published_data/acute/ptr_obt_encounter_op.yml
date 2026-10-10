@@ -1,0 +1,289 @@
+models:
+  - name: ptr_obt_encounter_op
+    description: >
+      Partner copy of obt_encounter_op, published to local authority partners. No SQL
+      filter: partner roles see only rows allowed by the PARTNER_POLICY row access
+      policy on sk_patient_id, which partner_mapping links to a borough partner role
+      when the patient is registered with a practice in, or resident in, that borough.
+      Rows without an sk_patient_id, or whose patient has no in-area registered or
+      residence borough, are visible to no partner. sk_patient_id is cast to VARCHAR to
+      match the policy; all other columns are as in obt_encounter_op. One row per latest
+      SUS outpatient appointment recorded as attended with attendance code 5 or 6.
+      Includes attended activity without a submitted appointment identifier or linked
+      patient key. Current PCN, neighbourhood and health borough fields use the latest
+      maintained mapping for the practice recorded on the appointment, not historical
+      membership.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: visit_occurrence_id
+        description: >
+          Primary key for the encounter within SUS
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.
+
+      - name: source
+        description: >
+          Commissioning data source
+
+      - name: local_patient_identifier
+        description: >
+          Trust-provided patient id.
+
+      - name: organisation_id
+        description: >
+          Provider organisation identifier
+
+      - name: organisation_name
+        description: >
+          Provider organisation name
+
+      - name: site_id
+        description: >
+          Site identifier
+
+      - name: site_name
+        description: >
+          Site name
+
+      - name: start_date
+        description: >
+          The date the appointment took place or will take place if in the future
+
+      - name: start_time
+        description: >
+          The time for the appointment
+
+      - name: expected_duration
+        description: >
+          Expected Duration of Appointment
+
+      - name: appointment_outcome
+        description: >
+          Code: Records the action resulting from the attendance such as making another
+          appointment or ending the series of consultations by discharging the patient.
+          It does not record clinical outcome.
+
+      - name: outcome_desc
+        description: >
+          Desc: Records the action resulting from the attendance such as making another
+          appointment or ending the series of consultations by discharging the patient.
+          It does not record clinical outcome.
+
+      - name: appointment_attended_or_dna
+        description: >
+          Code: An indication of whether an appointment took place or not and if not,
+          whether advance warning was given
+
+      - name: appointment_attendance_outcome_desc
+        description: >
+          Desc: An indication of whether an appointment took place or not and if not,
+          whether advance warning was given
+
+      - name: appointment_first_attendance
+        description: >
+          Code: Flag for whether the appointment was a first attendance
+
+      - name: first_attendance_desc
+        description: >
+          Desc: Flag for whether the appointment was a first attendance
+
+      - name: pod
+        description: >
+          Point of delivery, based on HRG code
+
+      - name: primary_diagnosis_code
+        description: >
+          Primary ICD diagnosis code for the appointment
+
+      - name: primary_diagnosis_name
+        description: >
+          Primary ICD diagnosis description for the appointment
+
+      - name: primary_procedure_code
+        description: >
+          Primary OPCS procedure code for the appointment
+
+      - name: primary_procedure_category
+        description: >
+          Primary OPCS procedure category for the appointment
+
+      - name: primary_procedure_name
+        description: >
+          Primary OPCS procedure description for the appointment
+
+      - name: main_specialty_code
+        description: >
+          Code: The specialty in which the consultant is contracted or recognised and
+          the code identifies a specialty as designated by Royal Colleges.
+
+      - name: main_specialty_name
+        description: >
+          Desc: The specialty in which the consultant is contracted or recognised and
+          the code identifies a specialty as designated by Royal Colleges.
+
+      - name: main_specialty_category
+        description: >
+          Grouping: The specialty in which the consultant is contracted or recognised
+          and the code identifies a specialty as designated by Royal Colleges.
+
+      - name: treatment_function_code
+        description: >
+          Treatment function code for the specialised service within which the patient
+          is treated.
+
+      - name: treatment_function_code_desc
+        description: >
+          Treatment function description for the specialised service within which the
+          patient is treated.
+
+      - name: referral_organisation_id
+        description: >
+          Code: Organisation identifier for the referring organisation.
+
+      - name: referral_organisation_date
+        description: >
+          Date the referral was made.
+
+      - name: referral_source_op
+        description: >
+          Code: Referral Group code for the source of referral. Categories into GP,
+          Consultant, and others.
+
+      - name: referral_source_op_desc
+        description: >
+          Desc: Referral Group code for the source of referral. Categories into GP,
+          Consultant, and others.
+
+      - name: referral_acuity
+        description: >
+          Code: The priority of a request for services as assessed by or on behalf of
+          the consultant
+
+      - name: referral_acuity_desc
+        description: >
+          Desc: The priority of a request for services as assessed by or on behalf of
+          the consultant
+
+      - name: spec_comm_flag
+        description: >
+          Specialised Commission Flag
+
+      - name: spec_comm_code
+        description: >
+          Specialised Commission Code
+
+      - name: spec_comm_desc
+        description: >
+          Specialised Commission description from the latest retained UKHFD lookup. Null
+          indicates there is no corresponding code or the code did not match in the
+          lookup.
+
+      - name: pss_service_line_code
+        description: >
+          Prescribed Specialised Services service line code
+
+      - name: pss_service_line_desc
+        description: >
+          Prescribed Specialised Services service line description from the latest
+          retained UKHFD lookup. Null indicates there is no corresponding code or the
+          code did not match in the lookup.
+
+      - name: core_hrg_code
+        description: >
+          HRG code associated with the encounter
+
+      - name: core_hrg_desc
+        description: >
+          HRG description associated with the encounter
+
+      - name: core_hrg_chapter
+        description: >
+          HRG chapter key associated with the encounter
+
+      - name: core_hrg_chapter_desc
+        description: >
+          HRG chapter description associated with the encounter
+
+      - name: cost
+        description: >
+          The final calculated national SUS listed price
+
+      - name: age_at_event
+        description: >
+          The age in years of the patient derived by the sender as at the relevant CDS
+          activity date of the CDS type.
+
+      - name: gender_at_event
+        description: >
+          Patient gender code at time of event
+
+      - name: gender_desc_at_event
+        description: >
+          Patient gender description at time of event
+
+      - name: ethnicity_at_event
+        description: >
+          Patient ethnicity code at time of event
+
+      - name: ethnicity_desc_at_event
+        description: >
+          Patient ethnicity description at time of event
+
+      - name: postcode_district_at_event
+        description: >
+          Patient postcode district at time of event
+
+      - name: lsoa_11_at_event
+        description: >
+          Patient LSOA 2011 of residence at the time of the appointment. Populated
+          across the full history, so use it for trends that span April 2024.
+
+      - name: lsoa_21_at_event
+        description: >
+          Patient LSOA 2021 of residence at the time of the appointment. Populated for
+          appointments from 1 April 2024 (about 98%); mostly null for earlier
+          appointments, so use lsoa_11_at_event for trends that span that date. About 2%
+          of values from April 2024 lie in a different local authority from
+          lsoa_11_at_event.
+
+      - name: lad_at_event
+        description: >
+          Patient local authority district at time of event
+
+      - name: imd_at_event
+        description: >
+          Patient index of multiple deprivation decile at time of event
+
+      - name: reg_practice_at_event
+        description: >
+          Patient registered GP practice at time of event
+
+      - name: reg_practice_pcn_name_latest
+        description: >
+          Latest maintained PCN name for reg_practice_at_event; not historical
+          membership.
+
+      - name: reg_practice_neighbourhood_name_latest
+        description: >
+          Latest maintained integrated neighbourhood name for reg_practice_at_event; not
+          historical membership.
+
+      - name: reg_practice_health_borough_name_latest
+        description: >
+          Latest maintained WNL health borough for reg_practice_at_event; not historical
+          membership.
+
+      - name: visit_occurrence_type
+        description: >
+          Type of visit occurrence

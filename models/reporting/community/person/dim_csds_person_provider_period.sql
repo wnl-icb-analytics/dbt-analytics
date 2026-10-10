@@ -1,23 +1,36 @@
 -- The newest CYP001 record for each person, provider and reporting period. A
 -- provider can submit two local patient records for one person in a month;
 -- both are counted and conflicting demographics flagged.
-with ranked as (
+-- Record counts are aggregated on narrow columns rather than as windows over the wide rows.
+with period_records as (
     select
-        m.*
-        , count(*) over (
-            partition by person_id, organisation_code_provider, reporting_period_end_date
-        ) as n_source_patient_records
+        person_id
+        , organisation_code_provider
+        , reporting_period_end_date
+        , count(*) as n_source_patient_records
         , count(distinct hash(ethnic_category, person_stated_gender_code, ic_age_of_patient_at_rp_end,
             lower_super_output_area_residence, lower_super_output_area_residence_2011, person_death_date,
             organisation_identifier_icb_of_residence, organisation_identifier_sub_icb_location_of_residence,
-            dm_icb_residence_submitted, dm_sub_icb_residence_submitted)) over (
-            partition by person_id, organisation_code_provider, reporting_period_end_date
-        ) > 1 as has_conflicting_demographic_records
-    from {{ ref('stg_csds_mpi_history') }} as m
+            dm_icb_residence_submitted, dm_sub_icb_residence_submitted)) > 1 as has_conflicting_demographic_records
+    from {{ ref('stg_csds_mpi_history') }}
     where person_id is not null
+    group by person_id, organisation_code_provider, reporting_period_end_date
+)
+
+, ranked as (
+    select
+        m.*
+        , pr.n_source_patient_records
+        , pr.has_conflicting_demographic_records
+    from {{ ref('stg_csds_mpi_history') }} as m
+    inner join period_records as pr
+        on m.person_id = pr.person_id
+        and equal_null(m.organisation_code_provider, pr.organisation_code_provider)
+        and equal_null(m.reporting_period_end_date, pr.reporting_period_end_date)
+    where m.person_id is not null
     qualify row_number() over (
-        partition by person_id, organisation_code_provider, reporting_period_end_date
-        order by effective_from desc nulls last, unique_submission_id::number desc, cyp001_unique_id::number desc
+        partition by m.person_id, m.organisation_code_provider, m.reporting_period_end_date
+        order by m.effective_from desc nulls last, m.unique_submission_id::number desc, m.cyp001_unique_id::number desc
     ) = 1
 )
 

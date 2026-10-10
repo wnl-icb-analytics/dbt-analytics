@@ -54,7 +54,8 @@ WHEN sched.VACCINE_ID = 'RSV_1B' AND IS_CARE_HOME_RESIDENT AND AGE_DAYS_APPROX >
 AND AGE_DAYS_APPROX <= sched.eligible_age_to_days THEN TRUE
 WHEN sched.VACCINE_ID = 'RSV_1C' AND IS_PREGNANT AND AGE_DAYS_APPROX >= sched.eligible_age_from_days 
 AND AGE_DAYS_APPROX <= sched.eligible_age_to_days THEN TRUE
---add in RSV new clinical risk group from 1st September 2026
+-- RSV_1D from 1 September 2026: clinical-risk flag (any age) plus the schedule
+-- window. Adult imms documents that window as ages 65 to 74.
 WHEN sched.VACCINE_ID = 'RSV_1D' AND IN_RSV_CLINICAL_RISK_GROUP AND AGE_DAYS_APPROX >= sched.eligible_age_from_days 
 AND AGE_DAYS_APPROX <= sched.eligible_age_to_days THEN TRUE
 --PPV add in PPV clinical risk groups (includes immunosuppression) from age 2 +

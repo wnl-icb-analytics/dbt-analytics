@@ -1,6 +1,5 @@
 -- Pair: macros/qof_registers/calculate_copd_register.sql.
--- This live fact includes future-dated records. Its PIT pair is strict as-of
--- and derives age at the reference date where age is used.
+-- This live fact uses evidence dated on or before today; its PIT pair is strict as-of.
 
 {{
     config(
@@ -50,11 +49,13 @@ WITH eligible_copd_evidence AS (
     FROM {{ ref('int_copd_diagnoses_all') }} AS d
     LEFT JOIN {{ ref('dim_person_age') }} AS age
         ON d.person_id = age.person_id
-    WHERE
-        d.is_disorder_code = TRUE
-        OR (
-            d.is_admin_code = TRUE
-            AND d.clinical_effective_date > DATEADD('year', -2, CURRENT_DATE())
+    WHERE CAST(d.clinical_effective_date AS DATE) <= CURRENT_DATE()
+        AND (
+            d.is_disorder_code = TRUE
+            OR (
+                d.is_admin_code = TRUE
+                AND CAST(d.clinical_effective_date AS DATE) > DATEADD('year', -2, CURRENT_DATE())
+            )
         )
 ),
 
@@ -68,6 +69,7 @@ copd_resolved_codes AS (
         d.concept_display
     FROM {{ ref('int_copd_diagnoses_all') }} AS d
     WHERE d.is_resolved_code = TRUE
+        AND CAST(d.clinical_effective_date AS DATE) <= CURRENT_DATE()
 ),
 
 person_evidence_aggregates AS (
@@ -111,7 +113,7 @@ copdlat_dat_calculations AS (
     INNER JOIN eligible_copd_evidence AS ece
         ON
             qfc.person_id = ece.person_id
-            AND qfc.copdres_dat < ece.evidence_date
+            AND CAST(qfc.copdres_dat AS DATE) < CAST(ece.evidence_date AS DATE)
     WHERE qfc.copdres_dat IS NOT NULL
     GROUP BY qfc.person_id
 ),
@@ -151,7 +153,7 @@ spirometry_tests AS (
                 THEN clinical_effective_date
         END AS fev1fvcl70_date
     FROM {{ ref('int_spirometry_all') }}
-    WHERE is_valid_spirometry = TRUE
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
 ),
 
 -- QOF Rule Implementation (Exact Specification)
@@ -160,7 +162,7 @@ qof_rule_1_pre_april_2023 AS (
     SELECT
         qfce.person_id,
         qfce.eunrescopd_dat AS diagnosis_date,
-        'Rule 1: Pre-April 2023' AS qof_rule_applied,
+        '{{ copd_qof_rule_labels()[1] }}' AS qof_rule_applied,
         TRUE AS qualifies_for_register,
         'EUNRESCOPD_DAT < 01/04/2023 - automatic inclusion'
             AS qualification_reason,
@@ -169,7 +171,7 @@ qof_rule_1_pre_april_2023 AS (
     FROM qof_field_calculations_extended AS qfce
     WHERE
         qfce.eunrescopd_dat IS NOT NULL
-        AND qfce.eunrescopd_dat < '2023-04-01'
+        AND CAST(qfce.eunrescopd_dat AS DATE) < '2023-04-01'::DATE
 ),
 
 patients_for_rule_2_3_4 AS (
@@ -178,7 +180,7 @@ patients_for_rule_2_3_4 AS (
     FROM qof_field_calculations_extended AS qfce
     WHERE
         qfce.eunrescopd_dat IS NOT NULL
-        AND qfce.eunrescopd_dat >= '2023-04-01'
+        AND CAST(qfce.eunrescopd_dat AS DATE) >= '2023-04-01'::DATE
         AND qfce.person_id NOT IN (
             SELECT person_id FROM qof_rule_1_pre_april_2023
         )
@@ -191,7 +193,7 @@ qof_rule_2_spirometry_timeframe AS (
     SELECT DISTINCT
         pfr.person_id,
         pfr.eunrescopd_dat AS diagnosis_date,
-        'Rule 2: Post-April 2023 + Spirometry' AS qof_rule_applied,
+        '{{ copd_qof_rule_labels()[2] }}' AS qof_rule_applied,
         TRUE AS qualifies_for_register,
         'Spirometry <0.7 within 93 days before to 186 days after EUNRESCOPD_DAT'
             AS qualification_reason,
@@ -202,26 +204,30 @@ qof_rule_2_spirometry_timeframe AS (
         ON
             pfr.person_id = s.person_id
             AND s.is_below_0_7 = TRUE  -- FEV1/FVC <0.7
-            AND s.spirometry_date >= DATEADD('day', -93, pfr.eunrescopd_dat)   -- 93 days before
-            AND s.spirometry_date <= DATEADD('day', 186, pfr.eunrescopd_dat)   -- 186 days after
+            AND CAST(s.spirometry_date AS DATE) >= DATEADD('day', -93, CAST(pfr.eunrescopd_dat AS DATE))
+            AND CAST(s.spirometry_date AS DATE) <= DATEADD('day', 186, CAST(pfr.eunrescopd_dat AS DATE))
 ),
 
 -- RULE 3: Newly registered patients (last 12 months) with spirometry within -93 to +186 days of registration
 newly_registered_patients AS (
+    -- REG_DAT is the latest registration start on or before today, including closed registrations.
     SELECT
         person_id,
         registration_start_date AS reg_dat
     FROM {{ ref('dim_person_historical_practice') }}
-    WHERE is_current_registration = TRUE
-      AND registration_start_date > CURRENT_DATE() - INTERVAL '12 months'
+    WHERE registration_start_date > CURRENT_DATE() - INTERVAL '12 months'
       AND registration_start_date <= CURRENT_DATE()
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY person_id
+        ORDER BY registration_start_date DESC, practice_id
+    ) = 1
 ),
 
 qof_rule_3_newly_registered AS (
     SELECT DISTINCT
         pfr.person_id,
         pfr.eunrescopd_dat AS diagnosis_date,
-        'Rule 3: Newly Registered + Spirometry' AS qof_rule_applied,
+        '{{ copd_qof_rule_labels()[3] }}' AS qof_rule_applied,
         TRUE AS qualifies_for_register,
         'Newly registered patient with spirometry <0.7 within 93 days before to 186 days after registration'
             AS qualification_reason,
@@ -234,8 +240,8 @@ qof_rule_3_newly_registered AS (
         ON
             pfr.person_id = s.person_id
             AND s.is_below_0_7 = TRUE
-            AND s.spirometry_date >= DATEADD('day', -93, nrp.reg_dat)
-            AND s.spirometry_date <= DATEADD('day', 186, nrp.reg_dat)
+            AND CAST(s.spirometry_date AS DATE) >= DATEADD('day', -93, nrp.reg_dat)
+            AND CAST(s.spirometry_date AS DATE) <= DATEADD('day', 186, nrp.reg_dat)
     WHERE
         pfr.person_id NOT IN (
             SELECT person_id FROM qof_rule_2_spirometry_timeframe
@@ -247,7 +253,7 @@ qof_rule_4_post_april_2023_remaining AS (
     SELECT DISTINCT
         pfr.person_id,
         pfr.eunrescopd_dat AS diagnosis_date,
-        'Rule 4: Post-April 2023 (All Remaining)' AS qof_rule_applied,
+        '{{ copd_qof_rule_labels()[4] }}' AS qof_rule_applied,
         TRUE AS qualifies_for_register,
         'EUNRESCOPD_DAT >= 01/04/2023 - included per QOF v51 Rule 4'
             AS qualification_reason,
@@ -278,10 +284,10 @@ all_qualifying_patients AS (
         ORDER BY
             -- Prioritize by rule number (Rule 1 > Rule 2 > Rule 3 > Rule 4)
             CASE qof_rule_applied
-                WHEN 'Rule 1: Pre-April 2023' THEN 1
-                WHEN 'Rule 2: Post-April 2023 + Spirometry' THEN 2
-                WHEN 'Rule 3: Newly Registered + Spirometry' THEN 3
-                WHEN 'Rule 4: Post-April 2023 (All Remaining)' THEN 4
+                WHEN '{{ copd_qof_rule_labels()[1] }}' THEN 1
+                WHEN '{{ copd_qof_rule_labels()[2] }}' THEN 2
+                WHEN '{{ copd_qof_rule_labels()[3] }}' THEN 3
+                WHEN '{{ copd_qof_rule_labels()[4] }}' THEN 4
                 ELSE 5
             END,
             -- Then by earliest spirometry date for tie-breaking
@@ -296,6 +302,7 @@ latest_spirometry_all AS (
         MAX(spirometry_date) AS latest_spirometry_date,
         COUNT(*) AS total_spirometry_tests
     FROM spirometry_tests
+    WHERE is_valid_spirometry = TRUE
     GROUP BY person_id
 ),
 
@@ -309,6 +316,7 @@ latest_spirometry_values AS (
         ON
             st.person_id = lsa.person_id
             AND st.spirometry_date = lsa.latest_spirometry_date
+    WHERE st.is_valid_spirometry = TRUE
     QUALIFY
         ROW_NUMBER()
             OVER (PARTITION BY st.person_id ORDER BY st.spirometry_date DESC)
@@ -322,6 +330,7 @@ unable_spirometry_summary AS (
         MAX(clinical_effective_date) AS latest_unable_spirometry_date,
         COUNT(*) AS total_unable_spirometry_records
     FROM {{ ref('int_unable_spirometry_all') }}
+    WHERE CAST(clinical_effective_date AS DATE) <= CURRENT_DATE()
     GROUP BY person_id
 )
 
@@ -338,7 +347,7 @@ SELECT
     -- QOF v51 fields and retained descriptive aliases
     qfce.copdres_dat AS latest_resolved_date,
     CASE
-        WHEN qfce.copdres_dat > qfce.copdear_dat THEN qfce.copdres_dat
+        WHEN CAST(qfce.copdres_dat AS DATE) > CAST(qfce.copdear_dat AS DATE) THEN qfce.copdres_dat
     END AS latest_resolved_after_earliest_date,
     qfce.copdlat_dat AS earliest_diagnosis_after_latest_resolved,
     qfce.copd_diagnosis_count,
@@ -362,8 +371,8 @@ SELECT
     COALESCE(aqp.qualification_reason, 'No COPD diagnosis or resolved') AS qualification_reason,
 
     -- Temporal flags
-    COALESCE(qfce.eunrescopd_dat < '2023-04-01', FALSE) AS is_pre_april_2023_diagnosis,
-    COALESCE(qfce.eunrescopd_dat >= '2023-04-01', FALSE) AS is_post_april_2023_diagnosis,
+    COALESCE(CAST(qfce.eunrescopd_dat AS DATE) < '2023-04-01'::DATE, FALSE) AS is_pre_april_2023_diagnosis,
+    COALESCE(CAST(qfce.eunrescopd_dat AS DATE) >= '2023-04-01'::DATE, FALSE) AS is_post_april_2023_diagnosis,
 
     -- Spirometry confirmation flags
     COALESCE(lsv.latest_spirometry_below_0_7, FALSE) AS latest_spirometry_confirms_copd,
@@ -373,10 +382,10 @@ SELECT
     COALESCE(uss.total_unable_spirometry_records, 0) AS total_unable_spirometry_records,
 
     -- Rule qualification flags
-    COALESCE(aqp.qof_rule_applied = 'Rule 1: Pre-April 2023', FALSE) AS qualified_rule_1,
-    COALESCE(aqp.qof_rule_applied = 'Rule 2: Post-April 2023 + Spirometry', FALSE) AS qualified_rule_2,
-    COALESCE(aqp.qof_rule_applied = 'Rule 3: Newly Registered + Spirometry', FALSE) AS qualified_rule_3,
-    COALESCE(aqp.qof_rule_applied = 'Rule 4: Post-April 2023 (All Remaining)', FALSE) AS qualified_rule_4,
+    COALESCE(aqp.qof_rule_applied = '{{ copd_qof_rule_labels()[1] }}', FALSE) AS qualified_rule_1,
+    COALESCE(aqp.qof_rule_applied = '{{ copd_qof_rule_labels()[2] }}', FALSE) AS qualified_rule_2,
+    COALESCE(aqp.qof_rule_applied = '{{ copd_qof_rule_labels()[3] }}', FALSE) AS qualified_rule_3,
+    COALESCE(aqp.qof_rule_applied = '{{ copd_qof_rule_labels()[4] }}', FALSE) AS qualified_rule_4,
 
     -- Flag for patients who have "unable to spirometry" codes (for analytics, not register requirement)
     COALESCE(uss.total_unable_spirometry_records > 0, FALSE) AS has_unable_spirometry_code

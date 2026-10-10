@@ -1,12 +1,16 @@
 models:
   - name: fct_person_smi_register
-    description: >
-      QOF v51 serious mental illness register. One row per person with an MH_COD
-      diagnosis; remission does not exclude them and remission-only records do not
-      qualify. The retired MH2 lithium route is removed, so counts are not comparable
-      with the former combined register. Lithium fields remain informational for
-      diagnosis-qualified people.
+    description: >-
+      Psychosis and bipolar disorder QOF register (NICE IND257). One row per register
+      member.
 
+
+      Registration status is not filtered. Schizophrenia, bipolar affective disorder or
+      other psychoses qualify at any age. People with a diagnosis remain included during
+      remission; remission-only records do not qualify. Lithium fields describe treatment
+      only for diagnosis-qualified people. For IND257 counts, select people registered on
+      the build date. Based on NICE CG178. Code lists: MH_COD (PCD). The NICE IND256
+      population, including lithium-only people, is in fct_person_nice_smi_register.
     data_tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -25,19 +29,21 @@ models:
     config:
       meta:
         indicator:
-          id: "MH003"
+          id: "MH001"
           type: "CONDITION"
           category: "LTC"
           clinical_domain: "Mental Health"
           name_short: "Serious Mental Illness"
-          description_short: "QOF serious mental illness register"
+          description_short: "QOF 2025/26 serious mental illness register"
           description_long: >
-            QOF v51 MH1 register for patients with an MH_COD diagnosis covering bipolar
-            disorder, schizophrenia and other psychoses. Remission does not remove a
-            diagnosed person, but a remission-only record does not qualify. The former
-            MH2 lithium route is retired. No age restriction.
+            QOF 2025/26 register correspondence; register-establishment indicators are retired
+            under QOF v51, while register extraction continues. QOF v51 MH1 register for patients
+            with an MH_COD diagnosis covering bipolar disorder, schizophrenia and other psychoses.
+            Remission does not remove a diagnosed person. Codes in both MH_COD and MHREM_COD
+            qualify; records only in MHREM_COD do not. Evidence is dated on or before today. The
+            former MH2 lithium route is retired. No age restriction.
           is_qof: true
-          qof_indicator: "MH003"
+          qof_indicator: "MH001"
           source_column: "is_on_register"
           usage_contexts:
             - "POPULATION_HEALTH_NEEDS_DASHBOARD"
@@ -47,5 +53,25 @@ models:
               category: "INCLUSION"
             - cluster_id: "MHREM_COD"
               category: "RESOLUTION"
+        indicators:
+          - id: "IND257"
+            type: "NICE_REGISTER"
+            category: "LTC"
+            clinical_domain: "Mental Health"
+            name_short: >-
+              Psychosis and bipolar disorder register
+            description_short: >-
+              People with schizophrenia, bipolar disorder or other psychoses,
+              including remission.
+            description_long: >-
+              Schizophrenia, bipolar affective disorder or other psychoses qualify at any age.
+              People with a diagnosis remain included during remission; remission-only records
+              do not qualify. Clinical evidence is dated by the build date. For NICE counts,
+              select people registered on the build date. Based on NICE CG178. Code lists:
+              MH_COD (PCD).
+            source_column: "is_on_register"
+            is_qof: true
+            qof_indicator: "MH001"
+            usage_contexts: ["NICE_GUIDANCE"]
         owner:
           name: EddieDavison92

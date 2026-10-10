@@ -296,12 +296,14 @@ sources:
     description: Curated primary care organisation reference - practices, PCNs, neighbourhoods and memberships
     raw_prefix: raw_reference_primary_care
     domain: shared
+    # App-maintained base tables only. The derived views (PRACTICE_*, PCN_*,
+    # NEIGHBOURHOOD_CURRENT) are dbt models in models/reference/primary_care.
     tables:
-      - PRACTICE_ACTIVE
-      - PRACTICE_ALL
-      - PCN_CURRENT
-      - PCN_MEMBERSHIP_ALL
-      - NEIGHBOURHOOD_CURRENT
+      - PRACTICE_HISTORY
+      - PRACTICE_PCN_HISTORY
+      - PRACTICE_NEIGHBOURHOOD_HISTORY
+      - PCN_HISTORY
+      - NEIGHBOURHOOD
       - PRACTICE_SUCCESSION
 
   - source_name: reference_geo
@@ -402,11 +404,14 @@ sources:
       - META_UNMAPPED_FILES
       - META_ROW_COUNT_COMPARE
 
-  # ANALYST_MANAGED - volatile schema; only explicitly listed tables are used
+  # ANALYST_MANAGED - volatile schema; only explicitly listed tables are used.
+  # Do not add TURNAROUND_TIMES_RAW. That analyst-managed copy is retired;
+  # analysts use int_tat_turnaround_times. Keep DATA_LAKE.TAT.TURNAROUND_TIMES_RAW
+  # as the ingest source (source_name: tat below).
   - source_name: reference_analyst_managed
     database: DATA_LAKE__NCL
     schema: ANALYST_MANAGED
-    description: Analyst-managed reference datasets and business rules
+    description: Analyst-managed reference datasets and business rules. TURNAROUND_TIMES_RAW is not in this source; use int_tat_turnaround_times.
     raw_prefix: raw_reference
     domain: shared
     manual: true
@@ -462,18 +467,6 @@ sources:
     raw_prefix: raw_c_ltcs
     domain: commissioning
     manual: true
-
-  # statistical modelling output tables
-  ## Qadmissions
-  - source_name: qadmissions
-    database: STAT_MODELS
-    schema: QADMISSIONS
-    description: qAdmissions model outputs
-    raw_prefix: raw_qadmissions
-    domain: shared
-    manual: true
-    tables:
-      - QADMISSIONS_PREDICTIONS_HISTORY
 
   # NOTE: the AIC_DEV pipeline (source_name: aic) was retired and is superseded
   # by DATA_LAKE__NCL.COMMON, declared manually in models/sources/manual_common.yml.

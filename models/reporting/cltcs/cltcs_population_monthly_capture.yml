@@ -7,7 +7,9 @@ models:
       including patients who were treated on the C-LTCS MDT.
       Eligibility membership can change over time, so this table captures records of 
       who were eligible at each month; covariates are read separately from the SCD2 snapshots and put in
-      cltcs_monthly_covariates. 
+      cltcs_monthly_covariates. The exception is LTC LCS Model of Care stage and status, captured
+      here each month because the risk-summary snapshot does not record MoC progress between
+      risk-group changes.
     config:
       meta:
         owner:
@@ -39,3 +41,20 @@ models:
           if that pool is later widened to out-of-locality candidates.
       - name: captured_at
         description: "Timestamp the row was written (for audit; not part of the grain)."
+      - name: is_in_ltc_lcs_moc_base
+        description: >
+          True if the patient was on the LTC LCS Model of Care (MoC) base population
+          (fct_person_ltc_lcs_risk_summary) in the captured month, false if not. NULL on months
+          captured before the MoC columns were added, when MoC status is unknown.
+      - name: moc_stage_completed_label
+        description: >
+          Furthest MoC pathway stage reached in the 12 months to the captured month ('Not started',
+          'Check & Test', 'Remote Desktop Review', 'MDT Review', 'Care Plan Sharing', 'Discussion'
+          or 'Follow-up'), from fct_person_ltc_lcs_risk_summary. NULL when the patient is not on the
+          MoC base population, or on months captured before this column was added.
+      - name: moc_pathway_status
+        description: >
+          State of the patient's current MoC cycle in the captured month ('Not started',
+          'In progress', 'Cycle complete' or 'Declined'), from fct_person_ltc_lcs_risk_summary.
+          NULL when the patient is not on the MoC base population, or on months captured before
+          this column was added.

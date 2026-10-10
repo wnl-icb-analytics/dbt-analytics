@@ -1,0 +1,50 @@
+models:
+  - name: int_nice_childhood_immunisation_profile
+    description: >-
+      Childhood vaccination evidence for registered, living, non-test children with a 24-week,
+      8-month, 18-month or fifth-birthday milestone in the 12 months before the build date.
+      One row per child on the build date. Counts distinct administration or vaccine order
+      dates. Birth dates are approximate; recorded event age determines birthday boundaries
+      when available. Contraindication code lists provide proxies rather than confirmed
+      vaccine-component anaphylaxis.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: reporting_date
+        description: >-
+          Build date on which population and evidence are assessed.
+      - name: person_id
+        description: Child identifier.
+        data_tests:
+          - unique
+          - not_null
+      - name: birth_date_approx
+        description: Approximate birth date (mid-month).
+      - name: dtap_doses_by_8_months
+        description: Distinct 4-, 5- or 6-in-1 DTP-containing administration or vaccine order dates before 8 months of age.
+      - name: mmr_doses_12_to_18_months
+        description: Distinct MMR or MMRV administration or vaccine order dates on or after the first birthday, using completed-year event age when known, and before approximate 18 months. Missing event age uses the approximate first birthday.
+      - name: mmr_doses_1_to_5_years
+        description: Distinct MMR or MMRV administration or vaccine order dates at completed-year event ages 1 to 4. Missing event age uses the approximate first and fifth birthdays.
+      - name: has_dtap_booster_1_to_5_years
+        description: Whether an explicit DTAPIPVVACBOOST_COD preschool booster was recorded at completed-year event ages 1 to 4. Missing event age uses the approximate first and fifth birthdays. A generic 4-in-1 vaccine product does not establish booster administration.
+      - name: rotavirus_doses_by_24_weeks
+        description: Distinct rotavirus administration or vaccine order dates before 24 weeks of age.
+      - name: menb_doses_by_8_months
+        description: Distinct MenB administration or vaccine order dates before 8 months of age.
+      - name: menb_doses_by_18_months
+        description: Distinct MenB administration or vaccine order dates before 18 months of age.
+      - name: menb_primary_doses_by_12_months
+        description: Distinct MenB administration or vaccine order dates at completed-year event age 0, the primary-course proxy. Missing event age uses the approximate first birthday.
+      - name: menb_booster_doses_12_to_18_months
+        description: Distinct MenB administration or vaccine order dates at completed-year event age 1 and before approximate 18 months, the booster proxy. Missing event age uses the approximate first birthday.
+      - name: has_dtap_contraindication
+        description: Any DTP contraindication record from the childhood lookup or PCD DTPCON_COD or DTAPIPVCON_COD. Proxy for confirmed anaphylaxis, not a specific anaphylaxis definition.
+      - name: has_mmr_contraindication
+        description: Any contraindicated code for MMR or MMRV. Proxy for confirmed anaphylaxis; no separate authorised immunocompromise code set is available.
+      - name: has_rotavirus_contraindication
+        description: Any contraindicated code for rotavirus vaccine or the contraindication and history-of-vaccine-allergy codes in PCD ROTAVACEXC_COD. Other cluster members do not add exclusions.
+      - name: has_menb_contraindication
+        description: Any contraindicated code for MenB vaccine.

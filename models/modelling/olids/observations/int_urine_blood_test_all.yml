@@ -1,0 +1,37 @@
+models:
+- name: int_urine_blood_test_all
+  description: Haematuria test evidence. One row per observation and code list for all people, including
+    inactive and deceased people. Uses ECL_CACHE URINE_BLOOD_TEST_COD, URINE_DIPSTICK_COD and URINALYSIS_RESULT_COD. Blood-specific
+    evidence includes negative and trace results, red-cell microscopy and microscopic haematuria findings.
+    Generic dipstick findings and method-unspecified urinalysis results also count, but do not prove the blood analyte. Blood-specific codes
+    do not always encode the test method. Symptom-only haematuria, requests, declines and generic urinalysis
+    headings are excluded by the lists. Clinical dates use the shared correction and missing-date sentinel;
+    consumers
+    apply reporting windows.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - id
+        - cluster_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: URINE_BLOOD_TEST_COD, URINE_DIPSTICK_COD, URINALYSIS_RESULT_COD
+        source: ECL_CACHE
+  columns:
+  - name: id
+    description: Source observation identifier.
+  - name: person_id
+    description: Person with the record, regardless of current registration.
+  - name: clinical_effective_date
+    description: Corrected clinical timestamp; missing dates use 1 January 1900.
+  - name: cluster_id
+    description: ECL_CACHE evidence list; an observation may belong to more than one list.
+  - name: concept_code
+    description: Recorded SNOMED CT concept code.
+  - name: concept_display
+    description: Recorded SNOMED CT label.

@@ -13,11 +13,16 @@ models:
           category: "BEHAVIOURAL_RISK_FACTOR"
           clinical_domain: "Lifestyle"
           name_short: "Smoking Status"
-          description_short: "Smoking status classification using QOF codes"
+          description_short: "Latest recorded smoking status, including non-smokers with unknown past history"
           description_long: >
-            Smoking status classification based on most recent clinical observations
-            using  QOF-defined cluster codes (LSMOK_COD, EXSMOK_COD, NSMOK_COD). Categories
-            include Never Smoked, Ex-Smoker, and Current Smoker. This is a person
+            Latest recorded smoking status using LSMOK_COD, EXSMOK_COD, NSMOK_COD
+            and SMOK_COD concept 405746006. Categories are Never Smoked, Ex-Smoker,
+            Current Smoker and Non-Smoker (History Unknown). The last category
+            records current non-smoking without establishing past history.
+            Status-free pack-years and unknown-consumption records are excluded.
+            On the same calendar date, current smoker, ex-smoker and never-smoked
+            evidence take priority in that order over unknown-history non-smoker
+            evidence. This is a person
             attribute, not SMOK1_REG. SMOK1_REG selects people with specified
             co-morbidities as the denominator for QOF smoking indicators and is not
             implemented here.
@@ -33,6 +38,9 @@ models:
               category: "INCLUSION"
             - cluster_id: "NSMOK_COD"
               category: "INCLUSION"
+            - cluster_id: "SMOK_COD"
+              category: "INCLUSION"
+              description: "Only SNOMED CT 405746006, current non-smoker with unknown past history"
           thresholds:
             - population_group: "ALL"
               threshold_type: "CURRENT_SMOKER"
@@ -69,11 +77,11 @@ models:
         description: Person's current age
 
       - name: smoking_status
-        description: Current smoking status (Never Smoked, Ex-Smoker, Current Smoker, Unknown)
-        tests:
+        description: Current smoking status (Never Smoked, Ex-Smoker, Current Smoker, Non-Smoker (History Unknown), Unknown)
+        data_tests:
           - accepted_values:
               arguments:
-                values: ['Never Smoked', 'Ex-Smoker', 'Current Smoker', 'Unknown']
+                values: ['Never Smoked', 'Ex-Smoker', 'Current Smoker', 'Non-Smoker (History Unknown)', 'Unknown']
       - name: smoking_risk_sort_key
         description: Smoking risk level (1=Never, 2=Ex-smoker, 3=Current smoker, 0=Unknown)
         tests:
