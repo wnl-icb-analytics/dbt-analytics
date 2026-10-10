@@ -1,0 +1,41 @@
+version: 2
+macros:
+  - name: test_navigation_time_consistency
+    description: >-
+      Returns the supplied record identifier for each row whose date, timestamp or
+      precision contradicts the documented longitudinal time representation.
+    arguments:
+      - name: model
+        type: Relation
+        description: Relation containing the date, timestamp, precision and record key.
+      - name: record_id
+        type: string
+        description: SQL expression identifying a failing record.
+      - name: date_column
+        type: string
+        description: Date column or SQL expression.
+      - name: at_column
+        type: string
+        description: Timestamp column or SQL expression.
+      - name: precision_column
+        type: string
+        description: Column containing timestamp, date, month, year or unknown.
+      - name: at_is_sorting_anchor
+        type: boolean
+        description: >-
+          Defaults to false for source adapters, whose timestamps require a known clock.
+          True for shared outputs, where date-only rows use midnight and partial dates
+          use the start of their recorded month or year.
+  - name: test_navigation_snomed_mapping
+    description: >-
+      Returns clinical_record_id for an invalid populated SNOMED mapping or a mapping
+      that replaces a recognised source SNOMED code. A full-refresh build also fails
+      when a recognised source SNOMED code has no mapping. Requires clinical_record_id,
+      source_code, source_coding_system, mapped_code and mapped_coding_system.
+      Unmapped historical deliveries may remain unmapped after reference additions
+      until their next full refresh; ordinary incremental builds do not assert
+      historical mapping completeness against newly added reference entries.
+    arguments:
+      - name: model
+        type: Relation
+        description: Clinical adapter using the shared SNOMED concept reference.
