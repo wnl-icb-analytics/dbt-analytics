@@ -1,0 +1,107 @@
+version: 2
+
+# Shared columns in every model: submission_id (accepted submission), source_row_id (NHSD
+# UniqueID_IDSnnn, one submitted row, never a record across versions), provider_organisation_code,
+# person_id (IAPT-scoped Person_ID), reporting period dates and dataset_version from the header,
+# source_file_received_at (EFFECTIVE_FROM) and source_loaded_at (warehouse load time).
+
+models:
+  - name: stg_iapt_previous_diagnosis_history
+    description: >-
+      NHS Talking Therapies (IAPT data set) IDS601 previous diagnoses in accepted
+      submissions. One row per submitted row; every accepted version is kept.
+      Diagnoses may be stated by the patient or taken from notes and need not be
+      made by the provider. Dates are as supplied, including placeholders.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: source_row_id
+        description: NHSD UniqueID_IDS601 of the submitted row.
+        data_tests: [not_null, unique]
+      - name: person_id
+        description: IAPT Person_ID from the Master Person Service. Not comparable with other datasets' person ids.
+      - name: unique_local_patient_id
+        description: Provider-qualified local patient id, kept only to key the diagnosis. Not exposed in facts.
+      - name: diag_scheme_in_use
+        description: Diagnosis scheme in use. 02 ICD-10, 06 SNOMED CT (ETOS v2.1.22 IDS601 rows 5-6).
+      - name: prev_diag
+        description: Submitted diagnosis code.
+      - name: diag_date
+        description: Diagnosis date as supplied, the date the diagnosis was observed or recorded, not onset.
+
+  - name: stg_iapt_long_term_condition_history
+    description: >-
+      NHS Talking Therapies (IAPT data set) IDS602 long term physical health
+      conditions in accepted submissions. One row per submitted row. The table has
+      no date item.
+    config: *owner
+    columns:
+      - name: source_row_id
+        description: NHSD UniqueID_IDS602 of the submitted row.
+        data_tests: [not_null, unique]
+      - name: referral_id
+        description: Provider-qualified service request id (Unique_ServiceRequestID).
+      - name: find_scheme_in_use
+        description: Finding scheme in use. 01 ICD-10, 04 SNOMED CT.
+      - name: validated_long_term_condition_code
+        description: NHSD validated code. '-3' means NHSD found the code or scheme invalid.
+
+  - name: stg_iapt_presenting_complaint_history
+    description: >-
+      NHS Talking Therapies (IAPT data set) IDS603 presenting complaints (problem
+      descriptors) in accepted submissions. One row per submitted row.
+    config: *owner
+    columns:
+      - name: source_row_id
+        description: NHSD UniqueID_IDS603 of the submitted row.
+        data_tests: [not_null, unique]
+      - name: referral_id
+        description: Provider-qualified service request id (Unique_ServiceRequestID).
+      - name: find_scheme_in_use
+        description: Finding scheme in use. 01 ICD-10, 04 SNOMED CT.
+      - name: pres_comp_cod_sig
+        description: Presenting complaint coding significance, 1 primary or 2 secondary. Blank is only a warning at source.
+      - name: pres_comp_date
+        description: Date the complaint was recorded, as supplied.
+      - name: validated_presenting_complaint
+        description: NHSD validated code. '-3' means NHSD found the code or scheme invalid.
+
+  - name: stg_iapt_referral_assessment_history
+    description: >-
+      NHS Talking Therapies (IAPT data set) IDS606 scored assessments completed
+      outside a care contact, in accepted submissions. One row per submitted
+      question, dimension or total score.
+    config: *owner
+    columns:
+      - name: source_row_id
+        description: NHSD UniqueID_IDS606 of the submitted row.
+        data_tests: [not_null, unique]
+      - name: coded_ass_tool_type
+        description: SNOMED CT observable for the scored item.
+      - name: pers_score
+        description: Submitted score as text (max 5 characters), including Y, N and NA responses.
+      - name: ass_tool_comp_date
+        description: Completion date as supplied.
+      - name: ass_tool_comp_time
+        description: Completion time of day. The warehouse stores it on a placeholder date, which is dropped.
+
+  - name: stg_iapt_activity_assessment_history
+    description: >-
+      NHS Talking Therapies (IAPT data set) IDS607 scored assessments recorded
+      against a care activity, in accepted submissions. One row per submitted
+      question, dimension or total score. The table has no date of its own.
+    config: *owner
+    columns:
+      - name: source_row_id
+        description: NHSD UniqueID_IDS607 of the submitted row.
+        data_tests: [not_null, unique]
+      - name: care_contact_id
+        description: Provider-qualified care contact id (Unique_CareContactID).
+      - name: care_activity_id
+        description: Provider-qualified care activity id (Unique_CareActivityID).
+      - name: pers_score
+        description: Submitted score as text (max 5 characters), including Y, N and NA responses.
+      - name: dmic_completion_date
+        description: Completion date added by the data services processing office. Undocumented derivation; compared with the contact date, never used in its place.
