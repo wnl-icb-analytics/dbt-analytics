@@ -56,6 +56,60 @@ sequence. The compiled model passed. Applying the view definition preserved its
 existing metadata and grants and did not rebuild any data tables. Outer queries
 still need their own `ORDER BY` when result ordering must be guaranteed.
 
+## Milestone additions, 1 October 2026
+
+The MHSDS, CSDS and SUS adapters were fully refreshed in the shared `dev`
+target after adding the milestones below. Figures are rounded aggregates.
+
+| Source record type | Source rows | Milestones | Dated | Clock time | Parent |
+|---|---:|---|---:|---:|---:|
+| MHSDS legal-status period | ~155K | start, end (~87%) | 100% | 99-100% | none recorded |
+| MHSDS community treatment order | ~18K | start, end (~73%) | 100% | date only | 100% |
+| MHSDS order recall | ~3K | start, end (~84%) | 100% | 100% | 100% |
+| MHSDS leave of absence | ~330K | start, end (~99%) | 100% | ~100% | ~100% |
+| MHSDS home leave | ~26K | start, end (~96%) | 100% | ~97% | ~100% |
+| MHSDS absence without leave | ~5K | start, end (~92%) | 100% | ~97% | ~100% |
+| MHSDS restrictive intervention | ~54K | start, end (~97%) | 100% | ~91-93% | ~100% |
+| MHSDS discharge readiness | ~6K | start, end (~88%) | 100% | date only | ~100% |
+| MHSDS onward referral | ~61K | onward referral | 100% | ~64% | ~100% |
+| CSDS onward referral | ~316K | onward referral | 100% | date only | 100% |
+| ECDS referred-to service | ~2.8M | onward referral; assessment (~39%) | 100% | ~99-100% | 100% |
+| ECDS attendance | ~3.4M with a value | clinically ready to proceed | 100% | 100% | attendance branch |
+
+Every start or primary milestone count equals its source fact row count. Every
+end or assessment count equals the source rows with that date. No primary
+milestone was undated, so the undated-retention rule removed nothing.
+Person-conflicting parents are not promoted: under 0.3% of leave,
+restrictive-intervention and MHSDS onward-referral rows, and under 0.02% of
+orders, recalls and readiness periods. No CSDS onward referral conflicts with its referral.
+ECDS referrals take their person key from the attendance and cannot conflict.
+
+About 59% of discharge-readiness periods name a hospital spell absent from
+`fct_mhsds_hospital_provider_spell`, and their referral is also absent from
+`fct_mhsds_referral`. Following the established rule for an absent parent, the
+recorded spell ID is still promoted. MHSDS onward referrals keep the same
+convention for the ~0.2% whose referral is absent.
+
+Labels cover every populated code except two sets. About 5% of discharge-delay
+reasons are unmatched, and about half of MHSDS onward-referral reasons are
+pre-2021 codes outside the current UKHFD list; they keep the code with a null
+label. Receiving organisations are present on ~88% of MHSDS and ~67% of CSDS
+onward referrals; all but ~0.1% of those codes have a reference name.
+
+ECDS clinically-ready timestamps carry `+01:00` or `Z` offsets matching UK local
+time. Their local clock agrees with the supplied minutes since arrival for ~97%
+of attendances. The ECDS referral request date and time are complete; the
+request falls after recorded departure for ~6%, so the request time is not
+substituted by the departure time.
+
+The adapter grain tests, the shared event ID uniqueness test and the shared
+time-consistency test pass. A repeat incremental run left counts and whole-row
+aggregate fingerprints of all three adapters unchanged. The new onward referral
+facts pass their grain tests. CSDS uses the ETOS v1.6.10 CYP105 successor key
+(referral, onward referral date and reason). MHSDS uses the same fields plus
+provider and supplied time; ~0.1% of its keys had more than one accepted
+version and keep the latest.
+
 ## Person lookup correction
 
 An analyst XS clinical lookup took 49 seconds and scanned about 123 GB.

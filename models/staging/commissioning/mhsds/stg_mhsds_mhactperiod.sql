@@ -28,11 +28,13 @@ select
         , null
         , start_date_mh_act_legal_status_class::date
     ) as start_date_mh_act_legal_status_class
+    , start_time_mh_act_legal_status_class::time as start_time_mh_act_legal_status_class
     , iff(
         end_date_mh_act_legal_status_class::date < '1901-01-01'::date
         , null
         , end_date_mh_act_legal_status_class::date
     ) as end_date_mh_act_legal_status_class
+    , end_time_mh_act_legal_status_class::time as end_time_mh_act_legal_status_class
     , iff(
         expiry_date_mh_act_legal_status_class::date < '1901-01-01'::date
         , null

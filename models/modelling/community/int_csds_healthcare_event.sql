@@ -6,7 +6,7 @@
     cluster_by=['sk_patient_id', 'coalesce(event_at, event_date::timestamp_ntz)'],
     tags=['healthcare_event_stream', 'daily'],
     pre_hook="{{ navigation_build_warehouse() }}",
-    post_hook=["{{ navigation_remove_withdrawn_records([('referral', 'fct_csds_referral', 'source_record_id'), ('care_contact', 'fct_csds_care_contact', 'source_record_id')]) }}", "{{ navigation_build_warehouse(restore=true) }}"]
+    post_hook=["{{ navigation_remove_withdrawn_records([('referral', 'fct_csds_referral', 'source_record_id'), ('care_contact', 'fct_csds_care_contact', 'source_record_id'), ('onward_referral', 'fct_csds_onward_referral', 'source_record_id')]) }}", "{{ navigation_build_warehouse(restore=true) }}"]
 ) }}
 
 -- One recorded milestone per source record; the primary milestone retains unknown dates.
@@ -33,6 +33,8 @@ select
     null::varchar as site_name,
     s.referring_organisation_code::varchar as referring_organisation_code,
     s.referring_organisation_name::varchar as referring_organisation_name,
+    null::varchar as receiving_organisation_code,
+    null::varchar as receiving_organisation_name,
     null::varchar as parent_record_type,
     null::varchar as parent_record_id,
     null::varchar as parent_model_name,
@@ -81,6 +83,8 @@ select
     s.site_name::varchar as site_name,
     null::varchar as referring_organisation_code,
     null::varchar as referring_organisation_name,
+    null::varchar as receiving_organisation_code,
+    null::varchar as receiving_organisation_name,
     iff(iff(s.is_referral_person_consistent is distinct from false, s.referral_id, null) is not null, 'referral', null)::varchar as parent_record_type,
     iff(s.is_referral_person_consistent is distinct from false, s.referral_id, null)::varchar as parent_record_id,
     iff(iff(s.is_referral_person_consistent is distinct from false, s.referral_id, null) is not null, 'fct_csds_referral', null)::varchar as parent_model_name,
@@ -99,6 +103,50 @@ select
 from {{ ref('fct_csds_care_contact') }} as s
 where true
 {{ navigation_delivery_filter('s.source_file_received_at', 'care_contact') }}
+union all
+select
+    s.sk_patient_id::varchar as sk_patient_id,
+    s.person_id::varchar as source_person_id,
+    'onward_referral'::varchar as source_record_type,
+    s.source_record_id::varchar as source_record_id,
+    'fct_csds_onward_referral'::varchar as source_model_name,
+    'community'::varchar as care_setting,
+    null::varchar as attendance_code,
+    null::varchar as attendance_name,
+    null::varchar as service_or_team_type_code,
+    null::varchar as service_or_team_type_name,
+    null::varchar as consultation_mechanism_code,
+    null::varchar as consultation_mechanism_name,
+    null::varchar as activity_location_type_code,
+    null::varchar as activity_location_type_name,
+    s.provider_organisation_code::varchar as provider_organisation_code,
+    s.provider_organisation_name::varchar as provider_organisation_name,
+    'ODS'::varchar as provider_code_authority,
+    null::varchar as site_code,
+    null::varchar as site_name,
+    null::varchar as referring_organisation_code,
+    null::varchar as referring_organisation_name,
+    s.receiving_organisation_code::varchar as receiving_organisation_code,
+    s.receiving_organisation_name::varchar as receiving_organisation_name,
+    iff(iff(s.is_referral_person_consistent is distinct from false, s.referral_source_record_id, null) is not null, 'referral', null)::varchar as parent_record_type,
+    iff(s.is_referral_person_consistent is distinct from false, s.referral_source_record_id, null)::varchar as parent_record_id,
+    iff(iff(s.is_referral_person_consistent is distinct from false, s.referral_source_record_id, null) is not null, 'fct_csds_referral', null)::varchar as parent_model_name,
+    iff(iff(s.is_referral_person_consistent is distinct from false, s.referral_source_record_id, null) is not null, 'recorded_parent', null)::varchar as relationship_type,
+    s.reporting_period_end_date::date as source_submission_period,
+    s.source_file_received_at::timestamp_ntz as source_received_at,
+    array_construct(
+        object_construct_keep_null(
+            'type', 'onward_referral', 'name', 'Onward referral',
+            'date', s.onward_referral_date::date,
+            'at', null::timestamp_ntz,
+            'precision', iff(s.onward_referral_date is null, 'unknown', 'date'),
+            'code', s.onward_referral_reason_code::varchar, 'code_name', s.onward_referral_reason_name::varchar, 'coding_system', 'Onward referral reason',
+            'basis', 'onward_referral_date', 'retain_undated', true
+        )
+    ) as milestones
+from {{ ref('fct_csds_onward_referral') }} as s
+where true
+{{ navigation_delivery_filter('s.source_file_received_at', 'onward_referral') }}
 )
 select
     {{ dbt_utils.generate_surrogate_key(["'CSDS'", 'r.source_record_type', 'r.source_record_id', 'm.value:type::varchar']) }} as event_id,
@@ -114,6 +162,9 @@ select
     m.value:basis::varchar as event_time_basis,
     m.value:type::varchar as event_type,
     m.value:name::varchar as event_name,
+    m.value:code::varchar as event_code,
+    m.value:code_name::varchar as event_code_name,
+    m.value:coding_system::varchar as event_coding_system,
     r.care_setting as care_setting,
     r.attendance_code as attendance_code,
     r.attendance_name as attendance_name,
@@ -130,6 +181,8 @@ select
     r.site_name as site_name,
     r.referring_organisation_code as referring_organisation_code,
     r.referring_organisation_name as referring_organisation_name,
+    r.receiving_organisation_code as receiving_organisation_code,
+    r.receiving_organisation_name as receiving_organisation_name,
     r.parent_record_type as parent_record_type,
     r.parent_record_id as parent_record_id,
     r.parent_model_name as parent_model_name,

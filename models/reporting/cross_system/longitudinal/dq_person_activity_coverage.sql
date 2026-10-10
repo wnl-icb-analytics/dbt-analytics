@@ -2,10 +2,10 @@
 
 {# Coverage needs source counts, not the ordering in the analyst views. #}
 {% set sources = [
-    ('healthcare_event', 'int_mhsds_healthcare_event', 'event_date', 'event_time_precision', 'null', 'null'),
-    ('healthcare_event', 'int_csds_healthcare_event', 'event_date', 'event_time_precision', 'null', 'null'),
+    ('healthcare_event', 'int_mhsds_healthcare_event', 'event_date', 'event_time_precision', 'event_code', 'event_code_name'),
+    ('healthcare_event', 'int_csds_healthcare_event', 'event_date', 'event_time_precision', 'event_code', 'event_code_name'),
     ('healthcare_event', 'int_olids_healthcare_event', 'event_date', 'event_time_precision', 'event_code', 'event_code_name'),
-    ('healthcare_event', 'int_sus_healthcare_event', 'event_date', 'event_time_precision', 'null', 'null'),
+    ('healthcare_event', 'int_sus_healthcare_event', 'event_date', 'event_time_precision', 'event_code', 'event_code_name'),
     ('healthcare_event', 'int_ers_healthcare_event', 'event_date', 'event_time_precision', 'event_code', 'event_code_name'),
     ('clinical_record', 'int_mhsds_person_clinical_record', 'clinical_record_date', 'clinical_time_precision', 'source_code', 'source_code_name'),
     ('clinical_record', 'int_csds_person_clinical_record', 'clinical_record_date', 'clinical_time_precision', 'source_code', 'source_code_name'),

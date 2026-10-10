@@ -1,0 +1,66 @@
+version: 2
+models:
+- name: fct_mhsds_onward_referral
+  description: >-
+    Onward referrals made from mental health services to another organisation or service. Each row
+    is one provider, referral, onward referral date/time and reason, using its latest accepted
+    MHS105 version. Includes records with missing person details. An onward referral records the
+    request; it does not show that the receiving organisation accepted the patient or provided care.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Stable onward referral key derived from provider, referral, onward referral date, time and reason.
+    data_tests:
+    - not_null
+    - unique
+  - name: source_row_id
+    description: Submitted MHS105 row selected for the onward referral.
+  - name: person_id
+    description: MHSDS person identifier from this record, never replaced by the referral's person.
+  - name: sk_patient_id
+    description: Pseudonymised cross-system patient key; null where bridging is unavailable.
+  - name: referral_source_record_id
+    description: Referral the onward referral was made from; joins to source_record_id in fct_mhsds_referral.
+  - name: is_referral_linked
+    description: Whether the recorded referral exists in fct_mhsds_referral.
+  - name: is_referral_person_consistent
+    description: Whether the onward referral and linked referral person identifiers agree. Null for an absent
+      referral or missing person identifier.
+  - name: decision_to_refer_date
+    description: Date the decision to make the onward referral was taken, where supplied.
+  - name: decision_to_refer_time
+    description: Time the decision to make the onward referral was taken, where supplied.
+  - name: onward_referral_date
+    description: Date the onward referral was made.
+  - name: onward_referral_time
+    description: Time the onward referral was made; missing for about a third of records.
+  - name: onward_referral_at
+    description: Onward referral timestamp; date-only records use midnight.
+  - name: onward_referral_time_precision
+    description: timestamp when a time was supplied, date when only the date was supplied.
+  - name: onward_referral_reason_code
+    description: Submitted onward referral reason. Codes from before MHSDS v5 (2021) often fall outside the
+      current national list.
+  - name: onward_referral_reason_description
+    description: Newest UKHFD description of the reason; null for codes outside the national list.
+  - name: out_of_area_reason_code
+    description: Submitted reason for an out-of-area placement referral, where applicable.
+  - name: out_of_area_reason_description
+    description: Newest UKHFD description of the out-of-area reason; null when unmatched.
+  - name: receiving_organisation_code
+    description: Submitted ODS code of the organisation receiving the onward referral.
+  - name: receiving_organisation_name
+    description: Latest reference name for the receiving organisation; null when the code is not recognised.
+  - name: n_accepted_source_records
+    description: Accepted submitted versions of this identity across all periods, including repeats.
+  - name: is_identity_incomplete
+    description: The referral or onward referral date is missing; the source row is retained separately.
+  - name: first_submission_period_end_date
+    description: First accepted reporting period containing this identity, not the clinical date.
+  - name: reporting_period_end_date
+    description: Period of the accepted source evidence; may be later than the onward referral.
+  - name: source_file_received_at
+    description: Source file receipt timestamp, not a clinical time.
