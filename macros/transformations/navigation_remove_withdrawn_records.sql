@@ -6,7 +6,9 @@
             select 1
             from (
                 {% for record_type, model_name, key in sources %}
-                select '{{ record_type }}' as source_record_type, {{ key }}::varchar as source_record_id
+                {#- A null record type reads the source model's own source_record_type column. #}
+                select {% if record_type is none %}source_record_type::varchar{% else %}'{{ record_type }}'{% endif %} as source_record_type,
+                    {{ key }}::varchar as source_record_id
                 from {{ ref(model_name) }}
                 {% if not loop.last %}union all{% endif %}
                 {% endfor %}

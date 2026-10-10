@@ -131,9 +131,18 @@ updated DNA actions. See [e-RS validation](ers-analyst-validation.md).
 
 Clinical items include OLIDS expanded observations and statement-enriched
 medication orders; MHSDS and CSDS prepared clinical records; SUS diagnoses and
-procedures; and ECDS diagnoses, treatments, investigations, comorbidities and
-coded findings. There are no standalone medication statements. Acute code
+procedures; and ECDS diagnoses, treatments, investigations, comorbidities, coded
+findings, observations, scored assessments, chief complaints, acuity, notifiable
+diseases, injury mechanism, intent and place, and alcohol or drug involvement.
+Single-valued ECDS attendance fields emit one row per recorded code, keyed by the
+attendance. Injury details take the recorded injury date; chief complaint, acuity
+and notifiable disease have no supported clinical date. There are no standalone medication statements. Acute code
 positions are preserved, including repeated codes in distinct supplied positions.
+ECDS observations and scored assessments keep separate source-sequence rows,
+values, reported units and clinical timestamps. Submitted scores populate the
+result fields but remain `not_validated` for assessment interpretation, with
+`assessment_score_numeric` null. Unit labels do not establish measurement-unit
+compatibility. See the [ECDS measurement review](ecds-measurement-review.md).
 
 ## Keys and source detail
 
@@ -146,6 +155,8 @@ and record identity, so both outputs retain those upstream UUIDs without a text
 prefix. Changes to dates preserve milestone IDs
 when the underlying source key stays the same. e-RS slot identity itself includes
 the supplied slot timestamp, so a new slot is a different source record.
+SUS and ECDS IDs derive from the supplied `PRIMARYKEY_ID`. They are stable while
+the supplier keeps that key; a resubmission that reissues it produces new IDs.
 
 Use `source_model_name`, `source_record_type` and `source_record_id` for detail.
 Existing source key names remain available:
@@ -161,7 +172,10 @@ Existing source key names remain available:
 | `obt_encounter_apc`, `int_sus_op_appointment`, `obt_encounter_uec` | `visit_occurrence_id` |
 | SUS diagnosis staging | `diagnosis_id` |
 | SUS procedure staging | `procedure_id` |
-| ECDS clinical staging | `diagnosis_id` for diagnoses; `source_record_id` for other items |
+| ECDS clinical staging | `diagnosis_id` for diagnoses; `source_record_id` for other staged items |
+| `fct_sus_uec_observation` | `observation_id` |
+| `fct_sus_uec_scored_assessment` | `assessment_id` |
+| `int_sus_uec_injury_alcohol_drug` | `involvement_id` |
 
 Recorded parents follow `parent_model_name`. MHSDS/CSDS parents use
 `source_record_id`; e-RS referrals use `ubrn_id`; acute encounters use
