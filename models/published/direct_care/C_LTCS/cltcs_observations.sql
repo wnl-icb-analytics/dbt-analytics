@@ -2,7 +2,7 @@
     config(
         materialized='table',
         cluster_by=['patient_id'],
-        tags=['cltcs_secure_source'])
+        tags=['cltcs_secure_source', 'cltcs', 'daily'])
 }}
 
 

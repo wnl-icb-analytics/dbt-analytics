@@ -1,4 +1,4 @@
-{{ config(materialized='table', tags=['cltcs']) }}
+{{ config(materialized='table', tags=['cltcs', 'daily']) }}
 
 /*
 Shared adult-registrant population for the C-LTCS sub-score models.

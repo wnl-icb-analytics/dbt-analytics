@@ -1,7 +1,7 @@
 {{
     config(
         materialized='table',
-        tags=['cltcs_secure_source'])
+        tags=['cltcs_secure_source', 'cltcs', 'daily'])
 }}
 
 {% set placeholder_date = '1900-01-01'%} 
