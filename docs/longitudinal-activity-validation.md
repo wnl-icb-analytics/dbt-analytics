@@ -119,15 +119,23 @@ version and keep the latest.
 
 ### Required milestone deployment
 
-The development full refresh above does not migrate production. PR #1283 adds
-columns to `int_mhsds_healthcare_event`, `int_csds_healthcare_event` and
-`int_sus_healthcare_event`. Their `on_schema_change='fail'` setting rejects an
-ordinary incremental build against the previous schemas. All three need a full
-refresh before their consumers rebuild. Allowing new columns alone would leave
-historical ECDS attendances without clinically-ready milestones when their
-delivery timestamps fall behind the stored watermark.
+The agreed fold combines PR #1209, PR #1284 and PR #1283 into PR #1165 before
+one production deployment. That deployment builds the adapters from scratch,
+so the separate full refreshes below are needed only if PR #1165 deploys without
+PR #1283.
 
-For the first production deployment, the maintainer must:
+In that case, the development full refresh above does not migrate production.
+PR #1283 adds columns to `int_mhsds_healthcare_event`,
+`int_csds_healthcare_event` and `int_sus_healthcare_event`. Their
+`on_schema_change='fail'` setting rejects an ordinary incremental build against
+the previous schemas. All three need a full refresh before their consumers
+rebuild. The MHSDS refresh adds `outcome_code` and `outcome_name` and populates
+historical legal-status start and end reasons. The SUS refresh populates
+historical APC admission and discharge method codes and labels. Allowing new
+columns alone would leave historical ECDS attendances without clinically-ready
+milestones when their delivery timestamps fall behind the stored watermark.
+
+For this separate rollout, the maintainer must:
 
 1. Add `[skip deploy]` to the pull-request title before merging to `main`, using
    the existing [deployment control](github-actions.md#production-deployment).

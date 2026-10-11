@@ -49,13 +49,6 @@ of the two stable outputs or a rewrite of their existing prepared snapshots.
 An incremental merge alone does not change the stored key type. Development
 builds in dbt-analytics use the established `dev` target and shared `DEV__` layers.
 
-The milestone additions in PR #1283 also require a one-off full refresh of the
-MHSDS, CSDS and SUS event adapters before their consumers rebuild. Follow the
-[milestone deployment steps](longitudinal-activity-validation.md#required-milestone-deployment).
-The MHSDS refresh also adds `outcome_code` and `outcome_name` and populates
-historical legal-status start and end reasons. The SUS refresh populates
-historical APC admission and discharge method codes and labels.
-
 ## Time and clustering
 
 Materialised branches cluster by the cross-system person key `sk_patient_id`, then
@@ -182,8 +175,8 @@ which can precede admission. It is separate from the ECDS `decision_to_admit`,
 which records the emergency department decision. Ready for discharge does not
 mean the patient was discharged.
 
-Deploy the APC event-type change with a full refresh of
-`int_sus_healthcare_event`. Its `event_id` includes the milestone type, so older
+If PR #1165 deploys without PR #1283, apply the APC event-type change with a
+full refresh of `int_sus_healthcare_event`. Its `event_id` includes the milestone type, so older
 deliveries behind the watermark otherwise retain the former type and ID.
 
 e-RS assessment actions 1426 and 1428 retain assessment outcome in the shared
