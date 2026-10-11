@@ -103,8 +103,8 @@ select
     initcap(replace(care_setting, '_', ' ')) as care_setting_name,
     null::varchar as service_id,
     null::varchar as service_name,
-    null::varchar as priority_code,
-    null::varchar as priority_name
+    priority_code,
+    priority_name
 from {{ ref('int_csds_healthcare_event') }}
 union all
 select
@@ -197,8 +197,8 @@ select
     provider_code_authority,
     site_code,
     site_name,
-    null::varchar as referring_organisation_code,
-    null::varchar as referring_organisation_name,
+    referring_organisation_code,
+    referring_organisation_name,
     null::varchar as clinical_record_id,
     null::varchar as parent_record_type,
     null::varchar as parent_record_id,

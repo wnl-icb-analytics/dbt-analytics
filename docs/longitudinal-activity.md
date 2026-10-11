@@ -142,6 +142,20 @@ Their source facts retain the derivation and consistency evidence.
 Primary milestones retain source records with missing dates. Optional milestones
 require a recorded date. A booking or scheduled slot never proves attendance.
 Status and outcome fields describe their source meanings and can be extract-current.
+
+CSDS referral milestones carry the single distinct non-null team type across
+`fct_csds_referral_service`. Several teams with the same type still supply that
+type; several distinct types or no recorded type leave it null.
+`priority_code` and `priority_name`
+carry recorded NHS DD Priority Type for e-RS and CSDS referral milestones.
+MHSDS clinical response priority uses a different list and remains separate.
+
+APC discharge and ECDS departure carry their recorded discharge destination in
+`outcome_code` and `outcome_name`; arrival and admission do not carry that outcome.
+ECDS arrival carries the recorded attendance source organisation or site and its
+name in the referring organisation fields. This is the recorded organisation
+the patient came from, with no inferred referral link.
+
 e-RS reminders, printing, letter edits and unconfirmed cancellation requests are
 not independent care milestones. e-RS action labels distinguish recorded and
 updated DNA actions. See [e-RS validation](ers-analyst-validation.md).

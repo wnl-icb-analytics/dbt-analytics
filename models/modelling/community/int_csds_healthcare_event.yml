@@ -2,7 +2,9 @@ version: 2
 models:
 - name: int_csds_healthcare_event
   description: CSDS recorded healthcare milestones, one row per source record and milestone type. Primary milestones
-    remain when undated; optional milestones require a recorded date. Contacts do not imply attendance. Incremental
+    remain when undated; optional milestones require a recorded date. Referral milestones carry recorded NHS DD
+    Priority Type and the single distinct non-null team type across their referral services. Team type is null
+    when several types are recorded or none is supplied. Contacts do not imply attendance. Incremental
     loads process newly received deliveries and replay the boundary delivery. Withdrawn source keys are removed
     on each run. Monthly full refreshes reconcile earlier corrections and reference changes.
   config:
@@ -80,5 +82,9 @@ models:
     description: '{{ doc(''navigation_relationship_type'') }}'
   - name: source_submission_period
     description: '{{ doc(''navigation_source_submission_period'') }}'
+  - name: priority_code
+    description: '{{ doc(''navigation_priority_code'') }}'
+  - name: priority_name
+    description: '{{ doc(''navigation_priority_name'') }}'
   - name: source_received_at
     description: '{{ doc(''navigation_source_received_at'') }}'
