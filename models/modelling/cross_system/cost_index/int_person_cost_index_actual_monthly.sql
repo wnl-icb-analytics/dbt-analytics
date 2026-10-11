@@ -10,8 +10,9 @@ NCL only, and NWL has no person-level GP feed. Adding it to one sub-ICB would
 bias every NCL vs NWL comparison.
 
 Months run from the latest first month to the earliest last month across the
-four sources, so every month carries all of them. EPD lags SLAM by about two
-months, which pulls the resource index window back accordingly.
+sources present. Error-severity tests require all four sources in each of the
+latest 12 months and reject a shorter window or month gaps. EPD lags SLAM by
+about two months, which pulls the resource index window back accordingly.
 */
 {{ config(materialized = 'table') }}
 
