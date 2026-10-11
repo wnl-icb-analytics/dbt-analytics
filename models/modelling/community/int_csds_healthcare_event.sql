@@ -146,6 +146,8 @@ select
     iff(iff(s.is_referral_person_consistent is distinct from false, s.referral_source_record_id, null) is not null, 'recorded_parent', null)::varchar as relationship_type,
     s.reporting_period_end_date::date as source_submission_period,
     s.source_file_received_at::timestamp_ntz as source_received_at,
+    null::varchar as priority_code,
+    null::varchar as priority_name,
     array_construct(
         object_construct_keep_null(
             'type', 'onward_referral', 'name', 'Onward referral',
