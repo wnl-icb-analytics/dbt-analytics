@@ -110,6 +110,64 @@ facts pass their grain tests. CSDS uses the ETOS v1.6.10 CYP105 successor key
 provider and supplied time; ~0.1% of its keys had more than one accepted
 version and keep the latest.
 
+### Required milestone deployment
+
+The development full refresh above does not migrate production. PR #1283 adds
+columns to `int_mhsds_healthcare_event`, `int_csds_healthcare_event` and
+`int_sus_healthcare_event`. Their `on_schema_change='fail'` setting rejects an
+ordinary incremental build against the previous schemas. All three need a full
+refresh before their consumers rebuild. Allowing new columns alone would leave
+historical ECDS attendances without clinically-ready milestones when their
+delivery timestamps fall behind the stored watermark.
+
+For the first production deployment, the maintainer must:
+
+1. Add `[skip deploy]` to the pull-request title before merging to `main`, using
+   the existing [deployment control](github-actions.md#production-deployment).
+   Pause scheduled production builds and prevent other deployments until this
+   rollout finishes; the marker only skips this merge's automatic deployment.
+   Wait for active production builds to finish.
+2. Check out the merged revision in the deployment environment with the tracked
+   `profiles.yml` and established production credentials. The base longitudinal
+   adapters and their other source branches must already be deployed.
+3. Run the commands below from the repository root in Bash. They stop on the
+   first failure. Inspect the listed selection before running the builds.
+   Use `rollout_target=dev` when rehearsing in the existing shared DEV layers.
+
+```bash
+set -euo pipefail
+rollout_target=prod
+event_adapters=(int_mhsds_healthcare_event int_csds_healthcare_event int_sus_healthcare_event)
+event_parents=(+int_mhsds_healthcare_event +int_csds_healthcare_event +int_sus_healthcare_event)
+event_consumers=(int_mhsds_healthcare_event+ int_csds_healthcare_event+ int_sus_healthcare_event+)
+
+dbt deps
+dbt ls --target "$rollout_target" --profiles-dir . --select "${event_parents[@]}" "${event_consumers[@]}"
+
+# Build new and changed dependencies before refreshing the adapters.
+dbt build --target "$rollout_target" --profiles-dir . --select "${event_parents[@]}" --exclude "${event_consumers[@]}"
+
+# Refresh all history, with --full-refresh confined to these three adapters.
+dbt build --target "$rollout_target" --profiles-dir . --full-refresh --select "${event_adapters[@]}"
+
+# Exercise the next increment and rebuild and test all downstream consumers.
+dbt build --target "$rollout_target" --profiles-dir . --select "${event_consumers[@]}"
+```
+
+The consumer selection includes `fct_person_healthcare_event` and
+`dq_person_activity_coverage`. Require successful adapter grain tests and shared
+event uniqueness and time-consistency tests before treating the outputs as
+current. The existing `DBT_ADMIN` hook uses `WH_WNL_OLIDS_L` for the adapter full
+refreshes and restores the profile warehouse afterwards.
+
+After these commands pass, manually dispatch `dbt-deploy.yml` on the merged
+revision to complete the ordinary production build and publish deployment
+state. A manual dispatch alone does not full-refresh these adapters. Resume
+scheduled builds and other deployments only after it succeeds. If any step
+fails, keep builds paused and resolve the failure before rerunning that step
+and the remaining steps; dbt does not roll back models already built. Record
+the revision and build results without patient-level output.
+
 ## Person lookup correction
 
 An analyst XS clinical lookup took 49 seconds and scanned about 123 GB.

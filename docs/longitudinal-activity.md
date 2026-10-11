@@ -49,6 +49,10 @@ of the two stable outputs or a rewrite of their existing prepared snapshots.
 An incremental merge alone does not change the stored key type. Development
 builds in dbt-analytics use the established `dev` target and shared `DEV__` layers.
 
+The milestone additions in PR #1283 also require a one-off full refresh of the
+MHSDS, CSDS and SUS event adapters before their consumers rebuild. Follow the
+[milestone deployment steps](longitudinal-activity-validation.md#required-milestone-deployment).
+
 ## Time and clustering
 
 Materialised branches cluster by the cross-system person key `sk_patient_id`, then
