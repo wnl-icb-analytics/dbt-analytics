@@ -16,6 +16,8 @@ with referral_team_types as (
         iff(count(distinct service_type_code) = 1, max(service_type_code), null)::varchar as service_or_team_type_code,
         iff(count(distinct service_type_code) = 1, max(iff(service_type_code is not null, service_type_name, null)), null)::varchar as service_or_team_type_name
     from {{ ref('fct_csds_referral_service') }}
+    -- Services recorded for a different person do not describe this referral.
+    where is_referral_person_consistent is distinct from false
     group by referral_id
 ), source_records as (
 select
