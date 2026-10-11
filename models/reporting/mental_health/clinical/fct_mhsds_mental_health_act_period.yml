@@ -7,7 +7,8 @@ models:
     detention when its code is classified as detention, it has no recorded end, it is unexpired at
     the dataset observation date, and it was last reported within two calendar months of that date.
     These are the existing project rules. Concurrent community orders are not reclassified by this
-    table.
+    table. Retains the supplied classification separately from the NHSD-derived classification,
+    with legal-status start/end reasons, expiry date/time and Mental Health Act 2007 mental category.
   config:
     meta:
       owner:
@@ -19,9 +20,33 @@ models:
     - not_null
     - unique
   - name: legal_status_code
-    description: Source-cleaned NHSD legal-status code.
+    description: NHSD-derived legal-status classification code used by the established detention rules.
+      Distinct from submitted_legal_status_code.
   - name: legal_status_description
     description: Authoritative UKHFD description; null for unmatched codes.
+  - name: submitted_legal_status_code
+    description: Submitted LegalStatusCode classification, trimmed and upper-cased without NHSD recoding.
+      Null when blank. Retained for comparison with the NHSD-derived legal_status_code.
+  - name: submitted_legal_status_description
+    description: UKHFD legal-status classification label for the supplied code; null for unmatched codes.
+      A non-standard supplied code can lack a label even when its NHSD-derived code has one.
+  - name: legal_status_start_reason_code
+    description: Submitted reason for the start of this legal-status assignment period; null when blank.
+  - name: legal_status_start_reason_description
+    description: Latest available UKHFD legal-status assignment period start reason label, including
+      retired codes. Null for missing or unmatched codes.
+  - name: legal_status_end_reason_code
+    description: Submitted reason for the end of this legal-status assignment period; null when blank.
+      An absent reason does not establish that the period remains open.
+  - name: legal_status_end_reason_description
+    description: Latest available UKHFD legal-status assignment period end reason label, including
+      retired codes. Null for missing or unmatched codes.
+  - name: mental_category_code
+    description: Submitted Mental Health Act 2007 mental category. Describes the primary reason for
+      detention, not a diagnosis; null when blank.
+  - name: mental_category_description
+    description: Latest available UKHFD Mental Health Act 2007 mental category label, including retired
+      codes. Null for missing or unmatched codes.
   - name: is_classified_legal_status
     description: Whether the maintained detention classification contains the source code.
   - name: is_detention_period
@@ -39,3 +64,6 @@ models:
     description: Recorded end time of the legal-status period; null while open or when not supplied.
   - name: legal_status_expiry_date
     description: Recorded expiry date; the period remains current through this date.
+  - name: legal_status_expiry_time
+    description: Recorded clock time when the legal-status classification expires; null when not
+      supplied. Retained for analysis; the current-detention rule still assesses expiry by date.

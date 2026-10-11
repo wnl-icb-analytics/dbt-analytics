@@ -6,6 +6,14 @@ select
     , provider.organisation_name as provider_organisation_name
     , m.nhsd_legal_status as legal_status_code
     , label.legal_status_desc as legal_status_description
+    , m.legal_status_code as submitted_legal_status_code
+    , submitted_label.legal_status_desc as submitted_legal_status_description
+    , m.legal_status_class_period_start_reason as legal_status_start_reason_code
+    , start_reason.description as legal_status_start_reason_description
+    , m.legal_status_class_period_end_reason as legal_status_end_reason_code
+    , end_reason.description as legal_status_end_reason_description
+    , m.mental_cat as mental_category_code
+    , mental_category.description as mental_category_description
     , c.nhsd_legal_status is not null as is_classified_legal_status
     , coalesce(c.is_detained, false) as is_detention_period
     , m.start_date_mh_act_legal_status_class as legal_status_start_date
@@ -13,6 +21,7 @@ select
     , m.end_date_mh_act_legal_status_class as legal_status_end_date
     , m.end_time_mh_act_legal_status_class as legal_status_end_time
     , m.expiry_date_mh_act_legal_status_class as legal_status_expiry_date
+    , m.expiry_time_mh_act_legal_status_class as legal_status_expiry_time
     , d.as_of_date
     , coalesce(c.is_detained, false)
         and m.end_date_mh_act_legal_status_class is null
@@ -29,6 +38,16 @@ left join {{ ref('mhsds_mh_act_legal_status_classification') }} as c
     on m.nhsd_legal_status = c.nhsd_legal_status
 left join {{ ref('stg_ukhfd_mental_health_act_legal_status_classification') }} as label
     on m.nhsd_legal_status = label.legal_status_code
+left join {{ ref('stg_ukhfd_mental_health_act_legal_status_classification') }} as submitted_label
+    on m.legal_status_code = submitted_label.legal_status_code
+left join {{ ref('mhsds_domain_code_lookup') }} as start_reason
+    on m.legal_status_class_period_start_reason = start_reason.code
+        and start_reason.code_set_name = 'legal_status_start_reason'
+left join {{ ref('mhsds_domain_code_lookup') }} as end_reason
+    on m.legal_status_class_period_end_reason = end_reason.code
+        and end_reason.code_set_name = 'legal_status_end_reason'
+left join {{ ref('mhsds_domain_code_lookup') }} as mental_category
+    on m.mental_cat = mental_category.code and mental_category.code_set_name = 'mental_category'
 left join {{ ref('stg_mhsds_bridging') }} as b on m.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(m.org_id_prov) = upper(provider.organisation_code)

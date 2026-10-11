@@ -119,7 +119,7 @@ Their source facts retain the derivation and consistency evidence.
 | Source | Milestones |
 |---|---|
 | OLIDS | Recorded current booking, scheduled appointment slot and terminology-selected patient referral. No reconstructed booking or cancellation history. |
-| MHSDS | Referral received, rejected and discharged; care contact; onward referral (the fact also retains the SNOMED CT procedure expression); hospital admission and discharge; ward stay start and end; Mental Health Act legal status start and end; community treatment order start and end; recall start and end; leave of absence, home leave and absence without leave start and end; restrictive intervention start and end; clinically ready for discharge start and end. |
+| MHSDS | Referral received, rejected and discharged; care contact; onward referral (the fact also retains the SNOMED CT procedure expression); hospital admission and discharge; ward stay start and end; Mental Health Act legal status start and end (the fact also retains start/end reasons, expiry date/time, supplied classification and mental category); community treatment order start and end; recall start and end; leave of absence, home leave and absence without leave start and end; restrictive intervention start and end; clinically ready for discharge start and end. |
 | CSDS | Referral received and discharged; care contact; onward referral. |
 | SUS APC | Spell admission and discharge. |
 | SUS OP | Scheduled appointment, including non-attendance and cancellations recorded on the appointment. |
@@ -140,6 +140,11 @@ period; leave links to its ward stay; restrictive interventions and discharge
 readiness link to their hospital spell. `event_code` carries the record's legal
 status or reason, with `event_coding_system` naming the NHS Data Dictionary item.
 Order and leave end milestones carry their end reason instead.
+The legal-status fact retains the supplied classification separately from the
+NHSD-derived classification used by the milestones and detention rules.
+Its start/end reasons and Mental Health Act 2007 mental category have UKHFD
+labels where matched. Expiry time is retained for analysis; the current-detention
+rule still assesses expiry by date. These attributes remain on the detailed fact.
 
 An onward referral records the request, not acceptance by the receiving
 organisation or later care. MHSDS and CSDS onward referrals carry their reason
