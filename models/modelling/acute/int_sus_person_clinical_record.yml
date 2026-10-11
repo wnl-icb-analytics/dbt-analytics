@@ -15,7 +15,10 @@ models:
     data_tests:
     - unique
   - name: sk_patient_id
-    description: '{{ doc(''navigation_sk_patient_id'') }}'
+    description: >-
+      {{ doc('navigation_sk_patient_id') }}
+      Null for APC clinical items whose spell and episode person keys conflict, pending the business owner's
+      decision on which identity is authoritative. The clinical item remains in the model.
   - name: source_dataset
     description: '{{ doc(''navigation_source_dataset'') }}'
   - name: source_record_type
@@ -63,8 +66,9 @@ models:
   - name: is_parent_person_consistent
     description: Agreement between the clinical record and its linked parent person key where independently checked.
       False identifies an APC spell-to-episode conflict; null means not independently established. APC parent
-      dates require positive agreement, and known conflicting parent links are not promoted. Outpatient clinical
-      records inherit their person key from the appointment rather than providing an independent comparison.
+      dates require positive agreement. Known conflicts retain neither a cross-system patient key nor a parent link.
+      Outpatient clinical records inherit their person key from the appointment rather than providing an
+      independent comparison.
   - name: parent_start_date
     description: Start date of the recorded episode or outpatient appointment. This is care
       context, not the onset or date of the clinical item. APC dates require agreement between spell and episode

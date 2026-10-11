@@ -67,12 +67,13 @@ The original date and precision remain explicit. Clustering helps pruning and re
 still requires `ORDER BY` to guarantee output order. A stable ID can break display
 ties; it does not establish which same-day event happened first.
 
-Both shared views include an `ORDER BY` across their complete source unions
-for direct timeline lookups. They sort by `sk_patient_id`, `event_at` or
-`clinical_record_at`, then record ID. Midnight anchors precede timed records on the same day; undated records come
-last. These are presentation rules, not additional clinical precision. Sorting
-happens at query time. Joins, aggregations and other outer queries can change
-the result order; use a top-level `ORDER BY` when order must be guaranteed.
+Both shared views are unordered so aggregate queries do not pay for a timeline
+sort. Timeline queries should use a top-level
+`ORDER BY sk_patient_id NULLS LAST, event_at NULLS LAST, event_id` for events,
+or `ORDER BY sk_patient_id NULLS LAST, clinical_record_at NULLS LAST, clinical_record_id`
+for clinical items. Midnight anchors precede timed records on the same day;
+undated records come last. These are presentation rules, not additional clinical
+precision.
 
 Interpret dates with their precision:
 
@@ -104,13 +105,29 @@ CSDS referral links whose referral names a different person; original source
 keys remain in the detailed models. `recorded_at` retains the OLIDS recording timestamp
 separately.
 
+APC clinical items with conflicting spell and episode person keys remain in the
+output with a null `sk_patient_id`. Neither identity is treated as authoritative
+pending a decision from Eddie Davison, the business owner. Missing episode keys
+do not establish a conflict and retain the existing spell attribution.
+
+Deploy this attribution correction with a full refresh of
+`int_sus_person_clinical_record`, then rebuild `dq_person_activity_coverage`.
+The delivery watermark would otherwise leave older stored attributions unchanged:
+
+```shell
+dbt build --target dev --full-refresh -s int_sus_person_clinical_record
+dbt build --target dev -s int_sus_person_clinical_record+
+```
+
 Use `code`, `code_name` and `coding_system` together for routine clinical analysis.
 They select the mapped triplet when available, otherwise the source triplet.
 Both original triplets remain available. Use `assessment_score_numeric` for
 assessment scoring; `result_value_numeric` also contains numeric non-score responses.
 
 SUS procedures use their supplied procedure dates. Undated diagnoses remain
-undated; admission or appointment dates are not substituted. MHSDS and CSDS
+undated; admission or appointment dates are not substituted. ECDS coded findings
+use the supplied time the finding was recorded, with `recorded_at` as the time
+basis. MHSDS and CSDS
 clinical dates can use the previously validated recorded activity/contact links.
 Their source facts retain the derivation and consistency evidence.
 
@@ -129,6 +146,20 @@ Their source facts retain the derivation and consistency evidence.
 Primary milestones retain source records with missing dates. Optional milestones
 require a recorded date. A booking or scheduled slot never proves attendance.
 Status and outcome fields describe their source meanings and can be extract-current.
+
+CSDS referral milestones carry the single distinct non-null team type across
+`fct_csds_referral_service`. Several teams with the same type still supply that
+type; several distinct types or no recorded type leave it null.
+`priority_code` and `priority_name`
+carry recorded NHS DD Priority Type for e-RS and CSDS referral milestones.
+MHSDS clinical response priority uses a different list and remains separate.
+
+APC discharge and ECDS departure carry their recorded discharge destination in
+`outcome_code` and `outcome_name`; arrival and admission do not carry that outcome.
+ECDS arrival carries the recorded attendance source organisation or site and its
+name in the referring organisation fields. This is the recorded organisation
+the patient came from, with no inferred referral link.
+
 e-RS reminders, printing, letter edits and unconfirmed cancellation requests are
 not independent care milestones. e-RS action labels distinguish recorded and
 updated DNA actions. See [e-RS validation](ers-analyst-validation.md).
@@ -239,8 +270,8 @@ period. MHSDS and CSDS reporting periods and source submission coverage remain
 available for choosing observation windows. e-RS future slots are planned
 activity; they do not extend the observation window for delivered care.
 
-The coverage model aggregates the prepared source branches directly. Reading the
-ordered analyst views would sort the complete populations before aggregation.
+The coverage model aggregates the prepared source branches directly, retaining
+source counts without the shared facts' display fields.
 
 Define the index event, source populations, completed-care criteria and period
 before calculating a time-to-care measure. Treat undated or partially dated

@@ -95,15 +95,23 @@ Authoritative reference label for attendance_code.
 {% enddocs %}
 
 {% docs navigation_outcome_code %}
-Recorded source outcome or action-reason code. Interpret within the source dataset and record type.
+Recorded source outcome or action-reason code. APC discharge and ECDS departure use recorded discharge destination; admission and arrival do not carry that outcome. Interpret within the source dataset, record type and milestone.
 {% enddocs %}
 
 {% docs navigation_outcome_name %}
 Retained source or reference label for outcome_code.
 {% enddocs %}
 
+{% docs navigation_priority_code %}
+Recorded referral priority (NHS DD Priority Type), where supplied by e-RS or CSDS. e-RS actions retain their own context; appointment slots use the latest observed action context. CSDS supplies priority on referral milestones only. MHSDS clinical response priority uses a different code list and is not mapped here.
+{% enddocs %}
+
+{% docs navigation_priority_name %}
+Retained source or reference label for the recorded referral priority (NHS DD Priority Type).
+{% enddocs %}
+
 {% docs navigation_service_or_team_type_code %}
-Recorded service or team category, where supplied by the source. Not inferred from nearby records.
+Recorded service or team category, where supplied by the source. CSDS referral milestones use the single distinct non-null type across fct_csds_referral_service; null when several types are recorded or none is supplied. Not inferred from nearby records.
 {% enddocs %}
 
 {% docs navigation_service_or_team_type_name %}
@@ -155,11 +163,11 @@ Retained source or reference name for the recorded site. Null when the code has 
 {% enddocs %}
 
 {% docs navigation_referring_organisation_code %}
-Recorded referring organisation, where available. No referral direction is inferred from time proximity.
+Recorded referring organisation, where available. ECDS arrival uses the recorded attendance source organisation or site code, which identifies the organisation the patient came from. No referral direction is inferred from time proximity.
 {% enddocs %}
 
 {% docs navigation_referring_organisation_name %}
-Retained source or reference name for the referring organisation.
+Retained source or reference name for the referring organisation. ECDS arrival retains the attendance source site or provider name.
 {% enddocs %}
 
 {% docs navigation_receiving_organisation_code %}
@@ -203,7 +211,7 @@ Readable name for the source clinical item type.
 {% enddocs %}
 
 {% docs navigation_clinical_record_date %}
-Recorded or source-validated clinical date. SUS diagnoses and other undated codes remain undated; an admission or appointment date is not substituted. Interpret partial OLIDS dates with clinical_time_precision.
+Recorded or source-validated clinical date. ECDS coded findings use their supplied recording timestamp. SUS diagnoses and other undated codes remain undated; an admission or appointment date is not substituted. Interpret partial OLIDS dates with clinical_time_precision.
 {% enddocs %}
 
 {% docs navigation_clinical_record_at %}

@@ -145,7 +145,7 @@ where true
 )
 select
     {{ dbt_utils.generate_surrogate_key(['source_dataset', 'source_record_type', 'source_record_id']) }} as clinical_record_id,
-    sk_patient_id,
+    iff(is_parent_person_consistent is distinct from false, sk_patient_id, null) as sk_patient_id,
     source_dataset,
     source_record_type,
     source_record_id,

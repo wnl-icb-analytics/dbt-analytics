@@ -155,9 +155,9 @@ select
     s.source_record_id::varchar as source_record_id,
     'stg_sus_ecds_clinical_coded_findings'::varchar as source_model_name,
     'clinical_finding'::varchar as clinical_record_type,
-    null::date as clinical_record_date,
-    'unknown'::varchar as clinical_time_precision,
-    'not_recorded'::varchar as clinical_time_basis,
+    s.recorded_date::date as clinical_record_date,
+    iff(s.recorded_at is null, 'unknown', 'timestamp')::varchar as clinical_time_precision,
+    iff(s.recorded_at is null, 'not_recorded', 'recorded_at')::varchar as clinical_time_basis,
     s.code::varchar as source_code,
     label.preferred_term::varchar as source_code_name,
     'SNOMED CT'::varchar as source_coding_system,
@@ -173,7 +173,7 @@ select
     p.start_date::date as parent_start_date,
     p.end_date::date as parent_end_date,
     delivery.source_received_at::timestamp_ntz as source_received_at,
-    null::timestamp_ntz as clinical_record_at,
+    s.recorded_at::timestamp_ntz as clinical_record_at,
     null::varchar as qualifier_code,
     null::varchar as qualifier_name
 from {{ ref('stg_sus_ecds_clinical_coded_findings') }} as s
