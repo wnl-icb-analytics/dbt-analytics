@@ -53,7 +53,8 @@ The milestone additions in PR #1283 also require a one-off full refresh of the
 MHSDS, CSDS and SUS event adapters before their consumers rebuild. Follow the
 [milestone deployment steps](longitudinal-activity-validation.md#required-milestone-deployment).
 The MHSDS refresh also adds `outcome_code` and `outcome_name` and populates
-historical legal-status start and end reasons.
+historical legal-status start and end reasons. The SUS refresh populates
+historical APC admission and discharge method codes and labels.
 
 ## Time and clustering
 
@@ -140,7 +141,7 @@ Their source facts retain the derivation and consistency evidence.
 | OLIDS | Recorded current booking, scheduled appointment slot and terminology-selected patient referral. No reconstructed booking or cancellation history. |
 | MHSDS | Referral received, rejected and discharged; care contact; onward referral (the fact also retains the SNOMED CT procedure expression); hospital admission and discharge; ward stay start and end; Mental Health Act legal status start and end (the fact also retains start/end reasons, expiry date/time, supplied classification and mental category); community treatment order start and end; recall start and end; leave of absence, home leave and absence without leave start and end; restrictive intervention start and end; clinically ready for discharge start and end. |
 | CSDS | Referral received and discharged; care contact; onward referral. |
-| SUS APC | Spell admission and discharge; optional recorded spell decision-to-admit and discharge-ready dates. |
+| SUS APC | Spell admission and discharge, with their recorded method codes and labels; optional recorded spell decision-to-admit and discharge-ready dates with null event codes. |
 | SUS OP | Scheduled appointment, including non-attendance and cancellations recorded on the appointment. |
 | ECDS | Arrival, initial assessment, seen for treatment, decision to admit, clinically ready to proceed and departure; onward referral to a service and that service's assessment. |
 | e-RS | Selected recorded actions and scheduled appointment slots. `ers_healthcare_event_type` defines the action selection. |
@@ -176,6 +177,11 @@ Ready for discharge does not mean the patient was discharged.
 
 e-RS assessment actions 1426 and 1428 retain assessment outcome in the shared
 outcome fields. Other action milestones and slots retain the action reason.
+
+APC admission and discharge carry their recorded methods in `event_code` and
+`event_code_name`. Their `event_coding_system` values are `Admission method` and
+`Discharge method`, the NHS DD list names. Decision-to-admit and discharge-ready
+milestones have null event codes.
 
 APC discharge and ECDS departure carry their recorded discharge destination in
 `outcome_code` and `outcome_name`; arrival and admission do not carry that outcome.

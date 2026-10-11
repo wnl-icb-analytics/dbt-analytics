@@ -59,7 +59,7 @@ Readable milestone label. e-RS preserves the recorded action label, including au
 {% enddocs %}
 
 {% docs navigation_event_code %}
-Recorded code associated with the milestone. For an e-RS slot this is its latest recorded appointment-state action, not evidence of attendance. MHSDS legal-status, restrictive-intervention, discharge-readiness and onward-referral milestones carry the record's status or reason; end milestones of community treatment orders and leave carry their end reason. ECDS onward referrals carry the referred-to service.
+Recorded code associated with the milestone. For an e-RS slot this is its latest recorded appointment-state action, not evidence of attendance. MHSDS legal-status, restrictive-intervention, discharge-readiness and onward-referral milestones carry the record's status or reason; end milestones of community treatment orders and leave carry their end reason. ECDS onward referrals carry the referred-to service. SUS APC admission and discharge carry their recorded admission and discharge methods; decision-to-admit and discharge-ready milestones have null event codes.
 {% enddocs %}
 
 {% docs navigation_event_code_name %}
