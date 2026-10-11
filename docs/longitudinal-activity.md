@@ -134,7 +134,7 @@ Their source facts retain the derivation and consistency evidence.
 | OLIDS | Recorded current booking, scheduled appointment slot and terminology-selected patient referral. No reconstructed booking or cancellation history. |
 | MHSDS | Referral received, rejected and discharged; care contact; hospital admission and discharge; ward stay start and end. |
 | CSDS | Referral received and discharged; care contact. |
-| SUS APC | Spell admission and discharge; optional recorded spell decision-to-admit and discharge-ready dates. |
+| SUS APC | Spell admission and discharge; optional `inpatient_decision_to_admit` (Inpatient decision to admit) and `discharge_ready` (Ready for discharge) on recorded spell dates. |
 | SUS OP | Scheduled appointment, including non-attendance and cancellations recorded on the appointment. |
 | ECDS | Arrival, initial assessment, seen for treatment, decision to admit and departure. |
 | e-RS | Selected recorded actions and scheduled appointment slots. `ers_healthcare_event_type` defines the action selection. |
@@ -147,8 +147,11 @@ CSDS referral milestones carry the single distinct non-null team type across
 `fct_csds_referral_service`, ignoring services recorded for a different person.
 Several teams with the same type still supply that type; several distinct types
 or no recorded type leave it null.
-`priority_code` and `priority_name`
-carry recorded NHS DD Priority Type for e-RS, CSDS referral milestones and SUS OP slots.
+Interpret `priority_code` within `source_dataset`. e-RS supplies its own priority
+codes (765 two week wait, 766 urgent, 767 routine). CSDS referral milestones and
+SUS OP slots supply NHS DD Priority Type (1 routine, 2 urgent, 3 two week wait).
+Codes are not mapped across lists. `priority_name` supplies the readable source
+or reference label; labels can differ between sources.
 MHSDS clinical response priority uses a different list and remains separate.
 
 OLIDS slots retain original source status in `status_code` and `status_name`,
@@ -165,9 +168,16 @@ list for SUS OP, with labels from `consultation_medium_used` in UKHFD-backed
 `REFERENCE.DATA_DICTIONARY`. MHSDS/CSDS Consultation Mechanism is a separate list;
 equal code values must not be combined across these sources without a mapping.
 
-APC decision-to-admit and discharge-ready milestones occur once per spell when
-their submitted dates exist. Their precision is `date`; no clock is supplied.
-Ready for discharge does not mean the patient was discharged.
+APC `inpatient_decision_to_admit` and `discharge_ready` milestones occur once per
+spell when their submitted dates exist. Their precision is `date`; no clock is
+supplied. The inpatient decision includes elective waiting-list decisions,
+which can precede admission. It is separate from the ECDS `decision_to_admit`,
+which records the emergency department decision. Ready for discharge does not
+mean the patient was discharged.
+
+Deploy the APC event-type change with a full refresh of
+`int_sus_healthcare_event`. Its `event_id` includes the milestone type, so older
+deliveries behind the watermark otherwise retain the former type and ID.
 
 e-RS assessment actions 1426 and 1428 retain assessment outcome in the shared
 outcome fields. Other action milestones and slots retain the action reason.
