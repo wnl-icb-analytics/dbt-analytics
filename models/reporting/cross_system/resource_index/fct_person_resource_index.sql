@@ -32,8 +32,9 @@ into the weights.
 
 Registered geography attributes via the *window* practice (last registered
 month), so leavers and decedents attribute to where they were registered.
-Age at window end (at death for decedents); missing age/gender carry an
-'Unknown' band matching the curve so their spend still standardises.
+Age at window end (at death when on or before that reference date); missing
+age/gender carry an 'Unknown' band matching the curve so their spend still
+standardises.
 */
 
 {{ config(materialized = 'table') }}
@@ -91,7 +92,7 @@ population as (
             'p.date_of_birth',
             'e.window_end_month',
             is_deceased_field='e.date_of_death is not null',
-            death_date_field='e.date_of_death'
+            death_date_field='case when e.date_of_death <= e.window_end_month then e.date_of_death end'
         ) }}
     from population_base as e
     left join {{ ref('dim_person_demographics_basic') }} as p

@@ -10,7 +10,7 @@ models:
       patient-attributable spend across those four sources (MHSDS and CSDS
       are proxy-priced); GP appointments are excluded because NWL has no
       person-level GP data. expected = empirical WNL age-sex
-      cost-per-month rate x months registered. resource_index =
+      cost-per-registered-month rate in the same window x months registered. resource_index =
       sum(actual) / sum(expected) for any cut (never average the ratio).
       Also carries the UKHFD Core need basis. weighted_months_12m apportions
       the practice's Core Services weighted/registered ratio to its patients.
@@ -28,7 +28,7 @@ models:
       - name: gender
         description: Gender ('Unknown' when missing; matches the curve band).
       - name: age
-        description: Age in completed years at the window end (at death for decedents).
+        description: Age in completed years at the window reference date, or at death if death occurred on or before that date. Later deaths do not affect age.
       - name: age_band
         description: NHS age band (0-4, 5-14, ... 85+, Unknown), used for the cost curve.
       - name: months_registered
@@ -61,7 +61,7 @@ models:
       - name: csds_cost_12m
         description: CSDS community contact proxy cost over the window (GBP).
       - name: expected_cost_12m
-        description: Age-sex band cost-per-month rate x months registered (GBP).
+        description: Observed WNL age-sex cost per registered month in the same window x the patient's registered months (GBP).
         data_tests:
           - not_null
       - name: residence_imd_quintile
@@ -86,3 +86,66 @@ models:
         description: practice_weighted_ratio x months_registered. sum()/12 = Core need-weighted person-years for any cut.
         data_tests:
           - not_null
+
+unit_tests:
+  - name: resource_index_age_ignores_deaths_after_window_reference_date
+    description: Later deaths must not change age bands or expected cost; deaths on or before the reference date use age at death.
+    model: fct_person_resource_index
+    given:
+      - input: ref('int_person_cost_index_actual_monthly')
+        format: sql
+        rows: |
+          select column1::number as sk_patient_id,
+              '2026-06-01'::date as activity_month,
+              column2::number as actual_cost, column2::number as slam_cost,
+              0::number as epd_cost, 0::number as mhsds_cost, 0::number as csds_cost
+          from values (-98001, 20), (-98002, 40), (-98003, 60),
+              (-98004, 140), (-98005, 100), (-98006, 120)
+      - input: ref('int_person_resource_index_exposure_monthly')
+        format: sql
+        rows: |
+          select column1::number as sk_patient_id, column2::date as activity_month,
+              'SYNTHETIC'::varchar as practice_code,
+              column3::date as date_of_death, column4::boolean as died_in_month
+          from values
+              (-98001, '2026-06-01', '2026-07-01', false),
+              (-98002, '2026-05-01', '2026-05-31', true),
+              (-98003, '2026-06-01', '2026-06-01', true),
+              (-98004, '2026-05-01', null, false),
+              (-98004, '2026-06-01', null, false),
+              (-98005, '2026-06-01', '2026-06-02', true),
+              (-98006, '2026-06-01', '2026-07-01', false)
+      - input: ref('dim_person_demographics_basic')
+        format: sql
+        rows: |
+          select column1::number as sk_patient_id, column2::date as date_of_birth,
+              'Female'::varchar as gender, 'Synthetic ethnicity'::varchar as ethnicity,
+              5::number as residence_imd_decile, 'Synthetic borough'::varchar as residence_borough,
+              'Synthetic ward'::varchar as residence_ward_2025_name,
+              'SYNTHETIC'::varchar as residence_lsoa_2021_code
+          from values
+              (-98001, '1961-07-01'), (-98002, '1961-06-01'),
+              (-98003, '1961-06-01'), (-98004, '1961-07-01'),
+              (-98005, '1961-06-01'), (-98006, null)
+      - input: ref('practice_weighted_population')
+        format: sql
+        rows: |
+          select 'SYNTHETIC'::varchar as practice_code, '2026/27'::varchar as financial_year,
+              '2026-04-01'::date as financial_year_start, 1.25::float as weighted_to_registered_ratio
+      - input: ref('int_organisation_borough_mapping')
+        format: sql
+        rows: |
+          select 'SYNTHETIC'::varchar as practice_code, 'Synthetic borough'::varchar as borough_registered,
+              'SYNTHETIC'::varchar as sub_icb_code, 'Synthetic sub-ICB'::varchar as sub_icb_name
+      - input: ref('stg_reference_wnl_gp_practice_neighbourhood')
+        format: sql
+        rows: |
+          select 'SYNTHETIC'::varchar as practice_code, 'Synthetic neighbourhood'::varchar as neighbourhood_name
+    expect:
+      rows:
+        - {sk_patient_id: -98001, age: 64, age_band: '55-64', months_registered: 1, actual_cost_12m: 20, expected_cost_12m: 50, weighted_months_12m: 1.25, died_in_window: false}
+        - {sk_patient_id: -98002, age: 64, age_band: '55-64', months_registered: 1, actual_cost_12m: 40, expected_cost_12m: 50, weighted_months_12m: 1.25, died_in_window: true}
+        - {sk_patient_id: -98003, age: 65, age_band: '65-74', months_registered: 1, actual_cost_12m: 60, expected_cost_12m: 80, weighted_months_12m: 1.25, died_in_window: true}
+        - {sk_patient_id: -98004, age: 64, age_band: '55-64', months_registered: 2, actual_cost_12m: 140, expected_cost_12m: 100, weighted_months_12m: 2.5, died_in_window: false}
+        - {sk_patient_id: -98005, age: 65, age_band: '65-74', months_registered: 1, actual_cost_12m: 100, expected_cost_12m: 80, weighted_months_12m: 1.25, died_in_window: true}
+        - {sk_patient_id: -98006, age: null, age_band: 'Unknown', months_registered: 1, actual_cost_12m: 120, expected_cost_12m: 120, weighted_months_12m: 1.25, died_in_window: false}

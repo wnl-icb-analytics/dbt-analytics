@@ -13,8 +13,10 @@
     covered by SLAM, EPD, MHSDS and CSDS. Actual cost sums all four; GP
     appointments are excluded.
     Resource ratio is SUM(actual_cost_12m) / SUM(expected_cost_12m), never an
-    average of person-level ratios. Expected cost is Carr-Hill practice
-    allocation and lags the cost window by about one year.
+    average of person-level ratios. Expected cost is the observed WNL age-sex
+    cost rate per registered month in the same window x the patient's
+    registered months. UKHFD Core Services weighting separately supplies
+    weighted_months_12m.
 #}
 
 TABLES(
@@ -26,7 +28,7 @@ TABLES(
 DIMENSIONS(
     ri.sk_patient_id AS sk_patient_id COMMENT = 'Pseudonymised patient key for cross-dataset linkage to sem_olids_population.sk_patient_id. Join CTEs on sk_patient_id, then aggregate. Never return sk_patient_id in final results.',
     ri.gender AS gender COMMENT = 'Gender at the resource-index window end',
-    ri.age AS age COMMENT = 'Age at window end or death',
+    ri.age AS age COMMENT = 'Age at the window reference date, or at death if death occurred on or before that date',
     ri.age_band AS age_band COMMENT = 'NHS age band used for the cost curve',
     ri.ethnicity AS ethnicity COMMENT = 'Ethnicity',
     ri.months_registered AS months_registered COMMENT = 'Months registered in the rolling window',
@@ -42,7 +44,7 @@ DIMENSIONS(
     ri.residence_imd_quintile AS residence_imd_quintile COMMENT = 'Residence IMD quintile',
     ri.residence_borough AS residence_borough COMMENT = 'Residence borough',
     ri.residence_ward_2025_name AS residence_ward_2025_name COMMENT = 'Residence ward',
-    ri.weighted_ratio_imputed AS weighted_ratio_imputed COMMENT = 'TRUE when the practice had no published Carr-Hill ratio and the WNL mean was used instead.'
+    ri.weighted_ratio_imputed AS weighted_ratio_imputed COMMENT = 'TRUE when the practice had no eligible UKHFD Core Services weighted/registered ratio and the WNL exposure-weighted mean was used instead.'
 )
 
 METRICS(
@@ -51,11 +53,11 @@ METRICS(
     ri.total_epd_cost_12m AS SUM(ri.epd_cost_12m) COMMENT = 'EPD GP prescribing actual cost in the window',
     ri.total_mhsds_cost_12m AS SUM(ri.mhsds_cost_12m) COMMENT = 'MHSDS mental health proxy cost in the window',
     ri.total_csds_cost_12m AS SUM(ri.csds_cost_12m) COMMENT = 'CSDS community contact proxy cost in the window',
-    ri.total_expected_cost_12m AS SUM(ri.expected_cost_12m) COMMENT = 'Total expected cost in the rolling 12-month window',
-    ri.total_weighted_months AS SUM(ri.weighted_months_12m) COMMENT = 'Total Carr-Hill weighted months',
+    ri.total_expected_cost_12m AS SUM(ri.expected_cost_12m) COMMENT = 'Total expected cost: observed WNL age-sex cost per registered month in the same window x each patient''s registered months',
+    ri.total_weighted_months AS SUM(ri.weighted_months_12m) COMMENT = 'Total registered months weighted by the practice UKHFD Core Services weighted/registered ratio',
     ri.patient_count AS COUNT(DISTINCT ri.sk_patient_id) COMMENT = 'Distinct people'
 )
 
-COMMENT = 'Resource Index Semantic View - person-level rolling 12-month resource index on SLAM, EPD, MHSDS and CSDS cost. Grain: one row per person. Calculate resource ratio as AGG(total_actual_cost_12m) / AGG(total_expected_cost_12m), never an average of person-level ratios. Carr-Hill expected cost is a practice-average allocation lagging the cost window by about one year.'
-AI_SQL_GENERATION 'Resource ratio is AGG(total_actual_cost_12m) / AGG(total_expected_cost_12m); never average person-level ratios. For cross-dataset linkage, query each semantic view in its own CTE, reduce each CTE to one row per sk_patient_id or aligned period before joining, then aggregate. Use COUNT(DISTINCT sk_patient_id) for people and the view metric for events; keep sk_patient_id out of final output. Example: SELECT residence_borough, AGG(total_actual_cost_12m), AGG(total_expected_cost_12m) FROM SEM_RESOURCE_INDEX GROUP BY residence_borough. weighted_ratio_imputed marks people whose practice had no published ratio and used the WNL fallback. Example linkage: reduce an active population cohort in sem_olids_population and resource use here before joining on sk_patient_id. Actual cost sums SLAM, EPD, MHSDS and CSDS (MHSDS and CSDS are proxy-priced); GP appointments are excluded. The rolling window ends at the latest month all four sources cover. Carr-Hill expected cost lags the cost window by about one year.'
-AI_QUESTION_CATEGORIZATION 'Use this view for: rolling 12-month resource use, actual versus expected cost, resource ratios by demographic or geography, Carr-Hill weighted population, and resource use of OLIDS-defined cohorts via sk_patient_id linkage.'
+COMMENT = 'Resource Index Semantic View - person-level rolling 12-month resource index on SLAM, EPD, MHSDS and CSDS cost. Grain: one row per person. Calculate resource ratio as AGG(total_actual_cost_12m) / AGG(total_expected_cost_12m), never an average of person-level ratios. Expected cost is the observed WNL age-sex cost rate per registered month in the same window x the patient''s registered months. UKHFD Core Services weighting separately supplies weighted_months_12m.'
+AI_SQL_GENERATION 'Resource ratio is AGG(total_actual_cost_12m) / AGG(total_expected_cost_12m); never average person-level ratios. For cross-dataset linkage, query each semantic view in its own CTE, reduce each CTE to one row per sk_patient_id or aligned period before joining, then aggregate. Use COUNT(DISTINCT sk_patient_id) for people and the view metric for events; keep sk_patient_id out of final output. Example: SELECT residence_borough, AGG(total_actual_cost_12m), AGG(total_expected_cost_12m) FROM SEM_RESOURCE_INDEX GROUP BY residence_borough. weighted_ratio_imputed marks people whose practice had no eligible UKHFD Core Services weighted/registered ratio and used the WNL exposure-weighted mean. Example linkage: reduce an active population cohort in sem_olids_population and resource use here before joining on sk_patient_id. Actual cost sums SLAM, EPD, MHSDS and CSDS (MHSDS and CSDS are proxy-priced); GP appointments are excluded. The rolling window ends at the latest month all four sources cover. Expected cost is the observed WNL age-sex cost rate per registered month in the same window x the patient''s registered months. UKHFD Core Services weighting separately supplies weighted_months_12m, using the latest allocation base year not later than the window reference date; it excludes the health-inequalities component.'
+AI_QUESTION_CATEGORIZATION 'Use this view for: rolling 12-month resource use, actual versus expected cost, resource ratios by demographic or geography, UKHFD Core Services weighted population, and resource use of OLIDS-defined cohorts via sk_patient_id linkage.'
