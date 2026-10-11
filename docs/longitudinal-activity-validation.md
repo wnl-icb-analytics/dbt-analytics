@@ -6,6 +6,13 @@ dbt-OLIDS #302. Encounter context is prepared separately in dbt-OLIDS #303. The
 initial person-lookup correction below rewrote the prepared OLIDS snapshots; the
 later context validation also rebuilt the clinical snapshot from conformed data.
 
+The PR review corrections have not been rerun in Snowflake. The shared views no
+longer sort their complete unions; timeline consumers must supply `ORDER BY`.
+APC clinical items with conflicting spell and episode person keys now retain a
+null cross-system patient key. The historical results below predate these fixes.
+The SUS adapter needs a full refresh to correct stored attributions, followed by
+downstream validation as described in [the deployment guidance](longitudinal-activity.md).
+
 ## Grain, time and increment behaviour
 
 All source adapter grain tests pass. Both shared outputs pass their global ID

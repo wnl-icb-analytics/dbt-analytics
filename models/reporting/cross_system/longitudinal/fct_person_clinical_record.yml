@@ -4,9 +4,9 @@ models:
   description: One source clinical item across the available OLIDS, MHSDS, CSDS, SUS and ECDS histories. Retains
     source coding positions and supported dates. Missing dates are not replaced by admission or appointment dates.
     OLIDS medication orders retain statement context; statements do not create extra rows. The same clinical occurrence
-    may appear in several feeds and is not deduplicated by person and time. Direct lookups sort by sk_patient_id,
-    clinical_record_at and record ID. Midnight and period starts are sorting conventions; precision remains explicit.
-    Undated rows come last. Outer queries need their own ORDER BY to guarantee order.
+    may appear in several feeds and is not deduplicated by person and time. The view is unordered; timeline queries
+    should order by sk_patient_id, clinical_record_at and clinical_record_id, with nulls last. Midnight and period
+    starts are sorting conventions; precision remains explicit.
   config:
     meta:
       owner:
@@ -15,7 +15,10 @@ models:
         on source_person_id = person_id. Apply the relevant governance for every other source.
   columns:
   - name: sk_patient_id
-    description: '{{ doc(''navigation_sk_patient_id'') }}'
+    description: >-
+      {{ doc('navigation_sk_patient_id') }}
+      Null for APC clinical items whose spell and episode person keys conflict, pending the business owner's
+      decision on which identity is authoritative. The clinical item remains in the model.
   - name: clinical_record_at
     description: '{{ doc(''navigation_clinical_record_at'') }}'
   - name: clinical_record_date
@@ -144,7 +147,8 @@ models:
   - name: is_parent_person_consistent
     description: Agreement between the clinical record and its linked parent person key where independently checked.
       False identifies a conflict; null means not independently established. APC and OLIDS parent dates require
-      positive agreement. Their known conflicting links are not promoted as parents.
+      positive agreement. Their known conflicting links are not promoted as parents. APC spell-to-episode conflicts
+      also leave sk_patient_id null; the clinical item remains available without cross-system person attribution.
   - name: parent_start_date
     description: Start date of the recorded episode, outpatient appointment, emergency attendance or OLIDS encounter.
       Care context, not diagnosis onset. APC and OLIDS dates require positive person agreement. Interpret partial

@@ -63,12 +63,13 @@ The original date and precision remain explicit. Clustering helps pruning and re
 still requires `ORDER BY` to guarantee output order. A stable ID can break display
 ties; it does not establish which same-day event happened first.
 
-Both shared views include an `ORDER BY` across their complete source unions
-for direct timeline lookups. They sort by `sk_patient_id`, `event_at` or
-`clinical_record_at`, then record ID. Midnight anchors precede timed records on the same day; undated records come
-last. These are presentation rules, not additional clinical precision. Sorting
-happens at query time. Joins, aggregations and other outer queries can change
-the result order; use a top-level `ORDER BY` when order must be guaranteed.
+Both shared views are unordered so aggregate queries do not pay for a timeline
+sort. Timeline queries should use a top-level
+`ORDER BY sk_patient_id NULLS LAST, event_at NULLS LAST, event_id` for events,
+or `ORDER BY sk_patient_id NULLS LAST, clinical_record_at NULLS LAST, clinical_record_id`
+for clinical items. Midnight anchors precede timed records on the same day;
+undated records come last. These are presentation rules, not additional clinical
+precision.
 
 Interpret dates with their precision:
 
@@ -99,6 +100,20 @@ Known conflicting APC and OLIDS links are not promoted as parents, nor are MHSDS
 CSDS referral links whose referral names a different person; original source
 keys remain in the detailed models. `recorded_at` retains the OLIDS recording timestamp
 separately.
+
+APC clinical items with conflicting spell and episode person keys remain in the
+output with a null `sk_patient_id`. Neither identity is treated as authoritative
+pending a decision from Eddie Davison, the business owner. Missing episode keys
+do not establish a conflict and retain the existing spell attribution.
+
+Deploy this attribution correction with a full refresh of
+`int_sus_person_clinical_record`, then rebuild `dq_person_activity_coverage`.
+The delivery watermark would otherwise leave older stored attributions unchanged:
+
+```shell
+dbt build --target dev --full-refresh -s int_sus_person_clinical_record
+dbt build --target dev -s int_sus_person_clinical_record+
+```
 
 Use `code`, `code_name` and `coding_system` together for routine clinical analysis.
 They select the mapped triplet when available, otherwise the source triplet.
@@ -204,8 +219,8 @@ period. MHSDS and CSDS reporting periods and source submission coverage remain
 available for choosing observation windows. e-RS future slots are planned
 activity; they do not extend the observation window for delivered care.
 
-The coverage model aggregates the prepared source branches directly. Reading the
-ordered analyst views would sort the complete populations before aggregation.
+The coverage model aggregates the prepared source branches directly, retaining
+source counts without the shared facts' display fields.
 
 Define the index event, source populations, completed-care criteria and period
 before calculating a time-to-care measure. Treat undated or partially dated
