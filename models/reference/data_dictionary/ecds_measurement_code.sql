@@ -1,13 +1,47 @@
--- Retain each historical code; the latest bulk import can contain several releases.
+with measurement_code as (
+    select
+        'observation' as record_type
+        , snomed_code
+        , snomed_uk_preferred_term
+        , snomed_term
+        , snomed_description
+        , ecds_description
+        , ecds_group1
+        , notes
+        , valid_from_date
+        , source_file_name
+    from {{ ref('ecds_coded_observation') }}
+
+    union all
+
+    select
+        'scored_assessment' as record_type
+        , snomed_code
+        , snomed_uk_preferred_term
+        , snomed_term
+        , snomed_description
+        , ecds_description
+        , ecds_group1
+        , notes
+        , valid_from_date
+        , source_file_name
+    from {{ ref('ecds_coded_assessment_tool_type') }}
+),
+
+labelled as (
+    select
+        *,
+        -- Releases before v3.1.0 use the older SNOMED term columns.
+        coalesce(snomed_uk_preferred_term, snomed_term, snomed_description) as preferred_term
+    from measurement_code
+)
+
 select
-    case code_set_name
-        when 'CODED OBSERVATION' then 'observation'
-        when 'CODED ASSESSMENT TOOL TYPE' then 'scored_assessment'
-    end as record_type
+    record_type
     , snomed_code
     , preferred_term
     , case
-        when code_set_name = 'CODED OBSERVATION' then preferred_term
+        when record_type = 'observation' then preferred_term
         when ecds_group1 = 'NEWS2' then 'National Early Warning Score 2'
         when ecds_group1 = 'PAIN' then 'Pain'
         when snomed_code = '1239211000000103' then 'Delirium'
@@ -16,14 +50,8 @@ select
     , ecds_description
     , ecds_group1
     , notes
-    , valid_from
+    , valid_from_date as valid_from
     , source_file_name
-    , source_file_at
-from {{ ref('stg_ukhfd_ecds_code_sets') }}
-where code_set_name in ('CODED OBSERVATION', 'CODED ASSESSMENT TOOL TYPE')
-    and nullif(trim(snomed_code), '') is not null
-qualify row_number() over (
-    partition by code_set_name, snomed_code
-    order by source_file_at desc nulls last, source_file_name desc,
-        source_imported_at desc nulls last, source_record_id desc
-) = 1
+    , try_to_timestamp_ntz(left(source_file_name, 14), 'YYYYMMDDHH24MISS') as source_file_at
+from labelled
+where nullif(snomed_code, '') is not null
