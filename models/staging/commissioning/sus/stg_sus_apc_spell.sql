@@ -45,6 +45,8 @@ select core.primarykey_id
     , core.spell_admission_time::time as spell_admission_time
     , core.spell_discharge_date::date as spell_discharge_date
     , core.spell_discharge_time::time as spell_discharge_time
+    , core.spell_referral_decided_to_admit_date::date as spell_referral_decided_to_admit_date
+    , core.spell_discharge_ready_date::date as spell_discharge_ready_date
     , core.spell_open_spell_indicator
     , core.spell_discharge_length_of_hospital_stay
     , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_unadjusted_days
