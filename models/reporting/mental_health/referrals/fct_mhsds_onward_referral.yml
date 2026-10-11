@@ -6,6 +6,7 @@ models:
     is one provider, referral, onward referral date/time and reason, using its latest accepted
     MHS105 version. Includes records with missing person details. An onward referral records the
     request; it does not show that the receiving organisation accepted the patient or provided care.
+    Retains the submitted SNOMED CT referral procedure expression separately from the reason.
   config:
     meta:
       owner:
@@ -46,6 +47,17 @@ models:
       current national list.
   - name: onward_referral_reason_description
     description: Newest UKHFD description of the reason; null for codes outside the national list.
+  - name: referral_procedure_expression
+    description: Submitted ReferralProc SNOMED CT expression, preserved without parsing or rewriting.
+      Identifies the referral procedure and is distinct from the onward referral reason.
+  - name: referral_procedure_snomed_code
+    description: Trimmed concept identifier when the expression contains only one 6-18 digit identifier.
+      Null for missing, compound or otherwise non-simple expressions; these remain in referral_procedure_expression.
+  - name: referral_procedure_snomed_term
+    description: SNOMED preferred term for a simple concept identifier, including inactive concepts.
+      Null for expressions that are not a single identifier or have no matching reference term.
+  - name: referral_procedure_coding_system
+    description: SNOMED CT when a non-blank ReferralProc expression is supplied; null otherwise.
   - name: out_of_area_reason_code
     description: Submitted reason for an out-of-area placement referral, where applicable.
   - name: out_of_area_reason_description

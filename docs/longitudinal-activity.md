@@ -119,7 +119,7 @@ Their source facts retain the derivation and consistency evidence.
 | Source | Milestones |
 |---|---|
 | OLIDS | Recorded current booking, scheduled appointment slot and terminology-selected patient referral. No reconstructed booking or cancellation history. |
-| MHSDS | Referral received, rejected and discharged; care contact; onward referral; hospital admission and discharge; ward stay start and end; Mental Health Act legal status start and end; community treatment order start and end; recall start and end; leave of absence, home leave and absence without leave start and end; restrictive intervention start and end; clinically ready for discharge start and end. |
+| MHSDS | Referral received, rejected and discharged; care contact; onward referral (the fact also retains the SNOMED CT procedure expression); hospital admission and discharge; ward stay start and end; Mental Health Act legal status start and end; community treatment order start and end; recall start and end; leave of absence, home leave and absence without leave start and end; restrictive intervention start and end; clinically ready for discharge start and end. |
 | CSDS | Referral received and discharged; care contact; onward referral. |
 | SUS APC | Spell admission and discharge. |
 | SUS OP | Scheduled appointment, including non-attendance and cancellations recorded on the appointment. |
@@ -146,6 +146,9 @@ organisation or later care. MHSDS and CSDS onward referrals carry their reason
 and `receiving_organisation_code`, and link to the referral they were made from.
 Pre-2021 MHSDS reason codes often fall outside the national list and keep a null
 label. CSDS supplies no onward referral time.
+The MHSDS onward referral fact also retains the submitted SNOMED CT procedure
+expression and labels simple concept identifiers. The procedure stays on the
+fact and does not create a clinical-record milestone.
 
 ECDS onward referrals use the date and time the referred-to service received the
 request, a separate ECDS data item from attendance conclusion or departure. The
