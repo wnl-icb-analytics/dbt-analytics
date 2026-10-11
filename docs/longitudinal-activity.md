@@ -180,8 +180,9 @@ require a recorded date. A booking or scheduled slot never proves attendance.
 Status and outcome fields describe their source meanings and can be extract-current.
 
 CSDS referral milestones carry the single distinct non-null team type across
-`fct_csds_referral_service`. Several teams with the same type still supply that
-type; several distinct types or no recorded type leave it null.
+`fct_csds_referral_service`, ignoring services recorded for a different person.
+Several teams with the same type still supply that type; several distinct types
+or no recorded type leave it null.
 `priority_code` and `priority_name`
 carry recorded NHS DD Priority Type for e-RS, CSDS referral milestones and SUS OP slots.
 MHSDS clinical response priority uses a different list and remains separate.
