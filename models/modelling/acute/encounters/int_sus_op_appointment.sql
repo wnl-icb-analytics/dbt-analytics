@@ -161,7 +161,7 @@ left join
 left join {{ ref('stg_dictionary_dbo_organisation') }} as referring
     on core.appointment_referral_referring_organisation = referring.organisation_code
 
-left join {{ ref('consultation_medium_used') }} as medium
+left join {{ ref('nhs_dd_consultation_medium_used') }} as medium
     on core.appointment_consultation_medium = medium.code
 
 left join

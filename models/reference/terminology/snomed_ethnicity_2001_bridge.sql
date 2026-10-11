@@ -47,5 +47,5 @@ select
         else 'mapped'
     end as mapping_status
 from resolved_codes as rc
-left join {{ ref('nhs_ethnicity_2001') }} as nhs
+left join {{ ref('ethnicity_2001') }} as nhs
     on rc.ethnicity_2001_code = nhs.ethnicity_2001_code
