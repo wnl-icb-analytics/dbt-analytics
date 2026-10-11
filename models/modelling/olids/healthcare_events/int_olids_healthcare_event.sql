@@ -27,8 +27,10 @@ select
         when 'patient_referral' then 'Patient referral'
     end as event_name,
     'primary_care'::varchar as care_setting,
-    status_code,
-    status_name,
+    source_status_code as status_code,
+    source_status_name as status_name,
+    status_code as attendance_code,
+    status_name as attendance_name,
     event_code,
     event_code_name,
     event_coding_system,

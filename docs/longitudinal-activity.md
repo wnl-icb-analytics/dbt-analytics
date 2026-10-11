@@ -170,7 +170,7 @@ Their source facts retain the derivation and consistency evidence.
 | OLIDS | Recorded current booking, scheduled appointment slot and terminology-selected patient referral. No reconstructed booking or cancellation history. |
 | MHSDS | Referral received, rejected and discharged; care contact; hospital admission and discharge; ward stay start and end. |
 | CSDS | Referral received and discharged; care contact. |
-| SUS APC | Spell admission and discharge. |
+| SUS APC | Spell admission and discharge; optional recorded spell decision-to-admit and discharge-ready dates. |
 | SUS OP | Scheduled appointment, including non-attendance and cancellations recorded on the appointment. |
 | ECDS | Arrival, initial assessment, seen for treatment, decision to admit and departure. |
 | e-RS | Selected recorded actions and scheduled appointment slots. `ers_healthcare_event_type` defines the action selection. |
@@ -183,8 +183,29 @@ CSDS referral milestones carry the single distinct non-null team type across
 `fct_csds_referral_service`. Several teams with the same type still supply that
 type; several distinct types or no recorded type leave it null.
 `priority_code` and `priority_name`
-carry recorded NHS DD Priority Type for e-RS and CSDS referral milestones.
+carry recorded NHS DD Priority Type for e-RS, CSDS referral milestones and SUS OP slots.
 MHSDS clinical response priority uses a different list and remains separate.
+
+OLIDS slots retain original source status in `status_code` and `status_name`,
+and the mapped national attendance category in `attendance_status_code` and
+`attendance_status_name`. Arrived, Start Call and completed source states can
+share a mapped code. A mapped DNA category can also include incomplete written
+work or an unanswered call; it does not prove literal non-attendance. Booking
+and referral milestones retain null status where none is supplied.
+
+SUS OP slots retain their submitted consultation medium, referral priority and
+referring organisation. The shared consultation fields use the NHS DD
+[Consultation Medium Used](https://archive.datadictionary.nhs.uk/DD%20Release%20June%202026/attributes/consultation_medium_used.html)
+list for SUS OP, with labels from `consultation_medium_used` in UKHFD-backed
+`REFERENCE.DATA_DICTIONARY`. MHSDS/CSDS Consultation Mechanism is a separate list;
+equal code values must not be combined across these sources without a mapping.
+
+APC decision-to-admit and discharge-ready milestones occur once per spell when
+their submitted dates exist. Their precision is `date`; no clock is supplied.
+Ready for discharge does not mean the patient was discharged.
+
+e-RS assessment actions 1426 and 1428 retain assessment outcome in the shared
+outcome fields. Other action milestones and slots retain the action reason.
 
 APC discharge and ECDS departure carry their recorded discharge destination in
 `outcome_code` and `outcome_name`; arrival and admission do not carry that outcome.

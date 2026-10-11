@@ -2,7 +2,9 @@ version: 2
 models:
 - name: int_sus_healthcare_event
   description: SUS recorded healthcare milestones, one row per source record and milestone type. Primary milestones
-    remain when undated; optional milestones require a recorded date. APC discharge and ECDS departure carry
+    remain when undated; optional milestones require a recorded date. APC decision-to-admit and discharge-ready
+    milestones use submitted spell dates without a clock, once per spell. SUS OP slots retain Consultation Medium
+    Used, NHS DD Priority Type and referring organisation. APC discharge and ECDS departure carry
     recorded discharge destination as the outcome. ECDS arrival carries the recorded attendance source organisation
     or site as the referring organisation. Contacts do not imply attendance. Incremental
     loads process newly received deliveries and replay the boundary delivery. Withdrawn source keys are removed
@@ -54,6 +56,15 @@ models:
     description: '{{ doc(''navigation_referring_organisation_name'') }}'
   - name: source_received_at
     description: '{{ doc(''navigation_source_received_at'') }}'
+  - name: consultation_mechanism_code
+    description: SUS OP Consultation Medium Used code, a separate NHS DD list from MHSDS/CSDS Consultation
+      Mechanism. Null for APC and ECDS milestones.
+  - name: consultation_mechanism_name
+    description: Authoritative NHS DD Consultation Medium Used label for SUS OP, retained from UKHFD.
+  - name: priority_code
+    description: Recorded NHS DD Priority Type for SUS OP slots. Null for APC and ECDS milestones.
+  - name: priority_name
+    description: Retained dictionary label for the SUS OP referral priority.
   - name: event_type
     description: '{{ doc(''navigation_event_type'') }}'
   - name: event_name

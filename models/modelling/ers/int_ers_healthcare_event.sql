@@ -23,8 +23,10 @@ with milestones as (
         a.action_code as event_code,
         a.action_name as event_code_name,
         'e-RS action'::varchar as event_coding_system,
-        a.action_reason_code as outcome_code,
-        a.action_reason_name as outcome_name,
+        case when a.action_code in ('1426', '1428')
+            then a.assessment_outcome_code else a.action_reason_code end as outcome_code,
+        case when a.action_code in ('1426', '1428')
+            then a.assessment_outcome_name else a.action_reason_name end as outcome_name,
         a.specialty_code,
         a.specialty_name,
         a.service_id::varchar as service_id,
