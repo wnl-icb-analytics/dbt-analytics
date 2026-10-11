@@ -236,6 +236,24 @@ encounter population.
 
 ## Known coverage limits
 
+### MHSDS spell coverage and legal-status clocks, 11 October 2026
+
+About 59% of retained discharge-readiness periods name a hospital spell absent
+from the loaded MHS501 extract. Spell coverage is complete for some providers
+and below 10% for others. Checks of raw spell history, accepted submissions and
+alternative recorded keys found no recoverable link for the missing spells.
+The recorded parent ID is retained unless a linked spell names a different
+person. Changing keys cannot recover spells absent from this extract. The feed
+owner needs to establish whether submission, loading or extraction scope causes
+the gap.
+
+Legal-status start times are supplied as recorded. About 3% of retained periods
+start at midnight, with strong provider variation. The retained clocks match
+the raw MHS401 clocks; staging and the milestones do not create midnight from
+missing values. The MHSDS v6 specification requires a start time and gives no
+midnight-as-unknown rule, so midnight is not treated as unknown. Provider
+confirmation is needed to distinguish an actual midnight from a local default.
+
 ### SNOMED mapping validation, 11 September 2026
 
 The new `snomed_concept` reference contains about 1.15 million recognised
