@@ -52,6 +52,8 @@ builds in dbt-analytics use the established `dev` target and shared `DEV__` laye
 The milestone additions in PR #1283 also require a one-off full refresh of the
 MHSDS, CSDS and SUS event adapters before their consumers rebuild. Follow the
 [milestone deployment steps](longitudinal-activity-validation.md#required-milestone-deployment).
+The MHSDS refresh also adds `outcome_code` and `outcome_name` and populates
+historical legal-status start and end reasons.
 
 ## Time and clustering
 
@@ -175,13 +177,17 @@ The legal-status fact retains the supplied classification separately from the
 NHSD-derived classification used by the milestones and detention rules.
 Its start/end reasons and Mental Health Act 2007 mental category have UKHFD
 labels where matched. Expiry time is retained for analysis; the current-detention
-rule still assesses expiry by date. These attributes remain on the detailed fact.
+rule still assesses expiry by date. Legal-status start milestones carry the
+start reason in `outcome_code` and `outcome_name`; end milestones carry the end
+reason. Other MHSDS milestones have null outcomes. The supplied classification,
+mental category and expiry remain on the detailed fact.
 
 An onward referral records the request, not acceptance by the receiving
 organisation or later care. MHSDS and CSDS onward referrals carry their reason
 and `receiving_organisation_code`, and link to the referral they were made from.
 Pre-2021 MHSDS reason codes often fall outside the national list and keep a null
-label. CSDS supplies no onward referral time.
+label. UKHFD's available onward-referral list, including its historical SCD rows,
+does not define these legacy codes. CSDS supplies no onward referral time.
 The MHSDS onward referral fact also retains the submitted SNOMED CT procedure
 expression and labels simple concept identifiers. The procedure stays on the
 fact and does not create a clinical-record milestone.

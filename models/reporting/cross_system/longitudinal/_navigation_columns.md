@@ -95,7 +95,7 @@ Authoritative reference label for attendance_code.
 {% enddocs %}
 
 {% docs navigation_outcome_code %}
-Recorded source outcome or action-reason code. APC discharge and ECDS departure use recorded discharge destination; admission and arrival do not carry that outcome. Interpret within the source dataset, record type and milestone.
+Recorded source outcome or action-reason code. APC discharge and ECDS departure use recorded discharge destination; admission and arrival do not carry that outcome. MHSDS legal-status start and end milestones use their respective assignment-period start and end reasons. Interpret within the source dataset, record type and milestone.
 {% enddocs %}
 
 {% docs navigation_outcome_name %}

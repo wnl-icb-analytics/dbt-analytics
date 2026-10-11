@@ -252,6 +252,7 @@ select
             'at', iff(s.legal_status_start_date is null, null, timestamp_ntz_from_parts(s.legal_status_start_date::date, s.legal_status_start_time::time)),
             'precision', iff(s.legal_status_start_date is null, 'unknown', iff(s.legal_status_start_time is null, 'date', 'timestamp')),
             'code', s.legal_status_code::varchar, 'code_name', s.legal_status_description::varchar, 'coding_system', 'Mental Health Act legal status classification',
+            'outcome_code', s.legal_status_start_reason_code::varchar, 'outcome_name', s.legal_status_start_reason_description::varchar,
             'basis', 'legal_status_start_date', 'retain_undated', true
         ),
         object_construct_keep_null(
@@ -260,6 +261,7 @@ select
             'at', iff(s.legal_status_end_date is null, null, timestamp_ntz_from_parts(s.legal_status_end_date::date, s.legal_status_end_time::time)),
             'precision', iff(s.legal_status_end_date is null, 'unknown', iff(s.legal_status_end_time is null, 'date', 'timestamp')),
             'code', s.legal_status_code::varchar, 'code_name', s.legal_status_description::varchar, 'coding_system', 'Mental Health Act legal status classification',
+            'outcome_code', s.legal_status_end_reason_code::varchar, 'outcome_name', s.legal_status_end_reason_description::varchar,
             'basis', 'legal_status_end_date', 'retain_undated', false
         )
     ) as milestones
@@ -703,6 +705,8 @@ select
     r.care_setting as care_setting,
     r.attendance_code as attendance_code,
     r.attendance_name as attendance_name,
+    m.value:outcome_code::varchar as outcome_code,
+    m.value:outcome_name::varchar as outcome_name,
     r.service_or_team_type_code as service_or_team_type_code,
     r.service_or_team_type_name as service_or_team_type_name,
     r.consultation_mechanism_code as consultation_mechanism_code,
