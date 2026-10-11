@@ -195,7 +195,7 @@ Readable name for the source clinical item type.
 {% enddocs %}
 
 {% docs navigation_clinical_record_date %}
-Recorded or source-validated clinical date. SUS diagnoses and other undated codes remain undated; an admission or appointment date is not substituted. Interpret partial OLIDS dates with clinical_time_precision.
+Recorded or source-validated clinical date. ECDS coded findings use their supplied recording timestamp. SUS diagnoses and other undated codes remain undated; an admission or appointment date is not substituted. Interpret partial OLIDS dates with clinical_time_precision.
 {% enddocs %}
 
 {% docs navigation_clinical_record_at %}

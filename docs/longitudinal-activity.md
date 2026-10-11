@@ -121,7 +121,9 @@ Both original triplets remain available. Use `assessment_score_numeric` for
 assessment scoring; `result_value_numeric` also contains numeric non-score responses.
 
 SUS procedures use their supplied procedure dates. Undated diagnoses remain
-undated; admission or appointment dates are not substituted. MHSDS and CSDS
+undated; admission or appointment dates are not substituted. ECDS coded findings
+use the supplied time the finding was recorded, with `recorded_at` as the time
+basis. MHSDS and CSDS
 clinical dates can use the previously validated recorded activity/contact links.
 Their source facts retain the derivation and consistency evidence.
 
