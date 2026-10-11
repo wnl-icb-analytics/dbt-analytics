@@ -102,7 +102,10 @@ select core.primarykey_id
     , clinical_injury_place_type
     , nullif(clinical_injury_date::date, '1900-01-01'::date) as clinical_injury_date
     , clinical_injury_time::time as clinical_injury_time
-    , clinical_disease_notification_code
+    -- SUS splits notification codes across two columns; the older one also holds descriptions.
+    , coalesce(clinical_disease_notification_code,
+        iff(regexp_like(trim(clinical_disease_notification), '[0-9]{6,18}'),
+            trim(clinical_disease_notification), null)) as clinical_disease_notification_code
 
     -- cost
     , commissioning_grouping_health_resource_group

@@ -4,9 +4,8 @@ models:
   description: One recorded source milestone per event, across the available OLIDS, MHSDS, CSDS, SUS and e-RS histories.
     Bookings, slots, contacts, referrals and inpatient transitions remain distinct. Missing person linkage or dates
     does not exclude a source record. This is a union of source evidence, not a count of unique real-world interactions
-    or an inferred journey. The view orders by sk_patient_id, event_at and event_id for direct timeline lookups.
-    Midnight and period starts are sorting conventions; precision remains explicit. Undated rows come last. Queries
-    that transform the output need their own ORDER BY for guaranteed order.
+    or an inferred journey. The view is unordered; timeline queries should order by sk_patient_id, event_at and
+    event_id, with nulls last. Midnight and period starts are sorting conventions; precision remains explicit.
   config:
     meta:
       owner:
@@ -57,11 +56,9 @@ models:
     description: Recorded e-RS service name. Action rows retain their own context; appointment slots use the latest
       observed action context.
   - name: priority_code
-    description: Recorded e-RS priority code. Action rows retain their own context; appointment slots use the latest
-      observed action context.
+    description: '{{ doc(''navigation_priority_code'') }}'
   - name: priority_name
-    description: Recorded e-RS priority name. Action rows retain their own context; appointment slots use the latest
-      observed action context.
+    description: '{{ doc(''navigation_priority_name'') }}'
   - name: service_or_team_type_code
     description: '{{ doc(''navigation_service_or_team_type_code'') }}'
   - name: service_or_team_type_name

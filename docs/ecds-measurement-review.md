@@ -174,8 +174,11 @@ Provider and site codes are attendance identifiers, not clinical terminologies.
    Both returned 404 from the UK SNOMED server; the valid NEWS2 total-score
    control code resolved in the 26 August 2026 UK edition. Barts accounts for
    about 151K of these rows. Source approval is not a reliable substitute: about 50K
-   unresolved rows are marked approved. Confirm intended codes with the supplier;
-   do not repair their final digits by similarity.
+   unresolved rows are marked approved. The reported codes match the NEWS2 total
+   score `1104051000000101` and air-or-oxygen score `1104331000000105` after a
+   spreadsheet truncates them to 15 significant digits. Several codes can share
+   each truncated form, so this pattern does not identify the intended code
+   safely. Confirm intended codes with the supplier; do not repair them in the model.
 
 5. **Medium: numeric parsing does not validate scores.** About 20K numeric NEWS2
    component rows fall outside the published discrete point values, out of

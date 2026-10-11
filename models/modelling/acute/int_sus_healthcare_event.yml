@@ -2,7 +2,9 @@ version: 2
 models:
 - name: int_sus_healthcare_event
   description: SUS recorded healthcare milestones, one row per source record and milestone type. Primary milestones
-    remain when undated; optional milestones require a recorded date. Contacts do not imply attendance. Incremental
+    remain when undated; optional milestones require a recorded date. APC discharge and ECDS departure carry
+    recorded discharge destination as the outcome. ECDS arrival carries the recorded attendance source organisation
+    or site as the referring organisation. Contacts do not imply attendance. Incremental
     loads process newly received deliveries and replay the boundary delivery. Withdrawn source keys are removed
     on each run. Monthly full refreshes reconcile earlier corrections and reference changes.
   config:
@@ -46,6 +48,10 @@ models:
     description: '{{ doc(''navigation_outcome_code'') }}'
   - name: outcome_name
     description: '{{ doc(''navigation_outcome_name'') }}'
+  - name: referring_organisation_code
+    description: '{{ doc(''navigation_referring_organisation_code'') }}'
+  - name: referring_organisation_name
+    description: '{{ doc(''navigation_referring_organisation_name'') }}'
   - name: source_received_at
     description: '{{ doc(''navigation_source_received_at'') }}'
   - name: event_type

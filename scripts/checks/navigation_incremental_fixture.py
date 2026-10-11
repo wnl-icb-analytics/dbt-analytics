@@ -39,7 +39,12 @@ def render(expression, incremental=True, watermarks=None):
     ).strip()
 
 
-def selection(incremental=True, watermarks=None):
+def selection(incremental=True, watermarks=None, correlated=False):
+    if correlated:
+        return f"select s.* from {SOURCE} as s where true " + render(
+            "{{ navigation_delivery_filter('s.source_received_at', "
+            "source_record_type_column='s.source_record_type') }}", incremental, watermarks
+        )
     return "\nunion all\n".join(
         f"select * from {SOURCE} where source_record_type = '{kind}' "
         + render("{{ navigation_delivery_filter('source_received_at', '" + kind + "') }}", incremental, watermarks)
@@ -47,9 +52,9 @@ def selection(incremental=True, watermarks=None):
     )
 
 
-def increment():
+def increment(correlated=False):
     watermarks = []
-    sql = f"create or replace temporary table {BATCH} as {selection(watermarks=watermarks)}"
+    sql = f"create or replace temporary table {BATCH} as {selection(watermarks=watermarks, correlated=correlated)}"
     statement = "'" + sql.replace("'", "''") + "'"
     # Resolve the real macro queries before substituting their timestamp literals.
     for marker, query in watermarks:
@@ -62,8 +67,9 @@ def increment():
           f"{TARGET}.source_record_type={BATCH}.source_record_type and "
           f"{TARGET}.source_record_id={BATCH}.source_record_id;")
     print(f"insert into {TARGET} select * from {BATCH};")
-    print(render("{{ navigation_remove_withdrawn_records([('contact', 'fixture', 'source_record_id'), "
-                 "('referral', 'fixture', 'source_record_id')]) }}") + ";")
+    sources = ("[(none, 'fixture', 'source_record_id')]" if correlated else
+               "[('contact', 'fixture', 'source_record_id'), ('referral', 'fixture', 'source_record_id')]")
+    print(render("{{ navigation_remove_withdrawn_records(" + sources + ") }}") + ";")
 
 
 print(f"create temporary table {SOURCE} as select column1::varchar as source_record_type, "
@@ -86,7 +92,7 @@ print(f"insert into {SOURCE} values "
       "('contact','null-receipt','null-receipt',null,'2025-12-09'),"
       "('contact','late-old','late-old','2026-01-05','2025-12-10');")
 increment()
-print(f"create temporary table {CHECKS} as select 'incremental_population' as check_name, "
+print(f"create temporary table {CHECKS} as select 'incremental_population'::varchar(64) as check_name, "
       f"count(*)=8 and count(distinct event_id)=8 as passed from {TARGET} union all "
       f"select 'changed_milestone', count_if(event_id='changed-start' and event_date='2025-12-09')=1 "
       f"and count_if(event_id in ('changed-end','withdrawn','late-old'))=0 from {TARGET};")
@@ -98,4 +104,30 @@ print(f"update {CHECKS} set passed=(select hash_agg(*)=$before_fingerprint from 
 print(f"create or replace temporary table {TARGET} as {selection(False)};")
 print(f"insert into {CHECKS} select 'monthly_reconciliation', count(*)=9 "
       f"and count_if(event_id='late-old')=1 from {TARGET};")
+print(f"delete from {SOURCE} where event_id in ('kept','slow');")
+print(f"insert into {SOURCE} values "
+      "('contact','mixed-equal','mixed-equal','2026-01-11','2025-12-11'),"
+      "('contact','mixed-newer','mixed-newer','2026-01-12','2025-12-12'),"
+      "('contact','mixed-old','mixed-old','2026-01-10','2025-12-13'),"
+      "('referral','lagging-boundary','lagging-boundary','2026-01-03','2025-12-14'),"
+      "('referral','mixed-null','mixed-null',null,'2025-12-15'),"
+      "('referral','lagging-old','lagging-old','2026-01-02','2025-12-16'),"
+      "('assessment','absent-type','absent-type','1901-01-01','2025-12-17'),"
+      "('assessment','before-fallback','before-fallback','1899-01-01','2025-12-18');")
+increment(correlated=True)
+print(f"insert into {CHECKS} select 'mixed_type_boundaries', count(*)=12 "
+      "and count(distinct event_id)=12 "
+      "and count_if(event_id in ('mixed-equal','mixed-newer','lagging-boundary','mixed-null','absent-type'))=5 "
+      "and count_if(event_id in ('mixed-old','lagging-old','before-fallback'))=0 "
+      f"from {TARGET};")
+print(f"insert into {CHECKS} select 'mixed_type_withdrawals', "
+      f"count_if(event_id in ('kept','slow'))=0 from {TARGET};")
+print(f"set before_fingerprint=(select hash_agg(*) from {TARGET});")
+increment(correlated=True)
+print(f"insert into {CHECKS} select 'mixed_type_repeat_fingerprint', "
+      f"hash_agg(*)=$before_fingerprint from {TARGET};")
+print(f"create or replace temporary table {TARGET} as {selection(False, correlated=True)};")
+print(f"insert into {CHECKS} select 'mixed_type_monthly_reconciliation', count(*)=15 "
+      "and count_if(event_id in ('mixed-old','lagging-old','before-fallback'))=3 "
+      f"from {TARGET};")
 print(f"select check_name, passed from {CHECKS} order by check_name;")

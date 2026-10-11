@@ -90,7 +90,9 @@ unknown. Attendance dates and delivery timestamps do not replace them.
 The adapter uses the existing parent-delivery watermark and withdrawal handling.
 Single-valued attendance fields come from `int_sus_uec_attendance_clinical_item`,
 a view that reads the attendance once; the same view supplies their withdrawal
-check. This work (#1209) merges into `feat/longitudinal-adapters` before #1165
+check. Notifiable disease uses the newer SUS code field first, then a trimmed
+6-18 digit code from the legacy field. Legacy descriptions are excluded.
+This work (#1209) merges into `feat/longitudinal-adapters` before #1165
 reaches main, so production builds the ECDS adapter once, from scratch, with the
 other new adapters. That initial build needs no separate full refresh. dbt builds
 the child facts and the attendance item view first. A DEV table built before the
@@ -98,6 +100,9 @@ result fields existed needs a full refresh because `on_schema_change` is `fail`.
 Subsequent loads replay the boundary delivery; the existing monthly full refresh reconciles
 older corrections and reference changes. Coordinate source and attendance refreshes
 before building the facts, since a refresh can replace attendance identifiers.
+After the legacy notification fix, rebuild the attendance model and fully refresh
+an existing ECDS adapter to recover codes on deliveries behind its watermark.
+Production's initial build includes them without a separate full refresh.
 Do not deduplicate a measurement against a score or related finding merely because
 they share an attendance.
 
@@ -132,6 +137,18 @@ does not recognise the installed dbt 2.0.1 banner, so warehouse verification
 used the documented direct CLI commands with the tracked `dev` target.
 
 ## Clinical-record integration validation
+
+On 11 October 2026, aggregate checks of the compiled attendance staging SQL
+preserved its one-row-per-attendance grain and matched the notification codes
+in the source. Combining the two SUS notification fields raises coverage from
+about 6.3K to 9.1K attendances, including about 200 in 2026. All resulting codes
+resolve in `REFERENCE.TERMINOLOGY.SNOMED_CONCEPT`; legacy descriptions remain
+excluded. Attendance-level reconciliation must use the staged notification code
+with this fallback, rather than only the newer source column. Composing the
+compiled staging, encounter, attendance, item and adapter SQL also preserved
+grain and matched every attendance-level type to staging, with no missing,
+unexpected or changed codes. Notification dates remain unknown. These checks
+did not rebuild the shared DEV adapter or analyst views.
 
 On 16 September 2026, the refreshed facts supplied about 62.3M observations and
 42.9M scored assessments. The
