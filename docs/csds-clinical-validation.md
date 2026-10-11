@@ -425,6 +425,11 @@ SNOMED mapping. Full-stack compilation passed all 6,912 nodes.
 
 ## Child health, diagnosis and growth sections
 
+Existing longitudinal adapters require the
+[one-off CSDS and MHSDS backfill](longitudinal-activity.md#deploying-the-additional-csds-and-mhsds-clinical-sections)
+when these additions are deployed. An incremental build alone does not load
+their older records.
+
 The fact also carries CYP502 childhood immunisations, CYP601 previous diagnoses,
 CYP603 newborn hearing screening, CYP604 newborn blood spot results, CYP605
 infant physical examinations, CYP606 to CYP608 provisional, primary and

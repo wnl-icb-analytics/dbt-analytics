@@ -452,6 +452,7 @@ union all
 {%- set can_inherit -%}
     a.source_record_id is not null and a.care_contact_at is not null and a.can_inherit_contact_time
         and (r.person_id is null or a.person_id is null or r.person_id = a.person_id)
+        and (r.person_id is null or c.person_id is null or r.person_id = c.person_id)
 {%- endset %}
 select
     {{ dbt_utils.generate_surrogate_key(['r.source_table', 'r.unique_submission_id', 'r.source_row_id']) }} as originating_source_record_id
@@ -494,3 +495,7 @@ left join activities as a
     on r.unique_submission_id = a.submission_id
     and r.unique_care_activity_identifier = a.activity_id
     and r.organisation_code_provider = a.provider_organisation_code
+-- A missing activity person ID must not conceal an item/contact person conflict.
+left join {{ ref('stg_csds_care_contact_history') }} as c
+    on a.submission_id = c.unique_submission_id
+    and a.contact_id = c.unique_care_contact_identifier

@@ -49,6 +49,42 @@ of the two stable outputs or a rewrite of their existing prepared snapshots.
 An incremental merge alone does not change the stored key type. Development
 builds in dbt-analytics use the established `dev` target and shared `DEV__` layers.
 
+## Deploying the additional CSDS and MHSDS clinical sections
+
+Existing `int_csds_person_clinical_record` and
+`int_mhsds_person_clinical_record` tables need a one-off full refresh when these
+sections are deployed. Each adapter uses one `clinical_record` delivery
+watermark across all clinical types. An ordinary increment skips newly included
+records with receipt timestamps older than that watermark. Without this
+backfill, the longitudinal clinical fact stays incomplete until the monthly
+full refresh. The refresh also applies corrected CSDS contact times and Read
+scheme labels to older records.
+
+First build the new and changed staging, reference and clinical models through
+the normal deployment selection, including `fct_csds_clinical_record` and
+`fct_mhsds_clinical_record`. Once both source facts are current, refresh only
+the two clinical adapters. Rehearse in the established shared `dev` target:
+
+```powershell
+dbt ls --target dev -s int_csds_person_clinical_record+ int_mhsds_person_clinical_record+
+dbt build --target dev --full-refresh -s int_csds_person_clinical_record int_mhsds_person_clinical_record
+dbt build --target dev -s fct_person_clinical_record+ dq_person_activity_coverage
+```
+
+Repeat the adapter refresh and downstream build in the deployment target after
+its source facts are current. Do not apply `--full-refresh` to the whole project
+for this backfill.
+
+Before and after the refresh, reconcile row counts by source dataset and
+`clinical_record_type` between each source fact, its adapter and the CSDS/MHSDS
+branches of `fct_person_clinical_record`. Include undated records and records
+without a linked patient key. Use the union of types present in any of the
+three layers so an entirely missing type is detected. After the refresh, each
+type must have equal counts in all three layers and the model grain tests must
+pass. Keep validation output to non-identifying aggregates; investigate any
+difference in a human-controlled Snowflake session before marking deployment
+complete.
+
 ## Time and clustering
 
 Materialised branches cluster by the cross-system person key `sk_patient_id`, then

@@ -1,0 +1,124 @@
+unit_tests:
+- name: csds_activity_items_check_contact_person_when_activity_person_is_missing
+  model: int_csds_clinical_record
+  given:
+  - input: ref('fct_csds_care_activity')
+    rows:
+    - source_record_id: SYN_ACTIVITY
+      submission_id: -91000
+      activity_id: -91202
+      contact_id: -91201
+      provider_organisation_code: SYN_PROVIDER
+      person_id: null
+      care_contact_at: '2026-01-02 10:30:00'
+      care_contact_time_precision: timestamp
+      is_submitted_contact_linked: true
+      is_submitted_contact_person_consistent: null
+      procedure_code: null
+      finding_code: null
+      observation_code: null
+      observation_value: null
+  - input: ref('stg_csds_care_contact_history')
+    rows:
+    - unique_submission_id: -91000
+      unique_care_contact_identifier: -91201
+      person_id: -91002
+    - unique_submission_id: -92000
+      unique_care_contact_identifier: -91201
+      person_id: -91001
+  - input: ref('stg_csds_breastfeeding_status')
+    rows:
+    - cyp610_unique_id: -91610
+      person_id: -91001
+      unique_submission_id: -91000
+      unique_care_activity_identifier: -91202
+      organisation_code_provider: SYN_PROVIDER
+      breastfeeding_status: '01'
+    - cyp610_unique_id: -92610
+      person_id: -91002
+      unique_submission_id: -91000
+      unique_care_activity_identifier: -91202
+      organisation_code_provider: SYN_PROVIDER
+      breastfeeding_status: '01'
+  - input: ref('stg_csds_observation')
+    rows:
+    - cyp611_unique_id: -91611
+      person_id: -91001
+      unique_submission_id: -91000
+      unique_care_activity_identifier: -91202
+      organisation_code_provider: SYN_PROVIDER
+      person_weight: 5.5
+      person_height_in_metres: 0.6
+      person_length_in_centimetres: 60
+    - cyp611_unique_id: -92611
+      person_id: -91002
+      unique_submission_id: -91000
+      unique_care_activity_identifier: -91202
+      organisation_code_provider: SYN_PROVIDER
+      person_weight: 5.5
+      person_height_in_metres: 0.6
+      person_length_in_centimetres: 60
+  - input: ref('int_csds_coded_immunisation')
+    rows: []
+  - input: ref('stg_csds_referral_assessment')
+    rows: []
+  - input: ref('stg_csds_activity_assessment')
+    rows: []
+  - input: ref('stg_csds_childhood_immunisation')
+    rows: []
+  - input: ref('stg_csds_previous_diagnosis')
+    rows: []
+  - input: ref('stg_csds_provisional_diagnosis')
+    rows: []
+  - input: ref('stg_csds_primary_diagnosis')
+    rows: []
+  - input: ref('stg_csds_secondary_diagnosis')
+    rows: []
+  - input: ref('stg_csds_newborn_hearing_screening')
+    rows: []
+  - input: ref('stg_csds_blood_spot_result')
+    rows: []
+  - input: ref('stg_csds_infant_physical_examination')
+    rows: []
+  expect:
+    rows:
+    - source_row_id: '-91610'
+      clinical_record_type: breastfeeding_status
+      clinical_at: null
+      clinical_time_precision: null
+      clinical_time_basis: not_recorded
+    - source_row_id: '-91611'
+      clinical_record_type: person_weight
+      clinical_at: null
+      clinical_time_precision: null
+      clinical_time_basis: not_recorded
+    - source_row_id: '-91611'
+      clinical_record_type: person_height
+      clinical_at: null
+      clinical_time_precision: null
+      clinical_time_basis: not_recorded
+    - source_row_id: '-91611'
+      clinical_record_type: person_length
+      clinical_at: null
+      clinical_time_precision: null
+      clinical_time_basis: not_recorded
+    - source_row_id: '-92610'
+      clinical_record_type: breastfeeding_status
+      clinical_at: '2026-01-02 10:30:00'
+      clinical_time_precision: timestamp
+      clinical_time_basis: same_submission_care_activity_contact
+    - source_row_id: '-92611'
+      clinical_record_type: person_weight
+      clinical_at: '2026-01-02 10:30:00'
+      clinical_time_precision: timestamp
+      clinical_time_basis: same_submission_care_activity_contact
+    - source_row_id: '-92611'
+      clinical_record_type: person_height
+      clinical_at: '2026-01-02 10:30:00'
+      clinical_time_precision: timestamp
+      clinical_time_basis: same_submission_care_activity_contact
+    - source_row_id: '-92611'
+      clinical_record_type: person_length
+      clinical_at: '2026-01-02 10:30:00'
+      clinical_time_precision: timestamp
+      clinical_time_basis: same_submission_care_activity_contact
