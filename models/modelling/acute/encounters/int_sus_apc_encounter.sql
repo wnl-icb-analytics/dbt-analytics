@@ -10,7 +10,7 @@ One row per staged spell, including open spells. No additional date or patient-s
 
 */
 with ethnicity_codes as (
-    select distinct bk_ethnicity_code, ethnicity_desc 
+    select distinct bk_ethnicity_code, ethnicity_desc
     from {{ref('stg_dictionary_dbo_ethnicity')}}
     where ethnicity_code_type = 'Current' or bk_ethnicity_code = '99'
     ),
@@ -20,14 +20,14 @@ gender_codes as (
     ),
 
 dominant_episode_information as (
-    select 
+    select
         primarykey_id,
         care_professional_main_specialty,
         care_professional_treatment_function
     from {{ ref('stg_sus_apc_spell_episodes') }}
     where dominant_episode_flag = '1'
     qualify row_number() over (
-        partition by primarykey_id 
+        partition by primarykey_id
         order by episodes_id -- TODO: check if this is correct, if multiple dominant episodes, should we take the first?
     ) = 1
 ),
@@ -52,7 +52,7 @@ select
     , dict_provider.service_provider_name  as organisation_name
     , core.spell_care_location_site_code_of_treatment as site_id
     , dict_site.organisation_name as site_name
-    
+
     /* Time and date */
     , core.spell_admission_date as start_date
     , core.spell_admission_time as start_time
@@ -86,13 +86,13 @@ select
         end as duration_to_date
     , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_unadjusted_days as unadjusted_length_of_stay_days
     , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_excess_bed_days as excess_bed_days
-   
+
     /* Admission information */
-    , core.spell_admission_method as spell_admission_method 
+    , core.spell_admission_method as spell_admission_method
     , dict_adm_method.admission_method_name as admission_method_name
     , dict_adm_method.admission_method_group as admission_method_group
     , dict_patient_class.patient_classification_name as admission_patient_classification
-    , case 
+    , case
         when core.spell_admission_method in ('11', '12', '13') -- dict_adm_method.admission_method_group = 'Elective'
             and core.spell_admission_patient_classification = '2' -- dict_patient_class.patient_classification_name = 'Day case admission'
             then 'DC' -- Day Case
@@ -115,7 +115,7 @@ select
         when core.spell_admission_method = '81' -- dict_adm_method.admission_method_name = 'Transfer'
             then 'TRANSFERS'
         else 'OTHER' end as pod
-    
+
     /* Discharge information */
     , core.spell_discharge_destination as discharge_destination_code
     , dict_discharge_destination.description as discharge_destination_name
@@ -124,7 +124,7 @@ select
     -- SUS+ derives these days from submitted critical-care activity; dbt passes them through.
     -- Do not subtract the length-of-stay adjustment again from duration.
     , core.spell_length_of_stay_critical_care_days as critical_care_days_for_length_of_stay
-    
+
     /* Clinical information */
     , core.spell_clinical_coding_grouper_derived_primary_diagnosis  as primary_diagnosis_code
     , core.spell_clinical_coding_grouper_derived_secondary_diagnosis  as secondary_diagnosis_code
@@ -150,13 +150,13 @@ select
 
     , iff(core.spell_admission_admission_sub_type = 'NON', core.spell_admission_admission_type, core.spell_admission_admission_sub_type) as type
     , core.spell_commissioning_tariff_calculation_final_price as cost
-    
+
     /* patient info at time of event  */
     , core.spell_patient_identity_spell_age as age_at_event
     , core.spell_patient_identity_gender as gender_at_event
     , gen.gender as gender_desc_at_event
     , core.spell_patient_identity_ethnic_category as ethnicity_at_event
-    , eth.ethnicity_desc as ethnicity_desc_at_event 
+    , eth.ethnicity_desc as ethnicity_desc_at_event
     , core.spell_patient_residence_derived_postcode_district as postcode_district_at_event
     , core.spell_patient_residence_derived_lsoa_11 as lsoa_11_at_event
     , core.spell_patient_residence_derived_lsoa_21 as lsoa_21_at_event
@@ -171,10 +171,10 @@ from {{ ref('stg_sus_apc_spell')}} as core
 left join {{ ref('stg_dictionary_ip_admissionmethods')}} as dict_adm_method
     ON core.spell_admission_method = dict_adm_method.bk_admission_method_code
 
-left join {{ ref('discharge_destination') }} as dict_discharge_destination
+left join {{ ref('nhs_dd_discharge_destination') }} as dict_discharge_destination
     on core.spell_discharge_destination = dict_discharge_destination.code
 
-left join {{ ref('discharge_method') }} as dict_discharge_method
+left join {{ ref('nhs_dd_discharge_method') }} as dict_discharge_method
     on core.spell_discharge_method = dict_discharge_method.code
 
 left join {{ ref('stg_dictionary_dbo_patientclassification')}} as dict_patient_class
@@ -186,7 +186,7 @@ left join ethnicity_codes as eth
 left join gender_codes as gen
     on core.spell_patient_identity_gender = gen.gender_code
 
-LEFT JOIN {{ ref('stg_dictionary_dbo_serviceprovider') }} as dict_provider 
+LEFT JOIN {{ ref('stg_dictionary_dbo_serviceprovider') }} as dict_provider
     ON core.SPELL_COMMISSIONING_SERVICE_AGREEMENT_PROVIDER = dict_provider.service_provider_full_code
 
 -- site name: site-level treatment code resolves against the full organisation
@@ -203,14 +203,14 @@ left join episode_end_information as ep_end
 
 LEFT JOIN  {{ ref('stg_dictionary_dbo_specialties')}} as dict_spec
     ON  dom_ep_info.care_professional_main_specialty = dict_spec.bk_specialty_code
-    and dict_spec.is_main_specialty = TRUE 
+    and dict_spec.is_main_specialty = TRUE
 
-left join {{ref('stg_dictionary_dbo_specialties')}} as dict_treat 
-    on dom_ep_info.care_professional_treatment_function = dict_treat.bk_specialty_code 
+left join {{ref('stg_dictionary_dbo_specialties')}} as dict_treat
+    on dom_ep_info.care_professional_treatment_function = dict_treat.bk_specialty_code
     and dict_treat.is_treatment_function = TRUE
 
 left join
-    {{ ref('stg_dictionary_dbo_hrg') }} as dict_hrg 
+    {{ ref('stg_dictionary_dbo_hrg') }} as dict_hrg
     on core.spell_commissioning_grouping_core_hrg = dict_hrg.hrg_code
 
 left join
