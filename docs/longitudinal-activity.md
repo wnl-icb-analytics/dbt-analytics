@@ -51,6 +51,10 @@ builds in dbt-analytics use the established `dev` target and shared `DEV__` laye
 
 ## Deploying the additional CSDS and MHSDS clinical sections
 
+The agreed deployment folds these sections into #1165 and builds both clinical
+adapters from scratch. The one-off refresh below is needed only if #1165
+deploys without these sections.
+
 Existing `int_csds_person_clinical_record` and
 `int_mhsds_person_clinical_record` tables need a one-off full refresh when these
 sections are deployed. Each adapter uses one `clinical_record` delivery
@@ -200,7 +204,7 @@ and referral milestones retain null status where none is supplied.
 SUS OP slots retain their submitted consultation medium, referral priority and
 referring organisation. The shared consultation fields use the NHS DD
 [Consultation Medium Used](https://archive.datadictionary.nhs.uk/DD%20Release%20June%202026/attributes/consultation_medium_used.html)
-list for SUS OP, with labels from `consultation_medium_used` in UKHFD-backed
+list for SUS OP, with labels from `nhs_dd_consultation_medium_used` in UKHFD-backed
 `REFERENCE.DATA_DICTIONARY`. MHSDS/CSDS Consultation Mechanism is a separate list;
 equal code values must not be combined across these sources without a mapping.
 

@@ -130,7 +130,7 @@ with submitted as (
     left join {{ ref('csds_activity_code_lookup') }} as scheme
         on scheme.code_set_name = r.coding_scheme_kind || '_scheme'
         and trim(r.coding_scheme_code) = scheme.code
-    left join {{ ref('diagnosis_scheme') }} as diagnosis_scheme
+    left join {{ ref('nhs_dd_diagnosis_scheme') }} as diagnosis_scheme
         on r.coding_scheme_kind = 'diagnosis'
         and trim(r.coding_scheme_code) = diagnosis_scheme.code
     left join {{ ref('csds_activity_code_lookup') }} as code_list

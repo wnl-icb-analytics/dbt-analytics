@@ -57,7 +57,7 @@ select
 from ranked as m
 left join {{ ref('stg_mhsds_bridging') }} as b on m.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider on upper(m.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('nhs_ethnicity_2001') }} as ethnic on m.ethnic_category = ethnic.ethnicity_2001_code
+left join {{ ref('ethnicity_2001') }} as ethnic on m.ethnic_category = ethnic.ethnicity_2001_code
 left join {{ ref('mhsds_domain_code_lookup') }} as legacy_gender
     on m.gender::varchar = legacy_gender.code and legacy_gender.code_set_name = 'person_stated_gender'
 left join {{ ref('mhsds_domain_code_lookup') }} as gender_identity

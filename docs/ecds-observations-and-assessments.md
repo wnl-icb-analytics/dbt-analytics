@@ -34,13 +34,18 @@ scores are separate submissions. Only the first NEWS2, pain, 4AT and Clinical
 Frailty Scale assessment needs submission, so these feeds do not establish a
 complete sequence of observations throughout an attendance.
 
-`ecds_measurement_code` uses the existing UKHFD `ECDS_TOS.dim_Code_Sets`
-table. No new warehouse ingestion is required. It selects the latest available
-definition for each code and record type, with the source filename retained.
-File timestamps determine release order because UKHFD can import several releases
-in one batch. Sheet names are matched without section numbers, which change
-between releases. Historical codes remain available for labelling; reference
-presence is not evidence of validity on the event date.
+`ecds_measurement_code` adds measurement categories to the shared
+`ecds_coded_observation` and `ecds_coded_assessment_tool_type` lists. Their single
+UKHFD interface is `ukhfd_ecds_etos.code_sets`, through
+`stg_ukhfd_ecds_etos_code_sets` and `ecds_code_set_history`, using the existing
+`ECDS_TOS.dim_Code_Sets` table. No new warehouse ingestion is required.
+Definitions use the newest ETOS release date that lists each code as live,
+or the latest listing for a code never listed as live. The source filename and
+its timestamp prefix come from that definition. Older term columns supply the
+label when the UK preferred term is absent. Sheet names are matched without
+section numbers, which change between releases. Historical codes remain
+available for labelling; reference presence is not evidence of validity on the
+event date.
 
 The [national ECDS guidance page](https://digital.nhs.uk/data-and-information/data-collections-and-data-sets/data-sets/emergency-care-data-set-ecds/ecds-guidance)
 provides the ETOS releases. UKHFD currently contains version 4.0.8. Assessment
@@ -59,7 +64,7 @@ the finite reference does not cover every legal UCUM expression. Unrecognised
 local spellings require a source-backed alias definition, not case folding.
 
 ACVPU response labels come from `ecds_observation_response`, which reads the
-latest ETOS release's notes for each coded observation. The notes list each
+shared ETOS definition's notes for each coded observation. The notes list each
 permitted response as `Label = "value"`: A is Alert, C is Confused, V is
 response to voice, P is response to painful stimulus and U is Unresponsive.
 Matching is exact and case-sensitive after trimming whitespace. Unrecognised

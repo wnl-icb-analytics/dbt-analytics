@@ -487,7 +487,7 @@ hips, heart, eyes and testes results: 01 Satisfactory, 02 Problem Identified,
 seed holds those values and the lookup adds them with `definition_source`
 `CSDS ETOS v1.6.10`; a UKHFD definition would take precedence. All submitted
 examination results now have a label. Diagnosis schemes use the shared
-`diagnosis_scheme` reference: 02 is ICD-10, 04 Read v2, 05 CTV3 and 06 SNOMED
+`nhs_dd_diagnosis_scheme` reference: 02 is ICD-10, 04 Read v2, 05 CTV3 and 06 SNOMED
 CT, resolved through the existing ICD-10, Read and SNOMED references.
 
 About half of CYP607 primary diagnoses lacked a label. Most of the gap was about
