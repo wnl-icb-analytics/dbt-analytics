@@ -195,7 +195,7 @@ Recorded receipt, import or extraction timestamp used for incremental loading. I
 {% enddocs %}
 
 {% docs navigation_clinical_record_type %}
-Source clinical item type. An OLIDS observation can contain diagnoses, allergies or referral content; its code defines the meaning. Medication rows are orders enriched by statements, with no standalone statements. CSDS and MHSDS include recorded social circumstances, with the source fact defining restatement keys and missing-date rules.
+Source clinical item type. An OLIDS observation can contain diagnoses, allergies or referral content; its code defines the meaning. Medication rows are orders enriched by statements, with no standalone statements. CSDS and MHSDS include recorded social circumstances, with the source fact defining restatement keys and missing-date rules. A missing date is part of the CSDS CYP006 key; rows missing person, provider or SNOMED code keep each source occurrence.
 {% enddocs %}
 
 {% docs navigation_clinical_record_type_name %}

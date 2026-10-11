@@ -440,10 +440,15 @@ length. These sections previously had only generated raw models.
 
 Each restated section has a `_history` staging model with every accepted row
 and a latest model with one row per ETOS record key from the Complex
-Derivations sheet. CYP006 uses person, provider, SNOMED concept and recorded date;
-all four fields are required, so an undated circumstance keeps each occurrence, as
-in MHSDS. ETOS v1.6.10 limits the CYP006 group to religious or other belief
-affiliation and stated sexual orientation. The fact retains submitted codes with
+Derivations sheet. CYP006 uses person, provider, SNOMED concept and recorded date.
+A missing date is part of the key, as for diagnoses, so undated restatements merge.
+Rows missing person, provider or SNOMED code keep each source occurrence. First
+and last reported periods and the accepted source-row count retain the restatement
+history. Across about 10.55M accepted CYP006 rows, 77.51% are undated.
+Treating the missing date as a key value retains about 1.42M clinical items,
+including every accepted source row in the reporting summaries. About 17.92%
+of retained items have a recorded date. ETOS v1.6.10 limits the CYP006 group to
+religious or other belief affiliation and stated sexual orientation. The fact retains submitted codes with
 shared SNOMED labels, including unmatched codes, and uses the recorded date, not
 onset, without a referral or activity parent. The other keys are person, provider,
 immunisation type and date
@@ -563,13 +568,17 @@ pair and the clinical domain models. The blood spot receipt date and ASQ band st
 in the domain fact; the shared clinical schema is unchanged.
 
 Full-refresh `int_csds_person_clinical_record` once to backfill older social
-circumstances. The earlier #1284 deployment also requires
+circumstances and replace the earlier undated occurrence keys with restatement
+keys. The earlier #1284 deployment also requires
 `int_mhsds_person_clinical_record` for its added social circumstances. These fixes
 do not add another event-adapter refresh. Shared adapters and cross-source views
 are rebuilt by the integration coordinator.
 
 `csds_clinical_staging_represents_history` includes CYP006, and
 `csds_clinical_records_reconcile` checks every retained circumstance is represented.
+The synthetic `csds_social_circumstance_merges_undated_restatements` unit test
+checks dated and undated restatements, reporting summaries and the separate
+occurrences retained when person, provider or SNOMED code is missing.
 `csds_clinical_domain_fields` preserves the supplied blood spot receipt date and
 ASQ band and checks that the blood spot clinical date remains the sample date.
 The Read correction unit test uses synthetic tokens to cover Dictionary exact

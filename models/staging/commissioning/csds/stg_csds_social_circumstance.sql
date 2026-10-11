@@ -3,9 +3,9 @@
 with keyed as (
     select
         *
-        -- ETOS requires all four key fields; incomplete keys keep each occurrence.
+        -- A missing date is part of the key; missing person, provider or code keeps each occurrence.
         , {{ dbt_utils.generate_surrogate_key(['person_id', 'organisation_code_provider', 'social_circumstance_code', 'recorded_date',
-            "iff(person_id is null or organisation_code_provider is null or social_circumstance_code is null or recorded_date is null, cyp006_unique_id::varchar, null)"]) }} as source_record_id
+            "iff(person_id is null or organisation_code_provider is null or social_circumstance_code is null, cyp006_unique_id::varchar, null)"]) }} as source_record_id
     from {{ ref('stg_csds_social_circumstance_history') }}
 )
 
