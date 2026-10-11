@@ -1,1 +1,4 @@
-{{ select_ukhfd_data_dictionary_code_set('raw_ukhfd_data_dictionary_attended_or_did_not_attend') }}
+{{ select_ukhfd_data_dictionary_code_set(
+    'raw_ukhfd_data_dictionary_attended_or_did_not_attend',
+    excluded_columns=['category', 'valid_to_date']
+) }}

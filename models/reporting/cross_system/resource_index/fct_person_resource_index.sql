@@ -7,8 +7,9 @@ Population: everyone with WNL registration exposure in the latest rolling
 the old current-registration filter
 dropped (~17% of in-patch patient-keyed spend). One row per patient.
 
-  * actual_cost_12m   - patient-attributable spend over the window
-    (rolled from int_person_cost_index_actual_monthly)
+  * actual_cost_12m   - patient-attributable spend over the window: SLAM +
+    EPD + MHSDS + CSDS (int_person_cost_index_actual_monthly), with a
+    per-source split. GP appointments are excluded (no NWL person-level feed).
   * expected_cost_12m - WNL age-sex cost-per-month rate for the patient's
     band x their months registered
   * weighted_months_12m - Core need basis: the practice's UKHFD Core
@@ -41,7 +42,7 @@ with bounds as (
     select
         max(activity_month)                       as window_end_month,
         dateadd(month, -11, max(activity_month))  as window_start_month
-    from {{ ref('int_cost_index_slam_activity_monthly') }}
+    from {{ ref('int_person_cost_index_actual_monthly') }}
 ),
 
 exposure_months as (
@@ -100,7 +101,11 @@ population as (
 cost as (
     select
         c.sk_patient_id,
-        sum(c.actual_cost) as actual_cost_12m
+        sum(c.actual_cost) as actual_cost_12m,
+        sum(c.slam_cost)   as slam_cost_12m,
+        sum(c.epd_cost)    as epd_cost_12m,
+        sum(c.mhsds_cost)  as mhsds_cost_12m,
+        sum(c.csds_cost)   as csds_cost_12m
     from {{ ref('int_person_cost_index_actual_monthly') }} as c
     cross join bounds as b
     where c.activity_month between b.window_start_month and b.window_end_month
@@ -166,6 +171,10 @@ select
     pop.residence_ward_2025_name,
     pop.residence_lsoa_2021_code,
     coalesce(cost.actual_cost_12m, 0)                       as actual_cost_12m,
+    coalesce(cost.slam_cost_12m, 0)                         as slam_cost_12m,
+    coalesce(cost.epd_cost_12m, 0)                          as epd_cost_12m,
+    coalesce(cost.mhsds_cost_12m, 0)                        as mhsds_cost_12m,
+    coalesce(cost.csds_cost_12m, 0)                         as csds_cost_12m,
     curve.expected_cost_per_month * pop.months_registered   as expected_cost_12m,
     coalesce(w.weighted_to_registered_ratio, mr.ratio)      as practice_weighted_ratio,
     w.financial_year                                       as practice_weight_financial_year,

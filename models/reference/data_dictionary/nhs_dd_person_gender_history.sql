@@ -1,3 +1,6 @@
 {{ config(materialized='ephemeral') }}
 
-{{ select_data_dictionary_history('stg_ukhfd_data_dictionary_person_gender_code') }}
+{{ select_data_dictionary_history(
+    'stg_ukhfd_data_dictionary_person_gender_code',
+    excluded_columns=['category', 'valid_to_date']
+) }}

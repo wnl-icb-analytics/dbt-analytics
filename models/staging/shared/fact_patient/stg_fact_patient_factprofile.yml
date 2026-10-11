@@ -1,0 +1,17 @@
+version: 2
+models:
+- name: stg_fact_patient_factprofile
+  description: Staged patient profile records from FactProfile. Provides the current and
+    historical patient demographic identifiers including gender, ethnicity,
+    date of birth and date of death. This model is a thin pass-through layer
+    used to enforce dbt lineage and allow downstream modelling-layer
+    consumers to reference FactProfile via ref() rather than direct source
+    access.
+  config:
+    meta:
+      owner:
+        name: Jonathan Linney
+  tests:
+    - dbt_expectations.expect_table_row_count_to_be_between:
+        arguments:
+          min_value: 1
