@@ -28,7 +28,7 @@ select
     array_construct(
         object_construct_keep_null('type', 'admission', 'name', 'Hospital admission', 'date', s.start_date::date, 'at', timestamp_ntz_from_parts(s.start_date::date, s.start_time::time), 'precision', iff(s.start_date is null, 'unknown', iff(s.start_time is null, 'date', 'timestamp')), 'basis', 'start_date', 'retain_undated', true),
         object_construct_keep_null('type', 'discharge', 'name', 'Hospital discharge', 'date', s.end_date::date, 'at', timestamp_ntz_from_parts(s.end_date::date, s.end_time::time), 'precision', iff(s.end_date is null, 'unknown', iff(s.end_time is null, 'date', 'timestamp')), 'basis', 'end_date', 'retain_undated', false),
-        object_construct_keep_null('type', 'decision_to_admit', 'name', 'Decision to admit', 'date', s.decided_to_admit_date::date, 'precision', 'date', 'basis', 'decided_to_admit_date', 'retain_undated', false),
+        object_construct_keep_null('type', 'inpatient_decision_to_admit', 'name', 'Inpatient decision to admit', 'date', s.decided_to_admit_date::date, 'precision', 'date', 'basis', 'decided_to_admit_date', 'retain_undated', false),
         object_construct_keep_null('type', 'discharge_ready', 'name', 'Ready for discharge', 'date', s.discharge_ready_date::date, 'precision', 'date', 'basis', 'discharge_ready_date', 'retain_undated', false)
     ) as milestones
 from {{ ref('obt_encounter_apc') }} as s
