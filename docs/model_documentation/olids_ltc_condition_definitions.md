@@ -14,7 +14,7 @@ The QOF indicator column records the identifier in model metadata, not a list of
 
 ## Cluster sources
 
-Clusters resolve through `stg_reference_combined_codesets`, which reads `DATA_LAKE__NCL.TERMINOLOGY.COMBINED_CODESETS`.
+Clusters resolve through `stg_reference_combined_codesets`, which reads `REFERENCE.TERMINOLOGY.COMBINED_CODESETS`.
 Checked against `COMBINED_CODESETS.SOURCE` on 2 October 2026, every cluster below is a PCD refset cluster except:
 
 | Mark | Source | Clusters |
