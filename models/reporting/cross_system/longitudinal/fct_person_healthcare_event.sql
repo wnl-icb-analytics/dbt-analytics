@@ -127,8 +127,8 @@ select
     care_setting,
     status_code,
     status_name,
-    null::varchar as attendance_code,
-    null::varchar as attendance_name,
+    attendance_code,
+    attendance_name,
     null::varchar as outcome_code,
     null::varchar as outcome_name,
     null::varchar as service_or_team_type_code,
@@ -188,8 +188,8 @@ select
     null::varchar as service_or_team_type_name,
     specialty_code,
     specialty_name,
-    null::varchar as consultation_mechanism_code,
-    null::varchar as consultation_mechanism_name,
+    consultation_mechanism_code,
+    consultation_mechanism_name,
     null::varchar as activity_location_type_code,
     null::varchar as activity_location_type_name,
     provider_organisation_code,
@@ -209,8 +209,8 @@ select
     initcap(replace(care_setting, '_', ' ')) as care_setting_name,
     null::varchar as service_id,
     null::varchar as service_name,
-    null::varchar as priority_code,
-    null::varchar as priority_name
+    priority_code,
+    priority_name
 from {{ ref('int_sus_healthcare_event') }}
 union all
 select
