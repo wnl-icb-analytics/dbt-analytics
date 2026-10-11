@@ -58,6 +58,8 @@ select
     , core.spell_admission_time as start_time
     , core.spell_discharge_date as end_date
     , core.spell_discharge_time as end_time
+    , core.spell_referral_decided_to_admit_date as decided_to_admit_date
+    , core.spell_discharge_ready_date as discharge_ready_date
     , case
         when core.spell_open_spell_indicator = 0
             and core.spell_discharge_date is null
