@@ -1,0 +1,89 @@
+models:
+  - name: ptr_fct_mhsds_employment_observation
+    description: >
+      Partner copy of fct_mhsds_employment_observation, published to local authority
+      partners. No SQL filter: partner roles see only rows allowed by the PARTNER_POLICY
+      row access policy on sk_patient_id, which partner_mapping links to a borough
+      partner role when the patient is registered with a practice in, or resident in,
+      that borough. Rows without an sk_patient_id, or whose patient has no in-area
+      registered or residence borough, are visible to no partner. sk_patient_id is cast
+      to VARCHAR to match the policy; all other columns are as in
+      fct_mhsds_employment_observation. Employment circumstances reported for patients.
+      Each row is one accepted MHS004 record in a provider reporting period. Includes
+      employment status, its effective and recorded dates, contract type and weekly
+      working-hours band, not an exact number of hours. Repeated submissions do not
+      establish new jobs or changes in employment. Status descriptions use the general
+      employment list and the mental-health extension; unmatched codes remain visible
+      through the label-status field.
+
+    config:
+      meta:
+        owner:
+          name: Partner Manager
+
+    columns:
+      - name: sk_patient_id
+        description: >
+          Patient surrogate key stored as VARCHAR and matched exactly by the partner row
+          access policy.
+
+      - name: employment_observation_id
+        description: >
+          Unique identifier at the documented model grain.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: employment_status_code
+        description: >
+          Submitted employment status code.
+
+      - name: employment_status_start_date
+        description: >
+          Submitted employment status start date.
+
+      - name: employment_status_end_date
+        description: >
+          Submitted employment status end date.
+
+      - name: employment_status_recorded_date
+        description: >
+          Submitted employment status recorded date.
+
+      - name: employment_contract_type_code
+        description: >
+          Submitted employment contract type code.
+
+      - name: weekly_hours_worked_code
+        description: >
+          National category code, not a numeric duration. 01 means 30+ hours, 02 means
+          16-29, 03 means 5-15 and 04 means 1-4 hours per week. 97 means declined to
+          answer, 98 not applicable and 99 hours not known. Missing is no submitted
+          code. Do not sum or average these codes.
+
+      - name: weekly_hours_worked_description
+        description: >
+          National description of the recorded weekly working-hours band or
+          stated-status code. Missing or unrecognised codes have no description. Bands
+          do not give exact hours.
+
+      - name: employment_status_description
+        description: >
+          National label, including historical codes; null when no definition matches.
+
+      - name: employment_contract_type_description
+        description: >
+          National label, including historical codes; null when no definition matches.
+
+      - name: reporting_period_end_date
+        description: >
+          Period of the accepted source evidence; may be later than the clinical event.
+
+      - name: source_file_received_at
+        description: >
+          Source file receipt timestamp, not a clinical time.
+
+      - name: employment_status_label_status
+        description: >
+          labelled when a general or mental-health-specific national code has a
+          reference label; code_missing or code_unmatched otherwise.

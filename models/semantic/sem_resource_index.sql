@@ -9,8 +9,9 @@
     Resource Index Semantic View
     ============================
 
-    Person-level resource index over the latest complete rolling 12-month
-    SLAM window. Actual cost is SLAM acute only; EPD prescribing is excluded.
+    Person-level resource index over the latest rolling 12-month window
+    covered by SLAM, EPD, MHSDS and CSDS. Actual cost sums all four; GP
+    appointments are excluded.
     Resource ratio is SUM(actual_cost_12m) / SUM(expected_cost_12m), never an
     average of person-level ratios. Expected cost is Carr-Hill practice
     allocation and lags the cost window by about one year.
@@ -45,12 +46,16 @@ DIMENSIONS(
 )
 
 METRICS(
-    ri.total_actual_cost_12m AS SUM(ri.actual_cost_12m) COMMENT = 'Total actual SLAM acute cost in the rolling 12-month window',
+    ri.total_actual_cost_12m AS SUM(ri.actual_cost_12m) COMMENT = 'Total patient-attributable cost (SLAM + EPD + MHSDS + CSDS) in the rolling 12-month window',
+    ri.total_slam_cost_12m AS SUM(ri.slam_cost_12m) COMMENT = 'SLAM acute and community actual cost in the window',
+    ri.total_epd_cost_12m AS SUM(ri.epd_cost_12m) COMMENT = 'EPD GP prescribing actual cost in the window',
+    ri.total_mhsds_cost_12m AS SUM(ri.mhsds_cost_12m) COMMENT = 'MHSDS mental health proxy cost in the window',
+    ri.total_csds_cost_12m AS SUM(ri.csds_cost_12m) COMMENT = 'CSDS community contact proxy cost in the window',
     ri.total_expected_cost_12m AS SUM(ri.expected_cost_12m) COMMENT = 'Total expected cost in the rolling 12-month window',
     ri.total_weighted_months AS SUM(ri.weighted_months_12m) COMMENT = 'Total Carr-Hill weighted months',
     ri.patient_count AS COUNT(DISTINCT ri.sk_patient_id) COMMENT = 'Distinct people'
 )
 
-COMMENT = 'Resource Index Semantic View - person-level rolling 12-month SLAM acute resource index. Grain: one row per person. Calculate resource ratio as AGG(total_actual_cost_12m) / AGG(total_expected_cost_12m), never an average of person-level ratios. Carr-Hill expected cost is a practice-average allocation lagging the cost window by about one year.'
-AI_SQL_GENERATION 'Resource ratio is AGG(total_actual_cost_12m) / AGG(total_expected_cost_12m); never average person-level ratios. For cross-dataset linkage, query each semantic view in its own CTE, reduce each CTE to one row per sk_patient_id or aligned period before joining, then aggregate. Use COUNT(DISTINCT sk_patient_id) for people and the view metric for events; keep sk_patient_id out of final output. Example: SELECT residence_borough, AGG(total_actual_cost_12m), AGG(total_expected_cost_12m) FROM SEM_RESOURCE_INDEX GROUP BY residence_borough. weighted_ratio_imputed marks people whose practice had no published ratio and used the WNL fallback. Example linkage: reduce an active population cohort in sem_olids_population and resource use here before joining on sk_patient_id. Actual cost is SLAM acute only. The rolling window ends at the latest complete SLAM month. Carr-Hill expected cost lags the cost window by about one year.'
+COMMENT = 'Resource Index Semantic View - person-level rolling 12-month resource index on SLAM, EPD, MHSDS and CSDS cost. Grain: one row per person. Calculate resource ratio as AGG(total_actual_cost_12m) / AGG(total_expected_cost_12m), never an average of person-level ratios. Carr-Hill expected cost is a practice-average allocation lagging the cost window by about one year.'
+AI_SQL_GENERATION 'Resource ratio is AGG(total_actual_cost_12m) / AGG(total_expected_cost_12m); never average person-level ratios. For cross-dataset linkage, query each semantic view in its own CTE, reduce each CTE to one row per sk_patient_id or aligned period before joining, then aggregate. Use COUNT(DISTINCT sk_patient_id) for people and the view metric for events; keep sk_patient_id out of final output. Example: SELECT residence_borough, AGG(total_actual_cost_12m), AGG(total_expected_cost_12m) FROM SEM_RESOURCE_INDEX GROUP BY residence_borough. weighted_ratio_imputed marks people whose practice had no published ratio and used the WNL fallback. Example linkage: reduce an active population cohort in sem_olids_population and resource use here before joining on sk_patient_id. Actual cost sums SLAM, EPD, MHSDS and CSDS (MHSDS and CSDS are proxy-priced); GP appointments are excluded. The rolling window ends at the latest month all four sources cover. Carr-Hill expected cost lags the cost window by about one year.'
 AI_QUESTION_CATEGORIZATION 'Use this view for: rolling 12-month resource use, actual versus expected cost, resource ratios by demographic or geography, Carr-Hill weighted population, and resource use of OLIDS-defined cohorts via sk_patient_id linkage.'

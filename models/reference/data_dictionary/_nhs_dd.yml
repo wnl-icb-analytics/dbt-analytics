@@ -131,7 +131,28 @@ models:
       NHS Data Model and Dictionary admission method codes. One row per code ever
       published, with the newest UKHFD definition. Retired codes remain for historical joins.
     config: *owner
-    columns: *latest_columns
+    columns: &latest_columns_without_valid_to_date
+      - name: code
+        description: National code.
+        data_tests: [not_null, unique]
+      - name: description
+        description: Newest published description for the code.
+      - name: short_description
+        description: Newest published description limited to 60 characters.
+      - name: category
+        description: Newest published category where supplied.
+      - name: notes
+        description: Newest published notes where supplied.
+      - name: valid_from_date
+        description: Date from which the selected definition is valid.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute used for the definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: definition_updated_at
+        description: Timestamp from which the selected UKHFD definition revision applies.
 
   - name: nhs_dd_admission_method_history
     description: >-
@@ -139,7 +160,39 @@ models:
       One row per code and UKHFD revision.
     config: *owner
     data_tests: *history_grain_test
-    columns: *history_columns
+    columns: &history_columns_without_valid_to_date
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute name.
+        data_tests:
+        - not_null
+      - name: code
+        description: National code.
+        data_tests:
+        - not_null
+      - name: description
+        description: Description in this definition revision.
+      - name: short_description
+        description: Description in this revision limited to 60 characters.
+      - name: category
+        description: Published category in this revision where supplied.
+      - name: notes
+        description: Published notes in this revision where supplied.
+      - name: valid_from_date
+        description: Date from which the definition is valid.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_unique_key
+        description: UKHFD key for the code definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: source_created_at
+        description: Timestamp when UKHFD created the source row.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code, including retired codes.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition revision applies.
+      - name: source_effective_to_at
+        description: Timestamp until which the UKHFD definition revision applies; null for its newest revision.
 
   - name: nhs_dd_admission_source
     description: >-
@@ -149,7 +202,26 @@ models:
       39, 41, 54, 65 and 85 remain for historical activity; UKHFD still marks them currently
       valid. Labels are the latest wording, not the wording at admission.
     config: *owner
-    columns: *latest_columns
+    columns: &latest_columns_without_category_valid_to_date
+      - name: code
+        description: National code.
+        data_tests: [not_null, unique]
+      - name: description
+        description: Newest published description for the code.
+      - name: short_description
+        description: Newest published description limited to 60 characters.
+      - name: notes
+        description: Newest published notes where supplied.
+      - name: valid_from_date
+        description: Date from which the selected definition is valid.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute used for the definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: definition_updated_at
+        description: Timestamp from which the selected UKHFD definition revision applies.
 
   - name: nhs_dd_admission_source_history
     description: >-
@@ -157,7 +229,7 @@ models:
       One row per source code set, code and UKHFD revision.
     config: *owner
     data_tests: *history_grain_test
-    columns: *history_columns
+    columns: *history_columns_without_valid_to_date
 
   - name: nhs_dd_attendance_status
     description: >-
@@ -181,7 +253,7 @@ models:
       late arrival, did not attend and cancellation by patient or provider. One row per code
       ever published, with the newest UKHFD definition.
     config: *owner
-    columns: *latest_columns
+    columns: *latest_columns_without_category_valid_to_date
 
   - name: nhs_dd_attended_or_did_not_attend_history
     description: >-
@@ -189,7 +261,37 @@ models:
       One row per code and UKHFD revision.
     config: *owner
     data_tests: *history_grain_test
-    columns: *history_columns
+    columns: &history_columns_without_category_valid_to_date
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute name.
+        data_tests:
+        - not_null
+      - name: code
+        description: National code.
+        data_tests:
+        - not_null
+      - name: description
+        description: Description in this definition revision.
+      - name: short_description
+        description: Description in this revision limited to 60 characters.
+      - name: notes
+        description: Published notes in this revision where supplied.
+      - name: valid_from_date
+        description: Date from which the definition is valid.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_unique_key
+        description: UKHFD key for the code definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: source_created_at
+        description: Timestamp when UKHFD created the source row.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code, including retired codes.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition revision applies.
+      - name: source_effective_to_at
+        description: Timestamp until which the UKHFD definition revision applies; null for its newest revision.
 
   - name: nhs_dd_care_contact_cancellation_reason
     description: >-
@@ -449,7 +551,7 @@ models:
       holds the 2001 broad group and is null for Z and 99. Recorded values may carry
       trailing spaces; trim them before joining.
     config: *owner
-    columns: *latest_columns
+    columns: *latest_columns_without_valid_to_date
 
   - name: nhs_dd_ethnic_category_history
     description: >-
@@ -514,7 +616,7 @@ models:
       appointment is a first or follow-up attendance and whether it is face to face or remote.
       One row per code ever published, with the newest UKHFD definition.
     config: *owner
-    columns: *latest_columns
+    columns: *latest_columns_without_category_valid_to_date
 
   - name: nhs_dd_first_attendance_history
     description: >-
@@ -522,7 +624,7 @@ models:
       One row per code and UKHFD revision.
     config: *owner
     data_tests: *history_grain_test
-    columns: *history_columns
+    columns: *history_columns_without_category_valid_to_date
 
   - name: nhs_dd_gender_identity
     description: >-
@@ -717,7 +819,24 @@ models:
       meaning: discharged, follow-up booked, follow-up to be booked. Codes 4 and 5 move or
       discharge the patient to a patient-initiated (personalised) follow-up pathway.
     config: *owner
-    columns: *latest_columns
+    columns: &latest_columns_without_category_notes_valid_to_date
+      - name: code
+        description: National code.
+        data_tests: [not_null, unique]
+      - name: description
+        description: Newest published description for the code.
+      - name: short_description
+        description: Newest published description limited to 60 characters.
+      - name: valid_from_date
+        description: Date from which the selected definition is valid.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute used for the definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: definition_updated_at
+        description: Timestamp from which the selected UKHFD definition revision applies.
 
   - name: nhs_dd_outpatient_attendance_outcome_history
     description: >-
@@ -725,7 +844,35 @@ models:
       UKHFD. One row per source code set, code and UKHFD revision.
     config: *owner
     data_tests: *history_grain_test
-    columns: *history_columns
+    columns: &history_columns_without_category_notes_valid_to_date
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute name.
+        data_tests:
+        - not_null
+      - name: code
+        description: National code.
+        data_tests:
+        - not_null
+      - name: description
+        description: Description in this definition revision.
+      - name: short_description
+        description: Description in this revision limited to 60 characters.
+      - name: valid_from_date
+        description: Date from which the definition is valid.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_unique_key
+        description: UKHFD key for the code definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: source_created_at
+        description: Timestamp when UKHFD created the source row.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code, including retired codes.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition revision applies.
+      - name: source_effective_to_at
+        description: Timestamp until which the UKHFD definition revision applies; null for its newest revision.
 
   - name: nhs_dd_outpatient_source_of_referral
     description: >-
@@ -749,7 +896,7 @@ models:
       such as ordinary admission and day case. One row per code ever published, with the
       newest UKHFD definition.
     config: *owner
-    columns: *latest_columns
+    columns: *latest_columns_without_category_valid_to_date
 
   - name: nhs_dd_patient_classification_history
     description: >-
@@ -757,7 +904,7 @@ models:
       One row per code and UKHFD revision.
     config: *owner
     data_tests: *history_grain_test
-    columns: *history_columns
+    columns: *history_columns_without_category_valid_to_date
 
   - name: nhs_dd_person_gender
     description: >-
@@ -765,7 +912,7 @@ models:
       not specified. One row per code, with the newest UKHFD definition. Used by SUS admitted
       patient and outpatient data; ECDS uses nhs_dd_person_stated_gender instead.
     config: *owner
-    columns: *latest_columns
+    columns: *latest_columns_without_category_valid_to_date
 
   - name: nhs_dd_person_gender_history
     description: >-
@@ -773,7 +920,7 @@ models:
       code and UKHFD revision.
     config: *owner
     data_tests: *history_grain_test
-    columns: *history_columns
+    columns: *history_columns_without_category_valid_to_date
 
   - name: nhs_dd_person_stated_gender
     description: >-
@@ -781,7 +928,7 @@ models:
       indeterminate and X not known. One row per code, with the newest UKHFD definition.
       Used by ECDS. SUS admitted patient and outpatient data use nhs_dd_person_gender instead.
     config: *owner
-    columns: *latest_columns
+    columns: *latest_columns_without_category_notes_valid_to_date
 
   - name: nhs_dd_person_stated_gender_history
     description: >-
@@ -789,7 +936,7 @@ models:
       One row per code and UKHFD revision.
     config: *owner
     data_tests: *history_grain_test
-    columns: *history_columns
+    columns: *history_columns_without_category_notes_valid_to_date
 
   - name: nhs_dd_place_of_safety_indicator
     description: >-
@@ -844,7 +991,7 @@ models:
       NHS Data Model and Dictionary priority type codes: routine, urgent and two week wait.
       One row per code ever published, with the newest UKHFD definition.
     config: *owner
-    columns: *latest_columns
+    columns: *latest_columns_without_category_valid_to_date
 
   - name: nhs_dd_priority_type_history
     description: >-
@@ -852,7 +999,7 @@ models:
       One row per code and UKHFD revision.
     config: *owner
     data_tests: *history_grain_test
-    columns: *history_columns
+    columns: *history_columns_without_category_valid_to_date
 
   - name: nhs_dd_procedure_scheme
     description: >-
@@ -1065,7 +1212,28 @@ models:
       with the newest UKHFD definition. Category holds the published specialty group. Retired
       codes remain for historical joins.
     config: *owner
-    columns: *latest_columns
+    columns: &latest_columns_without_notes
+      - name: code
+        description: National code.
+        data_tests: [not_null, unique]
+      - name: description
+        description: Newest published description for the code.
+      - name: short_description
+        description: Newest published description limited to 60 characters.
+      - name: category
+        description: Newest published category where supplied.
+      - name: valid_from_date
+        description: Date from which the selected definition is valid.
+      - name: valid_to_date
+        description: Last date on which the selected definition is valid; null when open-ended.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute used for the definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: definition_updated_at
+        description: Timestamp from which the selected UKHFD definition revision applies.
 
   - name: nhs_dd_treatment_function_history
     description: >-
