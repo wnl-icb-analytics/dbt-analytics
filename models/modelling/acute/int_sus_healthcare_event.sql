@@ -31,7 +31,9 @@ select
     delivery.source_received_at::timestamp_ntz as source_received_at,
     array_construct(
         object_construct_keep_null('type', 'admission', 'name', 'Hospital admission', 'date', s.start_date::date, 'at', timestamp_ntz_from_parts(s.start_date::date, s.start_time::time), 'precision', iff(s.start_date is null, 'unknown', iff(s.start_time is null, 'date', 'timestamp')), 'basis', 'start_date', 'retain_undated', true),
-        object_construct_keep_null('type', 'discharge', 'name', 'Hospital discharge', 'date', s.end_date::date, 'at', timestamp_ntz_from_parts(s.end_date::date, s.end_time::time), 'precision', iff(s.end_date is null, 'unknown', iff(s.end_time is null, 'date', 'timestamp')), 'basis', 'end_date', 'retain_undated', false)
+        object_construct_keep_null('type', 'discharge', 'name', 'Hospital discharge', 'date', s.end_date::date, 'at', timestamp_ntz_from_parts(s.end_date::date, s.end_time::time), 'precision', iff(s.end_date is null, 'unknown', iff(s.end_time is null, 'date', 'timestamp')), 'basis', 'end_date', 'retain_undated', false),
+        object_construct_keep_null('type', 'decision_to_admit', 'name', 'Decision to admit', 'date', s.decided_to_admit_date::date, 'precision', 'date', 'basis', 'decided_to_admit_date', 'retain_undated', false),
+        object_construct_keep_null('type', 'discharge_ready', 'name', 'Ready for discharge', 'date', s.discharge_ready_date::date, 'precision', 'date', 'basis', 'discharge_ready_date', 'retain_undated', false)
     ) as milestones
 from {{ ref('obt_encounter_apc') }} as s
 left join {{ ref('stg_sus_apc_spell') }} as delivery on s.visit_occurrence_id = delivery.primarykey_id
@@ -61,7 +63,7 @@ select
     null::varchar as relationship_type,
     delivery.source_received_at::timestamp_ntz as source_received_at,
     array_construct(
-        object_construct_keep_null('type', 'appointment_slot', 'name', 'Scheduled appointment', 'date', s.start_date::date, 'at', timestamp_ntz_from_parts(s.start_date::date, s.start_time::time), 'precision', iff(s.start_date is null, 'unknown', iff(s.start_time is null, 'date', 'timestamp')), 'basis', 'start_date', 'retain_undated', true)
+        object_construct_keep_null('type', 'appointment_slot', 'name', 'Scheduled appointment', 'date', s.start_date::date, 'at', timestamp_ntz_from_parts(s.start_date::date, s.start_time::time), 'precision', iff(s.start_date is null, 'unknown', iff(s.start_time is null, 'date', 'timestamp')), 'basis', 'start_date', 'retain_undated', true, 'consultation_mechanism_code', s.consultation_medium_used_code::varchar, 'consultation_mechanism_name', s.consultation_medium_used_name::varchar, 'priority_code', s.referral_acuity::varchar, 'priority_name', s.referral_acuity_desc::varchar, 'referring_organisation_code', s.referral_organisation_id::varchar, 'referring_organisation_name', s.referral_organisation_name::varchar)
     ) as milestones
 from {{ ref('int_sus_op_appointment') }} as s
 left join {{ ref('stg_sus_op_appointment') }} as delivery on s.visit_occurrence_id = delivery.primarykey_id
@@ -158,6 +160,10 @@ select
         then r.outcome_name end::varchar as outcome_name,
     m.value:referring_organisation_code::varchar as referring_organisation_code,
     m.value:referring_organisation_name::varchar as referring_organisation_name,
+    m.value:consultation_mechanism_code::varchar as consultation_mechanism_code,
+    m.value:consultation_mechanism_name::varchar as consultation_mechanism_name,
+    m.value:priority_code::varchar as priority_code,
+    m.value:priority_name::varchar as priority_name,
     r.parent_record_type as parent_record_type,
     r.parent_record_id as parent_record_id,
     r.parent_model_name as parent_model_name,

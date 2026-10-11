@@ -80,6 +80,7 @@ Readable name for the broad source care setting.
 
 {% docs navigation_status_code %}
 Recorded source status code. Meanings remain source-specific; referral acceptance does not mean attendance.
+OLIDS appointment slots retain the original source status, separately from mapped national attendance.
 {% enddocs %}
 
 {% docs navigation_status_name %}
@@ -88,6 +89,7 @@ Retained source or reference label for status_code.
 
 {% docs navigation_attendance_code %}
 Recorded attendance status. A null value means no attendance status is supplied in this branch.
+OLIDS uses its national mapping. A mapped DNA category can include incomplete written work or an unanswered call and does not prove literal non-attendance.
 {% enddocs %}
 
 {% docs navigation_attendance_name %}
@@ -95,7 +97,7 @@ Authoritative reference label for attendance_code.
 {% enddocs %}
 
 {% docs navigation_outcome_code %}
-Recorded source outcome or action-reason code. APC discharge and ECDS departure use recorded discharge destination; admission and arrival do not carry that outcome. MHSDS legal-status start and end milestones use their respective assignment-period start and end reasons. Interpret within the source dataset, record type and milestone.
+Recorded source outcome or action-reason code. APC discharge and ECDS departure use recorded discharge destination; admission and arrival do not carry that outcome. MHSDS legal-status start and end milestones use their respective assignment-period start and end reasons. e-RS actions 1426 and 1428 use the recorded assessment outcome; other e-RS milestones use the action reason. Interpret within the source dataset, record type and milestone.
 {% enddocs %}
 
 {% docs navigation_outcome_name %}
@@ -103,7 +105,7 @@ Retained source or reference label for outcome_code.
 {% enddocs %}
 
 {% docs navigation_priority_code %}
-Recorded referral priority (NHS DD Priority Type), where supplied by e-RS or CSDS. e-RS actions retain their own context; appointment slots use the latest observed action context. CSDS supplies priority on referral milestones only. MHSDS clinical response priority uses a different code list and is not mapped here.
+Recorded referral priority (NHS DD Priority Type), where supplied by e-RS, CSDS or SUS OP. e-RS actions retain their own context; appointment slots use the latest observed action context. CSDS supplies priority on referral milestones only. SUS OP slots retain the appointment's referral priority. MHSDS clinical response priority uses a different code list and is not mapped here.
 {% enddocs %}
 
 {% docs navigation_priority_name %}
@@ -128,10 +130,11 @@ Retained source or reference label for specialty_code.
 
 {% docs navigation_consultation_mechanism_code %}
 Recorded contact mechanism, such as face-to-face or telephone, in its source code system.
+SUS OP retains NHS DD Consultation Medium Used. MHSDS and CSDS use Consultation Mechanism, a separate list. Interpret codes within source_dataset; equal codes need not mean the same thing.
 {% enddocs %}
 
 {% docs navigation_consultation_mechanism_name %}
-Latest retained authoritative label for the consultation mechanism.
+Latest retained authoritative label for the source contact mechanism or consultation medium.
 {% enddocs %}
 
 {% docs navigation_activity_location_type_code %}
