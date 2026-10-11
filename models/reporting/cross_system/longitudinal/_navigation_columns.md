@@ -51,7 +51,7 @@ Source field defining the milestone date. This explains what happened at that ti
 {% enddocs %}
 
 {% docs navigation_event_type %}
-Shared milestone type. Bookings and scheduled slots are separate events. Neither establishes attendance. Emergency departure, referral discharge and hospital discharge retain their distinct meanings.
+Shared milestone type. Bookings and scheduled slots are separate events. Neither establishes attendance. Emergency departure, referral discharge and hospital discharge retain their distinct meanings. APC inpatient_decision_to_admit includes elective waiting-list decisions and is separate from the ECDS decision_to_admit. APC discharge_ready records readiness, not discharge.
 {% enddocs %}
 
 {% docs navigation_event_name %}
@@ -105,11 +105,11 @@ Retained source or reference label for outcome_code.
 {% enddocs %}
 
 {% docs navigation_priority_code %}
-Recorded referral priority (NHS DD Priority Type), where supplied by e-RS, CSDS or SUS OP. e-RS actions retain their own context; appointment slots use the latest observed action context. CSDS supplies priority on referral milestones only. SUS OP slots retain the appointment's referral priority. MHSDS clinical response priority uses a different code list and is not mapped here.
+Recorded referral priority, interpreted within source_dataset. e-RS uses e-RS priority codes (765 two week wait, 766 urgent, 767 routine); CSDS and SUS OP use NHS DD Priority Type (1 routine, 2 urgent, 3 two week wait). Codes are not mapped across lists; priority_name supplies the readable value. e-RS actions retain their own context; appointment slots use the latest observed action context. CSDS supplies priority on referral milestones only. SUS OP slots retain the appointment's referral priority. MHSDS clinical response priority uses a different code list and is not mapped here.
 {% enddocs %}
 
 {% docs navigation_priority_name %}
-Retained source or reference label for the recorded referral priority (NHS DD Priority Type).
+Readable source or reference label for the recorded referral priority. Labels can differ by source_dataset; codes are not mapped across lists.
 {% enddocs %}
 
 {% docs navigation_service_or_team_type_code %}

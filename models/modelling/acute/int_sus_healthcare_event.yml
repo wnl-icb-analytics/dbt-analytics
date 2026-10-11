@@ -2,11 +2,12 @@ version: 2
 models:
 - name: int_sus_healthcare_event
   description: SUS recorded healthcare milestones, one row per source record and milestone type. Primary milestones
-    remain when undated; optional milestones require a recorded date. APC decision-to-admit and discharge-ready
-    milestones use submitted spell dates without a clock, once per spell. SUS OP slots retain Consultation Medium
-    Used, NHS DD Priority Type and referring organisation. APC admission and discharge carry their recorded
-    methods and retained labels as event codes, using the NHS DD Admission method and Discharge method lists.
-    Decision-to-admit and discharge-ready milestones have null event codes. APC discharge and ECDS departure carry
+    remain when undated; optional milestones require a recorded date. APC inpatient_decision_to_admit includes
+    elective waiting-list decisions and is separate from the ECDS decision_to_admit. APC discharge_ready records
+    readiness, not discharge. Both APC milestones use submitted spell dates without a clock, once per spell, and
+    have null event codes. SUS OP slots retain Consultation Medium Used, NHS DD Priority Type and referring
+    organisation. APC admission and discharge carry their recorded methods and retained labels as event codes,
+    using the NHS DD Admission method and Discharge method lists. APC discharge and ECDS departure carry
     recorded discharge destination as the outcome. ECDS arrival carries the recorded attendance source organisation
     or site as the referring organisation. Contacts do not imply attendance. Incremental
     loads process newly received deliveries and replay the boundary delivery. Withdrawn source keys are removed
