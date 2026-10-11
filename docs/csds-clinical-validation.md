@@ -1,9 +1,10 @@
 # CSDS clinical records
 
 `fct_csds_clinical_record` supplies clinical detail for #1018 and the later
-cross-source work in #1006. One row is a retained coded immunisation, an accepted
-assessment occurrence or a populated procedure, finding or observation from a
-care activity. It is not an encounter or a whole-questionnaire table.
+cross-source work in #1006. One row is a retained immunisation, diagnosis, social
+circumstance, screening result, assessment occurrence, breastfeeding status, growth
+measurement or populated procedure, finding or observation from a care activity.
+It is not an encounter or a whole-questionnaire table.
 
 ## Source meaning and selection
 
@@ -430,7 +431,8 @@ Existing longitudinal adapters require the
 when these additions are deployed. An incremental build alone does not load
 their older records.
 
-The fact also carries CYP502 childhood immunisations, CYP601 previous diagnoses,
+The fact also carries CYP006 social and personal circumstances, CYP502 childhood
+immunisations, CYP601 previous diagnoses,
 CYP603 newborn hearing screening, CYP604 newborn blood spot results, CYP605
 infant physical examinations, CYP606 to CYP608 provisional, primary and
 secondary diagnoses, CYP610 breastfeeding status and CYP611 weight, height and
@@ -438,7 +440,13 @@ length. These sections previously had only generated raw models.
 
 Each restated section has a `_history` staging model with every accepted row
 and a latest model with one row per ETOS record key from the Complex
-Derivations sheet. The keys are person, provider, immunisation type and date
+Derivations sheet. CYP006 uses person, provider, SNOMED concept and recorded date;
+all four fields are required, so an undated circumstance keeps each occurrence, as
+in MHSDS. ETOS v1.6.10 limits the CYP006 group to religious or other belief
+affiliation and stated sexual orientation. The fact retains submitted codes with
+shared SNOMED labels, including unmatched codes, and uses the recorded date, not
+onset, without a referral or activity parent. The other keys are person, provider,
+immunisation type and date
 (CYP502); person, provider, diagnosis and date (CYP601); person, provider,
 screening outcome and audiology dates (CYP603); person, provider and card date
 (CYP604); person, provider and examination date (CYP605); and referral,
@@ -484,8 +492,15 @@ resolves those in CTV3.
 
 Screening sections with several coded fields give one row per populated field.
 Blood spot rows use `newborn_blood_spot_` plus the screened condition and take
-the card completion date, which ETOS defines as the sample date. Examination
-rows use `infant_physical_examination_` plus the examined area. CSDS supplies
+the card completion date, which ETOS defines as the sample date. Each CYP604
+outcome also carries `blood_spot_result_received_date` from the retained source
+row. This supports sample-to-receipt comparisons without changing clinical time
+or populating the shared `result_date`. CYP612 keeps its supplied `asq_score_band`
+and the ETOS C612D45 label in `asq_score_band_description`. The 15 labels are
+held in `csds_asq_score_band` and reused through `csds_activity_code_lookup`;
+no band or threshold is recalculated. Missing and unmatched bands retain a null
+label and their submitted code. Examination rows use
+`infant_physical_examination_` plus the examined area. CSDS supplies
 no hearing screening date, so those outcomes are undated; only a handful of
 audiology outcomes are populated. CYP611 types are `person_weight`,
 `person_height` and `person_length`, with no code and the units ETOS fixes:
@@ -538,3 +553,26 @@ mapping, so their mapped fields stay empty. Record keys stayed unique.
 MHSDS has no equivalent gap. Of its ~34K Read v2 and CTV3 clinical records, none
 that is absent from its submitted scheme is an exact concept code in the other,
 so the MHSDS models are unchanged.
+
+
+## Close-out deployment and regression checks
+
+Load the public `csds_asq_score_band` seed and rebuild `csds_activity_code_lookup`
+before rebuilding the clinical fact. Build the new CYP006 history/latest staging
+pair and the clinical domain models. The blood spot receipt date and ASQ band stay
+in the domain fact; the shared clinical schema is unchanged.
+
+Full-refresh `int_csds_person_clinical_record` once to backfill older social
+circumstances. The earlier #1284 deployment also requires
+`int_mhsds_person_clinical_record` for its added social circumstances. These fixes
+do not add another event-adapter refresh. Shared adapters and cross-source views
+are rebuilt by the integration coordinator.
+
+`csds_clinical_staging_represents_history` includes CYP006, and
+`csds_clinical_records_reconcile` checks every retained circumstance is represented.
+`csds_clinical_domain_fields` preserves the supplied blood spot receipt date and
+ASQ band and checks that the blood spot clinical date remains the sample date.
+The Read correction unit test uses synthetic tokens to cover Dictionary exact
+membership, ambiguous alternatives, UKHFD Read v2 codes and terms, and CTV3
+concepts and terms. Only exact Dictionary concepts with no evidence in the
+submitted scheme are corrected, in either direction.

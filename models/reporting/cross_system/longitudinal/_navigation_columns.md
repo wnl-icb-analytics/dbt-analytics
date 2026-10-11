@@ -187,7 +187,7 @@ Recorded receipt, import or extraction timestamp used for incremental loading. I
 {% enddocs %}
 
 {% docs navigation_clinical_record_type %}
-Source clinical item type. An OLIDS observation can contain diagnoses, allergies or referral content; its code defines the meaning. Medication rows are orders enriched by statements, with no standalone statements.
+Source clinical item type. An OLIDS observation can contain diagnoses, allergies or referral content; its code defines the meaning. Medication rows are orders enriched by statements, with no standalone statements. CSDS and MHSDS include recorded social circumstances, with the source fact defining restatement keys and missing-date rules.
 {% enddocs %}
 
 {% docs navigation_clinical_record_type_name %}
@@ -223,7 +223,7 @@ Latest supported reference or source description of the clinical code. Historica
 {% enddocs %}
 
 {% docs navigation_source_coding_system %}
-Coding system of the source code, or its source-supplied label. Keep source and mapped codes separate. CSDS gives the Read scheme the code belongs to: a code submitted as Read v2 or CTV3 that is absent from that scheme but an exact concept code in the other takes the other scheme. fct_csds_clinical_record keeps the submitted scheme.
+Coding system of the source code, or its source-supplied label. Keep source and mapped codes separate. CSDS gives the Read scheme the code belongs to: a code submitted as Read v2 or CTV3 that is absent from that scheme but an exact concept code in the other takes the other scheme. fct_csds_clinical_record keeps the submitted scheme. Any Dictionary membership, including ambiguous alternatives, or UKHFD code or term evidence prevents correction.
 {% enddocs %}
 
 {% docs navigation_mapped_code %}
@@ -255,7 +255,7 @@ Source numeric parsing assessment. Rounded or out-of-range values remain identif
 {% enddocs %}
 
 {% docs navigation_result_date %}
-Date-valued OLIDS result. This is the result content, not a replacement clinical event date.
+Date-valued OLIDS result. This is the result content, not a replacement clinical event date. The CYP604 blood spot result receipt date stays in fct_csds_clinical_record.blood_spot_result_received_date and is not mapped here.
 {% enddocs %}
 
 {% docs navigation_result_unit_code %}

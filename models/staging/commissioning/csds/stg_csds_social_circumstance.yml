@@ -1,0 +1,46 @@
+version: 2
+models:
+- name: stg_csds_social_circumstance_history
+  description: One CYP006 social and personal circumstance row from an accepted CSDS submission.
+    Providers can restate the same circumstance across reporting periods. ETOS v1.6.10 limits the
+    submitted group to religious or other belief affiliation and stated sexual orientation.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: cyp006_unique_id
+    description: Source table row identifier, unique across accepted submissions.
+    data_tests: [not_null, unique]
+  - name: social_circumstance_code
+    description: Submitted SNOMED CT concept for the social or personal circumstance. Unmatched codes remain present.
+  - name: recorded_date
+    description: Submitted date the circumstance was recorded, not its onset. Null dates remain present.
+  - name: organisation_code_provider
+    description: Submitted provider organisation identifier. CYP006 has no separate legacy provider-code field.
+  - name: unique_submission_id
+    description: Accepted submission supplying this occurrence.
+- name: stg_csds_social_circumstance
+  description: Latest accepted CYP006 social and personal circumstance per person, provider, SNOMED CT
+    concept and recorded date, the ETOS Complex Derivations key. Rows missing any key field retain
+    each source occurrence. Latest means reporting period, then file receipt, submission and source row.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: ETOS record key, with a source-row fallback when any required key field is missing.
+    data_tests: [not_null, unique]
+  - name: cyp006_unique_id
+    description: Source row of the selected accepted occurrence.
+  - name: social_circumstance_code
+    description: Submitted SNOMED CT concept for the social or personal circumstance.
+  - name: recorded_date
+    description: Date the circumstance was recorded. Null dates retain separate source occurrences.
+  - name: first_reported_period_end_date
+    description: Earliest accepted reporting period containing this key.
+  - name: last_reported_period_end_date
+    description: Latest accepted reporting period containing this key.
+  - name: accepted_source_record_count
+    description: Number of accepted source rows represented by the selected occurrence.

@@ -1,7 +1,7 @@
 -- Each latest clinical staging model represents every accepted source row once.
 {% set sections = [
     'childhood_immunisation', 'previous_diagnosis', 'newborn_hearing_screening', 'blood_spot_result',
-    'infant_physical_examination', 'provisional_diagnosis', 'primary_diagnosis', 'secondary_diagnosis'
+    'social_circumstance', 'infant_physical_examination', 'provisional_diagnosis', 'primary_diagnosis', 'secondary_diagnosis'
 ] %}
 {% for section in sections %}
 select

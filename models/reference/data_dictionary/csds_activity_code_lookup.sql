@@ -34,6 +34,25 @@ with definitions as (
         , null::timestamp_ntz
         , 'CSDS ETOS v' || specification_version
     from {{ ref('csds_infant_physical_examination_result') }}
+
+    union all
+
+    -- ETOS C612D45 supplies the ASQ-3 bands carried by the source.
+    select
+        'asq_score_band'
+        , 'CSDS ETOS ' || source_worksheet
+        , code
+        , description
+        , null::varchar
+        , null::varchar
+        , null::varchar
+        , null::date
+        , null::date
+        , null::boolean
+        , null::timestamp_ntz
+        , null::timestamp_ntz
+        , 'CSDS ETOS v' || specification_version
+    from {{ ref('csds_asq_score_band') }}
 )
 
 select *

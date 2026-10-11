@@ -1,9 +1,9 @@
 version: 2
 models:
 - name: fct_csds_clinical_record
-  description: CSDS clinical history, one row per retained immunisation, diagnosis, child health screening
+  description: CSDS clinical history, one row per retained immunisation, diagnosis, social circumstance, child health screening
     result, assessment occurrence, breastfeeding status, growth measurement or populated care-activity
-    component. Includes accepted history for all ages. Monthly restatements of immunisations, diagnoses and
+    component. Includes accepted history for all ages. Monthly restatements of immunisations, diagnoses, social circumstances and
     screening results resolve to their latest accepted row per ETOS record key; incomplete keys keep individual
     occurrences. Activity-linked items and assessments keep each accepted occurrence. These records are
     clinical items, not encounters. Missing labels, identities, times and parents remain visible.
@@ -28,7 +28,7 @@ models:
   - name: clinical_record_type
     description: Immunisation (CYP501 coded procedure); childhood immunisation (CYP502 immunisation type,
       often the same vaccination as a CYP501 record); previous, provisional, primary or secondary
-      diagnosis; newborn hearing screening or audiology; newborn_blood_spot_ plus the screened condition;
+      diagnosis; social circumstance; newborn hearing screening or audiology; newborn_blood_spot_ plus the screened condition;
       infant_physical_examination_ plus the examined area; breastfeeding status; person weight, height or
       length; referral or activity assessment; procedure, finding or observation. Assessment records may be
       questions, dimensions, subtotals or totals.
@@ -77,18 +77,19 @@ models:
           - code_or_expression_unmatched
   - name: clinical_at
     description: Unzoned same-submission contact timestamp, or the submitted immunisation, diagnosis, screening,
-      examination or completion date at midnight. Newborn hearing screening outcomes are undated. Interpret with clinical_time_precision; no time-zone conversion is inferred.
+      examination, social circumstance recorded or completion date at midnight. Newborn hearing screening outcomes are undated. Interpret with clinical_time_precision; no time-zone conversion is inferred.
       Explicit activity/contact links retain their time when person IDs are missing; known person conflicts
       prevent inheritance. Missing person identity remains unknown.
   - name: clinical_date
-    description: Calendar date of clinical_at; immunisation administration, assessment completion or inherited
-      contact date. Date-only records support daily timeline ordering without implying order within the day.
+    description: Calendar date of clinical_at. The clinical_time_basis identifies administration, diagnosis, screening,
+      examination, circumstance recording, assessment completion or inherited contact time. Date-only records support daily timeline ordering without implying order within the day.
   - name: clinical_time_precision
     description: date for submitted dates or contacts without a time; timestamp for inherited contacts
       with a recorded time. Null without usable clinical time.
   - name: clinical_time_basis
     description: immunisation_administration, assessment_completion, diagnosis_date, provisional_diagnosis_date,
-      audiology_procedure_date, blood_spot_card_completion, infant_physical_examination, same_submission_care_contact,
+      audiology_procedure_date, blood_spot_card_completion, infant_physical_examination, social_circumstance_recorded_date,
+      same_submission_care_contact,
       same_submission_care_activity_contact or not_recorded. Inherited times describe the recorded parent,
       not a separately submitted time. The blood spot date is the sample date, not the result date.
   - name: assessment_tool_name
@@ -103,7 +104,7 @@ models:
   - name: clinical_value_numeric
     description: Technical NUMBER(38,9) parse, including numeric missing-response codes. Use assessment_score_numeric
       for interpreted assessment values. Source text remains available; parsing alone does not establish
-      a valid score.
+      a valid score. Null for the ETOS unknown-length value 99.9.
   - name: clinical_value_parse_status
     description: value_missing, value_unknown (person_length 99.9, the ETOS unknown-length value), numeric, numeric_rounded,
       numeric_format_unverified or not_numeric_or_out_of_range.
@@ -177,8 +178,18 @@ models:
     description: Activity-to-contact person consistency from the same accepted submission. Null when either
       identity or the parent is absent.
   - name: source_clinical_date
-    description: Submitted immunisation, diagnosis, screening, examination or assessment completion date.
+    description: Submitted immunisation, diagnosis, screening, examination, social circumstance recorded or assessment completion date.
       Null for inherited contact time.
+  - name: blood_spot_result_received_date
+    description: Submitted CYP604 date the newborn blood spot result was received. Repeated on each populated
+      condition outcome from the retained source row. Null outside CYP604 or when not supplied. The clinical
+      date remains the card completion (sample) date; this is not the shared result_date.
+  - name: asq_score_band
+    description: Supplied CYP612 ASQ-3 dimension and score-band code (ETOS C612D45). Null outside CYP612 or
+      when not supplied. The model does not recalculate the band or its thresholds.
+  - name: asq_score_band_description
+    description: ETOS v1.6.10 label for the supplied ASQ-3 band. Null when the band is absent or unmatched;
+      the supplied code remains visible.
   - name: source_derived_date
     description: CYP610, CYP611 and CYP612 warehouse-added dmic_observation_date. Its derivation is not specified in ETOS;
       it does not override the recorded parent time.

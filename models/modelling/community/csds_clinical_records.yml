@@ -23,7 +23,7 @@ models:
   - name: last_reported_period_end_date
     description: Latest accepted period containing this immunisation key.
 - name: int_csds_clinical_record
-  description: One retained immunisation, diagnosis, child health screening result, accepted assessment occurrence,
+  description: One retained immunisation, diagnosis, social circumstance, child health screening result, accepted assessment occurrence,
     activity-linked breastfeeding status or growth measurement, or populated care-activity component before
     clinical labelling. Screening sections with several coded fields give one row per populated field. Referral and activity assessments retain repeated scores, including different
     dates. Activity items inherit time through the explicit same-submission activity/contact relationship
@@ -40,8 +40,15 @@ models:
   - name: clinical_record_type
     description: Clinical item type; see fct_csds_clinical_record.
   - name: source_clinical_date
-    description: Submitted administration, diagnosis, screening, examination or assessment completion date;
+    description: Submitted administration, diagnosis, screening, examination, social circumstance recorded or assessment completion date;
       no time-of-day precision is inferred.
+  - name: blood_spot_result_received_date
+    description: Submitted CYP604 date the newborn blood spot result was received. Repeated on each populated
+      condition outcome from the retained source row. Null outside CYP604 or when not supplied. The clinical
+      date remains the card completion (sample) date; this is not the shared result_date.
+  - name: asq_score_band
+    description: Supplied CYP612 ASQ-3 dimension and score-band code (ETOS C612D45). Null outside CYP612 or
+      when not supplied. The model does not recalculate the band or its thresholds.
   - name: source_derived_date
     description: Warehouse-added observation date for activity-linked items, kept separately from inherited
       contact time.

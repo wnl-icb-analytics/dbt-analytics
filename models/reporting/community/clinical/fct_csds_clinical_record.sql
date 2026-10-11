@@ -88,6 +88,7 @@ with submitted as (
         , coalesce(unit.match_type, iff(unit_alias.snomed_code is not null, 'csds_etos_alias', null))
             as unit_of_measurement_match_type
         , coalesce(unit.definition_source, unit_alias.definition_source) as unit_of_measurement_definition_source
+        , asq_band.description as asq_score_band_description
         , scale.assessment_tool_name
         , scale.specification_version as assessment_definition_version
         , response.response_description as clinical_value_description
@@ -137,6 +138,9 @@ with submitted as (
         and upper(trim(r.clinical_code)) = code_list.code
     left join code_list_sets
         on r.code_set_name = code_list_sets.code_set_name
+    left join {{ ref('csds_activity_code_lookup') }} as asq_band
+        on asq_band.code_set_name = 'asq_score_band'
+        and r.asq_score_band = asq_band.code
     left join {{ ref('snomed_concept') }} as snomed
         on trim(r.clinical_code) = snomed.snomed_code
         and r.resolver_system = 'SNOMED CT'
@@ -200,6 +204,8 @@ select
     , clinical_time_precision
     , clinical_time_basis
     , assessment_tool_name
+    , asq_score_band
+    , asq_score_band_description
     , clinical_value
     , clinical_value_description
     , clinical_value_numeric
@@ -230,6 +236,7 @@ select
     , is_submitted_contact_person_consistent
     , is_referral_person_consistent
     , source_clinical_date
+    , blood_spot_result_received_date
     , source_derived_date
     , source_derived_date <> clinical_at::date as is_source_derived_date_inconsistent
     , clinical_at::date > reporting_period_end_date as is_clinical_date_after_reporting_period

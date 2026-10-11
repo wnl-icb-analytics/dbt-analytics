@@ -43,6 +43,7 @@ select
     , null::boolean as is_care_activity_linked
     , null::boolean as is_care_activity_person_consistent
     , null::boolean as is_submitted_contact_person_consistent
+    , null::varchar as asq_score_band
 from {{ ref('int_csds_coded_immunisation') }} as i
 
 union all
@@ -82,6 +83,7 @@ select
     , null::boolean as is_care_activity_linked
     , null::boolean as is_care_activity_person_consistent
     , null::boolean as is_submitted_contact_person_consistent
+    , null::varchar as asq_score_band
 from {{ ref('stg_csds_referral_assessment') }} as r
 
 union all
@@ -136,6 +138,7 @@ select
     , a.source_record_id is not null as is_care_activity_linked
     , iff(a.source_record_id is null or r.person_id is null or a.person_id is null, null, r.person_id = a.person_id) as is_care_activity_person_consistent
     , a.is_submitted_contact_person_consistent as is_submitted_contact_person_consistent
+    , r.asq_score_band::varchar as asq_score_band
 from {{ ref('stg_csds_activity_assessment') }} as r
 left join activities as a
     on r.unique_submission_id = a.submission_id
@@ -179,6 +182,7 @@ select
     , true as is_care_activity_linked
     , iff(a.person_id is null, null, true) as is_care_activity_person_consistent
     , a.is_submitted_contact_person_consistent as is_submitted_contact_person_consistent
+    , null::varchar as asq_score_band
 from activities as a
 where a.procedure_code is not null
 
@@ -219,6 +223,7 @@ select
     , true as is_care_activity_linked
     , iff(a.person_id is null, null, true) as is_care_activity_person_consistent
     , a.is_submitted_contact_person_consistent as is_submitted_contact_person_consistent
+    , null::varchar as asq_score_band
 from activities as a
 where a.finding_code is not null
 
@@ -259,6 +264,7 @@ select
     , true as is_care_activity_linked
     , iff(a.person_id is null, null, true) as is_care_activity_person_consistent
     , a.is_submitted_contact_person_consistent as is_submitted_contact_person_consistent
+    , null::varchar as asq_score_band
 from activities as a
 where a.observation_code is not null or a.observation_value is not null
 )
@@ -276,6 +282,7 @@ select
     , 'childhood_immunisation_type' as code_set_name, childhood_immunisation_type as clinical_code
     , unique_submission_id, reporting_period_start_date, reporting_period_end_date, effective_from, csds_version, file_type
     , first_reported_period_end_date, last_reported_period_end_date, accepted_source_record_count
+    , null::date as blood_spot_result_received_date
 from {{ ref('stg_csds_childhood_immunisation') }}
 
 union all
@@ -289,7 +296,22 @@ select
     , null::varchar, diagnosis_code
     , unique_submission_id, reporting_period_start_date, reporting_period_end_date, effective_from, csds_version, file_type
     , first_reported_period_end_date, last_reported_period_end_date, accepted_source_record_count
+    , null::date as blood_spot_result_received_date
 from {{ ref('stg_csds_previous_diagnosis') }}
+
+union all
+
+select
+    source_record_id, cyp006_unique_id::varchar, 'CYP006'
+    , 'social_circumstance', person_id, organisation_code_provider
+    , local_patient_identifier_extended, null::varchar, null::varchar
+    , recorded_date, 'social_circumstance_recorded_date'
+    , 'fixed_snomed', null::varchar
+    , null::varchar, social_circumstance_code
+    , unique_submission_id, reporting_period_start_date, reporting_period_end_date, effective_from, csds_version, file_type
+    , first_reported_period_end_date, last_reported_period_end_date, accepted_source_record_count
+    , null::date
+from {{ ref('stg_csds_social_circumstance') }}
 
 {% for model_name, source_table, record_type, time_basis in [
     ('stg_csds_provisional_diagnosis', 'CYP606', 'provisional_diagnosis', 'provisional_diagnosis_date'),
@@ -307,6 +329,7 @@ select
     , null::varchar, diagnosis_code
     , unique_submission_id, reporting_period_start_date, reporting_period_end_date, effective_from, csds_version, file_type
     , first_reported_period_end_date, last_reported_period_end_date, accepted_source_record_count
+    , null::date as blood_spot_result_received_date
 from {{ ref(model_name) }}
 {% endfor %}
 
@@ -322,6 +345,7 @@ select
     , 'newborn_hearing_screening_outcome', newborn_hearing_screening_outcome
     , unique_submission_id, reporting_period_start_date, reporting_period_end_date, effective_from, csds_version, file_type
     , first_reported_period_end_date, last_reported_period_end_date, accepted_source_record_count
+    , null::date as blood_spot_result_received_date
 from {{ ref('stg_csds_newborn_hearing_screening') }}
 where newborn_hearing_screening_outcome is not null
 
@@ -336,6 +360,7 @@ select
     , 'newborn_hearing_audiology_outcome', newborn_hearing_audiology_outcome
     , unique_submission_id, reporting_period_start_date, reporting_period_end_date, effective_from, csds_version, file_type
     , first_reported_period_end_date, last_reported_period_end_date, accepted_source_record_count
+    , null::date as blood_spot_result_received_date
 from {{ ref('stg_csds_newborn_hearing_screening') }}
 where newborn_hearing_audiology_outcome is not null
 
@@ -355,6 +380,7 @@ select
     , 'newborn_blood_spot_test_outcome_status', outcome_{{ condition }}
     , unique_submission_id, reporting_period_start_date, reporting_period_end_date, effective_from, csds_version, file_type
     , first_reported_period_end_date, last_reported_period_end_date, accepted_source_record_count
+    , blood_spot_result_received_date as blood_spot_result_received_date
 from {{ ref('stg_csds_blood_spot_result') }}
 where outcome_{{ condition }} is not null
 {% endfor %}
@@ -371,6 +397,7 @@ select
     , 'infant_physical_examination_result', result_{{ area }}
     , unique_submission_id, reporting_period_start_date, reporting_period_end_date, effective_from, csds_version, file_type
     , first_reported_period_end_date, last_reported_period_end_date, accepted_source_record_count
+    , null::date as blood_spot_result_received_date
 from {{ ref('stg_csds_infant_physical_examination') }}
 where result_{{ area }} is not null
 {% endfor %}
@@ -405,6 +432,7 @@ where {{ column_name }} is not null
 select
     e.*
     , null::varchar as code_set_name
+    , null::date as blood_spot_result_received_date
 from existing_records as e
 
 union all
@@ -444,7 +472,9 @@ select
     , null::boolean as is_care_activity_linked
     , null::boolean as is_care_activity_person_consistent
     , null::boolean as is_submitted_contact_person_consistent
+    , null::varchar as asq_score_band
     , i.code_set_name
+    , i.blood_spot_result_received_date
 from submitted_items as i
 
 union all
@@ -489,7 +519,9 @@ select
     , a.source_record_id is not null as is_care_activity_linked
     , iff(a.source_record_id is null or r.person_id is null or a.person_id is null, null, r.person_id = a.person_id) as is_care_activity_person_consistent
     , a.is_submitted_contact_person_consistent
+    , null::varchar as asq_score_band
     , r.code_set_name
+    , null::date as blood_spot_result_received_date
 from activity_items as r
 left join activities as a
     on r.unique_submission_id = a.submission_id

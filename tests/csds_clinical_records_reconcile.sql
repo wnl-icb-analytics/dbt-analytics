@@ -23,6 +23,9 @@ with expected as (
     select 'CYP502', 'childhood_immunisation', cyp502_unique_id::varchar
     from {{ ref('stg_csds_childhood_immunisation') }}
     union all
+    select 'CYP006', 'social_circumstance', cyp006_unique_id::varchar
+    from {{ ref('stg_csds_social_circumstance') }}
+    union all
     select 'CYP601', 'previous_diagnosis', cyp601_unique_id::varchar
     from {{ ref('stg_csds_previous_diagnosis') }}
     {% for model_name, source_table, record_type in [
