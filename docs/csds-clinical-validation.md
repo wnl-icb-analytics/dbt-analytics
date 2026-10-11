@@ -574,6 +574,13 @@ keys. The earlier #1284 deployment also requires
 do not add another event-adapter refresh. Shared adapters and cross-source views
 are rebuilt by the integration coordinator.
 
+Rebuild `ptr_fct_csds_clinical_record` and `ptr_fct_mhsds_clinical_record` with
+`clinical_record_type = 'social_circumstance'` excluded. CYP006 and MHS011 include
+religious belief affiliation and stated sexual orientation, so these partner
+copies exclude them until the owner confirms the partner sharing basis covers
+them. Both domain facts and `fct_person_clinical_record` retain these records.
+The partner patient-key cast and row access policy still apply.
+
 `csds_clinical_staging_represents_history` includes CYP006, and
 `csds_clinical_records_reconcile` checks every retained circumstance is represented.
 The synthetic `csds_social_circumstance_merges_undated_restatements` unit test

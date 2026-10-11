@@ -2,21 +2,22 @@ models:
   - name: ptr_fct_mhsds_clinical_record
     description: >
       Partner copy of fct_mhsds_clinical_record, published to local authority partners.
-      No SQL filter: partner roles see only rows allowed by the PARTNER_POLICY row
+      Social circumstances are excluded until the owner confirms that the partner
+      sharing basis covers religious belief affiliation and stated sexual orientation.
+      Partner roles see only rows allowed by the PARTNER_POLICY row
       access policy on sk_patient_id, which partner_mapping links to a borough partner
       role when the patient is registered with a practice in, or resident in, that
       borough. Rows without an sk_patient_id, or whose patient has no in-area registered
       or residence borough, are visible to no partner. sk_patient_id is cast to VARCHAR
       to match the policy; all other columns are as in fct_mhsds_clinical_record.
       Recorded clinical evidence across the accepted MHSDS history. Each row is a
-      diagnosis, presenting complaint, social circumstance, assessment response or
+      diagnosis, presenting complaint, assessment response or
       populated clinical component of a care activity. Different diagnosis codes and
       person IDs remain separate. Repeated fully identified diagnoses use their
       latest accepted version; undated diagnoses and referral/activity assessment
       responses remain separate source occurrences. Historical clustering responses
-      use the latest version for each source assessment and concept. Social
-      circumstances use the latest version for each provider, person, code and
-      recorded date. Labels and response-status fields distinguish recognised,
+      use the latest version for each source assessment and concept.
+      Labels and response-status fields distinguish recognised,
       missing and unmatched values. These rows are clinical items, not visits,
       completed questionnaires or clinically current conditions.
 
@@ -49,12 +50,12 @@ models:
       - name: clinical_record_type
         description: >
           Previous, provisional, primary or secondary diagnosis; presenting complaint;
-          social circumstance; referral, activity or clustering assessment; procedure,
+          referral, activity or clustering assessment; procedure,
           finding or observation.
 
       - name: clinical_code
         description: >
-          Original diagnosis, presenting complaint, social circumstance, assessment
+          Original diagnosis, presenting complaint, assessment
           observable, procedure, finding or observation code.
 
       - name: clinical_description
@@ -112,8 +113,7 @@ models:
           Meaning and source of clinical time. Previous diagnoses use discussion time;
           MHS606 uses completion. Activity components and MHS607 inherit the linked
           activity date; source_derived_activity_date identifies a date-only fallback
-          without a submitted contact date. Social circumstances use their recording
-          time.
+          without a submitted contact date.
 
       - name: clinical_time_precision
         description: >
@@ -284,12 +284,12 @@ models:
 
       - name: source_timestamp
         description: >
-          Diagnosis, MHS606 or MHS011 timestamp as stored in the source pipeline,
+          Diagnosis or MHS606 timestamp as stored in the source pipeline,
           without its original offset. Null for inherited contact timing.
 
       - name: source_derived_date
         description: >
-          Separate source date for diagnoses, MHS606 and MHS011. Retained to expose
+          Separate source date for diagnoses and MHS606. Retained to expose
           discrepancies.
 
       - name: is_source_date_inconsistent
@@ -324,23 +324,23 @@ models:
 
       - name: first_reported_period_end_date
         description: >
-          First accepted reporting period containing this retained diagnosis or social
-          circumstance; the source period for other clinical occurrences.
+          First accepted reporting period containing this retained diagnosis;
+          the source period for other clinical occurrences.
 
       - name: last_reported_period_end_date
         description: >
-          Last accepted reporting period containing this retained diagnosis or social
-          circumstance. This is reporting evidence, not clinical resolution.
+          Last accepted reporting period containing this retained diagnosis.
+          This is reporting evidence, not clinical resolution.
 
       - name: reported_period_count
         description: >
-          Number of accepted reporting periods containing this retained diagnosis or
-          social circumstance. One for other clinical occurrences.
+          Number of accepted reporting periods containing this retained diagnosis.
+          One for other clinical occurrences.
 
       - name: accepted_source_record_count
         description: >
-          Number of accepted source rows represented by this retained diagnosis or
-          social circumstance. One for each other clinical occurrence.
+          Number of accepted source rows represented by this retained diagnosis.
+          One for each other clinical occurrence.
 
       - name: source_dataset
         description: >
@@ -353,8 +353,7 @@ models:
       - name: originating_source_record_id
         description: >
           Original source-occurrence key, previously exposed as source_record_id.
-          Diagnosis keys identify a guarded logical diagnosis; social circumstances
-          identify provider, person, code and recorded date; assessments identify an
+          Diagnosis keys identify a guarded logical diagnosis; assessments identify an
           accepted source row; activity components share their care-activity fact key.
           Not unique across clinical components.
 
