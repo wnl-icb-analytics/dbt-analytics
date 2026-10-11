@@ -10,7 +10,14 @@
 ) }}
 
 -- One recorded milestone per source record; the primary milestone retains unknown dates.
-with source_records as (
+with referral_team_types as (
+    select
+        referral_id,
+        iff(count(distinct service_type_code) = 1, max(service_type_code), null)::varchar as service_or_team_type_code,
+        iff(count(distinct service_type_code) = 1, max(iff(service_type_code is not null, service_type_name, null)), null)::varchar as service_or_team_type_name
+    from {{ ref('fct_csds_referral_service') }}
+    group by referral_id
+), source_records as (
 select
     s.sk_patient_id::varchar as sk_patient_id,
     s.person_id::varchar as source_person_id,
@@ -20,8 +27,8 @@ select
     'community'::varchar as care_setting,
     null::varchar as attendance_code,
     null::varchar as attendance_name,
-    null::varchar as service_or_team_type_code,
-    null::varchar as service_or_team_type_name,
+    team.service_or_team_type_code,
+    team.service_or_team_type_name,
     null::varchar as consultation_mechanism_code,
     null::varchar as consultation_mechanism_name,
     null::varchar as activity_location_type_code,
@@ -39,6 +46,8 @@ select
     null::varchar as relationship_type,
     s.reporting_period_end_date::date as source_submission_period,
     s.source_file_received_at::timestamp_ntz as source_received_at,
+    s.priority_type_code::varchar as priority_code,
+    s.priority_type_name::varchar as priority_name,
     array_construct(
         object_construct_keep_null(
             'type', 'referral_received', 'name', 'Referral received',
@@ -56,6 +65,7 @@ select
         )
     ) as milestones
 from {{ ref('fct_csds_referral') }} as s
+left join referral_team_types as team on s.referral_id = team.referral_id
 where true
 {{ navigation_delivery_filter('s.source_file_received_at', 'referral') }}
 union all
@@ -87,6 +97,8 @@ select
     iff(iff(s.is_referral_person_consistent is distinct from false, s.referral_id, null) is not null, 'recorded_parent', null)::varchar as relationship_type,
     s.reporting_period_end_date::date as source_submission_period,
     s.source_file_received_at::timestamp_ntz as source_received_at,
+    null::varchar as priority_code,
+    null::varchar as priority_name,
     array_construct(
         object_construct_keep_null(
             'type', 'care_contact', 'name', 'Care contact',
@@ -135,6 +147,8 @@ select
     r.parent_model_name as parent_model_name,
     r.relationship_type as relationship_type,
     r.source_submission_period as source_submission_period,
-    r.source_received_at as source_received_at
+    r.source_received_at as source_received_at,
+    r.priority_code as priority_code,
+    r.priority_name as priority_name
 from source_records as r, lateral flatten(input => r.milestones) as m
 where m.value:retain_undated::boolean or m.value:date::date is not null

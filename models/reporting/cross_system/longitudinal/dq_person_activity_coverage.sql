@@ -1,6 +1,6 @@
 {{ config(tags=['daily', 'person_activity_coverage']) }}
 
-{# Coverage needs source counts, not the ordering in the analyst views. #}
+{# Coverage counts source records without the shared facts' display fields. #}
 {% set sources = [
     ('healthcare_event', 'int_mhsds_healthcare_event', 'event_date', 'event_time_precision', 'null', 'null'),
     ('healthcare_event', 'int_csds_healthcare_event', 'event_date', 'event_time_precision', 'null', 'null'),

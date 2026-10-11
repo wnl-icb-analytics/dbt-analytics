@@ -2,12 +2,13 @@ version: 2
 models:
 - name: int_ecds_person_clinical_record
   description: ECDS clinical records, one row per source clinical item. Retains missing linkage and unsupported
-    dates. Includes observations and scored assessments at their separate source grains, with submitted
-    values, units, tool codes and clinical timestamps. Numeric parsing does not validate scores or unit compatibility.
-    Single-valued attendance fields (chief complaint, acuity, notifiable disease, injury mechanism, intent and
-    place) emit one row per recorded code, keyed by the attendance; alcohol or drug involvements keep one row per
-    source involvement. Notifiable disease uses the newer SUS code field, then a trimmed 6-18 digit legacy code;
-    legacy descriptions are excluded. Injury details take the recorded injury date; the others have no supported clinical date.
+    dates. Coded findings use their supplied recording timestamp. Includes observations and scored assessments at
+    their separate source grains, with submitted values, units, tool codes and clinical timestamps. Numeric parsing
+    does not validate scores or unit compatibility. Single-valued attendance fields (chief complaint, acuity,
+    notifiable disease, injury mechanism, intent and place) emit one row per recorded code, keyed by the attendance;
+    alcohol or drug involvements keep one row per source involvement. Notifiable disease uses the newer SUS code
+    field, then a trimmed 6-18 digit legacy code; legacy descriptions are excluded. Injury details take the recorded
+    injury date; the others have no supported clinical date. Attendance dates do not replace missing clinical dates.
     Prepared source facts retain domain-specific interpretation and all additional relationships. Incremental
     loads process newly received deliveries and replay the boundary delivery. Withdrawn source keys are removed
     on each run. Monthly full refreshes reconcile earlier corrections and reference changes.

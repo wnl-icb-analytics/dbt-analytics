@@ -382,6 +382,3 @@ select
     source_submission_period,
     source_received_at
 from source_records
-
--- Midnight and period starts are sorting anchors, not observed clock times.
-order by sk_patient_id nulls last, clinical_record_at nulls last, clinical_record_id
