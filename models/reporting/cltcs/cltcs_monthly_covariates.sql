@@ -42,17 +42,13 @@ with index_dates as (
     {%- endfor %}
 ),
 
--- Eligibility gate: who was in the control pool in the index_date's month. The roster capture
--- also carries the LTC LCS Model of Care stage and status for the month.
+-- Eligibility gate: who was in the control pool in the index_date's month.
 spine as (
     select
         i.index_date,
         p.sk_patient_id,
         p.person_id,
-        p.neighbourhood_code,
-        p.is_in_ltc_lcs_moc_base,
-        p.moc_stage_completed_label,
-        p.moc_pathway_status
+        p.neighbourhood_code
     from index_dates i
     join {{ ref('cltcs_population_monthly_capture') }} p
       on p.snapshot_month = date_trunc('month', i.index_date)
@@ -166,6 +162,30 @@ risk_summary as (
     from {{ temporal_join('spine', 'index_date', ref('fct_person_ltc_lcs_risk_summary_snapshot'),
                           join_key='person_id', join_type='left',
                           valid_from_col='dbt_valid_from', valid_to_col='dbt_valid_to') }}
+),
+
+-- LTC LCS Model of Care stage and status, as-at index_date, from a C-LTCS snapshot of the MoC
+-- fields (the risk-summary snapshot above versions only on risk-group changes). The snapshot
+-- holds a version only for people on the MoC base population, so a version valid on index_date
+-- means "on the MoC base then". Before the snapshot's first run, MoC status is unknown (NULL),
+-- not "not on MoC".
+moc_snapshot_start as (
+    select min(dbt_valid_from)::date as first_snapshot_date
+    from {{ ref('cltcs_ltc_lcs_moc_snapshot') }}
+),
+
+ltc_lcs_moc as (
+    select f.sk_patient_id, f.index_date,
+           case
+               when ms.first_snapshot_date is null
+                 or cast(f.index_date as date) < ms.first_snapshot_date then null
+               else d.person_id is not null
+           end as is_in_ltc_lcs_moc_base,
+           d.moc_stage_completed_label, d.moc_pathway_status
+    from {{ temporal_join('spine', 'index_date', ref('cltcs_ltc_lcs_moc_snapshot'),
+                          join_key='person_id', join_type='left',
+                          valid_from_col='dbt_valid_from', valid_to_col='dbt_valid_to') }}
+    cross join moc_snapshot_start ms
 ),
 
 score_treatment as (
@@ -511,12 +531,12 @@ select
     , coalesce(rs.overall_risk_group, 'None') as overall_risk_group
     , coalesce(rs.overall_risk_rank, 6) as overall_risk_rank
     , coalesce(rs.in_any_risk_group, false) as in_any_risk_group
-    -- Model of Care, as-at the captured month (population roster capture). NULL when not on the
-    -- MoC base population, or for months captured before MoC was added (is_in_ltc_lcs_moc_base
-    -- NULL, so unknown is distinguishable from not on MoC).
-    , s.is_in_ltc_lcs_moc_base
-    , s.moc_stage_completed_label
-    , s.moc_pathway_status
+    -- Model of Care, as-at index_date (MoC snapshot). When not on the MoC base population,
+    -- is_in_ltc_lcs_moc_base is false and the stage/status columns are NULL. For index dates
+    -- before the snapshot began, all three are NULL (unknown, distinguishable from not on MoC).
+    , moc.is_in_ltc_lcs_moc_base
+    , moc.moc_stage_completed_label
+    , moc.moc_pathway_status
     -- waiting list counts + flag + arrays (captured monthly; values as-at the captured month)
     , zeroifnull(act.wl_current_total_count) as wl_total_count
     , zeroifnull(act.wl_current_distinct_providers_count) as wl_provider_count
@@ -565,6 +585,7 @@ left join care_home        ch  on ch.sk_patient_id = s.sk_patient_id and ch.inde
 left join efi2             ef  on ef.sk_patient_id = s.sk_patient_id and ef.index_date = s.index_date
 left join rockwood         rk  on rk.sk_patient_id = s.sk_patient_id and rk.index_date = s.index_date
 left join risk_summary     rs  on rs.sk_patient_id = s.sk_patient_id and rs.index_date = s.index_date
+left join ltc_lcs_moc      moc on moc.sk_patient_id = s.sk_patient_id and moc.index_date = s.index_date
 left join score_treatment  st  on st.sk_patient_id = s.sk_patient_id and st.index_date = s.index_date
 left join score_frailty    sf  on sf.sk_patient_id = s.sk_patient_id and sf.index_date = s.index_date
 left join score_activation sa  on sa.sk_patient_id = s.sk_patient_id and sa.index_date = s.index_date
