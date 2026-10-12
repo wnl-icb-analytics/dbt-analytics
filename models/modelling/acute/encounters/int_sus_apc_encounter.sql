@@ -86,6 +86,7 @@ select
     , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_excess_bed_days as excess_bed_days
 
     /* Admission information */
+    , core.spell_admission_administrative_category as admission_administrative_category_code
     , core.spell_admission_method as spell_admission_method
     , dict_adm_method.admission_method_name as admission_method_name
     , dict_adm_method.admission_method_group as admission_method_group

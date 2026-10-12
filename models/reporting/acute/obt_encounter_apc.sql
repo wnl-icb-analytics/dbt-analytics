@@ -25,6 +25,7 @@ select
     , duration_to_date
     , unadjusted_length_of_stay_days
     , excess_bed_days
+    , admission_administrative_category_code
     , spell_admission_method
     , admission_method_name
     , admission_method_group
