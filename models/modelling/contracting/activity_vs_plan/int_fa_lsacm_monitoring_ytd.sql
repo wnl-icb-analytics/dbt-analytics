@@ -71,7 +71,7 @@ monitor as (
            and current_date() < coalesce(d.next_required_submission_date,'9999-12-31'::date) THEN 'Overdue' 
            WHEN s.date_submitted is null and current_date() >= d.next_required_submission_date THEN 'Missing' 
            WHEN s.date_submitted is null and current_date() <= d.required_submission_date THEN 'Awaiting submission'
-        ELSE s.submission_status end as DASHBOARD_STATUS,
+        ELSE s.submission_status end as dashboard_status,
         case
             when s.DATE_SUBMITTED is not null then
                 datediff('day',d.required_submission_date,s.DATE_SUBMITTED)
