@@ -1,3 +1,9 @@
+{{
+    config(
+        materialized='table',
+        tags=['cltcs', 'daily'])
+}}
+
 with inclusion_list as (
     select patient_id, area_code, olids_id
     from {{ ref('cltcs_patient_list')}}

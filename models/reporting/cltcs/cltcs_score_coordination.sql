@@ -1,4 +1,4 @@
-{{ config(materialized='table', tags=['cltcs']) }}
+{{ config(materialized='table', tags=['cltcs', 'daily']) }}
 
 with inclusion_list as (
     select *
