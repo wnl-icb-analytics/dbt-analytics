@@ -5,7 +5,7 @@
 }}
 
 
-{% set in_scope_borough_list = ['Haringey'] %}
+{% set in_scope_borough_list = ['Haringey', 'Barnet'] %}
 {% set in_scope_neighbourhood_list = ['East Camden'] %}
 
 with in_scope_practice_list as (
