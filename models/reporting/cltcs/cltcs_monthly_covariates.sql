@@ -531,9 +531,9 @@ select
     , coalesce(rs.overall_risk_group, 'None') as overall_risk_group
     , coalesce(rs.overall_risk_rank, 6) as overall_risk_rank
     , coalesce(rs.in_any_risk_group, false) as in_any_risk_group
-    -- Model of Care, as-at index_date (MoC snapshot). NULL when not on the MoC base population,
-    -- or for index dates before the snapshot began (is_in_ltc_lcs_moc_base NULL, so unknown is
-    -- distinguishable from not on MoC).
+    -- Model of Care, as-at index_date (MoC snapshot). When not on the MoC base population,
+    -- is_in_ltc_lcs_moc_base is false and the stage/status columns are NULL. For index dates
+    -- before the snapshot began, all three are NULL (unknown, distinguishable from not on MoC).
     , moc.is_in_ltc_lcs_moc_base
     , moc.moc_stage_completed_label
     , moc.moc_pathway_status
