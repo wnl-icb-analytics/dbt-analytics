@@ -1,34 +1,34 @@
 --CTE to create trust site map
 --Note historic mentions of NMUH ('RAP' trust code) is remapped to RFL ('RAL' trust code and 'RAL27' site code)
 -- 333761 is the NMUH SK Organisation ID for the historic trust
-WITH org_par AS (
-    SELECT
-        child."SK_OrganisationID" = 333761 or child."SK_OrganisationID_ParentOrg" = 333761 as nmuh_flag,
-        child."Organisation_Code" as site_code_original,
-        CASE 
-            WHEN nmuh_flag
-            THEN 'RAL27'
-            ELSE child."Organisation_Code" 
-        END AS site_code, 
-        CASE
-            WHEN nmuh_flag
-            THEN 'RAL'
-            WHEN child."SK_OrganisationTypeID" = 41
-            THEN child."Organisation_Code"
-            ELSE par."Organisation_Code" 
-        END AS trust_code,
-        child."OrganisationPrimaryRole" as child_role
+with org_par as (
+    select
+        child.sk_organisation_id = 333761 or child.sk_organisation_id_parent_org = 333761 as nmuh_flag,
+        child.organisation_code as site_code_original,
+        case 
+            when nmuh_flag
+            then 'RAL27'
+            else child.organisation_code
+        end as site_code, 
+        case
+            when nmuh_flag
+            then 'RAL'
+            when child.sk_organisation_type_id = 41
+            then child.organisation_code
+            else par.organisation_code
+        end as trust_code,
+        child.organisation_primary_role as child_role
         
     from {{ ref('stg_dictionary_dbo_organisation') }} child
 
-    LEFT JOIN {{ ref('stg_dictionary_dbo_organisation') }} par 
-    ON child."SK_OrganisationID_ParentOrg" = par."SK_OrganisationID"
+    left join {{ ref('stg_dictionary_dbo_organisation') }} par 
+    on child.sk_organisation_id_parent_org = par.sk_organisation_id
 )
 
 select
     --Entry identifiers
     cwt.recordid as record_id,
-    cwt."NHS_NUMBER Pseudo"::number as sk_patient_id,
+    cwt.nhs_number_pseudo::number as sk_patient_id,
 
     --Date Fields
     date(cwt.consultantupgradedate) as date__consultant_upgrade_date,
@@ -159,6 +159,5 @@ and (
 where exists (
     select null
     from {{ ref('stg_cwt_pathway_activesystemid') }} asi
-    where asi."dmicSystemId" = cwt."dmicSystemId"
+    where asi.dmic_system_id = cwt.dmic_system_id
 )
-;
