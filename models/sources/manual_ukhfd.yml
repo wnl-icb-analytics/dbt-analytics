@@ -278,7 +278,7 @@ sources:
   - name: ukhfd_demography
     database: '"UKHFD"'
     schema: '"Demography"'
-    description: GP-registered patient counts from the NHS England "Patients Registered at a GP Practice" monthly publication.
+    description: UKHFD Demography schema, including GP-registered patient counts and the English Indices of Deprivation by LSOA.
     config:
       meta:
         domain: shared
@@ -309,6 +309,60 @@ sources:
           - name: Unique_ID
             quote: true
           - name: AuditKey
+            quote: true
+      - name: domains_of_deprivation_by_lsoa
+        identifier: '"fact_Domains_Of_Deprivation_By_LSOA_V3"'
+        description: English Indices of Deprivation File 7 measures in long form, one row per LSOA, measure and release snapshot.
+        columns:
+          - name: LSOA_Code
+            quote: true
+          - name: LSOA_Code_Year
+            quote: true
+          - name: Measure_Name
+            quote: true
+          - name: Measure_Value
+            quote: true
+          - name: Measure_Value_Str
+            quote: true
+          - name: Effective_Snapshot_Date
+            quote: true
+          - name: DataSourceFileForThisSnapshot_Version
+            quote: true
+          - name: Report_Period_Length
+            quote: true
+          - name: Unique_ID
+            quote: true
+          - name: AuditKey
+            quote: true
+      - name: index_of_multiple_deprivation_by_lsoa
+        identifier: '"fact_Index_Of_Multiple_Deprivation_By_LSOA"'
+        description: Overall IMD score, rank and decile with the local authority supplied with each release, one row per LSOA and release snapshot.
+        columns:
+          - name: LSOA_Code
+            quote: true
+          - name: IMD_Score
+            quote: true
+          - name: IMD_Rank
+            quote: true
+          - name: IMD_Decile
+            quote: true
+          - name: Effective_Snapshot_Date
+            quote: true
+          - name: DataSourceFileForThisSnapshot_Version
+            quote: true
+          - name: Report_Period_Length
+            quote: true
+          - name: Unique_ID
+            quote: true
+          - name: AuditKey
+            quote: true
+          - name: LA_District_Code
+            quote: true
+          - name: LSOA_Code_2021
+            quote: true
+          - name: LAD_Code_2024
+            quote: true
+          - name: LSOA_Code_Year
             quote: true
 
   - name: ukhfd_comm_allocations
@@ -2859,4 +2913,36 @@ sources:
           - name: Import_Date
             quote: true
           - name: Created_Date
+            quote: true
+
+  - name: ukhfd_ordnance_survey
+    database: '"UKHFD"'
+    schema: '"Ordnance_Survey"'
+    description: ONS boundary datasets held in UKHFD. Geometry columns are not declared.
+    config:
+      meta:
+        domain: shared
+        raw_prefix: raw_ukhfd_ordnance_survey
+    tables:
+      - name: lsoa_2011
+        identifier: '"dim_LSOA_2011"'
+        description: One row per LSOA on 2011 boundaries with its ONS code and name.
+        columns:
+          - name: ID
+            quote: true
+          - name: LSOA11CD
+            quote: true
+          - name: LSOA11NM
+            quote: true
+      - name: lsoa_2021
+        identifier: '"dim_LSOA_DEC_2021_EW_BFE"'
+        description: One row per LSOA on December 2021 boundaries with its ONS code and name.
+        columns:
+          - name: ID
+            quote: true
+          - name: LSOA21CD
+            quote: true
+          - name: LSOA21NM
+            quote: true
+          - name: GlobalID
             quote: true
