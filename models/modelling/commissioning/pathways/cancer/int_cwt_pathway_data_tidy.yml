@@ -18,6 +18,9 @@ models:
     columns:
       - name: record_id
         description: Source record identifier from the raw CWT pathway table.
+        data_tests:
+          - unique
+          - not_null
       - name: sk_patient_id
         description: Pseudo NHS number converted to a numeric surrogate patient key.
       - name: date__consultant_upgrade_date
@@ -150,3 +153,7 @@ models:
         description: Ninth referring organisation identifier.
       - name: organisationidentifierreferring10
         description: Tenth referring organisation identifier.
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
