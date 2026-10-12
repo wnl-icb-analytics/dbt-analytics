@@ -1,1 +1,1 @@
-{{ select_data_dictionary_history('stg_ukhfd_data_dictionary_mhsds_planned_care_contact_indicator') }}
+{{ select_data_dictionary_history('stg_ukhfd_data_dictionary_planned_care_contact_indicator') }}

@@ -1,1 +1,1 @@
-{{ select_data_dictionary_history('stg_ukhfd_data_dictionary_mhsds_administrative_category') }}
+{{ select_data_dictionary_history('stg_ukhfd_data_dictionary_administrative_category') }}

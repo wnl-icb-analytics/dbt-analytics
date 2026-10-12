@@ -1,1 +1,1 @@
-{{ select_data_dictionary_history('stg_ukhfd_data_dictionary_mhsds_settled_accommodation') }}
+{{ select_data_dictionary_history('stg_ukhfd_data_dictionary_settled_accommodation_indicator') }}

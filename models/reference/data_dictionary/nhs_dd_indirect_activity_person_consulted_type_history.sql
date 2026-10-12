@@ -1,1 +1,1 @@
-{{ select_data_dictionary_history('stg_ukhfd_data_dictionary_mhsds_indirect_activity_person_consulted') }}
+{{ select_data_dictionary_history('stg_ukhfd_data_dictionary_indirect_activity_person_consulted_type') }}

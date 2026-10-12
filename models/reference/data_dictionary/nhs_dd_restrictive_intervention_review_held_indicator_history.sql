@@ -1,1 +1,1 @@
-{{ select_data_dictionary_history('stg_ukhfd_data_dictionary_mhsds_post_incident_review_held') }}
+{{ select_data_dictionary_history('stg_ukhfd_data_dictionary_restrictive_intervention_review_held_indicator') }}
