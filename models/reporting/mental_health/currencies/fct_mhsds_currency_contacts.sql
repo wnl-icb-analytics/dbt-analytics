@@ -74,5 +74,5 @@ left join {{ ref('int_mhsds_organisation') }} as derived_icb
     on upper(p.dm_icb_commissioner) = upper(derived_icb.organisation_code)
 left join {{ ref('int_mhsds_organisation') }} as currency_commissioner
     on upper(p.commissioner_icb_code) = upper(currency_commissioner.organisation_code)
-left join {{ ref('attendance_status') }} as attendance
+left join {{ ref('nhs_dd_attendance_status') }} as attendance
     on upper(trim(p.attend_status)) = attendance.code

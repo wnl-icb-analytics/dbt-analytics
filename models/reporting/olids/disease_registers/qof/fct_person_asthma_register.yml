@@ -1,11 +1,15 @@
 models:
   - name: fct_person_asthma_register
-    description: 'QOF v51 asthma register for patients aged 5+ with active asthma diagnosis.
+    description: >-
+      Treated asthma register for ages 5 or over (NICE IND186). One row per register member.
 
-      One row per person with an AST_COD diagnosis and no ASTRES_COD on or after that date.
-      Evidence is dated on or before today. ASTTRT_COD medication must be prescribed
-      after the date 12 months before today and on or before today.'
 
+      Registration status is not filtered. People aged 5 or over need an asthma diagnosis and
+      treatment in the 12 months before the build date. A resolution on or after the latest
+      diagnosis date excludes membership. NICE requires the diagnosis without this treatment
+      requirement. For NICE counts, use the diagnosis population used by IND273 and select
+      people registered on the build date. NICE IND186 has no underpinning guideline
+      recommendation. Code lists: AST_COD, ASTRES_COD, ASTTRT_COD (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -55,12 +59,12 @@ models:
               People aged 5 or over with unresolved asthma and treatment in the
               preceding 12 months.
             description_long: >-
-              People aged 5 or over need an unresolved asthma diagnosis and treatment
-              in the 12 months before the build date, following QOF rules. NICE
-              requires the diagnosis without treatment. For NICE counts, use the
-              diagnosis population used by IND273. NICE IND186 has no underpinning
-              guideline recommendation. Code lists: AST_COD, ASTRES_COD and
-              ASTTRT_COD.
+              People aged 5 or over need an asthma diagnosis and treatment in the 12 months
+              before the build date. A resolution on or after the latest diagnosis date excludes
+              membership. NICE requires the diagnosis without this treatment requirement. For
+              NICE counts, use the diagnosis population used by IND273 and select people
+              registered on the build date. NICE IND186 has no underpinning guideline
+              recommendation. Code lists: AST_COD, ASTRES_COD, ASTTRT_COD (PCD).
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "AST005"

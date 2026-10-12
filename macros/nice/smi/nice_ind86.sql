@@ -45,8 +45,9 @@ assessed AS (
         AND population.reporting_date = test.reporting_date
 )
 SELECT person_id, 'IND86' AS indicator_id, 'Bipolar, schizophrenia and other psychoses: target organ damage' AS indicator_name,
+'The percentage of patients on lithium therapy with a record of serum creatinine and TSH in the preceding 9 months.' AS indicator_description,
     reporting_date, DATEADD(month, -9, reporting_date) AS measurement_period_start,
-    age, 'Current lithium therapy' AS condition_name,
+    age, 'Current lithium therapy' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_creatinine_date, latest_thyroid_function_test_date,
     IFF(is_in_numerator, GREATEST(latest_creatinine_date, latest_thyroid_function_test_date), NULL) AS latest_record_date,

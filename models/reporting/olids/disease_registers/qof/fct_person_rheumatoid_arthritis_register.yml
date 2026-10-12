@@ -1,10 +1,13 @@
 models:
   - name: fct_person_rheumatoid_arthritis_register
-    description: >
-      Disease Registers (QOF v51) rheumatoid arthritis register. One row per
-      person aged 16 or over with RARTH_COD dated on or before today. RA001 is
-      retired; register extraction continues through the Disease Registers service.
+    description: >-
+      Rheumatoid arthritis register (NICE IND107). One row per register member.
 
+
+      Registration status is not filtered. Rheumatoid arthritis diagnoses qualify from age 16,
+      without a resolution rule. Clinical evidence is dated by the build date. For NICE counts,
+      select people registered on the build date. Based on NICE NG100. Code lists: RARTH_COD
+      (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -49,8 +52,9 @@ models:
             description_short: >-
               People aged 16 or over with a rheumatoid arthritis diagnosis.
             description_long: >-
-              Rheumatoid arthritis diagnoses qualify from age 16, without a resolution
-              rule. Based on NICE NG100. Code list: RARTH_COD.
+              Rheumatoid arthritis diagnoses qualify from age 16, without a resolution rule.
+              Clinical evidence is dated by the build date. For NICE counts, select people
+              registered on the build date. Based on NICE NG100. Code lists: RARTH_COD (PCD).
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "RA001"

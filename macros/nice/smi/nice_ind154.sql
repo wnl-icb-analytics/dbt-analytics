@@ -17,7 +17,8 @@ WITH indicator_population AS (
         profile.earliest_smi_diagnosis_date,
         smoking.latest_smoking_status_date,
         smoking.latest_smoking_status,
-        smoking.latest_never_smoked_date
+        smoking.latest_never_smoked_date,
+        smoking.is_ex_smoker_covered
     FROM ({{ nice_reference_population(reference) }}) AS population
     INNER JOIN {{ nice_ref('int_nice_ltc_population', reference) }} AS profile
         ON population.person_id = profile.person_id
@@ -46,7 +47,7 @@ assessed AS (
             AND population.latest_never_smoked_date > DATEADD(year, 25, population.birth_date_approx)
             AND population.latest_never_smoked_date > population.earliest_smi_diagnosis_date,
             FALSE
-        ) AS is_in_numerator
+        ) OR COALESCE(population.is_ex_smoker_covered, FALSE) AS is_in_numerator
     FROM indicator_population AS population
 )
 
@@ -54,10 +55,11 @@ SELECT
     person_id,
     'IND154' AS indicator_id,
     'Smoking: smoking status of people with bipolar, schizophrenia and other psychoses' AS indicator_name,
+    'The percentage of patients with schizophrenia, bipolar affective disorder or other psychoses whose notes record smoking status in the preceding 12 months.' AS indicator_description,
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Active severe mental illness' AS condition_name,
+    'Active severe mental illness' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_smoking_status,
     latest_smoking_status_date,

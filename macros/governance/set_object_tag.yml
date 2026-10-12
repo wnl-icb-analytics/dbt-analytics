@@ -1,0 +1,24 @@
+macros:
+  - name: set_object_tag
+    description: >
+      Sets a DATA_LAKE.CONTROL tag on the model's object. Use as a post-hook; the tag is lost when dbt
+      replaces the object, so it must run on every build. ANALYST needs READ and APPLY on the tag.
+    arguments:
+      - name: tag
+        type: string
+        description: Tag name in DATA_LAKE.CONTROL.
+      - name: value
+        type: string
+        description: Tag value; must be one of the tag's allowed values.
+  - name: set_lifecycle_tag
+    description: >
+      Sets LIFECYCLE_STATUS so Snowsight shows the object as legacy. Put the replacement and any
+      retirement date in the model description.
+    arguments:
+      - name: status
+        type: string
+        description: Tag value. Only 'LEGACY' is allowed by the tag.
+  - name: set_managed_by_tag
+    description: >
+      Sets MANAGED_BY = 'dbt-analytics' so analysts can see the object is built by this project and
+      that manual changes are overwritten on the next build. Applied to every model, seed and snapshot.

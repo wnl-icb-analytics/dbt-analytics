@@ -2,7 +2,7 @@
 -- distinct `ethnicity_subcategory` value present in dim_person_ethnicity.
 -- If a new subcategory appears in the population (e.g. a future ETH2016
 -- cluster, or a new "no record" variant) it would silently be COALESCEd
--- to ethrisk = 1 in int_qadmissions_ethrisk - hiding data drift.
+-- to ethrisk = 1 in qadmissions_ethrisk - hiding data drift.
 --
 -- The test fails when the SELECT returns rows. It returns one row per
 -- subcategory value that is in the live data but not in the seed.

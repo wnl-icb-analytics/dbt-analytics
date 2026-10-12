@@ -11,8 +11,9 @@ WITH reviews AS (
 )
 SELECT r.person_id, 'IND315' AS indicator_id,
     'Asthma: annual review (higher risk patients)' AS indicator_name,
+    'The percentage of patients with asthma on the register with a risk factor for poor outcomes, who have had an asthma review in the preceding 12 months that includes an assessment of asthma control, a recording of the number of exacerbations, an assessment of inhaler technique and a written personalised action plan.' AS indicator_description,
     r.reporting_date, r.measurement_period_start, r.age,
-    'Higher-risk asthma, aged 6 or over' AS condition_name,
+    'Higher-risk asthma, aged 6 or over' AS denominator_description,
     {{ nice_practice_columns(none, reference) }},
     risk.risk_period_start, risk.risk_period_end, risk.saba_inhaler_count,
     risk.oral_steroid_course_count, risk.latest_asthma_admission_date,

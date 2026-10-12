@@ -1,15 +1,23 @@
 models:
   - name: def_indicator_codes
-    description: 'SNOMED codes that define each clinical indicator.
+    description: >-
+      SNOMED codes listed in indicator metadata. One row per indicator, code-list identifier,
+      code category and matching code-list record.
 
-      Expands cluster IDs from indicator definitions to show the specific SNOMED codes used for inclusion, exclusion or resolution.'
+
+      Only code lists declared in indicator metadata are included. This is not a complete list
+      of every code used by a source model. Code descriptions come from the reference code
+      lists; missing or blank descriptions are replaced by a message containing the code.
+
     config:
       meta:
         owner:
           name: EddieDavison92
     columns:
       - name: indicator_id
-        description: Foreign key linking to def_indicator table
+        description: >-
+          Indicator identifier used to link to def_indicator.
+
         tests:
           - not_null
           - relationships:
@@ -22,12 +30,16 @@ models:
           - not_null
 
       - name: code_category
-        description: Purpose of this code in the indicator logic
+        description: >-
+          Declared purpose of the code list, such as INCLUSION, EXCLUSION or RESOLUTION.
+
         tests:
           - not_null
 
       - name: code_system
-        description: Coding system for this code
+        description: >-
+          SNOMED for every row.
+
         tests:
           - not_null
 
@@ -37,11 +49,16 @@ models:
           - not_null
 
       - name: code_description
-        description: Human-readable description of the SNOMED code
+        description: >-
+          Reference description of the code; missing or blank descriptions are replaced by a
+          message containing the code.
+
         tests:
           - not_null
 
       - name: metadata_extracted_at
-        description: Timestamp when metadata was extracted from YAML
+        description: >-
+          Timestamp when the catalogue table was built from indicator metadata.
+
         tests:
           - not_null

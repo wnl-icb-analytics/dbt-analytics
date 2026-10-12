@@ -22,9 +22,9 @@ Preconditions:
 - Fusion packages are installed.
 - The default target remains `dev`. Do not pass `prod`, `snowflake-prod` or `ci-prod`.
 
-- **Named model.** Compile the reference fixture. Run `control-dbt-analytics compile -- -s nhs_ethnicity_2001`. Exit code `0`. `dbt-compile.stdout.log` shows Fusion completed the selection. Evidence does not include executed preview rows.
-- **Upstream selection.** Compile with parents. Run `control-dbt-analytics compile -- -s +nhs_ethnicity_2001`. Exit code `0`. The log names the compiled nodes without warehouse row content.
-- **Proof.** Keep `dbt-compile.command.txt`, `dbt-compile.exit_code.txt` and the redacted stdout. The command contains `-s nhs_ethnicity_2001` and the exit code is `0`.
+- **Named model.** Compile the reference fixture. Run `control-dbt-analytics compile -- -s ethnicity_2001`. Exit code `0`. `dbt-compile.stdout.log` shows Fusion completed the selection. Evidence does not include executed preview rows.
+- **Upstream selection.** Compile with parents. Run `control-dbt-analytics compile -- -s +ethnicity_2001`. Exit code `0`. The log names the compiled nodes without warehouse row content.
+- **Proof.** Keep `dbt-compile.command.txt`, `dbt-compile.exit_code.txt` and the redacted stdout. The command contains `-s ethnicity_2001` and the exit code is `0`.
 
 ## Gotchas
 

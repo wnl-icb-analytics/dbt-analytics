@@ -5,15 +5,17 @@ models:
     denominator at each month-end.
 
 
-    People registered at the month-end recorded as female and aged 50 to 64. Achieved with
-    an adequate cervical screening test in the 66 months before the month-end. Excludes
-    complete cervix removal and current pregnancy. Non-response to three invitations in those 66 months excludes unless an adequate test exists in that period. Pregnancy means a record
-    in the last 9 months without delivery or outcome at the same or a later time. No
-    personalised care adjustments are applied. Based on Public Health England NHS
-    population screening reporting data definitions (2024). Recalculated for each of the
-    last 60 month-ends with current rules, code lists and records, so later corrections
-    can change past months. Code lists: SMEAR_COD, NOCX_COD, CSPCAINVITE_COD, PREG_COD,
-    PREGDEL_COD (PCD).
+    People registered at the month-end recorded as female and aged 50 to 64. Achieved
+    with an adequate cervical screening test in the 66 months before the month-end.
+    Excludes complete cervix removal and current pregnancy. A record of non-response to
+    three invitations in those 66 months excludes unless an adequate test exists in that
+    period. Pregnancy means a record in the last 9 months without delivery or outcome at
+    the same or a later time. No personalised care adjustments are applied. Based on
+    Public Health England NHS population screening reporting data definitions (2024).
+    Recalculated for each of the last 60 month-ends with current rules, code lists and
+    records, so later corrections can change past months. Code lists: SMEAR_COD,
+    NOCX_COD, CSPCAINVITE_COD, PREG_COD, PREGDEL_COD (PCD); CSPU_COD, CSDEC_COD for
+    programme status and screening history (PCD).
   config:
     meta:
       owner:
@@ -26,14 +28,16 @@ models:
     description: "NICE indicator identifier."
   - name: indicator_name
     description: "NICE published indicator title."
+  - name: indicator_description
+    description: "NICE's published statement of the indicator."
   - name: reporting_date
     description: "Month-end used to assess eligibility and achievement."
   - name: measurement_period_start
     description: "Inclusive start of the 42-month screening window for IND176, or 66 months for IND177 and IND321."
   - name: age
     description: "Age in completed years on the reporting date; null when the birth date is missing."
-  - name: condition_name
-    description: "Short label for the denominator population."
+  - name: denominator_description
+    description: "Short description of the people in the denominator."
   - name: practice_code
     description: "ODS code of the registration practice at month-end."
   - name: practice_name
@@ -43,7 +47,7 @@ models:
   - name: latest_screening_date
     description: "Latest cervical screening record of any type on or before the reporting date; null when none."
   - name: programme_status
-    description: "Screening programme status: Unsuitable, Never Screened, Up to Date or Overdue. Uses 1,277 days through age 49 and 2,007 days thereafter, so it can differ from indicator achievement."
+    description: "Unsuitable when an unsuitability record has no completed screening at the same or a later time; otherwise Never Screened, Up to Date or Overdue. Uses 1,277 days through age 49 and 2,007 days thereafter, so it can differ from indicator achievement. CSPU_COD supplies unsuitability."
   - name: latest_record_date
     description: "Latest adequate cervical screening test in the indicator achievement window; null when none."
   - name: is_in_denominator

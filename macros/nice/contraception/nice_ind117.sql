@@ -27,8 +27,9 @@ WITH population AS (
 )
 SELECT person_id, 'IND117' AS indicator_id,
     'Contraception: advice for people with epilepsy' AS indicator_name,
+    'The percentage of women with epilepsy who are aged 18 or over, but under 45, who are taking antiseizure medications and have a record of being given information and advice in the previous 12 months about pregnancy or conception, or contraception tailored to their pregnancy and contraceptive intentions.' AS indicator_description,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Women with epilepsy, aged 18 to 44' AS condition_name,
+    age, 'Women with epilepsy, aged 18 to 44' AS denominator_description,
     {{ nice_practice_columns('result', reference) }},
     latest_asm_date,
     latest_record_date, TRUE AS is_in_denominator,

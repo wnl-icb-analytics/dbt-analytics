@@ -34,8 +34,9 @@ WITH population AS (
     FROM selected
 )
 SELECT person_id, 'IND316' AS indicator_id, 'Asthma: MART (higher risk patients)' AS indicator_name,
+'The percentage of patients with asthma on the register aged 12 years or over with a risk factor for poor outcomes who are prescribed maintenance and reliever therapy (MART) in the preceding 12 months.' AS indicator_description,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Higher-risk asthma, aged 12 or over' AS condition_name,
+    age, 'Higher-risk asthma, aged 12 or over' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     risk_period_start, risk_period_end, saba_inhaler_count, oral_steroid_course_count,
     latest_asthma_admission_date, has_high_saba_use, has_repeated_oral_steroids, has_asthma_admission,

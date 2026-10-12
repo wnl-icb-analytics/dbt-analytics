@@ -8,5 +8,5 @@ select
     , practice_to_pcn_relationship_start_date as relationship_start_date
     , practice_to_pcn_relationship_end_date as relationship_end_date
     , effective_snapshot_date as snapshot_date
-    , datasourcefileforthissnapshot_version as snapshot_file_version
+    , data_source_file_for_this_snapshot_version as snapshot_file_version
 from {{ ref('raw_ukhfd_pcn_core_partner_details') }}

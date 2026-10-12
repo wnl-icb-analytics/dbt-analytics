@@ -107,7 +107,7 @@ conditions as (
 
 polypharmacy as (
     select f.sk_patient_id, f.index_date,
-           d.medication_count, d.medication_name_list,
+           d.medication_name_list,
            d.is_polypharmacy_5plus, d.is_polypharmacy_10plus
     from {{ temporal_join('spine', 'index_date', ref('fct_person_polypharmacy_current_snapshot'),
                           join_key='person_id', join_type='left',
@@ -162,11 +162,34 @@ risk_summary as (
     select f.sk_patient_id, f.index_date,
            d.chd_risk_group, d.ckd_risk_group, d.copd_risk_group, d.diabetes_risk_group,
            d.hf_risk_group, d.hypertension_risk_group, d.overall_risk_group,
-           d.overall_risk_rank, d.in_any_risk_group,
-           d.moc_stage_completed_label, d.moc_pathway_status
+           d.overall_risk_rank, d.in_any_risk_group
     from {{ temporal_join('spine', 'index_date', ref('fct_person_ltc_lcs_risk_summary_snapshot'),
                           join_key='person_id', join_type='left',
                           valid_from_col='dbt_valid_from', valid_to_col='dbt_valid_to') }}
+),
+
+-- LTC LCS Model of Care stage and status, as-at index_date, from a C-LTCS snapshot of the MoC
+-- fields (the risk-summary snapshot above versions only on risk-group changes). The snapshot
+-- holds a version only for people on the MoC base population, so a version valid on index_date
+-- means "on the MoC base then". Before the snapshot's first run, MoC status is unknown (NULL),
+-- not "not on MoC".
+moc_snapshot_start as (
+    select min(dbt_valid_from)::date as first_snapshot_date
+    from {{ ref('cltcs_ltc_lcs_moc_snapshot') }}
+),
+
+ltc_lcs_moc as (
+    select f.sk_patient_id, f.index_date,
+           case
+               when ms.first_snapshot_date is null
+                 or cast(f.index_date as date) < ms.first_snapshot_date then null
+               else d.person_id is not null
+           end as is_in_ltc_lcs_moc_base,
+           d.moc_stage_completed_label, d.moc_pathway_status
+    from {{ temporal_join('spine', 'index_date', ref('cltcs_ltc_lcs_moc_snapshot'),
+                          join_key='person_id', join_type='left',
+                          valid_from_col='dbt_valid_from', valid_to_col='dbt_valid_to') }}
+    cross join moc_snapshot_start ms
 ),
 
 score_treatment as (
@@ -306,9 +329,13 @@ asc_service as (
 
 -- Recent medications: rolling "recent" prescriptions, captured monthly (like activity/ASC);
 -- equijoin on the month, keyed on person_id (like the pregnancy/asthma joins).
+-- has_capture_row separates "no prescriptions in the year" (no row -> no repeats) from a row
+-- captured before the repeat columns existed (row present, repeat columns NULL -> unknown).
 meds as (
     select s.person_id, s.index_date,
-           m.medications_recent_12mo, m.unique_active_ingredient_count_12mo
+           m.person_id is not null as has_capture_row,
+           m.medications_recent_12mo, m.unique_active_ingredient_count_12mo,
+           m.medications_repeat, m.unique_repeat_medication_count
     from spine s
     left join {{ ref('cltcs_medications_monthly_capture') }} m
       on  m.person_id = s.person_id
@@ -510,8 +537,12 @@ select
     , coalesce(rs.overall_risk_group, 'None') as overall_risk_group
     , coalesce(rs.overall_risk_rank, 6) as overall_risk_rank
     , coalesce(rs.in_any_risk_group, false) as in_any_risk_group
-    , rs.moc_stage_completed_label
-    , rs.moc_pathway_status
+    -- Model of Care, as-at index_date (MoC snapshot). When not on the MoC base population,
+    -- is_in_ltc_lcs_moc_base is false and the stage/status columns are NULL. For index dates
+    -- before the snapshot began, all three are NULL (unknown, distinguishable from not on MoC).
+    , moc.is_in_ltc_lcs_moc_base
+    , moc.moc_stage_completed_label
+    , moc.moc_pathway_status
     -- waiting list counts + flag + arrays (captured monthly; values as-at the captured month)
     , zeroifnull(act.wl_current_total_count) as wl_total_count
     , zeroifnull(act.wl_current_distinct_providers_count) as wl_provider_count
@@ -519,14 +550,18 @@ select
     , coalesce(act.same_tfc_multiple_providers_flag, false) as has_same_tfc_multiple_providers_flag
     , coalesce(act.current_waiting_list_arrays, array_construct()) as current_waiting_list_arrays
     -- polypharmacy
-    , zeroifnull(poly.medication_count) as medication_count
     , case
         when poly.medication_name_list is null then null
         when array_size(poly.medication_name_list) = 0 then null
         else poly.medication_name_list
-      end as medication_name_list
+      end as poly_medication_name_list
     , coalesce(poly.is_polypharmacy_5plus, false) as is_polypharmacy_5plus
     , coalesce(poly.is_polypharmacy_10plus, false) as is_polypharmacy_10plus
+    -- current repeat medicines, as-at the captured month (cltcs_cohort_data's medication_count /
+    -- medication_name_list). 0 / empty when there is no capture row; NULL when the row was
+    -- captured before the repeat columns were added.
+    , case when med.has_capture_row then med.unique_repeat_medication_count else 0 end as medication_count
+    , case when med.has_capture_row then med.medications_repeat else array_construct() end as medication_name_list
     -- recent medications (last year), as-at the captured month
     , coalesce(med.medications_recent_12mo, array_construct()) as medications_recent_12mo
     , zeroifnull(med.unique_active_ingredient_count_12mo) as unique_active_ingredient_count_12mo
@@ -556,6 +591,7 @@ left join care_home        ch  on ch.sk_patient_id = s.sk_patient_id and ch.inde
 left join efi2             ef  on ef.sk_patient_id = s.sk_patient_id and ef.index_date = s.index_date
 left join rockwood         rk  on rk.sk_patient_id = s.sk_patient_id and rk.index_date = s.index_date
 left join risk_summary     rs  on rs.sk_patient_id = s.sk_patient_id and rs.index_date = s.index_date
+left join ltc_lcs_moc      moc on moc.sk_patient_id = s.sk_patient_id and moc.index_date = s.index_date
 left join score_treatment  st  on st.sk_patient_id = s.sk_patient_id and st.index_date = s.index_date
 left join score_frailty    sf  on sf.sk_patient_id = s.sk_patient_id and sf.index_date = s.index_date
 left join score_activation sa  on sa.sk_patient_id = s.sk_patient_id and sa.index_date = s.index_date

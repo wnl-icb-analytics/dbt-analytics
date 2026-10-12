@@ -6,7 +6,7 @@
 
 /*
 Person Geography
-Geographic mapping for persons including postcode hash, LSOA, borough, neighbourhood and IMD.
+Geographic mapping for persons including postcode hash, LSOA, borough, neighbourhood, IMD and Townsend.
 Uses refactored intermediate geography tables for clean separation of concerns.
 All geographic joins are LEFT JOINs as not everyone lives in London/NCL boundaries.
 */
@@ -130,6 +130,9 @@ SELECT
     imd25.imd_quintile_numeric_25,
     imd25.is_most_deprived_20pct_25,
 
+    -- Townsend Deprivation Score (2011 Census, via 2011 LSOA)
+    tds.townsend_score,
+
     -- London resident flag from LSOA reference (more reliable)
     COALESCE(la.is_london_resident, FALSE) as is_london_resident,
 
@@ -162,6 +165,10 @@ LEFT JOIN {{ ref('int_geography_lsoa_2011') }} imd
 -- Join IMD 2025 information (via 2021 LSOA)
 LEFT JOIN {{ ref('int_geography_lsoa_2021') }} imd25
     ON pg.yr_2021_lsoa = imd25.lsoa_code_2021
+
+-- Join Townsend Deprivation Score (via 2011 LSOA; seed is unique on the code)
+LEFT JOIN {{ ref('townsend_lsoa_2011') }} tds
+    ON pg.yr_2011_lsoa = tds.lsoa_2011_code
 
 -- Join neighbourhood reference
 LEFT JOIN neighbourhood_reference nr

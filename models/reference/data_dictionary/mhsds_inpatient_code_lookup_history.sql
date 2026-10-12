@@ -36,4 +36,4 @@ select
     is_latest_definition,
     source_effective_from_at,
     source_effective_to_at
-from {{ ref('mental_health_admitted_patient_classification_type_history') }}
+from {{ ref('nhs_dd_mental_health_admitted_patient_classification_type_history') }}

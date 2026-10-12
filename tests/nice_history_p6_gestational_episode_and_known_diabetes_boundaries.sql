@@ -69,7 +69,8 @@ synthetic_diagnoses AS (
         column1::NUMBER AS person_id,
         column2::TIMESTAMP_NTZ AS clinical_effective_date,
         column3::TIMESTAMP_NTZ AS date_recorded,
-        column4::BOOLEAN AS is_diagnosis_code
+        column4::BOOLEAN AS is_diagnosis_code,
+        FALSE AS is_resolved_code
     FROM VALUES
         (610, '2022-01-01', '2024-02-15', TRUE),
         (611, '2023-01-31', NULL, TRUE),

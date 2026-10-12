@@ -35,8 +35,9 @@ WITH indicator_population AS (
 )
 SELECT person_id, 'IND92' AS indicator_id,
     'Osteoporosis: bone sparing agents (75 years and over)' AS indicator_name,
+    'The percentage of patients aged 75 or over with a fragility fracture on or after 1 April 2012, who are currently treated with an appropriate bone-sparing agent.' AS indicator_description,
     reporting_date, DATEADD(month, -6, reporting_date) AS measurement_period_start,
-    age, 'Fragility fracture, aged 75 or over' AS condition_name,
+    age, 'Fragility fracture, aged 75 or over' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_bone_sparing_order_date, latest_hospital_therapy_date,
     GREATEST_IGNORE_NULLS(

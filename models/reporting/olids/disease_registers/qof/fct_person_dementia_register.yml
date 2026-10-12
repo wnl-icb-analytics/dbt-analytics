@@ -1,9 +1,13 @@
 models:
   - name: fct_person_dementia_register
-    description: 'QOF dementia register for patients with dementia diagnosis.
+    description: >-
+      Dementia register (NICE IND252). One row per register member.
 
-      One row per person with DEM_COD dated on or before today (dementia is a permanent condition).'
 
+      Registration status is not filtered. A dementia diagnosis qualifies at any age, without a
+      resolution rule or exclusions. Clinical evidence is dated by the build date. For NICE
+      counts, select people registered on the build date. Based on NICE NG97. Code lists:
+      DEM_COD (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -52,7 +56,9 @@ models:
               People of any age with a recorded dementia diagnosis.
             description_long: >-
               A dementia diagnosis qualifies at any age, without a resolution rule or
-              exclusions. Based on NICE NG97. Code list: DEM_COD.
+              exclusions. Clinical evidence is dated by the build date. For NICE counts, select
+              people registered on the build date. Based on NICE NG97. Code lists: DEM_COD
+              (PCD).
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "DEM001"

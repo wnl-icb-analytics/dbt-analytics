@@ -1,0 +1,89 @@
+version: 2
+
+models:
+  - name: qadmissions_predictions
+    description: >
+      QAdmissions 1-year emergency admission risk scores from the latest
+      build, computed by calling the model registered in the Snowflake Model
+      Registry from SQL (qadmissions_predict macro). The model is a
+      reimplementation of ClinRisk QAdmissions 2013 v4.1, registered from the
+      qadmission_review repository. Monthly history:
+      qadmissions_predictions_history.
+
+      One row per person in qadmissions_input_features, scored on the build
+      date; the population is that model's (active, non-deceased, aged 18-100,
+      recorded sex male or female). A row the model rejects, for example
+      because bmi or alcohol_cat6 is NULL or town is out of range, is kept
+      with is_scored false and the model's error text. The 32 input columns
+      are copied from qadmissions_input_features as scored; see that model
+      for their meaning.
+
+      Built by the monthly full refresh on the 1st, and by any deploy that
+      changes this model or one upstream of it, so scored_at can be later than
+      the latest month in qadmissions_predictions_history.
+
+      Failure guard: the not_null_proportion test on score_percent fails when
+      fewer than the share set by the qadmissions_min_scored_share variable
+      (default 0.5) are scored, and dbt build then skips
+      qadmissions_predictions_history, so the previous months stand. If it
+      fails, check the scoring_errors counts for a new cause. The
+      qadmissions_predict_canary test checks the model call itself.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    data_tests:
+      - dbt_utils.equal_rowcount:
+          arguments:
+            compare_model: ref('qadmissions_input_features')
+    columns:
+      - name: person_id
+        data_type: varchar
+        description: "OLIDS person identifier. Primary key of this model."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sk_patient_id
+        data_type: varchar
+        description: "Commissioning patient identifier, carried from qadmissions_input_features."
+
+      - name: score_month
+        data_type: date
+        description: "First day of the calendar month in which the row was scored."
+
+      - name: scored_at
+        data_type: timestamp_ntz
+        description: "When the row was scored."
+
+      - name: model_version
+        data_type: varchar
+        description: "Version of the registered QAdmissions model that produced the score."
+
+      - name: is_scored
+        data_type: boolean
+        description: "TRUE if the model produced a score; FALSE if it rejected the inputs (see scoring_errors)."
+        data_tests:
+          - not_null
+
+      - name: score_percent
+        data_type: float
+        description: >
+          Predicted risk of an emergency admission within the surv horizon, as a
+          percentage (0-100). NULL when is_scored is FALSE.
+        data_tests:
+          - dbt_utils.not_null_proportion:
+              arguments:
+                at_least: "{{ var('qadmissions_min_scored_share', 0.5) }}"
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+                inclusive: true
+
+      - name: scoring_errors
+        data_type: varchar
+        description: >
+          The model's reasons for rejecting the row, separated by semicolons, for
+          example "error: bmi must be in range (20.0,40.0)". NULL when is_scored
+          is TRUE.

@@ -1,23 +1,16 @@
 models:
   - name: fct_person_diabetes_register
-    description: 'QOF diabetes register with type classification for patients aged
-      17+ with active diabetes. One row per qualifying person, using clinical
-      evidence dated on or before today.
+    description: >-
+      Diabetes register with type classification (NICE IND100). One row per register member.
 
-      QOF Criteria:
 
-      • Age ≥17 years
-
-      • Active diabetes diagnosis (DM_COD codes)
-
-      • No resolution code (DMRES_COD) after the latest diabetes code; a
-      resolution on the same date does not remove the diagnosis
-
-      • Type classification: Type 1, Type 2, or Unknown (Type 1 takes precedence)
-
-      Purpose: Supports QOF reporting and diabetes care management with accurate type
-      classification for treatment planning.'
-
+      Registration status is not filtered. People aged 17 or over with a diabetes diagnosis
+      qualify unless a resolution is recorded on a later date. A same-day resolution retains
+      membership. NICE also starts at age 17 but has no resolution exclusion. Type is Type 1,
+      Type 2 or Unknown; Unknown includes untyped and other diabetes types. The latest type code
+      determines classification; Type 1 takes precedence on a shared date. Clinical evidence is
+      dated by the build date. For NICE counts, select people registered on the build date.
+      Based on NICE NG28. Code lists: DM_COD, DMTYPE1_COD, DMTYPE2_COD, DMRES_COD (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -62,17 +55,16 @@ models:
             clinical_domain: "Cardiometabolic"
             name_short: >-
               Diabetes register including type
-            description_short: >-
-              People aged 17 or over with unresolved diabetes, classified as Type 1,
-              Type 2 or Unknown.
+            description_short: "People aged 17 or over with unresolved diabetes, classified by type."
             description_long: >-
-              People aged 17 or over need an unresolved diabetes diagnosis. NICE has
-              no age or resolution exclusion. Type is Type 1, Type 2 or Unknown;
-              Unknown includes untyped diabetes and other types such as MODY or
-              secondary diabetes. The latest type code determines classification; Type
-              1 takes precedence on a shared date. Based on NICE NG28. Code list:
-              DM_COD, with diabetes type and resolved-code evidence from the shared
-              diabetes records.
+              People aged 17 or over with a diabetes diagnosis qualify unless a resolution is
+              recorded on a later date. A same-day resolution retains membership. NICE also
+              starts at age 17 but has no resolution exclusion. Type is Type 1, Type 2 or
+              Unknown; Unknown includes untyped and other diabetes types. The latest type code
+              determines classification; Type 1 takes precedence on a shared date. Clinical
+              evidence is dated by the build date. For NICE counts, select people registered on
+              the build date. Based on NICE NG28. Code lists: DM_COD, DMTYPE1_COD, DMTYPE2_COD,
+              DMRES_COD (PCD).
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "DM017"
@@ -90,10 +82,14 @@ models:
         description: Whether person meets QOF diabetes register criteria
 
       - name: age
-        description: Person's current age
+        description: >-
+          Age in years from the approximate birth month, at the build date or at death for
+          deceased people; null when birth date is missing.
 
       - name: diabetes_type
-        description: Diabetes type classification (Type 1, Type 2, Unknown)
+        description: >-
+          Type 1, Type 2 or Unknown, from the latest type code. Type 1 wins on a shared date;
+          Unknown includes untyped and other diabetes types.
 
       - name: earliest_diagnosis_date
         description: Date of earliest diabetes diagnosis

@@ -23,8 +23,9 @@ WITH population AS (
 )
 SELECT person_id, 'IND148' AS indicator_id,
     'Contraception: LARC for people on oral or patch contraceptives' AS indicator_name,
+    'The percentage of women, on the register, prescribed an oral or patch contraceptive method in the preceding 12 months who have also received information from the contractor about long acting reversible methods of contraception in the preceding 12 months.' AS indicator_description,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Women aged 54 or under using oral or patch contraception' AS condition_name,
+    age, 'Women aged 54 or under using oral or patch contraception' AS denominator_description,
     {{ nice_practice_columns('result', reference) }},
     latest_oral_patch_date,
     latest_record_date, TRUE AS is_in_denominator,

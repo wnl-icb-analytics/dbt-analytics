@@ -5,4 +5,4 @@ select
     system,
     last_refreshed,
     ecl_expression_hash
-from {{ ref('raw_reference_ecl_cache') }}
+from {{ ref('raw_snomed_cluster_manager_ecl_cache') }}

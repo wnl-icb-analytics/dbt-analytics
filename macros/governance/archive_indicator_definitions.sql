@@ -8,8 +8,10 @@
   CREATE TABLE IF NOT EXISTS {{ history_table }} (
     indicator_id STRING,
     indicator_type STRING,
+    programme STRING,
     category STRING,
     clinical_domain STRING,
+    clinical_subdomain STRING,
     name_short STRING,
     description_short STRING,
     description_long STRING,
@@ -27,6 +29,10 @@
     archived_by STRING,
     dbt_run_id STRING
   );
+
+  -- Existing history keeps its versions; new fields remain null in older versions.
+  ALTER TABLE {{ history_table }} ADD COLUMN IF NOT EXISTS programme STRING;
+  ALTER TABLE {{ history_table }} ADD COLUMN IF NOT EXISTS clinical_subdomain STRING;
 
   -- Add table comment using existing macro pattern
   COMMENT ON TABLE {{ history_table }} IS '{{ generate_history_table_comment("def_indicator", "Historical versions of indicator definitions with daily granularity. Tracks changes to indicator definitions across different days only. Multiple runs on the same day update the existing record rather than creating new versions.") }}';
@@ -72,8 +78,10 @@
       WHERE curr.indicator_id = {{ history_table }}.indicator_id
         AND (
           curr.indicator_type != {{ history_table }}.indicator_type
+          OR COALESCE(curr.programme, '') != COALESCE({{ history_table }}.programme, '')
           OR COALESCE(curr.category, '') != COALESCE({{ history_table }}.category, '')
           OR COALESCE(curr.clinical_domain, '') != COALESCE({{ history_table }}.clinical_domain, '')
+          OR COALESCE(curr.clinical_subdomain, '') != COALESCE({{ history_table }}.clinical_subdomain, '')
           OR curr.name_short != {{ history_table }}.name_short
           OR curr.description_short != {{ history_table }}.description_short
           OR curr.description_long != {{ history_table }}.description_long
@@ -92,8 +100,10 @@
     AND hist.is_current = TRUE
   WHEN MATCHED THEN UPDATE SET
     indicator_type = curr.indicator_type,
+    programme = curr.programme,
     category = curr.category,
     clinical_domain = curr.clinical_domain,
+    clinical_subdomain = curr.clinical_subdomain,
     name_short = curr.name_short,
     description_short = curr.description_short,
     description_long = curr.description_long,
@@ -109,8 +119,10 @@
   WHEN NOT MATCHED THEN INSERT (
     indicator_id,
     indicator_type,
+    programme,
     category,
     clinical_domain,
+    clinical_subdomain,
     name_short,
     description_short,
     description_long,
@@ -130,8 +142,10 @@
   ) VALUES (
     curr.indicator_id,
     curr.indicator_type,
+    curr.programme,
     curr.category,
     curr.clinical_domain,
+    curr.clinical_subdomain,
     curr.name_short,
     curr.description_short,
     curr.description_long,

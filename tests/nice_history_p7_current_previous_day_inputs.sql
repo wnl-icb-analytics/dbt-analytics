@@ -43,7 +43,9 @@ synthetic_smoking AS (
     SELECT person_id, reporting_date, 'Current Smoker' AS latest_smoking_status,
         reporting_date AS latest_smoking_status_date,
         NULL::DATE AS latest_never_smoked_date,
-        reporting_date AS latest_smoking_intervention_date
+        NULL::DATE AS latest_smoking_unsuitable_date,
+        reporting_date AS latest_smoking_intervention_date,
+        FALSE AS is_ex_smoker_covered
     FROM synthetic_ltc
 ),
 synthetic_orders AS (

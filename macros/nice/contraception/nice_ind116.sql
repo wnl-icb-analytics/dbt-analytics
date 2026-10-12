@@ -25,8 +25,9 @@ WITH population AS (
 )
 SELECT person_id, 'IND116' AS indicator_id,
     'Contraception: advice for people with diabetes' AS indicator_name,
+    'The percentage of women with diabetes aged 17 or over and who have not attained the age of 45 who have a record of being given information and advice about pregnancy or conception or contraception tailored to their pregnancy and contraceptive intentions recorded in the preceding 12 months.' AS indicator_description,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'Women with diabetes, aged 17 to 44' AS condition_name,
+    age, 'Women with diabetes, aged 17 to 44' AS denominator_description,
     {{ nice_practice_columns('result', reference) }},
     latest_record_date, TRUE AS is_in_denominator,
     latest_record_date IS NOT NULL AS is_in_numerator,

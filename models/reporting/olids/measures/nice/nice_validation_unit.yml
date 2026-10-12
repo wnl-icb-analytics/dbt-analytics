@@ -1,0 +1,333 @@
+unit_tests:
+- name: nice_fix_ind101_same_day_and_before_mrc
+  model: fct_person_copd_pulmonary_rehabilitation_ind101_by_month
+  given:
+  - input: ref('int_mrc_dyspnoea_all')
+    format: sql
+    rows: SELECT person_id, '2025-06-01'::DATE AS clinical_effective_date, 3 AS mrc_grade FROM (SELECT column1::NUMBER
+      AS person_id, '2026-03-31'::DATE AS reporting_date, 50 AS age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR
+      AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-99101), (-99102))
+  - input: ref('int_referral_pulmonary_rehab')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date, NULL::VARCHAR AS pr_obs_type
+      WHERE FALSE
+  - input: ref('int_ltc_review_all')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date, NULL::VARCHAR AS review_type
+      WHERE FALSE
+  - input: ref('int_nice_copd_observations_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, column2::DATE AS event_date, 'PULREHAB_OFFERED_COD'::VARCHAR AS evidence_type
+      FROM VALUES (-99101,'2025-06-01'),(-99102,'2025-05-31')
+  expect:
+    rows:
+    - person_id: -99101
+      latest_offer_date: '2025-06-01'
+      is_in_numerator: true
+    - person_id: -99102
+      latest_offer_date: null
+      is_in_numerator: false
+  config:
+    tags:
+    - nice-validation
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 50 AS
+        age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR
+        AS practice_name FROM VALUES (-99101), (-99102)
+      nice_register: SELECT person_id, reporting_date, '2020-01-01'::DATE AS earliest_diagnosis_date FROM (SELECT
+        column1::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 50 AS age, '1976-01-01'::DATE AS birth_date_approx,
+        'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-99101),
+        (-99102))
+- name: nice_fix_ind139_treated_register
+  model: fct_person_hypothyroidism_tft_ind139_by_month
+  given:
+  - input: ref('fct_person_nice_hypothyroidism_register_by_month')
+    format: sql
+    rows: SELECT -99111::NUMBER AS person_id, '2026-03-31'::DATE AS month_end_date, TRUE AS is_on_register
+  - input: ref('int_nice_review_evidence_by_month')
+    format: sql
+    rows: SELECT person_id, reporting_date, '2026-01-01'::DATE AS latest_thyroid_function_test_date FROM (SELECT
+      column1::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 50 AS age, '1976-01-01'::DATE AS birth_date_approx,
+      'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-99111),
+      (-99112), (-99113))
+  expect:
+    rows:
+    - person_id: -99111
+      is_in_numerator: true
+  config:
+    tags:
+    - nice-validation
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 50 AS
+        age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR
+        AS practice_name FROM VALUES (-99111), (-99112), (-99113)
+- name: nice_fix_ex_smoker_financial_years
+  model: int_nice_smoking_evidence_by_month
+  given:
+  - input: ref('int_smoking_status_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, ROW_NUMBER() OVER (ORDER BY column1,column2)::VARCHAR AS id, column2::TIMESTAMP_NTZ AS clinical_effective_date, column3::DATE AS date_recorded, column4::VARCHAR AS source_cluster_id, column5::VARCHAR AS smoking_status, column4='NSMOK_COD' AS is_never_smoked_code, column4='EXSMOK_COD' AS is_ex_smoker_code, column4='LSMOK_COD' AS is_smoker_code FROM VALUES (-99121, '2021-06-01', '2021-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99121, '2022-06-01', '2022-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99121, '2023-06-01', '2023-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99122, '2020-06-01', '2020-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99122, '2022-06-01', '2022-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99122, '2023-06-01', '2023-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99123, '2021-06-01', '2021-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99123, '2022-06-01', '2022-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99123, '2023-06-01', '2023-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99124, '2021-06-01', '2021-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99124, '2022-06-01', '2022-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99124, '2023-06-01', '2023-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99125, '2021-06-01', '2021-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99125, '2022-06-01', '2026-04-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99125, '2023-06-01', '2023-06-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99123, '2024-07-01', '2024-07-01', 'LSMOK_COD', 'Current Smoker'),
+      (-99123, '2024-08-01', '2024-08-01', 'EXSMOK_COD', 'Ex-Smoker'),
+      (-99124, '2024-07-01', '2026-04-01', 'LSMOK_COD', 'Current Smoker'),
+      (-99124, '2024-08-01', '2024-08-01', 'EXSMOK_COD', 'Ex-Smoker')
+  - input: ref('int_nice_smoking_support_all')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS event_date WHERE FALSE
+  - input: ref('int_nice_smoking_unsuitability_all')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::DATE AS event_date WHERE FALSE
+  expect:
+    rows:
+    - person_id: -99121
+      is_ex_smoker_covered: true
+    - person_id: -99122
+      is_ex_smoker_covered: false
+    - person_id: -99123
+      is_ex_smoker_covered: false
+    - person_id: -99124
+      is_ex_smoker_covered: true
+    - person_id: -99125
+      is_ex_smoker_covered: false
+  config:
+    tags:
+    - nice-validation
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 50 AS
+        age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR
+        AS practice_name FROM VALUES (-99121), (-99122), (-99123), (-99124), (-99125)
+      nice_ltc_summary: SELECT NULL::NUMBER AS person_id, NULL::DATE AS reporting_date WHERE FALSE
+- name: nice_fix_ind154_ex_smoker_allowance
+  model: fct_person_smi_smoking_ind154_by_month
+  given:
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: SELECT person_id, reporting_date, birth_date_approx, TRUE AS has_active_smi_diagnosis, TRUE AS has_chd,
+      FALSE AS has_pad, FALSE AS has_stroke_tia, FALSE AS has_hypertension, FALSE AS has_diabetes, FALSE AS has_copd,
+      FALSE AS has_ckd, FALSE AS has_asthma, '2010-01-01'::DATE AS earliest_smi_diagnosis_date, '2010-01-01'::DATE
+      AS earliest_smoking_ltc_diagnosis_date FROM (SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date,
+      50 AS age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR
+      AS practice_name FROM VALUES (-99131), (-99132))
+  - input: ref('int_nice_smoking_evidence_by_month')
+    format: sql
+    rows: SELECT person_id, reporting_date, 'Ex-Smoker'::VARCHAR AS latest_smoking_status, '2023-06-01'::DATE AS
+      latest_smoking_status_date, NULL::DATE AS latest_never_smoked_date, NULL::DATE AS latest_smoking_intervention_date,
+      person_id=-99131 AS is_ex_smoker_covered FROM (SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE AS
+      reporting_date, 50 AS age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code,
+      'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-99131), (-99132))
+  expect:
+    rows:
+    - person_id: -99131
+      is_in_numerator: true
+    - person_id: -99132
+      is_in_numerator: false
+  config:
+    tags:
+    - nice-validation
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 50 AS
+        age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR
+        AS practice_name FROM VALUES (-99131), (-99132)
+- name: nice_fix_ind156_ex_smoker_allowance
+  model: fct_person_smoking_ind156_by_month
+  given:
+  - input: ref('int_nice_ltc_population_by_month')
+    format: sql
+    rows: SELECT person_id, reporting_date, birth_date_approx, TRUE AS has_active_smi_diagnosis, TRUE AS has_chd,
+      FALSE AS has_pad, FALSE AS has_stroke_tia, FALSE AS has_hypertension, FALSE AS has_diabetes, FALSE AS has_copd,
+      FALSE AS has_ckd, FALSE AS has_asthma, '2010-01-01'::DATE AS earliest_smi_diagnosis_date, '2010-01-01'::DATE
+      AS earliest_smoking_ltc_diagnosis_date FROM (SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date,
+      50 AS age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR
+      AS practice_name FROM VALUES (-99131), (-99132))
+  - input: ref('int_nice_smoking_evidence_by_month')
+    format: sql
+    rows: SELECT person_id, reporting_date, 'Ex-Smoker'::VARCHAR AS latest_smoking_status, '2023-06-01'::DATE AS
+      latest_smoking_status_date, NULL::DATE AS latest_never_smoked_date, NULL::DATE AS latest_smoking_intervention_date,
+      person_id=-99131 AS is_ex_smoker_covered FROM (SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE AS
+      reporting_date, 50 AS age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code,
+      'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-99131), (-99132))
+  expect:
+    rows:
+    - person_id: -99131
+      is_in_numerator: true
+    - person_id: -99132
+      is_in_numerator: false
+  config:
+    tags:
+    - nice-validation
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 50 AS
+        age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR
+        AS practice_name FROM VALUES (-99131), (-99132)
+- name: nice_fix_flu_four_boundaries
+  model: fct_person_flu_vaccination_ind131_by_month
+  given:
+  - input: ref('int_nice_flu_season_vaccination_all')
+    format: sql
+    rows: SELECT -99141::NUMBER AS person_id, column1::NUMBER AS season_year, column2::DATE AS latest_vaccination_date,
+      FALSE AS is_laiv FROM VALUES (2024,'2024-09-01'),(2025,'2025-09-01')
+  - input: ref('int_flu_vaccination_contraindication_all')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, FALSE AS is_persisting
+      WHERE FALSE
+  expect:
+    rows:
+    - reporting_date: '2026-03-30'
+      measurement_period_start: '2024-08-01'
+      latest_vaccination_date: '2024-09-01'
+      is_in_numerator: true
+    - reporting_date: '2026-03-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - reporting_date: '2026-04-01'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+    - reporting_date: '2026-12-31'
+      measurement_period_start: '2025-08-01'
+      latest_vaccination_date: '2025-09-01'
+      is_in_numerator: true
+  config:
+    tags:
+    - nice-validation
+  overrides:
+    macros:
+      nice_reference_population: SELECT -99141::NUMBER AS person_id, column1::DATE AS reporting_date, 50 AS age,
+        'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name FROM VALUES ('2026-03-30'),('2026-03-31'),('2026-04-01'),('2026-12-31')
+      nice_register: SELECT person_id, reporting_date FROM (SELECT -99141::NUMBER AS person_id, column1::DATE AS
+        reporting_date, 50 AS age, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR AS practice_name
+        FROM VALUES ('2026-03-30'),('2026-03-31'),('2026-04-01'),('2026-12-31'))
+- name: nice_fix_retinal_attendance_cluster
+  model: int_retinal_screening_all
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    rows: |-
+      SELECT 'synthetic-screen-code-1'::VARCHAR AS code, 'CVDRETSCRN_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, NULL::VARCHAR AS cluster_description, NULL::VARCHAR AS code_description
+      UNION ALL
+      SELECT 'synthetic-screen-code-2'::VARCHAR AS code, 'CVDRETSCRN_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, NULL::VARCHAR AS cluster_description, NULL::VARCHAR AS code_description
+      UNION ALL
+      SELECT 'synthetic-screen-code-2'::VARCHAR AS code, 'RETSCREN_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, NULL::VARCHAR AS cluster_description, NULL::VARCHAR AS code_description
+    format: sql
+  - input: ref('stg_olids_observation')
+    rows: |-
+      SELECT 'synthetic-screen-1'::VARCHAR AS id, NULL::VARCHAR AS patient_id, -99151::NUMBER AS person_id, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-01-01'::DATE AS date_recorded, NULL::NUMBER AS result_value, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, NULL::DATE AS problem_end_date, NULL::VARCHAR AS mapped_concept_id, 'synthetic-screen-code-1'::VARCHAR AS mapped_concept_code, 'Synthetic screening attendance'::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::NUMBER AS age_at_event, NULL::TIMESTAMP_NTZ AS lds_transform_datetime
+      UNION ALL
+      SELECT 'synthetic-screen-2'::VARCHAR AS id, NULL::VARCHAR AS patient_id, -99152::NUMBER AS person_id, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-01-01'::DATE AS date_recorded, NULL::NUMBER AS result_value, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, NULL::DATE AS problem_end_date, NULL::VARCHAR AS mapped_concept_id, 'synthetic-screen-code-2'::VARCHAR AS mapped_concept_code, 'Synthetic screening attendance'::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::NUMBER AS age_at_event, NULL::TIMESTAMP_NTZ AS lds_transform_datetime
+    format: sql
+  - input: ref('dim_person_active_patients')
+    format: sql
+    rows: SELECT NULL::NUMBER AS person_id WHERE FALSE
+  expect:
+    rows:
+    - person_id: -99151
+      source_cluster_id: CVDRETSCRN_COD
+      is_completed_screening: true
+    - person_id: -99152
+      source_cluster_id: RETSCREN_COD
+      is_completed_screening: true
+  config:
+    tags:
+    - nice-validation
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS source_cluster_id, FALSE AS is_completed_screening
+        WHERE FALSE
+- name: nice_fix_ind137_attendance_counts
+  model: fct_person_diabetes_retinal_screening_ind137_by_month
+  given:
+  - input: ref('int_retinal_screening_all')
+    format: sql
+    rows: SELECT -99151::NUMBER AS person_id, '2026-01-01'::DATE AS clinical_effective_date, 'CVDRETSCRN_COD'::VARCHAR
+      AS source_cluster_id
+  expect:
+    rows:
+    - person_id: -99151
+      is_in_numerator: true
+  config:
+    tags:
+    - nice-validation
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 50 AS
+        age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR
+        AS practice_name FROM VALUES (-99151)
+      nice_register: SELECT person_id, reporting_date FROM (SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE
+        AS reporting_date, 50 AS age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code,
+        'Synthetic practice'::VARCHAR AS practice_name FROM VALUES (-99151))
+- name: nice_fix_ind270_coded_not_value_and_known_date
+  model: fct_person_cvd_risk_assessment_ind270_by_month
+  given:
+  - input: ref('int_cvd_risk_profile_by_month')
+    format: sql
+    rows: SELECT person_id, reporting_date, 5::FLOAT AS latest_risk_score, '2026-01-01'::DATE AS latest_risk_score_date,
+      '2026-01-01'::DATE AS latest_risk_assessment_date, FALSE AS is_current_smoker, FALSE AS has_obesity, FALSE
+      AS has_hypertension, FALSE AS has_type1_diabetes, FALSE AS has_cvd, person_id=-99164 AS has_familial_hypercholesterolaemia,
+      FALSE AS has_ckd, NULL::DATE AS latest_lipid_lowering_order_date, NULL::FLOAT AS max_risk_score_ever, 6::FLOAT
+      AS latest_total_cholesterol FROM (SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date,
+      50 AS age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR
+      AS practice_name FROM VALUES (-99161), (-99162), (-99163), (-99164))
+  - input: ref('int_nice_fh_assessment_all')
+    format: sql
+    rows: SELECT column1::NUMBER AS person_id, '2020-01-01'::DATE AS clinical_effective_date, column2::DATE AS date_recorded,
+      TRUE AS is_hypercholesterolaemia FROM VALUES (-99161,'2020-01-01'),(-99163,'2026-04-01'),(-99164,'2020-01-01')
+  expect:
+    rows:
+    - person_id: -99161
+      is_in_numerator: true
+  config:
+    tags:
+    - nice-validation
+  overrides:
+    macros:
+      nice_reference_population: SELECT column1::NUMBER AS person_id, '2026-03-31'::DATE AS reporting_date, 50 AS
+        age, '1976-01-01'::DATE AS birth_date_approx, 'SYNTHETIC'::VARCHAR AS practice_code, 'Synthetic practice'::VARCHAR
+        AS practice_name FROM VALUES (-99161), (-99162), (-99163), (-99164)
+- name: nice_fix_hypercholesterolaemia_cluster
+  model: int_nice_fh_assessment_all
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    rows: SELECT 'synthetic-hyper-code'::VARCHAR AS code, 'FNFHYP_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS
+      source, NULL::VARCHAR AS cluster_description, NULL::VARCHAR AS code_description
+    format: sql
+  - input: ref('stg_olids_observation')
+    rows: SELECT 'synthetic-hyper'::VARCHAR AS id, NULL::VARCHAR AS patient_id, -99161::NUMBER AS person_id, '2020-01-01'::TIMESTAMP_NTZ
+      AS clinical_effective_date, '2020-01-01'::DATE AS date_recorded, NULL::NUMBER AS result_value, NULL::VARCHAR
+      AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display,
+      NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN
+      AS is_review, NULL::DATE AS problem_end_date, NULL::VARCHAR AS mapped_concept_id, 'synthetic-hyper-code'::VARCHAR
+      AS mapped_concept_code, NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id,
+      NULL::NUMBER AS age_at_event, NULL::TIMESTAMP_NTZ AS lds_transform_datetime
+    format: sql
+  expect:
+    rows:
+    - person_id: -99161
+      is_hypercholesterolaemia: true
+      is_clinical_fh_diagnosis: false
+  config:
+    tags:
+    - nice-validation
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, FALSE AS is_hypercholesterolaemia, FALSE AS is_clinical_fh_diagnosis
+        WHERE FALSE

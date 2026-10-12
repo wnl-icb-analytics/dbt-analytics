@@ -121,9 +121,9 @@ left join {{ ref('int_csds_care_contact_context') }} as ctx
     and r.unique_care_contact_identifier = ctx.unique_care_contact_identifier
 left join {{ ref('csds_service_or_team_type') }} as team_type
     on trim(ctx.service_or_team_type_code) = team_type.code
-left join {{ ref('attendance_status') }} as att on nullif(ltrim(trim(r.attended_or_did_not_attend_code), '0'), '') = att.code
-left join {{ ref('consultation_mechanism') }} as cm on trim(r.consultation_mechanism_community_care) = cm.code
-left join {{ ref('activity_location_type') }} as loc on trim(r.activity_location_type_code) = loc.code
+left join {{ ref('nhs_dd_attendance_status') }} as att on nullif(ltrim(trim(r.attended_or_did_not_attend_code), '0'), '') = att.code
+left join {{ ref('nhs_dd_consultation_mechanism') }} as cm on trim(r.consultation_mechanism_community_care) = cm.code
+left join {{ ref('nhs_dd_activity_location_type') }} as loc on trim(r.activity_location_type_code) = loc.code
 left join {{ ref('mhsds_care_contact_code_lookup') }} as admin
     on admin.code_set_name = 'administrative_category' and trim(r.administrative_category_code) = admin.code
 left join {{ ref('mhsds_care_contact_code_lookup') }} as consult
@@ -136,7 +136,7 @@ left join {{ ref('mhsds_care_contact_code_lookup') }} as medium
     on medium.code_set_name = 'consultation_medium_used' and trim(r.consultation_medium_used) = medium.code
 left join {{ ref('mhsds_care_contact_code_lookup') }} as therapy
     on therapy.code_set_name = 'group_therapy_indicator' and trim(r.group_therapy_indicator) = therapy.code
-left join {{ ref('attendance_status') }} as source_attendance
+left join {{ ref('nhs_dd_attendance_status') }} as source_attendance
     on nullif(ltrim(trim(r.attendance_status), '0'), '') = source_attendance.code
 left join {{ ref('organisation') }} as provider
     on upper(trim(r.organisation_code_provider)) = provider.organisation_code

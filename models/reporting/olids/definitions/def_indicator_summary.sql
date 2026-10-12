@@ -28,8 +28,10 @@ code_summary AS (
 SELECT 
     i.indicator_id,
     i.indicator_type,
-    i.category,
+    i.programme,
     i.clinical_domain,
+    i.clinical_subdomain,
+    i.category,
     i.name_short,
     i.description_short,
     i.source_model,

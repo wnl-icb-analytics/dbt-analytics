@@ -33,10 +33,11 @@ SELECT
     person_id,
     'IND317' AS indicator_id,
     'Heart failure: 4 pillars (HFrEF)' AS indicator_name,
+    'The percentage of patients with a current diagnosis of heart failure with reduced ejection fraction, who are currently treated with: an angiotensin-converting enzyme inhibitor or angiotensin receptor-neprilysin inhibitor or angiotensin II receptor blocker a beta blocker a mineralocorticoid receptor antagonist a sodium glucose co-transporter-2 inhibitor.' AS indicator_description,
     reporting_date,
     DATEADD(month, -6, reporting_date) AS measurement_period_start,
     age,
-    'Heart failure with reduced ejection fraction' AS condition_name,
+    'Heart failure with reduced ejection fraction' AS denominator_description,
     {{ nice_practice_columns('result', reference) }},
     {% for name in ['ras', 'beta_blocker', 'hf_licensed_beta_blocker', 'mra', 'sglt2'] %}
     latest_{{ name }}_order_date,

@@ -60,10 +60,15 @@ select
     , lad_at_event
     , imd_at_event
     , reg_practice_at_event
+    , practice.pcn_name as reg_practice_pcn_name_latest
+    , practice.neighbourhood_name as reg_practice_neighbourhood_name_latest
+    , practice.health_borough_name as reg_practice_health_borough_name_latest
     , visit_occurrence_type
     , discharge_destination_code
     , discharge_destination_name
     , discharge_method_code
     , discharge_method_name
     , critical_care_days_for_length_of_stay
-from {{ ref('int_sus_apc_encounter') }}
+from {{ ref('int_sus_apc_encounter') }} as encounter
+left join {{ ref('practice_wnl_all') }} as practice
+    on encounter.reg_practice_at_event = practice.practice_code

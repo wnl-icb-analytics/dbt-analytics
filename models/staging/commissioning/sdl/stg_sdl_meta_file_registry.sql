@@ -10,6 +10,8 @@ select
     created_datetime,
     row_count,
     loader_job_name,
+    financial_year,
+    financial_month,
     last_refreshed_at
 
 from {{ ref('raw_sdl_wnl_meta_file_registry') }}

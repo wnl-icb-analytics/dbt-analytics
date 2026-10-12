@@ -1,0 +1,40 @@
+seeds:
+  - name: indicator_classification
+    description: >-
+      Programme and clinical classification, one row per catalogue indicator.
+      Condition-specific entries use the LTC condition lookup for domain and condition
+      names. Other entries supply a domain and topic directly.
+    config:
+      column_types:
+        indicator_id: varchar(100)
+        programme: varchar(20)
+        condition_code: varchar(20)
+        clinical_domain: varchar(100)
+        clinical_subdomain: varchar(100)
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: indicator_id
+        description: Indicator identifier in def_indicator.
+        data_tests:
+          - not_null
+          - unique
+      - name: programme
+        description: Programme that owns the indicator; NICE takes precedence over QOF membership.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['NICE', 'QOF', 'LTC_LCS', 'FLU', 'COVID', 'LOCAL']
+      - name: condition_code
+        description: LTC condition code; null when the indicator is classified by topic.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('ltc_register_denominator_rules')
+                field: condition_code
+      - name: clinical_domain
+        description: Clinical domain for topic entries; null when condition_code supplies it.
+      - name: clinical_subdomain
+        description: Topic within the clinical domain; null when condition_code supplies the condition name.

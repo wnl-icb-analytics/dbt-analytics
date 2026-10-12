@@ -1,10 +1,17 @@
 models:
   - name: fct_person_ndh_register
-    description: >
-      Clinical NDH register at the current date. One row represents one person
-      aged 18 or over with NDH, impaired glucose tolerance or pre-diabetes
-      evidence and no unresolved diabetes. Gestational diabetes alone never
-      adds a row; use fct_person_qof_ndh_gdm_register for the QOF v51 denominator.
+    description: >-
+      Coded non-diabetic hyperglycaemia register (NICE IND170). One row per register member.
+
+
+      Registration status is not filtered. People aged 18 or over with coded non-diabetic
+      hyperglycaemia, pre-diabetes or impaired glucose tolerance qualify; unresolved diabetes is
+      excluded. Diabetes is resolved only when its latest resolution timestamp is later than its
+      latest diagnosis. Gestational diabetes alone does not qualify. NICE also accepts two
+      consecutive HbA1c results of 42 to 47 mmol/mol or fasting glucose results of 5.5 to 6.9
+      mmol/L within 3 months; this register uses diagnosis codes only. Future-dated records can
+      affect membership. For NICE counts, select people registered on the build date. Based on
+      NICE PH38. Code lists: NDH_COD, IGT_COD, PRD_COD, DM_COD, DMRES_COD (PCD).
     config:
       meta:
         indicator:
@@ -40,13 +47,15 @@ models:
               Adults with coded non-diabetic hyperglycaemia, pre-diabetes or impaired
               glucose tolerance.
             description_long: >-
-              People aged 18 or over with non-diabetic hyperglycaemia, pre-diabetes or
-              impaired glucose tolerance qualify; unresolved diabetes is excluded.
-              Gestational diabetes alone does not qualify. NICE also includes two
-              consecutive HbA1c results of 42 to 47 mmol/mol or fasting glucose
-              results of 5.5 to 6.9 mmol/L within three months. This register uses
-              diagnostic codes only. Based on NICE PH38. Code lists: NDH_COD, IGT_COD
-              and PRD_COD.
+              People aged 18 or over with coded non-diabetic hyperglycaemia, pre-diabetes or
+              impaired glucose tolerance qualify; unresolved diabetes is excluded. Diabetes is
+              resolved only when its latest resolution timestamp is later than its latest
+              diagnosis. Gestational diabetes alone does not qualify. NICE also accepts two
+              consecutive HbA1c results of 42 to 47 mmol/mol or fasting glucose results of 5.5
+              to 6.9 mmol/L within 3 months; this register uses diagnosis codes only. Records dated
+              after the build date can affect membership. For NICE counts, select people registered on
+              the build date. Based on NICE PH38. Code lists: NDH_COD, IGT_COD, PRD_COD, DM_COD,
+              DMRES_COD (PCD).
             source_column: "is_on_register"
             is_qof: false
             qof_indicator: null

@@ -43,7 +43,7 @@ DIMENSIONS(
     demographics.sk_patient_id AS sk_patient_id COMMENT = 'Representative pseudonymised patient key for aggregate-only linkage to non-OLIDS semantic views. Never return sk_patient_id in final results.',
     indicators.indicator_id AS indicator_id WITH SYNONYMS = ('NICE indicator', 'measure') COMMENT = 'NICE indicator identifier IND239 to IND246. Filter this before using indicator metrics.',
     indicators.indicator_name AS indicator_name COMMENT = 'Published NICE indicator name',
-    indicators.condition_name AS condition_name WITH SYNONYMS = ('condition', 'register') COMMENT = 'Register population: Hypertension, Coronary heart disease, Stroke and transient ischaemic attack, or Peripheral arterial disease',
+    indicators.denominator_description AS denominator_description WITH SYNONYMS = ('condition', 'register') COMMENT = 'Short description of the people in the denominator.',
     indicators.reporting_date AS reporting_date WITH SYNONYMS = ('as at date', 'measure date') COMMENT = 'Date on which age and the rolling 12-month window were assessed',
     indicators.age AS age COMMENT = 'Age in years on the reporting date',
 

@@ -25,8 +25,9 @@ reviews AS (
 )
 SELECT population.person_id, 'IND89' AS indicator_id,
     'Diabetes: annual dietary review' AS indicator_name,
+    'The percentage of patients with diabetes who have a record of a dietary review by a suitably competent professional in the preceding 15 months.' AS indicator_description,
     population.reporting_date, DATEADD(month, -15, population.reporting_date) AS measurement_period_start,
-    population.age, 'Diabetes' AS condition_name,
+    population.age, 'Diabetes' AS denominator_description,
     {{ nice_practice_columns('population', reference) }},
     review.latest_record_date,
     TRUE AS is_in_denominator, review.latest_record_date IS NOT NULL AS is_in_numerator,

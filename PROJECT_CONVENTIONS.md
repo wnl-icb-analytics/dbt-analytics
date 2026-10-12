@@ -231,7 +231,8 @@ processes are outside it. A measure is one row per person in the indicator's
 denominator, restricted to currently registered, living, non-test people
 through `dim_person_active_patients`, assessed on the build date. It emits the
 shared columns listed in `fct_person_nice_indicator_status.yml` (`person_id`,
-`indicator_id`, `reporting_date`, `measurement_period_start`, `age`, practice,
+`indicator_id`, `indicator_name`, `indicator_description`, `denominator_description`,
+`reporting_date`, `measurement_period_start`, `age`, practice,
 `is_in_denominator`, `is_in_numerator`, `indicator_status`) plus its own
 readings, thresholds and provenance.
 

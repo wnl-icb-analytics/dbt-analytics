@@ -28,8 +28,9 @@ support AS (
 )
 SELECT population.person_id, 'IND222' AS indicator_id,
     'Cancer: review within 3 months' AS indicator_name,
+    'The percentage of patients with cancer, diagnosed within the preceding 12 months, who have had a discussion within 3 months of diagnosis about the support available from primary care.' AS indicator_description,
     population.reporting_date, DATEADD(month, -15, population.reporting_date) AS measurement_period_start,
-    population.age, 'Cancer diagnosed 15 to 3 months ago'::VARCHAR(43) AS condition_name,
+    population.age, 'Cancer diagnosed 15 to 3 months ago'::VARCHAR(43) AS denominator_description,
     {{ nice_practice_columns('population', reference) }},
     population.diagnosis_date, support.latest_record_date,
     TRUE AS is_in_denominator, support.latest_record_date IS NOT NULL AS is_in_numerator,

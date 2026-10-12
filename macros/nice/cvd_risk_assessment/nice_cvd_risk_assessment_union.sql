@@ -19,10 +19,11 @@ SELECT
     person_id,
     indicator_id,
     indicator_name,
+    indicator_description,
     reporting_date,
     measurement_period_start,
     age,
-    condition_name,
+    denominator_description,
     {{ nice_practice_columns(none, reference) }},
     {% if indicator_model == 'fct_person_blood_pressure_cvd_prevention_ind112' %}
     NULL::FLOAT AS latest_risk_score,

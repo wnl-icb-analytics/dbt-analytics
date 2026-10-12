@@ -53,9 +53,7 @@ max(olids_death_year) as olids_death_year,
 max(olids_death_date_approx) as olids_death_date_approx,
 max(pds_death_status) as pds_death_status,
 max(pds_date_of_death) as pds_date_of_death,
-max(reg_date_of_death) as reg_date_of_death,
---check to see if PDS and REGISTRY dates of death are the same
-EQUAL_NULL(MAX(a.pds_date_of_death), MAX(a.reg_date_of_death)) AS death_date_match_flag
+max(reg_date_of_death) as reg_date_of_death
 FROM (
 --1. Deaths from OLIDS (choose MAX Date if > death date per person or one patient id has a death as null and the other does not)
 select distinct
@@ -107,9 +105,30 @@ LEFT JOIN {{ ref('stg_registries_deaths') }} d on d.sk_patient_id = p.sk_patient
 ) a
 group by all
 )
+-- A registry or PDS death dated in or before the birth month is a mis-keyed birth date
+-- when another source dates the death later; it is not used for final_date_of_death.
+-- Genuine infant deaths keep their dates, as no source contradicts them.
+,USABLE_DATES as (
+select
+pop.*,
+CASE WHEN pop.reg_date_of_death <= bm.birth_month_end
+    AND GREATEST_IGNORE_NULLS(pop.pds_date_of_death, pop.olids_death_date_approx) > bm.birth_month_end
+    THEN NULL ELSE pop.reg_date_of_death END AS usable_reg_date_of_death,
+CASE WHEN pop.pds_date_of_death <= bm.birth_month_end
+    AND GREATEST_IGNORE_NULLS(pop.reg_date_of_death, pop.olids_death_date_approx) > bm.birth_month_end
+    THEN NULL ELSE pop.pds_date_of_death END AS usable_pds_date_of_death
+FROM POPULATION pop
+LEFT JOIN (
+    select
+    id as patient_id,
+    LAST_DAY(TO_DATE(birth_year || '-' || birth_month || '-01')) as birth_month_end
+    FROM {{ ref('stg_olids_patient') }}
+    where birth_year is not null and birth_month is not null
+) bm on bm.patient_id = pop.patient_id
+)
 ,COMBINED as (
-select 
-patient_id, 
+select
+patient_id,
 sk_patient_id,
 CASE 
 WHEN (pds_date_of_death IS NOT NULL OR reg_date_of_death IS NOT NULL OR olids_death_date_approx IS NOT NULL) THEN TRUE ELSE FALSE END AS is_deceased,
@@ -118,13 +137,13 @@ pds_death_status,
 pds_date_of_death,
 reg_date_of_death,
 --choose formal registry date if there is a mismatch where available or choose PDS (informal death status) if registry is null or choose olids_death_date_approx
-CASE 
-WHEN pds_date_of_death IS NOT NULL AND reg_date_of_death IS NOT NULL
-and death_date_match_flag = FALSE THEN reg_date_of_death
-WHEN pds_date_of_death IS NOT NULL AND reg_date_of_death IS NULL
-and death_date_match_flag = FALSE THEN pds_date_of_death
-WHEN olids_death_date_approx is not null and reg_date_of_death is null and pds_date_of_death is null
-THEN olids_death_date_approx ELSE reg_date_of_death END AS final_date_of_death,
+CASE
+WHEN usable_pds_date_of_death IS NOT NULL AND usable_reg_date_of_death IS NOT NULL
+and NOT EQUAL_NULL(usable_pds_date_of_death, usable_reg_date_of_death) THEN usable_reg_date_of_death
+WHEN usable_pds_date_of_death IS NOT NULL AND usable_reg_date_of_death IS NULL
+THEN usable_pds_date_of_death
+WHEN olids_death_date_approx is not null and usable_reg_date_of_death is null and usable_pds_date_of_death is null
+THEN olids_death_date_approx ELSE usable_reg_date_of_death END AS final_date_of_death,
 --Derive death source
 CASE 
 WHEN olids_death_date_approx is not null and reg_date_of_death is null and pds_date_of_death is null THEN 'OLIDS'
@@ -140,7 +159,7 @@ WHEN pds_date_of_death is null AND olids_death_date_approx is null AND reg_date_
 WHEN pds_date_of_death is not null AND olids_death_date_approx is not null AND reg_date_of_death IS NULL THEN 'PDS OLIDS'
 WHEN pds_date_of_death is null AND olids_death_date_approx is not null AND reg_date_of_death IS NOT NULL THEN 'Registry OLIDS'
 END as death_source_flag
-FROM POPULATION
+FROM USABLE_DATES
 GROUP BY ALL
 )
 --FINAL 

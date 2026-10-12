@@ -1,11 +1,10 @@
 models:
   - name: fct_person_frailty_register_by_month
-    description: >
-      Frailty register at each completed month-end, on the rules of
-      fct_person_frailty_register: a MILDFRAIL_COD, MODFRAIL_COD or SEVFRAIL_COD
-      finding, with no age restriction or resolution codes. Latest coded severity
-      takes precedence; same-date ties prefer greater severity, then the higher
-      observation ID; calculated frailty scores are excluded.
+    description: >-
+      Frailty register at each completed month-end, on the rules of fct_person_frailty_register:
+      a MILDFRAIL_COD, MODFRAIL_COD or SEVFRAIL_COD finding, with no age restriction or
+      resolution codes. Latest coded severity takes precedence; equal clinical timestamps prefer
+      greater severity, then the higher observation ID; calculated frailty scores are excluded.
       {{ doc('ltc_register_by_month_scope') }}
     config:
       meta:
@@ -28,7 +27,9 @@ models:
       - name: practice_code
         description: "{{ doc('ltc_register_by_month_practice_code') }}"
       - name: latest_frailty_severity
-        description: Severity of the latest coded frailty finding known by the month-end; same-date ties prefer greater severity, then the higher observation ID.
+        description: >-
+          Latest coded frailty severity by clinical timestamp known by month-end. Equal
+          timestamps prefer greater severity, then the higher observation ID.
         data_tests:
           - not_null
           - accepted_values:

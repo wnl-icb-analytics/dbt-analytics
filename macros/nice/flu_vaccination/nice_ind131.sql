@@ -68,7 +68,7 @@ assessed AS (
         season.latest_vaccination_date AS latest_record_date,
         season.person_id IS NOT NULL AS is_in_numerator
     FROM indicator_population AS population
-    -- March still selects the preceding completed season; the switch is on 1 April.
+    -- On 31 March the season ending that day counts as complete.
     LEFT JOIN {{ ref('int_nice_flu_season_vaccination_all') }} AS season
         ON population.person_id = season.person_id
         AND population.season_year = season.season_year
@@ -78,10 +78,11 @@ SELECT
     person_id,
     'IND131' AS indicator_id,
     'Immunisation: flu vaccine for people with CHD' AS indicator_name,
+    'The percentage of patients with coronary heart disease (CHD) who have had influenza immunisation in the preceding 1 August to 31 March.' AS indicator_description,
     reporting_date AS reporting_date,
     DATE_FROM_PARTS({{ nice_flu_season_year('reporting_date') }}, 8, 1) AS measurement_period_start,
     age,
-    'Coronary heart disease' AS condition_name,
+    'Coronary heart disease' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_vaccination_date,
     is_laiv,

@@ -54,14 +54,16 @@ models:
         description: "NICE indicator identifier."
       - name: indicator_name
         description: "NICE published indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess eligibility and achievement."
       - name: measurement_period_start
         description: "Exclusive start of the 12-month milestone cohort."
       - name: age
         description: "Age in completed years on the reporting date; null when the birth date is missing."
-      - name: condition_name
-        description: "Short label for the denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the registration practice on the build date."
       - name: current_practice_name
@@ -71,7 +73,7 @@ models:
       - name: milestone_date
         description: "Approximate date the child reached the required age milestone, in the 12-month eligibility window."
       - name: doses_in_window
-        description: "Number of distinct vaccine administration or order dates in the indicator age window; for IND217 this counts MMR or MMRV doses only."
+        description: "Number of distinct vaccine administration or order dates in the indicator age window, including zero when none. For IND217 this counts MMR or MMRV doses only; the booster is assessed separately."
       - name: is_in_denominator
         description: "Always true; each row meets the documented eligibility and exclusion rules."
       - name: is_in_numerator
@@ -91,10 +93,10 @@ models:
       or vaccine order dates. Excludes recorded vaccine contraindications as a
       substitute for confirmed anaphylaxis. Vaccination age uses recorded completed
       years where available, otherwise approximate birthdays. The upper age limit uses
-      approximate birth date. NICE's separate immunocompromise exclusion is not fully
-      applied. No personalised care adjustments are applied. Based on NICE NG218. Code
-      lists: MMR and MMRV administration, drug and contraindication lists
-      (CHILDHOOD_IMMS_CODES); MMRVACDRUG_COD, MMRVVACDRUG_COD (NHS drug refset).
+      approximate birth date. No separate immunocompromise exclusion is applied. No
+      personalised care adjustments are applied. Based on NICE NG218. Code lists: MMR
+      and MMRV administration, drug and contraindication lists (CHILDHOOD_IMMS_CODES);
+      MMRVACDRUG_COD, MMRVVACDRUG_COD (NHS drug refset).
     config:
       meta:
         owner:
@@ -109,16 +111,15 @@ models:
           description_short: "MMR vaccination by 18 months."
           description_long: >-
             People registered on the build date whose 18-month milestone, based on
-            approximate birth date, fell in the last 12 months. Achieved with at
-            least one MMR or MMRV dose from age 12 months to before 18 months.
-            Doses count distinct administration or vaccine order dates. Excludes
-            recorded vaccine contraindications as a substitute for confirmed
-            anaphylaxis. Vaccination age uses recorded completed years where
-            available, otherwise approximate birthdays. The upper age limit uses
-            approximate birth date. NICE's separate immunocompromise exclusion is
-            not fully applied. No personalised care adjustments are applied. Based
-            on NICE NG218. Code lists: MMR and MMRV administration, drug and
-            contraindication lists (CHILDHOOD_IMMS_CODES); MMRVACDRUG_COD,
+            approximate birth date, fell in the last 12 months. Achieved with at least
+            one MMR or MMRV dose from age 12 months to before 18 months. Doses count
+            distinct administration or vaccine order dates. Excludes recorded vaccine
+            contraindications as a substitute for confirmed anaphylaxis. Vaccination age
+            uses recorded completed years where available, otherwise approximate
+            birthdays. The upper age limit uses approximate birth date. No separate
+            immunocompromise exclusion is applied. No personalised care adjustments are
+            applied. Based on NICE NG218. Code lists: MMR and MMRV administration, drug
+            and contraindication lists (CHILDHOOD_IMMS_CODES); MMRVACDRUG_COD,
             MMRVVACDRUG_COD (NHS drug refset).
           is_qof: false
           source_column: "is_in_numerator"
@@ -129,8 +130,8 @@ models:
 
   - name: fct_person_childhood_immunisation_ind217
     description: >-
-      Preschool booster and MMR vaccination by age 5 (NICE IND217). One row per person
-      in the denominator on the build date.
+      Preschool booster and two MMR doses by age 5 (NICE IND217). One row per person in
+      the denominator on the build date.
 
 
       People registered on the build date whose fifth birthday, based on approximate
@@ -139,9 +140,9 @@ models:
       administration or vaccine order dates. Excludes recorded vaccine contraindications
       as a substitute for confirmed anaphylaxis. Vaccination age uses recorded completed
       years where available, otherwise approximate birthdays. A generic 4-in-1 product
-      alone does not establish a booster. NICE's separate immunocompromise exclusion is
-      not fully applied. No personalised care adjustments are applied. Based on NICE
-      NG218. Code lists: MMR and MMRV administration, drug and contraindication lists
+      alone does not establish a booster. No separate immunocompromise exclusion is
+      applied. No personalised care adjustments are applied. Based on NICE NG218. Code
+      lists: MMR and MMRV administration, drug and contraindication lists
       (CHILDHOOD_IMMS_CODES); DTAPIPVVACBOOST_COD, DTAPIPVCON_COD, DTPCON_COD (PCD);
       MMRVACDRUG_COD, MMRVVACDRUG_COD (NHS drug refset).
     config:
@@ -155,21 +156,20 @@ models:
           category: "IMMUNISATION"
           clinical_domain: "Prevention"
           name_short: "Preschool booster and two MMR doses"
-          description_short: "Preschool booster and MMR vaccination by age 5."
+          description_short: "Preschool booster and at least two MMR or MMRV doses, assessed after the fifth birthday."
           description_long: >-
             People registered on the build date whose fifth birthday, based on
             approximate birth date, fell in the last 12 months. Achieved with an
-            explicit DTaP/IPV booster and at least two MMR or MMRV doses at ages 1
-            to 4. Doses count distinct administration or vaccine order dates.
-            Excludes recorded vaccine contraindications as a substitute for
-            confirmed anaphylaxis. Vaccination age uses recorded completed years
-            where available, otherwise approximate birthdays. A generic 4-in-1
-            product alone does not establish a booster. NICE's separate
-            immunocompromise exclusion is not fully applied. No personalised care
-            adjustments are applied. Based on NICE NG218. Code lists: MMR and MMRV
-            administration, drug and contraindication lists
-            (CHILDHOOD_IMMS_CODES); DTAPIPVVACBOOST_COD, DTAPIPVCON_COD,
-            DTPCON_COD (PCD); MMRVACDRUG_COD, MMRVVACDRUG_COD (NHS drug refset).
+            explicit DTaP/IPV booster and at least two MMR or MMRV doses at ages 1 to 4.
+            Doses count distinct administration or vaccine order dates. Excludes
+            recorded vaccine contraindications as a substitute for confirmed
+            anaphylaxis. Vaccination age uses recorded completed years where available,
+            otherwise approximate birthdays. A generic 4-in-1 product alone does not
+            establish a booster. No separate immunocompromise exclusion is applied. No
+            personalised care adjustments are applied. Based on NICE NG218. Code lists:
+            MMR and MMRV administration, drug and contraindication lists
+            (CHILDHOOD_IMMS_CODES); DTAPIPVVACBOOST_COD, DTAPIPVCON_COD, DTPCON_COD
+            (PCD); MMRVACDRUG_COD, MMRVVACDRUG_COD (NHS drug refset).
           is_qof: false
           source_column: "is_in_numerator"
           usage_contexts:
@@ -179,8 +179,8 @@ models:
 
   - name: fct_person_childhood_immunisation_ind218
     description: >-
-      MMR vaccination by age 5 (NICE IND218). One row per person in the denominator on
-      the build date.
+      At least one MMR dose by age 5 (NICE IND218). One row per person in the
+      denominator on the build date.
 
 
       People registered on the build date whose fifth birthday, based on approximate
@@ -188,9 +188,9 @@ models:
       dose at ages 1 to 4. Doses count distinct administration or vaccine order dates.
       Excludes recorded vaccine contraindications as a substitute for confirmed
       anaphylaxis. Vaccination age uses recorded completed years where available,
-      otherwise approximate birthdays. NICE's separate immunocompromise exclusion is not
-      fully applied. No personalised care adjustments are applied. Based on NICE NG218.
-      Code lists: MMR and MMRV administration, drug and contraindication lists
+      otherwise approximate birthdays. No separate immunocompromise exclusion is
+      applied. No personalised care adjustments are applied. Based on NICE NG218. Code
+      lists: MMR and MMRV administration, drug and contraindication lists
       (CHILDHOOD_IMMS_CODES); MMRVACDRUG_COD, MMRVVACDRUG_COD (NHS drug refset).
     config:
       meta:
@@ -203,18 +203,17 @@ models:
           category: "IMMUNISATION"
           clinical_domain: "Prevention"
           name_short: "MMR: one dose by age 5"
-          description_short: "MMR vaccination by age 5."
+          description_short: "At least one MMR or MMRV dose at ages 1 to 4, assessed after the fifth birthday."
           description_long: >-
             People registered on the build date whose fifth birthday, based on
-            approximate birth date, fell in the last 12 months. Achieved with at
-            least one MMR or MMRV dose at ages 1 to 4. Doses count distinct
-            administration or vaccine order dates. Excludes recorded vaccine
-            contraindications as a substitute for confirmed anaphylaxis.
-            Vaccination age uses recorded completed years where available,
-            otherwise approximate birthdays. NICE's separate immunocompromise
-            exclusion is not fully applied. No personalised care adjustments are
-            applied. Based on NICE NG218. Code lists: MMR and MMRV administration,
-            drug and contraindication lists (CHILDHOOD_IMMS_CODES);
+            approximate birth date, fell in the last 12 months. Achieved with at least
+            one MMR or MMRV dose at ages 1 to 4. Doses count distinct administration or
+            vaccine order dates. Excludes recorded vaccine contraindications as a
+            substitute for confirmed anaphylaxis. Vaccination age uses recorded
+            completed years where available, otherwise approximate birthdays. No
+            separate immunocompromise exclusion is applied. No personalised care
+            adjustments are applied. Based on NICE NG218. Code lists: MMR and MMRV
+            administration, drug and contraindication lists (CHILDHOOD_IMMS_CODES);
             MMRVACDRUG_COD, MMRVVACDRUG_COD (NHS drug refset).
           is_qof: false
           source_column: "is_in_numerator"
@@ -356,14 +355,16 @@ models:
         description: "NICE indicator identifier."
       - name: indicator_name
         description: "NICE published indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
       - name: reporting_date
         description: "Build date used to assess eligibility and achievement."
       - name: measurement_period_start
         description: "Exclusive start of the 12-month milestone cohort."
       - name: age
         description: "Age in completed years on the reporting date; null when the birth date is missing."
-      - name: condition_name
-        description: "Short label for the denominator population."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: current_practice_code
         description: "ODS code of the registration practice on the build date."
       - name: current_practice_name
@@ -373,7 +374,7 @@ models:
       - name: milestone_date
         description: "Approximate date the child reached the required age milestone, in the 12-month eligibility window."
       - name: doses_in_window
-        description: "Number of distinct vaccine administration or order dates in the indicator age window; for IND217 this counts MMR or MMRV doses only."
+        description: "Number of distinct vaccine administration or order dates in the indicator age window, including zero when none. For IND217 this counts MMR or MMRV doses only; the booster is assessed separately."
       - name: is_in_denominator
         description: "Always true; each row meets the documented eligibility and exclusion rules."
       - name: is_in_numerator
@@ -403,6 +404,12 @@ models:
               - person_id
               - indicator_id
     columns:
+      - name: indicator_name
+        description: "Published NICE indicator title."
+      - name: indicator_description
+        description: "NICE's published statement of the indicator."
+      - name: denominator_description
+        description: "Short description of the people in the denominator."
       - name: person_id
         description: "Identifier of the person in the indicator denominator."
       - name: indicator_id
@@ -422,7 +429,7 @@ models:
       - name: milestone_date
         description: "Approximate date the child reached the required age milestone, in the 12-month eligibility window."
       - name: doses_in_window
-        description: "Number of distinct vaccine administration or order dates in the indicator age window; for IND217 this counts MMR or MMRV doses only."
+        description: "Number of distinct vaccine administration or order dates in the indicator age window, including zero when none. For IND217 this counts MMR or MMRV doses only; the booster is assessed separately."
       - name: primary_doses_by_12_months
         description: "Distinct MenB administration or order dates at recorded age 0; missing event age uses the approximate first birthday. Null for indicators other than IND226."
       - name: booster_doses_12_to_18_months
@@ -436,6 +443,7 @@ models:
       Includes IND215, IND216, IND217, IND218, IND224, IND225, IND226, with the eligibility,
       exclusions and achievement rules documented for each indicator. Records achievement and
       evidence used to track changes in clinical results.
+      Labels join from def_indicator or the measure tables by indicator_id.
     config:
       meta:
         owner:
@@ -468,4 +476,4 @@ models:
       - name: milestone_date
         description: "Approximate date the child reached the required age milestone, in the 12-month eligibility window."
       - name: doses_in_window
-        description: "Number of distinct vaccine administration or order dates in the indicator age window; for IND217 this counts MMR or MMRV doses only."
+        description: "Number of distinct vaccine administration or order dates in the indicator age window, including zero when none. For IND217 this counts MMR or MMRV doses only; the booster is assessed separately."

@@ -31,8 +31,9 @@ tests AS (
 )
 SELECT population.person_id, 'IND210' AS indicator_id,
     'HIV: testing at registration' AS indicator_name,
+    'The percentage of adults and young people newly registered with a GP in an area of high or extremely high HIV prevalence who receive an HIV test within 3 months of registration.' AS indicator_description,
     population.reporting_date, DATEADD(month, -15, population.reporting_date) AS measurement_period_start,
-    population.age, 'New registrants aged 16 or over without known HIV' AS condition_name,
+    population.age, 'New registrants aged 16 or over without known HIV' AS denominator_description,
     {{ nice_practice_columns('population', reference) }},
     population.registration_start_date, test.latest_record_date,
     TRUE AS is_in_denominator, test.latest_record_date IS NOT NULL AS is_in_numerator,

@@ -15,13 +15,13 @@ WITH indicator_population AS (
         population.practice_name,
         review.latest_thyroid_function_test_date
     FROM ({{ nice_reference_population(reference) }}) AS population
-    INNER JOIN {{ nice_ref('int_nice_ltc_population', reference) }} AS profile
-        ON population.person_id = profile.person_id
-        AND population.reporting_date = profile.reporting_date
+    INNER JOIN {{ nice_ref('fct_person_nice_hypothyroidism_register', reference) }} AS register
+        ON population.person_id = register.person_id
+        AND population.reporting_date = {% if reference == 'current' %}register.reporting_date{% else %}register.month_end_date{% endif %}
     LEFT JOIN {{ nice_ref('int_nice_review_evidence', reference) }} AS review
         ON population.person_id = review.person_id
         AND population.reporting_date = review.reporting_date
-    WHERE profile.has_hypothyroidism
+    WHERE register.is_on_register
 ),
 
 assessed AS (
@@ -44,10 +44,11 @@ SELECT
     person_id,
     'IND139' AS indicator_id,
     'Hypothyroidism: annual thyroid function test' AS indicator_name,
+    'The percentage of patients with hypothyroidism, on the register, with thyroid function tests recorded in the preceding 12 months.' AS indicator_description,
     reporting_date,
     DATEADD(month, -12, reporting_date) AS measurement_period_start,
     age,
-    'Hypothyroidism' AS condition_name,
+    'Hypothyroidism treated with levothyroxine (NICE IND138)' AS denominator_description,
     {{ nice_practice_columns('assessed', reference) }},
     latest_review_date,
     latest_record_date,

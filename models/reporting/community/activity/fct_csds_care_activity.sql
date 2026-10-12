@@ -85,7 +85,7 @@ left join {{ ref('stg_csds_care_contact_history') }} as c
     on a.unique_submission_id = c.unique_submission_id
     and a.unique_care_contact_identifier = c.unique_care_contact_identifier
 left join {{ ref('stg_csds_bridging') }} as b on a.person_id = b.person_id
-left join {{ ref('activity_location_type') }} as loc on trim(c.activity_location_type_code) = loc.code
+left join {{ ref('nhs_dd_activity_location_type') }} as loc on trim(c.activity_location_type_code) = loc.code
 left join {{ ref('csds_activity_code_lookup') }} as activity_type
     on activity_type.code_set_name = 'activity_type' and upper(trim(a.community_care_activity_type)) = activity_type.code
 left join {{ ref('csds_activity_code_lookup') }} as procedure_scheme

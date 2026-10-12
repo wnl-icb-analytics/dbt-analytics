@@ -1,0 +1,56 @@
+unit_tests:
+- name: nice_smoking_unsuitability_pcd_and_reporting_day
+  model: int_nice_smoking_unsuitability_all
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS code,
+          column2::VARCHAR AS cluster_id,
+          column3::VARCHAR AS source,
+          'Synthetic' AS cluster_description,
+          'Synthetic' AS code_description
+      FROM VALUES ('SYN_UNSUITABLE', 'SMOKPCAPU_COD', 'PCD'), ('SYN_OTHER', 'SMOKPCAPU_COD', 'OTHER')
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: |-
+      SELECT column1::VARCHAR AS id,
+          column2::VARCHAR AS patient_id,
+          column3::NUMBER AS person_id,
+          column4::TIMESTAMP_NTZ AS clinical_effective_date,
+          column5::TIMESTAMP_NTZ AS date_recorded,
+          column6::VARCHAR AS result_value,
+          column7::VARCHAR AS mapped_concept_code,
+          column8::VARCHAR AS mapped_concept_display,
+          column9::VARCHAR AS result_units_source_concept_id,
+          column10::VARCHAR AS result_unit_code,
+          column11::VARCHAR AS result_unit_display,
+          column12::VARCHAR AS result_text,
+          column13::VARCHAR AS allergy_medication_name,
+          column14::VARCHAR AS mapped_concept_id,
+          column15::VARCHAR AS episodicity_source_concept_id,
+          column16::BOOLEAN AS is_problem,
+          column17::BOOLEAN AS is_review,
+          column18::TIMESTAMP_NTZ AS problem_end_date,
+          column19::TIMESTAMP_NTZ AS lds_transform_datetime,
+          column20::NUMBER AS age_at_event
+      FROM VALUES
+          ('SYN_OLD', 'SYN_P', -98001, '2024-01-01', '2024-01-02', NULL, 'SYN_UNSUITABLE', 'Synthetic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_TODAY', 'SYN_P', -98001, DATEADD(hour, 12, CURRENT_DATE()::TIMESTAMP_NTZ), DATEADD(hour, 18, CURRENT_DATE()::TIMESTAMP_NTZ), NULL, 'SYN_UNSUITABLE', 'Synthetic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_FUTURE', 'SYN_P', -98001, DATEADD(day, 1, CURRENT_DATE()::TIMESTAMP_NTZ), DATEADD(day, 1, CURRENT_DATE()::TIMESTAMP_NTZ), NULL, 'SYN_UNSUITABLE', 'Synthetic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+          ('SYN_OTHER', 'SYN_P', -98001, '2024-01-01', '2024-01-02', NULL, 'SYN_OTHER', 'Synthetic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+  expect:
+    rows:
+    - observation_id: SYN_OLD
+      event_date: '2024-01-01'
+    - observation_id: SYN_TODAY
+      event_date: '{{ run_started_at.strftime(''%Y-%m-%d'') }}'
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS observation_id, NULL::DATE
+        AS event_date WHERE FALSE
+  config:
+    tags:
+    - monthly-full
+    - nice-history
+    - nice-qof-fixes

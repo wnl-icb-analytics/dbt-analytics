@@ -59,7 +59,8 @@ synthetic_smoking AS (
         'Current Smoker'::VARCHAR AS latest_smoking_status,
         DATEADD(day, -1, CURRENT_DATE())::DATE AS latest_smoking_status_date,
         NULL::DATE AS latest_never_smoked_date,
-        DATEADD(day, -1, CURRENT_DATE())::DATE AS latest_smoking_intervention_date
+        DATEADD(day, -1, CURRENT_DATE())::DATE AS latest_smoking_intervention_date,
+        FALSE AS is_ex_smoker_covered
 ),
 synthetic_physical AS (
     SELECT -11051::NUMBER AS person_id, DATEADD(day, -1, CURRENT_DATE())::DATE AS reporting_date,

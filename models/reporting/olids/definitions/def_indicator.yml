@@ -2,28 +2,55 @@
 models:
   - name: def_indicator
     description: >-
-      Clinical indicator definitions, one row per indicator from model and column
-      YAML metadata. Includes descriptions, categories and usage contexts for reporting.
+      Clinical indicator definitions for reports and dashboards. One row per indicator.
+
+
+      Definitions include the population, clinical rules and source model or column. Programme
+      and clinical classification come from the indicator classification list and the long-term
+      condition lookup. Register catalogue entries can require extra filters or populations for
+      NICE counts; read description_long before using their source flags.
     config:
       meta:
         owner:
           name: EddieDavison92
     columns:
       - name: indicator_id
-        description: Unique identifier for the indicator (e.g., COND_DM, 
-          BRF_BMI)
-        tests:
+        description: >-
+          Indicator identifier used to link to def_indicator.
+
+        data_tests:
           - not_null
           - unique
+          - relationships:
+              arguments:
+                to: ref('indicator_classification')
+                field: indicator_id
 
       - name: indicator_type
         description: High-level indicator classification
 
-      - name: category
-        description: Indicator category for grouping and filtering
+      - name: programme
+        description: Programme that owns the indicator, from indicator_classification.
+        data_tests:
+          - not_null
 
       - name: clinical_domain
-        description: Medical specialty or clinical area (for conditions)
+        description: >-
+          Clinical domain from the indicator classification list or the long-term condition
+          lookup.
+        data_tests:
+          - not_null
+
+      - name: clinical_subdomain
+        description: >-
+          Long-term condition name for condition-specific indicators; otherwise the
+          classification topic.
+
+        data_tests:
+          - not_null
+
+      - name: category
+        description: Indicator category for grouping and filtering
 
       - name: name_short
         description: Brief display name for dashboards and reports
@@ -32,20 +59,32 @@ models:
         description: One-line description for tooltips and summary views
 
       - name: description_long
-        description: Detailed definition including clinical criteria and logic
+        description: >-
+          Full definition of the population and clinical rules, including differences from NICE
+          where applicable.
+
       - name: source_model
-        description: dbt model containing this indicator's data
+        description: >-
+          Name of the model that supplies the indicator flag or result.
 
       - name: source_column
-        description: Column name in the source model
+        description: >-
+          Column in source_model that supplies the indicator flag or result.
+
       - name: is_qof
-        description: Whether this is a Quality and Outcomes Framework indicator
+        description: >-
+          Whether the source definition has a Quality and Outcomes Framework correspondence.
+          This does not make NICE results QOF payment measures.
 
       - name: qof_indicator
-        description: Specific QOF indicator code (e.g., DM017, HYP001)
+        description: >-
+          Corresponding QOF code; null when no QOF correspondence is declared. Retired codes can
+          remain as references.
 
       - name: sort_order
-        description: Sort key for consistent ordering in reports
+        description: >-
+          Sort key supplied by indicator metadata or generated from its type and name.
 
       - name: metadata_extracted_at
-        description: Timestamp when metadata was extracted from YAML
+        description: >-
+          Timestamp when the catalogue table was built from indicator metadata.

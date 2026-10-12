@@ -50,10 +50,11 @@ models:
     description: Patient LSOA 2011 of residence supplied by SUS+. Populated across the full history, so use
       it for trends that span April 2024.
   - name: spell_patient_residence_derived_lsoa_21
-    description: Patient LSOA 2021 of residence from the data lake's derived spell table (dmicLSOA2021),
-      matched on the retained record's import. Populated for spells discharged from 1 April 2024 (about
-      96%); mostly null for earlier spells. About 2% of values from April 2024 lie in a different local
-      authority from the LSOA 2011.
+    description: Patient LSOA 2021 of residence. Supplied by SUS+ for spells from April 2026; earlier
+      spells fall back to the data lake's derived spell table (dmicLSOA2021), matched on the retained
+      record's import. Populated for spells discharged from 1 April 2024 (about 96%); mostly null for
+      earlier spells. About 2.5% of the April 2024 to March 2026 derived values are not a 2021
+      successor of the record's LSOA 2011; the SUS+ values almost always are.
   tests:
   - elementary.volume_anomalies:
       description: Detects anomalous daily row counts for APC spells.

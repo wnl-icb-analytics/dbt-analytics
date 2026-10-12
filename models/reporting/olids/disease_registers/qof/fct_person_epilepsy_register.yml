@@ -1,13 +1,15 @@
 models:
   - name: fct_person_epilepsy_register
-    description: >
-      Disease Registers (QOF v51) epilepsy register. One row per person aged 18 or
-      over with EPIL_COD and no EPILRES_COD on or after the latest EPIL_COD
-      date; a same-day resolution removes membership. Diagnosis evidence is dated on or before
-      today. EPILDRUG_COD treatment must be after today minus six months and on
-      or before today. EP001 is retired; register extraction continues through the Disease
-      Registers service.
+    description: >-
+      Treated epilepsy register for adults (NICE IND253). One row per register member.
 
+
+      Registration status is not filtered. People aged 18 or over need an epilepsy diagnosis and
+      drug treatment in the 6 months before the build date. A resolved code on or after the
+      latest diagnosis date removes membership; NICE excludes resolution after diagnosis, so
+      same-day resolution is an extra exclusion here. Clinical evidence is dated by the build
+      date. For NICE counts, select people registered on the build date. Based on NICE NG217.
+      Code lists: EPIL_COD, EPILRES_COD, EPILDRUG_COD (PCD).
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -59,11 +61,12 @@ models:
               Adults with unresolved epilepsy and drug treatment in the preceding six
               months.
             description_long: >-
-              People aged 18 or over need an epilepsy diagnosis and drug treatment in
-              the six months before the build date. A resolved code on or after the
-              latest diagnosis removes membership; NICE excludes resolution after
-              diagnosis. Based on NICE NG217. Code lists: EPIL_COD, EPILRES_COD and
-              EPILDRUG_COD.
+              People aged 18 or over need an epilepsy diagnosis and drug treatment in the 6
+              months before the build date. A resolved code on or after the latest diagnosis
+              date removes membership; NICE excludes resolution after diagnosis, so same-day
+              resolution is an extra exclusion here. Clinical evidence is dated by the build
+              date. For NICE counts, select people registered on the build date. Based on NICE
+              NG217. Code lists: EPIL_COD, EPILRES_COD, EPILDRUG_COD (PCD).
             source_column: "is_on_register"
             is_qof: true
             qof_indicator: "EP001"

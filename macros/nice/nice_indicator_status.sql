@@ -43,11 +43,14 @@
     'fct_person_hiv_test_at_registration_ind210'
 ] %}
 
+WITH statuses AS (
 {% for indicator_model in indicator_models %}
 SELECT
     person_id,
     indicator_id,
     indicator_name,
+    indicator_description,
+    denominator_description,
     reporting_date,
     measurement_period_start,
     age,
@@ -58,4 +61,25 @@ SELECT
 FROM {{ ref(indicator_model if reference == 'current' else indicator_model ~ '_by_month') }}
 {% if not loop.last %}UNION ALL{% endif %}
 {% endfor %}
+)
+
+{% set practice_prefix = 'current_' if reference == 'current' else '' %}
+SELECT
+    s.person_id,
+    s.indicator_id,
+    s.indicator_name,
+    s.indicator_description,
+    s.denominator_description,
+    i.clinical_domain,
+    i.clinical_subdomain,
+    s.reporting_date,
+    s.measurement_period_start,
+    s.age,
+    s.{{ practice_prefix }}practice_code,
+    s.{{ practice_prefix }}practice_name,
+    s.is_in_denominator,
+    s.is_in_numerator,
+    s.indicator_status
+FROM statuses s
+LEFT JOIN {{ ref('def_indicator') }} i ON s.indicator_id = i.indicator_id
 {% endmacro %}

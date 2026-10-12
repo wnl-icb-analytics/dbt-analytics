@@ -11,7 +11,7 @@ Uses the QAdmissions 2023 falls cluster:
 - FALLS_COD_Q: Falls (any coded fall event - includes finding and event codes)
 
 Includes ALL persons (active, inactive, deceased) following intermediate
-layer principles. Use this model as input for int_qadmissions_features.sql,
+layer principles. Use this model as input for qadmissions_input_features.sql,
 where the wide feature row aggregates to the person grain.
 
 */

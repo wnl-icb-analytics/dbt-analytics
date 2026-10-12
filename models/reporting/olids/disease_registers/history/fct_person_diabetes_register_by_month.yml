@@ -1,12 +1,11 @@
 models:
   - name: fct_person_diabetes_register_by_month
-    description: >
+    description: >-
       Diabetes register at each completed month-end, on the QOF rules of
-      fct_person_diabetes_register: aged 17 or over, with a diabetes code and no
-      later resolution code (a same-day resolution does not remove it). The
-      type comes from the later of the latest Type 1 and Type 2 codes; Type 1
-      wins when both have the same timestamp.
-      {{ doc('ltc_register_by_month_scope') }}
+      fct_person_diabetes_register: aged 17 or over, with a diabetes code and no later
+      resolution code (a same-day resolution does not remove it). The type comes from the later
+      of the latest Type 1 and Type 2 codes; Type 1 wins when both have the same date. {{
+      doc('ltc_register_by_month_scope') }}
     config:
       meta:
         owner:
@@ -28,7 +27,9 @@ models:
       - name: practice_code
         description: "{{ doc('ltc_register_by_month_practice_code') }}"
       - name: diabetes_type
-        description: Type 1, Type 2 or Unknown, from the latest type-specific code known by the month-end.
+        description: >-
+          Type 1, Type 2 or Unknown, from the latest type code known by month-end. Type 1 wins
+          on a shared date; Unknown includes untyped and other diabetes types.
         data_tests:
           - not_null
           - accepted_values:

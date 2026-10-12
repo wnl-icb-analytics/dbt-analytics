@@ -25,8 +25,9 @@ WITH population AS (
     FROM selected
 )
 SELECT person_id, 'IND140' AS indicator_id, 'COPD: FEV1' AS indicator_name,
+'The percentage of patients with COPD with a record of FEV1 in the preceding 12 months.' AS indicator_description,
     reporting_date, DATEADD(month, -12, reporting_date) AS measurement_period_start,
-    age, 'COPD' AS condition_name, {{ nice_practice_columns('assessed', reference) }},
+    age, 'COPD' AS denominator_description, {{ nice_practice_columns('assessed', reference) }},
     latest_record_date AS latest_fev1_date, latest_record_date,
     TRUE AS is_in_denominator, latest_record_date IS NOT NULL AS is_in_numerator,
     IFF(latest_record_date IS NOT NULL, 'ACHIEVED', 'NOT_RECORDED_IN_PERIOD') AS indicator_status

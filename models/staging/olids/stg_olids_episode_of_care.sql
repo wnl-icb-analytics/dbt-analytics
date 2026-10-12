@@ -18,7 +18,7 @@ select
     episode_status_source_display,
     episode_of_care_start_date,
     episode_of_care_end_date,
-    usual_practitioner_in_role_id as care_manager_practitioner_in_role_id,
+    usual_gp_practitioner_in_role_id as care_manager_practitioner_in_role_id,
     managing_organisation_id as care_manager_organisation_id, -- REVIEW: renamed upstream
     managing_organisation_code as care_manager_organisation_code, -- REVIEW: renamed upstream
     publisher_organisation_code,
@@ -31,9 +31,6 @@ select
 
     -- New columns exposed by the 2026 OLIDS schema realignment (issue #747)
     author_organisation_id
--- Reads Episode of Care V2, which keeps earlier registrations at the same practice.
--- LDS moves EPISODE_OF_CARE onto the V2 logic on 6 October 2026 and removes V2 on
--- 20 October; switch back to raw_olids_episode_of_care between those dates.
-from {{ ref('raw_olids_episode_of_care_v2') }}
+from {{ ref('raw_olids_episode_of_care') }}
 where coalesce(lds_is_deleted, false) = false
     and person_id is not null
