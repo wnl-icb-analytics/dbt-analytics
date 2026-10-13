@@ -151,6 +151,10 @@ models:
       +post-hook:
         - "{{ add_model_comment() }}"
         - "{{ log_row_count() }}"
+      # Acute outputs are analyst-facing tables and are rebuilt by the daily job.
+      # The scheduled selector includes their upstream dependencies via +tag:daily.
+      acute:
+        +tags: ["daily"]
       segmentation:
         +tags: ["daily"]
         +meta:

@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 with expected as (
     select clinical_record_type, count(*) as expected_count
     from {{ ref('int_mhsds_diagnosis') }}

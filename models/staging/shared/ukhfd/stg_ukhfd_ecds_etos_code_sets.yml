@@ -1,0 +1,72 @@
+models:
+  - name: stg_ukhfd_ecds_etos_code_sets
+    description: >-
+      ECDS ETOS code set members from NHS England via UKHFD. One row per
+      release file, code set sheet and SNOMED code row, including duplicate
+      release files and deprecated codes. ETOS (Enhanced Technical Output
+      Specification) publishes the SNOMED codes allowed in each ECDS field;
+      each release is one spreadsheet and each code set one sheet. Use
+      ecds_code_set_history for one row per code set, code and release.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    columns:
+      - name: etos_version
+        description: ETOS release version parsed from the file name, e.g. 4.0.8. The v3.0.0 draft is 3.0.0-draft; the v4 release is published as 4.
+      - name: etos_version_sort_key
+        description: Integer that sorts releases by version (major x 1,000,000 + minor x 10,000 + patch x 100 + fourth part). Missing parts count as 0.
+      - name: is_draft_release
+        description: TRUE for the v3.0.0 draft release.
+      - name: etos_release_date
+        description: Release date of the ETOS file.
+      - name: source_file_name
+        description: UKHFD import folder and ETOS file name. v4.0.6 was loaded from two file variants; only the UnmergedCells file carries search terms.
+      - name: code_set_number
+        description: Sheet number in this release, e.g. 26.4. Numbers change between releases.
+      - name: code_set_name
+        description: Code set name as published without the sheet number, e.g. DISCHARGE DESTINATION. Stable across releases.
+        data_tests: [not_null]
+      - name: snomed_code
+        description: SNOMED CT concept ID as text. ECDS submissions hold SNOMED codes as text; cast before joining to numeric code columns.
+        data_tests: [not_null]
+      - name: is_deprecated
+        description: >-
+          TRUE when the release lists the code as deprecated. ETOS keeps
+          deprecated codes in the sheet and overwrites most fields with
+          'Code deprecated'; those markers are null here.
+      - name: ecds_unique_id
+        description: ETOS identifier of the code set entry. It can change between releases for the same SNOMED code.
+      - name: ecds_description
+        description: ETOS display description of the code.
+      - name: snomed_uk_preferred_term
+        description: SNOMED UK preferred term published in the release (v3.1.0 onwards).
+      - name: snomed_fully_specified_name
+        description: SNOMED fully specified name published in the release (v3.1.0 onwards).
+      - name: snomed_description
+        description: SNOMED fully specified name in releases before v3.1.0.
+      - name: is_valid_for_male
+        description: ETOS Male flag. TRUE when the code is valid for male patients; null where not supplied or N/A.
+      - name: is_valid_for_female
+        description: ETOS Female flag. TRUE when the code is valid for female patients; null where not supplied or N/A.
+      - name: is_injury
+        description: ETOS Injury flag (Inj before v3.1.0). TRUE for injury codes.
+      - name: is_same_day_emergency_care
+        description: ETOS SDEC flag (AEC before v3.1.0).
+      - name: is_ads
+        description: ETOS ADS flag on diagnosis codes, as published.
+      - name: is_pain
+        description: ETOS Pain flag on chief complaint codes, as published.
+      - name: icd10_mapping
+        description: ETOS ICD-10 mapping for diagnosis codes, formatted with a dot after the third character (clean_icd10_code).
+      - name: comorbidity_icd10_codes
+        description: ICD-10 codes or code patterns (e.g. D62*,D63*) that define a comorbidity, as published.
+      - name: pbr_category
+        description: Payment by Results category, as published. A few values were converted to dates in the source spreadsheet.
+      - name: valid_from_date
+        description: Date from which the code is valid in ECDS.
+      - name: valid_to_date
+        description: Last date the code is valid in ECDS; supplied for deprecated codes.
+      - name: source_unique_key
+        description: UKHFD row key.
+        data_tests: [unique, not_null]

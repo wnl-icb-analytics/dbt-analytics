@@ -28,13 +28,13 @@ from {{ ref('stg_mhsds_care_plan_agreement') }} as s
 left join {{ ref('stg_mhsds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as family_label
-    on upper(trim(s.family_care_plan_indicator::varchar)) = family_label.code and family_label.code_set_name = 'family_care_plan_involvement'
-left join {{ ref('mhsds_domain_code_lookup') }} as reason_label
-    on upper(trim(s.no_family_care_plan_reason::varchar)) = reason_label.code and reason_label.code_set_name = 'family_care_plan_exclusion_reason'
-left join {{ ref('mhsds_domain_code_lookup') }} as legacy_label
-    on upper(trim(s.care_plan_content_agreed_by::varchar)) = legacy_label.code and legacy_label.code_set_name = 'care_plan_content_agreed_by'
-left join {{ ref('mhsds_domain_code_lookup') }} as agreed_label
-    on upper(trim(s.care_plan_agreed_by::varchar)) = agreed_label.code and agreed_label.code_set_name = 'care_plan_agreed_by'
+left join {{ ref('nhs_dd_family_involved_in_care_plan_indicator') }} as family_label
+    on upper(trim(s.family_care_plan_indicator::varchar)) = family_label.code
+left join {{ ref('nhs_dd_family_not_involved_in_care_plan_reason') }} as reason_label
+    on upper(trim(s.no_family_care_plan_reason::varchar)) = reason_label.code
+left join {{ ref('nhs_dd_care_plan_content_agreed_by') }} as legacy_label
+    on upper(trim(s.care_plan_content_agreed_by::varchar)) = legacy_label.code
+left join {{ ref('nhs_dd_care_plan_agreed_by') }} as agreed_label
+    on upper(trim(s.care_plan_agreed_by::varchar)) = agreed_label.code
 left join {{ ref('fct_mhsds_care_plan_period') }} as p
     on s.uniq_submission_id = p.submission_id and s.uniq_care_plan_id = p.care_plan_source_id

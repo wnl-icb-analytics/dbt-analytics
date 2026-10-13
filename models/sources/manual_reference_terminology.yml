@@ -3,7 +3,7 @@ sources:
 - name: reference_terminology_curated
   database: '"REFERENCE"'
   schema: '"TERMINOLOGY"'
-  description: Curated Primary Care Domain terminology releases from UKHFD
+  description: Curated Primary Care Domain terminology releases from UKHFD and combined clinical code sets
   tables:
   - name: pcd_refset_latest
     identifier: '"PCD_REFSET_LATEST"'
@@ -49,4 +49,19 @@ sources:
     - name: PCD_REFSET_ID
       data_type: TEXT
     - name: SERVICE_AND_RULESET
+      data_type: TEXT
+  - name: combined_codesets
+    identifier: '"COMBINED_CODESETS"'
+    description: Clinical code-set membership across maintained sources. Rebuilt by
+      a Snowflake task, not dbt; staging provides one row per cluster, code and source
+    columns:
+    - name: CLUSTER_ID
+      data_type: TEXT
+    - name: CLUSTER_DESCRIPTION
+      data_type: TEXT
+    - name: CODE
+      data_type: TEXT
+    - name: CODE_DESCRIPTION
+      data_type: TEXT
+    - name: SOURCE
       data_type: TEXT

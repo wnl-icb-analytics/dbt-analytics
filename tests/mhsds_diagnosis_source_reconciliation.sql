@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 with expected as (
     select 'MHS601' as source_table, count(*) as source_count
     from {{ ref('stg_mhsds_previous_diagnosis') }}

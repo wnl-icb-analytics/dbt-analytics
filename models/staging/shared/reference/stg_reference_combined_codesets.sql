@@ -4,6 +4,6 @@ select
     code,
     min(code_description) as code_description,
     source
-from {{ ref('raw_reference_combined_codesets') }}
+from {{ ref('raw_reference_terminology_combined_codesets') }}
 where code is not null
 group by cluster_id, code, source

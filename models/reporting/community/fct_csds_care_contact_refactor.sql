@@ -734,15 +734,15 @@ CONTACT_ENRICHED AS (
         ON PAT1."Lower_super_output_area_(Residence)"
             = IMD.LSOA_CODE_2021
 
-    LEFT JOIN {{ ref('attendance_status') }} CSLK1
+    LEFT JOIN {{ ref('nhs_dd_attendance_status') }} CSLK1
         ON CCON."Attended_or_did_not_attend_code" = CSLK1.CODE
        AND CSLK1.SOURCE_CODE_SET_NAME = 'Attendance_Status'
 
-    LEFT JOIN {{ ref('consultation_mechanism') }} CSLK3
+    LEFT JOIN {{ ref('nhs_dd_consultation_mechanism') }} CSLK3
         ON CCON."Consultation_medium_used" = CSLK3.CODE
        AND CSLK3.SOURCE_CODE_SET_NAME = 'Consultation_Mechanism'
 
-    LEFT JOIN {{ ref('activity_location_type') }} CSLK4
+    LEFT JOIN {{ ref('nhs_dd_activity_location_type') }} CSLK4
         ON CCON."Activity_location_type_code" = CSLK4.CODE
        AND CSLK4.SOURCE_CODE_SET_NAME = 'Activity_Location_Type_Code'
 

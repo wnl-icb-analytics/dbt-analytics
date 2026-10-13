@@ -1,0 +1,27 @@
+models:
+- name: ons_geography
+  description: >-
+    One ONS geography code with the name from its most recently introduced
+    UKHFD ONS register definition. Includes terminated and historical codes.
+    For the same introduction date, prefers the highest register year, then the
+    latest source import and creation timestamps. Missing dates, years and
+    timestamps sort last. When revisions tie, prefers the latest recorded
+    termination date, then the first name alphabetically (missing names last).
+    Status does not override the supplied dates or establish revision order.
+    Introduction and termination describe the code, not effective periods for
+    previous names.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: code
+    data_tests:
+    - unique
+    - not_null
+  - name: name
+    description: Name from the code's most recently introduced definition.
+  - name: introduced_date
+    description: Supplied date the geography code was introduced.
+  - name: terminated_date
+    description: Supplied date the geography code was terminated; null if none is recorded.
