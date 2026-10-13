@@ -95,6 +95,11 @@ WITH index_dates AS (
     )
 ),
 
+first_index_date AS (
+    SELECT MIN(end_date) AS first_end_date
+    FROM index_dates
+),
+
 -- Eligible population at each index date: registered and alive at the
 -- month-end, recorded as Male or Female, aged 18-100 at the month-end. Taken
 -- from the person-month spine rather than dim_person_demographics so that
@@ -261,6 +266,25 @@ lab_results AS (
     WHERE inferred_value IS NOT NULL AND NOT is_negative
 ),
 
+-- Results visible at the first index date stay visible at every later one,
+-- so only the latest of them can be selected at any index date. Keep that
+-- one per person and measurement, and every result that becomes visible
+-- later, before the join to index dates multiplies rows.
+lab_candidates AS (
+    SELECT
+        l.*,
+        l.clinical_effective_date <= f.first_end_date
+            AND (l.date_recorded IS NULL OR CAST(l.date_recorded AS DATE) <= f.first_end_date)
+            AS is_visible_at_first_index_date
+    FROM lab_results AS l
+    CROSS JOIN first_index_date AS f
+    QUALIFY NOT is_visible_at_first_index_date
+        OR ROW_NUMBER() OVER (
+            PARTITION BY l.person_id, l.measurement, is_visible_at_first_index_date
+            ORDER BY l.clinical_effective_date DESC, l.id DESC
+        ) = 1
+),
+
 -- Latest valid result of each measurement per person at each index date,
 -- restricted to results with a clinical date on or before the index date and
 -- entered on or before it. Ordered as in the live int_*_latest models. One
@@ -272,7 +296,7 @@ lab_latest AS (
         l.measurement,
         l.inferred_value
     FROM index_dates AS i
-    INNER JOIN lab_results AS l
+    INNER JOIN lab_candidates AS l
         ON l.clinical_effective_date <= i.end_date
         AND (l.date_recorded IS NULL OR CAST(l.date_recorded AS DATE) <= i.end_date)
 -- get the most recent measurement within an end_date period
@@ -301,6 +325,28 @@ lab_flags AS (
     GROUP BY ll.end_date, ll.person_id
 ),
 
+-- Valid BMIs that can be selected at some index date, reduced as for
+-- lab_candidates.
+bmi_candidates AS (
+    SELECT
+        b.id,
+        b.person_id,
+        b.clinical_effective_date,
+        b.date_recorded,
+        b.bmi_value,
+        b.clinical_effective_date <= f.first_end_date
+            AND (b.date_recorded IS NULL OR CAST(b.date_recorded AS DATE) <= f.first_end_date)
+            AS is_visible_at_first_index_date
+    FROM {{ ref('int_bmi_all') }} AS b
+    CROSS JOIN first_index_date AS f
+    WHERE b.is_valid_bmi
+    QUALIFY NOT is_visible_at_first_index_date
+        OR ROW_NUMBER() OVER (
+            PARTITION BY b.person_id, is_visible_at_first_index_date
+            ORDER BY b.clinical_effective_date DESC, b.date_recorded DESC NULLS LAST, b.bmi_value DESC, b.id DESC
+        ) = 1
+),
+
 -- Latest valid BMI per person at each index date. For calculated BMI the recording date is the
 -- weight's; the height's is not held, so a height entered after the index
 -- date but dated before it can still contribute.
@@ -310,14 +356,43 @@ bmi_latest AS (
         b.person_id,
         b.bmi_value
     FROM index_dates AS i
-    INNER JOIN {{ ref('int_bmi_all') }} AS b
+    INNER JOIN bmi_candidates AS b
         ON b.clinical_effective_date <= i.end_date
         AND (b.date_recorded IS NULL OR CAST(b.date_recorded AS DATE) <= i.end_date)
-    WHERE b.is_valid_bmi
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY i.end_date, b.person_id
         ORDER BY b.clinical_effective_date DESC, b.date_recorded DESC NULLS LAST, b.bmi_value DESC, b.id DESC
     ) = 1
+),
+
+-- Smoking status records that can be selected at some index date, reduced as
+-- for lab_candidates.
+smoking_candidates AS (
+    SELECT
+        s.id,
+        s.person_id,
+        s.clinical_effective_date,
+        s.date_recorded,
+        s.source_cluster_id,
+        s.is_current_smoker,
+        s.is_ex_smoker,
+        s.clinical_effective_date <= f.first_end_date
+            AND (s.date_recorded IS NULL OR CAST(s.date_recorded AS DATE) <= f.first_end_date)
+            AS is_visible_at_first_index_date
+    FROM {{ ref('int_smoking_status_all') }} AS s
+    CROSS JOIN first_index_date AS f
+    QUALIFY NOT is_visible_at_first_index_date
+        OR ROW_NUMBER() OVER (
+            PARTITION BY s.person_id, is_visible_at_first_index_date
+            ORDER BY s.clinical_effective_date::DATE DESC,
+                CASE s.source_cluster_id
+                    WHEN 'LSMOK_COD' THEN 1
+                    WHEN 'EXSMOK_COD' THEN 2
+                    WHEN 'NSMOK_COD' THEN 3
+                    ELSE 4
+                END,
+                s.id DESC
+        ) = 1
 ),
 
 -- Latest recorded smoking status per person at each index date,
@@ -329,7 +404,7 @@ smoking_latest AS (
         s.is_current_smoker,
         s.is_ex_smoker
     FROM index_dates AS i
-    INNER JOIN {{ ref('int_smoking_status_all') }} AS s
+    INNER JOIN smoking_candidates AS s
         ON s.clinical_effective_date <= i.end_date
         AND (s.date_recorded IS NULL OR CAST(s.date_recorded AS DATE) <= i.end_date)
     -- Same selection as int_smoking_status_latest: calendar date, then specific status, then id.
