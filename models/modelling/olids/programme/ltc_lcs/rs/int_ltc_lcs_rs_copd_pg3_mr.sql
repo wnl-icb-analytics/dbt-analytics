@@ -54,7 +54,7 @@ rule_3_mrcbs_grade_1_3 as (
 -- Rule 4a: EMIS-local one-exacerbation-in-past-year code, matched by source only.
 rule_4a_copd_exacerbations as (
     select person_id
-    from ({{ get_ltc_lcs_observations("0c461d3b-96d7-4266-8df1-d5dc0bcdee26", match_paths='source') }})
+    from ({{ get_ltc_lcs_observations("be744271-2fb5-7e10-18f6-041df010ebf7", match_paths='source') }})
     where clinical_effective_date >= dateadd(month, -12, current_date())
     qualify row_number() over (partition by person_id order by clinical_effective_date desc) = 1
 ),

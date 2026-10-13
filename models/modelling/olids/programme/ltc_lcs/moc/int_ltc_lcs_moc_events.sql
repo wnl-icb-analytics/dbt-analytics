@@ -2,7 +2,7 @@
 
 -- One row per person, programme event code and date. Future events are excluded.
 with local_observations as (
-    {{ get_ltc_lcs_observations('f8fbb54b-fbab-4b5e-b668-24c33d8067e6', match_paths='source') }}
+    {{ get_ltc_lcs_observations('06a67476-a82f-8c9e-d328-c0c7c5aea698', match_paths='source') }}
 ),
 local_events as (
     select
@@ -25,7 +25,7 @@ local_events as (
     )
 ),
 uk_observations as (
-    {{ get_ltc_lcs_observations('674aa965-f721-4ce8-9b59-571b36db0676,d433bbf0-cb5c-4e9f-b7c9-d1d0a1f2e29d') }}
+    {{ get_ltc_lcs_observations('50bf74e8-ae15-b5f1-0e25-f6155f398c47,1e4b1d73-eaed-7e8d-da5e-0a77ca874c17') }}
 ),
 all_events as (
     select person_id, event_code, event_date from local_events
@@ -33,8 +33,8 @@ all_events as (
     select
         person_id,
         case valueset_id
-            when '674aa965-f721-4ce8-9b59-571b36db0676' then 'M'
-            when 'd433bbf0-cb5c-4e9f-b7c9-d1d0a1f2e29d' then 'S'
+            when '50bf74e8-ae15-b5f1-0e25-f6155f398c47' then 'M'
+            when '1e4b1d73-eaed-7e8d-da5e-0a77ca874c17' then 'S'
         end as event_code,
         clinical_effective_date::date as event_date
     from uk_observations

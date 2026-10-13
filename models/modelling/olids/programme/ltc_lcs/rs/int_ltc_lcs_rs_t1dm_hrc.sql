@@ -10,16 +10,11 @@ with latest_diabetes as (
         order by clinical_effective_date desc, date_recorded desc nulls last, id desc
     ) = 1
 ),
-valueset_availability as (
-    select count(*) > 0 as is_loaded
-    from {{ ref('stg_reference_ltc_lcs_valuesets') }}
-    where valueset_id = 'ef11a6f5-a7c5-4531-bf71-38f764df0270'
-),
 source_type1 as (
-    {{ get_ltc_lcs_observations('ef11a6f5-a7c5-4531-bf71-38f764df0270', match_paths='source') }}
+    {{ get_ltc_lcs_observations('0dd187c0-35b5-10be-2837-4a1ad771a6e8', match_paths='source') }}
 ),
 mapped_type1 as (
-    {{ get_ltc_lcs_observations('ef11a6f5-a7c5-4531-bf71-38f764df0270', match_paths='mapped') }}
+    {{ get_ltc_lcs_observations('0dd187c0-35b5-10be-2837-4a1ad771a6e8', match_paths='mapped') }}
 ),
 type1_records as (
     select observation_id from source_type1
@@ -37,7 +32,4 @@ select
     'Type 1 Diabetes' as condition,
     'HRC' as risk_group
 from latest_diabetes d
-cross join valueset_availability v
-left join type1_records t on d.id = t.observation_id
-where (v.is_loaded and t.observation_id is not null)
-    or (not v.is_loaded and d.is_type1_diabetes_code)
+inner join type1_records t on d.id = t.observation_id

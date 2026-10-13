@@ -1,11 +1,11 @@
 -- CYP asthma review evidence, one row per person with an AR or DTR event.
 with observations as (
-    {{ get_ltc_lcs_observations('229356ea-2e6c-41fc-9970-4ff96efb09b9,588fcdb7-58e7-400c-b772-c3d48017372d') }}
+    {{ get_ltc_lcs_observations('b7780aad-7443-896e-ebf6-1e3c3800226d,fd4dd2f3-c33a-e7d2-3556-448b9e23662b') }}
 ),
 events as (
     select
         person_id,
-        case when valueset_id = '229356ea-2e6c-41fc-9970-4ff96efb09b9' then 'AR' else 'DTR' end as event_code,
+        case when valueset_id = 'b7780aad-7443-896e-ebf6-1e3c3800226d' then 'AR' else 'DTR' end as event_code,
         clinical_effective_date::date as event_date
     from observations
     where clinical_effective_date::date <= current_date()
