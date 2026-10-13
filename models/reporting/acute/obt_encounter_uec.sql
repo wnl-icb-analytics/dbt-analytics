@@ -133,13 +133,6 @@ select
 
     , residence_area_code_at_event
     , residence_area_name_at_event
-    , assigned_commissioner_code_at_event
-    , assigned_commissioner_name_at_event
-    , cam_commissioner_code_at_event
-    , cam_commissioner_name_at_event
-    , cam_flowchart_reference_at_event
-    , dscro_commissioner_code_at_event
-    , dscro_commissioner_name_at_event
     , commissioner_code_at_event
     , commissioner_name_at_event
     , commissioner_source_at_event

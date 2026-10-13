@@ -246,25 +246,6 @@ select
         residence_commissioner_exact.commissioner_name
         , residence_commissioner_fallback.commissioner_name
     ) as residence_area_name_at_event
-    , core.commissioning_service_agreement_commissioner as assigned_commissioner_code_at_event
-    , coalesce(
-        registrant_commissioner_exact.commissioner_name
-        , registrant_commissioner_fallback.commissioner_name
-    ) as assigned_commissioner_name_at_event
-    , core.commissioning_commissioner_assignment_commissioner
-        as cam_commissioner_code_at_event
-    , coalesce(
-        cam_commissioner_exact.commissioner_name
-        , cam_commissioner_fallback.commissioner_name
-    ) as cam_commissioner_name_at_event
-    , core.commissioning_commissioner_assignment_flowchart_reference
-        as cam_flowchart_reference_at_event
-    , core.commissioning_service_agreement_commissioner
-        as dscro_commissioner_code_at_event
-    , coalesce(
-        registrant_commissioner_exact.commissioner_name
-        , registrant_commissioner_fallback.commissioner_name
-    ) as dscro_commissioner_name_at_event
     , coalesce(
         core.commissioning_commissioner_assignment_commissioner
         , core.commissioning_service_agreement_commissioner
