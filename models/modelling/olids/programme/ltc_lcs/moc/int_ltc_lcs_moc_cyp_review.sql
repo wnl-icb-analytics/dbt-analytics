@@ -19,7 +19,7 @@ latest_dates as (
     from events
     group by person_id
 ),
--- EMIS [CYPAST_HR_DTR]: the latest DTR, or else the latest AR, counts only with another AR/DTR
+-- EMIS [CYPAST_HR_DTR]: the latest DTR or the latest AR counts only with another AR/DTR
 -- dated from 3 months before it to before the day prior.
 linked as (
     select
