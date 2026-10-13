@@ -64,11 +64,11 @@ select
     , a.effective_from as source_file_received_at
 from activity_context as a
 left join {{ ref('stg_mhsds_bridging') }} as b on a.person_id = b.person_id
-left join {{ ref('mhsds_domain_code_lookup') }} as consulted
-    on a.ind_act_pers_cons = consulted.code and consulted.code_set_name = 'indirect_activity_person_consulted'
+left join {{ ref('nhs_dd_indirect_activity_person_consulted_type') }} as consulted
+    on a.ind_act_pers_cons = consulted.code
 left join {{ ref('snomed_concept') }} as procedure on trim(a.ind_act_procedure) = procedure.snomed_code
-left join {{ ref('mhsds_care_activity_code_lookup') }} as scheme
-    on a.find_scheme_in_use = scheme.code and scheme.code_set_name = 'finding_scheme'
+left join {{ ref('nhs_dd_finding_scheme') }} as scheme
+    on a.find_scheme_in_use = scheme.code
 left join {{ ref('icd10_code') }} as icd
     on replace({{ clean_icd10_code('upper(trim(a.finding))') }}, '.', '') = icd.code and a.find_scheme_in_use = '01'
 left join {{ ref('snomed_concept') }} as finding on trim(a.finding) = finding.snomed_code and a.find_scheme_in_use = '04'

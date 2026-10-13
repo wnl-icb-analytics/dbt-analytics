@@ -54,15 +54,15 @@ from {{ ref('stg_mhsds_mhs903warddetails') }} as w
 left join stay_totals as s on w.uniq_submission_id = s.uniq_submission_id and w.uniq_ward_code = s.uniq_ward_code
 left join {{ ref('int_mhsds_organisation') }} as provider on upper(w.org_id_prov) = upper(provider.organisation_code)
 left join {{ ref('int_mhsds_organisation') }} as site on upper(w.site_id_of_ward) = upper(site.organisation_code)
-left join {{ ref('mhsds_inpatient_code_lookup') }} as setting
-    on w.ward_type = setting.code and setting.code_set_name = 'ward_setting'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as age
-    on w.ward_age = age.code and age.code_set_name = 'ward_intended_age_group'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as sex
-    on w.ward_intended_sex = sex.code and sex.code_set_name = 'ward_intended_sex'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as security
-    on w.ward_sec_level = security.code and security.code_set_name = 'ward_security_level'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as intensity
-    on w.ward_intended_clin_care_mh = intensity.code and intensity.code_set_name = 'ward_clinical_care_intensity'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as locked_ward
-    on locked_ward_indicator_code = locked_ward.code and locked_ward.code_set_name = 'locked_ward_indicator'
+left join {{ ref('mhsds_ward_setting_type') }} as setting
+    on w.ward_type = setting.code
+left join {{ ref('mhsds_ward_intended_age_group') }} as age
+    on w.ward_age = age.code
+left join {{ ref('nhs_dd_ward_intended_sex') }} as sex
+    on w.ward_intended_sex = sex.code
+left join {{ ref('nhs_dd_ward_security_level') }} as security
+    on w.ward_sec_level = security.code
+left join {{ ref('nhs_dd_ward_intended_clinical_care_intensity') }} as intensity
+    on w.ward_intended_clin_care_mh = intensity.code
+left join {{ ref('nhs_dd_locked_ward_indicator') }} as locked_ward
+    on locked_ward_indicator_code = locked_ward.code
