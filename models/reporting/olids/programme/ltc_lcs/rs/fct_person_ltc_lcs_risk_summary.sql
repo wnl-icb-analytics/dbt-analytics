@@ -198,10 +198,13 @@ progression as (
             case when moc_pathway in ('HRCS','HRS') then greatest_ignore_nulls(moc_mdt_review_date, moc_careplan_sharing_date)
                 else moc_careplan_sharing_date end
         end as moc_stage_2_date,
-        (is_in_moc_base and (moc_discussion_completed or moc_followup_completed or moc_stage_2_completed)
+        -- Gap flags use stage 2 activity; EMIS stage 2 completion already requires C&T.
+        (is_in_moc_base and (moc_discussion_completed or moc_followup_completed or moc_careplan_sharing_completed
+            or (moc_pathway in ('HRCS','HRS') and moc_mdt_review_completed))
             and not moc_check_test_completed) as moc_missing_check_test,
         (is_in_moc_base and (moc_discussion_completed or moc_followup_completed)
-            and not moc_stage_2_completed) as moc_missing_stage_2,
+            and not (moc_careplan_sharing_completed or (moc_pathway in ('HRCS','HRS') and moc_mdt_review_completed)))
+            as moc_missing_stage_2,
         (moc_followup_completed and not moc_discussion_completed) as moc_missing_discussion,
         (moc_missing_check_test or moc_missing_stage_2 or moc_missing_discussion) as moc_has_missing_priors
     from work_lists w
