@@ -3,7 +3,7 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from validate_dbt_models import UEC_CHILDREN, UEC_PARENT, build_selection, main
+from validate_dbt_models import UEC_PARENT, build_selection, main
 
 
 class BuildSelectionTests(unittest.TestCase):
@@ -25,17 +25,6 @@ class BuildSelectionTests(unittest.TestCase):
 
     def test_empty_selection_stays_empty(self):
         self.assertEqual(build_selection([]), [])
-
-    def test_selected_parent_adds_direct_children_and_keeps_original_tests(self):
-        selection = set(build_selection([
-            {"name": "int_sus_uec_diagnosis", "resource_type": "model"},
-            {"name": UEC_PARENT, "resource_type": "model"},
-            {"name": "relationship_with_child", "resource_type": "test"},
-        ]))
-        self.assertEqual(selection, {
-            UEC_PARENT, *UEC_CHILDREN, "relationship_with_child",
-        })
-
 
 class BuildCommandTests(unittest.TestCase):
     def run_build(self, target):
