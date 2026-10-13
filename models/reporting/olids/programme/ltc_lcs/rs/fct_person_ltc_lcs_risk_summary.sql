@@ -71,7 +71,8 @@ population as (
         coalesce(not p.is_in_moc_base and cypr.annual_review_completed, false) as cyp_annual_review_completed,
         coalesce(not p.is_in_moc_base and cyp.person_id is not null and cypr.desktop_review_completed, false) as cyp_desktop_review_completed,
         case when not p.is_in_moc_base then cypr.annual_review_date end as cyp_annual_review_date,
-        case when not p.is_in_moc_base and cyp.person_id is not null then cypr.desktop_review_completed_date end as cyp_desktop_review_date
+        case when not p.is_in_moc_base and cyp.person_id is not null then cypr.desktop_review_completed_date end as cyp_desktop_review_date,
+        greatest_ignore_nulls(cypr.annual_review_date, cypr.desktop_review_date) as cyp_latest_review_date
     from {{ ref('int_ltc_lcs_moc_base') }} p
     left join {{ ref('int_ltc_lcs_rs_person_risk_summary') }} rs on p.person_id = rs.person_id
     left join {{ ref('int_ltc_lcs_rs_acyp_pg2_hr') }} cyp
@@ -100,6 +101,11 @@ activity as (
         coalesce(is_in_moc_base and (latest_declined_date >= dateadd(month, -12, current_date())), false) as moc_declined,
         case when moc_declined then latest_declined_date end as moc_declined_date,
         (not is_in_moc_base and not cyp_annual_review_completed) as cyp_requires_annual_review,
+        -- Project rule from the EMIS HR description (the exported search selects no one): desktop review
+        -- due 3 months after the latest annual or desktop review, once the annual review is done.
+        coalesce(not is_in_moc_base and moc_pathway = 'HRS' and cyp_annual_review_completed
+            and not cyp_desktop_review_completed
+            and cyp_latest_review_date <= dateadd(month, -3, current_date()), false) as cyp_requires_desktop_review,
         coalesce(latest_e_code = 'D', false) as moc_declined_is_latest
     from population p
 ),
@@ -149,9 +155,12 @@ progression as (
     select
         w.*,
         (moc_requires_check_test or moc_requires_stage_2 or moc_requires_discussion
-            or moc_requires_followup or cyp_requires_annual_review) as moc_has_work_list,
+            or moc_requires_followup or cyp_requires_annual_review or cyp_requires_desktop_review) as moc_has_work_list,
         coalesce(is_in_moc_base and moc_discussion_completed and moc_followup_completed
-            and latest_e_code = 'R' and not moc_has_work_list, false) as moc_cycle_complete,
+            and latest_e_code = 'R' and not moc_has_work_list, false)
+            -- CYP-only asthma: annual review, plus desktop review for HR.
+            or (not is_in_moc_base and cyp_annual_review_completed
+                and (moc_pathway = 'LRS' or cyp_desktop_review_completed)) as moc_cycle_complete,
         -- Existing status vocabulary; work-list detail is in moc_requires_* and moc_next_action.
         case
             when is_in_moc_base and moc_declined_is_latest then 'Declined'
@@ -163,6 +172,7 @@ progression as (
         end as moc_pathway_status,
         case
             when cyp_requires_annual_review then 'Annual Review'
+            when cyp_requires_desktop_review then 'Desktop Review'
             when moc_requires_check_test then 'Check & Test'
             when moc_requires_mdt_review then 'MDT Review'
             when moc_requires_careplan_sharing then 'Care Plan Sharing'
@@ -172,7 +182,7 @@ progression as (
             when moc_requires_followup then 'Follow-up'
         end as moc_next_action,
         case moc_next_action
-            when 'Annual Review' then 'AR' when 'Check & Test' then 'C&T'
+            when 'Annual Review' then 'AR' when 'Desktop Review' then 'DTR' when 'Check & Test' then 'C&T'
             when 'MDT Review' then 'MDT' when 'Care Plan Sharing' then 'CPS'
             when 'Discussion' then 'DISC' when 'Follow-up' then 'F/U'
         end as moc_next_action_code,
@@ -253,6 +263,7 @@ select
         latest_discussion_date, latest_followup_date) > moc_declined_date, false) as moc_re_engaged_after_decline,
     cyp_annual_review_completed,
     cyp_requires_annual_review,
+    cyp_requires_desktop_review,
     cyp_desktop_review_completed,
     cyp_annual_review_date,
     cyp_desktop_review_date,

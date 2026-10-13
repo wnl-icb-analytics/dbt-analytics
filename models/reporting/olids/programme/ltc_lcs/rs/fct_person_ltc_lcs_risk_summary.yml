@@ -247,7 +247,7 @@ models:
                   - Declined
       - name: moc_next_action
         description: |-
-          First observation-based work list in stage order; Annual Review for CYP. Null when no list selects the person. Future care-plan diaries are unavailable in OLIDS.
+          First observation-based work list in stage order; Annual Review or Desktop Review for CYP-only children. Null when no list selects the person. Future care-plan diaries are unavailable in OLIDS.
         data_tests:
           - accepted_values:
               config:
@@ -260,8 +260,9 @@ models:
                   - Discussion
                   - Follow-up
                   - Annual Review
+                  - Desktop Review
       - name: moc_next_action_code
-        description: 'Code for next action: C&T, MDT, CPS, DISC, F/U or AR; null when no work list selects the person.'
+        description: 'Code for next action: C&T, MDT, CPS, DISC, F/U, AR or DTR; null when no work list selects the person.'
         data_tests:
           - accepted_values:
               config:
@@ -274,6 +275,7 @@ models:
                   - DISC
                   - F/U
                   - AR
+                  - DTR
       - name: moc_missing_check_test
         description: True if a later stage is recorded but Check & Test is absent in the last 12m
         data_tests:
@@ -291,8 +293,8 @@ models:
         data_tests:
           - not_null
       - name: moc_cycle_complete
-        description: 'Project measure: adult agreed plan and review within 12 months, latest E is R, and no observation-based
-          work list. Not an EMIS-defined cycle measure.'
+        description: 'Project measure: adults need an agreed plan and review within 12 months, latest MoC event a review, and
+          no observation-based work list; CYP-only asthma children need the annual review, plus the desktop review if HR.'
         data_tests:
           - not_null
       - name: moc_stage_2_date
@@ -383,10 +385,14 @@ models:
         description: CYP-only annual asthma review strictly after the one-year anniversary. False for adult pathways.
       - name: cyp_requires_annual_review
         description: CYP-only person without an annual asthma review strictly after the one-year anniversary.
+      - name: cyp_requires_desktop_review
+        description: 'CYP-only HR: annual review done, no completed desktop review, and the latest annual or desktop review
+          was 3 or more months ago. Project rule from the EMIS HR description; the exported search selects no one.'
+        data_tests:
+          - not_null
       - name: cyp_desktop_review_completed
         description: 'CYP-only HR: latest desktop review or latest annual review, after the annual anniversary
-          with another AR/DTR in [review minus 3 months, review minus 1 day). Requires desktop review is omitted because the
-          exported search contradicts itself.'
+          with another AR/DTR in [review minus 3 months, review minus 1 day). Requires desktop review follows the HR description; see cyp_requires_desktop_review.'
       - name: cyp_annual_review_date
         description: Latest non-future CYP-only asthma annual review date; may be outside the completed window. Null for
           adult pathways or no event.

@@ -1,7 +1,7 @@
 models:
   - name: ltc_lcs_risk_stratification_base_secondary_use
     description: |-
-      LTC LCS risk and MoC status, one row per adult MoC base member at the build date (EMIS GROUP1-4 parent: LR hypertension-only, LR adult-asthma-only and CYP-only asthma people excluded). Next actions use observation-based EMIS work lists; future diary lists are unavailable.
+      LTC LCS risk and MoC status, one row per adult MoC base member or CYP-only asthma child at the build date. LR hypertension-only and LR adult-asthma-only people are excluded. Next actions use observation-based EMIS work lists; future diary lists are unavailable.
     config:
       meta:
         owner:
@@ -190,10 +190,10 @@ models:
       # ============================================================
       - name: overall_risk_group
         description: Highest adult MoC risk group (HRC/HR/MR/LR), with MRa/MRb reported as MR and unstratified eligible
-          members as LR (EMIS GROUP1-4).
+          members as LR. CYP-only asthma children carry their CYP HR/LR risk (EMIS CYPAST groups).
       - name: overall_risk_rank
-        description: 'Stored risk rank: 1=HRC, 2=HR, 3=MR, 4=MRa/MRb, 5=LR. Monthly movement compares overall group ranks
-          separately.'
+        description: 'Stored risk rank: 1=HRC, 2=HR, 3=MR, 4=MRa/MRb, 5=LR. CYP-only HR/LR review risk uses 2/5. Monthly movement
+          compares overall group ranks separately.'
       - name: in_any_risk_group
         description: True if person is in any condition risk group
       - name: number_of_ltc_lcs_conditions
@@ -203,7 +203,7 @@ models:
       # MOC: pathway identity
       # ============================================================
       - name: moc_pathway
-        description: 'EMIS pathway: HRCS, HRS, MRS or LRS.'
+        description: 'Risk pathway: HRCS, HRS, MRS or LRS. CYP-only asthma children show HRS or LRS by CYP risk and follow the annual/desktop review steps (is_cyp_asthma_only).'
         data_tests: []
       - name: moc_risk_category
         description: Dashboard risk category (High Risk + Complex, High Risk, Medium Risk, or Low Risk)
@@ -308,8 +308,8 @@ models:
       # MOC: progression summary
       # ============================================================
       - name: moc_stage_completed
-        description: Highest stage reached by recorded activity (0-4). Decline-accepted EMIS completion is in
-          moc_stage_3_completed and moc_stage_4_completed.
+        description: Highest adult stage reached by recorded activity (0-4). Decline-accepted EMIS completion is in
+          moc_stage_3_completed and moc_stage_4_completed. Zero for CYP-only children.
       - name: moc_stage_completed_label
         description: Highest completed adult stage, with MoC declined when a decline supplies completion. Annual Review
           or Desktop Review for CYP evidence; Not started if absent.
@@ -322,15 +322,15 @@ models:
           Based on observations; future diary lists are unavailable."
         data_tests: []
       - name: moc_next_action
-        description: First observation-based work list in stage order; Annual Review for CYP. Null when no list selects
+        description: First observation-based work list in stage order; Annual Review or Desktop Review for CYP-only children. Null when no list selects
           the person. Future care-plan diaries are unavailable in OLIDS.
         data_tests: []
       - name: moc_next_action_code
-        description: 'Code for next action: C&T, MDT, CPS, DISC, F/U or AR; null when no work list selects the person.'
+        description: 'Code for next action: C&T, MDT, CPS, DISC, F/U, AR or DTR; null when no work list selects the person.'
         data_tests: []
       - name: moc_cycle_complete
-        description: 'Project measure: adult agreed plan and review within 12 months, latest E is R, and no observation-based
-          work list. Not an EMIS-defined cycle measure.'
+        description: 'Project measure: adults need an agreed plan and review within 12 months, latest MoC event a review, and
+          no observation-based work list; CYP-only asthma children need the annual review, plus the desktop review if HR.'
 
       # ============================================================
       # MOC: data quality - missing prior stages
@@ -405,5 +405,26 @@ models:
       - name: moc_discussion_overdue
         description: No C on or before the 12-month anniversary, latest B is A, and A is more than 3 months old. B is
           C/A/R/D/O across all history.
+      - name: cyp_annual_review_completed
+        description: CYP-only annual asthma review strictly after the one-year anniversary. False for adult pathways.
+      - name: cyp_requires_annual_review
+        description: CYP-only person without an annual asthma review strictly after the one-year anniversary.
+      - name: cyp_desktop_review_completed
+        description: 'CYP-only HR: latest desktop review or latest annual review, after the annual anniversary
+          with another AR/DTR in [review minus 3 months, review minus 1 day). Requires desktop review follows the HR description; see cyp_requires_desktop_review.'
+      - name: cyp_annual_review_date
+        description: Latest non-future CYP-only asthma annual review date; may be outside the completed window. Null for
+          adult pathways or no event.
+      - name: cyp_desktop_review_date
+        description: Latest qualifying CYP-only HR desktop review or linked annual review date; null without completion
+          or for other pathways.
+      - name: is_in_moc_base
+        description: Eligible for adult MoC after EMIS exclusions. False for CYP-only asthma pathway rows.
+      - name: moc_base_exclusion_reason
+        description: CYP asthma only for CYP pathway rows; null for adult MoC. LR hypertension-only and LR
+          adult-asthma-only rows are not published.
+      - name: is_cyp_asthma_only
+        description: True for children on the CYP asthma register only (EMIS CYPAST pathway). Their MoC steps are the
+          annual review and, for HR, the desktop review; adult stage columns are false for them.
       - name: is_type_1_diabetes_hrc
         description: Qualifies for the separate EMIS Type 1 HRC rule; not added to diabetes_risk_group.
