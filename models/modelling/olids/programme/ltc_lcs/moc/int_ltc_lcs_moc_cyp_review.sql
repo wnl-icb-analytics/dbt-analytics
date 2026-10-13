@@ -19,27 +19,35 @@ latest_dates as (
     from events
     group by person_id
 ),
-linked_annual_reviews as (
-    select l.person_id
+-- EMIS [CYPAST_HR_DTR]: the latest DTR, or else the latest AR, counts only with another AR/DTR
+-- dated from 3 months before it to before the day prior.
+linked as (
+    select
+        l.person_id,
+        max(case when e.event_date >= dateadd(month, -3, l.desktop_review_date)
+            and e.event_date < dateadd(day, -1, l.desktop_review_date) then 1 else 0 end) = 1 as dtr_linked,
+        max(case when e.event_date >= dateadd(month, -3, l.annual_review_date)
+            and e.event_date < dateadd(day, -1, l.annual_review_date) then 1 else 0 end) = 1 as ar_linked
     from latest_dates l
     inner join events e on l.person_id = e.person_id
-        and e.event_date >= dateadd(month, -3, l.annual_review_date)
-        and e.event_date < dateadd(day, -1, l.annual_review_date)
     group by l.person_id
+),
+flags as (
+    select
+        l.*,
+        coalesce(l.desktop_review_date > dateadd(year, -1, current_date()) and k.dtr_linked, false) as dtr_qualifies,
+        coalesce(l.annual_review_date > dateadd(year, -1, current_date()) and k.ar_linked, false) as ar_qualifies
+    from latest_dates l
+    left join linked k on l.person_id = k.person_id
 )
 select
-    l.person_id,
-    l.annual_review_date,
-    l.desktop_review_date,
-    coalesce(l.annual_review_date > dateadd(year, -1, current_date()), false) as annual_review_completed,
-    (
-        coalesce(l.desktop_review_date > dateadd(year, -1, current_date()), false)
-        or (coalesce(l.annual_review_date > dateadd(year, -1, current_date()), false) and linked.person_id is not null)
-    ) as desktop_review_completed,
+    person_id,
+    annual_review_date,
+    desktop_review_date,
+    coalesce(annual_review_date > dateadd(year, -1, current_date()), false) as annual_review_completed,
+    (dtr_qualifies or ar_qualifies) as desktop_review_completed,
     greatest_ignore_nulls(
-        case when l.desktop_review_date > dateadd(year, -1, current_date()) then l.desktop_review_date end,
-        case when l.annual_review_date > dateadd(year, -1, current_date()) and linked.person_id is not null
-            then l.annual_review_date end
+        case when dtr_qualifies then desktop_review_date end,
+        case when ar_qualifies then annual_review_date end
     ) as desktop_review_completed_date
-from latest_dates l
-left join linked_annual_reviews linked on l.person_id = linked.person_id
+from flags

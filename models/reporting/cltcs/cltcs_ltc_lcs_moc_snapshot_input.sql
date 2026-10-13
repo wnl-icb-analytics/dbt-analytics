@@ -16,7 +16,7 @@ Purpose:
   C-LTCS-scoped snapshot tracks the MoC fields without changing the programme's snapshot.
 
 Shape:
-- One row per active eligible adult MoC or CYP-only asthma member (`person_id`), the same population
+- One row per adult MoC base member (`person_id`), the same population
   as fct_person_ltc_lcs_risk_summary.
 - Carries the two MoC fields used for matching plus table_refresh_date.
 
@@ -39,3 +39,4 @@ select
     , moc_pathway_status
     , current_timestamp()::timestamp_ntz as table_refresh_date
 from {{ ref('fct_person_ltc_lcs_risk_summary') }}
+where is_in_moc_base

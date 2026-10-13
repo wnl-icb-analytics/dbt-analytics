@@ -151,11 +151,14 @@ progression as (
             or moc_requires_followup or cyp_requires_annual_review) as moc_has_work_list,
         coalesce(is_in_moc_base and moc_discussion_completed and moc_followup_completed
             and latest_e_code = 'R' and not moc_has_work_list, false) as moc_cycle_complete,
+        -- Existing status vocabulary; work-list detail is in moc_requires_* and moc_next_action.
         case
-            when moc_has_work_list then 'Work-list pending'
             when is_in_moc_base and moc_declined_is_latest then 'Declined'
             when moc_cycle_complete then 'Cycle complete'
-            else 'No action identified'
+            when moc_check_test_completed or moc_mdt_review_completed or moc_careplan_sharing_completed
+                or moc_discussion_completed or moc_followup_completed
+                or cyp_annual_review_completed or cyp_desktop_review_completed then 'In progress'
+            else 'Not started'
         end as moc_pathway_status,
         case
             when cyp_requires_annual_review then 'Annual Review'
@@ -173,21 +176,21 @@ progression as (
             when 'Discussion' then 'DISC' when 'Follow-up' then 'F/U'
         end as moc_next_action_code,
         case
-            when moc_stage_4_completed then 4 when moc_stage_3_completed then 3
+            when moc_discussion_completed and moc_followup_completed then 4
+            when moc_discussion_completed then 3
             when moc_stage_2_completed then 2 when moc_stage_1_completed then 1 else 0
         end as moc_stage_completed,
         case
             when not is_in_moc_base and cyp_annual_review_completed then 'Annual Review'
             when not is_in_moc_base and cyp_desktop_review_completed then 'Desktop Review'
-            when moc_stage_4_completed and not (moc_discussion_completed and moc_followup_completed) then 'MoC declined'
-            when moc_stage_4_completed then 'Follow-up'
-            when moc_stage_3_completed then 'Discussion'
+            when moc_discussion_completed and moc_followup_completed then 'Follow-up'
+            when moc_discussion_completed then 'Discussion'
             when moc_stage_2_completed and moc_careplan_sharing_completed then 'Care Plan Sharing'
             when moc_stage_2_completed then 'MDT Review'
             when moc_stage_1_completed then 'Check & Test' else 'Not started'
         end as moc_stage_completed_label,
         case moc_stage_completed_label
-            when 'Annual Review' then 'AR' when 'Desktop Review' then 'DTR' when 'MoC declined' then 'DECL'
+            when 'Annual Review' then 'AR' when 'Desktop Review' then 'DTR'
             when 'Follow-up' then 'F/U' when 'Discussion' then 'DISC' when 'Care Plan Sharing' then 'CPS'
             when 'MDT Review' then 'MDT' when 'Check & Test' then 'C&T'
         end as moc_stage_completed_code,
@@ -238,6 +241,12 @@ select
     moc_followup_date,
     moc_declined,
     moc_declined_date,
+    -- Retained for consumers: annual review event in the last 12 months, any pathway.
+    -- No longer a MoC stage; MR/LR stage 2 is care plan sharing.
+    moc_mdt_review_completed as moc_remote_desktop_review_completed,
+    moc_mdt_review_date as moc_remote_desktop_review_date,
+    coalesce(moc_declined and greatest_ignore_nulls(latest_check_test_date, latest_careplan_sharing_date,
+        latest_discussion_date, latest_followup_date) > moc_declined_date, false) as moc_re_engaged_after_decline,
     cyp_annual_review_completed,
     cyp_requires_annual_review,
     cyp_desktop_review_completed,
@@ -251,6 +260,10 @@ select
     case when moc_pathway in ('HRCS','HRS') and moc_mdt_review_completed then moc_mdt_review_date end as moc_mdt_review_date_12m,
     coalesce(moc_pathway in ('HRCS','HRS') and moc_mdt_review_completed and moc_mdt_review_date >= {{ fy_start }}, false) as moc_mdt_review_completed_fy,
     case when moc_pathway in ('HRCS','HRS') and moc_mdt_review_date >= {{ fy_start }} then moc_mdt_review_date end as moc_mdt_review_date_fy,
+    (moc_pathway in ('MRS','LRS') and moc_mdt_review_completed) as moc_remote_desktop_review_completed_12m,
+    case when moc_pathway in ('MRS','LRS') and moc_mdt_review_completed then moc_mdt_review_date end as moc_remote_desktop_review_date_12m,
+    coalesce(moc_pathway in ('MRS','LRS') and moc_mdt_review_completed and moc_mdt_review_date >= {{ fy_start }}, false) as moc_remote_desktop_review_completed_fy,
+    case when moc_pathway in ('MRS','LRS') and moc_mdt_review_date >= {{ fy_start }} then moc_mdt_review_date end as moc_remote_desktop_review_date_fy,
     (moc_careplan_sharing_completed) as moc_careplan_sharing_completed_12m,
     case when moc_careplan_sharing_completed then moc_careplan_sharing_date end as moc_careplan_sharing_date_12m,
     coalesce(moc_careplan_sharing_completed and moc_careplan_sharing_date >= {{ fy_start }}, false) as moc_careplan_sharing_completed_fy,
@@ -305,7 +318,7 @@ select
     {{ ltc_lcs_activity_last_valid_date('moc_discussion_date', inclusive=true) }} as moc_careplan_expires_date,
     least_ignore_nulls(
         case when moc_pathway = 'LRS' then {{ ltc_lcs_activity_last_valid_date('moc_check_test_date', inclusive=true) }} else {{ ltc_lcs_activity_last_valid_date('moc_check_test_date') }} end,
-        {{ ltc_lcs_activity_last_valid_date('moc_mdt_review_date', inclusive=true) }},
+        case when moc_pathway in ('HRCS','HRS') then {{ ltc_lcs_activity_last_valid_date('moc_mdt_review_date', inclusive=true) }} end,
         case when moc_pathway = 'LRS' then {{ ltc_lcs_activity_last_valid_date('moc_careplan_sharing_date', inclusive=true) }} else {{ ltc_lcs_activity_last_valid_date('moc_careplan_sharing_date') }} end,
         {{ ltc_lcs_activity_last_valid_date('moc_discussion_date', inclusive=true) }},
         {{ ltc_lcs_activity_last_valid_date('moc_followup_date', inclusive=true) }},
