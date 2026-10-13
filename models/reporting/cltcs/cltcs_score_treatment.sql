@@ -9,10 +9,27 @@
 {% set weight_barriers = 1 %}
 {% set weight_total = weight_biomarker_gaps + weight_care_gaps + weight_complexity + weight_medication + weight_illness_uec + weight_barriers %}
 
-with inclusion_list as (
-    select *
+with spine as (
+    select sk_patient_id
+        , person_id
+        , neighbourhood_code
+        , practice_code
     from {{ ref('cltcs_adult_population') }}
-    ),
+    where meets_original_criteria or meets_segment_7),
+
+inclusion_list as (
+    select sk_patient_id
+        , 'original_criteria' as inclusion_rule
+        , applicable_cohort = 'original_criteria' as is_applicable_rule
+    from {{ ref('cltcs_adult_population') }}
+    where meets_original_criteria
+    union all
+    select sk_patient_id
+        , 'segment_7'
+        , applicable_cohort = 'segment_7'
+    from {{ ref('cltcs_adult_population') }}
+    where meets_segment_7
+),
 
 encoding_features as (
     select il.sk_patient_id
@@ -98,7 +115,7 @@ encoding_features as (
         ---- chronic heart disease
         -- Engagement in existing care pathways
         , lcs.moc_stage_completed
-      from inclusion_list il
+      from spine il
     left join {{ref('dim_person_conditions')}} pc
         on il.person_id =pc.person_id
     left join {{ref('fct_person_sus_uec_recent')}} aea
@@ -212,25 +229,35 @@ domain_sub_scores as (
     from encoding_features
 ),
 
+cohort_sub_scores as(
+    select dss.*
+    , il.inclusion_rule
+    , il.is_applicable_rule
+    from inclusion_list il
+    inner join domain_sub_scores dss on il.sk_patient_id = dss.sk_patient_id
+),
+
 composite_scores as (
     select
         sk_patient_id,
         neighbourhood_code,
         practice_code,
         age,
+        inclusion_rule,
+        is_applicable_rule,
         score_biomarker_gaps,
         score_care_gaps,
         score_complexity,
         score_medication,
         score_illness_uec,
         score_barriers,
-        (score_biomarker_gaps - avg(score_biomarker_gaps) over (partition by neighbourhood_code)) / nullif(stddev(score_biomarker_gaps) over (partition by neighbourhood_code), 0) as scaled_score_biomarker_gaps,
-        (score_care_gaps - avg(score_care_gaps) over (partition by neighbourhood_code)) / nullif(stddev(score_care_gaps) over (partition by neighbourhood_code), 0) as scaled_score_care_gaps,
-        (score_complexity - avg(score_complexity) over (partition by neighbourhood_code)) / nullif(stddev(score_complexity) over (partition by neighbourhood_code), 0) as scaled_score_complexity,
-        (score_medication - avg(score_medication) over (partition by neighbourhood_code)) / nullif(stddev(score_medication) over (partition by neighbourhood_code), 0) as scaled_score_medication,
-        (score_illness_uec - avg(score_illness_uec) over (partition by neighbourhood_code)) / nullif(stddev(score_illness_uec) over (partition by neighbourhood_code), 0) as scaled_score_illness_uec,
-        (score_barriers - avg(score_barriers) over (partition by neighbourhood_code)) / nullif(stddev(score_barriers) over (partition by neighbourhood_code), 0) as scaled_score_barriers
-    from domain_sub_scores
+        (score_biomarker_gaps - avg(score_biomarker_gaps) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_biomarker_gaps) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_biomarker_gaps,
+        (score_care_gaps - avg(score_care_gaps) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_care_gaps) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_care_gaps,
+        (score_complexity - avg(score_complexity) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_complexity) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_complexity,
+        (score_medication - avg(score_medication) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_medication) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_medication,
+        (score_illness_uec - avg(score_illness_uec) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_illness_uec) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_illness_uec,
+        (score_barriers - avg(score_barriers) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_barriers) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_barriers
+    from cohort_sub_scores
 ),
 
 
@@ -268,20 +295,20 @@ remapped_scores as (
 )
 
 select
-    *,
-    -- apply the age multiplier to the weighted 0-100 score, then bound to [1, 100].
-    least(greatest(
-        raw_score_treatment * (
-            case
-                when age is null then 1.0
-                else (
-                    1
-                    -- max +15% boost at age 18, linear decline to 0 at age 60
-                    + 0.15 * (60 - least(greatest(age, 18), 60)) / 42.0
-                    -- linear penalty from age 60, capped at -15% from age 100 onward
-                    - 0.15 * least(greatest(age - 60, 0), 40) / 40.0
-                )
-            end
-        )
-    , 1), 100) as score_treatment
-from remapped_scores
+        *,
+        -- apply the age multiplier to the weighted 0-100 score, then bound to [1, 100].
+        least(greatest(
+            raw_score_treatment * (
+                case
+                    when age is null then 1.0
+                    else (
+                        1
+                        -- max +15% boost at age 18, linear decline to 0 at age 60
+                        + 0.15 * (60 - least(greatest(age, 18), 60)) / 42.0
+                        -- linear penalty from age 60, capped at -15% from age 100 onward
+                        - 0.15 * least(greatest(age - 60, 0), 40) / 40.0
+                    )
+                end
+            )
+        , 1), 100) as score_treatment
+    from remapped_scores

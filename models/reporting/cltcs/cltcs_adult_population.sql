@@ -71,21 +71,25 @@ potentially_fragmented_person_ids as (
     GROUP BY pp.person_id
     HAVING COUNT(DISTINCT p.sk_patient_id) > 1
     ORDER BY patient_count DESC
-)
+),
 
-select erl.sk_patient_id
+segment_7 as (
+    select person_id
+        , sk_patient_id
+        , practice_code
+        , practice_name
+        , neighbourhood_registered
+    from {{ref('fct_person_segment')}}
+    where is_active = TRUE 
+    and is_deceased = FALSE
+    and segment_number = 7
+),
+
+cltcs_inclusion as (
+    select erl.sk_patient_id
     , erl.neighbourhood_code
     , erl.practice_code
     , erl.person_id
-    , pc.total_conditions
-    , fr.category 
-    , ccms.cambridge_comorbidity_score
-    , zeroifnull(aea.ae_tot_12mo) as ae_tot_12mo
-    , lcs.overall_risk_group
-    , rm.unique_active_ingredient_count_12mo
-    , frr.latest_frailty_severity
-    ,case when erl.sk_patient_id in (select sk_patient_id from potentially_fragmented_sk_patient_ids) then 1 else 0 end as fragmented_sk_patient_id_flag -- poor mapping of multiple person_ids to one sk_patient_id
-    ,case when erl.person_id in (select person_id from potentially_fragmented_person_ids) then 1 else 0 end as fragmented_person_id_flag -- poor mapping of multiple sk_patient_ids to one person_id
 from source_pop erl
 left join {{ ref('dim_person_conditions')}} pc
     on erl.person_id = pc.person_id
@@ -115,5 +119,23 @@ where
         -- emergency use
         or aea.ae_tot_12mo > 3 -- 4+ AE visits within 12 months
         or apca.acs_nel_12mo > 1 -- 2+ NEL for ASC conditions within 12 months
-        )
+        )),
+
+legacy_organisations as (
+    select  practice_code, area_code, area_name
+    from {{ ref('cltcs_legacy_organisations')}}
+)
+
+select erl.sk_patient_id
+    , erl.neighbourhood_code
+    , erl.practice_code
+    , erl.person_id
+    ,case when erl.sk_patient_id in (select sk_patient_id from potentially_fragmented_sk_patient_ids) then TRUE else FALSE end as has_fragmented_sk_patient_id -- poor mapping of multiple person_ids to one sk_patient_id
+    ,case when erl.person_id in (select person_id from potentially_fragmented_person_ids) then TRUE else FALSE end as has_fragmented_person_id -- poor mapping of multiple sk_patient_ids to one person_id
+    ,case when erl.sk_patient_id in (select sk_patient_id from cltcs_inclusion) then TRUE else FALSE end as meets_original_criteria
+    ,case when erl.person_id in (select person_id from segment_7) then TRUE else FALSE end as meets_segment_7
+    ,case when erl.practice_code  in (select distinct practice_code from legacy_organisations) then 'original_criteria' else 'segment_7' end as applicable_cohort
+    ,((applicable_cohort = 'original_criteria' and meets_original_criteria) or (applicable_cohort = 'segment_7' and meets_segment_7)) as is_case_finding_eligible
+from source_pop erl
+
         

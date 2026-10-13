@@ -1,0 +1,19 @@
+SELECT
+service_code,
+service_code_description,
+service_code_including_description,
+service_category_description,
+npoc_crg,
+highly_specialised_service,
+id_ps_operational_24_25,
+notes,
+effective_from,
+effective_to,
+is_current,
+icb_delegation_24_25,
+icb_delegation_25_26,
+icb_delegation_26_27,
+delegation_change_flag_25_26_26_27,
+grouping,
+amend_record_flag_2627
+from {{ ref('nhse_service_codes_by_year_v38') }}

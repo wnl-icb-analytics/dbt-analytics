@@ -3,7 +3,8 @@ snapshots:
     relation: ref('cltcs_score_treatment_snapshot_input')
     description: >
       SCD2 history of the C-LTCS treatment sub-score and its scaled subdomain
-      components, keyed on `sk_patient_id`. Built to support matching cohort
+      components, keyed on `sk_patient_id` and `inclusion_rule`: one history per
+      patient per C-LTCS cohort. Built to support matching cohort
       patients against a control cohort by comparing score state as-at a given
       date.
 
@@ -21,7 +22,7 @@ snapshots:
 
     config:
       strategy: check
-      unique_key: [sk_patient_id]
+      unique_key: [sk_patient_id, inclusion_rule]
       updated_at: table_refresh_date
       hard_deletes: invalidate
       check_cols:
@@ -30,6 +31,11 @@ snapshots:
     columns:
       - name: sk_patient_id
         description: "Unique patient identifier; snapshot unique_key."
+        data_tests:
+          - not_null
+
+      - name: inclusion_rule
+        description: "C-LTCS cohort the score belongs to; part of the snapshot unique_key."
         data_tests:
           - not_null
 
