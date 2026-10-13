@@ -37,7 +37,7 @@ pg1_exclusions as (
 rule_2_recent_ischaemia as (
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_pad_reg_pg2_hr_vs1") }})
-    where clinical_effective_date > dateadd(day, -365, current_date())
+    where clinical_effective_date >= dateadd(day, -365, current_date())
         and clinical_effective_date < dateadd(day, -90, current_date())
 ),
 
