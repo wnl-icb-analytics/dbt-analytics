@@ -19,7 +19,7 @@ Sub-ICB level geographies without hardcoding values or performing a join.
 {% endmacro %}
 
 {% macro ncl_trust_codes_full() %}
-    {{ to_sql_list_wnl(var('ncl_trust_codes_full', ['RP4', 'RP6', 'RAL', 'RAN', 'RRV', 'RKE', 'G6V2S', 'RNK', 'RAP', 'RRP', 'TAF'])) }}
+    {{ to_sql_list(var('ncl_trust_codes_full', ['RP4', 'RP6', 'RAL', 'RAN', 'RRV', 'RKE', 'G6V2S', 'RNK', 'RAP', 'RRP', 'TAF'])) }}
 {% endmacro %}
 
 {% macro ncl_borough_names() %}
