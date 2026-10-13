@@ -23,9 +23,9 @@ select
 from {{ ref('stg_mhsds_drop_in_contact') }} as s
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as outcome_label
-    on upper(trim(s.mh_drop_in_contact_outcome::varchar)) = outcome_label.code and outcome_label.code_set_name = 'drop_in_outcome'
-left join {{ ref('mhsds_domain_code_lookup') }} as gender_label
-    on upper(trim(s.gender_id_code::varchar)) = gender_label.code and gender_label.code_set_name = 'gender_identity'
+left join {{ ref('mhsds_drop_in_contact_outcome') }} as outcome_label
+    on upper(trim(s.mh_drop_in_contact_outcome::varchar)) = outcome_label.code
+left join {{ ref('nhs_dd_gender_identity') }} as gender_label
+    on upper(trim(s.gender_id_code::varchar)) = gender_label.code
 left join {{ ref('ethnicity_2001') }} as ethnic on s.ethnic_category = ethnic.ethnicity_2001_code
 left join {{ ref('nhs_dd_consultation_mechanism') }} as mechanism on s.cons_mechanism_mh = mechanism.code

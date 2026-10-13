@@ -28,12 +28,11 @@ from {{ ref('stg_mhsds_accommodation') }} as s
 left join {{ ref('stg_mhsds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as status_label
-    on upper(trim(s.accommodation_status_code::varchar)) = status_label.code and status_label.code_set_name = 'accommodation_status'
-left join {{ ref('mhsds_domain_code_lookup') }} as type_label
-    on upper(trim(s.accommodation_type::varchar)) = type_label.code and type_label.code_set_name = 'accommodation_type'
-left join {{ ref('mhsds_domain_code_lookup') }} as settled_label
-    on upper(trim(s.settled_accommodation_ind::varchar)) = settled_label.code and settled_label.code_set_name = 'settled_accommodation'
-left join {{ ref('mhsds_domain_code_lookup') }} as legacy_type_label
+left join {{ ref('nhs_dd_accommodation_status') }} as status_label
+    on upper(trim(s.accommodation_status_code::varchar)) = status_label.code
+left join {{ ref('nhs_dd_accommodation_type') }} as type_label
+    on upper(trim(s.accommodation_type::varchar)) = type_label.code
+left join {{ ref('nhs_dd_settled_accommodation_indicator') }} as settled_label
+    on upper(trim(s.settled_accommodation_ind::varchar)) = settled_label.code
+left join {{ ref('nhs_dd_accommodation_status') }} as legacy_type_label
     on upper(trim(s.accommodation_type::varchar)) = legacy_type_label.code
-    and legacy_type_label.code_set_name = 'accommodation_status'

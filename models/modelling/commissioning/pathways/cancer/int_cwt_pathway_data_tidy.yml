@@ -1,0 +1,159 @@
+models:
+  - name: int_cwt_pathway_data_tidy
+    description: >
+      Cancer pathway-level intermediate table for CWT pathway records. 
+      Due to the size and complexity of the base data table, this intermediate table seeks to accomplish a number of transformations that allows further development of the pipeline.
+      These include:
+        - Grouping columns into ordered categories with a hierarchical naming convention
+        - Convert datetime columns to dates
+        - Mapping all site level codes to include the parent organisation as standalone columns
+        - Maps NMUH to RFL pre-merger for retroactive analysis
+        - Converted field code fields to varchar for consistency in how they appear in documentation ('01' instead of 1)
+        - Deciated logic is used for the pathway identifier field as this contains a mix of site and trust codes in the raw data
+        - Uses the active system ID table to remove inactive rows
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns:
+      - name: record_id
+        description: Source record identifier from the raw CWT pathway table.
+        data_tests:
+          - unique
+          - not_null
+      - name: sk_patient_id
+        description: Pseudo NHS number converted to a numeric surrogate patient key.
+      - name: date__consultant_upgrade_date
+        description: Date of consultant upgrade.
+      - name: date__decision_to_refer_date
+        description: Decision to refer date.
+      - name: date__cancer_referral_to_treatment_period_start_date
+        description: Start date of the cancer referral to treatment period.
+      - name: date__date_first_seen
+        description: Date first seen at a trust.
+      - name: date__fds_pathway_end_date
+        description: Faster diagnosis pathway clock end date.
+      - name: date__transfer_to_treatment_date
+        description: Date of the patient transferred to treatment.
+      - name: date__cancer_treatment_period_date
+        description: Cancer treatment period start date.
+      - name: date__treatment_start_date
+        description: Date treatment started.
+      - name: org__consultant_upgrade_trust_code
+        description: Trust code for the consultant upgrade site.
+      - name: org__consultant_upgrade_site_code
+        description: Site code for the consultant upgrade organisation.
+      - name: org__first_seen_trust_code
+        description: Trust code for the first seen organisation.
+      - name: org__first_seen_site_code
+        description: Site code for the first seen organisation.
+      - name: org__faster_diagnosis_pathway_end_trust_code
+        description: Trust code for the faster diagnosis pathway end organisation.
+      - name: org__faster_diagnosis_pathway_end_site_code
+        description: Site code for the faster diagnosis pathway end organisation.
+      - name: org__patient_pathway_identifier_issuer_trust_code
+        description: Trust code for the issuer of the patient pathway identifier, using a mapped trust where available.
+      - name: org__accountable_investigating_trust_code_preset
+        description: Preset accountable investigating trust code.
+      - name: org__accountable_investigating_trust_code
+        description: Final accountable investigating trust code, taking the most reliable available source.
+      - name: org__accountable_treating_trust_code
+        description: Trust code for the accountable treating organisation.
+      - name: org__accountable_treating_site_code
+        description: Site code for the accountable treating organisation.
+      - name: referral__cancer_referral_type_code
+        description: Cancer referral type code.
+      - name: referral__source_of_referral_for_outpatient_code
+        description: Source of referral for outpatient code.
+      - name: referral__priority_type_code
+        description: Priority type code.
+      - name: diagnosis__fds_suspected_cancer_type_code
+        description: Suspected cancer type code from the faster diagnosis pathway.
+      - name: diagnosis__fds_end_reason_code
+        description: Faster diagnosis pathway end reason code.
+      - name: diagnosis__fds_end_reason_exclusion_code
+        description: Exclusion reason associated with the faster diagnosis end reason.
+      - name: diagnosis__fds_outcome_method_of_communication_code
+        description: Outcome method of communication code from the FDS pathway.
+      - name: diagnosis__fds_outcome_profession_type_code
+        description: Outcome profession type code from the FDS pathway.
+      - name: treatment__primary_icd10_code
+        description: Primary ICD-10 diagnosis code.
+      - name: treatment__modality_code
+        description: Cancer treatment modality code.
+      - name: treatment__event_type_code
+        description: Cancer treatment event type code.
+      - name: treatment__care_setting_code
+        description: Cancer care setting code.
+      - name: performance__wta_first_seen_date_adjustment
+        description: Waiting time adjustment applied to the first seen date.
+      - name: performance__wta_first_seen_date_reason_code
+        description: Reason code for the first seen date waiting time adjustment.
+      - name: performance__wta_treatment_start_date_adjustment
+        description: Waiting time adjustment applied to the treatment start date.
+      - name: performance__wta_treatment_start_date_reason_code
+        description: Reason code for the treatment start date waiting time adjustment.
+      - name: cancer_care_spell_delay_reason__first_seen_code
+        description: Delay reason code for first seen.
+      - name: cancer_care_spell_delay_reason__fdp_code
+        description: Delay reason code for the faster diagnosis pathway.
+      - name: cancer_care_spell_delay_reason__dtt_code
+        description: Delay reason code for decision to treat.
+      - name: cancer_care_spell_delay_reason__treatment_code
+        description: Delay reason code for treatment.
+      - name: cancer_care_spell_delay_reason__consultant_upgrade_code
+        description: Delay reason code for consultant upgrade.
+      - name: status__patient_status_code
+        description: Patient status code.
+      - name: at_event__registered__practice_code
+        description: Registered GP practice code at the event.
+      - name: at_event__residence__lsoa_code
+        description: Lower layer super output area of residence at the event.
+      - name: pds_gpcode
+        description: GP practice code from the patient demographic record.
+      - name: la_of_residence
+        description: Local authority of residence.
+      - name: organisationidentifierreceiving1
+        description: First receiving organisation identifier.
+      - name: organisationidentifierreceiving2
+        description: Second receiving organisation identifier.
+      - name: organisationidentifierreceiving3
+        description: Third receiving organisation identifier.
+      - name: organisationidentifierreceiving4
+        description: Fourth receiving organisation identifier.
+      - name: organisationidentifierreceiving5
+        description: Fifth receiving organisation identifier.
+      - name: organisationidentifierreceiving6
+        description: Sixth receiving organisation identifier.
+      - name: organisationidentifierreceiving7
+        description: Seventh receiving organisation identifier.
+      - name: organisationidentifierreceiving8
+        description: Eighth receiving organisation identifier.
+      - name: organisationidentifierreceiving9
+        description: Ninth receiving organisation identifier.
+      - name: organisationidentifierreceiving10
+        description: Tenth receiving organisation identifier.
+      - name: organisationidentifierreferring1
+        description: First referring organisation identifier.
+      - name: organisationidentifierreferring2
+        description: Second referring organisation identifier.
+      - name: organisationidentifierreferring3
+        description: Third referring organisation identifier.
+      - name: organisationidentifierreferring4
+        description: Fourth referring organisation identifier.
+      - name: organisationidentifierreferring5
+        description: Fifth referring organisation identifier.
+      - name: organisationidentifierreferring6
+        description: Sixth referring organisation identifier.
+      - name: organisationidentifierreferring7
+        description: Seventh referring organisation identifier.
+      - name: organisationidentifierreferring8
+        description: Eighth referring organisation identifier.
+      - name: organisationidentifierreferring9
+        description: Ninth referring organisation identifier.
+      - name: organisationidentifierreferring10
+        description: Tenth referring organisation identifier.
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
