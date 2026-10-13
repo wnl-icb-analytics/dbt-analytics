@@ -174,10 +174,22 @@ v2_periods as (
 
 {% set complete_query %}
 with {{ meds_input_ctes }}, latest_submissions as (
+    -- Rescan only the two key columns instead of reusing meds_input, which
+    -- would buffer every wide row for a second pass and spill.
     select
         processed_period as submission_period,
         max(uniq_submission_id) as latest_submission_id
-    from meds_input
+    from (
+        select processed_period, uniq_submission_id
+        from {{ ref('raw_epd_pc_medsv1') }} as source_rows
+        where not exists (
+            select 1 from v2_periods
+            where equal_null(v2_periods.processed_period, source_rows.processed_period)
+        )
+        union all
+        select processed_period, uniq_submission_id
+        from {{ ref('raw_epd_pc_medsv2') }}
+    ) as submission_ids
     group by processed_period
 )
 
