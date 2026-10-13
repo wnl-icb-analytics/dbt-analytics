@@ -1,8 +1,8 @@
 """Build selected models with the UEC encounter needed by its code tests.
 
 Reconciliation tests compare a model with separately built source or model
-data. A partial build mixes fresh and stale relations, so they run only in
-scheduled builds, which rebuild both sides from source.
+data. A partial build mixes fresh and stale relations, so they are excluded
+here and run in scheduled and full builds, which rebuild both sides.
 """
 
 import argparse
