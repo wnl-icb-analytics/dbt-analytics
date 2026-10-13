@@ -50,7 +50,8 @@ FROM {{ ref('stg_sdl_meta_file_registry') }} r
 --FROM STAGING.SDL.STG_SDL_META_FILE_REGISTRY r
 WHERE r.feed in ('LSDePLCM','LSDrPLCM','LSPLCM','LSACM','LSREF')
 AND LEFT(SPLIT_PART(r.file_name, '_', 2),3) in ('RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS')
-AND r.financial_year = (select max(financial_year) from STAGING.SDL.STG_SDL_META_FILE_REGISTRY where feed in ('LSDePLCM','LSDrPLCM','LSPLCM','LSACM','LSREF'))
+AND r.financial_year = (select max(financial_year) from {{ ref('stg_sdl_meta_file_registry') }} where feed in ('LSDePLCM','LSDrPLCM','LSPLCM','LSACM','LSREF'))
+--AND r.financial_year = (select max(financial_year) from STAGING.SDL.STG_SDL_META_FILE_REGISTRY where feed in ('LSDePLCM','LSDrPLCM','LSPLCM','LSACM','LSREF'))
 --ensure that the latest version of the file is selected
 QUALIFY ROW_NUMBER() OVER (PARTITION BY feed, LEFT(SPLIT_PART(r.file_name, '_', 2),3),  r.financial_year, r.financial_month  ORDER BY r.created_datetime DESC, r.file_id DESC ) =1
 )
