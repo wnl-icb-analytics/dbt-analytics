@@ -132,7 +132,7 @@ select
     cwt.organisationidentifierreferring10
     
 
-from {{ ref('raw_cwt_pathway_cwt001data') }} as cwt
+from {{ ref('stg_cwt_pathway_cwt001data') }} as cwt
 
 --Joins to map organisation sites into trusts
 left join org_par site_map__consultant_upgrade
