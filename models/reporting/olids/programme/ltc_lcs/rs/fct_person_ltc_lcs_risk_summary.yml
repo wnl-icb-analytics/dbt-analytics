@@ -1,24 +1,8 @@
 version: 2
 models:
   - name: fct_person_ltc_lcs_risk_summary
-    description: |
-      Person-level summary of LTC LCS risk stratification and Model of Care activity.
-      One row per person on the LTC LCS MOC base population: any LTC LCS disease
-      register (AF, CKD, CHD, Diabetes, Hypertension, NAFLD, Asthma Adult, Asthma CYP,
-      COPD, Heart Failure, PAD, Stroke/TIA).
-
-      Each condition column holds the highest risk group the person is in
-      (HRC > HR > MR > MRa/MRb > LR); columns are null for conditions the person is
-      not stratified against (only Diabetes, Hypertension, Asthma Adult and Asthma CYP
-      have per-condition LR searches in EMIS). overall_risk_group mirrors the EMIS
-      [GROUP4- LR] rollup: it falls back to 'LR' for any MOC base member not
-      stratified into HRC/HR/MR at any condition.
-
-      MOC flags indicate whether each pathway activity was recorded in the last 12 months.
-      Pathway progression is surfaced via moc_pathway (HRCS/HRS/MRS/LRS),
-      moc_stage_completed, moc_pathway_status, moc_next_action, and care plan expiry dates.
-      Named stage flags use _12m for the trailing 12 months and _fy for the current
-      financial year to date (1 April through current date).
+    description: |-
+      LTC LCS risk and MoC activity, one row per active person in the eligible adult MoC or CYP-only asthma population at the build date. LR hypertension-only and LR adult-asthma-only people are excluded.
     config:
       meta:
         owner:
@@ -44,7 +28,8 @@ models:
       - name: af_risk_group
         description: Highest AF risk group (HR/MR) or null if not on AF register pathway
       - name: asthma_adult_risk_group
-        description: Highest Asthma Adult risk group (HRC/HR/MR/LR) or null if not on adult asthma register pathway
+        description: Highest Asthma Adult risk group (HRC/HR/MR/LR) or null if not on adult asthma register
+          pathway
       - name: asthma_cyp_risk_group
         description: Highest Asthma CYP risk group (HR/LR) or null if not on CYP-only asthma register pathway
       - name: chd_risk_group
@@ -54,11 +39,13 @@ models:
       - name: copd_risk_group
         description: Highest COPD risk group (HRC/HR/MR) or null if not on COPD register pathway
       - name: diabetes_risk_group
-        description: Highest Diabetes risk group (HRC/HR/MR/MRa/MRb/LR) or null if not on Diabetes register pathway
+        description: Highest Diabetes risk group (HRC/HR/MR/MRa/MRb/LR) or null if not on Diabetes register
+          pathway
       - name: hf_risk_group
         description: Highest Heart Failure risk group (HR/MR) or null if not on HF register pathway
       - name: hypertension_risk_group
-        description: Highest Hypertension risk group (HRC/HR/MRa/MRb/LR) or null if not on HTN register pathway
+        description: Highest Hypertension risk group (HRC/HR/MRa/MRb/LR) or null if not on HTN register
+          pathway
       - name: nafld_risk_group
         description: Highest NAFLD risk group (MR only) or null if not on NAFLD register pathway
       - name: pad_risk_group
@@ -66,7 +53,8 @@ models:
       - name: stroke_tia_risk_group
         description: Highest Stroke/TIA risk group (HRC/HR/MR) or null if not on Stroke/TIA register pathway
       - name: overall_risk_group
-        description: Highest risk group across all conditions (HRC/HR/MR/LR); MRa/MRb collapse to MR; LR is the residual for MOC base members not stratified higher
+        description: Highest risk group across all conditions (HRC/HR/MR/LR); MRa/MRb collapse to MR; LR is
+          the residual for MOC base members not stratified higher
         data_tests:
           - accepted_values:
               arguments:
@@ -74,7 +62,8 @@ models:
       - name: overall_risk_rank
         description: Numeric rank of overall_risk_group (1=HRC highest, 5=LR lowest)
       - name: in_any_risk_group
-        description: True if person is in any condition risk group (i.e. stratified via a per-condition rs model)
+        description: True if person is in any condition risk group (i.e. stratified via a per-condition rs
+          model)
         data_tests:
           - not_null
       - name: moc_check_test_completed
@@ -108,13 +97,15 @@ models:
       - name: moc_followup_date
         description: Latest follow-up appointment date (null if none)
       - name: moc_declined
-        description: Model of Care declined event recorded in last 12 months (raw flag, regardless of later re-engagement)
+        description: Model of Care declined event recorded in last 12 months (raw flag, regardless of later
+          re-engagement)
         data_tests:
           - not_null
       - name: moc_declined_date
         description: Latest MoC declined date (null if none)
       - name: moc_re_engaged_after_decline
-        description: True if the person declined in last 12m but has since had a progression activity recorded after the decline
+        description: True if the person declined in last 12m but has since had a progression activity recorded
+          after the decline
         data_tests:
           - not_null
       - name: moc_any_activity_12m
@@ -126,12 +117,19 @@ models:
         data_tests:
           - not_null
       - name: moc_pathway
-        description: EMIS pathway family that applies to this person (HRCS/HRS/MRS/LRS), derived from overall_risk_group
+        description: EMIS pathway family that applies to this person (HRCS/HRS/MRS/LRS), derived from
+          overall_risk_group
         data_tests:
           - not_null
           - accepted_values:
               arguments:
-                values: ['HRCS', 'HRS', 'MRS', 'LRS']
+                values:
+                  - HRCS
+                  - HRS
+                  - MRS
+                  - LRS
+                  - CYPAST_HR
+                  - CYPAST_LR
       - name: moc_risk_category
         description: Dashboard risk category (High Risk + Complex, High Risk, Medium Risk, or Low Risk)
         data_tests:
@@ -155,10 +153,12 @@ models:
       - name: moc_remote_desktop_review_date_12m
         description: Latest Remote Desktop Review date in the trailing 12 months for MRS/LRS pathways
       - name: moc_remote_desktop_review_completed_fy
-        description: Remote Desktop Review completed in the current financial year to date for MRS/LRS pathways
+        description: Remote Desktop Review completed in the current financial year to date for MRS/LRS
+          pathways
         data_tests: [not_null]
       - name: moc_remote_desktop_review_date_fy
-        description: Latest Remote Desktop Review date in the current financial year to date for MRS/LRS pathways
+        description: Latest Remote Desktop Review date in the current financial year to date for MRS/LRS
+          pathways
       - name: moc_mdt_review_completed_12m
         description: MDT Review completed in the trailing 12 months for HRCS/HRS pathways
         data_tests: [not_null]
@@ -282,7 +282,8 @@ models:
         data_tests:
           - not_null
       - name: moc_missing_stage_2
-        description: True if discussion or follow-up is recorded but the pathway's stage 2 is absent in the last 12m
+        description: True if discussion or follow-up is recorded but the pathway's stage 2 is absent in the
+          last 12m
         data_tests:
           - not_null
       - name: moc_missing_discussion
@@ -290,7 +291,8 @@ models:
         data_tests:
           - not_null
       - name: moc_has_missing_priors
-        description: True if the person has reached a later stage but is missing any earlier stage in the last 12m
+        description: True if the person has reached a later stage but is missing any earlier stage in the last
+          12m
         data_tests:
           - not_null
       - name: moc_cycle_complete
@@ -298,15 +300,19 @@ models:
         data_tests:
           - not_null
       - name: moc_stage_2_date
-        description: Later MDT Review or Care Plan Sharing date for HRCS/HRS; Remote Desktop Review date for MRS/LRS
+        description: Later MDT Review or Care Plan Sharing date for HRCS/HRS; Remote Desktop Review date for
+          MRS/LRS
       - name: moc_days_check_test_to_stage_2
-        description: Days between check & test and stage 2. Null if either is missing; negative if stage 2 was recorded before check & test.
+        description: Days between check & test and stage 2. Null if either is missing; negative if stage 2 was
+          recorded before check & test.
       - name: moc_days_stage_2_to_discussion
         description: Days between stage 2 and discussion. Null if either is missing; negative if out of order.
       - name: moc_days_discussion_to_followup
-        description: Days between discussion and follow-up. Null if either is missing; negative if out of order.
+        description: Days between discussion and follow-up. Null if either is missing; negative if out of
+          order.
       - name: moc_days_check_test_to_followup
-        description: End-to-end cycle duration in days (check & test → follow-up). Null if either endpoint is missing.
+        description: End-to-end cycle duration in days (check & test → follow-up). Null if either endpoint
+          is missing.
       - name: moc_careplan_expires_date
         description: |
           Date the current care plan expires (discussion / PCSP-agreed date + 12 months).
@@ -323,3 +329,9 @@ models:
         description: Timestamp when the row was built
         data_tests:
           - not_null
+      - name: is_in_moc_base
+        description: Eligible for adult MoC; false for CYP-only asthma.
+      - name: moc_base_exclusion_reason
+        description: CYP asthma only for CYP pathway rows; null for adult MoC.
+      - name: is_type_1_diabetes_hrc
+        description: Qualifies for the separate EMIS Type 1 diabetes HRC rule.

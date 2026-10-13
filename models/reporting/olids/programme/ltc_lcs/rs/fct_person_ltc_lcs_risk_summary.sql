@@ -14,8 +14,9 @@
 -- HRCS / HRS / MRS / LRS pathway families.
 
 with moc_base as (
-    select person_id, number_of_ltc_lcs_conditions
+    select person_id, number_of_ltc_lcs_conditions, is_in_moc_base, moc_base_exclusion_reason
     from {{ ref('int_ltc_lcs_moc_base') }}
+    where is_in_moc_base or moc_base_exclusion_reason = 'CYP asthma only'
 ),
 
 rs as (
@@ -58,7 +59,10 @@ joined as (
         p.number_of_ltc_lcs_conditions,
         rs.af_risk_group,
         rs.asthma_adult_risk_group,
-        rs.asthma_cyp_risk_group,
+        case when p.moc_base_exclusion_reason = 'CYP asthma only' then coalesce(cyp.risk_group, 'LR') else rs.asthma_cyp_risk_group end as asthma_cyp_risk_group,
+        p.is_in_moc_base,
+        p.moc_base_exclusion_reason,
+        coalesce(rs.is_type_1_diabetes_hrc, false) as is_type_1_diabetes_hrc,
         rs.chd_risk_group,
         rs.ckd_risk_group,
         rs.copd_risk_group,
@@ -69,9 +73,9 @@ joined as (
         rs.pad_risk_group,
         rs.stroke_tia_risk_group,
         -- overall_risk_group: falls back to LR for MOC base members not stratified higher
-        -- (mirrors EMIS [GROUP4- LR] = MOC base ∖ (HRC ∪ HR ∪ MR))
-        coalesce(rs.overall_risk_group, 'LR') as overall_risk_group,
-        coalesce(rs.overall_risk_rank, 5) as overall_risk_rank,
+        -- GROUP4 is the eligible adult MoC base minus HRC, HR and MR.
+        coalesce(rs.overall_risk_group, cyp.risk_group, 'LR') as overall_risk_group,
+        coalesce(rs.overall_risk_rank, case when cyp.person_id is not null then 2 else 5 end) as overall_risk_rank,
         (rs.person_id is not null) as in_any_risk_group,
 
         coalesce(ct.check_test_completed, false) as moc_check_test_completed,
@@ -87,6 +91,8 @@ joined as (
         coalesce(dec.moc_declined, false) as moc_declined,
         dec.latest_declined_date as moc_declined_date
     from moc_base p
+    left join {{ ref('int_ltc_lcs_rs_acyp_pg2_hr') }} cyp
+        on p.person_id = cyp.person_id and p.moc_base_exclusion_reason = 'CYP asthma only'
     left join rs on p.person_id = rs.person_id
     left join moc_check_test ct on p.person_id = ct.person_id
     left join moc_review rev on p.person_id = rev.person_id
@@ -101,12 +107,14 @@ with_pathway as (
         j.*,
         -- MOC pathway family: which EMIS search series applies to this person
         -- HRC → HRCS, HR → HRS, MR/MRa/MRb → MRS, LR → LRS
-        case upper(j.overall_risk_group)
+        case
+            when j.moc_base_exclusion_reason = 'CYP asthma only' then 'CYPAST_' || j.asthma_cyp_risk_group
+            else case upper(j.overall_risk_group)
             when 'HRC' then 'HRCS'
             when 'HR'  then 'HRS'
             when 'MR'  then 'MRS'
             when 'LR'  then 'LRS'
-        end as moc_pathway,
+        end end as moc_pathway,
         case upper(j.overall_risk_group)
             when 'HRC' then 'High Risk + Complex'
             when 'HR'  then 'High Risk'
@@ -257,6 +265,9 @@ with_decline_logic as (
 select
     person_id,
     number_of_ltc_lcs_conditions,
+    is_in_moc_base,
+    moc_base_exclusion_reason,
+    is_type_1_diabetes_hrc,
 
     -- Condition risk groups
     af_risk_group,
