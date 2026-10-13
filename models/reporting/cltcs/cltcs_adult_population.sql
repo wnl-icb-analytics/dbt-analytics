@@ -74,15 +74,16 @@ potentially_fragmented_person_ids as (
 ),
 
 segment_7 as (
-    select person_id
-        , sk_patient_id
-        , practice_code
-        , practice_name
-        , neighbourhood_registered
-    from {{ref('fct_person_segment')}}
-    where is_active = TRUE 
-    and is_deceased = FALSE
-    and segment_number = 7
+    select d.person_id
+        , d.sk_patient_id
+        , d.practice_code
+        , d.practice_name
+        , d.neighbourhood_registered
+    from {{ ref('dim_person_demographics') }} d
+    inner join {{ref('fct_person_complex_adults')}} as ca
+     on d.person_id = ca.person_id
+    where d.is_active = TRUE 
+    and d.is_deceased = FALSE
 ),
 
 cltcs_inclusion as (
@@ -97,8 +98,6 @@ left join {{ref('fct_person_sus_uec_recent')}} aea
     on erl.sk_patient_id  = aea.sk_patient_id
 left join {{ref('fct_person_sus_apc_recent')}} apca
     on erl.sk_patient_id  = apca.sk_patient_id
-left join {{ref('fct_person_medications_recent')}} rm
-    on erl.person_id = rm.person_id
 left join {{ref('fct_person_efi2')}} fr
     on erl.person_id = fr.person_id
 left join {{ref('fct_person_frailty_register')}} frr
