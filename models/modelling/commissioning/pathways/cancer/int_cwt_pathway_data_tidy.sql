@@ -1,3 +1,7 @@
+{{ 
+    config(materialized='view') 
+}}
+
 --CTE to create trust site map
 --Note historic mentions of NMUH ('RAP' trust code) is remapped to RFL ('RAL' trust code and 'RAL27' site code)
 -- 333761 is the NMUH SK Organisation ID for the historic trust
