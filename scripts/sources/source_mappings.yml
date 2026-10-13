@@ -192,6 +192,8 @@ sources:
     description: OLIDS stable layer - cleaned and filtered patient records
     raw_prefix: raw_olids
     domain: olids
+    exclude_tables:
+      - EPISODE_OF_CARE_V2  # LDS retires V2 on 20 October 2026 (#1298).
 
   # Dictionary/Reference Data SNOMED
   - source_name: dictionary_snomed
@@ -220,6 +222,20 @@ sources:
     description: Reference terminology data including SNOMED, BNF, and other code sets
     raw_prefix: raw_reference
     domain: shared
+    # Moved on 11 October 2026; exclude compatibility views and migration backups.
+    exclude_tables:
+      - COMBINED_CODESETS
+      - ECL_CACHE
+      - ECL_CACHE_METADATA
+      - ECL_CLUSTERS
+      - ECL_CLUSTER_CHANGES
+      - ECL_CLUSTER_VERSIONS
+      - COMBINED_CODESETS__PRE_MIGRATION
+      - ECL_CACHE__PRE_MIGRATION
+      - ECL_CACHE_METADATA__PRE_MIGRATION
+      - ECL_CLUSTERS__PRE_MIGRATION
+      - ECL_CLUSTER_CHANGES__PRE_MIGRATION
+      - ECL_CLUSTER_VERSIONS__PRE_MIGRATION
 
     # PTL
   - source_name: ptl
@@ -321,7 +337,7 @@ sources:
   - source_name: reference_terminology_curated
     database: REFERENCE
     schema: TERMINOLOGY
-    description: Curated Primary Care Domain terminology releases
+    description: Curated terminology releases and combined clinical code sets
     raw_prefix: raw_reference_terminology
     domain: shared
     manual: true
@@ -425,6 +441,16 @@ sources:
     schema: POD_GROUP_MANAGER
     description: POD Group Manager app - governed POD group mappings
     raw_prefix: raw
+    domain: shared
+    manual: true
+
+  # SNOMED Cluster Manager app. Only the expansion cache is consumed by dbt.
+  # Keep app-internal definitions, versions, change logs and metadata out of dbt.
+  - source_name: snomed_cluster_manager
+    database: APPLICATIONS
+    schema: SNOMED_CLUSTER_MANAGER
+    description: SNOMED Cluster Manager app - expanded ECL code clusters
+    raw_prefix: raw_snomed_cluster_manager
     domain: shared
     manual: true
 

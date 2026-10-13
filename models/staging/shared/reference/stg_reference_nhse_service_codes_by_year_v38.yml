@@ -1,0 +1,49 @@
+models:
+  - name: stg_reference_nhse_service_codes_by_year_v38
+    description: NHSE service codes contracting years 2024-2027.
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    columns:
+      - name: service_code
+        description: National Service code unique identifier.
+        tests:
+          - unique
+          - not_null
+      - name: service_code_description
+        description: National service code description.
+      - name: service_code_including_description
+        description: Service code concatenated with description.
+      - name: service_category_description
+        description: Description of type of service.
+      - name: npoc_crg
+        description: TFC specialty level code.
+      - name: highly_specialised_service
+        description: Flag for highly specialised service.
+      - name: id_ps_operational_24_25
+        description: Flag for operational in previous year 2425.
+      - name: notes
+        description: Notes field.
+      - name: effective_from
+        description: Start date for code.
+      - name: effective_to
+        description: End date for code if applicable.
+      - name: is_current
+        description: Is current flag as binary 0/1.
+      - name: icb_delegation_24_25
+        description: ICB colour delegation status as RED/GREEN/BLUE 2425.
+      - name: icb_delegation_25_26
+        description: ICB colour delegation status as RED/GREEN/BLUE 2526.
+      - name: icb_delegation_26_27
+        description: ICB colour delegation status as RED/GREEN/BLUE 2627.
+      - name: delegation_change_flag_25_26_26_27
+        description: ICB delegation change flag last 2 years.
+      - name: grouping
+        description: Grouping as Acute, Mental Health.
+      - name: amend_record_flag_2627
+        description: Record of changes.
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

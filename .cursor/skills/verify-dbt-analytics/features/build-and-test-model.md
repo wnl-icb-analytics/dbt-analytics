@@ -22,9 +22,9 @@ Preconditions:
 - Selection is the smallest that answers the question. DEV is shared.
 - Tests that fail will try to return failing rows. Do not copy those rows into evidence, git or chat.
 
-- **Named build.** Build the fixture if warehouse proof is in scope. Run `control-dbt-analytics build -- -s nhs_ethnicity_2001`. Exit code `0`. Stdout shows the model and its tests as success. Evidence records node names and status only.
-- **Named tests.** Re-run tests without rebuilding. Run `control-dbt-analytics test -- -s nhs_ethnicity_2001`. Exit code `0`. Same evidence rule.
-- **Downstream limit.** List consumers first (`features/downstream-impact.md`). Only then `control-dbt-analytics build -- -s nhs_ethnicity_2001+` if that set is small enough. If it is not, skip and say so.
+- **Named build.** Build the fixture if warehouse proof is in scope. Run `control-dbt-analytics build -- -s ethnicity_2001`. Exit code `0`. Stdout shows the model and its tests as success. Evidence records node names and status only.
+- **Named tests.** Re-run tests without rebuilding. Run `control-dbt-analytics test -- -s ethnicity_2001`. Exit code `0`. Same evidence rule.
+- **Downstream limit.** List consumers first (`features/downstream-impact.md`). Only then `control-dbt-analytics build -- -s ethnicity_2001+` if that set is small enough. If it is not, skip and say so.
 - **Proof.** Keep `dbt-build.exit_code.txt` (or `dbt-test`) at `0` and a redacted log with success counts, not `select` results.
 
 ## Gotchas
