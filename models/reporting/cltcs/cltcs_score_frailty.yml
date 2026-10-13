@@ -22,23 +22,24 @@ models:
         data_type: varchar
         description: >
           Cohort this row is scored in. 'original_criteria' is the original C-LTCS
-          inclusion criteria; 'segment_7' is segment 7 (Adults with Complexity) from
-          fct_person_segment. The z-scores on this row are calculated against other
-          patients in the same cohort and neighbourhood.
+          inclusion criteria; 'adults_with_complexity' is the Adults with Complexity
+          cohort from fct_person_complex_adults, including people on the palliative care
+          register. The z-scores on this row are calculated against other patients in
+          the same cohort and neighbourhood.
         data_tests:
           - not_null
           - accepted_values:
               arguments:
                 values:
                   - original_criteria
-                  - segment_7
+                  - adults_with_complexity
 
       - name: is_applicable_rule
         data_type: boolean
         description: >
           True when inclusion_rule is the cohort that applies at the patient's practice:
           the original criteria at legacy practices (cltcs_legacy_organisations) and
-          segment 7 everywhere else. At most one row per patient is true. False rows are
+          Adults with Complexity everywhere else. At most one row per patient is true. False rows are
           scores for the other cohort, kept for comparison between cohorts.
       - name: neighbourhood_code
         data_type: varchar
