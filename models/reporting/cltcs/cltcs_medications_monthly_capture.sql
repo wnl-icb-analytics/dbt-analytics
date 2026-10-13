@@ -36,10 +36,8 @@ Retention: a post_hook keeps ~4 years (48 months) of monthly captures.
 Forward-only: history starts at the first run; it cannot backfill months before it existed.
 
 full_refresh=false: the scheduled monthly build on the 1st runs with --full-refresh, which would
-otherwise drop the table and re-seed ONLY the current month, permanently deleting every previously
-captured month (the history is not reconstructable). The setting makes that build run incrementally
-here instead. The sibling cltcs_*_monthly_capture models set it for the same reason. To rebuild
-deliberately, copy the table first, then drop it.
+otherwise rebuild this table from scratch and lose every captured month. To rebuild it on purpose,
+copy the table first, then drop it.
 
 cltcs_monthly_covariates consumes the two 12-month columns (medications_recent_12mo,
 unique_active_ingredient_count_12mo) and the current-repeat columns (medications_repeat,

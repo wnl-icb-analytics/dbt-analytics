@@ -41,7 +41,8 @@ are deleted after each build (a cheap no-op until a month ages out).
 Scheduling: left in the normal (daily) build -- the is_incremental guard makes daily runs a
 no-op except the first build of each month.
 full_refresh=false: the scheduled monthly build on the 1st runs with --full-refresh, which would
-otherwise rebuild this table from scratch and lose every captured month.
+otherwise rebuild this table from scratch and lose every captured month. To rebuild it on purpose,
+copy the table first, then drop it.
 */
 
 with captured as (

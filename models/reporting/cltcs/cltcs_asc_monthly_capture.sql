@@ -32,7 +32,8 @@ Grain: one row per (sk_patient_id, snapshot_month).
 Retention: a post_hook keeps ~4 years (48 months) of monthly captures.
 Forward-only: history starts at the first run; it cannot backfill months before it existed.
 full_refresh=false: the scheduled monthly build on the 1st runs with --full-refresh, which would
-otherwise rebuild this table from scratch and lose every captured month.
+otherwise rebuild this table from scratch and lose every captured month. To rebuild it on purpose,
+copy the table first, then drop it.
 */
 
 with captured as (
