@@ -438,9 +438,9 @@ SELECT
     CASE WHEN base.gender = 'Male' THEN 'male' ELSE 'female' END           AS sex,
     bmi.bmi_value                                                          AS bmi,
 
-    -- Constants, as in the live model: Strategic Health Authority 5 (London)
+    -- Constants, as in the live model: Strategic Health Authority 3 (London)
     -- and the prediction horizon in years.
-    5                                                                      AS sha1,
+    3                                                                      AS sha1,
     {{ var('qadmissions_horizon_years', 1) }}                              AS surv,
 
     -- Disease booleans from the as-at QOF registers.

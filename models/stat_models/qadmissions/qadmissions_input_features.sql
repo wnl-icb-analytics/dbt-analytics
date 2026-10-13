@@ -244,8 +244,9 @@ SELECT
     CASE WHEN base.gender = 'Male' THEN 'male' ELSE 'female' END           AS sex,
     bmi.bmi_value                                                          AS bmi,
 
-    -- Constants
-    5                                                                      AS sha1,
+    -- Constants. sha1 is the Strategic Health Authority; QAdmissions numbers
+    -- the regions alphabetically, so London is 3 (5 is North West).
+    3                                                                      AS sha1,
     {{ var('qadmissions_horizon_years', 1) }}                              AS surv,
 
     -- Disease booleans from dim_person_conditions
