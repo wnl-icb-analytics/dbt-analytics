@@ -7,7 +7,7 @@
 
 -- LTC LCS Risk Stratification Base Table
 -- Combines the person-level risk summary with demographics and population health filter flags.
--- One row per eligible adult MoC or CYP-only asthma member.
+-- Adult MoC base only (EMIS GROUP1-4 parent). One row per eligible adult MoC or CYP-only asthma member.
 
 select
     -- ============================================================
@@ -121,8 +121,6 @@ select
     -- ============================================================
     -- MOC: pathway identity
     -- ============================================================
-    rs.is_in_moc_base,
-    rs.moc_base_exclusion_reason,
     rs.is_type_1_diabetes_hrc,
     rs.moc_pathway,
     rs.moc_risk_category,
@@ -143,11 +141,6 @@ select
     rs.moc_requires_followup,
     rs.moc_ct_overdue,
     rs.moc_discussion_overdue,
-    rs.cyp_annual_review_completed,
-    rs.cyp_requires_annual_review,
-    rs.cyp_desktop_review_completed,
-    rs.cyp_annual_review_date,
-    rs.cyp_desktop_review_date,
     rs.moc_check_test_completed,
     rs.moc_check_test_date,
     rs.moc_remote_desktop_review_completed,
@@ -264,3 +257,5 @@ left join {{ ref('fct_person_ltc_lcs_outcomes_htn_bp_control') }} htn_roll
     on rs.person_id = htn_roll.person_id
 left join {{ ref('fct_person_ltc_lcs_outcomes_htn_bp_control_fy') }} htn_fy
     on rs.person_id = htn_fy.person_id
+-- Adult MoC base only (EMIS GROUP1-4 parent); CYP-only asthma rows stay in the reporting fct.
+where rs.is_in_moc_base
