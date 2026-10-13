@@ -53,7 +53,8 @@ population as (
         coalesce(rs.overall_risk_group, cyp.risk_group, 'LR') as overall_risk_group,
         coalesce(rs.overall_risk_rank, case when cyp.person_id is not null then 2 else 5 end) as overall_risk_rank,
         (rs.person_id is not null or cyp.person_id is not null or not p.is_in_moc_base) as in_any_risk_group,
-        case when not p.is_in_moc_base then 'CYPAST_' || coalesce(cyp.risk_group, 'LR')
+        -- Four risk pathways; CYP-only asthma rows (is_in_moc_base false) follow HRS or LRS by CYP risk.
+        case when not p.is_in_moc_base then case coalesce(cyp.risk_group, 'LR') when 'HR' then 'HRS' else 'LRS' end
             else case coalesce(rs.overall_risk_group, 'LR')
                 when 'HRC' then 'HRCS' when 'HR' then 'HRS' when 'MR' then 'MRS' else 'LRS'
             end end as moc_pathway,

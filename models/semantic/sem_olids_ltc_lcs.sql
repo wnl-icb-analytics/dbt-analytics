@@ -90,7 +90,7 @@ DIMENSIONS(
     rs.stroke_tia_risk_group AS stroke_tia_risk_group COMMENT = 'Stroke/TIA risk group',
     rs.overall_risk_group AS overall_risk_group COMMENT = 'Highest LTC LCS risk across conditions: HRC (high risk complex), HR, MR, or LR. Unstratified Model of Care members default to LR.',
     rs.overall_risk_rank AS overall_risk_rank COMMENT = 'Risk rank: 1=HRC, 2=HR, 3=MR, 4=MRa/MRb, 5=LR.',
-    rs.moc_pathway AS moc_pathway COMMENT = 'Model of Care pathway: HRCS, HRS, MRS, LRS, CYPAST_HR or CYPAST_LR',
+    rs.moc_pathway AS moc_pathway COMMENT = 'Model of Care pathway: HRCS, HRS, MRS or LRS',
     rs.moc_risk_category AS moc_risk_category COMMENT = 'Model of Care risk category',
     rs.moc_pathway_status AS moc_pathway_status COMMENT = 'Observation-based work-list pending, Declined, Cycle complete, or No action identified',
     rs.moc_stage_completed_label AS moc_stage_completed_label COMMENT = 'Highest completed adult stage including accepted declines, or CYP Annual Review/Desktop Review.',
