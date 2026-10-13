@@ -162,6 +162,8 @@ progression as (
             when moc_requires_check_test then 'Check & Test'
             when moc_requires_mdt_review then 'MDT Review'
             when moc_requires_careplan_sharing then 'Care Plan Sharing'
+            -- Main EMIS stage 2 list without a sublist match (MDT and sharing both recent, newer C&T).
+            when moc_requires_stage_2 then 'Care Plan Sharing'
             when moc_requires_discussion then 'Discussion'
             when moc_requires_followup then 'Follow-up'
         end as moc_next_action,
