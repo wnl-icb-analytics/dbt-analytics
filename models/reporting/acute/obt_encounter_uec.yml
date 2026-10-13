@@ -341,18 +341,20 @@ models:
           Additive attendance measure. Usually 1; 0 for the agreed historical
           Totally streaming records that were also counted at a co-located ED.
 
-      - name: four_hour_breach_status
-        data_type: varchar
+      - name: is_four_hour_breach
+        data_type: boolean
         description: >-
-          Legacy Quick Report Breach_4Hr measure. Y means the submitted time from
-          arrival to departure is at least 240 minutes, including exactly 240
-          minutes. N means it is below 240 minutes. Unknown means the submitted
-          duration is null. This field does not select an attendance population;
-          apply the population required by the report before aggregating it.
+          True when the submitted time from arrival to departure is more than
+          240 minutes; exactly 240 minutes is within the four-hour standard.
+          Null when duration is missing. This follows NHS England's A&E
+          Attendances and Emergency Admissions definitions v5.0, page 7:
+          https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2020/08/AE-Attendances-Emergency-Definitions-v5.0-final-August-2020.pdf.
+          This field does not select an attendance population; apply the
+          population required by the report before aggregating it.
         data_tests:
           - accepted_values:
               arguments:
-                values: ['Y', 'N', 'Unknown']
+                values: [true, false]
 
       - name: over_12_hours_count
         data_type: number
