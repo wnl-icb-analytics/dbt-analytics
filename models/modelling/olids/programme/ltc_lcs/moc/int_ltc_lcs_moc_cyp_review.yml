@@ -1,0 +1,31 @@
+models:
+  - name: int_ltc_lcs_moc_cyp_review
+    description: CYP asthma review evidence, one row per person with annual or desktop review history on or before
+      today. Pathway population is applied in the risk summary.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        data_tests:
+          - unique
+          - not_null
+      - name: annual_review_date
+        description: Latest asthma annual review date; null if absent.
+      - name: desktop_review_date
+        description: Latest at-risk asthma review date; null if absent.
+      - name: annual_review_completed
+        description: Annual review strictly after the one-year anniversary.
+      - name: desktop_review_completed
+        description: Desktop review after the anniversary, or latest annual review after it with another AR/DTR in
+          [review minus 3 months, review minus 1 day). Requires desktop review is omitted because the exported search
+          contradicts itself.
+      - name: desktop_review_completed_date
+        description: Latest qualifying direct desktop review or linked annual review date; null without completion.
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - 229356ea-2e6c-41fc-9970-4ff96efb09b9
+              - 588fcdb7-58e7-400c-b772-c3d48017372d

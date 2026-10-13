@@ -2,7 +2,7 @@ version: 2
 models:
   - name: fct_person_ltc_lcs_risk_summary
     description: |-
-      LTC LCS risk and MoC activity, one row per active person in the eligible adult MoC or CYP-only asthma population at the build date. LR hypertension-only and LR adult-asthma-only people are excluded.
+      LTC LCS risk and MoC status, one row per active eligible adult MoC or CYP-only asthma member at the build date. LR hypertension-only and LR adult-asthma-only people are excluded. Next actions use observation-based EMIS work lists; future diary lists are unavailable.
     config:
       meta:
         owner:
@@ -28,10 +28,10 @@ models:
       - name: af_risk_group
         description: Highest AF risk group (HR/MR) or null if not on AF register pathway
       - name: asthma_adult_risk_group
-        description: Highest Asthma Adult risk group (HRC/HR/MR/LR) or null if not on adult asthma register
-          pathway
+        description: Highest Asthma Adult risk group (HRC/HR/MR/LR) or null if not on adult asthma register pathway
       - name: asthma_cyp_risk_group
-        description: Highest Asthma CYP risk group (HR/LR) or null if not on CYP-only asthma register pathway
+        description: CYP asthma HR across the full register; LR for CYP-only people not in HR. Null for unstratified
+          CYP-plus-other people.
       - name: chd_risk_group
         description: Highest CHD risk group (HRC/HR/MR) or null if not on CHD register pathway
       - name: ckd_risk_group
@@ -39,13 +39,11 @@ models:
       - name: copd_risk_group
         description: Highest COPD risk group (HRC/HR/MR) or null if not on COPD register pathway
       - name: diabetes_risk_group
-        description: Highest Diabetes risk group (HRC/HR/MR/MRa/MRb/LR) or null if not on Diabetes register
-          pathway
+        description: Highest Diabetes risk group (HRC/HR/MR/MRa/MRb/LR) or null if not on Diabetes register pathway
       - name: hf_risk_group
         description: Highest Heart Failure risk group (HR/MR) or null if not on HF register pathway
       - name: hypertension_risk_group
-        description: Highest Hypertension risk group (HRC/HR/MRa/MRb/LR) or null if not on HTN register
-          pathway
+        description: Highest Hypertension risk group (HRC/HR/MRa/MRb/LR) or null if not on HTN register pathway
       - name: nafld_risk_group
         description: Highest NAFLD risk group (MR only) or null if not on NAFLD register pathway
       - name: pad_risk_group
@@ -53,8 +51,8 @@ models:
       - name: stroke_tia_risk_group
         description: Highest Stroke/TIA risk group (HRC/HR/MR) or null if not on Stroke/TIA register pathway
       - name: overall_risk_group
-        description: Highest risk group across all conditions (HRC/HR/MR/LR); MRa/MRb collapse to MR; LR is
-          the residual for MOC base members not stratified higher
+        description: Highest risk group across all conditions (HRC/HR/MR/LR); MRa/MRb collapse to MR; LR is the residual
+          for MOC base members not stratified higher
         data_tests:
           - accepted_values:
               arguments:
@@ -62,36 +60,31 @@ models:
       - name: overall_risk_rank
         description: Numeric rank of overall_risk_group (1=HRC highest, 5=LR lowest)
       - name: in_any_risk_group
-        description: True if person is in any condition risk group (i.e. stratified via a per-condition rs
-          model)
+        description: True if person is in any condition risk group (i.e. stratified via a per-condition rs model)
         data_tests:
           - not_null
       - name: moc_check_test_completed
-        description: Check & Test appointment completed in last 12 months
+        description: 'Actual C&T activity: C strictly after the annual anniversary for HRCS/HRS/MRS; inclusive for LRS. False
+          for CYP-only people.'
         data_tests:
           - not_null
       - name: moc_check_test_date
         description: Latest Check & Test appointment date (null if none)
-      - name: moc_remote_desktop_review_completed
-        description: Remote Desktop Review (RDR) completed in last 12 months
-        data_tests:
-          - not_null
-      - name: moc_remote_desktop_review_date
-        description: Latest Remote Desktop Review (RDR) date (null if none)
       - name: moc_careplan_sharing_completed
-        description: Care plan shared with patient in last 12 months
+        description: 'Actual sharing activity: S strictly after the annual anniversary for HRCS/HRS/MRS; inclusive for LRS.'
         data_tests:
           - not_null
       - name: moc_careplan_sharing_date
         description: Latest care plan sharing date (null if none)
       - name: moc_discussion_completed
-        description: Discussion appointment (PCSP agreed) completed in last 12 months
+        description: Actual PCSP agreed event in the inclusive trailing 12 months. Declines do not count as activity.
         data_tests:
           - not_null
       - name: moc_discussion_date
         description: Latest discussion appointment date (null if none)
       - name: moc_followup_completed
-        description: Follow-up appointment (review of PCSP) completed in last 12 months
+        description: Actual PCSP review event in the inclusive trailing 12 months. Stage 4 completion also requires an
+          agreed plan or a decline.
         data_tests:
           - not_null
       - name: moc_followup_date
@@ -103,22 +96,18 @@ models:
           - not_null
       - name: moc_declined_date
         description: Latest MoC declined date (null if none)
-      - name: moc_re_engaged_after_decline
-        description: True if the person declined in last 12m but has since had a progression activity recorded
-          after the decline
-        data_tests:
-          - not_null
       - name: moc_any_activity_12m
-        description: True if any MOC activity (including declined) recorded in last 12 months
+        description: Any actual adult MoC or applicable CYP review activity in its pathway window, including an adult
+          decline.
         data_tests:
           - not_null
       - name: moc_any_activity_fy
-        description: True if any MOC activity was recorded in the current financial year to date
+        description: 'Project financial-year measure, since 1 April: Project measure of actual adult MoC or applicable CYP
+          review activity since 1 April, including an adult decline.'
         data_tests:
           - not_null
       - name: moc_pathway
-        description: EMIS pathway family that applies to this person (HRCS/HRS/MRS/LRS), derived from
-          overall_risk_group
+        description: 'EMIS pathway: HRCS, HRS, MRS, LRS, CYPAST_HR or CYPAST_LR. CYP-only people have a separate review pathway.'
         data_tests:
           - not_null
           - accepted_values:
@@ -138,152 +127,161 @@ models:
               arguments:
                 values: ['High Risk + Complex', 'High Risk', 'Medium Risk', 'Low Risk']
       - name: moc_check_test_completed_12m
-        description: Check & Test completed in the trailing 12 months
+        description: 'Actual C&T activity: C strictly after the annual anniversary for HRCS/HRS/MRS; inclusive for LRS. False
+          for CYP-only people.'
         data_tests: [not_null]
       - name: moc_check_test_date_12m
         description: Latest Check & Test date in the trailing 12 months
       - name: moc_check_test_completed_fy
-        description: Check & Test completed in the current financial year to date
+        description: 'Project financial-year measure, since 1 April: Check & Test completed in the current financial year
+          to date'
         data_tests: [not_null]
       - name: moc_check_test_date_fy
-        description: Latest Check & Test date in the current financial year to date
-      - name: moc_remote_desktop_review_completed_12m
-        description: Remote Desktop Review completed in the trailing 12 months for MRS/LRS pathways
-        data_tests: [not_null]
-      - name: moc_remote_desktop_review_date_12m
-        description: Latest Remote Desktop Review date in the trailing 12 months for MRS/LRS pathways
-      - name: moc_remote_desktop_review_completed_fy
-        description: Remote Desktop Review completed in the current financial year to date for MRS/LRS
-          pathways
-        data_tests: [not_null]
-      - name: moc_remote_desktop_review_date_fy
-        description: Latest Remote Desktop Review date in the current financial year to date for MRS/LRS
-          pathways
+        description: 'Project financial-year measure, since 1 April: Latest Check & Test date in the current financial year
+          to date'
       - name: moc_mdt_review_completed_12m
-        description: MDT Review completed in the trailing 12 months for HRCS/HRS pathways
+        description: Actual annual MDT review event in the inclusive trailing 12 months; separate from stage 2
+          completion.
         data_tests: [not_null]
       - name: moc_mdt_review_date_12m
-        description: Latest MDT Review date in the trailing 12 months for HRCS/HRS pathways
+        description: Latest actual annual MDT review date within the inclusive trailing 12 months; null if absent.
       - name: moc_mdt_review_completed_fy
-        description: MDT Review completed in the current financial year to date for HRCS/HRS pathways
+        description: 'Project financial-year measure, since 1 April: MDT Review completed in the current financial year to
+          date for HRCS/HRS pathways'
         data_tests: [not_null]
       - name: moc_mdt_review_date_fy
-        description: Latest MDT Review date in the current financial year to date for HRCS/HRS pathways
+        description: 'Project financial-year measure, since 1 April: Latest MDT Review date in the current financial year
+          to date for HRCS/HRS pathways'
       - name: moc_careplan_sharing_completed_12m
-        description: Care Plan Sharing completed in the trailing 12 months for HRCS/HRS pathways
+        description: 'Actual sharing activity: S strictly after the annual anniversary for HRCS/HRS/MRS; inclusive for LRS.'
         data_tests: [not_null]
       - name: moc_careplan_sharing_date_12m
         description: Latest Care Plan Sharing date in the trailing 12 months for HRCS/HRS pathways
       - name: moc_careplan_sharing_completed_fy
-        description: Care Plan Sharing completed in the current financial year to date for HRCS/HRS pathways
+        description: 'Project financial-year measure, since 1 April: Care Plan Sharing completed in the current financial
+          year to date for HRCS/HRS pathways'
         data_tests: [not_null]
       - name: moc_careplan_sharing_date_fy
-        description: Latest Care Plan Sharing date in the current financial year to date for HRCS/HRS pathways
+        description: 'Project financial-year measure, since 1 April: Latest Care Plan Sharing date in the current financial
+          year to date for HRCS/HRS pathways'
       - name: moc_discussion_completed_12m
-        description: Discussion completed in the trailing 12 months
+        description: Actual PCSP agreed event in the inclusive trailing 12 months. Declines do not count as activity.
         data_tests: [not_null]
       - name: moc_discussion_date_12m
         description: Latest Discussion date in the trailing 12 months
       - name: moc_discussion_completed_fy
-        description: Discussion completed in the current financial year to date
+        description: 'Project financial-year measure, since 1 April: Discussion completed in the current financial year to
+          date'
         data_tests: [not_null]
       - name: moc_discussion_date_fy
-        description: Latest Discussion date in the current financial year to date
+        description: 'Project financial-year measure, since 1 April: Latest Discussion date in the current financial year
+          to date'
       - name: moc_followup_completed_12m
-        description: Follow-up completed in the trailing 12 months
+        description: Actual PCSP review event in the inclusive trailing 12 months. Stage 4 completion also requires an
+          agreed plan or a decline.
         data_tests: [not_null]
       - name: moc_followup_date_12m
         description: Latest Follow-up date in the trailing 12 months
       - name: moc_followup_completed_fy
-        description: Follow-up completed in the current financial year to date
+        description: 'Project financial-year measure, since 1 April: Follow-up completed in the current financial year to
+          date'
         data_tests: [not_null]
       - name: moc_followup_date_fy
-        description: Latest Follow-up date in the current financial year to date
+        description: 'Project financial-year measure, since 1 April: Latest Follow-up date in the current financial year to
+          date'
       - name: moc_stage_2_completed
-        description: |
-          Stage 2 completed using pathway rules. HRCS/HRS require MDT Review and
-          Care Plan Sharing. MRS/LRS require Remote Desktop Review.
+        description: |-
+          C strictly after the annual anniversary and MDT or sharing for HRCS/HRS; sharing for MRS/LRS. MDT is inclusive; sharing is strict except in LRS.
         data_tests:
           - not_null
       - name: moc_stage_completed
-        description: Furthest MOC pathway stage reached in the last 12 months (0-4)
+        description: Highest adult completed stage (0-4), including decline-accepted completion. Zero for CYP-only
+          pathways; use CYP review flags.
         data_tests:
           - not_null
           - accepted_values:
               arguments:
                 values: [0, 1, 2, 3, 4]
       - name: moc_stage_completed_label
-        description: |
-          Readable label for the furthest stage reached. One of 'Not started',
-          'Check & Test', 'Remote Desktop Review', 'MDT Review',
-          'Care Plan Sharing', 'Discussion', or 'Follow-up'.
+        description: |-
+          Highest completed adult stage, with MoC declined when a decline supplies completion. Annual Review or Desktop Review for CYP evidence; Not started if absent.
         data_tests:
           - not_null
           - accepted_values:
               arguments:
                 values:
-                  - 'Not started'
-                  - 'Check & Test'
-                  - 'Remote Desktop Review'
-                  - 'MDT Review'
-                  - 'Care Plan Sharing'
-                  - 'Discussion'
-                  - 'Follow-up'
+                  - Not started
+                  - Check & Test
+                  - MDT Review
+                  - Care Plan Sharing
+                  - Discussion
+                  - Follow-up
+                  - MoC declined
+                  - Annual Review
+                  - Desktop Review
       - name: moc_stage_completed_code
-        description: Short code for moc_stage_completed_label; null when not started
+        description: 'Code for completed-stage label: C&T, MDT, CPS, DISC, F/U, DECL, AR or DTR; null when not started.'
         data_tests:
           - accepted_values:
               config:
                 where: moc_stage_completed_code is not null
               arguments:
-                values: ['C&T', 'RDR', 'MDT', 'CPS', 'DISC', 'F/U']
+                values:
+                  - C&T
+                  - MDT
+                  - CPS
+                  - DISC
+                  - F/U
+                  - DECL
+                  - AR
+                  - DTR
       - name: moc_pathway_status
-        description: |
-          Overall state of the person's current MOC cycle. One of:
-          'Not started' (no activity recorded),
-          'In progress' (at least one stage done, cycle not yet complete — includes
-          follow-up recorded with missing priors, where moc_has_missing_priors=true),
-          'Cycle complete' (all required stages recorded in the last 12m; equivalent to
-          moc_cycle_complete=true),
-          'Declined' (MoC declined is the most recent MOC event).
-          Use alongside moc_next_action to filter the pending-action list.
+        description: |-
+          Work-list pending takes precedence, then Declined (latest E is D), Cycle complete, or No action identified. Based on observations; future diary lists are unavailable.
         data_tests:
           - not_null
           - accepted_values:
               arguments:
-                values: ['Not started', 'In progress', 'Cycle complete', 'Declined']
+                values:
+                  - Work-list pending
+                  - Declined
+                  - Cycle complete
+                  - No action identified
       - name: moc_next_action
-        description: |
-          Next pathway action the person needs, or NULL if no action is required
-          (cycle complete or declined). Uses the named progression stages.
-          Filter WHERE moc_next_action IS NOT NULL to get the action list.
+        description: |-
+          First observation-based work list in stage order; Annual Review for CYP. Null when no list selects the person. Future care-plan diaries are unavailable in OLIDS.
         data_tests:
           - accepted_values:
               config:
                 where: moc_next_action is not null
               arguments:
                 values:
-                  - 'Check & Test'
-                  - 'Remote Desktop Review'
-                  - 'MDT Review'
-                  - 'Care Plan Sharing'
-                  - 'Discussion'
-                  - 'Follow-up'
+                  - Check & Test
+                  - MDT Review
+                  - Care Plan Sharing
+                  - Discussion
+                  - Follow-up
+                  - Annual Review
       - name: moc_next_action_code
-        description: Short code for moc_next_action; null when no action is required
+        description: 'Code for next action: C&T, MDT, CPS, DISC, F/U or AR; null when no work list selects the person.'
         data_tests:
           - accepted_values:
               config:
                 where: moc_next_action_code is not null
               arguments:
-                values: ['C&T', 'RDR', 'MDT', 'CPS', 'DISC', 'F/U']
+                values:
+                  - C&T
+                  - MDT
+                  - CPS
+                  - DISC
+                  - F/U
+                  - AR
       - name: moc_missing_check_test
         description: True if a later stage is recorded but Check & Test is absent in the last 12m
         data_tests:
           - not_null
       - name: moc_missing_stage_2
-        description: True if discussion or follow-up is recorded but the pathway's stage 2 is absent in the
-          last 12m
+        description: True if discussion or follow-up is recorded but the pathway's stage 2 is absent in the last 12m
         data_tests:
           - not_null
       - name: moc_missing_discussion
@@ -291,47 +289,88 @@ models:
         data_tests:
           - not_null
       - name: moc_has_missing_priors
-        description: True if the person has reached a later stage but is missing any earlier stage in the last
-          12m
+        description: True if the person has reached a later stage but is missing any earlier stage in the last 12m
         data_tests:
           - not_null
       - name: moc_cycle_complete
-        description: True if all required pathway stages are recorded in the last 12m
+        description: 'Project measure: adult agreed plan and review within 12 months, latest E is R, and no observation-based
+          work list. Not an EMIS-defined cycle measure.'
         data_tests:
           - not_null
       - name: moc_stage_2_date
-        description: Later MDT Review or Care Plan Sharing date for HRCS/HRS; Remote Desktop Review date for
-          MRS/LRS
+        description: Latest qualifying MDT or sharing date for a completed HRCS/HRS stage 2; sharing date for MRS/LRS.
+          Null if stage 2 is incomplete.
       - name: moc_days_check_test_to_stage_2
-        description: Days between check & test and stage 2. Null if either is missing; negative if stage 2 was
-          recorded before check & test.
+        description: Days between check & test and stage 2. Null if either is missing; negative if stage 2 was recorded
+          before check & test.
       - name: moc_days_stage_2_to_discussion
         description: Days between stage 2 and discussion. Null if either is missing; negative if out of order.
       - name: moc_days_discussion_to_followup
-        description: Days between discussion and follow-up. Null if either is missing; negative if out of
-          order.
+        description: Days between discussion and follow-up. Null if either is missing; negative if out of order.
       - name: moc_days_check_test_to_followup
-        description: End-to-end cycle duration in days (check & test → follow-up). Null if either endpoint
-          is missing.
+        description: End-to-end cycle duration in days (check & test → follow-up). Null if either endpoint is missing.
       - name: moc_careplan_expires_date
-        description: |
-          Date the current care plan expires (discussion / PCSP-agreed date + 12 months).
-          The discussion appointment is when the care plan is agreed, so this is the
-          natural 12-month anniversary of the care plan. Null if no discussion on record.
+        description: |-
+          Last valid day of the inclusive PCSP-agreed 12-month window; null without valid activity. Accounts for leap-year clipping.
       - name: moc_next_expiry_date
-        description: |
-          Earliest date on which any currently-counted MOC event drops out of the 12m
-          rolling window. For 'Cycle complete' persons this is when the status will
-          lapse (earliest stage anniversary). For 'In progress' it is the oldest kept
-          activity + 12m. For 'Declined' it is the decline date + 12m. Null if no
-          MOC activity is recorded.
+        description: |-
+          Earliest last valid day among currently qualifying pathway events. Strict windows expire before the anniversary; inclusive windows include it, with leap-year clipping.
       - name: table_refresh_date
         description: Timestamp when the row was built
         data_tests:
           - not_null
       - name: is_in_moc_base
-        description: Eligible for adult MoC; false for CYP-only asthma.
+        description: Eligible for adult MoC after EMIS exclusions. False for CYP-only asthma pathway rows.
       - name: moc_base_exclusion_reason
-        description: CYP asthma only for CYP pathway rows; null for adult MoC.
+        description: CYP asthma only for CYP pathway rows; null for adult MoC. LR hypertension-only and LR
+          adult-asthma-only rows are not published.
       - name: is_type_1_diabetes_hrc
-        description: Qualifies for the separate EMIS Type 1 diabetes HRC rule.
+        description: Qualifies for the separate EMIS Type 1 HRC rule; not added to diabetes_risk_group.
+      - name: moc_mdt_review_completed
+        description: Actual annual MDT review event in the inclusive trailing 12 months; separate from stage 2
+          completion.
+      - name: moc_mdt_review_date
+        description: Latest actual annual MDT review date within the inclusive trailing 12 months; null if absent.
+      - name: moc_stage_1_completed
+        description: Adult pathway C&T completion, using its strict or inclusive annual window. False for CYP-only
+          people.
+      - name: moc_stage_3_completed
+        description: 'Adult stage 3: agreed plan or decline in the inclusive trailing 12 months. No stage 1 or 2 prerequisite.'
+      - name: moc_stage_4_completed
+        description: 'Adult stage 4: decline, or both agreed plan and review in the inclusive trailing 12 months. No stage
+          1 or 2 prerequisite.'
+      - name: moc_requires_check_test
+        description: Observation-based EMIS stage 1 list. Old C&T can require a new C&T despite a more recent decline.
+      - name: moc_requires_stage_2
+        description: Latest E in the inclusive trailing 12 months is C, strictly after the annual anniversary. Future
+          diaries are unavailable.
+      - name: moc_requires_mdt_review
+        description: HRCS/HRS stage 2 list with no MDT strictly after the 12-month anniversary.
+      - name: moc_requires_careplan_sharing
+        description: MRS/LRS stage 2 list, or HRCS/HRS stage 2 list with MDT strictly after the anniversary and no
+          sharing on or after it.
+      - name: moc_requires_discussion
+        description: Latest E in the inclusive trailing 12 months is S. Future diaries are unavailable.
+      - name: moc_requires_followup
+        description: Latest E is not D/R/C/S and latest E plus offered in the inclusive trailing 12 months is A. Future
+          diaries are unavailable.
+      - name: moc_ct_overdue
+        description: Latest C strictly within 12 months, latest B is C, and C is more than 42 days old. B is C/A/R/D/O
+          across all history.
+      - name: moc_discussion_overdue
+        description: No C on or before the 12-month anniversary, latest B is A, and A is more than 3 months old. B is
+          C/A/R/D/O across all history.
+      - name: cyp_annual_review_completed
+        description: CYP-only annual asthma review strictly after the one-year anniversary. False for adult pathways.
+      - name: cyp_requires_annual_review
+        description: CYP-only person without an annual asthma review strictly after the one-year anniversary.
+      - name: cyp_desktop_review_completed
+        description: 'CYP-only HR: desktop review strictly after the annual anniversary, or latest annual review after it
+          with another AR/DTR in [review minus 3 months, review minus 1 day). Requires desktop review is omitted because the
+          exported search contradicts itself.'
+      - name: cyp_annual_review_date
+        description: Latest non-future CYP-only asthma annual review date; may be outside the completed window. Null for
+          adult pathways or no event.
+      - name: cyp_desktop_review_date
+        description: Latest qualifying CYP-only HR desktop review or linked annual review date; null without completion
+          or for other pathways.
