@@ -56,8 +56,12 @@ bnf_oral_anticoagulants_6m as (
 -- Anticoagulant therapy in last 6 months (rule 2 arm and rule 10 gate)
 anticoagulants_6m as (
     select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("on_af_reg_pg3_mr_vs1, on_af_reg_pg3_mr_vs2, on_af_reg_pg3_mr_vs3") }})
+    from ({{ get_ltc_lcs_medication_orders_latest("on_af_reg_pg3_mr_vs1") }})
     where order_date >= dateadd(month, -6, current_date())
+    union
+    select person_id
+    from ({{ get_ltc_lcs_medication_orders_latest("on_af_reg_pg3_mr_vs2, on_af_reg_pg3_mr_vs3") }})
+    where order_date > dateadd(month, -6, current_date())
     union
     select person_id from bnf_oral_anticoagulants_6m
     union
@@ -79,7 +83,7 @@ oral_anticoagulants_6m as (
 doacs_6m as (
     select person_id
     from ({{ get_ltc_lcs_medication_orders_latest("on_af_reg_pg3_mr_vs3") }})
-    where order_date >= dateadd(month, -6, current_date())
+    where order_date > dateadd(month, -6, current_date())
 ),
 
 ages as (
@@ -125,7 +129,12 @@ rockwood_score_6 as (
 -- Latest CHA2DS2-VASc score (vs10, refset)
 latest_chadsvasc as (
     select person_id, result_value, clinical_effective_date
-    from ({{ get_ltc_lcs_observations_latest("on_af_reg_pg3_mr_vs10") }})
+    from ({{ get_ltc_lcs_observations("on_af_reg_pg3_mr_vs10") }})
+    where clinical_effective_date <= current_date()
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc, observation_id desc
+    ) = 1
 ),
 
 -- Latest serum creatinine (vs11)

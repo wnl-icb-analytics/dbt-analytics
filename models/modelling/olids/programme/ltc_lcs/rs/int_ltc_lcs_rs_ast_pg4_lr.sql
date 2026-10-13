@@ -10,7 +10,7 @@
 --
 -- Parent register note: the EMIS parent 'LTC LCS: Asthma Adult Register*' is
 -- the asthma register restricted to age >= 18; fct_person_asthma_register is
--- age >= 6, so the age filter is applied here.
+-- age >= 5, so the age filter is applied here.
 
 with
 -- Parent population: Adults currently on asthma register

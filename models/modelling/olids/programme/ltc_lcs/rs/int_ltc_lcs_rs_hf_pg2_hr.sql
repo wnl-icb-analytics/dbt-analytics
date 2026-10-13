@@ -12,7 +12,7 @@
 --   metolazone order (vs5) in last year -> include
 -- - Rule 3 (gate): latest HbA1c (vs6) > 48 and <= 75. Fail -> exclude.
 -- - Rule 4 (gate): latest LVEF (vs7) < 50, or HFLVSD/REDEJCFRAC code (vs8/vs9)
---   with episode excluding Review/End. Fail -> exclude.
+--   with episode excluding Review/Ended. Fail -> exclude.
 -- - Rule 5: on SGLT2 - course commenced (vs10) or order (vs10) in last
 --   6 months, or adverse reaction (vs11). Fail -> include (therapy gap).
 -- - Rule 6: on MRA - course commenced (vs12) or order (vs12) in last
@@ -73,7 +73,7 @@ rule_2_oedema_or_metolazone as (
     union
     select person_id
     from ({{ get_ltc_lcs_medication_orders_latest("on_hf_reg_pg2_hr_vs5") }})
-    where order_date >= dateadd(year, -1, current_date())
+    where order_date > dateadd(year, -1, current_date())
 ),
 
 -- Rule 3: latest HbA1c > 48 and <= 75
@@ -84,7 +84,7 @@ rule_3_hba1c as (
 ),
 
 -- Rule 4: latest LVEF < 50, or HFLVSD/REDEJCFRAC code with episode
--- excluding Review/End
+-- excluding Review/Ended
 rule_4_lvef as (
     select person_id
     from ({{ get_ltc_lcs_observations_latest("on_hf_reg_pg2_hr_vs7") }})
@@ -94,18 +94,18 @@ rule_4_lvef as (
     from ({{ get_ltc_lcs_observations("on_hf_reg_pg2_hr_vs8, on_hf_reg_pg2_hr_vs9") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
 ),
 
 -- Rule 5: on SGLT2 inhibitors
 rule_5_sglt2 as (
     select distinct person_id
     from ({{ get_ltc_lcs_medication_statements("on_hf_reg_pg2_hr_vs10") }})
-    where statement_date >= dateadd(month, -6, current_date())
+    where statement_date > dateadd(month, -6, current_date())
     union
     select distinct person_id
     from ({{ get_ltc_lcs_medication_orders("on_hf_reg_pg2_hr_vs10") }})
-    where order_date >= dateadd(month, -6, current_date())
+    where order_date > dateadd(month, -6, current_date())
     union
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_hf_reg_pg2_hr_vs11") }})
@@ -115,11 +115,11 @@ rule_5_sglt2 as (
 rule_6_mra as (
     select distinct person_id
     from ({{ get_ltc_lcs_medication_statements("on_hf_reg_pg2_hr_vs12") }})
-    where statement_date >= dateadd(month, -6, current_date())
+    where statement_date > dateadd(month, -6, current_date())
     union
     select distinct person_id
     from ({{ get_ltc_lcs_medication_orders("on_hf_reg_pg2_hr_vs12") }})
-    where order_date >= dateadd(month, -6, current_date())
+    where order_date > dateadd(month, -6, current_date())
     union
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_hf_reg_pg2_hr_vs13") }})
@@ -129,7 +129,7 @@ rule_6_mra as (
 rule_7_beta_blockers as (
     select distinct person_id
     from ({{ get_ltc_lcs_medication_orders("on_hf_reg_pg2_hr_vs14") }})
-    where order_date >= dateadd(month, -6, current_date())
+    where order_date > dateadd(month, -6, current_date())
     union
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_hf_reg_pg2_hr_vs15") }})

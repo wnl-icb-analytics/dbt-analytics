@@ -12,7 +12,7 @@
 --   Note: vs8 (Insulins) has no SNOMED mapping, using BNF 060101 fallback
 -- - Rule 5: eGFR 45-49 (vs11) (include)
 -- - Rule 6: ACR 3-30 (vs12) (include)
--- - Rule 7: ABPM BP ≥140/90 (include, if failed → exclude)
+-- - Rule 7: BP of any type ≥140/90 (include, if failed → exclude)
 
 with
 -- Parent population: Patients on diabetes register
@@ -92,7 +92,7 @@ rule_4_heart_failure as (
     from ({{ get_ltc_lcs_observations("on_dm_reg_priority_group_3b_mrb_vs7") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
 ),
 
 -- GLP-1 medications (vs9) and Insulins in last 6 months

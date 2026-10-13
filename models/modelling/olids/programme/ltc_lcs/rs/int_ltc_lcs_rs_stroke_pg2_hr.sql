@@ -41,7 +41,7 @@ rule_2_recent_stroke_episode as (
     from ({{ get_ltc_lcs_observations("on_stroketia_reg_pg2_hr_vs1, on_stroketia_reg_pg2_hr_vs2") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where o.clinical_effective_date >= dateadd(day, -365, current_date())
+    where o.clinical_effective_date > dateadd(day, -365, current_date())
         and o.clinical_effective_date < dateadd(day, -30, current_date())
         and ecm.source_display in ('First', 'New', 'Flare Up')
 ),
@@ -61,7 +61,7 @@ latest_bp as (
         diastolic_value,
         coalesce(is_home_bp_event or is_abpm_bp_event, false) as is_home_or_abpm
     from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+    where clinical_effective_date > dateadd(month, -12, current_date())
 ),
 
 ages as (

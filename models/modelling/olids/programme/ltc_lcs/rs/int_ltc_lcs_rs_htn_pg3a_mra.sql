@@ -47,7 +47,7 @@ rule_3_chd as (
     from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs3") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
 ),
 
 -- Rule 3: Stroke/TIA (episode type not Review or Ended)
@@ -56,7 +56,7 @@ rule_3_stroke_tia as (
     from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs4, on_htn_reg_priority_group_3a_mra_v3_vs5") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
 ),
 
 -- Rule 3: PAD (episode type not Review or Ended)
@@ -65,7 +65,7 @@ rule_3_pad as (
     from ({{ get_ltc_lcs_observations("on_htn_reg_priority_group_3a_mra_v3_vs6") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
 ),
 
 -- Rule 3: CKD
@@ -114,7 +114,7 @@ rule_3_comorbidities as (
 rules_4_5_bp_controlled as (
     select person_id
     from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+    where clinical_effective_date > dateadd(month, -12, current_date())
       and (
           (not coalesce(is_home_bp_event or is_abpm_bp_event, false)
            and systolic_value <= 140 and diastolic_value <= 90)
