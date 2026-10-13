@@ -2,7 +2,7 @@
 
 {% set fy_start = "date_from_parts(case when month(current_date()) >= 4 then year(current_date()) else year(current_date()) - 1 end, 4, 1)" %}
 
--- One row per eligible active adult MoC member or CYP-only asthma member, assessed today.
+-- One row per eligible adult MoC member or CYP-only asthma member, assessed today.
 with event_dates as (
     select
         person_id,

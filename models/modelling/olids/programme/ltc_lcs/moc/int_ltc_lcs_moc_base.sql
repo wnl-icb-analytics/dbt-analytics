@@ -1,6 +1,7 @@
 {{ config(materialized='table') }}
 
--- Active register members, including exclusions needed by the CYP-only pathway.
+-- Register members, including exclusions needed by the CYP-only pathway.
+-- Registration status is not filtered; consumers filter is_active.
 with register_population as (
     select r.person_id, 'af' as condition
     from {{ ref('fct_person_atrial_fibrillation_register') }} r
@@ -58,7 +59,6 @@ person_registers as (
         max(condition = 'pad') as is_on_pad_register,
         max(condition = 'stroke_tia') as is_on_stroke_tia_register
     from register_population r
-    inner join {{ ref('dim_person_active_patients') }} active on r.person_id = active.person_id
     group by r.person_id
 ),
 with_exclusion as (

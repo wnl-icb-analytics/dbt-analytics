@@ -14,7 +14,7 @@
     register population and Model of Care activity. Do not mix their elements
     in one query: they are different populations.
 
-    Risk summary contains active eligible adult MoC and CYP-only asthma members.
+    Risk summary contains eligible adult MoC and CYP-only asthma members, including inactive and deceased people; filter is_active.
     Adult stage 2 uses sharing, or MDT/sharing for HRCS and HRS.
 #}
 
@@ -29,7 +29,7 @@ TABLES(
 
     rs AS {{ ref('fct_person_ltc_lcs_risk_summary') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Active eligible adult MoC and CYP-only asthma members with risk and observation-based Model of Care status'
+        COMMENT = 'Eligible adult MoC and CYP-only asthma members with risk and observation-based Model of Care status'
 )
 
 RELATIONSHIPS(

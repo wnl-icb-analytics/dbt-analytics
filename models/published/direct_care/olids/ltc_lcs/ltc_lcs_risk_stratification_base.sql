@@ -7,7 +7,7 @@
 
 -- LTC LCS Risk Stratification Base Table
 -- Combines the person-level risk summary with demographics and population health filter flags.
--- One row per active eligible adult MoC or CYP-only asthma member.
+-- One row per eligible adult MoC or CYP-only asthma member.
 
 select
     -- ============================================================
