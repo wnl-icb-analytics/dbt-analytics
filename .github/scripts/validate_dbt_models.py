@@ -1,4 +1,4 @@
-"""Build selected models with the UEC encounter needed by its code tests.
+"""Build selected UEC parents and children together where tests require both.
 
 Reconciliation tests compare a model with separately built source or model
 data. A partial build mixes fresh and stale relations, so they are excluded
@@ -13,6 +13,14 @@ import sys
 
 UEC_CODES = {"int_sus_uec_diagnosis", "int_sus_uec_procedure"}
 UEC_PARENT = "int_sus_uec_encounter"
+UEC_CHILDREN = {
+    "int_sus_uec_diagnosis",
+    "int_sus_uec_encounter_clinical_codes",
+    "int_sus_uec_injury_alcohol_drug",
+    "int_sus_uec_mental_health_legal_status",
+    "int_sus_uec_procedure",
+    "int_sus_uec_referred_to_service",
+}
 EXCLUDE = ["--exclude", "tag:reconciliation"]
 
 
@@ -22,6 +30,8 @@ def build_selection(nodes):
     models = {node["name"] for node in nodes if node["resource_type"] == "model"}
     if models & UEC_CODES:
         names.add(UEC_PARENT)
+    if UEC_PARENT in models:
+        names.update(UEC_CHILDREN)
     return sorted(names)
 
 
@@ -53,6 +63,11 @@ def main():
         return
     if UEC_PARENT in selection and any(n["name"] in UEC_CODES for n in nodes):
         print("Building UEC codes and their encounter parent together.")
+    if any(
+        node["name"] == UEC_PARENT and node["resource_type"] == "model"
+        for node in nodes
+    ):
+        print("Building the UEC encounter and its direct child models together.")
     print(f"{args.target} build selects {len(selection)} explicit nodes.")
     # Cautious adds the parent's own tests without testing unselected siblings.
     # Original eager tests remain selected explicitly, so none are dropped.
