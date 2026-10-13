@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- int_sus_uec_encounter_clinical_codes must hold every coded child record: for
 -- each collection the count column and both array sizes equal the number of
 -- non-null codes in its staging feed, including the separate Coded Clinical

@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 with expected as (
     select
         person_id,

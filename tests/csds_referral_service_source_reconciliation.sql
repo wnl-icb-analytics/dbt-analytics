@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- Retain every referral/team key, including the unspecified team, and no extra keys.
 with source_keys as (
     select unique_service_request_identifier as referral_id, care_professional_team_local_identifier as local_team_id, 1 as is_present

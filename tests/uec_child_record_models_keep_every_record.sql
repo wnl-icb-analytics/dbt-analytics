@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- The one-row-per-record UEC models must not discard any staging record.
 with counts as (
     select 'referred_to_service' as feed
