@@ -1,0 +1,41 @@
+models:
+  - name: int_cwt_pathway_geo_flags
+    description: >
+      NCL geographic flag booleans for CWT pathway records. Determines whether a
+      pathway record relates to North Central London (NCL) by residence,
+      registered practice, or organisation codes. Includes checkpoint-specific
+      flags and an overall `ncl_geo_flag__any` for convenience.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns:
+      - name: record_id
+        description: Source record identifier from the `int_cwt_pathway_data_tidy` intermediate table.
+        data_tests:
+          - unique
+          - not_null
+      - name: ncl_geo_flag__residence_at_event
+        description: True when `la_of_residence` is in the NCL borough codes (residence at event).
+      - name: ncl_geo_flag__registered_at_event
+        description: True when the registered practice is in NCL (determined from the joined practice table).
+      - name: ncl_geo_flag__trust
+        description: True when any organisation identifier on the pathway maps to an NCL acute trust.
+      - name: ncl_geo_flag__any
+        description: True when any of the residence, registered or trust flags are True.
+      - name: ncl_geo_flag__consultant_upgrade_trust
+        description: True when the consultant upgrade trust is an NCL acute trust.
+      - name: ncl_geo_flag__first_seen_trust
+        description: True when the first seen trust is an NCL acute trust.
+      - name: ncl_geo_flag__faster_diagnosis_pathway_end_trust
+        description: True when the faster diagnosis pathway end trust is an NCL acute trust.
+      - name: ncl_geo_flag__patient_pathway_identifier_issuer_trust
+        description: True when the patient pathway identifier issuer trust is an NCL acute trust.
+      - name: ncl_geo_flag__accountable_investigating_trust
+        description: True when the accountable investigating trust is an NCL acute trust.
+      - name: ncl_geo_flag__accountable_treating_trust
+        description: True when the accountable treating trust is an NCL acute trust.
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
