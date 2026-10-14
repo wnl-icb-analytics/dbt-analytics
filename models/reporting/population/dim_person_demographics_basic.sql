@@ -106,7 +106,7 @@ left join (
 ) org_bor
 on pmi.practice_code = org_bor.practice_code
 
-left join {{ref('practice_wnl_all')}} nb_reg
+left join {{ref('practice_wnl_active')}} nb_reg
 on pmi.practice_code = nb_reg.practice_code
 
 left join (
