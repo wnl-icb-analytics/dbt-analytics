@@ -11,7 +11,7 @@ Sub-ICB level geographies without hardcoding values or performing a join.
 {% endmacro %}
 
 {% macro ncl_sub_icb() %}
-    {{ var("ncl_sub_icb", "93C") }}
+    '{{ var("ncl_sub_icb", "93C") }}'
 {% endmacro %}
 
 {% macro ncl_sub_icb_incl_ccg() %}
@@ -39,7 +39,7 @@ Sub-ICB level geographies without hardcoding values or performing a join.
 {% endmacro %}
 
 {% macro nwl_sub_icb() %}
-    {{ var("nwl_sub_icb", "W2U3Z") }}
+    '{{ var("nwl_sub_icb", "W2U3Z") }}'
 {% endmacro %}
 
 {% macro nwl_sub_icb_incl_ccg() %}
