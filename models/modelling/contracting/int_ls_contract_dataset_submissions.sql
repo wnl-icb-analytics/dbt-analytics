@@ -44,10 +44,13 @@ file_id as meta_file_id,
 r.financial_month as fy_month_submitted,
 r.financial_year,
 SPLIT_PART(r.file_name, '_', 8) as file_version,
+s.submission_date as due_date,
 DATE(r.created_datetime) AS date_submitted,
 r.row_count as submitted_row_count
 FROM {{ ref('stg_sdl_meta_file_registry') }} r
 --FROM STAGING.SDL.STG_SDL_META_FILE_REGISTRY r
+LEFT JOIN {{ ref('fa_lsacm_submission_dates') }} s on s.submission_year = r.financial_year and s.fy_submission_month_number = r.financial_month
+--LEFT JOIN MODELLING.CONTRACTING.FA_LSACM_SUBMISSION_DATES s on s.submission_year = r.financial_year and s.fy_submission_month_number = r.financial_month
 WHERE r.feed in ('LSDePLCM','LSDrPLCM','LSPLCM','LSACM','LSREF')
 AND LEFT(SPLIT_PART(r.file_name, '_', 2),3) in ('RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS')
 AND r.financial_year = (select max(financial_year) from {{ ref('stg_sdl_meta_file_registry') }} where feed in ('LSDePLCM','LSDrPLCM','LSPLCM','LSACM','LSREF'))
@@ -64,6 +67,7 @@ SELECT
     fy_month_submitted,
     meta_file_id,
     file_version,
+    due_date,
     date_submitted,
     submitted_row_count
 FROM monthly_submissions
@@ -85,13 +89,22 @@ SELECT
     s.fy_month_submitted,
     s.meta_file_id,
     s.file_version,
+    s.due_date,
     s.date_submitted,
     s.submitted_row_count,
-    CASE
-        WHEN s.provider_code IS NULL THEN 'No submission'
-        WHEN s.fy_month_submitted = l.max_fy_month_submitted THEN 'Yes'
+     CASE
+    WHEN e.provider_shorthand = 'MEH' AND e.dataset = 'LSDePLCM' THEN 'Not applicable'
+    WHEN e.provider_shorthand = 'LNWH' AND e.dataset = 'LSREF' THEN 'Not applicable'
+    WHEN s.fy_month_submitted = l.max_fy_month_submitted THEN 'Yes'
         ELSE 'No'
-    END AS latest_month_received
+    END AS latest_month_received,
+    --MAYBE SOME AGREED LEEWAY HERE FOR PROVIDERS BEING LATE
+    CASE
+    WHEN e.provider_shorthand = 'MEH' AND e.dataset = 'LSDePLCM' THEN 'Exempt'
+    WHEN e.provider_shorthand = 'LNWH' AND e.dataset = 'LSREF' THEN 'Not onboarded'
+    WHEN s.date_submitted is not null and s.date_submitted < due_date then 'Submitted early'
+    WHEN s.date_submitted is not null and s.date_submitted > due_date then 'Submitted late'      
+    ELSE 'Submitted on time' END AS submission_status
 FROM expected_provider_datasets e
 LEFT JOIN latest_provider_dataset_submission s ON e.provider_code = s.provider_code AND e.dataset = s.dataset
 CROSS JOIN latest_month_overall AS l
