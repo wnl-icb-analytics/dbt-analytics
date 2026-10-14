@@ -67,7 +67,8 @@ neighbourhood_reference AS (
 ),
 
 ward_reference AS (
-    -- 2025 ward names (one row per ward)
+    -- 2025 ward names (one row per ward). Covers wards that are an LSOA best-fit ward,
+    -- which includes every WNL ward; a few small wards elsewhere are absent.
     SELECT DISTINCT
         wd25_cd,
         wd25_nm
@@ -111,7 +112,7 @@ SELECT
     COALESCE(la.lad25_cd, pg.local_authority_organisation) as local_authority_code,
     COALESCE(la.lad25_nm, la_map.name) as local_authority_name,
 
-    -- Ward of the postcode; LSOA best-fit ward if the postcode ward is not a 2025 ward
+    -- Ward of the postcode; LSOA best-fit ward if the postcode ward is not in the ward lookup
     COALESCE(pw.wd25_cd, la.wd25_cd) as ward_code,
     COALESCE(pw.wd25_nm, la.wd25_nm) as ward_name,
 
@@ -130,7 +131,7 @@ SELECT
     lsoa_map.name as lsoa_name_21,
     pg.yr_2021_msoa as msoa_code_21,
 
-    -- WNL neighbourhood of residence from the postcode ward (LSOA if no 2025 ward); null outside WNL
+    -- WNL neighbourhood of residence from the postcode ward (LSOA route if the ward is not in the lookup); null outside WNL
     CASE
         WHEN pw.wd25_cd IS NOT NULL THEN nw.neighbourhood_name
         ELSE nr.neighbourhood_name
