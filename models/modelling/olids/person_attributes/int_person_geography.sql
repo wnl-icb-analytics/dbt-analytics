@@ -58,13 +58,11 @@ postcode_geography AS (
 ),
 
 neighbourhood_reference AS (
-    -- Get NCL neighbourhood data (based on 2021 LSOA codes)
-    SELECT DISTINCT
+    -- WNL neighbourhood per 2021 LSOA (one row per LSOA)
+    SELECT
         lsoa_2021_code,
         neighbourhood_name
-    FROM {{ ref('stg_reference_ncl_neighbourhood_lsoa_2021') }}
-    WHERE lsoa_2021_code IS NOT NULL
-        AND neighbourhood_name IS NOT NULL
+    FROM {{ ref('stg_reference_geo_neighbourhood_lsoa') }}
 ),
 
 london_areas AS (
@@ -115,7 +113,7 @@ SELECT
     lsoa_map.name as lsoa_name_21,
     pg.yr_2021_msoa as msoa_code_21,
 
-    -- NCL Neighbourhood (from 2021 LSOA)
+    -- WNL neighbourhood of residence (from 2021 LSOA); null outside WNL
     nr.neighbourhood_name as neighbourhood_resident,
 
     -- IMD 2019 data from dedicated IMD model

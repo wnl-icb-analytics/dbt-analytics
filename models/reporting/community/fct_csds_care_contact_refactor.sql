@@ -749,7 +749,7 @@ CONTACT_ENRICHED AS (
     LEFT JOIN PRACTICE_CONTEXT PRAC_WNL
         ON PAT1.GPCODE = PRAC_WNL.PRACTICE_CODE    
         
-    LEFT JOIN {{ ref('stg_reference_wnl_gp_practice_neighbourhood') }} PRAC_NGH
+    LEFT JOIN {{ ref('practice_wnl_all') }} PRAC_NGH
         ON PAT1.GPCODE = PRAC_NGH.PRACTICE_CODE
 
     LEFT JOIN DATA_LAKE.CSDS_SIMPLE."tblReferral" REF

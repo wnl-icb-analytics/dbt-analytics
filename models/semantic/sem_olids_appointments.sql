@@ -133,7 +133,7 @@ DIMENSIONS(
 
     -- Patient geography and deprivation (residence-based)
     demographics.borough_resident AS borough_resident COMMENT = 'Patient current borough of residence, not residence at appointment time',
-    demographics.neighbourhood_resident AS neighbourhood_resident COMMENT = 'Patient current NCL neighbourhood of residence, not residence at appointment time',
+    demographics.neighbourhood_resident AS neighbourhood_resident COMMENT = 'Patient current WNL neighbourhood of residence, not residence at appointment time',
     demographics.imd_decile_25 AS imd_decile_25 COMMENT = 'Current-residence IMD 2025 decile (1=most deprived, 10=least). NULL if LSOA not mapped.',
     demographics.imd_quintile_25 AS imd_quintile_25 COMMENT = 'Current-residence IMD 2025 quintile text label: ''Most Deprived'', ''Second Most Deprived'', ''Third Most Deprived'', ''Second Least Deprived'', ''Least Deprived'', or ''Unknown''',
 
