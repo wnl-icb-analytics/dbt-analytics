@@ -19,8 +19,8 @@ Clinical Purpose:
 - Foundation data for programme analysis
 
 Key Business Rules:
-- Women aged 25-49: invited every 3 years
-- Women aged 50-64: invited every 5 years
+- Routine recall every 5 years after an HPV-negative test from July 2025
+  (previously 3 years at 25-49); QOF achievement windows remain 42/66 months
 - Declined/non-response status: valid for 12 months only
 - Unsuitable status: applies within the screening interval (QOF CS005/CS006)
 

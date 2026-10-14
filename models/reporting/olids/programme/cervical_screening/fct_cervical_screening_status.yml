@@ -4,10 +4,11 @@ models:
       Cervical screening programme status for women aged 25 to 64, one row per person,
       assessed on the build date. Includes inactive and deceased people. Status follows
       the QOF v51 CS005/CS006 rule order: cervix removal (NOCX_COD) at any time, then
-      completed screening (SMEAR_COD) within 42 months to age 49 or 66 months from 50,
-      then unsuitability (CSPU_COD) within the same interval, then current pregnancy.
-      QOF counts any pregnancy code in the last 12 months; this uses
-      fct_person_pregnancy_status.
+      completed screening (SMEAR_COD) after the date 42 months (to age 49) or 66 months
+      (from 50) before the build date, then unsuitability (CSPU_COD) in the same window,
+      then current pregnancy. Pregnancy differs from QOF: it applies at all ages and uses
+      fct_person_pregnancy_status (code in last 9 months, no later delivery), whereas
+      QOF CS005 counts any pregnancy code in 12 months and CS006 has no pregnancy rule.
     config:
       meta:
         owner:
@@ -43,7 +44,7 @@ models:
       - name: latest_completed_date
         description: 'Date of the most recent completed screening (SMEAR_COD)'
       - name: next_screening_due_date
-        description: 'Latest completed screening plus the interval; null without a completed screening or with cervix removal'
+        description: 'Latest completed screening plus the QOF window (42 or 66 months); when the person leaves Up to Date, not a clinical recall date. Null without a completed screening or with cervix removal'
       - name: days_overdue
         description: 'Days past next_screening_due_date; populated only when programme_status is Overdue'
       - name: latest_unsuitable_date

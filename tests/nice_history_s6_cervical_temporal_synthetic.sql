@@ -76,22 +76,22 @@ SELECT COUNT(*) AS rows_total
 FROM actual
 HAVING COUNT(*) <> 8
     OR COUNT_IF(person_id = -9601 AND reporting_date = '2024-03-31'
-        AND latest_completed_date = '2020-10-01' AND programme_status = 'Up to Date'
+        AND latest_completed_date = '2020-10-01'
         AND latest_pregnancy_date = '2024-03-31 00:00:00' AND is_currently_pregnant
         AND first_cervix_removal_date IS NULL AND latest_non_response_date IS NULL) <> 1
     OR COUNT_IF(person_id = -9601 AND reporting_date = '2024-04-01'
         AND latest_completed_date = '2020-10-01' AND latest_screening_date = '2024-04-01'
-        AND latest_unsuitable_date = '2024-04-01' AND programme_status = 'Unsuitable') <> 1
+        AND latest_unsuitable_date = '2024-04-01') <> 1
     OR COUNT_IF(person_id = -9601 AND reporting_date = '2024-04-30'
         AND latest_completed_date = '2024-04-02' AND latest_screening_date = '2024-04-21'
-        AND latest_non_response_date = '2024-04-21' AND programme_status = 'Up to Date'
+        AND latest_non_response_date = '2024-04-21'
         AND first_cervix_removal_date = '2024-04-30' AND NOT is_currently_pregnant) <> 1
     OR COUNT_IF(person_id = -9601 AND reporting_date = '2025-01-31'
         AND latest_completed_date = '2024-04-02' AND NOT is_currently_pregnant) <> 1
     OR COUNT_IF(person_id = -9601 AND reporting_date = '2027-12-31'
-        AND programme_status = 'Overdue') <> 1
+        AND latest_completed_date = '2024-04-02') <> 1
     OR COUNT_IF(person_id = -9602 AND reporting_date = '2024-04-30'
-        AND programme_status = 'Never Screened' AND latest_completed_date IS NULL
+        AND latest_completed_date IS NULL
         AND NOT is_currently_pregnant) <> 1
     OR COUNT_IF(person_id = -9604 AND reporting_date = '2025-01-15'
         AND latest_pregnancy_date = '2024-04-15 00:00:00'

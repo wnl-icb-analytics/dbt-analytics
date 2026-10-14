@@ -11,15 +11,16 @@ Simplified tracking focused on core programme monitoring requirements.
 
 Key Business Rules:
 1. Screening Intervals:
-   - Women aged 25-49: invited every 3 years
-   - Women aged 50-64: invited every 5 years
+   - QOF achievement windows: 42 months at 25-49, 66 months at 50-64. These are not
+     recall dates; routine recall after an HPV-negative test is 5 years from July 2025
    - Women outside 25-64 age range: not eligible for routine screening
 
 2. Programme Status, in QOF v51 CS005/CS006 rule order:
    - Cervix Removed: any complete cervix removal record (NOCX_COD)
    - Up to Date: completed screening within the interval (42 months to 49, 66 months from 50)
    - Unsuitable: unsuitability record (CSPU_COD) within the interval
-   - Pregnant: currently pregnant, per fct_person_pregnancy_status
+   - Pregnant: currently pregnant, per fct_person_pregnancy_status (all ages; QOF applies
+     pregnancy to CS005 only)
    - Never Screened: no completed screening history
    - Overdue: last completed screening outside the interval
 
@@ -139,14 +140,14 @@ programme_status AS (
         -- Programme compliance status
         CASE
             WHEN cr.first_cervix_removal_date IS NOT NULL THEN 'Cervix Removed'
-            WHEN sh.latest_completed_date >= DATEADD(month, -pd.screening_interval_months, CURRENT_DATE()) THEN 'Up to Date'
-            WHEN sh.latest_unsuitable_date >= DATEADD(month, -pd.screening_interval_months, CURRENT_DATE()) THEN 'Unsuitable'
+            WHEN sh.latest_completed_date::DATE > DATEADD(month, -pd.screening_interval_months, CURRENT_DATE()) THEN 'Up to Date'
+            WHEN sh.latest_unsuitable_date::DATE > DATEADD(month, -pd.screening_interval_months, CURRENT_DATE()) THEN 'Unsuitable'
             WHEN preg.person_id IS NOT NULL THEN 'Pregnant'
             WHEN sh.latest_completed_date IS NULL THEN 'Never Screened'
             ELSE 'Overdue'
         END AS programme_status,
 
-        -- Next screening due date; null without a cervix
+        -- End of the QOF achievement window; null without a cervix
         CASE
             WHEN cr.first_cervix_removal_date IS NULL
             THEN DATEADD(month, pd.screening_interval_months, sh.latest_completed_date)
