@@ -12,6 +12,11 @@ select
     loader_job_name,
     financial_year,
     financial_month,
+    upper(trim(split_part(file_name, '_', 2)))  as file_site_code,
+    {{ clean_organisation_id("upper(trim(split_part(file_name, '_', 2)))") }}
+                                                as dv_provider_code,
+    try_to_number(regexp_substr(upper(file_name), '_V([0-9]+)_', 1, 1, 'e', 1))
+                                                as file_version,
     last_refreshed_at
 
 from {{ ref('raw_sdl_wnl_meta_file_registry') }}

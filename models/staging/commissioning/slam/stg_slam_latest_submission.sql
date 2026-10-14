@@ -5,155 +5,345 @@
     )
 }}
 
--- Latest-submission lookup for the 4 SLAM feeds: one row per
--- (feed, provider, FY, month) slice identifying the file that holds the
--- current provider statement of that slice. Rebuilt fully each run (slice
--- grain is tiny), so it never goes stale while the stg_ls* tables stay pure
--- append.
+-- Latest-submission lookup for the 4 SLAM feeds: one row per selected file x
+-- provider x file site x FY x activity month. The stg_*_latest views join it
+-- back to rows. Rebuilt fully each run; the stg_ls* tables stay pure append.
 --
--- Why slice grain, and why registry load time:
---   * SLAM files are cumulative-YTD restatements (median 4-6 months/file);
---     summing without latest-only filtering double-counts ~8x on a full FY.
---   * meta_file_id is NOT monotonic with load time (~45% inversions), and the
---     provider-typed DATE_AND_TIME_DATA_SET_CREATED is unreliable (~10% of
---     files contain >1 value) — so ordering uses
---     META_FILE_REGISTRY.CREATED_DATETIME (ISL processing log).
---   * A submission split across files (e.g. M1_6 + M7_12, same batch)
---     resolves correctly because the winner is picked per month-slice.
---
--- Consumers: the stg_*_latest views join this back to the staging tables;
--- or join it yourself on (feed, dv_provider_code, dv_financial_year,
--- dv_financial_month, meta_file_id, meta_batch_id).
+-- Selection, per provider, file site token, activity FY and month:
+--   * A component is one (site, recipient) stream: parallel contracts sent to
+--     different recipients are kept side by side.
+--   * Files restate whole periods (national ACM guidance), so within a
+--     component the latest upload wins: the latest file plus same-component
+--     files loaded in the 12 hours before it (complementary parts).
+--   * Where a slice keeps several files, the stg_*_latest views keep, per
+--     commissioner x POD x treatment function, only the latest file's rows.
+--     This also absorbs streams consolidated under one recipient.
+--   * Ordering: files whose majority FY is the activity FY first, then ISL
+--     load time (registry created_datetime), then file and batch id. Version
+--     numbers and submitted periods do not order resubmissions reliably.
+--   * A component is retired when a later component restates it under a new
+--     recipient code: the later one carries >= 80% of the older component's
+--     weight under the same commissioner codes and their weights are within
+--     10%, or the recode is listed in recipient_lineage. Weight is absolute
+--     actual price for LSACM and row count for the patient-level feeds.
 
 {% set feeds = [
-    ('LSACM', 'LSACM'),
-    ('LSPLCM', 'LSPLCM'),
-    ('LSDrPLCM', 'LSDRPLCM'),
-    ('LSDePLCM', 'LSDEPLCM'),
+    ('LSACM', 'stg_lsacm'),
+    ('LSPLCM', 'stg_lsplcm'),
+    ('LSDrPLCM', 'stg_lsdrplcm'),
+    ('LSDePLCM', 'stg_lsdeplcm'),
 ] %}
+{% set component = 'feed, dv_provider_code, site_code, recipient_code, dv_financial_year, dv_financial_month' %}
+{% set file_order = 'is_in_file_financial_year desc, submission_loaded_at desc nulls last, meta_file_id desc, meta_batch_id desc' %}
 
-with registry as (
-    select
-        feed,
-        file_id,
-        batch_id,
-        created_datetime                        as submission_loaded_at,
-        original_file_name                      as submission_file_name,
-        -- FY token from the platform-generated file-name prefix,
-        -- e.g. 'PLCM_2627_InformationStandard...' -> '202627'
-        case
-            when try_to_number(substr(regexp_substr(original_file_name, '_(2[0-9][0-9]{2})_InformationStandard', 1, 1, 'e', 1), 3, 2))
-                 = mod(try_to_number(substr(regexp_substr(original_file_name, '_(2[0-9][0-9]{2})_InformationStandard', 1, 1, 'e', 1), 1, 2)) + 1, 100)
-                then '20' || regexp_substr(original_file_name, '_(2[0-9][0-9]{2})_InformationStandard', 1, 1, 'e', 1)
-        end                                     as financial_year_from_file_name
-    from {{ source('sdl_wnl', 'META_FILE_REGISTRY') }}
-    where feed in ('LSACM', 'LSPLCM', 'LSDrPLCM', 'LSDePLCM')
+with recipient_lineage as (
+    -- Reviewed recipient recodes the weight test cannot detect because the
+    -- commissioner codes changed at the same time.
+    select *
+    from (values
+        -- RWH 2024/25: Flex to 93C restated by Freeze to 06K (commissioner 14E -> 13R)
+        ('RWH00', '93C', '06K', '202425')
+    ) as v (site_code, from_recipient_code, to_recipient_code, dv_financial_year)
 ),
 
--- For rows whose stated period is incomplete, the slice key includes the
--- activity-date-derived period (same slam_period_date chain as the staging
--- models), so backfilled rows resolve to real month slices instead of one
--- NULL slice per provider. Must stay identical to the staging models' logic
--- or backfilled rows drop out of the *_latest views.
-slices as (
-    {% for feed, table_name in feeds %}
+commissioner_months as (
+    {% for feed, model in feeds %}
     select
-        feed,
+        '{{ feed }}'                            as feed,
         meta_file_id,
         meta_batch_id,
-        meta_provider_code,
-        financial_year,
-        financial_month,
-        provider_code_raw,
-        dv_commissioner,
-        {{ slam_fy_from_date('period_date') }}      as fy_from_date,
-        iff(period_date is not null,
-            {{ slam_fm_from_date('period_date') }}, null)
-                                                    as fm_from_date
-    from (
-        select
-            '{{ feed }}'                                as feed,
-            s.meta_file_id,
-            s.meta_batch_id,
-            s.meta_provider_code,
-            cast(s.financial_year as varchar)           as financial_year,
-            cast(s.financial_month as varchar)          as financial_month,
-            s.organisation_identifier_code_of_provider  as provider_code_raw,
-            {% if table_name == 'LSACM' %}
-            -- LSACM DLP/Local layouts submit per-commissioner files, so the
-            -- current statement is per (provider, commissioner, FY, month).
-            -- Other feeds submit one comprehensive file per provider (grain
-            -- stays provider-only): dv_commissioner is NULL and drops out.
-            s.organisation_identifier_code_of_commissioner as dv_commissioner,
-            {% else %}
-            cast(null as varchar)                       as dv_commissioner,
-            {% endif %}
-            {% if table_name != 'LSACM' %}
-            -- evaluated once per row; gated to incomplete-period rows
-            case when {{ parse_slam_financial_year('s.financial_year') }} is null
-                   or {{ parse_slam_financial_month('s.financial_month') }} is null
-                 then {{ slam_period_date(table_name) }}
-            end                                         as period_date
-            {% else %}
-            null::date                                  as period_date
-            {% endif %}
-        from {{ source('sdl_wnl', table_name) }} as s
-    )
+        dv_provider_code,
+        meta_provider_code                      as site_code,
+        meta_recipient_code                     as recipient_code,
+        dv_financial_year,
+        dv_financial_month,
+        commissioner_code,
+        submission_loaded_at,
+        submission_file_name,
+        count(*)                                as row_count,
+        {% if feed == 'LSACM' %}
+        coalesce(sum(abs(dv_actual_price)), 0)  as weight,
+        coalesce(sum(dv_actual_price), 0)       as actual_price
+        {% else %}
+        count(*)                                as weight,
+        null::number(38, 2)                     as actual_price
+        {% endif %}
+    from {{ ref(model) }}
     group by all
     {% if not loop.last %}union all{% endif %}
     {% endfor %}
 ),
 
-enriched as (
-    select
-        s.feed,
-        s.meta_file_id,
-        s.meta_batch_id,
-        s.dv_commissioner,
-        coalesce(
-            -- LSACM DLP/Local layouts carry the FY as a bare start year; other
-            -- feeds keep the strict parse so their activity-date fallback wins.
-            case when s.feed = 'LSACM'
-                then {{ parse_slam_financial_year('s.financial_year', allow_bare_year=true) }}
-                else {{ parse_slam_financial_year('s.financial_year') }}
-            end,
-            r.financial_year_from_file_name,
-            s.fy_from_date
-        )                                       as dv_financial_year,
-        coalesce(
-            {{ parse_slam_financial_month('s.financial_month') }},
-            s.fm_from_date
-        )                                       as dv_financial_month,
-        {{ clean_organisation_id('upper(trim(coalesce(s.provider_code_raw, s.meta_provider_code)))') }}
-                                                as dv_provider_code,
-        r.submission_loaded_at,
-        r.submission_file_name
-    from slices as s
-    left join registry as r
-        on r.feed = s.feed
-       and r.file_id = s.meta_file_id
-       and r.batch_id = s.meta_batch_id
+-- Majority FY of each file's rows. Rows restating another FY rank below that
+-- FY's own files.
+file_fy as (
+    select feed, meta_file_id, meta_batch_id, dv_financial_year as file_financial_year
+    from commissioner_months
+    group by all
+    qualify row_number() over (
+        partition by feed, meta_file_id, meta_batch_id
+        order by sum(row_count) desc, dv_financial_year desc nulls last
+    ) = 1
 ),
 
-ranked as (
+file_months as (
+    select
+        c.feed,
+        c.meta_file_id,
+        c.meta_batch_id,
+        c.dv_provider_code,
+        c.site_code,
+        c.recipient_code,
+        c.dv_financial_year,
+        c.dv_financial_month,
+        c.submission_loaded_at,
+        c.submission_file_name,
+        equal_null(f.file_financial_year, c.dv_financial_year) as is_in_file_financial_year
+    from commissioner_months as c
+    inner join file_fy as f
+        on f.feed = c.feed
+       and f.meta_file_id = c.meta_file_id
+       and equal_null(f.meta_batch_id, c.meta_batch_id)
+    group by all
+),
+
+ranked_file_months as (
     select
         *,
-        rank() over (
-            partition by feed, dv_provider_code, dv_commissioner, dv_financial_year, dv_financial_month
-            order by submission_loaded_at desc nulls last, meta_file_id desc, meta_batch_id desc
-        )                                       as submission_rank
-    from enriched
+        row_number() over (partition by {{ component }} order by {{ file_order }}) as component_rank,
+        first_value(submission_loaded_at) over (partition by {{ component }} order by {{ file_order }})
+                                                as component_latest_loaded_at,
+        first_value(is_in_file_financial_year) over (partition by {{ component }} order by {{ file_order }})
+                                                as component_latest_in_year
+    from file_months
+),
+
+-- Latest upload per component: the latest file plus same-component files
+-- loaded in the 12 hours before it.
+event_files as (
+    select *
+    from ranked_file_months
+    where component_rank = 1
+       or (
+            is_in_file_financial_year = component_latest_in_year
+            and submission_loaded_at >= dateadd(hour, -12, component_latest_loaded_at)
+       )
+),
+
+-- Commissioner weight per component-month inside the latest upload, counting a
+-- commissioner repeated across copies once (latest file wins).
+event_commissioners as (
+    select
+        e.feed, e.dv_provider_code, e.site_code, e.recipient_code,
+        e.dv_financial_year, e.dv_financial_month, c.commissioner_code, c.weight
+    from event_files as e
+    inner join commissioner_months as c
+        on c.feed = e.feed
+       and c.meta_file_id = e.meta_file_id
+       and equal_null(c.meta_batch_id, e.meta_batch_id)
+       and equal_null(c.dv_provider_code, e.dv_provider_code)
+       and equal_null(c.site_code, e.site_code)
+       and equal_null(c.dv_financial_year, e.dv_financial_year)
+       and equal_null(c.dv_financial_month, e.dv_financial_month)
+    qualify row_number() over (
+        partition by e.feed, e.dv_provider_code, e.site_code, e.recipient_code,
+                     e.dv_financial_year, e.dv_financial_month, c.commissioner_code
+        order by e.submission_loaded_at desc nulls last, e.meta_file_id desc, e.meta_batch_id desc
+    ) = 1
+),
+
+components as (
+    select
+        e.feed, e.dv_provider_code, e.site_code, e.recipient_code, e.dv_financial_year, e.dv_financial_month,
+        boolor_agg(e.component_latest_in_year)  as is_in_file_financial_year,
+        max(e.component_latest_loaded_at)       as latest_loaded_at,
+        max(w.weight)                           as weight
+    from event_files as e
+    left join (
+        select {{ component }}, sum(weight) as weight
+        from event_commissioners
+        group by all
+    ) as w
+        on w.feed = e.feed
+       and equal_null(w.dv_provider_code, e.dv_provider_code)
+       and equal_null(w.site_code, e.site_code)
+       and equal_null(w.recipient_code, e.recipient_code)
+       and equal_null(w.dv_financial_year, e.dv_financial_year)
+       and equal_null(w.dv_financial_month, e.dv_financial_month)
+    group by all
+),
+
+-- Share of the older component's weight whose commissioner code also appears
+-- in the later component, for each later component at the same site and month.
+recode_candidates as (
+    select
+        older.feed, older.dv_provider_code, older.site_code, older.dv_financial_year, older.dv_financial_month,
+        older.recipient_code                    as older_recipient_code,
+        later.recipient_code                    as later_recipient_code,
+        older.weight                            as older_weight,
+        later.weight                            as later_weight,
+        sum(iff(lc.commissioner_code is not null, oc.weight, 0)) / nullif(older.weight, 0)
+                                                as shared_commissioner_share
+    from components as older
+    inner join components as later
+        on later.feed = older.feed
+       and equal_null(later.dv_provider_code, older.dv_provider_code)
+       and equal_null(later.site_code, older.site_code)
+       and equal_null(later.dv_financial_year, older.dv_financial_year)
+       and equal_null(later.dv_financial_month, older.dv_financial_month)
+       and not equal_null(later.recipient_code, older.recipient_code)
+       and (
+            later.is_in_file_financial_year and not older.is_in_file_financial_year
+            or (later.is_in_file_financial_year = older.is_in_file_financial_year
+                and later.latest_loaded_at > older.latest_loaded_at)
+       )
+    inner join event_commissioners as oc
+        on oc.feed = older.feed
+       and equal_null(oc.dv_provider_code, older.dv_provider_code)
+       and equal_null(oc.site_code, older.site_code)
+       and equal_null(oc.recipient_code, older.recipient_code)
+       and equal_null(oc.dv_financial_year, older.dv_financial_year)
+       and equal_null(oc.dv_financial_month, older.dv_financial_month)
+    left join event_commissioners as lc
+        on lc.feed = later.feed
+       and equal_null(lc.dv_provider_code, later.dv_provider_code)
+       and equal_null(lc.site_code, later.site_code)
+       and equal_null(lc.recipient_code, later.recipient_code)
+       and equal_null(lc.dv_financial_year, later.dv_financial_year)
+       and equal_null(lc.dv_financial_month, later.dv_financial_month)
+       and equal_null(lc.commissioner_code, oc.commissioner_code)
+    group by all
+),
+
+recodes as (
+    select feed, dv_provider_code, site_code, dv_financial_year, dv_financial_month,
+           older_recipient_code, later_recipient_code
+    from recode_candidates
+    where shared_commissioner_share >= 0.8
+      and older_weight > 0
+      and abs(later_weight - older_weight) <= 0.1 * older_weight
+
+    union
+
+    select c.feed, c.dv_provider_code, c.site_code, c.dv_financial_year, c.dv_financial_month,
+           c.recipient_code, l.to_recipient_code
+    from components as c
+    inner join recipient_lineage as l
+        on l.site_code = c.site_code
+       and l.from_recipient_code = c.recipient_code
+       and l.dv_financial_year = c.dv_financial_year
+    inner join components as successor
+        on successor.feed = c.feed
+       and equal_null(successor.dv_provider_code, c.dv_provider_code)
+       and successor.site_code = c.site_code
+       and successor.recipient_code = l.to_recipient_code
+       and equal_null(successor.dv_financial_year, c.dv_financial_year)
+       and equal_null(successor.dv_financial_month, c.dv_financial_month)
+),
+
+-- Retire a component only through a successor that is not itself retired.
+retired_components as (
+    select distinct r.feed, r.dv_provider_code, r.site_code, r.dv_financial_year, r.dv_financial_month,
+           r.older_recipient_code as recipient_code
+    from recodes as r
+    left join recodes as onward
+        on onward.feed = r.feed
+       and equal_null(onward.dv_provider_code, r.dv_provider_code)
+       and equal_null(onward.site_code, r.site_code)
+       and equal_null(onward.dv_financial_year, r.dv_financial_year)
+       and equal_null(onward.dv_financial_month, r.dv_financial_month)
+       and equal_null(onward.older_recipient_code, r.later_recipient_code)
+    where onward.feed is null
+),
+
+selected as (
+    select e.*
+    from event_files as e
+    left join retired_components as r
+        on r.feed = e.feed
+       and equal_null(r.dv_provider_code, e.dv_provider_code)
+       and equal_null(r.site_code, e.site_code)
+       and equal_null(r.recipient_code, e.recipient_code)
+       and equal_null(r.dv_financial_year, e.dv_financial_year)
+       and equal_null(r.dv_financial_month, e.dv_financial_month)
+    where r.feed is null
+),
+
+-- Diagnostics: commissioners in the component's previous upload that the
+-- selected upload no longer carries (treated as withdrawn).
+previous_files as (
+    select f.*
+    from ranked_file_months as f
+    where f.component_rank > 1
+      and not (
+            f.is_in_file_financial_year = f.component_latest_in_year
+            and f.submission_loaded_at >= dateadd(hour, -12, f.component_latest_loaded_at)
+      )
+    qualify row_number() over (partition by {{ component }} order by {{ file_order }}) = 1
+),
+
+omitted_commissioners as (
+    select
+        p.feed, p.dv_provider_code, p.site_code, p.recipient_code, p.dv_financial_year, p.dv_financial_month,
+        count(*)                                as omitted_commissioner_count,
+        sum(pc.actual_price)                    as omitted_commissioner_actual_price
+    from previous_files as p
+    inner join commissioner_months as pc
+        on pc.feed = p.feed
+       and pc.meta_file_id = p.meta_file_id
+       and equal_null(pc.meta_batch_id, p.meta_batch_id)
+       and equal_null(pc.dv_provider_code, p.dv_provider_code)
+       and equal_null(pc.site_code, p.site_code)
+       and equal_null(pc.dv_financial_year, p.dv_financial_year)
+       and equal_null(pc.dv_financial_month, p.dv_financial_month)
+    left join event_commissioners as ec
+        on ec.feed = p.feed
+       and equal_null(ec.dv_provider_code, p.dv_provider_code)
+       and equal_null(ec.site_code, p.site_code)
+       and equal_null(ec.recipient_code, p.recipient_code)
+       and equal_null(ec.dv_financial_year, p.dv_financial_year)
+       and equal_null(ec.dv_financial_month, p.dv_financial_month)
+       and equal_null(ec.commissioner_code, pc.commissioner_code)
+    where ec.feed is null
+    group by all
+),
+
+retired_summary as (
+    select feed, dv_provider_code, site_code, dv_financial_year, dv_financial_month,
+           listagg(recipient_code, ',') within group (order by recipient_code) as retired_recipient_codes
+    from retired_components
+    group by all
 )
 
-select distinct
-    feed,
-    dv_provider_code,
-    dv_commissioner,
-    dv_financial_year,
-    dv_financial_month,
-    meta_file_id,
-    meta_batch_id,
-    submission_loaded_at,
-    submission_file_name
-from ranked
-where submission_rank = 1
+select
+    s.feed,
+    s.dv_provider_code,
+    s.site_code                                 as submission_site_code,
+    s.recipient_code                            as submission_recipient_code,
+    s.dv_financial_year,
+    s.dv_financial_month,
+    s.meta_file_id,
+    s.meta_batch_id,
+    s.submission_loaded_at,
+    s.submission_file_name,
+    s.is_in_file_financial_year,
+    count(*) over (
+        partition by s.feed, s.dv_provider_code, s.site_code, s.dv_financial_year, s.dv_financial_month
+    )                                           as files_in_slice,
+    coalesce(o.omitted_commissioner_count, 0)   as omitted_commissioner_count,
+    o.omitted_commissioner_actual_price,
+    rs.retired_recipient_codes
+from selected as s
+left join omitted_commissioners as o
+    on o.feed = s.feed
+   and equal_null(o.dv_provider_code, s.dv_provider_code)
+   and equal_null(o.site_code, s.site_code)
+   and equal_null(o.recipient_code, s.recipient_code)
+   and equal_null(o.dv_financial_year, s.dv_financial_year)
+   and equal_null(o.dv_financial_month, s.dv_financial_month)
+left join retired_summary as rs
+    on rs.feed = s.feed
+   and equal_null(rs.dv_provider_code, s.dv_provider_code)
+   and equal_null(rs.site_code, s.site_code)
+   and equal_null(rs.dv_financial_year, s.dv_financial_year)
+   and equal_null(rs.dv_financial_month, s.dv_financial_month)
