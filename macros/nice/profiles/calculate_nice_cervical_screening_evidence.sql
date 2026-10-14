@@ -3,7 +3,7 @@
     Calculate cervical screening and pregnancy evidence at each reference date.
     Args: reference is current or by_month.
     Returns: one active, non-test female person aged 25-64 per reporting_date,
-             screening dates and programme status, cervix-removal first date,
+             screening dates, cervix-removal first date,
              pregnancy/delivery dates and current-pregnancy flag.
 -#}
 -- NICE cervical evidence for general and SMI screening measures, with clinical dates capped at R.
@@ -126,15 +126,6 @@ SELECT
     screening.reporting_date,
     screening.latest_completed_date,
     screening.latest_screening_date,
-    CASE
-        WHEN screening.latest_unsuitable_date IS NOT NULL
-            AND (screening.latest_completed_date IS NULL
-                OR screening.latest_unsuitable_date > screening.latest_completed_date) THEN 'Unsuitable'
-        WHEN screening.latest_completed_date IS NULL THEN 'Never Screened'
-        WHEN DATEDIFF(day, screening.latest_completed_date, screening.reporting_date)
-            <= IFF(screening.age <= 49, 1277, 2007) THEN 'Up to Date'
-        ELSE 'Overdue'
-    END AS programme_status,
     screening.latest_unsuitable_date,
     screening.latest_declined_date,
     screening.latest_non_response_date,

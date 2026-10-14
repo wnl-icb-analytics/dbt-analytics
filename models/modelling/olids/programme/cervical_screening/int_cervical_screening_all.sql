@@ -22,7 +22,7 @@ Key Business Rules:
 - Women aged 25-49: invited every 3 years
 - Women aged 50-64: invited every 5 years
 - Declined/non-response status: valid for 12 months only
-- Unsuitable status: permanent unless superseded by completed screening
+- Unsuitable status: applies within the screening interval (QOF CS005/CS006)
 
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 This is OBSERVATION-LEVEL data - one row per cervical screening observation.
