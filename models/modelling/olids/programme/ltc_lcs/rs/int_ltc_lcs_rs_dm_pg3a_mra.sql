@@ -41,19 +41,19 @@ rule_2_hba1c_prerequisite as (
 rule_3_mi as (
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_dm_reg_priority_group_3a_mra_vs2") }})
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+    where clinical_effective_date > dateadd(month, -12, current_date())
 ),
 
 rule_3_cerebral_thrombosis as (
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_dm_reg_priority_group_3a_mra_vs3") }})
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+    where clinical_effective_date > dateadd(month, -12, current_date())
 ),
 
 rule_3_tia as (
     select distinct person_id
     from ({{ get_ltc_lcs_observations("on_dm_reg_priority_group_3a_mra_vs4") }})
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+    where clinical_effective_date > dateadd(month, -12, current_date())
 ),
 
 rule_3_combined as (

@@ -55,6 +55,8 @@ class BuildCommandTests(unittest.TestCase):
         self.assertEqual(building[building.index("--target") + 1], target)
         for name in ("int_sus_uec_diagnosis", UEC_PARENT, "original_relationship_test"):
             self.assertIn(name, building)
+        for command in (listing, building):
+            self.assertEqual(command[command.index("--exclude") + 1], "tag:reconciliation")
         self.assertTrue(run.call_args.kwargs["check"])
         return building
 

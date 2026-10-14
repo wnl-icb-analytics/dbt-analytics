@@ -1,0 +1,21 @@
+models:
+  - name: int_ltc_lcs_rs_t1dm_hrc
+    description: >-
+      Type 1 diabetes HRC membership, one row per person. Latest DM_COD/DMRES_COD
+      on or before today must be in the EMIS GROUP1 Type 1 list (105 codes);
+      EMIS-local codes match by source code only.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets: ['0dd187c0-35b5-10be-2837-4a1ad771a6e8']
+    columns:
+      - name: person_id
+        data_tests: [unique, not_null]
+      - name: condition
+        description: Type 1 Diabetes; separate from the diabetes risk-group column.
+      - name: risk_group
+        description: HRC.

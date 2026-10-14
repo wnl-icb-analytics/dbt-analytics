@@ -1,4 +1,21 @@
-with organisation_type as (
+-- Referral rows from submissions that also carry a contact for that referral.
+-- Most referral history has no contact, so this shrinks the hash join.
+with submitted_referral as (
+    select
+        h.unique_submission_id
+        , h.unique_service_request_identifier
+        , h.cyp101_unique_id
+        , h.person_id
+    from {{ ref('stg_csds_referral_history') }} as h
+    where exists (
+        select 1
+        from {{ ref('stg_csds_care_contact') }} as c
+        where c.unique_submission_id = h.unique_submission_id
+            and c.unique_service_request_identifier = h.unique_service_request_identifier
+    )
+)
+
+, organisation_type as (
     select
         upper(trim(organisation_code)) as organisation_code
         , organisation_primary_role
@@ -112,7 +129,7 @@ select
     , therapy.description as group_therapy_name
 from {{ ref('stg_csds_care_contact') }} as r
 left join {{ ref('stg_csds_bridging') }} as b on r.person_id = b.person_id
-left join {{ ref('stg_csds_referral_history') }} as submitted_referral
+left join submitted_referral
     on r.unique_submission_id = submitted_referral.unique_submission_id
     and r.unique_service_request_identifier = submitted_referral.unique_service_request_identifier
 left join {{ ref('fct_csds_referral') }} as p on r.unique_service_request_identifier = p.source_record_id

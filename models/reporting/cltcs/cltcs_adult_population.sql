@@ -73,16 +73,15 @@ potentially_fragmented_person_ids as (
     ORDER BY patient_count DESC
 ),
 
-segment_7 as (
-    select person_id
-        , sk_patient_id
-        , practice_code
-        , practice_name
-        , neighbourhood_registered
-    from {{ref('fct_person_segment')}}
-    where is_active = TRUE 
-    and is_deceased = FALSE
-    and segment_number = 7
+-- Adults with Complexity cohort (fct_person_complex_adults). Unlike segment 7 of
+-- fct_person_segment, this includes complex adults on the palliative care register.
+adults_with_complexity as (
+    select d.person_id
+    from {{ ref('dim_person_demographics') }} d
+    inner join {{ref('fct_person_complex_adults')}} as ca
+     on d.person_id = ca.person_id
+    where d.is_active = TRUE 
+    and d.is_deceased = FALSE
 ),
 
 cltcs_inclusion as (
@@ -97,8 +96,6 @@ left join {{ref('fct_person_sus_uec_recent')}} aea
     on erl.sk_patient_id  = aea.sk_patient_id
 left join {{ref('fct_person_sus_apc_recent')}} apca
     on erl.sk_patient_id  = apca.sk_patient_id
-left join {{ref('fct_person_medications_recent')}} rm
-    on erl.person_id = rm.person_id
 left join {{ref('fct_person_efi2')}} fr
     on erl.person_id = fr.person_id
 left join {{ref('fct_person_frailty_register')}} frr
@@ -133,9 +130,9 @@ select erl.sk_patient_id
     ,case when erl.sk_patient_id in (select sk_patient_id from potentially_fragmented_sk_patient_ids) then TRUE else FALSE end as has_fragmented_sk_patient_id -- poor mapping of multiple person_ids to one sk_patient_id
     ,case when erl.person_id in (select person_id from potentially_fragmented_person_ids) then TRUE else FALSE end as has_fragmented_person_id -- poor mapping of multiple sk_patient_ids to one person_id
     ,case when erl.sk_patient_id in (select sk_patient_id from cltcs_inclusion) then TRUE else FALSE end as meets_original_criteria
-    ,case when erl.person_id in (select person_id from segment_7) then TRUE else FALSE end as meets_segment_7
-    ,case when erl.practice_code  in (select distinct practice_code from legacy_organisations) then 'original_criteria' else 'segment_7' end as applicable_cohort
-    ,((applicable_cohort = 'original_criteria' and meets_original_criteria) or (applicable_cohort = 'segment_7' and meets_segment_7)) as is_case_finding_eligible
+    ,case when erl.person_id in (select person_id from adults_with_complexity) then TRUE else FALSE end as meets_adults_with_complexity
+    ,case when erl.practice_code  in (select distinct practice_code from legacy_organisations) then 'original_criteria' else 'adults_with_complexity' end as applicable_cohort
+    ,((applicable_cohort = 'original_criteria' and meets_original_criteria) or (applicable_cohort = 'adults_with_complexity' and meets_adults_with_complexity)) as is_case_finding_eligible
 from source_pop erl
 
         

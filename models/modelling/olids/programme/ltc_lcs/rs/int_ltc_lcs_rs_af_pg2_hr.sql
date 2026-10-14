@@ -31,8 +31,12 @@ af_register as (
 -- Rule 1: anticoagulant therapy in last 6 months
 rule_1_anticoagulants as (
     select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("on_af_reg_pg2_hr_vs1, on_af_reg_pg2_hr_vs2, on_af_reg_pg2_hr_vs3") }})
+    from ({{ get_ltc_lcs_medication_orders_latest("on_af_reg_pg2_hr_vs1") }})
     where order_date >= dateadd(month, -6, current_date())
+    union
+    select person_id
+    from ({{ get_ltc_lcs_medication_orders_latest("on_af_reg_pg2_hr_vs2, on_af_reg_pg2_hr_vs3") }})
+    where order_date > dateadd(month, -6, current_date())
     union
     -- vs1 supplement: oral anticoagulants via BNF 2.8.2 (warfarin-type VKAs;
     -- the dm+d drug group behind vs1 is unexpanded)
@@ -71,7 +75,7 @@ rule_3_bleeding_risk as (
 rule_4_doacs as (
     select person_id
     from ({{ get_ltc_lcs_medication_orders_latest("on_af_reg_pg2_hr_vs2") }})
-    where order_date >= dateadd(month, -6, current_date())
+    where order_date > dateadd(month, -6, current_date())
 ),
 
 -- Rule 5: renal impairment, low body weight or severe frailty

@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- The long-form UEC code models must retain every non-null source code. Summing
 -- observation_count restores source-record grain after distinct codes are
 -- collapsed within each attendance.

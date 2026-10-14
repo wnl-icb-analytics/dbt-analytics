@@ -1,11 +1,8 @@
 models:
   - name: cltcs_ltc_lcs_moc_snapshot_input
-    description: >
-      Thin snapshot-input projection of the LTC LCS Model of Care (MoC) fields from
-      fct_person_ltc_lcs_risk_summary: one row per person on the MoC base population, with the
-      furthest stage reached and the pathway status (plus table_refresh_date). Feeds
-      cltcs_ltc_lcs_moc_snapshot, which C-LTCS uses to read MoC status as-at past dates for
-      matched-control evaluation.
+    description: >-
+      MoC snapshot input, one row per adult MoC base member (EMIS GROUP1-4 parent). Captures completed-stage label
+      and observation-based work-list status for C-LTCS matching.
     config:
       meta:
         owner:
@@ -18,15 +15,14 @@ models:
           - not_null
 
       - name: moc_stage_completed_label
-        description: >
-          Furthest MoC pathway stage reached in the last 12 months ('Not started',
-          'Check & Test', 'Remote Desktop Review', 'MDT Review', 'Care Plan Sharing',
-          'Discussion' or 'Follow-up'), from fct_person_ltc_lcs_risk_summary.
+        description: >-
+          Highest completed adult stage, with MoC declined when a decline supplies completion. Annual Review or Desktop Review
+          for CYP evidence; Not started if absent.
 
       - name: moc_pathway_status
-        description: >
-          State of the person's current MoC cycle ('Not started', 'In progress',
-          'Cycle complete' or 'Declined'), from fct_person_ltc_lcs_risk_summary.
+        description: >-
+          Work-list pending takes precedence, then Declined (latest E is D), Cycle complete, or No action identified. Based
+          on observations; future diary lists are unavailable.
 
       - name: table_refresh_date
         description: "Timestamp the view was read; the snapshot's updated_at column."

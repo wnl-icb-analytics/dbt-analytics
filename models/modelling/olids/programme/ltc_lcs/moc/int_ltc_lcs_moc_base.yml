@@ -1,20 +1,11 @@
 models:
   - name: int_ltc_lcs_moc_base
-    description: |
-      LTC LCS Model of Care base population. One row per person on any LTC LCS
-      disease register. Included registers:
-      Atrial Fibrillation, CKD, CHD, Diabetes, Hypertension, NAFLD, Asthma (Adult),
-      Asthma (CYP), COPD, Heart Failure, PAD, Stroke/TIA.
-      Used to gate downstream risk stratification and MOC activity reporting to
-      the LTC LCS cohort. Includes the number of listed registers each person is on.
+    description: |-
+      LTC LCS register members, one row per person at the build date. Registration status is not filtered. Adult asthma requires age 18 or over. Excluded people remain for CYP-only reporting.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
-      - dbt_utils.at_least_one:
-          arguments:
-            column_name: person_id
     columns:
       - name: person_id
         description: Unique person identifier
@@ -29,3 +20,45 @@ models:
               arguments:
                 min_value: 1
                 max_value: 12
+      - name: is_on_af_register
+        description: Person is on the af register.
+      - name: is_on_ckd_register
+        description: Person is on the ckd register.
+      - name: is_on_chd_register
+        description: Person is on the chd register.
+      - name: is_on_diabetes_register
+        description: Person is on the diabetes register.
+      - name: is_on_hypertension_register
+        description: Person is on the hypertension register.
+      - name: is_on_nafld_register
+        description: Person is on the nafld register.
+      - name: is_on_asthma_adult_register
+        description: Person is on the asthma adult register.
+      - name: is_on_asthma_cyp_register
+        description: Person is on the asthma cyp register.
+      - name: is_on_copd_register
+        description: Person is on the copd register.
+      - name: is_on_hf_register
+        description: Person is on the hf register.
+      - name: is_on_pad_register
+        description: Person is on the pad register.
+      - name: is_on_stroke_tia_register
+        description: Person is on the stroke tia register.
+      - name: moc_base_exclusion_reason
+        description: Adult MoC exclusion; null means included.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - CYP asthma only
+                  - LR hypertension only
+                  - LR adult asthma only
+      - name: is_in_moc_base
+        description: Included in the adult MoC population after the EMIS exclusions.
+    data_tests:
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: person_id
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: moc_base_exclusion_reason is null or number_of_ltc_lcs_conditions = 1
