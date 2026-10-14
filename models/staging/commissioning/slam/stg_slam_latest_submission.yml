@@ -14,8 +14,9 @@ models:
 
       Files are ordered by whether most of their rows belong to the activity FY, then by ISL load time
       (META_FILE_REGISTRY.CREATED_DATETIME). A stream is retired when a later stream restates it under a new
-      recipient code (>= 80% of its weight under the same commissioner codes, weights within 10%) or a reviewed
-      recode lists it. Weight is absolute actual price for LSACM and row count otherwise.
+      recipient code (>= 80% of its content weight under the same commissioner codes, month totals within 10%)
+      or a reviewed recode lists it. Content weight is absolute actual price for LSACM and row count otherwise;
+      month totals are signed actual price for LSACM.
     config:
       meta:
         owner:
@@ -62,9 +63,10 @@ models:
         description: Selected files for this provider, site, FY and month. Above 1 means parallel contracts or complementary parts; the stg_*_latest views then keep the latest file per content group.
       - name: omitted_commissioner_count
         description: |
-          Commissioners in the stream's previous upload for this month that the selected upload no longer
-          carries. Treated as withdrawn by the provider; non-zero values mark slices worth checking.
+          Commissioners carried by any earlier upload of the stream for this month that the selected upload no
+          longer carries. Treated as withdrawn by the provider; non-zero values mark slices worth checking.
+          Set on the stream's latest file only, so it can be summed.
       - name: omitted_commissioner_actual_price
-        description: LSACM actual price of the omitted commissioners in the previous upload. Null for patient-level feeds.
+        description: LSACM actual price of the omitted commissioners at their latest earlier statement. Set on the stream's latest file only. Null for patient-level feeds.
       - name: retired_recipient_codes
-        description: Recipient streams at this site and month retired as restated under a new recipient code. Comma separated; null when none.
+        description: Recipient streams at this site and month retired as restated under a new recipient code. Comma separated; repeated on every file of the slice; null when none.

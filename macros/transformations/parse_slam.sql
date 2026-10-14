@@ -1,7 +1,7 @@
 {# Shared macros for the SDL SLAM contract-monitoring feeds (LSACM, LSPLCM,
    LSDrPLCM, LSDePLCM): value parsers for provider-typed free text (formats
-   observed in profiling, 2026-06), the submission-slice CTEs that derive
-   dv_is_latest_submission, and the column blocks common to all 4 staging
+   observed in profiling, 2026-06), the submission-slice CTEs, the
+   stg_*_latest view body, and the column blocks common to all 4 staging
    models. Models supply only feed-specific columns; aliases are fixed:
    `s` = source table, `sl` = submission_slices_ranked. #}
 
@@ -242,11 +242,9 @@ where exists (
 {% endif %}
 {% endmacro %}
 
-{# Body of a stg_*_latest view: staging rows restricted to the file holding
-   the current provider statement of each (provider, FY, month) slice, via
-   the stg_slam_latest_submission lookup. LSACM adds commissioner to the slice
-   (DLP/Local providers submit per-commissioner files) — the lookup's
-   dv_commissioner is NULL for the other feeds, so they stay provider-grain. #}
+{# Body of a stg_*_latest view: staging rows restricted to the files selected
+   in stg_slam_latest_submission (latest upload per site and recipient
+   stream). #}
 {% macro slam_latest_view(staging_model, feed) %}
 {#- Rows of the files selected in stg_slam_latest_submission. Slices with more
     than one selected file (parallel contracts, complementary parts,
