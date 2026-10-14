@@ -102,9 +102,11 @@ SELECT
     CASE
     WHEN e.provider_shorthand = 'MEH' AND e.dataset = 'LSDePLCM' THEN 'Exempt'
     WHEN e.provider_shorthand = 'LNWH' AND e.dataset = 'LSREF' THEN 'Not onboarded'
-    WHEN s.date_submitted is not null and s.date_submitted < due_date then 'Submitted early'
-    WHEN s.date_submitted is not null and s.date_submitted > due_date then 'Submitted late'      
-    ELSE 'Submitted on time' END AS submission_status
+    WHEN s.fy_month_submitted < l.max_fy_month_submitted THEN 'Missed'
+    WHEN s.date_submitted < due_date then 'Submitted early'
+    WHEN s.date_submitted > due_date then 'Submitted late'  
+    WHEN s.date_submitted = due_date then 'Submitted on time' 
+    ELSE 'Not Submitted' END AS submission_status
 FROM expected_provider_datasets e
 LEFT JOIN latest_provider_dataset_submission s ON e.provider_code = s.provider_code AND e.dataset = s.dataset
 CROSS JOIN latest_month_overall AS l
