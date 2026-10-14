@@ -105,7 +105,7 @@ programme_status AS (
         pd.current_age,
         pd.is_active,
         pd.is_deceased,
-        pd.is_screening_eligible,
+        pd.is_screening_eligible AND cr.first_cervix_removal_date IS NULL AS is_screening_eligible,
         pd.screening_interval_years,
         
         -- Latest screening information
