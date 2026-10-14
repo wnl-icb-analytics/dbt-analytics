@@ -13,6 +13,7 @@ WITH wnl_reporting_names AS (
     --FROM STAGING.REFERENCE.STG_REFERENCE_WNL_REPORTING_NAMES
 )
 --USE STAGED LSacm DATA JOINING TO LATEST SUBMISSION DATA BY META_FILE_ID
+,latest_submissions AS (
 SELECT
 acm.meta_file_id,
 acm.dv_provider_code as provider_code,
@@ -75,3 +76,7 @@ LEFT JOIN {{ ref('stg_reference_nhse_service_codes_by_year_v38') }} ser on acm.s
 LEFT JOIN {{ ref('stg_reference_nhse_commissioned_service_category_codes') }} cs on acm.commissioned_service_category_code = cs.commissioned_service_category_code
 --LEFT JOIN STAGING.REFERENCE.STG_REFERENCE_NHSE_COMMISSIONED_SERVICE_CATEGORY_CODES cs on acm.commissioned_service_category_code = cs.commissioned_service_category_code
 LEFT JOIN wnl_reporting_names org on acm.dv_provider_code = org.provider_code
+)
+select * 
+from latest_submissions
+where comm_group = 'WNL'
