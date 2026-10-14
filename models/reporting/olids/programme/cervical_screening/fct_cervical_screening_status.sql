@@ -15,7 +15,7 @@ Key Business Rules:
    - Women aged 50-64: invited every 5 years
    - Women outside 25-64 age range: not eligible for routine screening
 
-2. Programme Status, in QOF v50 CS005/CS006 rule order:
+2. Programme Status, in QOF v51 CS005/CS006 rule order:
    - Cervix Removed: any complete cervix removal record (NOCX_COD)
    - Up to Date: completed screening within the interval (42 months to 49, 66 months from 50)
    - Unsuitable: unsuitability record (CSPU_COD) within the interval
@@ -45,7 +45,7 @@ WITH person_demographics AS (
         END AS is_screening_eligible,
         
         -- Age-specific screening interval
-        --updated 17.12.25 to match QOF v50
+        -- QOF v51 intervals (unchanged from v50)
         CASE
            -- WHEN dpa.age BETWEEN 25 AND 49 THEN 3  -- 3-year interval
             WHEN dpa.age BETWEEN 25 AND 49 THEN 3.5 -- 3.5-year interval (QOF)
@@ -54,7 +54,7 @@ WITH person_demographics AS (
             ELSE NULL
         END AS screening_interval_years,
         
-        -- QOF v50 CS005/CS006 windows
+        -- QOF v51 CS005/CS006 windows
         CASE
             WHEN dpa.age BETWEEN 25 AND 49 THEN 42
             WHEN dpa.age BETWEEN 50 AND 64 THEN 66
