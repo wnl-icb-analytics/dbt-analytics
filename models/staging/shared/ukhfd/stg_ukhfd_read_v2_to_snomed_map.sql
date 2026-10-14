@@ -1,0 +1,14 @@
+-- One row per map revision: map IDs recur across effective dates.
+select
+    map_id,
+    trim(read_code) as read_code,
+    trim(term_code) as term_code,
+    trim(concept_id::varchar) as snomed_concept_id,
+    trim(description_id::varchar) as snomed_description_id,
+    is_assured = '1' as is_assured,
+    effective_date::date as map_effective_date,
+    map_status = '1' as is_current_map,
+    effective_from as source_effective_from_at,
+    import_date as source_imported_at
+from {{ ref('raw_ukhfd_read_v2_to_snomed_map') }}
+where is_latest = 1
