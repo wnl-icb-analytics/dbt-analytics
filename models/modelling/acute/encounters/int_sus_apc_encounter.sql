@@ -86,6 +86,8 @@ select
     , core.spell_commissioning_tariff_calculation_pbr_length_of_stay_excess_bed_days as excess_bed_days
 
     /* Admission information */
+    , core.spell_admission_administrative_category as admission_administrative_category_code
+    , dict_administrative_category.description as admission_administrative_category_name
     , core.spell_admission_method as spell_admission_method
     , dict_adm_method.admission_method_name as admission_method_name
     , dict_adm_method.admission_method_group as admission_method_group
@@ -171,6 +173,9 @@ left join {{ ref('stg_dictionary_ip_admissionmethods')}} as dict_adm_method
 
 left join {{ ref('nhs_dd_discharge_destination') }} as dict_discharge_destination
     on core.spell_discharge_destination = dict_discharge_destination.code
+
+left join {{ ref('nhs_dd_administrative_category') }} as dict_administrative_category
+    on core.spell_admission_administrative_category = dict_administrative_category.code
 
 left join {{ ref('nhs_dd_discharge_method') }} as dict_discharge_method
     on core.spell_discharge_method = dict_discharge_method.code

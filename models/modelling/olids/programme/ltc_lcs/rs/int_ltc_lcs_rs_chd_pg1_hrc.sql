@@ -5,7 +5,7 @@
 -- Inclusion rules:
 -- - Rule 1a: First/new or flare-up of CHD within last month or
 -- - Rule 1b: Significant CHD within last month. Rule 1b is not possible with current data.
---   'Significant' CHD within last month is a data gap. Problem significance is not in OLIDS. 
+--   'Significant' CHD within last month is a data gap. Problem significance is not in OLIDS.
 --   It is also not used consistently by all practices and not used in a consistent way.
 
 with
@@ -23,13 +23,13 @@ rule_1a_first_new_flare_up as (
         from ({{ get_ltc_lcs_observations("on_chd_reg_pg1_hrc_vs1") }})) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id -- join episodiity for first/new/flare-up
-    where 
-    clinical_effective_date >= dateadd(month, -1, current_date())
+    where
+    clinical_effective_date > dateadd(month, -1, current_date())
         and ecm.source_display in ('First','New','Flare Up')
     qualify row_number() over (partition by person_id order by clinical_effective_date desc) = 1
 ),
 
--- Rule 1b: 'Significant' CHD within last month is a data gap. Problem significance is not in OLIDS. 
+-- Rule 1b: 'Significant' CHD within last month is a data gap. Problem significance is not in OLIDS.
 --           It is also not used consistently by all practices and not used in a consistent way.
 
 -- Combine rule results for all CHD register patients

@@ -7,6 +7,8 @@
 --   1 = HRC, 2 = HR, 3 = MR, 4 = MRa/MRb, 5 = LR
 
 with all_rs as (
+    select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_t1dm_hrc') }}
+    union all
     select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_acyp_pg2_hr') }}
     union all
     select person_id, condition, risk_group from {{ ref('int_ltc_lcs_rs_acyp_pg4_lr') }}
@@ -99,6 +101,8 @@ ranked as (
             else 5
         end as risk_rank
     from all_rs
+    inner join {{ ref('int_ltc_lcs_moc_base') }} base using (person_id)
+    where base.is_in_moc_base
 ),
 
 highest_per_condition as (
@@ -129,6 +133,7 @@ pivoted as (
         max(case when condition = 'NAFLD' then risk_group end) as nafld_risk_group,
         max(case when condition = 'PAD' then risk_group end) as pad_risk_group,
         max(case when condition = 'Stroke/TIA' then risk_group end) as stroke_tia_risk_group,
+        max(condition = 'Type 1 Diabetes') as is_type_1_diabetes_hrc,
         min(risk_rank) as overall_risk_rank
     from highest_per_condition
     group by person_id
@@ -156,5 +161,6 @@ select
         when 5 then 'LR'
         else 'LR'
     end as overall_risk_group,
-    overall_risk_rank
+    overall_risk_rank,
+    is_type_1_diabetes_hrc
 from pivoted

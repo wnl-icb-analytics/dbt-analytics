@@ -7,7 +7,7 @@ with spine as (
         , neighbourhood_code
         , practice_code
     from {{ ref('cltcs_adult_population') }}
-    where meets_original_criteria or meets_segment_7),
+    where meets_original_criteria or meets_adults_with_complexity),
 
 inclusion_list as (
     select sk_patient_id
@@ -17,10 +17,10 @@ inclusion_list as (
     where meets_original_criteria
     union all
     select sk_patient_id
-        , 'segment_7'
-        , applicable_cohort = 'segment_7'
+        , 'adults_with_complexity'
+        , applicable_cohort = 'adults_with_complexity'
     from {{ ref('cltcs_adult_population') }}
-    where meets_segment_7
+    where meets_adults_with_complexity
 ),
 
 encoding_features as (

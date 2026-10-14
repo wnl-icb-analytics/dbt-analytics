@@ -30,7 +30,7 @@ dim_person_demographics (base spine)
   + int_person_geography           → town        (townsend_score)
   + qadmissions_alcohol_category         → alcohol_cat6
   + qadmissions_ethrisk        → ethrisk
-  + constants                      → sha1 (=5, London), surv (=qadmissions_horizon_years var)
+  + constants                      → sha1 (=3, London), surv (=qadmissions_horizon_years var)
 ```
 
 ---

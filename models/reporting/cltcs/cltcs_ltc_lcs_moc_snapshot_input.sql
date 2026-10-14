@@ -16,13 +16,13 @@ Purpose:
   C-LTCS-scoped snapshot tracks the MoC fields without changing the programme's snapshot.
 
 Shape:
-- One row per person on the LTC LCS MoC base population (`person_id`), the same population
+- One row per adult MoC base member (`person_id`), the same population
   as fct_person_ltc_lcs_risk_summary.
 - Carries the two MoC fields used for matching plus table_refresh_date.
 
 Snapshot (see docs/archive/snapshots-guide.md):
 - `strategy: check` keyed on `unique_key: person_id`, `check_cols` = the two MoC fields.
-- Both fields look back over the last 12 months from the build date, so a version can open
+- Completion uses pathway windows; status uses observation-based work lists. A version can open
   when an activity ages out of that window as well as when a new one is recorded.
 - `hard_deletes: invalidate` closes a person's open row when they leave the MoC base
   population, so presence of a version as-at a date means "on the MoC base then".
@@ -39,3 +39,4 @@ select
     , moc_pathway_status
     , current_timestamp()::timestamp_ntz as table_refresh_date
 from {{ ref('fct_person_ltc_lcs_risk_summary') }}
+where is_in_moc_base
