@@ -27,11 +27,11 @@ acm.commissioner_code,
 acm.point_of_delivery_code,
 acm.local_point_of_delivery_description,
 acm.service_code,
-ser.npoc_crg as clinical_reference_group,
+ser.npoc_category_and_crg as clinical_reference_group,
 acm.commissioned_service_category_code,
 CASE 
- WHEN acm.commissioned_service_category_code = 11 THEN 'Integrated Care Board' ELSE
- cs.service_category_short_description END as service_name,
+ WHEN acm.commissioned_service_category_code = 11 THEN 'INTEGRATED CARE BOARD' ELSE
+ cs.short_description END as service_name,
 CASE
         WHEN acm.commissioner_code IN ('13Q','13R') 
             THEN 'Retained'
@@ -71,10 +71,8 @@ FROM {{ ref('stg_lsacm') }} acm
 --join on latest file submitted
 INNER JOIN {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }} ls using (meta_file_id)
 --INNER JOIN MODELLING.CONTRACTING.INT_FA_LSacm_MONTHLY_SUB_YTD_LATEST ls on ls.meta_file_id = acm.meta_file_id 
-LEFT JOIN {{ ref('stg_reference_nhse_service_codes_by_year_v38') }} ser on acm.service_code = ser.service_code
---LEFT JOIN STAGING.REFERENCE.STG_REFERENCE_NHSE_SERVICE_CODES_BY_YEAR_V38 ser ON acm.SERVICE_CODE = ser.SERVICE_CODE
-LEFT JOIN {{ ref('stg_reference_nhse_commissioned_service_category_codes') }} cs on acm.commissioned_service_category_code = cs.commissioned_service_category_code
---LEFT JOIN STAGING.REFERENCE.STG_REFERENCE_NHSE_COMMISSIONED_SERVICE_CATEGORY_CODES cs on acm.commissioned_service_category_code = cs.commissioned_service_category_code
+LEFT JOIN {{ ref('pss_service_code') }} ser on acm.service_code = ser.service_code
+LEFT JOIN {{ ref('nhs_dd_commissioned_service_category') }} cs on acm.commissioned_service_category_code = cs.code
 LEFT JOIN wnl_reporting_names org on acm.dv_provider_code = org.provider_code
 )
 select * 

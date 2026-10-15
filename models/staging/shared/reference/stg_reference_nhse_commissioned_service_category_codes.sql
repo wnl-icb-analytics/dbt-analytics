@@ -1,5 +1,0 @@
-SELECT
-commissioned_service_category_code,
-full_description as service_category_description,
-shorter_description as service_category_short_description
-from {{ ref('raw_reference_lookup_ncl_commissioned_service_category') }}

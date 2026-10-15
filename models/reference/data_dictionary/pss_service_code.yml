@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: pss_service_code
+    description: >-
+      NHS England specialised service codes used in contract monitoring. One row per
+      service code with the newest UKHFD definition and the ICB delegation status for
+      each financial year. Codes retired from the workbook remain for historical joins.
+      Delegation statuses come from the NHSE service code workbook (v38 seed) because
+      UKHFD holds one year only.
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    columns:
+      - name: service_code
+        description: NHS England service code, for example NCBPS01A.
+        data_tests: [not_null, unique]
+      - name: service_code_description
+        description: Service code description.
+      - name: service_code_including_description
+        description: Service code and description joined for display.
+      - name: service_category_description
+        description: Commissioner category for the service, for example NHS England - Specialised Services.
+      - name: npoc_category_and_crg
+        description: National Programme of Care category and Clinical Reference Group.
+      - name: highly_specialised_service
+        description: YES, NO or NOT APPLICABLE as published.
+      - name: service_grouping
+        description: ACUTE, MENTAL HEALTH, BOTH or NOT APPLICABLE.
+      - name: notes
+        description: Workbook notes for the code.
+      - name: effective_from_date
+        description: Date the code became effective, from the workbook.
+      - name: effective_to_date
+        description: Date the code ceased, from the workbook; null while it remains in use.
+      - name: is_current
+        description: TRUE when the workbook marks the code as current.
+      - name: icb_delegation_24_25
+        description: >-
+          ICB delegation status for 2024/25 as published: GREEN, AMBER, RED, BLUE or
+          NOT APPLICABLE. Null when the code is not in the workbook seed.
+      - name: icb_delegation_25_26
+        description: ICB delegation status for 2025/26, coded as for 2024/25.
+      - name: icb_delegation_26_27
+        description: ICB delegation status for 2026/27, coded as for 2024/25.
+      - name: source_snapshot_date
+        description: Date of the UKHFD snapshot holding the selected definition.
