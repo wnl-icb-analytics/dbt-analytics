@@ -117,7 +117,8 @@ cervix_removal AS (
     SELECT
         person_id,
         MIN(clinical_effective_date) AS first_cervix_removal_date
-    FROM {{ ref('int_cervix_removal_all') }}
+    FROM {{ ref('int_cervical_screening_all') }}
+    WHERE is_cervix_removal
     GROUP BY person_id
 )
 

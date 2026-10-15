@@ -91,12 +91,12 @@ DIMENSIONS(
     -- Cervical screening (female 25-64)
     cervical.cervical_screening_status AS programme_status COMMENT = 'Cervical programme status (Cervix Removed, Up to Date, Unsuitable, Pregnant, Never Screened, Overdue)',
     cervical.cervical_latest_screening_type AS latest_screening_type COMMENT = 'Type of the latest recorded cervical screening event',
-    cervical.cervical_latest_screening_date AS latest_screening_date COMMENT = 'Date of the latest recorded cervical screening event, including completed, declined, unsuitable and non-response events',
+    cervical.cervical_latest_screening_date AS latest_screening_date COMMENT = 'Date of the latest recorded cervical screening event, including completed, declined, unsuitable, non-response and cervix removal events',
     cervical.cervical_latest_completed_date AS latest_completed_date COMMENT = 'Date of most recent completed cervical screening',
     cervical.cervical_next_due_date AS next_screening_due_date COMMENT = 'Cervical due date (3.5 years at 25-49, 5.5 years at 50-64), not an activity date. Future means not yet due; past means overdue.',
     cervical.cervical_never_screened AS never_screened COMMENT = 'No completed cervical screening ever',
     cervical.cervical_latest_is_declined AS latest_is_declined COMMENT = 'Latest cervical record is a decline',
-    cervical.cervical_latest_is_unsuitable AS latest_is_unsuitable COMMENT = 'Latest cervical record marks person unsuitable',
+    cervical.cervical_latest_is_unsuitable AS latest_is_unsuitable COMMENT = 'Latest cervical record marks person unsuitable, including cervix removal',
     cervical.cervical_latest_is_non_response AS latest_is_non_response COMMENT = 'Latest cervical record is a non-response to invitation',
 
     -- NHS Health Check (whole population, eligibility as flag)

@@ -82,6 +82,7 @@ screening_history AS (
         COUNT(CASE WHEN is_unsuitable_screening THEN 1 END) AS total_unsuitable_records,
         COUNT(CASE WHEN is_declined_screening THEN 1 END) AS total_declined_records,
         COUNT(CASE WHEN is_non_response_screening THEN 1 END) AS total_non_response_records,
+        MIN(CASE WHEN is_cervix_removal THEN clinical_effective_date END) AS first_cervix_removal_date,
         
         -- Overall screening history
         MIN(clinical_effective_date) AS earliest_screening_date,
@@ -92,21 +93,13 @@ screening_history AS (
     GROUP BY person_id
 ),
 
-cervix_removal AS (
-    SELECT
-        person_id,
-        MIN(clinical_effective_date) AS first_cervix_removal_date
-    FROM {{ ref('int_cervix_removal_all') }}
-    GROUP BY person_id
-),
-
 programme_status AS (
     SELECT
         pd.person_id,
         pd.current_age,
         pd.is_active,
         pd.is_deceased,
-        pd.is_screening_eligible AND cr.first_cervix_removal_date IS NULL AS is_screening_eligible,
+        pd.is_screening_eligible AND sh.first_cervix_removal_date IS NULL AS is_screening_eligible,
         pd.screening_interval_years,
         
         -- Latest screening information
@@ -123,7 +116,7 @@ programme_status AS (
         -- Screening history
         sh.latest_completed_date,
         sh.latest_unsuitable_date,
-        cr.first_cervix_removal_date,
+        sh.first_cervix_removal_date,
         preg.person_id IS NOT NULL AS is_currently_pregnant,
         sh.total_completed_screenings,
         sh.total_unsuitable_records,
@@ -139,7 +132,7 @@ programme_status AS (
         
         -- Programme compliance status
         CASE
-            WHEN cr.first_cervix_removal_date IS NOT NULL THEN 'Cervix Removed'
+            WHEN sh.first_cervix_removal_date IS NOT NULL THEN 'Cervix Removed'
             WHEN sh.latest_completed_date::DATE > DATEADD(month, -pd.screening_interval_months, CURRENT_DATE()) THEN 'Up to Date'
             WHEN sh.latest_unsuitable_date::DATE > DATEADD(month, -pd.screening_interval_months, CURRENT_DATE()) THEN 'Unsuitable'
             WHEN preg.person_id IS NOT NULL THEN 'Pregnant'
@@ -149,14 +142,13 @@ programme_status AS (
 
         -- End of the QOF achievement window; null without a cervix
         CASE
-            WHEN cr.first_cervix_removal_date IS NULL
+            WHEN sh.first_cervix_removal_date IS NULL
             THEN DATEADD(month, pd.screening_interval_months, sh.latest_completed_date)
         END AS next_screening_due_date
 
     FROM person_demographics pd
     LEFT JOIN {{ ref('int_cervical_screening_latest') }} cls ON pd.person_id = cls.person_id
     LEFT JOIN screening_history sh ON pd.person_id = sh.person_id
-    LEFT JOIN cervix_removal cr ON pd.person_id = cr.person_id
     LEFT JOIN {{ ref('fct_person_pregnancy_status') }} preg ON pd.person_id = preg.person_id
 )
 
