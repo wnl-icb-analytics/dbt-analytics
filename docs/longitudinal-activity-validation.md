@@ -103,6 +103,25 @@ pre-2021 codes outside the current UKHFD list; they keep the code with a null
 label. Receiving organisations are present on ~88% of MHSDS and ~67% of CSDS
 onward referrals; all but ~0.1% of those codes have a reference name.
 
+### Per-list lookup validation, 15 October 2026
+
+The legal-status start reason, end reason and mental category now use separate
+`nhs_dd_` lookups. MHSDS and CSDS onward referrals share
+`nhs_dd_onward_referral_reason`. Read-only comparisons against the pre-merge
+bundles found identical latest and historical definitions, with no missing or
+extra rows across the retained fields. The new staging, history and latest
+models have no duplicate grain keys or null codes.
+
+The three changed facts also matched their pre-merge SQL on row counts,
+distinct keys and whole-row aggregate fingerprints. These comparisons used
+inlined source SQL for the lookups, so they did not depend on stale DEV lookup
+tables. Parse and compilation passed for the changed models and their
+downstream consumers, including the MHSDS and CSDS adapters. Snowflake EXPLAIN
+passed for every selected SQL model; the semantic model compiled separately.
+No adapter or shared reporting model was rebuilt.
+
+### Milestone timing checks
+
 ECDS clinically-ready timestamps carry `+01:00` or `Z` offsets matching UK local
 time. Their local clock agrees with the supplied minutes since arrival for ~97%
 of attendances. The ECDS referral request date and time are complete; the

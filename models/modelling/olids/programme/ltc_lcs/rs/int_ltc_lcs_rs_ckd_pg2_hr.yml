@@ -1,6 +1,6 @@
 models:
   - name: int_ltc_lcs_rs_ckd_pg2_hr
-    description: |
+    description: |-
       CKD Register Priority Group 2 - High Risk.
       Patients on CKD register (excluding PG1 HRC) meeting any inclusion rule:
       - Rule 2: eGFR 45-59 AND ACR > 30
@@ -10,6 +10,8 @@ models:
       - Rule 6: 3+ repeat antihypertensive prescriptions in last 3 months
       - Rule 7: Latest BP in last 12 months with diastolic > 90
       - Rule 8: Latest BP in last 12 months with systolic > 150
+
+      Repeat issues use source authorisation code Repeat only, strictly within three months. The project antihypertensive list remains broader than the EMIS drug group.
     config:
       meta:
         owner:
@@ -22,10 +24,6 @@ models:
             valuesets:
               - on_ckd_reg_pg2_hr_vs1
               - on_ckd_reg_pg2_hr_vs2
-      - cluster_ids_exist:
-          arguments:
-            cluster_ids: REPEAT_PRESCRIPTION
-            source: ECL_CACHE
     columns:
       - name: person_id
         tests:

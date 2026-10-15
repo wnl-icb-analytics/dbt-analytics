@@ -207,8 +207,9 @@ Order and leave end milestones carry their end reason instead.
 The legal-status fact retains the supplied classification separately from the
 NHSD-derived classification used by the milestones and detention rules.
 Its start/end reasons and Mental Health Act 2007 mental category have UKHFD
-labels where matched. Expiry time is retained for analysis; the current-detention
-rule still assesses expiry by date. Legal-status start milestones carry the
+labels from `nhs_dd_legal_status_start_reason`, `nhs_dd_legal_status_end_reason`
+and `nhs_dd_mental_category` where matched. Expiry time is retained for analysis;
+the current-detention rule still assesses expiry by date. Legal-status start milestones carry the
 start reason in `outcome_code` and `outcome_name`; end milestones carry the end
 reason. Other MHSDS milestones have null outcomes. The supplied classification,
 mental category and expiry remain on the detailed fact.
@@ -216,6 +217,9 @@ mental category and expiry remain on the detailed fact.
 An onward referral records the request, not acceptance by the receiving
 organisation or later care. MHSDS and CSDS onward referrals carry their reason
 and `receiving_organisation_code`, and link to the referral they were made from.
+Both facts use `nhs_dd_onward_referral_reason` for the national reason labels.
+These per-list lookups retain the newest definition for each code, including
+retired codes. Their `_history` models retain every UKHFD revision.
 Pre-2021 MHSDS reason codes often fall outside the national list and keep a null
 label. UKHFD's available onward-referral list, including its historical SCD rows,
 does not define these legacy codes. CSDS supplies no onward referral time.

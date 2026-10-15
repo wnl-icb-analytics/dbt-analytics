@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 with expected as (
     select count(*) as open_referrals, count(distinct r.person_id) as people
     from {{ ref('fct_mhsds_referral_period') }} as r

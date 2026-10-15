@@ -86,14 +86,14 @@ left join {{ ref('stg_csds_care_contact_history') }} as c
     and a.unique_care_contact_identifier = c.unique_care_contact_identifier
 left join {{ ref('stg_csds_bridging') }} as b on a.person_id = b.person_id
 left join {{ ref('nhs_dd_activity_location_type') }} as loc on trim(c.activity_location_type_code) = loc.code
-left join {{ ref('csds_activity_code_lookup') }} as activity_type
-    on activity_type.code_set_name = 'activity_type' and upper(trim(a.community_care_activity_type)) = activity_type.code
-left join {{ ref('csds_activity_code_lookup') }} as procedure_scheme
-    on procedure_scheme.code_set_name = 'procedure_scheme' and upper(trim(a.procedure_scheme_in_use_community_care)) = procedure_scheme.code
-left join {{ ref('csds_activity_code_lookup') }} as finding_scheme
-    on finding_scheme.code_set_name = 'finding_scheme' and upper(trim(a.finding_scheme_in_use_community_care)) = finding_scheme.code
-left join {{ ref('csds_activity_code_lookup') }} as observation_scheme
-    on observation_scheme.code_set_name = 'observation_scheme' and upper(trim(a.observation_scheme_in_use_community_care)) = observation_scheme.code
+left join {{ ref('csds_activity_type') }} as activity_type
+    on upper(trim(a.community_care_activity_type)) = activity_type.code
+left join {{ ref('nhs_dd_procedure_scheme') }} as procedure_scheme
+    on upper(trim(a.procedure_scheme_in_use_community_care)) = procedure_scheme.code
+left join {{ ref('nhs_dd_finding_scheme') }} as finding_scheme
+    on upper(trim(a.finding_scheme_in_use_community_care)) = finding_scheme.code
+left join {{ ref('nhs_dd_observation_scheme') }} as observation_scheme
+    on upper(trim(a.observation_scheme_in_use_community_care)) = observation_scheme.code
 left join {{ ref('fct_csds_care_contact') }} as latest_parent
     on latest_parent.referral_id = c.unique_service_request_identifier
     and latest_parent.contact_id = a.unique_care_contact_identifier

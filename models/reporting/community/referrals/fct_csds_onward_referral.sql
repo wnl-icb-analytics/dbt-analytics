@@ -32,6 +32,5 @@ left join {{ ref('organisation') }} as provider
     on upper(trim(s.organisation_code_provider)) = provider.organisation_code
 left join {{ ref('organisation') }} as receiving
     on s.organisation_identifier_receiving = receiving.organisation_code
-left join {{ ref('csds_referral_code_lookup') }} as reason_label
-    on reason_label.code_set_name = 'onward_referral_reason'
-    and s.onward_referral_reason = reason_label.code
+left join {{ ref('nhs_dd_onward_referral_reason') }} as reason_label
+    on s.onward_referral_reason = reason_label.code

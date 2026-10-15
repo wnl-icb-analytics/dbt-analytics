@@ -1,0 +1,419 @@
+version: 2
+
+# Code lists specific to the Mental Health Services Data Set.
+
+models:
+  - name: mhsds_absence_without_leave_end_reason
+    description: >-
+      NHS Data Model and Dictionary Mental Health Absence Without Leave End Reason codes, used
+      by MHSDS. One row per code ever published, with the newest UKHFD definition. Retired
+      codes remain for historical joins.
+    config: &owner
+      meta:
+        owner:
+          name: Eddie Davison
+    columns: &latest_columns
+      - name: code
+        description: National code.
+        data_tests: [not_null, unique]
+      - name: description
+        description: Newest published description for the code.
+      - name: short_description
+        description: Newest published description limited to 60 characters.
+      - name: category
+        description: Newest published category where supplied.
+      - name: notes
+        description: Newest published notes where supplied.
+      - name: valid_from_date
+        description: Date from which the selected definition is valid.
+      - name: valid_to_date
+        description: Last date on which the selected definition is valid; null when open-ended.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute used for the definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: definition_updated_at
+        description: Timestamp from which the selected UKHFD definition revision applies.
+
+  - name: mhsds_absence_without_leave_end_reason_history
+    description: >-
+      Mental Health Absence Without Leave End Reason definition revisions from UKHFD. One row
+      per code and UKHFD revision.
+    config: *owner
+    data_tests: &history_grain_test
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [source_code_set_name, code, source_effective_from_at]
+    columns: &history_columns
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute name.
+        data_tests: [not_null]
+      - name: code
+        description: National code.
+        data_tests: [not_null]
+      - name: description
+        description: Description in this definition revision.
+      - name: short_description
+        description: Description in this revision limited to 60 characters.
+      - name: category
+        description: Published category in this revision where supplied.
+      - name: notes
+        description: Published notes in this revision where supplied.
+      - name: valid_from_date
+        description: Date from which the definition is valid.
+      - name: valid_to_date
+        description: Last date on which the definition is valid; null when open-ended.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_unique_key
+        description: UKHFD key for the code definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: source_created_at
+        description: Timestamp when UKHFD created the source row.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code, including retired codes.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition revision applies.
+      - name: source_effective_to_at
+        description: Timestamp until which the UKHFD definition revision applies; null for its newest revision.
+
+  - name: mhsds_care_plan_type
+    description: >-
+      NHS Data Model and Dictionary Care Plan Type For Mental Health codes, used by MHSDS. One
+      row per code ever published, with the newest UKHFD definition. Retired codes remain for
+      historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_care_plan_type_history
+    description: >-
+      Care Plan Type For Mental Health definition revisions from UKHFD. One row per code and
+      UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_care_professional_staff_group
+    description: >-
+      NHS Data Model and Dictionary Care Professional Staff Group For Mental Health codes,
+      used by MHSDS. One row per code ever published, with the newest UKHFD definition.
+      Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_care_professional_staff_group_history
+    description: >-
+      Care Professional Staff Group For Mental Health definition revisions from UKHFD. One row
+      per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_diagnosis_scheme
+    description: >-
+      Each row is one diagnosis coding-scheme code, combining UKHFD historical codes with
+      specification-backed MHSDS labels not yet held in UKHFD. Inclusion supplies a label, not
+      validation for every MHSDS version.
+    config: *owner
+    columns:
+      - name: code
+        description: Diagnosis coding-scheme code.
+        data_tests: [not_null, unique]
+      - name: description
+        description: UKHFD label or MHSDS ETOS supplement when absent from UKHFD.
+
+  - name: mhsds_discharge_readiness_attribution
+    description: >-
+      NHS Data Model and Dictionary Mental Health Clinically Ready For Discharge Period
+      Attributable To Indication Code codes, used by MHSDS. One row per code ever published,
+      with the newest UKHFD definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_discharge_readiness_attribution_history
+    description: >-
+      Mental Health Clinically Ready For Discharge Period Attributable To Indication Code
+      definition revisions from UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_discharge_readiness_delay_reason
+    description: >-
+      NHS Data Model and Dictionary Mental Health Clinically Ready For Discharge Period Delay
+      Reason codes, used by MHSDS. One row per code ever published, with the newest UKHFD
+      definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_discharge_readiness_delay_reason_history
+    description: >-
+      Mental Health Clinically Ready For Discharge Period Delay Reason definition revisions
+      from UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_drop_in_contact_outcome
+    description: >-
+      NHS Data Model and Dictionary Mental Health Drop In Contact Outcome codes, used by
+      MHSDS. One row per code ever published, with the newest UKHFD definition. Retired codes
+      remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_drop_in_contact_outcome_history
+    description: >-
+      Mental Health Drop In Contact Outcome definition revisions from UKHFD. One row per code
+      and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_employment_contract_type
+    description: >-
+      NHS Data Model and Dictionary Patient Primary Employment Contract Type For Mental Health
+      codes, used by MHSDS. One row per code ever published, with the newest UKHFD definition.
+      Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_employment_contract_type_history
+    description: >-
+      Patient Primary Employment Contract Type For Mental Health definition revisions from
+      UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_employment_status
+    description: >-
+      NHS Data Model and Dictionary Employment Status codes, used by MHSDS. One row per code
+      ever published, with the newest UKHFD definition. Combines the general Employment Status
+      list with the Employment Status For Mental Health extension. The lists do not share
+      codes; if they ever do, the newest definition wins. Retired codes remain for historical
+      joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_employment_status_history
+    description: >-
+      Employment Status definition revisions from UKHFD, including the retired code set. One
+      row per source code set, code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_escorted_leave_indicator
+    description: >-
+      NHS Data Model and Dictionary Escorted Mental Health Leave Of Absence Indicator codes,
+      used by MHSDS. One row per code ever published, with the newest UKHFD definition.
+      Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_escorted_leave_indicator_history
+    description: >-
+      Escorted Mental Health Leave Of Absence Indicator definition revisions from UKHFD. One
+      row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_group_session_type
+    description: >-
+      NHS Data Model and Dictionary Group Session Type For Mental Health codes, used by MHSDS.
+      One row per code ever published, with the newest UKHFD definition. Retired codes remain
+      for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_group_session_type_history
+    description: >-
+      Group Session Type For Mental Health definition revisions from UKHFD. One row per code
+      and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_leave_of_absence_end_reason
+    description: >-
+      NHS Data Model and Dictionary Mental Health Leave Of Absence End Reason codes, used by
+      MHSDS. One row per code ever published, with the newest UKHFD definition. Retired codes
+      remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_leave_of_absence_end_reason_history
+    description: >-
+      Mental Health Leave Of Absence End Reason definition revisions from UKHFD. One row per
+      code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_out_of_area_referral_reason
+    description: >-
+      NHS Data Model and Dictionary Reason For Out Of Area Referral For Adult Acute Mental
+      Health codes, used by MHSDS. One row per code ever published, with the newest UKHFD
+      definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_out_of_area_referral_reason_history
+    description: >-
+      Reason For Out Of Area Referral For Adult Acute Mental Health definition revisions from
+      UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_perinatal_partner_assessment_offer_indicator
+    description: >-
+      NHS Data Model and Dictionary Community Perinatal Mental Health Partner Assessment Offer
+      Indicator codes, used by MHSDS. One row per code ever published, with the newest UKHFD
+      definition. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_perinatal_partner_assessment_offer_indicator_history
+    description: >-
+      Community Perinatal Mental Health Partner Assessment Offer Indicator definition
+      revisions from UKHFD. One row per code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_reason_for_referral
+    description: >-
+      NHS Data Model and Dictionary Reason For Referral To Mental Health codes, used by MHSDS.
+      One row per code ever published, with the newest UKHFD definition. Retired codes remain
+      for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_reason_for_referral_history
+    description: >-
+      Reason For Referral To Mental Health definition revisions from UKHFD. One row per code
+      and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_referring_care_professional_staff_group
+    description: >-
+      NHS Data Model and Dictionary Referring Care Professional Staff Group For Mental Health
+      codes, used by MHSDS. One row per code ever published, with the newest UKHFD definition.
+      Combines the current code set with the retired Referring Care Professional Staff Group
+      For Mental Health And Community Care. Currently valid definitions win, then the current
+      code set. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_referring_care_professional_staff_group_history
+    description: >-
+      Referring Care Professional Staff Group For Mental Health definition revisions from
+      UKHFD, including the retired code set. One row per source code set, code and UKHFD
+      revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_referring_care_professional_type
+    description: >-
+      NHS Data Model and Dictionary Referring Care Professional Type Mental Health codes, used
+      by MHSDS. One row per code ever published, with the newest UKHFD definition. Combines
+      the current code set with the retired Referring Care Professional Staff Group For Mental
+      Health And Community Care, which older submissions used for this field. Currently valid
+      definitions win, then the current code set. Retired codes remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_referring_care_professional_type_history
+    description: >-
+      Referring Care Professional Type Mental Health definition revisions from UKHFD,
+      including the retired code set. One row per source code set, code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_service_or_team_intended_age_group
+    description: >-
+      Each row is one mental health service or team intended-age code ever published. Uses the
+      newest UKHFD definition and retains retired codes.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_service_or_team_intended_age_group_history
+    description: >-
+      Mental health service or team intended-age definition history from UKHFD. Each row is one code
+      and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_service_or_team_type
+    description: >-
+      Each row is one mental-health service-or-team-type code ever published. Uses the newest UKHFD
+      definition and retains retired codes for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_service_or_team_type_history
+    description: >-
+      Mental-health service-or-team-type definition history from UKHFD. Each row is one code and
+      UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_source_of_referral
+    description: >-
+      Each row is one MHSDS source-of-referral code ever published. Current MHSDS definitions take
+      precedence over the retired mental-health code set where codes overlap; legacy-only codes
+      remain available for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_source_of_referral_history
+    description: >-
+      Current MHSDS and retired mental-health source-of-referral definition history from UKHFD. Each
+      row is one source code set, code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_ward_intended_age_group
+    description: >-
+      NHS Data Model and Dictionary Ward Intended Age Group For Mental Health codes, used by
+      MHSDS. One row per code ever published, with the newest UKHFD definition. Retired codes
+      remain for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_ward_intended_age_group_history
+    description: >-
+      Ward Intended Age Group For Mental Health definition revisions from UKHFD. One row per
+      code and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns
+
+  - name: mhsds_ward_setting_type
+    description: >-
+      NHS Data Model and Dictionary Ward Setting Type For Mental Health codes, used by MHSDS.
+      One row per code ever published, with the newest UKHFD definition. Retired codes remain
+      for historical joins.
+    config: *owner
+    columns: *latest_columns
+
+  - name: mhsds_ward_setting_type_history
+    description: >-
+      Ward Setting Type For Mental Health definition revisions from UKHFD. One row per code
+      and UKHFD revision.
+    config: *owner
+    data_tests: *history_grain_test
+    columns: *history_columns

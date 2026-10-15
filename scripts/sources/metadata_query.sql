@@ -292,6 +292,21 @@ WITH schema_metadata AS (
   WHERE table_schema = 'IP'
   
   UNION ALL
+
+    -- dictionary_geo: NHS organisation boundary geometry used for geographic assignment
+  SELECT
+    'Dictionary' as database_name,
+    'Geo' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "Dictionary".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'Geo'
+
+  UNION ALL
   
     -- dictionary_eRS: Primary care referrals lookups
   SELECT 

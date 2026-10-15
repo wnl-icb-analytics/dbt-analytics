@@ -99,24 +99,19 @@ readings_flagged AS (
 ),
 
 -- One representative reading per person/date: lowest systolic, then lowest
--- diastolic (time-of-day is not usable for ordering).
+-- diastolic (time-of-day is not usable for ordering). The date-level
+-- hypertensive flag is any reading in hypertensive range that date.
 representative AS (
-    SELECT *
+    SELECT
+        *,
+        BOOLOR_AGG(is_hypertensive_reading) OVER (
+            PARTITION BY person_id, effective_date
+        ) AS is_hypertensive_range
     FROM readings_flagged
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY person_id, effective_date
         ORDER BY systolic_value ASC, diastolic_value ASC, reading_id ASC
     ) = 1
-),
-
--- Date-level hypertensive flag: any reading in hypertensive range that date.
-date_hypertensive AS (
-    SELECT
-        person_id,
-        effective_date,
-        BOOLOR_AGG(is_hypertensive_reading) AS is_hypertensive_range
-    FROM readings_flagged
-    GROUP BY person_id, effective_date
 ),
 
 -- Date-level traceability arrays across all observations on the date.
@@ -146,7 +141,7 @@ SELECT
     r.is_abpm_bp_reading AS is_abpm_bp_event,
 
     -- Date-level hypertensive flag (any reading in range), unchanged semantics
-    h.is_hypertensive_range,
+    r.is_hypertensive_range,
 
     -- Traceability metadata
     'mmHg' AS result_unit_display,
@@ -157,9 +152,6 @@ SELECT
     c.all_source_cluster_ids
 
 FROM representative AS r
-INNER JOIN date_hypertensive AS h
-    ON r.person_id = h.person_id
-    AND r.effective_date = h.effective_date
 INNER JOIN date_concepts AS c
     ON r.person_id = c.person_id
     AND r.effective_date = c.effective_date

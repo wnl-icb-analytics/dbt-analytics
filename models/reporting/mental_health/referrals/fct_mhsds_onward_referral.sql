@@ -66,10 +66,10 @@ left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
 left join {{ ref('organisation') }} as receiving
     on s.org_id_receiving = receiving.organisation_code
-left join {{ ref('mhsds_referral_code_lookup') }} as reason_label
-    on s.onward_refer_reason = reason_label.code and reason_label.code_set_name = 'onward_referral_reason'
-left join {{ ref('mhsds_referral_code_lookup') }} as oat_label
-    on s.oat_reason = oat_label.code and oat_label.code_set_name = 'out_of_area_referral_reason'
+left join {{ ref('nhs_dd_onward_referral_reason') }} as reason_label
+    on s.onward_refer_reason = reason_label.code
+left join {{ ref('mhsds_out_of_area_referral_reason') }} as oat_label
+    on s.oat_reason = oat_label.code
 left join {{ ref('snomed_concept') }} as procedure_label
     on regexp_like(trim(s.referral_proc), '[0-9]{6,18}')
         and trim(s.referral_proc) = procedure_label.snomed_code

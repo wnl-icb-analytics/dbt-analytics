@@ -40,14 +40,12 @@ left join {{ ref('stg_ukhfd_mental_health_act_legal_status_classification') }} a
     on m.nhsd_legal_status = label.legal_status_code
 left join {{ ref('stg_ukhfd_mental_health_act_legal_status_classification') }} as submitted_label
     on m.legal_status_code = submitted_label.legal_status_code
-left join {{ ref('mhsds_domain_code_lookup') }} as start_reason
+left join {{ ref('nhs_dd_legal_status_start_reason') }} as start_reason
     on m.legal_status_class_period_start_reason = start_reason.code
-        and start_reason.code_set_name = 'legal_status_start_reason'
-left join {{ ref('mhsds_domain_code_lookup') }} as end_reason
+left join {{ ref('nhs_dd_legal_status_end_reason') }} as end_reason
     on m.legal_status_class_period_end_reason = end_reason.code
-        and end_reason.code_set_name = 'legal_status_end_reason'
-left join {{ ref('mhsds_domain_code_lookup') }} as mental_category
-    on m.mental_cat = mental_category.code and mental_category.code_set_name = 'mental_category'
+left join {{ ref('nhs_dd_mental_category') }} as mental_category
+    on m.mental_cat = mental_category.code
 left join {{ ref('stg_mhsds_bridging') }} as b on m.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(m.org_id_prov) = upper(provider.organisation_code)

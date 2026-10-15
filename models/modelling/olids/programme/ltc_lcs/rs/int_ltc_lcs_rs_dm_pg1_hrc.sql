@@ -50,7 +50,7 @@ rule_6_cardiac as (
     from ({{ get_ltc_lcs_observations("on_dm_reg_pg1_hrc_vs5") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
 ),
 
 -- Rule 6: Diabetes medications in last 6 months (inclusion)
