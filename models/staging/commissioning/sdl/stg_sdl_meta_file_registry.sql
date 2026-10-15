@@ -1,6 +1,6 @@
 -- SDL pipeline metadata: 1:1 view of raw_sdl_wnl_meta_file_registry. See docs/slam-data-guide.md
--- for how these objects drive layout resolution and loading. The source holds times in UTC;
--- they are exposed as Europe/London timestamp_tz.
+-- for how these objects drive layout resolution and loading. created_datetime and sent_datetime
+-- are held in UTC at source and exposed as Europe/London timestamp_tz.
 
 select
     feed,
