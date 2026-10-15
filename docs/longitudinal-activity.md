@@ -5,7 +5,8 @@
 Both retain unlinked and undated records. Neither assigns a journey or merges
 similar occurrences from different feeds. The business owner is Eddie Davison.
 
-The two facts and `dq_person_activity_coverage` are in `REPORTING.CROSS_SYSTEM`
+The two facts, `dq_person_activity_coverage` and
+`dq_person_activity_provider_period` are in `REPORTING.CROSS_SYSTEM`
 (`DEV__REPORTING.CROSS_SYSTEM` for development). These are shared cross-system
 models; Intelligent Navigation is one consumer.
 
@@ -358,6 +359,9 @@ local inversions of forward classification maps. The
 [NHS implementation guide](https://digital.nhs.uk/binaries/content/assets/website-assets/isce/scci0034/0034352016guidance-v2.pdf)
 states that published forward maps cannot be used in reverse. An individual
 SNOMED equivalent is not inferred from an ICD-10 or OPCS-4 code.
+
+For worked queries, coverage checks, observation-lag evidence and the metric
+definition template, see [the analyst guide](longitudinal-analysis-guide.md).
 
 ## Population and observation windows
 
