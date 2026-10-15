@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description="ARAF referral evidence for the NCL OLIDS valproate programme, one row per person with a code in the programme's REFERRAL category. Covers referral requests and observations, with duplicate copies of the same referral removed. No current-registration or recent-valproate filter applies.") }}
+    description="ARAF referral evidence for the OLIDS valproate programme, one row per person with a code in the programme's REFERRAL category. Covers referral requests and observations, with duplicate copies of the same referral removed. No current-registration or recent-valproate filter applies.") }}
 
 WITH person_level_araf_referral_aggregation AS (
     SELECT

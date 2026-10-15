@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description="Neurology records in NCL OLIDS, one row per observation linked to a person. Uses the valproate code list's NEUROLOGY category. Includes inactive and deceased people of any age or sex, whether or not they take valproate. Event dates are unrestricted; the dashboard applies its population rules separately.") }}
+    description="Neurology records in OLIDS, one row per observation linked to a person. Uses the valproate code list's NEUROLOGY category. Includes inactive and deceased people of any age or sex, whether or not they take valproate. Event dates are unrestricted; the dashboard applies its population rules separately.") }}
 
 SELECT
     pp.person_id,

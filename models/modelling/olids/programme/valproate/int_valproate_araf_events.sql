@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description="Annual risk acknowledgement form (ARAF) records in NCL OLIDS, one row per observation linked to a person. Uses the valproate code list's ARAF category, with code-specific lookbacks where configured and no upper date limit. Includes inactive and deceased people of any age or sex, whether or not they take valproate.") }}
+    description="Annual risk acknowledgement form (ARAF) records in OLIDS, one row per observation linked to a person. Uses the valproate code list's ARAF category, with code-specific lookbacks where configured and no upper date limit. Includes inactive and deceased people of any age or sex, whether or not they take valproate.") }}
 
 SELECT
     pp.person_id,

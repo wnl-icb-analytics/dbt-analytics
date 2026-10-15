@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description="Psychiatry evidence for the NCL OLIDS valproate programme, one row per person with an observation coded in the programme's PSYCH category. No date, current-registration or recent-valproate filter applies.") }}
+    description="Psychiatry evidence for the OLIDS valproate programme, one row per person with an observation coded in the programme's PSYCH category. No date, current-registration or recent-valproate filter applies.") }}
 
 WITH person_level_psych_aggregation AS (
     SELECT
