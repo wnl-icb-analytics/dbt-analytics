@@ -90,7 +90,7 @@ select
     org__accountable_treating_trust_code in {{ ncl_trust_codes_full() }} as ncl_geo_flag__accountable_treating_trust
     */
 
-from {{ ref('int_cwt_pathway_data_tidy') }} cwt
+from {{ ref('int_cwt_pathway__data_tidy') }} cwt
 
 --Join to determine NCL Registration
 
