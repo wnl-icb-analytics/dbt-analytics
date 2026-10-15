@@ -36,7 +36,7 @@ rule_1_bp_code as (
 rules_2_3_bp_controlled as (
     select person_id
     from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+    where clinical_effective_date > dateadd(month, -12, current_date())
       and (
           (not coalesce(is_home_bp_event or is_abpm_bp_event, false)
            and systolic_value <= 180 and diastolic_value <= 120)

@@ -56,6 +56,7 @@ select core.primarykey_id
     , core.spell_discharge_method
 
     /* Admission information */
+    , core.spell_admission_administrative_category
     , core.spell_admission_method
     , core.spell_admission_admission_type
     , core.spell_admission_admission_sub_type

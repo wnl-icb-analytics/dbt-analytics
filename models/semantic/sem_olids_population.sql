@@ -125,7 +125,7 @@ DIMENSIONS(
     demographics.ward_name AS ward_name COMMENT = 'Electoral ward 2025 name',
     demographics.borough_resident AS borough_resident COMMENT = 'London borough of residence',
     demographics.is_london_resident AS is_london_resident COMMENT = 'Resides in Greater London',
-    demographics.neighbourhood_resident AS neighbourhood_resident COMMENT = 'NCL neighbourhood based on residence',
+    demographics.neighbourhood_resident AS neighbourhood_resident COMMENT = 'WNL neighbourhood based on residence',
 
     -- Deprivation
     demographics.imd_decile_19 AS imd_decile_19 COMMENT = 'IMD 2019 decile (1=most deprived, 10=least). NULL if LSOA not mapped.',

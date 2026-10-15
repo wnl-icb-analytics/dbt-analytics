@@ -479,13 +479,14 @@ change `immunisation` counts. Neither table is deduplicated against the other.
 
 Code-list labels come from the UKHFD NHS Data Dictionary dimensions for
 childhood immunisation type, breastfeeding status, newborn hearing screening
-and audiology outcome, and newborn blood spot outcome status, added to
-`csds_activity_code_lookup`. UKHFD has no infant physical examination result
+and audiology outcome, and newborn blood spot outcome status. The five
+`nhs_dd_` per-list models retain the newest definition of each code, including
+retired codes. UKHFD has no infant physical examination result
 list. The CYP605IPE worksheet of CSDS ETOS v1.6.10 publishes one list for the
 hips, heart, eyes and testes results: 01 Satisfactory, 02 Problem Identified,
 03 Problem Suspected and NN Not examined. The `csds_infant_physical_examination_result`
-seed holds those values and the lookup adds them with `definition_source`
-`CSDS ETOS v1.6.10`; a UKHFD definition would take precedence. All submitted
+seed holds those values. The clinical fact joins it directly and attributes
+the labels to `CSDS ETOS v1.6.10`. All submitted
 examination results now have a label. Diagnosis schemes use the shared
 `nhs_dd_diagnosis_scheme` reference: 02 is ICD-10, 04 Read v2, 05 CTV3 and 06 SNOMED
 CT, resolved through the existing ICD-10, Read and SNOMED references.
@@ -502,7 +503,7 @@ outcome also carries `blood_spot_result_received_date` from the retained source
 row. This supports sample-to-receipt comparisons without changing clinical time
 or populating the shared `result_date`. CYP612 keeps its supplied `asq_score_band`
 and the ETOS C612D45 label in `asq_score_band_description`. The 15 labels are
-held in `csds_asq_score_band` and reused through `csds_activity_code_lookup`;
+held in `csds_asq_score_band` and joined directly by the clinical fact;
 no band or threshold is recalculated. Missing and unmatched bands retain a null
 label and their submitted code. Examination rows use
 `infant_physical_examination_` plus the examined area. CSDS supplies
@@ -562,8 +563,9 @@ so the MHSDS models are unchanged.
 
 ## Close-out deployment and regression checks
 
-Load the public `csds_asq_score_band` seed and rebuild `csds_activity_code_lookup`
-before rebuilding the clinical fact. Build the new CYP006 history/latest staging
+Load the public `csds_asq_score_band` and `csds_infant_physical_examination_result`
+seeds. Build the five child-health `nhs_dd_` lookups and their staging and history
+models before rebuilding the clinical fact. Build the new CYP006 history/latest staging
 pair and the clinical domain models. The blood spot receipt date and ASQ band stay
 in the domain fact; the shared clinical schema is unchanged.
 

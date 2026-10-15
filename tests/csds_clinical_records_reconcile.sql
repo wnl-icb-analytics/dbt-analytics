@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 with expected as (
     select 'CYP501' as source_table, 'immunisation' as clinical_record_type, cyp501_unique_id::varchar as source_row_id
     from {{ ref('int_csds_coded_immunisation') }}

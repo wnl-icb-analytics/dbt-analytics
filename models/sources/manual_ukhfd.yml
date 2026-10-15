@@ -278,7 +278,7 @@ sources:
   - name: ukhfd_demography
     database: '"UKHFD"'
     schema: '"Demography"'
-    description: GP-registered patient counts from the NHS England "Patients Registered at a GP Practice" monthly publication.
+    description: UKHFD Demography schema, including GP-registered patient counts and the English Indices of Deprivation by LSOA.
     config:
       meta:
         domain: shared
@@ -309,6 +309,60 @@ sources:
           - name: Unique_ID
             quote: true
           - name: AuditKey
+            quote: true
+      - name: domains_of_deprivation_by_lsoa
+        identifier: '"fact_Domains_Of_Deprivation_By_LSOA_V3"'
+        description: English Indices of Deprivation File 7 measures in long form, one row per LSOA, measure and release snapshot.
+        columns:
+          - name: LSOA_Code
+            quote: true
+          - name: LSOA_Code_Year
+            quote: true
+          - name: Measure_Name
+            quote: true
+          - name: Measure_Value
+            quote: true
+          - name: Measure_Value_Str
+            quote: true
+          - name: Effective_Snapshot_Date
+            quote: true
+          - name: DataSourceFileForThisSnapshot_Version
+            quote: true
+          - name: Report_Period_Length
+            quote: true
+          - name: Unique_ID
+            quote: true
+          - name: AuditKey
+            quote: true
+      - name: index_of_multiple_deprivation_by_lsoa
+        identifier: '"fact_Index_Of_Multiple_Deprivation_By_LSOA"'
+        description: Overall IMD score, rank and decile with the local authority supplied with each release, one row per LSOA and release snapshot.
+        columns:
+          - name: LSOA_Code
+            quote: true
+          - name: IMD_Score
+            quote: true
+          - name: IMD_Rank
+            quote: true
+          - name: IMD_Decile
+            quote: true
+          - name: Effective_Snapshot_Date
+            quote: true
+          - name: DataSourceFileForThisSnapshot_Version
+            quote: true
+          - name: Report_Period_Length
+            quote: true
+          - name: Unique_ID
+            quote: true
+          - name: AuditKey
+            quote: true
+          - name: LA_District_Code
+            quote: true
+          - name: LSOA_Code_2021
+            quote: true
+          - name: LAD_Code_2024
+            quote: true
+          - name: LSOA_Code_Year
             quote: true
 
   - name: ukhfd_comm_allocations
@@ -450,10 +504,6 @@ sources:
         identifier: '"dim_Consultation_Mechanism_SCD"'
         description: Consultation mechanism code definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: consultation_medium_used
-        identifier: '"dim_Consultation_Medium_Used_SCD"'
-        description: Consultation Medium Used definitions, separate from Consultation Mechanism.
-        columns: *ukhfd_data_dictionary_columns
       - name: mhsds_source_of_referral
         identifier: '"dim_Source_Of_Referral_For_Mental_Health_Services_Data_Set_SCD"'
         description: MHSDS source-of-referral code definitions and their UKHFD history.
@@ -474,43 +524,43 @@ sources:
         identifier: '"dim_Service_Or_Team_Type_Referred_To_For_Community_Care_SCD"'
         description: Community service or team type definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_care_contact_subject
+      - name: care_contact_subject
         identifier: '"dim_Care_Contact_Subject_SCD"'
         description: Care contact subject definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_planned_care_contact_indicator
+      - name: planned_care_contact_indicator
         identifier: '"dim_Planned_Care_Contact_Indicator_SCD"'
         description: Planned care contact indicator definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_consultation_type
+      - name: consultation_type
         identifier: '"dim_Consultation_Type_SCD"'
         description: Consultation type definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_consultation_medium_used
+      - name: consultation_medium_used
         identifier: '"dim_Consultation_Medium_Used_SCD"'
         description: Consultation medium definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_care_contact_patient_therapy_mode
+      - name: care_contact_patient_therapy_mode
         identifier: '"dim_Care_Contact_Patient_Therapy_Mode_SCD"'
         description: Care contact patient therapy mode definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_care_contact_cancellation_reason
+      - name: care_contact_cancellation_reason
         identifier: '"dim_Care_Contact_Cancellation_Reason_SCD"'
         description: Care contact cancellation reason definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_administrative_category
+      - name: administrative_category
         identifier: '"dim_Administrative_Category_Code_SCD"'
         description: Administrative category definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_place_of_safety_indicator
+      - name: place_of_safety_indicator
         identifier: '"dim_Place_Of_Safety_Indicator_SCD"'
         description: Place of safety indicator definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_group_therapy_indicator
+      - name: group_therapy_indicator
         identifier: '"dim_Group_Therapy_Indicator_SCD"'
         description: Group therapy indicator definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_interpreter_present_indicator
+      - name: interpreter_present_indicator
         identifier: '"dim_Interpreter_Present_At_Care_Contact_Indication_Code_SCD"'
         description: Care contact interpreter indicator definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
@@ -518,15 +568,15 @@ sources:
         identifier: '"dim_Community_Perinatal_Mental_Health_Partner_Assessment_Offer_Indicator_SCD"'
         description: Perinatal partner assessment offer indicator definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_reasonable_adjustment_made_indicator
+      - name: reasonable_adjustment_made_indicator
         identifier: '"dim_Reasonable_Adjustment_Made_Indicator_SCD"'
         description: Reasonable adjustment made indicator definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_reason_patient_no_imca
+      - name: reason_patient_no_imca
         identifier: '"dim_Reason_Patient_Does_Not_Have_Independent_Mental_Capacity_Advocate_SCD"'
         description: Reasons a patient does not have an IMCA and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_reason_patient_no_imha
+      - name: reason_patient_no_imha
         identifier: '"dim_Reason_Patient_Does_Not_Have_Independent_Mental_Health_Advocate_SCD"'
         description: Reasons a patient does not have an IMHA and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
@@ -534,7 +584,7 @@ sources:
         identifier: '"dim_Mental_Health_Service_Or_Team_Intended_Patient_Age_Group_SCD"'
         description: Mental health service or team intended age group definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_clinical_response_priority
+      - name: clinical_response_priority_type
         identifier: '"dim_Clinical_Response_Priority_Type_SCD"'
         description: Clinical response priority definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
@@ -554,11 +604,11 @@ sources:
         identifier: '"dim_Referring_Care_Professional_Staff_Group_For_Mental_Health_And_Community_Care_SCD"'
         description: Retired mental health and community referrer staff group definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_referral_rejection_reason
+      - name: referral_rejection_reason
         identifier: '"dim_Referral_Rejection_Reason_SCD"'
         description: Referral rejection reason definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_referral_closure_reason
+      - name: referral_closure_reason
         identifier: '"dim_Referral_Closure_Reason_SCD"'
         description: Referral closure reason definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
@@ -597,10 +647,6 @@ sources:
       - name: planned_destination_of_discharge
         identifier: '"dim_Planned_Destination_Of_Discharge_SCD"'
         description: Planned discharge destination definitions and their UKHFD history.
-        columns: *ukhfd_data_dictionary_columns
-      - name: discharge_method
-        identifier: '"dim_Discharge_Method_SCD"'
-        description: Discharge method definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
       - name: destination_of_discharge
         identifier: '"dim_Destination_Of_Discharge_SCD"'
@@ -650,13 +696,13 @@ sources:
         identifier: '"dim_Job_Role_Code_SCD"'
         description: Care professional job role definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_finding_scheme_in_use
+      - name: finding_scheme
         identifier: '"dim_Finding_Scheme_In_Use_SCD"'
-        description: MHSDS finding coding scheme definitions and their UKHFD history.
+        description: Finding coding scheme definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_observation_scheme_in_use
+      - name: observation_scheme
         identifier: '"dim_Observation_Scheme_In_Use_SCD"'
-        description: MHSDS observation coding scheme definitions and their UKHFD history.
+        description: Observation coding scheme definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
 
       - name: method_of_discharge
@@ -719,7 +765,7 @@ sources:
         identifier: '"dim_Referral_Closure_Reason_For_Community_Care_SCD"'
         description: National csds referral closure reason legacy definitions and their UKHFD history.
         columns: *ukhfd_data_dictionary_columns
-      - name: mhsds_accommodation_status
+      - name: accommodation_status
         identifier: '"dim_Accommodation_Status_Code_SCD"'
         description: National accommodation status definitions and their UKHFD history.
         columns:
@@ -767,7 +813,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_accommodation_type
+      - name: accommodation_type
         identifier: '"dim_Accommodation_Type_SCD"'
         description: National accommodation type definitions and their UKHFD history.
         columns:
@@ -815,7 +861,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_settled_accommodation
+      - name: settled_accommodation_indicator
         identifier: '"dim_Settled_Accommodation_Indicator_SCD"'
         description: National settled accommodation definitions and their UKHFD history.
         columns:
@@ -959,7 +1005,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_disability
+      - name: disability
         identifier: '"dim_Disability_Code_SCD"'
         description: National disability definitions and their UKHFD history.
         columns:
@@ -1007,7 +1053,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_disability_impact
+      - name: disability_impact_perception
         identifier: '"dim_Disability_Impact_Perception_SCD"'
         description: National disability impact definitions and their UKHFD history.
         columns:
@@ -1103,7 +1149,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_care_plan_agreed_by
+      - name: care_plan_agreed_by
         identifier: '"dim_Care_Plan_Agreed_By_SCD"'
         description: National care plan agreed by definitions and their UKHFD history.
         columns:
@@ -1151,7 +1197,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_care_plan_content_agreed_by
+      - name: care_plan_content_agreed_by
         identifier: '"dim_Care_Plan_Content_Agreed_By_SCD"'
         description: National care plan content agreed by definitions and their UKHFD history.
         columns:
@@ -1199,7 +1245,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_family_care_plan_involvement
+      - name: family_involved_in_care_plan_indicator
         identifier: '"dim_Family_Involved_In_Care_Plan_Indicator_SCD"'
         description: National family care plan involvement definitions and their UKHFD history.
         columns:
@@ -1247,7 +1293,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_family_care_plan_exclusion_reason
+      - name: family_not_involved_in_care_plan_reason
         identifier: '"dim_Family_Not_Involved_In_Care_Plan_Reason_SCD"'
         description: National family care plan exclusion reason definitions and their UKHFD history.
         columns:
@@ -1295,7 +1341,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_gender_identity
+      - name: gender_identity
         identifier: '"dim_Gender_Identity_Code_SCD"'
         description: National gender identity definitions and their UKHFD history.
         columns:
@@ -1343,7 +1389,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_gender_same_at_birth
+      - name: gender_identity_same_at_birth_indicator
         identifier: '"dim_Gender_Identity_Same_At_Birth_Indicator_SCD"'
         description: National gender same at birth definitions and their UKHFD history.
         columns:
@@ -1391,7 +1437,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_person_stated_gender
+      - name: person_stated_gender
         identifier: '"dim_Person_Stated_Gender_Code_SCD"'
         description: National person stated gender definitions and their UKHFD history.
         columns:
@@ -1535,7 +1581,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_indirect_activity_person_consulted
+      - name: indirect_activity_person_consulted_type
         identifier: '"dim_Indirect_Activity_Person_Consulted_Type_SCD"'
         description: National indirect activity person consulted definitions and their UKHFD history.
         columns:
@@ -1583,7 +1629,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_community_treatment_order_end_reason
+      - name: community_treatment_order_end_reason
         identifier: '"dim_Community_Treatment_Order_End_Reason_SCD"'
         description: National community treatment order end reason definitions and their UKHFD history.
         columns:
@@ -1631,7 +1677,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_restrictive_intervention_reason
+      - name: restrictive_intervention_reason
         identifier: '"dim_Restrictive_Intervention_Reason_SCD"'
         description: National restrictive intervention reason definitions and their UKHFD history.
         columns:
@@ -1679,7 +1725,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_restrictive_intervention_type
+      - name: restrictive_intervention_type
         identifier: '"dim_Restrictive_Intervention_Type_SCD"'
         description: National restrictive intervention type definitions and their UKHFD history.
         columns:
@@ -1727,7 +1773,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_post_incident_review_held
+      - name: restrictive_intervention_review_held_indicator
         identifier: '"dim_Restrictive_Intervention_Post_Incident_Review_Held_Indicator_SCD"'
         description: National post incident review held definitions and their UKHFD history.
         columns:
@@ -1775,7 +1821,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_post_incident_review_not_held_reason
+      - name: restrictive_intervention_review_not_held_reason
         identifier: '"dim_Restrictive_Intervention_Post_Incident_Review_Not_Held_Reason_For_Patient_SCD"'
         description: National post incident review not held reason definitions and their UKHFD history.
         columns:
@@ -1823,7 +1869,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_restraint_injury
+      - name: restrictive_intervention_restraint_injury_indicator
         identifier: '"dim_Restrictive_Intervention_Restraint_Injury_Indicator_SCD"'
         description: National restraint injury definitions and their UKHFD history.
         columns:
@@ -2111,7 +2157,7 @@ sources:
           quote: true
         - name: Effective_To
           quote: true
-      - name: mhsds_waiting_time_measurement_type
+      - name: waiting_time_measurement_type
         identifier: '"dim_Waiting_Time_Measurement_Type_SCD"'
         description: National waiting time measurement type definitions and their UKHFD history.
         columns:
@@ -2160,7 +2206,7 @@ sources:
         - name: Effective_To
           quote: true
 
-      - name: mhsds_employment_status_general
+      - name: employment_status
         identifier: '"dim_Employment_Status_SCD"'
         description: National employment status definitions, including employed, unemployed, inactive and stated-status
           codes.
@@ -2210,7 +2256,7 @@ sources:
         - name: Effective_To
           quote: true
 
-      - name: mhsds_weekly_hours_worked
+      - name: weekly_hours_worked
         identifier: '"dim_Weekly_Hours_Worked_SCD"'
         description: National weekly working-hours bands and stated-status codes with their
           UKHFD history
@@ -2530,6 +2576,561 @@ sources:
       - name: Effective_To
         quote: true
 
+  - name: ukhfd_read_data_migration
+    database: '"UKHFD"'
+    schema: '"Read_Data_Migration"'
+    description: NHS Data Migration (TRUD) Read v2 / CTV3 maps and subsets; final release 2020.
+    config:
+      meta:
+        domain: shared
+        raw_prefix: raw_ukhfd
+    tables:
+    - name: ctv3_to_cre_map
+      identifier: '"dim_CTV3_CRE_Map_SCD"'
+      description: CTV3 concept to CRE maps, including historical revisions.
+      columns:
+      - name: Map_ID
+        quote: true
+      - name: CTV3_Concept_ID
+        quote: true
+      - name: CRE_ID
+        quote: true
+      - name: Map_Status
+        quote: true
+      - name: Effective_Date
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: ctv3_to_read_v2_map
+      identifier: '"dim_CTV3_RCT_Map_SCD"'
+      description: CTV3 concept and term to Read v2 maps, including historical revisions.
+      columns:
+      - name: Map_ID
+        quote: true
+      - name: CTV3_Concept_ID
+        quote: true
+      - name: CTV3_TermID
+        quote: true
+      - name: CTV3_Term_Type
+        quote: true
+      - name: V2_Concept_ID
+        quote: true
+      - name: V2_Term_ID
+        quote: true
+      - name: Map_Type
+        quote: true
+      - name: Map_Status
+        quote: true
+      - name: Effective_Date
+        quote: true
+      - name: Is_Assured
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: ctv3_to_snomed_map
+      identifier: '"dim_CTV3_SCT_Map2_SCD"'
+      description: CTV3 concept and term to SNOMED CT maps, including historical revisions.
+      columns:
+      - name: Map_ID
+        quote: true
+      - name: CTV3_Concept_ID
+        quote: true
+      - name: CTV3_TermID
+        quote: true
+      - name: CTV3_Term_Type
+        quote: true
+      - name: SCT_Concept_ID
+        quote: true
+      - name: SCT_Description_ID
+        quote: true
+      - name: Map_Status
+        quote: true
+      - name: Effective_Date
+        quote: true
+      - name: Is_Assured
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: ctv3_codes_with_values_alt_maps
+      identifier: '"dim_Codes_With_Values_Alt_Maps_CTV3_SCD"'
+      description: Alternative observable SNOMED CT maps for CTV3 codes with values, including historical revisions.
+      columns:
+      - name: CTV3ID
+        quote: true
+      - name: TermCode
+        quote: true
+      - name: Observable_ConceptID
+        quote: true
+      - name: Observable_DescriptionID
+        quote: true
+      - name: Use_Alternate
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: read_v2_codes_with_values_alt_maps
+      identifier: '"dim_Codes_With_Values_Alt_Maps_READ2_SCD"'
+      description: Alternative observable SNOMED CT maps for Read v2 codes with values, including historical revisions.
+      columns:
+      - name: READCODE
+        quote: true
+      - name: TermCode
+        quote: true
+      - name: Observable_ConceptID
+        quote: true
+      - name: Observable_DescriptionID
+        quote: true
+      - name: Use_Alternate
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: gp_subset_blacklist
+      identifier: '"dim_GP_Subset_Blacklist_SCD"'
+      description: GP subset blacklist entries and reasons, including historical revisions.
+      columns:
+      - name: SCUI
+        quote: true
+      - name: STUI
+        quote: true
+      - name: Map
+        quote: true
+      - name: Term
+        quote: true
+      - name: Reason
+        quote: true
+      - name: Unique_Column
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: read_v2_to_cre_map
+      identifier: '"dim_RCT_CRE_Map_SCD"'
+      description: Read v2 concept and term to CRE maps, including historical revisions.
+      columns:
+      - name: Map_ID
+        quote: true
+      - name: V2_Concept_ID
+        quote: true
+      - name: V2_Term_ID
+        quote: true
+      - name: CRE_ID
+        quote: true
+      - name: Map_Status
+        quote: true
+      - name: Effective_Date
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: read_v2_to_ctv3_map
+      identifier: '"dim_RCT_CTV3_Map_SCD"'
+      description: Read v2 concept and term to CTV3 maps, including historical revisions.
+      columns:
+      - name: Map_ID
+        quote: true
+      - name: V2_Concept_ID
+        quote: true
+      - name: V2_Term_ID
+        quote: true
+      - name: CTV3_Term_ID
+        quote: true
+      - name: CTV3_Term_Type
+        quote: true
+      - name: CTV3_Concept_ID
+        quote: true
+      - name: Use_CTV3_Term_ID
+        quote: true
+      - name: Stat
+        quote: true
+      - name: Map_Type
+        quote: true
+      - name: Map_Status
+        quote: true
+      - name: Effective_Date
+        quote: true
+      - name: Is_assured
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: read_v2_to_snomed_map_reviewed
+      identifier: '"dim_RCT_SCT_Map_Reviewed_SCD"'
+      description: Reviewed Read v2 to SNOMED CT map rankings, including historical revisions.
+      columns:
+      - name: RC
+        quote: true
+      - name: TC
+        quote: true
+      - name: Rank
+        quote: true
+      - name: Unique_Column
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: read_v2_ctv3_map
+      identifier: '"dim_RC_Map_SCD"'
+      description: Read v2 to CTV3 concept maps, including historical revisions.
+      columns:
+      - name: Read_Code
+        quote: true
+      - name: Concept_ID
+        quote: true
+      - name: Map_ID
+        quote: true
+      - name: Map_Status
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: read_v2_to_snomed_map
+      identifier: '"dim_RC_SCT_Map2_SCD"'
+      description: Read v2 code and term to SNOMED CT maps, including historical revisions.
+      columns:
+      - name: Map_ID
+        quote: true
+      - name: Read_Code
+        quote: true
+      - name: Term_Code
+        quote: true
+      - name: Concept_ID
+        quote: true
+      - name: Description_ID
+        quote: true
+      - name: Is_Assured
+        quote: true
+      - name: Effective_Date
+        quote: true
+      - name: Map_Status
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: read_v2_to_snomed_map_enhanced
+      identifier: '"dim_RC_SCT_Map_Enhanced_SCD"'
+      description: Enhanced Read v2 to SNOMED CT maps with term identifiers, including historical revisions.
+      columns:
+      - name: Map_ID
+        quote: true
+      - name: Read_Code
+        quote: true
+      - name: Term_Code
+        quote: true
+      - name: Concept_ID
+        quote: true
+      - name: T30_ID
+        quote: true
+      - name: T60_ID
+        quote: true
+      - name: T198_ID
+        quote: true
+      - name: Effective_Date
+        quote: true
+      - name: Map_Status
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: read_v2_to_snomed_map_v1
+      identifier: '"dim_RC_SCT_Map_SCD"'
+      description: First-version Read v2 code and term to SNOMED CT concept maps, including historical revisions.
+      columns:
+      - name: Map_ID
+        quote: true
+      - name: Read_Code
+        quote: true
+      - name: Term_Code
+        quote: true
+      - name: Concept_ID
+        quote: true
+      - name: Effective_Date
+        quote: true
+      - name: Map_Status
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: read_v2_term_to_snomed_map
+      identifier: '"dim_RC_Term_SCT_Map_SCD"'
+      description: Read v2 term text to SNOMED CT concept maps, including historical revisions.
+      columns:
+      - name: Read_Code
+        quote: true
+      - name: Term
+        quote: true
+      - name: Concept_ID
+        quote: true
+      - name: Map_ID
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: primary_care_refset
+      identifier: '"dim_Ref_Set_Primary_Care_SCD"'
+      description: Primary care reference set members and linked components, including historical revisions.
+      columns:
+      - name: ID
+        quote: true
+      - name: Effective_Time
+        quote: true
+      - name: Active
+        quote: true
+      - name: Module_ID
+        quote: true
+      - name: Ref_Set_ID
+        quote: true
+      - name: Referenced_Component_ID
+        quote: true
+      - name: Linked_Component_ID
+        quote: true
+      - name: Linked_String_1
+        quote: true
+      - name: Linked_String_2
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: snomed_to_cre_map
+      identifier: '"dim_SCT_CRE_Map_SCD"'
+      description: SNOMED CT concept to CRE maps, including historical revisions.
+      columns:
+      - name: Map_ID
+        quote: true
+      - name: SCT_Concept_ID
+        quote: true
+      - name: CRE_ID
+        quote: true
+      - name: Map_Status
+        quote: true
+      - name: Effective_Date
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: uk_legacy_navigation_subset_members
+      identifier: '"dim_Subset_Members_UK_Legacy_Navigation_SCD"'
+      description: UK legacy navigation subset members, including historical revisions.
+      columns:
+      - name: Subset_ID
+        quote: true
+      - name: Member_ID
+        quote: true
+      - name: Member_Status
+        quote: true
+      - name: Linked_ID
+        quote: true
+      - name: Unique_Column
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
+    - name: uk_legacy_navigation_subsets
+      identifier: '"dim_Subsets_UK_Legacy_Navigation_SCD"'
+      description: UK legacy navigation subset definitions, including historical revisions.
+      columns:
+      - name: Subset_ID
+        quote: true
+      - name: Subset_Original_ID
+        quote: true
+      - name: Subset_Version
+        quote: true
+      - name: Subset_Name
+        quote: true
+      - name: Subset_Type
+        quote: true
+      - name: Language_Code
+        quote: true
+      - name: Subset_Realm_ID
+        quote: true
+      - name: Context_ID
+        quote: true
+      - name: In_Source_Data
+        quote: true
+      - name: Import_Date
+        quote: true
+      - name: Created_Date
+        quote: true
+      - name: Is_Latest
+        quote: true
+      - name: Effective_From
+        quote: true
+      - name: Effective_To
+        quote: true
+
   - name: ukhfd_pss
     database: '"UKHFD"'
     schema: '"Prescribed_Specialised_Services"'
@@ -2828,4 +3429,95 @@ sources:
           - name: Effective_From
             quote: true
           - name: Effective_To
+            quote: true
+  - name: ukhfd_ons_codes
+    database: '"UKHFD"'
+    schema: '"ONS_Codes"'
+    description: ONS Register of Geographic Codes reference data held in UKHFD.
+    config:
+      meta:
+        domain: shared
+        raw_prefix: raw_ukhfd_ons_codes
+    tables:
+      - name: equivalents
+        identifier: '"dim_Equivalents"'
+        description: ONS geography codes with names, equivalent codes, status and introduction and termination dates.
+        columns:
+          - name: Geography_Code
+            quote: true
+          - name: Geography_Name
+            quote: true
+          - name: Geography_Name_Welsh
+            quote: true
+          - name: ONS_Geography_Code
+            quote: true
+          - name: ONS_Geography_Name
+            quote: true
+          - name: DCLG_Geography_Code
+            quote: true
+          - name: DCLG_Geography_Name
+            quote: true
+          - name: DH_Geography_Code
+            quote: true
+          - name: DH_Geography_Name
+            quote: true
+          - name: Scottish_Geography_Code
+            quote: true
+          - name: Scottish_Geography_Name
+            quote: true
+          - name: NI_Geography_Code
+            quote: true
+          - name: NI_Geography_Name
+            quote: true
+          - name: WG_Geography_Code
+            quote: true
+          - name: WG_Geography_Name
+            quote: true
+          - name: WG_Geography_Name_Welsh
+            quote: true
+          - name: Date_Of_Introduction
+            quote: true
+          - name: Date_Of_Termination
+            quote: true
+          - name: Entity_Code
+            quote: true
+          - name: Year
+            quote: true
+          - name: Status
+            quote: true
+          - name: Import_Date
+            quote: true
+          - name: Created_Date
+            quote: true
+
+  - name: ukhfd_ordnance_survey
+    database: '"UKHFD"'
+    schema: '"Ordnance_Survey"'
+    description: ONS boundary datasets held in UKHFD. Geometry columns are not declared.
+    config:
+      meta:
+        domain: shared
+        raw_prefix: raw_ukhfd_ordnance_survey
+    tables:
+      - name: lsoa_2011
+        identifier: '"dim_LSOA_2011"'
+        description: One row per LSOA on 2011 boundaries with its ONS code and name.
+        columns:
+          - name: ID
+            quote: true
+          - name: LSOA11CD
+            quote: true
+          - name: LSOA11NM
+            quote: true
+      - name: lsoa_2021
+        identifier: '"dim_LSOA_DEC_2021_EW_BFE"'
+        description: One row per LSOA on December 2021 boundaries with its ONS code and name.
+        columns:
+          - name: ID
+            quote: true
+          - name: LSOA21CD
+            quote: true
+          - name: LSOA21NM
+            quote: true
+          - name: GlobalID
             quote: true

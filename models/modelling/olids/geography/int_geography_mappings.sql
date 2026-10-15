@@ -79,14 +79,12 @@ lsoa_2011_names AS (
 ),
 
 neighbourhood_mappings AS (
-    -- NCL Neighbourhood mappings
-    SELECT DISTINCT
+    -- WNL neighbourhood per 2021 LSOA
+    SELECT
         lsoa_2021_code AS geography_code,
         neighbourhood_name AS mapped_value,
         'LSOA_TO_NEIGHBOURHOOD' AS mapping_type
-    FROM {{ ref('stg_reference_ncl_neighbourhood_lsoa_2021') }}
-    WHERE lsoa_2021_code IS NOT NULL
-        AND neighbourhood_name IS NOT NULL
+    FROM {{ ref('stg_reference_geo_neighbourhood_lsoa') }}
 ),
 
 all_organisations AS (

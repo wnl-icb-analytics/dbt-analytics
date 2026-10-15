@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- Compare occurrence keys so missing and unexpected rows cannot cancel in a count.
 with source_keys as (
     select unique_submission_id as submission_id, unique_care_activity_identifier as activity_id, 1 as is_present

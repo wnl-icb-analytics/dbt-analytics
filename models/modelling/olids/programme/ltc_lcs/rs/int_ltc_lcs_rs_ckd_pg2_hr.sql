@@ -74,22 +74,15 @@ rule_5_acr_range as (
 ),
 
 -- Rule 6: 3+ repeat antihypertensive prescriptions in last 3 months (gate for BP rules)
--- EMIS: must-match on Antihypertensive Drug Group with repeat prescription type in 3 months.
--- EMIS Drug Group is narrower than our antihypertensive codeset, so >= 3 count acts as
--- a proxy filter to approximate the EMIS match rate.
-repeat_prescription_codes as (
-    select distinct code
-    from {{ ref('stg_reference_combined_codesets') }}
-    where cluster_id = 'REPEAT_PRESCRIPTION'
-),
+-- EMIS requires at least three repeat issues. The project antihypertensive list
+-- remains broader than the EMIS drug group; the count is not a proxy for that gap.
 rule_6_antihypertensive as (
     select am.person_id
     from {{ ref('int_antihypertensive_medications_all') }} am
     inner join {{ ref('stg_olids_medication_statement') }} ms
         on am.medication_statement_id = ms.id
-    inner join repeat_prescription_codes rpc
-        on ms.authorisation_type_code = rpc.code
-    where am.order_date >= dateadd(month, -3, current_date())
+    where am.order_date > dateadd(month, -3, current_date())
+        and ms.authorisation_type_source_code = 'Repeat'
     group by am.person_id
     having count(distinct am.medication_order_id) >= 3
 ),
@@ -98,7 +91,7 @@ rule_6_antihypertensive as (
 rule_7_bp_diastolic as (
     select person_id
     from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+    where clinical_effective_date > dateadd(month, -12, current_date())
       and diastolic_value > 90
 ),
 
@@ -106,7 +99,7 @@ rule_7_bp_diastolic as (
 rule_8_bp_systolic as (
     select person_id
     from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+    where clinical_effective_date > dateadd(month, -12, current_date())
       and systolic_value > 150
 ),
 

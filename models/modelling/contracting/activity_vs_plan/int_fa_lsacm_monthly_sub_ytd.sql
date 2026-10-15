@@ -9,24 +9,24 @@ No filtering by latest version or latest financial month applied.
  */
 WITH ALL_SUBMISSIONS AS (
  SELECT 
- LEFT(SPLIT_PART(r.file_name, '_', 2),3) as provider_code, 
+r.dv_provider_code as provider_code, 
 o.organisation_name,
 file_id as meta_file_id, 
 TO_CHAR(DATEADD(MONTH,r.financial_month + 2,TO_DATE(r.financial_year || '-01-01')),'YYYY-MM') AS activity_month,
 r.financial_month as fy_month_submitted,
 s.financial_year,
-SPLIT_PART(r.file_name, '_', 8) as file_version,
+r.file_version,
 s.submission_date as required_submission_date,
 DATE(r.created_datetime) AS date_submitted,
 r.row_count as submitted_row_count
 FROM {{ ref('stg_sdl_meta_file_registry') }} r
 --FROM STAGING.SDL.STG_SDL_META_FILE_REGISTRY r
-LEFT JOIN {{ ref('stg_dictionary_dbo_organisation') }} o on LEFT(SPLIT_PART(r.file_name, '_', 2),3) = o.organisation_code
---LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION o on LEFT(SPLIT_PART(r.file_name, '_', 2),3) = o.organisation_code
+LEFT JOIN {{ ref('stg_dictionary_dbo_organisation') }} o on r.dv_provider_code = o.organisation_code
+--LEFT JOIN STAGING.DICTIONARY.STG_DICTIONARY_DBO_ORGANISATION o on r.dv_provider_code = o.organisation_code
 LEFT JOIN {{ ref('fa_lsacm_submission_dates') }} s on s.submission_year = r.financial_year and s.fy_submission_month_number = r.financial_month
 --LEFT JOIN DEV__MODELLING.CONTRACTING.FA_LSACM_SUBMISSION_DATES s on s.submission_year = r.financial_year and s.fy_submission_month_number = r.financial_month
 WHERE r.feed = 'LSACM'
-AND LEFT(SPLIT_PART(r.file_name, '_', 2),3) in ('RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS')
+AND r.dv_provider_code in ('RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS')
 --AND r.financial_year >= (select max(financial_year) from STAGING.SDL.STG_SDL_META_FILE_REGISTRY where feed = 'LSACM')
 AND r.financial_year = (select max(financial_year) from {{ ref('stg_sdl_meta_file_registry') }} where feed = 'LSACM' )
 --keep submission version history and all months for now. Latest version and latest financial month can be filtered for in downstream tables

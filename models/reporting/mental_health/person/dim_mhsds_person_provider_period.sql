@@ -58,12 +58,12 @@ from ranked as m
 left join {{ ref('stg_mhsds_bridging') }} as b on m.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider on upper(m.org_id_prov) = upper(provider.organisation_code)
 left join {{ ref('ethnicity_2001') }} as ethnic on m.ethnic_category = ethnic.ethnicity_2001_code
-left join {{ ref('mhsds_domain_code_lookup') }} as legacy_gender
-    on m.gender::varchar = legacy_gender.code and legacy_gender.code_set_name = 'person_stated_gender'
-left join {{ ref('mhsds_domain_code_lookup') }} as gender_identity
-    on m.gender_id_code::varchar = gender_identity.code and gender_identity.code_set_name = 'gender_identity'
-left join {{ ref('mhsds_domain_code_lookup') }} as gender_birth
-    on m.gender_same_at_birth::varchar = gender_birth.code and gender_birth.code_set_name = 'gender_same_at_birth'
+left join {{ ref('nhs_dd_person_stated_gender') }} as legacy_gender
+    on m.gender::varchar = legacy_gender.code
+left join {{ ref('nhs_dd_gender_identity') }} as gender_identity
+    on m.gender_id_code::varchar = gender_identity.code
+left join {{ ref('nhs_dd_gender_identity_same_at_birth_indicator') }} as gender_birth
+    on m.gender_same_at_birth::varchar = gender_birth.code
 left join {{ ref('stg_reference_imd2019') }} as imd19 on m.lsoa2011 = imd19.lsoacode
 left join {{ ref('stg_reference_imd2025') }} as imd25 on m.lsoa2021 = imd25.lsoa_code_2021
 left join {{ ref('int_mhsds_organisation') }} as residence_icb

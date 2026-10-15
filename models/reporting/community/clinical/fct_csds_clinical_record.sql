@@ -37,8 +37,44 @@ with submitted as (
             when 'Read v2' then 'read_v2' when 'CTV3' then 'ctv3' end
 )
 
+, code_lists as (
+    select 'childhood_immunisation_type' as code_set_name, code, description,
+        'UKHFD NHS Data Dictionary' as definition_source
+    from {{ ref('nhs_dd_childhood_immunisation_type') }}
+
+    union all
+
+    select 'breastfeeding_status' as code_set_name, code, description,
+        'UKHFD NHS Data Dictionary' as definition_source
+    from {{ ref('nhs_dd_breastfeeding_status') }}
+
+    union all
+
+    select 'newborn_hearing_screening_outcome' as code_set_name, code, description,
+        'UKHFD NHS Data Dictionary' as definition_source
+    from {{ ref('nhs_dd_newborn_hearing_screening_outcome') }}
+
+    union all
+
+    select 'newborn_hearing_audiology_outcome' as code_set_name, code, description,
+        'UKHFD NHS Data Dictionary' as definition_source
+    from {{ ref('nhs_dd_newborn_hearing_audiology_outcome') }}
+
+    union all
+
+    select 'newborn_blood_spot_test_outcome_status' as code_set_name, code, description,
+        'UKHFD NHS Data Dictionary' as definition_source
+    from {{ ref('nhs_dd_newborn_blood_spot_test_outcome_status') }}
+
+    union all
+
+    select 'infant_physical_examination_result', code, description,
+        'CSDS ETOS v' || specification_version
+    from {{ ref('csds_infant_physical_examination_result') }}
+)
+
 , code_list_sets as (
-    select distinct code_set_name from {{ ref('csds_activity_code_lookup') }}
+    select distinct code_set_name from code_lists
 )
 
 , labelled as (
@@ -127,20 +163,25 @@ with submitted as (
         end as is_referral_person_consistent
     from resolved as r
     left join {{ ref('stg_csds_bridging') }} as b on r.person_id = b.person_id
-    left join {{ ref('csds_activity_code_lookup') }} as scheme
-        on scheme.code_set_name = r.coding_scheme_kind || '_scheme'
+    left join (
+        select 'procedure' as coding_scheme_kind, code, description from {{ ref('nhs_dd_procedure_scheme') }}
+        union all
+        select 'finding', code, description from {{ ref('nhs_dd_finding_scheme') }}
+        union all
+        select 'observation', code, description from {{ ref('nhs_dd_observation_scheme') }}
+    ) as scheme
+        on scheme.coding_scheme_kind = r.coding_scheme_kind
         and trim(r.coding_scheme_code) = scheme.code
     left join {{ ref('nhs_dd_diagnosis_scheme') }} as diagnosis_scheme
         on r.coding_scheme_kind = 'diagnosis'
         and trim(r.coding_scheme_code) = diagnosis_scheme.code
-    left join {{ ref('csds_activity_code_lookup') }} as code_list
+    left join code_lists as code_list
         on r.code_set_name = code_list.code_set_name
         and upper(trim(r.clinical_code)) = code_list.code
     left join code_list_sets
         on r.code_set_name = code_list_sets.code_set_name
-    left join {{ ref('csds_activity_code_lookup') }} as asq_band
-        on asq_band.code_set_name = 'asq_score_band'
-        and r.asq_score_band = asq_band.code
+    left join {{ ref('csds_asq_score_band') }} as asq_band
+        on r.asq_score_band = asq_band.code
     left join {{ ref('snomed_concept') }} as snomed
         on trim(r.clinical_code) = snomed.snomed_code
         and r.resolver_system = 'SNOMED CT'

@@ -1,0 +1,38 @@
+unit_tests:
+- name: ons_geography_retains_termination_unless_a_newer_revision_replaces_it
+  model: ons_geography
+  given:
+  - input: ref('stg_ukhfd_ons_codes_equivalents')
+    rows:
+    # Undated revisions differ only in status and termination date.
+    - {geography_code: SYN_TIE, geography_name: Synthetic tie, introduced_date: '2000-01-01', register_year: 2000,
+       geography_code_status: live, terminated_date: null, source_imported_at: null, source_created_at: null}
+    - {geography_code: SYN_TIE, geography_name: Synthetic tie, introduced_date: '2000-01-01', register_year: 2000,
+       geography_code_status: terminated, terminated_date: '2020-01-01', source_imported_at: null, source_created_at: null}
+    # Conflicting termination dates in the same revision have a stable winner.
+    - {geography_code: SYN_DATE, geography_name: Synthetic dates, introduced_date: '2000-01-01', register_year: 2000,
+       geography_code_status: terminated, terminated_date: '2019-01-01', source_imported_at: '2021-01-01', source_created_at: '2021-01-01'}
+    - {geography_code: SYN_DATE, geography_name: Synthetic dates, introduced_date: '2000-01-01', register_year: 2000,
+       geography_code_status: terminated, terminated_date: '2020-01-01', source_imported_at: '2021-01-01', source_created_at: '2021-01-01'}
+    # A later import can clear a termination, even with an earlier creation date.
+    - {geography_code: SYN_IMPORT, geography_name: Synthetic import, introduced_date: '2000-01-01', register_year: 2000,
+       geography_code_status: terminated, terminated_date: '2020-01-01', source_imported_at: '2021-01-01', source_created_at: '2021-01-01'}
+    - {geography_code: SYN_IMPORT, geography_name: Synthetic import, introduced_date: '2000-01-01', register_year: 2000,
+       geography_code_status: live, terminated_date: null, source_imported_at: '2022-01-01', source_created_at: '2020-01-01'}
+    # Creation timestamps resolve revisions with the same import timestamp.
+    - {geography_code: SYN_CREATED, geography_name: Synthetic creation, introduced_date: '2000-01-01', register_year: 2000,
+       geography_code_status: terminated, terminated_date: '2020-01-01', source_imported_at: '2022-01-01', source_created_at: '2021-01-01'}
+    - {geography_code: SYN_CREATED, geography_name: Synthetic creation, introduced_date: '2000-01-01', register_year: 2000,
+       geography_code_status: live, terminated_date: null, source_imported_at: '2022-01-01', source_created_at: '2022-01-01'}
+    # The most recently introduced definition still wins over source timestamps.
+    - {geography_code: SYN_INTRO, geography_name: Synthetic old definition, introduced_date: '2000-01-01', register_year: 2000,
+       geography_code_status: terminated, terminated_date: '2020-01-01', source_imported_at: '2022-01-01', source_created_at: '2022-01-01'}
+    - {geography_code: SYN_INTRO, geography_name: Synthetic new definition, introduced_date: '2021-01-01', register_year: 2021,
+       geography_code_status: live, terminated_date: null, source_imported_at: '2021-01-01', source_created_at: '2021-01-01'}
+  expect:
+    rows:
+    - {code: SYN_TIE, name: Synthetic tie, introduced_date: '2000-01-01', terminated_date: '2020-01-01'}
+    - {code: SYN_DATE, name: Synthetic dates, introduced_date: '2000-01-01', terminated_date: '2020-01-01'}
+    - {code: SYN_IMPORT, name: Synthetic import, introduced_date: '2000-01-01', terminated_date: null}
+    - {code: SYN_CREATED, name: Synthetic creation, introduced_date: '2000-01-01', terminated_date: null}
+    - {code: SYN_INTRO, name: Synthetic new definition, introduced_date: '2021-01-01', terminated_date: null}

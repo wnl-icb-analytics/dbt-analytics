@@ -172,6 +172,16 @@ sources:
     raw_prefix: raw_dictionary_ip
     domain: shared
 
+  # Dictionary geography boundaries
+  - source_name: dictionary_geo
+    database: Dictionary
+    schema: Geo
+    description: NHS organisation boundary geometry used for geographic assignment
+    raw_prefix: raw_dictionary_geo
+    domain: shared
+    tables:
+      - OS_CCG_Map
+
     # eRS dictionary
   - source_name: dictionary_eRS
     database: Dictionary
@@ -222,6 +232,20 @@ sources:
     description: Reference terminology data including SNOMED, BNF, and other code sets
     raw_prefix: raw_reference
     domain: shared
+    # Moved on 11 October 2026; exclude compatibility views and migration backups.
+    exclude_tables:
+      - COMBINED_CODESETS
+      - ECL_CACHE
+      - ECL_CACHE_METADATA
+      - ECL_CLUSTERS
+      - ECL_CLUSTER_CHANGES
+      - ECL_CLUSTER_VERSIONS
+      - COMBINED_CODESETS__PRE_MIGRATION
+      - ECL_CACHE__PRE_MIGRATION
+      - ECL_CACHE_METADATA__PRE_MIGRATION
+      - ECL_CLUSTERS__PRE_MIGRATION
+      - ECL_CLUSTER_CHANGES__PRE_MIGRATION
+      - ECL_CLUSTER_VERSIONS__PRE_MIGRATION
 
     # PTL
   - source_name: ptl
@@ -240,6 +264,7 @@ sources:
     domain: shared
     exclude_tables:
       - WNL  # Broken view retained upstream; unused by dbt.
+      - NEIGHBOURHOODS_LSOAS_LOOKUP_20260505  # Legacy; use REFERENCE.GEO.NEIGHBOURHOOD_LSOA.
 
   # CANCER schemas in DATA_LAKE__NCL
   - source_name: reference_cancer_cwt_alliance
@@ -316,14 +341,16 @@ sources:
     domain: shared
     tables:
       - NEIGHBOURHOOD_LSOA
+      - NEIGHBOURHOOD_WARD
       - LSOA_WARD_EW
       - LSOA_WIDER_LOOKUP
       - LSOA21_SICBL26_ICB26_NHSER26_LAD26
+      - LSOA_21_WNL
 
   - source_name: reference_terminology_curated
     database: REFERENCE
     schema: TERMINOLOGY
-    description: Curated Primary Care Domain terminology releases
+    description: Curated terminology releases and combined clinical code sets
     raw_prefix: raw_reference_terminology
     domain: shared
     manual: true
@@ -430,6 +457,16 @@ sources:
     domain: shared
     manual: true
 
+  # SNOMED Cluster Manager app. Only the expansion cache is consumed by dbt.
+  # Keep app-internal definitions, versions, change logs and metadata out of dbt.
+  - source_name: snomed_cluster_manager
+    database: APPLICATIONS
+    schema: SNOMED_CLUSTER_MANAGER
+    description: SNOMED Cluster Manager app - expanded ECL code clusters
+    raw_prefix: raw_snomed_cluster_manager
+    domain: shared
+    manual: true
+
   # MYRIA - Project Myria (BEVC) canonical inputs. Two tables (ENROLLED_PATIENTS,
   # MATCHED_PATIENTS) loaded by DATA_LAKE__NCL.MYRIA.LOAD_NEW_FILES(). Manual so the
   # column list is controlled; FILE_DATE versions each upload.
@@ -460,6 +497,13 @@ sources:
     description: Analyst-managed reference datasets and business rules in the MODELLING environment
     raw_prefix: raw_reference_lookup_ncl
     domain: shared
+    # Legacy neighbourhood lookups; use REFERENCE.GEO / REFERENCE.PRIMARY_CARE.
+    exclude_tables:
+      - NCL_GP_PRACTICE_NEIGHBOURHOOD
+      - NCL_NEIGHBOURHOOD
+      - NCL_NEIGHBOURHOOD_LSOA_2021
+      - NCL_NEIGHBOURHOOD_LSOA_2021_LATEST
+      - NEIGHBOURHOODS_2011
 
   # C-LTCS tables
   - source_name: c_ltcs
