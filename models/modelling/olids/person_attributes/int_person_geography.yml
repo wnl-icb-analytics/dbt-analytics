@@ -2,14 +2,17 @@ models:
   - name: int_person_geography
     description: >-
       Residential geography for people in int_patient_person_unique with a
-      non-null hashed postcode. One row per person, using an active address
-      where available, otherwise the most recent ended address. Includes
+      non-null hashed postcode. The OLIDS population comes from NCL GP
+      records. One row per person, using an address without an end date where
+      available, otherwise the most recently started address. Includes
       inactive and deceased people and residents outside London. Geography
       includes 2011 and 2021 Census areas, IMD 2019, IMD 2025 and Townsend
-      deprivation scores. Ward and WNL neighbourhood use the postcode ward
-      where recognised, with a 2021 LSOA fallback. Local authority and London
-      borough use the LSOA, so they can differ from the postcode ward's
-      borough. Unmatched geography remains null.
+      deprivation scores. Ward uses the postcode ward where recognised,
+      otherwise the 2021 LSOA mapping. WNL neighbourhood uses the recognised
+      ward's mapping, with a 2021 LSOA fallback only when the ward is
+      unrecognised. Local authority and London borough use the LSOA, so they
+      can differ from the postcode ward's borough. Unmatched geography remains
+      null.
     config:
       meta:
         owner:

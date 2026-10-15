@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description="Pregnancy Prevention Programme (PPP) status for people with recorded PPP evidence, one row per person in int_ppp_status_all. The latest dated event determines enrolment; other recorded statuses are classified as non-enrolled. Includes the latest status and date, earliest and latest evidence dates, and source identifiers and codes. No current-registration or recent-valproate restriction is applied.") }}
+    description="Pregnancy Prevention Programme (PPP) status for people with recorded PPP evidence, one row per person in int_ppp_status_all. The OLIDS population comes from NCL GP records. Status follows the selected latest event; undated records remain included. Only the selected 'Yes - PPP enrolled' status counts as enrolled. Includes the latest status and date, earliest and latest evidence dates, and source identifiers and codes. No current-registration or recent-valproate restriction is applied.") }}
 
 -- PPP events for each person from intermediate table
 WITH base_ppp_observations AS (

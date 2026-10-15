@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description="Psychiatry evidence defined for the valproate programme, one row per person with an observation in the PSYCH category of stg_reference_valproate_prog_codes. Contains earliest and latest event dates and the recorded identifiers and codes. No date, current-registration or recent-valproate restriction is applied.") }}
+    description="Psychiatry evidence defined for the valproate programme, one row per person with an observation in the PSYCH category of stg_reference_valproate_prog_codes. The OLIDS population comes from NCL GP records. Contains earliest and latest event dates and the recorded identifiers and codes. No date, current-registration or recent-valproate restriction is applied.") }}
 
 WITH person_level_psych_aggregation AS (
     SELECT

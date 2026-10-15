@@ -3,20 +3,18 @@ version: 2
 models:
   - name: stg_lsdeplcm
     description: >-
-      SLAM patient-level high-cost device contract monitoring submitted by
-      providers through ServicesDataLocal. One row per submitted source row,
-      with the full submission history retained. Files are cumulative
-      year-to-date restatements, so summing across submissions double-counts.
-      stg_lsdeplcm_latest holds the current provider statement for each
-      financial period. Financial years contain consecutive start and end
-      years as six digits, such as 202526, and financial months are 1-12. The
-      file name supplies the year where the submitted year is invalid.
-      Provider codes identify parent organisations where dictionary mappings
-      exist. Numeric device quantity, prices and total cost are available in
-      typed fields; unparseable values are null. meta_* fields describe the
-      SDL load, submission_* fields describe the source file and dv_* fields
-      contain the interpreted values. Original provider text remains in *_raw
-      or unprefixed fields; other code columns are not validated.
+      SLAM patient-level high-cost device contract monitoring submitted by providers through
+      ServicesDataLocal. One row per submitted source row, with the full submission history
+      retained. Files are cumulative year-to-date restatements, so summing across submissions
+      double-counts. stg_lsdeplcm_latest holds the current provider statement for each
+      financial period. Financial years contain consecutive start and end years as six digits,
+      such as 202526, and financial months are 1-12. The file name supplies the year where the
+      submitted year is invalid. Provider codes retain recognised trust identifiers; other
+      supplied values use their three-character prefix. Numeric device quantity, prices and
+      total cost are available in typed fields; unparseable values are null. meta_* fields
+      describe the SDL load, submission_* fields describe the source file and dv_* fields
+      contain the interpreted values. Original provider text remains in *_raw or unprefixed
+      fields; other code columns are not validated.
     config:
       meta:
         owner:
@@ -94,7 +92,9 @@ models:
       - name: provider_code
         description: Provider ODS code as submitted (ORGANISATION_IDENTIFIER_CODE_OF_PROVIDER). Cleaned in dv_provider_code.
       - name: dv_provider_code
-        description: Provider ODS code cleaned via dictionary lookup. Original in provider_code.
+        description: >-
+          Recognised trust identifiers are retained; other supplied values use their first three
+          characters. Original provider text is in provider_code.
         data_tests:
           - not_null
       - name: commissioner_code

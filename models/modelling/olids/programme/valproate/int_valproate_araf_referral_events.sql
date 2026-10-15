@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description="Recorded annual risk acknowledgement form (ARAF) referrals. One row per referral-request or observation record in the REFERRAL category of the valproate programme code list, with a person mapping. An observation explicitly linked from a referral request is represented by that referral request only. There is no restriction to valproate users, sex, age, registration, death or event date.") }}
+    description="Recorded annual risk acknowledgement form (ARAF) referrals. The OLIDS population comes from NCL GP records. One row per referral-request or observation record in the REFERRAL category of the valproate programme code list, with a person mapping. An observation explicitly linked from a referral request is represented by that referral request only. There is no restriction to valproate users, sex, age, registration, death or event date.") }}
 
 -- The new feed classifies coded referrals into referral_request where the
 -- legacy feed recorded them as observations. Read both so the model is
