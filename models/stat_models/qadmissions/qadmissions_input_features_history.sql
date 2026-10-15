@@ -4,7 +4,7 @@
         cluster_by=['end_date', 'person_id'],
         tags=['qadmissions', 'risk_scores', 'monthly-full'],
         meta={
-            'custom_message': 'QAdmissions feature set for Snowflake model registry. Derived from the QAdmissions 2013 v4.1 reference implementation (AGPL-3.0, ClinRisk Ltd). Displaying any score produced from these features requires the ClinRisk disclaimer.'
+            'custom_message': 'QAdmissions feature set for Snowflake model registry. Derived from the QAdmissions 2013 v4.1 reference implementation (AGPL-3.0, ClinRisk Ltd). Displaying any score produced from these features requires the ClinRisk disclaimer. A missing BMI is imputed (see is_bmi_imputed).'
         }
     )
 }}
@@ -39,7 +39,21 @@
       fct_person_*_register models behind dim_person_conditions.
       Two features are exceptions and take today's value at every index
       date: town (current LSOA, as address history is not held) and ethrisk
-      (latest recorded ethnicity, as the QAdmissions paper did).
+      (latest recorded ethnicity, as the QAdmissions paper did). The BMI
+      imputation groups people by today's ethnicity category, for the same
+      reason. A person's ethnicity doesn't change, but whether it has been
+      recorded does: someone first recorded after an index date is grouped
+      by their real category instead of Not Recorded, so Not Recorded is
+      smaller at early index dates than it really was.
+
+    BMI imputation
+      As in qadmissions_input_features, a missing BMI is filled with the mean
+      recorded BMI of people with the same sex, age decade and ethnicity
+      category, falling back to sex and age decade, then sex, when a group
+      has fewer than 100 recorded BMIs (macros/clinical/qadmissions_impute_bmi.sql).
+      The means are computed separately for each index date, from that
+      date's population and the BMIs known by then, with age at the
+      month-end. Imputed values are not clipped.
 
     Differences from qadmissions_input_features
       Lab features keep extreme outliers; the live model reads the
@@ -497,6 +511,39 @@ ethrisk_lookup AS (
         person_id,
         ethrisk
     FROM {{ ref('qadmissions_ethrisk') }}
+),
+
+-- Ethnicity category per person, used only to group the BMI imputation.
+-- Today's value at every index date, like ethrisk. One row per person.
+ethnicity AS (
+    SELECT
+        person_id,
+        ethnicity_category
+    FROM {{ ref('dim_person_ethnicity') }}
+),
+
+-- What the BMI imputation groups on, per person and index date: sex and age
+-- at the month-end, today's ethnicity category, and the latest BMI known by
+-- the index date. Each index date's group means use only its own rows.
+bmi_imputation_input AS (
+    SELECT
+        base.end_date,
+        base.person_id,
+        base.gender                                                    AS sex,
+        FLOOR(base.age / 10) * 10                                      AS age_decade,
+        {{ qadmissions_bmi_ethnicity_group('ethn.ethnicity_category') }} AS ethnicity_group,
+        bmi.bmi_value                                                  AS bmi_recorded
+    FROM base_spine AS base
+    LEFT JOIN bmi_latest AS bmi
+        ON base.person_id = bmi.person_id AND base.end_date = bmi.end_date
+    LEFT JOIN ethnicity AS ethn
+        ON base.person_id = ethn.person_id
+),
+
+-- One row per person and index date: the recorded BMI, or the mean for their
+-- group at that index date.
+bmi_imputed AS (
+    {{ qadmissions_impute_bmi('bmi_imputation_input', partition_by=['end_date']) }}
 )
 
 -- One row per eligible person per index date. The as-at feature CTEs are
@@ -511,7 +558,13 @@ SELECT
     base.sk_patient_id,
     base.age,
     CASE WHEN base.gender = 'Male' THEN 'male' ELSE 'female' END           AS sex,
-    bmi.bmi_value                                                          AS bmi,
+
+    -- BMI: the latest known by the index date, or the imputed mean when
+    -- there is none. bmi is what the model scores.
+    bmi_imp.bmi,
+    bmi_imp.bmi_recorded,
+    bmi_imp.is_bmi_imputed,
+    bmi_imp.bmi_imputation_group,
 
     -- Constants, as in the live model: Strategic Health Authority 3 (London)
     -- and the prediction horizon in years.
@@ -579,8 +632,8 @@ SELECT
     COALESCE(eth.ethrisk, 1)                                               AS ethrisk
 
 FROM base_spine                       base
-LEFT JOIN bmi_latest                  bmi
-    ON base.person_id = bmi.person_id  AND base.end_date = bmi.end_date
+LEFT JOIN bmi_imputed                 bmi_imp
+    ON base.person_id = bmi_imp.person_id AND base.end_date = bmi_imp.end_date
 LEFT JOIN conditions                  cond
     ON base.person_id = cond.person_id AND base.end_date = cond.end_date
 LEFT JOIN diabetes                    diab
