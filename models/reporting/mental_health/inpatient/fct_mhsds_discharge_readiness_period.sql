@@ -39,8 +39,8 @@ from selected as s
 left join {{ ref('stg_mhsds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as reason_label
-    on upper(trim(s.clin_readyfor_disch_delay_reason::varchar)) = reason_label.code and reason_label.code_set_name = 'discharge_readiness_delay_reason'
-left join {{ ref('mhsds_domain_code_lookup') }} as attribution_label
-    on upper(trim(s.attrib_to_indic::varchar)) = attribution_label.code and attribution_label.code_set_name = 'discharge_readiness_attribution'
+left join {{ ref('mhsds_discharge_readiness_delay_reason') }} as reason_label
+    on upper(trim(s.clin_readyfor_disch_delay_reason::varchar)) = reason_label.code
+left join {{ ref('mhsds_discharge_readiness_attribution') }} as attribution_label
+    on upper(trim(s.attrib_to_indic::varchar)) = attribution_label.code
 left join {{ ref('int_mhsds_organisation') }} as responsible on upper(s.org_id_resp_la_clin_readyfor_disch) = upper(responsible.organisation_code)

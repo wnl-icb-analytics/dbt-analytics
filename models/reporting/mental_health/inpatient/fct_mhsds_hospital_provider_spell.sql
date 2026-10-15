@@ -177,21 +177,16 @@ left join {{ ref('fct_mhsds_referral') }} as referral
     on s.uniq_serv_req_id = referral.source_record_id
 left join {{ ref('stg_mhsds_bridging') }} as bridge
     on s.person_id = bridge.person_id
-left join {{ ref('mhsds_inpatient_code_lookup') }} as admission_source
+left join {{ ref('nhs_dd_admission_source') }} as admission_source
     on upper(trim(s.admission_source_code)) = admission_source.code
-    and admission_source.code_set_name = 'admission_source'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as admission_method
+left join {{ ref('nhs_dd_admission_method') }} as admission_method
     on upper(trim(s.admission_method_code)) = admission_method.code
-    and admission_method.code_set_name = 'admission_method'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as planned_destination
+left join {{ ref('nhs_dd_planned_discharge_destination') }} as planned_destination
     on upper(trim(s.planned_discharge_destination_code)) = planned_destination.code
-    and planned_destination.code_set_name = 'planned_discharge_destination'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as discharge_method
+left join {{ ref('nhs_dd_discharge_method') }} as discharge_method
     on upper(trim(s.discharge_method_code)) = discharge_method.code
-    and discharge_method.code_set_name = 'discharge_method'
-left join {{ ref('mhsds_inpatient_code_lookup') }} as discharge_destination
+left join {{ ref('nhs_dd_discharge_destination') }} as discharge_destination
     on upper(trim(s.discharge_destination_code)) = discharge_destination.code
-    and discharge_destination.code_set_name = 'discharge_destination'
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
 left join {{ ref('int_mhsds_organisation') }} as commissioner

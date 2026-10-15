@@ -17,7 +17,9 @@ models:
 
       • Includes the Townsend Deprivation Score (via 2011 LSOA)
 
-      • Maps to NCL neighbourhoods (via 2021 LSOA)
+      • Maps to WNL neighbourhoods via the ward of the postcode (2021 LSOA route if the ward is not in the ward lookup)
+
+      • Ward and neighbourhood come from the postcode; local authority and borough come from the LSOA, so they can disagree for the few postcodes whose ward lies in a different borough from their LSOA
 
       • Includes London borough identification from dedicated model
 
@@ -52,9 +54,9 @@ models:
         description: 'Local Authority District 2025 name (LAD25NM) from LSOA reference,
           fallback to organisation name'
       - name: ward_code
-        description: '2025 Ward code (WD25CD) from LSOA reference'
+        description: '2025 ward code (WD25CD) of the postcode; the LSOA best-fit ward if the postcode ward is not in the ward lookup (every WNL ward is; a few small wards elsewhere are not)'
       - name: ward_name
-        description: '2025 Ward name (WD25NM) from LSOA reference'
+        description: '2025 ward name (WD25NM), matching ward_code'
       - name: borough_resident
         description: 'Borough name where patient resides (only populated for London
           boroughs)'
@@ -69,7 +71,7 @@ models:
       - name: msoa_code_21
         description: '2021 Census Middle Layer Super Output Area code'
       - name: neighbourhood_resident
-        description: 'NCL neighbourhood of residence (from 2021 LSOA)'
+        description: 'WNL neighbourhood of residence, from the ward of the postcode (LSOA best-fit ward if the postcode ward is not in the ward lookup); null outside WNL'
       - name: imd_decile_19
         description: 'IMD 2019 decile from dedicated IMD model'
       - name: imd_quintile_19

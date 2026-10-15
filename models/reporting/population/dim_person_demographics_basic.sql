@@ -34,7 +34,7 @@ select
         geo.icb_code as residence_icb_code,
         geo.icb_name as residence_icb_name,
         geo.resident_flag as residence_icb_group,
-        nb_res_code.neighbourhood_code as residence_neighbourhood_code,
+        nb_res.neighbourhood_code as residence_neighbourhood_code,
         nb_res.neighbourhood_name as residence_neighbourhood_name,
         imd.imd25_decile as residence_imd_decile,
 
@@ -82,12 +82,8 @@ on pmi.interpreter_required = dict_ir.interpreter_required
 left join {{ref('stg_reference_lookup_ncl_lsoa_2021_ward_2025_local_authority_2025')}} geo
 on pmi.lsoa21_code = geo.lsoa_2021_code
 
-left join {{ref('stg_reference_wnl_neighbourhood_lsoa')}} nb_res
+left join {{ref('stg_reference_geo_neighbourhood_lsoa')}} nb_res
 on pmi.lsoa21_code = nb_res.lsoa_2021_code
-
--- NCL residence neighbourhood code (WNL source is name-only; NWL has no code)
-left join {{ref('stg_reference_lookup_ncl_ncl_neighbourhood_lsoa_2021')}} nb_res_code
-on pmi.lsoa21_code = nb_res_code.lsoa_2021_code
 
 left join {{ref('stg_reference_lookup_ncl_imd_2025')}} imd
 on pmi.lsoa21_code = imd.lsoa_code_2021
@@ -110,7 +106,7 @@ left join (
 ) org_bor
 on pmi.practice_code = org_bor.practice_code
 
-left join {{ref('stg_reference_wnl_gp_practice_neighbourhood')}} nb_reg
+left join {{ref('practice_wnl_active')}} nb_reg
 on pmi.practice_code = nb_reg.practice_code
 
 left join (

@@ -39,7 +39,7 @@ from selected as s
 left join {{ ref('stg_mhsds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as reason_label
-    on upper(trim(s.mh_leave_abs_end_reason::varchar)) = reason_label.code and reason_label.code_set_name = 'leave_of_absence_end_reason'
-left join {{ ref('mhsds_domain_code_lookup') }} as escort_label
-    on upper(trim(s.escorted_leave_indicator::varchar)) = escort_label.code and escort_label.code_set_name = 'escorted_leave'
+left join {{ ref('mhsds_leave_of_absence_end_reason') }} as reason_label
+    on upper(trim(s.mh_leave_abs_end_reason::varchar)) = reason_label.code
+left join {{ ref('mhsds_escorted_leave_indicator') }} as escort_label
+    on upper(trim(s.escorted_leave_indicator::varchar)) = escort_label.code

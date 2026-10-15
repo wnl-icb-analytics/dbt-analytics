@@ -14,9 +14,8 @@
     register population and Model of Care activity. Do not mix their elements
     in one query: they are different populations.
 
-    Risk summary includes inactive and deceased people; filter is_active.
-    The same review event can surface as remote desktop or MDT review by
-    pathway, so only pathway-neutral stage flags are exposed.
+    Risk summary contains eligible adult MoC and CYP-only asthma members, including inactive and deceased people; filter is_active.
+    Adult stage 2 uses sharing, or MDT/sharing for HRCS and HRS.
 #}
 
 TABLES(
@@ -30,7 +29,7 @@ TABLES(
 
     rs AS {{ ref('fct_person_ltc_lcs_risk_summary') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'People on one or more LTC LCS registers with risk and Model of Care status; includes deceased and inactive people'
+        COMMENT = 'Eligible adult MoC and CYP-only asthma members with risk and observation-based Model of Care status'
 )
 
 RELATIONSHIPS(
@@ -77,32 +76,51 @@ DIMENSIONS(
     cf.in_any_case_finding AS in_any_case_finding COMMENT = 'At least one case-finding indicator; always TRUE in this table',
 
     -- LTC LCS risk and Model of Care
-    rs.af_risk_group AS af_risk_group COMMENT = 'AF LTC LCS risk group: HRC, HR, MR, or LR when stratified.',
+    rs.af_risk_group AS af_risk_group COMMENT = 'AF LTC LCS risk group: HR or MR when stratified.',
     rs.asthma_adult_risk_group AS asthma_adult_risk_group COMMENT = 'Adult asthma risk group',
     rs.asthma_cyp_risk_group AS asthma_cyp_risk_group COMMENT = 'Children and young people asthma risk group',
     rs.chd_risk_group AS chd_risk_group COMMENT = 'CHD risk group',
     rs.ckd_risk_group AS ckd_risk_group COMMENT = 'CKD risk group',
     rs.copd_risk_group AS copd_risk_group COMMENT = 'COPD risk group',
-    rs.diabetes_risk_group AS diabetes_risk_group COMMENT = 'Diabetes risk group',
+    rs.diabetes_risk_group AS diabetes_risk_group COMMENT = 'Diabetes risk group: HRC, HR, MR, MRa, MRb or LR; Type 1 HRC is separate',
     rs.hf_risk_group AS hf_risk_group COMMENT = 'Heart failure risk group',
-    rs.hypertension_risk_group AS hypertension_risk_group COMMENT = 'Hypertension risk group',
+    rs.hypertension_risk_group AS hypertension_risk_group COMMENT = 'Hypertension risk group: HRC, HR, MRa, MRb or LR',
     rs.nafld_risk_group AS nafld_risk_group COMMENT = 'NAFLD risk group',
     rs.pad_risk_group AS pad_risk_group COMMENT = 'PAD risk group',
     rs.stroke_tia_risk_group AS stroke_tia_risk_group COMMENT = 'Stroke/TIA risk group',
     rs.overall_risk_group AS overall_risk_group COMMENT = 'Highest LTC LCS risk across conditions: HRC (high risk complex), HR, MR, or LR. Unstratified Model of Care members default to LR.',
-    rs.overall_risk_rank AS overall_risk_rank COMMENT = 'Risk rank: 1=HRC, 2=HR, 3/4=MR subgroups, 5=LR.',
-    rs.moc_pathway AS moc_pathway COMMENT = 'Model of Care pathway: HRCS, HRS, MRS, or LRS',
+    rs.overall_risk_rank AS overall_risk_rank COMMENT = 'Risk rank: 1=HRC, 2=HR, 3=MR, 4=MRa/MRb, 5=LR.',
+    rs.moc_pathway AS moc_pathway COMMENT = 'Model of Care pathway: HRCS, HRS, MRS or LRS',
     rs.moc_risk_category AS moc_risk_category COMMENT = 'Model of Care risk category',
-    rs.moc_pathway_status AS moc_pathway_status COMMENT = 'Model of Care pathway status: Declined, Cycle complete, In progress, or Not started',
-    rs.moc_stage_completed_label AS moc_stage_completed_label COMMENT = 'Furthest recorded Model of Care stage: Not started, Check & Test, Remote Desktop Review, MDT Review, Care Plan Sharing, Discussion, or Follow-up.',
-    rs.moc_next_action AS moc_next_action COMMENT = 'Next Model of Care action',
+    rs.moc_pathway_status AS moc_pathway_status COMMENT = 'Observation-based work-list pending, Declined, Cycle complete, or No action identified',
+    rs.moc_stage_completed_label AS moc_stage_completed_label COMMENT = 'Highest completed adult stage including accepted declines, or CYP Annual Review/Desktop Review.',
+    rs.moc_next_action AS moc_next_action COMMENT = 'Next observation-based EMIS work-list action; future care-plan diaries are unavailable',
     rs.moc_cycle_complete AS moc_cycle_complete COMMENT = 'Model of Care cycle complete flag',
     rs.moc_any_activity_12m AS moc_any_activity_12m COMMENT = 'Any Model of Care activity in the last 12 months',
     rs.moc_declined AS moc_declined COMMENT = 'Model of Care declined flag',
-    rs.moc_re_engaged_after_decline AS moc_re_engaged_after_decline COMMENT = 'Re-engaged after a previous decline',
+    rs.is_in_moc_base AS is_in_moc_base COMMENT = 'Eligible for adult MoC after EMIS exclusions. False for CYP-only asthma pathway rows.',
+    rs.is_type_1_diabetes_hrc AS is_type_1_diabetes_hrc COMMENT = 'Qualifies for the separate EMIS Type 1 HRC rule; not added to diabetes_risk_group.',
+    rs.moc_mdt_review_completed AS moc_mdt_review_completed COMMENT = 'Actual annual MDT review event in the inclusive trailing 12 months; separate from stage 2 completion.',
+    rs.moc_mdt_review_date AS moc_mdt_review_date COMMENT = 'Latest actual annual MDT review date within the inclusive trailing 12 months; null if absent.',
+    rs.moc_stage_1_completed AS moc_stage_1_completed COMMENT = 'Adult pathway C&T completion, using its strict or inclusive annual window. False for CYP-only people.',
+    rs.moc_stage_3_completed AS moc_stage_3_completed COMMENT = 'Adult stage 3: agreed plan or decline in the inclusive trailing 12 months. No stage 1 or 2 prerequisite.',
+    rs.moc_stage_4_completed AS moc_stage_4_completed COMMENT = 'Adult stage 4: decline, or both agreed plan and review in the inclusive trailing 12 months. No stage 1 or 2 prerequisite.',
+    rs.moc_requires_check_test AS moc_requires_check_test COMMENT = 'Observation-based EMIS stage 1 list. Old C&T can require a new C&T despite a more recent decline.',
+    rs.moc_requires_stage_2 AS moc_requires_stage_2 COMMENT = 'Latest E in the inclusive trailing 12 months is C, strictly after the annual anniversary. Future diaries are unavailable.',
+    rs.moc_requires_mdt_review AS moc_requires_mdt_review COMMENT = 'HRCS/HRS stage 2 list with no MDT strictly after the 12-month anniversary.',
+    rs.moc_requires_careplan_sharing AS moc_requires_careplan_sharing COMMENT = 'MRS/LRS stage 2 list, or HRCS/HRS stage 2 list with MDT strictly after the anniversary and no sharing on or after it.',
+    rs.moc_requires_discussion AS moc_requires_discussion COMMENT = 'Latest E in the inclusive trailing 12 months is S. Future diaries are unavailable.',
+    rs.moc_requires_followup AS moc_requires_followup COMMENT = 'Latest E is not D/R/C/S and latest E plus offered in the inclusive trailing 12 months is A. Future diaries are unavailable.',
+    rs.moc_ct_overdue AS moc_ct_overdue COMMENT = 'Latest C strictly within 12 months, latest B is C, and C is more than 42 days old. B is C/A/R/D/O across all history.',
+    rs.moc_discussion_overdue AS moc_discussion_overdue COMMENT = 'No C on or before the 12-month anniversary, latest B is A, and A is more than 3 months old. B is C/A/R/D/O across all history.',
+    rs.cyp_annual_review_completed AS cyp_annual_review_completed COMMENT = 'CYP-only annual asthma review strictly after the one-year anniversary. False for adult pathways.',
+    rs.cyp_requires_annual_review AS cyp_requires_annual_review COMMENT = 'CYP-only person without an annual asthma review strictly after the one-year anniversary.',
+    rs.cyp_desktop_review_completed AS cyp_desktop_review_completed COMMENT = 'CYP-only HR: desktop review strictly after the annual anniversary, or latest annual review after it with another AR/DTR in [review minus 3 months, review minus 1 day). Requires desktop review is omitted because the exported search contradicts itself.',
+    rs.cyp_annual_review_date AS cyp_annual_review_date COMMENT = 'Latest non-future CYP-only asthma annual review date; may be outside the completed window. Null for adult pathways or no event.',
+    rs.cyp_desktop_review_date AS cyp_desktop_review_date COMMENT = 'Latest qualifying CYP-only HR desktop review or linked annual review date; null without completion or for other pathways.',
     rs.moc_has_missing_priors AS moc_has_missing_priors COMMENT = 'Prior Model of Care stages are missing',
     rs.moc_check_test_completed_12m AS moc_check_test_completed_12m COMMENT = 'Check and test completed in the last 12 months',
-    rs.moc_stage_2_completed AS moc_stage_2_completed COMMENT = 'Stage 2 complete: Remote Desktop Review for MR/LR; both MDT Review and Care Plan Sharing for HRC/HR.',
+    rs.moc_stage_2_completed AS moc_stage_2_completed COMMENT = 'C&T plus sharing for MR/LR; C&T plus MDT or sharing for HRC/HR, using pathway windows.',
     rs.moc_discussion_completed_12m AS moc_discussion_completed_12m COMMENT = 'Discussion completed in the last 12 months',
     rs.moc_followup_completed_12m AS moc_followup_completed_12m COMMENT = 'Follow-up completed in the last 12 months',
 
@@ -146,11 +164,11 @@ METRICS(
     cf.dm_case_finding_count AS COUNT(DISTINCT CASE WHEN cf.in_dm_61 OR cf.in_dm_62 OR cf.in_dm_63 OR cf.in_dm_64 OR cf.in_dm_65 OR cf.in_dm_66 THEN cf.person_id END) COMMENT = 'Candidates with a diabetes indicator',
     cf.htn_case_finding_count AS COUNT(DISTINCT CASE WHEN cf.in_htn_61 OR cf.in_htn_62 OR cf.in_htn_63 OR cf.in_htn_65 OR cf.in_htn_66 THEN cf.person_id END) COMMENT = 'Candidates with a hypertension indicator',
     cf.cyp_asthma_case_finding_count AS COUNT(DISTINCT CASE WHEN cf.in_cyp_ast_61 THEN cf.person_id END) COMMENT = 'Candidates with a children and young people asthma indicator',
-    rs.stratified_patients AS COUNT(DISTINCT rs.person_id) COMMENT = 'Risk-stratified LTC LCS register population',
-    rs.hrc_patients AS COUNT(DISTINCT CASE WHEN rs.overall_risk_group = 'HRC' THEN rs.person_id END) COMMENT = 'HRC patients',
-    rs.hr_patients AS COUNT(DISTINCT CASE WHEN rs.overall_risk_group = 'HR' THEN rs.person_id END) COMMENT = 'HR patients',
-    rs.mr_patients AS COUNT(DISTINCT CASE WHEN rs.overall_risk_group = 'MR' THEN rs.person_id END) COMMENT = 'MR patients',
-    rs.lr_patients AS COUNT(DISTINCT CASE WHEN rs.overall_risk_group = 'LR' THEN rs.person_id END) COMMENT = 'LR patients',
+    rs.stratified_patients AS COUNT(DISTINCT CASE WHEN rs.is_in_moc_base THEN rs.person_id END) COMMENT = 'Adult MoC base population (EMIS GROUP1-4); excludes CYP-only asthma',
+    rs.hrc_patients AS COUNT(DISTINCT CASE WHEN rs.is_in_moc_base AND rs.overall_risk_group = 'HRC' THEN rs.person_id END) COMMENT = 'HRC patients',
+    rs.hr_patients AS COUNT(DISTINCT CASE WHEN rs.is_in_moc_base AND rs.overall_risk_group = 'HR' THEN rs.person_id END) COMMENT = 'HR patients',
+    rs.mr_patients AS COUNT(DISTINCT CASE WHEN rs.is_in_moc_base AND rs.overall_risk_group = 'MR' THEN rs.person_id END) COMMENT = 'MR patients',
+    rs.lr_patients AS COUNT(DISTINCT CASE WHEN rs.is_in_moc_base AND rs.overall_risk_group = 'LR' THEN rs.person_id END) COMMENT = 'LR patients',
     rs.cycle_complete_patients AS COUNT(DISTINCT CASE WHEN rs.moc_cycle_complete THEN rs.person_id END) COMMENT = 'Patients with a complete Model of Care cycle',
     rs.any_activity_12m_patients AS COUNT(DISTINCT CASE WHEN rs.moc_any_activity_12m THEN rs.person_id END) COMMENT = 'Patients with Model of Care activity in the last 12 months',
     rs.avg_ltc_lcs_conditions AS AVG(rs.number_of_ltc_lcs_conditions) COMMENT = 'Average number of LTC LCS conditions'

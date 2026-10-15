@@ -7,7 +7,7 @@
 
 -- LTC LCS Risk Stratification Base Table
 -- Combines the person-level risk summary with demographics and population health filter flags.
--- One row per person on the LTC LCS MOC base population.
+-- One row per adult MoC base member or CYP-only asthma child (EMIS CYPAST pathway).
 
 select
     -- ============================================================
@@ -121,12 +121,35 @@ select
     -- ============================================================
     -- MOC: pathway identity
     -- ============================================================
+    rs.is_in_moc_base,
+    rs.moc_base_exclusion_reason,
+    not rs.is_in_moc_base as is_cyp_asthma_only,
+    rs.is_type_1_diabetes_hrc,
     rs.moc_pathway,
     rs.moc_risk_category,
 
     -- ============================================================
     -- MOC: activity flags + dates (last 12 months), in pathway order
     -- ============================================================
+    rs.moc_mdt_review_completed,
+    rs.moc_mdt_review_date,
+    rs.moc_stage_1_completed,
+    rs.moc_stage_3_completed,
+    rs.moc_stage_4_completed,
+    rs.moc_requires_check_test,
+    rs.moc_requires_stage_2,
+    rs.moc_requires_mdt_review,
+    rs.moc_requires_careplan_sharing,
+    rs.moc_requires_discussion,
+    rs.moc_requires_followup,
+    rs.moc_ct_overdue,
+    rs.moc_discussion_overdue,
+    rs.cyp_annual_review_completed,
+    rs.cyp_requires_annual_review,
+    rs.cyp_requires_desktop_review,
+    rs.cyp_desktop_review_completed,
+    rs.cyp_annual_review_date,
+    rs.cyp_desktop_review_date,
     rs.moc_check_test_completed,
     rs.moc_check_test_date,
     rs.moc_remote_desktop_review_completed,

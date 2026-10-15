@@ -1,0 +1,50 @@
+models:
+  - name: int_cwt_pathway__performance_conversion
+    description: >
+      Conversion rate records for CWT cancer pathways. Note this is not strictly
+       a performance metric but can reuse the structure of the performance 
+       pipeline to get conversion rate data that can be aggregated.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns:
+      - name: record_id
+        description: CWT Record ID
+        data_tests:
+          - unique
+          - not_null
+
+      - name: performance__date_full
+        description: Date for the clock end.
+
+      - name: performance__trust_code
+        description: The trust allocated the patient.
+
+      - name: performance__site_code
+        description: The site the activity took place (Note this doesn't imply allocation to site level).
+
+      - name: performance__metric
+        description: Performance metric name.
+
+      - name: performance__pathway_length_days
+        description: Null for conversion measures where the metric is based on the end outcome rather than duration.
+
+      - name: performance__numerator
+        description: Indicative of a breach (non-zero) and proportion of blame.
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 1
+                strictly: false
+      - name: performance__denominator
+        description: Denominator for the performance metric, represents the patient allocation/blame.
+
+      - name: performance__breach
+        description: For performance metrics, the amount of blame for a breach.
+
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

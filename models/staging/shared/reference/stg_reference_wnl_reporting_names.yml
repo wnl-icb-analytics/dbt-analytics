@@ -1,0 +1,33 @@
+models:
+  - name: stg_reference_wnl_reporting_names
+    description: WNL ODS translated to shorthand name for providers for more informative reporting.
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    columns:
+      - name: sk_organisation_id
+        description: Unique identifier of provider site.
+        tests:
+          - unique
+          - not_null
+      - name: provider_code
+        description: Provider ODS code.
+      - name: provider_name
+        description: Full name of provider organisation.
+      - name: provider_shorthand
+        description: Shorthand acronym for provider organisation.
+      - name: reporting_code
+        description: Provider site ODS code.
+      - name: reporting_name
+        description: Full name of provider site.
+      - name: reporting_shorthand
+        description: Shorthand acronym for provider site.
+      - name: provider_type
+        description: Type of provider eg acute, community.
+      - name: row_type
+        description: Further description of provider type.
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
