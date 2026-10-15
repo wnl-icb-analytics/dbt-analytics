@@ -1,18 +1,11 @@
 models:
   - name: int_ckd_lab_classification
     description: >-
-      Laboratory evidence of chronic kidney disease, one row per person with a
-      valid latest eGFR or urine albumin:creatinine ratio (ACR) result,
-      regardless of recorded CKD diagnosis. The OLIDS population comes from
-      NCL GP records. Includes inactive and deceased people. The latest
-      laboratory-criteria flag means eGFR below 60 mL/min/1.73m2, or eGFR at
-      least 60 with ACR at least 3 mg/mmol. The confirmation flag records a
-      pair of successive abnormal eGFR results below 60 or ACR results at
-      least 3, dated 90-730 days apart. Intervening normal results do not
-      break the pair. Low eGFR records flagged invalid or dated after the
-      build can contribute. Confirmation need not describe the latest result.
-      The inferred G and A stages use the latest valid result of each test,
-      which may have different dates.
+      Laboratory evidence of CKD in NCL OLIDS, one row per person with a valid latest eGFR or
+      urine ACR result, regardless of diagnosis. Includes inactive and deceased people. Latest
+      laboratory criteria and G/A stages use the latest valid tests, which may have different
+      dates. Confirmation reflects historical abnormal pairs and need not describe the latest
+      result.
     config:
       meta:
         owner:
@@ -40,12 +33,24 @@ models:
       - name: latest_acr_stage
         description: 'CKD A-stage classification based on latest ACR (A1-A3)'
       - name: has_confirmed_low_egfr
-        description: 'Boolean flag indicating persistent low eGFR (<60) confirmed by two measurements 90-730 days apart'
+        description: >-
+          True for successive abnormal eGFR results below 60 mL/min/1.73m2, 90-730 days apart.
+          Normal results do not break the pair. Low eGFR records flagged invalid or dated
+          after build can contribute. Confirmation can be historical.
       - name: has_confirmed_high_acr
-        description: 'Boolean flag indicating persistent high ACR (≥3) confirmed by two measurements 90-730 days apart'
+        description: >-
+          True for successive abnormal ACR results at least 3 mg/mmol, 90-730 days apart.
+          Normal results do not break the pair. Confirmation can be historical.
       - name: latest_ckd_stage_inferred
-        description: 'Combined CKD stage inference using latest G-stage and A-stage (e.g., "G3a A2")'
+        description: >-
+          Combined G and A stages from the latest valid eGFR and ACR. The two tests may have
+          different dates.
       - name: latest_labs_meet_ckd_criteria
-        description: 'Boolean flag indicating if latest laboratory results meet CKD criteria (eGFR <60 or eGFR ≥60 and ACR ≥3)'
+        description: >-
+          True for latest eGFR below 60 mL/min/1.73m2, or eGFR at least 60 with latest ACR at
+          least 3 mg/mmol.
       - name: has_confirmed_ckd_by_labs
-        description: 'Boolean flag indicating confirmed CKD based on persistent abnormal laboratory results'
+        description: >-
+          True if either historical low-eGFR or high-ACR confirmation is present. Uses the
+          pair rules on has_confirmed_low_egfr and has_confirmed_high_acr, not necessarily the
+          latest test results.

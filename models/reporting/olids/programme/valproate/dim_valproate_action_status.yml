@@ -1,22 +1,11 @@
 models:
   - name: dim_valproate_action_status
     description: >-
-      Valproate programme action and priority for each person in
-      dim_valproate_db_scope, one row per person not recorded as Male, aged 0
-      to 55 inclusive, with a valproate order in the last six months. The
-      OLIDS population comes from NCL GP records. Actions describe the
-      programme's recorded pregnancy and safety documentation rules, not an
-      independently confirmed clinical assessment. Pregnancy has first
-      priority for Review or refer. Age 0 to 6 or recorded permanent absence
-      of pregnancy risk gives No action required. Recorded PPP non-enrolment
-      gives Keep under review. Otherwise missing PPP evidence or no current
-      ARAF gives Review or refer; PPP enrolment with a current ARAF gives
-      Consider expiry of ARAF. ARAF currency follows code-specific lookback
-      rules in stg_reference_valproate_prog_codes. Priority 1 is pregnancy; 2
-      to 4 are missing documentation ranked by learning disability, age 13 to
-      55, then age 7 to 12. Priorities 6 to 8 rank complete documentation by
-      learning disability, age 7 to 12, then age 13 to 55. PPP non-enrolment
-      is priority 5 and low pregnancy risk is priority 9.
+      Valproate monitoring actions per person in NCL OLIDS aged 0 to 55, not recorded
+      as Male, with a valproate order in the last six months. Uses Pregnancy
+      Prevention Programme (PPP) status, whether the Annual Risk Acknowledgement Form
+      (ARAF) is up to date, and recorded pregnancy risk. Pregnancy has highest
+      priority. These are programme rules, not an independent clinical assessment.
     config:
       meta:
         owner:
@@ -30,3 +19,22 @@ models:
         tests:
           - unique
           - not_null
+      - name: action
+        description: >-
+          Programme action. Pregnancy gives 'Review or refer'. Otherwise, ages 0 to 6
+          or permanent absence of pregnancy risk give 'No action required'. Among
+          remaining people, PPP non-enrolment gives 'Keep under review'. PPP enrolment
+          with an up-to-date ARAF gives 'Consider expiry of ARAF'; missing PPP
+          evidence or an absent or out-of-date ARAF gives 'Review or refer'. ARAF
+          validity follows the code-specific lookback rules in dim_valproate_araf.
+          Other unmatched cases give 'Review or refer'.
+      - name: action_order
+        description: >-
+          Programme priority, with 1 highest and 9 lowest. Values are 1 pregnancy; 2
+          missing documentation with learning disability; 3 missing documentation aged
+          13 to 55; 4 missing documentation aged 7 to 12; 5 PPP non-enrolment; 6
+          complete documentation with learning disability; 7 complete documentation
+          aged 7 to 12; 8 complete documentation aged 13 to 55; 9 age 0 to 6 or
+          permanent absence of pregnancy risk. Pregnancy, low-risk and PPP
+          non-enrolment rules take precedence over documentation checks. Null if no
+          rule matches.

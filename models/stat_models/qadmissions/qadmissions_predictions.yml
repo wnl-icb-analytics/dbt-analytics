@@ -3,19 +3,11 @@ version: 2
 models:
   - name: qadmissions_predictions
     description: >-
-      QAdmissions one-year emergency-admission risk scores from the latest
-      build, using the registered reimplementation of ClinRisk QAdmissions
-      2013 v4.1. The scored population comes from NCL OLIDS GP records. One
-      row per active, non-deceased person aged 18-100 with recorded sex male
-      or female in qadmissions_input_features. Each row retains the input
-      values used for scoring. Missing BMI is imputed, with the recorded value
-      and imputation method retained separately. Rejected inputs remain
-      present with is_scored false and error text, including BMI outside 20-40
-      or missing or out-of-range town values. scored_at is the actual build
-      time and can be later than the latest calendar month in
-      qadmissions_predictions_history. Monthly history retains its previous
-      rows when fewer than the required share of current inputs receive a
-      score (qadmissions_min_scored_share, default 50%).
+      Latest QAdmissions one-year emergency-admission risk from ClinRisk 2013 v4.1, one row
+      per active, non-deceased NCL OLIDS person aged 18-100 with recorded sex male or female.
+      Scoring uses GP and linked SUS features. Inputs remain available, including BMI
+      imputation details. Rejected inputs remain with is_scored false and error text. Build
+      timestamps and monthly-history safeguards are documented on scored_at.
     config:
       meta:
         owner:
@@ -42,7 +34,11 @@ models:
 
       - name: scored_at
         data_type: timestamp_ntz
-        description: "When the row was scored."
+        description: >-
+          Actual scoring build time, which can be later than the latest calendar month in
+          qadmissions_predictions_history. Monthly history preserves previous rows when fewer
+          than qadmissions_min_scored_share of current inputs score successfully (default
+          50%).
 
       - name: model_version
         data_type: varchar
@@ -71,11 +67,9 @@ models:
 
       - name: scoring_errors
         data_type: varchar
-        description: >
-          The model's reasons for rejecting the row, separated by semicolons, for
-          example "error: bmi must be in range (20.0,40.0)". NULL when is_scored
-          is TRUE.
-
+        description: >-
+          Reasons for rejection, separated by semicolons, including BMI outside 20-40 or
+          missing or out-of-range town values. Null when is_scored is true.
       - name: bmi_recorded
         data_type: float
         description: "The person's latest valid recorded BMI (kg/m^2), from qadmissions_input_features. NULL when they have none and bmi was imputed."

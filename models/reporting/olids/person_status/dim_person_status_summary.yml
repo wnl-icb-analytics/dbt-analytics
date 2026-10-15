@@ -3,20 +3,12 @@ version: 2
 models:
   - name: dim_person_status_summary
     description: >-
-      Recorded care, vulnerability, behavioural and data-sharing statuses for
-      every person in dim_person_demographics, one row per person. The OLIDS
-      population comes from NCL GP records. Includes inactive and deceased
-      people. Statuses cover care homes, homelessness or CHIP registration,
-      carers, housebound people, polypharmacy, alcohol, smoking, pregnancy and
-      looked-after children. Most missing flags default to false, medication
-      counts to zero, and alcohol and smoking categories to Unknown. These
-      defaults do not establish absence of the condition.
-      is_allowed_secondary_use defaults to true where no matching allow-list
-      record exists and must not replace the dedicated secondary-use
-      allow-list. has_vulnerability_flag covers care home, homelessness or
-      CHIP registration, housebound status and looked-after children.
-      behavioural_risk_count counts current smoking, higher-risk-or-worse
-      alcohol status and ten or more qualifying medicines.
+      Care, vulnerability, lifestyle and data-sharing statuses per person with NCL OLIDS
+      demographics, including inactive and deceased people. Most missing flags default
+      to false, medication counts to zero and smoking/alcohol categories to Unknown.
+      These defaults do not confirm clinical absence. is_allowed_secondary_use defaults
+      to true without a matching record and must not replace the dedicated secondary-use
+      allow-list.
     config:
       meta:
         owner:
@@ -99,6 +91,10 @@ models:
       
       # Summary Flags
       - name: has_vulnerability_flag
-        description: Has any vulnerability indicator (care home, homeless, housebound, LAC)
+        description: >-
+          True for care-home residence, homelessness or CHIP registration, housebound
+          status, or looked-after-child evidence.
       - name: behavioural_risk_count
-        description: Count of behavioural risk factors (current smoker, high alcohol risk, severe polypharmacy)
+        description: >-
+          Number of these recorded risks: current smoking, higher-risk-or-worse alcohol
+          status, and ten or more qualifying medicines.

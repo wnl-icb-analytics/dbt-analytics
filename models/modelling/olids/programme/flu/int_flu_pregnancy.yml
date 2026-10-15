@@ -1,15 +1,11 @@
 models:
   - name: int_flu_pregnancy
     description: >-
-      Pregnancy population for flu vaccination. The OLIDS population comes
-      from NCL GP records. One row per person and reported campaign, aged at
-      least 12 at the campaign run date. This age floor is a local
-      data-quality guard. Includes a PREG_COD pregnancy record during the
-      campaign through its audit end, or in the preceding 8 months with no
-      later delivery before campaign start. Delivery evidence is PREGDEL_COD
-      excluding PREG_COD. Pregnancy during the campaign qualifies even when a
-      delivery is subsequently recorded. Codes use the campaign's UKHSA_FLU
-      terminology version.
+      Flu pregnancy group in NCL OLIDS, one row per person and campaign, aged at least 12 at its run
+      date as a local data-quality guard. Requires PREG_COD during the campaign through audit end,
+      or in the preceding 8 months without later delivery before campaign start. Pregnancy during
+      the campaign qualifies despite subsequent delivery. Uses campaign-specific UKHSA_FLU codes;
+      delivery means PREGDEL_COD excluding PREG_COD.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

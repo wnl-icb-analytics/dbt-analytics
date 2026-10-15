@@ -1,17 +1,11 @@
 models:
   - name: int_ethnicity_cardiometabolic_risk
     description: >-
-      Recorded ethnicity evidence for lower BMI thresholds under NICE NG246.
-      The OLIDS population comes from NCL GP records. One row per person with
-      a qualifying ETH2016*_COD observation, including inactive and deceased
-      people. South Asian, Chinese, other Asian, Middle Eastern, Black African
-      and African-Caribbean groups qualify, including the mapped
-      mixed-ethnicity groups. Any qualifying risk-ethnicity record takes
-      priority over records outside those groups; the latest clinical date
-      selects the record within that priority. The lower-threshold flag
-      therefore reflects any qualifying recorded ethnicity, rather than
-      necessarily the person's latest ethnicity. Arrays retain all matched
-      groups and concepts.
+      Ethnicity evidence for NICE NG246 lower BMI thresholds, one row per person with an
+      ETH2016*_COD observation in NCL OLIDS. Includes inactive and deceased people. Any
+      qualifying risk-ethnicity record takes priority over other records, then the latest date
+      wins. The selected ethnicity is therefore not necessarily the latest overall; arrays
+      retain all matched evidence.
     config:
       meta:
         owner:
@@ -31,11 +25,15 @@ models:
                 to: ref('int_patient_person_unique')
                 field: person_id
       - name: id
-        description: Latest ethnicity observation identifier
+        description: >-
+          Identifier of the selected ethnicity observation, after risk-group priority and
+          recency.
         tests:
           - not_null
       - name: clinical_effective_date
-        description: Date of latest ethnicity observation
+        description: >-
+          Clinical date of the selected ethnicity observation, which need not be the latest
+          overall.
         tests:
           - not_null
       - name: concept_code
@@ -73,7 +71,10 @@ models:
         tests:
           - not_null
       - name: requires_lower_bmi_thresholds
-        description: 'Composite flag indicating if person requires lower BMI thresholds per NICE guidance'
+        description: >-
+          True for recorded South Asian, Chinese, other Asian, Middle Eastern, Black African
+          and African-Caribbean ethnicities, including mapped mixed-ethnicity groups. Any
+          qualifying record takes priority over ethnicity records outside those groups.
         tests:
           - not_null
       - name: cardiometabolic_risk_ethnicity_group
@@ -84,7 +85,9 @@ models:
               arguments:
                 values: ['South Asian', 'Chinese', 'Other Asian', 'Middle Eastern', 'Black African', 'African-Caribbean', 'Other/White']
       - name: latest_ethnicity_date
-        description: Date of most recent ethnicity observation for this person
+        description: >-
+          Clinical date of the selected ethnicity observation, after risk-group priority and
+          recency.
       - name: all_ethnicity_groups
         description: Array of all ethnicity groups recorded for this person
       - name: all_ethnicity_concept_codes

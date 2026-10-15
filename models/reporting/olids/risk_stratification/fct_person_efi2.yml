@@ -1,16 +1,12 @@
 models:
   - name: fct_person_efi2
     description: >-
-      Electronic Frailty Index 2 (eFI2) score and category at the build date,
-      one row per living NCL OLIDS person with a mapped patient record whose
-      65th birthday could have occurred by the scoring date, using the first
-      day of the recorded birth month. No current-registration or opt-out
-      filter is applied. The in-house score follows int_efi2_scores, including
-      its deficit definitions, missing-data defaults and documented
-      differences from the retired AIC score. Categories are ROBUST below
-      0.0857, MILD FRAILTY from 0.0857 to below 0.1624, MODERATE FRAILTY from
-      0.1624 to 0.2391 inclusive, and SEVERE FRAILTY above 0.2391.
-      Secondary-use consumers must apply dim_person_secondary_use_allowed.
+      Electronic Frailty Index 2 (eFI2) score and category at build, one row per living
+      NCL OLIDS person with a mapped patient record who could be 65 or older. Age
+      eligibility uses the first day of the recorded birth month, so some people may
+      still be 64. Uses the in-house deficit definitions and missing-data defaults,
+      which differ from the retired AIC score. No current-registration or opt-out filter
+      applies; secondary-use consumers must apply dim_person_secondary_use_allowed.
     config:
       meta:
         owner:
@@ -26,7 +22,9 @@ models:
       - name: efi_score
         description: Electronic Frailty Index 2 score (0-1 scale), defaults to 0 if not available.
       - name: category
-        description: Frailty category (ROBUST / MILD / MODERATE / SEVERE FRAILTY).
+        description: >-
+          ROBUST below 0.0857; MILD FRAILTY from 0.0857 to below 0.1624; MODERATE
+          FRAILTY from 0.1624 to 0.2391 inclusive; SEVERE FRAILTY above 0.2391.
       - name: age_at_end
         description: Patient age at the end date.
       - name: gender

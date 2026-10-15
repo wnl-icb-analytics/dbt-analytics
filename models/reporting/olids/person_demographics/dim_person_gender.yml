@@ -1,11 +1,8 @@
 models:
   - name: dim_person_gender
     description: >-
-      Recorded gender for every person in dim_person, one row per person. The
-      OLIDS population comes from NCL GP records. Mapped gender labels take
-      precedence over source labels, with Unknown when neither is available.
-      Within each label type, the selected patient record precedes the current
-      registration record. Includes active and inactive people.
+      Recorded gender per person in NCL OLIDS, including active and inactive people.
+      Uses mapped or source labels, with Unknown for missing gender.
     columns:
       - name: person_id
         description: 'Unique identifier for the person'
@@ -14,7 +11,10 @@ models:
           - unique
 
       - name: gender
-        description: 'Persons gender derived from gender concept mappings'
+        description: >-
+          Recorded gender label, prioritising mapped labels over source labels. Within
+          each label type, the selected patient record takes precedence over the current
+          registration record. Unknown when neither has a label.
         tests:
           - not_null
           # screening, child-bearing-age and valproate cohorts filter on these

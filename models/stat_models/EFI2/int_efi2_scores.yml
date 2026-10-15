@@ -1,25 +1,12 @@
 models:
   - name: int_efi2_scores
     description: >-
-      Electronic Frailty Index 2 (eFI2) score and frailty category at the
-      current build date. One row per living NCL OLIDS person whose 65th
-      birthday could have occurred by the scoring date, without a
-      GP-registration restriction. Age eligibility uses the first day of the
-      approximate birth month. Scores sum the applicable published deficit
-      weights, including the missing-BMI and missing-alcohol defaults across
-      the whole scoring population. Polypharmacy counts distinct six-character
-      BNF sub-subchapter prefixes in the preceding 90 days, without the
-      chapter exclusions used by int_polypharmacy_* models. Categories are
-      ROBUST below 0.0857, MILD FRAILTY from 0.0857 to below 0.1624, MODERATE
-      FRAILTY from 0.1624 to 0.2391 inclusive, and SEVERE FRAILTY above
-      0.2391. This OLIDS score replaces the retired AIC import. Comparability
-      with legacy AIC scores requires validation: AIC included younger adults,
-      used the earliest BMI and applied some defaults only to people with eFI2
-      codes. Anaemia now uses the latest valid OLIDS haemoglobin in g/L at
-      equivalent sex-specific thresholds of 130/120, with different
-      observation coverage and unit standardisation. Source coverage and
-      refresh timing can also differ. Contiguous category thresholds classify
-      the legacy gap between 0.1623 and 0.1624 as mild frailty.
+      Current eFI2 score and frailty category, one row per living NCL OLIDS person whose 65th
+      birthday could have occurred by scoring. Eligibility uses the first day of the
+      approximate birth month, with no GP-registration restriction. Scores sum published
+      deficit weights, including missing-BMI and missing-alcohol defaults. This replaces the
+      retired AIC import; age coverage, BMI selection, default weights and source timing
+      differ, so legacy comparisons require validation.
     config:
       meta:
         owner:
@@ -33,12 +20,20 @@ models:
       - name: end_date
         description: As-at date for the scoring run (current_date()).
       - name: efi_score
-        description: Electronic Frailty Index 2 score (0-1 scale), defaults to 0 if not available.
+        description: >-
+          Electronic Frailty Index 2 score, the sum of applicable published weights,
+          defaulting to 0 if unavailable. Missing BMI and alcohol carry defaults across the
+          whole scoring population. Polypharmacy counts distinct six-character BNF prefixes in
+          the preceding 90 days, without int_polypharmacy_* chapter exclusions. Legacy AIC
+          included younger adults, chose earliest BMI and applied some defaults only to people
+          with eFI2 codes. Anaemia now uses latest valid OLIDS haemoglobin in g/L at
+          equivalent male/female thresholds of 130/120. Observation coverage, unit
+          standardisation and refresh timing can differ from AIC.
       - name: category
-        description: >
-          Frailty category based on eFI2 score (contiguous bands, no NULLs):
-          `ROBUST` (< 0.0857), `MILD FRAILTY` (>= 0.0857 and < 0.1624),
-          `MODERATE FRAILTY` (>= 0.1624 and <= 0.2391), `SEVERE FRAILTY` (> 0.2391).
+        description: >-
+          Frailty bands: ROBUST below 0.0857; MILD FRAILTY from 0.0857 to below 0.1624;
+          MODERATE FRAILTY from 0.1624 to 0.2391 inclusive; SEVERE FRAILTY above 0.2391. The
+          legacy gap above 0.1623 and below 0.1624 is classified as mild frailty.
       - name: age_at_end
         description: Patient age at the end date (null for persons with no eFI2-coded observation).
       - name: gender

@@ -1,14 +1,11 @@
 models:
   - name: fct_person_efi2_snapshot_input
     description: >-
-      Current eFI2 score and category for change-history capture, one row per
-      person in fct_person_efi2. Includes living NCL OLIDS people with a
-      mapped patient record whose 65th birthday could have occurred by the
-      scoring date, using the first day of the recorded birth month. No
-      current-registration or opt-out filter is applied. Contains the person
-      identifier, score and frailty category; scoring-date age and date fields
-      are not included. Historical score versions are held in
-      fct_person_efi2_snapshot.
+      Current eFI2 score and category for change-history capture, one row per living NCL
+      OLIDS person with a mapped patient record who could be 65 or older. Age
+      eligibility uses the first day of the recorded birth month, so some people may
+      still be 64. No current-registration or opt-out filter applies. Age and scoring
+      date are not stored in this input.
     config:
       meta:
         owner:
@@ -22,4 +19,6 @@ models:
       - name: efi_score
         description: "Electronic Frailty Index 2 score (0-1 scale)."
       - name: category
-        description: "eFI2 frailty category (ROBUST / MILD / MODERATE / SEVERE FRAILTY)."
+        description: >-
+          ROBUST below 0.0857; MILD FRAILTY from 0.0857 to below 0.1624; MODERATE
+          FRAILTY from 0.1624 to 0.2391 inclusive; SEVERE FRAILTY above 0.2391.

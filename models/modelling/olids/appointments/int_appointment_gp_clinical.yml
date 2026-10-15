@@ -2,22 +2,12 @@ version: 2
 models:
   - name: int_appointment_gp_clinical
     description: >-
-      NCL OLIDS GP appointments, one row per appointment recorded as a Care
-      Related Encounter. Available slots with status 0, administrative
-      practitioner roles and other encounter contexts are excluded. Missing or
-      unmapped practitioner roles remain. Other retained statuses and dates
-      remain included, including future-dated appointments.
-      Practitioner_role_group distinguishes the analytical workforce roles,
-      including ARRS roles; sds_role_group uses the NHS Digital four-group
-      classification. Appointment costs use PSSRU 2024/25 prices in
-      appointment_cost_gbp_base_prices and GDP-deflator-adjusted prices for
-      the appointment fiscal year in appointment_cost_gbp_nominal. Nominal
-      costs are null before fiscal year 2000. cost_is_proxy identifies roles
-      priced with another role's rate. Full retained history is available, but
-      OLIDS retains only about five years for people who left or died, so
-      earlier population comparisons are biased towards current registrants.
-      int_appointment_gp_clinical_recent provides the 60-month reporting
-      window.
+      NCL OLIDS GP appointments, one row per appointment recorded as a Care Related
+      Encounter. Excludes available slots (status 0), administrative roles and other
+      encounter contexts; missing or unmapped roles and future appointments remain.
+      Role groups and estimated costs are documented on their columns. Full retained
+      history is included, but leavers and deceased people have about five years of
+      history, so older comparisons favour current registrants.
     config:
       meta:
         owner:
@@ -259,15 +249,11 @@ models:
 
   - name: int_appointment_gp_clinical_recent
     description: >-
-      NCL OLIDS GP clinical appointments in the latest 60 calendar months
-      represented by int_appointment_gp_clinical. One row per retained
-      appointment, with the same clinical-context, practitioner-role and
-      status selection as that model. The window includes the month containing
-      the maximum recorded start_date and the preceding 59 months; it is not
-      anchored to the current date. No upper date cap is applied. OLIDS
-      retains only about five years for people who left or died, so this
-      reporting window limits the bias towards current registrants in older
-      history.
+      NCL OLIDS clinical appointments in the latest 60 calendar months represented by
+      int_appointment_gp_clinical, one row per appointment with the same selection rules. The
+      window starts 59 months before the maximum start_date month, rather than the current
+      month, with no upper date cap. It limits older-history bias caused by OLIDS retaining
+      about five years for leavers and deceased people.
     config:
       meta:
         owner:

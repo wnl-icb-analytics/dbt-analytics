@@ -1,18 +1,11 @@
 models:
   - name: int_blood_pressure_all
     description: >-
-      Blood pressure in mmHg, with one representative paired reading per
-      person and clinical date up to the build date. The OLIDS population
-      comes from NCL GP records. Includes all people with a complete reading
-      in the ranges 40-350 mmHg systolic and 20-200 mmHg diastolic. The
-      representative reading has the lowest systolic value that day, then the
-      lowest diastolic value. Systolic and diastolic observations share a
-      parent where available; unparented observations form one date-level pair
-      using their maximum values. Home and ambulatory flags describe the
-      representative reading. The hypertensive-range flag covers any
-      qualifying reading that day, using 135/85 mmHg for home or ambulatory
-      readings and 140/90 mmHg for other readings. Evidence comes from BP_COD,
-      SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, ABPM_COD and HOMEBP_COD.
+      Blood pressure in NCL OLIDS GP records, one representative paired reading per person and
+      clinical date up to the build date. Includes complete readings within 40-350 mmHg
+      systolic and 20-200 mmHg diastolic. The representative is the lowest systolic, then
+      diastolic reading. Its home or ambulatory setting can differ from the reading that
+      triggered the daily hypertensive-range flag.
     config:
       meta:
         owner:
@@ -37,7 +30,11 @@ models:
       - name: clinical_effective_date
         description: Backward-compatibility alias for effective_date
       - name: systolic_value
-        description: Systolic blood pressure value in mmHg
+        description: >-
+          Representative systolic blood pressure in mmHg, within 40-350. Paired observations
+          share a parent where available. Unparented observations form one date-level pair
+          using the maximum systolic and maximum diastolic values. The lowest systolic pair,
+          then lowest diastolic, represents the date.
         tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -46,7 +43,9 @@ models:
                 max_value: 350
                 inclusive: true
       - name: diastolic_value
-        description: Diastolic blood pressure value in mmHg
+        description: >-
+          Diastolic blood pressure in mmHg for the representative paired reading, within
+          20-200. Pairing and representative selection are described on systolic_value.
         tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -59,7 +58,11 @@ models:
       - name: is_abpm_bp_event
         description: 'Boolean flag indicating the representative reading was recorded as ambulatory blood pressure monitoring (ABPM_COD)'
       - name: is_hypertensive_range
-        description: 'Boolean flag (date-level, any reading): ≥140/90 mmHg (clinic) or ≥135/85 mmHg (home/ABPM)'
+        description: >-
+          True if any qualifying paired reading that day has systolic at least 135 or
+          diastolic at least 85 mmHg for home or ambulatory readings, or systolic at least 140
+          or diastolic at least 90 for clinic readings. Can differ from the representative
+          reading.
       - name: result_unit_display
         description: 'Unit of measurement for blood pressure values (always mmHg)'
       - name: systolic_observation_id
@@ -71,4 +74,6 @@ models:
       - name: all_concept_displays
         description: 'Array of all clinical concept display names used in observations for this BP event date'
       - name: all_source_cluster_ids
-        description: 'Array of all source cluster identifiers used in observations for this BP event date'
+        description: >-
+          All source clusters contributing that day: BP_COD, SYSBP_COD, DIASBP_COD,
+          HOMEAMBBP_COD, ABPM_COD and HOMEBP_COD.

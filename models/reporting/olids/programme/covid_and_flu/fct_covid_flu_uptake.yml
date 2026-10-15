@@ -1,16 +1,12 @@
 models:
   - name: fct_covid_flu_uptake
     description: >-
-      COVID and flu vaccination uptake, one row per person, programme,
-      reported campaign, eligible risk group and subcohort. The OLIDS
-      population comes from NCL GP records. Includes eligible people and the
-      non-eligible vaccination activity retained by fct_covid_uptake and
-      fct_flu_uptake. Each programme keeps its own eligibility, population
-      date, evidence windows and status priority. COVID includes non-eligible
-      decline-only records; flu does not. Campaigns are selected by
-      covid_reported_campaign_ids() and flu_reported_campaign_ids(). A person
-      can appear in several groups and campaigns, so use distinct-person
-      counts for headcounts. Demographics are not included.
+      COVID and flu vaccination uptake for NCL OLIDS, one row per person, programme,
+      reported campaign, eligible risk group and subcohort. Includes eligible people and
+      non-eligible vaccinated people; COVID also includes non-eligible decline-only
+      records. Each programme retains its own population month, eligibility rules,
+      tracking windows and status priority. People can appear in several groups and
+      campaigns, so use distinct-person counts for headcounts.
     config:
       meta:
         indicator:
@@ -81,7 +77,9 @@ models:
               arguments:
                 values: ['COVID', 'FLU']
       - name: campaign_id
-        description: Campaign identifier (programme-specific)
+        description: >-
+          Programme-specific reported campaign selected by covid_reported_campaign_ids()
+          or flu_reported_campaign_ids().
         tests:
           - not_null
 

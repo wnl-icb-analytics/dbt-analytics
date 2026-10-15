@@ -1,13 +1,10 @@
 models:
   - name: dim_households
     description: >-
-      Households identified by a known UPRN hash in dim_person_demographics,
-      one row per UPRN hash. The OLIDS population comes from NCL GP records.
-      Includes residence LSOA and IMD 2019 deprivation, with activity
-      classified by the most recent registration start date among linked
-      people. These dates describe registrations, not confirmed dates of
-      occupation. The current demographic history supplies null UPRN hashes,
-      so no households are represented until that upstream field is populated.
+      Households linked to NCL OLIDS people, one row per known UPRN hash. Registration
+      start dates describe household activity, rather than confirmed occupation dates;
+      deprivation uses IMD 2019. This model is currently empty because demographic
+      records supply no UPRN hashes.
     config:
       meta:
         owner:
@@ -26,7 +23,10 @@ models:
           - not_null
 
       - name: dwelling_activity_status
-        description: 'Classification of dwelling occupancy: Recently active, Previously active, or Historically active only'
+        description: >-
+          Registration-based activity category: Recently active, Previously active, or
+          Historically active only. Uses the most recent registration start among linked
+          people, rather than confirmed occupation dates.
         tests:
           - not_null
           - accepted_values:

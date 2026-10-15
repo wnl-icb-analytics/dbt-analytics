@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description="Annual Risk Acknowledgement Form (ARAF) evidence for the valproate programme, one row per person with an event in the ARAF category of stg_reference_valproate_prog_codes that meets its code-specific lookback rule. The OLIDS population comes from NCL GP records. Includes old-form SNOMED code 1366401000000107 and new-form code 2078951000000106. Contains earliest and latest event dates, form-specific dates and source identifiers and codes. latest_araf_overall_date is the later of the old and new form dates. This population is not restricted to current valproate recipients.") }}
+    description="Annual Risk Acknowledgement Form (ARAF) evidence for the NCL OLIDS valproate programme, one row per person with a qualifying coded event. ARAF codes follow the programme reference list and code-specific lookback rules, including old-form SNOMED code 1366401000000107 and new-form code 2078951000000106. Current valproate prescribing is not required.") }}
 
 WITH person_level_araf_aggregation AS (
     SELECT

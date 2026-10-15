@@ -1,17 +1,12 @@
 models:
   - name: dim_person_demographics_historical
     description: >-
-      Demographic history for people with a valid approximate birth date and a
-      practice registration, one row per person and retained change period.
-      The OLIDS population comes from NCL GP records. Period boundaries follow
-      registration, ethnicity and available address dates. effective_end_date
-      is exclusive; is_current marks the latest retained period, including
-      when that period has ended. Registration end dates account for death and
-      deregistration. Practice and ethnicity describe the period, but address,
-      gender, language and organisational mappings use current records.
-      Address changes are not reconstructed because upstream address history
-      dates are not populated. Age is not stored and must be assessed for the
-      analysis date.
+      Demographic history in NCL OLIDS, one row per person and retained change period,
+      with a valid approximate birth date and practice registration. Registration
+      periods account for death and deregistration. Registration and ethnicity
+      describe the period; address, gender, language and organisation mappings use
+      current records. Address history is unavailable. Age is not stored and must be
+      assessed for the analysis date.
     config:
       meta:
         owner:
@@ -26,15 +21,19 @@ models:
         description: 'Surrogate key for patient record'
 
       - name: effective_start_date
-        description: 'Start date of this demographic period (SCD-2)'
+        description: >-
+          Start of the retained demographic period. Period boundaries follow
+          registration, ethnicity and available address dates.
         tests:
           - not_null
 
       - name: effective_end_date
-        description: 'End date of this demographic period (NULL if current, SCD-2)'
-
+        description: >-
+          Exclusive end of the demographic period. Null means the period is open-ended.
       - name: is_current
-        description: 'Flag for the latest retained period per person. Computed after the registration filter, so deceased patients (whose open-ended period is dropped) keep a current row (SCD-2).'
+        description: >-
+          True for the latest retained period per person, including when that period has
+          ended. It does not mean the person is currently registered.
         tests:
           - not_null
 
@@ -122,8 +121,8 @@ models:
         description: 'Start date of practice registration'
 
       - name: registration_end_date
-        description: 'End date of practice registration (NULL if active)'
-
+        description: >-
+          Recorded practice registration end date; null when none is recorded.
       - name: pcn_code
         description: 'Primary Care Network code'
 

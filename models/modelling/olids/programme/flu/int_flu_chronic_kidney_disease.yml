@@ -1,14 +1,10 @@
 models:
   - name: int_flu_chronic_kidney_disease
     description: >-
-      Flu chronic kidney disease risk group. The OLIDS population comes from
-      NCL GP records. One row per person and reported campaign, aged at least
-      6 months at the campaign run date. People qualify through any CKD_COD
-      diagnosis, or a latest CKD_35_COD stage 3 to 5 date no earlier than any
-      CKD_15_COD any-stage date. Records must be on or before the campaign
-      audit end date and use its UKHSA_FLU terminology version. The qualifying
-      date is the later of the first direct diagnosis and qualifying stage
-      evidence when both routes apply. There is no upper age limit.
+      Flu CKD group in NCL OLIDS, one row per person and campaign, aged at least 6 months at its run
+      date, with no upper limit. Requires CKD_COD diagnosis or a latest CKD_35_COD stage 3 to 5
+      record no earlier than any CKD_15_COD stage record. Evidence uses campaign-specific UKHSA_FLU
+      codes through the audit end.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -79,7 +75,9 @@ models:
         data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying CKD diagnosis or stage classification'
+        description: >-
+          Later of the first CKD_COD diagnosis date and qualifying CKD_35_COD stage date when both
+          routes apply.
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description

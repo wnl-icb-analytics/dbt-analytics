@@ -1,18 +1,11 @@
 models:
   - name: int_blood_pressure_observations_base
     description: >-
-      Blood pressure observation evidence from BP_COD, SYSBP_COD, DIASBP_COD,
-      HOMEAMBBP_COD, ABPM_COD and HOMEBP_COD. The OLIDS population comes from
-      NCL GP records. One row per observation and matching cluster, with a
-      non-null person and result value. Includes inactive and deceased people,
-      without an age or reporting-period restriction. Systolic, diastolic,
-      home and ambulatory flags describe the coded evidence; values are
-      labelled mmHg without a plausibility or complete-pair restriction.
-      Parent observation identifiers link readings where supplied. Effective
-      dates use the recorded date when the original clinical date is later
-      than recording, and 1900-01-01 when the clinical date is missing.
-      Original dates and correction flags remain available. Future effective
-      dates are retained here.
+      Blood pressure evidence in NCL OLIDS GP records, one row per observation and matching
+      cluster with a non-null person and result. Includes inactive and deceased people without
+      age or date restrictions, including future dates. Values are labelled mmHg without
+      plausibility or complete-pair checks. Original dates and correction flags remain
+      available.
     config:
       meta:
         owner:
@@ -36,9 +29,9 @@ models:
         tests:
           - not_null
       - name: effective_date
-        description: |
-          Effective date for the BP reading. Uses clinical_effective_date unless it's
-          after date_recorded, in which case date_recorded is used as fallback.
+        description: >-
+          Clinical date, replaced by date_recorded when later than recording, or by 1900-01-01
+          when missing. Future effective dates remain included.
       - name: clinical_effective_date_raw
         description: Original clinical_effective_date before future date correction
       - name: date_recorded
@@ -54,12 +47,13 @@ models:
       - name: concept_display
         description: Human-readable display name for the concept
       - name: source_cluster_id
-        description: Source cluster identifier (BP_COD, SYSBP_COD, etc.)
+        description: >-
+          Matching cluster: BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, ABPM_COD or
+          HOMEBP_COD.
       - name: parent_observation_id
-        description: |
-          Parent observation linking the systolic and diastolic rows of the same
-          reading. Used downstream to pair within a reading rather than by date.
-          Null for ~7% of rows.
+        description: >-
+          Supplied parent observation linking systolic and diastolic readings. Null when no
+          link is supplied.
       - name: is_systolic_row
         description: True if this observation is a systolic BP reading
       - name: is_diastolic_row

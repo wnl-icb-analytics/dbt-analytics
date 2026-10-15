@@ -3,17 +3,10 @@ version: 2
 models:
   - name: qadmissions_alcohol_category
     description: >-
-      Alcohol category for the QAdmissions alcohol_cat6 feature, one row per
-      person with at least one valid Full AUDIT score. The OLIDS population
-      comes from NCL GP records. Categories use AUDIT scores 0, above 0-3,
-      above 3-7, above 7-15, above 15-19 and above 19 for levels 0-5
-      respectively. These correspond to the model's non-drinker, trivial,
-      light, moderate, heavy and very-heavy labels. The highest recorded
-      category takes priority over the latest record, so prior high
-      consumption remains represented. Clinical date resolves ties within a
-      category. AUDIT-C scores are excluded. People without valid Full AUDIT
-      evidence are absent here and receive category 0 in
-      qadmissions_input_features.
+      QAdmissions alcohol category from NCL OLIDS, one row per person with a valid Full AUDIT
+      score. The highest recorded category wins, then the latest clinical date; it does not
+      represent only recent consumption. AUDIT-C is excluded. People without valid evidence
+      are absent here and receive category 0 in qadmissions_input_features.
     config:
       meta:
         owner:
@@ -25,7 +18,10 @@ models:
           - unique
           - not_null
       - name: alcohol_cat6
-        description: 'QAdmissions alcohol category 0..5 (0 = NonDrinker, 1 = Trivial, 2 = Light, 3 = Moderate, 4 = Heavy, 5 = VeryHeavy). Derived from the highest Full AUDIT score the person has ever recorded.'
+        description: >-
+          QAdmissions categories from Full AUDIT: 0 for score 0 (NonDrinker), 1 above 0-3
+          (Trivial), 2 above 3-7 (Light), 3 above 7-15 (Moderate), 4 above 15-19 (Heavy), and
+          5 above 19 (VeryHeavy). Highest category across recorded history takes priority.
         data_tests:
           - not_null
           - accepted_values:

@@ -1,14 +1,12 @@
 models:
   - name: dim_person_age_historical
     description: >-
-      Age attributes at five-year birthdays, one row per person and retained
-      birthday milestone from age 0 to 100. The OLIDS population comes from
-      NCL GP records. Includes milestones within the five-year window
-      beginning at the first day of the build month five years ago, up to the
-      build date or recorded death date. People without a milestone in that
-      window have no row. Age is fixed at the period start rather than updated
-      during the period. effective_end_date is exclusive; a null end date
-      marks the last retained period, including for deceased people.
+      Age at five-year birthday milestones in NCL OLIDS, one row per person and
+      retained milestone from age 0 to 100. Covers the window from the start of the
+      build month five years ago to the build date or death. People without a
+      milestone in that window are excluded. Age stays fixed within each period. End
+      dates are exclusive; null marks the last retained period, including for deceased
+      people.
     config:
       meta:
         owner:
@@ -25,16 +23,18 @@ models:
           - not_null
 
       - name: effective_end_date
-        description: 'SCD2: Period end date for temporal tracking (NULL = current period)'
-
+        description: >-
+          Exclusive end of the retained age period. Null marks the last retained period,
+          including for deceased people.
       - name: period_sequence
         description: 'SCD2: Sequential number for each temporal period per person'
         tests:
           - not_null
 
       - name: age
-        description: 'SCD2: Age calculated as of effective_start_date (temporal)'
-
+        description: >-
+          Age at the birthday milestone starting this period. It stays fixed during the
+          period.
       - name: age_band_5y
         description: 'SCD2: 5-year age band as of effective_start_date (temporal)'
 
@@ -51,7 +51,9 @@ models:
         description: 'SCD2: Life stage as of effective_start_date (temporal)'
 
       - name: is_current_period
-        description: 'SCD2: Flag indicating if this is the current active period'
+        description: >-
+          True for the last retained age period, including for deceased people; it does
+          not establish current registration or living status.
         tests:
           - not_null
           - accepted_values:

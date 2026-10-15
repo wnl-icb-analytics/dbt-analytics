@@ -79,7 +79,7 @@ TABLES(
 
     bmi AS {{ ref('int_bmi_latest') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Latest BMI with ethnicity-adjusted categories per NICE NG246',
+        COMMENT = 'Latest valid BMI for people aged at least 18 at build or death. Recorded or calculated from adult height and weight, with ethnicity-adjusted NICE NG246 categories.',
 
     waist AS {{ ref('int_waist_circumference_latest') }}
         PRIMARY KEY (person_id)
@@ -111,7 +111,7 @@ TABLES(
 
     efi2 AS {{ ref('int_efi2_scores') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Calculated eFI2 score per living person aged 65+ as at end_date, recomputed from current OLIDS data rather than GP-recorded like efi or clinician-assessed like Rockwood. This is the preferred frailty measure: it covers the whole 65+ cohort (~258k people, against ~10k with a GP-recorded eFI) and reflects the latest data rather than whenever a practice last coded a score. Use for the current eFI2 cohort only; do not combine its category with efi or Rockwood categories. Profiled 2026-08-11: 63.58% Robust, 20.57% Mild, 9.18% Moderate, 6.68% Severe among 258,355 scored people; 4,732 had no matching demographics row.',
+        COMMENT = 'Calculated current eFI2 for living NCL OLIDS people whose 65th birthday could have occurred by scoring, using the first day of the approximate birth month. No GP-registration restriction. Differs from GP-recorded eFI/eFI2 and clinician-assessed Rockwood; categories must not be combined. This OLIDS score replaces the retired AIC import, whose age coverage, BMI selection, defaults and source timing differed.',
 
     rockwood AS {{ ref('int_rockwood_latest') }}
         PRIMARY KEY (person_id)
@@ -135,7 +135,7 @@ TABLES(
 
     smoking AS {{ ref('int_smoking_status_latest') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Latest recorded smoking status from QOF clusters LSMOK_COD, EXSMOK_COD and NSMOK_COD. People without a recorded status are absent. Population-wide smoking including Unknown is in sem_olids_population.'
+        COMMENT = 'Latest recorded smoking status from LSMOK_COD, EXSMOK_COD and NSMOK_COD, using observations at age 11 or older. Excludes status-free pack-years and unknown-consumption records. People without status evidence are absent; sem_olids_population includes Unknown for population denominators.'
 )
 
 RELATIONSHIPS(
@@ -201,7 +201,7 @@ FACTS(
 
     -- Frailty
     efi.latest_efi_score_preferred AS latest_efi_score_preferred COMMENT = 'Latest GP-recorded eFI or coded eFI2 score (0-1). Not the calculated eFI2 score.',
-    efi2.efi2_score AS efi_score WITH SYNONYMS = ('calculated eFI2 score', 'electronic frailty index 2 score') COMMENT = 'Calculated electronic Frailty Index 2 score (0-1) for living people aged 65+. Recomputed as at efi2_score_date; use efi2_category for population counts. Do not combine with GP-recorded eFI/eFI2 or Rockwood scores.',
+    efi2.efi2_score AS efi_score WITH SYNONYMS = ('calculated eFI2 score', 'electronic frailty index 2 score') COMMENT = 'Calculated eFI2 score (0-1) for the living cohort whose 65th birthday could have occurred by scoring, using the first day of the approximate birth month. Recomputed at efi2_score_date. Separate from GP-recorded eFI/eFI2 and Rockwood.',
     rockwood.rockwood_score AS rockwood_score COMMENT = 'Rockwood Clinical Frailty Scale score (1-9)',
 
     -- ESP
@@ -462,7 +462,7 @@ METRICS(
     efi.efi_severely_frail_count AS COUNT(DISTINCT CASE WHEN efi.latest_efi_category_preferred = 'Severely Frail' THEN efi.person_id END) COMMENT = 'Patients severely frail (eFI)',
 
     -- Frailty (calculated eFI2)
-    efi2.patients_with_efi2 AS COUNT(DISTINCT efi2.person_id) COMMENT = 'Living people aged 65+ with a calculated eFI2 score',
+    efi2.patients_with_efi2 AS COUNT(DISTINCT efi2.person_id) COMMENT = 'People in the living eFI2 cohort whose 65th birthday could have occurred by scoring, using the first day of the approximate birth month.',
     efi2.efi2_robust_count AS COUNT(DISTINCT CASE WHEN efi2.category = 'ROBUST' THEN efi2.person_id END) COMMENT = 'People classed Robust by calculated eFI2',
     efi2.efi2_mild_frailty_count AS COUNT(DISTINCT CASE WHEN efi2.category = 'MILD FRAILTY' THEN efi2.person_id END) COMMENT = 'People classed Mild Frailty by calculated eFI2',
     efi2.efi2_moderate_frailty_count AS COUNT(DISTINCT CASE WHEN efi2.category = 'MODERATE FRAILTY' THEN efi2.person_id END) COMMENT = 'People classed Moderate Frailty by calculated eFI2',
@@ -504,7 +504,7 @@ METRICS(
     qrisk.avg_qrisk AS AVG(qrisk.qrisk_score) COMMENT = 'Average QRISK',
     acr.avg_acr AS AVG(acr.acr_value) COMMENT = 'Average ACR',
     efi.avg_efi_score AS AVG(efi.latest_efi_score_preferred) COMMENT = 'Average eFI score',
-    efi2.avg_efi2_score AS AVG(efi2.efi_score) COMMENT = 'Average calculated eFI2 score among living people aged 65+',
+    efi2.avg_efi2_score AS AVG(efi2.efi_score) COMMENT = 'Average calculated eFI2 score in the living cohort whose 65th birthday could have occurred by scoring, using the first day of the approximate birth month.',
     rockwood.avg_rockwood AS AVG(rockwood.rockwood_score) COMMENT = 'Average Rockwood score',
     lft.avg_alt AS AVG(lft.alt_value) COMMENT = 'Average ALT (U/L)',
     lft.avg_ggt AS AVG(lft.ggt_value) COMMENT = 'Average GGT (U/L)',
@@ -513,6 +513,6 @@ METRICS(
     eosinophils.avg_eosinophils AS AVG(eosinophils.inferred_value) COMMENT = 'Average eosinophil count (10^9/L)'
 )
 
-COMMENT = 'Latest recorded clinical measurements and classifications for people in dim_person_demographics, with one row per person in each linked measurement table. The OLIDS population comes from NCL GP records. Covers blood pressure and its person-specific control assessment; HbA1c; lipids; BMI and waist circumference; blood glucose; kidney, liver and blood tests; QRISK; smoking status; and frailty. People without a qualifying measurement remain in the demographic population and have no matching measurement row. Measurements can have different dates. BMI applies to people aged at least 18 at the build date or at death, with lower thresholds for qualifying ethnicities. Blood glucose units are not standardised. The recorded cholesterol-to-HDL ratio has no derived treatment target. Recorded eFI or eFI2 scores differ from calculated eFI2, which includes living people whose 65th birthday could have occurred by the scoring date, using the first day of the approximate birth month. Smoking status uses observations recorded at age 11 or older and excludes status-free pack-years and unknown-consumption records. ESP 2013 weights are available for age-standardised rates. Current demographics describe today''s population, rather than the person at each measurement date. person_id supports cohort linkage; final results must be aggregate-only. Diabetes care processes and NICE blood pressure indicators have separate semantic views.'
+COMMENT = 'Latest clinical measurements for the NCL OLIDS demographic population, with one row per person in each linked measurement table. People without measurements remain in the demographic population; measurement dates can differ. Demographics are current. ESP 2013 weights support age-standardised rates. person_id supports cohort linkage; final results must be aggregate-only. Diabetes care and NICE blood pressure indicators have separate views.'
 AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is one row per person with latest values; filter is_active = TRUE for current cohorts. Example: SELECT borough_resident, AGG(patients_with_bp_assessment), AGG(bp_controlled_count) FROM SEM_OLIDS_OBSERVATIONS WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce out-of-target HbA1c patients here and SGLT2 exposure in sem_olids_prescribing before joining. BP control here uses patient-specific thresholds (T2DM, CKD, age); use sem_olids_bp_indicators for NICE IND239-246 fixed-target achievement. Prefer category-based counts over averages for population health questions. HDL, non-HDL and triglyceride categories are the upstream numeric bands, not invented treatment targets. The total:HDL ratio is the recorded ratio only. Blood glucose values keep source units, so group by result_unit_display before averaging. Smoking here is latest recorded status only; people without a record are absent. For eFI2 population questions, use efi2_category; its rows are already limited to the living 65+ scoring cohort. It is a calculated current score, not the GP-recorded eFI/eFI2 fields or Rockwood. Diabetes care processes and retinal screening are in sem_olids_diabetes_care. age_band_esp and esp_proportion are ESP 2013 age-only weights for standardised rates.'
 AI_QUESTION_CATEGORIZATION 'Use this view for questions about: general patient-specific BP control, HbA1c control, total cholesterol, LDL, HDL, non-HDL, triglycerides, recorded total:HDL ratio, blood glucose, smoking status, BMI, waist circumference, eGFR, CKD staging, creatinine, QRISK, ACR, liver function (ALT, GGT, bilirubin, abnormal LFTs), haemoglobin/anaemia, platelets, eosinophils, and current frailty. Do not invent a treatment target for the total:HDL ratio. Blood glucose is not categorised and units are not standardised. Smoking status here is the latest recorded QOF status; use sem_olids_population when Unknown (no record) must be in the denominator. For NICE BP indicators IND239-246 use sem_olids_bp_indicators. Use efi2_category for calculated eFI2 population counts in living people aged 65+; use latest_efi_* only for GP-recorded eFI/eFI2 and frailty_category only for Rockwood assessments. This view holds the LATEST value per biomarker only; calculated eFI2 has no serial history. For serial clinical readings, latest-2, or trajectory over time use sem_olids_observations_history. For condition prevalence and demographics use sem_olids_population. For condition trends over time use sem_olids_trends. Questions needing cohorts from TWO domains (e.g. biomarker control x medication, care-process gaps x appointment access) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'

@@ -4,17 +4,11 @@ models:
   - name: stg_lsplcm
     description: >-
       SLAM patient-level contract-monitoring activity submitted by providers through
-      ServicesDataLocal. One row per submitted source row, with the full submission history
-      retained. Files are cumulative year-to-date restatements, so summing across submissions
+      ServicesDataLocal, one row per submitted source row. Full submission history is
+      retained. Files are cumulative year-to-date restatements, so summing submissions
       double-counts. stg_lsplcm_latest holds the current provider statement for each financial
-      period. Financial years contain consecutive start and end years as six digits, such as
-      202526, and financial months are 1-12. The file name supplies the year where the
-      submitted year is invalid. Provider codes retain recognised trust identifiers; other
-      supplied values use their three-character prefix. Numeric activity count, unit price and
-      total cost are available in typed fields; unparseable values are null. meta_* fields
-      describe the SDL load, submission_* fields describe the source file and dv_* fields
-      contain the interpreted values. Original provider text remains in *_raw or unprefixed
-      fields; other code columns are not validated.
+      period. Interpreted fields use dv_*; original text and load metadata remain available.
+      Other supplied codes are not validated.
     config:
       meta:
         owner:
@@ -61,12 +55,10 @@ models:
           the stated period was incomplete; plausibility-gated (2015-04-01 to
           today).
       - name: dv_financial_year
-        description: |
-          Validated financial year as 'YYYYYY' (e.g. '202627'). Provider value
-          where it parses to consecutive years; else the FY token from the
-          platform file-name prefix; else derived from the activity date
-          (providers bill by activity date - dv_financial_period_source records
-          which applied); else NULL. Original in financial_year_raw.
+        description: >-
+          Financial year as consecutive start and end years in six digits, such as 202526.
+          Uses the valid submitted year, otherwise the file-name year and then an eligible
+          activity date. Original text remains in financial_year_raw.
       - name: dv_financial_month
         description: |
           Financial month 1 (April) - 12 (March). Provider value where valid;
@@ -202,11 +194,14 @@ models:
 
       # Measures (derived)
       - name: dv_activity_count
-        description: ACTIVITY_COUNT_POINT_OF_DELIVERY as NUMBER(38,6).
+        description: >-
+          ACTIVITY_COUNT_POINT_OF_DELIVERY as NUMBER(38,6). Unparseable values are null.
       - name: dv_activity_unit_price
-        description: ACTIVITY_UNIT_PRICE as NUMBER(38,6).
+        description: >-
+          ACTIVITY_UNIT_PRICE as NUMBER(38,6). Unparseable values are null.
       - name: dv_total_cost
-        description: TOTAL_COST as NUMBER(38,6). £/commas/'TBC' handled; sum-safe.
+        description: >-
+          TOTAL_COST as NUMBER(38,6). £/commas/'TBC' handled; Unparseable values are null.
 
   - name: stg_lsplcm_latest
     description: |

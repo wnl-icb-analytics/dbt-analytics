@@ -1,17 +1,12 @@
 models:
   - name: fct_person_condition_episodes
     description: >-
-      Recorded condition episodes across the available NCL OLIDS history, one
-      row per person, condition and episode number. Includes dated evidence on
-      or before the build date, without the age, medication or
-      recent-diagnosis requirements of QOF registers. Diagnosis and resolution
-      code definitions follow each condition's int_*_diagnoses_all model;
-      obesity uses valid BMI categories from int_bmi_all. A later onset after
-      a resolution begins a new episode. For conditions without resolution
-      evidence, the episode remains active. Episodes can begin with a
-      resolution record when earlier diagnosis evidence is unavailable, so
-      episode dates are evidence dates rather than confirmed clinical onset
-      dates.
+      Recorded NCL OLIDS condition episodes, one row per person, condition and episode
+      number, using evidence dated on or before the build date. Diagnosis and resolution
+      use condition-specific code lists; obesity uses valid BMI categories. A new onset
+      after resolution starts another episode, while episodes without resolution remain
+      active. These are recorded-evidence episodes, including resolution-only records,
+      rather than confirmed clinical onset dates or QOF-register membership.
     config:
       meta:
         indicators:
@@ -809,7 +804,10 @@ models:
               arguments:
                 expression: '>= 1'
       - name: episode_start_date
-        description: 'Date the episode started (first diagnosis/onset event)'
+        description: >-
+          Date of the first recorded event in the episode. This can be a resolution
+          record when earlier diagnosis evidence is unavailable, so it is not
+          necessarily the clinical onset date.
         tests:
           - not_null
 

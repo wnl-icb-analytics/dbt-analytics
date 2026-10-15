@@ -3,15 +3,11 @@ version: 2
 models:
   - name: qadmissions_ethrisk
     description: >-
-      QAdmissions ethnicity risk group, one row per person in
-      dim_person_ethnicity using its selected ethnicity subcategory. The OLIDS
-      population comes from NCL GP records. Non-deprioritised, more specific
-      records take priority over recency. Codes are 1 White or not recorded, 2
-      Indian, 3 Pakistani, 4 Bangladeshi, 5 Other Asian, 6 Black Caribbean, 7
-      Black African, 8 Chinese and 9 Other Ethnic Group. Not recorded, not
-      stated, refused and recorded-not-known categories share group 1.
-      Unmatched subcategories also default to 1. Mapping definitions are held
-      in qadmissions_eth2016_to_ethrisk9.
+      QAdmissions ethnicity group, one row per NCL OLIDS person in dim_person_ethnicity using
+      its selected subcategory. Non-deprioritised, more specific records take priority over
+      recency. The qadmissions_eth2016_to_ethrisk9 mapping assigns nine groups; missing,
+      refused, unknown or unmatched subcategories default to group 1, alongside White
+      ethnicity.
     config:
       meta:
         owner:
@@ -27,9 +23,16 @@ models:
         data_tests:
           - not_null
       - name: latest_ethnicity_date
-        description: 'Clinical effective date of the latest ethnicity record. NULL for persons with no usable record.'
+        description: >-
+          Clinical date of the ethnicity selected by dim_person_ethnicity. Specificity and
+          non-deprioritised status take priority over recency, so this need not be the latest
+          overall. Null without usable evidence.
       - name: ethrisk
-        description: 'QAdmissions ethrisk integer (1..9). Defaults to 1 for any subcategory not present in the seed.'
+        description: >-
+          QAdmissions groups: 1 White or not recorded, 2 Indian, 3 Pakistani, 4 Bangladeshi, 5
+          Other Asian, 6 Black Caribbean, 7 Black African, 8 Chinese, 9 Other Ethnic Group.
+          Not stated, refused, recorded-not-known and unmatched subcategories also default to
+          1.
         data_tests:
           - not_null
           - accepted_values:

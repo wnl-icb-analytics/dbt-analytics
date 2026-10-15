@@ -3,19 +3,13 @@ version: 2
 models:
   - name: stg_lsacm
     description: >-
-      SLAM aggregate contract-monitoring activity and price by point of delivery submitted by
-      providers through ServicesDataLocal. One row per submitted source row, with the full
-      submission history retained. Files are cumulative year-to-date restatements, so summing
-      across submissions double-counts. stg_lsacm_latest holds the current provider statement
-      for each financial period. Financial years contain consecutive start and end years as
-      six digits, such as 202526, and financial months are 1-12. The file name supplies the
-      year where the submitted year is invalid. Provider codes retain recognised trust
-      identifiers; other supplied values use their three-character prefix. Numeric plan and
-      actual activity, price and market-forces factor are available in typed fields;
-      unparseable values are null. meta_* fields describe the SDL load, submission_* fields
-      describe the source file and dv_* fields contain the interpreted values. Original
-      provider text remains in *_raw or unprefixed fields; other code columns are not
-      validated. This aggregate feed contains no patient-level fields.
+      SLAM aggregate activity and prices by point of delivery submitted by providers through
+      ServicesDataLocal, one row per submitted source row. Full submission history is
+      retained. Files are cumulative year-to-date restatements, so summing submissions
+      double-counts. stg_lsacm_latest holds the current provider statement for each financial
+      period. Interpreted fields use dv_*; original text and load metadata remain available.
+      Other supplied codes are not validated. This aggregate feed contains no patient-level
+      fields.
     config:
       meta:
         owner:
@@ -54,7 +48,10 @@ models:
       - name: financial_month_raw
         description: Provider-typed financial month as submitted. Cleaned in dv_financial_month.
       - name: dv_financial_year
-        description: Validated financial year as 'YYYYYY' (e.g. '202627'); see stg_lsplcm. Original in financial_year_raw.
+        description: >-
+          Financial year as consecutive start and end years in six digits, such as 202526.
+          Uses the valid submitted year, otherwise the file-name year. Original text remains
+          in financial_year_raw.
       - name: dv_financial_month
         description: Financial month 1 (April) - 12 (March). Junk values -> NULL. Original in financial_month_raw.
         data_tests:
@@ -135,17 +132,25 @@ models:
 
       # Measures (derived, plan vs actual)
       - name: dv_planned_activity
-        description: CONTRACT_MONITORING_PLANNED_ACTIVITY as NUMBER(38,6).
+        description: >-
+          CONTRACT_MONITORING_PLANNED_ACTIVITY as NUMBER(38,6). Unparseable values are null.
       - name: dv_actual_activity
-        description: CONTRACT_MONITORING_ACTUAL_ACTIVITY as NUMBER(38,6).
+        description: >-
+          CONTRACT_MONITORING_ACTUAL_ACTIVITY as NUMBER(38,6). Unparseable values are null.
       - name: dv_planned_price
-        description: CONTRACT_MONITORING_PLANNED_PRICE as NUMBER(38,6).
+        description: >-
+          CONTRACT_MONITORING_PLANNED_PRICE as NUMBER(38,6). Unparseable values are null.
       - name: dv_actual_price
-        description: CONTRACT_MONITORING_ACTUAL_PRICE as NUMBER(38,6). Sum-safe.
+        description: >-
+          CONTRACT_MONITORING_ACTUAL_PRICE as NUMBER(38,6). Unparseable values are null.
       - name: dv_planned_market_forces_factor
-        description: CONTRACT_MONITORING_PLANNED_MARKET_FORCES_FACTOR as NUMBER(38,6).
+        description: >-
+          CONTRACT_MONITORING_PLANNED_MARKET_FORCES_FACTOR as NUMBER(38,6). Unparseable values
+          are null.
       - name: dv_actual_market_forces_factor
-        description: CONTRACT_MONITORING_ACTUAL_MARKET_FORCES_FACTOR as NUMBER(38,6).
+        description: >-
+          CONTRACT_MONITORING_ACTUAL_MARKET_FORCES_FACTOR as NUMBER(38,6). Unparseable values
+          are null.
 
   - name: stg_lsacm_latest
     description: |

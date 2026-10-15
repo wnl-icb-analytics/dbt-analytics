@@ -1,13 +1,10 @@
 models:
   - name: int_flu_chronic_respiratory_disease
     description: >-
-      Flu chronic respiratory disease risk group. The OLIDS population comes
-      from NCL GP records. One row per person and reported campaign, aged at
-      least 6 months at the campaign run date. Includes people meeting
-      int_flu_asthma or with a RESP_COD observation on or before the campaign
-      audit end date, using its UKHSA_FLU terminology version. The qualifying
-      date is the latest date from the asthma route or first RESP_COD
-      occurrence. There is no upper age limit.
+      Flu respiratory disease group in NCL OLIDS, one row per person and campaign. Includes the flu
+      asthma group or people with RESP_COD evidence through the audit end, using the campaign's
+      UKHSA_FLU code version. People must be at least 6 months at the run date, with no upper age
+      limit.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -80,7 +77,8 @@ models:
         data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying respiratory event (asthma or earliest respiratory diagnosis)'
+        description: >-
+          Latest qualifying date across the asthma route and first RESP_COD occurrence.
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description

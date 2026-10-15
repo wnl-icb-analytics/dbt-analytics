@@ -1,17 +1,12 @@
 models:
   - name: fct_bowel_screening_status
     description: >-
-      Bowel screening status for people aged 50 to 74 in
-      dim_person_demographics, one row per person, including inactive and
-      deceased people. The OLIDS population comes from NCL GP records.
-      Completed screening follows COLCANSCREV_COD and COLCANSCR_COD; declines
-      follow COLCANSCRDEC_COD. Result-recording code 368481000000103 does not
-      count as completed screening. programme_status is Up to Date when the
-      latest completed screening is within 913 days of the build date, Overdue
-      when older, and Never Screened when none is recorded. A decline does not
-      override this status. Non-response and unsuitable codes are not
-      available. Age follows the current demographic model, including age at
-      death for deceased people.
+      Bowel screening status for NCL OLIDS people aged 50 to 74, one row per person,
+      including inactive and deceased people. Status is Up to Date when completed
+      screening was recorded within 913 days, Overdue when older, and Never Screened
+      when none is recorded. A decline does not override completion status. Result-only
+      code 368481000000103 is excluded from completed screening; non-response and
+      unsuitable codes are unavailable.
     config:
       meta:
         owner:
@@ -23,7 +18,8 @@ models:
           - not_null
           - unique
       - name: current_age
-        description: 'Current age of the person in years'
+        description: >-
+          Age at build for living people, or age at death for deceased people.
       - name: is_screening_eligible
         description: 'Flag indicating if person is eligible for screening (age 50-74)'
       - name: screening_interval_years
@@ -36,8 +32,9 @@ models:
       - name: latest_screening_date
         description: 'Date of the most recent screening observation'
       - name: latest_completed_date
-        description: 'Date of the most recent completed screening (COLCANSCREV_COD,
-          COLCANSCR_COD)'
+        description: >-
+          Latest completed screening date from COLCANSCREV_COD or COLCANSCR_COD,
+          excluding result-only code 368481000000103.
       - name: next_screening_due_date
         description: 'Calculated next screening due date based on interval'
       - name: days_overdue
@@ -57,7 +54,8 @@ models:
       # - name: total_unsuitable_records
       #   description: 'Total count of unsuitable status records'
       - name: total_declined_records
-        description: 'Total count of declined screening records'
+        description: >-
+          Number of screening decline records in COLCANSCRDEC_COD.
       # - name: total_non_response_records
       #   description: 'Total count of non-response to invitation records'
 

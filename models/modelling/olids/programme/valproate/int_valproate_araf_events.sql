@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description="Recorded annual risk acknowledgement form (ARAF) events. The OLIDS population comes from NCL GP records. One row per observation matching the ARAF category of the valproate programme code list, with a person mapping. Each code's lookback limit applies where configured. There is no restriction to valproate users, sex, age, registration or death, and no upper event-date limit.") }}
+    description="Annual risk acknowledgement form (ARAF) records in NCL OLIDS, one row per observation linked to a person. Uses the valproate code list's ARAF category, with code-specific lookbacks where configured and no upper date limit. Includes inactive and deceased people of any age or sex, whether or not they take valproate.") }}
 
 SELECT
     pp.person_id,

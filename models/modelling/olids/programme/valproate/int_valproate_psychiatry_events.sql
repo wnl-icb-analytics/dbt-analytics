@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description="Recorded psychiatry events identified by the valproate programme code list's PSYCH category. The OLIDS population comes from NCL GP records. One row per matching observation with a person mapping. There is no restriction to valproate users, sex, age, registration, death or event date; dashboard population restrictions apply downstream.") }}
+    description="Psychiatry records in NCL OLIDS, one row per observation linked to a person. Uses the valproate code list's PSYCH category. Includes inactive and deceased people of any age or sex, whether or not they take valproate. Event dates are unrestricted; the dashboard applies its population rules separately.") }}
 
 SELECT
     pp.person_id,

@@ -1,15 +1,11 @@
 models:
   - name: fct_person_medications_recent
     description: >-
-      Recent prescribing, one row per person with a named medication order in
-      the 365 days ending on the build date. The OLIDS population comes from
-      NCL GP records. Includes repeat and non-repeat orders, with counts and
-      medicine lists for the last 30 and 365 days. Distinct medicines use
-      their BNF name where available, otherwise the recorded medication name.
-      Active-ingredient counts use dm+d Virtual Therapeutic Moiety (VTM)
-      mappings and exclude medicines without a VTM code. Repeat status follows
-      int_medication_orders_repeat_current. No current-registration
-      restriction is applied.
+      Prescribing in the 365 days to the build date in NCL OLIDS, one row per person
+      with a named medication order. Includes repeat and non-repeat orders, without a
+      current-registration restriction. Distinct medicines use BNF names where
+      available, otherwise recorded names. Active-ingredient counts exclude medicines
+      without a dm+d Virtual Therapeutic Moiety (VTM) mapping.
     config:
       meta:
         owner:
@@ -47,7 +43,9 @@ models:
               arguments:
                 min_value: 0
       - name: unique_medication_count_30d
-        description: Count of distinct medication names prescribed in the last 30 days
+        description: >-
+          Distinct medicines prescribed in the last 30 days, using the BNF name where
+          available, otherwise the recorded medication name.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -73,7 +71,9 @@ models:
               arguments:
                 min_value: 0
       - name: unique_medication_count_12mo
-        description: Count of distinct medication names prescribed in the last year (365 days)
+        description: >-
+          Distinct medicines prescribed in the last 365 days, using the BNF name where
+          available, otherwise the recorded medication name.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:

@@ -1,31 +1,27 @@
 models:
   - name: dim_practice
     description: >-
-      GP practices with both Dictionary and OLIDS organisation records in
-      London ICBs, one row per OLIDS organisation identifier. Includes West
-      and North London (Z9B2Z), legacy North Central and North West London
-      (QMJ and QRV), North East London (QMF), South West London (QWE) and
-      South East London (QKK). If several practice codes map to one
-      organisation, the alphabetically first code is retained. Contains
-      current PCN, commissioner and ICB relationships, geography and
-      operational status; closed and obsolete practices remain and are
-      flagged. Catalogue inclusion does not establish OLIDS patient or
-      activity coverage outside NCL. Where a practice has several OLIDS
-      organisation identifiers, only the selected identifier is retained.
-      Older identifiers used by historical activity can therefore be absent.
+      London GP practices matched between Dictionary and OLIDS organisation records, one
+      row per selected organisation ID. Includes closed and obsolete practices. The
+      practice list covers London; OLIDS patient data covers NCL. Only one organisation
+      ID is kept per practice, so older activity IDs may be missing.
     config:
       meta:
         owner:
           name: EddieDavison92
     columns:
       - name: organisation_id
-        description: 'OLIDS internal organisation ID for practice'
+        description: >-
+          Selected OLIDS organisation ID for the practice. Other IDs for the same
+          practice, including IDs on older activity, may be absent.
         tests:
           - not_null
           - unique
 
       - name: practice_code
-        description: 'Practice ODS code (NHS organisational code)'
+        description: >-
+          Practice ODS code. If several practice codes map to one organisation ID, the
+          alphabetically first code is kept.
         tests:
           - not_null
 

@@ -1,16 +1,11 @@
 models:
   - name: int_efi2_rules
     description: >-
-      eFI2 deficit-rule results for the current scoring date, with the person,
-      deficit, sub-deficit, rule instructions and latest evidence date. The
-      OLIDS population comes from NCL GP records. A person can have several
-      results for a deficit, including repeated dated evidence where no
-      additional threshold rule applies. Covers qualifying evidence for living
-      people whose 65th birthday could have occurred by the scoring date,
-      using the first day of the approximate birth month. Anaemia uses the
-      latest valid haemoglobin in g/L, with thresholds of 130 for males and
-      120 for females. BMI uses the latest eligible reading, which differs
-      from the earliest-reading choice in the legacy AIC implementation.
+      eFI2 deficit-rule results for living NCL OLIDS people whose 65th birthday could have
+      occurred by scoring, using the first day of their approximate birth month. Rows identify
+      a person, deficit, sub-deficit, rule and evidence date; several results can remain for
+      one deficit. Anaemia uses the latest valid haemoglobin. BMI uses the latest eligible
+      reading, unlike the earliest-reading rule in legacy AIC.
     config:
       meta:
         owner:
@@ -25,7 +20,10 @@ models:
       - name: other_instructions
         description: Rule instruction the flag was evaluated under.
       - name: has_deficit
-        description: Whether the person meets the deficit rule.
+        description: >-
+          Whether the person meets the deficit rule. Anaemia uses the latest valid haemoglobin
+          in g/L, below 130 for males or 120 for females. BMI uses the latest eligible
+          reading.
       - name: sub_deficit
         description: Sub-classification of the deficit (e.g. CLINIC_SYSTOLIC_HTN, Obese).
       - name: end_date

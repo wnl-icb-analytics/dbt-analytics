@@ -1,19 +1,11 @@
 models:
   - name: int_efi2_chronology
     description: >-
-      Weighted eFI2 score for the current scoring date, one row per living
-      person with an applicable weighted deficit. The OLIDS population comes
-      from NCL GP records. People qualify when their 65th birthday could have
-      occurred by the scoring date, using the first day of the approximate
-      birth month. Dementia-related evidence contributes its maximum weight.
-      Smoking uses the latest qualifying status. Alcohol distinguishes current
-      harmful drinking from earlier higher-risk or harmful records within its
-      lookback window, with the earlier-history state taking priority. Missing
-      BMI and alcohol evidence carry the defined default weights across the
-      scored population. Polypharmacy counts distinct six-character BNF
-      sub-subchapter prefixes among orders in the 90 days ending on the
-      scoring date, without the chapter exclusions used by int_polypharmacy_*
-      models.
+      Current weighted eFI2 score, one row per living NCL OLIDS person with an applicable
+      weighted deficit. Eligibility uses the first day of the approximate birth month: the
+      65th birthday could have occurred by scoring. Scores sum published weights, including
+      missing-BMI and missing-alcohol defaults across the scoring population. Deficit-specific
+      weighting and polypharmacy rules are documented on efi.
     config:
       meta:
         owner:
@@ -27,4 +19,9 @@ models:
       - name: end_date
         description: As-at date for the scoring run.
       - name: efi
-        description: Raw eFI2 score (sum of the weights of the deficits the person has).
+        description: >-
+          Sum of applicable deficit weights. Dementia uses its maximum weight and smoking the
+          latest qualifying status. Earlier higher-risk or harmful alcohol history within
+          lookback takes priority over current harmful drinking. Missing BMI and alcohol carry
+          default weights. Polypharmacy counts distinct six-character BNF prefixes in the 90
+          days ending on scoring, without int_polypharmacy_* chapter exclusions.

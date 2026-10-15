@@ -1,14 +1,10 @@
 models:
   - name: dim_person_birth_death
     description: >-
-      Birth and death details for people with mapped NCL OLIDS patient
-      records, one row per person. Includes living and deceased people and
-      people without a recorded birth date. Birth dates use the midpoint of
-      the recorded month; death dates and status follow
-      int_patient_deceased_status. A death date earlier than the approximate
-      birth date is cleared and is_deceased is set to false. sk_patient_id
-      comes from the current registration when available, otherwise the
-      selected mapped patient record.
+      Birth and death details per person with a mapped NCL OLIDS patient record,
+      including people without a recorded birth date. Birth dates use the midpoint of
+      the recorded month; death details use OLIDS, PDS and registry evidence. Death
+      dates before birth are cleared and the person is treated as living.
     config:
       meta:
         owner:
@@ -21,7 +17,9 @@ models:
           - unique
 
       - name: sk_patient_id
-        description: 'Surrogate key from current registration or best mapped patient'
+        description: >-
+          Patient key from the current registration when available, otherwise the
+          selected mapped patient record.
         data_tests:
           - is_canonical_numeric_key
 

@@ -1,6 +1,6 @@
 {{
     config(
-        description="SNOMED CT to ICD-10 cross-map entries from the latest retained NHS TRUD release, one row per supplied mapping entry with its map group, priority, rule and advice."
+        description="SNOMED CT to ICD-10 cross-maps from the latest retained NHS TRUD release, one row per supplied mapping entry. Map group, priority, rule and advice govern interpretation. A concept can have several mappings."
     )
 }}
 

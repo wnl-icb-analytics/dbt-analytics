@@ -4,17 +4,11 @@ models:
   - name: stg_lsdeplcm
     description: >-
       SLAM patient-level high-cost device contract monitoring submitted by providers through
-      ServicesDataLocal. One row per submitted source row, with the full submission history
-      retained. Files are cumulative year-to-date restatements, so summing across submissions
+      ServicesDataLocal, one row per submitted source row. Full submission history is
+      retained. Files are cumulative year-to-date restatements, so summing submissions
       double-counts. stg_lsdeplcm_latest holds the current provider statement for each
-      financial period. Financial years contain consecutive start and end years as six digits,
-      such as 202526, and financial months are 1-12. The file name supplies the year where the
-      submitted year is invalid. Provider codes retain recognised trust identifiers; other
-      supplied values use their three-character prefix. Numeric device quantity, prices and
-      total cost are available in typed fields; unparseable values are null. meta_* fields
-      describe the SDL load, submission_* fields describe the source file and dv_* fields
-      contain the interpreted values. Original provider text remains in *_raw or unprefixed
-      fields; other code columns are not validated.
+      financial period. Interpreted fields use dv_*; original text and load metadata remain
+      available. Other supplied codes are not validated.
     config:
       meta:
         owner:
@@ -59,9 +53,9 @@ models:
           today).
       - name: dv_financial_year
         description: >-
-          Validated financial year as 'YYYYYY' (e.g. '202627'): provider value,
-          else file-name FY token, else derived from the implantation/insertion
-          date (see dv_financial_period_source). Original in financial_year_raw.
+          Financial year as consecutive start and end years in six digits, such as 202526.
+          Uses the valid submitted year, otherwise the file-name year and then an eligible
+          activity date. Original text remains in financial_year_raw.
       - name: dv_financial_month
         description: >-
           Financial month 1 (April) - 12 (March): provider value where valid,
@@ -164,7 +158,9 @@ models:
       - name: device_quantity_raw
         description: Device quantity as submitted. Parsed in dv_device_quantity.
       - name: dv_device_quantity
-        description: device_quantity_raw as NUMBER(38,6); non-numeric -> NULL.
+        description: >-
+          device_quantity_raw as NUMBER(38,6); non-numeric -> NULL. Unparseable values are
+          null.
       - name: device_size
         description: Device size as submitted (free text).
       - name: device_manufacturer
@@ -194,11 +190,14 @@ models:
 
       # Measures (derived)
       - name: dv_unit_price_commissioner
-        description: UNIT_PRICE_COMMISSIONER as NUMBER(38,6).
+        description: >-
+          UNIT_PRICE_COMMISSIONER as NUMBER(38,6). Unparseable values are null.
       - name: dv_unit_price_supplier
-        description: UNIT_PRICE_SUPPLIER as NUMBER(38,6).
+        description: >-
+          UNIT_PRICE_SUPPLIER as NUMBER(38,6). Unparseable values are null.
       - name: dv_total_cost
-        description: TOTAL_COST as NUMBER(38,6). £/commas/'TBC' handled; sum-safe.
+        description: >-
+          TOTAL_COST as NUMBER(38,6). £/commas/'TBC' handled; Unparseable values are null.
 
   - name: stg_lsdeplcm_latest
     description: |

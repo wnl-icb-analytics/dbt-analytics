@@ -1,15 +1,11 @@
 models:
   - name: dim_person_main_language
     description: >-
-      Latest recorded language or communication method for every person in
-      dim_person, one row per person. The OLIDS population comes from NCL GP
-      records. Language comes from PREFLANG_COD preferences or
-      language-specific REQINTERPRETER_COD records, whichever is most recent.
-      Interpreter and communication support details describe the latest
-      REQINTERPRETER_COD record where a language record is available. Spoken
-      languages, sign languages and other communication methods remain
-      distinct. Missing language is shown as Not Recorded; missing interpreter
-      evidence remains null. Includes active and inactive people.
+      Latest recorded language or communication method per person in NCL OLIDS,
+      including active and inactive people. Uses PREFLANG_COD or language-specific
+      REQINTERPRETER_COD evidence. Spoken languages, sign languages and other
+      communication methods remain distinct. Missing language is Not Recorded; missing
+      interpreter evidence is null.
     config:
       meta:
         indicator:
@@ -71,7 +67,10 @@ models:
           - not_null
 
       - name: language
-        description: 'Clean language name extracted from clinical terms ("Not Recorded" if none available)'
+        description: >-
+          Language or communication method from the latest PREFLANG_COD preference or
+          language-specific REQINTERPRETER_COD record. Not Recorded when no language
+          evidence is available.
         tests:
           - not_null
 
@@ -87,17 +86,21 @@ models:
         description: 'Source of language data: PREFLANG_COD (preference) or REQINTERPRETER_COD (interpreter requirement)'
 
       - name: interpreter_needed
-        description: 'Flag indicating if interpreter services are needed'
-
+        description: >-
+          Whether the latest REQINTERPRETER_COD record indicates an interpreter is
+          needed. Null when no language record is available.
       - name: interpreter_type
-        description: 'Specific type of interpreter required (e.g., British Sign Language, Arabic)'
-
+        description: >-
+          Interpreter type from the latest REQINTERPRETER_COD record where a language
+          record is available.
       - name: communication_support_needed
-        description: 'Flag indicating if additional communication support is needed (lipspeaker, note taker, etc.)'
-
+        description: >-
+          Whether the latest REQINTERPRETER_COD record indicates communication support
+          is needed. Null when no language record is available.
       - name: communication_support_type
-        description: 'Type of communication support needed (e.g., Lipspeaker, Note Taker, Speech to Text)'
-
+        description: >-
+          Communication support type from the latest REQINTERPRETER_COD record where a
+          language record is available.
     tests:
       - cluster_ids_exist:
           arguments:

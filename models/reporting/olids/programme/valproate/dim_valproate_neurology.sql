@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description="Neurology evidence defined for the valproate programme, one row per person with an observation in the NEUROLOGY category of stg_reference_valproate_prog_codes. The OLIDS population comes from NCL GP records. Contains earliest and latest event dates and the recorded identifiers and codes. No date, current-registration or recent-valproate restriction is applied.") }}
+    description="Neurology evidence for the NCL OLIDS valproate programme, one row per person with an observation coded in the programme's NEUROLOGY category. No date, current-registration or recent-valproate filter applies.") }}
 
 WITH person_level_neurology_aggregation AS (
     SELECT

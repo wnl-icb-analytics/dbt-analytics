@@ -1,16 +1,12 @@
 models:
   - name: dq_bmi_issues
     description: >-
-      BMI records with a data-quality issue, one row per retained recorded or
-      calculated BMI record from int_bmi_all. The OLIDS population comes from
-      NCL GP records. Includes people aged at least 18 in dim_person_age,
-      without an active-registration restriction. Selects BMI below 10 or
-      above 150 kg/m², missing or future dates, or an upstream invalid-BMI
-      flag. Extreme-outlier flags use below 8 or above 100 kg/m² but do not
-      independently select a record. Calculated BMI excludes height or weight
-      recorded before age 18; recorded BMIVAL_COD values have no equivalent
-      age-at-event restriction. Upstream filtering removes missing and future
-      dates from both paths, so those date flags are normally false.
+      BMI records with a data-quality issue in NCL OLIDS, one row per recorded or
+      calculated BMI record for people aged at least 18 at build or death. Selects BMI
+      below 10 or above 150 kg/m², an upstream invalid-BMI flag, or missing or future
+      dates; upstream date filtering normally leaves the date flags false. Calculated
+      BMI requires adult height and weight measurements, while recorded BMI can predate
+      adulthood. No current-registration filter applies.
     config:
       meta:
         owner:
@@ -26,7 +22,8 @@ models:
         description: Date of BMI measurement
 
       - name: bmi_value
-        description: BMI measurement value
+        description: >-
+          Recorded or calculated BMI in kg/m².
 
       - name: result_unit_display
         description: Unit of measurement for BMI
@@ -56,7 +53,9 @@ models:
         description: Whether measurement date is in the future
 
       - name: is_extreme_outlier
-        description: Whether BMI is an extreme outlier (<8 or >100)
+        description: >-
+          BMI below 8 or above 100 kg/m². This flag alone does not select a record into
+          this model.
 
       - name: bmi_category_with_issues
         description: BMI category including issue classifications
