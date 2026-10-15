@@ -1,12 +1,15 @@
 models:
   - name: fct_flu_status
-    description: 'Flu vaccination status combining eligibility with vaccination records.
-
-      Grain: One row per person per campaign per status event (vaccination given, LAIV given, declined, or eligible with no record)
-
-      Contains: • Eligibility determination and risk group classification • Vaccination status (given, LAIV given, declined, no record) • Status dates and reasoning • Eligibility flags and timing
-
-      Note: Includes both TIV and LAIV vaccination tracking'
+    description: >-
+      Flu vaccination evidence for the reported campaigns, one row per person, campaign and
+      status type. Statuses distinguish vaccination, live attenuated influenza vaccine
+      (LAIV), decline and eligible people with no recorded activity. LAIV can also
+      contribute to the general vaccination status, so rows must not be summed as distinct
+      vaccinations. Includes eligible and non-eligible people registered and alive in the
+      campaign population month from int_covid_flu_campaign_population. Evidence uses
+      versioned UKHSA_FLU code lists and campaign-specific tracking windows. Eligibility
+      follows fct_flu_eligibility; no recorded vaccination does not establish that a person
+      was unvaccinated.
     config:
       meta:
         indicator:

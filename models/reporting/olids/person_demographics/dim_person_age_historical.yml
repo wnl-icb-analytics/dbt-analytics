@@ -1,30 +1,12 @@
 models:
   - name: dim_person_age_historical
-    description: 'Historical Person Age Dimension Table (Type 2 SCD)
-
-      Calculates age and age bands using modern Type 2 slowly changing dimensions approach. Only creates rows when age bands actually change.
-
-      Key Features:
-
-      • Type 2 SCD with effective_start_date and effective_end_date (NULL = current period)
-
-      • 5-year rolling history window for performance optimisation
-
-      • Modern SCD2 implementation without sentinel dates (no 9999-12-31 values)
-
-      • Age milestones trigger new periods (every 5 years for age band changes)
-
-      • Efficient storage - periods created only when age bands change, not monthly
-
-      Implementation Notes:
-
-      • Uses NULL effective_end_date for current periods (not sentinel dates)
-
-      • Limited to last 5 years of data to balance completeness with performance
-
-      • Change points triggered by: age milestones at 5-year intervals (0, 5, 10, 15, etc.)
-
-      For analysis queries, join using: WHERE analysis_date >= effective_start_date AND (effective_end_date IS NULL OR analysis_date < effective_end_date)'
+    description: >-
+      Age attributes at five-year birthdays, one row per person and retained birthday
+      milestone from age 0 to 100. Includes milestones within the five-year window beginning
+      at the first day of the build month five years ago, up to the build date or recorded
+      death date. People without a milestone in that window have no row. Age is fixed at the
+      period start rather than updated during the period. effective_end_date is exclusive; a
+      null end date marks the last retained period, including for deceased people.
 
     config:
       meta:

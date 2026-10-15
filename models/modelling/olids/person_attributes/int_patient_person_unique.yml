@@ -1,20 +1,12 @@
 models:
   - name: int_patient_person_unique
-    description: 'Deduplicated patient-person mappings ensuring one-to-one relationships for consistent data linking.
-
-      Key Features:
-
-      • Handles multiple patient_ids mapping to same person_id
-
-      • Selects lowest patient_id when duplicates exist
-
-      • Excludes orphaned person records without valid patient links
-
-      • Requires basic demographics (birth_year) for inclusion
-
-      • Ensures consistent mapping for downstream models
-
-      Purpose: Prevent duplicate persons in models that join observations and medications to person data.'
+    description: >-
+      Distinct links between OLIDS patient records and people, with
+      patient_id, person_id, person_uuid and the commissioning patient key.
+      One row per patient-person mapping with a matching patient and person
+      record, a non-null commissioning patient key and a recorded birth year.
+      Includes inactive and deceased people. Orphaned links are excluded.
+      Multiple patient records for the same person remain separate mappings.
 
     config:
       meta:
@@ -26,7 +18,7 @@ models:
             min_value: 1
     columns:
       - name: patient_id
-        description: 'Unique patient identifier (lowest patient_id when multiple exist for same person)'
+        description: 'OLIDS patient record identifier'
         tests:
           - unique
           - not_null

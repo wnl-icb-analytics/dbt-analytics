@@ -1,6 +1,15 @@
 models:
   - name: ptr_person_month_analysis_base
-    description: 'Analysis foundation table providing person-months with demographics and condition flags for population health analytics.'
+    description: >-
+      Partner person-month demographics and condition flags from person_month_analysis_base,
+      one row per person and completed month. Includes registrations overlapping the month
+      with demographic history covering month end; a full refresh retains the latest 60
+      completed months. Age is assessed at month end and condition flags describe episodes
+      active or starting during the month. Historical geography uses the available address
+      history. Partner roles see only rows allowed by PARTNER_POLICY on sk_patient_id.
+      partner_mapping associates patients with boroughs through current practice
+      registration or residence, so access follows the current mapping rather than
+      historical borough membership.
 
 
     config:

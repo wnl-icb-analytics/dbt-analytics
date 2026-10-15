@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description='Aggregates ARAF referral-related events for each person, providing analytics-ready person-level ARAF referral event status and history.') }}
+    description="ARAF referral evidence for the valproate programme, one row per person with a referral coded in the REFERRAL category of stg_reference_valproate_prog_codes. Includes earliest and latest referral dates, identifiers and codes from referral requests and observations. Duplicate copies of the same referral are removed upstream. No current-registration or recent-valproate restriction is applied.") }}
 
 WITH person_level_araf_referral_aggregation AS (
     SELECT

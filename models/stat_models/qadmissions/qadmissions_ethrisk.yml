@@ -2,17 +2,14 @@ version: 2
 
 models:
   - name: qadmissions_ethrisk
-    description: >
-      Ethnicity risk group (1..9) per person for the QAdmissions feature
-      `ethrisk`. Joins dim_person_ethnicity (one row per person with
-      their latest ethnicity_subcategory, COALESCED to "Not Recorded"
-      when no record exists) to the qadmissions_eth2016_to_ethrisk9
-      seed. Defaults unmatched subcategories to 1 (White / NotRecorded)
-      per QResearch convention; the qadmissions_ethnicity_mapping_complete
-      singular test fails when an unmatched subcategory appears so data
-      drift is surfaced.
-
-      Grain: one row per person in dim_person_ethnicity.
+    description: >-
+      QAdmissions ethnicity risk group, one row per person in
+      dim_person_ethnicity using their latest recorded ethnicity subcategory.
+      Codes are 1 White or not recorded, 2 Indian, 3 Pakistani, 4 Bangladeshi,
+      5 Other Asian, 6 Black Caribbean, 7 Black African, 8 Chinese and 9 Other
+      Ethnic Group. Not recorded, not stated, refused and recorded-not-known
+      categories share group 1. Unmatched subcategories also default to 1.
+      Mapping definitions are held in qadmissions_eth2016_to_ethrisk9.
     config:
       meta:
         owner:

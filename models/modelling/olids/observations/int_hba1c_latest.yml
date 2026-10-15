@@ -1,36 +1,14 @@
 models:
   - name: int_hba1c_latest
-    description: 'Intermediate: Latest HbA1c Observations - Most recent valid HbA1c measurement per person.
-
-      Clinical Logic:
-
-      • Provides current glycaemic control status for diabetes management
-
-      • Supports diabetes care decision-making and QOF reporting
-
-      • Enables current diabetes control assessment and treatment planning
-
-
-      Data Granularity:
-
-      • One row per person with their most recent valid HbA1c
-
-      • Includes only patients with valid HbA1c measurements
-
-      • Supports both IFCC and DCCT measurement formats
-
-
-      Key Features:
-
-      • Latest valid HbA1c identification with measurement type preservation
-
-      • Clinical diabetes control categorisation for care pathway management
-
-      • QOF target achievement flags for quality indicator reporting
-
-      • Diabetes diagnostic indicators for clinical decision support
-      Validity is filtered before selecting the latest result. Observation ID descending
-      breaks ties on the clinical effective date.'
+    description: >-
+      Latest valid HbA1c result from IFCCHBAM_COD or DCCTHBA1C_COD, one row
+      per person with a qualifying result dated no later than the build date.
+      Includes inactive and deceased people, with no age restriction. Validity
+      ranges are 20-200 mmol/mol for IFCC results and 3-20% for DCCT results.
+      Both standardised formats are retained. The diabetes-range flag uses
+      IFCC at least 48 mmol/mol and the QOF target flag uses IFCC at most 58
+      mmol/mol; these flags do not establish a diabetes diagnosis or register
+      eligibility. Observation ID breaks ties on the clinical date.
 
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:

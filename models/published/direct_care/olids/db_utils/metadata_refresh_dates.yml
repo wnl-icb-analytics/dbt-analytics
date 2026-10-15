@@ -1,14 +1,13 @@
 models:
   - name: metadata_refresh_dates
-    description: |
-      Centralised metadata tracking for OLIDS data freshness and table update timestamps.
-
-      Provides two types of metrics:
-      - **Global data refresh**: Consensus date where ≥150 practices have uploaded data (excludes future dates and filters out stale practices)
-      - **Table refresh**: Last modified timestamps for all OLIDS tables in REPORTING and PUBLISHED_REPORTING databases
-
-      Table timestamps are retrieved from Snowflake's INFORMATION_SCHEMA, ensuring accuracy regardless of partial dbt runs.
-
+    description: >-
+      OLIDS freshness dates and warehouse table metadata. One row represents either the
+      global data-refresh metric or one base table identified by database, schema and table
+      name. The global metric is the latest observation date before the build date and
+      within the preceding three months represented at least 150 practices in dim_practice.
+      Table rows cover all base tables in the direct-care published database and OLIDS_*
+      schemas in reporting and modelling. last_altered_timestamp is Snowflake object
+      metadata and does not prove when source records arrived.
     config:
       meta:
         owner:

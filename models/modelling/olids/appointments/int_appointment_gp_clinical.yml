@@ -1,43 +1,23 @@
 version: 2
 models:
   - name: int_appointment_gp_clinical
-    description: |
-      Cleaned OLIDS GP appointments. Grain: one row per appointment.
-
-      Scope: Care Related Encounters with a clinical practitioner.
-      Excludes future/available slots, admin practitioner roles, and
-      non-Care-Related-Encounter contexts.
-
-      Two role groupings (sourced from the sds_role_groups seed):
-      * practitioner_role_group — analytical grouping preserving ARRS
-        workforce signal (GP, Nurse, Pharmacist, HCA, PA, Paramedic,
-        Physio, Care Navigator, etc.)
-      * sds_role_group — official NHS Digital 4-group taxonomy for
-        alignment with NHS Digital Appointments in General Practice
-
-      Two cost columns (sourced from pssru_unit_costs_2025 seed,
-      adjusted via uk_cost_indices seed):
-      * appointment_cost_gbp_base_prices — always in PSSRU 2024/25
-        real-terms prices, use for cross-year comparisons
-      * appointment_cost_gbp_nominal — in the appointment's own fiscal
-        year prices (GDP deflator adjusted), use for contemporaneous
-        reporting. NULL for pre-2000 fiscal years (outside seed
-        coverage — intentional data quality signal).
-
-      cost_is_proxy flags rows where the unit cost is borrowed from
-      another role's PSSRU rate (ARRS roles without a direct PSSRU
-      figure). Filter WHERE cost_is_proxy = FALSE to restrict to direct
-      PSSRU figures only.
-
-      For full cost methodology and per-role rationale see the
-      pssru_unit_costs_2025 and uk_cost_indices seed descriptions.
-
-      All reporting models (fct_gp_* and sem_olids_appointments) build
-      from int_appointment_gp_clinical_recent rather than this model
-      directly. The recent view restricts to the last 60 months of
-      data to match OLIDS retention. Use this unfiltered model only
-      for ad-hoc analyses that need pre-5-year history (with the
-      OLIDS retention caveat in mind — leavers are silently truncated).
+    description: >-
+      OLIDS GP clinical appointments, one row per appointment recorded as a
+      Care Related Encounter with a clinical practitioner. Available slots
+      with status 0, administrative practitioner roles and other encounter
+      contexts are excluded. Other retained statuses and dates remain
+      included, including future-dated appointments. Practitioner_role_group
+      distinguishes the analytical workforce roles, including ARRS roles;
+      sds_role_group uses the NHS Digital four-group classification.
+      Appointment costs use PSSRU 2024/25 prices in
+      appointment_cost_gbp_base_prices and GDP-deflator-adjusted prices for
+      the appointment fiscal year in appointment_cost_gbp_nominal. Nominal
+      costs are null before fiscal year 2000. cost_is_proxy identifies roles
+      priced with another role's rate. Full retained history is available, but
+      OLIDS retains only about five years for people who left or died, so
+      earlier population comparisons are biased towards current registrants.
+      int_appointment_gp_clinical_recent provides the 60-month reporting
+      window.
     config:
       meta:
         owner:
@@ -278,26 +258,16 @@ models:
         description: Practice ODS code (e.g. E85012)
 
   - name: int_appointment_gp_clinical_recent
-    description: |
-      Recent-window view over int_appointment_gp_clinical. Same grain
-      (one row per appointment), same columns, restricted to the
-      rolling last 60 months of data anchored to MAX(start_date).
-
-      Why this view exists: OLIDS only retains records for patients
-      who left or died within the last ~5 years. Anything older is
-      silently truncated to currently-registered patients only,
-      systematically biasing historical reporting (per-capita cost
-      drifts down, DNA rate biased toward stayers, workforce mix
-      tilts). Restricting reporting to a 5-year window matching OLIDS
-      retention keeps the population denominator honest.
-
-      All reporting models in models/reporting/olids/gp_access/ and
-      models/reporting/olids/gp_costs/ build from this view rather
-      than the unfiltered int_appointment_gp_clinical. The semantic view
-      sem_olids_appointments also references this view.
-
-      Materialised as a view (zero storage cost) — Snowflake pushes
-      the date filter down to the underlying clustered table.
+    description: >-
+      OLIDS GP clinical appointments in the latest 60 calendar months
+      represented by int_appointment_gp_clinical. One row per retained
+      appointment, with the same clinical-context, practitioner-role and
+      status selection as that model. The window includes the month containing
+      the maximum recorded start_date and the preceding 59 months; it is not
+      anchored to the current date. No upper date cap is applied. OLIDS
+      retains only about five years for people who left or died, so this
+      reporting window limits the bias towards current registrants in older
+      history.
     config:
       meta:
         owner:

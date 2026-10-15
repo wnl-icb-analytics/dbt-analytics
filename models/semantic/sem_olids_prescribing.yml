@@ -2,38 +2,21 @@ version: 2
 
 models:
   - name: sem_olids_prescribing
-    description: |
-      OLIDS Prescribing semantic view. OLIDS is the One London Integrated
-      Data Set — primary care data from system suppliers, unified by the
-      One London team.
-
-      All medication orders (issues) enriched with BNF classification,
-      prescription type (acute/repeat from medication statements),
-      details for the practice that issued the order (practice_code,
-      practice_name, pcn_code, pcn_name and borough_registered),
-      and core patient demographics. Condition, vulnerability, and
-      polypharmacy cohorts are NOT denormalised here — they come from
-      sem_olids_population via person_id CTE joins.
-
-      Pre-defined medication category tables are linked for key drug
-      classes: statins, antihypertensives, ACE inhibitors, ARBs,
-      beta-blockers, anticoagulants, antiplatelets, antipsychotics,
-      antidepressants, lithium, epilepsy drugs, valproate, diabetes
-      medications, inhaled corticosteroids, antibacterials, NSAIDs,
-      and PPIs.
-
-      BNF codes are mapped from SNOMED via stg_reference_bnf_latest. The
-      chatbot has a BNF lookup tool to resolve drug class names to BNF codes
-      for filtering.
-
-      Grain: one row per medication order (issue).
-
-      Exposes person_id as a pseudonymised linkage dimension for cross-view
-      cohort intersection (CTE joins to the other sem_olids_* views);
-      aggregate-only output.
-
-      Core table: int_medication_order_bnf (view, not materialised).
-
+    description: >-
+      OLIDS medication issues, one row per medication order dated from 1
+      January 1990 to the build date and linked to a patient-person mapping.
+      Includes inactive and deceased people. Each issue has BNF classification
+      where available, prescription authorisation type, quantity, dose,
+      duration and the issuing practice's current PCN and borough details.
+      Patient demographics are current, rather than as recorded at issue time.
+      Linked drug-class records identify statins, antihypertensives,
+      anticoagulants, antiplatelets, antipsychotics, antidepressants, lithium,
+      epilepsy medicines, valproate, diabetes medicines, inhaled
+      corticosteroids, antibacterials, NSAIDs and PPIs. BNF codes support
+      filtering by class. An order does not confirm that a medicine was taken
+      or establish its clinical indication. Condition and vulnerability
+      cohorts are available through sem_olids_population. person_id supports
+      cohort linkage; final results must be aggregate-only.
     config:
       materialized: semantic_view
       schema: SEMANTIC

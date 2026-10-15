@@ -1,13 +1,14 @@
 models:
   - name: fct_person_efi2
-    description: >
-      Reporting-layer eFI2 score and frailty category per person (in-house
-      int_efi2_scores joined to dim_person) — a computed per-person frailty measure, so
-      fct_. Native replacement for the retired AIC import stg_aic_int_efi2_scores, which
-      it was built in parallel to. See int_efi2_scores for the documented divergences
-      from the AIC-published score. Renamed from dim_person_efi2 (was a dim_; it is a measure).
-      The scoring population includes all living OLIDS people aged at least 65,
-      without a GP registration filter, then requires a link to dim_person.
+    description: >-
+      Electronic Frailty Index 2 (eFI2) score and category at the build date, one row per
+      living OLIDS person aged at least 65 with a mapped patient record. No
+      current-registration or opt-out filter is applied. The in-house score follows
+      int_efi2_scores, including its deficit definitions, missing-data defaults and
+      documented differences from the retired AIC score. Categories are ROBUST below 0.0857,
+      MILD FRAILTY from 0.0857 to below 0.1624, MODERATE FRAILTY from 0.1624 to 0.2391
+      inclusive, and SEVERE FRAILTY above 0.2391. Secondary-use consumers must apply
+      dim_person_secondary_use_allowed.
     config:
       meta:
         owner:

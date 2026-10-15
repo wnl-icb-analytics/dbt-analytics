@@ -1,18 +1,17 @@
 models:
   - name: int_blood_pressure_observations_base
-    description: |
-      Base blood pressure observations with row classification flags.
-      Incremental model using lds_start_datetime to handle late-arriving data.
-
-      Shared foundation for:
-      - int_blood_pressure_all (valid, paired BP events)
-      - dq_blood_pressure_issues (data quality issues)
-
-      Features:
-      - Incremental: only processes new observations since last run
-      - Future date handling: uses date_recorded as fallback if clinical_effective_date > today
-      - Row classification: identifies systolic/diastolic and clinical context (Home BP, ABPM)
-      - Uses six BP cluster types: BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, ABPM_COD, HOMEBP_COD
+    description: >-
+      Blood pressure observation evidence from BP_COD, SYSBP_COD, DIASBP_COD,
+      HOMEAMBBP_COD, ABPM_COD and HOMEBP_COD. One row per observation and
+      matching cluster, with a non-null person and result value. Includes
+      inactive and deceased people, without an age or reporting-period
+      restriction. Systolic, diastolic, home and ambulatory flags describe the
+      coded evidence; values are labelled mmHg without a plausibility or
+      complete-pair restriction. Parent observation identifiers link readings
+      where supplied. Effective dates use the recorded date when the original
+      clinical date is later than recording, and 1900-01-01 when the clinical
+      date is missing. Original dates and correction flags remain available.
+      Future effective dates are retained here.
     config:
       meta:
         owner:

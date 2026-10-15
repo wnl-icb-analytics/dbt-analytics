@@ -1,19 +1,13 @@
 models:
   - name: fct_person_medications_recent
-    description: |
-      Medications prescribed within the last 30 days and last year per person.
-
-      Person-level snapshot of recent medication prescriptions with counts and active ingredient analysis.
-      Includes all medication orders (not just repeat prescriptions) from the last 30 days and last year, and separates current repeat medicines from non-repeat medicines.
-
-      Active Ingredient Analysis:
-      - Uses VTM (Virtual Therapeutic Moiety) from BNF/dm+d to identify unique active ingredients
-      - VTM represents the active ingredient/therapeutic moiety in the UK dm+d classification system
-      - Medications without VTM mapping (NULL vtm_code) are excluded from active ingredient counts
-      - Unique medication count uses medication names (BNF name or original medication name)
-
-      Grain: One row per person with medications in last 30 days or last year
-
+    description: >-
+      Recent prescribing, one row per person with a named medication order in the 365 days
+      ending on the build date. Includes repeat and non-repeat orders, with counts and
+      medicine lists for the last 30 and 365 days. Distinct medicines use their BNF name
+      where available, otherwise the recorded medication name. Active-ingredient counts use
+      dm+d Virtual Therapeutic Moiety (VTM) mappings and exclude medicines without a VTM
+      code. Repeat status follows int_medication_orders_repeat_current. No
+      current-registration restriction is applied.
     config:
       meta:
         owner:

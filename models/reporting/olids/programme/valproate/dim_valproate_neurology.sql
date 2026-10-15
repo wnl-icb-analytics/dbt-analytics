@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description='Aggregates neurology-related events for each person, providing analytics-ready person-level neurology event status and history.') }}
+    description="Neurology evidence defined for the valproate programme, one row per person with an observation in the NEUROLOGY category of stg_reference_valproate_prog_codes. Contains earliest and latest event dates and the recorded identifiers and codes. No date, current-registration or recent-valproate restriction is applied.") }}
 
 WITH person_level_neurology_aggregation AS (
     SELECT

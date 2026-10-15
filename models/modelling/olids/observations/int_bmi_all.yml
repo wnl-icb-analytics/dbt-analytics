@@ -1,20 +1,16 @@
 models:
   - name: int_bmi_all
-    description: 'BMI measurements for adults aged 18+ with ethnicity-adjusted categorisation per NICE NG246.
-
-      One row per BMI observation for adults aged 18+ using BMIVAL_COD cluster with plausible range filtering (10-150). Uses ethnicity-adjusted BMI thresholds for cardiometabolic risk populations (South Asian, Chinese, other Asian, Middle Eastern, Black African, African-Caribbean). Avoids calculating BMI on dates where recorded BMI already exists.
-
-      Key Features:
-
-      • Age restriction: Adults 18+ only (paediatric BMI requires age/gender-specific percentiles). Heights and weights recorded under age 18 are excluded at source so they never feed calculated BMI.
-
-      • Ethnicity-adjusted BMI categories per NICE NG246 (lower thresholds for at-risk populations)
-
-      • Prevents BMI over-calculation by excluding dates with existing recorded BMI
-
-      • Combines recorded and calculated BMI observations
-
-      Purpose: Provides clinically appropriate adult BMI categorisation accounting for ethnic differences in cardiometabolic risk.'
+    description: >-
+      Recorded and calculated BMI measurements for people currently aged 18 or
+      over, including inactive and deceased people. One row per recorded
+      BMIVAL_COD observation or qualifying weight observation used to
+      calculate BMI, dated no later than the build date. Calculated BMI uses
+      the most recent prior height and is included only on dates without a
+      recorded BMI. Both height and weight must have been recorded at age 18
+      or over. Values outside 10-150 kg/m2 remain present with is_valid_bmi
+      false. Categories follow NICE NG246, with lower overweight and obesity
+      thresholds for South Asian, Chinese, other Asian, Middle Eastern, Black
+      African and African-Caribbean ethnicities.
     config:
       meta:
         owner:

@@ -1,6 +1,6 @@
 {{
     config(
-        description="Staging layer: SNOMED CT to ICD-10 cross-map reference data from TRUD. Cleans and standardizes column names from the raw source."
+        description="SNOMED CT to ICD-10 cross-map entries from the latest retained NHS TRUD release, one row per supplied mapping entry with its map group, priority, rule and advice."
     )
 }}
 

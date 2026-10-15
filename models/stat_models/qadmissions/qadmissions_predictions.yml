@@ -2,34 +2,19 @@ version: 2
 
 models:
   - name: qadmissions_predictions
-    description: >
-      QAdmissions 1-year emergency admission risk scores from the latest
-      build, computed by calling the model registered in the Snowflake Model
-      Registry from SQL (qadmissions_predict macro). The model is a
-      reimplementation of ClinRisk QAdmissions 2013 v4.1, registered from the
-      qadmission_review repository. Monthly history:
-      qadmissions_predictions_history.
-
-      One row per person in qadmissions_input_features, scored on the build
-      date; the population is that model's (active, non-deceased, aged 18-100,
-      recorded sex male or female). A row the model rejects, for example
-      because bmi (recorded or imputed) is outside 20-40 or town is NULL or
-      out of range, is kept with is_scored false and the model's error text.
-      The 32 input columns are copied from qadmissions_input_features as
-      scored; see that model for their meaning. A missing BMI is imputed
-      before scoring: bmi_recorded, is_bmi_imputed, bmi_imputation_group and
-      bmi_imputation_method record how bmi was filled in.
-
-      Built by the monthly full refresh on the 1st, and by any deploy that
-      changes this model or one upstream of it, so scored_at can be later than
-      the latest month in qadmissions_predictions_history.
-
-      Failure guard: the not_null_proportion test on score_percent fails when
-      fewer than the share set by the qadmissions_min_scored_share variable
-      (default 0.5) are scored, and dbt build then skips
-      qadmissions_predictions_history, so the previous months stand. If it
-      fails, check the scoring_errors counts for a new cause. The
-      qadmissions_predict_canary test checks the model call itself.
+    description: >-
+      QAdmissions one-year emergency-admission risk scores from the latest
+      build, using the registered reimplementation of ClinRisk QAdmissions
+      2013 v4.1. One row per active, non-deceased person aged 18-100 with
+      recorded sex male or female in qadmissions_input_features. Each row
+      retains the input values used for scoring. Missing BMI is imputed, with
+      the recorded value and imputation method retained separately. Rejected
+      inputs remain present with is_scored false and error text, including BMI
+      outside 20-40 or missing or out-of-range town values. scored_at is the
+      actual build time and can be later than the latest calendar month in
+      qadmissions_predictions_history. Monthly history retains its previous
+      rows when fewer than the required share of current inputs receive a
+      score (qadmissions_min_scored_share, default 50%).
     config:
       meta:
         owner:

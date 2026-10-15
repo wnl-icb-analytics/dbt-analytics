@@ -1,20 +1,12 @@
 models:
   - name: dim_person_birth_death
-    description: 'Person vital statistics with birth and death information using statistical midpoint methodology.
-
-      Key Features:
-
-      • One row per person with recorded birth year and month
-
-      • Statistical midpoint approximation for birth and death dates
-
-      • Includes both living and deceased persons
-
-      • Selects best patient record per person (prioritising those with DOB)
-
-      • Fallback to current registration patient for surrogate key consistency
-
-      Purpose: Foundation for age calculations, demographic analysis, and mortality tracking.'
+    description: >-
+      Birth and death details for people with mapped OLIDS patient records, one row per
+      person. Includes living and deceased people and people without a recorded birth date.
+      Birth dates use the midpoint of the recorded month; death dates and status follow
+      int_patient_deceased_status. A death date earlier than the approximate birth date is
+      cleared and is_deceased is set to false. sk_patient_id comes from the current
+      registration when available, otherwise the selected mapped patient record.
     config:
       meta:
         owner:

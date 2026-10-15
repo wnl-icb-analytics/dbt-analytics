@@ -2,16 +2,12 @@ version: 2
 
 models:
   - name: stg_lpf_allergies
-    description: |
-      Staging layer for local provider flow allergies data.
-      
-      Transformations applied:
-      - Removes deleted records (delete_ind = 'Y')
-      - Removes records with null allergy_id
-      - Deduplicates by taking the latest version of each allergy
-      
-      Source: raw_lpf_allergies (DATA_LAKE.LOCAL_PROVIDER_FLOWS.ALLERGIES)
-
+    description: >-
+      Allergy records from Local Provider Flows, one row per allergy_id with
+      the highest submitted version among non-deleted records. Missing allergy
+      identifiers are excluded. Ingestion timestamp and source file row
+      resolve equal versions. Includes recorded allergens, reactions,
+      severity, status and dates.
     config:
       meta:
         owner:

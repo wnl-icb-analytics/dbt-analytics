@@ -2,36 +2,18 @@ version: 2
 
 models:
   - name: dim_person_status_summary
-    description: |
-      Person Status Summary Dimension
-      ================================
-      
-      Wide dimension table combining all person status flags into a single model
-      with one row per person. Provides a complete picture of each person's
-      vulnerability factors, risk behaviours, and data sharing preferences.
-      
-      **Grain:** One row per person (from dim_person_demographics)
-      
-      **Key Features:**
-      - All status flags default to FALSE/0/'Unknown' for persons without records
-      - Complete population coverage (everyone in dim_person_demographics)
-      - Pre-calculated summary flags for vulnerability and risk
-      
-      **Status Categories:**
-      - Care Home: residential status (care home, nursing home, temporary)
-      - Homeless: homeless codes or registered at CHIP practice
-      - Carer: unpaid carer status and type
-      - Housebound: housebound status
-      - Polypharmacy: medication counts and polypharmacy flags
-      - Alcohol: alcohol status and risk level
-      - Smoking: smoking status and risk level
-      - Pregnancy: currently pregnant
-      - Data Sharing: Type 1 opt-out and secondary use allowed
-      - Looked After Child: LAC status
-      
-      **Use Case:** Join to semantic views for population health analysis
-      with complete vulnerability and risk factor coverage.
-
+    description: >-
+      Recorded care, vulnerability, behavioural and data-sharing statuses for every person
+      in dim_person_demographics, one row per person. Includes inactive and deceased people.
+      Statuses cover care homes, homelessness or CHIP registration, carers, housebound
+      people, polypharmacy, alcohol, smoking, pregnancy and looked-after children. Most
+      missing flags default to false, medication counts to zero, and alcohol and smoking
+      categories to Unknown. These defaults do not establish absence of the condition.
+      is_allowed_secondary_use defaults to true where no matching allow-list record exists
+      and must not replace the dedicated secondary-use allow-list. has_vulnerability_flag
+      covers care home, homelessness or CHIP registration, housebound status and
+      looked-after children. behavioural_risk_count counts current smoking,
+      higher-risk-or-worse alcohol status and ten or more qualifying medicines.
     config:
       meta:
         owner:

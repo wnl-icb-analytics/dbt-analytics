@@ -1,12 +1,14 @@
 models:
   - name: fct_flu_uptake
-    description: 'Flu vaccination uptake fact table focused on core uptake metrics.
-
-      Grain: One row per person per campaign per risk group they qualify for
-
-      Contains: • Eligibility status and reasons • Vaccination status (vaccinated, declined, no record) • Uptake category and timing metrics • Campaign reference dates • LAIV administration tracking
-
-      Purpose: Core uptake facts for flu programme monitoring. Join with dim_person_demographics for demographic analysis.'
+    description: >-
+      Flu vaccination uptake for the reported campaigns, one row per person, campaign,
+      eligible risk group and subcohort. Includes all eligible people and vaccinated people
+      who do not meet an eligibility rule; non-eligible decline-only records are excluded.
+      Population follows int_covid_flu_campaign_population, which requires registration and
+      survival at the selected campaign month. Administration, including LAIV, takes
+      precedence over decline and no record. vaccinated and declined require dates on or
+      after campaign start. People can appear in several risk groups, so count distinct
+      people for headcounts.
     config:
       meta:
         indicator:

@@ -1,18 +1,14 @@
 models:
   - name: dq_bmi_issues
-    description: 'Data quality issues in BMI measurements requiring review or correction.
-
-      Quality Criteria:
-
-      • Valid range: 10-150 BMI (physiologically plausible values)
-
-      • Extreme outliers: <8 or >100 BMI (require clinical validation)
-
-      • Date validation: Missing or future dates
-
-      • Partial paediatric scope: inherits int_bmi_all filtering — HEIGHT and WEIGHT inputs with age_at_event < 18 are excluded from the calculated BMI path, but recorded BMI values (BMIVAL_COD) are not age-filtered at source and paediatric recorded BMI may still appear here
-
-      Purpose: Supports BMI data validation and clinical review of extreme values.'
+    description: >-
+      BMI records with a data-quality issue, one row per retained recorded or calculated BMI
+      record from int_bmi_all. Includes people aged at least 18 in dim_person_age, without
+      an active-registration restriction. Selects BMI below 10 or above 150 kg/m², missing
+      or future dates, or an upstream invalid-BMI flag. Extreme-outlier flags use below 8 or
+      above 100 kg/m² but do not independently select a record. Calculated BMI excludes
+      height or weight recorded before age 18; recorded BMIVAL_COD values have no equivalent
+      age-at-event restriction. Upstream filtering removes missing and future dates from
+      both paths, so those date flags are normally false.
     config:
       meta:
         owner:

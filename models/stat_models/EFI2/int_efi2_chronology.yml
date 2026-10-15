@@ -1,16 +1,14 @@
 models:
   - name: int_efi2_chronology
-    description: >
-      Attaches eFI2 deficit weights and applies the special-case handling (max
-      dementia, latest alcohol, missing BMI/alcohol defaults, polypharmacy bands,
-      latest smoking status), summing to the raw eFI2 score per person. Port of
-      lds-pipelines stg_efi2__chronology. Polypharmacy counts distinct BNF
-      sub-subchapters (level 3 = first 6 chars of the BNF code) among meds in the
-      90 days before end_date, per the eFI2 paper. The deprecated phenolab
-      definition store is removed and no BNF code exclusions are applied (unlike
-      this repo's int_polypharmacy_* pipeline, which scopes to NHSBSA in-scope
-      chapters) - the paper counts across all sub-subchapters. No phenolab
-      dependency remains.
+    description: >-
+      Weighted eFI2 score for the current scoring date, one row per living
+      person aged at least 65 with an applicable weighted deficit.
+      Dementia-related evidence contributes its maximum weight; alcohol and
+      smoking use their latest qualifying evidence. Missing BMI and alcohol
+      evidence carry the defined default weights across the scored population.
+      Polypharmacy counts distinct six-character BNF sub-subchapter prefixes
+      among orders in the 90 days ending on the scoring date, without the
+      chapter exclusions used by int_polypharmacy_* models.
     config:
       meta:
         owner:

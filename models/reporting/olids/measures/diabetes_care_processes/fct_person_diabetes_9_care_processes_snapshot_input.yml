@@ -1,13 +1,13 @@
 models:
   - name: fct_person_diabetes_9_care_processes_snapshot_input
-    description: >
-      Thin snapshot-input projection of fct_person_diabetes_9_care_processes (person_id + the
-      latest measurement dates, the latest HbA1c value, and a date-independent
-      foot_check_qualifies flag) that excludes the CURRENT_DATE()-derived rolling completion
-      columns (care_processes_completed, every *_completed_in_last_12m) so the SCD2 snapshot
-      versions only on genuine changes (a new reading). The rolling 12-month window is
-      re-applied as-at index_date downstream in cltcs_monthly_covariates. Feeds
-      fct_person_diabetes_9_care_processes_snapshot.
+    description: >-
+      Latest diabetes care-process evidence for change-history capture, one row per member
+      of fct_person_diabetes_9_care_processes. Includes dates for the nine care processes,
+      the latest HbA1c value and foot-check qualification. A qualifying foot check covers
+      both feet, allowing for an absent or amputated foot, and is neither declined nor
+      unsuitable. Completion within a rolling 12-month period is not assessed here;
+      consumers assess recency for their analysis date. Historical evidence versions are
+      held in fct_person_diabetes_9_care_processes_snapshot.
     config:
       meta:
         owner:

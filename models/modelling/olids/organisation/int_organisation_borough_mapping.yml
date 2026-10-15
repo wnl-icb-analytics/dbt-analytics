@@ -1,31 +1,17 @@
 models:
   - name: int_organisation_borough_mapping
-    description: 'Organisation borough and legacy sub-ICB mapping for London practices and PCNs.
-
-      Key features:
-
-      • Borough derived from historic CCG relationships in OrganisationDescendent (contractual
-      view of how practices were commissioned through NHSE, not strict geography).
-
-      • One row per practice. Multiple historic CCG paths are resolved by preferring the
-      most recent relationship (active first, then latest end date, then latest start date).
-
-      • Sub-ICB = the live RO98/RO319 sub-ICB location the practice is commissioned
-      through (93C = North Central London, W2U3Z = North West London) — the codes
-      national datasets (SLAM/SUS/EPD) carry. Names curated for the WNL pair.
-
-      • Legacy ICB (pre-merger NCL / NWL system identity) from the
-      sub_icb_to_legacy_icb seed. ODS purged the RO261 parent edges after the
-      2026-04 merger, so the dissolved hierarchy is pinned as static reference
-      data. Non-merged ICBs resolve to themselves.
-
-      • PCN borough from majority member borough; PCN sub-ICB from the PCN''s single
-      commissioner (verified one-to-one).
-
-      • Special handling: Medicus Select Care (Y03103) pinned to Enfield.
-
-      Purpose: single source of truth for borough and legacy sub-ICB context consumed by
-      dim_practice and dim_pcn.'
+    description: >-
+      Borough, PCN and commissioner context for London GP practices with a
+      recorded PCN in the current organisation matrix. One row per practice.
+      The practice borough reflects historic CCG commissioning relationships
+      rather than strict geography. Active relationships take priority,
+      followed by the most recently ended relationship. Medicus Select Care
+      (Y03103) is assigned to Enfield. PCN borough is the majority borough
+      among its member practices. Sub-ICB codes identify the live
+      commissioning location, including 93C for North Central London and W2U3Z
+      for North West London. Legacy ICB codes retain the pre-April 2026
+      identity from sub_icb_to_legacy_icb; non-merged ICBs retain their own
+      identity.
     config:
       meta:
         owner:

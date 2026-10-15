@@ -1,24 +1,18 @@
 models:
   - name: int_blood_pressure_all
-    description: 'Event-based blood pressure consolidation with paired systolic/diastolic values and clinical context identification.
-
-      Key Features:
-
-      • Event-based design: one row per person per date
-
-      • Pairs systolic and diastolic within a single reading via parent_observation_id (not max systolic / max diastolic of the date), avoiding fabricated pairs on multi-reading days
-
-      • Selects one representative reading per date by the lowest-systolic rule (time-of-day is not usable: all observations are stored at midnight/01:00)
-
-      • Identifies clinical context (Home BP, ABPM) of the representative reading
-
-      • Filters invalid readings: requires both systolic and diastolic values with plausible ranges (Systolic: 40-350 mmHg, Diastolic: 20-200 mmHg)
-
-      • Flags hypertensive range (date-level, any reading): ≥140/90 mmHg (clinic) or ≥135/85 mmHg (home/ABPM)
-
-      • Uses six BP cluster types: BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, ABPM_COD, HOMEBP_COD
-
-      Purpose: Provide consolidated blood pressure events for clinical analysis and BP control assessment.'
+    description: >-
+      Blood pressure in mmHg, with one representative paired reading per
+      person and clinical date up to the build date. Includes all people with
+      a complete reading in the ranges 40-350 mmHg systolic and 20-200 mmHg
+      diastolic. The representative reading has the lowest systolic value that
+      day, then the lowest diastolic value. Systolic and diastolic
+      observations share a parent where available; unparented observations
+      form one date-level pair using their maximum values. Home and ambulatory
+      flags describe the representative reading. The hypertensive-range flag
+      covers any qualifying reading that day, using 135/85 mmHg for home or
+      ambulatory readings and 140/90 mmHg for other readings. Evidence comes
+      from BP_COD, SYSBP_COD, DIASBP_COD, HOMEAMBBP_COD, ABPM_COD and
+      HOMEBP_COD.
     config:
       meta:
         owner:

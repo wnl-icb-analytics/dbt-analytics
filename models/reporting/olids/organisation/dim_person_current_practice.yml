@@ -1,20 +1,11 @@
 models:
   - name: dim_person_current_practice
-    description: 'Current practice registration snapshot for each person with registration history and practice context.
-
-      Key Features:
-
-      • One row per person with current/latest practice registration
-
-      • Deduplication logic ensures single row per person via ROW_NUMBER()
-
-      • Practice details including type, postcode, and operational status
-
-      • Registration sequence and timeline for patient mobility analysis
-
-      • Age at registration start for demographic analysis
-
-      Purpose: Supports current state analysis, practice population profiling, and patient registration tracking.'
+    description: >-
+      Current practice registration for each person with a registration marked current in
+      dim_person_historical_practice, one row per person. People with no current
+      registration have no row. Where several registrations are current, the most recently
+      started is selected, with practice identifier as the tie-breaker. Includes practice
+      details, registration dates and available registration-history counts.
 
     config:
       meta:
