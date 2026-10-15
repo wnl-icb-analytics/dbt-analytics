@@ -1,0 +1,86 @@
+models:
+  - name: int_cwt_pathway__geo_flags
+    description: >
+      NCL geographic flag booleans for CWT pathway records. Determines whether a
+      pathway record relates to North Central London (NCL) by residence,
+      registered practice, or organisation codes. Includes checkpoint-specific
+      flags and an overall `ncl_geo_flag__any` for convenience.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns:
+      - name: record_id
+        description: Source record identifier from the `int_cwt_pathway_data_tidy` intermediate table.
+        data_tests:
+          - unique
+          - not_null
+      
+      - name: ncl_geo_flag__residence_at_event
+        description: True when `la_of_residence` is in the NCL borough codes (residence at event).
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+      
+      - name: ncl_geo_flag__registered_at_event
+        description: True when the registered practice is in NCL (determined from the joined practice table).
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+      
+      - name: ncl_geo_flag__trust
+        description: True when any organisation identifier on the pathway maps to an NCL acute trust.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+      
+      - name: ncl_geo_flag__any
+        description: True when any of the residence, registered or trust flags for NCL are True.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: nwl_geo_flag__residence_at_event
+        description: True when `la_of_residence` is in the NWL borough codes (residence at event).
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: nwl_geo_flag__registered_at_event
+        description: True when the registered practice is in NWL (determined from the joined practice table).
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: nwl_geo_flag__trust
+        description: True when any organisation identifier on the pathway maps to an NWL acute trust.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+      - name: nwl_geo_flag__any
+        description: True when any of the residence, registered or trust flags for NWL are True.
+        data_tests:
+          - dbt_expectations.expect_column_max_to_be_between:
+              arguments:
+                min_value: true
+                max_value: true
+
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

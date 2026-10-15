@@ -43,11 +43,11 @@ from selected as s
 left join {{ ref('stg_mhsds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as reason_label
-    on upper(trim(s.restrictive_int_reason::varchar)) = reason_label.code and reason_label.code_set_name = 'restrictive_intervention_reason'
-left join {{ ref('mhsds_domain_code_lookup') }} as patient_review_label
-    on upper(trim(s.restrictive_int_pi_review_held_pat::varchar)) = patient_review_label.code and patient_review_label.code_set_name = 'post_incident_review_held'
-left join {{ ref('mhsds_domain_code_lookup') }} as no_review_label
-    on upper(trim(s.restrictive_int_pi_review_not_held_reas_pat::varchar)) = no_review_label.code and no_review_label.code_set_name = 'post_incident_review_not_held_reason'
-left join {{ ref('mhsds_domain_code_lookup') }} as staff_review_label
-    on upper(trim(s.restrictive_int_pi_review_held_care_pers::varchar)) = staff_review_label.code and staff_review_label.code_set_name = 'post_incident_review_held'
+left join {{ ref('nhs_dd_restrictive_intervention_reason') }} as reason_label
+    on upper(trim(s.restrictive_int_reason::varchar)) = reason_label.code
+left join {{ ref('nhs_dd_restrictive_intervention_review_held_indicator') }} as patient_review_label
+    on upper(trim(s.restrictive_int_pi_review_held_pat::varchar)) = patient_review_label.code
+left join {{ ref('nhs_dd_restrictive_intervention_review_not_held_reason') }} as no_review_label
+    on upper(trim(s.restrictive_int_pi_review_not_held_reas_pat::varchar)) = no_review_label.code
+left join {{ ref('nhs_dd_restrictive_intervention_review_held_indicator') }} as staff_review_label
+    on upper(trim(s.restrictive_int_pi_review_held_care_pers::varchar)) = staff_review_label.code

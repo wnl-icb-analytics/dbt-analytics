@@ -383,13 +383,28 @@ models:
         data_type: varchar
         description: "Human-readable name of the residence geography at the time of attendance."
 
-      - name: assigned_commissioner_code_at_event
+      - name: commissioner_code_at_event
         data_type: varchar
-        description: "Service-agreement commissioner code submitted for the attendance. This is not the ECDS Commissioner Assignment Method field."
+        description: >-
+          Commissioner Assignment Method (CAM) commissioner when supplied;
+          otherwise the service-agreement/DSCRO commissioner. CAM starts in
+          2024, is populated for about three quarters of 2024 records and over
+          95% from 2025, so earlier records use DSCRO.
 
-      - name: assigned_commissioner_name_at_event
+      - name: commissioner_name_at_event
         data_type: varchar
-        description: "Latest dictionary name for the submitted service-agreement commissioner code."
+        description: Latest dictionary name for commissioner_code_at_event.
+
+      - name: commissioner_source_at_event
+        data_type: varchar
+        description: >-
+          CAM when the Commissioner Assignment Method supplied the selected
+          commissioner; otherwise DSCRO when the service-agreement commissioner
+          was used. Null when neither source supplied a commissioner.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [CAM, DSCRO]
 
       - name: age_at_event
         data_type: number
@@ -445,6 +460,15 @@ models:
       - name: lad_at_event
         data_type: varchar
         description: "Patient local authority district at time of event"
+
+      - name: residence_health_borough_name_at_event
+        data_type: varchar
+        description: >-
+          Legacy CCG-based WNL or NCL health borough containing the patient's residence at the
+          attendance. Uses the supplied LSOA 2021 when present. Otherwise it
+          uses the LSOA 2011 only where every mapped 2021 successor belongs to
+          the same health borough. Null means the residence is outside WNL/NCL
+          or no usable LSOA is available.
 
       - name: imd_at_event
         data_type: varchar

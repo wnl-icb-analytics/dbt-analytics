@@ -53,12 +53,12 @@ It controls PIT views only. Override it with `--vars` to evaluate a QOF year-end
 ### Code clusters
 
 `get_observations` and `get_medication_orders` resolve cluster membership through `stg_reference_combined_codesets`,
-which reads `DATA_LAKE__NCL.TERMINOLOGY.COMBINED_CODESETS`. Register clusters come from three sources:
+which reads `REFERENCE.TERMINOLOGY.COMBINED_CODESETS`. Register clusters come from three sources:
 
 | Source | Clusters | Updated by |
 |---|---|---|
 | `PCD` | All register diagnosis, resolution and supporting observation clusters not listed below | NHS England Primary Care Domain refset release, loaded outside this repo |
-| `ECL_CACHE` | QOF drug clusters (`ASTTRT_COD`, `EPILDRUG_COD`, obesity2's `STAT_COD`, `EZETIMIBE_COD`, `BEMPACID_COD`, `INCLISIRAN_COD`, `PCSK9I_COD`), plus local clusters `LIT_COD`, `HYPOTHY_COD`, `MASLD_DX_CODES`, `OA_COD` | ECL definitions in `DATA_LAKE__NCL.TERMINOLOGY.ECL_CLUSTERS`, refreshed weekly with `REFRESH_ECL_CLUSTER` |
+| `ECL_CACHE` | QOF drug clusters (`ASTTRT_COD`, `EPILDRUG_COD`, obesity2's `STAT_COD`, `EZETIMIBE_COD`, `BEMPACID_COD`, `INCLISIRAN_COD`, `PCSK9I_COD`), plus local clusters `LIT_COD`, `HYPOTHY_COD`, `MASLD_DX_CODES`, `OA_COD` | ECL definitions in `APPLICATIONS.SNOMED_CLUSTER_MANAGER.ECL_CLUSTERS`, refreshed weekly with `REFRESH_ECL_CLUSTER` |
 | `LTC_LCS` | `SYSBP_COD`, `DIASBP_COD` (hypertension BP staging only) | LTC LCS value sets |
 
 The PCD load does not include QOF's dm+d drug refsets, so each QOF drug cluster is an ECL cache of its v51 refset

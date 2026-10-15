@@ -53,7 +53,7 @@ latest_bp as (
         diastolic_value,
         coalesce(is_home_bp_event or is_abpm_bp_event, false) as is_home_or_abpm
     from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+    where clinical_effective_date > dateadd(month, -12, current_date())
 ),
 
 -- PG2a exclusion: latest reading controlled at stage 2
@@ -92,7 +92,7 @@ pg2b_chd as (
     from ({{ get_ltc_lcs_observations("priority_group_2b_icb_v3_vs4") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
 ),
 
 -- PG2b: Stroke/TIA (episode type not Review or Ended)
@@ -101,7 +101,7 @@ pg2b_stroke_tia as (
     from ({{ get_ltc_lcs_observations("priority_group_2b_icb_v3_vs5, priority_group_2b_icb_v3_vs6") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
 ),
 
 -- PG2b: PAD (episode type not Review or Ended)
@@ -110,7 +110,7 @@ pg2b_pad as (
     from ({{ get_ltc_lcs_observations("priority_group_2b_icb_v3_vs7") }}) o
     left join {{ ref('stg_olids_enriched_concept_map') }} ecm
         on o.episodicity_source_concept_id = ecm.source_concept_id
-    where ecm.source_display not in ('Review', 'End') or ecm.source_display is null
+    where ecm.source_display not in ('Review', 'Ended') or ecm.source_display is null
 ),
 
 -- PG2b: CKD

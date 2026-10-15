@@ -16,11 +16,13 @@ treatment_score as (
     select sk_patient_id,
         score_treatment
     from {{ ref('cltcs_score_treatment') }}
+    where is_applicable_rule = TRUE
 ),
 frailty_score as (
     select sk_patient_id,
         score_frailty
     from {{ ref('cltcs_score_frailty') }}
+    where is_applicable_rule = TRUE
 ),
 
 final_score as (

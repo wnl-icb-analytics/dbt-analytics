@@ -1,11 +1,14 @@
 models:
   - name: fct_cervical_screening_status
-    description: 'Cervical screening programme status for eligible females aged 25-64
-      years only.
-
-      Simplified person-level view focusing on core programme monitoring with screening
-      intervals, compliance status and coverage metrics. Only includes women within
-      the eligible screening age range.'
+    description: >-
+      Cervical screening programme status for women aged 25 to 64, one row per person,
+      assessed on the build date. Includes inactive and deceased people. Status follows
+      the QOF v51 CS005/CS006 rule order: cervix removal (NOCX_COD) at any time, then
+      completed screening (SMEAR_COD) after the date 42 months (to age 49) or 66 months
+      (from 50) before the build date, then unsuitability (CSPU_COD) in the same window,
+      then current pregnancy. Pregnancy differs from QOF: it applies at all ages and uses
+      fct_person_pregnancy_status (code in last 9 months, no later delivery), whereas
+      QOF CS005 counts any pregnancy code in 12 months and CS006 has no pregnancy rule.
     config:
       meta:
         owner:
@@ -13,20 +16,27 @@ models:
     columns:
       - name: person_id
         description: 'Unique identifier for the person'
-        tests:
+        data_tests:
           - not_null
           - unique
       - name: current_age
         description: 'Current age of the person in years'
       - name: is_screening_eligible
-        description: 'Flag indicating if person is eligible for screening (Female,
-          age 25-64)'
+        description: 'Eligible for cervical screening: female, aged 25-64 and no complete
+          cervix removal'
       - name: screening_interval_years
-        description: 'Target screening interval in years based on age (3 years for
-          25-49, 5 years for 50-64)'
+        description: 'Screening interval in years: 3.5 at ages 25-49, 5.5 at 50-64'
       - name: programme_status
-        description: 'Overall programme compliance status (Up to Date, Overdue, Never
-          Screened, Unsuitable)'
+        description: >-
+          Programme status, first matching rule: Cervix Removed (any NOCX_COD record);
+          Up to Date (completed screening within the interval); Unsuitable (CSPU_COD
+          within the interval); Pregnant (currently pregnant); Never Screened; Overdue.
+          Completed screening within the interval outranks unsuitability and pregnancy.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Cervix Removed', 'Up to Date', 'Unsuitable', 'Pregnant', 'Never Screened', 'Overdue']
       - name: latest_screening_type
         description: 'Type of the most recent screening observation'
       - name: latest_screening_date
@@ -34,9 +44,15 @@ models:
       - name: latest_completed_date
         description: 'Date of the most recent completed screening (SMEAR_COD)'
       - name: next_screening_due_date
-        description: 'Calculated next screening due date based on interval'
+        description: 'Latest completed screening plus the QOF window (42 or 66 months); when the person leaves Up to Date, not a clinical recall date. Null without a completed screening or with cervix removal'
       - name: days_overdue
-        description: 'Number of days overdue for screening (null if not overdue)'
+        description: 'Days past next_screening_due_date; populated only when programme_status is Overdue'
+      - name: latest_unsuitable_date
+        description: 'Latest unsuitability record (CSPU_COD or cervix removal NOCX_COD); null when none'
+      - name: first_cervix_removal_date
+        description: 'First complete cervix removal record (NOCX_COD); null when none'
+      - name: is_currently_pregnant
+        description: 'Currently pregnant per fct_person_pregnancy_status: pregnancy code in the last 9 months with no later delivery or outcome code'
       - name: never_screened
         description: 'Flag indicating person has never had a completed screening'
       - name: latest_is_completed
@@ -50,7 +66,7 @@ models:
       - name: total_completed_screenings
         description: 'Total count of completed screening observations'
       - name: total_unsuitable_records
-        description: 'Total count of unsuitable status records'
+        description: 'Total count of unsuitable records, including cervix removal'
       - name: total_declined_records
         description: 'Total count of declined screening records'
       - name: total_non_response_records

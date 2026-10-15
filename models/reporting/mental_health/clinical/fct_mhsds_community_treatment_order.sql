@@ -38,5 +38,5 @@ from selected as s
 left join {{ ref('stg_mhsds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as reason_label
-    on upper(trim(s.comm_treat_ord_end_reason::varchar)) = reason_label.code and reason_label.code_set_name = 'community_treatment_order_end_reason'
+left join {{ ref('nhs_dd_community_treatment_order_end_reason') }} as reason_label
+    on upper(trim(s.comm_treat_ord_end_reason::varchar)) = reason_label.code

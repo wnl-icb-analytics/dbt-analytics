@@ -1,0 +1,28 @@
+models:
+  - name: cltcs_ltc_lcs_moc_snapshot_input
+    description: >-
+      MoC snapshot input, one row per adult MoC base member (EMIS GROUP1-4 parent). Captures completed-stage label
+      and observation-based work-list status for C-LTCS matching.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    columns:
+      - name: person_id
+        description: "Unique person identifier; one row per person (snapshot unique_key)."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: moc_stage_completed_label
+        description: >-
+          Highest completed adult stage, with MoC declined when a decline supplies completion. Annual Review or Desktop Review
+          for CYP evidence; Not started if absent.
+
+      - name: moc_pathway_status
+        description: >-
+          Work-list pending takes precedence, then Declined (latest E is D), Cycle complete, or No action identified. Based
+          on observations; future diary lists are unavailable.
+
+      - name: table_refresh_date
+        description: "Timestamp the view was read; the snapshot's updated_at column."

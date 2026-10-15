@@ -45,6 +45,7 @@ WITH pregnancy_aggregated AS (
             END
         ) AS all_preg_source_cluster_ids
     FROM {{ ref('int_pregnancy_observations_all') }}
+    WHERE clinical_effective_date <= CURRENT_DATE() -- No future dates
     GROUP BY person_id
 ),
 
