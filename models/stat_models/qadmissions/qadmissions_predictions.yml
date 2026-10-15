@@ -13,10 +13,12 @@ models:
       One row per person in qadmissions_input_features, scored on the build
       date; the population is that model's (active, non-deceased, aged 18-100,
       recorded sex male or female). A row the model rejects, for example
-      because bmi or alcohol_cat6 is NULL or town is out of range, is kept
-      with is_scored false and the model's error text. The 32 input columns
-      are copied from qadmissions_input_features as scored; see that model
-      for their meaning.
+      because bmi (recorded or imputed) is outside 20-40 or town is NULL or
+      out of range, is kept with is_scored false and the model's error text.
+      The 32 input columns are copied from qadmissions_input_features as
+      scored; see that model for their meaning. A missing BMI is imputed
+      before scoring: bmi_recorded, is_bmi_imputed, bmi_imputation_group and
+      bmi_imputation_method record how bmi was filled in.
 
       Built by the monthly full refresh on the 1st, and by any deploy that
       changes this model or one upstream of it, so scored_at can be later than
@@ -87,3 +89,24 @@ models:
           The model's reasons for rejecting the row, separated by semicolons, for
           example "error: bmi must be in range (20.0,40.0)". NULL when is_scored
           is TRUE.
+
+      - name: bmi_recorded
+        data_type: float
+        description: "The person's latest valid recorded BMI (kg/m^2), from qadmissions_input_features. NULL when they have none and bmi was imputed."
+
+      - name: is_bmi_imputed
+        data_type: boolean
+        description: "TRUE when the bmi that was scored is imputed, because the person had no recorded BMI."
+
+      - name: bmi_imputation_group
+        data_type: varchar
+        description: "The group whose mean BMI was imputed: sex_age_ethnicity, or sex_age or sex when the finer group had fewer than 100 recorded BMIs. NULL when bmi is recorded."
+
+      - name: bmi_imputation_method
+        data_type: varchar
+        description: >
+          How a missing BMI was imputed for this run:
+          mean_sex_age_decade_ethnicity_category, or none when imputation was
+          switched off (var qadmissions_impute_bmi). In
+          qadmissions_predictions_history, months scored before imputation
+          was added hold NULL in this and the three columns above.
