@@ -9,7 +9,7 @@ with cwt_valid_records as (
 )
 
 select
-    cwt_data.record_id,
+    cwt.record_id,
 
     --Date
     date__fds_pathway_end_date as performance__date_full,
