@@ -75,6 +75,12 @@
 --   ethrisk   disagreements. Any difference here is a bug.
 --   age       Live is age today, history is age at the month-end. Only
 --             birthdays in between differ.
+--   bmi       bmi_recorded behaves like the other as-at features: it differs
+--             only for BMIs dated or entered after the month-end. bmi and
+--             is_bmi_imputed differ for those people too. The imputed values
+--             can also differ a little for people without a BMI, because each
+--             model's group means come from its own population (today's
+--             against the month-end's) and its own age decades.
 
 {%- set boolean_features = [
     'b_af', 'b_ccf', 'b_anycancer', 'b_asthmacopd', 'b_epilepsy', 'b_renal',
@@ -82,10 +88,11 @@
     'b_anticoagulant', 'b_antidepressant', 'b_antipsychotic',
     'b_corticosteroids', 'b_nsaid',
     'c_hb', 'high_lft', 'high_platelet',
-    'b_falls', 'b_malabsorption', 'b_vte', 'b_liverpancreas'
+    'b_falls', 'b_malabsorption', 'b_vte', 'b_liverpancreas',
+    'is_bmi_imputed'
 ] -%}
 {%- set categorical_features = ['sex', 'smoke_cat', 'hes_admitprior_cat', 'alcohol_cat6', 'ethrisk'] -%}
-{%- set numeric_features = ['age', 'bmi', 'town'] %}
+{%- set numeric_features = ['age', 'bmi', 'bmi_recorded', 'town'] %}
 
 WITH check_date AS (
     SELECT MAX(end_date) AS check_date
