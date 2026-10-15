@@ -76,8 +76,11 @@
 --   age       Live is age today, history is age at the month-end. Only
 --             birthdays in between differ.
 --   bmi       bmi_recorded behaves like the other as-at features: it differs
---             only for BMIs dated or entered after the month-end. bmi and
---             is_bmi_imputed differ for those people too. The imputed values
+--             only for BMIs dated or entered after the month-end. bmi,
+--             is_bmi_imputed and bmi_imputation_group (NULL, shown as
+--             "(null)", when bmi is recorded) differ for those people too.
+--             The imputation group can also differ when a group sits near the
+--             100-BMI minimum in one model but not the other. The imputed values
 --             can also differ a little for people without a BMI, because each
 --             model's group means come from its own population (today's
 --             against the month-end's) and its own age decades.
@@ -91,7 +94,7 @@
     'b_falls', 'b_malabsorption', 'b_vte', 'b_liverpancreas',
     'is_bmi_imputed'
 ] -%}
-{%- set categorical_features = ['sex', 'smoke_cat', 'hes_admitprior_cat', 'alcohol_cat6', 'ethrisk'] -%}
+{%- set categorical_features = ['sex', 'smoke_cat', 'hes_admitprior_cat', 'alcohol_cat6', 'ethrisk', 'bmi_imputation_group'] -%}
 {%- set numeric_features = ['age', 'bmi', 'bmi_recorded', 'town'] %}
 
 WITH check_date AS (
