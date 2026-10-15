@@ -1,0 +1,48 @@
+version: 2
+seeds:
+  - name: iapt_code_group
+    description: >-
+      NHS Talking Therapies (IAPT data set) groupings that UKHFD does not
+      publish, one row per code set and code. Discharge reason and source of
+      referral groups are UKHFD categories from iapt_code_lookup, not rows
+      here. Consultation codes follow NHS England measures M1001 to M1020; v2.0
+      consultation medium codes take the group of the v2.1 mechanism they
+      became, so video is 03 in v2.0 and 11 in v2.1. Talk type (04) is grouped
+      as other. A code with no row here has no group; facts report consultation
+      codes without a row as unknown, as NHS England measure M1009 does. The
+      anxiety_disorder_specific_measure rows map each I101D90 token to the
+      SNOMED CT concept of its score, for labelling from iapt_assessment_scale.
+      Maintained by hand from the cited documents.
+    config:
+      column_types:
+        code_set_name: varchar(40)
+        code: varchar(20)
+        group_code: varchar(20)
+        group_name: varchar(100)
+        source: varchar(200)
+        dataset_version: varchar(20)
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [code_set_name, code]
+    columns:
+      - name: code_set_name
+        description: >-
+          consultation_mechanism (v2.1), consultation_medium_used (v2.0) or
+          anxiety_disorder_specific_measure.
+        data_tests: [not_null]
+      - name: code
+        description: Submitted code, trimmed and upper case, or the I101D90 token for anxiety measures.
+        data_tests: [not_null]
+      - name: group_code
+        description: Group identifier in snake case; for anxiety measures, the SNOMED CT concept of the score.
+        data_tests: [not_null]
+      - name: group_name
+        description: Readable group name; for anxiety measures, the ETOS name of the score item.
+      - name: source
+        description: Document and item or measure defining the group.
+      - name: dataset_version
+        description: IAPT data set versions the code list applies to.

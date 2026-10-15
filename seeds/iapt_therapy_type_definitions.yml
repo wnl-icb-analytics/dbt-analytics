@@ -1,0 +1,43 @@
+version: 2
+seeds:
+  - name: iapt_therapy_type_definitions
+    description: >-
+      NHS Talking Therapies (IAPT data set) therapy types for IDS202 Coded
+      Procedure: one row per SNOMED CT concept that NHS England reports as a
+      national therapy, with its intensity group and v1.5 national code. Most
+      rows come from the "Therapy Types" sheet of the IAPT v2 terminology
+      mapping guidance v3.4. The ETOS v2.1.22 therapy clauses (Complex
+      Derivations row 88, clauses [8]-[10]) also count 228557008 Cognitive and
+      behavioral therapy, added to the CBT count in ETOS v2.1.9 (Change Control
+      rows 392 and 394); it is added with ETOS provenance and takes CBT's v1.5
+      code 50 from that count derivation (IDS101 I101D36). Regenerate with
+      scripts/reference/generate_iapt_therapy_type_seed.py; do not edit by hand.
+      User guidance v1.6.1 p53 also lists 1129481000000107 Behavioural couple
+      therapy, which neither the guidance workbook nor the ETOS derivations
+      include; it is not added.
+    config:
+      column_types:
+        snomed_code: varchar(18)
+        legacy_therapy_type_code: varchar(2)
+    columns:
+      - name: snomed_code
+        description: SNOMED CT concept for the therapy.
+        data_tests: [not_null, unique]
+      - name: source_term
+        description: Term printed in the source. The guidance prints preferred terms; the ETOS prints fully specified names with their semantic tag.
+      - name: therapy_type_category
+        description: Low Intensity, High Intensity or Employment Support. For ETOS rows, clause [10], [9] or [8] respectively.
+      - name: legacy_therapy_type_code
+        description: IAPT v1.5 national therapy type code. Null for concepts new or amended in v2.0, and for ETOS concepts that no count derivation ties to one guidance concept.
+      - name: legacy_therapy_type_description
+        description: IAPT v1.5 national code definition, or the workbook name for a new concept.
+      - name: source_document
+        description: Specification publishing the row, the terminology mapping guidance or the ETOS.
+      - name: source_sheet
+        description: Worksheet in source_document.
+      - name: source_row
+        description: One-based row in source_sheet.
+      - name: source_reference
+        description: ETOS therapy clause listing the concept. Null for guidance rows.
+      - name: legacy_code_source
+        description: ETOS count derivation that counts an ETOS concept with a guidance concept, supplying its legacy code. Null for guidance rows, whose code is on the same row.

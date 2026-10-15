@@ -1,0 +1,39 @@
+version: 2
+models:
+- name: stg_iapt_submission_header
+  description: One NHS Talking Therapies (IAPT data set) submitted file with its IDS000 header, whether accepted or
+    superseded. The single staging interface to the header. Section totals count the rows of the whole file as
+    validated by NHS England; the warehouse feed holds only part of a file for providers outside West and North
+    London, so the totals can exceed the rows retained in staging.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: submission_id
+    description: Unique submission identifier assigned by the submission portal.
+    data_tests:
+    - unique
+    - not_null
+  - name: provider_organisation_code
+    description: Submitting provider ODS code.
+  - name: reporting_period_end_date
+    description: Last day of the reporting month the file covers.
+  - name: unique_month_id
+    description: NHS England month number for the reporting period (month 1 is April 1900). Null when the header
+      value is not a whole number.
+  - name: dataset_version
+    description: IAPT data set version, 2.0 or 2.1; any other value keeps its raw text.
+  - name: file_type
+    description: Primary or Refresh. A Refresh replaces the Primary for the same period.
+  - name: source_file_received_at
+    description: Time the portal received the file.
+  - name: source_file_created_at
+    description: Time the provider created the file.
+  - name: source_loaded_at
+    description: Time the header row was added to the warehouse.
+  - name: file_total_records
+    description: Rows in the whole file across all tables.
+  - name: file_total_ids101
+    description: IDS101 referral rows in the whole file (I000D11). Other file_total_idsNNN columns give the same count
+      for their table, such as IDS201 care contacts and IDS607 activity assessments.
