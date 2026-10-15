@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description='Intermediate table extracting all neurology-related events for each person, using mapped concepts, observation, and valproate program codes (category NEUROLOGY).') }}
+    description="Recorded neurology events identified by the valproate programme code list's NEUROLOGY category. One row per matching observation with a person mapping. There is no restriction to valproate users, sex, age, registration, death or event date; dashboard population restrictions apply downstream.") }}
 
 SELECT
     pp.person_id,

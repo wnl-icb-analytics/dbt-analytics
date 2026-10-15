@@ -1,20 +1,13 @@
 models:
   - name: int_flu_health_social_care_worker
-    description: 'Flu vaccination eligibility for health and social care workers with direct patient contact.
-
-      Key Features:
-
-      • Care setting codes: CAREHOME_COD, NURSEHOME_COD, DOMCARE_COD
-
-      • Age restrictions: 16-64 years (under 65 as over 65s eligible via age-based rule)
-
-      • Latest occurrence in medical history qualifies
-
-      • Focuses on current employment status indicators
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      Purpose: Identify healthcare workers eligible for flu vaccination due to occupational exposure risk.'
+    description: >-
+      Care home, nursing home and domiciliary care worker population for flu vaccination. One row
+      per person and reported campaign, aged at least 16 at the campaign run date and under 65 at
+      its reference date. CAREHOME_COD, NURSEHOME_COD and DOMCARE_COD records through the audit end
+      use the campaign's UKHSA_FLU terminology version. The latest recorded worker category is
+      retained, with category name resolving same-date ties. People in the ATRISK_GROUP clinical
+      groups, severe obesity BMI_GROUP or pregnancy PREG_GROUP are excluded. Overlapping worker
+      categories are not separate denominators here.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

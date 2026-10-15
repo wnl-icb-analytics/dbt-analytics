@@ -1,20 +1,12 @@
 models:
   - name: int_flu_homeless
-    description: 'Flu vaccination eligibility for people in precarious accommodation using residential status logic.
-
-      Key Features:
-
-      • Residential status logic using HOMELESS_COD vs RESIDE_COD comparison
-
-      • Latest residential code must be homeless to qualify
-
-      • Age restriction: minimum 16 years for homeless eligibility
-
-      • Captures current housing status (not historical)
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      Purpose: Identify homeless people eligible for flu vaccination due to precarious housing infection risk.'
+    description: >-
+      Homelessness population for flu vaccination. One row per person and reported campaign, aged at
+      least 16 at the campaign run date. People qualify through a HOMELESS_COD record no earlier
+      than their latest RESIDE_COD residence record, or current living registration at Camden Health
+      Improvement Practice (Y02674). Coded evidence uses the campaign's UKHSA_FLU terminology
+      version and includes records through its audit end date, without a separate homelessness
+      lookback. The practice route uses current registration. There is no upper age limit.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

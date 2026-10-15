@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description='Intermediate table extracting all psychiatry-related events for each person, using mapped concepts, observation, and valproate program codes (category PSYCH).') }}
+    description="Recorded psychiatry events identified by the valproate programme code list's PSYCH category. One row per matching observation with a person mapping. There is no restriction to valproate users, sex, age, registration, death or event date; dashboard population restrictions apply downstream.") }}
 
 SELECT
     pp.person_id,

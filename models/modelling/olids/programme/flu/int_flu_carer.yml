@@ -1,20 +1,12 @@
 models:
   - name: int_flu_carer
-    description: 'Flu vaccination eligibility for carers using carer status logic with exclusion criteria.
-
-      Key Features:
-
-      • Carer status logic using CARER_COD vs NOTCARER_COD comparison
-
-      • Latest carer code must be positive to qualify
-
-      • Age restrictions: 5-64 years (excludes those eligible via other pathways)
-
-      • Exclusion logic for overlapping eligibility groups
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      Purpose: Identify carers eligible for flu vaccination due to caring role infection risk.'
+    description: >-
+      Carer population for flu vaccination. One row per person and reported campaign, aged at least
+      5 at the campaign run date and under 65 at its reference date. The latest CARER_COD date must
+      be later than any NOTCARER_COD date, using records through the audit end and the campaign's
+      UKHSA_FLU terminology version. People in any of the eight ATRISK_GROUP clinical groups, severe
+      obesity BMI_GROUP or pregnancy PREG_GROUP are excluded. Learning disability alone does not
+      exclude a carer.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

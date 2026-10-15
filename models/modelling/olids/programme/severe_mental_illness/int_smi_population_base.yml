@@ -1,10 +1,14 @@
-﻿models:
+models:
   - name: int_smi_population_base
-    description: >
-      Intermediate table holding demographics and core metrics for people in
-      the SMI programme. Programme casefinding retains diagnosis and active
-      lithium routes independently of the diagnosis-only QOF v51 register.
-
+    description: >-
+      Current SMI programme population with demographics, practice, geography and long-term
+      condition flags. One row per currently registered, living person with an SMI diagnosis
+      observation outside the remission code set in int_smi_diagnoses_all, or active lithium
+      treatment. People with a later resolution remain included. Active lithium means an order
+      in the preceding 6 months with no later LITSTP_COD stop record. Evidence is capped at the
+      build date; missing recording dates remain included. has_active_smi_diagnosis
+      distinguishes unresolved diagnoses; lithium-only and resolved-diagnosis members remain
+      included. This programme population is wider than the diagnosis-only QOF SMI register.
     data_tests:
       - cluster_ids_exist:
           arguments:

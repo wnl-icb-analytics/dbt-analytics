@@ -1,21 +1,12 @@
 models:
   - name: int_covid_flu_risk_group_flags
-    description: >
-      Clinical risk group membership per programme, campaign and person, at any age.
-
-      Grain: one row per programme_type, campaign_id and person_id, for people in at
-      least one clinical group.
-
-      The eligibility facts publish clinical groups only where they drive the offer,
-      so a person aged 65 or over with CKD appears there as "Age 65 and Over" only.
-      The UKHSA uptake indicators report each clinical group across every age band.
-      This model reads the clinical intermediates directly, which compute every
-      campaign and every age, and pivots membership to flag columns. The dashboards
-      join it per campaign, so the flags are bounded to that campaign's evidence
-      window and do not carry between seasons or programmes.
-
-      in_clinical_risk_group is the spec ATRISK_GROUP: the eight shared clinical
-      groups, plus learning disability and severe mental illness for COVID only.
+    description: >-
+      COVID and flu clinical risk membership. One row per programme, campaign and person with at
+      least one clinical group, including people outside the age bands in the vaccination offer.
+      Each flag follows that campaign's clinical code sets, evidence windows and minimum ages.
+      in_clinical_risk_group means UKHSA ATRISK_GROUP: eight shared clinical groups, plus learning
+      disability and severe mental illness for COVID. Flu learning disability is retained separately
+      from ATRISK_GROUP. Membership does not by itself confirm vaccination eligibility.
     config:
       meta:
         owner:

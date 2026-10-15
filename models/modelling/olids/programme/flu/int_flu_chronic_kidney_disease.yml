@@ -1,20 +1,12 @@
 models:
   - name: int_flu_chronic_kidney_disease
-    description: 'Flu vaccination eligibility for people with chronic kidney disease using complex staging logic.
-
-      Key Features:
-
-      • CKD pathways: general CKD diagnosis or stage 3-5 codes
-
-      • Stage comparison logic: CKD35_DAT >= CKD15_DAT when both present
-
-      • Age restriction: minimum 6 months for flu vaccination
-
-      • Uses CKD_COD, CKD15_COD (all stages), and CKD35_COD (stages 3-5) clusters
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      Purpose: Identify people eligible for flu vaccination due to chronic kidney disease with staging criteria.'
+    description: >-
+      Flu chronic kidney disease risk group. One row per person and reported campaign, aged at least
+      6 months at the campaign run date. People qualify through any CKD_COD diagnosis, or a latest
+      CKD_35_COD stage 3 to 5 date no earlier than any CKD_15_COD any-stage date. Records must be on
+      or before the campaign audit end date and use its UKHSA_FLU terminology version. The
+      qualifying date is the later of the first direct diagnosis and qualifying stage evidence when
+      both routes apply. There is no upper age limit.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

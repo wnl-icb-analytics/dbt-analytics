@@ -1,20 +1,12 @@
 models:
   - name: int_flu_pregnancy
-    description: 'Flu vaccination eligibility for pregnant women using campaign timing logic.
-
-      Key Features:
-
-      • Two eligibility scenarios: pregnant at campaign start (9 months before) or became pregnant during campaign
-
-      • Campaign timing logic for flu season protection
-
-      • Age restriction: minimum 12 years for pregnancy flu vaccination
-
-      • Uses PREG_COD and PREGDEL_COD for pregnancy and delivery tracking
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      Purpose: Identify pregnant women eligible for flu vaccination during flu season timing.'
+    description: >-
+      Pregnancy population for flu vaccination. One row per person and reported campaign, aged at
+      least 12 at the campaign run date. This age floor is a local data-quality guard. Includes a
+      PREG_COD pregnancy record during the campaign through its audit end, or in the preceding 8
+      months with no later delivery before campaign start. Delivery evidence is PREGDEL_COD
+      excluding PREG_COD. Pregnancy during the campaign qualifies even when a delivery is
+      subsequently recorded. Codes use the campaign's UKHSA_FLU terminology version.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

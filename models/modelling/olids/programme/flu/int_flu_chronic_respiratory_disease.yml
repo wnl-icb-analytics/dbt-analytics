@@ -1,20 +1,11 @@
 models:
   - name: int_flu_chronic_respiratory_disease
-    description: 'Flu vaccination eligibility for people with chronic respiratory conditions combining asthma and other lung diseases.
-
-      Key Features:
-
-      • Two eligibility pathways: asthma or chronic respiratory diagnosis (RESP_COD)
-
-      • Combines existing asthma eligibility rules with additional respiratory disease codes
-
-      • Age restriction: minimum 6 months for flu vaccination
-
-      • Deduplicates respiratory conditions to best qualifying event per person
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      Purpose: Identify people eligible for flu vaccination due to chronic respiratory conditions including asthma and COPD.'
+    description: >-
+      Flu chronic respiratory disease risk group. One row per person and reported campaign, aged at
+      least 6 months at the campaign run date. Includes people meeting int_flu_asthma or with a
+      RESP_COD observation on or before the campaign audit end date, using its UKHSA_FLU terminology
+      version. The qualifying date is the latest date from the asthma route or first RESP_COD
+      occurrence. There is no upper age limit.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

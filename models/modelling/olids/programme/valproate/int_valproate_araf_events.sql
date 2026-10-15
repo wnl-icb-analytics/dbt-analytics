@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description='Intermediate table extracting all ARAF-related events for each person, using mapped concepts, observation, and valproate program codes. Applies lookback logic as defined in valproate program codes.') }}
+    description="Recorded annual risk acknowledgement form (ARAF) events. One row per observation matching the ARAF category of the valproate programme code list, with a person mapping. Each code's lookback limit applies where configured. There is no restriction to valproate users, sex, age, registration or death, and no upper event-date limit.") }}
 
 SELECT
     pp.person_id,

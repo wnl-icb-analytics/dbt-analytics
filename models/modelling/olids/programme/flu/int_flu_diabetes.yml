@@ -1,22 +1,10 @@
 models:
   - name: int_flu_diabetes
-    description: 'Flu vaccination eligibility for people with diabetes or Addisons disease with resolution logic.
-
-      Key Features:
-
-      • Two eligibility pathways: Addisons disease (ADDIS_COD) or active diabetes (DIAB_COD)
-
-      • Exclusion logic for resolved diabetes (DMRES_COD superseding DIAB_COD)
-
-      • Age restriction: minimum 6 months for flu vaccination
-
-      • Uses latest diabetes code vs latest resolved code comparison
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      • Deduplicates to best qualifying event per person
-
-      Purpose: Identify people eligible for flu vaccination due to diabetes or related conditions.'
+    description: >-
+      Flu diabetes risk group. One row per person and reported campaign, aged at least 6 months at
+      the campaign run date. People qualify through any ADDIS_COD Addison disease record, or a
+      latest DIAB_COD diagnosis later than any DMRES_COD resolved record. Evidence is limited to the
+      campaign audit end date and its UKHSA_FLU terminology version. There is no upper age limit.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

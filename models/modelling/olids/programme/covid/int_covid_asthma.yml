@@ -1,12 +1,15 @@
 models:
   - name: int_covid_asthma
-    description: 'COVID asthma eligibility determination.
-
-      Grain: One row per person per campaign who meets active asthma criteria
-
-      Identifies people: • Diagnosed with asthma and recent inhaled medication (12 months) • 2+ oral steroid prescriptions on different dates less than 731 days apart, within a window or across adjacent windows • OR recent asthma hospital admission (2 years), with or without a diagnosis • Minimum age 5 years
-
-      Used by: Mart models for eligibility determination'
+    description: >-
+      COVID asthma risk group. One row per person and reported campaign, aged 5 or over at the
+      campaign reference date. Qualifying evidence is an ASTADM_COD emergency asthma admission
+      within the campaign's two-year lookback, or an AST_COD diagnosis with ASTRXM1_COD inhaled
+      medication in the 12-month lookback and repeated ASTRXM2_COD oral steroid prescriptions.
+      Steroids must occur on at least two distinct dates less than 731 days apart within a
+      campaign-defined window or across adjacent windows. Evidence uses the campaign's UKHSA_COVID
+      terminology version and ends at its audit end date. An admission does not require a separate
+      diagnosis or medication record. Risk membership alone does not confirm that the campaign
+      offers vaccination.
     data_tests:
       - cluster_ids_exist:
           arguments:
