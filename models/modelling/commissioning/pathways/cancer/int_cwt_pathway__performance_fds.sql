@@ -27,12 +27,12 @@ with cwt_fds_pathway_length as (
 --CTE to filter down to valid FDS records
 cwt_valid_records as (
     select
-        cwt_data.record_id
+        cwt.record_id
 
-    from {{ref('int_cwt_pathway__data_tidy')}}
+    from {{ref('int_cwt_pathway__data_tidy')}} cwt
         
     left join cwt_fds_pathway_length on
-    cwt_data.record_id = cwt_fds_pathway_length.record_id
+    cwt.record_id = cwt_fds_pathway_length.record_id
     
     where 
     --Either the pathway has a valid end code or the patient died on the pathway after 28 days elapsed

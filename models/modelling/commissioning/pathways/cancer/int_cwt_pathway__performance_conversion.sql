@@ -32,10 +32,10 @@ select
     end as performance__numerator,
     1 as performance__denominator
 
-from {{ref('int_cwt_pathway__data_tidy')}}
+from {{ref('int_cwt_pathway__data_tidy')}} cwt
 
 left join {{ref('int_cwt_pathway__pathway_entry_point')}} pep
-on cwt_data.record_id = pep.record_id
+on cwt.record_id = pep.record_id
 
 --Filter to valid 2WW records
-where cwt_data.record_id in (select record_id from cwt_valid_records)
+where cwt.record_id in (select record_id from cwt_valid_records)
