@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: ctv3_to_snomed_map
+    description: >-
+      National NHS Data Migration map from CTV3 to SNOMED CT, one current concept
+      per CTV3 code and term ID. TRUD via UKHFD, final release March 2020. Each
+      code and term keeps its latest map revision only when that revision is
+      active; an inactive latest revision does not revive an older map. Filter on
+      is_preferred_term (term type P) for one concept per code; some codes have
+      only synonym maps and drop out under that filter.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [ctv3_code, ctv3_term_id]
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [ctv3_code]
+          config:
+            where: is_preferred_term
+    columns:
+      - name: ctv3_code
+        description: CTV3 concept code. Case and dots are significant.
+      - name: ctv3_term_id
+        description: CTV3 term identifier, distinct from the concept code.
+      - name: ctv3_term_type
+        description: P for the preferred term, S for a synonym; null when the source does not supply it.
+      - name: is_preferred_term
+        description: True for term type P; null when the term type is missing. Filter to true for one concept per code.
+      - name: snomed_concept_id
+        description: Mapped SNOMED CT concept identifier, as text.
+        data_tests: [not_null]
+      - name: snomed_description_id
+        description: SNOMED CT description identifier for the mapped term, as text.
+      - name: is_assured
+        description: Whether the source marks the map as assured; null when the source flag is missing.
+      - name: map_effective_date
+        description: Effective date of the current map revision.
