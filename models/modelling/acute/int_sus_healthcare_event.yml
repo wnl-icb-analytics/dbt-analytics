@@ -4,9 +4,10 @@ models:
   description: SUS recorded healthcare milestones, one row per source record and milestone type. Primary milestones
     remain when undated; optional milestones require a recorded date. APC inpatient_decision_to_admit includes
     elective waiting-list decisions and is separate from the ECDS decision_to_admit. APC discharge_ready records
-    readiness, not discharge. Both APC milestones use submitted spell dates without a clock, once per spell.
-    SUS OP slots retain Consultation Medium
-    Used, NHS DD Priority Type and referring organisation. APC discharge and ECDS departure carry
+    readiness, not discharge. Both APC milestones use submitted spell dates without a clock, once per spell, and
+    have null event codes. SUS OP slots retain Consultation Medium Used, NHS DD Priority Type and referring
+    organisation. APC admission and discharge carry their recorded methods and retained labels as event codes,
+    using the NHS DD Admission method and Discharge method lists. APC discharge and ECDS departure carry
     recorded discharge destination as the outcome. ECDS arrival carries the recorded attendance source organisation
     or site as the referring organisation. Contacts do not imply attendance. Incremental
     loads process newly received deliveries and replay the boundary delivery. Withdrawn source keys are removed
@@ -52,6 +53,14 @@ models:
     description: '{{ doc(''navigation_outcome_code'') }}'
   - name: outcome_name
     description: '{{ doc(''navigation_outcome_name'') }}'
+  - name: parent_record_type
+    description: '{{ doc(''navigation_parent_record_type'') }}'
+  - name: parent_record_id
+    description: '{{ doc(''navigation_parent_record_id'') }}'
+  - name: parent_model_name
+    description: '{{ doc(''navigation_parent_model_name'') }}'
+  - name: relationship_type
+    description: '{{ doc(''navigation_relationship_type'') }}'
   - name: referring_organisation_code
     description: '{{ doc(''navigation_referring_organisation_code'') }}'
   - name: referring_organisation_name
@@ -71,6 +80,12 @@ models:
     description: '{{ doc(''navigation_event_type'') }}'
   - name: event_name
     description: '{{ doc(''navigation_event_name'') }}'
+  - name: event_code
+    description: '{{ doc(''navigation_event_code'') }}'
+  - name: event_code_name
+    description: '{{ doc(''navigation_event_code_name'') }}'
+  - name: event_coding_system
+    description: '{{ doc(''navigation_event_coding_system'') }}'
   - name: event_date
     description: '{{ doc(''navigation_event_date'') }}'
   - name: event_at

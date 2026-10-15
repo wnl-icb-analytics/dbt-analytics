@@ -63,6 +63,145 @@ sequence. The compiled model passed. Applying the view definition preserved its
 existing metadata and grants and did not rebuild any data tables. Outer queries
 still need their own `ORDER BY` when result ordering must be guaranteed.
 
+## Milestone additions, 1 October 2026
+
+The MHSDS, CSDS and SUS adapters were fully refreshed in the shared `dev`
+target after adding the milestones below. Figures are rounded aggregates.
+
+| Source record type | Source rows | Milestones | Dated | Clock time | Parent |
+|---|---:|---|---:|---:|---:|
+| MHSDS legal-status period | ~155K | start, end (~87%) | 100% | 99-100% | none recorded |
+| MHSDS community treatment order | ~18K | start, end (~73%) | 100% | date only | 100% |
+| MHSDS order recall | ~3K | start, end (~84%) | 100% | 100% | 100% |
+| MHSDS leave of absence | ~330K | start, end (~99%) | 100% | ~100% | ~100% |
+| MHSDS home leave | ~26K | start, end (~96%) | 100% | ~97% | ~100% |
+| MHSDS absence without leave | ~5K | start, end (~92%) | 100% | ~97% | ~100% |
+| MHSDS restrictive intervention | ~54K | start, end (~97%) | 100% | ~91-93% | ~100% |
+| MHSDS discharge readiness | ~6K | start, end (~88%) | 100% | date only | ~100% |
+| MHSDS onward referral | ~61K | onward referral | 100% | ~64% | ~100% |
+| CSDS onward referral | ~316K | onward referral | 100% | date only | 100% |
+| ECDS referred-to service | ~2.8M | onward referral; assessment (~39%) | 100% | ~99-100% | 100% |
+| ECDS attendance | ~3.4M with a value | clinically ready to proceed | 100% | 100% | attendance branch |
+
+Every start or primary milestone count equals its source fact row count. Every
+end or assessment count equals the source rows with that date. No primary
+milestone was undated, so the undated-retention rule removed nothing.
+Person-conflicting parents are not promoted: under 0.3% of leave,
+restrictive-intervention and MHSDS onward-referral rows, and under 0.02% of
+orders, recalls and readiness periods. No CSDS onward referral conflicts with its referral.
+ECDS referrals take their person key from the attendance and cannot conflict.
+
+About 59% of discharge-readiness periods name a hospital spell absent from
+`fct_mhsds_hospital_provider_spell`, and their referral is also absent from
+`fct_mhsds_referral`. Following the established rule for an absent parent, the
+recorded spell ID is still promoted. MHSDS onward referrals keep the same
+convention for the ~0.2% whose referral is absent.
+
+Labels cover every populated code except two sets. About 5% of discharge-delay
+reasons are unmatched, and about half of MHSDS onward-referral reasons are
+pre-2021 codes outside the current UKHFD list; they keep the code with a null
+label. Receiving organisations are present on ~88% of MHSDS and ~67% of CSDS
+onward referrals; all but ~0.1% of those codes have a reference name.
+
+### Per-list lookup validation, 15 October 2026
+
+The legal-status start reason, end reason and mental category now use separate
+`nhs_dd_` lookups. MHSDS and CSDS onward referrals share
+`nhs_dd_onward_referral_reason`. Read-only comparisons against the pre-merge
+bundles found identical latest and historical definitions, with no missing or
+extra rows across the retained fields. The new staging, history and latest
+models have no duplicate grain keys or null codes.
+
+The three changed facts also matched their pre-merge SQL on row counts,
+distinct keys and whole-row aggregate fingerprints. These comparisons used
+inlined source SQL for the lookups, so they did not depend on stale DEV lookup
+tables. Parse and compilation passed for the changed models and their
+downstream consumers, including the MHSDS and CSDS adapters. Snowflake EXPLAIN
+passed for every selected SQL model; the semantic model compiled separately.
+No adapter or shared reporting model was rebuilt.
+
+### Milestone timing checks
+
+ECDS clinically-ready timestamps carry `+01:00` or `Z` offsets matching UK local
+time. Their local clock agrees with the supplied minutes since arrival for ~97%
+of attendances. The ECDS referral request date and time are complete; the
+request falls after recorded departure for ~6%, so the request time is not
+substituted by the departure time.
+
+The adapter grain tests, the shared event ID uniqueness test and the shared
+time-consistency test pass. A repeat incremental run left counts and whole-row
+aggregate fingerprints of all three adapters unchanged. The new onward referral
+facts pass their grain tests. CSDS uses the ETOS v1.6.10 CYP105 successor key
+(referral, onward referral date and reason). MHSDS uses the same fields plus
+provider and supplied time; ~0.1% of its keys had more than one accepted
+version and keep the latest.
+
+### Required milestone deployment
+
+The agreed fold combines PR #1209, PR #1284 and PR #1283 into PR #1165 before
+one production deployment. That deployment builds the adapters from scratch,
+so the separate full refreshes below are needed only if PR #1165 deploys without
+PR #1283.
+
+In that case, the development full refresh above does not migrate production.
+PR #1283 adds columns to `int_mhsds_healthcare_event`,
+`int_csds_healthcare_event` and `int_sus_healthcare_event`. Their
+`on_schema_change='fail'` setting rejects an ordinary incremental build against
+the previous schemas. All three need a full refresh before their consumers
+rebuild. The MHSDS refresh adds `outcome_code` and `outcome_name` and populates
+historical legal-status start and end reasons. The SUS refresh populates
+historical APC admission and discharge method codes and labels. Allowing new
+columns alone would leave historical ECDS attendances without clinically-ready
+milestones when their delivery timestamps fall behind the stored watermark.
+
+For this separate rollout, the maintainer must:
+
+1. Add `[skip deploy]` to the pull-request title before merging to `main`, using
+   the existing [deployment control](github-actions.md#production-deployment).
+   Pause scheduled production builds and prevent other deployments until this
+   rollout finishes; the marker only skips this merge's automatic deployment.
+   Wait for active production builds to finish.
+2. Check out the merged revision in the deployment environment with the tracked
+   `profiles.yml` and established production credentials. The base longitudinal
+   adapters and their other source branches must already be deployed.
+3. Run the commands below from the repository root in Bash. They stop on the
+   first failure. Inspect the listed selection before running the builds.
+   Use `rollout_target=dev` when rehearsing in the existing shared DEV layers.
+
+```bash
+set -euo pipefail
+rollout_target=prod
+event_adapters=(int_mhsds_healthcare_event int_csds_healthcare_event int_sus_healthcare_event)
+event_parents=(+int_mhsds_healthcare_event +int_csds_healthcare_event +int_sus_healthcare_event)
+event_consumers=(int_mhsds_healthcare_event+ int_csds_healthcare_event+ int_sus_healthcare_event+)
+
+dbt deps
+dbt ls --target "$rollout_target" --profiles-dir . --select "${event_parents[@]}" "${event_consumers[@]}"
+
+# Build new and changed dependencies before refreshing the adapters.
+dbt build --target "$rollout_target" --profiles-dir . --select "${event_parents[@]}" --exclude "${event_consumers[@]}"
+
+# Refresh all history, with --full-refresh confined to these three adapters.
+dbt build --target "$rollout_target" --profiles-dir . --full-refresh --select "${event_adapters[@]}"
+
+# Exercise the next increment and rebuild and test all downstream consumers.
+dbt build --target "$rollout_target" --profiles-dir . --select "${event_consumers[@]}"
+```
+
+The consumer selection includes `fct_person_healthcare_event` and
+`dq_person_activity_coverage`. Require successful adapter grain tests and shared
+event uniqueness and time-consistency tests before treating the outputs as
+current. The existing `DBT_ADMIN` hook uses `WH_WNL_OLIDS_L` for the adapter full
+refreshes and restores the profile warehouse afterwards.
+
+After these commands pass, manually dispatch `dbt-deploy.yml` on the merged
+revision to complete the ordinary production build and publish deployment
+state. A manual dispatch alone does not full-refresh these adapters. Resume
+scheduled builds and other deployments only after it succeeds. If any step
+fails, keep builds paused and resolve the failure before rerunning that step
+and the remaining steps; dbt does not roll back models already built. Record
+the revision and build results without patient-level output.
+
 ## Person lookup correction
 
 An analyst XS clinical lookup took 49 seconds and scanned about 123 GB.
@@ -123,6 +262,24 @@ so DNA and other non-attended slots are not lost through an attendance-only
 encounter population.
 
 ## Known coverage limits
+
+### MHSDS spell coverage and legal-status clocks, 11 October 2026
+
+About 59% of retained discharge-readiness periods name a hospital spell absent
+from the loaded MHS501 extract. Spell coverage is complete for some providers
+and below 10% for others. Checks of raw spell history, accepted submissions and
+alternative recorded keys found no recoverable link for the missing spells.
+The recorded parent ID is retained unless a linked spell names a different
+person. Changing keys cannot recover spells absent from this extract. The feed
+owner needs to establish whether submission, loading or extraction scope causes
+the gap.
+
+Legal-status start times are supplied as recorded. About 3% of retained periods
+start at midnight, with strong provider variation. The retained clocks match
+the raw MHS401 clocks; staging and the milestones do not create midnight from
+missing values. The MHSDS v6 specification requires a start time and gives no
+midnight-as-unknown rule, so midnight is not treated as unknown. Provider
+confirmation is needed to distinguish an actual midnight from a local default.
 
 ### SNOMED mapping validation, 11 September 2026
 

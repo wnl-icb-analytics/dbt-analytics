@@ -172,11 +172,11 @@ Their source facts retain the derivation and consistency evidence.
 | Source | Milestones |
 |---|---|
 | OLIDS | Recorded current booking, scheduled appointment slot and terminology-selected patient referral. No reconstructed booking or cancellation history. |
-| MHSDS | Referral received, rejected and discharged; care contact; hospital admission and discharge; ward stay start and end. |
-| CSDS | Referral received and discharged; care contact. |
-| SUS APC | Spell admission and discharge; optional `inpatient_decision_to_admit` (Inpatient decision to admit) and `discharge_ready` (Ready for discharge) on recorded spell dates. |
+| MHSDS | Referral received, rejected and discharged; care contact; onward referral (the fact also retains the SNOMED CT procedure expression); hospital admission and discharge; ward stay start and end; Mental Health Act legal status start and end (the fact also retains start/end reasons, expiry date/time, supplied classification and mental category); community treatment order start and end; recall start and end; leave of absence, home leave and absence without leave start and end; restrictive intervention start and end; clinically ready for discharge start and end. |
+| CSDS | Referral received and discharged; care contact; onward referral. |
+| SUS APC | Spell admission and discharge, with their recorded method codes and labels; optional `inpatient_decision_to_admit` (Inpatient decision to admit) and `discharge_ready` (Ready for discharge) on recorded spell dates, with null event codes. |
 | SUS OP | Scheduled appointment, including non-attendance and cancellations recorded on the appointment. |
-| ECDS | Arrival, initial assessment, seen for treatment, decision to admit and departure. |
+| ECDS | Arrival, initial assessment, seen for treatment, decision to admit, clinically ready to proceed and departure; onward referral to a service and that service's assessment. |
 | e-RS | Selected recorded actions and scheduled appointment slots. `ers_healthcare_event_type` defines the action selection. |
 
 Primary milestones retain source records with missing dates. Optional milestones
@@ -215,12 +215,17 @@ which can precede admission. It is separate from the ECDS `decision_to_admit`,
 which records the emergency department decision. Ready for discharge does not
 mean the patient was discharged.
 
-Deploy the APC event-type change with a full refresh of
-`int_sus_healthcare_event`. Its `event_id` includes the milestone type, so older
+If PR #1165 deploys without PR #1283, apply the APC event-type change with a
+full refresh of `int_sus_healthcare_event`. Its `event_id` includes the milestone type, so older
 deliveries behind the watermark otherwise retain the former type and ID.
 
 e-RS assessment actions 1426 and 1428 retain assessment outcome in the shared
 outcome fields. Other action milestones and slots retain the action reason.
+
+APC admission and discharge carry their recorded methods in `event_code` and
+`event_code_name`. Their `event_coding_system` values are `Admission method` and
+`Discharge method`, the NHS DD list names. Decision-to-admit and discharge-ready
+milestones have null event codes.
 
 APC discharge and ECDS departure carry their recorded discharge destination in
 `outcome_code` and `outcome_name`; arrival and admission do not carry that outcome.
@@ -231,6 +236,43 @@ the patient came from, with no inferred referral link.
 e-RS reminders, printing, letter edits and unconfirmed cancellation requests are
 not independent care milestones. e-RS action labels distinguish recorded and
 updated DNA actions. See [e-RS validation](ers-analyst-validation.md).
+
+Start and end milestones of the same period share a source record. Each start is
+primary; each end is optional. MHSDS legal-status periods have no recorded
+parent; community treatment orders and recalls link to their legal-status
+period; leave links to its ward stay; restrictive interventions and discharge
+readiness link to their hospital spell. `event_code` carries the record's legal
+status or reason, with `event_coding_system` naming the NHS Data Dictionary item.
+Order and leave end milestones carry their end reason instead.
+The legal-status fact retains the supplied classification separately from the
+NHSD-derived classification used by the milestones and detention rules.
+Its start/end reasons and Mental Health Act 2007 mental category have UKHFD
+labels from `nhs_dd_legal_status_start_reason`, `nhs_dd_legal_status_end_reason`
+and `nhs_dd_mental_category` where matched. Expiry time is retained for analysis;
+the current-detention rule still assesses expiry by date. Legal-status start milestones carry the
+start reason in `outcome_code` and `outcome_name`; end milestones carry the end
+reason. Other MHSDS milestones have null outcomes. The supplied classification,
+mental category and expiry remain on the detailed fact.
+
+An onward referral records the request, not acceptance by the receiving
+organisation or later care. MHSDS and CSDS onward referrals carry their reason
+and `receiving_organisation_code`, and link to the referral they were made from.
+Both facts use `nhs_dd_onward_referral_reason` for the national reason labels.
+These per-list lookups retain the newest definition for each code, including
+retired codes. Their `_history` models retain every UKHFD revision.
+Pre-2021 MHSDS reason codes often fall outside the national list and keep a null
+label. UKHFD's available onward-referral list, including its historical SCD rows,
+does not define these legacy codes. CSDS supplies no onward referral time.
+The MHSDS onward referral fact also retains the submitted SNOMED CT procedure
+expression and labels simple concept identifiers. The procedure stays on the
+fact and does not create a clinical-record milestone.
+
+ECDS onward referrals use the date and time the referred-to service received the
+request, a separate ECDS data item from attendance conclusion or departure. The
+optional assessment milestone is that service's recorded assessment. Both carry
+the referred-to service SNOMED code and link to the attendance. Clinically ready
+to proceed is supplied with a UTC offset matching UK local time; the adapter
+keeps its local clock time and drops the offset.
 
 Clinical items include OLIDS expanded observations and statement-enriched
 medication orders; MHSDS and CSDS prepared clinical records, including MHSDS
@@ -274,13 +316,14 @@ Existing source key names remain available:
 
 | Detail model | Key represented by `source_record_id` |
 |---|---|
-| MHSDS and CSDS facts | `source_record_id` |
+| MHSDS and CSDS facts | `source_record_id`; MHSDS legal-status, order, recall, leave, restrictive-intervention and discharge-readiness facts use their entity ID, such as `mental_health_act_period_id` |
 | `fct_gp_appointment` | `appointment_id` |
 | `fct_gp_referral_request` | `source_record_id` |
 | `fct_gp_clinical_record` | `source_record_id` together with `source_record_type` |
 | `fct_ers_referral_action` | `action_id` |
 | `fct_ers_appointment` | `appointment_id` |
 | `obt_encounter_apc`, `int_sus_op_appointment`, `obt_encounter_uec` | `visit_occurrence_id` |
+| `int_sus_uec_referred_to_service` | `referral_id` |
 | SUS diagnosis staging | `diagnosis_id` |
 | SUS procedure staging | `procedure_id` |
 | ECDS clinical staging | `diagnosis_id` for diagnoses; `source_record_id` for other staged items |
@@ -290,7 +333,8 @@ Existing source key names remain available:
 | `int_sus_uec_mental_health_legal_status` | `legal_status_id` |
 
 Recorded parents follow `parent_model_name`. MHSDS/CSDS parents use
-`source_record_id`; e-RS referrals use `ubrn_id`; acute encounters use
+`source_record_id`, except MHSDS legal-status periods, which use
+`mental_health_act_period_id`; e-RS referrals use `ubrn_id`; acute encounters use
 `visit_occurrence_id`; APC episodes use `source_record_id`; OLIDS encounters
 use `id`. A parent link is source evidence, not a completed journey. Additional
 links and their consistency flags remain in the detailed models.

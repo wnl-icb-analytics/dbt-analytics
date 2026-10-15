@@ -508,3 +508,93 @@ models:
     config: *owner
     data_tests: *grain_test
     columns: *code_set_columns
+
+  - name: stg_ukhfd_data_dictionary_legal_status_start_reason
+    description: >-
+      UKHFD Mental Health Act legal status classification assignment period start reason definitions.
+      One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: &code_set_columns_without_notes_valid_to_date
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute name.
+        data_tests: [not_null]
+      - name: code
+        description: National code, upper-cased and trimmed.
+        data_tests: [not_null]
+      - name: description
+        description: Published code description.
+      - name: short_description
+        description: Published description limited to 60 characters.
+      - name: category
+        description: Published category where supplied.
+      - name: valid_from_date
+        description: Date from which the definition is valid.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_unique_key
+        description: UKHFD key for the code definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: source_created_at
+        description: Timestamp when UKHFD created the source row.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code, including retired codes.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition revision applies.
+      - name: source_effective_to_at
+        description: Timestamp until which the UKHFD definition revision applies; null for its newest revision.
+
+  - name: stg_ukhfd_data_dictionary_legal_status_end_reason
+    description: >-
+      UKHFD Mental Health Act legal status classification assignment period end reason definitions.
+      One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns_without_notes_valid_to_date
+
+  - name: stg_ukhfd_data_dictionary_mental_category
+    description: >-
+      UKHFD Mental Health Act 2007 mental category definitions.
+      One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: *code_set_columns_without_notes_valid_to_date
+
+  - name: stg_ukhfd_data_dictionary_onward_referral_reason
+    description: >-
+      UKHFD Onward referral reason definitions.
+      One row per code and UKHFD definition revision.
+    config: *owner
+    data_tests: *grain_test
+    columns: &code_set_columns_without_valid_to_date
+      - name: source_code_set_name
+        description: NHS Data Model and Dictionary attribute name.
+        data_tests: [not_null]
+      - name: code
+        description: National code, upper-cased and trimmed.
+        data_tests: [not_null]
+      - name: description
+        description: Published code description.
+      - name: short_description
+        description: Published description limited to 60 characters.
+      - name: category
+        description: Published category where supplied.
+      - name: notes
+        description: Published notes where supplied.
+      - name: valid_from_date
+        description: Date from which the definition is valid.
+      - name: is_currently_valid
+        description: TRUE when the code remains in the current published code set.
+      - name: source_unique_key
+        description: UKHFD key for the code definition.
+      - name: source_imported_at
+        description: Timestamp when UKHFD imported the source publication.
+      - name: source_created_at
+        description: Timestamp when UKHFD created the source row.
+      - name: is_latest_definition
+        description: TRUE for UKHFD's newest definition of the code, including retired codes.
+      - name: source_effective_from_at
+        description: Timestamp from which the UKHFD definition revision applies.
+      - name: source_effective_to_at
+        description: Timestamp until which the UKHFD definition revision applies; null for its newest revision.
