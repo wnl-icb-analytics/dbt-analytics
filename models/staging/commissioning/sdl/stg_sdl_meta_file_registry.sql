@@ -1,6 +1,6 @@
 -- SDL pipeline metadata: 1:1 view of raw_sdl_wnl_meta_file_registry. See docs/slam-data-guide.md
--- for how these objects drive layout resolution and loading. Times are Europe/London; the source
--- holds created_datetime in UTC and sent_datetime already converted.
+-- for how these objects drive layout resolution and loading. The source holds times in UTC;
+-- they are exposed as Europe/London timestamp_tz.
 
 select
     feed,
@@ -8,9 +8,8 @@ select
     batch_id,
     file_name,
     original_file_name,
-    convert_timezone('UTC', 'Europe/London', created_datetime)::timestamp_ntz
-                                                as created_datetime,
-    sent_datetime,
+    {{ utc_to_london('created_datetime') }}     as created_datetime,
+    {{ utc_to_london('sent_datetime') }}        as sent_datetime,
     row_count,
     loader_job_name,
     financial_year,
