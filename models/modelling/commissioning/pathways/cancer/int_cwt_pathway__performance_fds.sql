@@ -62,10 +62,11 @@ select
     'FDS' as performance__metric,
     performance__pathway_length_days,
     case 
-        when performance__pathway_length_days <= 28 then 0 
-        else 1 
+        when performance__pathway_length_days <= 28 then 1 
+        else 0
     end as performance__numerator,
-    1 as performance__denominator
+    1 as performance__denominator,
+    performance__denominator - performance__numerator as performance__breach 
 
 from {{ref('int_cwt_pathway__data_tidy')}} cwt
 

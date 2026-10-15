@@ -30,7 +30,8 @@ select
         
         else null
     end as performance__numerator,
-    1 as performance__denominator
+    1 as performance__denominator,
+    null as performance__breach
 
 from {{ref('int_cwt_pathway__data_tidy')}} cwt
 
