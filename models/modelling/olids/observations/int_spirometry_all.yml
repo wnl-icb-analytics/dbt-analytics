@@ -2,12 +2,15 @@ models:
   - name: int_spirometry_all
     description: 'Spirometry test results (FEV1/FVC ratios) for COPD diagnosis and respiratory disease monitoring.
 
-      One row per spirometry observation using PCD FEV1FVC_COD and FEV1FVCL70_COD clusters. COPD threshold assessment uses the unrounded FEV1/FVC ratio (<0.7); values above 1 are divided by 100.'
+      One row per spirometry observation using PCD FEV1FVC_COD and FEV1FVCL70_COD clusters. COPD threshold assessment uses the unrounded FEV1/FVC ratio (<0.7); ratios 0.1-1 are retained and percentages 10-100 are divided by 100. Other numeric values give no ratio.'
     config:
       meta:
         owner:
           name: EddieDavison92
     data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "source_cluster_id = 'FEV1FVCL70_COD' OR NOT is_below_0_7 OR is_valid_spirometry"
       - cluster_ids_exist:
           arguments:
             cluster_ids: FEV1FVCL70_COD, FEV1FVC_COD
@@ -17,3 +20,53 @@ models:
             combination_of_columns:
               - id
               - source_cluster_id
+    columns:
+      - name: fev1_fvc_ratio
+        description: FEV1/FVC ratio, null unless the recorded value is a ratio 0.1-1 or percentage 10-100.
+      - name: obstruction_status
+        description: Airway Obstruction for coded or measured ratio below 0.7, Normal for ratio at least 0.7, otherwise Unknown. Not a COPD severity stage.
+
+unit_tests:
+- name: spirometry_ratio_scale
+  model: int_spirometry_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR id, column2::NUMBER person_id,
+        column3::TIMESTAMP_NTZ clinical_effective_date, column3::TIMESTAMP_NTZ date_recorded,
+        column4::VARCHAR result_value, column5::VARCHAR result_unit_code,
+        column5::VARCHAR result_unit_display, 'SYN_CODE'::VARCHAR mapped_concept_code,
+        'Synthetic observation'::VARCHAR mapped_concept_display, column6::VARCHAR cluster_id
+        FROM VALUES ('SYN_0', -9300, '2026-01-01', 0.65, NULL, 'FEV1FVC_COD'),
+        ('SYN_1', -9301, '2026-01-01', 65, NULL, 'FEV1FVC_COD'),
+        ('SYN_2', -9302, '2026-01-01', 6.5, NULL, 'FEV1FVC_COD'),
+        ('SYN_3', -9303, '2026-01-01', -1, NULL, 'FEV1FVC_COD'),
+        ('SYN_4', -9304, '2026-01-01', 75, NULL, 'FEV1FVC_COD'),
+        ('SYN_CODED', -9305, '2026-01-01', NULL, NULL, 'FEV1FVCL70_COD')
+  given: []
+  expect:
+    rows:
+    - id: SYN_0
+      fev1_fvc_ratio: 0.65
+      is_below_0_7: true
+      is_valid_spirometry: true
+    - id: SYN_1
+      fev1_fvc_ratio: 0.65
+      is_below_0_7: true
+      is_valid_spirometry: true
+    - id: SYN_2
+      fev1_fvc_ratio: null
+      is_below_0_7: false
+      is_valid_spirometry: false
+    - id: SYN_3
+      fev1_fvc_ratio: null
+      is_below_0_7: false
+      is_valid_spirometry: false
+    - id: SYN_4
+      fev1_fvc_ratio: 0.75
+      is_below_0_7: false
+      is_valid_spirometry: true
+    - id: SYN_CODED
+      fev1_fvc_ratio: null
+      is_below_0_7: true
+      is_valid_spirometry: true
