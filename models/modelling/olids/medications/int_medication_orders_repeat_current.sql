@@ -32,7 +32,7 @@ WITH repeat_prescription_codes AS (
 repeat_orders AS (
     -- Join medication orders to statements to filter by authorisation type cluster
     SELECT
-        pp.person_id,
+        mo.person_id,
         mo.clinical_effective_date AS order_date,
         mo.duration_days AS order_duration_days,
         mo.estimated_cost,
@@ -42,8 +42,6 @@ repeat_orders AS (
         ON mo.medication_statement_id = ms.id
     INNER JOIN repeat_prescription_codes rpc
         ON ms.authorisation_type_code = rpc.code
-    INNER JOIN {{ ref('int_patient_person_unique') }} pp
-        ON mo.patient_id = pp.patient_id
     WHERE mo.clinical_effective_date IS NOT NULL
         AND mo.mapped_concept_code IS NOT NULL
 ),

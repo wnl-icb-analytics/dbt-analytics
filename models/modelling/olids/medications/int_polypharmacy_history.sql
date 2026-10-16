@@ -32,7 +32,7 @@ WITH repeat_prescription_codes AS (
 medication_periods AS (
     -- Get all repeat medications in polypharmacy scope for last 5 years
     SELECT
-        pp.person_id,
+        mo.person_id,
         mo.mapped_concept_code,
         mo.clinical_effective_date AS start_date,
         DATEADD(day, COALESCE(mo.duration_days, 28), mo.clinical_effective_date) AS end_date
@@ -41,8 +41,6 @@ medication_periods AS (
         ON mo.medication_statement_id = ms.id
     INNER JOIN repeat_prescription_codes rpc
         ON ms.authorisation_type_code = rpc.code
-    INNER JOIN {{ ref('int_patient_person_unique') }} pp
-        ON mo.patient_id = pp.patient_id
     INNER JOIN {{ ref('int_polypharmacy_medications_list') }} bnf
         ON mo.mapped_concept_code = bnf.snomed_code
     WHERE mo.clinical_effective_date >= DATEADD(year, -5, CURRENT_DATE())

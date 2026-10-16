@@ -19,7 +19,7 @@ WITH valproate_from_prog_codes AS (
     SELECT DISTINCT
         mo.id AS medication_order_id,
         NULL AS medication_statement_id,
-        pp.person_id,
+        mo.person_id,
         mo.clinical_effective_date::DATE AS order_date,
         mo.medication_name AS order_medication_name,
         mo.dose AS order_dose,
@@ -35,8 +35,6 @@ WITH valproate_from_prog_codes AS (
         NULL AS bnf_name,
         'PROG_CODES' AS source_method
     FROM {{ ref('stg_olids_medication_order') }} AS mo
-    INNER JOIN {{ ref('int_patient_person_unique') }} AS pp
-        ON mo.patient_id = pp.patient_id
     LEFT JOIN {{ ref('stg_reference_valproate_prog_codes') }} AS vp
         ON
             mo.mapped_concept_code = vp.code
