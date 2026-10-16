@@ -8,7 +8,7 @@
 Intermediate: CKD Lab Classification
 This table classifies each person’s most recent eGFR and ACR lab results according to CKD thresholds and staging criteria. It supports case finding and audit by identifying people whose labs are consistent with CKD, regardless of clinical diagnosis.
 - Uses int_egfr_all, int_egfr_latest, and (if present) int_acr_all/int_acr_latest as sources.
-- Applies CKD clinical rules: eGFR stage and ACR category labels, persistent abnormal results (>90 days apart), and combined inferred stage.
+- Applies CKD clinical rules: eGFR stage and ACR category labels, persistent abnormal results (successive abnormal results 90-730 days apart), and combined inferred stage.
 - Mirrors and improves on the legacy INTERMEDIATE_CKD_LAB_INFERENCE logic.
 */
 

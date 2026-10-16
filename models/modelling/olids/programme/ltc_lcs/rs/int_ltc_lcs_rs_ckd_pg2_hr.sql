@@ -1,7 +1,9 @@
 -- LTC LCS: CKD Register - Priority Group 2 (High Risk)
 -- Parent population: CKD register, excluding PG1 (HRC)
 --
--- Inclusion: any of rules 2-5, or rule 6 AND (rule 7 OR rule 8):
+-- Inclusion: any of rules 2-5, or rule 6 AND (rule 7 OR rule 8).
+-- BP checks use one latest event across settings; the XML has separate clinic and
+-- home/ambulatory BP chains (rules 7-10).
 -- - Rule 2: eGFR 45-59 AND ACR > 30
 -- - Rule 3: eGFR 30-44 AND ACR > 3
 -- - Rule 4: eGFR 15-29

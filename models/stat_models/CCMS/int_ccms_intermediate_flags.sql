@@ -7,8 +7,9 @@
 /*
 CCMS (Cambridge Comorbidity Score) raw flags per person.
 
-One row per person in int_patient_person_unique. 28 SNOMED-driven condition
-flags, 8 medication-driven flags, and 1 eGFR flag — 37 flag columns.
+One row per person in int_patient_person_unique whose minimum possible age is
+at least 16 in dim_person_age. 28 SNOMED-driven condition flags, 8
+medication-driven flags, and 1 eGFR flag — 37 flag columns.
 
 Sources:
 - Observations: stg_olids_observation.mapped_concept_code joined to

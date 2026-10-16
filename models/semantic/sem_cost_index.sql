@@ -29,7 +29,7 @@ DIMENSIONS(
     cost.is_patient_attributable AS is_patient_attributable COMMENT = 'TRUE for patient-attributable cost. Filter TRUE for patient-level analysis.',
     cost.cost_basis AS cost_basis COMMENT = 'Cost basis: actual for SLAM and EPD; proxy for MHSDS and CSDS.',
     cost.cost_source AS cost_source COMMENT = 'Cost source: SLAM (provider cost), EPD (prescribing), MHSDS (mental health activity, proxy-costed) or CSDS (community contacts, proxy-costed).',
-    cost.activity_unit AS activity_unit COMMENT = 'Unit for total_activity: slam_activity, prescription_item, contact or the MHSDS activity unit.'
+    cost.activity_unit AS activity_unit COMMENT = 'Unit for total_activity: slam_activity (SLAM), prescription_item (EPD), bed_day or contact (MHSDS), and contact (CSDS).'
 )
 
 METRICS(

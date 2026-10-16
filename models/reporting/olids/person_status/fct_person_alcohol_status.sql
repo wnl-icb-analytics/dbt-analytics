@@ -9,10 +9,9 @@ Person-level alcohol status combining AUDIT scores and disorder diagnoses.
 Provides comprehensive alcohol risk assessment for population health management.
 
 Business Logic:
-1. Uses most recent AUDIT/AUDIT-C score as primary indicator
-2. Considers alcohol disorder diagnoses for additional context
-3. Active disorder takes priority, then any historical disorder record, then AUDIT category
-4. Recency labels describe data age only and do not affect alcohol_status
+1. Uses the latest valid AUDIT/AUDIT-C score
+2. Active disorder takes priority, then any historical disorder record, then AUDIT category
+3. Recency labels describe data age only and do not affect alcohol_status
 
 This is PERSON-LEVEL data - one row per person with any alcohol-related data.
 */
