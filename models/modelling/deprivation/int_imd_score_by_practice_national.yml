@@ -15,6 +15,7 @@ models:
         description: "GP practice code for the registered population snapshot."
         tests:
           - not_null
+
       - name: effective_snapshot_date
         description: "Effective date of the patient count snapshot used in the calculation."
         tests:
@@ -30,3 +31,9 @@ models:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 10000
+            
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - practice_code
+              - effective_snapshot_date
