@@ -9,7 +9,8 @@ All BMI measurements for adults aged 18+ including both recorded BMI values and 
 Includes ALL persons (active, inactive, deceased) aged 18+ with basic validation (10-150 range).
 Uses ethnicity-adjusted BMI categories per NICE NG246 for cardiometabolic risk populations.
 Avoids calculating BMI on dates where recorded BMI already exists for the same person.
-Age restriction: paediatric height and weight measurements (age_at_event < 18) are excluded at source so they never feed calculated BMI. Final join on dim_person_age further filters to currently-18+ persons as adult BMI categories are only clinically appropriate for ages 18+.
+Age restriction: recorded BMI, height and weight require age_at_event >= 18.
+The dim_person_age join also restricts people to age 18 or over now (or at death).
 */
 
 WITH recorded_bmi AS (
@@ -33,6 +34,7 @@ WITH recorded_bmi AS (
     AND obs.clinical_effective_date <= CURRENT_DATE() -- No future dates
       AND obs.result_value IS NOT NULL
       AND TRY_CAST(obs.result_value AS FLOAT) IS NOT NULL
+      AND obs.age_at_event >= 18
       
 ),
 
