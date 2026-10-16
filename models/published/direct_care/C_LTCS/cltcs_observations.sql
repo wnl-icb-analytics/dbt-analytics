@@ -37,7 +37,7 @@ gp_observations as (
         il.area_code,
         il.olids_id,
         o.id as observation_id,
-        -- Shared observation date rule; preserve NULL when the clinical date is missing.
+        -- Shared observation date rule (undated rows are filtered out below).
         {{ observation_clinical_date('o') }} as clinical_effective_date,
         o.mapped_concept_code,
         o.mapped_concept_display,
