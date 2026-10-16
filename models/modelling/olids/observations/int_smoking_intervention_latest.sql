@@ -9,4 +9,6 @@
 
 select *
 FROM {{ ref('int_smoking_intervention') }}
-QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id ORDER BY clinical_effective_date DESC,
+    CASE smoking_cessation_services WHEN 'Yes' THEN 1 WHEN 'Other assistance' THEN 2 WHEN 'Declined' THEN 3 ELSE 4 END,
+    concept_code) = 1

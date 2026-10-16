@@ -3,15 +3,20 @@ models:
     description: >-
       Alcohol consumption from ALC_COD in OLIDS GP records, one row per person and
       clinical date up to the build date. Includes inactive and deceased people
-      without age or SMI-register restrictions. Known risk categories take priority on
-      the same date. Weekly-unit variants use U/week; other units stay as recorded.
+      without age or SMI-register restrictions. Same-day records prefer a classified
+      result, then a numeric reading, then higher risk (Higher, Increasing, Low, Ex-Drinker, Non-Drinker), then the lowest
+      concept code, highest value and unit text. Weekly-unit variants use U/week;
+      other units stay as recorded.
       Risk uses coded status or weekly units: increasing from 15, higher from 35 for
       women or 50 for men, using current gender.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, clinical_effective_date]
       - cluster_ids_exist:
           arguments:
             cluster_ids: ALC_COD

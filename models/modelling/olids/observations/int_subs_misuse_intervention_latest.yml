@@ -4,6 +4,8 @@ models:
       Latest recorded substance misuse intervention or decline per person in OLIDS, by
       clinical date up to the build date. Includes inactive and deceased people with
       qualifying evidence, without age or SMI-register restrictions.
+      Same-day records prefer completion, then other assistance, then decline,
+      then the lowest concept code.
     config:
       meta:
         owner:
@@ -17,3 +19,23 @@ models:
         tests:
           - unique
           - not_null
+
+unit_tests:
+- name: subs_misuse_intervention_latest_same_day_precedence
+  model: int_subs_misuse_intervention_latest
+  given:
+  - input: ref('int_subs_misuse_intervention')
+    rows:
+    - person_id: -9601
+      clinical_effective_date: '2024-03-01'
+      concept_code: SYN_B
+      subs_misuse_services: Declined
+    - person_id: -9601
+      clinical_effective_date: '2024-03-01'
+      concept_code: SYN_C
+      subs_misuse_services: 'Yes'
+  expect:
+    rows:
+    - person_id: -9601
+      concept_code: SYN_C
+      subs_misuse_services: 'Yes'

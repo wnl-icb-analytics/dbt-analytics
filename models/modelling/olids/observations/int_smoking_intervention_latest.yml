@@ -4,6 +4,8 @@ models:
       Latest recorded smoking cessation intervention or decline per person in OLIDS,
       by clinical date up to the build date. Includes inactive and deceased people
       with qualifying evidence, without age or SMI-register restrictions.
+      Same-day records prefer completion, then other assistance, then decline,
+      then the lowest concept code.
     config:
       meta:
         owner:
@@ -20,3 +22,49 @@ models:
 
 
 
+
+unit_tests:
+- name: smoking_intervention_latest_same_day_precedence
+  model: int_smoking_intervention_latest
+  given:
+  - input: ref('int_smoking_intervention')
+    rows:
+    - person_id: -9601
+      clinical_effective_date: '2024-03-01'
+      concept_code: SYN_B
+      smoking_cessation_services: Declined
+    - person_id: -9601
+      clinical_effective_date: '2024-03-01'
+      concept_code: SYN_C
+      smoking_cessation_services: 'Yes'
+    - person_id: -9601
+      clinical_effective_date: '2024-02-01'
+      concept_code: SYN_A
+      smoking_cessation_services: 'Yes'
+    - person_id: -9602
+      clinical_effective_date: '2024-03-01'
+      concept_code: SYN_A
+      smoking_cessation_services: Declined
+    - person_id: -9602
+      clinical_effective_date: '2024-03-01'
+      concept_code: SYN_B
+      smoking_cessation_services: Other assistance
+    - person_id: -9603
+      clinical_effective_date: '2024-03-01'
+      concept_code: SYN_B
+      smoking_cessation_services: 'Yes'
+    - person_id: -9603
+      clinical_effective_date: '2024-03-01'
+      concept_code: SYN_A
+      smoking_cessation_services: 'Yes'
+  expect:
+    rows:
+    - person_id: -9601
+      concept_code: SYN_C
+      smoking_cessation_services: 'Yes'
+    - person_id: -9602
+      concept_code: SYN_B
+      smoking_cessation_services: Other assistance
+    - person_id: -9603
+      concept_code: SYN_A
+      smoking_cessation_services: 'Yes'
