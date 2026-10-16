@@ -16,6 +16,7 @@
 
     Risk summary contains eligible adult MoC and CYP-only asthma members, including inactive and deceased people; filter is_active.
     Adult stage 2 uses sharing, or MDT/sharing for HRCS and HRS.
+    CYP-only HR desktop review follows the EMIS HR description: due three months after the latest annual or desktop review, once the annual review is done.
 #}
 
 TABLES(
@@ -94,8 +95,8 @@ DIMENSIONS(
     rs.moc_risk_category AS moc_risk_category COMMENT = 'Model of Care risk category',
     rs.moc_pathway_status AS moc_pathway_status COMMENT = 'Observation-based work-list pending, Declined, Cycle complete, or No action identified',
     rs.moc_stage_completed_label AS moc_stage_completed_label COMMENT = 'Highest completed adult stage including accepted declines, or CYP Annual Review/Desktop Review.',
-    rs.moc_next_action AS moc_next_action COMMENT = 'Next observation-based EMIS work-list action; future care-plan diaries are unavailable',
-    rs.moc_cycle_complete AS moc_cycle_complete COMMENT = 'Model of Care cycle complete flag',
+    rs.moc_next_action AS moc_next_action COMMENT = 'Next observation-based EMIS work-list action: Check & Test (C&T), MDT Review (MDT), Care Plan Sharing (CPS), Discussion (DISC), Follow-up (F/U), Annual Review (AR) or Desktop Review (DTR). Null when no list selects the person. Future care-plan diaries are unavailable',
+    rs.moc_cycle_complete AS moc_cycle_complete COMMENT = 'Project measure: adults need an agreed plan and review within 12 months, latest MoC event a review, and no observation-based work list; CYP-only asthma children need the annual review, plus the desktop review if HR.',
     rs.moc_any_activity_12m AS moc_any_activity_12m COMMENT = 'Any Model of Care activity in the last 12 months',
     rs.moc_declined AS moc_declined COMMENT = 'Model of Care declined flag',
     rs.is_in_moc_base AS is_in_moc_base COMMENT = 'Eligible for adult MoC after EMIS exclusions. False for CYP-only asthma pathway rows.',
@@ -115,7 +116,8 @@ DIMENSIONS(
     rs.moc_discussion_overdue AS moc_discussion_overdue COMMENT = 'No C on or before the 12-month anniversary, latest B is A, and A is more than 3 months old. B is C/A/R/D/O across all history.',
     rs.cyp_annual_review_completed AS cyp_annual_review_completed COMMENT = 'CYP-only annual asthma review strictly after the one-year anniversary. False for adult pathways.',
     rs.cyp_requires_annual_review AS cyp_requires_annual_review COMMENT = 'CYP-only person without an annual asthma review strictly after the one-year anniversary.',
-    rs.cyp_desktop_review_completed AS cyp_desktop_review_completed COMMENT = 'CYP-only HR: desktop review strictly after the annual anniversary, or latest annual review after it with another AR/DTR in [review minus 3 months, review minus 1 day). Requires desktop review is omitted because the exported search contradicts itself.',
+    rs.cyp_requires_desktop_review AS cyp_requires_desktop_review COMMENT = 'CYP-only HR: annual review done, no completed desktop review, and the latest annual or desktop review was 3 or more months ago. Project rule from the EMIS HR description; the exported search selects no one.',
+    rs.cyp_desktop_review_completed AS cyp_desktop_review_completed COMMENT = 'CYP-only HR: latest desktop review or latest annual review, after the annual anniversary with another AR/DTR in [review minus 3 months, review minus 1 day). Requires desktop review follows the HR description; see cyp_requires_desktop_review.',
     rs.cyp_annual_review_date AS cyp_annual_review_date COMMENT = 'Latest non-future CYP-only asthma annual review date; may be outside the completed window. Null for adult pathways or no event.',
     rs.cyp_desktop_review_date AS cyp_desktop_review_date COMMENT = 'Latest qualifying CYP-only HR desktop review or linked annual review date; null without completion or for other pathways.',
     rs.moc_has_missing_priors AS moc_has_missing_priors COMMENT = 'Prior Model of Care stages are missing',
@@ -174,6 +176,6 @@ METRICS(
     rs.avg_ltc_lcs_conditions AS AVG(rs.number_of_ltc_lcs_conditions) COMMENT = 'Average number of LTC LCS conditions'
 )
 
-COMMENT = 'OLIDS LTC LCS Semantic View - case-finding candidates and the risk-stratified LTC LCS register population with Model of Care progress. Grain: one row per person in each element; cf (case finding) and rs (risk summary) are person-grain but DIFFERENT populations - never mix their elements in one query. Pathway-neutral stage flags avoid double counting the same review event. No date dimensions are exposed; recency is available only via the *_12m boolean flags.'
+COMMENT = 'OLIDS LTC LCS Semantic View - case-finding candidates and the risk-stratified LTC LCS register population with Model of Care progress. Grain: one row per person in each element; cf (case finding) and rs (risk summary) are person-grain but DIFFERENT populations - never mix their elements in one query. Pathway-neutral stage flags avoid double counting the same review event. Date dimensions exposed are moc_mdt_review_date, cyp_annual_review_date and cyp_desktop_review_date; other recency is available via the *_12m boolean flags.'
 AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. Case finding and risk summary are different populations; never mix cf and rs elements. Example: SELECT borough_resident, AGG(stratified_patients) FROM SEM_OLIDS_LTC_LCS WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce case-finding patients here and DNA patients in sem_olids_appointments before joining. Risk summary includes inactive and deceased people. Use the pathway-neutral Model of Care flags; hypertension has no indicator 64.'
-AI_QUESTION_CATEGORIZATION 'Use this view for: LTC LCS case-finding indicators and candidates, risk stratification (HRC/HR/MR/LR), Model of Care pathway progress including check and test, care plans, discussions and follow-ups, and cycle completion.'
+AI_QUESTION_CATEGORIZATION 'Use this view for: LTC LCS case-finding indicators and candidates, risk stratification (HRC/HR/MR/LR), Model of Care pathway progress including check and test, care plans, discussions, follow-ups, CYP annual and desktop review, and cycle completion.'
