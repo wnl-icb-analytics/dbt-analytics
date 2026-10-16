@@ -11,7 +11,8 @@ unit_tests:
       \ quantity_unit, null::number duration_days,\n null::number estimated_cost, null::varchar statement_medication_name,\n\
       \ 'SYN_PPI'::varchar mapped_concept_code, null::varchar mapped_concept_display\n from (select 'SYN_FUTURE',dateadd(day,1,current_date())\
       \ union all\n select 'SYN_TODAY',current_date() union all\n select 'SYN_3M',dateadd(month,-3,current_date())\
-      \ union all\n select 'SYN_6M',dateadd(month,-6,current_date()) union all\n select 'SYN_12M',dateadd(month,-12,current_date())\
+      \ union all\n select 'SYN_3M_OLD',dateadd(day,-1,dateadd(month,-3,current_date())) union all\n select\
+      \ 'SYN_6M',dateadd(month,-6,current_date()) union all\n select 'SYN_12M',dateadd(month,-12,current_date())\
       \ union all\n select 'SYN_NULL',null::date) v(id,dt)"
   - input: ref('stg_olids_patient')
     format: sql
@@ -43,6 +44,11 @@ unit_tests:
       is_recent_3m: false
       is_recent_6m: false
       is_recent_12m: false
+    - medication_order_id: SYN_3M_OLD
+      is_future_dated: false
+      is_recent_3m: false
+      is_recent_6m: true
+      is_recent_12m: true
   overrides:
     macros:
       get_empty_subquery_sql: select null::varchar as medication_order_id, null::boolean as is_future_dated,
@@ -60,9 +66,9 @@ unit_tests:
   - input: ref('stg_olids_medication_order')
     format: sql
     rows: "select id::varchar id, person::number person_id, code::varchar mapped_concept_code,\n dateadd(day,days,current_date())::date\
-      \ clinical_effective_date, current_date()::timestamp_ntz date_recorded,\n duration::number duration_days,\
-      \ 'SYN_STATEMENT'::varchar medication_statement_id\n from (values ('SYN_11',-9101,'SYN_A',-10,56),('SYN_12',-9101,'SYN_A',20,28),\n\
-      \ ('SYN_21',-9102,'SYN_B',-5,0),('SYN_22',-9102,'SYN_B',-5,28),('SYN_31',-9103,'SYN_C',3,28))\n\
+      \ clinical_effective_date, dateadd(day,iff(id in ('SYN_41','SYN_62'),-2,-1),current_date())::timestamp_ntz\
+      \ date_recorded,\n duration::number duration_days, 'SYN_STATEMENT'::varchar medication_statement_id\n\
+      \ from (values ('SYN_11',-9101,'SYN_A',-10,56),('SYN_12',-9101,'SYN_A',20,28),\n ('SYN_21',-9102,'SYN_B',-5,0),('SYN_22',-9102,'SYN_B',-5,28),('SYN_31',-9103,'SYN_C',3,28),('SYN_41',-9104,'SYN_D',-40,56),('SYN_49',-9104,'SYN_D',-40,28),('SYN_51',-9105,'SYN_E',-20,null),('SYN_59',-9105,'SYN_E',-20,14),('SYN_61',-9106,'SYN_F',-5,28),('SYN_62',-9106,'SYN_F',-5,28),('SYN_71',-9107,'SYN_G',-15,56),('SYN_72',-9107,'SYN_G',-10,0))\n\
       \ v(id,person,code,days,duration)"
   expect:
     rows:
@@ -73,6 +79,18 @@ unit_tests:
     - person_id: -9102
       mapped_concept_code: SYN_B
       medication_order_id: SYN_22
+      latest_duration: 28
+    - person_id: -9104
+      mapped_concept_code: SYN_D
+      medication_order_id: SYN_41
+      latest_duration: 56
+    - person_id: -9105
+      mapped_concept_code: SYN_E
+      medication_order_id: SYN_51
+      latest_duration: null
+    - person_id: -9106
+      mapped_concept_code: SYN_F
+      medication_order_id: SYN_62
       latest_duration: 28
   overrides:
     macros:

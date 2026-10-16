@@ -17,7 +17,6 @@ repeat_orders as (
         mo.person_id,
         mo.id as medication_order_id,
         mo.clinical_effective_date as order_date,
-        mo.date_recorded,
         mo.duration_days as order_duration_days,
         mo.mapped_concept_code
     from {{ ref('stg_olids_medication_order') }} mo
@@ -42,7 +41,7 @@ latest_orders as (
         and ro.order_date = ld.latest_order_date
     qualify row_number() over (
         partition by ro.person_id, ro.mapped_concept_code
-        order by ro.date_recorded desc nulls last, ro.medication_order_id desc
+        order by coalesce(ro.order_duration_days, 28) desc, ro.medication_order_id desc
     ) = 1
 )
 select
