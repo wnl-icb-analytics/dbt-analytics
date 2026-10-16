@@ -23,6 +23,8 @@ WITH base_observations AS (
             ELSE CAST(TRY_CAST(obs.result_value AS FLOAT) AS NUMBER(10,2))
         END AS hba1c_original_value,
         obs.result_unit_display,
+        obs.result_unit_code AS original_result_unit_code,
+        obs.result_unit_display AS original_result_unit_display,
         obs.mapped_concept_code AS concept_code,
         obs.mapped_concept_display AS concept_display,
         obs.cluster_id AS source_cluster_id,
@@ -31,15 +33,15 @@ WITH base_observations AS (
         -- Single measurement type determination - mutually exclusive
         -- Unambiguous ranges determined by value: DCCT is always <20%, IFCC is always >25 mmol/mol.
         -- The 20-25 zone is ambiguous (could be low-normal IFCC or extreme DCCT),
-        -- so falls back to cluster ID and unit display.
+        -- so falls back to the recorded UCUM unit, then the concept cluster.
         CASE
             WHEN TRY_CAST(obs.result_value AS FLOAT) > 25 THEN 'IFCC'
             WHEN TRY_CAST(obs.result_value AS FLOAT) < 20 THEN 'DCCT'
-            -- Ambiguous 20-25 range: fall back to concept code then unit
+            -- Ambiguous 20-25 range and value-free tests use unit, then cluster.
+            WHEN obs.result_unit_code = 'mmol/mol' THEN 'IFCC'
+            WHEN obs.result_unit_code IN ('%', '%{Hemoglobin}') THEN 'DCCT'
             WHEN obs.cluster_id = 'IFCCHBAM_COD' THEN 'IFCC'
             WHEN obs.cluster_id = 'DCCTHBA1C_COD' THEN 'DCCT'
-            WHEN obs.result_unit_display ILIKE '%mmol/mol%' THEN 'IFCC'
-            WHEN obs.result_unit_display ILIKE '%\%%' THEN 'DCCT'
             ELSE 'UNKNOWN'
         END AS measurement_type
     FROM ({{ get_observations("'IFCCHBAM_COD', 'DCCTHBA1C_COD'") }}) obs
@@ -69,6 +71,27 @@ standardised AS (
             ELSE NULL
         END AS hba1c_dcct
     FROM base_observations bo
+),
+
+assessed AS (
+    SELECT
+        *,
+        CASE
+            WHEN measurement_type = 'IFCC' AND hba1c_original_value BETWEEN 20 AND 200 THEN TRUE
+            WHEN measurement_type = 'DCCT' AND hba1c_original_value BETWEEN 3 AND 20 THEN TRUE
+            ELSE FALSE
+        END AS is_valid_hba1c,
+        CASE WHEN measurement_type = 'UNKNOWN' THEN NULL
+            ELSE COALESCE(
+                CASE WHEN original_result_unit_code = 'mmol/mol' THEN 'IFCC'
+                    WHEN original_result_unit_code IN ('%', '%{Hemoglobin}') THEN 'DCCT'
+                END <> measurement_type, FALSE)
+                OR COALESCE(
+                    CASE source_cluster_id WHEN 'IFCCHBAM_COD' THEN 'IFCC'
+                        WHEN 'DCCTHBA1C_COD' THEN 'DCCT'
+                    END <> measurement_type, FALSE)
+        END AS is_unit_conflict
+    FROM standardised
 )
 
 SELECT
@@ -92,21 +115,19 @@ SELECT
     (measurement_type = 'IFCC') AS is_ifcc,
     (measurement_type = 'DCCT') AS is_dcct,
     original_result_value,
+    original_result_unit_code,
+    original_result_unit_display,
 
     -- Display both standardised values with units
     CAST(hba1c_ifcc AS VARCHAR) || ' mmol/mol (' ||
         CAST(hba1c_dcct AS VARCHAR) || '%)' AS hba1c_display,
 
-    -- Data quality validation (enhanced range checks)
-    CASE
-        WHEN measurement_type = 'IFCC' AND hba1c_original_value BETWEEN 20 AND 200 THEN TRUE  -- IFCC: mmol/mol
-        WHEN measurement_type = 'DCCT' AND hba1c_original_value BETWEEN 3 AND 20 THEN TRUE    -- DCCT: %
-        ELSE FALSE
-    END AS is_valid_hba1c,
+    is_valid_hba1c,
+    is_unit_conflict,
 
     -- NICE-aligned clinical categorisation using standardised IFCC value
     CASE
-        WHEN hba1c_ifcc IS NULL THEN 'Invalid'
+        WHEN NOT is_valid_hba1c THEN 'Invalid'
         WHEN hba1c_ifcc < 42 THEN 'Normal'                -- < 6.0%
         WHEN hba1c_ifcc >= 42 AND hba1c_ifcc < 48 THEN 'Prediabetes' -- 42.0–47.9
         WHEN hba1c_ifcc >= 48 AND hba1c_ifcc < 54 THEN 'Diabetes - At NICE Target' -- 48.0–53.9
@@ -119,15 +140,15 @@ SELECT
 
     -- Diabetes diagnostic flag
     CASE
-        WHEN hba1c_ifcc >= 48 THEN TRUE ELSE FALSE
+        WHEN is_valid_hba1c THEN hba1c_ifcc >= 48
     END AS indicates_diabetes,
 
     -- Target achievement flags for QOF (DM021 threshold is inclusive <=58)
     CASE
-        WHEN hba1c_ifcc <= 58 THEN TRUE ELSE FALSE
+        WHEN is_valid_hba1c THEN hba1c_ifcc <= 58
     END AS meets_qof_target
 
-FROM standardised
+FROM assessed
 
 -- Sort for consistent output
 ORDER BY person_id, clinical_effective_date DESC
