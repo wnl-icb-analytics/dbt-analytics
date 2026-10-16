@@ -54,11 +54,8 @@
         o.id,
         o.patient_id,
         o.person_id,
-        -- Use date_recorded as fallback if clinical_effective_date is after it (data quality fix)
-        CASE
-            WHEN o.clinical_effective_date > o.date_recorded THEN o.date_recorded
-            ELSE COALESCE(o.clinical_effective_date, '1900-01-01')
-        END AS clinical_effective_date,
+        -- Corrected clinical date; 1900-01-01 marks a missing date (see get_observations.yml).
+        COALESCE({{ observation_clinical_date('o') }}, '1900-01-01') AS clinical_effective_date,
         o.clinical_effective_date AS clinical_effective_date_raw,  -- Original value for audit
         o.date_recorded,
         o.result_value,
