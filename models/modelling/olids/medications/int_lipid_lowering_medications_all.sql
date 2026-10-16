@@ -129,8 +129,8 @@ SELECT
         ELSE 'OTHER_STATIN'
     END AS VARCHAR) AS statin_intensity,
 
-    -- Fixed-dose combination products
-    ingredient_count >= 2 AS is_combination_therapy,
+    -- Omega-3 ethyl esters are one agent despite having several dm+d substances.
+    COALESCE(ingredient_count >= 2, FALSE) AND lipid_lowering_class <> 'OMEGA_3' AS is_combination_therapy,
 
     -- Order recency at build time; order_date is never after the build date
     {{ medication_date_flags('order_date', include_future_flag=false) }},

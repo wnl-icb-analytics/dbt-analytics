@@ -3,7 +3,8 @@ models:
   description: Lipid-regulating orders in BNF 2.12, one row per dated order for all people. National ECL_CACHE
     drug lists classify statins, ezetimibe, bempedoic acid, PCSK9 inhibitors and inclisiran; BNF chemicals
     classify remaining products. dm+d current ingredients identify combinations. Excludes dates before
-    1990 and after the build date.
+    1990 and after the build date. Historic fenofibrate/simvastatin products fall outside STAT_COD
+    and remain in OTHER; the national statin list defines is_statin.
   config:
     meta:
       owner:
@@ -77,8 +78,11 @@ models:
         arguments:
           values: [HIGH_INTENSITY, COMBINATION, OTHER_STATIN]
   - name: is_combination_therapy
-    description: At least two current dm+d virtual product ingredients; null when no ingredient count
+    description: Fixed-dose product with at least two lipid-lowering agents, identified by current
+      dm+d ingredients. Omega-3 products are one agent and excluded. False when no ingredient count
       is available.
+    data_tests:
+    - not_null
   - name: is_recent_3m
     description: Order in the 3 calendar months up to and including the build date; lower bound excluded.
   - name: is_recent_6m
