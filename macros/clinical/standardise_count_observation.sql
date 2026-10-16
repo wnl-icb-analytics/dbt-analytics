@@ -95,6 +95,14 @@ classified AS (
     SELECT
         base.*,
         CAST(base.{{ value_column }} AS FLOAT) AS numeric_value,
+        GREATEST(0,
+            COALESCE(LENGTH(RTRIM(REGEXP_SUBSTR(base.{{ value_column }}::VARCHAR, '[.][0-9]+'), '0')), 1) - 1
+            - COALESCE(TRY_TO_NUMBER(REGEXP_SUBSTR(base.{{ value_column }}::VARCHAR, '[eE]([+-]?[0-9]+)', 1, 1, 'e', 1)), 0)
+        ) AS source_decimal_places,
+        GREATEST(0,
+            COALESCE(LENGTH(RTRIM(REGEXP_SUBSTR(ur.MULTIPLY_BY::VARCHAR, '[.][0-9]+'), '0')), 1) - 1
+            - COALESCE(TRY_TO_NUMBER(REGEXP_SUBSTR(ur.MULTIPLY_BY::VARCHAR, '[eE]([+-]?[0-9]+)', 1, 1, 'e', 1)), 0)
+        ) AS factor_decimal_places,
         base.result_unit_code AS original_result_unit_code,
         base.result_unit_display AS original_result_unit_display,
         base.{{ value_column }} AS original_result_value,
@@ -157,10 +165,12 @@ standardised AS (
         *,
 
         -- inferred_value: the standardised numeric result
+        -- Keep source decimal precision, extended for the conversion factor or power-of-ten divisor.
         CASE matched_pass
             WHEN 'pass_1' THEN numeric_value
-            WHEN 'pass_2' THEN converted_value
-            WHEN 'pass_3' THEN numeric_value / POWER(10, canonical_exponent)
+            WHEN 'pass_2' THEN ROUND(converted_value, source_decimal_places + factor_decimal_places)
+            WHEN 'pass_3' THEN ROUND(numeric_value / POWER(10, canonical_exponent),
+                GREATEST(0, source_decimal_places + canonical_exponent))
             -- pass through: keep raw value when no pass matched
             WHEN 'no_match' THEN numeric_value
             ELSE NULL
