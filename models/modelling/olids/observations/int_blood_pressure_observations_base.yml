@@ -66,3 +66,106 @@ models:
         description: True if clinical_effective_date was after date_recorded (corrected)
       - name: had_null_date
         description: True if clinical_effective_date was null
+      - name: bp_context_group
+        description: Concept-level setting from PCD cluster membership, ABPM before HOME, otherwise CLINIC. Identical across all cluster rows of an observation.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [CLINIC, HOME, ABPM]
+      - name: bp_context
+        description: Concept-level detail within bp_context_group, descriptive only. ABPM maximum concepts present only in SYSBP_COD or DIASBP_COD are CLINIC_UNSPECIFIED under PCD membership.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [ABPM_24H, ABPM_DAY, ABPM_NIGHT, ABPM_MIN_MAX, ABPM_UNSPECIFIED, HOME_AVERAGE, HOME_SELF_REPORTED, HOME_UNSPECIFIED, CLINIC_SITTING, CLINIC_STANDING, CLINIC_LYING, CLINIC_UNSPECIFIED]
+
+unit_tests:
+- name: bp_observation_context
+  model: int_blood_pressure_observations_base
+  given:
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: |-
+      SELECT 'SYN_N'::VARCHAR AS id, '314445006'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, 'Synthetic ambulatory systolic'::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -9301::NUMBER AS person_id, NULL::NUMBER AS age_at_event, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-01-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 130::VARCHAR AS result_value
+      UNION ALL
+      SELECT 'SYN_S'::VARCHAR AS id, '400974009'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, 'Synthetic standing systolic'::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -9301::NUMBER AS person_id, NULL::NUMBER AS age_at_event, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-01-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 130::VARCHAR AS result_value
+      UNION ALL
+      SELECT 'SYN_H'::VARCHAR AS id, '413606001'::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id, 'Synthetic home systolic'::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS parent_observation_id, NULL::NUMBER AS patient_id, -9301::NUMBER AS person_id, NULL::NUMBER AS age_at_event, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, '2026-01-01'::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN AS is_review, 130::VARCHAR AS result_value
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      SELECT '314445006'::VARCHAR AS code, 'ABPM_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BP'::VARCHAR AS cluster_description, 'Synthetic ambulatory systolic'::VARCHAR AS code_description
+      UNION ALL
+      SELECT '314445006'::VARCHAR AS code, 'BP_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BP'::VARCHAR AS cluster_description, 'Synthetic ambulatory systolic'::VARCHAR AS code_description
+      UNION ALL
+      SELECT '314445006'::VARCHAR AS code, 'SYSBP_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BP'::VARCHAR AS cluster_description, 'Synthetic ambulatory systolic'::VARCHAR AS code_description
+      UNION ALL
+      SELECT '314445006'::VARCHAR AS code, 'HOMEAMBBP_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BP'::VARCHAR AS cluster_description, 'Synthetic ambulatory systolic'::VARCHAR AS code_description
+      UNION ALL
+      SELECT '400974009'::VARCHAR AS code, 'BP_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BP'::VARCHAR AS cluster_description, 'Synthetic standing systolic'::VARCHAR AS code_description
+      UNION ALL
+      SELECT '400974009'::VARCHAR AS code, 'SYSBP_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BP'::VARCHAR AS cluster_description, 'Synthetic standing systolic'::VARCHAR AS code_description
+      UNION ALL
+      SELECT '413606001'::VARCHAR AS code, 'SYSBP_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BP'::VARCHAR AS cluster_description, 'Synthetic home systolic'::VARCHAR AS code_description
+      UNION ALL
+      SELECT '413606001'::VARCHAR AS code, 'HOMEBP_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BP'::VARCHAR AS cluster_description, 'Synthetic home systolic'::VARCHAR AS code_description
+      UNION ALL
+      SELECT '413606001'::VARCHAR AS code, 'HOMEAMBBP_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BP'::VARCHAR AS cluster_description, 'Synthetic home systolic'::VARCHAR AS code_description
+      UNION ALL
+      SELECT '413606001'::VARCHAR AS code, 'BP_COD'::VARCHAR AS cluster_id, 'PCD'::VARCHAR AS source, 'Synthetic BP'::VARCHAR AS cluster_description, 'Synthetic home systolic'::VARCHAR AS code_description
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::VARCHAR AS id, NULL::VARCHAR AS mapped_concept_code, NULL::VARCHAR AS
+        result_units_source_concept_id, NULL::VARCHAR AS result_unit_code, NULL::VARCHAR AS result_unit_display,
+        NULL::VARCHAR AS result_text, NULL::VARCHAR AS allergy_medication_name, NULL::VARCHAR AS mapped_concept_id,
+        NULL::VARCHAR AS mapped_concept_display, NULL::VARCHAR AS episodicity_source_concept_id, NULL::VARCHAR AS
+        parent_observation_id, NULL::NUMBER AS patient_id, NULL::NUMBER AS person_id, NULL::NUMBER AS age_at_event,
+        NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TIMESTAMP_NTZ AS date_recorded, NULL::TIMESTAMP_NTZ
+        AS problem_end_date, NULL::TIMESTAMP_NTZ AS lds_transform_datetime, NULL::BOOLEAN AS is_problem, NULL::BOOLEAN
+        AS is_review, NULL::VARCHAR AS result_value, NULL::VARCHAR AS code, NULL::VARCHAR AS cluster_id, NULL::VARCHAR
+        AS source, NULL::VARCHAR AS cluster_description, NULL::VARCHAR AS code_description, NULL::VARCHAR AS source_cluster_id,
+        NULL::VARCHAR AS bp_context_group, NULL::VARCHAR AS bp_context WHERE FALSE
+  expect:
+    rows:
+    - id: SYN_N
+      source_cluster_id: ABPM_COD
+      bp_context_group: ABPM
+      bp_context: ABPM_NIGHT
+    - id: SYN_N
+      source_cluster_id: BP_COD
+      bp_context_group: ABPM
+      bp_context: ABPM_NIGHT
+    - id: SYN_N
+      source_cluster_id: SYSBP_COD
+      bp_context_group: ABPM
+      bp_context: ABPM_NIGHT
+    - id: SYN_N
+      source_cluster_id: HOMEAMBBP_COD
+      bp_context_group: ABPM
+      bp_context: ABPM_NIGHT
+    - id: SYN_S
+      source_cluster_id: BP_COD
+      bp_context_group: CLINIC
+      bp_context: CLINIC_STANDING
+    - id: SYN_S
+      source_cluster_id: SYSBP_COD
+      bp_context_group: CLINIC
+      bp_context: CLINIC_STANDING
+    - id: SYN_H
+      source_cluster_id: SYSBP_COD
+      bp_context_group: HOME
+      bp_context: HOME_AVERAGE
+    - id: SYN_H
+      source_cluster_id: HOMEBP_COD
+      bp_context_group: HOME
+      bp_context: HOME_AVERAGE
+    - id: SYN_H
+      source_cluster_id: HOMEAMBBP_COD
+      bp_context_group: HOME
+      bp_context: HOME_AVERAGE
+    - id: SYN_H
+      source_cluster_id: BP_COD
+      bp_context_group: HOME
+      bp_context: HOME_AVERAGE
