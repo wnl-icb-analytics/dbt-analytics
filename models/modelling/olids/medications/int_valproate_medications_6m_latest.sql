@@ -36,8 +36,9 @@ WITH valproate_6m_orders AS (
         END AS valproate_product_term
 
     FROM {{ ref('int_valproate_medications_all') }}
+    -- Inclusive boundary retained for the published cohort pending interface approval.
     WHERE
-        order_date > DATEADD(month, -6, CURRENT_DATE())
+        order_date >= DATEADD(month, -6, CURRENT_DATE())
         AND order_date <= CURRENT_DATE()
 ),
 
