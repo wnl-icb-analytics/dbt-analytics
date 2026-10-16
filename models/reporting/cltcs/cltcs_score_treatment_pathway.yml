@@ -1,0 +1,222 @@
+models:
+  - name: cltcs_score_treatment_pathway
+    description: >
+      Candidate C-LTCS treatment sub-score organised by care pathway, built beside
+      cltcs_score_treatment for comparison before any switch. Same population and grain as
+      cltcs_score_treatment, but with seven domains instead of six, each piece of evidence
+      counted in one domain only, NICE indicators across conditions in place of the
+      diabetes-specific care gaps, and different scaling (see raw_score_treatment and
+      score_treatment). Not used by cltcs_scores or the snapshot.
+
+      One row per patient for each C-LTCS cohort the patient meets (from
+      cltcs_adult_population), so a patient who meets both the original C-LTCS criteria
+      and the Adults with Complexity cohort has two rows.
+
+      The first three domains follow the care pathway from monitoring to treatment to
+      control. In each, a condition or measured concept with at least one gap scores 1
+      plus 0.5 x the share of its items that are gaps (between 1.125 and 1.5 for a group
+      of four items). The score therefore adds up across conditions, and more gaps within a
+      condition count for something, but a single condition scores less than two
+      conditions with a gap, so multimorbidity dominates and a condition with many
+      indicators cannot outweigh one with few. The 0.5 depth weight is set in the model
+      header. Disease control counts results out of target and
+      uncontrolled respiratory disease. Monitoring gaps counts tests, reviews and care
+      processes not done, including a missing result for a disease control indicator.
+      Treatment optimisation counts under-treatment (indicated treatments and lifestyle
+      interventions not given) and over-treatment or prescribing safety (no structured
+      medication review, NSAID with low eGFR). They are counted from the items in
+      cltcs_gap_items (NICE indicators plus eGFR monitoring, salbutamol-only asthma
+      treatment and respiratory disease triggers), which shows the item behind each gap.
+
+      The other domains are clinical complexity (multimorbidity, medication burden, and
+      smoking, BMI and alcohol status); illness-related urgent and
+      emergency care; barriers to treatment; and LTC LCS engagement. LTC LCS engagement is
+      the LTC LCS risk groups summed across conditions: in full when the Model of Care has
+      not started or was declined, halved while in progress, and zero once the cycle is
+      complete. It uses the LTC LCS programme's risk groups and Model of Care stages
+      unchanged, so a change to the LTC LCS specification moves this domain.
+
+      Each sub-score is centred within the patient's neighbourhood and cohort and scaled by
+      the cohort's pooled standard deviation. A person with nothing assessable in a domain
+      scores 0, the same as a person assessed with no gaps; the _groups_assessed columns
+      distinguish the two. Filter to is_applicable_rule for the one score per patient that
+      would be used in case finding.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - inclusion_rule
+    columns:
+      - name: sk_patient_id
+        data_type: number
+        description: "Patient identifier (sk_patient_id from PDS via dim_person_demographics_basic). Appears once per cohort the patient meets."
+        data_tests:
+          - not_null
+
+      - name: inclusion_rule
+        data_type: varchar
+        description: "Cohort this row is scored in: 'original_criteria' or 'adults_with_complexity'. The z-scores on this row are calculated against other patients in the same cohort and neighbourhood."
+
+      - name: is_applicable_rule
+        data_type: boolean
+        description: "True when inclusion_rule is the cohort that applies at the patient's practice. At most one row per patient is true."
+
+      - name: neighbourhood_code
+        data_type: varchar
+        description: "C-LTCS neighbourhood code. Together with inclusion_rule, it defines the group each z-score is calculated against."
+
+      - name: practice_code
+        data_type: varchar
+        description: "Registered GP practice ODS code."
+
+      - name: age
+        data_type: number
+        description: "Age in years from dim_person_demographics. Used for age_band, age_multiplier and score_treatment_age_adjusted, not for score_treatment. Null when unavailable."
+
+      - name: disease_control_groups_assessed
+        data_type: number
+        description: "Number of disease control groups (blood pressure, diabetes, lipids, lithium, respiratory) with at least one assessable result for the patient. 0 means score_disease_control is 0 because nothing applies, not because control is good."
+
+      - name: monitoring_groups_assessed
+        data_type: number
+        description: "Number of conditions or measured concepts with at least one assessable monitoring item for the patient."
+
+      - name: treatment_optimisation_groups_assessed
+        data_type: number
+        description: "Number of conditions or lifestyle topics with at least one assessable treatment or intervention for the patient."
+
+      - name: score_disease_control
+        data_type: number
+        description: >
+          Raw disease control sub-score: summed over groups (blood pressure, diabetes HbA1c,
+          lipids, lithium, respiratory) where the patient has a result out of target or
+          uncontrolled disease, 1 + 0.5 x the share of the group's assessable items that are
+          gaps. Blood pressure counts once however many registers it is
+          assessed for. Respiratory is uncontrolled with 2 or more glucocorticoid order days
+          in 12 months with an antibacterial ordered the same day (COPD), 2 or more
+          glucocorticoid order days (asthma), or 3 or more salbutamol inhalers (asthma).
+
+      - name: score_monitoring_gaps
+        data_type: number
+        description: >
+          Raw monitoring gaps sub-score: summed over conditions or measured concepts with a
+          test, review or care process not done, 1 + 0.5 x the share of the group's
+          assessable items not done. Includes disease control indicators whose
+          result was not recorded in their period, and eGFR older than its interval for the
+          latest value (12 months at 45-59, 6 months at 30-44, 3 months below 30).
+
+      - name: score_treatment_optimisation
+        data_type: number
+        description: "Raw treatment optimisation sub-score: summed over conditions or lifestyle topics with an indicated treatment or intervention not given (including asthma treated with salbutamol alone), 1 + 0.5 x the share of the group's assessable items not given."
+
+      - name: score_complexity
+        data_type: number
+        description: "Raw clinical complexity sub-score: QOF condition count capped at 8, mental health conditions, Cambridge comorbidity score x 5, log medication and active-ingredient counts, 2 for 10+ polypharmacy, and smoking, BMI and alcohol status below dependence. Unknown smoking, BMI and alcohol status score 0."
+
+      - name: score_illness_uec
+        data_type: number
+        description: "Raw illness-related urgent and emergency care sub-score: log A&E illness and Type 1 attendances and ambulatory care sensitive emergency admissions in 12 months, minus log GP attendances."
+
+      - name: score_barriers
+        data_type: number
+        description: "Raw barriers to treatment sub-score: housebound, severe mental illness, substance misuse and alcohol dependence, 1 each."
+
+      - name: score_ltc_lcs_engagement
+        data_type: number
+        description: >
+          Raw LTC LCS engagement sub-score: LTC LCS risk groups (LR 1, MR 2, HR 3, HRC 4)
+          summed across AF, adult asthma, CHD, CKD, COPD, diabetes, heart failure,
+          hypertension, NAFLD, PAD and stroke/TIA, multiplied by 1 when the Model of Care
+          has not started or was declined, 0.5 while in progress and 0 once the cycle is
+          complete.
+
+      - name: raw_score_treatment
+        data_type: number
+        description: >
+          Weighted average of the seven bounded domain z-scores, between -3 and 3. Each
+          domain is log-transformed if it is a count, centred on its
+          neighbourhood and cohort mean, divided by the pooled within-neighbourhood standard
+          deviation for the cohort, and soft-clipped with 3 * tanh(z / 3). Domain weights
+          default to 1 and are set in the model header.
+
+      - name: composite_z
+        data_type: number
+        description: >
+          raw_score_treatment re-standardised: centred on the neighbourhood and cohort mean
+          and divided by the pooled within-neighbourhood standard deviation for the cohort.
+          Averaging several domains narrows the composite's spread; this restores it to a
+          z-score. 0 when the composite does not vary.
+
+      - name: score_treatment
+        data_type: number
+        description: >
+          Candidate treatment score, 0-100, with no age adjustment: 50 + 15 x composite_z,
+          capped at 0 and 100. A straight line, so the score has the same shape as
+          composite_z: 50 is an average patient for the neighbourhood and cohort, 65 is 1 z
+          above and 80 is 2 z above. Patients beyond about 3.3 z either side are capped, so
+          ties at 100 (or 0) are possible. Not a percentile; use treatment_priority_tier for
+          position in the list. The points per z unit are set in the model header. Relative to
+          the patient's neighbourhood and cohort.
+
+      - name: age_multiplier
+        data_type: number
+        description: >
+          Age multiplier carried over from cltcs_score_treatment: 1.15 at age 18, falling
+          linearly to 1 at 60, then to 0.85 from age 100. 1 when age is unknown.
+
+      - name: score_treatment_age_adjusted
+        data_type: number
+        description: >
+          score_treatment multiplied by age_multiplier and capped at 0 and 100, applied as the
+          final step. score_treatment and treatment_priority_tier are not age adjusted; this
+          column is the age-adjusted alternative for comparison while age handling is
+          decided. Because the multiplier scales the distance from 0, it moves high scores
+          more than low ones (a score of 80 at age 18 becomes 92; at age 100 it becomes 68).
+
+      - name: age_band
+        data_type: varchar
+        description: "Age band used for the priority tiers: '18-39', '40-59', '60-74', '75+', or 'Unknown' when age is missing (tiered as its own group)."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['18-39', '40-59', '60-74', '75+', 'Unknown']
+
+      - name: treatment_priority_tier
+        data_type: number
+        description: >
+          Priority tier for clinicians by the patient's position on score_treatment within
+          their neighbourhood, cohort and age band: 1 is the top 5%, 2 the top 5-15% and 3
+          the rest. Each age band has its own top tiers, so younger patients are prioritised
+          against others of similar age rather than against older patients with more
+          age-related burden; score_treatment itself is not age adjusted. Lower is higher
+          priority; use for sorting and filtering, with treatment_priority_tier_label for
+          display. Thresholds are set in the model header. Ties share a tier, and
+          neighbourhood and age band groups can be small, so tier sizes can differ from 5%
+          and 10%; in a group of fewer than 20 patients the top tier may hold only one
+          patient or none.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3]
+                quote: false
+
+      - name: treatment_priority_tier_label
+        data_type: varchar
+        description: >
+          Label for treatment_priority_tier, stating its percentile band within the
+          neighbourhood and age band (see age_band). Built from the thresholds in the model
+          header, so the accepted values below must change with them.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - 'Top 5% in neighbourhood and age band'
+                  - 'Top 5-15% in neighbourhood and age band'
+                  - 'Below top 15% in neighbourhood and age band'
