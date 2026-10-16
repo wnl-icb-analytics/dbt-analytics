@@ -1,0 +1,144 @@
+version: 2
+
+models:
+  - name: qadmissions_outcomes_history
+    description: >
+      Emergency admission outcomes after each index date in
+      qadmissions_input_features_history, for validating QAdmissions scores
+      built from those features. It holds no risk scores.
+
+      Grain: one row per person and index date (end_date), for every row of
+      qadmissions_input_features_history.
+
+      Horizon: 2 years, the horizon the QAdmissions paper validated, matching
+      the surv that qadmissions_input_features_history passes to the model
+      (both from the qadmissions_history_horizon_years macro).
+
+      Event: the first SUS admitted patient care spell admitted after the
+      index date, up to the end of the horizon, with an emergency admission
+      method (every method starting 2 except 2C, as for hes_admitprior_cat).
+      Open spells count. An admission after death, deregistration or the end
+      of complete SUS data is not an event.
+
+      Follow-up ends at the earliest of the event, death, deregistration, the
+      end of complete SUS data and the end of the horizon, as the QAdmissions
+      paper censored. Complete SUS data is assumed to run to the end of the
+      third month before the build month, so the table changes as it is
+      rebuilt. Use has_complete_follow_up to choose index dates whose whole
+      horizon is covered.
+
+      For validation, exclude rows without has_sus_link: no admission can be
+      found for them. is_registered_12m gives the paper's entry rule of 12
+      months' registration. Rows are kept so exclusions can be counted.
+    config:
+      meta:
+        owner:
+          name: Thomas Shallcross
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - end_date
+              - person_id
+    columns:
+      - name: end_date
+        data_type: date
+        description: "Index date (a month-end), as in qadmissions_input_features_history. Follow-up starts the day after."
+        data_tests:
+          - not_null
+
+      - name: person_id
+        data_type: varchar
+        description: "OLIDS person identifier. With end_date, identifies a row."
+        data_tests:
+          - not_null
+
+      - name: sk_patient_id
+        data_type: varchar
+        description: "Commissioning patient identifier, used to link SUS admissions and deaths."
+
+      - name: horizon_years
+        data_type: number
+        description: >
+          Follow-up horizon in years: 2 on every row. Equal to surv in
+          qadmissions_input_features_history, so scores built from it pair
+          with these outcomes.
+
+      - name: horizon_end_date
+        data_type: date
+        description: "Last day of the horizon: the month-end horizon_years after end_date."
+
+      - name: has_sus_link
+        data_type: boolean
+        description: >
+          TRUE when sk_patient_id can link to SUS (not NULL and not the
+          placeholder '1'). When FALSE no admission can be found, so is_event
+          is always FALSE; exclude these rows from validation.
+
+      - name: is_registered_12m
+        data_type: boolean
+        description: >
+          TRUE when, at end_date, the person had an open practice registration
+          (dim_person_historical_practice) that started at least 12 months
+          earlier. The QAdmissions paper started follow-up only after a year's
+          registration, so the GP record is complete.
+
+      - name: has_complete_follow_up
+        data_type: boolean
+        description: >
+          TRUE when the whole horizon falls within complete SUS data (to the end
+          of the third month before the build month). When FALSE, follow-up
+          stops at the end of complete data instead (follow_up_end_reason
+          'end_of_data').
+
+      - name: is_event
+        data_type: boolean
+        description: "TRUE when an emergency admission ended follow-up."
+
+      - name: emergency_admission_date
+        data_type: date
+        description: "Admission date of the first emergency admission after end_date. NULL when is_event is FALSE."
+
+      - name: emergency_admission_method
+        data_type: varchar
+        description: "SUS admission method code of that admission. NULL when is_event is FALSE."
+
+      - name: death_date
+        data_type: date
+        description: >
+          Date of death when it falls after end_date and on or before
+          horizon_end_date, otherwise NULL. From int_patient_deceased_status
+          (registry, then PDS, then OLIDS) by sk_patient_id, or else the
+          mid-month approximation in dim_person_birth_death. Can be after the
+          event, which then ended follow-up.
+
+      - name: deregistration_date
+        data_type: date
+        description: >
+          First OLIDS practice deregistration after end_date and on or before
+          horizon_end_date, otherwise NULL. Registrations ended by death are
+          not deregistrations, and one followed by another OLIDS registration
+          that starts before horizon_end_date doesn't count. Can be after the
+          event, which then ended follow-up.
+
+      - name: follow_up_end_date
+        data_type: date
+        description: >
+          End of follow-up: the earliest of emergency_admission_date,
+          death_date, deregistration_date, the end of complete SUS data and
+          horizon_end_date. Never before end_date.
+
+      - name: follow_up_end_reason
+        data_type: varchar
+        description: >
+          What ended follow-up: emergency_admission (the event), death,
+          deregistration, end_of_data or end_of_horizon. On the same day the
+          event comes first, then death, deregistration and end of data.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['emergency_admission', 'death', 'deregistration', 'end_of_data', 'end_of_horizon']
+
+      - name: follow_up_days
+        data_type: number
+        description: "Days from end_date to follow_up_end_date: time to event, or to censoring when is_event is FALSE."
