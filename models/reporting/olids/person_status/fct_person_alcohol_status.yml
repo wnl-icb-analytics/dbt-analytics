@@ -5,7 +5,9 @@ models:
 
       One row per person with any alcohol-related data, integrating AUDIT/AUDIT-C
       scores with alcohol disorder diagnoses using 12-month recency window for conflict
-      resolution.'
+      resolution. Valid AUDIT records use the latest clinical date. Same-day records
+      prefer full AUDIT over AUDIT-C, then the highest total, latest recorded date
+      and observation id.'
     config:
       meta:
         indicator:
@@ -199,3 +201,38 @@ models:
       - name: disorder_data_recency
         description: Recency classification of disorder data (Current, Recent, 
           Historical, No Disorder Record)
+
+unit_tests:
+  - name: alcohol_status_selects_instrument_total
+    model: fct_person_alcohol_status
+    given:
+      - input: ref('int_alcohol_audit_scores')
+        format: sql
+        rows: |
+          -- Synthetic item answers and totals. Later recording must not override the total.
+          SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                 column3::DATE AS clinical_effective_date, column4::VARCHAR AS audit_type,
+                 column5::NUMBER(10,2) AS audit_score, column6::TIMESTAMP_NTZ AS date_recorded,
+                 'SYN_risk'::VARCHAR AS risk_category, 'SYN_risk'::VARCHAR AS simplified_risk_level,
+                 FALSE AS auditc_positive_screen, FALSE AS requires_specialist_intervention,
+                 FALSE AS brief_intervention_indicated, 'Male'::VARCHAR AS gender, TRUE AS is_valid_score
+          FROM VALUES
+              ('SYN_item_1', -9601, '2024-03-01', 'AUDIT-C', 1, '2024-03-02'),
+              ('SYN_item_2', -9601, '2024-03-01', 'AUDIT-C', 2, '2024-03-02'),
+              ('SYN_item_3', -9601, '2024-03-01', 'AUDIT-C', 1, '2024-03-02'),
+              ('SYN_total', -9601, '2024-03-01', 'AUDIT-C', 4, '2024-03-01'),
+              ('SYN_full', -9602, '2024-03-01', 'Full AUDIT', 9, '2024-03-01'),
+              ('SYN_screen', -9602, '2024-03-01', 'AUDIT-C', 6, '2024-03-02'),
+              ('SYN_older_full', -9603, '2024-02-01', 'Full AUDIT', 20, '2024-03-02'),
+              ('SYN_newer_screen', -9603, '2024-03-01', 'AUDIT-C', 2, '2024-03-01')
+      - input: ref('int_alcohol_misuse_disorders')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS id,
+                 NULL::DATE AS clinical_effective_date, NULL::BOOLEAN AS is_problem,
+                 NULL::DATE AS problem_end_date WHERE FALSE
+    expect:
+      rows:
+        - {person_id: -9601, audit_score: 4, audit_type: AUDIT-C}
+        - {person_id: -9602, audit_score: 9, audit_type: Full AUDIT}
+        - {person_id: -9603, audit_score: 2, audit_type: AUDIT-C}

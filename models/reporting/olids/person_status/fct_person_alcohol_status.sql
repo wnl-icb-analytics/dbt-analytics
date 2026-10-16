@@ -36,7 +36,11 @@ WITH latest_audit_scores AS (
             ROW_NUMBER() OVER (
                 PARTITION BY person_id 
                 ORDER BY clinical_effective_date DESC, 
-                         CASE WHEN audit_type = 'Full AUDIT' THEN 1 ELSE 2 END -- Prefer full AUDIT if same date
+                         CASE WHEN audit_type = 'Full AUDIT' THEN 1 ELSE 2 END,
+                         -- Instrument total is the sum of item scores, so it is the day's highest value
+                         audit_score DESC,
+                         date_recorded DESC NULLS LAST,
+                         id
             ) AS rn
         FROM {{ ref('int_alcohol_audit_scores') }}
         WHERE is_valid_score = TRUE
