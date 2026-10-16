@@ -1,7 +1,7 @@
 {#
 QAdmissions BMI imputation
 
-Shared by qadmissions_input_features and qadmissions_input_features_history.
+Shared by qadmissions_input_features and qadmissions_input_features_validation.
 A missing BMI is filled with the mean recorded BMI of people with the same
 sex, age decade and ethnicity group. If that group has fewer than
 var('qadmissions_bmi_imputation_min_group', 100) recorded BMIs, the mean for

@@ -1,17 +1,17 @@
 version: 2
 
 models:
-  - name: qadmissions_outcomes_history
+  - name: qadmissions_outcomes_validation
     description: >
       Emergency admission outcomes after each index date in
-      qadmissions_input_features_history, for validating QAdmissions scores
+      qadmissions_input_features_validation, for validating QAdmissions scores
       built from those features. It holds no risk scores.
 
       Grain: one row per person and index date (end_date), for every row of
-      qadmissions_input_features_history.
+      qadmissions_input_features_validation.
 
       Horizon: 2 years, the horizon the QAdmissions paper validated, matching
-      the surv that qadmissions_input_features_history passes to the model
+      the surv that qadmissions_input_features_validation passes to the model
       (both from the qadmissions_history_horizon_years macro).
 
       Event: the first SUS admitted patient care spell admitted after the
@@ -43,7 +43,7 @@ models:
     columns:
       - name: end_date
         data_type: date
-        description: "Index date (a month-end), as in qadmissions_input_features_history. Follow-up starts the day after."
+        description: "Index date (a month-end), as in qadmissions_input_features_validation. Follow-up starts the day after."
         data_tests:
           - not_null
 
@@ -61,7 +61,7 @@ models:
         data_type: number
         description: >
           Follow-up horizon in years: 2 on every row. Equal to surv in
-          qadmissions_input_features_history, so scores built from it pair
+          qadmissions_input_features_validation, so scores built from it pair
           with these outcomes.
 
       - name: horizon_end_date

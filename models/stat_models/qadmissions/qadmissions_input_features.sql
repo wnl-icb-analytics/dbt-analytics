@@ -155,7 +155,7 @@ emergency_admissions AS (
 ),
 
 -- Lab features use the int_*_latest models, which exclude negative values and
--- extreme outliers. qadmissions_input_features_history keeps extreme outliers,
+-- extreme outliers. qadmissions_input_features_validation keeps extreme outliers,
 -- so c_hb, high_platelet and high_lft can differ between the two models.
 
 -- Lab thresholds from the qadmissions_lab_thresholds seed, pivoted to one row.

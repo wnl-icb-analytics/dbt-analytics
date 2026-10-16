@@ -2,7 +2,7 @@
 QAdmissions history index dates
 
 qadmissions_history_index_dates() returns a query of the month-ends that
-qadmissions_input_features_history is built for, as one reference_date column:
+qadmissions_input_features_validation is built for, as one reference_date column:
 every month-end from August 2022 to July 2024. The model and
 tests/qadmissions_features_history_index_dates_have_rows.sql both read it, so
 the test always checks the dates the model uses.
@@ -19,8 +19,8 @@ person-month spine and register histories until about September 2027.
 
 qadmissions_history_horizon_years() returns the prediction horizon, in years,
 for validating against these index dates: 2, the horizon the QAdmissions paper
-validated. qadmissions_input_features_history passes it to the model as surv,
-and qadmissions_outcomes_history follows each person for the same horizon, so
+validated. qadmissions_input_features_validation passes it to the model as surv,
+and qadmissions_outcomes_validation follows each person for the same horizon, so
 the scores and outcomes always match.
 */
 

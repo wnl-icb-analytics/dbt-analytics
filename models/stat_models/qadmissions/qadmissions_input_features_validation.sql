@@ -10,8 +10,8 @@
 }}
 
 /*
-    qadmissions_input_features_history
-    ----------------------------------
+    qadmissions_input_features_validation
+    -------------------------------------
     Rebuilds the QAdmissions input features as they stood at historical index
     dates, so the model registered in Snowflake's model registry can be
     validated against later emergency admissions. The historical counterpart
@@ -96,7 +96,7 @@
     {%- do qadmissions_registers.append((register_code, register_model)) -%}
 {%- endfor -%}
 {%- if qadmissions_registers | length != qadmissions_register_codes | length -%}
-    {{ exceptions.raise_compiler_error("qadmissions_input_features_history: not every QAdmissions register code was found in ltc_register_history_models()") }}
+    {{ exceptions.raise_compiler_error("qadmissions_input_features_validation: not every QAdmissions register code was found in ltc_register_history_models()") }}
 {%- endif %}
 
 -- Index month-ends (August 2022 to July 2024), from
@@ -568,7 +568,7 @@ SELECT
 
     -- Constants: Strategic Health Authority 3 (London), as in the live model,
     -- and the validation horizon in years (2, as in the QAdmissions paper),
-    -- shared with qadmissions_outcomes_history. The live model scores 1 year.
+    -- shared with qadmissions_outcomes_validation. The live model scores 1 year.
     3                                                                      AS sha1,
     {{ qadmissions_history_horizon_years() }}                              AS surv,
 

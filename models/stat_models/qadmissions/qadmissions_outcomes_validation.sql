@@ -4,26 +4,26 @@
         cluster_by=['end_date', 'person_id'],
         tags=['qadmissions', 'risk_scores', 'monthly-full'],
         meta={
-            'custom_message': 'Emergency admission outcomes for validating QAdmissions scores built from qadmissions_input_features_history. Holds no risk scores. Includes OLIDS and SUS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering.'
+            'custom_message': 'Emergency admission outcomes for validating QAdmissions scores built from qadmissions_input_features_validation. Holds no risk scores. Includes OLIDS and SUS data - for secondary use, INNER JOIN to REPORTING.OLIDS_PERSON_STATUS.DIM_PERSON_SECONDARY_USE_ALLOWED ON person_id to apply National Data Opt-Out and Type 1 opt-out filtering.'
         }
     )
 }}
 
 /*
-    qadmissions_outcomes_history
-    ----------------------------
-    Follow-up of each person in qadmissions_input_features_history after each
+    qadmissions_outcomes_validation
+    -------------------------------
+    Follow-up of each person in qadmissions_input_features_validation after each
     index date: the first emergency admission, or the date and reason follow-up
     ended without one. Pair it with scores from the same index date to
     validate QAdmissions (calibration, discrimination, sensitivity and PPV).
 
     Grain
       One row per person and index date, for every row of
-      qadmissions_input_features_history.
+      qadmissions_input_features_validation.
 
     Horizon
       2 years, the horizon the QAdmissions paper validated, from
-      qadmissions_history_horizon_years(). qadmissions_input_features_history
+      qadmissions_history_horizon_years(). qadmissions_input_features_validation
       passes the same value to the model as surv.
 
     Event
@@ -83,7 +83,7 @@ base_spine AS (
         person_id,
         sk_patient_id,
         sk_patient_id IS NOT NULL AND sk_patient_id <> '1'         AS has_sus_link
-    FROM {{ ref('qadmissions_input_features_history') }}
+    FROM {{ ref('qadmissions_input_features_validation') }}
 ),
 
 -- Emergency admissions that could follow any index date. sk_patient_id '1' is
