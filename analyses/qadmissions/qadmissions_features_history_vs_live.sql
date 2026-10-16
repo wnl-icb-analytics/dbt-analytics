@@ -10,8 +10,8 @@
 -- SET UP FIRST
 --   1. The check uses MAX(end_date), which must be the latest completed
 --      month-end. qadmissions_history_index_dates()
---      (macros/config/qadmissions_index_dates.sql) covers January 2023 to
---      December 2024, so for this check temporarily add the latest month to
+--      (macros/config/qadmissions_index_dates.sql) covers August 2022 to
+--      July 2024, so for this check temporarily add the latest month to
 --      its WHERE clause:
 --        OR month_end_date = LAST_DAY(DATEADD('month', -1, CURRENT_DATE()))
 --      and remove it afterwards.
