@@ -9,7 +9,20 @@ models:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, concept_code, clinical_effective_date]
       - cluster_ids_exist:
           arguments:
             cluster_ids: MHPCADEC_COD, MHPCAPU_COD
+    columns:
+      - name: cluster_id
+        description: >-
+          QOF PCD cluster for the adjustment. MHPCAPU_COD means patient unsuitable;
+          MHPCADEC_COD means informed dissent.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [MHPCADEC_COD, MHPCAPU_COD]

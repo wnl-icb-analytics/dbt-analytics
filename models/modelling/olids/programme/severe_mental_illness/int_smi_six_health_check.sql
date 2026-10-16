@@ -11,13 +11,11 @@ WITH EXCEPTIONS AS (
 select 
 e.person_id
 ,DATE(e.clinical_effective_date) as EXCEPTION_DATE
-,CASE 
-WHEN e.concept_display = 'Excepted from mental health quality indicators - patient unsuitable' THEN 'Patient Unsuitable' ELSE 'Informed dissent' 
-END as EXCEPTION_CATEGORY
+,CASE e.cluster_id WHEN 'MHPCAPU_COD' THEN 'Patient Unsuitable' WHEN 'MHPCADEC_COD' THEN 'Informed dissent' END AS exception_category
 FROM {{ ref('int_smi_quality_check_exception') }} e
 INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
 where e.clinical_effective_date  >= DATEADD('month', -12, CURRENT_DATE)
-QUALIFY ROW_NUMBER() OVER (PARTITION BY e.person_id ORDER BY e.clinical_effective_date DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY e.person_id ORDER BY e.clinical_effective_date DESC, e.cluster_id) = 1
 )
 
 
