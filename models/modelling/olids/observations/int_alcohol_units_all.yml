@@ -3,10 +3,9 @@ models:
     description: >-
       Alcohol consumption from ALC_COD in OLIDS GP records, one row per person and
       clinical date up to the build date. Includes inactive and deceased people
-      without age or SMI-register restrictions. Same-day records prefer a classified
-      result, then a numeric reading, then higher risk (Higher, Increasing, Low,
-      Ex-Drinker, Non-Drinker), then the lowest
-      concept code, highest value and unit text. Weekly-unit variants use U/week;
+      without age or SMI-register restrictions. Same-day records prefer higher risk
+      (Higher, Increasing, Low, Ex-Drinker, Non-Drinker, Unclear), then a numeric
+      reading, then the lowest observation id. Weekly-unit variants use U/week;
       other units stay as recorded.
       Risk uses coded status or weekly units: low up to 14 units a week; increasing
       above 14; higher above 35 for women or 50 for men (NHS/OHID), using current
@@ -48,7 +47,11 @@ unit_tests:
               ('SYN_h', -9508, '160573003', 20, 'per week'),
               ('SYN_i1', -9509, '86933000', NULL, NULL),
               ('SYN_i2', -9509, '160573003', 10, 'U/week'),
-              ('SYN_j', -9510, '1082641000000106', 10, ' units/wk ')
+              ('SYN_j', -9510, '1082641000000106', 10, ' units/wk '),
+              ('SYN_k1', -9511, '266917007', NULL, NULL),
+              ('SYN_k2', -9511, '160573003', 10, 'U/week'),
+              ('SYN_l1', -9512, '160573003', 10, 'U/week'),
+              ('SYN_l2', -9512, '1082641000000106', 12, 'U/week')
     given:
       - input: ref('stg_olids_concept')
         format: sql
@@ -60,7 +63,8 @@ unit_tests:
           SELECT column1::NUMBER AS person_id, column2::VARCHAR AS gender
           FROM VALUES (-9501, 'Male'), (-9502, 'Male'), (-9503, 'Male'),
               (-9504, 'Female'), (-9505, 'Female'), (-9506, 'Male'),
-              (-9507, 'Male'), (-9508, 'Male'), (-9509, 'Male'), (-9510, 'Male')
+              (-9507, 'Male'), (-9508, 'Male'), (-9509, 'Male'), (-9510, 'Male'),
+              (-9511, 'Male'), (-9512, 'Male')
     expect:
       rows:
         - {person_id: -9501, alcohol_risk_category: Low Risk, result_unit_display: U/week}
@@ -71,5 +75,7 @@ unit_tests:
         - {person_id: -9506, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
         - {person_id: -9507, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
         - {person_id: -9508, alcohol_risk_category: Unclear, result_unit_display: per week}
-        - {person_id: -9509, concept_code: '160573003', alcohol_risk_category: Low Risk, result_unit_display: U/week}
+        - {person_id: -9509, concept_code: '86933000', alcohol_risk_category: Higher Risk}
         - {person_id: -9510, alcohol_risk_category: Low Risk, result_unit_display: U/week}
+        - {person_id: -9511, concept_code: '160573003', alcohol_risk_category: Low Risk, result_value: 10}
+        - {person_id: -9512, concept_code: '160573003', alcohol_risk_category: Low Risk, result_value: 10}

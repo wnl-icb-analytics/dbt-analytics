@@ -28,6 +28,7 @@ AND obs.clinical_effective_date <= CURRENT_DATE() -- No future dates
 ),
 observations_with_demographics AS (
     SELECT DISTINCT
+        bo.id,
         bo.person_id,
         pd.gender,
         date(bo.clinical_effective_date) as clinical_effective_date,
@@ -89,8 +90,7 @@ ELSE 'Unclear'
 END AS alcohol_risk_category
 from observations_with_demographics
 QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id, clinical_effective_date ORDER BY
-    IFF(alcohol_risk_category = 'Unclear', 1, 0),
-    IFF(result_value IS NOT NULL, 0, 1),
     CASE alcohol_risk_category WHEN 'Higher Risk' THEN 1 WHEN 'Increasing Risk' THEN 2 WHEN 'Low Risk' THEN 3
          WHEN 'Ex-Drinker' THEN 4 WHEN 'Non-Drinker' THEN 5 ELSE 6 END,
-    concept_code, result_value DESC NULLS LAST, result_unit_display) = 1
+    IFF(result_value IS NOT NULL, 0, 1),
+    id) = 1
