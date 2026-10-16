@@ -14,4 +14,4 @@ select
     "Report_Period_Length" as report_period_length,
     "Unique_ID" as unique_id,
     "AuditKey" as audit_key
-from {{ source('ukhfd_demography', 'registered_patients_at_gp_practice_by_lsoa_2021') }}
+from {{ source('ukhfd_demography', 'registered_patients_by_gp_practice_lsoa_2021') }}
