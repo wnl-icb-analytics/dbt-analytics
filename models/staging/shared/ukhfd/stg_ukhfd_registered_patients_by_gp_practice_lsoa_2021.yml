@@ -33,3 +33,16 @@ models:
         description: Publication snapshot date (first of the month).
       - name: data_source_file_for_this_snapshot_version
         description: UKHFD source-file version for the snapshot.
+
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - gp_practice_code
+              - lsoa_code
+              - sex
+              - effective_snapshot_date
