@@ -5,7 +5,9 @@ models:
       One row per observation id and source cluster, with an effective date no later
       than the build date. Includes IFCCHBAM_COD and DCCTHBA1C_COD tests without
       numeric results. Missing or non-numeric results have null standardised values
-      and false validity. IFCC values use mmol/mol and DCCT values use percent.
+      and false validity. IFCC values use mmol/mol and DCCT values use percent. Values
+      below 20 are read as percent, except 13 to 19 recorded as mmol/mol, which are
+      invalid: below the National Diabetes Audit IFCC range and an extreme percent value.
       Consumers assessing control must check validity; test-presence measures may
       use every retained observation. Invalid results have category Invalid and null
       diabetes-range and QOF target flags. The original unit is retained for review.
@@ -118,11 +120,11 @@ unit_tests:
   expect:
     rows:
     - id: SYN_1
-      measurement_type: DCCT
-      is_valid_hba1c: true
-      hba1c_category: Diabetes - Very High Risk
-      meets_qof_target: false
-      is_unit_conflict: true
+      measurement_type: IFCC
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      is_unit_conflict: false
       original_result_unit_code: mmol/mol
     - id: SYN_2
       measurement_type: IFCC
