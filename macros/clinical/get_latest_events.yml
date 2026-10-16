@@ -3,6 +3,7 @@ macros:
   - name: get_latest_events
     description: >
       Returns the most recent event per partition using Snowflake QUALIFY.
+      Does not add a tie-break.
 
 
     arguments:
@@ -16,7 +17,10 @@ macros:
 
       - name: order_by
         type: string | list
-        description: Column(s) to order by within partition. Default 'clinical_effective_date'
+        description: >
+          Column or expression, or a list of them. direction is applied to each term
+          that has no explicit ASC/DESC/NULLS clause. Pass several columns as a list,
+          not a comma-separated string. Default 'clinical_effective_date'.
 
       - name: direction
         type: string
