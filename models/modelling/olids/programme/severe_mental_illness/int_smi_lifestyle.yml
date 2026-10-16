@@ -6,6 +6,9 @@ models:
       Excludes people with lithium alone or resolved diagnoses. Covers smoking,
       alcohol, drugs, BMI, nutrition, exercise, dental reviews and referrals, with
       12-month flags. Recorded declines remain distinct from completed assessments.
+      Valid same-day AUDIT records prefer the full instrument, then the highest
+      total, latest recorded date and observation id. Same-day classified alcohol
+      sources prefer AUDIT, then weekly units, then disorders.
     config:
       meta:
         owner:
@@ -78,7 +81,7 @@ unit_tests:
     format: sql
   - input: ref('int_alcohol_audit_scores')
     rows: |-
-      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS risk_category, NULL::BOOLEAN AS is_valid_score, NULL::TEXT AS audit_type, NULL::TEXT AS id WHERE FALSE
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS risk_category, NULL::BOOLEAN AS is_valid_score, NULL::TEXT AS audit_type, NULL::NUMBER(10,2) AS audit_score, NULL::TIMESTAMP_NTZ AS date_recorded, NULL::TEXT AS id WHERE FALSE
     format: sql
   - input: ref('int_alcohol_units_latest')
     rows: |-

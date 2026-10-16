@@ -117,7 +117,9 @@ FROM {{ ref('int_alcohol_audit_scores') }} au
 --INNER JOIN MODELLING.OLIDS_PROGRAMME.INT_SMI_POPULATION_BASE p USING (PERSON_ID)
 INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
 WHERE au.is_valid_score
-QUALIFY ROW_NUMBER() OVER (PARTITION BY au.person_id ORDER BY au.clinical_effective_date DESC, IFF(au.audit_type = 'Full AUDIT', 0, 1), au.id) = 1
+-- Instrument total is the sum of item scores, so it is the day's highest value
+QUALIFY ROW_NUMBER() OVER (PARTITION BY au.person_id ORDER BY au.clinical_effective_date DESC,
+    IFF(au.audit_type = 'Full AUDIT', 0, 1), au.audit_score DESC, au.date_recorded DESC NULLS LAST, au.id) = 1
 
 UNION
 --ALCOHOL UNITS
@@ -150,7 +152,8 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY s.person_id ORDER BY s.clinical_effectiv
 ) a
 QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY a.alcohol_assessment_date DESC, 
 CASE WHEN ALCOHOL_RISK_CATEGORY NOT IN ('Unclear','Alcohol Status Declined') THEN 2 
-WHEN ALCOHOL_RISK_CATEGORY = 'Alcohol Status Declined' THEN 1 ELSE 0 END DESC) = 1
+WHEN ALCOHOL_RISK_CATEGORY = 'Alcohol Status Declined' THEN 1 ELSE 0 END DESC,
+CASE a.source WHEN 'AUDIT' THEN 1 WHEN 'UnitsWeek' THEN 2 WHEN 'Disorders' THEN 3 ELSE 4 END) = 1
 ) b
 )
 --ALCOHOL INTERVENTION LATEST EVER

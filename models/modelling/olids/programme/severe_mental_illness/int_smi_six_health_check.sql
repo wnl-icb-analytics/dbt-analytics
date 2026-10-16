@@ -11,7 +11,7 @@ WITH EXCEPTIONS AS (
 select 
 e.person_id
 ,DATE(e.clinical_effective_date) as EXCEPTION_DATE
-,CASE e.cluster_id WHEN 'MHPCAPU_COD' THEN 'Patient Unsuitable' WHEN 'MHPCADEC_COD' THEN 'Informed dissent' END AS exception_category
+,(CASE e.cluster_id WHEN 'MHPCAPU_COD' THEN 'Patient Unsuitable' WHEN 'MHPCADEC_COD' THEN 'Informed dissent' END)::VARCHAR(18) AS exception_category
 FROM {{ ref('int_smi_quality_check_exception') }} e
 INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
 where e.clinical_effective_date  >= DATEADD('month', -12, CURRENT_DATE)
