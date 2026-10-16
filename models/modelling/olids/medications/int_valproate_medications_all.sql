@@ -170,27 +170,28 @@ valproate_enhanced AS (
             ELSE 'UNKNOWN_DOSE'
         END AS dose_category,
 
-        -- Formulation type for bioequivalence monitoring
+        -- Keep the published label vocabulary; exact dm+d form is available separately.
         CASE
-            WHEN
-                vo.order_medication_name ILIKE '%TABLET%' THEN 'TABLET'
-            WHEN
-                vo.order_medication_name ILIKE '%CAPSULE%' THEN 'CAPSULE'
-            WHEN
-                vo.order_medication_name ILIKE '%LIQUID%'
-                OR vo.order_medication_name ILIKE '%SYRUP%'
-                THEN 'LIQUID'
-            WHEN
-                vo.order_medication_name ILIKE '%MODIFIED RELEASE%'
-                OR vo.order_medication_name ILIKE '%MR%'
-                THEN 'MODIFIED_RELEASE'
+            WHEN dmd.form_description ILIKE 'Modified-release%'
+                OR dmd.form_description ILIKE 'Prolonged-release%' THEN 'MODIFIED_RELEASE'
+            WHEN dmd.form_description ILIKE '%tablet%' THEN 'TABLET'
+            WHEN dmd.form_description ILIKE '%capsule%' THEN 'CAPSULE'
+            WHEN dmd.form_description ILIKE '%solution%'
+                OR dmd.form_description ILIKE '%suspension%'
+                OR dmd.form_description ILIKE '%liquid%'
+                OR dmd.form_description ILIKE '%syrup%' THEN 'LIQUID'
             ELSE 'UNKNOWN_FORMULATION'
         END AS formulation_type,
+        coalesce(dmd.form_description, 'UNKNOWN') AS dmd_formulation_type,
+        CASE WHEN dmd.form_description IS NULL THEN NULL
+             ELSE dmd.form_description ILIKE 'Modified-release%'
+                OR dmd.form_description ILIKE 'Prolonged-release%' END AS is_modified_release,
 
         -- Recency flags for clinical monitoring
         {{ medication_date_flags('vo.order_date') }}
 
     FROM valproate_orders AS vo
+    LEFT JOIN {{ ref('dmd_product') }} dmd ON vo.mapped_concept_code = dmd.product_code
 )
 
 -- Final selection with ALL persons - no filtering by active status
@@ -227,7 +228,9 @@ SELECT
 
     -- Add person demographics for reference
     p.current_practice_id,
-    p.total_patients
+    p.total_patients,
+    ve.dmd_formulation_type,
+    ve.is_modified_release
 
 FROM valproate_enhanced AS ve
 -- Join to main person dimension (includes ALL persons)
