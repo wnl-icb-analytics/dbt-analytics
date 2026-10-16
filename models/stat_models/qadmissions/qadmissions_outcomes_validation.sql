@@ -53,6 +53,12 @@
       is_registered_12m: registered at the index date with a practice whose
         registration started at least 12 months earlier, the QAdmissions
         paper's entry rule for a complete GP record.
+
+    Validation cohort
+      is_cohort_entry marks each person's first index date with has_sus_link
+      and is_registered_12m: their entry to an open cohort, as in the paper,
+      where people entered at any point in the study period. Each person
+      enters once and is followed for the full 2 years from entry.
 */
 
 {%- set horizon_years = qadmissions_history_horizon_years() -%}
@@ -289,6 +295,13 @@ SELECT
     horizon_end_date,
     has_sus_link,
     is_registered_12m,
+    -- The person's first index date meeting the entry criteria. Not chosen by
+    -- whether the model scores the row: a rejected entry row is excluded,
+    -- not replaced by a later date.
+    has_sus_link
+        AND is_registered_12m
+        AND end_date = MIN(IFF(has_sus_link AND is_registered_12m, end_date, NULL))
+            OVER (PARTITION BY person_id)                              AS is_cohort_entry,
     horizon_end_date <= sus_complete_through_date                      AS has_complete_follow_up,
     COALESCE(admission_date <= censoring_date, FALSE)                  AS is_event,
     IFF(is_event, admission_date, NULL)                                AS emergency_admission_date,

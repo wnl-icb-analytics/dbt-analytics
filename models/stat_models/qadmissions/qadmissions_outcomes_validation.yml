@@ -27,9 +27,12 @@ models:
       rebuilt. Use has_complete_follow_up to choose index dates whose whole
       horizon is covered.
 
-      For validation, exclude rows without has_sus_link: no admission can be
-      found for them. is_registered_12m gives the paper's entry rule of 12
-      months' registration. Rows are kept so exclusions can be counted.
+      Validation cohort: is_cohort_entry marks each person's first index date
+      with has_sus_link (no admission can be found without it) and
+      is_registered_12m (the paper's 12 months' registration). This gives an
+      open cohort, as in the paper: each person enters once, at any index
+      date, and is followed for 2 years from entry. Every row is kept, so
+      exclusions can be counted and other index dates used to check drift.
     config:
       meta:
         owner:
@@ -52,6 +55,10 @@ models:
         description: "OLIDS person identifier. With end_date, identifies a row."
         data_tests:
           - not_null
+          # Each person enters the validation cohort at most once.
+          - unique:
+              config:
+                where: "is_cohort_entry"
 
       - name: sk_patient_id
         data_type: varchar
@@ -82,6 +89,16 @@ models:
           (dim_person_historical_practice) that started at least 12 months
           earlier. The QAdmissions paper started follow-up only after a year's
           registration, so the GP record is complete.
+
+      - name: is_cohort_entry
+        data_type: boolean
+        description: >
+          TRUE on the person's entry to the validation cohort: the first
+          end_date with has_sus_link and is_registered_12m. FALSE on every
+          other row, and on every row for people who never meet both. Entry
+          doesn't depend on scoring: when the model rejects the entry row
+          (qadmissions_predictions_validation.is_scored FALSE), count the
+          person as excluded rather than using a later date.
 
       - name: has_complete_follow_up
         data_type: boolean
