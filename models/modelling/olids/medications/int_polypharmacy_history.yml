@@ -1,125 +1,104 @@
 models:
-- name: int_polypharmacy_history
-  description: 'Historical polypharmacy medication counts as SCD Type 2 (last 5 years).
+  - name: int_polypharmacy_history
+    description: |
+      Historical polypharmacy medication counts as SCD Type 2 (last 5 years).
 
+      Grain: One row per person per distinct medication count period (5-year lookback)
 
-    Grain: One row per person per distinct medication count period (5-year lookback)
+      Inclusion criteria:
+      - Repeat prescriptions only (authorisation_type = '182918009')
+      - Polypharmacy-scope medications (via int_polypharmacy_medications_list)
+      - Medication count periods lasting 3+ days (smoothed to filter transient fluctuations)
+      - Last 5 years only
 
+      Polypharmacy scope uses exclusion-based filtering:
+      - Excludes most infections (except HIV and hepatitis antivirals)
+      - Excludes vitamins, minerals, nutrition products
+      - Excludes contraceptives, thyroid drugs, topicals
+      - Excludes devices, dressings, appliances
+      - See int_polypharmacy_medications_list for complete scope definition
 
-    Inclusion criteria:
+      Event-based SCD tracking medication burden changes over time.
+      Creates new row only when medication count changes and persists for 3+ days.
 
-    - Repeat prescriptions only (authorisation_type = ''182918009'')
+      Example periods:
+      - 2020-01-15 to 2021-08-10: 4 medications (not polypharmacy)
+      - 2021-08-11 to 2023-03-05: 5 medications (polypharmacy starts)
+      - 2023-03-06 to 2025-10-06: 6 medications (current)
 
-    - Polypharmacy-scope medications (via int_polypharmacy_medications_list)
+      Use for trending analysis and historical polypharmacy status.
+      Not used for current state (see int_polypharmacy_current instead).
 
-    - Medication count periods lasting 3+ days (smoothed to filter transient fluctuations)
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_olids_patient')
+                field: person_id
+      - name: medication_count
+        description: Count of distinct polypharmacy-scope medications during this period
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "> 0"
+      - name: valid_from
+        description: Start of medication-count period. No period starts from a future-dated issue; expiry of a
+          current issue can create future periods.
+        data_tests:
+          - not_null
 
-    - Last 5 years only
+      - name: valid_to
+        description: End date of this smoothed medication count period (inclusive). Always populated, as the
+          count falls to zero after the last issues run out; that zero period is not output.
 
+      - name: is_polypharmacy_5plus
+        description: Flag for standard polypharmacy (5+ medications) during this period
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
 
-    Polypharmacy scope uses exclusion-based filtering:
+      - name: is_polypharmacy_10plus
+        description: Flag for severe/complex polypharmacy (10+ medications) during this period
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
 
-    - Excludes most infections (except HIV and hepatitis antivirals)
+      - name: is_current
+        description: Whether this period overlaps with today (valid_from <= today AND valid_to >= today)
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
 
-    - Excludes vitamins, minerals, nutrition products
-
-    - Excludes contraceptives, thyroid drugs, topicals
-
-    - Excludes devices, dressings, appliances
-
-    - See int_polypharmacy_medications_list for complete scope definition
-
-
-    Event-based SCD tracking medication burden changes over time.
-
-    Creates new row only when medication count changes and persists for 3+ days.
-
-
-    Example periods:
-
-    - 2020-01-15 to 2021-08-10: 4 medications (not polypharmacy)
-
-    - 2021-08-11 to 2023-03-05: 5 medications (polypharmacy starts)
-
-    - 2023-03-06 to 2025-10-06: 6 medications (current)
-
-
-    Use for trending analysis and historical polypharmacy status.
-
-    Not used for current state (see int_polypharmacy_current instead).
-
-    '
-  config:
-    meta:
-      owner:
-        name: EddieDavison92
-  columns:
-  - name: person_id
-    description: Person identifier
+      - name: period_duration_days
+        description: Duration of this period in days (up to current date if ongoing)
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
     data_tests:
-    - not_null
-    - relationships:
-        arguments:
-          to: ref('stg_olids_patient')
-          field: person_id
-  - name: medication_count
-    description: Count of distinct polypharmacy-scope medications during this period
-    data_tests:
-    - not_null
-    - dbt_utils.expression_is_true:
-        arguments:
-          expression: '> 0'
-  - name: valid_from
-    description: Start of medication-count period. No period starts from a future-dated issue; expiry
-      of a current issue can create future periods.
-    data_tests:
-    - not_null
-  - name: valid_to
-    description: End date of this smoothed medication count period (inclusive). Always populated, as the
-      count falls to zero after the last issues run out; that zero period is not output.
-  - name: is_polypharmacy_5plus
-    description: Flag for standard polypharmacy (5+ medications) during this period
-    data_tests:
-    - not_null
-    - accepted_values:
-        arguments:
-          values:
-          - true
-          - false
-  - name: is_polypharmacy_10plus
-    description: Flag for severe/complex polypharmacy (10+ medications) during this period
-    data_tests:
-    - not_null
-    - accepted_values:
-        arguments:
-          values:
-          - true
-          - false
-  - name: is_current
-    description: Whether this period overlaps with today (valid_from <= today AND valid_to >= today)
-    data_tests:
-    - not_null
-    - accepted_values:
-        arguments:
-          values:
-          - true
-          - false
-  - name: period_duration_days
-    description: Duration of this period in days (up to current date if ongoing)
-    data_tests:
-    - not_null
-    - dbt_utils.expression_is_true:
-        arguments:
-          expression: '>= 0'
-  data_tests:
-  - dbt_utils.unique_combination_of_columns:
-      arguments:
-        combination_of_columns:
-        - person_id
-        - valid_from
-  - dbt_utils.at_least_one:
-      column_name: person_id
-  - cluster_ids_exist:
-      arguments:
-        cluster_ids: REPEAT_PRESCRIPTION
-        source: ECL_CACHE
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - valid_from
+      - dbt_utils.at_least_one:
+          column_name: person_id
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: REPEAT_PRESCRIPTION
+            source: ECL_CACHE

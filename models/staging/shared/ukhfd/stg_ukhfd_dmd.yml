@@ -1,136 +1,143 @@
 version: 2
+
 models:
-- name: stg_ukhfd_dmd_vmp
-  description: Current dm+d vmp records. One row per vpid. Removed source records remain available; is_in_latest_source
-    marks current source membership.
-  columns:
-  - name: vpid
-    description: SNOMED CT identifier of the virtual medicinal product (VMP).
+  - name: stg_ukhfd_dmd_vmp
+    description: >-
+      Current dm+d vmp records. One row per vpid. Removed source records remain available;
+      is_in_latest_source marks current source membership.
+    columns:
+      - name: vpid
+        description: SNOMED CT identifier of the virtual medicinal product (VMP).
+        data_tests:
+          - not_null
+          - unique
+      - name: vtm_id
+        description: SNOMED CT identifier of the virtual therapeutic moiety (VTM), independent of strength
+          and form.
+      - name: vmp_name
+        description: dm+d name of the generic product, including strength and dose form.
+      - name: is_invalid
+        description: Whether dm+d marks this product identifier invalid; null when no flag is supplied.
+      - name: combination_product_code
+        description: Supplied dm+d combination-product lookup code; null when absent.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports this retained record in its latest source data.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+  - name: stg_ukhfd_dmd_amp
+    description: >-
+      Current dm+d amp records. One row per apid. Removed source records remain available;
+      is_in_latest_source marks current source membership.
+    columns:
+      - name: apid
+        description: SNOMED CT identifier of the actual medicinal product (AMP).
+        data_tests:
+          - not_null
+          - unique
+      - name: vpid
+        description: SNOMED CT identifier of the virtual medicinal product (VMP).
+      - name: amp_name
+        description: dm+d name of the branded or supplier-specific medicinal product.
+      - name: is_invalid
+        description: Whether dm+d marks this product identifier invalid; null when no flag is supplied.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports this retained record in its latest source data.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+  - name: stg_ukhfd_dmd_vmp_drug_form
+    description: >-
+      Current dm+d vmp drug form records. One row per vpid. Removed source records remain available;
+      is_in_latest_source marks current source membership.
+    columns:
+      - name: vpid
+        description: SNOMED CT identifier of the virtual medicinal product (VMP).
+        data_tests:
+          - not_null
+          - unique
+      - name: form_code
+        description: dm+d dose-form lookup code.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports this retained record in its latest source data.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+  - name: stg_ukhfd_dmd_lookup_form
+    description: >-
+      Current dm+d lookup form records. One row per form_code. Removed source records remain
+      available; is_in_latest_source marks current source membership.
+    columns:
+      - name: form_code
+        description: dm+d dose-form lookup code.
+        data_tests:
+          - not_null
+          - unique
+      - name: form_description
+        description: dm+d dose-form text, such as Modified-release tablet.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports this retained record in its latest source data.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+  - name: stg_ukhfd_dmd_vmp_ingredient
+    description: >-
+      Latest retained dm+d active ingredient record per virtual product and ingredient substance.
+      Removed records remain available; is_in_latest_source marks current source membership.
+      Strength values retain their supplied units.
+    columns:
+      - name: vpid
+        description: SNOMED CT identifier of the virtual medicinal product (VMP).
+        data_tests:
+          - not_null
+      - name: ingredient_substance_id
+        description: SNOMED CT identifier of the active ingredient substance in the virtual product.
+        data_tests:
+          - not_null
+      - name: basis_strength_code
+        description: dm+d lookup code for how the ingredient strength is expressed.
+      - name: strength_numerator_value
+        description: Supplied numerator of the ingredient strength, in strength_numerator_unit_code units.
+      - name: strength_numerator_unit_code
+        description: dm+d unit code for the ingredient strength numerator; null when absent.
+      - name: strength_denominator_value
+        description: Supplied denominator of the ingredient strength, in strength_denominator_unit_code units.
+      - name: strength_denominator_unit_code
+        description: dm+d unit code for the ingredient strength denominator; null when absent.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports this retained record in its latest source data.
     data_tests:
-    - not_null
-    - unique
-  - name: vtm_id
-    description: SNOMED CT identifier of the virtual therapeutic moiety (VTM), independent of strength
-      and form.
-  - name: vmp_name
-    description: dm+d name of the generic product, including strength and dose form.
-  - name: is_invalid
-    description: Whether dm+d marks this product identifier invalid; null when no flag is supplied.
-  - name: combination_product_code
-    description: Supplied dm+d combination-product lookup code; null when absent.
-  - name: is_in_latest_source
-    description: Whether UKHFD reports this retained record in its latest source data.
-  config:
-    meta:
-      owner:
-        name: Eddie Davison
-- name: stg_ukhfd_dmd_amp
-  description: Current dm+d amp records. One row per apid. Removed source records remain available; is_in_latest_source
-    marks current source membership.
-  columns:
-  - name: apid
-    description: SNOMED CT identifier of the actual medicinal product (AMP).
-    data_tests:
-    - not_null
-    - unique
-  - name: vpid
-    description: SNOMED CT identifier of the virtual medicinal product (VMP).
-  - name: amp_name
-    description: dm+d name of the branded or supplier-specific medicinal product.
-  - name: is_invalid
-    description: Whether dm+d marks this product identifier invalid; null when no flag is supplied.
-  - name: is_in_latest_source
-    description: Whether UKHFD reports this retained record in its latest source data.
-  config:
-    meta:
-      owner:
-        name: Eddie Davison
-- name: stg_ukhfd_dmd_vmp_drug_form
-  description: Current dm+d vmp drug form records. One row per vpid. Removed source records remain available;
-    is_in_latest_source marks current source membership.
-  columns:
-  - name: vpid
-    description: SNOMED CT identifier of the virtual medicinal product (VMP).
-    data_tests:
-    - not_null
-    - unique
-  - name: form_code
-    description: dm+d dose-form lookup code.
-  - name: is_in_latest_source
-    description: Whether UKHFD reports this retained record in its latest source data.
-  config:
-    meta:
-      owner:
-        name: Eddie Davison
-- name: stg_ukhfd_dmd_lookup_form
-  description: Current dm+d lookup form records. One row per form_code. Removed source records remain
-    available; is_in_latest_source marks current source membership.
-  columns:
-  - name: form_code
-    description: dm+d dose-form lookup code.
-    data_tests:
-    - not_null
-    - unique
-  - name: form_description
-    description: dm+d dose-form text, such as Modified-release tablet.
-  - name: is_in_latest_source
-    description: Whether UKHFD reports this retained record in its latest source data.
-  config:
-    meta:
-      owner:
-        name: Eddie Davison
-- name: stg_ukhfd_dmd_vmp_ingredient
-  description: Latest retained dm+d active ingredient record per virtual product and ingredient substance.
-    Removed records remain available; is_in_latest_source marks current source membership. Strength values
-    retain their supplied units.
-  columns:
-  - name: vpid
-    description: SNOMED CT identifier of the virtual medicinal product (VMP).
-    data_tests:
-    - not_null
-  - name: ingredient_substance_id
-    description: SNOMED CT identifier of the active ingredient substance in the virtual product.
-    data_tests:
-    - not_null
-  - name: basis_strength_code
-    description: dm+d lookup code for how the ingredient strength is expressed.
-  - name: strength_numerator_value
-    description: Supplied numerator of the ingredient strength, in strength_numerator_unit_code units.
-  - name: strength_numerator_unit_code
-    description: dm+d unit code for the ingredient strength numerator; null when absent.
-  - name: strength_denominator_value
-    description: Supplied denominator of the ingredient strength, in strength_denominator_unit_code units.
-  - name: strength_denominator_unit_code
-    description: dm+d unit code for the ingredient strength denominator; null when absent.
-  - name: is_in_latest_source
-    description: Whether UKHFD reports this retained record in its latest source data.
-  data_tests:
-  - dbt_utils.unique_combination_of_columns:
-      arguments:
-        combination_of_columns:
-        - vpid
-        - ingredient_substance_id
-  config:
-    meta:
-      owner:
-        name: Eddie Davison
-- name: stg_ukhfd_dmd_vtm
-  description: Current dm+d vtm records. One row per vtm_id. Removed source records remain available;
-    is_in_latest_source marks current source membership.
-  columns:
-  - name: vtm_id
-    description: SNOMED CT identifier of the virtual therapeutic moiety (VTM), independent of strength
-      and form.
-    data_tests:
-    - not_null
-    - unique
-  - name: vtm_name
-    description: dm+d name of the therapeutic moiety or combination of moieties.
-  - name: previous_vtm_id
-    description: Previous SNOMED CT moiety identifier supplied by dm+d; null when absent.
-  - name: is_in_latest_source
-    description: Whether UKHFD reports this retained record in its latest source data.
-  config:
-    meta:
-      owner:
-        name: Eddie Davison
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - vpid
+              - ingredient_substance_id
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+  - name: stg_ukhfd_dmd_vtm
+    description: >-
+      Current dm+d vtm records. One row per vtm_id. Removed source records remain available;
+      is_in_latest_source marks current source membership.
+    columns:
+      - name: vtm_id
+        description: SNOMED CT identifier of the virtual therapeutic moiety (VTM), independent of strength
+          and form.
+        data_tests:
+          - not_null
+          - unique
+      - name: vtm_name
+        description: dm+d name of the therapeutic moiety or combination of moieties.
+      - name: previous_vtm_id
+        description: Previous SNOMED CT moiety identifier supplied by dm+d; null when absent.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports this retained record in its latest source data.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison

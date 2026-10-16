@@ -1,105 +1,114 @@
 models:
-- name: int_lipid_lowering_medications_all
-  description: Lipid-regulating orders in BNF 2.12, one row per dated order for all people. National ECL_CACHE
-    drug lists classify statins, ezetimibe, bempedoic acid, PCSK9 inhibitors and inclisiran; BNF chemicals
-    classify remaining products. dm+d current ingredients identify combinations. Excludes dates before
-    1990 and after the build date. Historic fenofibrate/simvastatin products fall outside STAT_COD
-    and remain in OTHER; the national statin list defines is_statin.
-  config:
-    meta:
-      owner:
-        name: EddieDavison92
-  columns:
-  - name: person_id
-    description: Person identifier.
+  - name: int_lipid_lowering_medications_all
+    description: >
+      Lipid-regulating orders in BNF 2.12, one row per dated order for all people.
+      National ECL_CACHE drug lists classify statins, ezetimibe, bempedoic acid, PCSK9
+      inhibitors and inclisiran; BNF chemicals classify remaining products. dm+d current
+      ingredients identify combinations. Excludes dates before 1990 and after the build
+      date. Historic fenofibrate/simvastatin products fall outside STAT_COD and remain in
+      OTHER; the national statin list defines is_statin.
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    columns:
+      - name: person_id
+        description: Person identifier.
+        data_tests:
+          - not_null
+      - name: medication_order_id
+        description: Medication order identifier; one row per order.
+        data_tests:
+          - unique
+          - not_null
+      - name: medication_statement_id
+        description: Related medication statement identifier.
+      - name: order_date
+        description: Date the medication was ordered. Between 1990-01-01 and the build date.
+        data_tests:
+          - not_null
+      - name: order_medication_name
+        description: Name of medication as ordered.
+      - name: order_dose
+        description: Prescribed dose.
+      - name: order_quantity_value
+        description: Quantity ordered.
+      - name: order_quantity_unit
+        description: Unit of quantity ordered.
+      - name: order_duration_days
+        description: Duration in days.
+      - name: statement_medication_name
+        description: Name from medication statement.
+      - name: mapped_concept_code
+        description: Mapped SNOMED concept code.
+      - name: mapped_concept_display
+        description: Mapped SNOMED concept display name.
+      - name: bnf_code
+        description: BNF product code.
+      - name: bnf_name
+        description: BNF product name.
+      - name: bnf_chemical_code
+        description: First nine characters of the BNF code, identifying the chemical substance.
+      - name: lipid_lowering_class
+        description: >
+          National-list product class, with BNF chemicals for fibrates, bile acid
+          sequestrants, nicotinic acid and omega-3 products. Statin combinations contain
+          at least two current dm+d ingredients.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - STATIN
+                  - STATIN_COMBINATION
+                  - EZETIMIBE
+                  - BEMPEDOIC_ACID
+                  - PCSK9_INHIBITOR
+                  - INCLISIRAN
+                  - FIBRATE
+                  - BILE_ACID_SEQUESTRANT
+                  - NICOTINIC_ACID
+                  - OMEGA_3
+                  - OTHER
+      - name: is_statin
+        description: Whether the product contains a statin, alone or in combination.
+      - name: statin_intensity
+        description: >
+          HIGH_INTENSITY for national HIATORVASTAT_COD, HIROSUVASTAT_COD or
+          HISIMVASTAT_COD members; COMBINATION for other statin combinations; OTHER_STATIN
+          for other statins; null for non-statins. Product strength does not establish
+          prescribed daily dose. MODERATE_INTENSITY was retired with Eddie's approval on
+          16 October 2026 because it classified drugs without considering strength.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - HIGH_INTENSITY
+                  - COMBINATION
+                  - OTHER_STATIN
+      - name: is_combination_therapy
+        description: Fixed-dose product with at least two lipid-lowering agents, identified by current dm+d
+          ingredients. Excludes omega-3 products (one agent) and nicotinic acid/laropiprant
+          (laropiprant reduces flushing, not lipids; EMA Tredaptive review). False when no
+          ingredient count is available.
+        data_tests:
+          - not_null
+      - name: is_recent_3m
+        description: Order in the 3 calendar months up to and including the build date; lower bound excluded.
+      - name: is_recent_6m
+        description: Order in the 6 calendar months up to and including the build date; lower bound excluded.
+      - name: is_recent_12m
+        description: Order in the 12 calendar months up to and including the build date; lower bound excluded.
+      - name: is_high_intensity_statin
+        description: >-
+          Product belongs to a national HIATORVASTAT_COD, HIROSUVASTAT_COD or HISIMVASTAT_COD refset
+          (NHS_DRUG_REFSETS, OPENCODELISTS). NICE NG238 high intensity means more than 40% LDL-C
+          reduction; product strength is not a validated daily dose.
     data_tests:
-    - not_null
-  - name: medication_order_id
-    description: Medication order identifier; one row per order.
-    data_tests:
-    - unique
-    - not_null
-  - name: medication_statement_id
-    description: Related medication statement identifier.
-  - name: order_date
-    description: Date the medication was ordered. Between 1990-01-01 and the build date.
-    data_tests:
-    - not_null
-  - name: order_medication_name
-    description: Name of medication as ordered.
-  - name: order_dose
-    description: Prescribed dose.
-  - name: order_quantity_value
-    description: Quantity ordered.
-  - name: order_quantity_unit
-    description: Unit of quantity ordered.
-  - name: order_duration_days
-    description: Duration in days.
-  - name: statement_medication_name
-    description: Name from medication statement.
-  - name: mapped_concept_code
-    description: Mapped SNOMED concept code.
-  - name: mapped_concept_display
-    description: Mapped SNOMED concept display name.
-  - name: bnf_code
-    description: BNF product code.
-  - name: bnf_name
-    description: BNF product name.
-  - name: bnf_chemical_code
-    description: First nine characters of the BNF code, identifying the chemical substance.
-  - name: lipid_lowering_class
-    description: National-list product class, with BNF chemicals for fibrates, bile acid sequestrants,
-      nicotinic acid and omega-3 products. Statin combinations contain at least two current dm+d ingredients.
-    data_tests:
-    - accepted_values:
-        arguments:
-          values:
-          - STATIN
-          - STATIN_COMBINATION
-          - EZETIMIBE
-          - BEMPEDOIC_ACID
-          - PCSK9_INHIBITOR
-          - INCLISIRAN
-          - FIBRATE
-          - BILE_ACID_SEQUESTRANT
-          - NICOTINIC_ACID
-          - OMEGA_3
-          - OTHER
-  - name: is_statin
-    description: Whether the product contains a statin, alone or in combination.
-  - name: statin_intensity
-    description: >-
-      HIGH_INTENSITY for national HIATORVASTAT_COD, HIROSUVASTAT_COD or HISIMVASTAT_COD members;
-      COMBINATION for other statin combinations; OTHER_STATIN for other statins; null for non-statins.
-      Product strength does not establish prescribed daily dose. MODERATE_INTENSITY was retired with
-      Eddie's approval on 16 October 2026 because it classified drugs without considering strength.
-    data_tests:
-    - accepted_values:
-        arguments:
-          values: [HIGH_INTENSITY, COMBINATION, OTHER_STATIN]
-  - name: is_combination_therapy
-    description: Fixed-dose product with at least two lipid-lowering agents, identified by current
-      dm+d ingredients. Excludes omega-3 products (one agent) and nicotinic acid/laropiprant
-      (laropiprant reduces flushing, not lipids; EMA Tredaptive review). False when no ingredient count
-      is available.
-    data_tests:
-    - not_null
-  - name: is_recent_3m
-    description: Order in the 3 calendar months up to and including the build date; lower bound excluded.
-  - name: is_recent_6m
-    description: Order in the 6 calendar months up to and including the build date; lower bound excluded.
-  - name: is_recent_12m
-    description: Order in the 12 calendar months up to and including the build date; lower bound excluded.
-  - name: is_high_intensity_statin
-    description: Product belongs to a national HIATORVASTAT_COD, HIROSUVASTAT_COD or HISIMVASTAT_COD refset
-      (NHS_DRUG_REFSETS, OPENCODELISTS). NICE NG238 high intensity means more than 40% LDL-C reduction;
-      product strength is not a validated daily dose.
-  data_tests:
-  - cluster_ids_exist:
-      arguments:
-        cluster_ids: NHS_DRUG_REFSETS/HIATORVASTAT_COD,NHS_DRUG_REFSETS/HIROSUVASTAT_COD,NHS_DRUG_REFSETS/HISIMVASTAT_COD
-        source: OPENCODELISTS
-  - cluster_ids_exist:
-      arguments:
-        cluster_ids: STAT_COD,EZETIMIBE_COD,BEMPACID_COD,INCLISIRAN_COD,PCSK9I_COD
-        source: ECL_CACHE
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: NHS_DRUG_REFSETS/HIATORVASTAT_COD,NHS_DRUG_REFSETS/HIROSUVASTAT_COD,NHS_DRUG_REFSETS/HISIMVASTAT_COD
+            source: OPENCODELISTS
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: STAT_COD,EZETIMIBE_COD,BEMPACID_COD,INCLISIRAN_COD,PCSK9I_COD
+            source: ECL_CACHE

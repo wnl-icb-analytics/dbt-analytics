@@ -4,16 +4,21 @@ unit_tests:
   given:
   - input: ref('stg_olids_medication_order')
     format: sql
-    rows: "select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9100::number person_id,\n v.dt::date\
-      \ clinical_effective_date, '01'::varchar bnf_chapter, '0103'::varchar bnf_section,\n '0103050SYN'::varchar\
-      \ bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,\n null::varchar medication_name,\
-      \ null::timestamp_ntz date_recorded, null::varchar dose,\n null::number quantity_value, null::varchar\
-      \ quantity_unit, null::number duration_days,\n null::number estimated_cost, null::varchar statement_medication_name,\n\
-      \ 'SYN_PPI'::varchar mapped_concept_code, null::varchar mapped_concept_display\n from (select 'SYN_FUTURE',dateadd(day,1,current_date())\
-      \ union all\n select 'SYN_TODAY',current_date() union all\n select 'SYN_3M',dateadd(month,-3,current_date())\
-      \ union all\n select 'SYN_3M_OLD',dateadd(day,-1,dateadd(month,-3,current_date())) union all\n select\
-      \ 'SYN_6M',dateadd(month,-6,current_date()) union all\n select 'SYN_12M',dateadd(month,-12,current_date())\
-      \ union all\n select 'SYN_NULL',null::date) v(id,dt)"
+    rows: |-
+      select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9100::number person_id,
+       v.dt::date clinical_effective_date, '01'::varchar bnf_chapter, '0103'::varchar bnf_section,
+       '0103050SYN'::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
+       null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
+       null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
+       null::number estimated_cost, null::varchar statement_medication_name,
+       'SYN_PPI'::varchar mapped_concept_code, null::varchar mapped_concept_display
+       from (select 'SYN_FUTURE',dateadd(day,1,current_date()) union all
+       select 'SYN_TODAY',current_date() union all
+       select 'SYN_3M',dateadd(month,-3,current_date()) union all
+       select 'SYN_3M_OLD',dateadd(day,-1,dateadd(month,-3,current_date())) union all
+       select 'SYN_6M',dateadd(month,-6,current_date()) union all
+       select 'SYN_12M',dateadd(month,-12,current_date()) union all
+       select 'SYN_NULL',null::date) v(id,dt)
   - input: ref('stg_olids_patient')
     format: sql
     rows: select 'SYN_PAT'::varchar id,-9100::number person_id,null::number sk_patient_id
@@ -51,9 +56,9 @@ unit_tests:
       is_recent_12m: true
   overrides:
     macros:
-      get_empty_subquery_sql: select null::varchar as medication_order_id, null::boolean as is_future_dated,
-        null::boolean as is_recent_3m, null::boolean as is_recent_6m, null::boolean as is_recent_12m where
-        false
+      get_empty_subquery_sql: >-
+        select null::varchar as medication_order_id, null::boolean as is_future_dated, null::boolean
+        as is_recent_3m, null::boolean as is_recent_6m, null::boolean as is_recent_12m where false
 - name: medication_repeat_current_latest_eligible_issue
   model: int_medication_orders_repeat_current
   given:
@@ -65,11 +70,13 @@ unit_tests:
     rows: select 'SYN_STATEMENT'::varchar id,'SYN_REPEAT'::varchar authorisation_type_code
   - input: ref('stg_olids_medication_order')
     format: sql
-    rows: "select id::varchar id, person::number person_id, code::varchar mapped_concept_code,\n dateadd(day,days,current_date())::date\
-      \ clinical_effective_date, dateadd(day,iff(id in ('SYN_41','SYN_62'),-2,-1),current_date())::timestamp_ntz\
-      \ date_recorded,\n duration::number duration_days, 'SYN_STATEMENT'::varchar medication_statement_id\n\
-      \ from (values ('SYN_11',-9101,'SYN_A',-10,56),('SYN_12',-9101,'SYN_A',20,28),\n ('SYN_21',-9102,'SYN_B',-5,0),('SYN_22',-9102,'SYN_B',-5,28),('SYN_31',-9103,'SYN_C',3,28),('SYN_41',-9104,'SYN_D',-10,28),('SYN_49',-9104,'SYN_D',-10,56),('SYN_51',-9105,'SYN_E',-20,null),('SYN_59',-9105,'SYN_E',-20,14),('SYN_61',-9106,'SYN_F',-5,28),('SYN_62',-9106,'SYN_F',-5,28),('SYN_71',-9107,'SYN_G',-15,56),('SYN_72',-9107,'SYN_G',-10,0))\n\
-      \ v(id,person,code,days,duration)"
+    rows: |-
+      select id::varchar id, person::number person_id, code::varchar mapped_concept_code,
+       dateadd(day,days,current_date())::date clinical_effective_date, dateadd(day,iff(id in ('SYN_41','SYN_62'),-2,-1),current_date())::timestamp_ntz date_recorded,
+       duration::number duration_days, 'SYN_STATEMENT'::varchar medication_statement_id
+       from (values ('SYN_11',-9101,'SYN_A',-10,56),('SYN_12',-9101,'SYN_A',20,28),
+       ('SYN_21',-9102,'SYN_B',-5,0),('SYN_22',-9102,'SYN_B',-5,28),('SYN_31',-9103,'SYN_C',3,28),('SYN_41',-9104,'SYN_D',-10,28),('SYN_49',-9104,'SYN_D',-10,56),('SYN_51',-9105,'SYN_E',-20,null),('SYN_59',-9105,'SYN_E',-20,14),('SYN_61',-9106,'SYN_F',-5,28),('SYN_62',-9106,'SYN_F',-5,28),('SYN_71',-9107,'SYN_G',-15,56),('SYN_72',-9107,'SYN_G',-10,0))
+       v(id,person,code,days,duration)
   expect:
     rows:
     - person_id: -9101
@@ -94,5 +101,6 @@ unit_tests:
       latest_duration: 28
   overrides:
     macros:
-      get_empty_subquery_sql: select null::number as person_id, null::varchar as mapped_concept_code,
-        null::varchar as medication_order_id, null::number as latest_duration where false
+      get_empty_subquery_sql: >-
+        select null::number as person_id, null::varchar as mapped_concept_code, null::varchar as
+        medication_order_id, null::number as latest_duration where false
