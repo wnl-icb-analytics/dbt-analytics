@@ -1,3 +1,8 @@
+{{
+    config(
+        description="Raw layer: Generic medicinal products with strength and dose form, with UKHFD snapshot history. 1:1 passthrough with cleaned column names. \nSource: UKHFD.DMPlusD.dim_VMP_Virtual_Medicinal_Products_SCD \ndbt: source(''ukhfd_dmd'', ''dmd_vmp'') \nColumns:\n  VMPS_Id -> vmps_id\n  VPID -> vpid\n  VPIDDT -> vpiddt\n  VPIDPREV -> vpidprev\n  VTMID -> vtmid\n  INVALID -> invalid\n  NM -> nm\n  ABBREVNM -> abbrevnm\n  BASISCD -> basiscd\n  NMDT -> nmdt\n  NMPREV -> nmprev\n  BASIS_PREVCD -> basis_prevcd\n  NMCHANGECD -> nmchangecd\n  COMBPRODCD -> combprodcd\n  PRES_STATCD -> pres_statcd\n  SUG_F -> sug_f\n  GLU_F -> glu_f\n  PRES_F -> pres_f\n  CFC_F -> cfc_f\n  NON_AVAILCD -> non_availcd\n  NON_AVAILDT -> non_availdt\n  DF_INDCD -> df_indcd\n  UDFS -> udfs\n  UDFS_UOMCD -> udfs_uomcd\n  UNIT_DOSE_UOMCD -> unit_dose_uomcd\n  Unique_Column -> unique_column\n  In_Source_Data -> in_source_data\n  Import_Date -> import_date\n  Created_Date -> created_date\n  Is_Latest -> is_latest\n  Effective_From -> effective_from\n  Effective_To -> effective_to"
+    )
+}}
 select
     "VMPS_Id" as vmps_id,
     "VPID" as vpid,

@@ -1,3 +1,8 @@
+{{
+    config(
+        description="Raw layer: Virtual therapeutic moieties independent of strength and form, with UKHFD snapshot history. 1:1 passthrough with cleaned column names. \nSource: UKHFD.DMPlusD.dim_VTM_Virtual_Therapeutic_Moiety_SCD \ndbt: source(''ukhfd_dmd'', ''dmd_vtm'') \nColumns:\n  VTMID -> vtmid\n  INVALID -> invalid\n  NM -> nm\n  ABBREVNM -> abbrevnm\n  VTMIDPREV -> vtmidprev\n  VTMIDDT -> vtmiddt\n  Unique_Column -> unique_column\n  In_Source_Data -> in_source_data\n  Import_Date -> import_date\n  Created_Date -> created_date\n  Is_Latest -> is_latest\n  Effective_From -> effective_from\n  Effective_To -> effective_to"
+    )
+}}
 select
     "VTMID" as vtmid,
     "INVALID" as invalid,
