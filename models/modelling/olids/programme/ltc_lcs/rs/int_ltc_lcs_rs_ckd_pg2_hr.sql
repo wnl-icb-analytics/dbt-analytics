@@ -1,12 +1,12 @@
 -- LTC LCS: CKD Register - Priority Group 2 (High Risk)
 -- Parent population: CKD register, excluding PG1 (HRC)
 --
--- Inclusion rules (any one qualifies):
+-- Inclusion: any of rules 2-5, or rule 6 AND (rule 7 OR rule 8):
 -- - Rule 2: eGFR 45-59 AND ACR > 30
 -- - Rule 3: eGFR 30-44 AND ACR > 3
 -- - Rule 4: eGFR 15-29
 -- - Rule 5: ACR 70-250 (>=70 and <250)
--- - Rule 6: 3+ repeat antihypertensive prescriptions in last 3 months
+-- - Rule 6: 3+ repeat antihypertensive prescriptions in last 3 months (gate only)
 -- - Rule 7: Latest BP in last 12 months with diastolic > 90
 -- - Rule 8: Latest BP in last 12 months with systolic > 150
 

@@ -3,7 +3,7 @@
         materialized='table',
         tags=['fa_checks'])
 }}
-/* this tables pulls all records of monthly submissions into LSACM for the latest financial year and month. 
+/* this tables pulls all records of monthly submissions into LSACM for every month of the latest financial year, for a fixed list of 10 providers. 
 This can be used to track submissions, flag overdue and check versions for the current month and historically. 
 No filtering by latest version or latest financial month applied.
  */

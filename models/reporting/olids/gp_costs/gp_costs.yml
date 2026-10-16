@@ -5,13 +5,13 @@ models:
       GP appointment unit-cost fact at practice / month / role grain.
 
       Scope: rolling last 60 months of appointments, anchored to the
-      latest start_date in int_appointment_gp_clean. OLIDS only retains
+      latest start_date in int_appointment_gp_clinical. OLIDS only retains
       records for patients who left or died within the last ~5 years —
       anything older is silently truncated to currently-registered
       patients only and would bias historical cost reporting. Keeping
       this fact at 5 years matches OLIDS retention.
 
-      Aggregates int_appointment_gp_clean by workforce mix. Two cost
+      Aggregates int_appointment_gp_clinical_recent by workforce mix. Two cost
       totals per group:
       * total_cost_gbp_base_prices — always in PSSRU 2024/25 real-terms
         prices, use for cross-year comparisons
@@ -26,7 +26,7 @@ models:
       grain). For person / demographic / equity cost analysis use
       sem_olids_appointments — but apply the same 5-year caveat to
       any historical comparisons. For full cost methodology see the
-      int_appointment_gp_clean and pssru_unit_costs_2025 descriptions.
+      int_appointment_gp_clinical and pssru_unit_costs_2025 descriptions.
     config:
       meta:
         owner:
@@ -55,7 +55,7 @@ models:
         data_tests:
           - not_null
       - name: sds_role_group
-        description: Official NHS Digital SDS role group passed through from int_appointment_gp_clean.
+        description: Official NHS Digital SDS role group passed through from int_appointment_gp_clinical.
       - name: cost_is_proxy
         description: TRUE when this practitioner_role_group's unit cost is borrowed from another role's PSSRU rate. FALSE for direct PSSRU figures.
       - name: cost_proxy_source
@@ -93,7 +93,7 @@ models:
 
       Scope: rolling last 60 months of in-scope appointments
       (is_attended OR is_dna), anchored to the latest start_date in
-      int_appointment_gp_clean. Cancelled, rescheduled and other
+      int_appointment_gp_clinical. Cancelled, rescheduled and other
       non-attendance statuses are excluded from both numerator and
       denominator (matches fct_gp_dna_rate).
 
@@ -107,7 +107,7 @@ models:
       total cost. Use as a "cost of missed appointments" KPI for
       DNA-reduction work.
 
-      Cost methodology is inherited from int_appointment_gp_clean.
+      Cost methodology is inherited from int_appointment_gp_clinical.
       Both cost columns come in two pricing bases:
       * _base_prices — PSSRU 2024/25 real terms (cross-year comparable)
       * _nominal — contemporaneous (GDP deflator adjusted)

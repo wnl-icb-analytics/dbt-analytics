@@ -9,7 +9,7 @@ the source of truth for registrant data), enriched with:
   sk_patient_id with a latest-registered-record tiebreak.
 - neighbourhood_code: C-LTCS local neighbourhood
   (stg_cltcs_emis_cltcs_local_mapping_nh_gp), used as the z-score scaling group in
-  the sub-score models. Null for practices outside the Haringey/Camden local mapping.
+  the sub-score models. Always populated; practices outside the Haringey/Camden local mapping are excluded.
 
 NOTE: the sk_patient_id <-> person_id resolution here is a local stopgap. It should
 be handled centrally (e.g. in dim_person_pseudo or a shared bridge/macro), and it

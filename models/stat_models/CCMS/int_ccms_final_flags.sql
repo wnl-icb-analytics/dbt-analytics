@@ -5,7 +5,7 @@
 }}
 
 /*
-CCMS final condition flags — collapses the 35 raw flags in
+CCMS final condition flags — collapses the 37 raw flags in
 int_ccms_intermediate_flags into the 20 Cambridge categories used by the
 weighted score.
 
