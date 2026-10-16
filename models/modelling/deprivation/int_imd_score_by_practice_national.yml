@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: int_imd_score_by_practice_national
+    description: >
+      2025 IMD Score for GP Practices by taking an average of the IMD score for their registered population.  
+      Each row is 1 quartely snapshot per practice.
+      Note that patients with an unmappable LSOA are not included as they have no associated IMD score.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns:
+      - name: practice_code
+        description: "GP practice code for the registered population snapshot."
+        tests:
+          - not_null
+      - name: effective_snapshot_date
+        description: "Effective date of the patient count snapshot used in the calculation."
+        tests:
+          - not_null
+      
+      - name: imd_score
+        description: "Aggregated IMD score for the GP practice, calculated as sum of patient IMD scores divided by the population size."
+      
+      - name: imd_release_year
+        description: "IMD Year. Currently only 2025 but included for the future option to inlcude more years."
+    
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 10000
