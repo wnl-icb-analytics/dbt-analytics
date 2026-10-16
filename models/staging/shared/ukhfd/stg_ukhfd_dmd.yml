@@ -1,0 +1,109 @@
+version: 2
+models:
+- name: stg_ukhfd_dmd_vmp
+  description: Current dm+d vmp records. One row per vpid. Removed source records remain available; is_in_latest_source
+    marks current source membership.
+  columns:
+  - name: vpid
+    description: Vpid
+    data_tests:
+    - not_null
+    - unique
+  - name: vtm_id
+    description: Vtm id
+  - name: vmp_name
+    description: Vmp name
+  - name: is_invalid
+    description: Is invalid
+  - name: combination_product_code
+    description: Combination product code
+  - name: is_in_latest_source
+    description: Is in latest source
+- name: stg_ukhfd_dmd_amp
+  description: Current dm+d amp records. One row per apid. Removed source records remain available; is_in_latest_source
+    marks current source membership.
+  columns:
+  - name: apid
+    description: Apid
+    data_tests:
+    - not_null
+    - unique
+  - name: vpid
+    description: Vpid
+  - name: amp_name
+    description: Amp name
+  - name: is_invalid
+    description: Is invalid
+  - name: is_in_latest_source
+    description: Is in latest source
+- name: stg_ukhfd_dmd_vmp_drug_form
+  description: Current dm+d vmp drug form records. One row per vpid. Removed source records remain available;
+    is_in_latest_source marks current source membership.
+  columns:
+  - name: vpid
+    description: Vpid
+    data_tests:
+    - not_null
+    - unique
+  - name: form_code
+    description: Form code
+  - name: is_in_latest_source
+    description: Is in latest source
+- name: stg_ukhfd_dmd_lookup_form
+  description: Current dm+d lookup form records. One row per form_code. Removed source records remain
+    available; is_in_latest_source marks current source membership.
+  columns:
+  - name: form_code
+    description: Form code
+    data_tests:
+    - not_null
+    - unique
+  - name: form_description
+    description: Form description
+  - name: is_in_latest_source
+    description: Is in latest source
+- name: stg_ukhfd_dmd_vmp_ingredient
+  description: Current dm+d vmp ingredient records. One row per vpid, ingredient_substance_id. Removed
+    source records remain available; is_in_latest_source marks current source membership.
+  columns:
+  - name: vpid
+    description: Vpid
+    data_tests:
+    - not_null
+  - name: ingredient_substance_id
+    description: Ingredient substance id
+    data_tests:
+    - not_null
+  - name: basis_strength_code
+    description: Basis strength code
+  - name: strength_numerator_value
+    description: Strength numerator value
+  - name: strength_numerator_unit_code
+    description: Strength numerator unit code
+  - name: strength_denominator_value
+    description: Strength denominator value
+  - name: strength_denominator_unit_code
+    description: Strength denominator unit code
+  - name: is_in_latest_source
+    description: Is in latest source
+  data_tests:
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - vpid
+        - ingredient_substance_id
+- name: stg_ukhfd_dmd_vtm
+  description: Current dm+d vtm records. One row per vtm_id. Removed source records remain available;
+    is_in_latest_source marks current source membership.
+  columns:
+  - name: vtm_id
+    description: Vtm id
+    data_tests:
+    - not_null
+    - unique
+  - name: vtm_name
+    description: Vtm name
+  - name: previous_vtm_id
+    description: Previous vtm id
+  - name: is_in_latest_source
+    description: Is in latest source

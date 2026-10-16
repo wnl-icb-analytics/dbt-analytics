@@ -1,0 +1,32 @@
+version: 2
+models:
+- name: dmd_product
+  description: 'dm+d VMP and AMP codes (SNOMED CT identifiers) with their VMP therapeutic moiety, dose
+    form and virtual product ingredient count. One row per product code in the current dm+d release, not
+    historical attributes. Source: NHSBSA dm+d, held in UKHFD.'
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: product_code
+    description: dm+d VMP or AMP SNOMED CT product identifier.
+    data_tests:
+    - unique
+    - not_null
+  - name: product_type
+    description: VMP (virtual medicinal product) or AMP (actual medicinal product).
+  - name: vpid
+    description: Virtual medicinal product SNOMED CT identifier.
+  - name: vmp_name
+    description: Virtual medicinal product name.
+  - name: vtm_id
+    description: Virtual therapeutic moiety SNOMED CT identifier; null when not supplied.
+  - name: vtm_name
+    description: Virtual therapeutic moiety name; null when not supplied.
+  - name: form_code
+    description: dm+d dose form code; null when not supplied.
+  - name: form_description
+    description: dm+d VMP dose form description; null when not supplied.
+  - name: ingredient_count
+    description: Count of current virtual product ingredients; null when dm+d lists none, mostly appliances.
