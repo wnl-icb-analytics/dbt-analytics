@@ -6,7 +6,9 @@ macros:
       or stg_reference_ukhsa_codecluster_versions when versioned. Person status is not filtered.
       clinical_effective_date uses observation_clinical_date: a clinical date after a real
       recorded date (1900 or later) becomes the recorded date. A pre-1900 recorded date is an
-      EMIS placeholder and never replaces the clinical date. A missing clinical date becomes
+      EMIS placeholder and never replaces the clinical date, so a clinical date after such a
+      placeholder is kept even when it is in the future; apply your own date ceiling where a
+      future event would be wrong. A missing clinical date becomes
       1900-01-01; filter clinical_effective_date_raw IS NOT NULL to exclude undated evidence.
       The result type is TIMESTAMP_NTZ. clinical_effective_date_raw is the supplied date:
       a row was corrected when it is NULL or differs from clinical_effective_date.
