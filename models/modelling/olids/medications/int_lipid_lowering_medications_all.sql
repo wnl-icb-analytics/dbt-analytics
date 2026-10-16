@@ -18,7 +18,14 @@ Excludes orders dated before 1990 or after the build date; the source carries bo
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 */
 
-WITH base_orders AS (
+WITH high_intensity_codes AS (
+    SELECT DISTINCT code
+    FROM {{ ref('stg_reference_combined_codesets') }}
+    WHERE source = 'OPENCODELISTS'
+        AND cluster_id IN ('NHS_DRUG_REFSETS/HIATORVASTAT_COD',
+            'NHS_DRUG_REFSETS/HIROSUVASTAT_COD', 'NHS_DRUG_REFSETS/HISIMVASTAT_COD')
+),
+base_orders AS (
     SELECT
         person_id,
         medication_order_id,
@@ -113,10 +120,10 @@ SELECT
     lipid_lowering_class,
     lipid_lowering_class IN ('STATIN', 'STATIN_COMBINATION') AS is_statin,
 
-    -- Statin intensity by typical LDL reduction; null for non-statin products
+    -- Legacy labels retained for published consumers; use statin_intensity_national for NG238.
     CASE
-        WHEN bnf_chemical_code IN ('0212000B0', '0212000AA') THEN 'HIGH_INTENSITY'      -- >=50% LDL reduction
-        WHEN bnf_chemical_code IN ('0212000Y0', '0212000X0', '0212000M0') THEN 'MODERATE_INTENSITY'  -- 30-49%
+        WHEN bnf_chemical_code IN ('0212000B0', '0212000AA') THEN 'HIGH_INTENSITY'
+        WHEN bnf_chemical_code IN ('0212000Y0', '0212000X0', '0212000M0') THEN 'MODERATE_INTENSITY'
         WHEN lipid_lowering_class = 'STATIN_COMBINATION' THEN 'COMBINATION'
         WHEN lipid_lowering_class = 'STATIN' THEN 'OTHER_STATIN'
     END AS statin_intensity,
@@ -125,6 +132,12 @@ SELECT
     bnf_chemical_code IN ('0212000AC', '0212000AJ', '0212000AL') AS is_combination_therapy,
 
     -- Order recency at build time; order_date is never after the build date
-    {{ medication_date_flags('order_date', include_future_flag=false) }}
+    {{ medication_date_flags('order_date', include_future_flag=false) }},
+    -- NICE NG238 high intensity means >40% LDL-C reduction; refsets classify product strength.
+    hi.code IS NOT NULL AS is_high_intensity_statin,
+    CASE WHEN NOT is_statin THEN NULL
+         WHEN hi.code IS NOT NULL THEN 'HIGH_INTENSITY'
+         ELSE 'UNKNOWN' END AS statin_intensity_national
 
 FROM classified
+LEFT JOIN high_intensity_codes hi ON classified.mapped_concept_code = hi.code

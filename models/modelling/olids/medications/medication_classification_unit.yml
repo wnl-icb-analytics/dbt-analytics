@@ -1,0 +1,37 @@
+unit_tests:
+- name: lipid_statin_intensity_national_lists
+  model: int_lipid_lowering_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: "select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,\n current_date()::date\
+      \ clinical_effective_date, '02'::varchar bnf_chapter, '0212'::varchar bnf_section,\n v.bnf::varchar\
+      \ bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,\n null::varchar medication_name,\
+      \ null::timestamp_ntz date_recorded, null::varchar dose,\n null::number quantity_value, null::varchar\
+      \ quantity_unit, null::number duration_days,\n null::number estimated_cost, null::varchar statement_medication_name,\n\
+      \ v.code::varchar mapped_concept_code, null::varchar mapped_concept_display\n from (values ('SYN_HI','SYN_ATORVA80','0212000B0SYN'),\n\
+      \ ('SYN_NONHI','SYN_ATORVA10','0212000B0SYN'),('SYN_EZET','SYN_EZET','0212000L0SYN')) v(id,code,bnf)"
+  - input: ref('stg_olids_patient')
+    format: sql
+    rows: select 'SYN_PAT'::varchar id,-9200::number person_id,null::number sk_patient_id
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: "select code::varchar code, cluster::varchar cluster_id, src::varchar source,\n 'Synthetic list'::varchar\
+      \ cluster_description from (values\n ('SYN_ATORVA80','STAT_COD','ECL_CACHE'),('SYN_ATORVA10','STAT_COD','ECL_CACHE'),\n\
+      \ ('SYN_EZET','EZETIMIBE_COD','ECL_CACHE'),\n ('SYN_ATORVA80','NHS_DRUG_REFSETS/HIATORVASTAT_COD','OPENCODELISTS'))\
+      \ v(code,cluster,src)"
+  expect:
+    rows:
+    - medication_order_id: SYN_HI
+      statin_intensity_national: HIGH_INTENSITY
+      is_high_intensity_statin: true
+    - medication_order_id: SYN_NONHI
+      statin_intensity_national: UNKNOWN
+      is_high_intensity_statin: false
+    - medication_order_id: SYN_EZET
+      statin_intensity_national: null
+      is_high_intensity_statin: false
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::varchar medication_order_id,null::varchar statin_intensity_national,null::boolean
+        is_high_intensity_statin where false
