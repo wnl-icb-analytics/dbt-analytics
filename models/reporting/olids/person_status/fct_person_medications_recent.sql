@@ -13,7 +13,7 @@ Person-level snapshot of recent medication prescriptions with counts.
 Includes all medication orders (not just repeat prescriptions) from the last 30 days and last year.
 Also splits last-year medicines into current repeats and non-repeats (see medications_repeat / medications_non_repeat).
 
-Grain: One row per person with medications in last 30 days or last year
+Grain: One row per person in dim_person with a named order in the last 365 days.
 */
 
 WITH repeat_medicines_list as (
@@ -44,7 +44,12 @@ medication_orders_base AS (
         ON mo.mapped_concept_code = rm.mapped_concept_code
         and mo.person_id = rm.person_id
         and mo.clinical_effective_date = rm.latest_order_date
-    WHERE mo.clinical_effective_date >= DATEADD(day, -365, CURRENT_DATE())
+    WHERE EXISTS (
+        SELECT 1
+        FROM {{ ref('dim_person') }} person
+        WHERE person.person_id = mo.person_id
+    )
+        AND mo.clinical_effective_date >= DATEADD(day, -365, CURRENT_DATE())
         AND mo.clinical_effective_date <= CURRENT_DATE()
         AND mo.clinical_effective_date IS NOT NULL
         AND COALESCE(bnf.bnf_name, mo.medication_name, mo.statement_medication_name) IS NOT NULL

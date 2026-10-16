@@ -17,7 +17,7 @@ Polypharmacy definition (NHSBSA standard):
 - Standard polypharmacy: 5+ medications
 - Severe/complex polypharmacy: 10+ medications
 
-Grain: One row per person with current polypharmacy medications (excludes persons with 0 medications)
+Grain: One row per person in dim_person with current polypharmacy medications.
 */
 
 SELECT
@@ -42,3 +42,8 @@ SELECT
     END AS medication_count_band
 
 FROM {{ ref('int_polypharmacy_current') }} poly
+WHERE EXISTS (
+    SELECT 1
+    FROM {{ ref('dim_person') }} person
+    WHERE person.person_id = poly.person_id
+)
