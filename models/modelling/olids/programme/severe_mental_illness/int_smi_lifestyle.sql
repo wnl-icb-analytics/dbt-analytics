@@ -116,7 +116,8 @@ au.person_id
 FROM {{ ref('int_alcohol_audit_scores') }} au
 --INNER JOIN MODELLING.OLIDS_PROGRAMME.INT_SMI_POPULATION_BASE p USING (PERSON_ID)
 INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
-QUALIFY ROW_NUMBER() OVER (PARTITION BY au.person_id ORDER BY au.clinical_effective_date DESC) = 1
+WHERE au.is_valid_score
+QUALIFY ROW_NUMBER() OVER (PARTITION BY au.person_id ORDER BY au.clinical_effective_date DESC, IFF(au.audit_type = 'Full AUDIT', 0, 1), au.id) = 1
 
 UNION
 --ALCOHOL UNITS

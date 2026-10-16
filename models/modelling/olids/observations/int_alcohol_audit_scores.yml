@@ -47,7 +47,9 @@ models:
         description: Type of AUDIT assessment (AUDIT-C or Full AUDIT)
 
       - name: is_valid_score
-        description: Flag indicating if score is within valid range for the instrument
+        description: >-
+          Whole-number total within the instrument range (AUDIT-C 0-12, AUDIT 0-40).
+          All risk fields and flags are null, Invalid or false when this is false.
 
       - name: risk_category
         description: Clinical risk category based on score thresholds
@@ -62,7 +64,40 @@ models:
         description: Flag for scores meeting threshold for brief intervention
 
       - name: simplified_risk_level
-        description: Simplified risk categorisation (Low/Moderate/High) for aggregation
+        description: Simplified risk categorisation for aggregation. Null for invalid scores.
 
       - name: gender
         description: Person's gender used for risk stratification (where applicable)
+
+unit_tests:
+  - name: audit_scores_validity_gates_flags
+    model: int_alcohol_audit_scores
+    overrides:
+      macros:
+        get_observations: |
+          SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                 '2024-03-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+                 '2024-03-02'::TIMESTAMP_NTZ AS date_recorded,
+                 column3::NUMBER(10,3) AS result_value,
+                 'SYN_score'::VARCHAR AS result_unit_display,
+                 'SYN_AUDIT'::VARCHAR AS mapped_concept_code,
+                 'SYN_AUDIT assessment'::VARCHAR AS mapped_concept_display,
+                 column4::VARCHAR AS cluster_id, 40::NUMBER AS age_at_event
+          FROM VALUES
+              ('SYN_1', -9401, 5, 'AUDITC_COD'),
+              ('SYN_2', -9402, 5.5, 'AUDITC_COD'),
+              ('SYN_3', -9403, 13, 'AUDITC_COD'),
+              ('SYN_4', -9404, 40, 'AUDIT_COD'),
+              ('SYN_5', -9405, 5.001, 'AUDITC_COD')
+    given:
+      - input: ref('dim_person_demographics')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::VARCHAR AS gender WHERE FALSE
+    expect:
+      rows:
+        - {person_id: -9401, is_valid_score: true, risk_category: Increasing Risk, auditc_positive_screen: true, brief_intervention_indicated: true, requires_specialist_intervention: false}
+        - {person_id: -9402, is_valid_score: false, risk_category: Invalid, simplified_risk_level: null, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
+        - {person_id: -9403, is_valid_score: false, risk_category: Invalid, simplified_risk_level: null, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
+        - {person_id: -9404, is_valid_score: true, risk_category: Possible Dependence, auditc_positive_screen: false, brief_intervention_indicated: true, requires_specialist_intervention: true}
+        - {person_id: -9405, is_valid_score: false, risk_category: Invalid, simplified_risk_level: null, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
