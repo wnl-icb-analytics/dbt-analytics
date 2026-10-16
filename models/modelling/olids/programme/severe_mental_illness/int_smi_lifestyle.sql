@@ -26,7 +26,6 @@ select
 sm.person_id
 ,DATE(sm.clinical_effective_date) as sm_int_date
 ,sm.CONCEPT_DISPLAY as sm_int_type
-,IFF(sm.clinical_effective_date >= DATEADD('month', -12, CURRENT_DATE), 'Yes', 'No') AS sm_int_last_12m
 ,sm.subs_misuse_services
 --FROM MODELLING.OLIDS_OBSERVATIONS.int_smi_longlives_subs_misuse_intervention_latest sm 
 FROM {{ ref('int_subs_misuse_intervention_latest') }} sm
@@ -73,7 +72,6 @@ select
 s.person_id
 ,DATE(s.clinical_effective_date) as smok_int_date
 ,s.CONCEPT_DISPLAY as smok_int_type
-,IFF(s.clinical_effective_date >= DATEADD('month', -12, CURRENT_DATE), 'Yes', 'No') AS smok_int_last_12m
 ,s.smoking_cessation_services
 --FROM MODELLING.OLIDS_OBSERVATIONS.INT_SMI_LONGLIVES_SMOKING_INTERVENTION_latest s 
 FROM {{ ref('int_smoking_intervention_latest') }} s 
@@ -160,7 +158,6 @@ select
 ai.person_id
 ,DATE(ai.clinical_effective_date) as alc_int_date
 ,ai.CONCEPT_DISPLAY as alc_int_type
-,IFF(ai.clinical_effective_date >= DATEADD('month', -12, CURRENT_DATE), 'Yes', 'No') AS alc_int_last_12m
 ,ai.alcohol_advice_services
 --FROM MODELLING.OLIDS_OBSERVATIONS.int_smi_longlives_alcohol_intervention_latest ai 
 FROM {{ ref('int_alcohol_intervention_latest') }} ai
@@ -255,6 +252,27 @@ FROM {{ ref('int_exercise_assessment_latest') }} e
 --INNER JOIN MODELLING.OLIDS_PROGRAMME.INT_SMI_POPULATION_BASE p using (PERSON_ID)
 INNER JOIN {{ ref('int_smi_population_base')  }} p using (PERSON_ID)
 )
+,SMOK_INT_12M AS (
+    SELECT person_id
+    FROM {{ ref('int_smoking_intervention') }}
+    WHERE clinical_effective_date >= DATEADD('month', -12, CURRENT_DATE)
+      AND smoking_cessation_services IN ('Yes', 'Other assistance')
+    GROUP BY person_id
+)
+,ALC_INT_12M AS (
+    SELECT person_id
+    FROM {{ ref('int_alcohol_intervention') }}
+    WHERE clinical_effective_date >= DATEADD('month', -12, CURRENT_DATE)
+      AND alcohol_advice_services IN ('Yes')
+    GROUP BY person_id
+)
+,SM_INT_12M AS (
+    SELECT person_id
+    FROM {{ ref('int_subs_misuse_intervention') }}
+    WHERE clinical_effective_date >= DATEADD('month', -12, CURRENT_DATE)
+      AND subs_misuse_services IN ('Yes', 'Other assistance')
+    GROUP BY person_id
+)
 --Population demographics and lifestyle factors
 SELECT
 p.PERSON_ID
@@ -267,7 +285,7 @@ p.PERSON_ID
 ,i.ILLICIT_DRUG_PATTERN
 ,i.ILLICIT_DRUG_CLASS
 ,NVL(i.drug_misuse_flag, 'Unknown') AS drug_misuse_flag
-,NVL(sm.sm_int_last_12m, 'No') AS sm_int_last_12m
+,IFF(sm12.person_id IS NOT NULL, 'Yes', 'No') AS sm_int_last_12m
 ,sm.SM_INT_DATE
 ,sm.SM_INT_TYPE
 ,sm.subs_misuse_services
@@ -276,7 +294,7 @@ p.PERSON_ID
 ,ss.SMOKING_DATE as SMOK_STATUS_DATE
 ,ss.SMOKING_STATUS
 ,ss.smoker_flag
-,NVL(si.smok_int_last_12m, 'No') AS smok_int_last_12m
+,IFF(si12.person_id IS NOT NULL, 'Yes', 'No') AS smok_int_last_12m
 ,si.SMOK_INT_DATE
 ,si.SMOK_INT_TYPE
 ,si.smoking_cessation_services
@@ -288,7 +306,7 @@ p.PERSON_ID
 ,a.ALCOHOL_UNITS
 ,a.UNIT_DISPLAY
 ,a.high_alcohol_use_flag
-,NVL(ai.alc_int_last_12m, 'No') AS alc_int_last_12m
+,IFF(ai12.person_id IS NOT NULL, 'Yes', 'No') AS alc_int_last_12m
 ,ai.ALC_INT_DATE
 ,ai.ALC_INT_TYPE
 ,ai.alcohol_advice_services
@@ -321,6 +339,9 @@ LEFT JOIN SMOK_EVER ss using (person_id)
 LEFT JOIN SMOK_INT si using (person_id)
 LEFT JOIN ALC_EVER a using (person_id)
 LEFT JOIN ALCOHOL_INT ai using (person_id)
+LEFT JOIN SMOK_INT_12M si12 USING (person_id)
+LEFT JOIN ALC_INT_12M ai12 USING (person_id)
+LEFT JOIN SM_INT_12M sm12 USING (person_id)
 LEFT JOIN BMI_EVER b using (person_id)
 LEFT JOIN NUT_REV n using (person_id)
 LEFT JOIN WT_MGMT w using (person_id)
