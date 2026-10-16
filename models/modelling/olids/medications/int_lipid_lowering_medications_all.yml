@@ -67,8 +67,15 @@ models:
   - name: is_statin
     description: Whether the product contains a statin, alone or in combination.
   - name: statin_intensity
-    description: Legacy statin intensity labels retained for published consumers pending approval. Use
-      statin_intensity_national for the national high-intensity classification.
+    description: >-
+      HIGH_INTENSITY for national HIATORVASTAT_COD, HIROSUVASTAT_COD or HISIMVASTAT_COD members;
+      COMBINATION for other statin combinations; OTHER_STATIN for other statins; null for non-statins.
+      Product strength does not establish prescribed daily dose. MODERATE_INTENSITY was retired with
+      Eddie's approval on 16 October 2026 because it classified drugs without considering strength.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values: [HIGH_INTENSITY, COMBINATION, OTHER_STATIN]
   - name: is_combination_therapy
     description: At least two current dm+d virtual product ingredients; null when no ingredient count
       is available.
@@ -82,15 +89,6 @@ models:
     description: Product belongs to a national HIATORVASTAT_COD, HIROSUVASTAT_COD or HISIMVASTAT_COD refset
       (NHS_DRUG_REFSETS, OPENCODELISTS). NICE NG238 high intensity means more than 40% LDL-C reduction;
       product strength is not a validated daily dose.
-  - name: statin_intensity_national
-    description: 'NICE NG238 national high-intensity product-list classification: HIGH_INTENSITY, UNKNOWN
-      for other statins, null for non-statins. Medium and low intensity await reviewed code lists. https://www.nice.org.uk/guidance/ng238/chapter/Recommendations#terms-used-in-this-guideline'
-    data_tests:
-    - accepted_values:
-        arguments:
-          values:
-          - HIGH_INTENSITY
-          - UNKNOWN
   data_tests:
   - cluster_ids_exist:
       arguments:

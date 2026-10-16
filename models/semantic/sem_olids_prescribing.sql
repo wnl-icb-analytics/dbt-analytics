@@ -235,7 +235,7 @@ DIMENSIONS(
 
     -- Lipid-regulating classification (only populated for BNF 2.12 orders)
     statins.lipid_lowering_class AS lipid_lowering_class COMMENT = 'Lipid-regulating product class (STATIN, STATIN_COMBINATION, EZETIMIBE, BEMPEDOIC_ACID, PCSK9_INHIBITOR, INCLISIRAN, FIBRATE, BILE_ACID_SEQUESTRANT, NICOTINIC_ACID, OMEGA_3, OTHER). Only for BNF 2.12 orders.',
-    statins.statin_intensity AS statin_intensity COMMENT = 'Statin intensity (HIGH_INTENSITY, MODERATE_INTENSITY, COMBINATION, OTHER_STATIN). Null for non-statin products.',
+    statins.statin_intensity AS statin_intensity COMMENT = 'Statin classification: HIGH_INTENSITY from national high-intensity product lists, COMBINATION for other statin combinations, OTHER_STATIN for other statins. Null for non-statins. MODERATE_INTENSITY retired with Eddie approval on 16 October 2026.',
     statins.is_combination_therapy AS is_combination_therapy COMMENT = 'Fixed-dose lipid combination product. Only for BNF 2.12 orders.',
     statins.is_statin AS is_statin COMMENT = 'Whether a BNF 2.12 order contains a statin. Only for BNF 2.12 orders.',
 

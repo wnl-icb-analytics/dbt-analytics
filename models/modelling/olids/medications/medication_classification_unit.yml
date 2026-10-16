@@ -10,7 +10,8 @@ unit_tests:
       \ null::timestamp_ntz date_recorded, null::varchar dose,\n null::number quantity_value, null::varchar\
       \ quantity_unit, null::number duration_days,\n null::number estimated_cost, null::varchar statement_medication_name,\n\
       \ v.code::varchar mapped_concept_code, null::varchar mapped_concept_display\n from (values ('SYN_HI','SYN_ATORVA80','0212000B0SYN'),\n\
-      \ ('SYN_NONHI','SYN_ATORVA10','0212000B0SYN'),('SYN_EZET','SYN_EZET','0212000L0SYN')) v(id,code,bnf)"
+      \ ('SYN_NONHI','SYN_ATORVA10','0212000B0SYN'),('SYN_EZET','SYN_EZET','0212000L0SYN'),('SYN_COMBO','SYN_COMBO','0212000SYN'),('SYN_HICOMBO','SYN_HICOMBO','0212000SYN'),('SYN_OLDMOD','SYN_OLDMOD','0212000Y0SYN'))\
+      \ v(id,code,bnf)"
   - &id001
     input: ref('stg_olids_patient')
     format: sql
@@ -19,26 +20,35 @@ unit_tests:
     format: sql
     rows: "select code::varchar code, cluster::varchar cluster_id, src::varchar source,\n 'Synthetic list'::varchar\
       \ cluster_description from (values\n ('SYN_ATORVA80','STAT_COD','ECL_CACHE'),('SYN_ATORVA10','STAT_COD','ECL_CACHE'),\n\
-      \ ('SYN_EZET','EZETIMIBE_COD','ECL_CACHE'),\n ('SYN_ATORVA80','NHS_DRUG_REFSETS/HIATORVASTAT_COD','OPENCODELISTS'))\
-      \ v(code,cluster,src)"
+      \ ('SYN_EZET','EZETIMIBE_COD','ECL_CACHE'),('SYN_COMBO','STAT_COD','ECL_CACHE'),('SYN_HICOMBO','STAT_COD','ECL_CACHE'),('SYN_OLDMOD','STAT_COD','ECL_CACHE'),('SYN_HICOMBO','NHS_DRUG_REFSETS/HIATORVASTAT_COD','OPENCODELISTS'),\n\
+      \ ('SYN_ATORVA80','NHS_DRUG_REFSETS/HIATORVASTAT_COD','OPENCODELISTS')) v(code,cluster,src)"
   - input: ref('dmd_product')
     format: sql
-    rows: select code::varchar product_code, 1::number ingredient_count from (values ('SYN_ATORVA80'),('SYN_ATORVA10'),('SYN_EZET'))
-      v(code)
+    rows: select code::varchar product_code, ingredients::number ingredient_count from (values ('SYN_ATORVA80',1),('SYN_ATORVA10',1),('SYN_EZET',1),('SYN_COMBO',2),('SYN_HICOMBO',2),('SYN_OLDMOD',1))
+      v(code,ingredients)
   expect:
     rows:
     - medication_order_id: SYN_HI
-      statin_intensity_national: HIGH_INTENSITY
       is_high_intensity_statin: true
+      statin_intensity: HIGH_INTENSITY
     - medication_order_id: SYN_NONHI
-      statin_intensity_national: UNKNOWN
       is_high_intensity_statin: false
+      statin_intensity: OTHER_STATIN
     - medication_order_id: SYN_EZET
-      statin_intensity_national: null
+      is_high_intensity_statin: false
+      statin_intensity: null
+    - medication_order_id: SYN_COMBO
+      statin_intensity: COMBINATION
+      is_high_intensity_statin: false
+    - medication_order_id: SYN_HICOMBO
+      statin_intensity: HIGH_INTENSITY
+      is_high_intensity_statin: true
+    - medication_order_id: SYN_OLDMOD
+      statin_intensity: OTHER_STATIN
       is_high_intensity_statin: false
   overrides:
     macros:
-      get_empty_subquery_sql: select null::varchar medication_order_id,null::varchar statin_intensity_national,null::boolean
+      get_empty_subquery_sql: select null::varchar medication_order_id,null::varchar statin_intensity,null::boolean
         is_high_intensity_statin where false
 - name: nsaid_cox2_by_ingredient
   model: int_nsaid_medications_all

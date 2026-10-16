@@ -121,13 +121,13 @@ SELECT
     lipid_lowering_class,
     is_stat_cod AS is_statin,
 
-    -- Legacy labels retained for published consumers; use statin_intensity_national for NG238.
-    CASE
-        WHEN bnf_chemical_code IN ('0212000B0', '0212000AA') THEN 'HIGH_INTENSITY'
-        WHEN bnf_chemical_code IN ('0212000Y0', '0212000X0', '0212000M0') THEN 'MODERATE_INTENSITY'
+    -- National high-intensity lists classify product strength, not prescribed daily dose.
+    CAST(CASE
+        WHEN NOT is_stat_cod THEN NULL
+        WHEN national_high_intensity THEN 'HIGH_INTENSITY'
         WHEN lipid_lowering_class = 'STATIN_COMBINATION' THEN 'COMBINATION'
-        WHEN lipid_lowering_class = 'STATIN' THEN 'OTHER_STATIN'
-    END AS statin_intensity,
+        ELSE 'OTHER_STATIN'
+    END AS VARCHAR) AS statin_intensity,
 
     -- Fixed-dose combination products
     ingredient_count >= 2 AS is_combination_therapy,
@@ -135,9 +135,6 @@ SELECT
     -- Order recency at build time; order_date is never after the build date
     {{ medication_date_flags('order_date', include_future_flag=false) }},
     -- NICE NG238 high intensity means >40% LDL-C reduction; refsets classify product strength.
-    national_high_intensity AS is_high_intensity_statin,
-    CASE WHEN NOT is_statin THEN NULL
-         WHEN national_high_intensity THEN 'HIGH_INTENSITY'
-         ELSE 'UNKNOWN' END AS statin_intensity_national
+    national_high_intensity AS is_high_intensity_statin
 
 FROM classified
