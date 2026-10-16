@@ -10,7 +10,7 @@ unit_tests:
       \ null::timestamp_ntz date_recorded, null::varchar dose,\n null::number quantity_value, null::varchar\
       \ quantity_unit, null::number duration_days,\n null::number estimated_cost, null::varchar statement_medication_name,\n\
       \ v.code::varchar mapped_concept_code, null::varchar mapped_concept_display\n from (values ('SYN_HI','SYN_ATORVA80','0212000B0SYN'),\n\
-      \ ('SYN_NONHI','SYN_ATORVA10','0212000B0SYN'),('SYN_EZET','SYN_EZET','0212000L0SYN'),('SYN_COMBO','SYN_COMBO','0212000SYN'),('SYN_HICOMBO','SYN_HICOMBO','0212000SYN'),('SYN_OLDMOD','SYN_OLDMOD','0212000Y0SYN'),('SYN_OMEGA','SYN_OMEGA','0212000ABSYN'),('SYN_MISSING','SYN_MISSING','0212000F0SYN'))\
+      \ ('SYN_NONHI','SYN_ATORVA10','0212000B0SYN'),('SYN_EZET','SYN_EZET','0212000L0SYN'),('SYN_COMBO','SYN_COMBO','0212000SYN'),('SYN_HICOMBO','SYN_HICOMBO','0212000SYN'),('SYN_OLDMOD','SYN_OLDMOD','0212000Y0SYN'),('SYN_OMEGA','SYN_OMEGA','0212000ABSYN'),('SYN_MISSING','SYN_MISSING','0212000F0SYN'),('SYN_LARO','SYN_LARO','0212000AESYN'))\
       \ v(id,code,bnf)"
   - &id001
     input: ref('stg_olids_patient')
@@ -24,7 +24,8 @@ unit_tests:
       \ ('SYN_ATORVA80','NHS_DRUG_REFSETS/HIATORVASTAT_COD','OPENCODELISTS')) v(code,cluster,src)"
   - input: ref('dmd_product')
     format: sql
-    rows: select code::varchar product_code, ingredients::number ingredient_count from (values ('SYN_ATORVA80',1),('SYN_ATORVA10',1),('SYN_EZET',1),('SYN_COMBO',2),('SYN_HICOMBO',2),('SYN_OLDMOD',1),('SYN_OMEGA',2))
+    rows: select code::varchar product_code, ingredients::number ingredient_count, iff(code='SYN_LARO','15926311000001102','SYN_VTM')::varchar
+      vtm_id from (values ('SYN_ATORVA80',1),('SYN_ATORVA10',1),('SYN_EZET',1),('SYN_COMBO',2),('SYN_HICOMBO',2),('SYN_OLDMOD',1),('SYN_OMEGA',2),('SYN_LARO',2))
       v(code,ingredients)
   expect:
     rows:
@@ -57,6 +58,10 @@ unit_tests:
       is_high_intensity_statin: false
       is_combination_therapy: false
     - medication_order_id: SYN_MISSING
+      statin_intensity: null
+      is_high_intensity_statin: false
+      is_combination_therapy: false
+    - medication_order_id: SYN_LARO
       statin_intensity: null
       is_high_intensity_statin: false
       is_combination_therapy: false

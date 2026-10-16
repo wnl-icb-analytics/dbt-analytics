@@ -66,6 +66,7 @@ classified AS (
         coalesce(lm.is_stat_cod, false) AS is_stat_cod,
         coalesce(lm.is_high_intensity_statin, false) AS national_high_intensity,
         dmd.ingredient_count,
+        dmd.vtm_id,
         CASE
             WHEN lm.is_stat_cod AND dmd.ingredient_count >= 2 THEN 'STATIN_COMBINATION'
             WHEN lm.is_stat_cod THEN 'STATIN'
@@ -129,8 +130,10 @@ SELECT
         ELSE 'OTHER_STATIN'
     END AS VARCHAR) AS statin_intensity,
 
-    -- Omega-3 ethyl esters are one agent despite having several dm+d substances.
-    COALESCE(ingredient_count >= 2, FALSE) AND lipid_lowering_class <> 'OMEGA_3' AS is_combination_therapy,
+    -- Omega-3 esters are one agent; laropiprant treats nicotinic-acid flushing, not lipids.
+    COALESCE(ingredient_count >= 2, FALSE)
+        AND lipid_lowering_class <> 'OMEGA_3'
+        AND COALESCE(vtm_id <> '15926311000001102', TRUE) AS is_combination_therapy,
 
     -- Order recency at build time; order_date is never after the build date
     {{ medication_date_flags('order_date', include_future_flag=false) }},
