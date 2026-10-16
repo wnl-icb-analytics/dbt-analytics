@@ -14,9 +14,12 @@ models:
         owner:
           name: Thomas Shallcross
     data_tests:
+      # Predictions and inputs can be refreshed separately.
       - dbt_utils.equal_rowcount:
           arguments:
             compare_model: ref('qadmissions_input_features')
+          config:
+            tags: [reconciliation]
     columns:
       - name: person_id
         data_type: varchar
