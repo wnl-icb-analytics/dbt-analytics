@@ -4,8 +4,8 @@ models:
     description: 'Combined alcohol risk assessment from screening and diagnoses.
 
       One row per person with any alcohol-related data, integrating AUDIT/AUDIT-C
-      scores with alcohol disorder diagnoses using 12-month recency window for conflict
-      resolution.'
+      scores with alcohol disorder diagnoses. Any active disorder takes priority, then any
+      historical disorder record regardless of age, then the AUDIT risk category.'
     config:
       meta:
         indicator:
@@ -21,9 +21,8 @@ models:
             clinical diagnoses of alcohol misuse disorders. Includes non-drinkers
             through
             to alcohol dependence, integrating screening tools and formal diagnoses.
-            Uses AUDIT thresholds alongside disorder diagnoses with 12-month recency
-            window
-            for conflict resolution. Supports population health monitoring, intervention
+            Uses AUDIT thresholds alongside disorder diagnoses; any disorder
+            record overrides the AUDIT category. Supports population health monitoring, intervention
             planning, and clinical care pathways.
           is_qof: false
           source_column: "alcohol_status"
@@ -170,8 +169,10 @@ models:
           disorder diagnoses
 
       - name: alcohol_risk_sort_key
-        description: Numeric sort key for ordering from lowest (1) to highest 
-          (6) risk, with historical disorders as (7)
+        description: >-
+          Numeric risk sort key: 7 active disorder, 6 possible dependence, 5 higher risk,
+          4 historical disorder, 3 increasing risk, 2 lower risk or occasional drinker,
+          1 non-drinker, 0 no data.
 
       - name: audit_score
         description: Most recent AUDIT or AUDIT-C score
