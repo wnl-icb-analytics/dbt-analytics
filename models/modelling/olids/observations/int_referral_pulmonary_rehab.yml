@@ -1,11 +1,17 @@
 models:
   - name: int_referral_pulmonary_rehab
-    description: 'Determine referral to pulmonary rehabilitation including declined, attendance and not suitable using PCD REFSET: PULRHBPU_COD - patient not suitable, PULRHBATT_COD attended, PULRHBOFF_COD referred, PULRHBDEC_COD declined.'
+    description: 'Determine referral to pulmonary rehabilitation including declined, attendance and not suitable using PCD REFSET: PULRHBPU_COD - patient not suitable, PULRHBATT_COD attended, PULRHBOFF_COD referred, PULRHBDEC_COD declined. One row per person, concept and calendar date, from all four clusters; includes inactive and deceased people.'
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - concept_code
+              - clinical_effective_date
       - cluster_ids_exist:
           arguments:
             cluster_ids: PULRHBPU_COD, PULRHBATT_COD, PULRHBOFF_COD, PULRHBDEC_COD
