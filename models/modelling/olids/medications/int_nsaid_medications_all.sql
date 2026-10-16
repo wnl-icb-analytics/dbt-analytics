@@ -6,9 +6,21 @@
 
 /*
 All NSAID (Non-Steroidal Anti-Inflammatory Drug) medication orders for pain and inflammation.
-Uses BNF classification (10.1.1) for NSAIDs and (10.3.2) for topical NSAIDs.
+Uses BNF 10.1.1; the previous BNF 10.1 scope could not include topical products.
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 */
+
+WITH medication_attributes AS (
+    SELECT orders.*, dmd.vtm_id,
+    -- Current and previous coxib VTMs; meloxicam is not COX-2 selective.
+    CASE WHEN dmd.vtm_id IS NULL THEN NULL
+         ELSE dmd.vtm_id IN (
+             '775123001', '370187009', '775901004', '395292007',
+             '777080002', '395289008', '776587002', '422506000',
+             '777459002', '116095002', '777908009', '385583007') END AS is_cox2_selective
+    FROM ({{ get_medication_orders(bnf_code='100101') }}) orders
+    LEFT JOIN {{ ref('dmd_product') }} dmd ON orders.mapped_concept_code = dmd.product_code
+)
 
 SELECT
     base_orders.person_id,
@@ -26,29 +38,12 @@ SELECT
     base_orders.bnf_code,
     base_orders.bnf_name,
 
-    -- NSAID type classification
-    CASE
-        -- COX-2 selective
-        WHEN base_orders.bnf_code LIKE '1001010A%' OR base_orders.bnf_code LIKE '1001010AJ%' OR
-             base_orders.bnf_code LIKE '1001010AN%' OR base_orders.bnf_code LIKE '1001010AF%' THEN 'COX2_SELECTIVE'
-        -- Topical
-        WHEN base_orders.bnf_code LIKE '100302%' THEN 'TOPICAL'
-        -- Non-selective (all others in 10.1.1)
-        WHEN base_orders.bnf_code LIKE '100101%' THEN 'NON_SELECTIVE'
-        ELSE 'OTHER_NSAID'
-    END AS nsaid_type,
-
-
-    -- NSAID classification flags
-    CASE
-        WHEN base_orders.bnf_code LIKE '1001010A%' OR base_orders.bnf_code LIKE '1001010AJ%' OR
-             base_orders.bnf_code LIKE '1001010AN%' OR base_orders.bnf_code LIKE '1001010AF%' THEN TRUE
-        ELSE FALSE
-    END AS is_cox2_selective,
-
-    CASE WHEN base_orders.bnf_code LIKE '100302%' THEN TRUE ELSE FALSE END AS is_topical,
-    CASE WHEN base_orders.bnf_code LIKE '100101%' AND base_orders.bnf_code NOT LIKE '1001010A%' THEN TRUE ELSE FALSE END AS is_non_selective,
-
+    CASE WHEN base_orders.vtm_id IS NULL THEN 'OTHER_NSAID'
+         WHEN base_orders.is_cox2_selective THEN 'COX2_SELECTIVE'
+         ELSE 'NON_SELECTIVE' END AS nsaid_type,
+    base_orders.is_cox2_selective,
+    FALSE AS is_topical,
+    NOT base_orders.is_cox2_selective AS is_non_selective,
 
     -- Cardiovascular risk flag (COX-2 selective)
     CASE
@@ -60,6 +55,5 @@ SELECT
     -- Order recency flags
     {{ medication_date_flags('base_orders.order_date') }}
 
-FROM ({{ get_medication_orders(bnf_code='1001') }}) base_orders
-WHERE base_orders.bnf_code LIKE '100101%' OR base_orders.bnf_code LIKE '100302%'  -- Oral NSAIDs and topical NSAIDs
+FROM medication_attributes base_orders
 ORDER BY base_orders.person_id, base_orders.order_date DESC

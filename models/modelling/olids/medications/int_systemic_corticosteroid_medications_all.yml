@@ -1,8 +1,8 @@
 models:
 - name: int_systemic_corticosteroid_medications_all
-  description: Systemic corticosteroid orders in OLIDS, identified by BNF prefix 0603. One row per dated
-    order linked by staging person_id, including inactive and deceased people and future-dated orders.
-    An order does not establish its indication or confirm that the medicine was taken.
+  description: Systemic corticosteroid orders in BNF 0603 for all people, one row per dated order. dm+d
+    therapeutic moiety identifies fludrocortisone as mineralocorticoid. Products do not establish replacement
+    or anti-inflammatory indication; legacy indication columns remain pending interface approval.
   config:
     meta:
       owner:
@@ -39,13 +39,14 @@ models:
   - name: bnf_name
     description: BNF classification name
   - name: corticosteroid_type
-    description: Corticosteroid type (replacement, glucocorticoid, mineralocorticoid)
+    description: Legacy BNF classification retained pending interface approval. Use corticosteroid_type_dmd
+      for the ingredient-based class.
   - name: is_replacement_therapy
-    description: Flag for replacement therapy corticosteroids
+    description: Legacy BNF flag; product does not establish indication. Held for removal.
   - name: is_anti_inflammatory
-    description: Flag for anti-inflammatory corticosteroids
+    description: Legacy BNF flag; product does not establish indication. Held for removal.
   - name: is_mineralocorticoid
-    description: Flag for mineralocorticoid medications
+    description: Fludrocortisone by current or previous dm+d VTM; null when no VTM is available.
   - name: is_recent_1m
     description: Order in the 1 calendar months up to and including the build date; lower bound excluded.
   - name: is_recent_3m
@@ -54,6 +55,9 @@ models:
     description: Order in the 6 calendar months up to and including the build date; lower bound excluded.
   - name: is_future_dated
     description: Order dated after the build date; kept as source evidence, never recent.
+  - name: corticosteroid_type_dmd
+    description: MINERALOCORTICOID for current or previous fludrocortisone VTM, GLUCOCORTICOID for other
+      known VTMs, UNKNOWN when no VTM is available.
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

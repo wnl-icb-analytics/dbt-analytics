@@ -10,6 +10,17 @@ Uses BNF classification (2.8.2) for oral anticoagulants.
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 */
 
+WITH national_membership AS (
+    SELECT code,
+        BOOLOR_AGG(cluster_id = 'NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD') AS is_national_doac,
+        BOOLOR_AGG(cluster_id = 'NHS_DRUG_REFSETS/VITKANTAGDRUG_COD') AS is_national_vka
+    FROM {{ ref('stg_reference_combined_codesets') }}
+    WHERE source = 'OPENCODELISTS'
+        AND cluster_id IN ('NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD',
+            'NHS_DRUG_REFSETS/VITKANTAGDRUG_COD')
+    GROUP BY code
+)
+
 SELECT
     person_id,
     medication_order_id,
@@ -55,9 +66,14 @@ SELECT
     END AS is_vka,
 
     -- Order recency flags (anticoagulants are typically long-term therapy)
-    {{ medication_date_flags('order_date') }}
+    {{ medication_date_flags('order_date') }},
+    -- Legacy membership stays until the semantic category removal is approved.
+    coalesce(lm.is_national_doac OR lm.is_national_vka, false) AS is_in_national_anticoagulant_list,
+    CASE WHEN lm.is_national_doac THEN 'DOAC'
+         WHEN lm.is_national_vka THEN 'VKA' END AS anticoagulant_type_national
 
 FROM (
     {{ get_medication_orders(bnf_code='020802') }}
 ) base_orders
+LEFT JOIN national_membership lm ON base_orders.mapped_concept_code = lm.code
 ORDER BY person_id, order_date DESC

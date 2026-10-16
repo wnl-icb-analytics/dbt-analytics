@@ -11,7 +11,8 @@ unit_tests:
       \ quantity_unit, null::number duration_days,\n null::number estimated_cost, null::varchar statement_medication_name,\n\
       \ v.code::varchar mapped_concept_code, null::varchar mapped_concept_display\n from (values ('SYN_HI','SYN_ATORVA80','0212000B0SYN'),\n\
       \ ('SYN_NONHI','SYN_ATORVA10','0212000B0SYN'),('SYN_EZET','SYN_EZET','0212000L0SYN')) v(id,code,bnf)"
-  - input: ref('stg_olids_patient')
+  - &id001
+    input: ref('stg_olids_patient')
     format: sql
     rows: select 'SYN_PAT'::varchar id,-9200::number person_id,null::number sk_patient_id
   - input: ref('stg_reference_combined_codesets')
@@ -20,6 +21,10 @@ unit_tests:
       \ cluster_description from (values\n ('SYN_ATORVA80','STAT_COD','ECL_CACHE'),('SYN_ATORVA10','STAT_COD','ECL_CACHE'),\n\
       \ ('SYN_EZET','EZETIMIBE_COD','ECL_CACHE'),\n ('SYN_ATORVA80','NHS_DRUG_REFSETS/HIATORVASTAT_COD','OPENCODELISTS'))\
       \ v(code,cluster,src)"
+  - input: ref('dmd_product')
+    format: sql
+    rows: select code::varchar product_code, 1::number ingredient_count from (values ('SYN_ATORVA80'),('SYN_ATORVA10'),('SYN_EZET'))
+      v(code)
   expect:
     rows:
     - medication_order_id: SYN_HI
@@ -35,3 +40,106 @@ unit_tests:
     macros:
       get_empty_subquery_sql: select null::varchar medication_order_id,null::varchar statin_intensity_national,null::boolean
         is_high_intensity_statin where false
+- name: nsaid_cox2_by_ingredient
+  model: int_nsaid_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: "select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,\n current_date()::date\
+      \ clinical_effective_date, '10'::varchar bnf_chapter, '1001'::varchar bnf_section,\n v.bnf::varchar\
+      \ bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,\n null::varchar medication_name,\
+      \ null::timestamp_ntz date_recorded, null::varchar dose,\n null::number quantity_value, null::varchar\
+      \ quantity_unit, null::number duration_days,\n null::number estimated_cost, null::varchar statement_medication_name,\n\
+      \ v.code::varchar mapped_concept_code, null::varchar mapped_concept_display\n from (values ('SYN_ONE','SYN_ONE','100101SYN'),('SYN_TWO','SYN_TWO','100101SYN'),('SYN_THREE','SYN_THREE','100101SYN'))\
+      \ v(id,code,bnf)"
+  - *id001
+  - input: ref('dmd_product')
+    format: sql
+    rows: select code::varchar product_code,vtm::varchar vtm_id from (values ('SYN_ONE','775123001'),('SYN_TWO','SYN_MELOXICAM'))
+      v(code,vtm)
+  expect:
+    rows:
+    - medication_order_id: SYN_ONE
+      nsaid_type: COX2_SELECTIVE
+      is_cox2_selective: true
+    - medication_order_id: SYN_TWO
+      nsaid_type: NON_SELECTIVE
+      is_cox2_selective: false
+    - medication_order_id: SYN_THREE
+      nsaid_type: OTHER_NSAID
+      is_cox2_selective: null
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::varchar medication_order_id,null::varchar nsaid_type,null::boolean
+        is_cox2_selective where false
+- name: ics_combination_by_ingredient_count
+  model: int_inhaled_corticosteroid_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: "select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,\n current_date()::date\
+      \ clinical_effective_date, '03'::varchar bnf_chapter, '0302'::varchar bnf_section,\n v.bnf::varchar\
+      \ bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,\n null::varchar medication_name,\
+      \ null::timestamp_ntz date_recorded, null::varchar dose,\n null::number quantity_value, null::varchar\
+      \ quantity_unit, null::number duration_days,\n null::number estimated_cost, null::varchar statement_medication_name,\n\
+      \ v.code::varchar mapped_concept_code, null::varchar mapped_concept_display\n from (values ('SYN_ONE','SYN_ONE','030200SYN'),('SYN_TWO','SYN_TWO','030200SYN'),('SYN_THREE','SYN_THREE','030200SYN'),('SYN_FOUR','SYN_FOUR','030200SYN'))\
+      \ v(id,code,bnf)"
+  - *id001
+  - input: ref('dmd_product')
+    format: sql
+    rows: select code::varchar product_code,n::number ingredient_count from (values ('SYN_ONE',1),('SYN_TWO',2),('SYN_THREE',3),('SYN_FOUR',null))
+      v(code,n)
+  expect:
+    rows:
+    - medication_order_id: SYN_ONE
+      ics_type: SINGLE_AGENT
+      is_single_agent: true
+      is_combination_therapy: false
+    - medication_order_id: SYN_TWO
+      ics_type: COMBINATION
+      is_single_agent: false
+      is_combination_therapy: true
+    - medication_order_id: SYN_THREE
+      ics_type: COMBINATION
+      is_single_agent: false
+      is_combination_therapy: true
+    - medication_order_id: SYN_FOUR
+      ics_type: OTHER_ICS
+      is_single_agent: null
+      is_combination_therapy: null
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::varchar medication_order_id,null::varchar ics_type,null::boolean
+        is_single_agent,null::boolean is_combination_therapy where false
+- name: systemic_corticosteroid_mineralocorticoid
+  model: int_systemic_corticosteroid_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: "select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,\n current_date()::date\
+      \ clinical_effective_date, '06'::varchar bnf_chapter, '0603'::varchar bnf_section,\n v.bnf::varchar\
+      \ bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,\n null::varchar medication_name,\
+      \ null::timestamp_ntz date_recorded, null::varchar dose,\n null::number quantity_value, null::varchar\
+      \ quantity_unit, null::number duration_days,\n null::number estimated_cost, null::varchar statement_medication_name,\n\
+      \ v.code::varchar mapped_concept_code, null::varchar mapped_concept_display\n from (values ('SYN_ONE','SYN_ONE','060302SYN'),('SYN_TWO','SYN_TWO','060302SYN'),('SYN_THREE','SYN_THREE','060302SYN'))\
+      \ v(id,code,bnf)"
+  - *id001
+  - input: ref('dmd_product')
+    format: sql
+    rows: select code::varchar product_code,vtm::varchar vtm_id from (values ('SYN_ONE','775983003'),('SYN_TWO','SYN_PREDNISOLONE'))
+      v(code,vtm)
+  expect:
+    rows:
+    - medication_order_id: SYN_ONE
+      corticosteroid_type_dmd: MINERALOCORTICOID
+      is_mineralocorticoid: true
+    - medication_order_id: SYN_TWO
+      corticosteroid_type_dmd: GLUCOCORTICOID
+      is_mineralocorticoid: false
+    - medication_order_id: SYN_THREE
+      corticosteroid_type_dmd: UNKNOWN
+      is_mineralocorticoid: null
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::varchar medication_order_id,null::varchar corticosteroid_type_dmd,null::boolean
+        is_mineralocorticoid where false

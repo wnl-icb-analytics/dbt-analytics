@@ -1,8 +1,7 @@
 models:
 - name: int_mra_medications_all
-  description: Mineralocorticoid receptor antagonist orders for all people, one row per medication order. BNF
-    prefixes 0202030S0 (spironolactone), 0202030X0 (eplerenone) and 0202030Y0 (finerenone) cover the full
-    class. No build-relative window is applied.
+  description: National mineralocorticoid receptor antagonist drug-refset orders for all people, one row
+    per dated order. Includes spironolactone combinations. No build-relative window is applied.
   config:
     meta:
       owner:
@@ -12,6 +11,11 @@ models:
       arguments:
         combination_of_columns:
         - medication_order_id
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: NHS_DRUG_REFSETS/MRADRUG_COD
+        source: OPENCODELISTS
   columns:
   - name: is_steroidal_mra
-    description: True for spironolactone or eplerenone orders; false for finerenone orders.
+    description: Spironolactone and eplerenone, including combinations, are steroidal. Finerenone is non-steroidal;
+      null when no dm+d therapeutic moiety is available.
