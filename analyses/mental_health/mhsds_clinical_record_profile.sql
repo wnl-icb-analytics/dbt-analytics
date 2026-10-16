@@ -19,8 +19,8 @@ select
     , count_if(coding_scheme_kind = 'fixed_snomed' and coding_scheme_code is not null)
         as fixed_schemes_presented_as_submitted
     , count_if(clinical_label_status = 'mapped_to_snomed') as mapped_labels
-    , count_if(clinical_value_parse_status = 'not_numeric_or_out_of_range') as unparsed_values
-    , count_if(clinical_value_parse_status = 'numeric_rounded') as rounded_values
+    , count_if(clinical_value_parse_status = 'not numeric or out of range') as unparsed_values
+    , count_if(clinical_value_parse_status = 'numeric (rounded)') as rounded_values
     , count_if(clinical_value_numeric <> trunc(clinical_value_numeric)) as fractional_values
     , count_if(clinical_date is null) as missing_clinical_dates
     , count_if(is_source_date_inconsistent) as inconsistent_source_dates

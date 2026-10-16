@@ -26,6 +26,6 @@ select clinical_record_type, assessment_tool_name, count(*) as unmatched_respons
     count_if(clinical_value_numeric is null) as non_numeric_responses,
     count_if(clinical_value_numeric = 0) as zero_responses
 from {{ ref('fct_mhsds_clinical_record') }}
-where assessment_response_status = 'response_unmatched'
+where assessment_response_status = 'unmatched response'
 group by clinical_record_type, assessment_tool_name
 having count(*) >= 1000;
