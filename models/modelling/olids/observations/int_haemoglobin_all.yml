@@ -7,7 +7,8 @@ models:
       clinical date, value, unit and concept) was entered more than once, only the earliest
       entry is kept (earliest date_recorded, then lowest id), so date_recorded is when the
       result was first entered. Applies a value-first standardisation workflow via the standardise_count_observation macro to infer
-      correct units and values, then categorises by clinical severity. Standard unit: g/L.
+      correct units and values, then categorises by clinical severity. Results in g/dL
+      and g/dL-scale numbers labelled g/L or unlabelled are converted to g/L.
     config:
       meta:
         owner:
@@ -78,6 +79,8 @@ models:
         description: TRUE if inferred value is negative
       - name: is_extreme_outlier
         description: TRUE if inferred value exceeds the BIOLOGICAL_UPPER bound from the observation_value_bounds seed
+      - name: is_out_of_range
+        description: No conversion brought the value into 25-300 g/L. Kept as recorded and should not be used.
       - name: haemoglobin_category
         description: Clinical severity category based on inferred value (sex-agnostic; sex-specific c_hb flag derived downstream)
         data_tests:
@@ -91,3 +94,108 @@ models:
                   - 'Mild Anaemia (male threshold)'
                   - 'Normal'
                   - 'Elevated'
+
+unit_tests:
+- name: haemoglobin_unit_scale_conversion
+  model: int_haemoglobin_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR id, column2::NUMBER person_id,
+        column3::TIMESTAMP_NTZ clinical_effective_date, column3::TIMESTAMP_NTZ date_recorded,
+        column4::VARCHAR result_value, column5::VARCHAR result_unit_code,
+        column5::VARCHAR result_unit_display, 'SYN_CODE'::VARCHAR mapped_concept_code,
+        'Synthetic observation'::VARCHAR mapped_concept_display, 'HAEMOGLOBIN_EST'::VARCHAR cluster_id
+        FROM VALUES ('SYN_A', -9300, '2026-01-01', 13.5, 'g/dL'),
+        ('SYN_B', -9301, '2026-01-01', 135, 'g/dL'),
+        ('SYN_C', -9302, '2026-01-01', 13.5, NULL),
+        ('SYN_D', -9303, '2026-01-01', 13.5, 'g/L'),
+        ('SYN_E', -9304, '2026-01-01', 1.5, 'g/dL'),
+        ('SYN_F', -9305, '2026-01-01', 135, 'g/L'),
+        ('SYN_G', -9306, '2026-01-01', 400, 'g/L')
+  given:
+  - input: ref('observation_unit_rules')
+    rows:
+    - DEFINITION_ID: null
+      DEFINITION_NAME: haemoglobin_est
+      CONFIG_ID: null
+      CONFIG_VERSION: null
+      CONVERT_FROM_UNIT: g/L
+      CONVERT_TO_UNIT: g/L
+      MULTIPLY_BY: 1.0
+      PRE_OFFSET: 0.0
+      POST_OFFSET: 0.0
+    - DEFINITION_ID: null
+      DEFINITION_NAME: haemoglobin_est
+      CONFIG_ID: null
+      CONFIG_VERSION: null
+      CONVERT_FROM_UNIT: g/dL
+      CONVERT_TO_UNIT: g/L
+      MULTIPLY_BY: 10.0
+      PRE_OFFSET: 0.0
+      POST_OFFSET: 0.0
+    - DEFINITION_ID: null
+      DEFINITION_NAME: haemoglobin_est
+      CONFIG_ID: null
+      CONFIG_VERSION: null
+      CONVERT_FROM_UNIT: mg/dL
+      CONVERT_TO_UNIT: g/L
+      MULTIPLY_BY: 0.01
+      PRE_OFFSET: 0.0
+      POST_OFFSET: 0.0
+  - input: ref('observation_standard_units')
+    rows:
+    - DEFINITION_ID: null
+      DEFINITION_NAME: haemoglobin_est
+      CONFIG_ID: null
+      CONFIG_VERSION: null
+      UNIT: g/L
+      PRIMARY_UNIT: true
+  - input: ref('observation_value_bounds')
+    rows:
+    - DEFINITION_ID: null
+      DEFINITION_NAME: haemoglobin_est
+      CONFIG_ID: null
+      CONFIG_VERSION: null
+      ABSOLUTE_LOWER: 25.0
+      ABSOLUTE_UPPER: 300.0
+      CANONICAL_EXPONENT: -1.0
+      BIOLOGICAL_LOWER: 25.0
+      BIOLOGICAL_UPPER: 300.0
+  expect:
+    rows:
+    - id: SYN_A
+      inferred_value: 135
+      value_was_converted: true
+      is_out_of_range: false
+      confidence: LOW
+    - id: SYN_B
+      inferred_value: 135
+      value_was_converted: false
+      is_out_of_range: false
+      confidence: MEDIUM
+    - id: SYN_C
+      inferred_value: 135
+      value_was_converted: true
+      is_out_of_range: false
+      confidence: LOW
+    - id: SYN_D
+      inferred_value: 135
+      value_was_converted: true
+      is_out_of_range: false
+      confidence: LOW
+    - id: SYN_E
+      inferred_value: 1.5
+      value_was_converted: false
+      is_out_of_range: true
+      confidence: MEDIUM
+    - id: SYN_F
+      inferred_value: 135
+      value_was_converted: false
+      is_out_of_range: false
+      confidence: HIGH
+    - id: SYN_G
+      inferred_value: 400
+      value_was_converted: false
+      is_out_of_range: true
+      confidence: LOW

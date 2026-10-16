@@ -261,7 +261,7 @@ lab_thresholds AS (
 lab_results AS (
     SELECT 'haemoglobin' AS measurement, id, person_id, clinical_effective_date, date_recorded, inferred_value
     FROM {{ ref('int_haemoglobin_all') }}
-    WHERE inferred_value IS NOT NULL AND NOT is_negative
+    WHERE inferred_value IS NOT NULL AND NOT is_negative AND NOT is_out_of_range
     UNION ALL
     SELECT 'platelets'   AS measurement, id, person_id, clinical_effective_date, date_recorded, inferred_value
     FROM {{ ref('int_platelets_all') }}
