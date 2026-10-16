@@ -65,7 +65,7 @@ TABLES(
     -- Pre-defined medication category models (each filtered to specific drug class)
     statins AS {{ ref('int_lipid_lowering_medications_all') }}
         PRIMARY KEY (medication_order_id)
-        COMMENT = 'Lipid-regulating orders (BNF 2.12) with lipid_lowering_class and, for statins, intensity: HIGH_INTENSITY (atorvastatin, rosuvastatin), MODERATE_INTENSITY (simvastatin, pravastatin, fluvastatin), COMBINATION (statin combinations)',
+        COMMENT = 'Lipid-regulating orders (BNF 2.12). Statin classification is HIGH_INTENSITY from national high-intensity product lists, COMBINATION for other statin combinations, OTHER_STATIN for other statins; null for non-statins.',
 
     antihypertensives AS {{ ref('int_antihypertensive_medications_all') }}
         PRIMARY KEY (medication_order_id)
