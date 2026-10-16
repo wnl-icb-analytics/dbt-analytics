@@ -61,9 +61,9 @@ models:
       - name: right_foot_amputated
         description: Right foot amputation recorded at any time.
       - name: left_foot_risk_level
-        description: "Risk descriptor carried by the left foot codes: Low, Moderate, High or Ulcerated; null when none."
+        description: "Highest severity in the left foot codes on the date: Low, Moderate, High or Ulcerated (NICE NG19 order); null when none."
       - name: right_foot_risk_level
-        description: "Risk descriptor carried by the right foot codes: Low, Moderate, High or Ulcerated; null when none."
+        description: "Highest severity in the right foot codes on the date: Low, Moderate, High or Ulcerated (NICE NG19 order); null when none."
       - name: townson_scale_level
         description: Townson scale level recorded on the date; null when none.
       - name: has_screening_referral
@@ -137,3 +137,28 @@ unit_tests:
           first_right_foot_absent_date: null
     config:
       tags: [monthly-full, nice-history]
+
+  - name: foot_risk_uses_severity_order
+    model: int_foot_examination_all
+    overrides:
+      macros:
+        get_observations: |
+          SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                 '2024-03-01'::TIMESTAMP_NTZ AS clinical_effective_date,
+                 'FRC_COD'::VARCHAR AS cluster_id,
+                 column3::VARCHAR AS code_description,
+                 column1::VARCHAR AS mapped_concept_code,
+                 column3::VARCHAR AS mapped_concept_display
+          FROM VALUES
+              ('SYN_1', -9911, 'Left diabetic foot at low risk'),
+              ('SYN_2', -9911, 'Left diabetic foot at high risk'),
+              ('SYN_3', -9912, 'Left diabetic foot at moderate risk'),
+              ('SYN_4', -9912, 'Left diabetic foot ulcerated'),
+              ('SYN_5', -9913, 'Townson scale level 1'),
+              ('SYN_6', -9913, 'Right diabetic foot at high risk')
+    given: []
+    expect:
+      rows:
+        - {person_id: -9911, left_foot_risk_level: High, diabetes_foot_risk_category: High Risk}
+        - {person_id: -9912, left_foot_risk_level: Ulcerated, diabetes_foot_risk_category: Ulcerated (High Risk)}
+        - {person_id: -9913, left_foot_risk_level: Low, right_foot_risk_level: High, diabetes_foot_risk_category: High Risk}
