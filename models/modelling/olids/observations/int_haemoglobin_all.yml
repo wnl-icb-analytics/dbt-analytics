@@ -7,8 +7,9 @@ models:
       clinical date, value, unit and concept) was entered more than once, only the earliest
       entry is kept (earliest date_recorded, then lowest id), so date_recorded is when the
       result was first entered. Applies a value-first standardisation workflow via the standardise_count_observation macro to infer
-      correct units and values, then categorises by clinical severity. Results in g/dL
-      and g/dL-scale numbers labelled g/L or unlabelled are converted to g/L.
+      correct units and values, then categorises by clinical severity. Values from 25 to
+      300 are kept as g/L whatever their recorded unit. Values below 25 are read as g/dL
+      and multiplied by 10 when that gives 25 to 300; anything else is out of range.
     config:
       meta:
         owner:
