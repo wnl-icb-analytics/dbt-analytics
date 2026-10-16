@@ -17,6 +17,7 @@ repeat_orders as (
         mo.person_id,
         mo.id as medication_order_id,
         mo.clinical_effective_date as order_date,
+        mo.date_recorded,
         mo.duration_days as order_duration_days,
         mo.mapped_concept_code
     from {{ ref('stg_olids_medication_order') }} mo
@@ -41,7 +42,10 @@ latest_orders as (
         and ro.order_date = ld.latest_order_date
     qualify row_number() over (
         partition by ro.person_id, ro.mapped_concept_code
-        order by coalesce(ro.order_duration_days, 28) desc, ro.medication_order_id desc
+        -- Same-day copies are usually the original issue plus a GP2GP copy recorded later
+        -- with a default supply, so the earliest-recorded (original) issue wins.
+        order by ro.date_recorded asc nulls last, coalesce(ro.order_duration_days, 28) desc,
+            ro.medication_order_id desc
     ) = 1
 )
 select
