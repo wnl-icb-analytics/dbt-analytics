@@ -10,8 +10,8 @@
 }}
 
 /*
-    qadmissions_input_features_history
-    ----------------------------------
+    qadmissions_input_features_validation
+    -------------------------------------
     Rebuilds the QAdmissions input features as they stood at historical index
     dates, so the model registered in Snowflake's model registry can be
     validated against later emergency admissions. The historical counterpart
@@ -20,7 +20,7 @@
 
     Grain
       One row per person per index date. Index dates are every month-end
-      from January 2023 to December 2024, from
+      from August 2022 to July 2024, from
       qadmissions_history_index_dates(). Each needs a full outcome horizon of
       complete SUS follow-up before it is used for validation.
 
@@ -96,10 +96,10 @@
     {%- do qadmissions_registers.append((register_code, register_model)) -%}
 {%- endfor -%}
 {%- if qadmissions_registers | length != qadmissions_register_codes | length -%}
-    {{ exceptions.raise_compiler_error("qadmissions_input_features_history: not every QAdmissions register code was found in ltc_register_history_models()") }}
+    {{ exceptions.raise_compiler_error("qadmissions_input_features_validation: not every QAdmissions register code was found in ltc_register_history_models()") }}
 {%- endif %}
 
--- Index month-ends (January 2023 to December 2024), from
+-- Index month-ends (August 2022 to July 2024), from
 -- macros/config/qadmissions_index_dates.sql, which the index-dates test also
 -- reads.
 WITH index_dates AS (
@@ -566,10 +566,11 @@ SELECT
     bmi_imp.is_bmi_imputed,
     bmi_imp.bmi_imputation_group,
 
-    -- Constants, as in the live model: Strategic Health Authority 3 (London)
-    -- and the prediction horizon in years.
+    -- Constants: Strategic Health Authority 3 (London), as in the live model,
+    -- and the validation horizon in years (2, as in the QAdmissions paper),
+    -- shared with qadmissions_outcomes_validation. The live model scores 1 year.
     3                                                                      AS sha1,
-    {{ var('qadmissions_horizon_years', 1) }}                              AS surv,
+    {{ qadmissions_history_horizon_years() }}                              AS surv,
 
     -- Disease booleans from the as-at QOF registers.
     COALESCE(cond.has_atrial_fibrillation, FALSE)                          AS b_af,
