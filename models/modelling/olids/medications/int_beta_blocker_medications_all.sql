@@ -27,20 +27,7 @@ SELECT
     bnf_name,
 
     -- Order recency flags (beta blockers are typically long-term therapy)
-    CASE
-        WHEN DATEDIFF(day, order_date, CURRENT_DATE()) <= 90 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_3m,
-
-    CASE
-        WHEN DATEDIFF(day, order_date, CURRENT_DATE()) <= 180 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_6m,
-
-    CASE
-        WHEN DATEDIFF(day, order_date, CURRENT_DATE()) <= 365 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_12m,
+    {{ medication_date_flags('order_date') }},
     EXISTS (
         SELECT 1
         FROM {{ ref('stg_reference_combined_codesets') }} AS codes

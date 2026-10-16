@@ -1,7 +1,7 @@
 models:
 - name: int_antiplatelet_medications_all
-  description: Antiplatelet medication orders using BNF classification for cardiovascular protection. One row
-    per medication order for all people, without a build-relative window.
+  description: Antiplatelet medication orders using BNF classification for cardiovascular protection.
+    One row per medication order for all people, without a build-relative window.
   config:
     meta:
       owner:
@@ -40,15 +40,17 @@ models:
   - name: is_p2y12_inhibitor
     description: Clopidogrel (0209000C0), prasugrel (0209000Y0) or ticagrelor (0209000Z0) BNF prefix.
   - name: is_recent_3m
-    description: Order within last 3 months
+    description: Order in the 3 calendar months up to and including the build date; lower bound excluded.
   - name: is_recent_6m
-    description: Order within last 6 months
+    description: Order in the 6 calendar months up to and including the build date; lower bound excluded.
   - name: is_recent_12m
-    description: Order within last 12 months
+    description: Order in the 12 calendar months up to and including the build date; lower bound excluded.
   - name: is_aspirin
     description: Whether the order has BNF prefix 0209000A0.
   - name: is_clopidogrel
     description: Whether the order has BNF prefix 0209000C0.
+  - name: is_future_dated
+    description: Order dated after the build date; kept as source evidence, never recent.
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

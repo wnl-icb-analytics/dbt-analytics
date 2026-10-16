@@ -1,45 +1,37 @@
-
 models:
-  - name: int_medication_orders_repeat_current
-    description: |
-      Latest repeat medication orders currently active based on supply duration.
-
-      Grain: One row per person × medication (latest order only, current medications)
-
-      Inclusion criteria:
-      - Repeat prescriptions only (authorisation_type = '182918009' from REPEAT_PRESCRIPTION cluster)
-      - Order date + duration >= today (current supply not expired)
-      - Order date <= today (exclude future orders)
-      - Latest order per person-medication combination
-      - Duration defaults to 28 days if NULL
-
-      Uses medication_order table as source of truth for dispensing events and duration.
-
-    config:
-      meta:
-        owner:
-          name: EddieDavison92
+- name: int_medication_orders_repeat_current
+  description: Latest repeat issue per person and product, current when issue date plus source duration
+    reaches the build date. Null duration defaults to 28 days. Future issues are excluded before choosing
+    the latest issue; same-date ties go to the later recorded issue, then higher order id. An order is
+    an issue, not a dispensing event.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  data_tests:
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: REPEAT_PRESCRIPTION
+        source: ECL_CACHE
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - person_id
+        - mapped_concept_code
+  columns:
+  - name: person_id
+    description: Person identifier
     data_tests:
-      - cluster_ids_exist:
-          arguments:
-            cluster_ids: REPEAT_PRESCRIPTION
-            source: ECL_CACHE
-    columns:
-      - name: person_id
-        description: Person identifier
-        data_tests:
-          - not_null
-
-      - name: mapped_concept_code
-        description: SNOMED CT code for the medication
-        data_tests:
-          - not_null
-
-      - name: latest_order_date
-        description: Date of most recent medication order
-        data_tests:
-          - not_null
-
-      - name: latest_duration
-        description: Duration in days for most recent order (NULL defaults to 28
-          days in currency calculation)
+    - not_null
+  - name: mapped_concept_code
+    description: SNOMED CT code for the medication
+    data_tests:
+    - not_null
+  - name: latest_order_date
+    description: Date of most recent medication order
+    data_tests:
+    - not_null
+  - name: latest_duration
+    description: Duration in days for most recent order (NULL defaults to 28 days in currency calculation)
+  - name: medication_order_id
+    description: Selected latest eligible medication issue identifier.

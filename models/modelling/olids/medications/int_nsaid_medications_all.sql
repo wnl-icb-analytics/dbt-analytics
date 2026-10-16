@@ -58,20 +58,7 @@ SELECT
 
 
     -- Order recency flags
-    CASE
-        WHEN DATEDIFF(day, base_orders.order_date, CURRENT_DATE()) <= 90 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_3m,
-
-    CASE
-        WHEN DATEDIFF(day, base_orders.order_date, CURRENT_DATE()) <= 180 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_6m,
-
-    CASE
-        WHEN DATEDIFF(day, base_orders.order_date, CURRENT_DATE()) <= 365 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_12m
+    {{ medication_date_flags('base_orders.order_date') }}
 
 FROM ({{ get_medication_orders(bnf_code='1001') }}) base_orders
 WHERE base_orders.bnf_code LIKE '100101%' OR base_orders.bnf_code LIKE '100302%'  -- Oral NSAIDs and topical NSAIDs

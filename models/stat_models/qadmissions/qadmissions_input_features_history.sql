@@ -207,7 +207,7 @@ medication_orders AS (
     FROM {{ ref('int_nsaid_medications_all') }}
 ),
 
--- One or more orders in the 180 days up to and including each index date:
+-- One or more orders in the 6 calendar months up to and including each index date:
 -- the live is_recent_6m rule, measured back from the index date instead of
 -- today. One row per person and index date with any qualifying order.
 medication_flags AS (
@@ -222,7 +222,7 @@ medication_flags AS (
     FROM index_dates AS i
     INNER JOIN medication_orders AS m
         ON m.order_date <= i.end_date
-        AND m.order_date >= DATEADD(day, -180, i.end_date)
+        AND m.order_date > DATEADD(month, -6, i.end_date)
     GROUP BY i.end_date, m.person_id
 ),
 

@@ -19,6 +19,8 @@ Example output for a patient:
 - 2023-03-06 to 2026-11-02: 6 medications (current; valid_to is always
   set, and periods can start in the future as current issues run out)
 
+Future-dated issues are excluded. Supply expiry can still create future periods.
+
 Grain: One row per person per distinct medication count period
 */
 
@@ -44,6 +46,7 @@ medication_periods AS (
     INNER JOIN {{ ref('int_polypharmacy_medications_list') }} bnf
         ON mo.mapped_concept_code = bnf.snomed_code
     WHERE mo.clinical_effective_date >= DATEADD(year, -5, CURRENT_DATE())
+        AND mo.clinical_effective_date <= CURRENT_DATE()
         AND mo.clinical_effective_date IS NOT NULL
         AND mo.mapped_concept_code IS NOT NULL
 ),

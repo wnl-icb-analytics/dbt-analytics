@@ -188,9 +188,7 @@ valproate_enhanced AS (
         END AS formulation_type,
 
         -- Recency flags for clinical monitoring
-        vo.order_date >= CURRENT_DATE() - INTERVAL '3 months' AS is_recent_3m,
-        vo.order_date >= CURRENT_DATE() - INTERVAL '6 months' AS is_recent_6m,
-        vo.order_date >= CURRENT_DATE() - INTERVAL '12 months' AS is_recent_12m
+        {{ medication_date_flags('vo.order_date') }}
 
     FROM valproate_orders AS vo
 )
@@ -225,6 +223,7 @@ SELECT
     ve.is_recent_3m,
     ve.is_recent_6m,
     ve.is_recent_12m,
+    ve.is_future_dated,
 
     -- Add person demographics for reference
     p.current_practice_id,

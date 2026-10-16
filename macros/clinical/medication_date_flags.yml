@@ -1,0 +1,20 @@
+macros:
+  - name: medication_date_flags
+    description: >-
+      Build-date eligibility flags for medication orders. Recent N months means after the date
+      N calendar months before the reference date, up to and including that date. Future orders
+      remain source evidence but are never recent. For latest-issue models, exclude future issues
+      before ranking by order date, date recorded (when available), then order id descending.
+    arguments:
+      - name: date_column
+        type: string
+        description: SQL expression for the order date.
+      - name: months
+        type: list
+        description: Calendar-month windows; defaults to 3, 6 and 12.
+      - name: include_future_flag
+        type: boolean
+        description: Emit is_future_dated; defaults to true.
+      - name: reference_date
+        type: string
+        description: SQL reference date expression; defaults to current_date().

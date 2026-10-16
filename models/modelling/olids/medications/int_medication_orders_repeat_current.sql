@@ -6,61 +6,50 @@
     )
 }}
 
-/*
-Latest repeat medication orders that are currently active based on duration.
-Filters to repeat prescriptions by joining medication_statement.authorisation_type_code
-against the REPEAT_PRESCRIPTION codeset (see CTE below).
-
-Currency logic:
-- Takes the most recent order for each person × medication combination
-- Considers medication "current" if: order_date + duration_days >= CURRENT_DATE
-- Defaults to 28 days duration if NULL (99% of records have duration populated)
-
-Note: Uses medication_order table (not statement) as each order represents when the
-GP issues the medication (sends to pharmacy or prints FP10) with accurate duration_days.
-
-Grain: One row per person × medication (latest order only, filtered to current)
-*/
-
-WITH repeat_prescription_codes AS (
-    -- Get SNOMED codes for repeat prescriptions from cluster
-    SELECT DISTINCT code
-    FROM {{ ref('stg_reference_combined_codesets') }}
-    WHERE cluster_id = 'REPEAT_PRESCRIPTION'
+-- Latest eligible repeat issue per person and product, retained while its supply is current.
+with repeat_prescription_codes as (
+    select distinct code
+    from {{ ref('stg_reference_combined_codesets') }}
+    where cluster_id = 'REPEAT_PRESCRIPTION'
 ),
-
-repeat_orders AS (
-    -- Join medication orders to statements to filter by authorisation type cluster
-    SELECT
+repeat_orders as (
+    select
         mo.person_id,
-        mo.clinical_effective_date AS order_date,
-        mo.duration_days AS order_duration_days,
-        mo.estimated_cost,
+        mo.id as medication_order_id,
+        mo.clinical_effective_date as order_date,
+        mo.date_recorded,
+        mo.duration_days as order_duration_days,
         mo.mapped_concept_code
-    FROM {{ ref('stg_olids_medication_order') }} mo
-    INNER JOIN {{ ref('stg_olids_medication_statement') }} ms
-        ON mo.medication_statement_id = ms.id
-    INNER JOIN repeat_prescription_codes rpc
-        ON ms.authorisation_type_code = rpc.code
-    WHERE mo.clinical_effective_date IS NOT NULL
-        AND mo.mapped_concept_code IS NOT NULL
+    from {{ ref('stg_olids_medication_order') }} mo
+    inner join {{ ref('stg_olids_medication_statement') }} ms
+        on mo.medication_statement_id = ms.id
+    inner join repeat_prescription_codes rpc on ms.authorisation_type_code = rpc.code
+    where mo.clinical_effective_date is not null
+        and mo.clinical_effective_date <= current_date()
+        and mo.mapped_concept_code is not null
 ),
-
-latest_orders AS (
-    SELECT
-        person_id,
-        mapped_concept_code,
-        MAX(order_date) AS latest_order_date,
-        MAX_BY(order_duration_days, order_date) AS latest_duration
-    FROM repeat_orders
-    GROUP BY person_id, mapped_concept_code
+latest_dates as (
+    select person_id, mapped_concept_code, max(order_date) as latest_order_date
+    from repeat_orders
+    group by person_id, mapped_concept_code
+),
+latest_orders as (
+    select ro.*
+    from repeat_orders ro
+    inner join latest_dates ld
+        on ro.person_id = ld.person_id
+        and ro.mapped_concept_code = ld.mapped_concept_code
+        and ro.order_date = ld.latest_order_date
+    qualify row_number() over (
+        partition by ro.person_id, ro.mapped_concept_code
+        order by ro.date_recorded desc nulls last, ro.medication_order_id desc
+    ) = 1
 )
-
-SELECT
+select
     person_id,
     mapped_concept_code,
-    latest_order_date,
-    latest_duration
-FROM latest_orders
-WHERE DATEADD(day, COALESCE(latest_duration, 28), latest_order_date) >= CURRENT_DATE()
-    AND latest_order_date <= CURRENT_DATE()  -- Ignore future orders
+    order_date as latest_order_date,
+    order_duration_days as latest_duration,
+    medication_order_id
+from latest_orders
+where dateadd(day, coalesce(order_duration_days, 28), order_date) >= current_date()

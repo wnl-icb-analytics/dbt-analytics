@@ -43,20 +43,7 @@ SELECT
 
 
     -- Order recency flags (important for steroid monitoring)
-    CASE
-        WHEN DATEDIFF(day, base_orders.order_date, CURRENT_DATE()) <= 30 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_1m,
-
-    CASE
-        WHEN DATEDIFF(day, base_orders.order_date, CURRENT_DATE()) <= 90 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_3m,
-
-    CASE
-        WHEN DATEDIFF(day, base_orders.order_date, CURRENT_DATE()) <= 180 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_6m
+    {{ medication_date_flags('base_orders.order_date', months=[1, 3, 6]) }}
 
 FROM ({{ get_medication_orders(bnf_code='0603') }}) base_orders
 ORDER BY base_orders.person_id, base_orders.order_date DESC

@@ -125,8 +125,6 @@ SELECT
     bnf_chemical_code IN ('0212000AC', '0212000AJ', '0212000AL') AS is_combination_therapy,
 
     -- Order recency at build time; order_date is never after the build date
-    order_date >= DATEADD(day, -90, CURRENT_DATE()) AS is_recent_3m,
-    order_date >= DATEADD(day, -180, CURRENT_DATE()) AS is_recent_6m,
-    order_date >= DATEADD(day, -365, CURRENT_DATE()) AS is_recent_12m
+    {{ medication_date_flags('order_date', include_future_flag=false) }}
 
 FROM classified

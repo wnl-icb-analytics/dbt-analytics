@@ -37,7 +37,7 @@ WITH valproate_6m_orders AS (
 
     FROM {{ ref('int_valproate_medications_all') }}
     WHERE
-        order_date >= CURRENT_DATE() - INTERVAL '6 months'
+        order_date > DATEADD(month, -6, CURRENT_DATE())
         AND order_date <= CURRENT_DATE()
 ),
 
@@ -54,7 +54,7 @@ valproate_latest AS (
         vo.*,
         vc.recent_order_count,
         ROW_NUMBER()
-            OVER (PARTITION BY vo.person_id ORDER BY vo.order_date DESC)
+            OVER (PARTITION BY vo.person_id ORDER BY vo.order_date DESC, vo.medication_order_id DESC)
             AS rn
     FROM valproate_6m_orders AS vo
     INNER JOIN valproate_6m_counts AS vc ON vo.person_id = vc.person_id

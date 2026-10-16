@@ -39,8 +39,6 @@ SELECT
     mapped_concept_display,
     bnf_code,
     bnf_name,
-    order_date >= CURRENT_DATE() - INTERVAL '3 months' AS is_recent_3m,
-    order_date >= CURRENT_DATE() - INTERVAL '6 months' AS is_recent_6m,
-    order_date >= CURRENT_DATE() - INTERVAL '12 months' AS is_recent_12m
+    {{ medication_date_flags('order_date') }}
 FROM cluster_orders
 ORDER BY person_id, order_date DESC

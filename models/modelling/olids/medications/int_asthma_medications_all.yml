@@ -1,43 +1,47 @@
 models:
-  - name: int_asthma_medications_all
-    description: 'All asthma medication orders using ASTTRT_COD cluster. Date filtering applied by consumers.'
-    config:
-      meta:
-        owner:
-          name: EddieDavison92
+- name: int_asthma_medications_all
+  description: All asthma medication orders using ASTTRT_COD cluster. Date filtering applied by consumers.
+  config:
+    meta:
+      owner:
+        name: EddieDavison92
+  columns:
+  - name: person_id
+    description: Person identifier
+  - name: medication_order_id
+    description: Unique medication order identifier
+  - name: order_date
+    description: Date medication was ordered
     tests:
-      - cluster_ids_exist:
-          arguments:
-            cluster_ids: ASTTRT_COD
-    columns:
-      - name: person_id
-        description: 'Person identifier'
-      - name: medication_order_id
-        description: 'Unique medication order identifier'
-      - name: order_date
-        description: 'Date medication was ordered'
-        tests:
-          - not_null
-      - name: date_recorded
-        description: 'Date the order was recorded in the source system. Use with
-          order_date for point-in-time views, as an order can be back-dated.'
-      - name: order_medication_name
-        description: 'Name of medication as ordered'
-      - name: mapped_concept_code
-        description: 'Mapped SNOMED concept code'
-      - name: mapped_concept_display
-        description: 'Mapped SNOMED concept display name'
-      - name: cluster_id
-        description: 'Cluster identifier (ASTTRT_COD)'
-      - name: is_asthma_treatment
-        description: 'Flag for asthma treatment medications'
-      - name: is_recent_12m
-        description: 'Order within last 12 months'
-      - name: is_recent_6m
-        description: 'Order within last 6 months'
-      - name: is_recent_3m
-        description: 'Order within last 3 months'
-      - name: current_practice_id
-        description: 'Current practice identifier'
-      - name: total_patients
-        description: 'Total patients count'
+    - not_null
+  - name: date_recorded
+    description: Date the order was recorded in the source system. Use with order_date for point-in-time
+      views, as an order can be back-dated.
+  - name: order_medication_name
+    description: Name of medication as ordered
+  - name: mapped_concept_code
+    description: Mapped SNOMED concept code
+  - name: mapped_concept_display
+    description: Mapped SNOMED concept display name
+  - name: cluster_id
+    description: Cluster identifier (ASTTRT_COD)
+  - name: is_asthma_treatment
+    description: Flag for asthma treatment medications
+  - name: is_recent_12m
+    description: Order in the 12 calendar months up to and including the build date; lower bound excluded.
+  - name: is_recent_6m
+    description: Order in the 6 calendar months up to and including the build date; lower bound excluded.
+  - name: is_recent_3m
+    description: Order in the 3 calendar months up to and including the build date; lower bound excluded.
+  - name: current_practice_id
+    description: Current practice identifier
+  - name: total_patients
+    description: Total patients count
+  data_tests:
+  - cluster_ids_exist:
+      arguments:
+        cluster_ids: ASTTRT_COD
+  - dbt_utils.unique_combination_of_columns:
+      arguments:
+        combination_of_columns:
+        - medication_order_id
