@@ -56,6 +56,9 @@ unit_tests:
             (-103, 'SYN_ASCVD_A', NULL, '2026-01-01 00:00:00'),
             (-104, 'SYN_ASCVD_A', '2010-03-01', '2010-03-05 00:00:00'),
             (-105, 'SYN_ASCVD_A', '2012-01-01', '1860-01-01 00:00:00'),
+            (-18001, 'SYN_ASCVD_A', '2000-01-01', '1900-01-01 00:00:00'),
+            (-18002, 'SYN_ASCVD_A', DATEADD(day, 1, CURRENT_DATE())::VARCHAR, '1899-12-31 00:00:00'),
+            (-18009, 'SYN_ASCVD_A', '2000-01-01', NULL),
             (-201, 'SYN_OLD_PLAIN', '2020-01-01', '2020-01-01 00:00:00'),
             (-202, 'SYN_OLD_AMB_FULL', '2020-01-01', '2020-01-01 00:00:00'),
             (-203, 'SYN_OLD_AMB_PART', '2020-01-01', '2020-01-01 00:00:00'),
@@ -67,20 +70,24 @@ unit_tests:
       format: sql
       rows: |
         SELECT column1::NUMBER AS id, column2::VARCHAR AS source_cluster_id,
-          column3::TIMESTAMP_NTZ AS clinical_effective_date
+          column3::TIMESTAMP_NTZ AS clinical_effective_date,
+          column4::TIMESTAMP_NTZ AS date_recorded
         FROM (VALUES
-          (-101, 'ASCVD_COD', '2005-06-01 00:00:00'),
-          (-102, 'ASCVD_COD', '2026-01-01 09:30:00'),
-          (-103, 'ASCVD_COD', '1900-01-01 00:00:00'),
-          (-104, 'ASCVD_COD', '2010-03-01 00:00:00'),
-          (-105, 'ASCVD_COD', '2012-01-01 00:00:00'),
-          (-201, 'ASCVD_COD', '2020-01-01 00:00:00'),
-          (-202, 'ASCVD_COD', '2020-01-01 00:00:00'),
-          (-205, 'OBSLPAPNOEA_COD', '2020-01-01 00:00:00'),
-          (-206, 'ASCVD_COD', '2020-01-01 00:00:00'))
+          (-101, 'ASCVD_COD', '2005-06-01 00:00:00', '1899-12-31 00:00:00'),
+          (-102, 'ASCVD_COD', '2026-01-01 09:30:00', '2026-01-01 09:30:00'),
+          (-103, 'ASCVD_COD', '1900-01-01 00:00:00', '2026-01-01 00:00:00'),
+          (-104, 'ASCVD_COD', '2010-03-01 00:00:00', '2010-03-05 00:00:00'),
+          (-105, 'ASCVD_COD', '2012-01-01 00:00:00', '1860-01-01 00:00:00'),
+          (-18001, 'ASCVD_COD', '1900-01-01 00:00:00', '1900-01-01 00:00:00'),
+          (-18002, 'ASCVD_COD', DATEADD(day, 1, CURRENT_DATE())::VARCHAR, '1899-12-31 00:00:00'),
+          (-18009, 'ASCVD_COD', '2000-01-01 00:00:00', NULL),
+          (-201, 'ASCVD_COD', '2020-01-01 00:00:00', '2020-01-01 00:00:00'),
+          (-202, 'ASCVD_COD', '2020-01-01 00:00:00', '2020-01-01 00:00:00'),
+          (-205, 'OBSLPAPNOEA_COD', '2020-01-01 00:00:00', '2020-01-01 00:00:00'),
+          (-206, 'ASCVD_COD', '2020-01-01 00:00:00', '2020-01-01 00:00:00'))
     overrides:
       macros:
         # Fusion cannot infer UUID metadata; assert only these output columns.
         get_empty_subquery_sql: >
           SELECT NULL::NUMBER AS id, NULL::VARCHAR AS source_cluster_id,
-          NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+          NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TIMESTAMP_NTZ AS date_recorded WHERE FALSE
