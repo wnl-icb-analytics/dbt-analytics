@@ -11,9 +11,9 @@ Current polypharmacy status per person.
 
 Person-level snapshot of current polypharmacy medication burden.
 Pure polypharmacy measures only - join to demographic tables for reporting.
+Includes current repeat medications selected by int_polypharmacy_medications_list.
 
-Polypharmacy definition (NHSBSA standard):
-- Current repeat medications in BNF chapters 1-4, 6-10
+Polypharmacy thresholds:
 - Standard polypharmacy: 5+ medications
 - Severe/complex polypharmacy: 10+ medications
 
