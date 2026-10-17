@@ -11,6 +11,10 @@ models:
       - cluster_ids_exist:
           arguments:
             cluster_ids: LIT_COD
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - medication_order_id
     columns:
       - name: person_id
         description: 'Person identifier'
@@ -45,8 +49,10 @@ models:
       - name: bnf_name
         description: 'BNF classification name'
       - name: is_recent_3m
-        description: 'Order within last 3 months'
+        description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_6m
-        description: 'Order within last 6 months'
+        description: 'Order in the 6 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_12m
-        description: 'Order within last 12 months'
+        description: 'Order in the 12 calendar months up to and including the build date; lower bound excluded.'
+      - name: is_future_dated
+        description: Order dated after the build date; kept as source evidence, never recent.

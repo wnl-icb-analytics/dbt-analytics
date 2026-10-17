@@ -36,20 +36,7 @@ SELECT
     END AS is_p2y12_inhibitor,
 
     -- Order recency flags (antiplatelets are typically long-term therapy)
-    CASE
-        WHEN DATEDIFF(day, order_date, CURRENT_DATE()) <= 90 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_3m,
-
-    CASE
-        WHEN DATEDIFF(day, order_date, CURRENT_DATE()) <= 180 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_6m,
-
-    CASE
-        WHEN DATEDIFF(day, order_date, CURRENT_DATE()) <= 365 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_12m,
+    {{ medication_date_flags('order_date') }},
     bnf_code LIKE '0209000A0%' AS is_aspirin,
     bnf_code LIKE '0209000C0%' AS is_clopidogrel
 

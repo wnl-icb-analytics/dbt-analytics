@@ -1,16 +1,19 @@
 models:
   - name: int_nsaid_medications_all
     description: >-
-      NSAID orders in OLIDS, selected from BNF section 1001 and restricted to prefixes
-      100101 or 100302. The initial 1001 selection means 100302 alone cannot qualify.
-      One row per dated order linked to a patient-person mapping, including inactive
-      and deceased people and future dates. An order does not establish its indication
-      or confirm use.
+      NSAID orders in BNF 100101 for all people, one row per dated order. dm+d therapeutic
+      moiety identifies coxibs, including withdrawn products in historical orders.
+      Meloxicam is not classed as COX-2 selective. QAdmissions uses recency, not COX-2
+      classification.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests: []
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - medication_order_id
     columns:
       - name: person_id
         description: 'Person identifier'
@@ -43,18 +46,20 @@ models:
       - name: bnf_name
         description: 'BNF classification name'
       - name: nsaid_type
-        description: 'NSAID type (COX2 selective, non-selective, topical)'
+        description: 'COX2_SELECTIVE for known coxib VTMs, NON_SELECTIVE for other known VTMs, OTHER_NSAID when no dm+d VTM is available. Existing labels are retained.'
       - name: is_cox2_selective
-        description: 'Flag for COX-2 selective NSAIDs'
+        description: 'dm+d therapeutic moiety is a coxib; null when no VTM is available.'
       - name: is_topical
-        description: 'Flag for topical NSAID preparations'
+        description: 'False within the BNF 100101 scope; retained for interface compatibility.'
       - name: is_non_selective
-        description: 'Flag for non-selective NSAIDs'
+        description: 'Known dm+d therapeutic moiety that is not a coxib; null when unknown.'
       - name: is_high_cv_risk
-        description: 'Flag for high cardiovascular risk NSAIDs'
+        description: 'Legacy flag for BNF codes starting 1001010A, retained unchanged until the held column removal. Not a dm+d COX-2 or validated cardiovascular risk classification.'
       - name: is_recent_3m
-        description: 'Order within last 3 months'
+        description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_6m
-        description: 'Order within last 6 months'
+        description: 'Order in the 6 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_12m
-        description: 'Order within last 12 months'
+        description: 'Order in the 12 calendar months up to and including the build date; lower bound excluded.'
+      - name: is_future_dated
+        description: Order dated after the build date; kept as source evidence, never recent.

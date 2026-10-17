@@ -1,4 +1,5 @@
 {% macro get_medication_orders(bnf_code=none, cluster_id=none, source=none, include_history=false, versioned=false) %}
+    -- Person comes from staging mo.person_id; the patient commissioning key is optional.
     -- Optional source parameter to filter to specific refset (e.g., 'LTC_LCS')
     -- include_history=true expands cluster codes with retired SNOMED predecessors via SCT_History
     -- versioned=true reads every published version of a UKHSA cluster from
@@ -93,8 +94,8 @@
         mo.id AS medication_order_id,
         mo.medication_statement_id,
         mo.patient_id,
-        pp.person_id,
-        pp.sk_patient_id,
+        mo.person_id,
+        pat.sk_patient_id,
         mo.clinical_effective_date AS order_date,
         mo.medication_name AS order_medication_name,
         mo.date_recorded,
@@ -113,8 +114,8 @@
         mo.bnf_code,
         mo.bnf_name
     FROM {{ ref('stg_olids_medication_order') }} mo
-    JOIN {{ ref('int_patient_person_unique') }} pp
-        ON mo.patient_id = pp.patient_id
+    LEFT JOIN {{ ref('stg_olids_patient') }} pat
+        ON mo.patient_id = pat.id
     INNER JOIN {% if include_history %}expanded_codes{% else %}cluster_codes{% endif %} cc
         ON mo.mapped_concept_code = cc.mapped_concept_code
     WHERE mo.clinical_effective_date IS NOT NULL
@@ -125,8 +126,8 @@
         mo.id AS medication_order_id,
         mo.medication_statement_id,
         mo.patient_id,
-        pp.person_id,
-        pp.sk_patient_id,
+        mo.person_id,
+        pat.sk_patient_id,
         mo.clinical_effective_date AS order_date,
         mo.medication_name AS order_medication_name,
         mo.date_recorded,
@@ -144,8 +145,8 @@
         mo.bnf_code,
         mo.bnf_name
     FROM {{ ref('stg_olids_medication_order') }} mo
-    JOIN {{ ref('int_patient_person_unique') }} pp
-        ON mo.patient_id = pp.patient_id
+    LEFT JOIN {{ ref('stg_olids_patient') }} pat
+        ON mo.patient_id = pat.id
     WHERE mo.clinical_effective_date IS NOT NULL
     {{ bnf_filter }}
     {%- endif -%}
