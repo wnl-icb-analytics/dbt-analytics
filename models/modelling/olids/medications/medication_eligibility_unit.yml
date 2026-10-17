@@ -71,11 +71,12 @@ unit_tests:
   - input: ref('stg_olids_medication_order')
     format: sql
     rows: |-
-      select id::varchar id, person::number person_id, code::varchar mapped_concept_code,
-       dateadd(day,days,current_date())::date clinical_effective_date, dateadd(day,iff(id in ('SYN_41','SYN_62'),-2,-1),current_date())::timestamp_ntz date_recorded,
+      select id::varchar id, person::number person_id, iff(id = 'SYN_49', 'SYN_PATIENT_COPY', 'SYN_PATIENT_' || person)::varchar patient_id,
+       code::varchar mapped_concept_code,
+       dateadd(day,days,current_date())::date clinical_effective_date, dateadd(day,iff(id in ('SYN_41','SYN_62','SYN_81'),-2,-1),current_date())::timestamp_ntz date_recorded,
        duration::number duration_days, 'SYN_STATEMENT'::varchar medication_statement_id
        from (values ('SYN_11',-9101,'SYN_A',-10,56),('SYN_12',-9101,'SYN_A',20,28),
-       ('SYN_21',-9102,'SYN_B',-5,0),('SYN_22',-9102,'SYN_B',-5,28),('SYN_31',-9103,'SYN_C',3,28),('SYN_41',-9104,'SYN_D',-10,28),('SYN_49',-9104,'SYN_D',-10,56),('SYN_51',-9105,'SYN_E',-20,null),('SYN_59',-9105,'SYN_E',-20,14),('SYN_61',-9106,'SYN_F',-5,28),('SYN_62',-9106,'SYN_F',-5,28),('SYN_71',-9107,'SYN_G',-15,56),('SYN_72',-9107,'SYN_G',-10,0))
+       ('SYN_21',-9102,'SYN_B',-5,0),('SYN_22',-9102,'SYN_B',-5,28),('SYN_31',-9103,'SYN_C',3,28),('SYN_41',-9104,'SYN_D',-10,28),('SYN_49',-9104,'SYN_D',-10,56),('SYN_51',-9105,'SYN_E',-20,null),('SYN_59',-9105,'SYN_E',-20,14),('SYN_61',-9106,'SYN_F',-5,28),('SYN_62',-9106,'SYN_F',-5,28),('SYN_71',-9107,'SYN_G',-15,56),('SYN_72',-9107,'SYN_G',-10,0),('SYN_81',-9108,'SYN_H',-10,14),('SYN_82',-9108,'SYN_H',-10,56))
        v(id,person,code,days,duration)
   expect:
     rows:
@@ -99,6 +100,10 @@ unit_tests:
       mapped_concept_code: SYN_F
       medication_order_id: SYN_62
       latest_duration: 28
+    - person_id: -9108
+      mapped_concept_code: SYN_H
+      medication_order_id: SYN_82
+      latest_duration: 56
   overrides:
     macros:
       get_empty_subquery_sql: >-

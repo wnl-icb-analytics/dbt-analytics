@@ -15,6 +15,7 @@ with repeat_prescription_codes as (
 repeat_orders as (
     select
         mo.person_id,
+        mo.patient_id,
         mo.id as medication_order_id,
         mo.clinical_effective_date as order_date,
         mo.date_recorded,
@@ -33,19 +34,28 @@ latest_dates as (
     from repeat_orders
     group by person_id, mapped_concept_code
 ),
-latest_orders as (
-    select ro.*
+latest_candidates as (
+    select
+        ro.*,
+        min(ro.date_recorded) over (
+            partition by ro.person_id, ro.mapped_concept_code, ro.patient_id
+        ) as record_first_recorded
     from repeat_orders ro
     inner join latest_dates ld
         on ro.person_id = ld.person_id
         and ro.mapped_concept_code = ld.mapped_concept_code
         and ro.order_date = ld.latest_order_date
+),
+latest_orders as (
+    select *
+    from latest_candidates
+    -- Same-day issues on two patient records are usually an original plus a GP2GP copy
+    -- recorded later with a default supply, so the record that entered it first wins.
+    -- Within that record, the longest supply wins.
     qualify row_number() over (
-        partition by ro.person_id, ro.mapped_concept_code
-        -- Same-day copies are usually the original issue plus a GP2GP copy recorded later
-        -- with a default supply, so the earliest-recorded (original) issue wins.
-        order by ro.date_recorded asc nulls last, coalesce(ro.order_duration_days, 28) desc,
-            ro.medication_order_id desc
+        partition by person_id, mapped_concept_code
+        order by record_first_recorded asc nulls last, coalesce(order_duration_days, 28) desc,
+            medication_order_id desc
     ) = 1
 )
 select
