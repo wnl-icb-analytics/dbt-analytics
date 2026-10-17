@@ -327,3 +327,157 @@ models:
           qadmissions_ethrisk. Not as at the index date: the QAdmissions
           paper also used the latest recorded ethnicity, including records
           made after baseline. 1 when there is no mapped ethnicity.
+
+unit_tests:
+- name: qadmissions_history_antidepressant_calendar_boundary
+  model: qadmissions_input_features_history
+  given:
+  - input: ref('int_segmentation_person_month_spine')
+    format: sql
+    rows: |-
+      select '2024-03-31'::date month_end_date,column1::number person_id,'SYN_SK'::varchar sk_patient_id,39::number(3,0) age,'Female'::varchar gender,true::boolean is_active from values (-18320),(-18321),(-18322),(-18323),(-18324),(-18325)
+  - input: ref('int_antidepressant_medications_all')
+    format: sql
+    rows: |-
+      select column1::number person_id,column2::date order_date from values (-18320,'2023-09-30'),(-18321,'2023-10-01'),(-18322,'2024-03-31'),(-18323,'2024-04-01'),(-18324,null),(-18325,'2023-10-02')
+  - input: ref('int_anticoagulant_medications_all')
+    format: sql
+    rows: |-
+      select null::number person_id, null::date order_date where false
+  - input: ref('int_antipsychotic_medications_all')
+    format: sql
+    rows: |-
+      select null::number person_id, null::date order_date where false
+  - input: ref('int_systemic_corticosteroid_medications_all')
+    format: sql
+    rows: |-
+      select null::number person_id, null::date order_date where false
+  - input: ref('int_nsaid_medications_all')
+    format: sql
+    rows: |-
+      select null::number person_id, null::date order_date where false
+  - input: ref('fct_person_atrial_fibrillation_register_by_month')
+    format: sql
+    rows: |-
+      select null::date month_end_date, null::number person_id where false
+  - input: ref('fct_person_asthma_register_by_month')
+    format: sql
+    rows: |-
+      select null::date month_end_date, null::number person_id where false
+  - input: ref('fct_person_cancer_register_by_month')
+    format: sql
+    rows: |-
+      select null::date month_end_date, null::number person_id where false
+  - input: ref('fct_person_chd_register_by_month')
+    format: sql
+    rows: |-
+      select null::date month_end_date, null::number person_id where false
+  - input: ref('fct_person_ckd_register_by_month')
+    format: sql
+    rows: |-
+      select null::date month_end_date, null::number person_id where false
+  - input: ref('fct_person_copd_register_by_month')
+    format: sql
+    rows: |-
+      select null::date month_end_date, null::number person_id where false
+  - input: ref('fct_person_epilepsy_register_by_month')
+    format: sql
+    rows: |-
+      select null::date month_end_date, null::number person_id where false
+  - input: ref('fct_person_heart_failure_register_by_month')
+    format: sql
+    rows: |-
+      select null::date month_end_date, null::number person_id where false
+  - input: ref('fct_person_pad_register_by_month')
+    format: sql
+    rows: |-
+      select null::date month_end_date, null::number person_id where false
+  - input: ref('fct_person_smi_register_by_month')
+    format: sql
+    rows: |-
+      select null::date month_end_date, null::number person_id where false
+  - input: ref('fct_person_stroke_tia_register_by_month')
+    format: sql
+    rows: |-
+      select null::date month_end_date, null::number person_id where false
+  - input: ref('fct_person_diabetes_register_by_month')
+    format: sql
+    rows: |-
+      select null::date month_end_date, null::number person_id, null::varchar diabetes_type where false
+  - input: ref('int_segmentation_acute_activity_history')
+    format: sql
+    rows: |-
+      select null::date end_date, null::number person_id, null::number nel_admissions_12mo where false
+  - input: ref('qadmissions_lab_thresholds')
+    format: sql
+    rows: |-
+      select null::varchar measurement, null::varchar direction, null::number threshold where false
+  - input: ref('int_haemoglobin_all')
+    format: sql
+    rows: |-
+      select null::varchar id, null::number person_id, null::date clinical_effective_date, null::timestamp_ntz date_recorded, null::number inferred_value, null::boolean is_negative where false
+  - input: ref('int_platelets_all')
+    format: sql
+    rows: |-
+      select null::varchar id, null::number person_id, null::date clinical_effective_date, null::timestamp_ntz date_recorded, null::number inferred_value, null::boolean is_negative where false
+  - input: ref('int_alt_all')
+    format: sql
+    rows: |-
+      select null::varchar id, null::number person_id, null::date clinical_effective_date, null::timestamp_ntz date_recorded, null::number inferred_value, null::boolean is_negative where false
+  - input: ref('int_ggt_all')
+    format: sql
+    rows: |-
+      select null::varchar id, null::number person_id, null::date clinical_effective_date, null::timestamp_ntz date_recorded, null::number inferred_value, null::boolean is_negative where false
+  - input: ref('int_bilirubin_all')
+    format: sql
+    rows: |-
+      select null::varchar id, null::number person_id, null::date clinical_effective_date, null::timestamp_ntz date_recorded, null::number inferred_value, null::boolean is_negative where false
+  - input: ref('int_bmi_all')
+    format: sql
+    rows: |-
+      select null::varchar id, null::number person_id, null::date clinical_effective_date, null::timestamp_ntz date_recorded, null::number bmi_value, null::boolean is_valid_bmi where false
+  - input: ref('int_smoking_status_all')
+    format: sql
+    rows: |-
+      select null::varchar id, null::number person_id, null::date clinical_effective_date, null::timestamp_ntz date_recorded, null::varchar source_cluster_id, null::boolean is_current_smoker, null::boolean is_ex_smoker where false
+  - input: ref('int_alcohol_audit_scores')
+    format: sql
+    rows: |-
+      select null::varchar id, null::number person_id, null::date clinical_effective_date, null::timestamp_ntz date_recorded, null::number audit_score, null::varchar audit_type, null::boolean is_valid_score where false
+  - input: ref('int_falls_observations_all')
+    format: sql
+    rows: |-
+      select null::varchar id, null::number person_id, null::date clinical_effective_date, null::timestamp_ntz date_recorded where false
+  - input: ref('int_malabsorption_diagnoses_all')
+    format: sql
+    rows: |-
+      select null::varchar id, null::number person_id, null::date clinical_effective_date, null::timestamp_ntz date_recorded where false
+  - input: ref('int_vte_diagnoses_all')
+    format: sql
+    rows: |-
+      select null::varchar id, null::number person_id, null::date clinical_effective_date, null::timestamp_ntz date_recorded where false
+  - input: ref('int_liver_pancreatitis_diagnoses_all')
+    format: sql
+    rows: |-
+      select null::varchar id, null::number person_id, null::date clinical_effective_date, null::timestamp_ntz date_recorded where false
+  - input: ref('int_person_geography')
+    format: sql
+    rows: |-
+      select null::number person_id, null::number townsend_score where false
+  - input: ref('qadmissions_ethrisk')
+    format: sql
+    rows: |-
+      select null::number person_id, null::number ethrisk where false
+  - input: ref('dim_person_ethnicity')
+    format: sql
+    rows: |-
+      select null::number person_id, null::varchar ethnicity_category where false
+  expect:
+    format: sql
+    rows: |-
+      select '2024-03-31'::date end_date,column1::number person_id,column2::boolean b_antidepressant from values (-18320,false),(-18321,true),(-18322,true),(-18323,false),(-18324,false),(-18325,true)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::date as end_date, null::number as person_id, null::boolean as b_antidepressant where false
+      qadmissions_history_index_dates: "select '2024-03-31'::date reference_date"

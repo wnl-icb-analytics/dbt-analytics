@@ -93,3 +93,35 @@ models:
           - dbt_utils.accepted_range:
               arguments:
                 min_value: 0
+
+unit_tests:
+- name: medications_recent_named_eligible_orders_in_person_population
+  model: fct_person_medications_recent
+  given:
+  - input: ref('dim_person')
+    format: sql
+    rows: |-
+      select -18315::number person_id
+  - input: ref('int_medication_orders_repeat_current')
+    format: sql
+    rows: |-
+      select null::number person_id,null::varchar mapped_concept_code,null::date latest_order_date where false
+  - input: ref('stg_reference_bnf_latest')
+    format: sql
+    rows: |-
+      select null::varchar snomed_code,null::varchar bnf_name,null::varchar vtm,null::varchar vtm_name where false
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select person::number person_id,'SYN_UNMAPPED'::varchar patient_id,'SYN_PRODUCT'::varchar mapped_concept_code,
+       dateadd(day,days,current_date())::date clinical_effective_date,name::varchar medication_name,null::varchar statement_medication_name
+       from (values (-18315,-10,'Synthetic named medicine'),(-18316,-10,'Synthetic named medicine'),
+       (-18315,1,'Synthetic future medicine'),(-18315,-10,null)) v(person,days,name)
+  expect:
+    format: sql
+    rows: |-
+      select -18315::number person_id,1::number total_prescriptions_12mo,1::number total_prescriptions_30d
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::number as person_id, null::number as total_prescriptions_12mo, null::number as total_prescriptions_30d where false

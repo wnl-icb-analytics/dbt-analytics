@@ -141,3 +141,154 @@ models:
       meta:
         owner:
           name: Eddie Davison
+
+unit_tests:
+- name: dmd_vmp_retained_latest_precedence
+  model: stg_ukhfd_dmd_vmp
+  given:
+  - input: ref('raw_ukhfd_dmd_vmp')
+    format: sql
+    rows: |-
+      select k as vpid, 'SYN_' || label as vtmid, label as nm, iff(k='SYN_V2',1,0) as invalid, null::varchar as combprodcd, 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+       from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic removed competitor',0,'2024-02-01','2024-02-01','2024-02-01'),
+       ('SYN_IMPORT','Synthetic old import',1,'2024-01-01','2024-01-01','2024-03-01'),
+       ('SYN_IMPORT','Synthetic new import',1,'2024-01-01','2024-02-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic old created',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic new created',1,'2024-01-01','2024-01-01','2024-02-01'),
+       ('SYN_V2','Synthetic removed',0,'2024-01-01','2024-01-01','2024-01-01')) v(k,label,src,eff,imp,created)
+  expect:
+    format: sql
+    rows: |-
+      select k::varchar as vpid, 'SYN_' || label::varchar as vtm_id, label::varchar as vmp_name, (k='SYN_V2')::boolean as is_invalid, (src=1)::boolean as is_in_latest_source from (values ('SYN_V1','Synthetic new',1),('SYN_SOURCE','Synthetic source',1),('SYN_IMPORT','Synthetic new import',1),('SYN_CREATED','Synthetic new created',1),('SYN_V2','Synthetic removed',0)) v(k,label,src)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as vpid, null::varchar as vtm_id, null::varchar as vmp_name, null::boolean as is_invalid, null::boolean as is_in_latest_source where false
+
+- name: dmd_amp_retained_latest_precedence
+  model: stg_ukhfd_dmd_amp
+  given:
+  - input: ref('raw_ukhfd_dmd_amp')
+    format: sql
+    rows: |-
+      select k as apid, 'SYN_' || label as vpid, label as nm, iff(k='SYN_V2',1,0) as invalid, 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+       from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic removed competitor',0,'2024-02-01','2024-02-01','2024-02-01'),
+       ('SYN_IMPORT','Synthetic old import',1,'2024-01-01','2024-01-01','2024-03-01'),
+       ('SYN_IMPORT','Synthetic new import',1,'2024-01-01','2024-02-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic old created',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic new created',1,'2024-01-01','2024-01-01','2024-02-01'),
+       ('SYN_V2','Synthetic removed',0,'2024-01-01','2024-01-01','2024-01-01')) v(k,label,src,eff,imp,created)
+  expect:
+    format: sql
+    rows: |-
+      select k::varchar as apid, 'SYN_' || label::varchar as vpid, label::varchar as amp_name, (k='SYN_V2')::boolean as is_invalid, (src=1)::boolean as is_in_latest_source from (values ('SYN_V1','Synthetic new',1),('SYN_SOURCE','Synthetic source',1),('SYN_IMPORT','Synthetic new import',1),('SYN_CREATED','Synthetic new created',1),('SYN_V2','Synthetic removed',0)) v(k,label,src)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as apid, null::varchar as vpid, null::varchar as amp_name, null::boolean as is_invalid, null::boolean as is_in_latest_source where false
+
+- name: dmd_vtm_retained_latest_precedence
+  model: stg_ukhfd_dmd_vtm
+  given:
+  - input: ref('raw_ukhfd_dmd_vtm')
+    format: sql
+    rows: |-
+      select k as vtmid, label as nm, null::varchar as vtmidprev, 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+       from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic removed competitor',0,'2024-02-01','2024-02-01','2024-02-01'),
+       ('SYN_IMPORT','Synthetic old import',1,'2024-01-01','2024-01-01','2024-03-01'),
+       ('SYN_IMPORT','Synthetic new import',1,'2024-01-01','2024-02-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic old created',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic new created',1,'2024-01-01','2024-01-01','2024-02-01'),
+       ('SYN_V2','Synthetic removed',0,'2024-01-01','2024-01-01','2024-01-01')) v(k,label,src,eff,imp,created)
+  expect:
+    format: sql
+    rows: |-
+      select k::varchar as vtm_id, label::varchar as vtm_name, (src=1)::boolean as is_in_latest_source from (values ('SYN_V1','Synthetic new',1),('SYN_SOURCE','Synthetic source',1),('SYN_IMPORT','Synthetic new import',1),('SYN_CREATED','Synthetic new created',1),('SYN_V2','Synthetic removed',0)) v(k,label,src)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as vtm_id, null::varchar as vtm_name, null::boolean as is_in_latest_source where false
+
+- name: dmd_vmp_drug_form_retained_latest_precedence
+  model: stg_ukhfd_dmd_vmp_drug_form
+  given:
+  - input: ref('raw_ukhfd_dmd_vmp_drug_form')
+    format: sql
+    rows: |-
+      select k as vpid, label as formcd, 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+       from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic removed competitor',0,'2024-02-01','2024-02-01','2024-02-01'),
+       ('SYN_IMPORT','Synthetic old import',1,'2024-01-01','2024-01-01','2024-03-01'),
+       ('SYN_IMPORT','Synthetic new import',1,'2024-01-01','2024-02-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic old created',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic new created',1,'2024-01-01','2024-01-01','2024-02-01'),
+       ('SYN_V2','Synthetic removed',0,'2024-01-01','2024-01-01','2024-01-01')) v(k,label,src,eff,imp,created)
+  expect:
+    format: sql
+    rows: |-
+      select k::varchar as vpid, label::varchar as form_code, (src=1)::boolean as is_in_latest_source from (values ('SYN_V1','Synthetic new',1),('SYN_SOURCE','Synthetic source',1),('SYN_IMPORT','Synthetic new import',1),('SYN_CREATED','Synthetic new created',1),('SYN_V2','Synthetic removed',0)) v(k,label,src)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as vpid, null::varchar as form_code, null::boolean as is_in_latest_source where false
+
+- name: dmd_lookup_form_retained_latest_precedence
+  model: stg_ukhfd_dmd_lookup_form
+  given:
+  - input: ref('raw_ukhfd_dmd_lookup_form')
+    format: sql
+    rows: |-
+      select k as cd, label as "DESC", 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+       from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic removed competitor',0,'2024-02-01','2024-02-01','2024-02-01'),
+       ('SYN_IMPORT','Synthetic old import',1,'2024-01-01','2024-01-01','2024-03-01'),
+       ('SYN_IMPORT','Synthetic new import',1,'2024-01-01','2024-02-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic old created',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic new created',1,'2024-01-01','2024-01-01','2024-02-01'),
+       ('SYN_V2','Synthetic removed',0,'2024-01-01','2024-01-01','2024-01-01')) v(k,label,src,eff,imp,created)
+  expect:
+    format: sql
+    rows: |-
+      select k::varchar as form_code, label::varchar as form_description, (src=1)::boolean as is_in_latest_source from (values ('SYN_V1','Synthetic new',1),('SYN_SOURCE','Synthetic source',1),('SYN_IMPORT','Synthetic new import',1),('SYN_CREATED','Synthetic new created',1),('SYN_V2','Synthetic removed',0)) v(k,label,src)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as form_code, null::varchar as form_description, null::boolean as is_in_latest_source where false
+
+- name: dmd_vmp_ingredient_retained_latest_precedence
+  model: stg_ukhfd_dmd_vmp_ingredient
+  given:
+  - input: ref('raw_ukhfd_dmd_vmp_ingredient')
+    format: sql
+    rows: |-
+      select k as vpid, 'SYN_I1' as isid, label as basis_strntcd, null::number as strnt_nmrtr_val, null::varchar as strnt_nmrtr_uomcd, null::number as strnt_dnmtr_val, null::varchar as strnt_dnmtr_uomcd, 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+       from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic removed competitor',0,'2024-02-01','2024-02-01','2024-02-01'),
+       ('SYN_IMPORT','Synthetic old import',1,'2024-01-01','2024-01-01','2024-03-01'),
+       ('SYN_IMPORT','Synthetic new import',1,'2024-01-01','2024-02-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic old created',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic new created',1,'2024-01-01','2024-01-01','2024-02-01'),
+       ('SYN_V2','Synthetic removed',0,'2024-01-01','2024-01-01','2024-01-01')) v(k,label,src,eff,imp,created)
+  expect:
+    format: sql
+    rows: |-
+      select k::varchar as vpid, label::varchar as basis_strength_code, (src=1)::boolean as is_in_latest_source from (values ('SYN_V1','Synthetic new',1),('SYN_SOURCE','Synthetic source',1),('SYN_IMPORT','Synthetic new import',1),('SYN_CREATED','Synthetic new created',1),('SYN_V2','Synthetic removed',0)) v(k,label,src)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as vpid, null::varchar as basis_strength_code, null::boolean as is_in_latest_source where false

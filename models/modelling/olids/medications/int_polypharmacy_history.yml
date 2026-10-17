@@ -102,3 +102,34 @@ models:
           arguments:
             cluster_ids: REPEAT_PRESCRIPTION
             source: ECL_CACHE
+
+unit_tests:
+- name: polypharmacy_history_unlinked_current_issue_excludes_future
+  model: int_polypharmacy_history
+  given:
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      select 'SYN_REPEAT'::varchar code,'REPEAT_PRESCRIPTION'::varchar cluster_id
+  - input: ref('stg_olids_medication_statement')
+    format: sql
+    rows: |-
+      select 'SYN_STATEMENT'::varchar id,'SYN_REPEAT'::varchar authorisation_type_code
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select -18314::number person_id,'SYN_UNMAPPED'::varchar patient_id,'SYN_STATEMENT'::varchar medication_statement_id,
+       code::varchar mapped_concept_code,dateadd(day,days,current_date())::date clinical_effective_date,28::number duration_days
+       from (values ('SYN_PRODUCT_A',-10),('SYN_PRODUCT_B',5)) v(code,days)
+  - input: ref('int_polypharmacy_medications_list')
+    format: sql
+    rows: |-
+      select column1::varchar snomed_code from values ('SYN_PRODUCT_A'),('SYN_PRODUCT_B')
+  expect:
+    format: sql
+    rows: |-
+      select -18314::number person_id,1::number medication_count,dateadd(day,-10,current_date())::date valid_from,dateadd(day,18,current_date())::date valid_to,true::boolean is_current
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::number as person_id, null::number as medication_count, null::date as valid_from, null::date as valid_to, null::boolean as is_current where false

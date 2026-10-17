@@ -82,3 +82,26 @@ models:
           - accepted_values:
               arguments:
                 values: ['1-4', '5-9', '10-14', '15+']
+
+unit_tests:
+- name: polypharmacy_reporting_preserves_person_population
+  model: fct_person_polypharmacy_current
+  given:
+  - input: ref('dim_person')
+    format: sql
+    rows: |-
+      select -18315::number person_id
+  - input: ref('int_polypharmacy_current')
+    format: sql
+    rows: |-
+      select column1::number person_id,5::number medication_count,array_construct('SYN_BNF') medication_bnf_list,
+       array_construct('Synthetic medicine') medication_name_list,current_date()::date polypharmacy_status_date,
+       true::boolean is_polypharmacy_5plus,false::boolean is_polypharmacy_10plus from values (-18315),(-18316)
+  expect:
+    format: sql
+    rows: |-
+      select -18315::number person_id,5::number medication_count
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::number as person_id, null::number as medication_count where false
