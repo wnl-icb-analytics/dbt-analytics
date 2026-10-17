@@ -182,6 +182,7 @@ with
             and hb.clinical_effective_date <= ac.end_date
             and hb.inferred_value is not null
             and not hb.is_negative
+            and not hb.is_out_of_range
             and not hb.is_extreme_outlier
         qualify row_number() over (
             partition by ac.person_id, ac.end_date
