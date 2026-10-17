@@ -37,8 +37,13 @@ gp_observations as (
         il.area_code,
         il.olids_id,
         o.id as observation_id,
-        -- Shared observation date rule (undated rows are filtered out below).
-        {{ observation_clinical_date('o') }} as clinical_effective_date,
+        -- Fall back to date_recorded when clinical_effective_date is in the
+        -- future relative to when the record was written (matches the data
+        -- quality fix applied by the get_observations macro).
+        case
+            when o.clinical_effective_date > o.date_recorded then o.date_recorded
+            else o.clinical_effective_date
+        end as clinical_effective_date,
         o.mapped_concept_code,
         o.mapped_concept_display,
         o.result_value,
