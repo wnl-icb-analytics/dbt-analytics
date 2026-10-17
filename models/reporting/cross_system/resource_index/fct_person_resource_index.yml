@@ -15,6 +15,10 @@ models:
       Also carries the UKHFD Core need basis. weighted_months_12m apportions
       the practice's Core Services weighted/registered ratio to its patients.
       The health-inequalities weight is excluded.
+      Missing residence geography for deceased patients uses the latest PDS WNL
+      residence, including ended records. Living patients and existing residence
+      values retain the demographics rules. Residence is not reconstructed for
+      the window or death date; unknown residence remains null.
     config:
       meta:
         owner:
@@ -65,13 +69,37 @@ models:
         data_tests:
           - not_null
       - name: residence_imd_quintile
-        description: IMD 2025 quintile of the residence LSOA (1 = most deprived, from decile).
+        description: >
+          IMD 2025 quintile of the attributed residence LSOA (1 = most deprived,
+          from decile). Uses last-known PDS WNL residence for deceased patients
+          with missing geography. Null when no IMD mapping is available.
         data_tests:
           - accepted_values:
               arguments:
                 values: [1, 2, 3, 4, 5]
               config:
                 where: residence_imd_quintile is not null
+      - name: residence_imd_decile
+        description: >
+          IMD 2025 decile of the attributed residence LSOA (1 = most deprived).
+          Uses last-known PDS WNL residence for deceased patients with missing
+          geography. Null when no IMD mapping is available.
+      - name: residence_borough
+        description: >
+          Residence local authority from the shared geography lookup. Uses
+          last-known PDS WNL residence for deceased patients with missing
+          geography. Null when residence cannot be resolved.
+      - name: residence_ward_2025_name
+        description: >
+          Residence ward name on 2025 boundaries. Uses last-known PDS WNL
+          residence for deceased patients with missing geography. Null when
+          residence cannot be resolved.
+      - name: residence_lsoa_2021_code
+        description: >
+          Attributed residence LSOA 2021 code. Existing demographics residence,
+          or the latest PDS WNL residence for deceased patients when that is
+          missing. Includes ended PDS residence records; does not establish
+          residence at the reporting window or death date. Null when unresolved.
       - name: practice_weighted_ratio
         description: Practice UKHFD Core Services weighted/registered ratio; WNL exposure-weighted mean when unavailable.
         data_tests:
@@ -86,3 +114,69 @@ models:
         description: practice_weighted_ratio x months_registered. sum()/12 = Core need-weighted person-years for any cut.
         data_tests:
           - not_null
+
+unit_tests:
+  - name: resource_index_restores_only_missing_deceased_wnl_residence
+    model: fct_person_resource_index
+    given:
+      - input: ref('int_person_cost_index_actual_monthly')
+        rows:
+          - {sk_patient_id: -1, activity_month: '2026-09-01', actual_cost: 120, slam_cost: 120, epd_cost: 0, mhsds_cost: 0, csds_cost: 0}
+          - {sk_patient_id: -2, activity_month: '2026-09-01', actual_cost: 120, slam_cost: 120, epd_cost: 0, mhsds_cost: 0, csds_cost: 0}
+          - {sk_patient_id: -3, activity_month: '2026-09-01', actual_cost: 120, slam_cost: 120, epd_cost: 0, mhsds_cost: 0, csds_cost: 0}
+          - {sk_patient_id: -4, activity_month: '2026-09-01', actual_cost: 120, slam_cost: 120, epd_cost: 0, mhsds_cost: 0, csds_cost: 0}
+          - {sk_patient_id: -5, activity_month: '2026-09-01', actual_cost: 120, slam_cost: 120, epd_cost: 0, mhsds_cost: 0, csds_cost: 0}
+          - {sk_patient_id: -6, activity_month: '2026-09-01', actual_cost: 120, slam_cost: 120, epd_cost: 0, mhsds_cost: 0, csds_cost: 0}
+          - {sk_patient_id: -7, activity_month: '2026-09-01', actual_cost: 120, slam_cost: 120, epd_cost: 0, mhsds_cost: 0, csds_cost: 0}
+      - input: ref('int_person_resource_index_exposure_monthly')
+        rows:
+          - {sk_patient_id: -1, activity_month: '2026-08-01', practice_code: SYNTHETIC_GP, date_of_death: '2026-08-15', died_in_month: true}
+          - {sk_patient_id: -2, activity_month: '2026-08-01', practice_code: SYNTHETIC_GP, date_of_death: null, died_in_month: false}
+          - {sk_patient_id: -3, activity_month: '2026-08-01', practice_code: SYNTHETIC_GP, date_of_death: '2026-08-15', died_in_month: true}
+          - {sk_patient_id: -4, activity_month: '2026-08-01', practice_code: SYNTHETIC_GP, date_of_death: '2026-08-15', died_in_month: true}
+          - {sk_patient_id: -5, activity_month: '2026-08-01', practice_code: SYNTHETIC_GP, date_of_death: '2026-08-15', died_in_month: true}
+          - {sk_patient_id: -6, activity_month: '2026-08-01', practice_code: SYNTHETIC_GP, date_of_death: null, died_in_month: false}
+          - {sk_patient_id: -7, activity_month: '2026-08-01', practice_code: SYNTHETIC_GP, date_of_death: '2026-08-15', died_in_month: true}
+      - input: ref('dim_person_demographics_basic')
+        rows:
+          - {sk_patient_id: -1, gender: Female, date_of_birth: '1980-01-01'}
+          - {sk_patient_id: -2, gender: Female, date_of_birth: '1980-01-01'}
+          - {sk_patient_id: -3, gender: Female, date_of_birth: '1980-01-01', residence_lsoa_2021_code: SYNTHETIC_OUTSIDE, residence_borough: Synthetic outside borough, residence_ward_2025_name: Synthetic outside ward, residence_imd_decile: 8}
+          - {sk_patient_id: -4, gender: Female, date_of_birth: '1980-01-01'}
+          - {sk_patient_id: -5, gender: Female, date_of_birth: '1980-01-01', residence_lsoa_2021_code: SYNTHETIC_CURRENT, residence_borough: Synthetic current borough, residence_ward_2025_name: Synthetic current ward, residence_imd_decile: 6}
+          - {sk_patient_id: -6, gender: Female, date_of_birth: '1980-01-01', residence_lsoa_2021_code: SYNTHETIC_CURRENT, residence_borough: Synthetic current borough, residence_ward_2025_name: Synthetic current ward, residence_imd_decile: 6}
+          - {sk_patient_id: -7, gender: Female, date_of_birth: '1980-01-01'}
+      - input: ref('int_person_pmi_combined')
+        rows:
+          - {sk_patient_id: -1, last_known_wnl_lsoa21_code: SYNTHETIC_NWL}
+          - {sk_patient_id: -2, last_known_wnl_lsoa21_code: SYNTHETIC_NWL}
+          - {sk_patient_id: -3, last_known_wnl_lsoa21_code: null}
+          - {sk_patient_id: -4, last_known_wnl_lsoa21_code: null}
+          - {sk_patient_id: -5, last_known_wnl_lsoa21_code: SYNTHETIC_NWL}
+          - {sk_patient_id: -6, last_known_wnl_lsoa21_code: SYNTHETIC_NWL}
+          - {sk_patient_id: -7, last_known_wnl_lsoa21_code: SYNTHETIC_NCL}
+      - input: ref('stg_reference_lookup_ncl_lsoa_2021_ward_2025_local_authority_2025')
+        rows:
+          - {lsoa_2021_code: SYNTHETIC_NWL, local_authority_2025_name: Synthetic NWL borough, ward_2025_name: Synthetic NWL ward, resident_flag: NWL}
+          - {lsoa_2021_code: SYNTHETIC_NCL, local_authority_2025_name: Synthetic NCL borough, ward_2025_name: Synthetic NCL ward, resident_flag: NCL}
+      - input: ref('stg_reference_lookup_ncl_imd_2025')
+        rows:
+          - {lsoa_code_2021: SYNTHETIC_NWL, imd25_decile: 3}
+      - input: ref('practice_weighted_population')
+        rows:
+          - {practice_code: SYNTHETIC_GP, financial_year: '2026/27', financial_year_start: '2026-04-01', weighted_to_registered_ratio: 2}
+      - input: ref('int_organisation_borough_mapping')
+        rows:
+          - {practice_code: SYNTHETIC_GP, borough_registered: Synthetic registered borough, sub_icb_code: '93C', sub_icb_name: Synthetic sub-ICB}
+      - input: ref('stg_reference_wnl_gp_practice_neighbourhood')
+        rows:
+          - {practice_code: SYNTHETIC_GP, neighbourhood_name: Synthetic neighbourhood}
+    expect:
+      rows:
+        - {sk_patient_id: -1, residence_lsoa_2021_code: SYNTHETIC_NWL, residence_borough: Synthetic NWL borough, residence_ward_2025_name: Synthetic NWL ward, residence_imd_decile: 3, residence_imd_quintile: 2, months_registered: 1, actual_cost_12m: 120, expected_cost_12m: 120, weighted_months_12m: 2, registered_borough: Synthetic registered borough}
+        - {sk_patient_id: -2, residence_lsoa_2021_code: null, residence_borough: null, residence_ward_2025_name: null, residence_imd_decile: null, residence_imd_quintile: null, months_registered: 1, actual_cost_12m: 120, expected_cost_12m: 120, weighted_months_12m: 2, registered_borough: Synthetic registered borough}
+        - {sk_patient_id: -3, residence_lsoa_2021_code: SYNTHETIC_OUTSIDE, residence_borough: Synthetic outside borough, residence_ward_2025_name: Synthetic outside ward, residence_imd_decile: 8, residence_imd_quintile: 4, months_registered: 1, actual_cost_12m: 120, expected_cost_12m: 120, weighted_months_12m: 2, registered_borough: Synthetic registered borough}
+        - {sk_patient_id: -4, residence_lsoa_2021_code: null, residence_borough: null, residence_ward_2025_name: null, residence_imd_decile: null, residence_imd_quintile: null, months_registered: 1, actual_cost_12m: 120, expected_cost_12m: 120, weighted_months_12m: 2, registered_borough: Synthetic registered borough}
+        - {sk_patient_id: -5, residence_lsoa_2021_code: SYNTHETIC_CURRENT, residence_borough: Synthetic current borough, residence_ward_2025_name: Synthetic current ward, residence_imd_decile: 6, residence_imd_quintile: 3, months_registered: 1, actual_cost_12m: 120, expected_cost_12m: 120, weighted_months_12m: 2, registered_borough: Synthetic registered borough}
+        - {sk_patient_id: -6, residence_lsoa_2021_code: SYNTHETIC_CURRENT, residence_borough: Synthetic current borough, residence_ward_2025_name: Synthetic current ward, residence_imd_decile: 6, residence_imd_quintile: 3, months_registered: 1, actual_cost_12m: 120, expected_cost_12m: 120, weighted_months_12m: 2, registered_borough: Synthetic registered borough}
+        - {sk_patient_id: -7, residence_lsoa_2021_code: SYNTHETIC_NCL, residence_borough: Synthetic NCL borough, residence_ward_2025_name: Synthetic NCL ward, residence_imd_decile: null, residence_imd_quintile: null, months_registered: 1, actual_cost_12m: 120, expected_cost_12m: 120, weighted_months_12m: 2, registered_borough: Synthetic registered borough}

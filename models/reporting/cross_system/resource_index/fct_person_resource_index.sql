@@ -34,6 +34,8 @@ Registered geography attributes via the *window* practice (last registered
 month), so leavers and decedents attribute to where they were registered.
 Age at window end (at death for decedents); missing age/gender carry an
 'Unknown' band matching the curve so their spend still standardises.
+Missing residence for deceased patients uses the latest PDS WNL residence,
+including ended records. This is not a reconstruction of residence in the window.
 */
 
 {{ config(materialized = 'table') }}
@@ -83,10 +85,10 @@ population as (
         e.practice_code,
         coalesce(p.gender, 'Unknown') as gender,
         p.ethnicity,
-        p.residence_imd_decile,
-        p.residence_borough,
-        p.residence_ward_2025_name,
-        p.residence_lsoa_2021_code,
+        coalesce(p.residence_imd_decile, last_imd.imd25_decile) as residence_imd_decile,
+        coalesce(p.residence_borough, last_geo.local_authority_2025_name) as residence_borough,
+        coalesce(p.residence_ward_2025_name, last_geo.ward_2025_name) as residence_ward_2025_name,
+        coalesce(p.residence_lsoa_2021_code, last_geo.lsoa_2021_code) as residence_lsoa_2021_code,
         {{ calculate_age_attributes(
             'p.date_of_birth',
             'e.window_end_month',
@@ -96,6 +98,15 @@ population as (
     from population_base as e
     left join {{ ref('dim_person_demographics_basic') }} as p
         on e.sk_patient_id = p.sk_patient_id
+    -- Restore geography only for deceased patients whose existing residence is missing.
+    left join {{ ref('int_person_pmi_combined') }} as pmi
+        on e.sk_patient_id = pmi.sk_patient_id
+        and e.date_of_death is not null
+        and p.residence_lsoa_2021_code is null
+    left join {{ ref('stg_reference_lookup_ncl_lsoa_2021_ward_2025_local_authority_2025') }} as last_geo
+        on pmi.last_known_wnl_lsoa21_code = last_geo.lsoa_2021_code
+    left join {{ ref('stg_reference_lookup_ncl_imd_2025') }} as last_imd
+        on last_geo.lsoa_2021_code = last_imd.lsoa_code_2021
 ),
 
 cost as (

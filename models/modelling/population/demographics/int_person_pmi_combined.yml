@@ -2,8 +2,10 @@
 models:
   - name: int_person_pmi_combined
     description: >
-      Combines available int_person_pmi_dataset tables into single combined table.
-      Each field has its own criteria for prioritising datasets.
+      Person master index with one row per patient across the PDS, SUS and
+      national ethnicity feeds. Each field has its own source priority.
+      Current WNL residence and registration retain the PDS population rules.
+      A separate last-known WNL residence supports resource index period reporting.
     config:
       meta:
         owner:
@@ -73,10 +75,23 @@ models:
         description: Dataset used for field
 
       - name: lsoa21_code
-        description: Lower Super Output Area code (2021 Census)
+        description: >
+          Lower layer Super Output Area code (2021 Census), selected from PDS or
+          SUS. WNL codes are retained only for the current PDS resident population;
+          death or an ended residence can therefore leave this field null.
 
       - name: lsoa_event_date
         description: Date of record in source dataset
+
+      - name: last_known_wnl_lsoa21_code
+        description: >
+          LSOA 2021 code from the latest PDS residence when the shared geography
+          lookup identifies it as NCL or NWL. Retained regardless of death or
+          residence end date. Null when PDS residence is missing, unmapped or
+          outside WNL; does not fall back to SUS or an older WNL address.
+          Used only by resource index period reporting to restore missing
+          geography for deceased patients. This is the latest recorded residence,
+          not a residence reconstructed at the reporting window or death date.
 
       - name: practice_source
         description: Dataset used for field
@@ -86,3 +101,47 @@ models:
 
       - name: registered_event_date
         description: Date of record in source dataset
+
+unit_tests:
+  - name: pmi_last_known_wnl_residence_preserves_current_fields
+    model: int_person_pmi_combined
+    given:
+      - input: ref('int_person_pmi_dataset_pds')
+        rows:
+          - {dataset_source: pds, sk_patient_id: -1, lsoa21_code: SYNTHETIC_NCL, lsoa_event_date: '2026-09-01', date_of_death: null}
+          - {dataset_source: pds, sk_patient_id: -2, lsoa21_code: SYNTHETIC_NWL, lsoa_event_date: '2026-08-01', date_of_death: '2026-08-01'}
+          - {dataset_source: pds, sk_patient_id: -3, lsoa21_code: SYNTHETIC_NCL, lsoa_event_date: '2026-07-01', date_of_death: null}
+          - {dataset_source: pds, sk_patient_id: -4, lsoa21_code: SYNTHETIC_OUTSIDE, lsoa_event_date: '2026-09-01', date_of_death: '2026-08-01'}
+          - {dataset_source: pds, sk_patient_id: -5, lsoa21_code: null, lsoa_event_date: '2026-09-01', date_of_death: '2026-08-01'}
+          - {dataset_source: pds, sk_patient_id: -6, lsoa21_code: SYNTHETIC_UNMAPPED, lsoa_event_date: '2026-09-01', date_of_death: '2026-08-01'}
+      - input: ref('int_person_pmi_dataset_sus')
+        rows:
+          - {dataset_source: sus, sk_patient_id: -4, lsoa21_code: SYNTHETIC_NCL, lsoa_event_date: '2026-07-01'}
+          - {dataset_source: sus, sk_patient_id: -5, lsoa21_code: SYNTHETIC_NCL, lsoa_event_date: '2026-07-01'}
+          - {dataset_source: sus, sk_patient_id: -7, lsoa21_code: SYNTHETIC_NCL, lsoa_event_date: '2026-07-01'}
+      - input: ref('int_person_pmi_dataset_ethnicity_national_data_sets')
+        rows: []
+      - input: ref('int_person_pds_population_flags')
+        rows:
+          - {sk_patient_id: -1, flag_current_resident: true, flag_current_registered: true}
+          - {sk_patient_id: -2, flag_current_resident: false, flag_current_registered: false}
+          - {sk_patient_id: -3, flag_current_resident: false, flag_current_registered: false}
+          - {sk_patient_id: -4, flag_current_resident: false, flag_current_registered: false}
+          - {sk_patient_id: -5, flag_current_resident: false, flag_current_registered: false}
+          - {sk_patient_id: -6, flag_current_resident: false, flag_current_registered: false}
+      - input: ref('stg_reference_lookup_ncl_lsoa_2021_ward_2025_local_authority_2025')
+        rows:
+          - {lsoa_2021_code: SYNTHETIC_NCL, resident_flag: NCL}
+          - {lsoa_2021_code: SYNTHETIC_NWL, resident_flag: NWL}
+          - {lsoa_2021_code: SYNTHETIC_OUTSIDE, resident_flag: OOA}
+      - input: ref('dim_practice')
+        rows: []
+    expect:
+      rows:
+        - {sk_patient_id: -1, lsoa21_code: SYNTHETIC_NCL, last_known_wnl_lsoa21_code: SYNTHETIC_NCL, flag_current_resident: true, flag_current_registered: true}
+        - {sk_patient_id: -2, lsoa21_code: null, last_known_wnl_lsoa21_code: SYNTHETIC_NWL, flag_current_resident: false, flag_current_registered: false}
+        - {sk_patient_id: -3, lsoa21_code: null, last_known_wnl_lsoa21_code: SYNTHETIC_NCL, flag_current_resident: false, flag_current_registered: false}
+        - {sk_patient_id: -4, lsoa21_code: SYNTHETIC_OUTSIDE, last_known_wnl_lsoa21_code: null, flag_current_resident: false, flag_current_registered: false}
+        - {sk_patient_id: -5, lsoa21_code: null, last_known_wnl_lsoa21_code: null, flag_current_resident: false, flag_current_registered: false}
+        - {sk_patient_id: -6, lsoa21_code: SYNTHETIC_UNMAPPED, last_known_wnl_lsoa21_code: null, flag_current_resident: false, flag_current_registered: false}
+        - {sk_patient_id: -7, lsoa21_code: null, last_known_wnl_lsoa21_code: null, flag_current_resident: null, flag_current_registered: null}
