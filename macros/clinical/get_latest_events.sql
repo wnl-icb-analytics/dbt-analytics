@@ -15,12 +15,19 @@
     {%- for item in order_items -%}
         {%- set term = item | string | trim -%}
         {%- set upper_term = term | upper -%}
-        {%- if upper_term.endswith(' ASC') or upper_term.endswith(' DESC')
-              or upper_term.endswith(' NULLS FIRST') or upper_term.endswith(' NULLS LAST') -%}
-            {%- do order_terms.append(term) -%}
-        {%- else -%}
-            {%- do order_terms.append(term ~ ' ' ~ direction) -%}
+        {%- set nulls_clause = '' -%}
+        {%- if upper_term.endswith(' NULLS FIRST') -%}
+            {%- set nulls_clause = term[-12:] -%}
+            {%- set term = term[:-12] | trim -%}
+        {%- elif upper_term.endswith(' NULLS LAST') -%}
+            {%- set nulls_clause = term[-11:] -%}
+            {%- set term = term[:-11] | trim -%}
         {%- endif -%}
+        {%- set upper_term = term | upper -%}
+        {%- if not (upper_term.endswith(' ASC') or upper_term.endswith(' DESC')) -%}
+            {%- set term = term ~ ' ' ~ direction -%}
+        {%- endif -%}
+        {%- do order_terms.append(term ~ nulls_clause) -%}
     {%- endfor -%}
 
 SELECT *
