@@ -88,7 +88,14 @@ unit_tests:
               ('SYN_2', -9402, 5.5, 'AUDITC_COD'),
               ('SYN_3', -9403, 13, 'AUDITC_COD'),
               ('SYN_4', -9404, 40, 'AUDIT_COD'),
-              ('SYN_5', -9405, 5.001, 'AUDITC_COD')
+              ('SYN_5', -9405, 5.001, 'AUDITC_COD'),
+              ('SYN_C_ZERO', -18240, 0, 'AUDITC_COD'),
+              ('SYN_C_MAX', -18241, 12, 'AUDITC_COD'),
+              ('SYN_C_NEGATIVE', -18242, -1, 'AUDITC_COD'),
+              ('SYN_FULL_ZERO', -18243, 0, 'AUDIT_COD'),
+              ('SYN_FULL_OVER', -18244, 41, 'AUDIT_COD'),
+              -- NULL totals are excluded before validation in the current model.
+              ('SYN_FULL_NULL', -18245, NULL, 'AUDIT_COD')
     given:
       - input: ref('dim_person_demographics')
         format: sql
@@ -101,3 +108,8 @@ unit_tests:
         - {person_id: -9403, is_valid_score: false, risk_category: Invalid, simplified_risk_level: null, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
         - {person_id: -9404, is_valid_score: true, risk_category: Possible Dependence, auditc_positive_screen: false, brief_intervention_indicated: true, requires_specialist_intervention: true}
         - {person_id: -9405, is_valid_score: false, risk_category: Invalid, simplified_risk_level: null, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
+        - {person_id: -18240, is_valid_score: true, risk_category: Non-Drinker, simplified_risk_level: Non-Drinker, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
+        - {person_id: -18241, is_valid_score: true, risk_category: Possible Dependence, simplified_risk_level: Higher Risk, auditc_positive_screen: true, brief_intervention_indicated: true, requires_specialist_intervention: true}
+        - {person_id: -18242, is_valid_score: false, risk_category: Invalid, simplified_risk_level: null, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
+        - {person_id: -18243, is_valid_score: true, risk_category: Non-Drinker, simplified_risk_level: Non-Drinker, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}
+        - {person_id: -18244, is_valid_score: false, risk_category: Invalid, simplified_risk_level: null, auditc_positive_screen: false, brief_intervention_indicated: false, requires_specialist_intervention: false}

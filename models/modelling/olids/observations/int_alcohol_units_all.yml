@@ -51,7 +51,12 @@ unit_tests:
               ('SYN_k1', -9511, '266917007', NULL, NULL),
               ('SYN_k2', -9511, '160573003', 10, 'U/week'),
               ('SYN_l1', -9512, '160573003', 10, 'U/week'),
-              ('SYN_l2', -9512, '1082641000000106', 12, 'U/week')
+              ('SYN_l2', -9512, '1082641000000106', 12, 'U/week'),
+              ('SYN_MALE_HIGH', -18221, '1082641000000106', 50.5, 'U/week'),
+              ('SYN_Z', -18222, '1082641000000106', 20, 'U/week'),
+              ('SYN_A', -18222, '1082641000000106', 10, 'U/week'),
+              ('SYN_Z', -18223, '160582009', NULL, NULL),
+              ('SYN_A', -18223, '783261004', NULL, NULL)
     given:
       - input: ref('stg_olids_concept')
         format: sql
@@ -64,7 +69,8 @@ unit_tests:
           FROM VALUES (-9501, 'Male'), (-9502, 'Male'), (-9503, 'Male'),
               (-9504, 'Female'), (-9505, 'Female'), (-9506, 'Male'),
               (-9507, 'Male'), (-9508, 'Male'), (-9509, 'Male'), (-9510, 'Male'),
-              (-9511, 'Male'), (-9512, 'Male')
+              (-9511, 'Male'), (-9512, 'Male'),
+              (-18221, 'Male'), (-18222, 'Male'), (-18223, 'Male')
     expect:
       rows:
         - {person_id: -9501, concept_code: '1082641000000106', result_value: 10, alcohol_risk_category: Low Risk, result_unit_display: U/week}
@@ -79,3 +85,6 @@ unit_tests:
         - {person_id: -9510, concept_code: '1082641000000106', result_value: 10, alcohol_risk_category: Low Risk, result_unit_display: U/week}
         - {person_id: -9511, concept_code: '160573003', result_value: 10, alcohol_risk_category: Low Risk, result_unit_display: U/week}
         - {person_id: -9512, concept_code: '160573003', result_value: 10, alcohol_risk_category: Low Risk, result_unit_display: U/week}
+        - {person_id: -18221, concept_code: '1082641000000106', result_value: 50.5, alcohol_risk_category: Higher Risk, result_unit_display: U/week}
+        - {person_id: -18222, concept_code: '1082641000000106', result_value: 20, alcohol_risk_category: Increasing Risk, result_unit_display: U/week}
+        - {person_id: -18223, concept_code: '160582009', result_value: null, alcohol_risk_category: Ex-Drinker, result_unit_display: null}
