@@ -23,7 +23,7 @@ bmi_recording AS (
         SELECT person_id, clinical_effective_date
         FROM {{ ref('int_bmi_qof_all') }}
         WHERE source_cluster_id = 'BMIVAL_COD'
-            AND is_valid_bmi
+            AND is_plausible_bmi
             AND clinical_effective_date <= CURRENT_DATE()
         UNION ALL
         SELECT person_id, clinical_effective_date

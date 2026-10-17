@@ -2,7 +2,7 @@ models:
   - name: fct_person_diabetes_8_care_processes
     description: 'Diabetes 8 care processes achievement for QOF reporting.
 
-      One row per person on diabetes register with completion status for HbA1c, blood pressure, cholesterol, creatinine, ACR, foot check, BMI, and smoking status within 12 months. BMI recording counts a valid recorded BMI value (BMIVAL_COD) at any age, or an adult recorded or calculated BMI from int_bmi_latest.'
+      One row per person on diabetes register with completion status for HbA1c, blood pressure, cholesterol, creatinine, ACR, foot check, BMI, and smoking status within 12 months. BMI recording counts a recorded BMI value (BMIVAL_COD) within 10-150 at any age, or an adult recorded or calculated BMI from int_bmi_latest.'
 
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
@@ -78,3 +78,68 @@ models:
               sort_order: 2
         owner:
           name: EddieDavison92
+
+unit_tests:
+- name: diabetes_bmi_recording_plausibility_and_composition
+  model: fct_person_diabetes_8_care_processes
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::BOOLEAN AS bmi_completed_in_last_12m, NULL::TIMESTAMP_NTZ AS latest_bmi_date WHERE FALSE
+  given:
+  - input: ref('fct_person_diabetes_register')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id FROM VALUES (-18131), (-18132), (-18133), (-18134), (-18135)
+  - input: ref('int_bmi_qof_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::VARCHAR AS source_cluster_id,
+          DATEADD(day, column3, CURRENT_DATE())::TIMESTAMP_NTZ AS clinical_effective_date,
+          column4::BOOLEAN AS is_plausible_bmi, TRUE::BOOLEAN AS is_valid_bmi,
+          column5::FLOAT AS bmi_value, 17::NUMBER AS age_at_event
+      FROM VALUES (-18131, 'BMIVAL_COD', -30, TRUE, 24),
+          (-18132, 'BMIVAL_COD', -30, FALSE, 8),
+          (-18133, 'SYN_OTHER_CLUSTER', -30, TRUE, 24),
+          (-18134, 'BMIVAL_COD', 1, TRUE, 24)
+  - input: ref('int_bmi_latest')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id,
+          DATEADD(day, column2, CURRENT_DATE())::TIMESTAMP_NTZ AS clinical_effective_date,
+          'calculated'::VARCHAR AS bmi_source, 24::FLOAT AS bmi_value, TRUE::BOOLEAN AS is_valid_bmi
+      FROM VALUES (-18131, -60), (-18135, -30)
+  - input: ref('int_hba1c_latest')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value WHERE FALSE
+  - input: ref('int_blood_pressure_latest')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date WHERE FALSE
+  - input: ref('int_cholesterol_latest')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date WHERE FALSE
+  - input: ref('int_creatinine_latest')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date WHERE FALSE
+  - input: ref('int_urine_acr_latest')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date WHERE FALSE
+  - input: ref('int_foot_examination_latest')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date, NULL::BOOLEAN AS both_feet_checked, NULL::BOOLEAN AS left_foot_checked, NULL::BOOLEAN AS right_foot_checked, NULL::BOOLEAN AS right_foot_absent, NULL::BOOLEAN AS right_foot_amputated, NULL::BOOLEAN AS left_foot_absent, NULL::BOOLEAN AS left_foot_amputated, NULL::BOOLEAN AS is_unsuitable, NULL::BOOLEAN AS is_declined WHERE FALSE
+  - input: ref('int_smoking_status_latest')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER AS person_id, NULL::DATE AS clinical_effective_date WHERE FALSE
+  expect:
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER AS person_id, column2::BOOLEAN AS bmi_completed_in_last_12m,
+          DATEADD(day, column3, CURRENT_DATE())::TIMESTAMP_NTZ AS latest_bmi_date
+      FROM VALUES (-18131, TRUE, -30), (-18132, FALSE, NULL),
+          (-18133, FALSE, NULL), (-18134, FALSE, NULL), (-18135, TRUE, -30)

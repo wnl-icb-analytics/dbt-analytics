@@ -6,8 +6,9 @@ models:
       than the build date. Includes IFCCHBAM_COD and DCCTHBA1C_COD tests without
       numeric results. Missing or non-numeric results have null standardised values
       and false validity. IFCC values use mmol/mol and DCCT values use percent. Values
-      below 20 are read as percent, except 13 to 19 recorded as mmol/mol, which are
-      invalid: below the National Diabetes Audit IFCC range and an extreme percent value.
+      below 20 are read as percent, except unrounded values from 13 to below 20
+      recorded as mmol/mol. These are invalid: below the National Diabetes Audit
+      IFCC range and an extreme percent value.
       Consumers assessing control must check validity; test-presence measures may
       use every retained observation. Invalid results have category Invalid and null
       diabetes-range and QOF target flags. The original unit is retained for review.
@@ -53,7 +54,10 @@ models:
               arguments:
                 values: ['IFCC', 'DCCT', 'UNKNOWN']
       - name: is_valid_hba1c
-        description: Whether the result is numeric and within 20-200 mmol/mol for IFCC or 3-20 percent for DCCT; false for missing or non-numeric results
+        description: >
+          Whether the numeric result is within 20-200 mmol/mol for IFCC or 3-20 percent
+          for DCCT. Recorded mmol/mol values from 13 to below 20 are invalid before
+          rounding. False for missing or non-numeric results.
         data_tests:
           - not_null
           - accepted_values:
@@ -105,7 +109,8 @@ unit_tests:
         SELECT column1::VARCHAR id, column2::NUMBER person_id,
         column3::TIMESTAMP_NTZ clinical_effective_date, column3::TIMESTAMP_NTZ date_recorded,
         column4::VARCHAR result_value, column5::VARCHAR result_unit_code,
-        column5::VARCHAR result_unit_display, 'SYN_CODE'::VARCHAR mapped_concept_code,
+        CASE WHEN column1 = 'SYN_HPCT' THEN 'SYN_original_percent_words'
+            ELSE column5::VARCHAR END result_unit_display, 'SYN_CODE'::VARCHAR mapped_concept_code,
         'Synthetic observation'::VARCHAR mapped_concept_display, column6::VARCHAR cluster_id
         FROM VALUES ('SYN_1', -9300, '2026-01-01', 15, 'mmol/mol', 'IFCCHBAM_COD'),
         ('SYN_2', -9301, '2026-01-01', 22, 'mmol/mol', 'DCCTHBA1C_COD'),
@@ -115,7 +120,15 @@ unit_tests:
         ('SYN_6', -9305, '2026-01-01', 0.5, '%', 'DCCTHBA1C_COD'),
         ('SYN_7', -9306, '2026-01-01', 250, 'mmol/mol', 'IFCCHBAM_COD'),
         ('SYN_8', -9307, '2026-01-01', NULL, NULL, 'IFCCHBAM_COD'),
-        ('SYN_9', -9308, '2026-01-01', 22, '%{Hemoglobin}', 'IFCCHBAM_COD')
+        ('SYN_9', -9308, '2026-01-01', 22, '%{Hemoglobin}', 'IFCCHBAM_COD'),
+        ('SYN_H13', -18120, '2026-01-01', 13, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_H19', -18121, '2026-01-01', 19.99, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_HLOW', -18122, '2026-01-01', 12.99, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_HPCT', -18123, '2026-01-01', 15, '%', 'DCCTHBA1C_COD'),
+        ('SYN_H20', -18124, '2026-01-01', 20, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_H19999', -18127, '2026-01-01', 19.999, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_H25', -18128, '2026-01-01', 25, 'mmol/mol', 'IFCCHBAM_COD'),
+        ('SYN_HP1999', -18129, '2026-01-01', 19.99, '%', 'DCCTHBA1C_COD')
   given: []
   expect:
     rows:
@@ -126,6 +139,8 @@ unit_tests:
       meets_qof_target: null
       is_unit_conflict: false
       original_result_unit_code: mmol/mol
+      indicates_diabetes: null
+      original_result_unit_display: mmol/mol
     - id: SYN_2
       measurement_type: IFCC
       is_valid_hba1c: true
@@ -133,6 +148,8 @@ unit_tests:
       meets_qof_target: true
       is_unit_conflict: true
       original_result_unit_code: mmol/mol
+      indicates_diabetes: false
+      original_result_unit_display: mmol/mol
     - id: SYN_3
       measurement_type: DCCT
       is_valid_hba1c: false
@@ -140,6 +157,8 @@ unit_tests:
       meets_qof_target: null
       is_unit_conflict: true
       original_result_unit_code: '%'
+      indicates_diabetes: null
+      original_result_unit_display: '%'
     - id: SYN_4
       measurement_type: IFCC
       is_valid_hba1c: true
@@ -147,6 +166,8 @@ unit_tests:
       meets_qof_target: true
       is_unit_conflict: false
       original_result_unit_code: null
+      indicates_diabetes: false
+      original_result_unit_display: null
     - id: SYN_5
       measurement_type: IFCC
       is_valid_hba1c: true
@@ -154,6 +175,8 @@ unit_tests:
       meets_qof_target: true
       is_unit_conflict: false
       original_result_unit_code: mmol/mol
+      indicates_diabetes: true
+      original_result_unit_display: mmol/mol
     - id: SYN_6
       measurement_type: DCCT
       is_valid_hba1c: false
@@ -161,6 +184,8 @@ unit_tests:
       meets_qof_target: null
       is_unit_conflict: false
       original_result_unit_code: '%'
+      indicates_diabetes: null
+      original_result_unit_display: '%'
     - id: SYN_7
       measurement_type: IFCC
       is_valid_hba1c: false
@@ -168,6 +193,8 @@ unit_tests:
       meets_qof_target: null
       is_unit_conflict: false
       original_result_unit_code: mmol/mol
+      indicates_diabetes: null
+      original_result_unit_display: mmol/mol
     - id: SYN_8
       measurement_type: IFCC
       is_valid_hba1c: false
@@ -175,6 +202,8 @@ unit_tests:
       meets_qof_target: null
       is_unit_conflict: false
       original_result_unit_code: null
+      indicates_diabetes: null
+      original_result_unit_display: null
     - id: SYN_9
       measurement_type: DCCT
       is_valid_hba1c: false
@@ -182,3 +211,77 @@ unit_tests:
       meets_qof_target: null
       is_unit_conflict: true
       original_result_unit_code: '%{Hemoglobin}'
+      indicates_diabetes: null
+      original_result_unit_display: '%{Hemoglobin}'
+    - id: SYN_H13
+      measurement_type: IFCC
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      indicates_diabetes: null
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      original_result_unit_display: mmol/mol
+    - id: SYN_H19
+      measurement_type: IFCC
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      indicates_diabetes: null
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      original_result_unit_display: mmol/mol
+    - id: SYN_HLOW
+      measurement_type: DCCT
+      is_valid_hba1c: true
+      hba1c_category: Diabetes - Very High Risk
+      meets_qof_target: false
+      indicates_diabetes: true
+      is_unit_conflict: true
+      original_result_unit_code: mmol/mol
+      original_result_unit_display: mmol/mol
+    - id: SYN_HPCT
+      measurement_type: DCCT
+      is_valid_hba1c: true
+      hba1c_category: Diabetes - Very High Risk
+      meets_qof_target: false
+      indicates_diabetes: true
+      is_unit_conflict: false
+      original_result_unit_code: '%'
+      original_result_unit_display: SYN_original_percent_words
+    - id: SYN_H20
+      measurement_type: IFCC
+      is_valid_hba1c: true
+      hba1c_category: Normal
+      meets_qof_target: true
+      indicates_diabetes: false
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      original_result_unit_display: mmol/mol
+    - id: SYN_H19999
+      measurement_type: IFCC
+      is_valid_hba1c: false
+      hba1c_category: Invalid
+      meets_qof_target: null
+      indicates_diabetes: null
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      original_result_unit_display: mmol/mol
+    - id: SYN_H25
+      measurement_type: IFCC
+      is_valid_hba1c: true
+      hba1c_category: Normal
+      meets_qof_target: true
+      indicates_diabetes: false
+      is_unit_conflict: false
+      original_result_unit_code: mmol/mol
+      original_result_unit_display: mmol/mol
+    - id: SYN_HP1999
+      measurement_type: DCCT
+      is_valid_hba1c: true
+      hba1c_category: Diabetes - Very High Risk
+      meets_qof_target: false
+      indicates_diabetes: true
+      is_unit_conflict: false
+      original_result_unit_code: '%'
+      original_result_unit_display: '%'

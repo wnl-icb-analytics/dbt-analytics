@@ -36,8 +36,8 @@ WITH base_observations AS (
         -- so falls back to the recorded UCUM unit, then the concept cluster.
         CASE
             WHEN TRY_CAST(obs.result_value AS FLOAT) > 25 THEN 'IFCC'
-            -- 13-19 recorded as mmol/mol is below the NDA IFCC range (20-195) and an extreme
-            -- DCCT value, so it stays IFCC and fails validity instead of being read as percent.
+            -- Values from 13 to below 20 recorded as mmol/mol are below the NDA IFCC range
+            -- (20-195) and extreme on the DCCT scale, so they stay IFCC and fail validity.
             WHEN TRY_CAST(obs.result_value AS FLOAT) >= 13 AND obs.result_unit_code = 'mmol/mol' THEN 'IFCC'
             WHEN TRY_CAST(obs.result_value AS FLOAT) < 20 THEN 'DCCT'
             -- Ambiguous 20-25 range and value-free tests use unit, then cluster.
@@ -80,6 +80,10 @@ assessed AS (
     SELECT
         *,
         CASE
+            -- Keep sub-20 recorded mmol/mol results invalid before display rounding.
+            WHEN original_result_unit_code = 'mmol/mol'
+                AND TRY_CAST(original_result_value AS FLOAT) >= 13
+                AND TRY_CAST(original_result_value AS FLOAT) < 20 THEN FALSE
             WHEN measurement_type = 'IFCC' AND hba1c_original_value BETWEEN 20 AND 200 THEN TRUE
             WHEN measurement_type = 'DCCT' AND hba1c_original_value BETWEEN 3 AND 20 THEN TRUE
             ELSE FALSE
