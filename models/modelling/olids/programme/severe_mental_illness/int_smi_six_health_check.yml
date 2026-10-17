@@ -63,35 +63,39 @@ unit_tests:
     format: sql
   - input: ref('int_hba1c_latest')
     rows: |-
-      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS hba1c_display, NULL::TEXT AS hba1c_category WHERE FALSE
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_HbA1c'::TEXT AS hba1c_display, 'SYN_HbA1c_category'::TEXT AS hba1c_category
     format: sql
   - input: ref('int_blood_glucose_latest')
     rows: |-
       SELECT -9702::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=20)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN'::TEXT AS blood_glucose_display
+      UNION ALL
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_glucose'::TEXT AS blood_glucose_display
     format: sql
   - input: ref('int_blood_glucose_declined')
     rows: |-
       SELECT -9702::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=20)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
+      UNION ALL
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
     format: sql
   - input: ref('int_cholesterol_latest')
     rows: |-
-      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS cholesterol_value, NULL::TEXT AS cholesterol_category WHERE FALSE
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 5::FLOAT AS cholesterol_value, 'SYN_cholesterol_category'::TEXT AS cholesterol_category
     format: sql
   - input: ref('int_qrisk_latest')
     rows: |-
-      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS qrisk_score, NULL::TEXT AS cvd_risk_category WHERE FALSE
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 15::FLOAT AS qrisk_score, 'SYN_QRISK_category'::TEXT AS cvd_risk_category
     format: sql
   - input: ref('int_cholesterol_declined')
     rows: |-
-      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
     format: sql
   - input: ref('fct_person_bp_control')
     rows: |-
-      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS latest_bp_date, NULL::FLOAT AS latest_systolic_value, NULL::FLOAT AS latest_diastolic_value, NULL::BOOLEAN AS is_overall_bp_controlled WHERE FALSE
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS latest_bp_date, 120::FLOAT AS latest_systolic_value, 80::FLOAT AS latest_diastolic_value, NULL::TEXT AS is_overall_bp_controlled
     format: sql
   - input: ref('int_blood_pressure_declined')
     rows: |-
-      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
     format: sql
   - input: ref('fct_person_smoking_status')
     rows: |-
@@ -103,72 +107,108 @@ unit_tests:
     format: sql
   - input: ref('fct_person_alcohol_status')
     rows: |-
-      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS latest_audit_date, NULL::TEXT AS audit_risk_category WHERE FALSE
+      SELECT column1::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS latest_audit_date, column2::TEXT AS audit_risk_category FROM VALUES (-9701, 'Increasing Risk'), (-9702, 'Unclear')
     format: sql
   - input: ref('int_alcohol_units_latest')
     rows: |-
-      SELECT NULL::NUMBER(38,0) AS person_id, NULL::DATE AS clinical_effective_date, NULL::FLOAT AS result_value, NULL::TEXT AS result_unit_display, NULL::TEXT AS alcohol_risk_category WHERE FALSE
+      SELECT column1::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ::DATE AS clinical_effective_date, 5::FLOAT AS result_value, 'units/week'::TEXT AS result_unit_display, column2::TEXT AS alcohol_risk_category FROM VALUES (-9701, 'Higher Risk'), (-9702, 'Low Risk')
     format: sql
   - input: ref('int_alcohol_assessment_declined')
     rows: |-
-      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+      SELECT -9701::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date
     format: sql
   expect:
     rows:
     - person_id: -9701
       check_type: BMI
       check_status: Met
+      test_type: BMI
+      result_category: Healthy weight
     - person_id: -9701
       check_type: HBA1C
-      check_status: Not Met
+      check_status: Met
+      test_type: HbA1c
+      result_category: SYN_HbA1c_category
     - person_id: -9701
       check_type: Cholesterol
-      check_status: Not Met
+      check_status: Met
+      test_type: Cholesterol
+      result_category: SYN_cholesterol_category
     - person_id: -9701
       check_type: Blood Pressure
-      check_status: Not Met
+      check_status: Met
+      test_type: Blood Pressure
+      result_category: null
     - person_id: -9701
       check_type: Smoking
       check_status: Met
+      test_type: Smoking status
+      result_category: Current Smoker
     - person_id: -9701
       check_type: Alcohol
-      check_status: Not Met
+      check_status: Met
+      test_type: AUDIT
+      result_category: Increasing Risk
     - person_id: -9702
       check_type: BMI
       check_status: Declined
+      test_type: BMI
+      result_category: BMI Declined
     - person_id: -9702
       check_type: HBA1C
       check_status: Met
+      test_type: Blood Glucose
+      result_category: null
     - person_id: -9702
       check_type: Cholesterol
       check_status: Not Met
+      test_type: null
+      result_category: null
     - person_id: -9702
       check_type: Blood Pressure
       check_status: Not Met
+      test_type: null
+      result_category: null
     - person_id: -9702
       check_type: Smoking
       check_status: Not Met
+      test_type: null
+      result_category: null
     - person_id: -9702
       check_type: Alcohol
-      check_status: Not Met
+      check_status: Met
+      test_type: Units per week
+      result_category: Low Risk
     - person_id: -9703
       check_type: BMI
       check_status: Met
+      test_type: BMI
+      result_category: Healthy weight
     - person_id: -9703
       check_type: HBA1C
       check_status: Not Met
+      test_type: null
+      result_category: null
     - person_id: -9703
       check_type: Cholesterol
       check_status: Not Met
+      test_type: null
+      result_category: null
     - person_id: -9703
       check_type: Blood Pressure
       check_status: Not Met
+      test_type: null
+      result_category: null
     - person_id: -9703
       check_type: Smoking
       check_status: Not Met
+      test_type: null
+      result_category: null
     - person_id: -9703
       check_type: Alcohol
       check_status: Not Met
+      test_type: null
+      result_category: null
 - name: smi_six_health_check_exception_uses_cluster
   model: int_smi_six_health_check
   given:
