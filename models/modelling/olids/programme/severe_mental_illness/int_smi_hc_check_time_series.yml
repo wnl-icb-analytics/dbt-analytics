@@ -4,6 +4,8 @@
       Health check completion for the historical SMI population, one row per person
       and analysis month. HbA1c evidence requires a recorded result value, including
       implausible results; value-free HbA1c tests do not count in this historical series.
+      AUDIT evidence is assessed at each month end. Later assessments cannot replace
+      alcohol evidence for earlier months.
     config:
       meta:
         owner:
@@ -19,3 +21,73 @@
         description: Unique identifier for the person
         tests:
           - not_null
+
+unit_tests:
+  - name: smi_historical_audit_covers_each_eligible_month
+    model: int_smi_hc_check_time_series
+    given:
+      - input: ref('int_smi_population_historical')
+        format: sql
+        rows: |
+          -- First person: one AUDIT and two eligible month ends. Second: units before a future AUDIT.
+          SELECT column1::NUMBER AS person_id, column2::DATE AS analysis_month,
+              TRUE AS has_smi, 'SYN_fiscal_year'::TEXT AS fiscal_year_label,
+              NULL::TEXT AS practice_name, NULL::TEXT AS practice_code,
+              NULL::TEXT AS practice_borough, NULL::TEXT AS primary_care_network,
+              NULL::TEXT AS gender, NULL::TEXT AS age_band_nhs, NULL::NUMBER AS age_nhs_order,
+              NULL::TEXT AS ethnicity_category, NULL::NUMBER AS ethcat_order,
+              NULL::TEXT AS ethnicity_subcategory, NULL::NUMBER AS ethsubcat_order,
+              NULL::TEXT AS imd_quintile, NULL::NUMBER AS imdquintile_order
+          FROM VALUES (-9901, '2024-03-31'), (-9901, '2024-04-30'),
+              (-9902, '2024-02-29'), (-9902, '2024-03-31')
+      - input: ref('int_alcohol_audit_scores')
+        format: sql
+        rows: |
+          SELECT column1::NUMBER AS person_id, column2::TEXT AS id,
+              '2024-03-15'::TIMESTAMP_NTZ AS clinical_effective_date,
+              'Full AUDIT'::TEXT AS audit_type, 9::NUMBER AS audit_score,
+              NULL::TIMESTAMP_NTZ AS date_recorded, TRUE AS is_valid_score
+          FROM VALUES (-9901, 'SYN_assessment'), (-9902, 'SYN_future_assessment')
+      - input: ref('int_bmi_all')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+      - input: ref('int_hba1c_all')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS original_result_value WHERE FALSE
+      - input: ref('int_blood_glucose_all')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+      - input: ref('int_cholesterol_all')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+      - input: ref('int_qrisk_all')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+      - input: ref('int_blood_pressure_all')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+      - input: ref('int_smoking_status_all')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+      - input: ref('int_alcohol_misuse_disorders')
+        format: sql
+        rows: |
+          SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS concept_display WHERE FALSE
+      - input: ref('int_alcohol_units_all')
+        format: sql
+        rows: |
+          SELECT -9902::NUMBER AS person_id, '2024-02-15'::TIMESTAMP_NTZ AS clinical_effective_date,
+              5::FLOAT AS result_value, 'units/week'::TEXT AS result_unit_display
+    expect:
+      rows:
+        - {person_id: -9901, analysis_month: '2024-03-31', alc_check_12m: Met, met_ct: 1}
+        - {person_id: -9901, analysis_month: '2024-04-30', alc_check_12m: Met, met_ct: 1}
+        - {person_id: -9902, analysis_month: '2024-02-29', alc_check_12m: Met, met_ct: 1}
+        - {person_id: -9902, analysis_month: '2024-03-31', alc_check_12m: Met, met_ct: 1}
