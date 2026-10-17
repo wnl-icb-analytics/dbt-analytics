@@ -134,7 +134,7 @@ SELECT
         WHEN hba1c_ifcc < 42 THEN 'Normal'                -- < 6.0%
         WHEN hba1c_ifcc >= 42 AND hba1c_ifcc < 48 THEN 'Prediabetes' -- 42.0–47.9
         WHEN hba1c_ifcc >= 48 AND hba1c_ifcc < 54 THEN 'Diabetes - At NICE Target' -- 48.0–53.9
-        WHEN hba1c_ifcc >= 54 AND hba1c_ifcc <= 58 THEN 'Diabetes - Elevated (within QOF)' -- 54.0–58.0 (QOF DM021 inclusive)
+        WHEN hba1c_ifcc >= 54 AND hba1c_ifcc <= 58 THEN 'Diabetes - Elevated (within QOF)' -- 54.0–58.0 (QOF DM020 inclusive)
         WHEN hba1c_ifcc > 58 AND hba1c_ifcc < 75 THEN 'Diabetes - Above Target' -- >58.0–74.9
         WHEN hba1c_ifcc >= 75 AND hba1c_ifcc < 86 THEN 'Diabetes - High Risk' -- 75.0–85.9
         WHEN hba1c_ifcc >= 86 THEN 'Diabetes - Very High Risk'
@@ -146,7 +146,7 @@ SELECT
         WHEN is_valid_hba1c THEN hba1c_ifcc >= 48
     END AS indicates_diabetes,
 
-    -- Target achievement flags for QOF (DM021 threshold is inclusive <=58)
+    -- Numerical <=58 flag used by QOF DM020 (people without moderate or severe frailty)
     CASE
         WHEN is_valid_hba1c THEN hba1c_ifcc <= 58
     END AS meets_qof_target
