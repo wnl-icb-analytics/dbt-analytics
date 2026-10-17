@@ -5,16 +5,10 @@
 }}
 
 /*
-Person-level alcohol status combining AUDIT scores and disorder diagnoses.
-Provides comprehensive alcohol risk assessment for population health management.
-
-Business Logic:
-1. Uses most recent AUDIT/AUDIT-C score as primary indicator
-2. Considers alcohol disorder diagnoses for additional context
-3. Recent AUDIT scores override older disorder codes (unless disorder is more recent)
-4. Applies 12-month recency window for conflicting assessments
-
-This is PERSON-LEVEL data - one row per person with any alcohol-related data.
+One row per person with valid AUDIT evidence or an alcohol disorder record.
+Select the latest AUDIT calendar date, then prefer full AUDIT and the highest
+score. Active disorders take priority over historical disorders, then AUDIT
+risk, regardless of assessment age. Recency fields describe evidence age.
 */
 
 WITH latest_audit_scores AS (
@@ -35,8 +29,12 @@ WITH latest_audit_scores AS (
             *,
             ROW_NUMBER() OVER (
                 PARTITION BY person_id 
-                ORDER BY clinical_effective_date DESC, 
-                         CASE WHEN audit_type = 'Full AUDIT' THEN 1 ELSE 2 END -- Prefer full AUDIT if same date
+                ORDER BY clinical_effective_date::date DESC,
+                         CASE WHEN audit_type = 'Full AUDIT' THEN 1 ELSE 2 END,
+                         -- Instrument total is the sum of item scores, so it is the day's highest value
+                         audit_score DESC,
+                         date_recorded DESC NULLS LAST,
+                         id
             ) AS rn
         FROM {{ ref('int_alcohol_audit_scores') }}
         WHERE is_valid_score = TRUE

@@ -10,6 +10,9 @@ models:
         owner:
           name: KateHomer55
     data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [person_id, concept_code, clinical_effective_date]
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:
             min_value: 1
@@ -20,3 +23,26 @@ models:
       - name: person_id
         tests:
           - not_null
+
+unit_tests:
+  - name: smoking_intervention_decline_codes
+    model: int_smoking_intervention
+    overrides:
+      macros:
+        get_observations: |
+          SELECT column1::VARCHAR AS id, column2::NUMBER AS person_id,
+                 column3::DATE AS clinical_effective_date,
+                 column4::VARCHAR AS mapped_concept_code,
+                 'SYN_intervention'::VARCHAR AS mapped_concept_display
+          FROM VALUES
+              ('SYN_1', -9801, '2024-03-01', '822591000000108'),
+              ('SYN_2', -9802, '2024-03-01', '225323000'),
+              ('SYN_3', -9803, '2024-03-01', '315022003'),
+              ('SYN_4', -9804, '2024-03-01', '966971000000103')
+    given: []
+    expect:
+      rows:
+        - {person_id: -9801, smoking_cessation_services: Declined}
+        - {person_id: -9802, smoking_cessation_services: 'Yes'}
+        - {person_id: -9803, smoking_cessation_services: Declined}
+        - {person_id: -9804, smoking_cessation_services: Declined}
