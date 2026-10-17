@@ -8,8 +8,9 @@ models:
       entry is kept (earliest date_recorded, then lowest id), so date_recorded is when the
       result was first entered. Applies a value-first standardisation workflow via the standardise_count_observation macro to infer
       correct units and values, then categorises by clinical severity. Values from 25 to
-      300 are kept as g/L whatever their recorded unit. Values below 25 are read as g/dL
-      and multiplied by 10 when that gives 25 to 300; anything else is out of range.
+      300 are kept as g/L whatever their recorded unit. Outside that band, known-unit
+      conversion applies first when it gives 25 to 300 g/L. Otherwise, values below
+      25 are multiplied by 10 when that gives 25 to 300; anything else is out of range.
     config:
       meta:
         owner:
@@ -116,7 +117,18 @@ unit_tests:
         ('SYN_G', -9306, '2026-01-01', 400, 'g/L'),
         ('SYN_H', -9307, '2026-01-01', 3.52, 'g/dL'),
         ('SYN_I', -9308, '2026-01-01', 3.52, 'g/L'),
-        ('SYN_J', -9309, '2026-01-01', 12.0001, 'g/L')
+        ('SYN_J', -9309, '2026-01-01', 12.0001, 'g/L'),
+        ('SYN_HB01', -18101, '2026-01-01', 2.49, 'g/dL'),
+        ('SYN_HB02', -18102, '2026-01-01', 2.5, 'g/dL'),
+        ('SYN_HB03', -18103, '2026-01-01', 2.5, NULL),
+        ('SYN_HB04', -18104, '2026-01-01', 24.999, 'g/L'),
+        ('SYN_HB05', -18105, '2026-01-01', 25, 'g/dL'),
+        ('SYN_HB06', -18106, '2026-01-01', 300, 'g/L'),
+        ('SYN_HB07', -18107, '2026-01-01', 300.001, 'g/L'),
+        ('SYN_HB08', -18108, '2026-01-01', 30000, 'mg/dL'),
+        ('SYN_PREC_K', -18110, '2026-01-01', 12.345678, 'g/dL'),
+        ('SYN_PREC_I', -18111, '2026-01-01', 12.345678, NULL),
+        ('SYN_RAW', -18112, '2026-01-01', 123.456789, 'g/L')
   given:
   - input: ref('observation_unit_rules')
     rows:
@@ -218,3 +230,58 @@ unit_tests:
       value_was_converted: true
       is_out_of_range: false
       confidence: LOW
+    - id: SYN_HB01
+      confidence: MEDIUM
+      inferred_value: 2.49
+      is_out_of_range: true
+      value_was_converted: false
+    - id: SYN_HB02
+      confidence: LOW
+      inferred_value: 25
+      is_out_of_range: false
+      value_was_converted: true
+    - id: SYN_HB03
+      confidence: LOW
+      inferred_value: 25
+      is_out_of_range: false
+      value_was_converted: true
+    - id: SYN_HB04
+      confidence: LOW
+      inferred_value: 249.99
+      is_out_of_range: false
+      value_was_converted: true
+    - id: SYN_HB05
+      confidence: MEDIUM
+      inferred_value: 25
+      is_out_of_range: false
+      value_was_converted: false
+    - id: SYN_HB06
+      confidence: HIGH
+      inferred_value: 300
+      is_out_of_range: false
+      value_was_converted: false
+    - id: SYN_HB07
+      confidence: LOW
+      inferred_value: 300.001
+      is_out_of_range: true
+      value_was_converted: false
+    - id: SYN_HB08
+      confidence: LOW
+      inferred_value: 300
+      is_out_of_range: false
+      value_was_converted: true
+    - id: SYN_PREC_K
+      confidence: LOW
+      inferred_value: 123.45678
+      is_out_of_range: false
+      value_was_converted: true
+    - id: SYN_PREC_I
+      confidence: LOW
+      inferred_value: 123.45678
+      is_out_of_range: false
+      value_was_converted: true
+    - id: SYN_RAW
+      confidence: HIGH
+      inferred_value: 123.456789
+      is_out_of_range: false
+      value_was_converted: false

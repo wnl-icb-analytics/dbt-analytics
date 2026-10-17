@@ -103,7 +103,9 @@ unit_tests:
         'Synthetic observation'::VARCHAR mapped_concept_display, 'BILIRUBIN_LEVEL'::VARCHAR cluster_id
         FROM VALUES ('SYN_BILI_1', -9300, '2026-01-01', 10, 'mg/dL'),
         ('SYN_BILI_2', -9301, '2026-01-01', -5, 'umol/L'),
-        ('SYN_BILI_3', -9302, '2026-01-01', 2000, 'mg/dL')
+        ('SYN_BILI_3', -9302, '2026-01-01', 2000, 'mg/dL'),
+        ('SYN_BILI_CONVERT', -18113, '2026-01-01', 100000, 'pmol/L'),
+        ('SYN_BILI_PREC', -18115, '2026-01-01', 123456.7, 'pmol/L')
   given:
   - input: ref('observation_unit_rules')
     rows:
@@ -165,14 +167,27 @@ unit_tests:
   expect:
     rows:
     - id: SYN_BILI_1
+      value_was_converted: false
       inferred_value: 10
       is_negative: false
       conversion_reason: No value conversion, unit was assumed to be incorrect
     - id: SYN_BILI_2
+      value_was_converted: false
       conversion_reason: Value out of plausible range, kept unchanged
       inferred_value: -5
       is_negative: true
     - id: SYN_BILI_3
+      value_was_converted: false
       conversion_reason: Value out of plausible range, kept unchanged
       inferred_value: 2000
       is_negative: false
+    - id: SYN_BILI_CONVERT
+      is_negative: false
+      conversion_reason: Value converted using known unit factor (x1e-06)
+      inferred_value: 0.1
+      value_was_converted: true
+    - id: SYN_BILI_PREC
+      is_negative: false
+      conversion_reason: Value converted using known unit factor (x1e-06)
+      inferred_value: 0.123457
+      value_was_converted: true

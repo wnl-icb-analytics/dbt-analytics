@@ -52,3 +52,24 @@ models:
           - accepted_values:
               arguments:
                 values: [CLINIC, HOME, ABPM]
+
+unit_tests:
+- name: bp_latest_preserves_selected_context
+  model: int_blood_pressure_latest
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::NUMBER AS person_id, NULL::DATE AS effective_date, NULL::FLOAT AS systolic_value, NULL::FLOAT AS diastolic_value, NULL::VARCHAR AS bp_context_group WHERE FALSE
+  given:
+  - input: ref('int_blood_pressure_all')
+    format: sql
+    rows: |-
+      SELECT -18140::NUMBER AS person_id, '2024-01-01'::DATE AS effective_date, 150::FLOAT AS systolic_value, 90::FLOAT AS diastolic_value, NULL::BOOLEAN AS is_home_bp_event, NULL::BOOLEAN AS is_abpm_bp_event, 'CLINIC'::VARCHAR AS bp_context_group, NULL::BOOLEAN AS is_hypertensive_range, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS systolic_observation_id, NULL::VARCHAR AS diastolic_observation_id, NULL::VARCHAR AS all_concept_codes, NULL::VARCHAR AS all_concept_displays, NULL::VARCHAR AS all_source_cluster_ids
+      UNION ALL
+      SELECT -18140::NUMBER AS person_id, '2024-02-01'::DATE AS effective_date, 130::FLOAT AS systolic_value, 80::FLOAT AS diastolic_value, NULL::BOOLEAN AS is_home_bp_event, NULL::BOOLEAN AS is_abpm_bp_event, 'HOME'::VARCHAR AS bp_context_group, NULL::BOOLEAN AS is_hypertensive_range, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS systolic_observation_id, NULL::VARCHAR AS diastolic_observation_id, NULL::VARCHAR AS all_concept_codes, NULL::VARCHAR AS all_concept_displays, NULL::VARCHAR AS all_source_cluster_ids
+  expect:
+    rows:
+    - person_id: -18140
+      effective_date: "2024-02-01"
+      systolic_value: 130
+      diastolic_value: 80
+      bp_context_group: HOME

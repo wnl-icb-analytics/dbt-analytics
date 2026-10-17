@@ -113,13 +113,24 @@ unit_tests:
       SELECT 'SYN_LATER'::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS hba1c_display, NULL::VARCHAR AS hba1c_category, NULL::VARCHAR AS original_result_value, NULL::VARCHAR AS original_result_unit_code, -9301::NUMBER AS person_id, '2026-02-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value, NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct, NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict, FALSE::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result
       UNION ALL
       SELECT 'SYN_ONLY'::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS hba1c_display, NULL::VARCHAR AS hba1c_category, NULL::VARCHAR AS original_result_value, NULL::VARCHAR AS original_result_unit_code, -9302::NUMBER AS person_id, '2026-01-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value, NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct, NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict, TRUE::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result
+      UNION ALL
+      SELECT 'SYN_V'::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS hba1c_display, NULL::VARCHAR AS hba1c_category, NULL::VARCHAR AS original_result_value, NULL::VARCHAR AS original_result_unit_code, -18125::NUMBER AS person_id, '2026-03-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value, NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct, NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict, TRUE::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result
+      UNION ALL
+      SELECT 'SYN_I'::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS hba1c_display, NULL::VARCHAR AS hba1c_category, NULL::VARCHAR AS original_result_value, NULL::VARCHAR AS original_result_unit_code, -18125::NUMBER AS person_id, '2026-03-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value, NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct, NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict, FALSE::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result
+      UNION ALL
+      SELECT 'SYN_INVALID_ONLY'::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS result_unit_display, NULL::VARCHAR AS hba1c_display, NULL::VARCHAR AS hba1c_category, NULL::VARCHAR AS original_result_value, NULL::VARCHAR AS original_result_unit_code, -18126::NUMBER AS person_id, '2026-03-01'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value, NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct, NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict, FALSE::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result
     format: sql
   expect:
     rows:
     - id: SYN_OLD
+      most_recent_result_date: "2026-02-01"
       has_later_unassessable_result: true
     - id: SYN_ONLY
+      most_recent_result_date: "2026-01-01"
       has_later_unassessable_result: false
+    - id: SYN_V
+      has_later_unassessable_result: false
+      most_recent_result_date: "2026-03-01"
   overrides:
     macros:
       get_empty_subquery_sql: SELECT NULL::VARCHAR AS id, NULL::VARCHAR AS concept_code, NULL::VARCHAR AS concept_display,
@@ -128,4 +139,4 @@ unit_tests:
         NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS hba1c_original_value,
         NULL::FLOAT AS hba1c_ifcc, NULL::FLOAT AS hba1c_dcct, NULL::BOOLEAN AS is_ifcc, NULL::BOOLEAN AS is_dcct,
         NULL::BOOLEAN AS indicates_diabetes, NULL::BOOLEAN AS meets_qof_target, NULL::BOOLEAN AS is_unit_conflict,
-        NULL::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result WHERE FALSE
+        NULL::BOOLEAN AS is_valid_hba1c, NULL::BOOLEAN AS has_later_unassessable_result, NULL::TIMESTAMP_NTZ AS most_recent_result_date WHERE FALSE
