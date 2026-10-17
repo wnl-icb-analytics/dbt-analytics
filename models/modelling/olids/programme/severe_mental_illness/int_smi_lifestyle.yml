@@ -114,7 +114,8 @@ unit_tests:
     rows: |-
       -- Synthetic categories distinguish every AUDIT tie-break candidate.
       SELECT column1::TEXT AS id, column2::NUMBER AS person_id,
-          '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, column3::TEXT AS audit_type,
+          DATEADD(hour, IFF(column3 = 'AUDIT-C', 15, 9),
+              DATEADD(day, -30, CURRENT_DATE())::TIMESTAMP_NTZ) AS clinical_effective_date, column3::TEXT AS audit_type,
           column4::NUMBER(10,2) AS audit_score, column5::TIMESTAMP_NTZ AS date_recorded,
           column6::TEXT AS risk_category, TRUE AS is_valid_score
       FROM VALUES
@@ -125,6 +126,9 @@ unit_tests:
           ('SYN_full_item', -9801, 'Full AUDIT', 4, '2024-03-03', 'Lower Risk'),
           ('SYN_screen', -9801, 'AUDIT-C', 12, '2024-03-03', 'Possible Dependence'),
           ('SYN_unclear', -9803, 'AUDIT-C', 0, '2024-03-03', 'Unclear')
+      UNION ALL
+      SELECT 'SYN_older_full', -9801, DATEADD(day, -60, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'Full AUDIT', 20, CURRENT_DATE()::TIMESTAMP_NTZ, 'SYN_wrong_older', TRUE
       UNION ALL
       SELECT 'SYN_INVALID_TOTAL', -9801, DATEADD(day, -1, CURRENT_DATE()),
           'Full AUDIT', 99, CURRENT_DATE()::TIMESTAMP_NTZ, 'SYN_INVALID_RISK', FALSE

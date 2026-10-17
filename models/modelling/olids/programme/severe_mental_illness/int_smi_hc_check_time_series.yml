@@ -4,8 +4,8 @@
       Health check completion for the historical SMI population, one row per person
       and analysis month. HbA1c evidence requires a recorded result value, including
       implausible results; value-free HbA1c tests do not count in this historical series.
-      AUDIT evidence is assessed at each month end. Later assessments cannot replace
-      alcohol evidence for earlier months.
+      Alcohol evidence is assessed by calendar date at each month end. Later
+      assessments cannot replace alcohol evidence for earlier months.
     config:
       meta:
         owner:
@@ -39,7 +39,9 @@ unit_tests:
               NULL::TEXT AS ethnicity_subcategory, NULL::NUMBER AS ethsubcat_order,
               NULL::TEXT AS imd_quintile, NULL::NUMBER AS imdquintile_order
           FROM VALUES (-9901, '2024-03-31'), (-9901, '2024-04-30'),
-              (-9902, '2024-02-29'), (-9902, '2024-03-31'), (-18201, '2024-03-31')
+              (-9902, '2024-02-29'), (-9902, '2024-03-31'), (-18201, '2024-03-31'),
+              (-18301, '2024-03-31'), (-18302, '2024-03-31'), (-18303, '2024-03-31'),
+              (-18304, '2024-03-31'), (-18305, '2024-03-31')
       - input: ref('int_alcohol_audit_scores')
         format: sql
         rows: |
@@ -48,7 +50,11 @@ unit_tests:
               'Full AUDIT'::TEXT AS audit_type, column3::NUMBER AS audit_score,
               NULL::TIMESTAMP_NTZ AS date_recorded, column4::BOOLEAN AS is_valid_score
           FROM VALUES (-9901, 'SYN_assessment', 9, TRUE), (-9902, 'SYN_future_assessment', 9, TRUE),
-              (-18201, 'SYN_INVALID_TOTAL', 99, FALSE)
+              (-18201, 'SYN_INVALID_TOTAL', 99, FALSE),
+              (-18301, 'SYN_before_future_units', 9, TRUE), (-18302, 'SYN_before_future_disorder', 9, TRUE)
+          UNION ALL
+          SELECT -18303, 'SYN_last_day_audit', '2024-03-31 12:00:00'::TIMESTAMP_NTZ,
+              'Full AUDIT', 9, NULL::TIMESTAMP_NTZ, TRUE
       - input: ref('int_bmi_all')
         format: sql
         rows: |
@@ -80,12 +86,17 @@ unit_tests:
       - input: ref('int_alcohol_misuse_disorders')
         format: sql
         rows: |
-          SELECT NULL::NUMBER AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS concept_display WHERE FALSE
+          SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,
+              'SYN_disorder'::TEXT AS concept_display
+          FROM VALUES (-18302, '2024-04-15'), (-18305, '2024-03-31 12:00:00')
       - input: ref('int_alcohol_units_all')
         format: sql
         rows: |
           SELECT -9902::NUMBER AS person_id, '2024-02-15'::TIMESTAMP_NTZ AS clinical_effective_date,
               5::FLOAT AS result_value, 'units/week'::TEXT AS result_unit_display
+          UNION ALL
+          SELECT column1::NUMBER, column2::TIMESTAMP_NTZ, 5::FLOAT, 'units/week'::TEXT
+          FROM VALUES (-18301, '2024-04-15'), (-18304, '2024-03-31 12:00:00')
     expect:
       rows:
         - {person_id: -9901, analysis_month: '2024-03-31', alc_check_12m: Met, met_ct: 1}
@@ -93,3 +104,8 @@ unit_tests:
         - {person_id: -9902, analysis_month: '2024-02-29', alc_check_12m: Met, met_ct: 1}
         - {person_id: -9902, analysis_month: '2024-03-31', alc_check_12m: Met, met_ct: 1}
         - {person_id: -18201, analysis_month: '2024-03-31', alc_check_12m: Not Met, met_ct: 0}
+        - {person_id: -18301, analysis_month: '2024-03-31', alc_check_12m: Met, met_ct: 1}
+        - {person_id: -18302, analysis_month: '2024-03-31', alc_check_12m: Met, met_ct: 1}
+        - {person_id: -18303, analysis_month: '2024-03-31', alc_check_12m: Met, met_ct: 1}
+        - {person_id: -18304, analysis_month: '2024-03-31', alc_check_12m: Met, met_ct: 1}
+        - {person_id: -18305, analysis_month: '2024-03-31', alc_check_12m: Met, met_ct: 1}
