@@ -32,7 +32,7 @@ models:
       - name: form_description
         description: dm+d VMP dose form description; null when not supplied.
       - name: ingredient_count
-        description: Count of latest retained virtual product ingredient records, including removed records; null when dm+d lists none, mostly appliances.
+        description: Count of current virtual product ingredient records. For a product removed from dm+d, the count of its retained records. Null when dm+d lists none, mostly appliances.
 
 unit_tests:
 - name: dmd_product_amp_inheritance_retained_ingredients_and_missing_attributes
@@ -66,7 +66,7 @@ unit_tests:
     format: sql
     rows: |-
       select column1::varchar product_code,column2::varchar vtm_id,column3::varchar form_code,column4::varchar form_description,column5::number ingredient_count
-       from values ('SYN_V1','SYN_T1','SYN_F1','Synthetic form',3),('SYN_A1','SYN_T1','SYN_F1','Synthetic form',3),('SYN_V2',null,null,null,null),('SYN_REMOVED','SYN_T1','SYN_F1','Synthetic form',1),('SYN_A_REMOVED','SYN_T1','SYN_F1','Synthetic form',1)
+       from values ('SYN_V1','SYN_T1','SYN_F1','Synthetic form',2),('SYN_A1','SYN_T1','SYN_F1','Synthetic form',2),('SYN_V2',null,null,null,null),('SYN_REMOVED','SYN_T1','SYN_F1','Synthetic form',1),('SYN_A_REMOVED','SYN_T1','SYN_F1','Synthetic form',1)
   overrides:
     macros:
       get_empty_subquery_sql: >-

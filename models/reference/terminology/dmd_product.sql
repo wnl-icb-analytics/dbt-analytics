@@ -4,7 +4,10 @@ with products as (
     select apid, 'AMP', vpid from {{ ref('stg_ukhfd_dmd_amp') }}
 ),
 ingredients as (
-    select vpid, count(*) as ingredient_count
+    -- Current ingredient rows when the product has any; otherwise the retained rows of a removed product.
+    -- Counting every retained row would add superseded ingredient records to current products.
+    select vpid,
+        coalesce(nullif(count_if(is_in_latest_source), 0), count(*)) as ingredient_count
     from {{ ref('stg_ukhfd_dmd_vmp_ingredient') }}
     group by vpid
 )
