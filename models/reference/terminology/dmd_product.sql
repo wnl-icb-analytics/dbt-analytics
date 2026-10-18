@@ -6,7 +6,6 @@ with products as (
 ingredients as (
     select vpid, count(*) as ingredient_count
     from {{ ref('stg_ukhfd_dmd_vmp_ingredient') }}
-    where is_in_latest_source
     group by vpid
 )
 select

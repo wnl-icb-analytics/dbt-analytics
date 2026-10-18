@@ -26,7 +26,7 @@ SELECT
     base_orders.bnf_code,
     base_orders.bnf_name,
 
-    -- A combination has more than one current dm+d ingredient, including triple inhalers.
+    -- A combination has more than one retained dm+d ingredient, including triple inhalers.
     CASE WHEN dmd.ingredient_count = 1 THEN 'SINGLE_AGENT'
          WHEN dmd.ingredient_count >= 2 THEN 'COMBINATION'
          ELSE 'OTHER_ICS' END AS ics_type,
