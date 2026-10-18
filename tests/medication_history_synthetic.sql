@@ -1,4 +1,4 @@
-{# Exercise both production extractors with synthetic relations, including their history calls. #}
+-- No caller enables history on either extractor, so exercise both macro branches with synthetic inputs.
 {% set orders = get_medication_orders(cluster_id='SYN_CLUSTER', source='SYN_SOURCE', include_history=true) %}
 {% set statements = get_medication_statements(cluster_id='SYN_CLUSTER', source='SYN_SOURCE', include_history=true) %}
 {% set replacements = {
@@ -70,10 +70,14 @@ expected AS (
     SELECT column1::VARCHAR AS source_kind, 'SYN_OK'::VARCHAR AS id, -18004::NUMBER AS person_id
     FROM VALUES ('ORDER'), ('STATEMENT')
 )
-SELECT COUNT(*) AS mismatches
+SELECT
+    'medication_history_membership_and_grain' AS check_name,
+    COALESCE(actual.source_kind, expected.source_kind) AS source_kind,
+    actual.id AS actual_id, expected.id AS expected_id,
+    actual.person_id AS actual_person_id, expected.person_id AS expected_person_id,
+    actual.row_count AS actual_row_count, 1 AS expected_row_count
 FROM actual_counts AS actual
 FULL OUTER JOIN expected USING (source_kind, id)
 WHERE actual.id IS NULL OR expected.id IS NULL
     OR NOT EQUAL_NULL(actual.person_id, expected.person_id)
     OR actual.row_count <> 1
-HAVING COUNT(*) > 0
