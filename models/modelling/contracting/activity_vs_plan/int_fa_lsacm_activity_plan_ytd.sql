@@ -27,13 +27,15 @@ acm.commissioner_code,
 o.organisation_name as commissioner_name,
 acm.point_of_delivery_code,
 acm.local_point_of_delivery_description,
-acm.service_code,
-ser.npoc_category_and_crg,
-ser.icb_delegation_26_27,
 acm.commissioned_service_category_code,
 CASE 
  WHEN acm.commissioned_service_category_code = 11 THEN 'INTEGRATED CARE BOARD' ELSE
- cs.short_description END as cssc_name,
+ INITCAP(LOWER(cs.short_description)) END as cssc_name,
+cs.funding_status as cssc_funding_status,
+acm.service_code,
+INITCAP(LOWER(ser.npoc_category_and_crg)) as service_code_desc,
+ser.icb_delegation_26_27,
+
 CASE
         WHEN acm.commissioner_code IN ('13Q','13R') 
             THEN 'Retained'
