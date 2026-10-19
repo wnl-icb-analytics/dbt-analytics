@@ -33,6 +33,7 @@ select
     date_recorded,
     is_problem_deleted,
     is_confidential,
+    is_gp2gp_import,
     lds_is_deleted,
     publisher_organisation_code,
     lds_transform_datetime,
@@ -48,3 +49,4 @@ select
 from {{ ref('raw_olids_observation') }}
 where coalesce(lds_is_deleted, false) = false
     and person_id is not null
+    and coalesce(is_gp2gp_copy, false) = false

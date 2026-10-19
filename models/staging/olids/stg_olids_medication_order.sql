@@ -23,7 +23,9 @@ select
     quantity_value,
     quantity_unit,
     duration_days,
+    source_duration_days,
     estimated_cost,
+    source_estimated_cost,
     medication_name,
     medication_order_source_concept_id,
     source_code,
@@ -41,6 +43,7 @@ select
     publisher_organisation_code,
     lds_transform_datetime,
     statement_medication_name,
+    is_gp2gp_import,
     mapped_concept_id,
     mapped_concept_code,
     mapped_concept_display,
@@ -58,3 +61,4 @@ select
 from {{ ref('raw_olids_medication_order') }}
 where coalesce(lds_is_deleted, false) = false
     and person_id is not null
+    and coalesce(is_gp2gp_copy, false) = false

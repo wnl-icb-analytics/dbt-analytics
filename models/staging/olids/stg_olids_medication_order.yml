@@ -1,6 +1,9 @@
 models:
   - name: stg_olids_medication_order
-    description: Medication orders and prescriptions issued in GP systems. Deduplicated by id and filtered to exclude deleted records.
+    description: Medication orders and prescriptions issued in GP systems. Deduplicated by id and filtered to exclude
+      deleted records and GP2GP transfer copies. A copy is the second version of a transferred patient
+      history, held on the patient record at the new practice. The original on the earlier record is kept,
+      so each event is counted once.
     config:
       meta:
         owner:
@@ -49,9 +52,15 @@ models:
       - name: quantity_unit
         description: Unit of measure for the quantity
       - name: duration_days
-        description: Duration of the medication order in days
+        description: Duration of the medication order in days. Null when the supplied value is 0 or less, or when a
+          GP2GP import carries the 28-day default of the receiving system. The supplied value is in source_duration_days.
+      - name: source_duration_days
+        description: Duration in days as supplied by the GP system, before cleaning.
       - name: estimated_cost
-        description: Estimated cost of the medication
+        description: Estimated cost of the medication. Null when a GP2GP import carries a zero cost, which GP2GP
+          cannot transfer. The supplied value is in source_estimated_cost.
+      - name: source_estimated_cost
+        description: Estimated cost as supplied by the GP system, before cleaning.
       - name: medication_name
         description: Name of the medication ordered
       - name: medication_order_source_concept_id
@@ -100,6 +109,10 @@ models:
         description: Display text of the mapped concept
       - name: lds_start_datetime
         description: LDS datetime stamp from which the record version was correct - used for deduplication to get the latest record
+      - name: is_gp2gp_import
+        description: True when dbt-OLIDS infers the record arrived by GP2GP transfer. The event is dated before the
+          latest Regular registration start and was recorded within 30 days of it. This is a timing
+          signature, so a small share may be entries made by the new practice, such as new-patient checks.
       - name: lds_is_deleted
         description: Deletion flag - records with TRUE are filtered out in this staging layer
       - name: lds_source_record_id
