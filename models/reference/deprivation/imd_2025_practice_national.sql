@@ -2,7 +2,7 @@
 
 with imd_ranking as (
     select 
-        rank () over (partition by effective_snapshot_date order by imd_score) as imd_rank,
+        rank () over (partition by effective_snapshot_date order by imd_score desc) as imd_rank,
         practice_code,
         effective_snapshot_date,
         imd_score
