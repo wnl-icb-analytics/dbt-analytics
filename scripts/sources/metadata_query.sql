@@ -593,6 +593,21 @@ WITH schema_metadata AS (
   
   UNION ALL
   
+    -- ukhfd_lsoa_to_sub_icb_plus: Mapping between LSOA and Sub-ICB including higher NHSE geographies
+  SELECT 
+    'UKHFD' as database_name,
+    'LSOA_Sub_ICB_ICB_NHSER_LAD' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "UKHFD".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'LSOA_Sub_ICB_ICB_NHSER_LAD'
+  
+  UNION ALL
+  
     -- sdl_wnl: ServicesDataLocal canonical-named feeds, WNL footprint (SLAM contract monitoring)
   SELECT 
     'DATA_LAKE' as database_name,
