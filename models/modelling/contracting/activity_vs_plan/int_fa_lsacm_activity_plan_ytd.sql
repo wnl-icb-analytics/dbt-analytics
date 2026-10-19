@@ -35,7 +35,6 @@ cs.funding_status as cssc_funding_status,
 acm.service_code,
 INITCAP(LOWER(ser.npoc_category_and_crg)) as service_code_desc,
 ser.icb_delegation_26_27,
-
 CASE
         WHEN acm.commissioner_code IN ('13Q','13R') 
             THEN 'Retained'
@@ -87,7 +86,7 @@ commissioner_name,
 point_of_delivery_code,
 local_point_of_delivery_description,
 service_code,
-npoc_category_and_crg as service_code_desc,
+service_code_desc,
 commissioned_service_category_code, 
 CASE
     WHEN cssc_name = 'INTEGRATED CARE BOARD'
