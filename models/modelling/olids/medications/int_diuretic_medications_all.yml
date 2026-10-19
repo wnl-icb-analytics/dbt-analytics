@@ -1,15 +1,17 @@
 models:
   - name: int_diuretic_medications_all
     description: >-
-      Diuretic orders in OLIDS, identified by BNF prefix 0202. One row per dated order
-      linked to a patient-person mapping, including inactive and deceased people and
-      future-dated orders. An order does not establish its indication or confirm that
-      the medicine was taken.
+      Diuretic orders in BNF 2.2 for all people, one row per dated order. Diuretic
+      ingredients in ACE-inhibitor combinations (BNF 2.5.5.1) are outside this scope.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests: []
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - medication_order_id
     columns:
       - name: person_id
         description: 'Person identifier'
@@ -50,8 +52,10 @@ models:
       - name: is_potassium_sparing
         description: 'Flag for potassium sparing medications'
       - name: is_recent_3m
-        description: 'Order within last 3 months'
+        description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_6m
-        description: 'Order within last 6 months'
+        description: 'Order in the 6 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_12m
-        description: 'Order within last 12 months'
+        description: 'Order in the 12 calendar months up to and including the build date; lower bound excluded.'
+      - name: is_future_dated
+        description: Order dated after the build date; kept as source evidence, never recent.

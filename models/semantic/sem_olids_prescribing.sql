@@ -65,7 +65,7 @@ TABLES(
     -- Pre-defined medication category models (each filtered to specific drug class)
     statins AS {{ ref('int_lipid_lowering_medications_all') }}
         PRIMARY KEY (medication_order_id)
-        COMMENT = 'Lipid-regulating orders (BNF 2.12) with lipid_lowering_class and, for statins, intensity: HIGH_INTENSITY (atorvastatin, rosuvastatin), MODERATE_INTENSITY (simvastatin, pravastatin, fluvastatin), COMBINATION (statin combinations)',
+        COMMENT = 'Lipid-regulating orders (BNF 2.12). Statin classification is HIGH_INTENSITY from national high-intensity product lists, COMBINATION for other statin combinations, OTHER_STATIN for other statins; null for non-statins.',
 
     antihypertensives AS {{ ref('int_antihypertensive_medications_all') }}
         PRIMARY KEY (medication_order_id)
@@ -235,7 +235,7 @@ DIMENSIONS(
 
     -- Lipid-regulating classification (only populated for BNF 2.12 orders)
     statins.lipid_lowering_class AS lipid_lowering_class COMMENT = 'Lipid-regulating product class (STATIN, STATIN_COMBINATION, EZETIMIBE, BEMPEDOIC_ACID, PCSK9_INHIBITOR, INCLISIRAN, FIBRATE, BILE_ACID_SEQUESTRANT, NICOTINIC_ACID, OMEGA_3, OTHER). Only for BNF 2.12 orders.',
-    statins.statin_intensity AS statin_intensity COMMENT = 'Statin intensity (HIGH_INTENSITY, MODERATE_INTENSITY, COMBINATION, OTHER_STATIN). Null for non-statin products.',
+    statins.statin_intensity AS statin_intensity COMMENT = 'Statin classification: HIGH_INTENSITY from national high-intensity product lists, COMBINATION for other statin combinations, OTHER_STATIN for other statins. Null for non-statins. MODERATE_INTENSITY retired with Eddie approval on 16 October 2026.',
     statins.is_combination_therapy AS is_combination_therapy COMMENT = 'Fixed-dose lipid combination product. Only for BNF 2.12 orders.',
     statins.is_statin AS is_statin COMMENT = 'Whether a BNF 2.12 order contains a statin. Only for BNF 2.12 orders.',
 

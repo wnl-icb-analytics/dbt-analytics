@@ -4,6 +4,8 @@ models:
       Latest recorded substance misuse intervention or decline per person in OLIDS, by
       clinical date up to the build date. Includes inactive and deceased people with
       qualifying evidence, without age or SMI-register restrictions.
+      Same-day records prefer completion, then other assistance, then decline,
+      then the lowest concept code.
     config:
       meta:
         owner:
@@ -17,3 +19,41 @@ models:
         tests:
           - unique
           - not_null
+
+unit_tests:
+- name: subs_misuse_intervention_latest_same_day_precedence
+  model: int_subs_misuse_intervention_latest
+  given:
+  - input: ref('int_subs_misuse_intervention')
+    format: sql
+    rows: |
+      SELECT column1::NUMBER AS person_id, column2::TIMESTAMP_NTZ AS clinical_effective_date,
+          column3::VARCHAR AS concept_code, column4::VARCHAR AS subs_misuse_services
+      FROM VALUES
+          (-9601, '2024-03-01 15:00:00'::TIMESTAMP_NTZ, 'SYN_B', 'Declined'),
+          (-9601, '2024-03-01 09:00:00'::TIMESTAMP_NTZ, 'SYN_C', 'Yes'),
+          (-18214, DATEADD(day, -1, CURRENT_DATE()), 'SYN_Z', 'Other assistance'),
+          (-18214, DATEADD(day, -1, CURRENT_DATE()), 'SYN_A', 'Declined'),
+          (-18215, DATEADD(day, -1, CURRENT_DATE()), 'SYN_Z', 'Yes'),
+          (-18215, DATEADD(day, -1, CURRENT_DATE()), 'SYN_A', 'Other assistance'),
+          (-18216, DATEADD(day, -2, CURRENT_DATE()), 'SYN_A', 'Yes'),
+          (-18216, DATEADD(day, -1, CURRENT_DATE()), 'SYN_Z', 'Declined'),
+          (-18217, DATEADD(day, -1, CURRENT_DATE()), 'SYN_A', 'Yes'),
+          (-18217, DATEADD(day, -1, CURRENT_DATE()), 'SYN_Z', 'Yes')
+  expect:
+    rows:
+    - person_id: -9601
+      concept_code: SYN_C
+      subs_misuse_services: 'Yes'
+    - person_id: -18214
+      concept_code: SYN_Z
+      subs_misuse_services: 'Other assistance'
+    - person_id: -18215
+      concept_code: SYN_Z
+      subs_misuse_services: 'Yes'
+    - person_id: -18216
+      concept_code: SYN_Z
+      subs_misuse_services: 'Declined'
+    - person_id: -18217
+      concept_code: SYN_A
+      subs_misuse_services: 'Yes'
