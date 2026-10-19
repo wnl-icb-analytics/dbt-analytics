@@ -6,7 +6,7 @@
 
 /*
 All ARB (Angiotensin Receptor Blocker) medication orders for cardiovascular and renal protection.
-Uses BNF classification (2.5.5.2 - 0205052) for angiotensin-II receptor antagonists.
+Uses the national ARB drug refset, including fixed-dose ARB combinations.
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 */
 
@@ -27,6 +27,6 @@ SELECT
     bnf_name
 
 FROM (
-    {{ get_medication_orders(bnf_code='0205052') }}
+    {{ get_medication_orders(cluster_id='NHS_DRUG_REFSETS/AII_COD', source='OPENCODELISTS') }}
 ) base_orders
 ORDER BY person_id, order_date DESC

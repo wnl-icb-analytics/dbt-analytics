@@ -1,14 +1,19 @@
 models:
   - name: int_anticoagulant_medications_all
     description: >-
-      Oral anticoagulant orders in OLIDS, identified by BNF prefix 020802. One row per
-      dated order linked to a patient-person mapping, including inactive and deceased
-      people and future-dated orders. An order does not establish its indication or
-      confirm that the medicine was taken.
+      Oral anticoagulant orders for all people, one row per dated order. Legacy BNF 020802
+      membership and category labels remain pending interface approval. National DOAC and
+      vitamin K antagonist refsets identify supported products; heparins and INR test
+      strips are not included in those lists.
     config:
       meta:
         owner:
           name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD,NHS_DRUG_REFSETS/VITKANTAGDRUG_COD
+            source: OPENCODELISTS
     columns:
       - name: person_id
         description: 'Person identifier'
@@ -49,8 +54,16 @@ models:
       - name: is_vka
         description: 'Flag for Vitamin K Antagonists'
       - name: is_recent_3m
-        description: 'Order within last 3 months'
+        description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_6m
-        description: 'Order within last 6 months'
+        description: 'Order in the 6 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_12m
-        description: 'Order within last 12 months'
+        description: 'Order in the 12 calendar months up to and including the build date; lower bound excluded.'
+      - name: is_future_dated
+        description: Order dated after the build date; kept as source evidence, never recent.
+      - name: is_in_national_anticoagulant_list
+        description: >-
+          Product belongs to the national DOAC or vitamin K antagonist drug refset; excludes INR
+          strips and pentosan.
+      - name: anticoagulant_type_national
+        description: DOAC or VKA from national drug-refset membership; null outside these lists.

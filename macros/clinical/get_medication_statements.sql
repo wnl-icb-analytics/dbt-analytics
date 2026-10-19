@@ -1,4 +1,5 @@
 {% macro get_medication_statements(bnf_code=none, cluster_id=none, source=none, include_history=false) %}
+    -- Person comes from staging ms.person_id; the patient commissioning key is optional.
     -- Optional source parameter to filter to specific refset (e.g., 'LTC_LCS')
     -- include_history=true expands cluster codes with retired SNOMED predecessors via SCT_History
     --
@@ -72,8 +73,8 @@
     SELECT
         ms.id AS medication_statement_id,
         ms.patient_id,
-        pp.person_id,
-        pp.sk_patient_id,
+        ms.person_id,
+        pat.sk_patient_id,
         ms.clinical_effective_date AS statement_date,
         ms.date_recorded,
         ms.medication_name AS statement_medication_name,
@@ -95,8 +96,8 @@
         ms.bnf_code,
         ms.bnf_name
     FROM {{ ref('stg_olids_medication_statement') }} ms
-    JOIN {{ ref('int_patient_person_unique') }} pp
-        ON ms.patient_id = pp.patient_id
+    LEFT JOIN {{ ref('stg_olids_patient') }} pat
+        ON ms.patient_id = pat.id
     INNER JOIN {% if include_history %}expanded_codes{% else %}cluster_codes{% endif %} cc
         ON ms.mapped_concept_code = cc.mapped_concept_code
     WHERE ms.clinical_effective_date IS NOT NULL
@@ -106,8 +107,8 @@
     SELECT
         ms.id AS medication_statement_id,
         ms.patient_id,
-        pp.person_id,
-        pp.sk_patient_id,
+        ms.person_id,
+        pat.sk_patient_id,
         ms.clinical_effective_date AS statement_date,
         ms.date_recorded,
         ms.medication_name AS statement_medication_name,
@@ -129,8 +130,8 @@
         ms.bnf_code,
         ms.bnf_name
     FROM {{ ref('stg_olids_medication_statement') }} ms
-    JOIN {{ ref('int_patient_person_unique') }} pp
-        ON ms.patient_id = pp.patient_id
+    LEFT JOIN {{ ref('stg_olids_patient') }} pat
+        ON ms.patient_id = pat.id
     WHERE ms.clinical_effective_date IS NOT NULL
     {{ bnf_filter }}
     {%- endif -%}

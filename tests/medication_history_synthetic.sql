@@ -6,7 +6,7 @@
     'stg_nhsd_snomed_sct_history': 'synthetic_history',
     'stg_olids_medication_order': 'synthetic_orders',
     'stg_olids_medication_statement': 'synthetic_statements',
-    'int_patient_person_unique': 'synthetic_patients'
+    'stg_olids_patient': 'synthetic_patients'
 } %}
 {% set queries = namespace(orders=orders, statements=statements) %}
 {% for model, synthetic_relation in replacements.items() %}
@@ -26,13 +26,12 @@ synthetic_history AS (
         ('SYN_BAD', 'SYN_A'), ('SYN_BAD', 'SYN_OUTSIDE')
 ),
 synthetic_patients AS (
-    SELECT column1::VARCHAR AS patient_id, column2::NUMBER AS person_id,
-        column2::NUMBER AS sk_patient_id
+    SELECT column1::VARCHAR AS id, column2::NUMBER AS sk_patient_id
     FROM VALUES ('SYN_PAT_OK', -18004), ('SYN_PAT_BAD', -18005)
 ),
 synthetic_events AS (
     SELECT column1::VARCHAR AS id, column2::VARCHAR AS patient_id,
-        column3::VARCHAR AS mapped_concept_code,
+        column3::VARCHAR AS mapped_concept_code, column4::NUMBER AS person_id,
         '2024-01-01'::TIMESTAMP_NTZ AS clinical_effective_date,
         '2024-01-02'::TIMESTAMP_NTZ AS date_recorded,
         'Synthetic medication'::VARCHAR AS medication_name,
@@ -40,7 +39,7 @@ synthetic_events AS (
         NULL::NUMBER AS quantity_value, NULL::VARCHAR AS quantity_unit,
         NULL::VARCHAR AS bnf_chapter, NULL::VARCHAR AS bnf_section,
         NULL::VARCHAR AS bnf_code, NULL::VARCHAR AS bnf_name
-    FROM VALUES ('SYN_OK', 'SYN_PAT_OK', 'SYN_OK'), ('SYN_BAD', 'SYN_PAT_BAD', 'SYN_BAD')
+    FROM VALUES ('SYN_OK', 'SYN_PAT_OK', 'SYN_OK', -18004), ('SYN_BAD', 'SYN_PAT_BAD', 'SYN_BAD', -18005)
 ),
 synthetic_orders AS (
     SELECT *, NULL::VARCHAR AS medication_statement_id, NULL::NUMBER AS duration_days,
