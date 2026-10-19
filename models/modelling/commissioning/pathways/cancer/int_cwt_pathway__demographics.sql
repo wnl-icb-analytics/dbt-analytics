@@ -1,3 +1,7 @@
+{{ 
+    config(materialized='view') 
+}}
+
 select 
     cwt.record_id,
     --Demographic Information
@@ -9,14 +13,16 @@ select
     pmi.ethnicity_detail as demographics__ethnicity_subcategory,    
     
     --Registered Information
-    gp_all.sub_icb_code = '93C'              as registered__ncl_registered_flag,
+    gp_all.icb_code = 'Z9B2Z'               as registered__wnl_registered_flag,
+    gp_all.sub_icb_code = '93C'             as registered__ncl_registered_flag,
+    gp_all.sub_icb_code = 'W2U3Z'           as registered__nwl_registered_flag,
     cwt.at_event__registered__practice_code as registered__practice_code,
     gp_all.practice_name                    as registered__practice_name,
-    gp_all.close_date                as registered__practice_end_date,
+    gp_all.close_date                       as registered__practice_end_date,
     gp_all.pcn_code                         as registered__pcn_code,
     gp_all.pcn_name                         as registered__pcn_name,
-    gp_all.sub_icb_code                      as registered__subicb_code,
-    gp_all.sub_icb_name                      as registered__subicb_name,
+    gp_all.sub_icb_code                     as registered__subicb_code,
+    gp_all.sub_icb_name                     as registered__subicb_name,
     gp_all.icb_code                         as registered__icb_code,
     gp_all.icb_name                         as registered__icb_name,
     
@@ -24,9 +30,9 @@ select
     --Note a null subicb will still have a null value as borough cannot be determined
     --This is required as practice to borough mapping does not exist outside of NCL
     case 
-        when registered__subicb_code != '93C' 
-        then 'Non-NCL'
-        when registered__subicb_code = '93C'
+        when registered__wnl_registered_flag = false
+        then 'Non-WNL'
+        when registered__wnl_registered_flag = true
         then coalesce(gp_wnl.health_borough_name, 'Unknown')
         else null
     end                                     as registered__borough,
@@ -37,22 +43,23 @@ select
 
     --Residence Information
     --Note older records use older LSOA formats which can fail when trying to map to higher geographies
-    dict_lsoa_subicb.sicbl23cdh = '93C'     as residence__ncl_residence_flag,
+    dict_lsoa_subicb.icb26cdh = 'Z9B2Z'     as residence__wnl_residence_flag,
+    dict_lsoa_subicb.sicbl26cdh = '93C'     as residence__ncl_residence_flag,
+    dict_lsoa_subicb.sicbl26cdh = 'W2U3Z'   as residence__nwl_residence_flag,
     cwt.at_event__residence__lsoa_code      as residence__lsoa_code,
-    dict_lsoa_subicb.sicbl23cdh             as residence__subicb_code,
-    dict_lsoa_subicb.sicbl23nm             as residence__subicb_name,
-    dict_lsoa_subicb.icb23cdh               as residence__icb_code,
-    dict_lsoa_subicb.icb23nm                as residence__icb_name,
-    dict_lsoa_subicb.lad23nm                as residence__borough,
-    imd.imd25_decile                        as residence__imd_decile,
+    dict_lsoa_subicb.sicbl26cdh             as residence__subicb_code,
+    dict_lsoa_subicb.icb26cd                as residence__icb_code,
+    dict_lsoa_subicb.icb26nm                as residence__icb_name,
+    dict_lsoa_subicb.lad26nm                as residence__borough,
+    imd.imd_decile                          as residence__imd_decile,
     
     --Logic to map out of area to 'Non-NCL'
     --Note a null subicb will still have a null value as neighbourhood cannot be determined
     --This is required as we do not have neighbour definitions for out of area
     case 
-        when residence__subicb_code != '93C' 
-        then 'Non-NCL'
-        when residence__subicb_code = '93C'
+        when residence__wnl_residence_flag = false
+        then 'Non-WNL'
+        when residence__wnl_residence_flag = true
         then coalesce(dict_lsoa_nb.neighbourhood_name, 'Unknown')
         else null
     end                                     as residence__neighbourhood_name,
@@ -73,22 +80,22 @@ on registered__practice_code = gp_all.practice_code
 left join {{ ref('practice_all') }} gp_wnl
 on registered__practice_code = gp_wnl.practice_code
 
-left join modelling.lookup_ncl.imd_practice gp_imd
+left join {{ ref('imd_2025_practice_national') }} gp_imd
 on registered__practice_code = gp_imd.practice_code
 and gp_imd.date_indicator = 2025
 
-left join modelling.cancer__ref.stg_reference_cancer_sub_icb_to_cancer_alliance dict_subicb_ca
+left join {{ ref('stg_reference_cancer_sub_icb_to_cancer_alliance') }} dict_subicb_ca
 on registered__subicb_code = dict_subicb_ca.sub_icb_code
 
 --Residence Joins
-left join modelling.cancer__ref.lsoa_to_subicb__merger_mitigation dict_lsoa_subicb
+left join {{ ref('lsoa21_sicbl26_icb26_nhser26_lad26 dict_lsoa_subicb') }} dict_lsoa_subicb
 on residence__lsoa_code = dict_lsoa_subicb.lsoa21cd
 
-left join modelling.lookup_ncl.imd_2025 imd
+left join {{ ref('imd_2025_lsoa_2021') }} imd
 on residence__lsoa_code = imd.lsoa_code_2021
 
-left join modelling.lookup_ncl.ncl_neighbourhood_lsoa_2021 dict_lsoa_nb
+left join {{ ref('neighbourhood_lsoa') }} dict_lsoa_nb
 on residence__lsoa_code = dict_lsoa_nb.lsoa_2021_code
 
-left join modelling.cancer__ref.stg_reference_cancer_lsoa_to_cancer_alliance dict_lsoa_ca
+left join {{ ref('stg_reference_cancer_lsoa_to_cancer_alliance') }} dict_lsoa_ca
 on residence__lsoa_code = dict_lsoa_ca.lsoa_2021_code
