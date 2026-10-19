@@ -11,13 +11,11 @@ WITH EXCEPTIONS AS (
 select 
 e.person_id
 ,DATE(e.clinical_effective_date) as EXCEPTION_DATE
-,CASE 
-WHEN e.concept_display = 'Excepted from mental health quality indicators - patient unsuitable' THEN 'Patient Unsuitable' ELSE 'Informed dissent' 
-END as EXCEPTION_CATEGORY
+,(CASE e.cluster_id WHEN 'MHPCAPU_COD' THEN 'Patient Unsuitable' WHEN 'MHPCADEC_COD' THEN 'Informed dissent' END)::VARCHAR(18) AS exception_category
 FROM {{ ref('int_smi_quality_check_exception') }} e
 INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
 where e.clinical_effective_date  >= DATEADD('month', -12, CURRENT_DATE)
-QUALIFY ROW_NUMBER() OVER (PARTITION BY e.person_id ORDER BY e.clinical_effective_date DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY e.person_id ORDER BY e.clinical_effective_date DESC, e.cluster_id) = 1
 )
 
 
@@ -49,8 +47,8 @@ INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
 where b.clinical_effective_date  >= DATEADD('month', -12, CURRENT_DATE)
 QUALIFY ROW_NUMBER() OVER (PARTITION BY b.person_id ORDER BY b.clinical_effective_date DESC) = 1
 ) a
---select latest from BMI code or Declined in the last year
-QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY a.bmi_date DESC, CASE WHEN a.bmi_category <> 'BMI Declined' THEN 1 ELSE 0 END DESC) = 1
+-- Completion in the window wins over a decline (QOF: achievement overrides PCA).
+QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY IFF(a.bmi_category = 'BMI Declined', 1, 0), a.bmi_date DESC) = 1
 )
 -- # TEST 2 GLUCOSE/HBA1C
 ,Glucose as (
@@ -90,7 +88,7 @@ INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
 where b.clinical_effective_date  >= DATEADD('month', -12, CURRENT_DATE)
 QUALIFY ROW_NUMBER() OVER (PARTITION BY b.person_id ORDER BY b.clinical_effective_date DESC) = 1
 ) a
-QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY a.glucose_date DESC, CASE WHEN a.glucose_category <> 'Glucose Declined' THEN 1 ELSE 0 END DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY IFF(a.glucose_category = 'Glucose Declined', 1, 0), a.glucose_date DESC, IFF(a.test_type = 'HbA1c', 0, 1)) = 1
 )
 -- # TEST 3 CHOLESTEROL OR QRISK
 ,CHOL as (
@@ -131,7 +129,7 @@ INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
 where c.clinical_effective_date  >= DATEADD('month', -12, CURRENT_DATE)
 QUALIFY ROW_NUMBER() OVER (PARTITION BY c.person_id ORDER BY c.clinical_effective_date DESC) = 1
 ) a
-QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY a.Cholesterol_date DESC, CASE WHEN a.CHOLESTEROL_CATEGORY <> 'Cholesterol Declined' THEN 1 ELSE 0 END DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY IFF(a.cholesterol_category = 'Cholesterol Declined', 1, 0), a.cholesterol_date DESC, IFF(a.test_type = 'Cholesterol', 0, 1)) = 1
 )
 -- # TEST 4 BLOOD PRESSURE
 ,BP as (
@@ -166,7 +164,7 @@ INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
 where bp.clinical_effective_date  >= DATEADD('month', -12, CURRENT_DATE)
 QUALIFY ROW_NUMBER() OVER (PARTITION BY bp.person_id ORDER BY bp.clinical_effective_date DESC) = 1
 ) a
-QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY a.BP_date DESC, CASE WHEN a.BP_CATEGORY <> 'BP Declined' THEN 1 ELSE 0 END DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY IFF(a.bp_category = 'BP Declined', 1, 0), a.bp_date DESC) = 1
 )
 -- # TEST 5 SMOKING STATUS
 ,SMOK as (
@@ -193,7 +191,7 @@ INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
 where s.clinical_effective_date  >= DATEADD('month', -12, CURRENT_DATE)
 QUALIFY ROW_NUMBER() OVER (PARTITION BY s.person_id ORDER BY s.clinical_effective_date DESC) = 1
 ) a
-QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY a.SMOKING_date DESC, CASE WHEN a.SMOKING_STATUS <> 'Smoking Declined' THEN 1 ELSE 0 END DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY IFF(a.smoking_status = 'Smoking Declined', 1, 0), a.smoking_date DESC) = 1
 )
 --TEST # 6 ALCOHOL ASSESSMENT EITHER AUDIT C or UNITS PER WEEK
 ,ALC as (
@@ -237,9 +235,8 @@ INNER JOIN {{ ref('int_smi_population_base')  }} p USING (PERSON_ID)
 where s.clinical_effective_date  >= DATEADD('month', -12, CURRENT_DATE)
 QUALIFY ROW_NUMBER() OVER (PARTITION BY s.person_id ORDER BY s.clinical_effective_date DESC) = 1
 ) a
-QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY a.alcohol_assessment_date DESC, 
-CASE WHEN ALCOHOL_RISK_CATEGORY NOT IN ('Unclear','Alcohol Declined') THEN 2 
-WHEN ALCOHOL_RISK_CATEGORY = 'Alcohol Declined' THEN 1 ELSE 0 END DESC) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY a.person_id ORDER BY IFF(a.alcohol_risk_category = 'Alcohol Declined', 1, 0), a.alcohol_assessment_date DESC,
+    IFF(a.alcohol_risk_category = 'Unclear', 1, 0), IFF(a.test_type = 'AUDIT', 0, 1)) = 1
 )
 ,HC_CHECKS AS (
     SELECT

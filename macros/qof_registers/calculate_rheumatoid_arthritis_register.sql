@@ -46,8 +46,8 @@
         SELECT
             diag.reference_date,
             diag.person_id,
-            -- Month-based age calculation, matching dim_person_age.
-            FLOOR(DATEDIFF('month', birth.birth_date_approx, diag.reference_date) / 12) AS age
+            -- Month-based age, matching dim_person_age for someone already dead.
+            {{ ltc_register_age_at('birth', 'diag.reference_date') }} AS age
         FROM ra_person_aggregates AS diag
         INNER JOIN {{ ref('dim_person_birth_death') }} AS birth
             ON diag.person_id = birth.person_id
