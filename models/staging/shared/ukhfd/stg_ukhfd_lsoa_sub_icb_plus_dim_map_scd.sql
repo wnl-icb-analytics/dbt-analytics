@@ -9,7 +9,7 @@ select
     sub_icb_code_year,
     sub_icb_ods_code,
     sub_icb_ods_code_year,
-    dict_ons_icb.name as icb_name,
+    dict_ods_icb.organisation_name as icb_name,
     icb_code,
     icb_code_year,
     icb_ods_code,
@@ -18,7 +18,7 @@ select
     nhser_code_year,
     nhser_ods_code,
     nhser_ods_code_year,
-    dict_ons_lad.name as lad_name,
+    dict_lad.name as lad_name,
     lad_code,
     lad_code_year,
     effective_snapshot_date,
@@ -27,8 +27,8 @@ select
     effective_to
 from {{ ref('raw_ukhfd_lsoa_sub_icb_plus_dim_map_scd') }} raw
 
-left join reference.data_dictionary.ons_geography dict_ons_icb
-on raw.icb_code = dict_ons_icb.code
+left join reference.organisation.organisation dict_ods_icb
+on raw.icb_ods_code = dict_ods_icb.organisation_code
 
-left join reference.data_dictionary.ons_geography dict_ons_lad
-on raw.lad_code = dict_ons_icb.code
+left join reference.data_dictionary.ons_geography dict_lad
+on raw.lad_code = dict_lad.code
