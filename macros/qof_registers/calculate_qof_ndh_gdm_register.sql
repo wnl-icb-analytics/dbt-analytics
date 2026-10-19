@@ -204,14 +204,7 @@
         SELECT
             event.reference_date,
             event.person_id,
-            FLOOR(DATEDIFF(
-                'month',
-                person.birth_date_approx,
-                CASE
-                    WHEN person.death_date_approx <= event.reference_date THEN person.death_date_approx
-                    ELSE event.reference_date
-                END
-            ) / 12) AS age
+            {{ ltc_register_age_at('person', 'event.reference_date') }} AS age
         FROM ndh_gdm_person_aggregates AS event
         INNER JOIN {{ ref('dim_person_birth_death') }} AS person
             ON event.person_id = person.person_id

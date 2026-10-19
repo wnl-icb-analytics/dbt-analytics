@@ -4,7 +4,7 @@
     Calculates CKD register status at one or more reference dates.
 
     Business Logic (QOF v51):
-    - Age ≥18 at reference date
+    - Age ≥18 at reference date, or at death if earlier (ltc_register_age_at)
     - Has CKD Stage 3-5 diagnosis (CKD_COD)
     - NOT downstaged: no CKD Stage 1-2 code (CKD1AND2_COD) after latest Stage 3-5
     - NOT resolved: no resolved code (CKDRES_COD) after latest Stage 3-5
@@ -54,14 +54,7 @@
         SELECT
             diag.reference_date,
             diag.person_id,
-            FLOOR(DATEDIFF(
-                'month',
-                birth.birth_date_approx,
-                CASE
-                    WHEN birth.death_date_approx <= diag.reference_date THEN birth.death_date_approx
-                    ELSE diag.reference_date
-                END
-            ) / 12) AS age
+            {{ ltc_register_age_at('birth', 'diag.reference_date') }} AS age
         FROM ckd_person_aggregates AS diag
         INNER JOIN {{ ref('dim_person_birth_death') }} AS birth
             ON diag.person_id = birth.person_id

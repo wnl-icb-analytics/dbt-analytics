@@ -57,6 +57,7 @@ These models reconstruct known evidence from today's retained records. They do n
 Age-restricted rules use the approximate birth date to derive age at each reference date.
 A death date on or before that date is used instead, so someone who died earlier is not aged forward.
 People alive at the month-end are unchanged, because their death date is null or later.
+Someone recorded as deceased without a usable death date has no age, as in `dim_person_age`, so age-restricted registers leave them out at every month-end.
 Rolling medication and administrative-code windows also move with that date.
 Earliest and latest diagnosis fields follow each register's definition, rather than a shared episode definition.
 For obesity, `earliest_diagnosis_date` is the latest valid BMI date and `latest_diagnosis_date` is the latest BMI date of any kind.

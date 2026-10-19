@@ -40,7 +40,8 @@ The two copies differ in inputs and dates:
 - Live facts use `dim_person_age`. Macros derive age from `dim_person_birth_death.birth_date_approx`
   as `FLOOR(DATEDIFF('month', birth_date_approx, age_date) / 12)`. `age_date` is the death date when
   that date is on or before the reference date, and the reference date otherwise. Someone who died
-  before the age threshold is not aged forward to the reference date.
+  before the age threshold is not aged forward to the reference date. Someone recorded as deceased
+  without a usable death date has no age, as in `dim_person_age`. `ltc_register_age_at` holds this rule.
 - Live FH, gestational diabetes and NAFLD join `dim_person_active_patients`; other live facts use different demographic joins.
   Do not assume every live fact is limited to registered, living people.
 
