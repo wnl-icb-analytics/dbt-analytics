@@ -56,9 +56,10 @@
       month-end. Imputed values are not clipped.
 
     Differences from qadmissions_input_features
-      Lab features keep extreme outliers; the live model reads the
-      int_*_latest models, which exclude them. c_hb, high_platelet and
-      high_lft can therefore differ even at the same date.
+      Platelet and LFT features keep extreme outliers; the live model reads
+      the int_*_latest models, which exclude them. high_platelet and high_lft
+      can therefore differ even at the same date. Haemoglobin excludes
+      out-of-range results in both models.
       Prior admissions come from int_segmentation_acute_activity_history,
       built from the SUS APC encounter model because the live mart's spell
       source holds only two years. It does not impute missing admission
@@ -257,11 +258,11 @@ lab_thresholds AS (
 -- Valid results for the five QAdmissions lab measurements, narrowed to the
 -- columns needed before the index-date join. Valid means a standardised value
 -- that is not negative. Unlike the live int_*_latest models, extreme outliers
--- are kept.
+-- are kept, except for haemoglobin, which drops out-of-range results.
 lab_results AS (
     SELECT 'haemoglobin' AS measurement, id, person_id, clinical_effective_date, date_recorded, inferred_value
     FROM {{ ref('int_haemoglobin_all') }}
-    WHERE inferred_value IS NOT NULL AND NOT is_negative
+    WHERE inferred_value IS NOT NULL AND NOT is_negative AND NOT is_out_of_range
     UNION ALL
     SELECT 'platelets'   AS measurement, id, person_id, clinical_effective_date, date_recorded, inferred_value
     FROM {{ ref('int_platelets_all') }}

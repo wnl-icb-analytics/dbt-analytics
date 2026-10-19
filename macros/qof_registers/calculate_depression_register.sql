@@ -4,7 +4,7 @@
     Calculates Depression register status at one or more reference dates.
 
     Business Logic:
-    - Age ≥18 at reference date
+    - Age ≥18 at reference date, or at death if earlier (ltc_register_age_at)
     - Latest first/new episode of depression on/after 2006-04-01
     - Unresolved (no DEPRES_COD after latest first/new episode)
 
@@ -50,14 +50,7 @@
         SELECT
             diag.reference_date,
             diag.person_id,
-            FLOOR(DATEDIFF(
-                'month',
-                birth.birth_date_approx,
-                CASE
-                    WHEN birth.death_date_approx <= diag.reference_date THEN birth.death_date_approx
-                    ELSE diag.reference_date
-                END
-            ) / 12) AS age
+            {{ ltc_register_age_at('birth', 'diag.reference_date') }} AS age
         FROM depression_person_aggregates AS diag
         INNER JOIN {{ ref('dim_person_birth_death') }} AS birth
             ON diag.person_id = birth.person_id
