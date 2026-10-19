@@ -593,10 +593,10 @@ WITH schema_metadata AS (
   
   UNION ALL
   
-    -- ukhfd_lsoa_to_sub_icb: Mapping between LSOA and Sub ICB geographies
+    -- ukhfd_lsoa_to_sub_icb_plus: Mapping between LSOA and Sub-ICB including higher NHSE geographies
   SELECT 
     'UKHFD' as database_name,
-    'LSOA_To_Sub_ICB' as schema_name,
+    'LSOA_Sub_ICB_ICB_NHSER_LAD' as schema_name,
     table_name,
     column_name,
     data_type,
@@ -604,7 +604,7 @@ WITH schema_metadata AS (
     numeric_scale,
     ordinal_position
   FROM "UKHFD".INFORMATION_SCHEMA.COLUMNS
-  WHERE table_schema = 'LSOA_To_Sub_ICB'
+  WHERE table_schema = 'LSOA_Sub_ICB_ICB_NHSER_LAD'
   
   UNION ALL
   

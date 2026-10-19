@@ -19,3 +19,30 @@ models:
           column_name: medication_order_id
       - unique:
           column_name: medication_order_id
+
+unit_tests:
+- name: medication_bnf_source_person_without_patient_mapping
+  model: int_medication_order_bnf
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select 'SYN_BNF'::varchar id,-18303::number person_id,'SYN_UNMAPPED'::varchar patient_id,
+       null::varchar medication_statement_id,null::varchar provider_organisation_id,null::varchar publisher_organisation_code,
+       dateadd(day,-1,current_date())::date clinical_effective_date,null::varchar medication_name,
+       'SYN_PRODUCT'::varchar mapped_concept_code,null::varchar mapped_concept_display,null::varchar dose,
+       null::number quantity_value,null::varchar quantity_unit,null::number duration_days,null::number estimated_cost,
+       null::number age_at_event,'0103050SYN'::varchar bnf_code,null::varchar bnf_name,'01'::varchar bnf_chapter,
+       '0103'::varchar bnf_section,null::varchar issue_method_description
+  - input: ref('stg_olids_medication_statement')
+    format: sql
+    rows: |-
+      select null::varchar id,null::varchar authorisation_type_source_code,null::boolean is_active,null::date cancellation_date,null::date expiry_date where false
+  expect:
+    format: sql
+    rows: |-
+      select 'SYN_BNF'::varchar medication_order_id,-18303::number person_id
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as medication_order_id, null::number as person_id where false

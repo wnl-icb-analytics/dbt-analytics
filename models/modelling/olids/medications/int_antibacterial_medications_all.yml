@@ -3,14 +3,14 @@ models:
   - name: int_antibacterial_medications_all
     description: >-
       Antibacterial orders in OLIDS, identified by BNF prefix 0501. One row per dated
-      order linked to a patient-person mapping, including inactive and deceased people
+      order linked by staging person_id, including inactive and deceased people
       and future-dated orders. An order does not establish its indication or confirm
       that the medicine was taken.
     config:
       meta:
         owner:
           name: Emily Baldwin
-    tests: []
+    data_tests: []
     columns:
       - name: person_id
         description: 'Person identifier'
@@ -49,8 +49,10 @@ models:
         description: 'BNF-based antibacterial class (penicillins, cephalosporins,
           tetracyclines, macrolides, quinolones, etc.)'
       - name: is_recent_3m
-        description: 'Order within last 3 months'
+        description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_6m
-        description: 'Order within last 6 months'
+        description: 'Order in the 6 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_12m
-        description: 'Order within last 12 months'
+        description: 'Order in the 12 calendar months up to and including the build date; lower bound excluded.'
+      - name: is_future_dated
+        description: Order dated after the build date; kept as source evidence, never recent.
