@@ -1,7 +1,3 @@
-{{ 
-    config(materialized='view') 
-}}
-
 with joined_data as (
     select 
         gp_practice_code as practice_code,

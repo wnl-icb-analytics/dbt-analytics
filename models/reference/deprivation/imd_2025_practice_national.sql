@@ -1,5 +1,3 @@
-{{ config(materialized='view') }}
-
 with imd_ranking as (
     select 
         rank () over (partition by effective_snapshot_date order by imd_score desc) as imd_rank,
