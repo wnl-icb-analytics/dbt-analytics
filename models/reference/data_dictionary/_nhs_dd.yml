@@ -402,6 +402,25 @@ models:
     data_tests: *history_grain_test
     columns: *history_columns
 
+  - name: nhs_dd_commissioned_service_category
+    description: >-
+      NHS Data Model and Dictionary Commissioned Service Category Code values from the
+      UKHFD specialised commissioning lookup. One row per code ever published, with the
+      newest UKHFD definition.
+    config: *owner
+    columns:
+      - name: code
+        description: National code, for example 12 for an Integrated Care Board.
+        data_tests: [not_null, unique]
+      - name: description
+        description: Newest published description, including any usage note in brackets.
+      - name: short_description
+        description: Description without its trailing usage note, such as (funded nationally).
+      - name: is_currently_valid
+        description: TRUE when the code is in the latest UKHFD extract.
+      - name: source_snapshot_date
+        description: Date of the UKHFD snapshot holding the selected definition.
+
   - name: nhs_dd_community_treatment_order_end_reason
     description: >-
       NHS Data Model and Dictionary Community Treatment Order End Reason codes. One row per

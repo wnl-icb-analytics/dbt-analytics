@@ -1,14 +1,13 @@
 models:
   - name: int_covid_immunosuppression
-    description: 'COVID immunosuppression eligibility determination.
-
-      Grain: One row per person per campaign who meets immunosuppression criteria
-
-      Identifies people: • Diagnosed with immunosuppression (any time) • Recent immunosuppressant medication (6 months before the search run date) • Recent immunosuppression admin code (3 years before the search run date) • Recent chemotherapy/radiotherapy (6 months before the search run date) • Aged 6 months or over, any upper age. Computed for every campaign. The search run date is the earlier of the build date and RUN_DAT, so a season in flight uses the last 6 months and a closed season keeps its reported windows.
-
-      The offer''s under-75 cap (immuno_max_age_years, Spring 2025 onward) is applied by fct_covid_eligibility, tested on birth date, so this model can also feed int_covid_flu_risk_group_flags with immunosuppression status at any age.
-
-      Used by: fct_covid_eligibility, int_covid_under_65_at_risk, int_covid_flu_risk_group_flags, adult immunisation population models'
+    description: >-
+      COVID immunosuppression recall group in OLIDS, one row per person and campaign,
+      aged at least 6 months at its reference date. Qualifying UKHSA_COVID evidence is
+      IMMDX_COV_COD at any time, IMMRX_COD or DXT_CHEMO_COD in 6 months, or
+      IMM_ADM_COD in 3 years. Windows end at the earlier of today and campaign audit
+      end. There is no upper age limit here; the offer applies the under-75 limit from
+      Spring 2025 separately. Recall windows differ from campaign-anchored uptake
+      monitoring.
     data_tests:
       - cluster_ids_exist:
           arguments:

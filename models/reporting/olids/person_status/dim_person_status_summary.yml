@@ -2,36 +2,13 @@ version: 2
 
 models:
   - name: dim_person_status_summary
-    description: |
-      Person Status Summary Dimension
-      ================================
-      
-      Wide dimension table combining all person status flags into a single model
-      with one row per person. Provides a complete picture of each person's
-      vulnerability factors, risk behaviours, and data sharing preferences.
-      
-      **Grain:** One row per person (from dim_person_demographics)
-      
-      **Key Features:**
-      - All status flags default to FALSE/0/'Unknown' for persons without records
-      - Complete population coverage (everyone in dim_person_demographics)
-      - Pre-calculated summary flags for vulnerability and risk
-      
-      **Status Categories:**
-      - Care Home: residential status (care home, nursing home, temporary)
-      - Homeless: homeless codes or registered at CHIP practice
-      - Carer: unpaid carer status and type
-      - Housebound: housebound status
-      - Polypharmacy: medication counts and polypharmacy flags
-      - Alcohol: alcohol status and risk level
-      - Smoking: smoking status and risk level
-      - Pregnancy: currently pregnant
-      - Data Sharing: Type 1 opt-out and secondary use allowed
-      - Looked After Child: LAC status
-      
-      **Use Case:** Join to semantic views for population health analysis
-      with complete vulnerability and risk factor coverage.
-
+    description: >-
+      Care, vulnerability, lifestyle and data-sharing statuses per person with OLIDS
+      demographics, including inactive and deceased people. Most missing flags default
+      to false, medication counts to zero and smoking/alcohol categories to Unknown.
+      These defaults do not confirm clinical absence. is_allowed_secondary_use
+      defaults to true without a matching record and must not replace the dedicated
+      secondary-use allow-list.
     config:
       meta:
         owner:
@@ -114,6 +91,10 @@ models:
       
       # Summary Flags
       - name: has_vulnerability_flag
-        description: Has any vulnerability indicator (care home, homeless, housebound, LAC)
+        description: >-
+          True for care-home residence, homelessness or CHIP registration, housebound
+          status, or looked-after-child evidence.
       - name: behavioural_risk_count
-        description: Count of behavioural risk factors (current smoker, high alcohol risk, severe polypharmacy)
+        description: >-
+          Number of these recorded risks: current smoking, higher-risk-or-worse alcohol
+          status, and ten or more qualifying medicines.

@@ -1,25 +1,12 @@
 models:
   - name: int_flu_long_term_residential_care
-    description: 'Flu vaccination eligibility for people in long-term residential care settings.
-
-      Grain: at most one row per campaign per person, for campaigns with
-      eligible_long_term_residential_care switched on in flu_campaign_config().
-
-      Key Features:
-
-      • Residential status logic using LONGRES_COD vs RESIDE_COD comparison
-
-      • Latest residential code must be long-term care to qualify
-
-      • Age restriction: minimum 6 months for flu vaccination
-
-      • Captures current residential status (not historical)
-
-      • Local extension: UKHSA removed the long-stay residential care indicator and the LONGRES_COD group from the flu specification at v15.7, but residents remain eligible and their vaccinations are coordinated through a provider, so the cohort is kept and drives eligibility. Not part of the ImmForm return
-
-      • LONGRES_COD is read from the COVID workbook, which still publishes it, unpinned because the seven codes are identical in every published version; RESIDE_COD is read from the flu workbook pinned to the campaign version
-
-      Purpose: Identify care home residents eligible for flu vaccination due to communal living infection risk.'
+    description: >-
+      OLIDS care-home group for flu planning, one row per person and offering
+      campaign, aged at least 6 months at its run date, with no upper limit. Latest
+      LONGRES_COD must not precede RESIDE_COD through audit end. LONGRES_COD uses
+      shared UKHSA_COVID codes; RESIDE_COD uses campaign-specific UKHSA_FLU codes.
+      This local offer remains after removal of the national residential-care uptake
+      indicator.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

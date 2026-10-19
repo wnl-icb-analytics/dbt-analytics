@@ -1,36 +1,27 @@
 models:
   - name: dim_practice
-    description: 'Practice dimension with organisational hierarchy spanning multiple London ICBs.
-
-      Key Features:
-
-      • One row per practice combining Dictionary and OLIDS data sources
-
-      • Borough-prefixed PCN names for geographic clarity
-
-      • Practice name cleaning via clean_practice_name macro for consistency
-
-      • Geographic coordinates and LSOA/MSOA mapping for spatial analysis
-
-      • Complete organisational hierarchy (Practice > PCN > Commissioner > ICB)
-
-      • Filtered to London ICBs: West and North London (merged NCL + NWL), North East, South East, South West
-
-      Purpose: Supports practice-level reporting, geographic analysis, and organisational hierarchy navigation.'
-
+    description: >-
+      London GP practices matched between Dictionary and OLIDS organisation records,
+      one row per selected organisation ID. Includes closed and obsolete practices.
+      Only one organisation ID is kept per practice, so older activity IDs may be
+      missing.
     config:
       meta:
         owner:
           name: EddieDavison92
     columns:
       - name: organisation_id
-        description: 'OLIDS internal organisation ID for practice'
+        description: >-
+          Selected OLIDS organisation ID for the practice. Other IDs for the same
+          practice, including IDs on older activity, may be absent.
         tests:
           - not_null
           - unique
 
       - name: practice_code
-        description: 'Practice ODS code (NHS organisational code)'
+        description: >-
+          Practice ODS code. If several practice codes map to one organisation ID, the
+          alphabetically first code is kept.
         tests:
           - not_null
 

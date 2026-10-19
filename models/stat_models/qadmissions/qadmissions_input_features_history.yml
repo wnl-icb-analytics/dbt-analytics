@@ -53,6 +53,14 @@ models:
             combination_of_columns:
               - end_date
               - person_id
+      # BMI imputation, as in qadmissions_input_features. Both hold with
+      # imputation switched off.
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "is_bmi_imputed = (bmi_recorded is null and bmi is not null)"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "is_bmi_imputed or equal_null(bmi, bmi_recorded)"
     columns:
       - name: end_date
         data_type: date
@@ -85,13 +93,50 @@ models:
       - name: bmi
         data_type: float
         description: >
-          Latest valid BMI (kg/m^2) known by the index date, from int_bmi_all,
-          chosen as int_bmi_latest chooses it. Valid means 10-150 kg/m^2;
-          includes BMI calculated from weight and the most recent prior
-          height. Raw value, not clipped. NULL when the person has no valid
-          BMI by the index date. For calculated BMI only the weight's
-          recording date is checked, so a height entered after the index date
-          but dated before it can still contribute.
+          BMI (kg/m^2) as scored at the index date: bmi_recorded or, when there
+          is none, the mean recorded BMI at that index date of people with the
+          same sex, age decade (at the month-end) and ethnicity category,
+          falling back as in qadmissions_input_features. The means use only
+          that index date's population and the BMIs known by then. Ethnicity
+          is today's category, like ethrisk. Not clipped.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 10
+                max_value: 150
+                inclusive: true
+
+      - name: bmi_recorded
+        data_type: float
+        description: >
+          Latest valid BMI (kg/m^2) known by the index date, before imputation,
+          from int_bmi_all, chosen as int_bmi_latest chooses it. Valid means
+          10-150 kg/m^2; includes BMI calculated from weight and the most
+          recent prior height. NULL when the person has no valid BMI by the
+          index date. For calculated BMI only the weight's recording date is
+          checked, so a height entered after the index date but dated before
+          it can still contribute.
+        data_tests:
+          - dbt_utils.not_null_proportion:
+              arguments:
+                at_least: "{{ var('qadmissions_min_recorded_bmi_share', 0.8) }}"
+
+      - name: is_bmi_imputed
+        data_type: boolean
+        description: "TRUE when bmi is imputed because the person has no BMI known by the index date."
+        data_tests:
+          - not_null
+
+      - name: bmi_imputation_group
+        data_type: varchar
+        description: >
+          The group whose mean recorded BMI at that index date was imputed:
+          sex_age_ethnicity, or sex_age or sex when the finer group had fewer
+          than 100 recorded BMIs. NULL when bmi is recorded.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['sex_age_ethnicity', 'sex_age', 'sex']
 
       - name: sha1
         data_type: number

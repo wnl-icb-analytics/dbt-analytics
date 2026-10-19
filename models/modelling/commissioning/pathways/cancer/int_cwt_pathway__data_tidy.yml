@@ -1,16 +1,11 @@
 models:
   - name: int_cwt_pathway__data_tidy
-    description: >
-      Cancer pathway-level intermediate table for CWT pathway records. 
-      Due to the size and complexity of the base data table, this intermediate table seeks to accomplish a number of transformations that allows further development of the pipeline.
-      These include:
-        - Grouping columns into ordered categories with a hierarchical naming convention
-        - Convert datetime columns to dates
-        - Mapping all site level codes to include the parent organisation as standalone columns
-        - Maps NMUH to RFL pre-merger for retroactive analysis
-        - Converted field code fields to varchar for consistency in how they appear in documentation ('01' instead of 1)
-        - Deciated logic is used for the pathway identifier field as this contains a mix of site and trust codes in the raw data
-        - Uses the active system ID table to remove inactive rows
+    description: >-
+      Cancer Waiting Times pathways whose system ID is in the active-record list, one row per
+      retained pathway record. Includes referral, diagnosis, treatment and waiting-time
+      details, with parent-trust codes alongside sites. All historic North Middlesex
+      University Hospital records are attributed to Royal Free London (trust RAL, site RAL27),
+      including pre-merger records.
     config:
       meta:
         owner:
@@ -52,7 +47,9 @@ models:
       - name: org__faster_diagnosis_pathway_end_site_code
         description: Site code for the faster diagnosis pathway end organisation.
       - name: org__patient_pathway_identifier_issuer_trust_code
-        description: Trust code for the issuer of the patient pathway identifier, using a mapped trust where available.
+        description: >-
+          Trust code for the pathway identifier issuer. Retains the supplied value when no
+          eligible trust or site mapping exists.
       - name: org__accountable_investigating_trust_code_preset
         description: Preset accountable investigating trust code.
       - name: org__accountable_investigating_trust_code

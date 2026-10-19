@@ -19,7 +19,8 @@ dim_person_demographics (base spine)
   + int_smoking_status_latest      → smoke_cat
   + 5 × int_<med>_medications_all  → b_anticoagulant / b_antidepressant / b_antipsychotic / b_corticosteroids / b_nsaid
   + fct_person_sus_apc_recent       → hes_admitprior_cat
-  + int_bmi_latest                 → bmi
+  + int_bmi_latest                 → bmi_recorded, and bmi (missing values imputed; see "BMI imputation")
+  + dim_person_ethnicity           → ethnicity category, used only to group the BMI imputation
   + int_haemoglobin_latest         → c_hb        
   + int_platelets_latest           → high_platelet
   + int_lft_latest                 → high_lft    (composite of ALT, GGT, bilirubin)
@@ -63,7 +64,7 @@ The features split into four groups based on where their codes come from.
 
 ### 4. Other project intermediates
 
-- `bmi` ← `int_bmi_latest`
+- `bmi` ← `int_bmi_latest`, with missing values imputed (see "BMI imputation")
 - `smoke_cat` ← `int_smoking_status_latest`
 - `hes_admitprior_cat` ← `fct_person_sus_apc_recent.apc_nel_12mo`
 - `town` ← `int_person_geography.townsend_score` (joins the postcode-derived `lsoa_code_11` to the `townsend_lsoa_2011` seed)
@@ -130,17 +131,44 @@ Already capped at 12 months prior (per the paper's "emergency admissions in the 
 
 ---
 
+## BMI imputation
+
+A missing BMI is filled in before scoring. The QAdmissions paper used multiple imputation for missing BMI; this is a simpler single imputation.
+
+- **Who:** everyone with no valid recorded BMI in `int_bmi_latest`. Recorded values are never changed.
+- **The value:** the mean recorded BMI of eligible people with the same sex, age decade (`FLOOR(age / 10) * 10`) and ethnicity category from `dim_person_ethnicity`, with "Unknown" (a code with no category) counted as "Not Recorded".
+- **Small groups:** if that group has fewer than 100 recorded BMIs (var `qadmissions_bmi_imputation_min_group`), the mean for sex and age decade is used, then the mean for sex.
+- **Not clipped:** the means use every valid recorded BMI (10–150), and the aim is the most accurate BMI, so an imputed value outside 20–40 is left as it is and the model rejects that row.
+- **Columns:**
+  - `bmi` is what the model scores: recorded, or imputed
+  - `bmi_recorded` keeps the recorded value
+  - `is_bmi_imputed` and `bmi_imputation_group` show what was imputed and from which group
+  - `qadmissions_predictions` carries all of them, plus `bmi_imputation_method`
+- **History:** `qadmissions_input_features_history` imputes the same way, with the means computed separately for each index date from that date's population and the BMIs known by then. Ethnicity is today's category at every index date, like `ethrisk`.
+- **Code and tests:**
+  - the logic is in `macros/clinical/qadmissions_impute_bmi.sql`
+  - `tests/qadmissions_impute_bmi_synthetic.sql` checks it on made-up rows
+  - the column tests check that recorded values are unchanged and that everyone gets a BMI
+  - a `not_null_proportion` test on `bmi_recorded` (var `qadmissions_min_recorded_bmi_share`) fails if the BMI feed breaks, which would otherwise have everyone imputed
+- **Switching it off:** set var `qadmissions_impute_bmi` to false. `bmi` is then the recorded value, and the tests still pass.
+
+Why these choices: imputing from the mean was more accurate than from the median, on both BMI and the model's hazard. Adding the ethnicity category corrected the biggest group-level biases, such as BMI being underestimated for Black people when only sex and age were used.
+
+---
+
 ## NULL handling
 
-The model needs a value for every feature in order to score a row. The features below currently allow NULL pass-through, which means rows with these NULLs cannot be scored until either the upstream data is populated or a default is added in `qadmissions_input_features.sql`.
+The model needs a value for every feature in order to score a row.
+
+**Imputed when missing:**
+- `bmi`: see "BMI imputation"
 
 **NULL pass-through (no default applied):**
-- `bmi`
-- `town`
-- `alcohol_cat6`
+- `town`: rows without a Townsend score aren't scored
 
 **Default applied when no record exists:**
-- `ethrisk` → `1` (NotRecorded, per `qadmission_review/python_pipeline/mapping.py:48-59`)
+- `alcohol_cat6` → `0` (NonDrinker), the category a Full AUDIT score of 0 gives
+- `ethrisk` → `1` (NotRecorded, the same group as White)
 - `hes_admitprior_cat` → `0`
 - `smoke_cat` → `0`
 - The eight `b_*` disease booleans (and the four `_COD_Q`-sourced ones) → `FALSE`
