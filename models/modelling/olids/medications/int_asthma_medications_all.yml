@@ -1,6 +1,7 @@
 models:
   - name: int_asthma_medications_all
-    description: 'All asthma medication orders using ASTTRT_COD cluster. Date filtering applied by consumers.'
+    description: 'All asthma medication orders using ASTTRT_COD cluster. Date filtering applied by consumers.
+      One row per medication order, identified by medication_order_id.'
     config:
       meta:
         owner:
@@ -9,15 +10,13 @@ models:
       - cluster_ids_exist:
           arguments:
             cluster_ids: ASTTRT_COD
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - medication_order_id
     columns:
       - name: person_id
         description: 'Person identifier'
       - name: medication_order_id
         description: 'Unique medication order identifier'
+        data_tests:
+          - unique
       - name: order_date
         description: 'Date medication was ordered'
         tests:

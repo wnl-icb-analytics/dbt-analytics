@@ -2,7 +2,7 @@ models:
   - name: int_lithium_medications_all
     description: 'Lithium medication orders from the LIT_COD cluster (QOF lithium
       prescription codes, MH2_REG). BNF 040203 is not used as it covers non-lithium
-      mania drugs.'
+      mania drugs. One row per medication order, identified by medication_order_id.'
     config:
       meta:
         owner:
@@ -11,15 +11,13 @@ models:
       - cluster_ids_exist:
           arguments:
             cluster_ids: LIT_COD
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - medication_order_id
     columns:
       - name: person_id
         description: 'Person identifier'
       - name: medication_order_id
         description: 'Unique medication order identifier'
+        data_tests:
+          - unique
       - name: medication_statement_id
         description: 'Related medication statement identifier'
       - name: order_date

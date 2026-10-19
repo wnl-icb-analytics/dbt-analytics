@@ -6,7 +6,7 @@
 
 /*
 Latest valid haemoglobin observation per person.
-Excludes excluded units, negative values and extreme outliers, returns the most recent per person.
+Excludes excluded units, negative values, extreme outliers and unconvertible out-of-range values, returns the most recent per person.
 */
 
 SELECT
@@ -31,6 +31,7 @@ FROM {{ ref('int_haemoglobin_all') }}
 WHERE inferred_value IS NOT NULL
   AND NOT is_negative
   AND NOT is_extreme_outlier
+  AND NOT is_out_of_range
 QUALIFY ROW_NUMBER() OVER (
     PARTITION BY person_id
     ORDER BY clinical_effective_date DESC, id DESC

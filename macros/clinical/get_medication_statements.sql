@@ -61,16 +61,7 @@
     ){% if include_history %},
 
     historical_codes AS (
-        SELECT DISTINCT
-            h.old_concept_id::VARCHAR AS mapped_concept_code,
-            cc.cluster_id,
-            cc.cluster_description
-        FROM {{ ref('stg_nhsd_snomed_sct_history') }} h
-        INNER JOIN cluster_codes cc
-            ON h.new_concept_id::VARCHAR = cc.mapped_concept_code
-        WHERE h.old_concept_id::VARCHAR NOT IN (
-            SELECT mapped_concept_code FROM cluster_codes
-        )
+        {{ snomed_history_predecessors('cluster_codes') }}
     ),
 
     expanded_codes AS (
