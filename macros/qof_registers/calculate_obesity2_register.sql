@@ -161,9 +161,14 @@
         SELECT
             bmi.reference_date,
             bmi.person_id,
-            FLOOR(
-                DATEDIFF('month', birth.birth_date_approx, bmi.reference_date) / 12
-            ) AS age
+            FLOOR(DATEDIFF(
+                'month',
+                birth.birth_date_approx,
+                CASE
+                    WHEN birth.death_date_approx <= bmi.reference_date THEN birth.death_date_approx
+                    ELSE bmi.reference_date
+                END
+            ) / 12) AS age
         FROM bmi_status AS bmi
         INNER JOIN {{ ref('dim_person_birth_death') }} AS birth
             ON bmi.person_id = birth.person_id

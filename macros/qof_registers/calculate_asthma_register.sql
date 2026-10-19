@@ -71,7 +71,14 @@
         SELECT
             diag.reference_date,
             diag.person_id,
-            FLOOR(DATEDIFF('month', birth.birth_date_approx, diag.reference_date) / 12) AS age
+            FLOOR(DATEDIFF(
+                'month',
+                birth.birth_date_approx,
+                CASE
+                    WHEN birth.death_date_approx <= diag.reference_date THEN birth.death_date_approx
+                    ELSE diag.reference_date
+                END
+            ) / 12) AS age
         FROM asthma_person_aggregates AS diag
         INNER JOIN {{ ref('dim_person_birth_death') }} AS birth
             ON diag.person_id = birth.person_id

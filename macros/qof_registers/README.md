@@ -9,7 +9,7 @@ Non-QOF and clinical NDH macros live in `macros/ltc_registers/`.
   `reference_dates` instead supplies a query returning a `reference_date` column.
 - Events count once their clinical or order date and any recorded date are on or before the reference date.
   A null recorded date does not block an event (`ltc_register_known_by`).
-- Age-restricted rules derive age at the reference date from the approximate birth date.
+- Age-restricted rules derive age from the approximate birth date. A death date on or before the reference date is used instead, so someone who died earlier is not aged forward.
 - Outputs have one row per person and reference date with returned evidence, including `is_on_register` and condition fields.
   Filter the membership flag when counting register members.
 

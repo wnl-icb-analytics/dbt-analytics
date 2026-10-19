@@ -37,8 +37,10 @@ The two copies differ in inputs and dates:
 - Macros read `int_*_all` modelling event models through `ref()`, never staging observations.
   Live obesity reads the person-level `int_bmi_qof` and `int_ethnicity_qof` instead.
 - Live facts keep future-dated evidence; macros only count evidence known by the reference date.
-- Live facts use `dim_person_age`. Macros derive age at the reference date from `dim_person_birth_death.birth_date_approx`
-  as `FLOOR(DATEDIFF('month', birth_date_approx, reference_date) / 12)`.
+- Live facts use `dim_person_age`. Macros derive age from `dim_person_birth_death.birth_date_approx`
+  as `FLOOR(DATEDIFF('month', birth_date_approx, age_date) / 12)`. `age_date` is the death date when
+  that date is on or before the reference date, and the reference date otherwise. Someone who died
+  before the age threshold is not aged forward to the reference date.
 - Live FH, gestational diabetes and NAFLD join `dim_person_active_patients`; other live facts use different demographic joins.
   Do not assume every live fact is limited to registered, living people.
 
