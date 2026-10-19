@@ -27,8 +27,8 @@ select
     effective_to
 from {{ ref('raw_ukhfd_lsoa_sub_icb_plus_dim_map_scd') }} raw
 
-left join reference.organisation.organisation dict_ods_icb
+left join {{ ref('organisation') }} dict_ods_icb
 on raw.icb_ods_code = dict_ods_icb.organisation_code
 
-left join reference.data_dictionary.ons_geography dict_lad
+left join {{ ref('ons_geography') }} dict_lad
 on raw.lad_code = dict_lad.code
