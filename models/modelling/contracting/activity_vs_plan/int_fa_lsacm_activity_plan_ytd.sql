@@ -34,7 +34,7 @@ WHEN acm.commissioned_service_category_code = 11 THEN 'Integrated Care Board' EL
 REGEXP_REPLACE(
     INITCAP(LOWER(cs.short_description)),
     '\\bNhs\\b','NHS')  END AS cscc_name,
-CASE WHEN acm.commissioned_service_category_code = 11 or cs.code is null THEN 'Invalid Code' ELSE 'Valid' END AS cscc_dq,
+CASE WHEN acm.commissioned_service_category_code = 11 or cs.code is null THEN 'Code fix required' ELSE 'Valid' END AS cscc_dq,
 CASE 
 WHEN acm.commissioned_service_category_code = 11 THEN 'ICB-commissioned' 
 ELSE cs.funding_status END AS cscc_funding_status,
@@ -51,7 +51,7 @@ ser.current_funding_status as service_code_funding_status,
 CASE 
 WHEN acm.service_code IS NOT NULL and ser.service_code IS NULL THEN 'Invalid Code' 
 WHEN RIGHT(acm.service_code, 1) REGEXP '[a-z]' THEN 'Code fix required'
-WHEN acm.service_code IS NULL THEN NULL
+WHEN acm.service_code IS NULL THEN 'Missing Code'
 ELSE 'Valid' END AS service_code_dq,
  --define SPEC_COMM_FLAG for reporting. icb_delegation_26_27 = 'BLUE' is locally commissioned so use the CSSC code for Funding Status
 CASE
