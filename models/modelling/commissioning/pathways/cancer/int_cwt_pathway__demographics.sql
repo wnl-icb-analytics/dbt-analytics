@@ -22,7 +22,6 @@ select
     gp_all.pcn_code                           as registered__pcn_code,
     gp_all.pcn_name                           as registered__pcn_name,
     gp_all.sub_icb_code                       as registered__subicb_code,
-    gp_all.sub_icb_name                       as registered__subicb_name,
     gp_all.icb_code                           as registered__icb_code,
     gp_all.icb_name                           as registered__icb_name,
     
