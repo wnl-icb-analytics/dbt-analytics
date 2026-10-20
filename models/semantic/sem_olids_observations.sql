@@ -79,7 +79,7 @@ TABLES(
 
     bmi AS {{ ref('int_bmi_latest') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Latest valid BMI for people aged at least 18 at build or death. Recorded or calculated from adult height and weight, with ethnicity-adjusted NICE NG246 categories.',
+        COMMENT = 'Latest valid BMI of 10-150 kg/m2, up to the build date. People are aged at least 18 at the build date, or at death. Recorded BMI, height and weight are kept only when measured at age 18 or over. Categories use ethnicity-adjusted NICE NG246 thresholds.',
 
     waist AS {{ ref('int_waist_circumference_latest') }}
         PRIMARY KEY (person_id)
@@ -119,11 +119,11 @@ TABLES(
 
     lft AS {{ ref('int_lft_latest') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Latest liver function tests (ALT, GGT, bilirubin) with high flags vs clinical upper reference limits. Pairs with NAFLD/chronic liver disease registers.',
+        COMMENT = 'Latest liver function tests (ALT, GGT, bilirubin). A high flag is true when the value exceeds its QAdmissions abnormal-LFT threshold from qadmissions_lab_thresholds where direction is high, approximately three times the clinical upper limit of normal. Pairs with NAFLD/chronic liver disease registers.',
 
     haemoglobin AS {{ ref('int_haemoglobin_latest') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Latest haemoglobin with anaemia category',
+        COMMENT = 'Latest valid haemoglobin in g/L after conversion. Keeps a non-null inferred value from 25 to 300 g/L, and excludes negative values, extreme outliers and values that stay out of range.',
 
     platelets AS {{ ref('int_platelets_latest') }}
         PRIMARY KEY (person_id)
@@ -316,14 +316,14 @@ DIMENSIONS(
     glucose.result_unit_display AS result_unit_display COMMENT = 'Recorded unit of the latest blood glucose. Values are not converted, so group or filter by this before averaging.',
 
     -- Smoking Status
-    smoking.smoking_status AS smoking_status COMMENT = 'Latest recorded smoking status (Current Smoker, Ex-Smoker, Never Smoked, Non-Smoker (History Unknown), Unknown). People without a recorded status are absent.',
+    smoking.smoking_status AS smoking_status COMMENT = 'Latest recorded smoking status (Current Smoker, Ex-Smoker, Never Smoked, Non-Smoker (History Unknown)). People without a recorded status are absent; use sem_olids_population for an Unknown category.',
     smoking.is_current_smoker AS is_current_smoker COMMENT = 'TRUE when the latest smoking status is Current Smoker.',
     smoking.is_ex_smoker AS is_ex_smoker COMMENT = 'TRUE when the latest smoking status is Ex-Smoker.',
 
     -- BMI Categories
     bmi.bmi_category AS bmi_category COMMENT = 'BMI category (Underweight, Normal, Overweight, Obese Class I, Obese Class II, Obese Class III). Uses ethnicity-adjusted thresholds per NICE NG246.',
     bmi.requires_lower_bmi_thresholds AS requires_lower_bmi_thresholds COMMENT = 'Uses lower BMI thresholds for ethnicity',
-    bmi.is_valid_bmi AS is_valid_bmi COMMENT = 'BMI in valid range',
+    bmi.is_valid_bmi AS is_valid_bmi COMMENT = 'TRUE when BMI is within 10-150 kg/m2. This latest view keeps only valid values.',
 
     -- Waist Circumference Categories
     waist.waist_risk_category AS waist_risk_category COMMENT = 'Waist circumference risk (Low Risk, Moderate Risk Female, Moderate Risk, High Risk, Very High Risk)',
@@ -352,13 +352,13 @@ DIMENSIONS(
     acr.is_macroalbuminuria AS is_macroalbuminuria COMMENT = 'Macroalbuminuria present',
 
     -- Liver Function
-    lft.is_high_alt AS is_high_alt COMMENT = 'ALT above clinical upper reference limit',
-    lft.is_high_ggt AS is_high_ggt COMMENT = 'GGT above clinical upper reference limit',
-    lft.is_high_bilirubin AS is_high_bilirubin COMMENT = 'Bilirubin above clinical upper reference limit',
-    lft.high_lft AS high_lft WITH SYNONYMS = ('abnormal LFT', 'deranged LFTs') COMMENT = 'Any of ALT/GGT/bilirubin above its upper reference limit',
+    lft.is_high_alt AS is_high_alt COMMENT = 'TRUE when ALT exceeds the ALT QAdmissions abnormal-LFT threshold, approximately three times the clinical upper limit of normal. NULL when ALT is absent.',
+    lft.is_high_ggt AS is_high_ggt COMMENT = 'TRUE when GGT exceeds the GGT QAdmissions abnormal-LFT threshold, approximately three times the clinical upper limit of normal. NULL when GGT is absent.',
+    lft.is_high_bilirubin AS is_high_bilirubin COMMENT = 'TRUE when bilirubin exceeds the bilirubin QAdmissions abnormal-LFT threshold, approximately three times the clinical upper limit of normal. NULL when bilirubin is absent.',
+    lft.high_lft AS high_lft WITH SYNONYMS = ('abnormal LFT', 'deranged LFTs') COMMENT = 'TRUE when any of ALT, GGT or bilirubin exceeds its QAdmissions abnormal-LFT threshold, approximately three times the clinical upper limit of normal.',
 
     -- Haematology
-    haemoglobin.haemoglobin_category AS haemoglobin_category WITH SYNONYMS = ('anaemia category') COMMENT = 'Haemoglobin category (e.g. Anaemia, Normal, High)',
+    haemoglobin.haemoglobin_category AS haemoglobin_category WITH SYNONYMS = ('anaemia category') COMMENT = 'Category of the inferred g/L value: Abnormal below 20 or above 250, Severe Anaemia below 80, Moderate Anaemia below 100, Mild Anaemia (female threshold) below 120, Mild Anaemia (male threshold) below 130, Normal up to 180, otherwise Elevated. Sex is not used to choose the band.',
     platelets.platelets_category AS platelets_category WITH SYNONYMS = ('thrombocytopenia category') COMMENT = 'Platelet count category (e.g. Low, Normal, High)',
     eosinophils.eosinophil_category AS eosinophil_category COMMENT = 'Eosinophil count category (e.g. Normal, Raised). Raised eosinophils inform asthma/COPD biologic eligibility.',
 
@@ -475,7 +475,7 @@ METRICS(
 
     -- Liver Function
     lft.patients_with_lft AS COUNT(DISTINCT lft.person_id) COMMENT = 'Patients with any liver function test',
-    lft.high_lft_count AS COUNT(DISTINCT CASE WHEN lft.high_lft THEN lft.person_id END) COMMENT = 'Patients with any abnormal LFT (ALT/GGT/bilirubin above reference)',
+    lft.high_lft_count AS COUNT(DISTINCT CASE WHEN lft.high_lft THEN lft.person_id END) COMMENT = 'Patients with any of ALT, GGT or bilirubin above its QAdmissions abnormal-LFT threshold',
 
     -- Haematology
     haemoglobin.patients_with_haemoglobin AS COUNT(DISTINCT haemoglobin.person_id) COMMENT = 'Patients with haemoglobin',

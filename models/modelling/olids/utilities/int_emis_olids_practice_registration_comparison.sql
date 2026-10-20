@@ -20,7 +20,7 @@ Categorization:
 - 2-5% Variance: Between 2-5% variance
 - 5-20% Variance: Between 5-20% variance
 - 20%+ Variance: 20% or greater variance
-- Missing Data: No EMIS or OLIDS data available
+- Missing Data: EMIS list size absent or zero (e.g. practice only in OLIDS). A practice with EMIS but no OLIDS registrations has an OLIDS count of 0 and falls in a variance category
 
 Data Sources:
 - EMIS: Static extract (date from seed file)

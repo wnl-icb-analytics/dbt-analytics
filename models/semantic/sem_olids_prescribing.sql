@@ -23,7 +23,7 @@
     The chatbot has a BNF lookup tool — ask it to resolve drug class names to BNF codes.
 
     Pre-defined medication sets (joined via medication_order_id):
-    - Statins: with intensity classification (high/moderate/combination)
+    - Statins: with intensity classification (HIGH_INTENSITY, COMBINATION, OTHER_STATIN)
     - Antihypertensives, ACE inhibitors, ARBs, beta-blockers
     - Anticoagulants: with DOAC/VKA classification
     - Antiplatelets
@@ -176,9 +176,9 @@ RELATIONSHIPS(
 
 FACTS(
     -- Order details
-    rx.estimated_cost AS estimated_cost COMMENT = 'Estimated cost of this medication order (GBP).',
+    rx.estimated_cost AS estimated_cost COMMENT = 'Estimated cost of this medication order in pounds. Null when an inferred GP2GP import supplies zero. Other values, including non-zero costs on imports, are retained.',
     rx.quantity_value AS quantity_value COMMENT = 'Quantity prescribed',
-    rx.duration_days AS duration_days COMMENT = 'Duration of prescription in days',
+    rx.duration_days AS duration_days COMMENT = 'Duration of the prescription in days. Null when the supplied value is zero or less, or when an inferred GP2GP import supplies the 28-day default. Other positive values are retained.',
     rx.age_at_event AS age_at_event COMMENT = 'Patient age at time of order'
 )
 
