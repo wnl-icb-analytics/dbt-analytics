@@ -80,27 +80,38 @@ models:
         description: 'Flag indicating high teratogenic risk (always true for valproate)'
 
       - name: clinical_indication
-        description: 'Clinical indication category (ANTI_EPILEPTIC, MOOD_STABILISER,
-          UNSPECIFIED)'
+        description: 'Legacy product-name inference; not a validated indication. Retained pending interface approval.'
 
       - name: dose_category
-        description: 'Dose categorisation (LOW_DOSE, MODERATE_DOSE, HIGH_DOSE, UNKNOWN_DOSE)'
+        description: 'Legacy dose-string inference; not a validated daily dose. Retained pending interface approval.'
 
       - name: formulation_type
-        description: 'Formulation type (TABLET, CAPSULE, LIQUID, MODIFIED_RELEASE,
-          UNKNOWN_FORMULATION)'
+        description: 'dm+d dose form grouped into existing TABLET, CAPSULE, LIQUID, MODIFIED_RELEASE and UNKNOWN_FORMULATION labels. Modified- and prolonged-release forms take priority over tablet or capsule.'
 
       - name: is_recent_3m
-        description: 'Flag indicating order within the last 3 months'
+        description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
 
       - name: is_recent_6m
-        description: 'Flag indicating order within the last 6 months'
+        description: 'Order in the 6 calendar months up to and including the build date; lower bound excluded.'
 
       - name: is_recent_12m
-        description: 'Flag indicating order within the last 12 months'
+        description: 'Order in the 12 calendar months up to and including the build date; lower bound excluded.'
 
       - name: current_practice_id
         description: 'Current practice identifier for the patient'
 
       - name: total_patients
         description: 'Total patient count reference'
+
+      - name: is_future_dated
+        description: Order dated after the build date; kept as source evidence, never recent.
+
+      - name: dmd_formulation_type
+        description: dm+d VMP dose form verbatim; UNKNOWN when the product has no dm+d form.
+        data_tests:
+          - not_null
+
+      - name: is_modified_release
+        description: >-
+          dm+d form starts Modified-release or Prolonged-release. Gastro-resistant is distinct and
+          false; null when form is unknown.
