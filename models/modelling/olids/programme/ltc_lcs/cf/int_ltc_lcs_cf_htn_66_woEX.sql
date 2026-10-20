@@ -1,20 +1,23 @@
 {{ config(materialized='table') }}
 
--- LTC LCS HTN case finding: ICB_CF_HTN_66_woEX (UCLP Priority Group 3b) — pre-Rule-1
+-- LTC LCS HTN case finding: ICB_CF_HTN_66_woEX (UCLP Priority Group 3b). Pre-Rule-1
+-- Keep the latest record across the full 22-code systolic or diastolic pool.
+-- Test that same record against the clinic/home code set before its numeric threshold.
+-- The same code test applies to both inclusion and the age-80 low-BP exclusions.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/hypertension/icb-cf-htn-66.md
 --
 -- Start = int_ltc_lcs_cf_htn_base. Net logic:
 --   INCLUDE stage-1 BP:
---     clinic systolic  (vs1 + vs2) latest >= 140
---     clinic diastolic (vs3 + vs4) latest >= 90
---     home   systolic  (vs1 + vs5) latest >= 135
---     home   diastolic (vs3 + vs6) latest >= 85
+--     clinic systolic  (latest full pool, code IN vs2) >= 140
+--     clinic diastolic (latest full pool, code IN vs4) >= 90
+--     home   systolic  (latest full pool, code IN vs5) >= 135
+--     home   diastolic (latest full pool, code IN vs6) >= 85
 --   EXCLUDE ICB_CF_HTN_61_woEX, 62_woEX, 63_woEX, 65_woEX  (this realises the
---     "no risk factor / not higher priority" intent — NOT re-derived directly per canon)
+--     "no risk factor / not higher priority" intent. NOT re-derived directly per canon)
 --   EXCLUDE age>=80 patients whose elderly band is below threshold (BOTH sys AND dia below):
 --     clinic: age>=80 AND latest clinic SBP < 150 AND latest clinic DBP < 90
 --     home:   age>=80 AND latest home   SBP < 145 AND latest home   DBP < 85
--- vs1 [COLLISION] -> pin woEX id 8c607c29-9273-b754-5056-727bbbc8d5fa (22-code clinic-systolic).
+-- vs1 [COLLISION] -> pin woEX id 8c607c29-9273-b754-5056-727bbbc8d5fa (22-code combined systolic).
 
 with base as (
     select bp.person_id, pop.age_at_least
@@ -28,26 +31,22 @@ htn_62_woex as (select person_id from {{ ref('int_ltc_lcs_cf_htn_62_woEX') }}),
 htn_63_woex as (select person_id from {{ ref('int_ltc_lcs_cf_htn_63_woEX') }}),
 htn_65_woex as (select person_id from {{ ref('int_ltc_lcs_cf_htn_65_woEX') }}),
 
--- latest value per BP arm (value carried for both the include test and the 80+ exclusion)
+-- Code-tested latest readings feed both inclusion and the age-80 exclusions.
 clinic_systolic_latest as (
     select person_id, result_value
-    from ({{ get_ltc_lcs_observations("8c607c29-9273-b754-5056-727bbbc8d5fa, uclp_priority_group_3b_vs2") }})
-    qualify row_number() over (partition by person_id order by clinical_effective_date desc, observation_id desc) = 1
+    from ({{ get_ltc_lcs_latest_record_in_set("8c607c29-9273-b754-5056-727bbbc8d5fa", "uclp_priority_group_3b_vs2") }})
 ),
 clinic_diastolic_latest as (
     select person_id, result_value
-    from ({{ get_ltc_lcs_observations("uclp_priority_group_3b_vs3, uclp_priority_group_3b_vs4") }})
-    qualify row_number() over (partition by person_id order by clinical_effective_date desc, observation_id desc) = 1
+    from ({{ get_ltc_lcs_latest_record_in_set("uclp_priority_group_3b_vs3", "uclp_priority_group_3b_vs4") }})
 ),
 home_systolic_latest as (
     select person_id, result_value
-    from ({{ get_ltc_lcs_observations("8c607c29-9273-b754-5056-727bbbc8d5fa, uclp_priority_group_3b_vs5") }})
-    qualify row_number() over (partition by person_id order by clinical_effective_date desc, observation_id desc) = 1
+    from ({{ get_ltc_lcs_latest_record_in_set("8c607c29-9273-b754-5056-727bbbc8d5fa", "uclp_priority_group_3b_vs5") }})
 ),
 home_diastolic_latest as (
     select person_id, result_value
-    from ({{ get_ltc_lcs_observations("uclp_priority_group_3b_vs3, uclp_priority_group_3b_vs6") }})
-    qualify row_number() over (partition by person_id order by clinical_effective_date desc, observation_id desc) = 1
+    from ({{ get_ltc_lcs_latest_record_in_set("uclp_priority_group_3b_vs3", "uclp_priority_group_3b_vs6") }})
 ),
 
 bp_eligible as (

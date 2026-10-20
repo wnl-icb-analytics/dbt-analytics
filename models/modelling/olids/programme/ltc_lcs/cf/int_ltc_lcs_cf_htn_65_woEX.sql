@@ -1,19 +1,21 @@
 {{ config(materialized='table') }}
 
--- LTC LCS HTN case finding: ICB_CF_HTN_65_woEX (UCLP Priority Group 3a) — pre-Rule-1
+-- LTC LCS HTN case finding: ICB_CF_HTN_65_woEX (UCLP Priority Group 3a). Pre-Rule-1
+-- Keep the latest record across the full 22-code systolic or diastolic pool.
+-- Test that same record against the clinic/home code set before its numeric threshold.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/hypertension/icb-cf-htn-65.md
 --
 -- Start = int_ltc_lcs_cf_htn_base. Net logic:
 --   REQUIRE stage-1 BP:
---     clinic systolic  (vs1 + vs2) latest >= 140
---     clinic diastolic (vs3 + vs4) latest >= 90
---     home   systolic  (vs1 + vs5) latest >= 135
---     home   diastolic (vs3 + vs6) latest >= 85
+--     clinic systolic  (latest full pool, code IN vs2) >= 140
+--     clinic diastolic (latest full pool, code IN vs4) >= 90
+--     home   systolic  (latest full pool, code IN vs5) >= 135
+--     home   diastolic (latest full pool, code IN vs6) >= 85
 --   EXCLUDE ICB_CF_HTN_61_woEX, 62_woEX and 63_woEX
 --   AND an include arm (any of): CHD_COD (vs7) OR STRK_COD (vs8) OR TIA_COD (vs9)
 --     OR PAD_COD (vs10) OR CKD_COD (vs11) OR eGFR-MDRD (vs12) latest < 60 OR DM_COD (vs13)
 --     OR Black ethnicity (vs14, 78 codes).  NOTE: no BMI arm in PG3a (unlike 63).
--- vs1 [COLLISION] -> pin woEX id 4df8a74f-daed-fda0-5a8d-81d6f775ab83 (22-code clinic-systolic).
+-- vs1 [COLLISION] -> pin woEX id 4df8a74f-daed-fda0-5a8d-81d6f775ab83 (22-code combined systolic).
 
 with base as (
     select person_id
@@ -26,38 +28,22 @@ htn_63_woex as (select person_id from {{ ref('int_ltc_lcs_cf_htn_63_woEX') }}),
 
 clinic_systolic as (
     select person_id
-    from (
-        select person_id, clinical_effective_date, result_value
-        from ({{ get_ltc_lcs_observations("4df8a74f-daed-fda0-5a8d-81d6f775ab83, uclp_priority_group_3a_vs2") }})
-        qualify row_number() over (partition by person_id order by clinical_effective_date desc, observation_id desc) = 1
-    )
+    from ({{ get_ltc_lcs_latest_record_in_set("4df8a74f-daed-fda0-5a8d-81d6f775ab83", "uclp_priority_group_3a_vs2") }})
     where result_value >= 140
 ),
 clinic_diastolic as (
     select person_id
-    from (
-        select person_id, clinical_effective_date, result_value
-        from ({{ get_ltc_lcs_observations("uclp_priority_group_3a_vs3, uclp_priority_group_3a_vs4") }})
-        qualify row_number() over (partition by person_id order by clinical_effective_date desc, observation_id desc) = 1
-    )
+    from ({{ get_ltc_lcs_latest_record_in_set("uclp_priority_group_3a_vs3", "uclp_priority_group_3a_vs4") }})
     where result_value >= 90
 ),
 home_systolic as (
     select person_id
-    from (
-        select person_id, clinical_effective_date, result_value
-        from ({{ get_ltc_lcs_observations("4df8a74f-daed-fda0-5a8d-81d6f775ab83, uclp_priority_group_3a_vs5") }})
-        qualify row_number() over (partition by person_id order by clinical_effective_date desc, observation_id desc) = 1
-    )
+    from ({{ get_ltc_lcs_latest_record_in_set("4df8a74f-daed-fda0-5a8d-81d6f775ab83", "uclp_priority_group_3a_vs5") }})
     where result_value >= 135
 ),
 home_diastolic as (
     select person_id
-    from (
-        select person_id, clinical_effective_date, result_value
-        from ({{ get_ltc_lcs_observations("uclp_priority_group_3a_vs3, uclp_priority_group_3a_vs6") }})
-        qualify row_number() over (partition by person_id order by clinical_effective_date desc, observation_id desc) = 1
-    )
+    from ({{ get_ltc_lcs_latest_record_in_set("uclp_priority_group_3a_vs3", "uclp_priority_group_3a_vs6") }})
     where result_value >= 85
 ),
 

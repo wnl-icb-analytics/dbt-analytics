@@ -10,10 +10,9 @@
 --   register exclusion = "no diagnosis of diabetes"), NOT CF_NHSHC2Y.
 -- ICB_CF_DM_61_woEX: then
 --   - latest HbA1c (vs3, 3-code IFCC, value > 0) >= 48, AND
---   - exclude diabetes resolved / in-remission markers, "Latest 1" semantics. vs1 (7) and
---     vs2 (4, subset of vs1) are wholly remission/resolved codes, so latest-of-set is always
---     a remission marker -> equivalent to any-time membership of vs1 (pinned woEX id, name
---     collides with the 1-code Rule-1 marker).
+--   - exclude only when the latest record across the seven-code remission/HbA1c pool
+--     belongs to the four-code remission/resolution set. A later HbA1c defeats an older
+--     remission marker. The pinned inclusion ID avoids the headline report's name collision.
 
 with base as (
     select person_id
@@ -36,16 +35,13 @@ hba1c_ge_48 as (
     where result_value >= 48
 ),
 
--- Diabetes resolved / in-remission exclusion.
--- NB: canon vs1 (b7ce1049) is POLLUTED in the reference expansion with the 3 IFCC HbA1c
--- *measurement* codes (999791000000106 etc.), so it matches ~1.2M HbA1c-tested patients and
--- would wrongly exclude the whole cohort. vs2 (68968843) is the clean 4-code diabetes
--- resolved/remission set (Type I/II remission, diabetes resolved, DM in remission). Canon
--- excludes vs1 (any) OR vs2 (Latest 1); vs1's genuine remission content == vs2, so vs2
--- any-time membership reproduces the intended exclusion without the polluted HbA1c codes.
+-- Rank the mixed pool before testing the kept record for remission.
 diabetes_remission as (
     select person_id
-    from ({{ get_ltc_lcs_observations("68968843-a4fb-1a67-29d0-bfe7f33b241e") }})
+    from ({{ get_ltc_lcs_latest_record_in_set(
+        "b7ce1049-b4c0-1477-ec22-7696854f03ed",
+        "68968843-a4fb-1a67-29d0-bfe7f33b241e"
+    ) }})
 )
 
 select distinct b.person_id
