@@ -1,16 +1,18 @@
 -- LTC LCS: CKD Register - Priority Group 2 (High Risk)
 -- Parent population: CKD register, excluding PG1 (HRC)
 --
--- Inclusion: any of rules 2-5, or rule 6 AND (rule 7 OR rule 8).
--- BP checks use one latest event across settings; the XML has separate clinic and
--- home/ambulatory BP chains (rules 7-10).
--- - Rule 2: eGFR 45-59 AND ACR > 30
--- - Rule 3: eGFR 30-44 AND ACR > 3
--- - Rule 4: eGFR 15-29
--- - Rule 5: ACR 70-250 (>=70 and <250)
--- - Rule 6: 3+ repeat antihypertensive prescriptions in last 3 months (gate only)
--- - Rule 7: Latest BP in last 12 months with diastolic > 90
--- - Rule 8: Latest BP in last 12 months with systolic > 150
+-- One row per included person. Rules 2-5 select independently; otherwise rule 6
+-- (3+ repeat antihypertensive issues strictly within three months) gates rules 7-10.
+-- Rules 7-8 require the XML clinic-setting chain and a clinic-marker date strictly
+-- within 12 months, with latest positive diastolic > 90 and systolic >= 1, or
+-- latest positive systolic > 150 and diastolic >= 1, linked on the same date.
+-- Rules 9-10 require the latest complete BP date at baseline to have a home/
+-- ambulatory chain, plus a home-marker date strictly within 12 months with the
+-- same > 90 or > 150 thresholds. These dates belong to separate AND criteria.
+-- Preserve Latest 100 marker limits, Latest 1 positive component restrictions,
+-- and DATE = DATE links. XML descriptions mentioning 140/90 or 135/85 are stale;
+-- the numeric operators in the restrictions determine membership.
+-- Rule 6 retains the existing project medication list, broader than the XML group.
 
 with
 -- Parent population: Patients on CKD register
@@ -89,26 +91,253 @@ rule_6_antihypertensive as (
     having count(distinct am.medication_order_id) >= 3
 ),
 
--- Rule 7: Latest BP in last 12 months with diastolic > 90
-rule_7_bp_diastolic as (
-    select person_id
-    from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date > dateadd(month, -12, current_date())
-      and diastolic_value > 90
+-- Keep observation membership across both match paths. BP components are linked
+-- by date in this XML, rather than by the shared paired-reading model.
+bp_observations as (
+    select
+        observation_id,
+        person_id,
+        clinical_effective_date,
+        result_value,
+        boolor_agg(valueset_friendly_name = 'on_ckd_reg_pg2_hr_vs4') as is_clinic_marker,
+        boolor_agg(valueset_friendly_name = 'on_ckd_reg_pg2_hr_vs5') as is_home_marker,
+        boolor_agg(valueset_friendly_name = 'on_ckd_reg_pg2_hr_vs6') as is_any_systolic,
+        boolor_agg(valueset_friendly_name = 'on_ckd_reg_pg2_hr_vs7') as is_any_diastolic,
+        boolor_agg(valueset_friendly_name = 'on_ckd_reg_pg2_hr_vs8') as is_clinic_systolic,
+        boolor_agg(valueset_friendly_name = 'on_ckd_reg_pg2_hr_vs9') as is_clinic_diastolic,
+        boolor_agg(valueset_friendly_name = 'on_ckd_reg_pg2_hr_vs10') as is_home_systolic,
+        boolor_agg(valueset_friendly_name = 'on_ckd_reg_pg2_hr_vs11') as is_home_diastolic
+    from ({{ get_ltc_lcs_observations("on_ckd_reg_pg2_hr_vs4, on_ckd_reg_pg2_hr_vs5, on_ckd_reg_pg2_hr_vs6, on_ckd_reg_pg2_hr_vs7, on_ckd_reg_pg2_hr_vs8, on_ckd_reg_pg2_hr_vs9, on_ckd_reg_pg2_hr_vs10, on_ckd_reg_pg2_hr_vs11") }})
+    group by observation_id, person_id, clinical_effective_date, result_value
 ),
 
--- Rule 8: Latest BP in last 12 months with systolic > 150
+-- The first clinic criterion filters by date before Latest 100. The clinic/home
+-- threshold criteria apply the date test after Latest 100, as encoded in the XML.
+recent_markers_100 as (
+    select *
+    from bp_observations
+    where (is_clinic_marker or is_home_marker)
+        and clinical_effective_date > dateadd(month, -12, current_date())
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc, observation_id desc
+    ) <= 100
+),
+
+clinic_markers_100 as (
+    select *
+    from bp_observations
+    where is_clinic_marker
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc, observation_id desc
+    ) <= 100
+),
+
+home_markers_100 as (
+    select *
+    from bp_observations
+    where is_home_marker
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc, observation_id desc
+    ) <= 100
+),
+
+-- Each DATE link restricts the child pool before Latest 1. The earlier Latest 100
+-- systolic child is an existence check on that date; Latest 1 also proves it exists.
+any_systolic_dates as (
+    select distinct person_id, clinical_effective_date
+    from bp_observations
+    where is_any_systolic and result_value > 0
+),
+
+any_diastolic_latest as (
+    select *
+    from bp_observations
+    where is_any_diastolic and result_value > 0
+    qualify row_number() over (
+        partition by person_id, clinical_effective_date
+        order by observation_id desc
+    ) = 1
+),
+
+clinic_systolic_latest as (
+    select person_id, clinical_effective_date, result_value
+    from bp_observations
+    where is_clinic_systolic and result_value > 0
+    qualify row_number() over (
+        partition by person_id, clinical_effective_date
+        order by observation_id desc
+    ) = 1
+),
+
+clinic_diastolic_latest as (
+    select person_id, clinical_effective_date, result_value
+    from bp_observations
+    where is_clinic_diastolic and result_value > 0
+    qualify row_number() over (
+        partition by person_id, clinical_effective_date
+        order by observation_id desc
+    ) = 1
+),
+
+home_systolic_latest as (
+    select person_id, clinical_effective_date, result_value
+    from bp_observations
+    where is_home_systolic and result_value > 0
+    qualify row_number() over (
+        partition by person_id, clinical_effective_date
+        order by observation_id desc
+    ) = 1
+),
+
+home_diastolic_latest as (
+    select person_id, clinical_effective_date, result_value
+    from bp_observations
+    where is_home_diastolic and result_value > 0
+    qualify row_number() over (
+        partition by person_id, clinical_effective_date
+        order by observation_id desc
+    ) = 1
+),
+
+clinic_setting as (
+    select distinct m.person_id
+    from recent_markers_100 as m
+    inner join any_systolic_dates as s
+        on m.person_id = s.person_id
+        and m.clinical_effective_date = s.clinical_effective_date
+    inner join any_diastolic_latest as d
+        on s.person_id = d.person_id
+        and s.clinical_effective_date = d.clinical_effective_date
+    -- The restriction tests the latest combined diastolic code against CLINBP.
+    where d.is_clinic_marker
+),
+
+clinic_bp_dates as (
+    select distinct
+        m.person_id,
+        m.clinical_effective_date,
+        s.result_value as systolic_value,
+        d.result_value as diastolic_value
+    from clinic_markers_100 as m
+    inner join clinic_systolic_latest as s
+        on m.person_id = s.person_id
+        and m.clinical_effective_date = s.clinical_effective_date
+    inner join clinic_diastolic_latest as d
+        on s.person_id = d.person_id
+        and s.clinical_effective_date = d.clinical_effective_date
+),
+
+home_bp_dates as (
+    select distinct
+        m.person_id,
+        m.clinical_effective_date,
+        s.result_value as systolic_value,
+        d.result_value as diastolic_value
+    from home_markers_100 as m
+    inner join home_systolic_latest as s
+        on m.person_id = s.person_id
+        and m.clinical_effective_date = s.clinical_effective_date
+    inner join home_diastolic_latest as d
+        on s.person_id = d.person_id
+        and s.clinical_effective_date = d.clinical_effective_date
+),
+
+-- The home-setting criterion's baseCriteriaGroup unions complete clinic and home
+-- chains on/before baseline, then restricts that union to Latest 1 before linking
+-- back to a home chain on the same date.
+baseline_markers_100 as (
+    select observation_id, person_id, clinical_effective_date, 'clinic' as setting
+    from bp_observations
+    where is_clinic_marker and clinical_effective_date <= current_date()
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc, observation_id desc
+    ) <= 100
+    union all
+    select observation_id, person_id, clinical_effective_date, 'home' as setting
+    from bp_observations
+    where is_home_marker and clinical_effective_date <= current_date()
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc, observation_id desc
+    ) <= 100
+),
+
+complete_bp_dates as (
+    select m.person_id, m.clinical_effective_date
+    from baseline_markers_100 as m
+    inner join clinic_systolic_latest as s
+        on m.person_id = s.person_id
+        and m.clinical_effective_date = s.clinical_effective_date
+    inner join clinic_diastolic_latest as d
+        on s.person_id = d.person_id
+        and s.clinical_effective_date = d.clinical_effective_date
+    where m.setting = 'clinic'
+    union
+    select m.person_id, m.clinical_effective_date
+    from baseline_markers_100 as m
+    inner join home_systolic_latest as s
+        on m.person_id = s.person_id
+        and m.clinical_effective_date = s.clinical_effective_date
+    inner join home_diastolic_latest as d
+        on s.person_id = d.person_id
+        and s.clinical_effective_date = d.clinical_effective_date
+    where m.setting = 'home'
+),
+
+latest_complete_bp as (
+    select person_id, max(clinical_effective_date) as clinical_effective_date
+    from complete_bp_dates
+    group by person_id
+),
+
+home_setting as (
+    select distinct b.person_id
+    from latest_complete_bp as b
+    inner join home_bp_dates as h
+        on b.person_id = h.person_id
+        and b.clinical_effective_date = h.clinical_effective_date
+),
+
+rule_7_bp_diastolic as (
+    select distinct b.person_id
+    from clinic_bp_dates as b
+    inner join clinic_setting as c on b.person_id = c.person_id
+    where b.clinical_effective_date > dateadd(month, -12, current_date())
+        and b.diastolic_value > 90 and b.systolic_value >= 1
+),
+
 rule_8_bp_systolic as (
-    select person_id
-    from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date > dateadd(month, -12, current_date())
-      and systolic_value > 150
+    select distinct b.person_id
+    from clinic_bp_dates as b
+    inner join clinic_setting as c on b.person_id = c.person_id
+    where b.clinical_effective_date > dateadd(month, -12, current_date())
+        and b.systolic_value > 150 and b.diastolic_value >= 1
+),
+
+rule_9_home_bp_diastolic as (
+    select distinct b.person_id
+    from home_bp_dates as b
+    inner join home_setting as h on b.person_id = h.person_id
+    where b.clinical_effective_date > dateadd(month, -12, current_date())
+        and b.diastolic_value > 90 and b.systolic_value >= 1
+),
+
+rule_10_home_bp_systolic as (
+    select distinct b.person_id
+    from home_bp_dates as b
+    inner join home_setting as h on b.person_id = h.person_id
+    where b.clinical_effective_date > dateadd(month, -12, current_date())
+        and b.systolic_value > 150 and b.diastolic_value >= 1
 ),
 
 -- Combine rule results for all CKD register patients (excluding PG1)
 -- Rules 2-5: independent inclusion criteria (eGFR/ACR thresholds)
--- Rule 6: antihypertensive is a gate (must-match) for Rules 7-8 (BP)
--- Rules 7-8: BP inclusion only applies if Rule 6 (antihypertensive gate) passes
+-- Rule 6: antihypertensive is a gate (must-match) for Rules 7-10 (BP)
+-- Rules 7-10: BP inclusion only applies if Rule 6 (antihypertensive gate) passes
 patient_rules as (
     select
         cr.person_id,
@@ -119,13 +348,16 @@ patient_rules as (
         (r6.person_id is not null) as rule_6_antihypertensive,
         (r7.person_id is not null) as rule_7_bp_diastolic,
         (r8.person_id is not null) as rule_8_bp_systolic,
+        (r9.person_id is not null) as rule_9_home_bp_diastolic,
+        (r10.person_id is not null) as rule_10_home_bp_systolic,
         case
             when r2.person_id is not null then 'Included'
             when r3.person_id is not null then 'Included'
             when r4.person_id is not null then 'Included'
             when r5.person_id is not null then 'Included'
             -- Rule 6 is a gate: must have 3+ antihypertensives to reach BP rules
-            when r6.person_id is not null and (r7.person_id is not null or r8.person_id is not null) then 'Included'
+            when r6.person_id is not null and (r7.person_id is not null or r8.person_id is not null
+                or r9.person_id is not null or r10.person_id is not null) then 'Included'
             else 'Excluded'
         end as final_status
     from ckd_register cr
@@ -137,6 +369,8 @@ patient_rules as (
     left join rule_6_antihypertensive r6 on cr.person_id = r6.person_id
     left join rule_7_bp_diastolic r7 on cr.person_id = r7.person_id
     left join rule_8_bp_systolic r8 on cr.person_id = r8.person_id
+    left join rule_9_home_bp_diastolic r9 on cr.person_id = r9.person_id
+    left join rule_10_home_bp_systolic r10 on cr.person_id = r10.person_id
     where pg1.person_id is null  -- Exclude PG1 patients
 )
 

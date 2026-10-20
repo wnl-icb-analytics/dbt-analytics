@@ -9,11 +9,9 @@
 -- ICB_CF_DM_64_BASE: base (age >= 17, NOT ICS_METABOLIC_LTC, NOT CF_NHSHC2Y), then latest
 --   BMI (vs1, 1-code Body mass index) Latest 1 where:
 --     numeric value >= 35; OR
---     numeric value >= 32.5 AND patient matches the ethnic-category determinant = vs2 OR vs3.
--- NB: canon's "bame_population" vs2/vs3 are generic EMIS ethnic-category parent concepts
--- (include_children -> all recorded ethnicities, incl. White), so this branch is effectively
--- "BMI>=32.5 AND any recorded ethnicity", not BAME-specific. Implemented per canon; flagged
--- for EMIS/clinical review.
+--     numeric value >= 32.5 AND an ethnicity observation in vs2 but not vs3.
+-- The XML's Latest 999 ethnicity restriction is an any-record determinant.
+-- vs3 is the non-BAME list with BAME exception children already removed by expansion.
 
 with base as (
     select person_id
@@ -30,9 +28,14 @@ latest_bmi as (
 ),
 
 bame as (
-    -- canon BAME determinant = vs2 OR vs3 (vs2 pinned by id; see header note on breadth)
-    select distinct person_id
-    from ({{ get_ltc_lcs_observations("55c83e52-63f7-477c-82c8-9b172815352c, obesity_with_latest_bmi_35_325_bame_population_vs3") }})
+    -- Apply the NOT IN restriction to each observation, across both match paths.
+    select distinct eth.person_id
+    from ({{ get_ltc_lcs_observations("55c83e52-63f7-477c-82c8-9b172815352c") }}) as eth
+    where not exists (
+        select 1
+        from ({{ get_ltc_lcs_observations("obesity_with_latest_bmi_35_325_bame_population_vs3") }}) as non_bame
+        where non_bame.observation_id = eth.observation_id
+    )
 )
 
 select distinct b.person_id

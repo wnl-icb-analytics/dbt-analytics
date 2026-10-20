@@ -8,7 +8,9 @@
 -- ICB_CF_DM_65_BASE: base (age >= 17, NOT ICS_METABOLIC_LTC, NOT CF_NHSHC2Y), exclude
 --   ICB_CF_DM_64_BASE (higher BMI band), then latest BMI (vs1) Latest 1 where:
 --     numeric value >= 30 and < 35; OR
---     numeric value >= 27.5 and < 32.5 AND BAME (vs3 17-code list, any-time membership).
+--     numeric value >= 27.5 and < 32.5 AND an ethnicity observation in vs2 but not vs3.
+-- The XML's Latest 999 ethnicity restriction is an any-record determinant.
+-- vs3 is the non-BAME list with BAME exception children already removed by expansion.
 -- ICB_CF_DM_65_woEX: then exclude ICB_CF_DM_61/62/63/64_woEX, and keep patients with NO
 --   HbA1c (3-code IFCC, date-only, pinned woEX id) in the last 2 years.
 
@@ -31,10 +33,14 @@ latest_bmi as (
 ),
 
 bame as (
-    -- canon BAME determinant = vs2 OR vs3 (generic EMIS ethnic-category sets, include_children
-    -- -> all recorded ethnicities; see DM_64 header note -- flagged for clinical review)
-    select distinct person_id
-    from ({{ get_ltc_lcs_observations("2e9a5dbb-a1f2-19ff-d657-bf70de2d2c43, obesity_with_latest_bmi_30_35_275_325_bame_population_vs3") }})
+    -- Apply the NOT IN restriction to each observation, across both match paths.
+    select distinct eth.person_id
+    from ({{ get_ltc_lcs_observations("2e9a5dbb-a1f2-19ff-d657-bf70de2d2c43") }}) as eth
+    where not exists (
+        select 1
+        from ({{ get_ltc_lcs_observations("obesity_with_latest_bmi_30_35_275_325_bame_population_vs3") }}) as non_bame
+        where non_bame.observation_id = eth.observation_id
+    )
 ),
 
 base_65 as (
