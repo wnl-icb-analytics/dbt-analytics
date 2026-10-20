@@ -13,18 +13,18 @@ select
     pmi.ethnicity_detail as demographics__ethnicity_subcategory,    
     
     --Registered Information
-    gp_all.icb_code = 'Z9B2Z'               as registered__wnl_registered_flag,
-    gp_all.sub_icb_code = '93C'             as registered__ncl_registered_flag,
-    gp_all.sub_icb_code = 'W2U3Z'           as registered__nwl_registered_flag,
-    cwt.at_event__registered__practice_code as registered__practice_code,
-    gp_all.practice_name                    as registered__practice_name,
-    gp_all.close_date                       as registered__practice_end_date,
-    gp_all.pcn_code                         as registered__pcn_code,
-    gp_all.pcn_name                         as registered__pcn_name,
-    gp_all.sub_icb_code                     as registered__subicb_code,
-    gp_all.sub_icb_name                     as registered__subicb_name,
-    gp_all.icb_code                         as registered__icb_code,
-    gp_all.icb_name                         as registered__icb_name,
+    gp_all.icb_code in {{ wnl_ods_codes() }}  as registered__wnl_registered_flag,
+    gp_all.sub_icb_code = {{ ncl_sub_icb() }} as registered__ncl_registered_flag,
+    gp_all.sub_icb_code = {{ nwl_sub_icb() }} as registered__nwl_registered_flag,
+    cwt.at_event__registered__practice_code   as registered__practice_code,
+    gp_all.practice_name                      as registered__practice_name,
+    gp_all.close_date                         as registered__practice_end_date,
+    gp_all.pcn_code                           as registered__pcn_code,
+    gp_all.pcn_name                           as registered__pcn_name,
+    gp_all.sub_icb_code                       as registered__subicb_code,
+    gp_all.sub_icb_name                       as registered__subicb_name,
+    gp_all.icb_code                           as registered__icb_code,
+    gp_all.icb_name                           as registered__icb_name,
     
     --Logic to map out of area to 'Non-NCL'
     --Note a null subicb will still have a null value as borough cannot be determined
@@ -43,15 +43,18 @@ select
 
     --Residence Information
     --Note older records use older LSOA formats which can fail when trying to map to higher geographies
-    dict_lsoa_subicb.icb26cdh = 'Z9B2Z'     as residence__wnl_residence_flag,
-    dict_lsoa_subicb.sicbl26cdh = '93C'     as residence__ncl_residence_flag,
-    dict_lsoa_subicb.sicbl26cdh = 'W2U3Z'   as residence__nwl_residence_flag,
-    cwt.at_event__residence__lsoa_code      as residence__lsoa_code,
-    dict_lsoa_subicb.sicbl26cdh             as residence__subicb_code,
-    dict_lsoa_subicb.icb26cd                as residence__icb_code,
-    dict_lsoa_subicb.icb26nm                as residence__icb_name,
-    dict_lsoa_subicb.lad26nm                as residence__borough,
-    imd.imd_decile                          as residence__imd_decile,
+    dict_lsoa_subicb.icb_ods_code in {{ wnl_ods_codes() }}  as residence__wnl_residence_flag,
+    dict_lsoa_subicb.sub_icb_ods_code = {{ ncl_sub_icb() }} as residence__ncl_residence_flag,
+    dict_lsoa_subicb.sub_icb_ods_code = {{ nwl_sub_icb() }} as residence__nwl_residence_flag,
+    coalesce(
+        dict_lsoa_versioning.lsoa21_cd, 
+        cwt.at_event__residence__lsoa_code
+    )                                                       as residence__lsoa_code,
+    dict_lsoa_subicb.sub_icb_ods_code                       as residence__subicb_code,
+    dict_lsoa_subicb.icb_ods_code                           as residence__icb_code,
+    dict_lsoa_subicb.icb_name                               as residence__icb_name,
+    dict_lsoa_subicb.lad_name                               as residence__borough,
+    imd.imd_decile                                          as residence__imd_decile,
     
     --Logic to map out of area to 'Non-NCL'
     --Note a null subicb will still have a null value as neighbourhood cannot be determined
@@ -88,8 +91,12 @@ left join {{ ref('stg_reference_cancer_sub_icb_to_cancer_alliance') }} dict_subi
 on registered__subicb_code = dict_subicb_ca.sub_icb_code
 
 --Residence Joins
-left join {{ ref('lsoa21_sicbl26_icb26_nhser26_lad26 dict_lsoa_subicb') }} dict_lsoa_subicb
-on residence__lsoa_code = dict_lsoa_subicb.lsoa21cd
+left join {{ ref('stg_reference_lsoa2011_lsoa2021') }} dict_lsoa_versioning
+on cwt.at_event__residence__lsoa_code = dict_lsoa_versioning.lsoa11_cd
+
+left join {{ ref('stg_ukhfd_lsoa_sub_icb_plus_dim_map_scd') }} dict_lsoa_subicb
+on residence__lsoa_code = dict_lsoa_subicb.lsoa_code
+and dict_lsoa_subicb.is_latest = 1
 
 left join {{ ref('imd_2025_lsoa_2021') }} imd
 on residence__lsoa_code = imd.lsoa_code_2021
