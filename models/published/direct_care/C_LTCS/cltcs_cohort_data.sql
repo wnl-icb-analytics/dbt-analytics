@@ -238,12 +238,12 @@ select il.patient_id
 
     -- Current risk scores?
     -- scores from cltcs_scores model
-    ,coalesce(cs.score_activation, 0) as score_activation
-    ,coalesce(cs.score_coordination, 0) as score_coordination
-    ,coalesce(cs.score_treatment_original_criteria, 0) as score_treatment_original_criteria
-    ,coalesce(cs.score_treatment_adults_with_complexity, 0) as score_treatment_adults_with_complexity
-    ,coalesce(cs.score_frailty_original_criteria, 0) as score_frailty_original_criteria
-    ,coalesce(cs.score_frailty_adults_with_complexity, 0) as score_frailty_adults_with_complexity
+    ,cs.score_activation
+    ,cs.score_coordination
+    ,cs.score_treatment_original_criteria
+    ,cs.score_treatment_adults_with_complexity
+    ,cs.score_frailty_original_criteria
+    ,cs.score_frailty_adults_with_complexity
     -- Other relevant annual activity (LTC LCS, C-LTCS review)
 
 from inclusion_list il

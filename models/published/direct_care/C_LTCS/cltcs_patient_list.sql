@@ -17,7 +17,7 @@ registrant_list as (
     select patient_id
         , area_code
     from adult_population
-    -- old areas original criteria or any area new criteria
+    -- TO DO: consider filer to limit original criteria to legacy areas
     where (meets_original_criteria = TRUE or meets_adults_with_complexity = TRUE)
     and practice_code in (select distinct practice_code from in_scope_practice_list)
 ),
