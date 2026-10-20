@@ -85,7 +85,7 @@ on registered__practice_code = gp_wnl.practice_code
 
 left join {{ ref('imd_2025_practice_national') }} gp_imd
 on registered__practice_code = gp_imd.practice_code
-and gp_imd.date_indicator = 2025
+and gp_imd.is_latest = true
 
 left join {{ ref('stg_reference_cancer_sub_icb_to_cancer_alliance') }} dict_subicb_ca
 on registered__subicb_code = dict_subicb_ca.sub_icb_code
@@ -99,9 +99,9 @@ on residence__lsoa_code = dict_lsoa_subicb.lsoa_code
 and dict_lsoa_subicb.is_latest = 1
 
 left join {{ ref('imd_2025_lsoa_2021') }} imd
-on residence__lsoa_code = imd.lsoa_code_2021
+on residence__lsoa_code = imd.lsoa_code
 
-left join {{ ref('neighbourhood_lsoa') }} dict_lsoa_nb
+left join {{ ref('stg_reference_geo_neighbourhood_lsoa') }} dict_lsoa_nb
 on residence__lsoa_code = dict_lsoa_nb.lsoa_2021_code
 
 left join {{ ref('stg_reference_cancer_lsoa_to_cancer_alliance') }} dict_lsoa_ca
