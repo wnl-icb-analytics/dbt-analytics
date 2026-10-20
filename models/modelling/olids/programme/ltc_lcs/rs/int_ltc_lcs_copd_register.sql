@@ -3,9 +3,10 @@
 -- (docs/emis_specs/ltc_lcs_r5/risk_stratification/specs/conditions/copd/ltc_lcs_copd_register.md)
 --
 -- The LTC LCS COPD register differs from QOF by also keeping patients coded
--- in the last year ahead of spirometry confirmation (rules 3-6). Every rule
--- carries the same active-COPD group requirement: no COPD resolved code at
--- all, OR a diagnosis code dated after the latest resolved code.
+-- in the last year ahead of spirometry confirmation (rules 3-6). Rules 2-6
+-- carry the same active-COPD group requirement: no COPD resolved code at
+-- all, OR a diagnosis code dated after the latest resolved code. Rule 1 has
+-- no such group in the XML; the QOF register applies its own resolved test.
 --
 -- Rule chain (include on pass, all rules):
 -- - Rule 1: EMIS library item ee5b135f-b9b2-4ef7-8b51-939a754cf935 (not in the

@@ -201,14 +201,14 @@ models:
       - name: smoke_cat
         data_type: number
         description: >
-          QAdmissions smoking category from the latest current, ex- or
-          never-smoker code (LSMOK_COD, EXSMOK_COD, NSMOK_COD via
-          int_smoking_status_all) known by the index date: 3 = current smoker,
-          1 = ex-smoker, 0 = never smoked or no record. Cigarettes per day are
-          not captured, so categories 2, 4 and 5 are not produced and every
-          current smoker maps to 3, as in qadmissions_input_features. Same-day
-          codes are separated by observation id, where the live model's
-          choice is arbitrary.
+          QAdmissions smoking category from the latest smoking status known by
+          the index date (int_smoking_status_all): 3 = current smoker,
+          1 = ex-smoker, 0 = never smoked, non-smoker with unknown past history,
+          or no record. Cigarettes per day are not captured, so categories 2, 4
+          and 5 are not produced and every current smoker maps to 3, as in
+          qadmissions_input_features. Same-day codes are resolved by status
+          priority (current, ex-, never smoker, then other non-smoker codes),
+          then observation id, as in the live model.
 
       - name: b_anticoagulant
         data_type: boolean
