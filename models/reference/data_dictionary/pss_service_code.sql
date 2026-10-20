@@ -1,4 +1,5 @@
 -- UKHFD holds one year's delegation status, so per-year statuses come from the NHSE workbook seed
+--2026-10-21 addition of 26/27 funding status by colour code. 
 with service_code as (
     select *
     from {{ ref('stg_ukhfd_dsc_sc_service_code') }}
@@ -29,6 +30,11 @@ select
     , d.icb_delegation_24_25
     , d.icb_delegation_25_26
     , d.icb_delegation_26_27
+    ,CASE
+    WHEN sc.service_code = 'CCGPS08S_EXC' OR sc.service_code LIKE '%99999%' THEN 'ICB-commissioned'
+    WHEN d.icb_delegation_26_27 = 'GREEN' THEN 'Delegated'
+    WHEN d.icb_delegation_26_27 IN ('RED','BLUE','NOT APPLICABLE') THEN 'Retained'
+    END AS current_funding_status
     , sc.source_snapshot_date
 from service_code as sc
 left join delegation as d

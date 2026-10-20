@@ -6,6 +6,9 @@ models:
       Excludes people with lithium alone or resolved diagnoses. Covers smoking,
       alcohol, drugs, BMI, nutrition, exercise, dental reviews and referrals, with
       12-month flags. Recorded declines remain distinct from completed assessments.
+      Valid same-day AUDIT records prefer the full instrument, then the highest
+      total, latest recorded date and observation id. Same-day classified alcohol
+      sources prefer AUDIT, then weekly units, then disorders.
     config:
       meta:
         owner:
@@ -13,6 +16,315 @@ models:
     columns:
       - name: person_id
         description: Unique identifier for the person
-        tests:
+        data_tests:
           - not_null
+          - unique
 
+      - name: smok_int_last_12m
+        description: >-
+          Yes when a non-declined intervention is recorded in the 12 months to the
+          build date. A later decline does not remove it. The smok_int_date,
+          smok_int_type and smoking_cessation_services columns describe the latest record ever,
+          which may be a decline.
+      - name: alc_int_last_12m
+        description: >-
+          Yes when a non-declined intervention is recorded in the 12 months to the
+          build date. A later decline does not remove it. The alc_int_date,
+          alc_int_type and alcohol_advice_services columns describe the latest record ever,
+          which may be a decline.
+      - name: sm_int_last_12m
+        description: >-
+          Yes when a non-declined intervention is recorded in the 12 months to the
+          build date. A later decline does not remove it. The sm_int_date,
+          sm_int_type and subs_misuse_services columns describe the latest record ever,
+          which may be a decline.
+
+unit_tests:
+- name: smi_lifestyle_intervention_flag_ignores_declines
+  model: int_smi_lifestyle
+  given:
+  - input: ref('int_illicit_drug_use_latest')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::BOOLEAN AS illicit_drug_assessed_last_12m, NULL::TEXT AS illicit_drug_pattern, NULL::TEXT AS illicit_drug_class WHERE FALSE
+    format: sql
+  - input: ref('int_smi_population_base')
+    rows: |-
+      SELECT -9801::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS gender, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -9802::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS gender, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -9803::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS gender, TRUE::BOOLEAN AS has_active_smi_diagnosis
+
+      UNION ALL
+      SELECT -18250::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS gender, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -18251::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS gender, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -18252::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS gender, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -18253::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS gender, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -18254::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS gender, TRUE::BOOLEAN AS has_active_smi_diagnosis
+      UNION ALL
+      SELECT -18255::NUMBER(38,0) AS person_id, NULL::TEXT AS hx_flake, NULL::NUMBER(16,0) AS age, NULL::TEXT AS gender, TRUE::BOOLEAN AS has_active_smi_diagnosis
+    format: sql
+  - input: ref('int_subs_misuse_intervention_latest')
+    rows: |-
+      SELECT -9803::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_intervention'::TEXT AS concept_display, 'Declined'::TEXT AS subs_misuse_services
+      UNION ALL
+      SELECT -9802::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_intervention'::TEXT AS concept_display, 'Declined'::TEXT AS subs_misuse_services
+      UNION ALL
+      SELECT -9801::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=400)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_intervention'::TEXT AS concept_display, 'Yes'::TEXT AS subs_misuse_services
+      UNION ALL
+      SELECT -18254::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'SYN_later_decline'::TEXT, 'Declined'::TEXT
+      UNION ALL
+      SELECT -18255::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'SYN_later_decline'::TEXT, 'Declined'::TEXT
+    format: sql
+  - input: ref('fct_person_smoking_status')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TEXT AS smoking_status, NULL::TIMESTAMP_NTZ AS latest_smoking_date WHERE FALSE
+    format: sql
+  - input: ref('int_smoking_assessment_declined')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS concept_display WHERE FALSE
+    format: sql
+  - input: ref('int_smoking_intervention_latest')
+    rows: |-
+      SELECT -9801::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS concept_display, 'Declined'::TEXT AS smoking_cessation_services
+      UNION ALL
+      SELECT -9802::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS concept_display, 'Declined'::TEXT AS smoking_cessation_services
+      UNION ALL
+      SELECT -9803::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=400)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS concept_display, 'Yes'::TEXT AS smoking_cessation_services
+      UNION ALL
+      SELECT -18250::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'SYN_later_decline'::TEXT, 'Declined'::TEXT
+      UNION ALL
+      SELECT -18251::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'SYN_later_decline'::TEXT, 'Declined'::TEXT
+    format: sql
+  - input: ref('int_alcohol_misuse_disorders')
+    rows: |-
+      SELECT column1::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date,
+          'SYN_disorder'::TEXT AS concept_display
+      FROM VALUES (-9801), (-9802), (-9803)
+    format: sql
+  - input: ref('int_alcohol_audit_scores')
+    rows: |-
+      -- Synthetic categories distinguish every AUDIT tie-break candidate.
+      SELECT column1::TEXT AS id, column2::NUMBER AS person_id,
+          DATEADD(hour, IFF(column3 = 'AUDIT-C', 15, 9),
+              DATEADD(day, -30, CURRENT_DATE())::TIMESTAMP_NTZ) AS clinical_effective_date, column3::TEXT AS audit_type,
+          column4::NUMBER(10,2) AS audit_score, column5::TIMESTAMP_NTZ AS date_recorded,
+          column6::TEXT AS risk_category, TRUE AS is_valid_score
+      FROM VALUES
+          ('SYN_A_full_total', -9801, 'Full AUDIT', 9, '2024-03-02', 'Increasing Risk'),
+          ('SYN_Z_full_total', -9801, 'Full AUDIT', 9, '2024-03-02', 'SYN_wrong_id'),
+          ('SYN_full_null_recorded', -9801, 'Full AUDIT', 9, NULL, 'SYN_wrong_null'),
+          ('SYN_full_older_recorded', -9801, 'Full AUDIT', 9, '2024-03-01', 'SYN_wrong_recorded'),
+          ('SYN_full_item', -9801, 'Full AUDIT', 4, '2024-03-03', 'Lower Risk'),
+          ('SYN_screen', -9801, 'AUDIT-C', 12, '2024-03-03', 'Possible Dependence'),
+          ('SYN_unclear', -9803, 'AUDIT-C', 0, '2024-03-03', 'Unclear')
+      UNION ALL
+      SELECT 'SYN_older_full', -9801, DATEADD(day, -60, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'Full AUDIT', 20, CURRENT_DATE()::TIMESTAMP_NTZ, 'SYN_wrong_older', TRUE
+      UNION ALL
+      SELECT 'SYN_INVALID_TOTAL', -9801, DATEADD(day, -1, CURRENT_DATE()),
+          'Full AUDIT', 99, CURRENT_DATE()::TIMESTAMP_NTZ, 'SYN_INVALID_RISK', FALSE
+    format: sql
+  - input: ref('int_alcohol_units_latest')
+    rows: |-
+      SELECT column1::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=30)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ::DATE AS clinical_effective_date,
+          5::FLOAT AS result_value, 'units/week'::TEXT AS result_unit_display,
+          'Low Risk'::TEXT AS alcohol_risk_category, 'No'::TEXT AS high_alcohol_use_flag
+      FROM VALUES (-9801), (-9802), (-9803)
+    format: sql
+  - input: ref('int_alcohol_assessment_declined')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS concept_display WHERE FALSE
+    format: sql
+  - input: ref('int_alcohol_intervention_latest')
+    rows: |-
+      SELECT -9802::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_intervention'::TEXT AS concept_display, 'Declined'::TEXT AS alcohol_advice_services
+      UNION ALL
+      SELECT -9801::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_intervention'::TEXT AS concept_display, 'Declined'::TEXT AS alcohol_advice_services
+      UNION ALL
+      SELECT -9803::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=400)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'SYN_intervention'::TEXT AS concept_display, 'Yes'::TEXT AS alcohol_advice_services
+      UNION ALL
+      SELECT -18252::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'SYN_later_decline'::TEXT, 'Declined'::TEXT
+      UNION ALL
+      SELECT -18253::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ,
+          'SYN_later_decline'::TEXT, 'Declined'::TEXT
+    format: sql
+  - input: ref('int_bmi_latest')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::FLOAT AS bmi_value, NULL::TEXT AS bmi_category, NULL::NUMBER(1,0) AS bmi_risk_sort_key WHERE FALSE
+    format: sql
+  - input: ref('int_bmi_assessment_declined')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date WHERE FALSE
+    format: sql
+  - input: ref('int_nutrition_review_latest')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS concept_display, NULL::TEXT AS poor_diet_flag WHERE FALSE
+    format: sql
+  - input: ref('int_weight_mgmt_intervention_latest')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS concept_display, NULL::TEXT AS referral_diet_advice, NULL::TEXT AS referral_exercise_advice WHERE FALSE
+    format: sql
+  - input: ref('int_dental_inspection_latest')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS concept_display, NULL::BOOLEAN AS dental_last_12m WHERE FALSE
+    format: sql
+  - input: ref('int_exercise_assessment_latest')
+    rows: |-
+      SELECT NULL::NUMBER(38,0) AS person_id, NULL::TIMESTAMP_NTZ AS clinical_effective_date, NULL::TEXT AS concept_display, NULL::TEXT AS low_exercise_flag WHERE FALSE
+    format: sql
+  - input: ref('int_smoking_intervention')
+    rows: |-
+      SELECT -9801::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=60)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'Yes'::TEXT AS smoking_cessation_services
+      UNION ALL
+      SELECT -9801::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'Declined'::TEXT AS smoking_cessation_services
+      UNION ALL
+      SELECT -9802::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'Declined'::TEXT AS smoking_cessation_services
+      UNION ALL
+      SELECT -9803::NUMBER(38,0) AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=400)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'Yes'::TEXT AS smoking_cessation_services
+      UNION ALL
+      SELECT -18250::NUMBER, DATEADD(month, -12, CURRENT_DATE())::TIMESTAMP_NTZ, 'Other assistance'::TEXT
+      UNION ALL
+      SELECT -18250::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ, 'Declined'::TEXT
+      UNION ALL
+      SELECT -18251::NUMBER, DATEADD(day, -1, DATEADD(month, -12, CURRENT_DATE()))::TIMESTAMP_NTZ, 'Other assistance'::TEXT
+      UNION ALL
+      SELECT -18251::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ, 'Declined'::TEXT
+    format: sql
+  - input: ref('int_alcohol_intervention')
+    rows: |-
+      SELECT -9802::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=60)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'Yes'::TEXT AS alcohol_advice_services
+      UNION ALL
+      SELECT -9802::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'Declined'::TEXT AS alcohol_advice_services
+      UNION ALL
+      SELECT -9801::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'Declined'::TEXT AS alcohol_advice_services
+      UNION ALL
+      SELECT -9803::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=400)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'Yes'::TEXT AS alcohol_advice_services
+      UNION ALL
+      SELECT -18252::NUMBER, DATEADD(month, -12, CURRENT_DATE())::TIMESTAMP_NTZ, 'Yes'::TEXT
+      UNION ALL
+      SELECT -18252::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ, 'Declined'::TEXT
+      UNION ALL
+      SELECT -18253::NUMBER, DATEADD(day, -1, DATEADD(month, -12, CURRENT_DATE()))::TIMESTAMP_NTZ, 'Yes'::TEXT
+      UNION ALL
+      SELECT -18253::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ, 'Declined'::TEXT
+    format: sql
+  - input: ref('int_subs_misuse_intervention')
+    rows: |-
+      SELECT -9803::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=60)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'Yes'::TEXT AS subs_misuse_services
+      UNION ALL
+      SELECT -9803::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'Declined'::TEXT AS subs_misuse_services
+      UNION ALL
+      SELECT -9802::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=10)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'Declined'::TEXT AS subs_misuse_services
+      UNION ALL
+      SELECT -9801::NUMBER AS person_id, '{{ (run_started_at - modules.datetime.timedelta(days=400)).strftime('%Y-%m-%d') }}'::TIMESTAMP_NTZ AS clinical_effective_date, 'Yes'::TEXT AS subs_misuse_services
+      UNION ALL
+      SELECT -18254::NUMBER, DATEADD(month, -12, CURRENT_DATE())::TIMESTAMP_NTZ, 'Other assistance'::TEXT
+      UNION ALL
+      SELECT -18254::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ, 'Declined'::TEXT
+      UNION ALL
+      SELECT -18255::NUMBER, DATEADD(day, -1, DATEADD(month, -12, CURRENT_DATE()))::TIMESTAMP_NTZ, 'Other assistance'::TEXT
+      UNION ALL
+      SELECT -18255::NUMBER, DATEADD(day, -1, CURRENT_DATE())::TIMESTAMP_NTZ, 'Declined'::TEXT
+    format: sql
+  expect:
+    rows:
+    - person_id: -9801
+      smok_int_last_12m: 'Yes'
+      alc_int_last_12m: 'No'
+      sm_int_last_12m: 'No'
+      smoking_cessation_services: Declined
+      alcohol_advice_services: Declined
+      subs_misuse_services: 'Yes'
+      alc_source: AUDIT
+      alcohol_risk_category: Increasing Risk
+      alcohol_last_12m: 'Yes'
+    - person_id: -9802
+      smok_int_last_12m: 'No'
+      alc_int_last_12m: 'Yes'
+      sm_int_last_12m: 'No'
+      smoking_cessation_services: Declined
+      alcohol_advice_services: Declined
+      subs_misuse_services: Declined
+      alc_source: UnitsWeek
+      alcohol_risk_category: Low Risk
+      alcohol_last_12m: 'Yes'
+    - person_id: -9803
+      smok_int_last_12m: 'No'
+      alc_int_last_12m: 'No'
+      sm_int_last_12m: 'Yes'
+      smoking_cessation_services: 'Yes'
+      alcohol_advice_services: 'Yes'
+      subs_misuse_services: Declined
+      alc_source: UnitsWeek
+      alcohol_risk_category: Low Risk
+      alcohol_last_12m: 'Yes'
+    - person_id: -18250
+      smok_int_last_12m: 'Yes'
+      alc_int_last_12m: 'No'
+      sm_int_last_12m: 'No'
+      smoking_cessation_services: Declined
+      alcohol_advice_services: null
+      subs_misuse_services: null
+      alc_source: null
+      alcohol_risk_category: null
+      alcohol_last_12m: 'No'
+    - person_id: -18251
+      smok_int_last_12m: 'No'
+      alc_int_last_12m: 'No'
+      sm_int_last_12m: 'No'
+      smoking_cessation_services: Declined
+      alcohol_advice_services: null
+      subs_misuse_services: null
+      alc_source: null
+      alcohol_risk_category: null
+      alcohol_last_12m: 'No'
+    - person_id: -18252
+      smok_int_last_12m: 'No'
+      alc_int_last_12m: 'Yes'
+      sm_int_last_12m: 'No'
+      smoking_cessation_services: null
+      alcohol_advice_services: Declined
+      subs_misuse_services: null
+      alc_source: null
+      alcohol_risk_category: null
+      alcohol_last_12m: 'No'
+    - person_id: -18253
+      smok_int_last_12m: 'No'
+      alc_int_last_12m: 'No'
+      sm_int_last_12m: 'No'
+      smoking_cessation_services: null
+      alcohol_advice_services: Declined
+      subs_misuse_services: null
+      alc_source: null
+      alcohol_risk_category: null
+      alcohol_last_12m: 'No'
+    - person_id: -18254
+      smok_int_last_12m: 'No'
+      alc_int_last_12m: 'No'
+      sm_int_last_12m: 'Yes'
+      smoking_cessation_services: null
+      alcohol_advice_services: null
+      subs_misuse_services: Declined
+      alc_source: null
+      alcohol_risk_category: null
+      alcohol_last_12m: 'No'
+    - person_id: -18255
+      smok_int_last_12m: 'No'
+      alc_int_last_12m: 'No'
+      sm_int_last_12m: 'No'
+      smoking_cessation_services: null
+      alcohol_advice_services: null
+      subs_misuse_services: Declined
+      alc_source: null
+      alcohol_risk_category: null
+      alcohol_last_12m: 'No'

@@ -4,7 +4,7 @@
     Standardises count-type observation values and units.
 
     Produces a standardised output with inferred values and units, an audit reason, the
-    is_negative / is_extreme_outlier flags, and a HIGH/MEDIUM/LOW confidence rating. A given
+    is_negative / is_extreme_outlier / is_out_of_range flags, and a HIGH/MEDIUM/LOW confidence rating. A given
     row always carries a value and corresponding unit (nothing is dropped except excluded
     units, whose value/unit are NULL).
 
@@ -13,18 +13,18 @@
       Pass 1 - Accept values already inside [ABSOLUTE_LOWER, ABSOLUTE_UPPER], regardless
                of recorded unit. Kept exactly as recorded.
 
-      Pass 2 - For values ABOVE ABSOLUTE_UPPER, apply a known conversion factor from the
+      Pass 2 - For values outside [ABSOLUTE_LOWER, ABSOLUTE_UPPER], apply a known conversion factor from the
                seed (e.g. {cells}/uL -> 10*9/L via x0.001) when the converted value lands
                back inside [ABSOLUTE_LOWER, ABSOLUTE_UPPER].
 
-      Pass 3 - For values ABOVE ABSOLUTE_UPPER, check if the value is unambiguously a raw
+      Pass 3 - For values outside [ABSOLUTE_LOWER, ABSOLUTE_UPPER], check if the value is unambiguously a raw
                base-unit recording (e.g. cells/L instead of 10*9/L) by dividing by
                10^CANONICAL_EXPONENT and checking the result lands inside
                [BIOLOGICAL_LOWER, ABSOLUTE_UPPER]. CANONICAL_EXPONENT IS NULL disables Pass 3.
 
-      Conversions (Pass 2/3) are attempted ONLY when the value is implausibly HIGH
-      (numeric_value > ABSOLUTE_UPPER), never when implausibly low. Values matching no
-      pass (out-of-range and unconvertible, including negatives) pass through unchanged.
+      Passes 2 and 3 run below or above the band. A negative CANONICAL_EXPONENT
+      multiplies: -1 rescales g/dL-scale values to g/L by multiplying by 10.
+      Values matching no pass remain unchanged and are flagged is_out_of_range.
 
     Unit classification after LEFT JOIN to seed:
       known    - CONVERT_FROM_UNIT IS NOT NULL AND MULTIPLY_BY IS NOT NULL
@@ -32,6 +32,7 @@
       unknown  - CONVERT_FROM_UNIT IS NULL (no match in seed)
 
     Flags and confidence:
+      is_out_of_range    - no pass brought the value into the plausible range
       is_negative        - inferred_value < 0
       is_extreme_outlier - inferred_value > BIOLOGICAL_UPPER
       confidence:
@@ -61,6 +62,7 @@
       inferred_unit               - Standardised unit (NULL only for excluded units)
       value_was_converted         - TRUE if value was mathematically changed
       conversion_reason           - Human-readable explanation of action taken
+      is_out_of_range             - TRUE if no conversion brought the value into range
       is_negative                 - TRUE if inferred_value < 0
       is_extreme_outlier          - TRUE if inferred_value > BIOLOGICAL_UPPER
       confidence                  - HIGH / MEDIUM / LOW
@@ -131,16 +133,16 @@ pass_assigned AS (
             -- Pass 1: value already plausible, keep as recorded
             WHEN numeric_value BETWEEN lower_limit AND upper_limit
                 THEN 'pass_1'
-            -- Pass 2: implausibly high, rescued by a known unit factor
-            WHEN numeric_value > upper_limit
+            -- Pass 2: outside the band, rescued by a known unit factor
+            WHEN (numeric_value < lower_limit OR numeric_value > upper_limit)
              AND unit_status = 'known'
              AND seed_multiply_by != 1
              AND ((numeric_value + COALESCE(seed_pre_offset, 0)) * seed_multiply_by
                   + COALESCE(seed_post_offset, 0))
                   BETWEEN lower_limit AND upper_limit
                 THEN 'pass_2'
-            -- Pass 3: implausibly high, unambiguously a raw base-unit recording
-            WHEN numeric_value > upper_limit
+            -- Pass 3: outside the band, rescued by the configured power of ten
+            WHEN (numeric_value < lower_limit OR numeric_value > upper_limit)
              AND canonical_exponent IS NOT NULL
              AND (numeric_value / POWER(10, canonical_exponent)) BETWEEN biological_lower AND upper_limit
                 THEN 'pass_3'
@@ -155,10 +157,11 @@ standardised AS (
         *,
 
         -- inferred_value: the standardised numeric result
+        -- Converted values are rounded to 6 decimal places to remove float noise (e.g. 35.199999999999996).
         CASE matched_pass
             WHEN 'pass_1' THEN numeric_value
-            WHEN 'pass_2' THEN converted_value
-            WHEN 'pass_3' THEN numeric_value / POWER(10, canonical_exponent)
+            WHEN 'pass_2' THEN ROUND(converted_value, 6)
+            WHEN 'pass_3' THEN ROUND(numeric_value / POWER(10, canonical_exponent), 6)
             -- pass through: keep raw value when no pass matched
             WHEN 'no_match' THEN numeric_value
             ELSE NULL
@@ -187,7 +190,12 @@ standardised AS (
                     ELSE 'No value conversion, unit was assumed to be incorrect'
                 END
             WHEN 'pass_2' THEN 'Value converted using known unit factor (x' || seed_multiply_by::VARCHAR || ')'
-            WHEN 'pass_3' THEN 'Value divided by 10^' || canonical_exponent::VARCHAR || ' (inferred raw base-unit recording)'
+            WHEN 'pass_3' THEN
+                CASE
+                    WHEN canonical_exponent > 0
+                        THEN 'Value divided by 10^' || canonical_exponent::VARCHAR || ' (inferred raw base-unit recording)'
+                    ELSE 'Value multiplied by 10^' || (-canonical_exponent)::VARCHAR || ' (inferred recording in a unit 10^' || (-canonical_exponent)::VARCHAR || ' times the canonical unit)'
+                END
             ELSE 'Value out of plausible range, kept unchanged'
         END AS conversion_reason
 
@@ -198,6 +206,7 @@ standardised AS (
 flagged AS (
     SELECT
         *,
+        matched_pass = 'no_match' AS is_out_of_range,
         inferred_value < 0 AS is_negative,
         inferred_value > biological_upper AS is_extreme_outlier,
         -- confidence: HIGH if nothing changed; MEDIUM if only the unit changed and the value
