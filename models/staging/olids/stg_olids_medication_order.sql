@@ -43,7 +43,7 @@ select
     publisher_organisation_code,
     lds_transform_datetime,
     statement_medication_name,
-    is_gp2gp_import,
+    is_gp2_gp_import as is_gp2gp_import,
     mapped_concept_id,
     mapped_concept_code,
     mapped_concept_display,
@@ -61,4 +61,4 @@ select
 from {{ ref('raw_olids_medication_order') }}
 where coalesce(lds_is_deleted, false) = false
     and person_id is not null
-    and coalesce(is_gp2gp_copy, false) = false
+    and coalesce(is_gp2_gp_copy, false) = false

@@ -48,7 +48,7 @@ select
     expiry_date,
     publisher_organisation_code,
     lds_transform_datetime,
-    is_gp2gp_import,
+    is_gp2_gp_import as is_gp2gp_import,
 
     -- BNF classification (pre-computed upstream in dbt-olids)
     bnf_chapter,
@@ -63,4 +63,4 @@ select
 from {{ ref('raw_olids_medication_statement') }}
 where coalesce(lds_is_deleted, false) = false
     and person_id is not null
-    and coalesce(is_gp2gp_copy, false) = false
+    and coalesce(is_gp2_gp_copy, false) = false
