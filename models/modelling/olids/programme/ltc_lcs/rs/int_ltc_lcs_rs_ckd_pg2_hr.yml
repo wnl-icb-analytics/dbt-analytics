@@ -1,29 +1,15 @@
 models:
   - name: int_ltc_lcs_rs_ckd_pg2_hr
-    description: |-
-      One row per person on the CKD register, excluding Priority Group 1, who meets
-      any of these latest-result rules: eGFR 45-59 and ACR > 30; eGFR 30-44 and
-      ACR > 3; eGFR 15-29; or ACR >= 70 and < 250.
-
-      Otherwise, at least three repeat antihypertensive issues strictly within
-      three months are required before the BP rules can include a person.
-      Clinic and home/ambulatory BP use separate EMIS code lists. Both require a
-      marker strictly within 12 months and positive systolic and diastolic
-      components linked on the same date. The latest positive diastolic on that
-      date must be > 90 mmHg with systolic >= 1, or the latest positive systolic
-      must be > 150 mmHg with diastolic >= 1. The XML limits marker pools to the
-      latest 100 records and tests values after selecting the latest component.
-
-      The clinic-setting check requires a recent marker linked to positive
-      systolic and latest positive diastolic whose code is in the clinic set.
-      The home-setting check requires the latest complete clinic or home BP date
-      on or before the build date to have a home/ambulatory chain. Each setting
-      check and its threshold check are separate criteria and may use different
-      dates. The XML descriptions mentioning 140/90 or 135/85 do not match its
-      numeric tests; the model follows the tests (> 150 or > 90) for both settings.
-
-      Repeat issues use source authorisation code Repeat only. The existing
-      project antihypertensive list remains broader than the EMIS drug group.
+    description: >
+      One row per person on the CKD register, excluding Priority Group 1, with
+      latest eGFR 45-59 and ACR > 30, eGFR 30-44 and ACR > 3, eGFR 15-29, or
+      ACR >= 70 and < 250.
+      Otherwise, rule 6 requires at least three repeat antihypertensive issues
+      strictly within three months before the latest clinic or home/ambulatory
+      BP strictly within 12 months can qualify: its setting must pass the clinic
+      or latest complete home BP check, all retained markers for that setting must
+      be within 12 months, and diastolic must be > 90 mmHg with systolic >= 1,
+      or systolic > 150 mmHg with diastolic >= 1.
     config:
       meta:
         owner:
