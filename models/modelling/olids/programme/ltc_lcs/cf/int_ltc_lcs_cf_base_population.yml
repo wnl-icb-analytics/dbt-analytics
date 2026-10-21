@@ -10,8 +10,10 @@ models:
       programme COPD and NAFLD registers; other register proxies and their limitations
       are documented in int_ltc_lcs_cf_exclusions. has_respiratory_excluding_condition
       flags the ICS_RESP_LTC conditions: COPD, adult asthma (age 18+) and CYP asthma.
-      had_nhs_health_check_24m flags a completed NHS Health Check, HEALTH_CHECK_COMP, on
-      or after the date 24 months before the build date.
+      Current registration follows dim_person_current_practice, including valid future
+      end dates. had_nhs_health_check_24m flags the nine-code CF_NHSHC2Y set on or after
+      24 months before the build date. is_on_palliative_care_register flags current QOF
+      palliative care register membership, excluded by the CVD and HTN bases only.
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -20,6 +22,8 @@ models:
         data_tests:
           - not_null
           - unique
+      - name: is_on_palliative_care_register
+        description: Current QOF palliative care register membership; false when no register row exists.
     config:
       meta:
         indicator:
@@ -30,10 +34,11 @@ models:
           name_short: "LTC/LCS base population"
           description_short: "Registered, living population with case-finding exclusion flags"
           description_long: >
-            Currently registered, living people with metabolic, respiratory and NHS Health
-            Check exclusion flags. No exclusions are applied in this model. AF, CKD, CVD,
+            Currently registered, living people with metabolic, respiratory, palliative care and NHS
+            Health Check exclusion flags. No exclusions are applied in this model. AF, CKD, CVD,
             diabetes, HF and hypertension bases apply the metabolic flag; CYP asthma uses
-            the respiratory flag. Each base applies the health-check flag where EMIS does.
+            the respiratory flag. CVD and HTN apply the palliative care flag. Each base
+            applies the health-check flag where EMIS does.
           is_qof: false
           source_column: "person_id"
           sort_order: "LTC_LCS_BASE_001"
@@ -41,8 +46,6 @@ models:
             - "LTC_LCS_DASHBOARD"
             - "CASE_FINDING_PROGRAMME"
           code_clusters:
-            - cluster_id: "HEALTH_CHECK_COMP"
-              category: "EXCLUSION"
             - cluster_id: "CKD_COD"
               category: "EXCLUSION"
             - cluster_id: "AFIB_COD"

@@ -3,6 +3,7 @@
 -- LTC LCS HTN case finding: ICB_CF_HTN_63_woEX (UCLP Priority Group 2b), pre-Rule-1 population.
 -- Keep the latest record across the full 22-code systolic or diastolic pool.
 -- Test that same record against the clinic/home code set before its numeric threshold.
+-- CHD/stroke/TIA/PAD exclude Review and Ended episodes; CKD/diabetes are dated on or before today.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/hypertension/icb-cf-htn-63.md
 --
 -- Start = int_ltc_lcs_cf_htn_base. Net logic:
@@ -61,7 +62,7 @@ bp_eligible as (
     select person_id from home_diastolic
 ),
 
--- Risk-factor include (register-code arms ever; eGFR/BMI Latest 1)
+-- Risk-factor include; eGFR/BMI retain their Latest 1 restrictions.
 egfr_low as (
     select person_id
     from ({{ get_ltc_lcs_observations_latest("uclp_priority_group_2b_vs13") }})
@@ -73,19 +74,29 @@ bmi_high as (
     where result_value > 35
 ),
 risk_factor as (
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs8") }})
+    select obs.person_id
+    from ({{ get_ltc_lcs_observations(
+        "uclp_priority_group_2b_vs8,uclp_priority_group_2b_vs9,uclp_priority_group_2b_vs10,uclp_priority_group_2b_vs11"
+    ) }}) as obs
+    where not exists (
+        select 1
+        from {{ ref('stg_olids_enriched_concept_map') }} as episode
+        where episode.source_concept_id = obs.episodicity_source_concept_id
+            and episode.source_system in (
+                'EMIS_ObservationEpisode_cs', 'EMIS_Enumeration_cs'
+            )
+            and upper(episode.source_code) in ('REVIEW', 'ENDED')
+    )
     union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs9") }})
-    union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs10") }})
-    union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs11") }})
-    union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs12") }})
+    select person_id
+    from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs12") }})
+    where clinical_effective_date <= current_date()
     union
     select person_id from egfr_low
     union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs14") }})
+    select person_id
+    from ({{ get_ltc_lcs_observations("uclp_priority_group_2b_vs14") }})
+    where clinical_effective_date <= current_date()
     union
     select person_id from bmi_high
 )

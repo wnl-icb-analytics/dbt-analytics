@@ -5,13 +5,15 @@
 -- Excludes persistent statin adverse reactions at any date and contraindication,
 -- statin not indicated or not tolerated events on or before today. Local adverse codes match exactly.
 -- This parent permits statin treatment and recent NHS health checks.
--- XML library exclusions 3de35e4f / ea06414e lack complete exported definitions.
+-- Excludes QOF palliative care register membership (EMIS library ea06414e).
+-- XML library exclusion 3de35e4f lacks a complete exported definition.
 -- Authority: EMIS R5 ICB_CF_CVD_63_BASE, structured filters and tests.
 
 with base as (
     select person_id, age_at_least
     from {{ ref('int_ltc_lcs_cf_base_population') }}
     where has_metabolic_excluding_condition = false
+        and is_on_palliative_care_register = false
 ),
 
 age_eligible as (

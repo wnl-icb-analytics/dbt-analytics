@@ -12,14 +12,14 @@
 --     in HYP_COD. A later resolution defeats an older diagnosis in this rule.
 --     The earlier ever-resolved exclusion still applies independently.
 --
--- CAVEAT: ICB_CF_HTN_61_Base also references two EMIS library items
---   (3de35e4f-7964-4f24-a0b4-fd42930a1dd1, ea06414e-6bec-4593-837f-5b854c54a8c7) whose logic is
---   NOT in the XML export. Omitted here pending EMIS verification (flagged in canon caveats).
+-- Excludes QOF palliative care register membership (EMIS library ea06414e).
+-- Library 3de35e4f lacks a complete exported definition and remains omitted.
 
 with base as (
     select person_id
     from {{ ref('int_ltc_lcs_cf_base_population') }}
     where has_metabolic_excluding_condition = false
+        and is_on_palliative_care_register = false
         and had_nhs_health_check_24m = false
 ),
 

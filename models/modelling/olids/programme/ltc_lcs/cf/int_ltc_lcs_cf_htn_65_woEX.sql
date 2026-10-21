@@ -3,6 +3,7 @@
 -- LTC LCS HTN case finding: ICB_CF_HTN_65_woEX (UCLP Priority Group 3a), pre-Rule-1 population.
 -- Keep the latest record across the full 22-code systolic or diastolic pool.
 -- Test that same record against the clinic/home code set before its numeric threshold.
+-- CHD/stroke/TIA/PAD exclude Review and Ended episodes; CKD/diabetes are dated on or before today.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/hypertension/icb-cf-htn-65.md
 --
 -- Start = int_ltc_lcs_cf_htn_base. Net logic:
@@ -63,21 +64,32 @@ egfr_low as (
     where result_value < 60
 ),
 risk_factor as (
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_3a_vs7") }})
+    select obs.person_id
+    from ({{ get_ltc_lcs_observations(
+        "uclp_priority_group_3a_vs7,uclp_priority_group_3a_vs8,uclp_priority_group_3a_vs9,uclp_priority_group_3a_vs10"
+    ) }}) as obs
+    where not exists (
+        select 1
+        from {{ ref('stg_olids_enriched_concept_map') }} as episode
+        where episode.source_concept_id = obs.episodicity_source_concept_id
+            and episode.source_system in (
+                'EMIS_ObservationEpisode_cs', 'EMIS_Enumeration_cs'
+            )
+            and upper(episode.source_code) in ('REVIEW', 'ENDED')
+    )
     union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_3a_vs8") }})
-    union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_3a_vs9") }})
-    union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_3a_vs10") }})
-    union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_3a_vs11") }})
+    select person_id
+    from ({{ get_ltc_lcs_observations("uclp_priority_group_3a_vs11") }})
+    where clinical_effective_date <= current_date()
     union
     select person_id from egfr_low
     union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_3a_vs13") }})
+    select person_id
+    from ({{ get_ltc_lcs_observations("uclp_priority_group_3a_vs13") }})
+    where clinical_effective_date <= current_date()
     union
-    select person_id from ({{ get_ltc_lcs_observations("uclp_priority_group_3a_vs14") }})
+    select person_id
+    from ({{ get_ltc_lcs_observations("uclp_priority_group_3a_vs14") }})
 )
 
 select distinct b.person_id

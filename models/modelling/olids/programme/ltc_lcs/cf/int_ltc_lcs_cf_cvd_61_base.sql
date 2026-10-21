@@ -6,7 +6,8 @@
 -- and latest statin decline within five years, selecting records on or before today.
 -- Excludes persistent statin adverse reactions at any date and contraindication,
 -- statin not indicated or not tolerated events on or before today. Local adverse codes match exactly.
--- XML library exclusions 3de35e4f / ea06414e lack complete exported definitions.
+-- Excludes QOF palliative care register membership (EMIS library ea06414e).
+-- XML library exclusion 3de35e4f lacks a complete exported definition.
 -- Authority: EMIS R5 ICB_CF_CVD_61_BASE, structured filters and tests.
 
 -- XML date caps apply before Latest 1, so future records cannot hide earlier records.
@@ -44,6 +45,7 @@ base as (
     select person_id, age_at_least
     from {{ ref('int_ltc_lcs_cf_base_population') }}
     where has_metabolic_excluding_condition = false
+        and is_on_palliative_care_register = false
         and had_nhs_health_check_24m = false
 ),
 
