@@ -228,9 +228,11 @@ models:
           Low-haemoglobin flag. TRUE if latest haemoglobin value is below the
           threshold from qadmissions_lab_thresholds seed, FALSE otherwise
           (including NULL haemoglobin). The latest value comes from
-          int_haemoglobin_latest, which excludes negative values and extreme
-          outliers; qadmissions_input_features_validation keeps extreme outliers,
-          so the two models can differ.
+          int_haemoglobin_latest, which excludes negative, out-of-range and
+          extreme outlier values. qadmissions_input_features_validation also
+          excludes out-of-range haemoglobin, and under the current
+          observation_value_bounds every extreme outlier is out of range, so
+          both models use the same results.
         data_tests:
           - not_null
           - accepted_values:
