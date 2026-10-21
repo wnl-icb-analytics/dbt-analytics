@@ -7,11 +7,11 @@
 -- lipid-lowering therapy exception pool, including decline and maximum tolerated dose.
 -- XML criterion 0a123f28 requires MEDICATION_COURSES STATUS C and RX_TYPE U/R/RD:
 -- the same statin statement must be active and Automatic, Repeat or Repeat Dispensing.
--- No recent issue or course-start lookback is required. Apply all nested product
--- exceptions with descendants; the warehouse expansion still retains some descendants.
--- The current statin product expansion is incomplete: atorvastatin dm+d products,
--- generic and branded, are missing pending a terminology fix. Membership remains understated.
--- Authority: EMIS R5 updated 27 November 2025, ICB_CF_CVD_65_woEX.
+-- Use national statin refset ^12464001000001103 (ECL_CACHE:STAT_COD), as agreed
+-- by the technical lead, instead of the XML's five-ingredient statin list.
+-- No recent issue or course-start lookback is required. Retain the XML's 19 nested
+-- product exceptions with descendants. The LTC LCS reference data is unchanged.
+-- Authority: EMIS R5 updated 27 November 2025, ICB_CF_CVD_65_woEX, except the agreed refset.
 
 with base as (
     select person_id
@@ -52,13 +52,18 @@ statin_product_exceptions as (
 ),
 
 on_statin_course as (
-    select person_id
-    from ({{ get_ltc_lcs_medication_statements("with_qrisk210_amd_not_on_a_high_intensity_statin_vs3") }}) as ms
+    select pp.person_id
+    from ({{ get_medication_statements(cluster_id='STAT_COD', source='ECL_CACHE') }}) as statin
+    -- The cluster macro omits source authorisation; read it from the same statement.
+    inner join {{ ref('stg_olids_medication_statement') }} as ms
+        on statin.medication_statement_id = ms.id
+    inner join {{ ref('int_patient_person_unique') }} as pp
+        on ms.patient_id = pp.patient_id
     where ms.is_active = true
         and ms.authorisation_type_source_code in ('Automatic', 'Repeat', 'Repeat Dispensing')
         and not exists (
             select 1 from statin_product_exceptions as ex
-            where ex.concept_code = ms.concept_code
+            where ex.concept_code = ms.mapped_concept_code
         )
 )
 

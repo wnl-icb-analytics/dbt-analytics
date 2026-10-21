@@ -133,13 +133,17 @@ models:
 
   - name: int_ltc_lcs_cf_cvd_65_woEX
     description: >
-      People aged 40 to under 84 with latest QRISK >= 10 on a current repeat statin course
-      (excluding the high-intensity statin products listed in the EMIS search:
-      80 mg atorvastatin, simvastatin and fluvastatin; rosuvastatin 10-40 mg), not in CVD_61-64,
-      the shared metabolic exclusion or recorded lipid-lowering therapy exceptions such as
-      decline or maximum tolerated dose. One row per person, before the review-declined
-      exclusion. Understated until the statin code list is re-expanded:
-      atorvastatin dm+d products, generic and branded, are currently missing.
+      One row per currently registered, living person aged 40 to under 84 at build date
+      with latest QRISK >= 10 on a current repeat statin course. Uses national statin
+      refset ^12464001000001103 (STAT_COD, cached in ECL_CACHE), as agreed by the technical
+      lead, instead of the XML's five-ingredient list. Retains the XML's 19 product
+      exceptions and their descendants, including 80 mg atorvastatin, simvastatin and
+      fluvastatin and rosuvastatin 10-40 mg. The same medication statement must be active
+      with source authorisation Automatic, Repeat or Repeat Dispensing; no recent issue
+      or course-start lookback is required. Excludes CVD_61-64_woEX, the shared metabolic
+      population, inherited CVD_63_BASE therapy exclusions and ever-recorded lipid-lowering
+      therapy exceptions such as decline or maximum tolerated dose. Before the final
+      review-decline exclusion. The LTC LCS reference data is unchanged.
     config:
       meta:
         owner:
@@ -150,7 +154,11 @@ models:
             valuesets:
               - ed40f2e7-f9f3-1a17-104a-42af018aaf32  # with_qrisk210_amd_not_on_a_high_intensity_statin_vs1
               - fdead4de-c567-b1c4-15af-7e6a88bfb587  # with_qrisk210_amd_not_on_a_high_intensity_statin_vs2
-              - with_qrisk210_amd_not_on_a_high_intensity_statin_vs3
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: STAT_COD
+            source: ECL_CACHE
+            versioned: false
     columns:
       - name: person_id
         data_tests: [not_null, unique]
@@ -255,9 +263,11 @@ models:
   - name: int_ltc_lcs_cf_cvd_65
     description: >
       CVD_65_woEX people without a "Cardiovascular disease high risk review declined"
-      record in the last three years. One row per person. Understated until the statin
-      code list is re-expanded: atorvastatin dm+d products, generic and branded,
-      are currently missing.
+      record in the last three years. One row per person. Current repeat statin courses
+      use national refset ^12464001000001103 (STAT_COD, cached in ECL_CACHE), as agreed
+      by the technical lead, with the XML's 19 product exceptions and their descendants.
+      The active status and source authorisation Automatic, Repeat or Repeat Dispensing
+      must belong to the same statement. The LTC LCS reference data is unchanged.
     config:
       meta:
         owner:
