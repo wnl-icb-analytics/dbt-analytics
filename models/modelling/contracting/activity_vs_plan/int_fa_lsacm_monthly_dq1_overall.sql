@@ -6,10 +6,9 @@
 --First check of activity versus plan by commissioner code for WNL only. This is a high level check to see if the activity submitted is in line with the plan for the financial year and month.
 --SOURCE STAGING.SLAM.STG_LSACM
 with latestmonth as (
-select provider_code, max(fy_month_submitted) as financial_month
+select provider_code, fy_month_submitted as financial_month
 FROM {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }}
 --FROM MODELLING.CONTRACTING.INT_FA_LSACM_MONTHLY_SUB_YTD_LATEST
-group by provider_code
 )
 
 SELECT
