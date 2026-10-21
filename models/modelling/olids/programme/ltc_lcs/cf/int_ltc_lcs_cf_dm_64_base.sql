@@ -10,10 +10,10 @@
 -- ICB_CF_DM_64_BASE: base (age >= 17, NOT ICS_METABOLIC_LTC, NOT CF_NHSHC2Y), then latest
 --   BMI (vs1, 1-code Body mass index) Latest 1 where:
 --     numeric value >= 35; OR
---     numeric value >= 32.5 AND ethnicity in vs2 with no vs2 observation in vs3.
--- Interpret Latest 999 + NOTIN as every ethnicity record passing, following
--- the lead's decision based on CKD PG2 EMIS practice-count comparisons.
--- Require ethnicity evidence; none of the latest 999 records may fail the category test.
+--     numeric value >= 32.5 AND at least one vs2 ethnicity observation not in vs3.
+-- Latest 999 + NOTIN is read as at least one ethnicity record passing. vs3 also holds
+-- uninformative codes (not stated, other, the ethnic category parent), so requiring every
+-- record to pass would drop people recorded as BAME who later have one of those codes.
 -- vs3 is the non-BAME list with BAME exception children already removed by expansion.
 
 with base as (
@@ -31,7 +31,7 @@ latest_bmi as (
 ),
 
 bame as (
-    -- Every record in the latest 999 ethnicity observations must pass the non-BAME test.
+    -- At least one of the latest 999 ethnicity observations must pass the non-BAME test.
     select eth.person_id
     from (
         select *
@@ -44,7 +44,7 @@ bame as (
     left join ({{ get_ltc_lcs_observations("f0c4af8c-f818-da47-ba29-600c2f13e09f", emis_local_exact=true) }}) as non_bame
         on non_bame.observation_id = eth.observation_id
     group by eth.person_id
-    having count(non_bame.observation_id) = 0
+    having count(non_bame.observation_id) < count(*)
 )
 
 select distinct b.person_id
