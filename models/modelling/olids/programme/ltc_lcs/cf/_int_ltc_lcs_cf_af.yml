@@ -5,17 +5,18 @@ models:
     description: >
       One row per currently registered, living AF_61 medication candidate, assessed on the
       build date, outside ICS_METABOLIC_LTC and the recent NHS health-check population
-      CF_NHSHC2Y. Includes current Automatic, Repeat or Repeat Dispensed courses of oral
+      CF_NHSHC2Y. Includes current Automatic, Repeat or Repeat Dispensing courses of oral
       anticoagulants, digoxin, flecainide, propafenone or cardiac glycosides, with no
       course-start lookback. A separate anticoagulant/protamine issue rule is strictly after
       six months ago, with no upper date bound, current-course or repeat-only restriction.
       Unexpanded drug groups use BNF 02.08.02 for oral courses, 02.01.01 for glycosides and
-      02.08 for issues; these are approximations rather than exact expansions. The issue
-      fallback still includes parenteral anticoagulants and reversal medicines excluded
-      by the XML because their complete drug-group expansion is unavailable. Excludes
+      02.08.02-02.08.03 for issues; these are approximations rather than exact expansions.
+      The issue rule excludes parenteral anticoagulants (02.08.01) and reversal agents,
+      including idarucizumab and andexanet, as in the XML. Excludes
       ever-recorded DVT/PE/antiphospholipid, AF/flutter, Long COVID and hypoplastic left
       heart evidence. AF_61 applies the final marker exclusion; AF_62 subtracts this whole
-      candidate population.
+      candidate population. EMIS-local codes in the thrombosis and antiphospholipid
+      exclusion set match source codes exactly.
     config:
       meta:
         owner:
@@ -37,7 +38,8 @@ models:
     description: >
       ICB_CF_AF_61: AF medication candidates (base_woEX) excluding anyone with an
       "AF excluded/confirmed" code recorded strictly after three years before the build
-      date, with no upper date bound. One row per included person.
+      date, with no upper date bound. EMIS-local marker codes match source codes exactly.
+      One row per included person.
     config:
       meta:
         owner:

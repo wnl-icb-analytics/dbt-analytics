@@ -2,14 +2,14 @@
 
 -- AF_61 candidates before the final AF marker exclusion. One row per person at build date.
 -- Currently registered, living patients outside ICS_METABOLIC_LTC and CF_NHSHC2Y.
--- Include current Automatic, Repeat or Repeat Dispensed courses of oral
+-- Include current Automatic, Repeat or Repeat Dispensing courses of oral
 -- anticoagulants, digoxin, flecainide, propafenone or cardiac glycosides, without a
 -- course-start lookback. Separately include anticoagulant/protamine issues strictly
 -- after six months ago, without a current-course or repeat-prescription restriction.
 -- Unexpanded drug groups use BNF 02.08.02 (oral courses), 02.01.01 (glycosides)
--- and 02.08 (issues). These BNF mappings are not exact drug-group expansions.
--- The issue fallback still includes the XML's parenteral/reversal exceptions;
--- their complete drug-group expansion is unavailable.
+-- and 02.08.02-02.08.03 (issues). These BNF mappings are not exact drug-group expansions.
+-- The issue rule excludes parenteral anticoagulants (02.08.01) and reversal agents,
+-- including idarucizumab and andexanet, as in the XML.
 -- Exclude ever-recorded thrombosis/antiphospholipid, AF/flutter, Long COVID and
 -- hypoplastic left heart evidence. AF_62 subtracts this whole candidate population.
 -- XML authority: ICB_CF_AF_61_BASE / _base_woEX, R5 updated 27 November 2025.
@@ -32,7 +32,7 @@ af_medication as (
     from {{ ref('stg_olids_medication_statement') }} as ms
     where ms.is_active = true
         and ms.authorisation_type_source_code in (
-            'Automatic', 'Repeat', 'Repeat Dispensed', 'U', 'R', 'RD'
+            'Automatic', 'Repeat', 'Repeat Dispensing'
         )
         and (
             ms.bnf_code like '020802%'
@@ -44,13 +44,14 @@ af_medication as (
     select person_id
     from ({{ get_medication_orders(bnf_code='0208') }})
     where order_date > dateadd(month, -6, current_date())
+        and substr(bnf_code, 1, 6) in ('020802', '020803')
 ),
 
 -- woEX clinical exclusions (ever recorded)
 woex_excluded as (
     -- vs1: 223-code DVT/PE/antiphospholipid set (name collides with the 2-code Rule-1 marker -> pin id)
     select person_id
-    from ({{ get_ltc_lcs_observations("f4f774b1-0949-b062-b74a-d03f7d820a81") }})
+    from ({{ get_ltc_lcs_observations("f4f774b1-0949-b062-b74a-d03f7d820a81", emis_local_exact=true) }})
     union
     -- vs2: atrial fibrillation / flutter (8 codes)
     select person_id
