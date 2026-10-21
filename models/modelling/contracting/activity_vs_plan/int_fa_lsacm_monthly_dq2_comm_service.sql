@@ -5,10 +5,9 @@
 }}
 --list activity vs plan by commissioner service category code, service code and spec_comm_flag for the latest LSACM monthly submission used for DQ check 2.
 with latestmonth as (
-select provider_code, max(fy_month_submitted) as financial_month
+select provider_code, fy_month_submitted as financial_month
 FROM {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }}
 --FROM MODELLING.CONTRACTING.INT_FA_LSACM_MONTHLY_SUB_YTD_LATEST
-group by provider_code
 )
 
 SELECT
@@ -24,7 +23,7 @@ SELECT
     fa.service_code_funding_status,
     fa.service_code_dq,
     CONCAT(fa.commissioned_service_category_code, ' - ', fa.cscc_name) as commissioned_service,
-    CONCAT(fa.service_code, ' - ', fa.service_code_desc) as service_category,
+    CONCAT(fa.service_code, ' - ', COALESCE(fa.service_code_desc, 'NULL')) as service_category,
     SUM(fa.activity_actual) AS activity_actual,
     SUM(fa.activity_plan) AS activity_plan,
     SUM(fa.price_actual) AS price_actual,
