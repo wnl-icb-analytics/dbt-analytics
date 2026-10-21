@@ -2,19 +2,15 @@
 -- EMIS source: 'LTC LCS: NAFLD Register v2*'
 -- (docs/emis_specs/ltc_lcs_r5/risk_stratification/specs/conditions/nafld/ltc_lcs_nafld_register_v2.md)
 --
--- The EMIS register spans the whole steatotic liver disease family (fatty
--- liver conditions including the alcoholic branch, plus MASLD/MASH codes) -
--- broader than fct_person_nafld_register, which stays on the clinically
--- clean MASLD_DX_CODES cluster.
---
--- Implemented from the ECL-managed SLD_DX_CODES cluster
--- (<< 197321007 OR << 79720007 OR << 29185008, with historic expansion;
--- verified equivalent to the EMIS NAFLD v2 valueset expansion).
+-- One row per currently registered, living, non-test person with any exported
+-- NAFLD v2 diagnosis code ever recorded. No age or recency restriction.
+-- Use the two XML code lists rather than the broader SLD_DX_CODES cluster.
+-- EMIS-local codes match source codes exactly; public codes retain permitted descendants.
 
 with
 nafld_codes as (
     select distinct person_id
-    from ({{ get_observations("'SLD_DX_CODES'") }})
+    from ({{ get_ltc_lcs_observations("08654d02-552a-7784-076c-e7fcc941d284,f0bfa8e2-972c-1cba-326f-573ef42e6124", emis_local_exact=true) }})
 ),
 
 active as (
