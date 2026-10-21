@@ -1,11 +1,9 @@
 {{ config(materialized='table') }}
 
--- LTC LCS CKD case finding indicator CKD_64: at risk of CKD, not on CKD register
--- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/ckd/icb-cf-ckd-64-1d.md (+ -64-1n.md)
--- ICB_CF_CKD_64 = ICB_CF_CKD_64_1D_woEX (64_BASE minus 61/62/63 woEX, any at-risk arm), then:
---   Rule 1 (1D, exclude if matched): "Chronic kidney disease screening" code (1-code marker,
---     name collides with the 11-code AKI woEX set -> pinned id) within the last 3 years.
---   Rule 1 (1N): on the CKD register. Both applied.
+-- CKD_64: one row per eligible, registered, living person aged at least 17.
+-- Includes the CKD_64 helper at-risk arms after CKD_61/62/63 helper exclusions.
+-- Excludes screening strictly within three years and current CKD register membership.
+-- Authority: EMIS R5 CKD case-finding reports; full result rules are in the helper.
 
 with base_woex as (
     select person_id
@@ -16,7 +14,7 @@ with base_woex as (
 ckd_screened as (
     select person_id
     from ({{ get_ltc_lcs_observations("7b63b8f0-5846-9636-b5b0-7c2e2f177f30") }})
-    where clinical_effective_date >= dateadd(year, -3, current_date())
+    where clinical_effective_date > dateadd(year, -3, current_date())
 ),
 
 -- Rule 1 (1N): on the CKD register

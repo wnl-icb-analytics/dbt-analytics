@@ -1,10 +1,10 @@
 {{ config(materialized='table') }}
 
--- LTC LCS CKD case finding indicator CKD_62: latest UACR > 4, not on CKD register
--- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/ckd/icb-cf-ckd-62.md
--- ICB_CF_CKD_62 = ICB_CF_CKD_62_woEX (61_BASE minus 61_woEX, latest UACR > 4), then:
---   Rule 1 (exclude if matched): "Chronic kidney disease screening" code within the last
---     3 years. Plus the CKD register exclusion (consistent with the 1N variants).
+-- CKD_62: one row per eligible, registered, living person aged at least 17.
+-- The latest positive exact-code UACR and latest positive result on an earlier date
+-- must both be > 4, with at least two positive observations. Excludes the CKD_61 helper.
+-- Excludes screening strictly within three years and current CKD register membership.
+-- Authority: EMIS R5 CKD case-finding reports; full result rules are in the helper.
 
 with base_woex as (
     select person_id
@@ -14,8 +14,8 @@ with base_woex as (
 -- Rule 1: CKD screening recorded in the last 3 years (1-code marker)
 ckd_screened as (
     select person_id
-    from ({{ get_ltc_lcs_observations("with_most_recent_2_uacr4_and_not_on_ckd_regckd_diagnosis_vs1") }})
-    where clinical_effective_date >= dateadd(year, -3, current_date())
+    from ({{ get_ltc_lcs_observations("1daf7ba0-0a74-840c-3af3-83affee70a7f") }})
+    where clinical_effective_date > dateadd(year, -3, current_date())
 ),
 
 -- on the CKD register

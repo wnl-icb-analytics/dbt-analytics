@@ -10,7 +10,8 @@
 --   find at-risk patients who have NOT been recently eGFR-tested (anti-join, not inner join).
 -- CKD_64 BASE does NOT exclude CF_NHSHC2Y (per review).
 --
--- Caveat: two unresolvable EMIS library items (3de35e4f-..., c913f5a7-...) omitted as above.
+-- External library definitions are absent from the export. Shared register exclusions
+-- remain proxies; the XML does not establish complete library equivalence.
 
 with base as (
     select person_id
@@ -23,8 +24,8 @@ with base as (
 -- (canon: Value > 0 within 1y OR any record within 1y)
 recent_egfr as (
     select person_id
-    from ({{ get_ltc_lcs_observations("ckd_case_finding_vs1") }})
-    where clinical_effective_date >= dateadd(year, -1, current_date())
+    from ({{ get_ltc_lcs_observations("a491afe2-cbfe-8024-0c9b-09749af1c569", match_paths='source') }})
+    where clinical_effective_date > dateadd(year, -1, current_date())
 )
 
 select distinct b.person_id

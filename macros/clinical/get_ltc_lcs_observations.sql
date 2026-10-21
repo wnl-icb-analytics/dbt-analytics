@@ -1,4 +1,4 @@
-{% macro get_ltc_lcs_observations(valuesets, match_paths='both') %}
+{% macro get_ltc_lcs_observations(valuesets, match_paths='both', emis_local_exact=false) %}
 
 {#
     Returns observations for one or more LTC LCS valuesets via two parallel paths:
@@ -15,6 +15,8 @@
     Params:
       valuesets    - comma-separated list of valueset_id or valueset_friendly_name tokens
       match_paths  - 'both' (default), 'mapped', or 'source'
+      emis_local_exact - restrict mapped matches to non-local roots and their permitted
+                         descendants; EMIS namespace 1000006 matches source codes only.
 #}
 
 {%- if valuesets is none -%}
@@ -38,7 +40,29 @@
 {%- set valuesets_quoted = "'" ~ valueset_tokens | join("','") ~ "'" -%}
 {%- set valuesets_upper_quoted = "'" ~ (valueset_tokens | map('upper') | join("','")) ~ "'" -%}
 
-with matched_observations as (
+with
+{%- if emis_local_exact and match_paths in ['both', 'mapped'] %}
+non_local_roots as (
+    select distinct oc.valueset_id, oc.translated_to_snomed_code, oc.include_children
+    from {{ ref('stg_reference_ltc_lcs_original_codes') }} as oc
+    inner join {{ ref('stg_reference_ltc_lcs_valuesets') }} as vs
+        on oc.valueset_id = vs.valueset_id
+    where (oc.valueset_id in ({{ valuesets_quoted }})
+        or upper(vs.valueset_friendly_name) in ({{ valuesets_upper_quoted }}))
+        and not regexp_like(oc.original_code, '.*1000006[0-9]{3}$')
+),
+permitted_mapped_codes as (
+    select valueset_id, translated_to_snomed_code as snomed_code
+    from non_local_roots
+    union
+    select root.valueset_id, hierarchy.sub_type_id::varchar as snomed_code
+    from non_local_roots as root
+    inner join {{ ref('stg_nhsd_snomed_sct_transitive_closure') }} as hierarchy
+        on hierarchy.super_type_id::varchar = root.translated_to_snomed_code
+    where root.include_children
+),
+{%- endif %}
+matched_observations as (
 {%- if match_paths in ['both', 'mapped'] %}
     select
         o.id as observation_id,
@@ -63,6 +87,10 @@ with matched_observations as (
     from {{ ref('stg_olids_observation') }} as o
     inner join {{ ref('stg_reference_ltc_lcs_expanded_concepts') }} as ec
         on o.mapped_concept_code = ec.snomed_code
+    {%- if emis_local_exact %}
+    inner join permitted_mapped_codes as permitted
+        on ec.valueset_id = permitted.valueset_id and ec.snomed_code = permitted.snomed_code
+    {%- endif %}
     left join {{ ref('stg_reference_ltc_lcs_valuesets') }} as vs
         on ec.valueset_id = vs.valueset_id
     where (
