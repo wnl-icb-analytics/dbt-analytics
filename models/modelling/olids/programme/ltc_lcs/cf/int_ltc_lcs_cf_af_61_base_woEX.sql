@@ -1,24 +1,18 @@
 {{ config(materialized='table') }}
 
--- LTC LCS AF case finding: ICB_CF_AF_61_base_woEX population (shared parent)
--- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/af/icb-cf-af-61.md
---
--- The pre-Rule-1 AF_61 population. Consumed by both int_ltc_lcs_cf_af_61 (which adds the
--- final Rule 1) and int_ltc_lcs_cf_af_62 (which excludes this whole population).
---
--- ICB_CF_AF_61_BASE: currently registered, NOT in ICS_METABOLIC_LTC, NOT CF_NHSHC2Y,
---   NOT on AF/HF register (both already inside ICS_METABOLIC_LTC), AND on AF-relevant
---   medication in the last 6 months:
---     vs1 Oral Anticoagulants (dm+d drug group, unexpanded -> BNF 0208)
---     vs2 Digoxin/Flecainide/Propafenone (SCT, expanded -> valueset)
---     vs3 Cardiac Glycosides (dm+d drug group, unexpanded -> BNF 020101)
---     vs4 Anticoagulants And Protamine (dm+d drug group, unexpanded -> BNF 0208)
---   The unexpanded drug groups are recovered via BNF sections, mirroring the RS AF model.
--- ICB_CF_AF_61_base_woEX: then exclude the woEX clinical-code sets (no date filter / ever):
---     vs1 (223 codes: antiphospholipid, DVT/PE, thrombotic disorders) [pinned id, name collides]
---     vs2 (8 codes: atrial fibrillation / flutter)
---     vs3 (Long COVID-19)
---     vs4 (Hypoplastic left heart syndrome) — canon "include if NOT match"
+-- AF_61 candidates before the final AF marker exclusion. One row per person at build date.
+-- Currently registered, living patients outside ICS_METABOLIC_LTC and CF_NHSHC2Y.
+-- Include current Automatic, Repeat or Repeat Dispensed courses of oral
+-- anticoagulants, digoxin, flecainide, propafenone or cardiac glycosides, without a
+-- course-start lookback. Separately include anticoagulant/protamine issues strictly
+-- after six months ago, without a current-course or repeat-prescription restriction.
+-- Unexpanded drug groups use BNF 02.08.02 (oral courses), 02.01.01 (glycosides)
+-- and 02.08 (issues). These BNF mappings are not exact drug-group expansions.
+-- The issue fallback still includes the XML's parenteral/reversal exceptions;
+-- their complete drug-group expansion is unavailable.
+-- Exclude ever-recorded thrombosis/antiphospholipid, AF/flutter, Long COVID and
+-- hypoplastic left heart evidence. AF_62 subtracts this whole candidate population.
+-- XML authority: ICB_CF_AF_61_BASE / _base_woEX, R5 updated 27 November 2025.
 
 with base as (
     select person_id
@@ -27,21 +21,29 @@ with base as (
         and had_nhs_health_check_24m = false
 ),
 
--- AF-relevant medication in the last 6 months (any arm)
+-- Keep both mapped and source-code matches for the XML ingredient list.
+af_course_codes as (
+    select medication_statement_id
+    from ({{ get_ltc_lcs_medication_statements("98b8e1d3-7db0-0653-9412-2fdf795e6f61") }})
+),
+
 af_medication as (
+    select ms.person_id
+    from {{ ref('stg_olids_medication_statement') }} as ms
+    where ms.is_active = true
+        and ms.authorisation_type_source_code in (
+            'Automatic', 'Repeat', 'Repeat Dispensed', 'U', 'R', 'RD'
+        )
+        and (
+            ms.bnf_code like '020802%'
+            or ms.bnf_code like '020101%'
+            or ms.id in (select medication_statement_id from af_course_codes)
+        )
+    union
+    -- The issue arm is independent of course status and prescription type.
     select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("patients_on_digoxin_flecainide_propafenone_or_anticoag_vs2") }})
-    where order_date >= dateadd(month, -6, current_date())
-    union
-    -- vs1 Oral Anticoagulants + vs4 Anticoagulants And Protamine (unexpanded drug groups) via BNF 2.8
-    select distinct person_id
     from ({{ get_medication_orders(bnf_code='0208') }})
-    where order_date >= dateadd(month, -6, current_date())
-    union
-    -- vs3 Cardiac Glycosides (unexpanded drug group) via BNF 2.1.1
-    select distinct person_id
-    from ({{ get_medication_orders(bnf_code='020101') }})
-    where order_date >= dateadd(month, -6, current_date())
+    where order_date > dateadd(month, -6, current_date())
 ),
 
 -- woEX clinical exclusions (ever recorded)
@@ -52,15 +54,15 @@ woex_excluded as (
     union
     -- vs2: atrial fibrillation / flutter (8 codes)
     select person_id
-    from ({{ get_ltc_lcs_observations("af_case_finding_eligible_population_on_af_medication_vs2") }})
+    from ({{ get_ltc_lcs_observations("08ba16a7-dfb1-1282-f9a6-288f2641f431") }})
     union
     -- vs3: Long COVID-19
     select person_id
-    from ({{ get_ltc_lcs_observations("af_case_finding_eligible_population_on_af_medication_vs3") }})
+    from ({{ get_ltc_lcs_observations("c7ea5a27-039f-d39d-bfbb-5a5c37240961") }})
     union
     -- vs4: Hypoplastic left heart syndrome (canon: include if NOT match -> exclude if match)
     select person_id
-    from ({{ get_ltc_lcs_observations("af_case_finding_eligible_population_on_af_medication_vs4") }})
+    from ({{ get_ltc_lcs_observations("8463a4a4-8199-6956-5458-a3014aaa8f11") }})
 )
 
 select distinct b.person_id

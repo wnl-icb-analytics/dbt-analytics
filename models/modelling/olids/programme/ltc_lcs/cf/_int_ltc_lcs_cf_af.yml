@@ -3,10 +3,19 @@ version: 2
 models:
   - name: int_ltc_lcs_cf_af_61_base_woEX
     description: >
-      ICB_CF_AF_61_base_woEX shared parent: currently-registered patients not in
-      ICS_METABOLIC_LTC / CF_NHSHC2Y, on AF-relevant medication in the last 6 months,
-      minus the woEX clinical exclusions (DVT/PE, AF/flutter, Long COVID, hypoplastic
-      left heart). Pre-Rule-1 population consumed by AF_61 and AF_62.
+      One row per currently registered, living AF_61 medication candidate, assessed on the
+      build date, outside ICS_METABOLIC_LTC and the recent NHS health-check population
+      CF_NHSHC2Y. Includes current Automatic, Repeat or Repeat Dispensed courses of oral
+      anticoagulants, digoxin, flecainide, propafenone or cardiac glycosides, with no
+      course-start lookback. A separate anticoagulant/protamine issue rule is strictly after
+      six months ago, with no upper date bound, current-course or repeat-only restriction.
+      Unexpanded drug groups use BNF 02.08.02 for oral courses, 02.01.01 for glycosides and
+      02.08 for issues; these are approximations rather than exact expansions. The issue
+      fallback still includes parenteral anticoagulants and reversal medicines excluded
+      by the XML because their complete drug-group expansion is unavailable. Excludes
+      ever-recorded DVT/PE/antiphospholipid, AF/flutter, Long COVID and hypoplastic left
+      heart evidence. AF_61 applies the final marker exclusion; AF_62 subtracts this whole
+      candidate population.
     config:
       meta:
         owner:
@@ -15,11 +24,11 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - patients_on_digoxin_flecainide_propafenone_or_anticoag_vs2
+              - 98b8e1d3-7db0-0653-9412-2fdf795e6f61  # patients_on_digoxin_flecainide_propafenone_or_anticoag_vs2
               - f4f774b1-0949-b062-b74a-d03f7d820a81  # af_case_finding_eligible_population_on_af_medication_vs1
-              - af_case_finding_eligible_population_on_af_medication_vs2
-              - af_case_finding_eligible_population_on_af_medication_vs3
-              - af_case_finding_eligible_population_on_af_medication_vs4
+              - 08ba16a7-dfb1-1282-f9a6-288f2641f431  # af_case_finding_eligible_population_on_af_medication_vs2
+              - c7ea5a27-039f-d39d-bfbb-5a5c37240961  # af_case_finding_eligible_population_on_af_medication_vs3
+              - 8463a4a4-8199-6956-5458-a3014aaa8f11  # af_case_finding_eligible_population_on_af_medication_vs4
     columns:
       - name: person_id
         data_tests: [not_null, unique]
@@ -27,7 +36,8 @@ models:
   - name: int_ltc_lcs_cf_af_61
     description: >
       ICB_CF_AF_61: AF medication candidates (base_woEX) excluding anyone with an
-      "AF excluded/confirmed" code in the last 3 years. One row per included person.
+      "AF excluded/confirmed" code recorded strictly after three years before the build
+      date, with no upper date bound. One row per included person.
     config:
       meta:
         owner:
