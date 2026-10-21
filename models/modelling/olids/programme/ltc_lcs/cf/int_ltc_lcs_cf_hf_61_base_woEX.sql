@@ -90,7 +90,7 @@ bnp_400_latest as (
     from bnp_observations
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc nulls last, observation_id desc
     ) = 1
 ),
 
@@ -145,7 +145,7 @@ symptom_pool_a_latest as (
     from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs8, hf_case_finding_eligible_patients_vs7") }})
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc nulls last, observation_id desc
     ) = 1
 ),
 
@@ -154,7 +154,7 @@ symptom_pool_b_latest as (
     from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs9, hf_case_finding_eligible_patients_vs7") }})
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc nulls last, observation_id desc
     ) = 1
 ),
 
