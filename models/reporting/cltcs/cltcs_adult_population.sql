@@ -7,9 +7,9 @@ One row per living adult sk_patient_id from dim_person_demographics_basic (PDS a
 the source of truth for registrant data), enriched with:
 - person_id: OLIDS person key via dim_person_pseudo, resolved to one row per
   sk_patient_id with a latest-registered-record tiebreak.
-- neighbourhood_code: C-LTCS local neighbourhood
-  (stg_cltcs_emis_cltcs_local_mapping_nh_gp), used as the z-score scaling group in
-  the sub-score models. Always populated; practices outside the Haringey/Camden local mapping are excluded.
+- neighbourhood_code: C-LTCS neighbourhood (cltcs_practice_neighbourhood), used as
+  the z-score scaling group in the sub-score models. Always populated; practices
+  without a neighbourhood in that mapping are excluded.
 
 NOTE: the sk_patient_id <-> person_id resolution here is a local stopgap. It should
 be handled centrally (e.g. in dim_person_pseudo or a shared bridge/macro), and it
@@ -33,7 +33,7 @@ left join {{ ref('dim_person_pseudo') }} pp
     on db.sk_patient_id = pp.sk_patient_id
 left join {{ ref('dim_person_demographics') }} reg
     on pp.person_id = reg.person_id
-left join {{ ref('stg_cltcs_emis_cltcs_local_mapping_nh_gp') }} nh
+left join {{ ref('cltcs_practice_neighbourhood') }} nh
     on db.practice_code = nh.practice_code
 where (reg.is_deceased = false or reg.is_deceased is null or db.date_of_death is null) -- living patients only
     and db.date_of_birth < date_trunc('month', dateadd(year, -18, current_date)) -- adults only
