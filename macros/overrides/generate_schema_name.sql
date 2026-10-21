@@ -11,6 +11,17 @@
     - Explicit custom schemas take precedence.
 #}
 
+{% macro get_divider(use_double) -%}
+
+    {# Logic to determine number of underscores between domain and subdomain #}
+    {%- if use_double -%}
+        {{ '__' }}
+    {%- else -%}
+        {{ '_' }}
+    {%- endif -%}
+
+{%- endmacro %}
+
 {% macro generate_schema_name(custom_schema_name, node) -%}
 
     {%- set default_schema = target.schema -%}
@@ -18,6 +29,8 @@
     {%- if custom_schema_name is none -%}
         {%- set path_parts = node.fqn -%}
         {%- set auto_schema_domains = var('auto_schema_domains', []) -%}
+        {%- set auto_schema_domains_double_underscores = var('auto_schema_domains_double_underscores', []) -%}
+
 
         {# Staging models: schema named after the source-system folder containing the model #}
         {%- if path_parts | length >= 4 and path_parts[1] == 'staging' -%}
@@ -26,7 +39,9 @@
         {%- elif path_parts | length >= 4 and path_parts[1] in ['modelling', 'reporting'] and path_parts[2] in auto_schema_domains -%}
             {%- set domain = path_parts[2] | upper -%}
             {%- set subdomain = path_parts[3] | upper -%}
-            {{ domain ~ '_' ~ subdomain }}
+
+            {%- set divider = get_divider(path_parts[2] in auto_schema_domains_double_underscores) -%}
+            {{ domain ~ divider ~ subdomain }}
         {# Other modelling/reporting domains: folder name is the schema (models/modelling/acute -> ACUTE) #}
         {%- elif path_parts | length >= 4 and path_parts[1] in ['modelling', 'reporting'] -%}
             {{ path_parts[2] | upper }}
@@ -37,7 +52,15 @@
         {%- elif path_parts | length >= 5 and path_parts[1] == 'published' and path_parts[3] in auto_schema_domains -%}
             {%- set domain = path_parts[3] | upper -%}
             {%- set subdomain = path_parts[4] | upper -%}
-            {{ domain ~ '_' ~ subdomain }}
+
+            {# Logic to determine number of underscores #}
+            {%- if path_parts[3] in auto_schema_domains_double_underscores -%}
+                {%- set divider = '_ccc_' -%}
+            {%- else -%}
+                {%- set divider = 'ddd' -%}
+            {%- endif -%}
+
+            {{ domain ~ divider ~ subdomain }}
         {%- else -%}
             {{ default_schema }}
         {%- endif -%}
