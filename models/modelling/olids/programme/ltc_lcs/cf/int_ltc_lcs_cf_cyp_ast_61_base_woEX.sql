@@ -12,6 +12,8 @@
 -- Library ee5b135f is absent from the export but is already within ICS_RESP_LTC
 -- through the XML COPD register. The product and screening sets share a name, so
 -- their warehouse value-set IDs are pinned separately.
+-- The prednisolone constituent excludes the XML's rectal and injectable products
+-- and their descendants. The other prednisolone lists remain independent alternatives.
 
 with base as (
     select person_id
@@ -54,6 +56,21 @@ base_carved as (
     where b.person_id not in (select person_id from active_asthma_latest)
 ),
 
+prednisolone_exception_roots as (
+    select translated_to_snomed_code as concept_code
+    from {{ ref('stg_reference_ltc_lcs_exceptions') }}
+    where valueset_id = 'f1fdb838-2556-257c-fd9d-c621ad7ea0f3'
+),
+
+prednisolone_exceptions as (
+    select concept_code from prednisolone_exception_roots
+    union
+    select tc.sub_type_id::varchar as concept_code
+    from {{ ref('stg_nhsd_snomed_sct_transitive_closure') }} as tc
+    inner join prednisolone_exception_roots as ex
+        on tc.super_type_id::varchar = ex.concept_code
+),
+
 -- woEX eligible arms (any match in the relevant window)
 eligible as (
     -- Any issue within the XML window qualifies, even when a newer issue is today.
@@ -71,8 +88,15 @@ eligible as (
     union
     -- vs3/vs4/vs5 prednisolone (last 12 months / "last 1 year")
     select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("f1fdb838-2556-257c-fd9d-c621ad7ea0f3, 3ad6ed82-b887-ed90-a8e7-254979cf33c1, 48b40183-3fce-b10b-dcbe-3ef134f2426f") }})
+    from ({{ get_ltc_lcs_medication_orders("f1fdb838-2556-257c-fd9d-c621ad7ea0f3, 3ad6ed82-b887-ed90-a8e7-254979cf33c1, 48b40183-3fce-b10b-dcbe-3ef134f2426f") }}) as mo
     where order_date > dateadd(month, -12, current_date())
+        and (
+            mo.valueset_id != 'f1fdb838-2556-257c-fd9d-c621ad7ea0f3'
+            or not exists (
+                select 1 from prednisolone_exceptions as ex
+                where ex.concept_code = mo.concept_code
+            )
+        )
     union
     -- vs6 montelukast (last 12 months / "last 1 year")
     select person_id
