@@ -4,6 +4,8 @@
 -- The latest positive six-code eGFR and latest positive result on an earlier date
 -- must both be < 60, with at least two positive eight-code observations.
 -- Excludes screening strictly within three years and current CKD register membership.
+-- Register membership uses the QOF CKD register (fct_person_ckd_register)
+-- as a proxy for the EMIS LTC LCS CKD register.
 -- Authority: EMIS R5 CKD case-finding reports; full result rules are in the helper.
 
 with base_woex as (

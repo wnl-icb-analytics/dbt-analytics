@@ -8,8 +8,8 @@
 --   (eligible_for_ckd_case_finding_vs1, 162 codes -> "include patients who do not match").
 -- CKD_61 BASE does NOT exclude CF_NHSHC2Y (per review).
 --
--- External library definitions are absent from the export. Shared register exclusions
--- remain proxies; the XML does not establish complete library equivalence.
+-- The XML also rejects EMIS library items 3de35e4f and c913f5a7, which are not
+-- in the export and are not implemented.
 
 with base as (
     select person_id

@@ -10,8 +10,8 @@
 --   find at-risk patients who have NOT been recently eGFR-tested (anti-join, not inner join).
 -- CKD_64 BASE does NOT exclude CF_NHSHC2Y (per review).
 --
--- External library definitions are absent from the export. Shared register exclusions
--- remain proxies; the XML does not establish complete library equivalence.
+-- The XML also rejects EMIS library items 3de35e4f and c913f5a7, which are not
+-- in the export and are not implemented.
 
 with base as (
     select person_id

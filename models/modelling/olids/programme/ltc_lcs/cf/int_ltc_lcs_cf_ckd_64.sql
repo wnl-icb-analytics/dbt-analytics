@@ -3,6 +3,8 @@
 -- CKD_64: one row per eligible, registered, living person aged at least 17.
 -- Includes the CKD_64 helper at-risk arms after CKD_61/62/63 helper exclusions.
 -- Excludes screening strictly within three years and current CKD register membership.
+-- Register membership uses the QOF CKD register (fct_person_ckd_register)
+-- as a proxy for the EMIS LTC LCS CKD register.
 -- Authority: EMIS R5 CKD case-finding reports; full result rules are in the helper.
 
 with base_woex as (

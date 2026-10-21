@@ -4,9 +4,10 @@
 -- The base excludes eGFR codes strictly within one year. Exclude CKD_61/62/63 helpers.
 -- EMIS selects AKI within three years, at-risk conditions ever, or specified medication
 -- issued strictly within six months before testing the two haematuria routes.
--- Latest vs7 requires no vs8 on or after its date; latest vs9 requires exact-code UACR
--- > 30 on or after its date. Neither linked test applies to the other at-risk arms.
--- The BNF lithium substitute remains pending evidence for drug-group/brand equivalence.
+-- Latest microscopic haematuria or red-cell microscopy requires no negative urine
+-- blood test or red-cell microscopy on or after its date. Latest microscopic haematuria
+-- diagnosis requires exact-code UACR > 30 on or after its date. Other arms have no linked test.
+-- The BNF substitute includes lithium carbonate and citrate only.
 
 with base as (
     select person_id
@@ -37,10 +38,11 @@ arm_medication as (
     from ({{ get_ltc_lcs_medication_orders_latest("7d11f002-bdf4-e22d-4aa4-5e1de14bb3af,67b57e4a-b4c4-f213-726c-bcead7df9e1a") }})
     where order_date > dateadd(month, -6, current_date())
     union
-    -- vs3 Lithium Salts (drug group) + vs5 Lithium Carbonate brand (unexpanded) -> BNF 0402030 (lithium)
+    -- Unexpanded Lithium Salts and lithium carbonate brand use lithium-only BNF codes.
     select distinct person_id
     from ({{ get_medication_orders(bnf_code='0402030') }})
     where order_date > dateadd(month, -6, current_date())
+        and substr(bnf_code, 1, 9) in ('0402030K0', '0402030P0')
 ),
 
 -- The two haematuria pools have independent Latest 1 restrictions.

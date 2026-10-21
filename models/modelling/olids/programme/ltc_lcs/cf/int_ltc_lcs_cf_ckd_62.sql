@@ -4,6 +4,10 @@
 -- The latest positive exact-code UACR and latest positive result on an earlier date
 -- must both be > 4, with at least two positive observations. Excludes the CKD_61 helper.
 -- Excludes screening strictly within three years and current CKD register membership.
+-- Register membership uses the QOF CKD register (fct_person_ckd_register)
+-- as a proxy for the EMIS LTC LCS CKD register.
+-- The register exclusion is not in the CKD_62 XML. It is retained for consistency
+-- with the 1N searches; the base already excludes CKD-stage codes.
 -- Authority: EMIS R5 CKD case-finding reports; full result rules are in the helper.
 
 with base_woex as (

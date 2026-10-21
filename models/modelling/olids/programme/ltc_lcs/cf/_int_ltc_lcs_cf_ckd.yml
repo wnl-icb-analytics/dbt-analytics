@@ -5,8 +5,8 @@ models:
     description: >
       One row per currently registered, living person aged at least 17 in the CKD_61
       base, excluding the shared metabolic population and any recorded CKD-stage code.
-      Local EMIS codes match their source codes only. The external EMIS register libraries
-      are not fully defined in the export; shared register exclusions remain proxies.
+      Local EMIS codes match their source codes only. The XML also rejects EMIS library
+      items 3de35e4f and c913f5a7, which are not in the export and are not implemented.
     config:
       meta:
         owner:
@@ -25,7 +25,8 @@ models:
       One row per currently registered, living person aged at least 17 outside the shared
       metabolic population with no eGFR code dated strictly after one year before the
       build date. Uses exact EMIS-local source codes, regardless of numeric result.
-      External EMIS register libraries remain represented by shared register proxies.
+      The XML also rejects EMIS library items 3de35e4f and c913f5a7, which are not
+      in the export and are not implemented.
     config:
       meta:
         owner:
@@ -103,13 +104,14 @@ models:
       One row per person in the CKD_64 base outside the CKD_61/62/63 helpers, with AKI
       on or after three years before the build date, an at-risk condition ever recorded,
       or specified medication issued strictly after six months before the build date.
-      Also includes the latest vs7 haematuria record without a vs8 negative urine blood
-      test or red-cell microscopy on or after its calendar date, or the latest vs9
-      haematuria diagnosis with any exact-code UACR > 30 mg/mmol on or after its date.
+      Also includes the latest microscopic haematuria or red-cell microscopy record
+      without a negative urine blood test or red-cell microscopy on or after its calendar
+      date, or the latest microscopic haematuria diagnosis with any exact-code UACR
+      > 30 mg/mmol on or after its date.
       A microscopy record cancels itself; no numeric test applies to cancellation.
       Haematuria links do not restrict the other arms. Local EMIS codes match exactly;
-      non-local roots retain permitted descendants. The BNF lithium substitute remains
-      pending confirmation of equivalence to the EMIS drug group and brand.
+      non-local roots retain permitted descendants. The BNF substitute includes lithium
+      carbonate and citrate only, excluding valproic acid and asenapine.
     config:
       meta:
         owner:
@@ -136,6 +138,8 @@ models:
       CKD_61 helper, excluding screening dated strictly after three years before the build
       date and current CKD register membership. Both the latest positive six-code eGFR and the latest positive result on an earlier
       date are < 60 mL/min/1.73 m2; at least two eight-code positive observations exist.
+      Register membership uses the QOF CKD register (fct_person_ckd_register)
+      as a proxy for the EMIS LTC LCS CKD register.
     config:
       meta:
         owner:
@@ -155,6 +159,10 @@ models:
       CKD_62 helper, excluding screening dated strictly after three years before the build
       date and current CKD register membership. Both the latest positive exact-code UACR and the latest positive result on an earlier
       date are > 4 mg/mmol; at least two positive observations exist. Excludes CKD_61 helper.
+      Register membership uses the QOF CKD register (fct_person_ckd_register)
+      as a proxy for the EMIS LTC LCS CKD register.
+      The register exclusion is not in the CKD_62 XML. It is retained for consistency
+      with the 1N searches; the base already excludes CKD-stage codes.
     config:
       meta:
         owner:
@@ -173,6 +181,8 @@ models:
       One row per eligible, currently registered, living person aged at least 17 in the
       CKD_63 helper, excluding screening dated strictly after three years before the build
       date and current CKD register membership. The latest positive exact-code UACR is > 70 mg/mmol. Excludes CKD_61 and CKD_62 helpers.
+      Register membership uses the QOF CKD register (fct_person_ckd_register)
+      as a proxy for the EMIS LTC LCS CKD register.
     config:
       meta:
         owner:
@@ -192,6 +202,8 @@ models:
       CKD_64 helper, excluding screening dated strictly after three years before the build
       date and current CKD register membership. Inherits the CKD_64 base and at-risk arms, including both linked haematuria routes,
       after excluding CKD_61/62/63 helpers.
+      Register membership uses the QOF CKD register (fct_person_ckd_register)
+      as a proxy for the EMIS LTC LCS CKD register.
     config:
       meta:
         owner:
