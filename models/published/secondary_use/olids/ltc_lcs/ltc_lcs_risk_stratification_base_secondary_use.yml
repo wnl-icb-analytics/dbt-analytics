@@ -1,7 +1,7 @@
 models:
   - name: ltc_lcs_risk_stratification_base_secondary_use
     description: |-
-      LTC LCS risk and MoC status, one row per adult MoC base member or CYP-only asthma child at the build date. LR hypertension-only and LR adult-asthma-only people are excluded. Next actions use observation-based EMIS work lists; future diary lists are unavailable.
+      LTC LCS risk and MoC status, one row per adult MoC base member or CYP-only asthma child at the build date. LR hypertension-only and LR adult-asthma-only people follow a Check & Test-only pathway (is_moc_check_test_only); filter is_in_moc_base for figures matching the EMIS MoC base. Next actions use observation-based EMIS work lists; future diary lists are unavailable.
     config:
       meta:
         owner:
@@ -199,7 +199,7 @@ models:
       # MOC: pathway identity
       # ============================================================
       - name: moc_pathway
-        description: 'Risk pathway: HRCS, HRS, MRS or LRS. CYP-only asthma children show HRS or LRS by CYP risk and follow the annual/desktop review steps (is_cyp_asthma_only).'
+        description: 'Risk pathway: HRCS, HRS, MRS or LRS. CYP-only asthma children show HRS or LRS by CYP risk and follow the annual/desktop review steps (is_cyp_asthma_only). Check & Test-only people are LRS (is_moc_check_test_only).'
         data_tests: []
       - name: moc_risk_category
         description: Dashboard risk category (High Risk + Complex, High Risk, Medium Risk, or Low Risk)
@@ -208,8 +208,8 @@ models:
       # MOC: activity flags + dates (last 12 months), in pathway order
       # ============================================================
       - name: moc_check_test_completed
-        description: 'Actual C&T activity: C strictly after the annual anniversary for HRCS/HRS/MRS; inclusive for LRS. False
-          for CYP-only people.'
+        description: 'Actual C&T activity: C strictly after the annual anniversary for HRCS/HRS/MRS; inclusive for LRS,
+          including Check & Test-only people. False for CYP-only people.'
       - name: moc_check_test_date
         description: Latest Check & Test appointment date
       - name: moc_careplan_sharing_completed
@@ -247,8 +247,8 @@ models:
       # MOC: named progression stages (12m and current FY to date)
       # ============================================================
       - name: moc_check_test_completed_12m
-        description: 'Actual C&T activity: C strictly after the annual anniversary for HRCS/HRS/MRS; inclusive for LRS. False
-          for CYP-only people.'
+        description: 'Actual C&T activity: C strictly after the annual anniversary for HRCS/HRS/MRS; inclusive for LRS,
+          including Check & Test-only people. False for CYP-only people.'
       - name: moc_check_test_date_12m
         description: Latest Check & Test date in the trailing 12 months
       - name: moc_check_test_completed_fy
@@ -326,7 +326,8 @@ models:
         data_tests: []
       - name: moc_cycle_complete
         description: 'Project measure: adults need an agreed plan and review within 12 months, latest MoC event a review, and
-          no observation-based work list; CYP-only asthma children need the annual review, plus the desktop review if HR.'
+          no observation-based work list; CYP-only asthma children need the annual review, plus the desktop review if HR;
+          Check & Test-only people need the C&T.'
 
       # ============================================================
       # MOC: data quality - missing prior stages
@@ -373,8 +374,8 @@ models:
       - name: moc_mdt_review_date
         description: Latest actual annual MDT review date within the inclusive trailing 12 months; null if absent.
       - name: moc_stage_1_completed
-        description: Adult pathway C&T completion, using its strict or inclusive annual window. False for CYP-only
-          people.
+        description: Adult pathway C&T completion, using its strict or inclusive annual window. Includes Check & Test-only
+          people; false for CYP-only people.
       - name: moc_stage_3_completed
         description: 'Adult stage 3: agreed plan or decline in the inclusive trailing 12 months. No stage 1 or 2 prerequisite.'
       - name: moc_stage_4_completed
@@ -382,6 +383,7 @@ models:
           1 or 2 prerequisite.'
       - name: moc_requires_check_test
         description: Observation-based EMIS stage 1 list. Old C&T can require a new C&T despite a more recent decline.
+          Check & Test-only people are listed when moc_check_test_completed is false.
       - name: moc_requires_stage_2
         description: Latest E in the inclusive trailing 12 months is C, strictly after the annual anniversary. Future
           diaries are unavailable.
@@ -415,12 +417,13 @@ models:
         description: Latest qualifying CYP-only HR desktop review or linked annual review date; null without completion
           or for other pathways.
       - name: is_in_moc_base
-        description: Eligible for adult MoC after EMIS exclusions. False for CYP-only asthma pathway rows.
+        description: In the full adult MoC base after the EMIS exclusions; use for figures matching EMIS MoC searches. False for CYP-only asthma and Check & Test-only rows.
       - name: moc_base_exclusion_reason
-        description: CYP asthma only for CYP pathway rows; null for adult MoC. LR hypertension-only and LR
-          adult-asthma-only rows are not published.
+        description: Why the person is outside the full adult MoC - CYP asthma only, LR hypertension only or LR adult asthma only. Null for the MoC base.
       - name: is_cyp_asthma_only
         description: True for children on the CYP asthma register only (EMIS CYPAST pathway). Their MoC steps are the
           annual review and, for HR, the desktop review; adult stage columns are false for them.
+      - name: is_moc_check_test_only
+        description: True for LR hypertension-only and LR adult-asthma-only people. Outside the EMIS MoC base; the programme requires only the annual Check & Test, so other stage columns are false and the cycle completes with the C&T.
       - name: is_type_1_diabetes_hrc
         description: Qualifies for the separate EMIS Type 1 HRC rule; not added to diabetes_risk_group.

@@ -7,13 +7,26 @@ models:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.at_least_one:
           arguments:
             column_name: person_id
       - dbt_utils.expression_is_true:
           arguments:
             expression: "is_in_moc_base::int + is_cyp_asthma_only::int + is_moc_check_test_only::int = 1"
+      # Check & Test-only pathway: LRS, C&T alone completes the cycle, no other stage applies.
+      - dbt_utils.expression_is_true:
+          name: fct_person_ltc_lcs_risk_summary_check_test_only_pathway
+          arguments:
+            expression: >-
+              moc_pathway = 'LRS'
+              and moc_cycle_complete = moc_check_test_completed
+              and moc_requires_check_test <> moc_check_test_completed
+              and not (moc_mdt_review_completed or moc_careplan_sharing_completed or moc_discussion_completed
+                or moc_followup_completed or moc_declined or moc_stage_2_completed or moc_stage_3_completed
+                or moc_stage_4_completed or cyp_annual_review_completed or cyp_desktop_review_completed)
+          config:
+            where: is_moc_check_test_only
     columns:
       - name: person_id
         description: Unique person identifier
