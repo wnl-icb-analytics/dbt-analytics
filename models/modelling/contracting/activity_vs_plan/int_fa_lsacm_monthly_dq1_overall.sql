@@ -13,11 +13,11 @@ group by provider_code
 )
 
 SELECT
-        fa.PROVIDER_SHORTHAND,
-        fa.META_FILE_ID,
+        fa.provider_shorthand,
+        fa.meta_file_id,
         l.financial_month as Latest_month,
-        fa.COMMISSIONER_CODE,
-        fa.COMMISSIONER_NAME,
+        fa.commissioner_code,
+        fa.commissioner_name,
         SUM(fa.activity_actual) AS activity_actual,
         SUM(fa.activity_plan) AS activity_plan,
         SUM(fa.price_actual) AS price_actual,
@@ -26,4 +26,4 @@ SELECT
         --FROM MODELLING.CONTRACTING.INT_FA_LSACM_ACTIVITY_PLAN_YTD fa
         LEFT JOIN latestmonth l on fa.provider_code = l.provider_code
         GROUP BY ALL
-        ORDER BY fa.PROVIDER_SHORTHAND, fa.COMMISSIONER_CODE
+        ORDER BY fa.provider_shorthand, fa.commissioner_code
