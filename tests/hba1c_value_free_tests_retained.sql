@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- A coded HbA1c test remains evidence when its result is missing.
 WITH value_free_tests AS (
     SELECT obs.id, obs.cluster_id

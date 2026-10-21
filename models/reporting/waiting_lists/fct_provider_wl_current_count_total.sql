@@ -1,7 +1,7 @@
 {{ config(materialized='view') }}
 
 /*
-Count of all active waiting lists per provider.
+Count of all active waiting lists per provider and provider site.
 
 Clinical Purpose:
 - Care coordination management across providers

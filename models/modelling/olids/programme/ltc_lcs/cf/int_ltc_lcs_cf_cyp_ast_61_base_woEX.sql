@@ -6,7 +6,7 @@
 -- The pre-Rule-1 eligible population. RESPIRATORY case-finding domain (NOT metabolic):
 --   ICB_CF_CYPAST_61_BASE: currently registered, age 18 months to 17 years inclusive,
 --     NOT on a respiratory register (ICS_RESP_LTC = COPD/asthma/CYP-asthma), and whose
---     latest AST_COD event is NOT an asthma-resolved code. No CF_NHSHC2Y exclusion and no
+--     latest asthma event (AST_COD or ASTRES_COD) is NOT an active AST_COD code. No CF_NHSHC2Y exclusion and no
 --     metabolic exclusion (canon _BASE lists neither).
 --   ICB_CF_CYPAST_61_woEX: then keep only patients with asthma medication/symptom activity
 --     in the last 12 months (any arm):

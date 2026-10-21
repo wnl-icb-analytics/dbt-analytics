@@ -1,6 +1,6 @@
 {{
     config(
-        description="Raw layer: GP subset blacklist entries and reasons, including historical revisions. 1:1 passthrough with cleaned column names. \nSource: UKHFD.Read_Data_Migration.dim_GP_Subset_Blacklist_SCD \ndbt: source(''ukhfd_read_data_migration'', ''gp_subset_blacklist'') \nColumns:\n  SCUI -> scui\n  STUI -> stui\n  Map -> map\n  Term -> term\n  Reason -> reason\n  Unique_Column -> unique_column\n  In_Source_Data -> in_source_data\n  Import_Date -> import_date\n  Created_Date -> created_date\n  Is_Latest -> is_latest\n  Effective_From -> effective_from\n  Effective_To -> effective_to"
+        description="Raw layer: GP subset blacklist entries and reasons, including historical revisions.. 1:1 passthrough with cleaned column names. \nSource: UKHFD.Read_Data_Migration.dim_GP_Subset_Blacklist_SCD \ndbt: source(''ukhfd_read_data_migration'', ''gp_subset_blacklist'') \nColumns:\n  SCUI -> scui\n  STUI -> stui\n  Map -> map\n  Term -> term\n  Reason -> reason\n  Unique_Column -> unique_column\n  In_Source_Data -> in_source_data\n  Import_Date -> import_date\n  Created_Date -> created_date\n  Is_Latest -> is_latest\n  Effective_From -> effective_from\n  Effective_To -> effective_to"
     )
 }}
 select

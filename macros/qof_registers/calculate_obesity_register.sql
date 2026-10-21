@@ -4,7 +4,7 @@
     Calculates Obesity register status at one or more reference dates.
 
     Business Logic:
-    - Age ≥18 at reference date
+    - Age ≥18 at reference date, or at death if earlier (ltc_register_age_at)
     - Latest valid BMI (5 to 400) known by the reference date, at any date: ≥30, or ≥27.5
       for ethnic groups at higher cardiometabolic risk
     - No QOF 12-month window: an unmeasured person keeps their last valid BMI
@@ -105,14 +105,7 @@
         SELECT
             bmi.reference_date,
             bmi.person_id,
-            FLOOR(DATEDIFF(
-                'month',
-                birth.birth_date_approx,
-                CASE
-                    WHEN birth.death_date_approx <= bmi.reference_date THEN birth.death_date_approx
-                    ELSE bmi.reference_date
-                END
-            ) / 12) AS age
+            {{ ltc_register_age_at('birth', 'bmi.reference_date') }} AS age
         FROM bmi_data AS bmi
         INNER JOIN {{ ref('dim_person_birth_death') }} AS birth
             ON bmi.person_id = birth.person_id

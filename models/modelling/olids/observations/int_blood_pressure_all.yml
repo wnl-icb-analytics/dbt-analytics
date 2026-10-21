@@ -3,14 +3,19 @@ models:
     description: >-
       Blood pressure in OLIDS GP records, one representative paired reading per person
       and clinical date up to the build date. Includes complete readings within 40-350
-      mmHg systolic and 20-200 mmHg diastolic. The representative is the lowest
+      mmHg systolic and 20-200 mmHg diastolic, with systolic above diastolic.
+      Unparented components pair only within the same date and context group.
+      The representative is the lowest
       systolic, then diastolic reading. Its home or ambulatory setting can differ from
       the reading that triggered the daily hypertensive-range flag.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: systolic_value > diastolic_value
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
@@ -32,7 +37,7 @@ models:
       - name: systolic_value
         description: >-
           Representative systolic blood pressure in mmHg, within 40-350. Paired observations
-          share a parent where available. Unparented observations form one date-level pair
+          share a parent where available. Unparented observations form one pair per date and context group
           using the maximum systolic and maximum diastolic values. The lowest systolic pair,
           then lowest diastolic, represents the date.
         tests:
@@ -54,7 +59,7 @@ models:
                 max_value: 200
                 inclusive: true
       - name: is_home_bp_event
-        description: 'Boolean flag indicating the representative reading was recorded as home blood pressure (HOMEBP_COD, HOMEAMBBP_COD)'
+        description: True for HOME and ABPM readings through HOMEAMBBP_COD. Use bp_context_group for an unambiguous setting.
       - name: is_abpm_bp_event
         description: 'Boolean flag indicating the representative reading was recorded as ambulatory blood pressure monitoring (ABPM_COD)'
       - name: is_hypertensive_range
@@ -77,3 +82,53 @@ models:
         description: >-
           All source clusters contributing that day: BP_COD, SYSBP_COD, DIASBP_COD,
           HOMEAMBBP_COD, ABPM_COD and HOMEBP_COD.
+      - name: bp_context_group
+        description: Representative reading setting, CLINIC, HOME or ABPM, from concept-level cluster membership.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [CLINIC, HOME, ABPM]
+
+unit_tests:
+- name: bp_context_pairing_and_validity
+  model: int_blood_pressure_all
+  given:
+  - input: ref('int_blood_pressure_observations_base')
+    format: sql
+    rows: |-
+      SELECT 'SYN_BP_0'::VARCHAR AS id, -9301::NUMBER AS person_id, '2026-08-06'::DATE AS effective_date, NULL::VARCHAR AS parent_observation_id, 150::FLOAT AS result_value, 'SYN_CODE'::VARCHAR AS concept_code, 'Synthetic BP'::VARCHAR AS concept_display, 'SYSBP_COD'::VARCHAR AS source_cluster_id, 'CLINIC'::VARCHAR AS bp_context_group, TRUE::BOOLEAN AS is_systolic_row, FALSE::BOOLEAN AS is_diastolic_row, FALSE::BOOLEAN AS is_home_bp_row, FALSE::BOOLEAN AS is_abpm_bp_row
+      UNION ALL
+      SELECT 'SYN_BP_1'::VARCHAR AS id, -9301::NUMBER AS person_id, '2026-08-06'::DATE AS effective_date, NULL::VARCHAR AS parent_observation_id, 130::FLOAT AS result_value, 'SYN_CODE'::VARCHAR AS concept_code, 'Synthetic BP'::VARCHAR AS concept_display, 'SYSBP_COD'::VARCHAR AS source_cluster_id, 'HOME'::VARCHAR AS bp_context_group, TRUE::BOOLEAN AS is_systolic_row, FALSE::BOOLEAN AS is_diastolic_row, TRUE::BOOLEAN AS is_home_bp_row, FALSE::BOOLEAN AS is_abpm_bp_row
+      UNION ALL
+      SELECT 'SYN_BP_2'::VARCHAR AS id, -9301::NUMBER AS person_id, '2026-08-06'::DATE AS effective_date, NULL::VARCHAR AS parent_observation_id, 80::FLOAT AS result_value, 'SYN_CODE'::VARCHAR AS concept_code, 'Synthetic BP'::VARCHAR AS concept_display, 'DIASBP_COD'::VARCHAR AS source_cluster_id, 'HOME'::VARCHAR AS bp_context_group, FALSE::BOOLEAN AS is_systolic_row, TRUE::BOOLEAN AS is_diastolic_row, TRUE::BOOLEAN AS is_home_bp_row, FALSE::BOOLEAN AS is_abpm_bp_row
+      UNION ALL
+      SELECT 'SYN_BP_3'::VARCHAR AS id, -9301::NUMBER AS person_id, '2026-08-07'::DATE AS effective_date, 'SYN_INVERTED'::VARCHAR AS parent_observation_id, 120::FLOAT AS result_value, 'SYN_CODE'::VARCHAR AS concept_code, 'Synthetic BP'::VARCHAR AS concept_display, 'SYSBP_COD'::VARCHAR AS source_cluster_id, 'CLINIC'::VARCHAR AS bp_context_group, TRUE::BOOLEAN AS is_systolic_row, FALSE::BOOLEAN AS is_diastolic_row, FALSE::BOOLEAN AS is_home_bp_row, FALSE::BOOLEAN AS is_abpm_bp_row
+      UNION ALL
+      SELECT 'SYN_BP_4'::VARCHAR AS id, -9301::NUMBER AS person_id, '2026-08-07'::DATE AS effective_date, 'SYN_INVERTED'::VARCHAR AS parent_observation_id, 130::FLOAT AS result_value, 'SYN_CODE'::VARCHAR AS concept_code, 'Synthetic BP'::VARCHAR AS concept_display, 'DIASBP_COD'::VARCHAR AS source_cluster_id, 'CLINIC'::VARCHAR AS bp_context_group, FALSE::BOOLEAN AS is_systolic_row, TRUE::BOOLEAN AS is_diastolic_row, FALSE::BOOLEAN AS is_home_bp_row, FALSE::BOOLEAN AS is_abpm_bp_row
+      UNION ALL
+      SELECT 'SYN_BP_5'::VARCHAR AS id, -9301::NUMBER AS person_id, '2026-08-07'::DATE AS effective_date, 'SYN_OK'::VARCHAR AS parent_observation_id, 150::FLOAT AS result_value, 'SYN_CODE'::VARCHAR AS concept_code, 'Synthetic BP'::VARCHAR AS concept_display, 'SYSBP_COD'::VARCHAR AS source_cluster_id, 'CLINIC'::VARCHAR AS bp_context_group, TRUE::BOOLEAN AS is_systolic_row, FALSE::BOOLEAN AS is_diastolic_row, FALSE::BOOLEAN AS is_home_bp_row, FALSE::BOOLEAN AS is_abpm_bp_row
+      UNION ALL
+      SELECT 'SYN_BP_6'::VARCHAR AS id, -9301::NUMBER AS person_id, '2026-08-07'::DATE AS effective_date, 'SYN_OK'::VARCHAR AS parent_observation_id, 85::FLOAT AS result_value, 'SYN_CODE'::VARCHAR AS concept_code, 'Synthetic BP'::VARCHAR AS concept_display, 'DIASBP_COD'::VARCHAR AS source_cluster_id, 'CLINIC'::VARCHAR AS bp_context_group, FALSE::BOOLEAN AS is_systolic_row, TRUE::BOOLEAN AS is_diastolic_row, FALSE::BOOLEAN AS is_home_bp_row, FALSE::BOOLEAN AS is_abpm_bp_row
+      UNION ALL
+      SELECT 'SYN_BP_7'::VARCHAR AS id, -9301::NUMBER AS person_id, '2026-08-08'::DATE AS effective_date, 'SYN_INV_ONLY'::VARCHAR AS parent_observation_id, 100::FLOAT AS result_value, 'SYN_CODE'::VARCHAR AS concept_code, 'Synthetic BP'::VARCHAR AS concept_display, 'SYSBP_COD'::VARCHAR AS source_cluster_id, 'CLINIC'::VARCHAR AS bp_context_group, TRUE::BOOLEAN AS is_systolic_row, FALSE::BOOLEAN AS is_diastolic_row, FALSE::BOOLEAN AS is_home_bp_row, FALSE::BOOLEAN AS is_abpm_bp_row
+      UNION ALL
+      SELECT 'SYN_BP_8'::VARCHAR AS id, -9301::NUMBER AS person_id, '2026-08-08'::DATE AS effective_date, 'SYN_INV_ONLY'::VARCHAR AS parent_observation_id, 100::FLOAT AS result_value, 'SYN_CODE'::VARCHAR AS concept_code, 'Synthetic BP'::VARCHAR AS concept_display, 'DIASBP_COD'::VARCHAR AS source_cluster_id, 'CLINIC'::VARCHAR AS bp_context_group, FALSE::BOOLEAN AS is_systolic_row, TRUE::BOOLEAN AS is_diastolic_row, FALSE::BOOLEAN AS is_home_bp_row, FALSE::BOOLEAN AS is_abpm_bp_row
+  overrides:
+    macros:
+      get_empty_subquery_sql: SELECT NULL::VARCHAR AS id, NULL::NUMBER AS person_id, NULL::DATE AS effective_date,
+        NULL::VARCHAR AS parent_observation_id, NULL::FLOAT AS result_value, NULL::VARCHAR AS concept_code, NULL::VARCHAR
+        AS concept_display, NULL::VARCHAR AS source_cluster_id, NULL::VARCHAR AS bp_context_group, NULL::BOOLEAN
+        AS is_systolic_row, NULL::BOOLEAN AS is_diastolic_row, NULL::BOOLEAN AS is_home_bp_row, NULL::BOOLEAN AS
+        is_abpm_bp_row, NULL::FLOAT AS systolic_value, NULL::FLOAT AS diastolic_value WHERE FALSE
+  expect:
+    rows:
+    - person_id: -9301
+      effective_date: '2026-08-06'
+      systolic_value: 130
+      diastolic_value: 80
+      bp_context_group: HOME
+    - person_id: -9301
+      effective_date: '2026-08-07'
+      systolic_value: 150
+      diastolic_value: 85
+      bp_context_group: CLINIC

@@ -3,6 +3,7 @@ models:
     description: |
       Intermediate: All electronic Frailty Index (eFI) observations from `EFI_SCORE` and `EFI2_SCORE`.
       One row per observation with algorithm-specific categorisation and the original numeric score.
+      Scores outside 0-1 and non-numeric results have no category. Numeric values are retained for audit.
 
       Categorisation thresholds:
       - EFI (cluster `EFI_SCORE`):
@@ -20,6 +21,11 @@ models:
         owner:
           name: EddieDavison92
     tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - id
+              - source_cluster_id
       - cluster_ids_exist:
           arguments:
             cluster_ids: EFI_SCORE, EFI2_SCORE
@@ -41,4 +47,40 @@ models:
       - name: efi_type
         description: Algorithm type derived from cluster (EFI or EFI2)
       - name: efi_category
-        description: Frailty category per algorithm-specific thresholds
+        description: Frailty category per algorithm-specific thresholds; null for scores outside 0-1 or non-numeric results.
+      - name: is_valid_efi
+        description: Whether the recorded score is between 0 and 1 inclusive. False for non-numeric results.
+
+unit_tests:
+- name: efi_validity_preserves_algorithm_thresholds
+  model: int_efi_all
+  overrides:
+    macros:
+      get_observations: |-
+        SELECT column1::VARCHAR id, -98102::NUMBER person_id,
+            '2026-01-01'::TIMESTAMP_NTZ clinical_effective_date, column2::VARCHAR result_value,
+            'score'::VARCHAR result_unit_display, 'SYN_CODE'::VARCHAR mapped_concept_code,
+            'Synthetic eFI'::VARCHAR mapped_concept_display, column3::VARCHAR cluster_id
+        FROM VALUES ('SYN_NEGATIVE', '-0.01', 'EFI_SCORE'), ('SYN_ZERO', '0', 'EFI_SCORE'),
+            ('SYN_EFI_MILD', '0.12', 'EFI_SCORE'), ('SYN_EFI_MODERATE', '0.24', 'EFI_SCORE'),
+            ('SYN_EFI_SEVERE', '0.36', 'EFI_SCORE'), ('SYN_ONE', '1', 'EFI_SCORE'),
+            ('SYN_HIGH', '1.01', 'EFI_SCORE'), ('SYN_EFI2_MILD', '0.09', 'EFI2_SCORE'),
+            ('SYN_EFI2_MODERATE', '0.16', 'EFI2_SCORE'), ('SYN_EFI2_SEVERE', '0.24', 'EFI2_SCORE'),
+            ('SYN_EFI2_NEGATIVE', '-0.01', 'EFI2_SCORE'), ('SYN_EFI2_HIGH', '1.01', 'EFI2_SCORE'),
+            ('SYN_TEXT', 'synthetic', 'EFI_SCORE')
+  given: []
+  expect:
+    rows:
+    - {id: SYN_NEGATIVE, efi_category: null, is_valid_efi: false}
+    - {id: SYN_ZERO, efi_category: Fit, is_valid_efi: true}
+    - {id: SYN_EFI_MILD, efi_category: Mildly Frail, is_valid_efi: true}
+    - {id: SYN_EFI_MODERATE, efi_category: Moderately Frail, is_valid_efi: true}
+    - {id: SYN_EFI_SEVERE, efi_category: Severely Frail, is_valid_efi: true}
+    - {id: SYN_ONE, efi_category: Severely Frail, is_valid_efi: true}
+    - {id: SYN_HIGH, efi_category: null, is_valid_efi: false}
+    - {id: SYN_EFI2_MILD, efi_category: Mildly Frail, is_valid_efi: true}
+    - {id: SYN_EFI2_MODERATE, efi_category: Moderately Frail, is_valid_efi: true}
+    - {id: SYN_EFI2_SEVERE, efi_category: Severely Frail, is_valid_efi: true}
+    - {id: SYN_EFI2_NEGATIVE, efi_category: null, is_valid_efi: false}
+    - {id: SYN_EFI2_HIGH, efi_category: null, is_valid_efi: false}
+    - {id: SYN_TEXT, efi_category: null, is_valid_efi: false}
