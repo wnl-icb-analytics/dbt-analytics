@@ -6,9 +6,10 @@
 --
 -- Canon: every ICB_CF_*_BASE starts from "Currently registered patients", then excludes
 -- the relevant LTC set:
---   - metabolic CF (AF, CKD, CVD, DM, HF, HTN): ICS_METABOLIC_LTC (+ CF_NHSHC2Y on most)
+--   - AF, CKD, CVD, DM, HF, HTN: ICS_METABOLIC_LTC (+ CF_NHSHC2Y on most)
 --   - respiratory CF (CYP asthma):             ICS_RESP_LTC
 -- ICS_METABOLIC_LTC / ICS_RESP_LTC membership comes from int_ltc_lcs_cf_exclusions.
+-- ICS_METABOLIC_LTC includes hyperlipidaemia ever, with descendants.
 -- CF_NHSHC2Y = any completed NHS health check in the last 24 months.
 --
 -- The exclusions are exposed as FLAGS (not pre-filtered) so each int_ltc_lcs_cf_<cond>_<n>
@@ -40,7 +41,7 @@ exclusions as (
 ),
 
 nhs_health_check_24m as (
-    -- CF_NHSHC2Y: completed NHS health check in the last 24 months
+    -- CF_NHSHC2Y: completed NHS health check in the last 24 months (inclusive).
     select distinct person_id
     from {{ ref('int_ltc_lcs_nhs_health_checks') }}
     where clinical_effective_date >= dateadd(month, -24, current_date())

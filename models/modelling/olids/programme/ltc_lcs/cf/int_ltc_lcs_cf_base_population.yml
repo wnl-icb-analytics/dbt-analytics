@@ -5,10 +5,13 @@ models:
       finding, one row per person. No condition or health-check exclusions are applied here.
       Each case-finding base applies the flags its EMIS search requires.
       has_metabolic_excluding_condition flags the ICS_METABOLIC_LTC conditions: AF, CKD,
-      CHD, hypertension, heart failure, stroke/TIA, PAD, NAFLD, diabetes of any type and
-      familial hypercholesterolaemia. has_respiratory_excluding_condition flags the
-      ICS_RESP_LTC conditions: COPD, asthma and CYP asthma. had_nhs_health_check_24m flags a
-      completed NHS Health Check, HEALTH_CHECK_COMP, in the last 24 months.
+      CHD, hypertension, heart failure, stroke/TIA, PAD, NAFLD and diabetes register
+      membership, or any hyperlipidaemia record ever, including descendants. Uses the
+      programme COPD and NAFLD registers; other register proxies and their limitations
+      are documented in int_ltc_lcs_cf_exclusions. has_respiratory_excluding_condition
+      flags the ICS_RESP_LTC conditions: COPD, adult asthma (age 18+) and CYP asthma.
+      had_nhs_health_check_24m flags a completed NHS Health Check, HEALTH_CHECK_COMP, on
+      or after the date 24 months before the build date.
     tests:
       - dbt_utils.at_least_one:
           column_name: person_id
@@ -25,14 +28,12 @@ models:
           category: "CASE_FINDING"
           clinical_domain: "Population Health Management"
           name_short: "LTC/LCS base population"
-          description_short: "Eligible population for metabolic/CV case finding with exclusions applied"
+          description_short: "Registered, living population with case-finding exclusion flags"
           description_long: >
-            Active patients with practice registration, excluding metabolic/CV LTC programme
-            participants (ICS_METABOLIC_LTC: CKD, AF, HTN, CHD, STIA, PAD, HF, Diabetes
-            (all types), Hyperlipidaemia, NAFLD) and recent NHS health check recipients (24m).
-            Does NOT exclude respiratory conditions (COPD, Asthma) which are handled separately
-            via ICS_RESP_LTC for the CYP Asthma pathway. Forms foundation for metabolic case
-            finding indicators.
+            Currently registered, living people with metabolic, respiratory and NHS Health
+            Check exclusion flags. No exclusions are applied in this model. AF, CKD, CVD,
+            diabetes, HF and hypertension bases apply the metabolic flag; CYP asthma uses
+            the respiratory flag. Each base applies the health-check flag where EMIS does.
           is_qof: false
           source_column: "person_id"
           sort_order: "LTC_LCS_BASE_001"
@@ -58,9 +59,7 @@ models:
               category: "EXCLUSION"
             - cluster_id: "DM_COD"
               category: "EXCLUSION"
-            - cluster_id: "FHYP_COD"
-              category: "EXCLUSION"
-            - cluster_id: "NAF_COD"
+            - cluster_id: "SLD_DX_CODES"
               category: "EXCLUSION"
           thresholds:
             - population_group: "ALL_ADULTS"
@@ -68,7 +67,7 @@ models:
               threshold_value: "24"
               threshold_operator: "WITHIN"
               threshold_unit: "months"
-              description: "Exclude patients with NHS health checks in last 24 months"
+              description: "Flag completed NHS health checks in the last 24 months"
               sort_order: 1
         owner:
           name: EddieDavison92
