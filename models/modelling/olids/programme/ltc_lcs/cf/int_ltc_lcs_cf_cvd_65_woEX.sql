@@ -9,8 +9,8 @@
 -- the same statin statement must be active and Automatic, Repeat or Repeat Dispensing.
 -- No recent issue or course-start lookback is required. Apply all nested product
 -- exceptions with descendants; the warehouse expansion still retains some descendants.
--- The current statin product expansion is incomplete: generic atorvastatin products
--- are missing pending a terminology fix. Membership remains understated.
+-- The current statin product expansion is incomplete: atorvastatin dm+d products,
+-- generic and branded, are missing pending a terminology fix. Membership remains understated.
 -- Authority: EMIS R5 updated 27 November 2025, ICB_CF_CVD_65_woEX.
 
 with base as (

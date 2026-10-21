@@ -3,6 +3,7 @@
 -- CVD_63 before review-decline exclusion: one row per person in CVD_63_BASE.
 -- Requires latest non-HDL >2.5 mmol/L, without a date window, and excludes CVD_61/62_woEX.
 -- EMIS-local non-HDL codes match source codes exactly before selecting the latest result.
+-- Dated non-HDL records take precedence over undated records.
 -- Requires an explicit statin-product issue, STAT_COD issue or STAT_COD clinical event.
 -- Selects the latest record on or before today in each arm, then requires a date strictly after 12 months ago.
 -- Authority: EMIS R5 ICB_CF_CVD_63_woEX, structured filters and tests.
@@ -56,7 +57,7 @@ latest_non_hdl as (
     from ({{ get_ltc_lcs_observations("23f72268-d2d1-6fb0-9fe5-19eeb497790e", emis_local_exact=true) }})
     qualify row_number() over (
         partition by person_id, valueset_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc nulls last, observation_id desc
     ) = 1
 ),
 
