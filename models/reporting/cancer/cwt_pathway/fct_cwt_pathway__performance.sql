@@ -18,6 +18,3 @@ select
     performance__breach
     
 from {{ ref('int_cwt_pathway__performance_combined')}} cwt
-
-left join modelling.cancer__ref.ncl_trusts__merger_mitigation geo_t
-on cwt.performance__trust_code = geo_t.organisation_code
