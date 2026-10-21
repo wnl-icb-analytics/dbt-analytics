@@ -1,6 +1,7 @@
 {{ config(materialized='table') }}
 
 -- LTC LCS DM case finding indicator DM_62: gestational diabetes, no HbA1c in the last year
+-- Local list roots match exactly; local descriptions of public concepts remain eligible.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/diabetes/icb-cf-dm-62.md
 -- ICB_CF_DM_62 = ICB_CF_DM_62_woEX, then Rule 1 (final, exclude if matched):
 --   exclude "annual review declined" (1-code marker, pinned id) within the last 3 years.
@@ -12,7 +13,7 @@ with base_woex as (
 
 review_declined as (
     select person_id
-    from ({{ get_ltc_lcs_observations("5d6cf960-e4cd-9015-fd93-5105d7bf219a") }})
+    from ({{ get_ltc_lcs_observations("5d6cf960-e4cd-9015-fd93-5105d7bf219a", emis_local_exact=true) }})
     where clinical_effective_date > dateadd(year, -3, current_date())
 )
 

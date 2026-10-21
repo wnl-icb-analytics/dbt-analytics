@@ -3,11 +3,14 @@ version: 2
 models:
   - name: int_ltc_lcs_cf_dm_61_woEX
     description: >
-      ICB_CF_DM_61_woEX shared parent: registered patients aged >= 17, not in
-      ICS_METABOLIC_LTC / CF_NHSHC2Y, whose latest HbA1c (3-code IFCC) is >= 48,
-      excluding people whose latest record across diabetes resolved, remission and
-      HbA1c codes is a resolved or remission code (a later HbA1c overrides an older
-      remission code). Pre-Rule-1 population consumed by DM_61 and subtracted by DM_62-66.
+      One row per currently registered, living person aged at least 17, outside the
+      metabolic LTC population and with no NHS Health Check in the last 24 months.
+      Selects the latest positive HbA1c from the three-code IFCC set, in mmol/mol.
+      Valueless and non-positive records do not replace an older positive result.
+      Requires HbA1c >= 48. Excludes a latest remission/resolution marker in the mixed
+      seven-code remission/HbA1c pool. A later HbA1c overrides an older remission marker.
+      Pre-Rule-1 population used by DM_61 and excluded by DM_62-66.
+      Local list roots match exactly; local descriptions of listed public concepts still match.
     config:
       meta:
         owner:
@@ -17,7 +20,7 @@ models:
           arguments:
             valuesets:
               - b7ce1049-b4c0-1477-ec22-7696854f03ed  # latest_hba1c_48_and_no_diagnosis_of_dm_vs1 (woEX pool)
-              - latest_hba1c_48_and_no_diagnosis_of_dm_vs3
+              - 919fb132-083e-bba0-d8b6-d21e9846dcae
               - 68968843-a4fb-1a67-29d0-bfe7f33b241e  # latest_hba1c_48_and_no_diagnosis_of_dm_vs2
     columns:
       - name: person_id
@@ -25,8 +28,9 @@ models:
 
   - name: int_ltc_lcs_cf_dm_61
     description: >
-      ICB_CF_DM_61: latest HbA1c >= 48 with no diabetes diagnosis, excluding anyone with
-      an "annual review declined" code in the last 3 years. One row per included person.
+      One row per included person in DM_61_woEX, whose latest positive HbA1c is >= 48
+      mmol/mol, excluding annual review declined strictly within three years.
+      Local list roots match exactly; local descriptions of listed public concepts still match.
     config:
       meta:
         owner:
@@ -42,8 +46,12 @@ models:
 
   - name: int_ltc_lcs_cf_dm_62_woEX
     description: >
-      ICB_CF_DM_62_woEX shared parent: DM base on a gestational-diabetes code, not in
-      DM_61_woEX, with no HbA1c in the last 1 year. Subtracted by DM_63-66.
+      One row per currently registered, living person aged at least 17, outside the
+      metabolic LTC population and with no NHS Health Check in the last 24 months.
+      Requires gestational diabetes evidence, no DM_61_woEX membership and no HbA1c
+      record strictly after one year before the build date, regardless of its value.
+      Subtracted by DM_63-66.
+      Local list roots match exactly; local descriptions of listed public concepts still match.
     config:
       meta:
         owner:
@@ -52,7 +60,7 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - patients_on_gestational_dm_vs1
+              - 8827e417-8374-c4e2-a76b-d1b6f2c1ee5d
               - 56fd73ba-981e-cab3-0404-8c26b02afb36  # gestational_dm_and_no_hba1c_in_the_last_year_vs1
     columns:
       - name: person_id
@@ -60,8 +68,9 @@ models:
 
   - name: int_ltc_lcs_cf_dm_62
     description: >
-      ICB_CF_DM_62: history of gestational diabetes, no HbA1c in the last year, excluding
-      "annual review declined" in the last 3 years.
+      One row per included person in DM_62_woEX with gestational diabetes and no HbA1c
+      strictly within one year, excluding annual review declined strictly within three years.
+      Local list roots match exactly; local descriptions of listed public concepts still match.
     config:
       meta:
         owner:
@@ -77,8 +86,13 @@ models:
 
   - name: int_ltc_lcs_cf_dm_63_woEX
     description: >
-      ICB_CF_DM_63_woEX shared parent: DM base whose latest HbA1c (3-code IFCC) is 46-47
-      and older than 1 year, not in DM_61/62_woEX. Subtracted by DM_64-66.
+      One row per currently registered, living person aged at least 17, outside the
+      metabolic LTC population and with no NHS Health Check in the last 24 months.
+      Selects the latest positive HbA1c from the three-code IFCC set, in mmol/mol.
+      Valueless and non-positive records do not replace an older positive result.
+      Requires HbA1c >= 46 and < 48, dated on or before one year before the build date.
+      Excludes DM_61/62_woEX and is subtracted by DM_64-66.
+      Local list roots match exactly; local descriptions of listed public concepts still match.
     config:
       meta:
         owner:
@@ -94,8 +108,10 @@ models:
 
   - name: int_ltc_lcs_cf_dm_63
     description: >
-      ICB_CF_DM_63: latest HbA1c 46-47 and no HbA1c in the last year, excluding "annual
-      review declined" in the last 3 years.
+      One row per included person in DM_63_woEX, whose latest positive HbA1c is >= 46
+      and < 48 mmol/mol and dated on or before one year before the build date.
+      Excludes annual review declined strictly within three years.
+      Local list roots match exactly; local descriptions of listed public concepts still match.
     config:
       meta:
         owner:
@@ -112,13 +128,12 @@ models:
   - name: int_ltc_lcs_cf_dm_64_base
     description: >
       One row per currently registered, living person aged at least 17, outside the
-      metabolic LTC population and with no NHS Health Check in the last 24 months,
-      whose latest BMI is >= 35, or >= 32.5 with a BAME ethnicity observation.
-      The ethnicity route requires at least one observation in the ethnic-category
-      set (vs2) and no ethnicity record outside the BAME and minority categories:
-      none of the vs2 observations may match the non-BAME set (vs3, with BAME
-      exception children removed), across both mapped and source codes. Consumed by
-      DM_64_woEX and excluded by DM_65_BASE.
+      metabolic LTC population and with no NHS Health Check in the last 24 months.
+      Requires latest BMI >= 35 kg/m2, or >= 32.5 with qualifying BAME ethnicity.
+      The ethnicity route requires at least one record in the ethnicity pool; every
+      record among the latest 999 must pass the non-BAME exclusion test, with BAME
+      exception children removed. Used by DM_64_woEX and excluded by DM_65_BASE.
+      Local list roots match exactly; local descriptions of listed public concepts still match.
     config:
       meta:
         owner:
@@ -127,17 +142,19 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - obesity_with_latest_bmi_35_325_bame_population_vs1
+              - 631c11e6-1a77-2cd0-0dd3-3ef61868842c
               - 55c83e52-63f7-477c-82c8-9b172815352c  # obesity_with_latest_bmi_35_325_bame_population_vs2
-              - obesity_with_latest_bmi_35_325_bame_population_vs3
+              - f0c4af8c-f818-da47-ba29-600c2f13e09f
     columns:
       - name: person_id
         data_tests: [not_null, unique]
 
   - name: int_ltc_lcs_cf_dm_64_woEX
     description: >
-      ICB_CF_DM_64_woEX shared parent: DM_64_BASE not in DM_61/62/63_woEX, with no HbA1c
-      in the last 2 years. Subtracted by DM_65-66.
+      One row per person in DM_64_BASE outside DM_61/62/63_woEX, with no HbA1c record
+      strictly after two years before the build date, regardless of its value.
+      Subtracted by DM_65-66.
+      Local list roots match exactly; local descriptions of listed public concepts still match.
     config:
       meta:
         owner:
@@ -153,8 +170,10 @@ models:
 
   - name: int_ltc_lcs_cf_dm_64
     description: >
-      ICB_CF_DM_64: latest BMI >= 35 (>= 32.5 BAME) and no HbA1c in the last 2 years,
-      excluding "annual review declined" in the last 3 years.
+      One row per included person in DM_64_woEX with latest BMI >= 35 kg/m2
+      (>= 32.5 with qualifying BAME ethnicity), and no HbA1c strictly within two years.
+      Excludes annual review declined strictly within three years.
+      Local list roots match exactly; local descriptions of listed public concepts still match.
     config:
       meta:
         owner:
@@ -171,14 +190,14 @@ models:
   - name: int_ltc_lcs_cf_dm_65_woEX
     description: >
       One row per currently registered, living person aged at least 17, outside the
-      metabolic LTC population and with no NHS Health Check in the last 24 months,
-      excluding DM_64_BASE. Latest BMI must be >= 30 and < 35, or >= 27.5 and < 32.5
-      with qualifying ethnicity. The ethnicity route requires at least one
-      observation in the ethnic-category set (vs2) and no ethnicity record outside
-      the BAME and minority categories: none of the vs2 observations may match the
-      non-BAME set (vs3, with BAME exception children removed), across both mapped
-      and source codes. Excludes DM_61/62/63/64_woEX and anyone with HbA1c in
-      the last 2 years. Subtracted by DM_66.
+      metabolic LTC population and with no NHS Health Check in the last 24 months.
+      Excludes DM_64_BASE. Requires latest BMI >= 30 and < 35 kg/m2, or >= 27.5 and
+      < 32.5 with qualifying BAME ethnicity. The ethnicity route requires at least one
+      record in the ethnicity pool; every record among the latest 999 must pass the
+      non-BAME exclusion test, with BAME exception children removed. Excludes
+      DM_61/62/63/64_woEX and any HbA1c record strictly after two years before the build
+      date, regardless of its value. Subtracted by DM_66.
+      Local list roots match exactly; local descriptions of listed public concepts still match.
     config:
       meta:
         owner:
@@ -187,9 +206,9 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - obesity_with_latest_bmi_30_35_275_325_bame_population_vs1
+              - 75b5fe04-32b9-cb6b-1d1d-79b8183e75c4
               - 2e9a5dbb-a1f2-19ff-d657-bf70de2d2c43  # obesity_with_latest_bmi_30_35_275_325_bame_population_vs2
-              - obesity_with_latest_bmi_30_35_275_325_bame_population_vs3
+              - 396f1048-e18e-908e-b0d3-958d23d46607
               - dd384e6e-92e2-04b5-f1f9-17c119852411  # with_latest_bmi_30275bame_pop_no_hba1c_in_l2y_vs1
     columns:
       - name: person_id
@@ -197,8 +216,10 @@ models:
 
   - name: int_ltc_lcs_cf_dm_65
     description: >
-      ICB_CF_DM_65: latest BMI >= 30 (>= 27.5 BAME) and no HbA1c in the last 2 years,
-      excluding "annual review declined" in the last 3 years.
+      One row per included person in DM_65_woEX with latest BMI >= 30 and < 35 kg/m2
+      (>= 27.5 and < 32.5 with qualifying BAME ethnicity), and no HbA1c strictly within
+      two years. Excludes annual review declined strictly within three years.
+      Local list roots match exactly; local descriptions of listed public concepts still match.
     config:
       meta:
         owner:
@@ -214,8 +235,14 @@ models:
 
   - name: int_ltc_lcs_cf_dm_66
     description: >
-      ICB_CF_DM_66: latest HbA1c 42-45 and no HbA1c in the last year, not in any higher DM
-      cohort (61-65 woEX), excluding "annual review declined" in the last 3 years.
+      One row per currently registered, living person aged at least 17, outside the
+      metabolic LTC population and with no NHS Health Check in the last 24 months.
+      Selects the latest positive HbA1c from the three-code IFCC set, in mmol/mol.
+      Valueless and non-positive records do not replace an older positive result.
+      Requires HbA1c >= 42 and < 46, dated on or before one year before the build date.
+      Excludes higher-priority DM_61-65_woEX and annual review declined strictly within
+      three years.
+      Local list roots match exactly; local descriptions of listed public concepts still match.
     config:
       meta:
         owner:
