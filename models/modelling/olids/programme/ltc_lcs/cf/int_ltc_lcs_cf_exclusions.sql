@@ -52,13 +52,37 @@ programme_registers AS (
     FROM {{ ref('int_ltc_lcs_nafld_register') }}
 ),
 
+nafld_exception_roots AS (
+    SELECT translated_to_snomed_code AS concept_code
+    FROM {{ ref('stg_reference_ltc_lcs_exceptions') }}
+    WHERE valueset_id = '08654d02-552a-7784-076c-e7fcc941d284'
+),
+
+nafld_exceptions AS (
+    SELECT concept_code FROM nafld_exception_roots
+    UNION
+    SELECT tc.sub_type_id::varchar AS concept_code
+    FROM {{ ref('stg_nhsd_snomed_sct_transitive_closure') }} AS tc
+    INNER JOIN nafld_exception_roots AS ex
+        ON tc.super_type_id::varchar = ex.concept_code
+),
+
 programme_diagnosis_dates AS (
     SELECT
         person_id,
-        CASE WHEN cluster_id = 'COPD_COD' THEN 'COPD' ELSE 'NAF' END AS condition_code,
+        'COPD' AS condition_code,
         MIN(clinical_effective_date) AS earliest_diagnosis_date
-    FROM ({{ get_observations("'COPD_COD','SLD_DX_CODES'") }})
+    FROM ({{ get_observations("'COPD_COD'") }})
     GROUP BY person_id, condition_code
+    UNION ALL
+    SELECT obs.person_id, 'NAF' AS condition_code,
+        MIN(obs.clinical_effective_date) AS earliest_diagnosis_date
+    FROM ({{ get_ltc_lcs_observations("08654d02-552a-7784-076c-e7fcc941d284,f0bfa8e2-972c-1cba-326f-573ef42e6124", emis_local_exact=true) }}) AS obs
+    WHERE NOT EXISTS (
+        SELECT 1 FROM nafld_exceptions AS ex
+        WHERE ex.concept_code = obs.concept_code
+    )
+    GROUP BY obs.person_id
 ),
 
 hyperlipidaemia AS (
