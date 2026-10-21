@@ -2,7 +2,7 @@
 
 {% set fy_start = "date_from_parts(case when month(current_date()) >= 4 then year(current_date()) else year(current_date()) - 1 end, 4, 1)" %}
 
--- One row per eligible adult MoC member or CYP-only asthma member, assessed today.
+-- One row per adult MoC member, Check & Test-only LR member or CYP-only asthma member, assessed today.
 with event_dates as (
     select
         person_id,
@@ -35,9 +35,11 @@ population as (
         p.number_of_ltc_lcs_conditions,
         p.is_in_moc_base,
         p.moc_base_exclusion_reason,
+        p.is_cyp_asthma_only,
+        p.is_moc_check_test_only,
         rs.af_risk_group,
         rs.asthma_adult_risk_group,
-        case when not p.is_in_moc_base then coalesce(cyp.risk_group, 'LR')
+        case when p.is_cyp_asthma_only then coalesce(cyp.risk_group, 'LR')
             else rs.asthma_cyp_risk_group end as asthma_cyp_risk_group,
         rs.chd_risk_group,
         rs.ckd_risk_group,
@@ -52,9 +54,9 @@ population as (
         -- GROUP4 is the eligible adult MoC base minus HRC, HR and MR.
         coalesce(rs.overall_risk_group, cyp.risk_group, 'LR') as overall_risk_group,
         coalesce(rs.overall_risk_rank, case when cyp.person_id is not null then 2 else 5 end) as overall_risk_rank,
-        (rs.person_id is not null or cyp.person_id is not null or not p.is_in_moc_base) as in_any_risk_group,
-        -- Four risk pathways; CYP-only asthma rows (is_in_moc_base false) follow HRS or LRS by CYP risk.
-        case when not p.is_in_moc_base then case coalesce(cyp.risk_group, 'LR') when 'HR' then 'HRS' else 'LRS' end
+        (rs.person_id is not null or cyp.person_id is not null or p.is_cyp_asthma_only) as in_any_risk_group,
+        -- Four risk pathways; CYP-only asthma rows follow HRS or LRS by CYP risk.
+        case when p.is_cyp_asthma_only then case coalesce(cyp.risk_group, 'LR') when 'HR' then 'HRS' else 'LRS' end
             else case coalesce(rs.overall_risk_group, 'LR')
                 when 'HRC' then 'HRCS' when 'HR' then 'HRS' when 'MR' then 'MRS' else 'LRS'
             end end as moc_pathway,
@@ -68,18 +70,18 @@ population as (
         ev.latest_e_code,
         ev.latest_e_plus_code,
         ev.latest_b_code,
-        coalesce(not p.is_in_moc_base and cypr.annual_review_completed, false) as cyp_annual_review_completed,
-        coalesce(not p.is_in_moc_base and cyp.person_id is not null and cypr.desktop_review_completed, false) as cyp_desktop_review_completed,
-        case when not p.is_in_moc_base then cypr.annual_review_date end as cyp_annual_review_date,
-        case when not p.is_in_moc_base and cyp.person_id is not null then cypr.desktop_review_completed_date end as cyp_desktop_review_date,
+        coalesce(p.is_cyp_asthma_only and cypr.annual_review_completed, false) as cyp_annual_review_completed,
+        coalesce(p.is_cyp_asthma_only and cyp.person_id is not null and cypr.desktop_review_completed, false) as cyp_desktop_review_completed,
+        case when p.is_cyp_asthma_only then cypr.annual_review_date end as cyp_annual_review_date,
+        case when p.is_cyp_asthma_only and cyp.person_id is not null then cypr.desktop_review_completed_date end as cyp_desktop_review_date,
         greatest_ignore_nulls(cypr.annual_review_date, cypr.desktop_review_date) as cyp_latest_review_date
     from {{ ref('int_ltc_lcs_moc_base') }} p
     left join {{ ref('int_ltc_lcs_rs_person_risk_summary') }} rs on p.person_id = rs.person_id
     left join {{ ref('int_ltc_lcs_rs_acyp_pg2_hr') }} cyp
-        on p.person_id = cyp.person_id and not p.is_in_moc_base
+        on p.person_id = cyp.person_id and p.is_cyp_asthma_only
     left join event_dates ev on p.person_id = ev.person_id
     left join {{ ref('int_ltc_lcs_moc_cyp_review') }} cypr on p.person_id = cypr.person_id
-    where p.is_in_moc_base or p.moc_base_exclusion_reason = 'CYP asthma only'
+    where p.is_in_moc_base or p.is_cyp_asthma_only or p.is_moc_check_test_only
 ),
 activity as (
     select
@@ -88,7 +90,8 @@ activity as (
             when 'HRC' then 'High Risk + Complex' when 'HR' then 'High Risk'
             when 'MR' then 'Medium Risk' else 'Low Risk'
         end as moc_risk_category,
-        coalesce(is_in_moc_base and (latest_check_test_date > dateadd(year, -1, current_date()) or (moc_pathway = 'LRS' and latest_check_test_date = dateadd(year, -1, current_date()))), false) as moc_check_test_completed,
+        -- Check & Test-only people share the adult C&T rule; their other stages stay false.
+        coalesce((is_in_moc_base or is_moc_check_test_only) and (latest_check_test_date > dateadd(year, -1, current_date()) or (moc_pathway = 'LRS' and latest_check_test_date = dateadd(year, -1, current_date()))), false) as moc_check_test_completed,
         case when moc_check_test_completed then latest_check_test_date end as moc_check_test_date,
         coalesce(is_in_moc_base and (latest_mdt_review_date >= dateadd(month, -12, current_date())), false) as moc_mdt_review_completed,
         case when moc_mdt_review_completed then latest_mdt_review_date end as moc_mdt_review_date,
@@ -100,10 +103,10 @@ activity as (
         case when moc_followup_completed then latest_followup_date end as moc_followup_date,
         coalesce(is_in_moc_base and (latest_declined_date >= dateadd(month, -12, current_date())), false) as moc_declined,
         case when moc_declined then latest_declined_date end as moc_declined_date,
-        (not is_in_moc_base and not cyp_annual_review_completed) as cyp_requires_annual_review,
+        (is_cyp_asthma_only and not cyp_annual_review_completed) as cyp_requires_annual_review,
         -- Project rule from the EMIS HR description (the exported search selects no one): desktop review
         -- due 3 months after the latest annual or desktop review, once the annual review is done.
-        coalesce(not is_in_moc_base and moc_pathway = 'HRS' and cyp_annual_review_completed
+        coalesce(is_cyp_asthma_only and moc_pathway = 'HRS' and cyp_annual_review_completed
             and not cyp_desktop_review_completed
             and cyp_latest_review_date <= dateadd(month, -3, current_date()), false) as cyp_requires_desktop_review,
         coalesce(latest_e_code = 'D', false) as moc_declined_is_latest
@@ -119,7 +122,8 @@ stages as (
         (is_in_moc_base and (moc_declined or moc_discussion_completed)) as moc_stage_3_completed,
         (is_in_moc_base and (moc_declined or (moc_discussion_completed and moc_followup_completed))) as moc_stage_4_completed,
         case
-            when not is_in_moc_base then false
+            when is_cyp_asthma_only then false
+            when is_moc_check_test_only then not moc_check_test_completed
             when latest_check_test_date > dateadd(year, -1, current_date()) then false
             when latest_check_test_date < dateadd(year, -1, current_date()) then true
             when latest_e_code in ('A','D','C','S')
@@ -159,8 +163,9 @@ progression as (
         coalesce(is_in_moc_base and moc_discussion_completed and moc_followup_completed
             and latest_e_code = 'R' and not moc_has_work_list, false)
             -- CYP-only asthma: annual review, plus desktop review for HR.
-            or (not is_in_moc_base and cyp_annual_review_completed
-                and (moc_pathway = 'LRS' or cyp_desktop_review_completed)) as moc_cycle_complete,
+            or (is_cyp_asthma_only and cyp_annual_review_completed
+                and (moc_pathway = 'LRS' or cyp_desktop_review_completed))
+            or (is_moc_check_test_only and moc_check_test_completed) as moc_cycle_complete,
         -- Existing status vocabulary; work-list detail is in moc_requires_* and moc_next_action.
         case
             when is_in_moc_base and moc_declined_is_latest then 'Declined'
@@ -192,8 +197,8 @@ progression as (
             when moc_stage_2_completed then 2 when moc_stage_1_completed then 1 else 0
         end as moc_stage_completed,
         case
-            when not is_in_moc_base and cyp_annual_review_completed then 'Annual Review'
-            when not is_in_moc_base and cyp_desktop_review_completed then 'Desktop Review'
+            when is_cyp_asthma_only and cyp_annual_review_completed then 'Annual Review'
+            when is_cyp_asthma_only and cyp_desktop_review_completed then 'Desktop Review'
             when moc_discussion_completed and moc_followup_completed then 'Follow-up'
             when moc_discussion_completed then 'Discussion'
             when moc_stage_2_completed and moc_careplan_sharing_completed then 'Care Plan Sharing'
@@ -225,6 +230,8 @@ select
     number_of_ltc_lcs_conditions,
     is_in_moc_base,
     moc_base_exclusion_reason,
+    is_cyp_asthma_only,
+    is_moc_check_test_only,
     is_type_1_diabetes_hrc,
     af_risk_group,
     asthma_adult_risk_group,

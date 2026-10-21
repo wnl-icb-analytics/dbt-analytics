@@ -102,7 +102,7 @@ ranked as (
         end as risk_rank
     from all_rs
     inner join {{ ref('int_ltc_lcs_moc_base') }} base using (person_id)
-    where base.is_in_moc_base
+    where base.is_in_moc_base or base.is_moc_check_test_only
 ),
 
 highest_per_condition as (

@@ -1,6 +1,6 @@
 {{ config(materialized='table') }}
 
--- Register members, including exclusions needed by the CYP-only pathway.
+-- Register members, including people excluded from the full adult MoC.
 -- Registration status is not filtered; consumers filter is_active.
 with register_population as (
     select r.person_id, 'af' as condition
@@ -76,5 +76,11 @@ with_exclusion as (
     left join {{ ref('int_ltc_lcs_rs_htn_pg4_lr') }} htn on p.person_id = htn.person_id
     left join {{ ref('int_ltc_lcs_rs_ast_pg4_lr') }} ast on p.person_id = ast.person_id
 )
-select *, moc_base_exclusion_reason is null as is_in_moc_base
+select
+    *,
+    moc_base_exclusion_reason is null as is_in_moc_base,
+    coalesce(moc_base_exclusion_reason = 'CYP asthma only', false) as is_cyp_asthma_only,
+    -- Programme rule: LR single-condition people need only the annual Check & Test.
+    coalesce(moc_base_exclusion_reason in ('LR hypertension only', 'LR adult asthma only'), false)
+        as is_moc_check_test_only
 from with_exclusion
