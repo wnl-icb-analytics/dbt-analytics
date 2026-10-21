@@ -3,10 +3,14 @@ version: 2
 models:
   - name: int_ltc_lcs_cf_cvd_61_base
     description: >
-      ICB_CF_CVD_61_BASE shared parent (61 + 62): currently-registered patients aged 40 to
-      <84, not in ICS_METABOLIC_LTC / CF_NHSHC2Y, not on atorvastatin (latest issue <12m) or
-      STAT_COD (latest code <12m), no statin adverse reaction / contraindication ever, no statin
-      declined in the last 5 years.
+      One row per registered living person aged 40 to under 84 in the shared CVD_61/62
+      population, assessed today. Excludes the shared metabolic population and an NHS health
+      check in the last two years. Excludes a statin-product issue or STAT_COD event strictly
+      after 12 months ago, or statin decline strictly after five years ago, using the latest
+      matching record on or before today. Excludes persistent statin adverse reactions at
+      any date and statin contraindication, not indicated or not tolerated on or before today.
+      EMIS-local adverse codes match exactly; public originals retain their SNOMED meaning.
+      The two XML library exclusions lack complete exported definitions and are not implemented.
     config:
       meta:
         owner:
@@ -15,20 +19,24 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - people_with_aged_40_84_with_qrisk_recorded_vs1
-              - people_with_aged_40_84_with_qrisk_recorded_vs2
-              - people_with_aged_40_84_with_qrisk_recorded_vs3
-              - people_with_aged_40_84_with_qrisk_recorded_vs4
-              - people_with_aged_40_84_with_qrisk_recorded_vs5
+              - 476ee994-f9a6-21f8-16ac-bcd937a23da5
+              - 64531256-e997-1a46-caf9-45de4bd95bbe
+              - 38fdc3b5-7de4-b15c-6577-3f3142bb313e
+              - 312c880f-3b26-2eef-48ff-7f2795ed33ef
+              - 49465e07-b9f2-275e-293a-61c00c62a4a0
     columns:
       - name: person_id
         data_tests: [not_null, unique]
 
   - name: int_ltc_lcs_cf_cvd_63_base
     description: >
-      ICB_CF_CVD_63_BASE shared parent (63 + 64 + 65): currently-registered patients aged 40 to
-      <84, not in ICS_METABOLIC_LTC, no statin adverse reaction / contraindication ever, with a
-      QRISK refset latest numeric value >= 10. Does not exclude NHSHC2Y or statin users.
+      One row per registered living person aged 40 to under 84 in the shared CVD_63/64/65
+      population, assessed today. Requires the latest QRISK numeric value >=10, with no date
+      window, and excludes the shared metabolic population. Excludes persistent statin adverse
+      reactions at any date and statin contraindication, not indicated or not tolerated on or
+      before today. EMIS-local adverse codes match exactly; public originals retain their
+      SNOMED meaning. Permits statin treatment and recent NHS health checks. The two XML
+      library exclusions lack complete exported definitions and are not implemented.
     config:
       meta:
         owner:
@@ -37,9 +45,9 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - people_with_qrisk_10_vs1
-              - people_with_qrisk_10_vs2
-              - people_with_qrisk_10_vs3
+              - a06baf8e-f9c8-30ab-cee1-c2ba3af35902
+              - cd58c9a2-0e17-f7fe-30d3-effd2a7ec9aa
+              - bc214a50-595d-7b11-b391-6f3d8ef2aa96
     columns:
       - name: person_id
         data_tests: [not_null, unique]
@@ -80,9 +88,11 @@ models:
 
   - name: int_ltc_lcs_cf_cvd_63_woEX
     description: >
-      ICB_CF_CVD_63_woEX: CVD_63_BASE, requiring non-HDL latest > 2.5, excluding CVD_61/62_woEX,
-      including patients on a statin (atorvastatin issue / STAT_COD code or issue, latest <12m).
-      Pre-Rule-1 cohort.
+      One row per person in CVD_63_BASE with latest non-HDL cholesterol >2.5 mmol/L,
+      excluding CVD_61/62_woEX, before the high-risk-review-decline exclusion. Includes a
+      statin-product issue, STAT_COD issue or STAT_COD clinical event strictly after 12 months
+      ago, selecting the latest record on or before today in each arm. The non-HDL result
+      has no date window.
     config:
       meta:
         owner:
@@ -92,17 +102,18 @@ models:
           arguments:
             valuesets:
               - 23f72268-d2d1-6fb0-9fe5-19eeb497790e  # qrisk2_10_on_a_statin_and_a_non_hdl_25_vs1
-              - qrisk2_10_on_a_statin_and_a_non_hdl_25_vs2
-              - qrisk2_10_on_a_statin_and_a_non_hdl_25_vs3
+              - ebb22ff5-788c-4989-66a7-aaf7a68ebb62
+              - 624085a5-e1b3-e962-99f1-e7a6270a20e5
     columns:
       - name: person_id
         data_tests: [not_null, unique]
 
   - name: int_ltc_lcs_cf_cvd_64_woEX
     description: >
-      ICB_CF_CVD_64_woEX: CVD_63_BASE, excluding CVD_61/62/63_woEX, including patients NOT on a
-      statin (no STAT_COD code/issue latest <12m, no statin declined latest <5y). No QRISK upper
-      bound. Pre-Rule-1 cohort.
+      One row per person in CVD_63_BASE, excluding CVD_61/62/63_woEX, before the
+      high-risk-review-decline exclusion. Excludes STAT_COD issues or clinical events strictly
+      after 12 months ago and statin decline strictly after five years ago, selecting the
+      latest matching record on or before today in each arm. There is no QRISK upper limit.
     config:
       meta:
         owner:
@@ -112,7 +123,7 @@ models:
           arguments:
             valuesets:
               - 73a1adb2-031d-ffa6-1c8a-e0662ddbc9b4  # with_a_qrisk2_10_and_not_on_a_statin_vs1
-              - with_a_qrisk2_10_and_not_on_a_statin_vs2
+              - 4ff4b3d4-c379-00dd-3603-bcdb169589c0
     columns:
       - name: person_id
         data_tests: [not_null, unique]
@@ -139,10 +150,16 @@ models:
 
   - name: int_ltc_lcs_cf_cvd_66_woEX
     description: >
-      ICB_CF_CVD_66_woEX: registered patients aged 75 to <84, not in ICS_METABOLIC_LTC /
-      CF_NHSHC2Y, not on a statin (STAT_COD code/issue latest <12m, adverse reaction,
-      contraindication, declined latest <5y), excluding CVD_61-65_woEX, with no QRISK refset
-      reading in the last 5 years. Pre-Rule-1 cohort.
+      One row per registered living person aged 75 to under 84, assessed today, before
+      the high-risk-review-decline exclusion. Excludes the shared metabolic population, NHS
+      health checks in the last two years and CVD_61-65_woEX. Excludes STAT_COD issues or
+      clinical events strictly after 12 months ago and statin decline strictly after five years
+      ago, selecting the latest record on or before today in each arm. Excludes persistent
+      statin adverse reactions at any date and contraindication, not indicated or not tolerated
+      on or before today. EMIS-local adverse codes match exactly. Requires no QRISK event on
+      or after the five-year anniversary, regardless of its numeric value; there is no upper
+      event-date limit. The two XML library exclusions lack complete exported definitions
+      and are not implemented.
     config:
       meta:
         owner:
@@ -151,10 +168,10 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - people_with_aged_70_84_with_qrisk_recorded_vs1
-              - people_with_aged_70_84_with_qrisk_recorded_vs2
-              - people_with_aged_70_84_with_qrisk_recorded_vs3
-              - people_with_aged_70_84_with_qrisk_recorded_vs4
+              - 6cf0e193-860f-4b76-9d06-09a3037d09eb
+              - 75140610-d834-c931-9efa-3f47eaf12f5a
+              - 4b0f96a0-5505-e71e-1db3-09f5f557ce99
+              - c2aa42c9-1dc5-ef51-69f1-80caa1d29cd5
               - a1c6f038-fa5a-8265-93aa-1a1eecf71007  # aged_75_84_years_who_are_not_on_a_statin_and_no_qriskin_l5y_vs1
     columns:
       - name: person_id
