@@ -1,9 +1,11 @@
 -- LTC LCS case-finding exclusions, one row per person with an excluding condition.
 -- ICS_METABOLIC_LTC: nine LTC LCS registers OR any hyperlipidaemia record ever.
 -- ICS_RESP_LTC: LTC LCS COPD, adult asthma and CYP asthma registers.
--- Reuse programme COPD/NAFLD registers; other registers retain the existing QOF
--- proxies. EMIS library definitions are absent from the export, and CKD equivalence
--- remains unresolved. Adult asthma requires age >= 18; CYP asthma has its own register.
+-- Programme COPD and NAFLD register models implement the exported EMIS searches;
+-- their aggregate counts differ from EMIS. Other conditions use QOF or clinical
+-- register proxies for unexported library items. The QOF CKD register is known to
+-- differ materially from the EMIS LTC LCS CKD register. Adult asthma requires age >= 18;
+-- CYP asthma has its own register.
 
 WITH ltc_summary_conditions AS (
     SELECT
