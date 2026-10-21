@@ -9,8 +9,10 @@
 -- ICB_CF_DM_64_BASE: base (age >= 17, NOT ICS_METABOLIC_LTC, NOT CF_NHSHC2Y), then latest
 --   BMI (vs1, 1-code Body mass index) Latest 1 where:
 --     numeric value >= 35; OR
---     numeric value >= 32.5 AND an ethnicity observation in vs2 but not vs3.
--- The XML's Latest 999 ethnicity restriction is an any-record determinant.
+--     numeric value >= 32.5 AND ethnicity in vs2 with no vs2 observation in vs3.
+-- Interpret Latest 999 + NOTIN as every ethnicity record passing, following
+-- the lead's decision based on CKD PG2 EMIS practice-count comparisons.
+-- Require an ethnicity record and no ethnicity record outside the BAME and minority categories.
 -- vs3 is the non-BAME list with BAME exception children already removed by expansion.
 
 with base as (
@@ -28,14 +30,13 @@ latest_bmi as (
 ),
 
 bame as (
-    -- Apply the NOT IN restriction to each observation, across both match paths.
-    select distinct eth.person_id
+    -- Both match paths contribute; any vs2 observation in vs3 excludes the person.
+    select eth.person_id
     from ({{ get_ltc_lcs_observations("55c83e52-63f7-477c-82c8-9b172815352c") }}) as eth
-    where not exists (
-        select 1
-        from ({{ get_ltc_lcs_observations("obesity_with_latest_bmi_35_325_bame_population_vs3") }}) as non_bame
-        where non_bame.observation_id = eth.observation_id
-    )
+    left join ({{ get_ltc_lcs_observations("obesity_with_latest_bmi_35_325_bame_population_vs3") }}) as non_bame
+        on non_bame.observation_id = eth.observation_id
+    group by eth.person_id
+    having count(non_bame.observation_id) = 0
 )
 
 select distinct b.person_id
