@@ -1,6 +1,6 @@
 {{ config(materialized='table') }}
 
--- LTC LCS HTN case finding: ICB_CF_HTN_66_woEX (UCLP Priority Group 3b). Pre-Rule-1
+-- LTC LCS HTN case finding: ICB_CF_HTN_66_woEX (UCLP Priority Group 3b), pre-Rule-1 population.
 -- Keep the latest record across the full 22-code systolic or diastolic pool.
 -- Test that same record against the clinic/home code set before its numeric threshold.
 -- The same code test applies to both inclusion and the age-80 low-BP exclusions.

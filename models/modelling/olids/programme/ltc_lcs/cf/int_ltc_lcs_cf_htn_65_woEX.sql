@@ -1,6 +1,6 @@
 {{ config(materialized='table') }}
 
--- LTC LCS HTN case finding: ICB_CF_HTN_65_woEX (UCLP Priority Group 3a). Pre-Rule-1
+-- LTC LCS HTN case finding: ICB_CF_HTN_65_woEX (UCLP Priority Group 3a), pre-Rule-1 population.
 -- Keep the latest record across the full 22-code systolic or diastolic pool.
 -- Test that same record against the clinic/home code set before its numeric threshold.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/hypertension/icb-cf-htn-65.md
