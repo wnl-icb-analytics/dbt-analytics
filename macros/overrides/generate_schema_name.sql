@@ -53,14 +53,9 @@
             {%- set domain = path_parts[3] | upper -%}
             {%- set subdomain = path_parts[4] | upper -%}
 
-            {# Logic to determine number of underscores #}
-            {%- if path_parts[3] in auto_schema_domains_double_underscores -%}
-                {%- set divider = '_ccc_' -%}
-            {%- else -%}
-                {%- set divider = 'ddd' -%}
-            {%- endif -%}
-
+            {%- set divider = get_divider(path_parts[3] in auto_schema_domains_double_underscores) -%}
             {{ domain ~ divider ~ subdomain }}
+
         {%- else -%}
             {{ default_schema }}
         {%- endif -%}
