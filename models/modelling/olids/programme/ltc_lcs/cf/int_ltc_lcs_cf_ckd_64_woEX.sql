@@ -8,6 +8,7 @@
 -- blood test or red-cell microscopy on or after its date. Latest microscopic haematuria
 -- diagnosis requires exact-code UACR > 30 on or after its date. Other arms have no linked test.
 -- The BNF substitute includes lithium carbonate and citrate only.
+-- Tacrolimus excludes the five topical/mouthwash products and their descendants; any recent issue qualifies.
 
 with base as (
     select person_id
@@ -31,12 +32,34 @@ arm_conditions as (
     from ({{ get_ltc_lcs_observations("a30e0c52-efd9-9ce9-c56a-6d1469fc64d4", emis_local_exact=true) }})
 ),
 
+medication_exception_roots as (
+    select translated_to_snomed_code as concept_code
+    from {{ ref('stg_reference_ltc_lcs_exceptions') }}
+    where valueset_id = '67b57e4a-b4c4-f213-726c-bcead7df9e1a'
+),
+
+medication_exceptions as (
+    select concept_code from medication_exception_roots
+    union
+    select tc.sub_type_id::varchar as concept_code
+    from {{ ref('stg_nhsd_snomed_sct_transitive_closure') }} as tc
+    inner join medication_exception_roots as ex
+        on tc.super_type_id::varchar = ex.concept_code
+),
+
 -- Arm C: nephrotoxic medication in the last 6 months
 arm_medication as (
     -- vs4 Lithium Carbonate/Citrate + vs6 Sulfasalazine/Tacrolimus (expanded)
-    select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("7d11f002-bdf4-e22d-4aa4-5e1de14bb3af,67b57e4a-b4c4-f213-726c-bcead7df9e1a") }})
-    where order_date > dateadd(month, -6, current_date())
+    select mo.person_id
+    from ({{ get_ltc_lcs_medication_orders("7d11f002-bdf4-e22d-4aa4-5e1de14bb3af,67b57e4a-b4c4-f213-726c-bcead7df9e1a") }}) as mo
+    where mo.order_date > dateadd(month, -6, current_date())
+        and (
+            mo.valueset_id != '67b57e4a-b4c4-f213-726c-bcead7df9e1a'
+            or not exists (
+                select 1 from medication_exceptions as ex
+                where ex.concept_code = mo.concept_code
+            )
+        )
     union
     -- Unexpanded Lithium Salts and lithium carbonate brand use lithium-only BNF codes.
     select distinct person_id
