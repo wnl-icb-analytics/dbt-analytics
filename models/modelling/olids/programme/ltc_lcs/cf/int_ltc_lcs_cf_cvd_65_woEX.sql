@@ -1,19 +1,17 @@
 {{ config(materialized='table') }}
 
--- LTC LCS CVD case finding: ICB_CF_CVD_65_woEX population (pre-Rule-1)
--- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/cvd/icb-cf-cvd-65.md
---
--- CVD_65 shares CVD_63_BASE (age 40-84, not metabolic, not adverse/contra, QRISK latest >=10).
--- CVD_65_woEX =
---   REQUIRE QRISK refset (999011011000230107) latest numeric value >= 10 (vs2, CVDASS2_COD),
---   EXCLUDE CVD_61_woEX, CVD_62_woEX, CVD_63_woEX, CVD_64_woEX cohorts,
---   EXCLUDE lipid-lowering adverse-reaction set (vs1, 19 codes),
---   then INCLUDE who match Medication Courses with Atorvastatin/Simvastatin/Fluvastatin +2
---     (vs3, 5 SCT Const ingredients -> 577 expanded statin products).
---
--- Collisions:
---   vs1 with_qrisk210_amd_not_on_a_high_intensity_statin_vs1 -> pin woEX id ed40f2e7 (19 AR codes)
---   vs2 -> pin id fdead4de (6 QRISK refset codes)  [distinct purpose copy of CVDASS2]
+-- CVD_65 candidates before the final review-decline exclusion. One row per person.
+-- Currently registered, living people aged 40 to under 84 at build date, outside
+-- the shared metabolic population and inherited CVD_63_BASE therapy exclusions.
+-- Require latest QRISK >= 10, subtract CVD_61-64_woEX and exclude the ever-recorded
+-- lipid-lowering therapy exception pool, including decline and maximum tolerated dose.
+-- XML criterion 0a123f28 requires MEDICATION_COURSES STATUS C and RX_TYPE U/R/RD:
+-- the same statin statement must be active and Automatic, Repeat or Repeat Dispensing.
+-- No recent issue or course-start lookback is required. Apply all nested product
+-- exceptions with descendants; the warehouse expansion still retains some descendants.
+-- The current statin product expansion is incomplete: generic atorvastatin products
+-- are missing pending a terminology fix. Membership remains understated.
+-- Authority: EMIS R5 updated 27 November 2025, ICB_CF_CVD_65_woEX.
 
 with base as (
     select person_id
@@ -32,16 +30,36 @@ qrisk_ge10 as (
     where result_value >= 10
 ),
 
--- lipid-lowering adverse-reaction exclusion (vs1, pinned id, 19 codes) -- ever
+-- The XML pool includes therapy decisions as well as adverse reactions, ever recorded.
 lipid_adverse as (
     select person_id
     from ({{ get_ltc_lcs_observations("ed40f2e7-f9f3-1a17-104a-42af018aaf32") }})
 ),
 
--- on a statin course (vs3 5-ingredient statin list, 577 expanded products)
+statin_product_exception_roots as (
+    select translated_to_snomed_code as concept_code
+    from {{ ref('stg_reference_ltc_lcs_exceptions') }}
+    where valueset_id = '21e3808c-e538-c84d-ad57-ed87efd5ef46'
+),
+
+statin_product_exceptions as (
+    select concept_code from statin_product_exception_roots
+    union
+    select tc.sub_type_id::varchar as concept_code
+    from {{ ref('stg_nhsd_snomed_sct_transitive_closure') }} as tc
+    inner join statin_product_exception_roots as ex
+        on tc.super_type_id::varchar = ex.concept_code
+),
+
 on_statin_course as (
     select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("with_qrisk210_amd_not_on_a_high_intensity_statin_vs3") }})
+    from ({{ get_ltc_lcs_medication_statements("with_qrisk210_amd_not_on_a_high_intensity_statin_vs3") }}) as ms
+    where ms.is_active = true
+        and ms.authorisation_type_source_code in ('Automatic', 'Repeat', 'Repeat Dispensing')
+        and not exists (
+            select 1 from statin_product_exceptions as ex
+            where ex.concept_code = ms.concept_code
+        )
 )
 
 select distinct b.person_id
