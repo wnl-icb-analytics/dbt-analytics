@@ -1,7 +1,7 @@
 models:
   - name: ltc_lcs_risk_stratification_base
     description: |-
-      LTC LCS risk and MoC status, one row per adult MoC base member, Check & Test-only LR member or CYP-only asthma child at the build date. LR hypertension-only and LR adult-asthma-only people follow a Check & Test-only pathway (is_moc_check_test_only); filter is_in_moc_base for figures matching the EMIS MoC base. Includes inactive and deceased people; filter is_active in the published base. Next actions use observation-based EMIS work lists; future diary lists are unavailable.
+      LTC LCS risk and MoC status, one row per adult MoC base member (including Check & Test-only LR members) or CYP-only asthma child at the build date. LR hypertension-only and LR adult-asthma-only people are in the MoC base on a Check & Test-only pathway (is_moc_check_test_only); exclude them for figures matching the EMIS MoC base search. Includes inactive and deceased people; filter is_active in the published base. Next actions use observation-based EMIS work lists; future diary lists are unavailable.
     config:
       meta:
         owner:
@@ -486,13 +486,13 @@ models:
         description: Latest qualifying CYP-only HR desktop review or linked annual review date; null without completion
           or for other pathways.
       - name: is_in_moc_base
-        description: In the full adult MoC base after the EMIS exclusions; use for figures matching EMIS MoC searches. False for CYP-only asthma and Check & Test-only rows.
+        description: In the adult MoC base, including Check & Test-only LR members. For counts matching the EMIS MoC base search, also require not is_moc_check_test_only. False for CYP-only asthma rows.
       - name: moc_base_exclusion_reason
-        description: Why the person is outside the full adult MoC - CYP asthma only, LR hypertension only or LR adult asthma only. Null for the MoC base.
+        description: EMIS MoC base search exclusion - CYP asthma only, LR hypertension only or LR adult asthma only. Null otherwise. LR rows stay in the MoC base on the Check & Test-only pathway.
       - name: is_cyp_asthma_only
         description: True for children on the CYP asthma register only (EMIS CYPAST pathway). Their MoC steps are the
           annual review and, for HR, the desktop review; adult stage columns are false for them.
       - name: is_moc_check_test_only
-        description: True for LR hypertension-only and LR adult-asthma-only people. Outside the EMIS MoC base; the programme requires only the annual Check & Test, so other stage columns are false and the cycle completes with the C&T.
+        description: True for LR hypertension-only and LR adult-asthma-only people. In the MoC base but excluded from the EMIS MoC base search; the programme requires only the annual Check & Test, so other stage columns are false and the cycle completes with the C&T.
       - name: is_type_1_diabetes_hrc
         description: Qualifies for the separate EMIS Type 1 HRC rule; not added to diabetes_risk_group.

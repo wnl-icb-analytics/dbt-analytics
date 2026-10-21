@@ -1,7 +1,7 @@
 models:
   - name: int_ltc_lcs_moc_base
     description: |-
-      LTC LCS register members, one row per person at the build date. Registration status is not filtered. Adult asthma requires age 18 or over. People excluded from the full adult MoC remain, flagged for the CYP-only asthma pathway or the Check & Test-only pathway.
+      LTC LCS register members, one row per person at the build date. Registration status is not filtered. Adult asthma requires age 18 or over. People excluded from the EMIS MoC base search remain: CYP-only asthma people outside the MoC base, and LR single-condition people inside it on the Check & Test-only pathway.
     config:
       meta:
         owner:
@@ -54,7 +54,7 @@ models:
                   - LR hypertension only
                   - LR adult asthma only
       - name: is_in_moc_base
-        description: Included in the full adult MoC population after the EMIS exclusions.
+        description: In the adult MoC base - the EMIS MoC base search population plus Check & Test-only LR members. CYP-only asthma people are excluded.
         data_tests:
           - not_null
       - name: is_cyp_asthma_only
@@ -62,7 +62,7 @@ models:
         data_tests:
           - not_null
       - name: is_moc_check_test_only
-        description: LR hypertension-only or LR adult-asthma-only. Excluded from the EMIS MoC base; the programme requires only the annual Check & Test for them.
+        description: LR hypertension-only or LR adult-asthma-only. Excluded from the EMIS MoC base search but kept in the MoC base; the programme requires only the annual Check & Test for them.
         data_tests:
           - not_null
     data_tests:

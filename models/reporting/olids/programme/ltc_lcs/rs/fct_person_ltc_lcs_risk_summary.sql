@@ -2,7 +2,7 @@
 
 {% set fy_start = "date_from_parts(case when month(current_date()) >= 4 then year(current_date()) else year(current_date()) - 1 end, 4, 1)" %}
 
--- One row per adult MoC member, Check & Test-only LR member or CYP-only asthma member, assessed today.
+-- One row per adult MoC member (including Check & Test-only LR members) or CYP-only asthma member, assessed today.
 with event_dates as (
     select
         person_id,
@@ -37,6 +37,8 @@ population as (
         p.moc_base_exclusion_reason,
         p.is_cyp_asthma_only,
         p.is_moc_check_test_only,
+        -- Full adult pathway; Check & Test-only members are in the MoC base but skip the later stages.
+        p.is_in_moc_base and not p.is_moc_check_test_only as is_full_moc_pathway,
         rs.af_risk_group,
         rs.asthma_adult_risk_group,
         case when p.is_cyp_asthma_only then coalesce(cyp.risk_group, 'LR')
@@ -81,7 +83,7 @@ population as (
         on p.person_id = cyp.person_id and p.is_cyp_asthma_only
     left join event_dates ev on p.person_id = ev.person_id
     left join {{ ref('int_ltc_lcs_moc_cyp_review') }} cypr on p.person_id = cypr.person_id
-    where p.is_in_moc_base or p.is_cyp_asthma_only or p.is_moc_check_test_only
+    where p.is_in_moc_base or p.is_cyp_asthma_only
 ),
 activity as (
     select
@@ -90,18 +92,18 @@ activity as (
             when 'HRC' then 'High Risk + Complex' when 'HR' then 'High Risk'
             when 'MR' then 'Medium Risk' else 'Low Risk'
         end as moc_risk_category,
-        -- Check & Test-only people share the adult C&T rule; their other stages stay false.
-        coalesce((is_in_moc_base or is_moc_check_test_only) and (latest_check_test_date > dateadd(year, -1, current_date()) or (moc_pathway = 'LRS' and latest_check_test_date = dateadd(year, -1, current_date()))), false) as moc_check_test_completed,
+        -- All MoC base members share the adult C&T rule; Check & Test-only members skip the later stages.
+        coalesce(is_in_moc_base and (latest_check_test_date > dateadd(year, -1, current_date()) or (moc_pathway = 'LRS' and latest_check_test_date = dateadd(year, -1, current_date()))), false) as moc_check_test_completed,
         case when moc_check_test_completed then latest_check_test_date end as moc_check_test_date,
-        coalesce(is_in_moc_base and (latest_mdt_review_date >= dateadd(month, -12, current_date())), false) as moc_mdt_review_completed,
+        coalesce(is_full_moc_pathway and (latest_mdt_review_date >= dateadd(month, -12, current_date())), false) as moc_mdt_review_completed,
         case when moc_mdt_review_completed then latest_mdt_review_date end as moc_mdt_review_date,
-        coalesce(is_in_moc_base and (latest_careplan_sharing_date > dateadd(year, -1, current_date()) or (moc_pathway = 'LRS' and latest_careplan_sharing_date = dateadd(year, -1, current_date()))), false) as moc_careplan_sharing_completed,
+        coalesce(is_full_moc_pathway and (latest_careplan_sharing_date > dateadd(year, -1, current_date()) or (moc_pathway = 'LRS' and latest_careplan_sharing_date = dateadd(year, -1, current_date()))), false) as moc_careplan_sharing_completed,
         case when moc_careplan_sharing_completed then latest_careplan_sharing_date end as moc_careplan_sharing_date,
-        coalesce(is_in_moc_base and (latest_discussion_date >= dateadd(month, -12, current_date())), false) as moc_discussion_completed,
+        coalesce(is_full_moc_pathway and (latest_discussion_date >= dateadd(month, -12, current_date())), false) as moc_discussion_completed,
         case when moc_discussion_completed then latest_discussion_date end as moc_discussion_date,
-        coalesce(is_in_moc_base and (latest_followup_date >= dateadd(month, -12, current_date())), false) as moc_followup_completed,
+        coalesce(is_full_moc_pathway and (latest_followup_date >= dateadd(month, -12, current_date())), false) as moc_followup_completed,
         case when moc_followup_completed then latest_followup_date end as moc_followup_date,
-        coalesce(is_in_moc_base and (latest_declined_date >= dateadd(month, -12, current_date())), false) as moc_declined,
+        coalesce(is_full_moc_pathway and (latest_declined_date >= dateadd(month, -12, current_date())), false) as moc_declined,
         case when moc_declined then latest_declined_date end as moc_declined_date,
         (is_cyp_asthma_only and not cyp_annual_review_completed) as cyp_requires_annual_review,
         -- Project rule from the EMIS HR description (the exported search selects no one): desktop review
@@ -116,11 +118,11 @@ stages as (
     select
         a.*,
         moc_check_test_completed as moc_stage_1_completed,
-        coalesce(is_in_moc_base and latest_check_test_date > dateadd(year, -1, current_date())
+        coalesce(is_full_moc_pathway and latest_check_test_date > dateadd(year, -1, current_date())
             and (moc_careplan_sharing_completed
                 or (moc_pathway in ('HRCS','HRS') and moc_mdt_review_completed)), false) as moc_stage_2_completed,
-        (is_in_moc_base and (moc_declined or moc_discussion_completed)) as moc_stage_3_completed,
-        (is_in_moc_base and (moc_declined or (moc_discussion_completed and moc_followup_completed))) as moc_stage_4_completed,
+        (is_full_moc_pathway and (moc_declined or moc_discussion_completed)) as moc_stage_3_completed,
+        (is_full_moc_pathway and (moc_declined or (moc_discussion_completed and moc_followup_completed))) as moc_stage_4_completed,
         case
             when is_cyp_asthma_only then false
             when is_moc_check_test_only then not moc_check_test_completed
@@ -134,14 +136,14 @@ stages as (
                 latest_declined_date, latest_check_test_date) > dateadd(year, -1, current_date()) then false
             else true
         end as moc_requires_check_test,
-        coalesce(is_in_moc_base and latest_e_code = 'C'
+        coalesce(is_full_moc_pathway and latest_e_code = 'C'
             and latest_check_test_date > dateadd(year, -1, current_date()), false) as moc_requires_stage_2,
-        coalesce(is_in_moc_base and latest_e_code = 'S', false) as moc_requires_discussion,
-        coalesce(is_in_moc_base and latest_e_code not in ('D','R','C','S')
+        coalesce(is_full_moc_pathway and latest_e_code = 'S', false) as moc_requires_discussion,
+        coalesce(is_full_moc_pathway and latest_e_code not in ('D','R','C','S')
             and latest_e_plus_code = 'A', false) as moc_requires_followup,
-        coalesce(is_in_moc_base and latest_check_test_date > dateadd(month, -12, current_date())
+        coalesce(is_full_moc_pathway and latest_check_test_date > dateadd(month, -12, current_date())
             and latest_b_code = 'C' and latest_check_test_date < dateadd(day, -42, current_date()), false) as moc_ct_overdue,
-        coalesce(is_in_moc_base and (latest_check_test_date is null or latest_check_test_date > dateadd(month, -12, current_date()))
+        coalesce(is_full_moc_pathway and (latest_check_test_date is null or latest_check_test_date > dateadd(month, -12, current_date()))
             and latest_b_code = 'A' and latest_discussion_date < dateadd(month, -3, current_date()), false) as moc_discussion_overdue
     from activity a
 ),
@@ -160,7 +162,7 @@ progression as (
         w.*,
         (moc_requires_check_test or moc_requires_stage_2 or moc_requires_discussion
             or moc_requires_followup or cyp_requires_annual_review or cyp_requires_desktop_review) as moc_has_work_list,
-        coalesce(is_in_moc_base and moc_discussion_completed and moc_followup_completed
+        coalesce(is_full_moc_pathway and moc_discussion_completed and moc_followup_completed
             and latest_e_code = 'R' and not moc_has_work_list, false)
             -- CYP-only asthma: annual review, plus desktop review for HR.
             or (is_cyp_asthma_only and cyp_annual_review_completed
@@ -168,7 +170,7 @@ progression as (
             or (is_moc_check_test_only and moc_check_test_completed) as moc_cycle_complete,
         -- Existing status vocabulary; work-list detail is in moc_requires_* and moc_next_action.
         case
-            when is_in_moc_base and moc_declined_is_latest then 'Declined'
+            when is_full_moc_pathway and moc_declined_is_latest then 'Declined'
             when moc_cycle_complete then 'Cycle complete'
             when moc_check_test_completed or moc_mdt_review_completed or moc_careplan_sharing_completed
                 or moc_discussion_completed or moc_followup_completed
@@ -215,10 +217,10 @@ progression as (
                 else moc_careplan_sharing_date end
         end as moc_stage_2_date,
         -- Gap flags use stage 2 activity; EMIS stage 2 completion already requires C&T.
-        (is_in_moc_base and (moc_discussion_completed or moc_followup_completed or moc_careplan_sharing_completed
+        (is_full_moc_pathway and (moc_discussion_completed or moc_followup_completed or moc_careplan_sharing_completed
             or (moc_pathway in ('HRCS','HRS') and moc_mdt_review_completed))
             and not moc_check_test_completed) as moc_missing_check_test,
-        (is_in_moc_base and (moc_discussion_completed or moc_followup_completed)
+        (is_full_moc_pathway and (moc_discussion_completed or moc_followup_completed)
             and not (moc_careplan_sharing_completed or (moc_pathway in ('HRCS','HRS') and moc_mdt_review_completed)))
             as moc_missing_stage_2,
         (moc_followup_completed and not moc_discussion_completed) as moc_missing_discussion,

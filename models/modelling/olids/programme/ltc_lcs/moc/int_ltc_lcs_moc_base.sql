@@ -78,9 +78,9 @@ with_exclusion as (
 )
 select
     *,
-    moc_base_exclusion_reason is null as is_in_moc_base,
-    coalesce(moc_base_exclusion_reason = 'CYP asthma only', false) as is_cyp_asthma_only,
-    -- Programme rule: LR single-condition people need only the annual Check & Test.
+    -- Programme rule: LR single-condition people stay in the MoC base but need only the annual Check & Test.
     coalesce(moc_base_exclusion_reason in ('LR hypertension only', 'LR adult asthma only'), false)
-        as is_moc_check_test_only
+        as is_moc_check_test_only,
+    moc_base_exclusion_reason is null or is_moc_check_test_only as is_in_moc_base,
+    coalesce(moc_base_exclusion_reason = 'CYP asthma only', false) as is_cyp_asthma_only
 from with_exclusion

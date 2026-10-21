@@ -7,7 +7,7 @@
 
 -- LTC LCS Risk Stratification Base Table
 -- Combines the person-level risk summary with demographics and population health filter flags.
--- One row per adult MoC base member, Check & Test-only LR member or CYP-only asthma child (EMIS CYPAST pathway).
+-- One row per adult MoC base member (including Check & Test-only LR members) or CYP-only asthma child (EMIS CYPAST pathway).
 
 select
     -- ============================================================
