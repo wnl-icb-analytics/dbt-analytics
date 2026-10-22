@@ -65,11 +65,10 @@ reversal_products as (
 ),
 
 anticoagulant_issues as (
-    select person_id, order_date, mapped_concept_code, bnf_code
-    from ({{ get_medication_orders(
-        cluster_id='NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD,NHS_DRUG_REFSETS/VITKANTAGDRUG_COD',
-        source='OPENCODELISTS'
-    ) }})
+    select mo.person_id, mo.clinical_effective_date as order_date, mo.mapped_concept_code, mo.bnf_code
+    from {{ ref('stg_olids_medication_order') }} as mo
+    inner join national_oral_anticoagulant_codes as c
+        on mo.mapped_concept_code = c.code
     union all
     -- Retain the protamine BNF route until a reviewed dm+d cluster is available.
     select person_id, order_date, mapped_concept_code, bnf_code
