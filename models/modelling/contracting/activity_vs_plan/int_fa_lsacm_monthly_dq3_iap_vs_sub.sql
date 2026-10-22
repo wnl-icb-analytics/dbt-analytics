@@ -44,7 +44,7 @@ SELECT
  SELECT
     COALESCE(s.provider_shorthand, i.provider_shorthand) AS provider_shorthand,
     s.latest_month,
-    s.commissioned_service,
+     COALESCE(s.commissioned_service,'Not Assigned') AS commissioned_service,
     COALESCE(
         s.commissioned_service_category_code,
         i.commissioned_service_category_code
