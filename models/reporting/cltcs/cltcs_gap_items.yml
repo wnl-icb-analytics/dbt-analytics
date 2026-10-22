@@ -1,0 +1,96 @@
+models:
+  - name: cltcs_gap_items
+    description: >
+      Care pathway gap items for the C-LTCS population: one row per person and assessable
+      item, showing whether the item is a gap. Covers people in cltcs_adult_population who
+      meet the original C-LTCS criteria or the Adults with Complexity cohort, keyed on the
+      OLIDS person_id (join through cltcs_adult_population for sk_patient_id). All evidence
+      is from OLIDS primary care records, assessed on the build date.
+
+      Items are NICE indicators listed in cltcs_treatment_nice_indicators, taken from
+      fct_person_nice_indicator_status, plus bespoke items: eGFR overdue for its interval;
+      seven diabetes care processes from fct_person_diabetes_9_care_processes (cholesterol,
+      creatinine, urine ACR, foot check, BMI, smoking status and retinal screening in 12
+      months; HbA1c and blood pressure are scored through the NICE indicators instead);
+      latest HbA1c in 12 months above 90 mmol/mol for people with diabetes; asthma treated
+      with salbutamol alone; and three uncontrolled respiratory disease triggers. A NICE item is included only when the person is in that indicator's
+      denominator and the result is assessable; NOT_ASSESSABLE results are left out. Any
+      other status that is not ACHIEVED is a gap. A disease control indicator whose result
+      was not recorded is placed in the monitoring_gaps domain rather than disease_control.
+      No personalised care adjustments are applied.
+
+      Each item belongs to one domain and one group (a condition or measured concept).
+      cltcs_score_treatment_pathway scores a group with any gap as 1 plus a weighted share
+      of its items that are gaps, so this table explains which items drove a person's
+      domain scores.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - item_id
+    columns:
+      - name: person_id
+        description: "OLIDS person identifier. One row per item for each person in the C-LTCS population with that item assessable."
+        data_tests:
+          - not_null
+
+      - name: item_id
+        data_type: varchar
+        description: >
+          NICE indicator identifier (for example IND191) or a bespoke item code:
+          EGFR_OVERDUE; DM_CP_CHOLESTEROL, DM_CP_CREATININE, DM_CP_ACR, DM_CP_FOOT_CHECK,
+          DM_CP_BMI, DM_CP_SMOKING or DM_CP_RETINAL_SCREENING (diabetes care processes);
+          HBA1C_ABOVE_90; ASTHMA_SALBUTAMOL_ONLY; COPD_EXACERBATIONS; ASTHMA_STEROID_COURSES;
+          or ASTHMA_SALBUTAMOL_OVERUSE.
+        data_tests:
+          - not_null
+
+      - name: item_name
+        data_type: varchar
+        description: "Readable name of the item: the NICE indicator name, or a description of the bespoke rule."
+
+      - name: item_source
+        data_type: varchar
+        description: "'nice' for a NICE indicator or 'bespoke' for a C-LTCS rule."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['nice', 'bespoke']
+
+      - name: score_domain
+        data_type: varchar
+        description: >
+          Domain the item contributes to: disease_control (result out of target or
+          uncontrolled respiratory disease), monitoring_gaps (test, review or care process not
+          done, including a missing disease control result) or treatment_optimisation
+          (indicated treatment or intervention not given, or a prescribing safety gap).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['disease_control', 'monitoring_gaps', 'treatment_optimisation']
+
+      - name: score_group
+        data_type: varchar
+        description: >
+          Condition or measured concept within the domain, for example blood_pressure,
+          diabetes, copd or smoking. A group counts as one gap in the domain score however many
+          of its items are gaps.
+        data_tests:
+          - not_null
+
+      - name: indicator_status
+        data_type: varchar
+        description: "NICE indicator status token (for example ACHIEVED, ABOVE_TARGET, NOT_RECORDED_IN_PERIOD) for NICE items; null for bespoke items."
+
+      - name: is_gap
+        data_type: boolean
+        description: "True when the item is not achieved."
+        data_tests:
+          - not_null
