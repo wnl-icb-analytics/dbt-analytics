@@ -21,16 +21,27 @@ with base as (
         and had_nhs_health_check_24m = false
 ),
 
+-- National oral anticoagulant lists. Matched directly so undated courses still count,
+-- as in the XML; get_medication_statements drops courses without a clinical date.
+national_oral_anticoagulant_codes as (
+    select distinct code
+    from {{ ref('stg_reference_combined_codesets') }}
+    where upper(cluster_id) in (
+            'NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD',
+            'NHS_DRUG_REFSETS/VITKANTAGDRUG_COD'
+        )
+        and source = 'OPENCODELISTS'
+),
+
 -- Keep both mapped and source-code matches for the XML ingredient list.
 af_course_codes as (
     select medication_statement_id
     from ({{ get_ltc_lcs_medication_statements("98b8e1d3-7db0-0653-9412-2fdf795e6f61") }})
     union
-    select medication_statement_id
-    from ({{ get_medication_statements(
-        cluster_id='NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD,NHS_DRUG_REFSETS/VITKANTAGDRUG_COD',
-        source='OPENCODELISTS'
-    ) }})
+    select ms.id as medication_statement_id
+    from {{ ref('stg_olids_medication_statement') }} as ms
+    inner join national_oral_anticoagulant_codes as c
+        on ms.mapped_concept_code = c.code
 ),
 
 -- The XML names these reversal preparations; exclude their dm+d roots and descendants.
