@@ -608,7 +608,7 @@ WITH schema_metadata AS (
   
   UNION ALL
   
-    -- sdl_wnl: ServicesDataLocal canonical-named feeds, WNL footprint (SLAM contract monitoring)
+    -- sdl_wnl: ServicesDataLocal canonical-named feeds, WNL footprint
   SELECT 
     'DATA_LAKE' as database_name,
     'SDL' as schema_name,
