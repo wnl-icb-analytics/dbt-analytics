@@ -160,8 +160,9 @@ models:
           composite_z: 50 is an average patient for the neighbourhood and cohort, 65 is 1 z
           above and 80 is 2 z above. Patients beyond about 3.3 z either side are capped, so
           ties at 100 (or 0) are possible. Not a percentile; use treatment_priority_tier for
-          position in the list. The points per z unit are set in the model header. Relative to
-          the patient's neighbourhood and cohort.
+          position in the list. The points per z unit are set in the model header. Rounded to
+          a whole number as the final step; the priority tier and the age-adjusted score use
+          the unrounded value. Relative to the patient's neighbourhood and cohort.
 
       - name: age_multiplier
         data_type: number
@@ -172,8 +173,8 @@ models:
       - name: score_treatment_age_adjusted
         data_type: number
         description: >
-          score_treatment multiplied by age_multiplier and capped at 0 and 100, applied as the
-          final step. score_treatment and treatment_priority_tier are not age adjusted; this
+          The unrounded score_treatment multiplied by age_multiplier, capped at 0 and 100, then
+          rounded to a whole number, applied as the final step. score_treatment and treatment_priority_tier are not age adjusted; this
           column is the age-adjusted alternative for comparison while age handling is
           decided. Because the multiplier scales the distance from 0, it moves high scores
           more than low ones (a score of 80 at age 18 becomes 92; at age 100 it becomes 68).

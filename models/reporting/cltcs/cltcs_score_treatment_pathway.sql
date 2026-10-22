@@ -284,7 +284,7 @@ bounded_scores as (
 combined_scores as (
     select *
         {%- for domain in domain_weights %}
-        , round((bounded_score_{{ domain }} + 3) / 6.0 * 100, 1) as score_{{ domain }}_0_100
+        , round((bounded_score_{{ domain }} + 3) / 6.0 * 100, 0) as score_{{ domain }}_0_100
         {%- endfor %}
         , (
             {%- for domain, weight in domain_weights.items() %}
@@ -312,8 +312,9 @@ composite_scores as (
           ) as composite_z
         -- map to 0-100 on a straight line, so the score keeps the composite's shape: 50 is an
         -- average patient and each z unit is worth score_points_per_z. The hard cap only
-        -- keeps the few patients beyond the range within 0-100.
-        , round(least(greatest(50 + {{ score_points_per_z }} * composite_z, 0), 100), 1) as score_treatment
+        -- keeps the few patients beyond the range within 0-100. Left unrounded: tiers and
+        -- the age adjustment use this value, and rounding is applied only in the final step.
+        , least(greatest(50 + {{ score_points_per_z }} * composite_z, 0), 100) as score_treatment_exact
     from centred_composite
 ),
 
@@ -337,9 +338,9 @@ age_banded_scores as (
 tiered_scores as (
     select *
         , case
-            when percent_rank() over (partition by neighbourhood_code, inclusion_rule, age_band order by score_treatment)
+            when percent_rank() over (partition by neighbourhood_code, inclusion_rule, age_band order by score_treatment_exact)
                 >= {{ tier_1_percentile }} then 1
-            when percent_rank() over (partition by neighbourhood_code, inclusion_rule, age_band order by score_treatment)
+            when percent_rank() over (partition by neighbourhood_code, inclusion_rule, age_band order by score_treatment_exact)
                 >= {{ tier_2_percentile }} then 2
             else 3
           end as treatment_priority_tier
@@ -356,10 +357,13 @@ labelled_scores as (
     from tiered_scores
 )
 
--- last step: the age multiplier from cltcs_score_treatment, applied to score_treatment in a
--- separate column so the unadjusted score and the tiers are unchanged
+-- last step: the age multiplier from cltcs_score_treatment, applied to the unrounded score in
+-- a separate column so the unadjusted score and the tiers are unchanged. Both final scores
+-- are rounded to whole points here and nowhere earlier, so the age adjustment never works
+-- from a rounded number and small drift between builds does not move the published scores.
 select
-        *,
+        * exclude (score_treatment_exact),
+        round(score_treatment_exact, 0) as score_treatment,
         case
             when age is null then 1.0
             else (
@@ -370,5 +374,5 @@ select
                 - 0.15 * least(greatest(age - 60, 0), 40) / 40.0
             )
         end as age_multiplier,
-        round(least(greatest(score_treatment * age_multiplier, 0), 100), 1) as score_treatment_age_adjusted
+        round(least(greatest(score_treatment_exact * age_multiplier, 0), 100), 0) as score_treatment_age_adjusted
     from labelled_scores

@@ -46,5 +46,5 @@ from inclusion_list il
 left join {{ ref('cltcs_score_activation') }} a on il.patient_id = a.sk_patient_id
 left join {{ ref('cltcs_score_coordination') }} c on il.patient_id = c.sk_patient_id
 left join treatment_by_route tr on il.patient_id = tr.sk_patient_id
-left join nice_treatment_by_route ntr on il.patient_id = tr.sk_patient_id
+left join nice_treatment_by_route ntr on il.patient_id = ntr.sk_patient_id
 left join frailty_by_route f on il.patient_id = f.sk_patient_id
