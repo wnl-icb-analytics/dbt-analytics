@@ -16,6 +16,7 @@ SELECT
         fa.meta_file_id,
         l.financial_month as Latest_month,
         TO_NUMBER(fa.commissioned_service_category_code) as commissioned_service_category_code,
+        CONCAT(fa.commissioned_service_category_code, ' - ', fa.cscc_name) as commissioned_service,
         fa.point_of_delivery_code,
         SUM(fa.activity_plan) AS activity_plan_sub,
         SUM(fa.price_plan) AS price_plan_sub
@@ -43,6 +44,7 @@ SELECT
  SELECT
     COALESCE(s.provider_shorthand, i.provider_shorthand) AS provider_shorthand,
     s.latest_month,
+     COALESCE(s.commissioned_service,'Not Assigned') AS commissioned_service,
     COALESCE(
         s.commissioned_service_category_code,
         i.commissioned_service_category_code
