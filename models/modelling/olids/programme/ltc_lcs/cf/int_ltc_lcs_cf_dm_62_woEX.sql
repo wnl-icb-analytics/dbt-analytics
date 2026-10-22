@@ -2,7 +2,7 @@
 
 -- LTC LCS DM case finding: ICB_CF_DM_62_woEX population (shared parent)
 -- The HbA1c lookback starts strictly after 1 year before the build date.
--- Local list roots match exactly; local descriptions of public concepts remain eligible.
+-- Equivalent local roots permit mapped matches; other local roots match source codes exactly.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/diabetes/icb-cf-dm-62.md
 --
 -- Pre-Rule-1 DM_62 population. Consumed by int_ltc_lcs_cf_dm_62 and subtracted by DM_63-66.
@@ -22,7 +22,7 @@ with base as (
 
 gestational_dm as (
     select person_id
-    from ({{ get_ltc_lcs_observations("8827e417-8374-c4e2-a76b-d1b6f2c1ee5d", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("8827e417-8374-c4e2-a76b-d1b6f2c1ee5d") }})
 ),
 
 dm_61_woex as (
@@ -33,7 +33,7 @@ dm_61_woex as (
 -- HbA1c recorded in the last 1 year (date-only, no value filter) -> NOT missing -> exclude
 hba1c_last_1y as (
     select person_id
-    from ({{ get_ltc_lcs_observations("56fd73ba-981e-cab3-0404-8c26b02afb36", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("56fd73ba-981e-cab3-0404-8c26b02afb36") }})
     where clinical_effective_date > dateadd(year, -1, current_date())
 )
 

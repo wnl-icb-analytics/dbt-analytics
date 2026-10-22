@@ -22,14 +22,14 @@ ckd_63_woex as (select person_id from {{ ref('int_ltc_lcs_cf_ckd_63_woEX') }}),
 -- Arm A: AKI in the last 3 years (vs1 = 11-code woEX set, pinned id)
 arm_aki as (
     select person_id
-    from ({{ get_ltc_lcs_observations("4fad1128-518d-aab7-8bb8-ed51bd35c7b6", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("4fad1128-518d-aab7-8bb8-ed51bd35c7b6") }})
     where clinical_effective_date >= dateadd(year, -3, current_date())
 ),
 
 -- Arm B: at-risk conditions (vs2), ever recorded
 arm_conditions as (
     select person_id
-    from ({{ get_ltc_lcs_observations("a30e0c52-efd9-9ce9-c56a-6d1469fc64d4", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("a30e0c52-efd9-9ce9-c56a-6d1469fc64d4") }})
 ),
 
 medication_exception_roots as (
@@ -70,7 +70,7 @@ arm_medication as (
 -- The two haematuria pools have independent Latest 1 restrictions.
 latest_haematuria as (
     select person_id, clinical_effective_date, valueset_id
-    from ({{ get_ltc_lcs_observations("37f2f047-d4b2-bf56-5c7b-2a9788936448,5bf47b55-ccf0-9e25-d7d1-0a7f4b5f3dac", emis_local_exact=true, include_date_recorded=true) }})
+    from ({{ get_ltc_lcs_observations("37f2f047-d4b2-bf56-5c7b-2a9788936448,5bf47b55-ccf0-9e25-d7d1-0a7f4b5f3dac", include_date_recorded=true) }})
     qualify row_number() over (
         partition by person_id, valueset_id
         order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
@@ -79,12 +79,12 @@ latest_haematuria as (
 
 haematuria_cancellation as (
     select person_id, clinical_effective_date
-    from ({{ get_ltc_lcs_observations("63bf0d9b-589c-905a-abd2-e59190e02053", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("63bf0d9b-589c-905a-abd2-e59190e02053") }})
 ),
 
 uacr_confirmation as (
     select person_id, clinical_effective_date, result_value
-    from ({{ get_ltc_lcs_observations("3b7a55b7-b9a6-f23b-60d6-1015949622d2", match_paths='source') }})
+    from ({{ get_ltc_lcs_observations("3b7a55b7-b9a6-f23b-60d6-1015949622d2", match_paths='both') }})
 ),
 
 arm_haematuria as (

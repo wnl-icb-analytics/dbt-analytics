@@ -77,7 +77,7 @@ programme_diagnosis_dates AS (
     UNION ALL
     SELECT obs.person_id, 'NAF' AS condition_code,
         MIN(obs.clinical_effective_date) AS earliest_diagnosis_date
-    FROM ({{ get_ltc_lcs_observations("08654d02-552a-7784-076c-e7fcc941d284,f0bfa8e2-972c-1cba-326f-573ef42e6124", emis_local_exact=true) }}) AS obs
+    FROM ({{ get_ltc_lcs_observations("08654d02-552a-7784-076c-e7fcc941d284,f0bfa8e2-972c-1cba-326f-573ef42e6124") }}) AS obs
     WHERE NOT EXISTS (
         SELECT 1 FROM nafld_exceptions AS ex
         WHERE ex.concept_code = obs.concept_code

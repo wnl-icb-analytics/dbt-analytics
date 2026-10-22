@@ -6,6 +6,7 @@ macros:
       Filters by LTC/LCS valueset IDs or friendly names. Orders by clinical_effective_date descending
       with nulls last, date_recorded descending with nulls last, then observation_id descending.
       Same-day records use EMIS save time; result values do not break ties.
+      Inherits P2 root permissions from get_ltc_lcs_observations.
 
 
     arguments:
@@ -16,9 +17,6 @@ macros:
           Can be passed as 'VS001,VS002' or "'VS001','VS002'"
       - name: match_paths
         type: string
-        description: Both mapped and source matches by default; accepts mapped or source alone.
-      - name: emis_local_exact
-        type: boolean
         description: >
-          False by default. When true, local list roots match exactly without
-          rejecting local descriptions of listed public concepts.
+          Both mapped and source matches by default. 'mapped' omits source matches;
+          legacy 'source' also includes P2-permitted mapped matches.
