@@ -5,11 +5,11 @@ models:
     description: >
       One row per currently registered, living AF_61 medication candidate, assessed on the
       build date, outside ICS_METABOLIC_LTC and the recent NHS health-check population
-      CF_NHSHC2Y. Includes current Automatic, Repeat or Repeat Dispensing courses of oral
-      anticoagulants, digoxin, flecainide, propafenone or cardiac glycosides, with no
-      course-start lookback. A separate anticoagulant/protamine issue rule is strictly after
+      CF_NHSHC2Y. Includes current Automatic, Repeat or Repeat Dispensing cardiac
+      glycoside courses, with no course-start lookback.
+      A separate anticoagulant/protamine issue rule is strictly after
       six months ago, with no upper date bound, current-course or repeat-only restriction.
-      Oral anticoagulant courses and issues use the national OPENCODELISTS DOAC and
+      Oral anticoagulant issues use the national OPENCODELISTS DOAC and
       vitamin K antagonist lists. Cardiac glycosides use BNF 02.01.01 and protamine
       issues use BNF 02.08.03 pending reviewed dm+d clusters; these remain approximations.
       The issue rule excludes parenteral anticoagulants (02.08.01) and reversal agents,
@@ -31,7 +31,6 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - 98b8e1d3-7db0-0653-9412-2fdf795e6f61  # patients_on_digoxin_flecainide_propafenone_or_anticoag_vs2
               - f4f774b1-0949-b062-b74a-d03f7d820a81  # af_case_finding_eligible_population_on_af_medication_vs1
               - 08ba16a7-dfb1-1282-f9a6-288f2641f431  # af_case_finding_eligible_population_on_af_medication_vs2
               - c7ea5a27-039f-d39d-bfbb-5a5c37240961  # af_case_finding_eligible_population_on_af_medication_vs3
@@ -42,10 +41,11 @@ models:
 
   - name: int_ltc_lcs_cf_af_61
     description: >
-      ICB_CF_AF_61: AF medication candidates (base_woEX) excluding anyone with an
+      One row per currently registered, living AF_61 candidate at build date. Includes
+      the eligible base_woEX population with a current repeat cardiac glycoside course
+      or an anticoagulant/protamine issue strictly after six months ago. Excludes anyone with an
       "AF excluded/confirmed" code recorded strictly after three years before the build
       date, with no upper date bound. EMIS-local marker codes match source codes exactly.
-      One row per included person.
     config:
       meta:
         owner:
@@ -61,9 +61,11 @@ models:
 
   - name: int_ltc_lcs_cf_af_62
     description: >
-      ICB_CF_AF_62: registered patients aged >= 65, not in ICS_METABOLIC_LTC /
-      CF_NHSHC2Y, not already an AF_61 medication candidate, with no pulse check in the
-      last 3 years and no "AF excluded/confirmed" code in the last 3 years.
+      One row per currently registered, living AF_62 candidate aged >= 65 at build date,
+      outside ICS_METABOLIC_LTC and CF_NHSHC2Y. Excludes the AF_61 base_woEX population
+      with a current repeat cardiac glycoside course or an anticoagulant/protamine
+      issue strictly after six months ago, before AF_61's final marker exclusion.
+      Requires no pulse check and no "AF excluded/confirmed" code in the last 3 years.
     config:
       meta:
         owner:
