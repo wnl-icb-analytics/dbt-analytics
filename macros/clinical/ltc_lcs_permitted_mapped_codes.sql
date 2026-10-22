@@ -1,7 +1,7 @@
 {% macro ltc_lcs_permitted_mapped_codes(valuesets_quoted, valuesets_upper_quoted) %}
 
-{# Intersect root permissions with the supplied expansion so translated exceptions
-   and specialised ingredient/refset expansion remain authoritative. #}
+{# Intersect root permissions with the supplied expansion to retain its exceptions.
+   Public-only sets retain specialised expansion rules without restriction. #}
 with selected_roots as (
     select
         oc.valueset_id,
@@ -20,7 +20,7 @@ permitted_roots as (
     select valueset_id, translated_to_snomed_code, include_children
     from selected_roots
     where not regexp_like(original_code, '.*1000006[0-9]{3}$')
-        or translation_equivalence = 'equivalent'
+        or lower(translation_equivalence) = 'equivalent'
 ),
 permitted_codes as (
     select valueset_id, translated_to_snomed_code as snomed_code
@@ -33,13 +33,13 @@ permitted_codes as (
     where root.include_children
     union
     -- Refset roots can have no translated concept. Resolve their members directly.
-    select root.valueset_id, member.referenced_component_id::varchar as snomed_code
+    select root.valueset_id, member.snomed_code
     from selected_roots as root
-    inner join {{ ref('stg_nhsd_snomed_sct_refset_simple') }} as member
-        on member.ref_set_id::varchar = root.original_code
-    where root.is_refset and member.active = 1
+    inner join ({{ ltc_lcs_refset_members() }}) as member
+        on member.refset_id = root.original_code
+    where root.is_refset
         and (not regexp_like(root.original_code, '.*1000006[0-9]{3}$')
-            or root.translation_equivalence = 'equivalent')
+            or lower(root.translation_equivalence) = 'equivalent')
 )
 select distinct ec.valueset_id, ec.snomed_code
 from {{ ref('stg_reference_ltc_lcs_expanded_concepts') }} as ec

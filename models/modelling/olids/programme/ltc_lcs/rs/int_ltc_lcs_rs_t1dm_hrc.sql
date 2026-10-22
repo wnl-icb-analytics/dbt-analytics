@@ -13,9 +13,22 @@ with latest_diabetes as (
         order by o.clinical_effective_date desc, o.date_recorded desc nulls last, d.id desc
     ) = 1
 ),
+source_type1 as (
+    {{ get_ltc_lcs_observations('0dd187c0-35b5-10be-2837-4a1ad771a6e8', match_paths='source') }}
+),
+mapped_type1 as (
+    {{ get_ltc_lcs_observations('0dd187c0-35b5-10be-2837-4a1ad771a6e8', match_paths='mapped') }}
+),
 type1_records as (
-    select observation_id
-    from ({{ get_ltc_lcs_observations('0dd187c0-35b5-10be-2837-4a1ad771a6e8') }})
+    select observation_id from source_type1
+    union
+    select m.observation_id
+    from mapped_type1 m
+    inner join {{ ref('stg_olids_observation') }} o on m.observation_id = o.id
+    inner join {{ ref('stg_olids_enriched_concept_map') }} ecm
+        on o.observation_source_concept_id = ecm.source_concept_id
+    -- EMIS-local 1000006 descriptions must qualify through the source path only.
+    where substr(ecm.source_code, -10, 7) <> '1000006'
 )
 select
     d.person_id,

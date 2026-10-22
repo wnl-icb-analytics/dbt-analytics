@@ -12,7 +12,6 @@
 
     P2 permits mapped concepts and requested descendants only through public or
     equivalent local roots. Other local roots retain exact source matching.
-    The legacy source path also includes permitted mapped matches under P2.
 
     Params:
       valuesets    - comma-separated list of valueset_id or valueset_friendly_name tokens
@@ -45,6 +44,7 @@ with permitted_mapped_codes as (
     {{ ltc_lcs_permitted_mapped_codes(valuesets_quoted, valuesets_upper_quoted) }}
 ),
 matched_orders as (
+{%- if match_paths in ['both', 'mapped'] %}
     select
         mo.id as medication_order_id,
         mo.medication_statement_id,
@@ -83,7 +83,8 @@ matched_orders as (
             ec.valueset_id in ({{ valuesets_quoted }})
             or upper(vs.valueset_friendly_name) in ({{ valuesets_upper_quoted }})
         )
-{%- if match_paths in ['both', 'source'] %}
+{%- endif %}
+{%- if match_paths == 'both' %}
     union all
 {%- endif %}
 {%- if match_paths in ['both', 'source'] %}

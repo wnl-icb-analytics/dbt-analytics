@@ -12,7 +12,6 @@
 
     Public and equivalent EMIS-local roots permit mapped concepts and XML-requested
     descendants. Other local roots match their original source code only.
-    The legacy source path also includes permitted mapped matches under P2.
 
     Params:
       valuesets    - comma-separated list of valueset_id or valueset_friendly_name tokens
@@ -45,6 +44,7 @@ with permitted_mapped_codes as (
     {{ ltc_lcs_permitted_mapped_codes(valuesets_quoted, valuesets_upper_quoted) }}
 ),
 matched_observations as (
+{%- if match_paths in ['both', 'mapped'] %}
     select
         o.id as observation_id,
         o.patient_id,
@@ -77,7 +77,8 @@ matched_observations as (
         ec.valueset_id in ({{ valuesets_quoted }})
         or upper(vs.valueset_friendly_name) in ({{ valuesets_upper_quoted }})
     )
-{%- if match_paths in ['both', 'source'] %}
+{%- endif %}
+{%- if match_paths == 'both' %}
     union all
 {%- endif %}
 {%- if match_paths in ['both', 'source'] %}
