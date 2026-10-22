@@ -8,8 +8,8 @@
    emis_local_exact: restrict local list roots using the shared observation matcher.
    Returns person_id, observation_id, clinical_effective_date and result_value, one row per
    person whose kept record passes the test; no row otherwise. Undated records rank last.
-   Same-date records rank by date_recorded (EMIS save time) descending, then lowest result,
-   then observation_id descending for records saved together without a result.
+   Same-date records rank by date_recorded (EMIS save time) descending, then observation_id
+   descending. No result-value tie-break: lowest or highest both fit EMIS counts worse.
    Empty value set arguments raise a compiler error in get_ltc_lcs_observations. #}
 
 select latest.person_id, latest.observation_id, latest.clinical_effective_date, latest.result_value
@@ -21,7 +21,6 @@ from (
         order by
             clinical_effective_date desc nulls last,
             date_recorded desc nulls last,
-            result_value asc nulls last,
             observation_id desc
     ) = 1
 ) as latest
