@@ -6,7 +6,7 @@
 -- issued strictly within six months before testing the two haematuria routes.
 -- Latest microscopic haematuria or red-cell microscopy requires no negative urine
 -- blood test or red-cell microscopy on or after its date. Latest microscopic haematuria
--- diagnosis requires exact-code UACR > 30 on or after its date. Other arms have no linked test.
+-- diagnosis requires UACR > 30 on or after its date (local UACR codes follow the equivalence rule). Other arms have no linked test.
 -- Lithium salts use the national LIT_COD refset alongside the explicit XML ingredients.
 -- Tacrolimus excludes the five topical/mouthwash products and their descendants; any recent issue qualifies.
 
