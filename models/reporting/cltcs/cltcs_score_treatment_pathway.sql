@@ -344,7 +344,7 @@ tiered_scores as (
             else 3
           end as treatment_priority_tier
     from age_banded_scores
-)
+),
 
 labelled_scores as (
     select *

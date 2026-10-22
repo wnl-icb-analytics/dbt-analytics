@@ -242,6 +242,8 @@ select il.patient_id
     ,cs.score_coordination
     ,cs.score_treatment_original_criteria
     ,cs.score_treatment_adults_with_complexity
+    ,cs.score_treatment_nice_original_criteria
+    ,cs.score_treatment_nice_adults_with_complexity
     ,cs.score_frailty_original_criteria
     ,cs.score_frailty_adults_with_complexity
     -- Other relevant annual activity (LTC LCS, C-LTCS review)
