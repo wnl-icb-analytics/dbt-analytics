@@ -1,4 +1,4 @@
-{% macro get_ltc_lcs_observations(valuesets, match_paths='both', emis_local_exact=false) %}
+{% macro get_ltc_lcs_observations(valuesets, match_paths='both', emis_local_exact=false, include_date_recorded=false) %}
 
 {#
     Returns observations for one or more LTC LCS valuesets via two parallel paths:
@@ -17,6 +17,7 @@
       match_paths  - 'both' (default), 'mapped', or 'source'
       emis_local_exact - restrict mapped matches to non-local roots and their permitted
                          descendants; EMIS namespace 1000006 matches source codes only.
+      include_date_recorded - also return date_recorded, the EMIS save time, for same-day ordering.
 #}
 
 {%- if valuesets is none -%}
@@ -69,6 +70,9 @@ matched_observations as (
         o.patient_id,
         o.person_id,
         o.clinical_effective_date,
+        {%- if include_date_recorded %}
+        o.date_recorded,
+        {%- endif %}
         o.result_value,
         o.result_units_source_concept_id,
         o.result_unit_display,
@@ -107,6 +111,9 @@ matched_observations as (
         o.patient_id,
         o.person_id,
         o.clinical_effective_date,
+        {%- if include_date_recorded %}
+        o.date_recorded,
+        {%- endif %}
         o.result_value,
         o.result_units_source_concept_id,
         o.result_unit_display,
