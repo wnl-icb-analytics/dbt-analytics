@@ -25,7 +25,7 @@ SELECT
 	y.file_version,
 	y.submitted_row_count,
 	y.submission_status
-FROM {{ ref('int_fa_lsacm_monthly_sub_ytd') }}
+FROM {{ ref('int_fa_lsacm_monthly_sub_ytd') }} y
 --FROM DEV__MODELLING.CONTRACTING.INT_FA_LSACM_MONTHLY_SUB_YTD y
 --select latest financial month by provider
 INNER JOIN latest_month l ON y.provider_code = l.provider_code AND y.fy_month_submitted = l.fy_month_submitted
