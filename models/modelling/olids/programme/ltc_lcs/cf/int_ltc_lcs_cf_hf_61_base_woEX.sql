@@ -81,8 +81,8 @@ arm_med_sglt2 as (
 ),
 
 bnp_observations as (
-    select observation_id, person_id, clinical_effective_date, result_value
-    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs5") }})
+    select observation_id, person_id, clinical_effective_date, date_recorded, result_value
+    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs5", include_date_recorded=true) }})
 ),
 
 bnp_400_latest as (
@@ -90,7 +90,7 @@ bnp_400_latest as (
     from bnp_observations
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc nulls last, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 
@@ -122,7 +122,7 @@ bnp_2000_latest as (
     where clinical_effective_date > dateadd(year, -2, current_date())
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 
@@ -142,19 +142,19 @@ arm_bnp_2000 as (
 -- would allow an older symptom to survive a later HF-excluded record.
 symptom_pool_a_latest as (
     select observation_id, person_id
-    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs8, hf_case_finding_eligible_patients_vs7") }})
+    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs8, hf_case_finding_eligible_patients_vs7", include_date_recorded=true) }})
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc nulls last, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 
 symptom_pool_b_latest as (
     select observation_id, person_id
-    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs9, hf_case_finding_eligible_patients_vs7") }})
+    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs9, hf_case_finding_eligible_patients_vs7", include_date_recorded=true) }})
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc nulls last, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 

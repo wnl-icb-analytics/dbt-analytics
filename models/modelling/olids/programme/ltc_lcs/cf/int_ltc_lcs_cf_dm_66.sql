@@ -22,11 +22,11 @@ with base as (
 
 latest_hba1c as (
     select person_id, result_value, clinical_effective_date
-    from ({{ get_ltc_lcs_observations("a4dfc336-6ec7-4cec-21fa-c7d3e7842f2d", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("a4dfc336-6ec7-4cec-21fa-c7d3e7842f2d", emis_local_exact=true, include_date_recorded=true) }})
     where result_value > 0
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 

@@ -13,8 +13,8 @@ with base as (
 
 -- EMIS-local laboratory codes match their original source codes only.
 positive_uacr as (
-    select o.person_id, o.observation_id, o.clinical_effective_date, o.result_value, o.valueset_id
-    from ({{ get_ltc_lcs_observations("c75746ce-5d7b-1647-f08a-ef5b10445f4c", match_paths='source') }}) as o
+    select o.person_id, o.observation_id, o.clinical_effective_date, o.date_recorded, o.result_value, o.valueset_id
+    from ({{ get_ltc_lcs_observations("c75746ce-5d7b-1647-f08a-ef5b10445f4c", match_paths='source', include_date_recorded=true) }}) as o
     inner join base as b on o.person_id = b.person_id
     where o.result_value > 0
 ),
@@ -33,7 +33,7 @@ latest_uacr as (
     where valueset_id = 'c75746ce-5d7b-1647-f08a-ef5b10445f4c'
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc nulls last, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 
@@ -46,7 +46,7 @@ earlier_uacr as (
     where child.valueset_id = 'c75746ce-5d7b-1647-f08a-ef5b10445f4c'
     qualify row_number() over (
         partition by child.person_id
-        order by child.clinical_effective_date desc nulls last, child.observation_id desc
+        order by child.clinical_effective_date desc nulls last, child.date_recorded desc nulls last, child.observation_id desc
     ) = 1
 )
 

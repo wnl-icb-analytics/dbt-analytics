@@ -9,8 +9,9 @@ models:
       anticoagulants, digoxin, flecainide, propafenone or cardiac glycosides, with no
       course-start lookback. A separate anticoagulant/protamine issue rule is strictly after
       six months ago, with no upper date bound, current-course or repeat-only restriction.
-      Unexpanded drug groups use BNF 02.08.02 for oral courses, 02.01.01 for glycosides and
-      02.08.02-02.08.03 for issues; these are approximations rather than exact expansions.
+      Oral anticoagulant courses and issues use the national OPENCODELISTS DOAC and
+      vitamin K antagonist lists. Cardiac glycosides use BNF 02.01.01 and protamine
+      issues use BNF 02.08.03 pending reviewed dm+d clusters; these remain approximations.
       The issue rule excludes parenteral anticoagulants (02.08.01) and reversal agents,
       including idarucizumab and andexanet, as in the XML. Excludes
       ever-recorded DVT/PE/antiphospholipid, AF/flutter, Long COVID and hypoplastic left
@@ -22,6 +23,11 @@ models:
         owner:
           name: Eddie Davison
     data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD,NHS_DRUG_REFSETS/VITKANTAGDRUG_COD
+            source: OPENCODELISTS
+            versioned: false
       - valuesets_have_codes:
           arguments:
             valuesets:

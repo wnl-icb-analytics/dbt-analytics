@@ -7,7 +7,7 @@
 -- Latest microscopic haematuria or red-cell microscopy requires no negative urine
 -- blood test or red-cell microscopy on or after its date. Latest microscopic haematuria
 -- diagnosis requires exact-code UACR > 30 on or after its date. Other arms have no linked test.
--- The BNF substitute includes lithium carbonate and citrate only.
+-- Lithium salts use the national LIT_COD refset alongside the explicit XML ingredients.
 -- Tacrolimus excludes the five topical/mouthwash products and their descendants; any recent issue qualifies.
 
 with base as (
@@ -61,20 +61,19 @@ arm_medication as (
             )
         )
     union
-    -- Unexpanded Lithium Salts and lithium carbonate brand use lithium-only BNF codes.
+    -- National lithium refset ^12465601000001107 covers the XML lithium drug group.
     select distinct person_id
-    from ({{ get_medication_orders(bnf_code='0402030') }})
+    from ({{ get_medication_orders(cluster_id='LIT_COD', source='ECL_CACHE') }})
     where order_date > dateadd(month, -6, current_date())
-        and substr(bnf_code, 1, 9) in ('0402030K0', '0402030P0')
 ),
 
 -- The two haematuria pools have independent Latest 1 restrictions.
 latest_haematuria as (
     select person_id, clinical_effective_date, valueset_id
-    from ({{ get_ltc_lcs_observations("37f2f047-d4b2-bf56-5c7b-2a9788936448,5bf47b55-ccf0-9e25-d7d1-0a7f4b5f3dac", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("37f2f047-d4b2-bf56-5c7b-2a9788936448,5bf47b55-ccf0-9e25-d7d1-0a7f4b5f3dac", emis_local_exact=true, include_date_recorded=true) }})
     qualify row_number() over (
         partition by person_id, valueset_id
-        order by clinical_effective_date desc nulls last, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 

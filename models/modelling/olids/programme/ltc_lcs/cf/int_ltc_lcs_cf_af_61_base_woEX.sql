@@ -6,8 +6,8 @@
 -- anticoagulants, digoxin, flecainide, propafenone or cardiac glycosides, without a
 -- course-start lookback. Separately include anticoagulant/protamine issues strictly
 -- after six months ago, without a current-course or repeat-prescription restriction.
--- Unexpanded drug groups use BNF 02.08.02 (oral courses), 02.01.01 (glycosides)
--- and 02.08.02-02.08.03 (issues). These BNF mappings are not exact drug-group expansions.
+-- Oral anticoagulants use the national OPENCODELISTS DOAC and vitamin K antagonist lists.
+-- Glycosides (BNF 02.01.01) and protamine (02.08.03) await reviewed dm+d clusters.
 -- The issue rule excludes parenteral anticoagulants (02.08.01) and reversal agents,
 -- including idarucizumab and andexanet, as in the XML.
 -- Exclude ever-recorded thrombosis/antiphospholipid, AF/flutter, Long COVID and
@@ -25,6 +25,44 @@ with base as (
 af_course_codes as (
     select medication_statement_id
     from ({{ get_ltc_lcs_medication_statements("98b8e1d3-7db0-0653-9412-2fdf795e6f61") }})
+    union
+    select medication_statement_id
+    from ({{ get_medication_statements(
+        cluster_id='NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD,NHS_DRUG_REFSETS/VITKANTAGDRUG_COD',
+        source='OPENCODELISTS'
+    ) }})
+),
+
+-- The XML names these reversal preparations; exclude their dm+d roots and descendants.
+reversal_product_roots as (
+    select column1::varchar as concept_code
+    from (values
+        ('37454211000001101'), -- Andexanet alfa 200mg vials
+        ('37347611000001103'), -- Ondexxya 200mg vials
+        ('31141811000001100'), -- Idarucizumab 2.5g/50ml vials
+        ('31065711000001108')  -- Praxbind 2.5g/50ml vials
+    )
+),
+
+reversal_products as (
+    select concept_code from reversal_product_roots
+    union
+    select tc.sub_type_id::varchar as concept_code
+    from {{ ref('stg_nhsd_snomed_sct_transitive_closure') }} as tc
+    inner join reversal_product_roots as ex
+        on tc.super_type_id::varchar = ex.concept_code
+),
+
+anticoagulant_issues as (
+    select person_id, order_date, mapped_concept_code, bnf_code
+    from ({{ get_medication_orders(
+        cluster_id='NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD,NHS_DRUG_REFSETS/VITKANTAGDRUG_COD',
+        source='OPENCODELISTS'
+    ) }})
+    union all
+    -- Retain the protamine BNF route until a reviewed dm+d cluster is available.
+    select person_id, order_date, mapped_concept_code, bnf_code
+    from ({{ get_medication_orders(bnf_code='020803') }})
 ),
 
 af_medication as (
@@ -35,16 +73,19 @@ af_medication as (
             'Automatic', 'Repeat', 'Repeat Dispensing'
         )
         and (
-            ms.bnf_code like '020802%'
-            or ms.bnf_code like '020101%'
+            ms.bnf_code like '020101%'
             or ms.id in (select medication_statement_id from af_course_codes)
         )
     union
     -- The issue arm is independent of course status and prescription type.
     select person_id
-    from ({{ get_medication_orders(bnf_code='0208') }})
-    where order_date > dateadd(month, -6, current_date())
-        and substr(bnf_code, 1, 6) in ('020802', '020803')
+    from anticoagulant_issues as issue
+    where issue.order_date > dateadd(month, -6, current_date())
+        and coalesce(issue.bnf_code, '') not like '020801%'
+        and not exists (
+            select 1 from reversal_products as ex
+            where ex.concept_code = issue.mapped_concept_code
+        )
 ),
 
 -- woEX clinical exclusions (ever recorded)

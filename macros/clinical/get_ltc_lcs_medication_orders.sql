@@ -1,4 +1,4 @@
-{% macro get_ltc_lcs_medication_orders(valuesets, match_paths='both') %}
+{% macro get_ltc_lcs_medication_orders(valuesets, match_paths='both', include_date_recorded=false) %}
 
 {#
     Returns medication orders for one or more LTC LCS valuesets via two parallel paths:
@@ -15,6 +15,7 @@
     Params:
       valuesets    - comma-separated list of valueset_id or valueset_friendly_name tokens
       match_paths  - 'both' (default), 'mapped', or 'source'
+      include_date_recorded - also return EMIS save time for same-day ordering.
 #}
 
 {%- if valuesets is none -%}
@@ -47,6 +48,9 @@ with matched_orders as (
         pp.person_id,
         pp.sk_patient_id,
         mo.clinical_effective_date as order_date,
+        {%- if include_date_recorded %}
+        mo.date_recorded,
+        {%- endif %}
         mo.medication_name as order_medication_name,
         mo.dose as order_dose,
         mo.quantity_value as order_quantity_value,
@@ -87,6 +91,9 @@ with matched_orders as (
         pp.person_id,
         pp.sk_patient_id,
         mo.clinical_effective_date as order_date,
+        {%- if include_date_recorded %}
+        mo.date_recorded,
+        {%- endif %}
         mo.medication_name as order_medication_name,
         mo.dose as order_dose,
         mo.quantity_value as order_quantity_value,

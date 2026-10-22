@@ -30,8 +30,8 @@ with base as (
 -- the UNION of both sets; REJECT when that latest event is an active AST_COD code (current
 -- asthma activity). Keep patients whose latest asthma event is 'resolved', or who have none.
 ast_union_events as (
-    select person_id, observation_id, clinical_effective_date, valueset_id
-    from ({{ get_ltc_lcs_observations("e49a6f96-d7a8-ad43-7448-2166a2858204, be433490-3609-4849-20b6-045ddfbdc032") }})
+    select person_id, observation_id, clinical_effective_date, date_recorded, valueset_id
+    from ({{ get_ltc_lcs_observations("e49a6f96-d7a8-ad43-7448-2166a2858204, be433490-3609-4849-20b6-045ddfbdc032", include_date_recorded=true) }})
 ),
 
 latest_ast_event as (
@@ -39,7 +39,7 @@ latest_ast_event as (
     from ast_union_events
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 

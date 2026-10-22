@@ -27,11 +27,11 @@ with base as (
 -- Latest HbA1c (3-code IFCC valueset), value > 0
 latest_hba1c as (
     select person_id, result_value, clinical_effective_date
-    from ({{ get_ltc_lcs_observations("919fb132-083e-bba0-d8b6-d21e9846dcae", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("919fb132-083e-bba0-d8b6-d21e9846dcae", emis_local_exact=true, include_date_recorded=true) }})
     where result_value > 0
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 

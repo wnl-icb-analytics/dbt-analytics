@@ -6,7 +6,8 @@
       - 'mapped': medication_statement.mapped_concept_code = expanded_concepts.snomed_code
       - 'source': medication_statement.medication_statement_source_concept_id -> enriched_concept_map.source_concept_id
                   -> original_codes.original_code
-    Latest is picked across both paths combined; ties on date prefer the 'mapped' row.
+    Latest uses clinical date, EMIS save time, then record ID descending.
+    Matching the same record through both paths prefers the 'mapped' row.
 
     Note: original_codes.include_children is not yet expanded (parent codes only).
 
@@ -130,7 +131,8 @@ from matched_statements
 qualify row_number() over (
     partition by person_id, valueset_id
     order by
-        statement_date desc,
+        statement_date desc nulls last,
+        date_recorded desc nulls last,
         medication_statement_id desc,
         case when match_path = 'mapped' then 0 else 1 end
 ) = 1

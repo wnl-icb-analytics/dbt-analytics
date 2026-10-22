@@ -41,10 +41,10 @@ bame as (
     select eth.person_id
     from (
         select *
-        from ({{ get_ltc_lcs_observations("2e9a5dbb-a1f2-19ff-d657-bf70de2d2c43", emis_local_exact=true) }})
+        from ({{ get_ltc_lcs_observations("2e9a5dbb-a1f2-19ff-d657-bf70de2d2c43", emis_local_exact=true, include_date_recorded=true) }})
         qualify row_number() over (
             partition by person_id
-            order by clinical_effective_date desc, observation_id desc
+            order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
         ) <= 999
     ) as eth
     left join ({{ get_ltc_lcs_observations("396f1048-e18e-908e-b0d3-958d23d46607", emis_local_exact=true) }}) as non_bame

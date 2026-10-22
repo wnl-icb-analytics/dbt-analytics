@@ -6,7 +6,8 @@
       - 'mapped': medication_order.mapped_concept_code = expanded_concepts.snomed_code
       - 'source': medication_order.medication_order_source_concept_id -> enriched_concept_map.source_concept_id
                   -> original_codes.original_code
-    Latest is picked across both paths combined; ties on date prefer the 'mapped' row.
+    Latest uses clinical date, EMIS save time, then record ID descending.
+    Matching the same record through both paths prefers the 'mapped' row.
 
     Note: original_codes.include_children is not yet expanded (parent codes only).
 
@@ -45,6 +46,7 @@ with matched_orders as (
         pp.person_id,
         pp.sk_patient_id,
         mo.clinical_effective_date as order_date,
+        mo.date_recorded,
         mo.medication_name as order_medication_name,
         mo.dose as order_dose,
         mo.quantity_value as order_quantity_value,
@@ -85,6 +87,7 @@ with matched_orders as (
         pp.person_id,
         pp.sk_patient_id,
         mo.clinical_effective_date as order_date,
+        mo.date_recorded,
         mo.medication_name as order_medication_name,
         mo.dose as order_dose,
         mo.quantity_value as order_quantity_value,
@@ -117,12 +120,13 @@ with matched_orders as (
         )
 {%- endif %}
 )
-select *
+select * exclude (date_recorded)
 from matched_orders
 qualify row_number() over (
     partition by person_id, valueset_id
     order by
-        order_date desc,
+        order_date desc nulls last,
+        date_recorded desc nulls last,
         medication_order_id desc,
         case when match_path = 'mapped' then 0 else 1 end
 ) = 1

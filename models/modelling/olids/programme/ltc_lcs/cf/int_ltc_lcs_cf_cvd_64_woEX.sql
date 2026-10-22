@@ -9,31 +9,31 @@
 -- XML date caps apply before Latest 1, so future records cannot hide earlier records.
 with statin_code_issue_at_baseline as (
     select person_id, order_date
-    from ({{ get_ltc_lcs_medication_orders("73a1adb2-031d-ffa6-1c8a-e0662ddbc9b4") }})
+    from ({{ get_ltc_lcs_medication_orders("73a1adb2-031d-ffa6-1c8a-e0662ddbc9b4", include_date_recorded=true) }})
     where order_date <= current_date()
     qualify row_number() over (
         partition by person_id, valueset_id
-        order by order_date desc, medication_order_id desc
+        order by order_date desc nulls last, date_recorded desc nulls last, medication_order_id desc
     ) = 1
 ),
 
 statin_code_event_at_baseline as (
     select person_id, clinical_effective_date
-    from ({{ get_ltc_lcs_observations("73a1adb2-031d-ffa6-1c8a-e0662ddbc9b4") }})
+    from ({{ get_ltc_lcs_observations("73a1adb2-031d-ffa6-1c8a-e0662ddbc9b4", include_date_recorded=true) }})
     where clinical_effective_date <= current_date()
     qualify row_number() over (
         partition by person_id, valueset_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 
 statin_decline_at_baseline as (
     select person_id, clinical_effective_date
-    from ({{ get_ltc_lcs_observations("4ff4b3d4-c379-00dd-3603-bcdb169589c0") }})
+    from ({{ get_ltc_lcs_observations("4ff4b3d4-c379-00dd-3603-bcdb169589c0", include_date_recorded=true) }})
     where clinical_effective_date <= current_date()
     qualify row_number() over (
         partition by person_id, valueset_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 

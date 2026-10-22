@@ -26,11 +26,11 @@ ckd_62_woex as (
 -- Filter positive source-code results before Latest 1, then test > 70 below.
 latest_uacr_severe as (
     select person_id, result_value
-    from ({{ get_ltc_lcs_observations("6bfbf92c-3c89-cc89-f541-a7dcaa945562", match_paths='source') }})
+    from ({{ get_ltc_lcs_observations("6bfbf92c-3c89-cc89-f541-a7dcaa945562", match_paths='source', include_date_recorded=true) }})
     where result_value > 0
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc nulls last, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 )
 
