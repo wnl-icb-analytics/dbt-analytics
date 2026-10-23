@@ -14,7 +14,7 @@
     register population and Model of Care activity. Do not mix their elements
     in one query: they are different populations.
 
-    Risk summary contains eligible adult MoC and CYP-only asthma members, including inactive and deceased people; filter is_active.
+    Risk summary contains adult MoC (including Check & Test-only LR) and CYP-only asthma members, including inactive and deceased people; filter is_active.
     Adult stage 2 uses sharing, or MDT/sharing for HRCS and HRS.
     CYP-only HR desktop review follows the EMIS HR description: due three months after the latest annual or desktop review, once the annual review is done.
 #}
@@ -177,6 +177,6 @@ METRICS(
     rs.avg_ltc_lcs_conditions AS AVG(rs.number_of_ltc_lcs_conditions) COMMENT = 'Average number of LTC LCS conditions'
 )
 
-COMMENT = 'OLIDS LTC LCS Semantic View - case-finding candidates and the risk-stratified LTC LCS register population with Model of Care progress. Grain: one row per person in each element; cf (case finding) and rs (risk summary) are person-grain but DIFFERENT populations - never mix their elements in one query. Pathway-neutral stage flags avoid double counting the same review event. Date dimensions exposed are moc_mdt_review_date, cyp_annual_review_date and cyp_desktop_review_date; other recency is available via the *_12m boolean flags.'
+COMMENT = 'OLIDS LTC LCS Semantic View - case-finding candidates, and adult MoC (including Check & Test-only LR) and CYP-only asthma members with Model of Care progress. Grain: one row per person in each element; cf (case finding) and rs (risk summary) are person-grain but DIFFERENT populations - never mix their elements in one query. Pathway-neutral stage flags avoid double counting the same review event. Date dimensions are moc_mdt_review_date (latest actual annual MDT review within the inclusive trailing 12 months; null if absent), cyp_annual_review_date (latest non-future CYP-only asthma annual review date; may be outside the completed window; null for adult pathways or no event) and cyp_desktop_review_date (latest qualifying CYP-only HR desktop review or linked annual review date; null without completion or for other pathways). The *_12m flags remain boolean recency indicators.'
 AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. Case finding and risk summary are different populations; never mix cf and rs elements. Example: SELECT borough_resident, AGG(stratified_patients) FROM SEM_OLIDS_LTC_LCS WHERE is_active = TRUE GROUP BY borough_resident. Example linkage: reduce case-finding patients here and DNA patients in sem_olids_appointments before joining. Risk summary includes inactive and deceased people. Use the pathway-neutral Model of Care flags; hypertension has no indicator 64.'
 AI_QUESTION_CATEGORIZATION 'Use this view for: LTC LCS case-finding indicators and candidates, risk stratification (HRC/HR/MR/LR), Model of Care pathway progress including check and test, care plans, discussions, follow-ups, CYP annual and desktop review, and cycle completion.'
