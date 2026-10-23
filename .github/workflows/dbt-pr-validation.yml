@@ -171,7 +171,8 @@ jobs:
             } | sort -u | tr '\n' ' '
           )
           COUNT=$(echo "$SELECT" | wc -w)
-          echo "select=$SELECT" >> $GITHUB_OUTPUT
+          # A file, not an output: large selections exceed the 128 KB env var limit.
+          printf '%s' "$SELECT" > "$RUNNER_TEMP/pr_select.txt"
           echo "node_count=$COUNT" >> $GITHUB_OUTPUT
           echo "Found $COUNT changed nodes: $SELECT"
           [ -n "$YML_FILES" ] && echo "YML changes detected - included associated models" || true
@@ -217,7 +218,6 @@ jobs:
         if: env.RUNTIME_BUILD == 'true'
         env:
           NODE_COUNT: ${{ steps.changes.outputs.node_count }}
-          PR_SELECT: ${{ steps.changes.outputs.select }}
           HAS_STATE: ${{ steps.state.outputs.has_state }}
         run: |
           if [ "$HAS_STATE" != "true" ]; then
@@ -228,8 +228,8 @@ jobs:
               echo "No state manifest and no changed dbt files - nothing to validate"
               exit 0
             fi
-            echo "No state manifest - falling back to $NODE_COUNT directly changed nodes: $PR_SELECT"
-            read -r -a pr_select_args <<< "$PR_SELECT"
+            echo "No state manifest - falling back to $NODE_COUNT directly changed nodes"
+            read -r -a pr_select_args < "$RUNNER_TEMP/pr_select.txt"
             python .github/scripts/validate_dbt_models.py --select "${pr_select_args[@]}"
             exit 0
           fi
