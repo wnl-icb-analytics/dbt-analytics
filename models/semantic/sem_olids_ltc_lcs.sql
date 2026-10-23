@@ -93,7 +93,7 @@ DIMENSIONS(
     rs.overall_risk_rank AS overall_risk_rank COMMENT = 'Risk rank: 1=HRC, 2=HR, 3=MR, 4=MRa/MRb, 5=LR.',
     rs.moc_pathway AS moc_pathway COMMENT = 'Model of Care pathway: HRCS, HRS, MRS or LRS',
     rs.moc_risk_category AS moc_risk_category COMMENT = 'Model of Care risk category',
-    rs.moc_pathway_status AS moc_pathway_status COMMENT = 'Observation-based work-list pending, Declined, Cycle complete, or No action identified',
+    rs.moc_pathway_status AS moc_pathway_status COMMENT = 'Declined (latest MoC event is a decline), Cycle complete, In progress (any recorded MoC activity in its window) or Not started. Work-list position is in the moc_requires_* flags and moc_next_action.',
     rs.moc_stage_completed_label AS moc_stage_completed_label COMMENT = 'Highest completed adult stage including accepted declines, or CYP Annual Review/Desktop Review.',
     rs.moc_next_action AS moc_next_action COMMENT = 'Next observation-based EMIS work-list action: Check & Test (C&T), MDT Review (MDT), Care Plan Sharing (CPS), Discussion (DISC), Follow-up (F/U), Annual Review (AR) or Desktop Review (DTR). Null when no list selects the person. Future care-plan diaries are unavailable',
     rs.moc_cycle_complete AS moc_cycle_complete COMMENT = 'Project measure: adults need an agreed plan and review within 12 months, latest MoC event a review, and no observation-based work list; CYP-only asthma children need the annual review, plus the desktop review if HR; Check & Test-only people need the C&T.',
