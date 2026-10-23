@@ -2,7 +2,10 @@ models:
   - name: stg_olids_observation
     description: One record from the expanded OLIDS observation feed, including native observations,
       allergy records and referral requests. Excludes records marked deleted and records without a
-      person identifier. Does not deduplicate separate source entities into clinical occurrences.
+      person identifier. Also excludes GP2GP transfer copies. A copy is the second version of a
+      transferred patient history, held on the patient record at the new practice. The original on the
+      earlier record is kept, so each event is counted once.
+      Does not deduplicate separate source entities into clinical occurrences.
       Source entities identify delivery tables; clinical meaning follows the recorded code.
     config:
       meta:
@@ -77,6 +80,10 @@ models:
         description: Boolean indicating if the associated problem has been deleted
       - name: is_confidential
         description: Source confidentiality flag. Null when unavailable, including referral requests; null does not mean false.
+      - name: is_gp2gp_import
+        description: True when dbt-OLIDS infers the record arrived by GP2GP transfer. The event is dated before the
+          latest Regular registration start and was recorded within 30 days of it. This is a timing
+          signature, so a small share may be entries made by the new practice, such as new-patient checks.
       - name: lds_is_deleted
         description: Deletion flag from LDS
       - name: publisher_organisation_code

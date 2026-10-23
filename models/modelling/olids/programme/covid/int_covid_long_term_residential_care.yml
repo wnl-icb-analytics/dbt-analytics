@@ -1,22 +1,11 @@
 models:
   - name: int_covid_long_term_residential_care
-    description: 'COVID vaccination eligibility for people in long-term residential care.
-
-      Grain: one row per person per campaign.
-
-      Key Features:
-
-      • Residential status logic: the latest residence code (RESIDE_COD) must be from the long-term care cluster (LONGRES_COD)
-
-      • Minimum age is campaign driven: 18 for the Autumn 2024 offer, 65 from Spring 2025 onward (spec 5.1.1 Group M denominator)
-
-      • Age is tested on birth date rather than DATEDIFF, which subtracts calendar years rather than counting completed years
-
-      • Captures current residential status, not historical
-
-      • Generates data for every campaign in covid_reported_campaign_ids()
-
-      Purpose: Identify care home residents eligible for COVID vaccination because of communal living infection risk.'
+    description: >-
+      OLIDS care-home group for COVID vaccination, one row per person and offering
+      campaign. The latest LONGRES_COD and RESIDE_COD dates must match, using
+      campaign-specific UKHSA_COVID evidence through the audit end. Minimum age at the
+      campaign reference date is 18 for Autumn 2024 and 65 from Spring 2025. Inactive
+      and deceased people remain included.
     data_tests:
       - cluster_ids_exist:
           arguments:
@@ -99,4 +88,4 @@ models:
       - name: age_years_at_ref_date
         description: 'Age in years at campaign reference date. The minimum is 18 for Autumn 2024 and 65 from Spring 2025'
       - name: created_at
-        description: 'Audit timestamp for record creation (campaign audit end date)'
+        description: 'Timestamp when the row was built; not the campaign audit end date'

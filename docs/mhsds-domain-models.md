@@ -33,6 +33,7 @@ For a short introduction to the layers and where to start, see
 | Who is on the current recorded caseload? | `fct_mhsds_current_caseload_referral`, `fct_mhsds_current_caseload_person` | Open referral, or person/provider, in the dataset latest month |
 | What was each provider's latest caseload evidence, including old submissions? | `fct_mhsds_latest_provider_caseload_referral` | Open referral in that provider's latest period |
 | What RTT clocks were submitted? | `fct_mhsds_referral_to_treatment_period` | Accepted RTT source occurrence |
+| Where were patients referred on to? | `fct_mhsds_onward_referral` | Latest recorded onward referral |
 | Who receives care by age, ethnicity, gender and deprivation? | `dim_mhsds_person_provider_period` | Person, provider and accepted period |
 | What care happened without the patient present? | `fct_mhsds_indirect_activity` | Accepted indirect-activity occurrence |
 | What anonymous group activity and drop-ins were reported? | `fct_mhsds_group_session`, `fct_mhsds_drop_in_contact` | Accepted session or anonymous contact |

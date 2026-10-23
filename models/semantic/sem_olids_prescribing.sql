@@ -23,7 +23,7 @@
     The chatbot has a BNF lookup tool — ask it to resolve drug class names to BNF codes.
 
     Pre-defined medication sets (joined via medication_order_id):
-    - Statins: with intensity classification (high/moderate/combination)
+    - Statins: with intensity classification (HIGH_INTENSITY, COMBINATION, OTHER_STATIN)
     - Antihypertensives, ACE inhibitors, ARBs, beta-blockers
     - Anticoagulants: with DOAC/VKA classification
     - Antiplatelets
@@ -65,7 +65,7 @@ TABLES(
     -- Pre-defined medication category models (each filtered to specific drug class)
     statins AS {{ ref('int_lipid_lowering_medications_all') }}
         PRIMARY KEY (medication_order_id)
-        COMMENT = 'Lipid-regulating orders (BNF 2.12) with lipid_lowering_class and, for statins, intensity: HIGH_INTENSITY (atorvastatin, rosuvastatin), MODERATE_INTENSITY (simvastatin, pravastatin, fluvastatin), COMBINATION (statin combinations)',
+        COMMENT = 'Lipid-regulating orders (BNF 2.12). Statin classification is HIGH_INTENSITY from national high-intensity product lists, COMBINATION for other statin combinations, OTHER_STATIN for other statins; null for non-statins.',
 
     antihypertensives AS {{ ref('int_antihypertensive_medications_all') }}
         PRIMARY KEY (medication_order_id)
@@ -176,9 +176,9 @@ RELATIONSHIPS(
 
 FACTS(
     -- Order details
-    rx.estimated_cost AS estimated_cost COMMENT = 'Estimated cost of this medication order (GBP).',
+    rx.estimated_cost AS estimated_cost COMMENT = 'Estimated cost of this medication order in pounds. Null when an inferred GP2GP import supplies zero. Other values, including non-zero costs on imports, are retained.',
     rx.quantity_value AS quantity_value COMMENT = 'Quantity prescribed',
-    rx.duration_days AS duration_days COMMENT = 'Duration of prescription in days',
+    rx.duration_days AS duration_days COMMENT = 'Duration of the prescription in days. Null when the supplied value is zero or less, or when an inferred GP2GP import supplies the 28-day default. Other positive values are retained.',
     rx.age_at_event AS age_at_event COMMENT = 'Patient age at time of order'
 )
 
@@ -235,7 +235,7 @@ DIMENSIONS(
 
     -- Lipid-regulating classification (only populated for BNF 2.12 orders)
     statins.lipid_lowering_class AS lipid_lowering_class COMMENT = 'Lipid-regulating product class (STATIN, STATIN_COMBINATION, EZETIMIBE, BEMPEDOIC_ACID, PCSK9_INHIBITOR, INCLISIRAN, FIBRATE, BILE_ACID_SEQUESTRANT, NICOTINIC_ACID, OMEGA_3, OTHER). Only for BNF 2.12 orders.',
-    statins.statin_intensity AS statin_intensity COMMENT = 'Statin intensity (HIGH_INTENSITY, MODERATE_INTENSITY, COMBINATION, OTHER_STATIN). Null for non-statin products.',
+    statins.statin_intensity AS statin_intensity COMMENT = 'Statin classification: HIGH_INTENSITY from national high-intensity product lists, COMBINATION for other statin combinations, OTHER_STATIN for other statins. Null for non-statins. MODERATE_INTENSITY retired with Eddie approval on 16 October 2026.',
     statins.is_combination_therapy AS is_combination_therapy COMMENT = 'Fixed-dose lipid combination product. Only for BNF 2.12 orders.',
     statins.is_statin AS is_statin COMMENT = 'Whether a BNF 2.12 order contains a statin. Only for BNF 2.12 orders.',
 
@@ -325,6 +325,6 @@ METRICS(
     valproate.valproate_patient_count AS COUNT(DISTINCT valproate.person_id) COMMENT = 'Patients with valproate orders'
 )
 
-COMMENT = 'OLIDS Prescribing Semantic View - All medication orders with BNF classification, prescription type, prescribing-practice attribution, core patient demographics, and pre-defined drug category flags. Source: OLIDS (One London Integrated Data Set). Grain: one row per medication order. BNF chapter is the primary therapeutic filter — the chatbot has a BNF lookup tool to resolve drug class names. Condition, vulnerability, and polypharmacy cohorts come from sem_olids_population via person_id CTE joins.'
+COMMENT = 'OLIDS medication issues, one row per linked order dated from 1 January 1990 to build. Includes inactive and deceased people. BNF codes, drug-class flags and prescription details describe each issue; demographics and practice context are current. An order does not establish indication or confirm use. sem_olids_population supplies condition cohorts. person_id supports cohort linkage; final results must be aggregate-only.'
 AI_SQL_GENERATION 'LINKAGE: query each view in its own CTE, reduce to one row per person before joining on person_id, then aggregate; keep person_id out of the final output. This is medication-order grain. Example: SELECT bnf_chapter, AGG(order_count), AGG(total_cost) FROM SEM_OLIDS_PRESCRIBING WHERE order_date >= DATEADD(year, -1, CURRENT_DATE) GROUP BY bnf_chapter. Example linkage: reduce active diabetes people in sem_olids_population and SGLT2 orders here before joining. Default treatment exposure is the last 12 months of order_date. For dimension-backed classes, filter the classification dimension in WHERE (antibacterial_class, sglt2_drug, glp1_drug, dpp4_drug, lipid_lowering_class or is_statin, statin_intensity for statins only, anticoagulant_type, valproate_product_type or metformin is_combination). For metric-only medication sets, use person-grain HAVING AGG(<class>_order_count) > 0. Never put a metric in WHERE. Every pre-defined medication set has <class>_order_count and <class>_patient_count metrics — use AGG(<class>_patient_count) for "patients with X orders" headcounts. Prefer the pre-defined medication sets over BNF filtering for known drug classes. BNF codes are compact, not dotted: bnf_chapter 2-digit (02 = Cardiovascular), bnf_section 4-digit (0205 = Hypertension and heart failure), bnf_code 15-character product code — use the BNF lookup tool to resolve drug class names, then WHERE bnf_section = result or bnf_code LIKE result || ''%''. order_date is clean (1990-01-01 to today). fiscal_year_start is an integer year (2024 = FY2024/25), not a date. quantity_value is meaningful only within the same medication product and quantity_unit. Practice dimensions are prescribing practice; registered practice is in population. Demographics are current snapshot — use age_at_event for historical age cohorting.'
 AI_QUESTION_CATEGORIZATION 'Use this view for: medication orders, prescribing volume and estimated cost by BNF classification, medication, practice or PCN; exposed medication classes; repeat versus acute issues; and prescribing equity by deprivation or ethnicity. It does not contain dispensing, adherence, allergy or monitoring-test records. For current population health (conditions, demographics) without prescribing use sem_olids_population. For clinical biomarkers use sem_olids_observations. Questions needing cohorts from TWO domains (e.g. medication x biomarker control, medication x appointment access, treated vs untreated gaps) are answerable by joining this view to the other sem_olids_* views on person_id in CTEs, with aggregate-only output.'
