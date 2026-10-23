@@ -39,3 +39,53 @@ models:
         description: 'Source cluster identifier (FHYP_COD for FH diagnoses)'
       - name: is_diagnosis_code
         description: 'Boolean flag indicating if the code represents an FH diagnosis (always TRUE for FHYP_COD cluster)'
+
+unit_tests:
+  - name: familial_hypercholesterolaemia_preserves_raw_and_missing_dates
+    model: int_familial_hypercholesterolaemia_diagnoses_all
+    given:
+      - input: ref('stg_reference_combined_codesets')
+        format: sql
+        rows: |
+          SELECT 'SYN_FH'::VARCHAR AS code, 'FHYP_COD'::VARCHAR AS cluster_id,
+            'PCD'::VARCHAR AS source, 'Synthetic FH'::VARCHAR AS cluster_description,
+            'Synthetic FH'::VARCHAR AS code_description
+      - input: ref('stg_olids_observation')
+        format: sql
+        rows: |
+          SELECT CAST(column1 AS DECIMAL(38, 0)) AS id,
+            CAST(column1 AS DECIMAL(38, 0)) AS person_id,
+            CAST(column2 AS VARCHAR) AS mapped_concept_code,
+            column3::DATE AS clinical_effective_date,
+            column4::TIMESTAMP_NTZ AS date_recorded,
+            CAST(NULL AS VARCHAR) AS patient_id,
+            CAST(NULL AS VARCHAR) AS result_value,
+            CAST(NULL AS VARCHAR) AS result_units_source_concept_id,
+            CAST(NULL AS VARCHAR) AS result_unit_code,
+            CAST(NULL AS VARCHAR) AS result_unit_display,
+            CAST(NULL AS VARCHAR) AS result_text,
+            CAST(NULL AS VARCHAR) AS allergy_medication_name,
+            CAST(NULL AS VARCHAR) AS is_problem,
+            CAST(NULL AS VARCHAR) AS is_review,
+            CAST(NULL AS VARCHAR) AS problem_end_date,
+            CAST(NULL AS VARCHAR) AS mapped_concept_id,
+            CAST(NULL AS VARCHAR) AS mapped_concept_display,
+            CAST(NULL AS VARCHAR) AS episodicity_source_concept_id,
+            CAST(NULL AS VARCHAR) AS age_at_event,
+            CAST(NULL AS VARCHAR) AS lds_transform_datetime FROM (VALUES
+            (-18010, 'SYN_FH', '2030-01-01', '2026-01-01'),
+            (-18011, 'SYN_FH', NULL, '2026-01-01'))
+    expect:
+      rows:
+        - id: -18010
+          clinical_effective_date: '2026-01-01 00:00:00'
+          clinical_effective_date_raw: '2030-01-01'
+        - id: -18011
+          clinical_effective_date: '1900-01-01 00:00:00'
+          clinical_effective_date_raw: null
+    overrides:
+      macros:
+        # Fusion cannot infer UUID metadata for the empty schema probe.
+        get_empty_subquery_sql: >
+          SELECT NULL::NUMBER AS id, NULL::TIMESTAMP_NTZ AS clinical_effective_date,
+          NULL::DATE AS clinical_effective_date_raw WHERE FALSE

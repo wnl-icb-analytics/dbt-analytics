@@ -1,12 +1,19 @@
 models:
   - name: int_systemic_corticosteroid_medications_all
-    description: 'Systemic corticosteroid medication orders using BNF classification
-      for inflammatory conditions.'
+    description: >-
+      Systemic corticosteroid orders in BNF 0603 for all people, one row per dated order.
+      dm+d therapeutic moiety identifies fludrocortisone as mineralocorticoid. Products do
+      not establish replacement or anti-inflammatory indication; legacy indication columns
+      remain pending interface approval.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests: []
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - medication_order_id
     columns:
       - name: person_id
         description: 'Person identifier'
@@ -39,16 +46,22 @@ models:
       - name: bnf_name
         description: 'BNF classification name'
       - name: corticosteroid_type
-        description: 'Corticosteroid type (replacement, glucocorticoid, mineralocorticoid)'
+        description: 'Legacy BNF classification retained pending interface approval. Use corticosteroid_type_dmd for the ingredient-based class.'
       - name: is_replacement_therapy
-        description: 'Flag for replacement therapy corticosteroids'
+        description: 'Legacy BNF flag; product does not establish indication. Held for removal.'
       - name: is_anti_inflammatory
-        description: 'Flag for anti-inflammatory corticosteroids'
+        description: 'Legacy BNF flag; product does not establish indication. Held for removal.'
       - name: is_mineralocorticoid
-        description: 'Flag for mineralocorticoid medications'
+        description: 'Fludrocortisone by current or previous dm+d VTM; null when no VTM is available.'
       - name: is_recent_1m
-        description: 'Order within last month'
+        description: 'Order in the 1 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_3m
-        description: 'Order within last 3 months'
+        description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_6m
-        description: 'Order within last 6 months'
+        description: 'Order in the 6 calendar months up to and including the build date; lower bound excluded.'
+      - name: is_future_dated
+        description: Order dated after the build date; kept as source evidence, never recent.
+      - name: corticosteroid_type_dmd
+        description: >-
+          MINERALOCORTICOID for current or previous fludrocortisone VTM, GLUCOCORTICOID for other
+          known VTMs, UNKNOWN when no VTM is available.

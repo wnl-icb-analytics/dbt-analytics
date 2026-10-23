@@ -115,6 +115,8 @@ encoding_features as (
         ---- chronic heart disease
         -- Engagement in existing care pathways
         , lcs.moc_stage_completed
+        -- Check & Test-only LR people complete their MoC cycle at stage 1.
+        , coalesce(lcs.is_moc_check_test_only and lcs.moc_cycle_complete, false) as is_moc_check_test_only_complete
       from spine il
     left join {{ref('dim_person_conditions')}} pc
         on il.person_id =pc.person_id
@@ -184,6 +186,7 @@ domain_sub_scores as (
             + diabetes_not_triple_target_flag * 3
             + case
                 when zeroifnull(moc_stage_completed) < 2
+                    and not is_moc_check_test_only_complete
                     and overall_risk_group_sort_key > 0 then 3
                 else 0
               end

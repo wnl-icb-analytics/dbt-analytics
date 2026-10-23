@@ -17,6 +17,8 @@ select
     , start_time
     , end_date
     , end_time
+    , decided_to_admit_date
+    , discharge_ready_date
     , estimated_discharge_date
     , has_estimated_discharge_date
     , estimated_discharge_date_method

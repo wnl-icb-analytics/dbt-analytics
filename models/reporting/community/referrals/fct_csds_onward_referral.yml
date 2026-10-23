@@ -1,0 +1,50 @@
+version: 2
+models:
+- name: fct_csds_onward_referral
+  description: >-
+    Onward referrals made from community services to another organisation or service. Each row is one
+    referral, onward referral date and reason (the ETOS key), using its latest accepted CYP105 report.
+    Includes records with missing person details. An onward referral records the request; it does not
+    show that the receiving organisation accepted the patient or provided care. Filter
+    is_wnl_commissioner for West and North London activity.
+  config:
+    meta:
+      owner:
+        name: Eddie Davison
+  columns:
+  - name: source_record_id
+    description: Stable onward referral key derived from the referral, onward referral date and reason.
+    data_tests:
+    - unique
+    - not_null
+  - name: source_row_id
+    description: Delivered CYP105 row selected for the onward referral.
+  - name: person_id
+    description: CSDS person identifier from this record, never replaced by the referral's person.
+  - name: sk_patient_id
+    description: Pseudonymised cross-system patient key; null where bridging is unavailable.
+  - name: referral_source_record_id
+    description: Provider-qualified referral the onward referral was made from; joins to source_record_id in
+      fct_csds_referral.
+  - name: is_referral_linked
+    description: Whether the recorded referral exists in fct_csds_referral.
+  - name: is_referral_person_consistent
+    description: Whether the onward referral and latest referral person identifiers agree. Null for an absent
+      referral or missing person identifier.
+  - name: onward_referral_date
+    description: Date the onward referral was made. CSDS supplies no time.
+  - name: onward_referral_reason_code
+    description: Submitted onward referral reason. Most providers record 96 (other).
+  - name: onward_referral_reason_name
+    description: Newest UKHFD description of the reason; null for codes outside the national list.
+  - name: receiving_organisation_code
+    description: Submitted ODS code of the organisation receiving the onward referral.
+  - name: receiving_organisation_name
+    description: Latest reference name for the receiving organisation; null when the code is not recognised.
+  - name: is_wnl_commissioner
+    description: The same-submission referral's source-derived or submitted commissioner is West and North London.
+  - name: reporting_period_end_date
+    description: Last date of the reporting month carrying the selected record; may be later than the onward
+      referral.
+  - name: source_file_received_at
+    description: Source file receipt timestamp, not a clinical time.

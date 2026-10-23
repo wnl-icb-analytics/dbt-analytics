@@ -1,16 +1,12 @@
 version: 2
 models:
   - name: fct_person_resource_index_olids
-    description: >
-      NCL deep-dive on fct_person_resource_index (registered sub-ICB 93C
-      only), enriched with OLIDS primary-care context - Cambridge
-      comorbidity score, LTC register count, frailty severity, GP
-      appointment cost (PSSRU nominal) and OLIDS-estimated prescribing.
-      actual_cost_12m is SLAM + EPD + MHSDS + CSDS from the base fact;
-      whole-person cost adds GP appointments. Same person grain as the base fact;
-      has_olids_record flags patients with an OLIDS link. Cut resource
-      index by morbidity (score bands, LTC count, frailty) x deprivation
-      quintile for the NCL pack.
+    description: >-
+      Resource index for patients attributed to NCL (registered sub-ICB 93C), one row
+      per patient over a rolling 12-month cost window. Includes deceased and deducted
+      patients, with available OLIDS clinical measures. Whole-person cost adds GP
+      appointment costs to recorded service costs; OLIDS prescribing costs are a
+      separate estimate and are not added.
     config:
       meta:
         owner:
@@ -30,12 +26,16 @@ models:
       - name: frailty_severity
         description: Mild / Moderate / Severe; null when not on the frailty register.
       - name: gp_appointment_cost_12m
-        description: Attended GP appointment cost over the window (PSSRU nominal GBP). Additive.
+        description: >-
+          Attended GP appointment cost over the 12-month window, in GBP at nominal PSSRU
+          prices.
       - name: olids_prescribing_cost_12m_modelled
         description: Full-window prescribing from OLIDS estimated_cost (GBP, validated vs EPD to 0.4%). Cross-check only; EPD in actual_cost_12m is the counted prescribing cost.
       - name: olids_prescription_orders_12m
         description: OLIDS medication orders in the window.
       - name: total_cost_whole_person_12m
-        description: actual_cost_12m + GP appointment cost (GBP). The whole-person headline.
+        description: >-
+          Whole-person cost in GBP: actual_cost_12m (SLAM, EPD, MHSDS and CSDS) plus GP
+          appointment cost. The separate OLIDS prescribing estimate is not added.
         data_tests:
           - not_null

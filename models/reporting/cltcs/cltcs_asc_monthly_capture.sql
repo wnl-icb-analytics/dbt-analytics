@@ -2,6 +2,7 @@
     config(
         materialized='incremental',
         incremental_strategy='append',
+        full_refresh=false,
         on_schema_change='append_new_columns',
         cluster_by=['snapshot_month'],
         tags=['cltcs', 'monthly_capture'],
@@ -30,6 +31,9 @@ Population: any patient in fct_person_asc_service_recent (i.e. with an ASC servi
 Grain: one row per (sk_patient_id, snapshot_month).
 Retention: a post_hook keeps ~4 years (48 months) of monthly captures.
 Forward-only: history starts at the first run; it cannot backfill months before it existed.
+full_refresh=false: the scheduled monthly build on the 1st runs with --full-refresh, which would
+otherwise rebuild this table from scratch and lose every captured month. To rebuild it on purpose,
+copy the table first, then drop it.
 */
 
 with captured as (

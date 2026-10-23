@@ -5,7 +5,7 @@
 }}
 
 /*
-All systemic corticosteroid medication orders for inflammatory conditions.
+Systemic corticosteroid medication orders in BNF 0603; indication is not established by product.
 Uses BNF classification (6.3) for corticosteroids and corticotropins.
 Includes ALL persons (active, inactive, deceased) following intermediate layer principles.
 */
@@ -26,7 +26,7 @@ SELECT
     base_orders.bnf_code,
     base_orders.bnf_name,
 
-    -- Corticosteroid type classification
+    -- Legacy classification retained pending approval; corticosteroid_type_dmd is ingredient-based.
     CASE
         WHEN base_orders.bnf_code LIKE '060301%' THEN 'REPLACEMENT'        -- Replacement therapy
         WHEN base_orders.bnf_code LIKE '060302%' THEN 'GLUCOCORTICOID'     -- Glucocorticoid therapy
@@ -38,25 +38,18 @@ SELECT
     -- Usage classification flags
     CASE WHEN base_orders.bnf_code LIKE '060301%' THEN TRUE ELSE FALSE END AS is_replacement_therapy,
     CASE WHEN base_orders.bnf_code LIKE '060302%' THEN TRUE ELSE FALSE END AS is_anti_inflammatory,
-    CASE WHEN base_orders.bnf_code LIKE '060303%' THEN TRUE ELSE FALSE END AS is_mineralocorticoid,
+    CASE WHEN dmd.vtm_id IS NULL THEN NULL
+         ELSE dmd.vtm_id IN ('775983003', '89192008') END AS is_mineralocorticoid,
 
 
 
     -- Order recency flags (important for steroid monitoring)
-    CASE
-        WHEN DATEDIFF(day, base_orders.order_date, CURRENT_DATE()) <= 30 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_1m,
-
-    CASE
-        WHEN DATEDIFF(day, base_orders.order_date, CURRENT_DATE()) <= 90 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_3m,
-
-    CASE
-        WHEN DATEDIFF(day, base_orders.order_date, CURRENT_DATE()) <= 180 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_6m
+    {{ medication_date_flags('base_orders.order_date', months=[1, 3, 6]) }},
+    -- Current and previous fludrocortisone VTM identifiers in dm+d.
+    CASE WHEN dmd.vtm_id IN ('775983003', '89192008') THEN 'MINERALOCORTICOID'
+         WHEN dmd.vtm_id IS NOT NULL THEN 'GLUCOCORTICOID'
+         ELSE 'UNKNOWN' END AS corticosteroid_type_dmd
 
 FROM ({{ get_medication_orders(bnf_code='0603') }}) base_orders
+LEFT JOIN {{ ref('dmd_product') }} dmd ON base_orders.mapped_concept_code = dmd.product_code
 ORDER BY base_orders.person_id, base_orders.order_date DESC

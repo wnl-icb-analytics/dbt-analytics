@@ -17,6 +17,7 @@ WITH ethnicity_observations AS (
         pp.person_id,
         p.sk_patient_id,
         o.clinical_effective_date,
+        o.date_recorded,
         o.mapped_concept_id AS concept_id,
         o.mapped_concept_code AS concept_code,
         o.mapped_concept_display AS concept_display
@@ -123,6 +124,7 @@ SELECT
     person_id,
     sk_patient_id,
     clinical_effective_date,
+    date_recorded,
     concept_id,
     concept_code AS snomed_code,
     ID AS observation_lds_id,

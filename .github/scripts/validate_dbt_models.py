@@ -1,4 +1,4 @@
-"""Build selected models with the UEC encounter needed by its code tests.
+"""Build selected UEC code models with their encounter parent.
 
 Reconciliation tests compare a model with separately built source or model
 data. A partial build mixes fresh and stale relations, so they are excluded

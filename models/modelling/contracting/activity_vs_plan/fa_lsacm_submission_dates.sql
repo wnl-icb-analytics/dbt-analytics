@@ -133,7 +133,7 @@ END AS financial_year,
     TO_CHAR(submission_date,'YYYY-MM') AS submission_month,
        submission_date,
 FROM submission_dates
-ORDER BY activity_month;
+ORDER BY activity_month
 
 
 

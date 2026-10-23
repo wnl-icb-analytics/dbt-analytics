@@ -1,6 +1,6 @@
 {{ config(
     materialized='table',
-    description='Intermediate table extracting all psychiatry-related events for each person, using mapped concepts, observation, and valproate program codes (category PSYCH).') }}
+    description="Psychiatry records in OLIDS, one row per observation linked to a person. Uses the valproate code list's PSYCH category. Includes inactive and deceased people of any age or sex, whether or not they take valproate. Event dates are unrestricted; the dashboard applies its population rules separately.") }}
 
 SELECT
     pp.person_id,

@@ -11,23 +11,17 @@
 --   canon, applied explicitly belt-and-braces), AND NOT carrying any HF-evidence code
 --   eligible_for_hf_casefinding_vs1 (7 codes: HFrEF/CCF/CCFDN..., ever recorded).
 --   CF_NHSHC2Y is NOT applied to HF (canon BASE does not list it).
--- ICB_CF_HF_61_woEX: canon = "REQUIRE Spironolactone (last 3 months) AND include patients
---   who match ANY of the arms below", then drop the PCOS-pattern carve-out (age < 40 AND
---   Female AND hirsutism). Spironolactone is a HARD GATE (canon keyword "Require"), ANDed
---   with the OR-group of the remaining inclusion arms.
---   Arms (canon woEX prose):
---     med_hf      : Sacubitril/Valsartan (vs1) OR Entresto (vs2) OR Ivabradine/Eplerenone
---                   (vs3), order in last 3 months
---     med_sglt2   : Dapagliflozin / Dapagliflozin Propanediol Monohydrate / Digoxin +1
---                   (vs4), order in last 3 months
---     bnp_400     : latest pro-BNP (vs5) numeric value > 400 (no date window)
---     bnp_2000    : pro-BNP (vs5) within last 2 years, then latest within that window,
---                   numeric value > 2000 (window FIRST, then latest)
---     symptom     : (cardiomyopathy etc vs8 OR HF-excluded vs7) latest 1 AND
---                   (breathlessness etc vs9 OR HF-excluded vs7) latest 1 -> presence in
---                   each pool (EMIS "Latest 1" = the latest pool record exists)
---     med_digoxin : Digoxin (vs10), order in last 3 months
---     med_spiro   : Spironolactone (vs11), order in last 3 months
+-- ICB_CF_HF_61_woEX: R1-R6 SELECT immediately. Otherwise R7 requires a spironolactone
+-- order strictly after three months ago, then R8 rejects only females aged < 40 with
+-- hirsutism, acne or alopecia. Spironolactone is an independent inclusion route.
+-- R1: HF-specific medications; R2: SGLT2/digoxin group; R6: digoxin. All use > -3 months.
+-- R3: latest pro-BNP > 400, with no linked cardiology referral, HF-excluded or normal/
+-- diastolic-dysfunction LV echo observation on or after the pro-BNP date.
+-- R4: pro-BNP strictly within two years, latest > 2000, with no HF-excluded observation
+-- on or after that date. Select the latest result before applying each value test.
+-- R5: the latest record in each cardiomyopathy/HF-excluded and breathlessness/
+-- HF-excluded pool must not be an HF-excluded observation.
+-- One row per eligible person; HF_61 applies the final three-year exclusion separately.
 --
 -- Valueset notes:
 --   vs1 friendly name COLLIDES (woEX Sacubitril/Valsartan id 299f9e3b... vs final-search
@@ -76,71 +70,124 @@ hf_base as (
 arm_med_hf as (
     select person_id
     from ({{ get_ltc_lcs_medication_orders_latest("299f9e3b-bbab-c65e-c19e-9c531f91755a, hf_case_finding_eligible_patients_vs2, hf_case_finding_eligible_patients_vs3") }})
-    where order_date >= dateadd(month, -3, current_date())
+    where order_date > dateadd(month, -3, current_date())
 ),
 
 -- med_sglt2: Dapagliflozin / Digoxin group (vs4), 3m
 arm_med_sglt2 as (
     select person_id
     from ({{ get_ltc_lcs_medication_orders_latest("hf_case_finding_eligible_patients_vs4") }})
-    where order_date >= dateadd(month, -3, current_date())
+    where order_date > dateadd(month, -3, current_date())
 ),
 
--- bnp_400: latest pro-BNP (vs5) where numeric value > 400 (no date window)
+bnp_observations as (
+    select observation_id, person_id, clinical_effective_date, date_recorded, result_value
+    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs5", include_date_recorded=true) }})
+),
+
+bnp_400_latest as (
+    select *
+    from bnp_observations
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
+    ) = 1
+),
+
+bnp_follow_up as (
+    select person_id, clinical_effective_date
+    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs6") }})
+),
+
+hf_excluded as (
+    select observation_id, person_id, clinical_effective_date
+    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs7") }})
+),
+
 arm_bnp_400 as (
-    select person_id
-    from ({{ get_ltc_lcs_observations_latest("hf_case_finding_eligible_patients_vs5") }})
-    where result_value > 400
+    select b.person_id
+    from bnp_400_latest as b
+    where b.result_value > 400
+        and not exists (
+            select 1
+            from bnp_follow_up as f
+            where f.person_id = b.person_id
+                and f.clinical_effective_date >= b.clinical_effective_date
+        )
 ),
 
--- bnp_2000: pro-BNP (vs5) within last 2 years, then latest within window, value > 2000
+bnp_2000_latest as (
+    select *
+    from bnp_observations
+    where clinical_effective_date > dateadd(year, -2, current_date())
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
+    ) = 1
+),
+
 arm_bnp_2000 as (
-    select person_id
-    from (
-        select person_id, result_value
-        from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs5") }})
-        where clinical_effective_date >= dateadd(year, -2, current_date())
-        qualify row_number() over (
-            partition by person_id
-            order by clinical_effective_date desc, observation_id desc
-        ) = 1
-    )
-    where result_value > 2000
+    select b.person_id
+    from bnp_2000_latest as b
+    where b.result_value > 2000
+        and not exists (
+            select 1
+            from hf_excluded as e
+            where e.person_id = b.person_id
+                and e.clinical_effective_date >= b.clinical_effective_date
+        )
 ),
 
--- symptom: (vs8 OR vs7) present AND (vs9 OR vs7) present
-symptom_pool_a as (
-    select distinct person_id
-    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs8, hf_case_finding_eligible_patients_vs7") }})
+-- Rank the whole pool before excluding HF-excluded records. Ranking per value set
+-- would allow an older symptom to survive a later HF-excluded record.
+symptom_pool_a_latest as (
+    select observation_id, person_id
+    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs8, hf_case_finding_eligible_patients_vs7", include_date_recorded=true) }})
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
+    ) = 1
 ),
 
-symptom_pool_b as (
-    select distinct person_id
-    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs9, hf_case_finding_eligible_patients_vs7") }})
+symptom_pool_b_latest as (
+    select observation_id, person_id
+    from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs9, hf_case_finding_eligible_patients_vs7", include_date_recorded=true) }})
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
+    ) = 1
 ),
 
 arm_symptom as (
     select a.person_id
-    from symptom_pool_a as a
-    inner join symptom_pool_b as b
+    from symptom_pool_a_latest as a
+    inner join symptom_pool_b_latest as b
         on a.person_id = b.person_id
+    where not exists (
+        select 1 from hf_excluded as e
+        where e.observation_id = a.observation_id
+    )
+        and not exists (
+            select 1 from hf_excluded as e
+            where e.observation_id = b.observation_id
+        )
 ),
 
 -- med_digoxin: Digoxin (vs10), 3m
 arm_med_digoxin as (
     select person_id
     from ({{ get_ltc_lcs_medication_orders_latest("hf_case_finding_eligible_patients_vs10") }})
-    where order_date >= dateadd(month, -3, current_date())
+    where order_date > dateadd(month, -3, current_date())
 ),
 
 -- med_spiro: Spironolactone (vs11), 3m
 arm_med_spiro as (
     select person_id
     from ({{ get_ltc_lcs_medication_orders_latest("hf_case_finding_eligible_patients_vs11") }})
-    where order_date >= dateadd(month, -3, current_date())
+    where order_date > dateadd(month, -3, current_date())
 ),
 
--- Any inclusion arm (OR group). Spironolactone is NOT here -- it is the required gate.
+-- R1-R6 select before the spironolactone route and its carve-out are evaluated.
 included as (
     select person_id from arm_med_hf
     union
@@ -155,16 +202,15 @@ included as (
     select person_id from arm_med_digoxin
 ),
 
--- PCOS-pattern carve-out: age < 40 AND Female AND any hirsutism (vs13), applied to the
--- WHOLE woEX population. vs12 ("Female") is an EMIS-internal gender attribute with no
--- clinical-code series in OLIDS, so gender comes from dim_person_gender.
+-- R8 applies only after R7. The vs13 list includes hirsutism, acne and alopecia.
+-- vs12 (Female) is an EMIS-internal attribute, resolved through dim_person_gender.
 female_patients as (
     select distinct person_id
     from {{ ref('dim_person_gender') }}
     where gender = 'Female'
 ),
 
-hirsutism as (
+pcos_codes as (
     select distinct person_id
     from ({{ get_ltc_lcs_observations("hf_case_finding_eligible_patients_vs13") }})
 ),
@@ -174,15 +220,27 @@ pcos_excluded as (
     from {{ ref('int_ltc_lcs_cf_base_population') }} as bp
     inner join female_patients as f
         on bp.person_id = f.person_id
-    inner join hirsutism as h
+    inner join pcos_codes as h
         on bp.person_id = h.person_id
     where bp.age < 40
+),
+
+spiro_route as (
+    select distinct s.person_id
+    from arm_med_spiro as s
+    where not exists (
+        select 1 from pcos_excluded as e
+        where e.person_id = s.person_id
+    )
+),
+
+selected as (
+    select person_id from included
+    union
+    select person_id from spiro_route
 )
 
-select distinct b.person_id
+select b.person_id
 from hf_base as b
-inner join arm_med_spiro as s
+inner join selected as s
     on b.person_id = s.person_id
-inner join included as i
-    on b.person_id = i.person_id
-where b.person_id not in (select person_id from pcos_excluded)

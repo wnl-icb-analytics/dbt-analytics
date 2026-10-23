@@ -1,20 +1,12 @@
 models:
   - name: int_flu_health_social_care_worker
-    description: 'Flu vaccination eligibility for health and social care workers with direct patient contact.
-
-      Key Features:
-
-      • Care setting codes: CAREHOME_COD, NURSEHOME_COD, DOMCARE_COD
-
-      • Age restrictions: 16-64 years (under 65 as over 65s eligible via age-based rule)
-
-      • Latest occurrence in medical history qualifies
-
-      • Focuses on current employment status indicators
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      Purpose: Identify healthcare workers eligible for flu vaccination due to occupational exposure risk.'
+    description: >-
+      Care home, nursing home and domiciliary care workers in the OLIDS flu offer, one
+      row per person and campaign. People must be at least 16 at its run date and
+      under 65 at its reference date. Uses the latest CAREHOME_COD, NURSEHOME_COD or
+      DOMCARE_COD category through audit end, with campaign-specific UKHSA_FLU codes.
+      Excludes ATRISK_GROUP, BMI_GROUP and PREG_GROUP members. A person has one worker
+      category.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -84,15 +76,17 @@ models:
         data_tests:
           - not_null
       - name: campaign_category
-        description: 'Category of eligibility criteria (always "Occupational")'
+        description: 'Category of eligibility criteria (always "Clinical Condition")'
       - name: risk_group
-        description: 'Risk group classification (always "Health Social Care Worker")'
+        description: 'Risk group classification (always "Health and Social Care Workers")'
       - name: person_id
         description: 'Unique identifier for the person'
         data_tests:
           - not_null
       - name: qualifying_event_date
-        description: 'Date of qualifying employment indicator (latest care setting code)'
+        description: >-
+          Date of the latest qualifying worker record. Category name resolves same-date ties between
+          care-home, nursing-home and domiciliary-care categories.
       - name: reference_date
         description: 'Campaign reference date used for eligibility assessment'
       - name: description

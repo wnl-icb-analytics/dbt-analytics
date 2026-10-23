@@ -11,15 +11,18 @@ Simplified tracking focused on core programme monitoring requirements.
 
 Key Business Rules:
 1. Screening Intervals:
-   - Women aged 25-49: invited every 3 years
-   - Women aged 50-64: invited every 5 years
+   - QOF achievement windows: 42 months at 25-49, 66 months at 50-64. These are not
+     recall dates; routine recall after an HPV-negative test is 5 years from July 2025
    - Women outside 25-64 age range: not eligible for routine screening
 
-2. Programme Status:
-   - Up to date: Completed screening within age-appropriate interval
-   - Overdue: Last screening outside age-appropriate interval
-   - Never screened: No completed screening history
-   - Not eligible: Outside age range or not female
+2. Programme Status, in QOF v51 CS005/CS006 rule order:
+   - Cervix Removed: any complete cervix removal record (NOCX_COD)
+   - Up to Date: completed screening within the interval (42 months to 49, 66 months from 50)
+   - Unsuitable: unsuitability record (CSPU_COD) within the interval
+   - Pregnant: currently pregnant, per fct_person_pregnancy_status (all ages; QOF applies
+     pregnancy to CS005 only)
+   - Never Screened: no completed screening history
+   - Overdue: last completed screening outside the interval
 
 Clinical Purpose:
 - Programme compliance monitoring
@@ -43,7 +46,7 @@ WITH person_demographics AS (
         END AS is_screening_eligible,
         
         -- Age-specific screening interval
-        --updated 17.12.25 to match QOF v50
+        -- QOF v51 intervals (unchanged from v50)
         CASE
            -- WHEN dpa.age BETWEEN 25 AND 49 THEN 3  -- 3-year interval
             WHEN dpa.age BETWEEN 25 AND 49 THEN 3.5 -- 3.5-year interval (QOF)
@@ -52,15 +55,11 @@ WITH person_demographics AS (
             ELSE NULL
         END AS screening_interval_years,
         
-        -- Target screening frequency in days
-        --updated 17.12.25 to match QOF v50
+        -- QOF v51 CS005/CS006 windows
         CASE
-            --WHEN dpa.age BETWEEN 25 AND 49 THEN 1095  -- 3 years
-            WHEN dpa.age BETWEEN 25 AND 49 THEN 1277  -- 3.5 years (QOF)
-            --WHEN dpa.age BETWEEN 50 AND 64 THEN 1825  -- 5 years
-            WHEN dpa.age BETWEEN 50 AND 64 THEN 2007  -- 5.5 years (QOF)
-            ELSE NULL
-        END AS screening_interval_days
+            WHEN dpa.age BETWEEN 25 AND 49 THEN 42
+            WHEN dpa.age BETWEEN 50 AND 64 THEN 66
+        END AS screening_interval_months
         
     FROM {{ ref('dim_person_demographics') }} dpa
     -- LEFT JOIN {{ ref('dim_person_gender') }} dps ON dpa.person_id = dps.person_id
@@ -83,6 +82,7 @@ screening_history AS (
         COUNT(CASE WHEN is_unsuitable_screening THEN 1 END) AS total_unsuitable_records,
         COUNT(CASE WHEN is_declined_screening THEN 1 END) AS total_declined_records,
         COUNT(CASE WHEN is_non_response_screening THEN 1 END) AS total_non_response_records,
+        MIN(CASE WHEN is_cervix_removal THEN clinical_effective_date END) AS first_cervix_removal_date,
         
         -- Overall screening history
         MIN(clinical_effective_date) AS earliest_screening_date,
@@ -99,9 +99,8 @@ programme_status AS (
         pd.current_age,
         pd.is_active,
         pd.is_deceased,
-        pd.is_screening_eligible,
+        pd.is_screening_eligible AND sh.first_cervix_removal_date IS NULL AS is_screening_eligible,
         pd.screening_interval_years,
-        pd.screening_interval_days,
         
         -- Latest screening information
         cls.clinical_effective_date AS latest_screening_date,
@@ -116,6 +115,9 @@ programme_status AS (
         
         -- Screening history
         sh.latest_completed_date,
+        sh.latest_unsuitable_date,
+        sh.first_cervix_removal_date,
+        preg.person_id IS NOT NULL AS is_currently_pregnant,
         sh.total_completed_screenings,
         sh.total_unsuitable_records,
         sh.total_declined_records,
@@ -128,35 +130,26 @@ programme_status AS (
             ELSE FALSE
         END AS never_screened,
         
-        -- Programme compliance status (simplified)
+        -- Programme compliance status
         CASE
-            WHEN sh.latest_unsuitable_date IS NOT NULL 
-                AND (sh.latest_completed_date IS NULL OR sh.latest_unsuitable_date > sh.latest_completed_date)
-                THEN 'Unsuitable'
-            WHEN sh.total_completed_screenings = 0 OR sh.latest_completed_date IS NULL THEN 'Never Screened'
-            WHEN DATEDIFF(day, sh.latest_completed_date, CURRENT_DATE()) <= pd.screening_interval_days THEN 'Up to Date'
-            WHEN DATEDIFF(day, sh.latest_completed_date, CURRENT_DATE()) > pd.screening_interval_days THEN 'Overdue'
-            ELSE 'Unknown'
+            WHEN sh.first_cervix_removal_date IS NOT NULL THEN 'Cervix Removed'
+            WHEN sh.latest_completed_date::DATE > DATEADD(month, -pd.screening_interval_months, CURRENT_DATE()) THEN 'Up to Date'
+            WHEN sh.latest_unsuitable_date::DATE > DATEADD(month, -pd.screening_interval_months, CURRENT_DATE()) THEN 'Unsuitable'
+            WHEN preg.person_id IS NOT NULL THEN 'Pregnant'
+            WHEN sh.latest_completed_date IS NULL THEN 'Never Screened'
+            ELSE 'Overdue'
         END AS programme_status,
-        
-        -- Next screening due calculation
+
+        -- End of the QOF achievement window; null without a cervix
         CASE
-            WHEN sh.latest_completed_date IS NOT NULL AND pd.screening_interval_days IS NOT NULL
-            THEN DATEADD(day, pd.screening_interval_days, sh.latest_completed_date)
-            ELSE NULL
-        END AS next_screening_due_date,
-        
-        -- Days overdue calculation
-        CASE
-            WHEN sh.latest_completed_date IS NOT NULL AND pd.screening_interval_days IS NOT NULL
-                AND DATEDIFF(day, sh.latest_completed_date, CURRENT_DATE()) > pd.screening_interval_days
-            THEN DATEDIFF(day, sh.latest_completed_date, CURRENT_DATE()) - pd.screening_interval_days
-            ELSE NULL
-        END AS days_overdue
-        
+            WHEN sh.first_cervix_removal_date IS NULL
+            THEN DATEADD(month, pd.screening_interval_months, sh.latest_completed_date)
+        END AS next_screening_due_date
+
     FROM person_demographics pd
     LEFT JOIN {{ ref('int_cervical_screening_latest') }} cls ON pd.person_id = cls.person_id
     LEFT JOIN screening_history sh ON pd.person_id = sh.person_id
+    LEFT JOIN {{ ref('fct_person_pregnancy_status') }} preg ON pd.person_id = preg.person_id
 )
 
 SELECT
@@ -175,7 +168,13 @@ SELECT
     latest_screening_date,
     latest_completed_date,
     next_screening_due_date,
-    days_overdue,
+    CASE
+        WHEN programme_status = 'Overdue'
+        THEN DATEDIFF(day, next_screening_due_date, CURRENT_DATE())
+    END AS days_overdue,
+    latest_unsuitable_date,
+    first_cervix_removal_date,
+    is_currently_pregnant,
     
     -- Core flags
     never_screened,

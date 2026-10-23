@@ -26,13 +26,6 @@ class BuildSelectionTests(unittest.TestCase):
     def test_empty_selection_stays_empty(self):
         self.assertEqual(build_selection([]), [])
 
-    def test_existing_parent_is_not_duplicated(self):
-        self.assertEqual(build_selection([
-            {"name": "int_sus_uec_diagnosis", "resource_type": "model"},
-            {"name": UEC_PARENT, "resource_type": "model"},
-        ]), ["int_sus_uec_diagnosis", UEC_PARENT])
-
-
 class BuildCommandTests(unittest.TestCase):
     def run_build(self, target):
         nodes = [

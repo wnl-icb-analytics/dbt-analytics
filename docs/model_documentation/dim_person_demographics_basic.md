@@ -60,3 +60,8 @@ Note that the logic for the PDS Snapshot table largely follows the same logic as
 * Residence and registered neighbourhood now sourced from WNL reference tables (`WNLNEIGHBOURHOODS`, `WNL_GP_PRACTICE_NEIGHBOURHOOD`) covering all 13 NCL + NWL boroughs (previously NCL-only → null for NWL).
 * Residence scope note: the V1.1.1 "non-PDS false positive" restriction now applies across the WNL footprint. Patients with an NWL LSOA who appear only in non-PDS sources (e.g. SUS) and are not in the PDS current-resident set now have a null residence LSOA / ICB group — previously they surfaced as "Other London" with an LSOA. ~1.44M patients, all `flag_current_resident = false`; the current-resident population is unchanged.
 * Added an EPD prescribing PMI feeder (`int_person_pmi_dataset_prescribing`) — built but not yet combined into the dim (PDS is ~complete on LSOA/practice for WNL).
+
+### V2.1.0 - 14/10/2026
+* Residence and registered neighbourhood now come from the primary care org manager reference (`REFERENCE.GEO.NEIGHBOURHOOD_LSOA` via `stg_reference_geo_neighbourhood_lsoa`; `practice_wnl_active`, so closed practices stay Unknown as before), replacing `WNLNEIGHBOURHOODS` and `WNL_GP_PRACTICE_NEIGHBOURHOOD`.
+* Codes use the canonical scheme (e.g. `BAR01`, `BRE01`) instead of N001-N020 / W001-W031; names follow the org manager (e.g. "Barnet East", "Harlesden"). `residence_neighbourhood_code` is now populated for NWL.
+* Brent reflects the October 2026 move from five neighbourhoods to four (Willesden merged into Kilburn & Willesden). LSOA assignment follows the approved ward map, so some LSOAs elsewhere also change neighbourhood.

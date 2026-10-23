@@ -1,31 +1,11 @@
 models:
   - name: int_organisation_borough_mapping
-    description: 'Organisation borough and legacy sub-ICB mapping for London practices and PCNs.
-
-      Key features:
-
-      • Borough derived from historic CCG relationships in OrganisationDescendent (contractual
-      view of how practices were commissioned through NHSE, not strict geography).
-
-      • One row per practice. Multiple historic CCG paths are resolved by preferring the
-      most recent relationship (active first, then latest end date, then latest start date).
-
-      • Sub-ICB = the live RO98/RO319 sub-ICB location the practice is commissioned
-      through (93C = North Central London, W2U3Z = North West London) — the codes
-      national datasets (SLAM/SUS/EPD) carry. Names curated for the WNL pair.
-
-      • Legacy ICB (pre-merger NCL / NWL system identity) from the
-      sub_icb_to_legacy_icb seed. ODS purged the RO261 parent edges after the
-      2026-04 merger, so the dissolved hierarchy is pinned as static reference
-      data. Non-merged ICBs resolve to themselves.
-
-      • PCN borough from majority member borough; PCN sub-ICB from the PCN''s single
-      commissioner (verified one-to-one).
-
-      • Special handling: Medicus Select Care (Y03103) pinned to Enfield.
-
-      Purpose: single source of truth for borough and legacy sub-ICB context consumed by
-      dim_practice and dim_pcn.'
+    description: >-
+      London GP practice borough, PCN and commissioner reference, one row per practice with a
+      PCN in the current organisation matrix. Borough follows historic CCG commissioning
+      relationships rather than residence or strict geography. PCN borough is the majority
+      among member practices. Live sub-ICB and pre-April 2026 ICB identities are both
+      retained.
     config:
       meta:
         owner:
@@ -42,8 +22,10 @@ models:
           - not_null
           - unique
       - name: borough_registered
-        description: 'Borough assignment for the practice based on historic CCG relationships.
-          Contractual view — boundary practices stay with the CCG that contracted them.'
+        description: >-
+          Practice borough from historic CCG commissioning relationships. Active relationships
+          take priority, then the most recently ended. Medicus Select Care (Y03103) is
+          assigned to Enfield. This is a commissioning assignment, not strict geography.
       - name: practice_historic_ccg
         description: 'Historic CCG code used for the borough assignment.'
       - name: commissioner_code

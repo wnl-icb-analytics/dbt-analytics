@@ -1,21 +1,11 @@
 models:
   - name: dq_multiple_current_registrations
-    description: 'Patient registration data quality issues where individuals have
-      multiple current practice registrations.
-
-      One row per person and registration sequence from the practice history.
-      Registrations at the same practice on the same date remain separate.
-
-      Registration Rules:
-
-      • Each person should have only one current active registration
-
-      • Multiple current registrations indicate data quality issues
-
-      • Overlapping registration periods require resolution
-
-      Purpose: Supports patient registration data validation and duplicate resolution
-      processes.'
+    description: >-
+      OLIDS registrations for people with more than one registration marked current,
+      one row per person and registration sequence. Repeated records at the same
+      practice on the same date remain separate. Counts and overlap flags help
+      distinguish concurrent practices from repeated records; inclusion alone does not
+      confirm an error.
     config:
       meta:
         owner:
@@ -43,7 +33,7 @@ models:
         description: Start date of this registration
 
       - name: registration_end_date
-        description: End date of this registration (NULL for current)
+        description: End date of this registration. Null for open registrations; current registrations can also have a future end date or one before the start date (see current_registration_reason)
 
       - name: registration_status
         description: Status of this registration

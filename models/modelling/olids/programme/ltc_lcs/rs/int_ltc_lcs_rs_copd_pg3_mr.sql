@@ -51,10 +51,10 @@ rule_3_mrcbs_grade_1_3 as (
     from ({{ get_ltc_lcs_observations("on_copd_reg_pg3_mr_vs2") }})
     qualify row_number() over (partition by person_id order by clinical_effective_date desc) = 1
 ),
--- Rule 4a: EMIS-local one-exacerbation-in-past-year code, matched by source only.
+-- Rule 4a: one-exacerbation-in-past-year code, using the shared equivalence rule.
 rule_4a_copd_exacerbations as (
     select person_id
-    from ({{ get_ltc_lcs_observations("be744271-2fb5-7e10-18f6-041df010ebf7", match_paths='source') }})
+    from ({{ get_ltc_lcs_observations("be744271-2fb5-7e10-18f6-041df010ebf7", match_paths='both') }})
     where clinical_effective_date >= dateadd(month, -12, current_date())
     qualify row_number() over (partition by person_id order by clinical_effective_date desc) = 1
 ),

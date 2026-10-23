@@ -1,20 +1,45 @@
 {{ config(materialized='table') }}
 
--- LTC LCS CVD case finding: ICB_CF_CVD_63_woEX population (pre-Rule-1)
--- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/cvd/icb-cf-cvd-63.md
---
--- CVD_63_woEX = CVD_63_BASE (age 40-84, not metabolic, not adverse/contra, QRISK latest >=10),
---   then REQUIRE non-HDL cholesterol latest numeric value > 2.5,
---   EXCLUDE CVD_61_woEX and CVD_62_woEX cohorts,
---   then INCLUDE who match (on a statin) any of:
---     - atorvastatin SCT_PREP issue latest > today - 12m (vs2, 91 codes)
---     - STAT_COD refset clinical code latest > today - 12m (vs3, 845 codes)
---     - STAT_COD refset medication issue latest > today - 12m (vs3, 845 codes)
---
--- non-HDL valueset qrisk2_10_on_a_statin_and_a_non_hdl_25_vs1 COLLIDES with the 1-code Rule-1
---   marker -> pin woEX id 23f72268 (4 non-HDL codes).
+-- CVD_63 before review-decline exclusion: one row per person in CVD_63_BASE.
+-- Requires latest non-HDL >2.5 mmol/L, without a date window, and excludes CVD_61/62_woEX.
+-- Non-HDL codes use the shared equivalence rule before selecting the latest result.
+-- Dated non-HDL records take precedence over undated records.
+-- Requires an explicit statin-product issue, STAT_COD issue or STAT_COD clinical event.
+-- Selects the latest record on or before today in each arm, then requires a date strictly after 12 months ago.
+-- Authority: EMIS R5 ICB_CF_CVD_63_woEX, structured filters and tests.
 
-with base as (
+-- XML date caps apply before Latest 1, so future records cannot hide earlier records.
+with statin_product_issue_at_baseline as (
+    select person_id, order_date
+    from ({{ get_ltc_lcs_medication_orders("ebb22ff5-788c-4989-66a7-aaf7a68ebb62", include_date_recorded=true) }})
+    where order_date <= current_date()
+    qualify row_number() over (
+        partition by person_id, valueset_id
+        order by order_date desc nulls last, date_recorded desc nulls last, medication_order_id desc
+    ) = 1
+),
+
+statin_code_event_at_baseline as (
+    select person_id, clinical_effective_date
+    from ({{ get_ltc_lcs_observations("624085a5-e1b3-e962-99f1-e7a6270a20e5", include_date_recorded=true) }})
+    where clinical_effective_date <= current_date()
+    qualify row_number() over (
+        partition by person_id, valueset_id
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
+    ) = 1
+),
+
+statin_code_issue_at_baseline as (
+    select person_id, order_date
+    from ({{ get_ltc_lcs_medication_orders("624085a5-e1b3-e962-99f1-e7a6270a20e5", include_date_recorded=true) }})
+    where order_date <= current_date()
+    qualify row_number() over (
+        partition by person_id, valueset_id
+        order by order_date desc nulls last, date_recorded desc nulls last, medication_order_id desc
+    ) = 1
+),
+
+base as (
     select person_id
     from {{ ref('int_ltc_lcs_cf_cvd_63_base') }}
 ),
@@ -27,28 +52,32 @@ cvd_62_woex as (
     select person_id from {{ ref('int_ltc_lcs_cf_cvd_62_woEX') }}
 ),
 
--- non-HDL cholesterol latest > 2.5 (vs1, pinned id)
+latest_non_hdl as (
+    select person_id, result_value
+    from ({{ get_ltc_lcs_observations("23f72268-d2d1-6fb0-9fe5-19eeb497790e", include_date_recorded=true) }})
+    qualify row_number() over (
+        partition by person_id, valueset_id
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
+    ) = 1
+),
+
 non_hdl_gt25 as (
     select person_id
-    from ({{ get_ltc_lcs_observations_latest("23f72268-d2d1-6fb0-9fe5-19eeb497790e") }})
+    from latest_non_hdl
     where result_value > 2.5
 ),
 
--- on a statin (any branch)
 on_statin as (
-    -- atorvastatin SCT_PREP issue latest > 12m (vs2)
     select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("qrisk2_10_on_a_statin_and_a_non_hdl_25_vs2") }})
+    from statin_product_issue_at_baseline
     where order_date > dateadd(month, -12, current_date())
     union
-    -- STAT_COD refset clinical code latest > 12m (vs3)
     select person_id
-    from ({{ get_ltc_lcs_observations_latest("qrisk2_10_on_a_statin_and_a_non_hdl_25_vs3") }})
+    from statin_code_event_at_baseline
     where clinical_effective_date > dateadd(month, -12, current_date())
     union
-    -- STAT_COD refset medication issue latest > 12m (vs3)
     select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("qrisk2_10_on_a_statin_and_a_non_hdl_25_vs3") }})
+    from statin_code_issue_at_baseline
     where order_date > dateadd(month, -12, current_date())
 )
 
