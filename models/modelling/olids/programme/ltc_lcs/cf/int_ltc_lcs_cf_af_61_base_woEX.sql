@@ -87,7 +87,7 @@ af_medication as (
 woex_excluded as (
     -- vs1: 223-code DVT/PE/antiphospholipid set (name collides with the 2-code Rule-1 marker -> pin id)
     select person_id
-    from ({{ get_ltc_lcs_observations("f4f774b1-0949-b062-b74a-d03f7d820a81", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("f4f774b1-0949-b062-b74a-d03f7d820a81") }})
     union
     -- vs2: atrial fibrillation / flutter (8 codes)
     select person_id

@@ -3,7 +3,7 @@
 -- CVD_63/64/65 shared cohort: one row per registered living person aged 40 to <84.
 -- Requires latest QRISK >=10, without a date window, and no shared metabolic exclusion.
 -- Excludes persistent statin adverse reactions at any date and contraindication,
--- statin not indicated or not tolerated events on or before today. Local adverse codes match exactly.
+-- statin not indicated or not tolerated events on or before today. Local adverse codes use the shared equivalence rule.
 -- This parent permits statin treatment and recent NHS health checks.
 -- Excludes QOF palliative care register membership (EMIS library ea06414e).
 -- XML library exclusion 3de35e4f lacks a complete exported definition.
@@ -25,7 +25,7 @@ age_eligible as (
 
 statin_adverse as (
     select person_id
-    from ({{ get_ltc_lcs_observations("a06baf8e-f9c8-30ab-cee1-c2ba3af35902", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("a06baf8e-f9c8-30ab-cee1-c2ba3af35902") }})
 ),
 
 statin_contra as (

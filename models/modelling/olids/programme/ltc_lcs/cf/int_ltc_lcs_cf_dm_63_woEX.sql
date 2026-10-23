@@ -2,7 +2,7 @@
 
 -- LTC LCS DM case finding: ICB_CF_DM_63_woEX population (shared parent)
 -- Filter HbA1c values > 0 before Latest 1, then test thresholds and dates.
--- Local list roots match exactly; local descriptions of public concepts remain eligible.
+-- Equivalent local roots permit mapped matches; other local roots match source codes exactly.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/diabetes/icb-cf-dm-63.md
 --
 -- Pre-Rule-1 DM_63 population. Consumed by int_ltc_lcs_cf_dm_63 and subtracted by DM_64-66.
@@ -21,7 +21,7 @@ with base as (
 
 latest_hba1c as (
     select person_id, result_value, clinical_effective_date
-    from ({{ get_ltc_lcs_observations("160ec384-bb4f-915b-9a8e-66d118eefe0c", emis_local_exact=true, include_date_recorded=true) }})
+    from ({{ get_ltc_lcs_observations("160ec384-bb4f-915b-9a8e-66d118eefe0c", include_date_recorded=true) }})
     where result_value > 0
     qualify row_number() over (
         partition by person_id

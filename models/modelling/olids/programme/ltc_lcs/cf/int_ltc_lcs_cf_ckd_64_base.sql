@@ -24,7 +24,7 @@ with base as (
 -- (canon: Value > 0 within 1y OR any record within 1y)
 recent_egfr as (
     select person_id
-    from ({{ get_ltc_lcs_observations("a491afe2-cbfe-8024-0c9b-09749af1c569", match_paths='source') }})
+    from ({{ get_ltc_lcs_observations("a491afe2-cbfe-8024-0c9b-09749af1c569", match_paths='both') }})
     where clinical_effective_date > dateadd(year, -1, current_date())
 )
 

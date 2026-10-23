@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 -- LTC LCS DM case finding indicator DM_64: latest BMI >= 35 (>= 32.5 BAME), no HbA1c in 2y
--- Local list roots match exactly; local descriptions of public concepts remain eligible.
+-- Equivalent local roots permit mapped matches; other local roots match source codes exactly.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/diabetes/icb-cf-dm-64.md
 -- ICB_CF_DM_64 = ICB_CF_DM_64_woEX, then Rule 1 (final, exclude if matched):
 --   exclude "annual review declined" (1-code marker, pinned id) within the last 3 years.
@@ -13,7 +13,7 @@ with base_woex as (
 
 review_declined as (
     select person_id
-    from ({{ get_ltc_lcs_observations("4ed7513e-8c5c-68c8-3850-f4bff1387f79", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("4ed7513e-8c5c-68c8-3850-f4bff1387f79") }})
     where clinical_effective_date > dateadd(year, -3, current_date())
 )
 

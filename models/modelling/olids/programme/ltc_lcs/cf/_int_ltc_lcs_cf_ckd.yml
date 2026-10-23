@@ -5,8 +5,8 @@ models:
     description: >
       One row per currently registered, living person aged at least 17 in the CKD_61
       base, excluding the shared metabolic population and any recorded CKD-stage code.
-      Local EMIS codes match their source codes only. The XML also rejects EMIS library
-      items 3de35e4f and c913f5a7, which are not in the export and are not implemented.
+      Equivalent local roots also permit mapped concepts and requested descendants.
+      The XML also rejects EMIS library items 3de35e4f and c913f5a7, which are not in the export and are not implemented.
     config:
       meta:
         owner:
@@ -24,7 +24,7 @@ models:
     description: >
       One row per currently registered, living person aged at least 17 outside the shared
       metabolic population with no eGFR code dated strictly after one year before the
-      build date. Uses exact EMIS-local source codes, regardless of numeric result.
+      build date. Uses the shared LTC LCS equivalence rule, regardless of numeric result.
       The XML also rejects EMIS library items 3de35e4f and c913f5a7, which are not
       in the export and are not implemented.
     config:
@@ -45,8 +45,9 @@ models:
       One row per person in the CKD_61 base with at least two positive eGFR observations
       in the eight-code pool. The latest positive result in the six-code pool and the
       latest positive result on an earlier calendar date must both be < 60 mL/min/1.73 m2.
-      There is no recency window or minimum interval beyond the earlier date. EMIS-local
-      codes match exactly. Supplies CKD_61 and exclusions for the later CKD helpers.
+      There is no recency window or minimum interval beyond the earlier date.
+      Matching follows the shared LTC LCS equivalence rule. Supplies CKD_61 and
+      exclusions for the later CKD helpers.
     config:
       meta:
         owner:
@@ -64,10 +65,11 @@ models:
   - name: int_ltc_lcs_cf_ckd_62_woEX
     description: >
       One row per person in the CKD_61 base outside the CKD_61 helper, with at least two
-      positive UACR observations. The latest positive exact-code UACR and the latest
-      positive exact-code UACR on an earlier calendar date must both be > 4 mg/mmol.
-      There is no recency window or minimum interval beyond the earlier date. Local EMIS
-      codes match exactly. Supplies CKD_62 and exclusions for the later CKD helpers.
+      positive UACR observations. The latest positive UACR and the latest
+      positive UACR on an earlier calendar date must both be > 4 mg/mmol.
+      There is no recency window or minimum interval beyond the earlier date. EMIS-local UACR
+      codes mapped as equivalent to a public concept also match that concept; other local
+      codes match their exact code only. Supplies CKD_62 and exclusions for the later CKD helpers.
     config:
       meta:
         owner:
@@ -84,7 +86,7 @@ models:
   - name: int_ltc_lcs_cf_ckd_63_woEX
     description: >
       One row per person in the CKD_61 base outside the CKD_61 and CKD_62 helpers, whose
-      latest positive exact-code UACR is > 70 mg/mmol. There is no date window or second
+      latest positive UACR is > 70 mg/mmol (local UACR codes follow the same equivalence rule). There is no date window or second
       result requirement. Supplies CKD_63 and the CKD_64 helper exclusion.
     config:
       meta:
@@ -106,11 +108,11 @@ models:
       or specified medication issued strictly after six months before the build date.
       Also includes the latest microscopic haematuria or red-cell microscopy record
       without a negative urine blood test or red-cell microscopy on or after its calendar
-      date, or the latest microscopic haematuria diagnosis with any exact-code UACR
+      date, or the latest microscopic haematuria diagnosis with any UACR
       > 30 mg/mmol on or after its date.
       A microscopy record cancels itself; no numeric test applies to cancellation.
-      Haematuria links do not restrict the other arms. Local EMIS codes match exactly;
-      non-local roots retain permitted descendants. Lithium salts use the national
+      Haematuria links do not restrict the other arms. Public and equivalent local roots
+      permit mapped concepts and requested descendants. Other local roots match source codes exactly. Lithium salts use the national
       ECL_CACHE LIT_COD refset alongside the explicit XML lithium ingredients. The tacrolimus
       arm excludes Protopic 0.03%/0.1% ointment, tacrolimus 0.005% mouthwash and
       tacrolimus 0.03%/0.1% ointment, including descendants. Any permitted recent issue
@@ -165,7 +167,7 @@ models:
     description: >
       One row per eligible, currently registered, living person aged at least 17 in the
       CKD_62 helper, excluding screening dated strictly after three years before the build
-      date and current CKD register membership. Both the latest positive exact-code UACR and the latest positive result on an earlier
+      date and current CKD register membership. Both the latest positive UACR and the latest positive result on an earlier
       date are > 4 mg/mmol; at least two positive observations exist. Excludes CKD_61 helper.
       Register membership uses the QOF CKD register (fct_person_ckd_register)
       as a proxy for the EMIS LTC LCS CKD register.
@@ -188,7 +190,7 @@ models:
     description: >
       One row per eligible, currently registered, living person aged at least 17 in the
       CKD_63 helper, excluding screening dated strictly after three years before the build
-      date and current CKD register membership. The latest positive exact-code UACR is > 70 mg/mmol. Excludes CKD_61 and CKD_62 helpers.
+      date and current CKD register membership. The latest positive UACR is > 70 mg/mmol. Excludes CKD_61 and CKD_62 helpers.
       Register membership uses the QOF CKD register (fct_person_ckd_register)
       as a proxy for the EMIS LTC LCS CKD register.
     config:

@@ -1,4 +1,4 @@
-{% macro get_ltc_lcs_observations(valuesets, match_paths='both', emis_local_exact=false, include_date_recorded=false) %}
+{% macro get_ltc_lcs_observations(valuesets, match_paths='both', include_date_recorded=false) %}
 
 {#
     Returns observations for one or more LTC LCS valuesets via two parallel paths:
@@ -10,13 +10,12 @@
     to translate EMIS codes to SNOMED. When both paths match the same observation, the
     'mapped' row wins via the qualify ordering.
 
-    Note: original_codes.include_children is not yet expanded (parent codes only).
+    Public and equivalent EMIS-local roots permit mapped concepts and XML-requested
+    descendants. Other local roots match their original source code only.
 
     Params:
       valuesets    - comma-separated list of valueset_id or valueset_friendly_name tokens
       match_paths  - 'both' (default), 'mapped', or 'source'
-      emis_local_exact - restrict mapped matches to non-local roots and their permitted
-                         descendants; EMIS namespace 1000006 matches source codes only.
       include_date_recorded - also return date_recorded, the EMIS save time, for same-day ordering.
 #}
 
@@ -41,28 +40,9 @@
 {%- set valuesets_quoted = "'" ~ valueset_tokens | join("','") ~ "'" -%}
 {%- set valuesets_upper_quoted = "'" ~ (valueset_tokens | map('upper') | join("','")) ~ "'" -%}
 
-with
-{%- if emis_local_exact and match_paths in ['both', 'mapped'] %}
-non_local_roots as (
-    select distinct oc.valueset_id, oc.translated_to_snomed_code, oc.include_children
-    from {{ ref('stg_reference_ltc_lcs_original_codes') }} as oc
-    inner join {{ ref('stg_reference_ltc_lcs_valuesets') }} as vs
-        on oc.valueset_id = vs.valueset_id
-    where (oc.valueset_id in ({{ valuesets_quoted }})
-        or upper(vs.valueset_friendly_name) in ({{ valuesets_upper_quoted }}))
-        and not regexp_like(oc.original_code, '.*1000006[0-9]{3}$')
+with permitted_mapped_codes as (
+    {{ ltc_lcs_permitted_mapped_codes(valuesets_quoted, valuesets_upper_quoted) }}
 ),
-permitted_mapped_codes as (
-    select valueset_id, translated_to_snomed_code as snomed_code
-    from non_local_roots
-    union
-    select root.valueset_id, hierarchy.sub_type_id::varchar as snomed_code
-    from non_local_roots as root
-    inner join {{ ref('stg_nhsd_snomed_sct_transitive_closure') }} as hierarchy
-        on hierarchy.super_type_id::varchar = root.translated_to_snomed_code
-    where root.include_children
-),
-{%- endif %}
 matched_observations as (
 {%- if match_paths in ['both', 'mapped'] %}
     select
@@ -89,12 +69,8 @@ matched_observations as (
         vs.valueset_friendly_name,
         'mapped' as match_path
     from {{ ref('stg_olids_observation') }} as o
-    inner join {{ ref('stg_reference_ltc_lcs_expanded_concepts') }} as ec
+    inner join permitted_mapped_codes as ec
         on o.mapped_concept_code = ec.snomed_code
-    {%- if emis_local_exact %}
-    inner join permitted_mapped_codes as permitted
-        on ec.valueset_id = permitted.valueset_id and ec.snomed_code = permitted.snomed_code
-    {%- endif %}
     left join {{ ref('stg_reference_ltc_lcs_valuesets') }} as vs
         on ec.valueset_id = vs.valueset_id
     where (

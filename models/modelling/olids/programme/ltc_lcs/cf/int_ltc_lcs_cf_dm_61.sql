@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 -- LTC LCS DM case finding indicator DM_61: latest HbA1c >= 48 and no diabetes diagnosis
--- Local list roots match exactly; local descriptions of public concepts remain eligible.
+-- Equivalent local roots permit mapped matches; other local roots match source codes exactly.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/diabetes/icb-cf-dm-61.md
 -- ICB_CF_DM_61 = ICB_CF_DM_61_woEX, then Rule 1 (final, exclude if matched):
 --   exclude patients with "High risk of diabetes mellitus annual review declined"
@@ -16,7 +16,7 @@ with base_woex as (
 -- Rule 1: annual-review-declined recorded in the last 3 years
 review_declined as (
     select person_id
-    from ({{ get_ltc_lcs_observations("877b18f5-9756-23a8-7a41-1900d12e70fa", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("877b18f5-9756-23a8-7a41-1900d12e70fa") }})
     where clinical_effective_date > dateadd(year, -3, current_date())
 )
 

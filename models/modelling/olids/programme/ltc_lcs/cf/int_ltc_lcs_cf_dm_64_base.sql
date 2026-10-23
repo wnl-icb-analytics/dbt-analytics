@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 -- LTC LCS DM case finding: ICB_CF_DM_64_BASE population (shared helper)
--- Local list roots match exactly; local descriptions of public concepts remain eligible.
+-- Equivalent local roots permit mapped matches; other local roots match source codes exactly.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/diabetes/icb-cf-dm-64.md
 --
 -- The higher-BMI-band base cohort. Consumed by int_ltc_lcs_cf_dm_64_woEX AND excluded by
@@ -26,7 +26,7 @@ with base as (
 
 latest_bmi as (
     select person_id, result_value
-    from ({{ get_ltc_lcs_observations_latest("631c11e6-1a77-2cd0-0dd3-3ef61868842c", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations_latest("631c11e6-1a77-2cd0-0dd3-3ef61868842c") }})
     where result_value > 0
 ),
 
@@ -35,13 +35,13 @@ bame as (
     select eth.person_id
     from (
         select *
-        from ({{ get_ltc_lcs_observations("55c83e52-63f7-477c-82c8-9b172815352c", emis_local_exact=true, include_date_recorded=true) }})
+        from ({{ get_ltc_lcs_observations("55c83e52-63f7-477c-82c8-9b172815352c", include_date_recorded=true) }})
         qualify row_number() over (
             partition by person_id
             order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
         ) <= 999
     ) as eth
-    left join ({{ get_ltc_lcs_observations("f0c4af8c-f818-da47-ba29-600c2f13e09f", emis_local_exact=true) }}) as non_bame
+    left join ({{ get_ltc_lcs_observations("f0c4af8c-f818-da47-ba29-600c2f13e09f") }}) as non_bame
         on non_bame.observation_id = eth.observation_id
     group by eth.person_id
     having count(non_bame.observation_id) < count(*)
