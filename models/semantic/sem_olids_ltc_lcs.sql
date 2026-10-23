@@ -96,7 +96,7 @@ DIMENSIONS(
     rs.moc_pathway_status AS moc_pathway_status COMMENT = 'Observation-based work-list pending, Declined, Cycle complete, or No action identified',
     rs.moc_stage_completed_label AS moc_stage_completed_label COMMENT = 'Highest completed adult stage including accepted declines, or CYP Annual Review/Desktop Review.',
     rs.moc_next_action AS moc_next_action COMMENT = 'Next observation-based EMIS work-list action: Check & Test (C&T), MDT Review (MDT), Care Plan Sharing (CPS), Discussion (DISC), Follow-up (F/U), Annual Review (AR) or Desktop Review (DTR). Null when no list selects the person. Future care-plan diaries are unavailable',
-    rs.moc_cycle_complete AS moc_cycle_complete COMMENT = 'Project measure: adults need an agreed plan and review within 12 months, latest MoC event a review, and no observation-based work list; CYP-only asthma children need the annual review, plus the desktop review if HR.',
+    rs.moc_cycle_complete AS moc_cycle_complete COMMENT = 'Project measure: adults need an agreed plan and review within 12 months, latest MoC event a review, and no observation-based work list; CYP-only asthma children need the annual review, plus the desktop review if HR; Check & Test-only people need the C&T.',
     rs.moc_any_activity_12m AS moc_any_activity_12m COMMENT = 'Any Model of Care activity in the last 12 months',
     rs.moc_declined AS moc_declined COMMENT = 'Model of Care declined flag',
     rs.is_in_moc_base AS is_in_moc_base COMMENT = 'In the adult MoC base, including Check & Test-only LR members. False for CYP-only asthma rows.',
