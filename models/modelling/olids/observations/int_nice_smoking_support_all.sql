@@ -22,11 +22,8 @@ support_events AS (
         'OBSERVATION' AS source_kind,
         observation.id::VARCHAR AS source_key,
         observation.person_id,
-        -- Match the shared observation date correction, including the undated sentinel.
-        CASE WHEN observation.clinical_effective_date > observation.date_recorded
-            THEN observation.date_recorded
-            ELSE COALESCE(observation.clinical_effective_date, '1900-01-01')
-        END::DATE AS event_date
+        -- Shared observation date rule, including the undated sentinel.
+        COALESCE({{ observation_clinical_date('observation') }}, '1900-01-01')::DATE AS event_date
     FROM {{ ref('stg_olids_observation') }} AS observation
     INNER JOIN pharmacotherapy_codes AS codes
         ON observation.mapped_concept_code = codes.mapped_concept_code

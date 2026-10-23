@@ -8,9 +8,8 @@
 --   (eligible_for_ckd_case_finding_vs1, 162 codes -> "include patients who do not match").
 -- CKD_61 BASE does NOT exclude CF_NHSHC2Y (per review).
 --
--- Caveat: canon also excludes two EMIS library items (3de35e4f-... and c913f5a7-...)
---   whose logic is not in the XML export. They are not resolvable here so are omitted;
---   the ICS_METABOLIC_LTC + CKD-stage-code exclusions cover the documented intent.
+-- The XML also rejects EMIS library items 3de35e4f and c913f5a7, which are not
+-- in the export and are not implemented.
 
 with base as (
     select person_id
@@ -22,7 +21,7 @@ with base as (
 -- CKD-stage carriers: exclude (162-code stage 3/4/5 + related set)
 ckd_stage_coded as (
     select person_id
-    from ({{ get_ltc_lcs_observations("eligible_for_ckd_case_finding_vs1") }})
+    from ({{ get_ltc_lcs_observations("d83d89d4-dfed-6717-12ce-15a4002c9167") }})
 )
 
 select distinct b.person_id

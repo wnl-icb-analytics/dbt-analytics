@@ -1,0 +1,45 @@
+models:
+  - name: wnl_health_borough_lsoa_2021
+    description: >-
+      Lookup from each curated WNL LSOA 2021 to one of the 13 legacy CCG-based
+      health boroughs across North Central and North West London. The assignment
+      uses the LSOA centroid and historical CCG boundary geometry, preserving
+      the West London CCG area within Westminster.
+    config:
+      meta:
+        owner:
+          name: Emily Baldwin
+    columns:
+      - name: lsoa_2021_code
+        description: ONS 2021 Lower Layer Super Output Area code.
+        data_tests:
+          - unique
+          - not_null
+      - name: ccg_code
+        description: Legacy CCG organisation code containing the LSOA centroid.
+        data_tests:
+          - not_null
+      - name: ccg_name
+        description: Latest Dictionary organisation name for the legacy CCG.
+        data_tests:
+          - not_null
+      - name: health_borough_name
+        description: Reporting health borough derived from the legacy CCG boundary.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - Barnet
+                  - Brent
+                  - Camden
+                  - Central London
+                  - Ealing
+                  - Enfield
+                  - Hammersmith & Fulham
+                  - Haringey
+                  - Harrow
+                  - Hillingdon
+                  - Hounslow
+                  - Islington
+                  - West London

@@ -1,6 +1,6 @@
 {{
     config(
-        materialized='view'
+        materialized='table'
     )
 }}
 
@@ -16,6 +16,8 @@ select
     , start_date
     , start_time
     , expected_duration
+    , consultation_medium_used_code
+    , consultation_medium_used_name
     , appointment_outcome
     , outcome_desc
     , appointment_attended_or_dna
@@ -34,6 +36,7 @@ select
     , treatment_function_code
     , treatment_function_code_desc
     , referral_organisation_id
+    , referral_organisation_name
     , referral_organisation_date
     , referral_source_op
     , referral_source_op_desc

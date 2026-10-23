@@ -204,7 +204,7 @@ events AS (
     SELECT person_id, id, 'Haemoglobin', 'Haematology',
         clinical_effective_date, inferred_value::FLOAT, inferred_unit::VARCHAR, haemoglobin_category::VARCHAR
     FROM {{ ref('int_haemoglobin_all') }}
-    WHERE NOT is_negative AND NOT is_extreme_outlier AND inferred_value IS NOT NULL
+    WHERE NOT is_negative AND NOT is_extreme_outlier AND NOT is_out_of_range AND inferred_value IS NOT NULL
 
     UNION ALL
     SELECT person_id, id, 'Platelets', 'Haematology',

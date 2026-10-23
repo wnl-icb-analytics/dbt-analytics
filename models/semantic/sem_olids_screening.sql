@@ -62,7 +62,7 @@ FACTS(
     breast.breast_screening_interval_years AS screening_interval_years COMMENT = 'Breast screening interval in years for the eligible person',
     breast.breast_days_overdue AS days_overdue COMMENT = 'Days past the breast screening due date; null when up to date or never screened',
     cervical.cervical_screening_interval_years AS screening_interval_years COMMENT = 'Cervical screening interval in years for the eligible person; depends on age',
-    cervical.cervical_days_overdue AS days_overdue COMMENT = 'Days past the cervical screening due date; null when up to date, unsuitable or never screened'
+    cervical.cervical_days_overdue AS days_overdue COMMENT = 'Days past the cervical screening due date; populated only when status is Overdue'
 )
 
 DIMENSIONS(
@@ -89,14 +89,14 @@ DIMENSIONS(
     breast.breast_latest_is_declined AS latest_is_declined COMMENT = 'Latest breast record is a decline',
 
     -- Cervical screening (female 25-64)
-    cervical.cervical_screening_status AS programme_status COMMENT = 'Cervical programme status (Unsuitable, Never Screened, Up to Date, Overdue, Unknown)',
+    cervical.cervical_screening_status AS programme_status COMMENT = 'Cervical programme status (Cervix Removed, Up to Date, Unsuitable, Pregnant, Never Screened, Overdue)',
     cervical.cervical_latest_screening_type AS latest_screening_type COMMENT = 'Type of the latest recorded cervical screening event',
-    cervical.cervical_latest_screening_date AS latest_screening_date COMMENT = 'Date of the latest recorded cervical screening event, including completed, declined, unsuitable and non-response events',
+    cervical.cervical_latest_screening_date AS latest_screening_date COMMENT = 'Date of the latest recorded cervical screening event, including completed, declined, unsuitable, non-response and cervix removal events',
     cervical.cervical_latest_completed_date AS latest_completed_date COMMENT = 'Date of most recent completed cervical screening',
     cervical.cervical_next_due_date AS next_screening_due_date COMMENT = 'Cervical due date (3.5 years at 25-49, 5.5 years at 50-64), not an activity date. Future means not yet due; past means overdue.',
     cervical.cervical_never_screened AS never_screened COMMENT = 'No completed cervical screening ever',
     cervical.cervical_latest_is_declined AS latest_is_declined COMMENT = 'Latest cervical record is a decline',
-    cervical.cervical_latest_is_unsuitable AS latest_is_unsuitable COMMENT = 'Latest cervical record marks person unsuitable',
+    cervical.cervical_latest_is_unsuitable AS latest_is_unsuitable COMMENT = 'Latest cervical record marks person unsuitable, including cervix removal',
     cervical.cervical_latest_is_non_response AS latest_is_non_response COMMENT = 'Latest cervical record is a non-response to invitation',
 
     -- NHS Health Check (whole population, eligibility as flag)
@@ -149,11 +149,13 @@ METRICS(
     breast.breast_never_screened_count AS COUNT(DISTINCT CASE WHEN breast.never_screened THEN breast.person_id END) COMMENT = 'Never breast screened',
 
     -- Cervical
-    cervical.cervical_eligible_count AS COUNT(DISTINCT cervical.person_id) COMMENT = 'People in the cervical screening cohort (female 25-64)',
+    cervical.cervical_eligible_count AS COUNT(DISTINCT CASE WHEN cervical.programme_status != 'Cervix Removed' THEN cervical.person_id END) COMMENT = 'People in the cervical screening cohort (female 25-64), excluding complete cervix removal',
+    cervical.cervical_cervix_removed_count AS COUNT(DISTINCT CASE WHEN cervical.programme_status = 'Cervix Removed' THEN cervical.person_id END) COMMENT = 'Complete cervix removal recorded; not eligible for cervical screening',
+    cervical.cervical_pregnant_count AS COUNT(DISTINCT CASE WHEN cervical.programme_status = 'Pregnant' THEN cervical.person_id END) COMMENT = 'Currently pregnant and not up to date; screening deferred',
     cervical.cervical_up_to_date_count AS COUNT(DISTINCT CASE WHEN cervical.programme_status = 'Up to Date' THEN cervical.person_id END) COMMENT = 'Cervical screening up to date',
     cervical.cervical_overdue_count AS COUNT(DISTINCT CASE WHEN cervical.programme_status = 'Overdue' THEN cervical.person_id END) COMMENT = 'Cervical screening overdue',
     cervical.cervical_never_screened_count AS COUNT(DISTINCT CASE WHEN cervical.never_screened THEN cervical.person_id END) COMMENT = 'Never cervically screened',
-    cervical.cervical_unsuitable_count AS COUNT(DISTINCT CASE WHEN cervical.programme_status = 'Unsuitable' THEN cervical.person_id END) COMMENT = 'Marked unsuitable for cervical screening',
+    cervical.cervical_unsuitable_count AS COUNT(DISTINCT CASE WHEN cervical.programme_status = 'Unsuitable' THEN cervical.person_id END) COMMENT = 'Marked unsuitable for cervical screening within the screening interval',
 
     -- NHS Health Check
     hc.hc_population_count AS COUNT(DISTINCT hc.person_id) COMMENT = 'People in the NHS Health Check model (whole population)',

@@ -1,12 +1,22 @@
 models:
   - name: int_alcohol_intervention
-    description: 'Determine alcohol education or referrals. Built for SMI for Longer Lives campaign using clusters: SMI_LONGER_LIVES_ALCOHOL_EDUCATION, ALCOHOLINT_COD, ALCSPADVDEC_COD, ALCBRINTDEC_COD. Includes declined codes'
-
+    description: >-
+      Alcohol education, interventions and declined interventions in OLIDS GP records,
+      using SMI_LONGER_LIVES_ALCOHOL_EDUCATION, ALCOHOLINT_COD, ALCSPADVDEC_COD and
+      ALCBRINTDEC_COD. One row per person, concept and clinical date up to the build
+      date. Includes inactive and deceased people, without age or SMI-register
+      restrictions.
     config:
       meta:
         owner:
           name: KateHomer55
-    tests:
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - person_id
+              - concept_code
+              - clinical_effective_date
       - cluster_ids_exist:
           arguments:
             cluster_ids: ALCBRINTDEC_COD, ALCOHOLINT_COD, ALCSPADVDEC_COD, SMI_LONGER_LIVES_ALCOHOL_EDUCATION

@@ -34,7 +34,7 @@ unit_tests:
       NULL, NULL)
   - input: ref('stg_olids_medication_statement')
     format: sql
-    rows: SELECT column1::VARCHAR AS bnf_chapter, column2::VARCHAR AS bnf_section, column3::VARCHAR AS bnf_code,
+    rows: SELECT -9891::NUMBER AS person_id, column1::VARCHAR AS bnf_chapter, column2::VARCHAR AS bnf_section, column3::VARCHAR AS bnf_code,
       column4::NUMBER AS id, column5::VARCHAR AS patient_id, column6::DATE AS clinical_effective_date, column7::DATE
       AS date_recorded, column8::VARCHAR AS medication_name, column9::VARCHAR AS dose, column10::VARCHAR AS quantity_value,
       column11::VARCHAR AS quantity_unit, column12::VARCHAR AS authorisation_type_code, column13::VARCHAR AS authorisation_type_display,
@@ -49,10 +49,11 @@ unit_tests:
       NULL, NULL, NULL, 'SYN_ORAL', 'Synthetic oral therapy', NULL), (NULL, NULL, '0606020V0SYNTHETIC', '-9891',
       'SYNTHETIC_PATIENT', '2026-01-01', '2026-01-01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
       NULL, 'SYN_ZOL_BRAND', 'Aclasta synthetic branded therapy', NULL)
-  - input: ref('int_patient_person_unique')
+  - input: ref('stg_olids_patient')
     format: sql
-    rows: SELECT 'SYNTHETIC_PATIENT'::VARCHAR AS patient_id, -9891::NUMBER AS person_id, 'SYNTHETIC_KEY'::VARCHAR
-      AS sk_patient_id
+    rows: >-
+      SELECT 'SYNTHETIC_PATIENT'::VARCHAR AS id, -9891::NUMBER AS person_id,
+      'SYNTHETIC_KEY'::VARCHAR AS sk_patient_id
   expect:
     rows:
     - record_id: '-9891'

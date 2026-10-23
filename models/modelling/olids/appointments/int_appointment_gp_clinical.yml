@@ -1,43 +1,13 @@
 version: 2
 models:
   - name: int_appointment_gp_clinical
-    description: |
-      Cleaned OLIDS GP appointments. Grain: one row per appointment.
-
-      Scope: Care Related Encounters with a clinical practitioner.
-      Excludes future/available slots, admin practitioner roles, and
-      non-Care-Related-Encounter contexts.
-
-      Two role groupings (sourced from the sds_role_groups seed):
-      * practitioner_role_group — analytical grouping preserving ARRS
-        workforce signal (GP, Nurse, Pharmacist, HCA, PA, Paramedic,
-        Physio, Care Navigator, etc.)
-      * sds_role_group — official NHS Digital 4-group taxonomy for
-        alignment with NHS Digital Appointments in General Practice
-
-      Two cost columns (sourced from pssru_unit_costs_2025 seed,
-      adjusted via uk_cost_indices seed):
-      * appointment_cost_gbp_base_prices — always in PSSRU 2024/25
-        real-terms prices, use for cross-year comparisons
-      * appointment_cost_gbp_nominal — in the appointment's own fiscal
-        year prices (GDP deflator adjusted), use for contemporaneous
-        reporting. NULL for pre-2000 fiscal years (outside seed
-        coverage — intentional data quality signal).
-
-      cost_is_proxy flags rows where the unit cost is borrowed from
-      another role's PSSRU rate (ARRS roles without a direct PSSRU
-      figure). Filter WHERE cost_is_proxy = FALSE to restrict to direct
-      PSSRU figures only.
-
-      For full cost methodology and per-role rationale see the
-      pssru_unit_costs_2025 and uk_cost_indices seed descriptions.
-
-      All reporting models (fct_gp_* and sem_olids_appointments) build
-      from int_appointment_gp_clinical_recent rather than this model
-      directly. The recent view restricts to the last 60 months of
-      data to match OLIDS retention. Use this unfiltered model only
-      for ad-hoc analyses that need pre-5-year history (with the
-      OLIDS retention caveat in mind — leavers are silently truncated).
+    description: >-
+      OLIDS GP appointments, one row per appointment recorded as a Care Related
+      Encounter. Excludes available slots (status 0), administrative roles and other
+      encounter contexts; missing or unmapped roles and future appointments remain.
+      Role groups and estimated costs are documented on their columns. Full retained
+      history is included, but leavers and deceased people have about five years of
+      history, so older comparisons favour current registrants.
     config:
       meta:
         owner:
@@ -278,26 +248,12 @@ models:
         description: Practice ODS code (e.g. E85012)
 
   - name: int_appointment_gp_clinical_recent
-    description: |
-      Recent-window view over int_appointment_gp_clinical. Same grain
-      (one row per appointment), same columns, restricted to the
-      rolling last 60 months of data anchored to MAX(start_date).
-
-      Why this view exists: OLIDS only retains records for patients
-      who left or died within the last ~5 years. Anything older is
-      silently truncated to currently-registered patients only,
-      systematically biasing historical reporting (per-capita cost
-      drifts down, DNA rate biased toward stayers, workforce mix
-      tilts). Restricting reporting to a 5-year window matching OLIDS
-      retention keeps the population denominator honest.
-
-      All reporting models in models/reporting/olids/gp_access/ and
-      models/reporting/olids/gp_costs/ build from this view rather
-      than the unfiltered int_appointment_gp_clinical. The semantic view
-      sem_olids_appointments also references this view.
-
-      Materialised as a view (zero storage cost) — Snowflake pushes
-      the date filter down to the underlying clustered table.
+    description: >-
+      OLIDS clinical appointments in the latest 60 calendar months represented by
+      int_appointment_gp_clinical, one row per appointment with the same selection
+      rules. The window starts 59 months before the maximum start_date month, rather
+      than the current month, with no upper date cap. It limits older-history bias
+      caused by OLIDS retaining about five years for leavers and deceased people.
     config:
       meta:
         owner:

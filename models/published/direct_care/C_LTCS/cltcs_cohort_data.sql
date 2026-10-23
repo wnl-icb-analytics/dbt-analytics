@@ -18,7 +18,12 @@ Testing:
 */
 
 with inclusion_list as (
-    select patient_id, area_code, olids_id
+    select patient_id
+        , area_code
+        , olids_id
+        , source
+        , meets_original_criteria
+        , meets_adults_with_complexity
     from {{ ref('cltcs_patient_list')}}
     )
 
@@ -56,7 +61,17 @@ select il.patient_id
     -- , il.fragmented_sk_patient_id_flag -- include as DQ check 
     -- , il.fragmented_person_id_flag  -- include as DQ check 
     , il.area_code
-    , coalesce(pd.practice_code, 'Unknown') as practice_code
+    , il.source
+    , il.meets_original_criteria
+    , il.meets_adults_with_complexity
+    , case
+        when il.meets_original_criteria and il.meets_adults_with_complexity then 'both'
+        when il.meets_original_criteria and not il.meets_adults_with_complexity then 'original only'
+        when not il.meets_original_criteria and il.meets_adults_with_complexity then 'w/ complexity only'
+        when il.meets_original_criteria is null or il.meets_adults_with_complexity is null then 'not assessed'
+        else 'neither'
+      end as route_summary
+      , coalesce(pd.practice_code, 'Unknown') as practice_code
     , coalesce(pd.practice_name, 'Unknown') as practice_name
     , pd.age 
     , coalesce(pd.main_language, 'Unknown') as main_language
@@ -223,10 +238,14 @@ select il.patient_id
 
     -- Current risk scores?
     -- scores from cltcs_scores model
-    ,coalesce(cs.score_activation, 0) as score_activation
-    ,coalesce(cs.score_coordination, 0) as score_coordination
-    ,coalesce(cs.score_treatment, 0) as score_treatment
-    ,coalesce(cs.score_frailty, 0) as score_frailty
+    ,cs.score_activation
+    ,cs.score_coordination
+    ,cs.score_treatment_original_criteria
+    ,cs.score_treatment_adults_with_complexity
+    ,cs.score_treatment_nice_original_criteria
+    ,cs.score_treatment_nice_adults_with_complexity
+    ,cs.score_frailty_original_criteria
+    ,cs.score_frailty_adults_with_complexity
     -- Other relevant annual activity (LTC LCS, C-LTCS review)
 
 from inclusion_list il

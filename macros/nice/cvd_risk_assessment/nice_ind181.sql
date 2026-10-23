@@ -1,7 +1,7 @@
 {% macro nice_ind181(reference='current') %}
 {#- Calculate IND181 at eligible person/reporting-date grain in current or by_month mode. -#}
 -- NICE IND181: https://www.nice.org.uk/indicators/ind181
--- CVD risk assessment recorded in 3 years for people aged 25 to 84 with type 2 diabetes, no moderate or severe frailty and no statin order in 6 months; excludes CVD, FH and CKD.
+-- CVD risk assessment recorded in 3 years for people aged 25 to 84 with type 2 diabetes and no statin order in 6 months; excludes CVD, FH and CKD.
 WITH indicator_population AS (
     SELECT
         profile.person_id,
@@ -18,7 +18,6 @@ WITH indicator_population AS (
         AND profile.reporting_date = population.reporting_date
     WHERE population.age BETWEEN 25 AND 84
         AND profile.has_type2_diabetes
-        AND COALESCE(profile.latest_frailty_severity, 'None') NOT IN ('Moderate', 'Severe')
         AND NOT COALESCE(profile.latest_statin_order_date >= DATEADD(month, -6, profile.reporting_date), FALSE)
         AND NOT profile.has_cvd_including_haemorrhagic_stroke
         AND NOT profile.has_familial_hypercholesterolaemia
@@ -46,7 +45,7 @@ SELECT
     person_id,
     'IND181' AS indicator_id,
     'Diabetes: CVD risk assessment' AS indicator_name,
-    'The percentage of patients aged between 25 and 84 years, with type 2 diabetes, without moderate or severe frailty, not currently treated with a statin, who have had a consultation for a full formal cardiovascular disease risk assessment in the last 3 years.' AS indicator_description,
+    'The percentage of patients aged between 25 and 84 years, with type 2 diabetes, not currently treated with a statin, who have had a consultation for a full formal cardiovascular disease risk assessment in the last 3 years.' AS indicator_description,
     reporting_date,
     DATEADD(month, -36, reporting_date) AS measurement_period_start,
     age,

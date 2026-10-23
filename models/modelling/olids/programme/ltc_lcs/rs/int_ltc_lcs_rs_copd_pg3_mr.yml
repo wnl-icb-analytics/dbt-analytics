@@ -1,36 +1,22 @@
 version: 2
 models:
   - name: int_ltc_lcs_rs_copd_pg3_mr
-    description: |
-      COPD Register Priority Group 3 - Medium Risk.
-
-      Patients on COPD register (excluding PG1 HRC and PG2 HR) meeting any inclusion rule:
-      - Rule 2: FEV1 >= 50 and < 80 (inclusion)
-      - Rule 3: MRC Breathlessness Scale: grade 2 or 3 (inclusion)
-      - Rule 4: 1 COPD exacerbation within last 12 months OR 
-                medication issues (any of Amoxicillin, Amoxicillin Trihydrate,
-                Doxycycline, Doxycycline Hyclate, Doxycycline Monohydrate, Erythromycin, 
-                Erythromycin (As Stearate), Erythromycin Ethyl Succinate, Clarithromycin) 
-                within last 12 months OR
-                Medication issues (any of Prednisolone, Prednisolone Sodium Phosphate, 
-                Prednisolone Steaglate) within last 12 months OR 
-                Medication issues (any of Azithromycin, Azithromycin) within last 12 months.
-                We re-use the COPD ruleset for COPD exacerbation from pg2 - the code in ruleset on_copd_reg_pg3_mr_vs3 is only in
-                EMIS's local nameset and doesn't match, returning 0 results.
-        - Rule 5: Medication issues (any of Trimbow, Trelegy Ellipta) within last 6 months
-        - Rule 6: Medication issues (any of Beclometasone Dipropionate, Budesonide, Ciclesonide, 
-                  Fluticasone Furoate, Fluticasone Propionate, Mometasone Furoate) within last 6 months AND
-                  Medication issues (any of Aclidinium Bromide, Glycopyrronium bromide 55microgram 
-                  inhalation powder capsules with device, Seebri Breezhaler 44microgram inhalation 
-                  powder capsules with device (Novartis Pharmaceuticals UK Ltd) ...etc) within last 6 months AND
-                  Medication issues ( Bambuterol Hydrochloride, Formoterol Fumarate, Indacaterol, Olodaterol, 
-                  Salmeterol Xinafoate, Umeclidinium Bromide, Beclometasone 100micrograms/dose / Formoterol 6micrograms/dose dry powder inhaler, 
-                  Beclometasone 100micrograms/dose / Formoterol 6micrograms/dose inhaler CFC free ...etc) within last 6 months
+    description: |-
+      COPD MR membership, one row per register member outside PG1/PG2.
+      Includes FEV1 >=50 and <80%, MRC grades 1-3, the EMIS-local one-exacerbation
+      code, at least two antibiotic issues, any prednisolone or azithromycin issue
+      in the inclusive last 12 months, or triple therapy in the inclusive last 6 months.
+      Local exacerbation codes use the shared equivalence rule.
     config:
       meta:
         owner:
           name: Peter Shakeshaft
-    tests:
+    columns:
+      - name: person_id
+        tests:
+          - not_null
+          - unique
+    data_tests:
       - dbt_utils.at_least_one:
           arguments:
             column_name: person_id
@@ -42,7 +28,6 @@ models:
             valuesets:
               - on_copd_reg_pg3_mr_vs1
               - on_copd_reg_pg3_mr_vs2
-              - on_copd_reg_pg2_hr_vs4
               - on_copd_reg_pg3_mr_vs4
               - on_copd_reg_pg3_mr_vs5
               - on_copd_reg_pg3_mr_vs6
@@ -54,8 +39,4 @@ models:
               - on_copd_reg_pg3_mr_vs13
               - on_copd_reg_pg3_mr_vs14
               - on_copd_reg_pg3_mr_vs15
-    columns:
-      - name: person_id
-        tests:
-          - not_null
-          - unique
+              - be744271-2fb5-7e10-18f6-041df010ebf7

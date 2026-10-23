@@ -1,15 +1,22 @@
-
 macros:
   - name: get_ltc_lcs_medication_statements
-    description: >
-      Retrieves medication statements (courses) filtered by LTC/LCS valueset IDs or friendly names.
-      Joins to expanded concepts, valuesets, patient mapping, and BNF reference data.
-      Use when rules need course-level criteria (e.g. Date Drug Added) rather than issue-level.
+    description: |-
+      LTC LCS medication courses filtered by value-set GUID or friendly name.
+      Returns the source authorisation code alongside mapped authorisation fields
+      for EMIS course-type rules.
 
 
+      Inherits P2 root permissions: public and equivalent local roots permit
+      mapped concepts and requested descendants within the existing expansion.
+      Other local roots match their original source code only.
     arguments:
       - name: valuesets
         type: string
         description: >
           Comma-separated valueset IDs or friendly names to filter by.
           Can be passed as 'VS001,VS002' or "'VS001','VS002'"
+      - name: match_paths
+        type: string
+        description: >
+          Both mapped and exact source matches by default. 'mapped' omits exact
+          source matches. 'source' uses exact original-source matches only.

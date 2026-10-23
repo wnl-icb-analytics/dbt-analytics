@@ -1,21 +1,55 @@
 models:
   - name: cltcs_score_frailty
-    description: "Frailty sub-score for C-LTCS cohort. One row per patient. Derived from age, frailty-related conditions, falls/emergency activity, BP control, comorbidity burden and AIC eFI2 score."
+    description: >-
+      C-LTCS frailty scores for the case-finding population, one row per patient and
+      qualifying inclusion rule. People meeting both the original and Adults with
+      Complexity criteria have two rows; use is_applicable_rule to select the patient's
+      case-finding cohort. Scores range from 0 to 100 and are relative to the patient's
+      neighbourhood and cohort, with a separate percentile. These programme scores
+      differ from eFI2 and frailty-register severity.
     config:
       meta:
         owner:
           name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - inclusion_rule
     columns:
       - name: sk_patient_id
         data_type: number
         description: "Unique patient identifier (sk_patient_id from PDS via dim_person_demographics_basic)"
         data_tests:
-          - unique
           - not_null
+      
+      - name: inclusion_rule
+        data_type: varchar
+        description: >
+          Cohort this row is scored in. 'original_criteria' is the original C-LTCS
+          inclusion criteria; 'adults_with_complexity' is the Adults with Complexity
+          cohort from fct_person_complex_adults, including people on the palliative care
+          register. The z-scores on this row are calculated against other patients in
+          the same cohort and neighbourhood.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - original_criteria
+                  - adults_with_complexity
 
+      - name: is_applicable_rule
+        data_type: boolean
+        description: >
+          True when inclusion_rule is the cohort that applies at the patient's practice:
+          the original criteria at legacy practices (cltcs_legacy_organisations) and
+          Adults with Complexity everywhere else. At most one row per patient is true. False rows are
+          scores for the other cohort, kept for comparison between cohorts.
       - name: neighbourhood_code
         data_type: varchar
-        description: "Neighbourhood code (from stg_cltcs_emis_cltcs_local_mapping_nh_gp) used as the z-score scaling group. Null for practices outside the Haringey/Camden local mapping."
+        description: "Neighbourhood code (from cltcs_practice_neighbourhood) used as the z-score scaling group."
 
       - name: score_frailty
         data_type: number

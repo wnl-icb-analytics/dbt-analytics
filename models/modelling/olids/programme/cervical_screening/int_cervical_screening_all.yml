@@ -1,8 +1,11 @@
 models:
   - name: int_cervical_screening_all
-    description: 'NHS cervical screening programme observations from clinical records.
-
-      One row per cervical screening observation using SMEAR_COD, CSPU_COD, CSDEC_COD, and CSPCAINVITE_COD clusters for core programme tracking.'
+    description: >-
+      Cervical screening records in OLIDS, one row per observation and matching PCD
+      cluster (SMEAR_COD, CSPU_COD, CSDEC_COD, CSPCAINVITE_COD and NOCX_COD). Covers
+      completion, decline, unsuitability, non-response and cervix removal, regardless
+      of age, sex, registration or death. Future events are excluded; missing dates
+      appear as 1900-01-01.
     config:
       meta:
         owner:
@@ -10,10 +13,14 @@ models:
     tests:
       - cluster_ids_exist:
           arguments:
-            cluster_ids: SMEAR_COD,CSPU_COD,CSDEC_COD,CSPCAINVITE_COD
+            cluster_ids: SMEAR_COD,CSPU_COD,CSDEC_COD,CSPCAINVITE_COD,NOCX_COD
+            source: PCD
     columns:
       - name: id
         description: 'Unique identifier for the observation'
+        data_tests:
+          - unique
+          - not_null
       - name: person_id
         description: 'Unique identifier for the person'
       - name: clinical_effective_date
@@ -23,14 +30,16 @@ models:
       - name: concept_display
         description: 'Mapped clinical concept display text'
       - name: source_cluster_id
-        description: 'QOF cluster identifier (SMEAR_COD, CSPU_COD, CSDEC_COD, CSPCAINVITE_COD)'
+        description: 'QOF cluster identifier (SMEAR_COD, CSPU_COD, CSDEC_COD, CSPCAINVITE_COD, NOCX_COD)'
       - name: screening_observation_type
         description: 'Type of screening observation based on cluster'
       - name: is_completed_screening
         description: 'Flag indicating if this is a completed screening (SMEAR_COD)'
       - name: is_unsuitable_screening
-        description: 'Flag indicating if person is unsuitable for screening (CSPU_COD)'
+        description: 'Flag indicating if person is unsuitable for screening (CSPU_COD or cervix removal NOCX_COD)'
       - name: is_declined_screening
         description: 'Flag indicating if screening was declined (CSDEC_COD)'
       - name: is_non_response_screening
         description: 'Flag indicating non-response to invitations (CSPCAINVITE_COD)'
+      - name: is_cervix_removal
+        description: 'Flag indicating complete removal of the cervix (NOCX_COD)'

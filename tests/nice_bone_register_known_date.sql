@@ -20,7 +20,7 @@ WITH synthetic_diagnoses AS (
      FALSE AS confirms_osteoporosis_diagnosis
 ), synthetic_birth AS (
  SELECT -541::NUMBER AS person_id, '1966-01-15'::DATE AS birth_date_approx,
-     NULL::DATE AS death_date_approx
+     NULL::DATE AS death_date_approx, FALSE AS is_deceased
 ), actual AS ({{ ns.calculation }})
 SELECT COUNT(*) AS failure_count
 FROM actual
