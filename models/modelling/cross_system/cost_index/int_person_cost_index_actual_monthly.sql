@@ -3,7 +3,8 @@ Per-person patient-attributable spend by month for the resource index.
 
 Sources: SLAM (acute actuals), EPD (GP prescribing actuals), MHSDS and CSDS
 (currency x price proxies). SLAM mental health and community block lines are
-mostly not patient-attributable, so the proxy sources do not double count.
+mostly not patient-attributable, but overlap is not removed: patient-attributable
+SLAM Community and Therapies lines can cover care also recorded in CSDS.
 
 GP appointment cost is excluded: OLIDS gives person-level appointments for
 NCL only, and NWL has no person-level GP feed. Adding it to one sub-ICB would
