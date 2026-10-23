@@ -3,9 +3,10 @@ version: 2
 models:
   - name: int_ltc_lcs_cf_ckd_61_base
     description: >
-      ICB_CF_CKD_61_BASE shared parent (61/62/63): currently-registered patients aged
-      at least 17, not in ICS_METABOLIC_LTC, and not carrying any CKD-stage code
-      (eligible_for_ckd_case_finding_vs1). Does not exclude CF_NHSHC2Y.
+      One row per currently registered, living person aged at least 17 in the CKD_61
+      base, excluding the shared metabolic population and any recorded CKD-stage code.
+      Equivalent local roots also permit mapped concepts and requested descendants.
+      The XML also rejects EMIS library items 3de35e4f and c913f5a7, which are not in the export and are not implemented.
     config:
       meta:
         owner:
@@ -14,16 +15,18 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - eligible_for_ckd_case_finding_vs1
+              - d83d89d4-dfed-6717-12ce-15a4002c9167
     columns:
       - name: person_id
         data_tests: [not_null, unique]
 
   - name: int_ltc_lcs_cf_ckd_64_base
     description: >
-      People aged 17+ with no eGFR code in the last year, currently registered, living and
-      not in ICS_METABOLIC_LTC. One row per person. ICB_CF_CKD_64_BASE population for CKD
-      case finding. Uses value set ckd_case_finding_vs1 and does not exclude CF_NHSHC2Y.
+      One row per currently registered, living person aged at least 17 outside the shared
+      metabolic population with no eGFR code dated strictly after one year before the
+      build date. Uses the shared LTC LCS equivalence rule, regardless of numeric result.
+      The XML also rejects EMIS library items 3de35e4f and c913f5a7, which are not
+      in the export and are not implemented.
     config:
       meta:
         owner:
@@ -32,15 +35,19 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - ckd_case_finding_vs1
+              - a491afe2-cbfe-8024-0c9b-09749af1c569
     columns:
       - name: person_id
         data_tests: [not_null, unique]
 
   - name: int_ltc_lcs_cf_ckd_61_woEX
     description: >
-      ICB_CF_CKD_61_1D_woEX: 61_BASE patients with an eGFR > 0 recorded (vs1) whose latest
-      eGFR (vs2) is < 60. Pre-Rule-1 helper consumed by CKD_61 and 62/63/64 exclusions.
+      One row per person in the CKD_61 base with at least two positive eGFR observations
+      in the eight-code pool. The latest positive result in the six-code pool and the
+      latest positive result on an earlier calendar date must both be < 60 mL/min/1.73 m2.
+      There is no recency window or minimum interval beyond the earlier date.
+      Matching follows the shared LTC LCS equivalence rule. Supplies CKD_61 and
+      exclusions for the later CKD helpers.
     config:
       meta:
         owner:
@@ -50,15 +57,19 @@ models:
           arguments:
             valuesets:
               - cc380a59-cc4c-ee42-4a2e-30ab9286dc71  # with_most_recent_2_egfr60_and_not_on_ckd_reg_vs1
-              - with_most_recent_2_egfr60_and_not_on_ckd_reg_vs2
+              - c9896ca5-15c8-0009-a57a-bd6f5067dcad
     columns:
       - name: person_id
         data_tests: [not_null, unique]
 
   - name: int_ltc_lcs_cf_ckd_62_woEX
     description: >
-      ICB_CF_CKD_62_woEX: 61_BASE minus 61_woEX, patients whose latest UACR is > 4.
-      Pre-Rule-1 helper consumed by CKD_62 and 63/64 exclusions.
+      One row per person in the CKD_61 base outside the CKD_61 helper, with at least two
+      positive UACR observations. The latest positive UACR and the latest
+      positive UACR on an earlier calendar date must both be > 4 mg/mmol.
+      There is no recency window or minimum interval beyond the earlier date. EMIS-local UACR
+      codes mapped as equivalent to a public concept also match that concept; other local
+      codes match their exact code only. Supplies CKD_62 and exclusions for the later CKD helpers.
     config:
       meta:
         owner:
@@ -67,15 +78,16 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - with_most_recent_2_uacr4_and_not_on_ckd_reg_vs1
+              - c75746ce-5d7b-1647-f08a-ef5b10445f4c
     columns:
       - name: person_id
         data_tests: [not_null, unique]
 
   - name: int_ltc_lcs_cf_ckd_63_woEX
     description: >
-      ICB_CF_CKD_63_1D_woEX: 61_BASE minus 61_woEX minus 62_woEX, patients whose latest
-      UACR is > 70. Pre-Rule-1 helper consumed by CKD_63 and 64 exclusion.
+      One row per person in the CKD_61 base outside the CKD_61 and CKD_62 helpers, whose
+      latest positive UACR is > 70 mg/mmol (local UACR codes follow the same equivalence rule). There is no date window or second
+      result requirement. Supplies CKD_63 and the CKD_64 helper exclusion.
     config:
       meta:
         owner:
@@ -84,38 +96,60 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - with_most_recent_uacr70_and_not_on_ckd_reg_vs1
+              - 6bfbf92c-3c89-cc89-f541-a7dcaa945562
     columns:
       - name: person_id
         data_tests: [not_null, unique]
 
   - name: int_ltc_lcs_cf_ckd_64_woEX
     description: >
-      ICB_CF_CKD_64_1D_woEX: 64_BASE minus 61/62/63 woEX, patients matching any at-risk arm
-      (AKI last 3y, at-risk conditions, nephrotoxic meds last 6m, latest microhaematuria).
-      Pre-Rule-1 helper consumed by CKD_64.
+      One row per person in the CKD_64 base outside the CKD_61/62/63 helpers, with AKI
+      on or after three years before the build date, an at-risk condition ever recorded,
+      or specified medication issued strictly after six months before the build date.
+      Also includes the latest microscopic haematuria or red-cell microscopy record
+      without a negative urine blood test or red-cell microscopy on or after its calendar
+      date, or the latest microscopic haematuria diagnosis with any UACR
+      > 30 mg/mmol on or after its date.
+      A microscopy record cancels itself; no numeric test applies to cancellation.
+      Haematuria links do not restrict the other arms. Public and equivalent local roots
+      permit mapped concepts and requested descendants. Other local roots match source codes exactly. Lithium salts use the national
+      ECL_CACHE LIT_COD refset alongside the explicit XML lithium ingredients. The tacrolimus
+      arm excludes Protopic 0.03%/0.1% ointment, tacrolimus 0.005% mouthwash and
+      tacrolimus 0.03%/0.1% ointment, including descendants. Any permitted recent issue
+      qualifies; medication is not restricted to the latest issue.
     config:
       meta:
         owner:
           name: Eddie Davison
     data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: LIT_COD
+            source: ECL_CACHE
+            versioned: false
       - valuesets_have_codes:
           arguments:
             valuesets:
               - 4fad1128-518d-aab7-8bb8-ed51bd35c7b6  # at_risk_of_ckd_who_are_not_on_ckd_reg_vs1
-              - at_risk_of_ckd_who_are_not_on_ckd_reg_vs2
-              - at_risk_of_ckd_who_are_not_on_ckd_reg_vs4
-              - at_risk_of_ckd_who_are_not_on_ckd_reg_vs6
-              - at_risk_of_ckd_who_are_not_on_ckd_reg_vs7
-              - at_risk_of_ckd_who_are_not_on_ckd_reg_vs9
+              - a30e0c52-efd9-9ce9-c56a-6d1469fc64d4
+              - 7d11f002-bdf4-e22d-4aa4-5e1de14bb3af
+              - 67b57e4a-b4c4-f213-726c-bcead7df9e1a
+              - 37f2f047-d4b2-bf56-5c7b-2a9788936448
+              - 5bf47b55-ccf0-9e25-d7d1-0a7f4b5f3dac
+              - 63bf0d9b-589c-905a-abd2-e59190e02053
+              - 3b7a55b7-b9a6-f23b-60d6-1015949622d2
     columns:
       - name: person_id
         data_tests: [not_null, unique]
 
   - name: int_ltc_lcs_cf_ckd_61
     description: >
-      ICB_CF_CKD_61: 61_woEX population excluding anyone with a CKD screening code in the
-      last 3 years or on the CKD register. One row per included person.
+      One row per eligible, currently registered, living person aged at least 17 in the
+      CKD_61 helper, excluding screening dated strictly after three years before the build
+      date and current CKD register membership. Both the latest positive six-code eGFR and the latest positive result on an earlier
+      date are < 60 mL/min/1.73 m2; at least two eight-code positive observations exist.
+      Register membership uses the QOF CKD register (fct_person_ckd_register)
+      as a proxy for the EMIS LTC LCS CKD register.
     config:
       meta:
         owner:
@@ -131,8 +165,14 @@ models:
 
   - name: int_ltc_lcs_cf_ckd_62
     description: >
-      ICB_CF_CKD_62: 62_woEX population excluding anyone with a CKD screening code in the
-      last 3 years or on the CKD register. One row per included person.
+      One row per eligible, currently registered, living person aged at least 17 in the
+      CKD_62 helper, excluding screening dated strictly after three years before the build
+      date and current CKD register membership. Both the latest positive UACR and the latest positive result on an earlier
+      date are > 4 mg/mmol; at least two positive observations exist. Excludes CKD_61 helper.
+      Register membership uses the QOF CKD register (fct_person_ckd_register)
+      as a proxy for the EMIS LTC LCS CKD register.
+      The register exclusion is not in the CKD_62 XML. It is retained for consistency
+      with the 1N searches; the base already excludes CKD-stage codes.
     config:
       meta:
         owner:
@@ -141,15 +181,18 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - with_most_recent_2_uacr4_and_not_on_ckd_regckd_diagnosis_vs1
+              - 1daf7ba0-0a74-840c-3af3-83affee70a7f
     columns:
       - name: person_id
         data_tests: [not_null, unique]
 
   - name: int_ltc_lcs_cf_ckd_63
     description: >
-      ICB_CF_CKD_63: 63_woEX population excluding anyone with a CKD screening code in the
-      last 3 years or on the CKD register. One row per included person.
+      One row per eligible, currently registered, living person aged at least 17 in the
+      CKD_63 helper, excluding screening dated strictly after three years before the build
+      date and current CKD register membership. The latest positive UACR is > 70 mg/mmol. Excludes CKD_61 and CKD_62 helpers.
+      Register membership uses the QOF CKD register (fct_person_ckd_register)
+      as a proxy for the EMIS LTC LCS CKD register.
     config:
       meta:
         owner:
@@ -158,15 +201,19 @@ models:
       - valuesets_have_codes:
           arguments:
             valuesets:
-              - with_most_recent_uacr70_and_not_on_ckd_regckd_diagnosi_vs1
+              - 21ca7a93-5261-c6d6-0e7d-29f497aeb753
     columns:
       - name: person_id
         data_tests: [not_null, unique]
 
   - name: int_ltc_lcs_cf_ckd_64
     description: >
-      ICB_CF_CKD_64: 64_woEX population excluding anyone with a CKD screening code in the
-      last 3 years or on the CKD register. One row per included person.
+      One row per eligible, currently registered, living person aged at least 17 in the
+      CKD_64 helper, excluding screening dated strictly after three years before the build
+      date and current CKD register membership. Inherits the CKD_64 base and at-risk arms, including both linked haematuria routes,
+      after excluding CKD_61/62/63 helpers.
+      Register membership uses the QOF CKD register (fct_person_ckd_register)
+      as a proxy for the EMIS LTC LCS CKD register.
     config:
       meta:
         owner:

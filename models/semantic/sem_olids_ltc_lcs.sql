@@ -29,7 +29,7 @@ TABLES(
 
     rs AS {{ ref('fct_person_ltc_lcs_risk_summary') }}
         PRIMARY KEY (person_id)
-        COMMENT = 'Eligible adult MoC and CYP-only asthma members with risk and observation-based Model of Care status'
+        COMMENT = 'Adult MoC (including Check & Test-only LR) and CYP-only asthma members with risk and observation-based Model of Care status'
 )
 
 RELATIONSHIPS(
@@ -98,11 +98,12 @@ DIMENSIONS(
     rs.moc_cycle_complete AS moc_cycle_complete COMMENT = 'Model of Care cycle complete flag',
     rs.moc_any_activity_12m AS moc_any_activity_12m COMMENT = 'Any Model of Care activity in the last 12 months',
     rs.moc_declined AS moc_declined COMMENT = 'Model of Care declined flag',
-    rs.is_in_moc_base AS is_in_moc_base COMMENT = 'Eligible for adult MoC after EMIS exclusions. False for CYP-only asthma pathway rows.',
+    rs.is_in_moc_base AS is_in_moc_base COMMENT = 'In the adult MoC base, including Check & Test-only LR members. False for CYP-only asthma rows.',
+    rs.is_moc_check_test_only AS is_moc_check_test_only COMMENT = 'LR hypertension-only or LR adult-asthma-only; in the MoC base, excluded from the EMIS MoC base search, needs only the annual Check & Test.',
     rs.is_type_1_diabetes_hrc AS is_type_1_diabetes_hrc COMMENT = 'Qualifies for the separate EMIS Type 1 HRC rule; not added to diabetes_risk_group.',
     rs.moc_mdt_review_completed AS moc_mdt_review_completed COMMENT = 'Actual annual MDT review event in the inclusive trailing 12 months; separate from stage 2 completion.',
     rs.moc_mdt_review_date AS moc_mdt_review_date COMMENT = 'Latest actual annual MDT review date within the inclusive trailing 12 months; null if absent.',
-    rs.moc_stage_1_completed AS moc_stage_1_completed COMMENT = 'Adult pathway C&T completion, using its strict or inclusive annual window. False for CYP-only people.',
+    rs.moc_stage_1_completed AS moc_stage_1_completed COMMENT = 'Adult pathway C&T completion, using its strict or inclusive annual window. Includes Check & Test-only people; false for CYP-only people.',
     rs.moc_stage_3_completed AS moc_stage_3_completed COMMENT = 'Adult stage 3: agreed plan or decline in the inclusive trailing 12 months. No stage 1 or 2 prerequisite.',
     rs.moc_stage_4_completed AS moc_stage_4_completed COMMENT = 'Adult stage 4: decline, or both agreed plan and review in the inclusive trailing 12 months. No stage 1 or 2 prerequisite.',
     rs.moc_requires_check_test AS moc_requires_check_test COMMENT = 'Observation-based EMIS stage 1 list. Old C&T can require a new C&T despite a more recent decline.',
@@ -164,7 +165,7 @@ METRICS(
     cf.dm_case_finding_count AS COUNT(DISTINCT CASE WHEN cf.in_dm_61 OR cf.in_dm_62 OR cf.in_dm_63 OR cf.in_dm_64 OR cf.in_dm_65 OR cf.in_dm_66 THEN cf.person_id END) COMMENT = 'Candidates with a diabetes indicator',
     cf.htn_case_finding_count AS COUNT(DISTINCT CASE WHEN cf.in_htn_61 OR cf.in_htn_62 OR cf.in_htn_63 OR cf.in_htn_65 OR cf.in_htn_66 THEN cf.person_id END) COMMENT = 'Candidates with a hypertension indicator',
     cf.cyp_asthma_case_finding_count AS COUNT(DISTINCT CASE WHEN cf.in_cyp_ast_61 THEN cf.person_id END) COMMENT = 'Candidates with a children and young people asthma indicator',
-    rs.stratified_patients AS COUNT(DISTINCT CASE WHEN rs.is_in_moc_base THEN rs.person_id END) COMMENT = 'Adult MoC base population (EMIS GROUP1-4); excludes CYP-only asthma',
+    rs.stratified_patients AS COUNT(DISTINCT CASE WHEN rs.is_in_moc_base THEN rs.person_id END) COMMENT = 'Adult MoC base population, including Check & Test-only LR members; excludes CYP-only asthma',
     rs.hrc_patients AS COUNT(DISTINCT CASE WHEN rs.is_in_moc_base AND rs.overall_risk_group = 'HRC' THEN rs.person_id END) COMMENT = 'HRC patients',
     rs.hr_patients AS COUNT(DISTINCT CASE WHEN rs.is_in_moc_base AND rs.overall_risk_group = 'HR' THEN rs.person_id END) COMMENT = 'HR patients',
     rs.mr_patients AS COUNT(DISTINCT CASE WHEN rs.is_in_moc_base AND rs.overall_risk_group = 'MR' THEN rs.person_id END) COMMENT = 'MR patients',

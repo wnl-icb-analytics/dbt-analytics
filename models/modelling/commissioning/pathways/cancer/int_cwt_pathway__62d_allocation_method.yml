@@ -1,0 +1,51 @@
+models:
+  - name: int_cwt_pathway__62d_allocation_method
+    description: >
+      62-day allocation method for CWT cancer pathways. 
+      Determines the accountable investigating and treating organisations and 
+      the allocation method used for 62-day performance.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns:
+      - name: record_id
+        description: CWT Record ID
+        data_tests:
+          - unique
+          - not_null
+
+      - name: performance__date_full
+        description: Date for the clock end (treatment start date).
+
+      - name: d62__investigating_trust_code
+        description: Trust code assigned as accountable for investigation.
+
+      - name: d62__treating_trust_code
+        description: Trust code assigned as accountable for treatment.
+
+      - name: d62__treating_site_code
+        description: Site code for the accountable treating organisation.
+
+      - name: d62__allocation_method
+        description: Allocation method for 62-day cases; values include `Solo`, `50-50` and `6 Scenarios`.
+
+      - name: performance__pathway_length_days
+        description: Number of days between the clock start and end date for the 62-day measure.
+
+      - name: performance__numerator_base
+        description: Base numerator for the 62-day measure. 1 when the pathway length is 62 days or fewer (within standard), otherwise 0 (breach).
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 1
+                strictly: false
+
+      - name: performance__denominator_base
+        description: Base denominator for the 62-day measure.
+
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

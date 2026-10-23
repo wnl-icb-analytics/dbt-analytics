@@ -1,6 +1,8 @@
 {{ config(materialized='table') }}
 
 -- LTC LCS DM case finding indicator DM_66: latest HbA1c 42-45, no HbA1c in the last year
+-- Filter HbA1c values > 0 before Latest 1, then test thresholds and dates.
+-- Equivalent local roots permit mapped matches; other local roots match source codes exactly.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/diabetes/icb-cf-dm-66.md
 --
 -- Lowest-priority DM cohort; no later report subtracts it, so woEX is folded inline.
@@ -20,8 +22,12 @@ with base as (
 
 latest_hba1c as (
     select person_id, result_value, clinical_effective_date
-    from ({{ get_ltc_lcs_observations_latest("a4dfc336-6ec7-4cec-21fa-c7d3e7842f2d") }})
+    from ({{ get_ltc_lcs_observations("a4dfc336-6ec7-4cec-21fa-c7d3e7842f2d", include_date_recorded=true) }})
     where result_value > 0
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
+    ) = 1
 ),
 
 hba1c_42_45 as (

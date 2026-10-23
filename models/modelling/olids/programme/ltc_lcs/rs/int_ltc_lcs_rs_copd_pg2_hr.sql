@@ -6,7 +6,8 @@
 -- - Rule 2: latest FEV1 < 50 (inclusion)
 -- - Rule 3: Chronic cor pulmonale within last 5 years (inclusion)
 -- - Rule 4: MRC Breathlessness Scale: grade 4 (inclusion)
--- - Rule 5: 2+ COPD exacerbations in past year, Acute exacerbation of COPD
+-- - Rule 5: any exacerbation record in past year (2 / 3+ exacerbations codes or acute
+--   exacerbation of COPD); one record qualifies
 
 
 with

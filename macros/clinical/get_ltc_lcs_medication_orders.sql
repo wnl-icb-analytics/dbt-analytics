@@ -1,4 +1,4 @@
-{% macro get_ltc_lcs_medication_orders(valuesets, match_paths='both') %}
+{% macro get_ltc_lcs_medication_orders(valuesets, match_paths='both', include_date_recorded=false) %}
 
 {#
     Returns medication orders for one or more LTC LCS valuesets via two parallel paths:
@@ -10,11 +10,13 @@
     translate EMIS codes to SNOMED. When both paths match the same order, the 'mapped'
     row wins via the qualify ordering.
 
-    Note: original_codes.include_children is not yet expanded (parent codes only).
+    P2 permits mapped concepts and requested descendants only through public or
+    equivalent local roots. Other local roots retain exact source matching.
 
     Params:
       valuesets    - comma-separated list of valueset_id or valueset_friendly_name tokens
       match_paths  - 'both' (default), 'mapped', or 'source'
+      include_date_recorded - also return EMIS save time for same-day ordering.
 #}
 
 {%- if valuesets is none -%}
@@ -38,7 +40,10 @@
 {%- set valuesets_quoted = "'" ~ valueset_tokens | join("','") ~ "'" -%}
 {%- set valuesets_upper_quoted = "'" ~ (valueset_tokens | map('upper') | join("','")) ~ "'" -%}
 
-with matched_orders as (
+with permitted_mapped_codes as (
+    {{ ltc_lcs_permitted_mapped_codes(valuesets_quoted, valuesets_upper_quoted) }}
+),
+matched_orders as (
 {%- if match_paths in ['both', 'mapped'] %}
     select
         mo.id as medication_order_id,
@@ -47,6 +52,9 @@ with matched_orders as (
         pp.person_id,
         pp.sk_patient_id,
         mo.clinical_effective_date as order_date,
+        {%- if include_date_recorded %}
+        mo.date_recorded,
+        {%- endif %}
         mo.medication_name as order_medication_name,
         mo.dose as order_dose,
         mo.quantity_value as order_quantity_value,
@@ -62,7 +70,7 @@ with matched_orders as (
         bnf.bnf_name,
         'mapped' as match_path
     from {{ ref('stg_olids_medication_order') }} as mo
-    inner join {{ ref('stg_reference_ltc_lcs_expanded_concepts') }} as ec
+    inner join permitted_mapped_codes as ec
         on mo.mapped_concept_code = ec.snomed_code
     left join {{ ref('stg_reference_ltc_lcs_valuesets') }} as vs
         on ec.valueset_id = vs.valueset_id
@@ -87,6 +95,9 @@ with matched_orders as (
         pp.person_id,
         pp.sk_patient_id,
         mo.clinical_effective_date as order_date,
+        {%- if include_date_recorded %}
+        mo.date_recorded,
+        {%- endif %}
         mo.medication_name as order_medication_name,
         mo.dose as order_dose,
         mo.quantity_value as order_quantity_value,

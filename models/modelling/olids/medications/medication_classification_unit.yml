@@ -1,0 +1,467 @@
+unit_tests:
+- name: lipid_statin_intensity_national_lists
+  model: int_lipid_lowering_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,
+       current_date()::date clinical_effective_date, '02'::varchar bnf_chapter, '0212'::varchar bnf_section,
+       v.bnf::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
+       null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
+       null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
+       null::number estimated_cost, null::varchar statement_medication_name,
+       v.code::varchar mapped_concept_code, null::varchar mapped_concept_display
+       from (values ('SYN_HI','SYN_ATORVA80','0212000B0SYN'),
+       ('SYN_NONHI','SYN_ATORVA10','0212000B0SYN'),('SYN_EZET','SYN_EZET','0212000L0SYN'),('SYN_COMBO','SYN_COMBO','0212000SYN'),('SYN_HICOMBO','SYN_HICOMBO','0212000SYN'),('SYN_OLDMOD','SYN_OLDMOD','0212000Y0SYN'),('SYN_OMEGA','SYN_OMEGA','0212000ABSYN'),('SYN_MISSING','SYN_MISSING','0212000F0SYN'),('SYN_LARO','SYN_LARO','0212000AESYN'),
+       ('SYN_ROSU','SYN_ROSU','0212000SYN'),('SYN_SIMVA','SYN_SIMVA','0212000SYN'),
+       ('SYN_BEMP','SYN_BEMP','0212000SYN'),('SYN_PCSK9','SYN_PCSK9','0212000SYN'),
+       ('SYN_INCL','SYN_INCL','0212000SYN'),('SYN_WRONG_SOURCE','SYN_WRONG_SOURCE','0212000SYN')) v(id,code,bnf)
+  - input: ref('stg_olids_patient')
+    format: sql
+    rows: select 'SYN_PAT'::varchar id,-9200::number person_id,null::number sk_patient_id
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      select code::varchar code, cluster::varchar cluster_id, src::varchar source,
+       'Synthetic list'::varchar cluster_description from (values
+       ('SYN_ATORVA80','STAT_COD','ECL_CACHE'),('SYN_ATORVA10','STAT_COD','ECL_CACHE'),
+       ('SYN_EZET','EZETIMIBE_COD','ECL_CACHE'),('SYN_COMBO','STAT_COD','ECL_CACHE'),('SYN_HICOMBO','STAT_COD','ECL_CACHE'),('SYN_OLDMOD','STAT_COD','ECL_CACHE'),('SYN_HICOMBO','NHS_DRUG_REFSETS/HIATORVASTAT_COD','OPENCODELISTS'),
+       ('SYN_ATORVA80','NHS_DRUG_REFSETS/HIATORVASTAT_COD','OPENCODELISTS'),
+       ('SYN_ROSU','STAT_COD','ECL_CACHE'),('SYN_ROSU','NHS_DRUG_REFSETS/HIROSUVASTAT_COD','OPENCODELISTS'),
+       ('SYN_SIMVA','STAT_COD','ECL_CACHE'),('SYN_SIMVA','NHS_DRUG_REFSETS/HISIMVASTAT_COD','OPENCODELISTS'),
+       ('SYN_BEMP','BEMPACID_COD','ECL_CACHE'),('SYN_PCSK9','PCSK9I_COD','ECL_CACHE'),
+       ('SYN_INCL','INCLISIRAN_COD','ECL_CACHE'),('SYN_EZET','EZETIMIBE_COD','ECL_CACHE'),
+       ('SYN_WRONG_SOURCE','STAT_COD','OPENCODELISTS')) v(code,cluster,src)
+  - input: ref('dmd_product')
+    format: sql
+    rows: >-
+      select code::varchar product_code, ingredients::number ingredient_count,
+      iff(code='SYN_LARO','15926311000001102','SYN_VTM')::varchar vtm_id from (values
+      ('SYN_ATORVA80',1),('SYN_ATORVA10',1),('SYN_EZET',1),('SYN_COMBO',2),('SYN_HICOMBO',2),('SYN_OLDMOD',1),('SYN_OMEGA',2),('SYN_LARO',2))
+      v(code,ingredients)
+  expect:
+    rows:
+    - medication_order_id: SYN_HI
+      is_statin: true
+      lipid_lowering_class: STATIN
+      is_high_intensity_statin: true
+      statin_intensity: HIGH_INTENSITY
+      is_combination_therapy: false
+    - medication_order_id: SYN_NONHI
+      is_statin: true
+      lipid_lowering_class: STATIN
+      is_high_intensity_statin: false
+      statin_intensity: OTHER_STATIN
+      is_combination_therapy: false
+    - medication_order_id: SYN_EZET
+      is_statin: false
+      lipid_lowering_class: EZETIMIBE
+      is_high_intensity_statin: false
+      statin_intensity: null
+      is_combination_therapy: false
+    - medication_order_id: SYN_COMBO
+      is_statin: true
+      lipid_lowering_class: STATIN_COMBINATION
+      statin_intensity: COMBINATION
+      is_high_intensity_statin: false
+      is_combination_therapy: true
+    - medication_order_id: SYN_HICOMBO
+      is_statin: true
+      lipid_lowering_class: STATIN_COMBINATION
+      statin_intensity: HIGH_INTENSITY
+      is_high_intensity_statin: true
+      is_combination_therapy: true
+    - medication_order_id: SYN_OLDMOD
+      is_statin: true
+      lipid_lowering_class: STATIN
+      statin_intensity: OTHER_STATIN
+      is_high_intensity_statin: false
+      is_combination_therapy: false
+    - medication_order_id: SYN_OMEGA
+      is_statin: false
+      lipid_lowering_class: OMEGA_3
+      statin_intensity: null
+      is_high_intensity_statin: false
+      is_combination_therapy: false
+    - medication_order_id: SYN_MISSING
+      is_statin: false
+      lipid_lowering_class: BILE_ACID_SEQUESTRANT
+      statin_intensity: null
+      is_high_intensity_statin: false
+      is_combination_therapy: false
+    - medication_order_id: SYN_LARO
+      is_statin: false
+      lipid_lowering_class: NICOTINIC_ACID
+      statin_intensity: null
+      is_high_intensity_statin: false
+      is_combination_therapy: false
+    - medication_order_id: SYN_ROSU
+      is_statin: true
+      lipid_lowering_class: STATIN
+      statin_intensity: HIGH_INTENSITY
+      is_high_intensity_statin: true
+      is_combination_therapy: false
+    - medication_order_id: SYN_SIMVA
+      is_statin: true
+      lipid_lowering_class: STATIN
+      statin_intensity: HIGH_INTENSITY
+      is_high_intensity_statin: true
+      is_combination_therapy: false
+    - medication_order_id: SYN_BEMP
+      is_statin: false
+      lipid_lowering_class: BEMPEDOIC_ACID
+      statin_intensity: null
+      is_high_intensity_statin: false
+      is_combination_therapy: false
+    - medication_order_id: SYN_PCSK9
+      is_statin: false
+      lipid_lowering_class: PCSK9_INHIBITOR
+      statin_intensity: null
+      is_high_intensity_statin: false
+      is_combination_therapy: false
+    - medication_order_id: SYN_INCL
+      is_statin: false
+      lipid_lowering_class: INCLISIRAN
+      statin_intensity: null
+      is_high_intensity_statin: false
+      is_combination_therapy: false
+    - medication_order_id: SYN_WRONG_SOURCE
+      is_statin: false
+      lipid_lowering_class: OTHER
+      statin_intensity: null
+      is_high_intensity_statin: false
+      is_combination_therapy: false
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar medication_order_id,null::boolean is_statin,null::varchar lipid_lowering_class,null::varchar statin_intensity,null::boolean
+        is_high_intensity_statin,null::boolean is_combination_therapy where false
+- name: nsaid_cox2_by_ingredient
+  model: int_nsaid_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,
+       current_date()::date clinical_effective_date, '10'::varchar bnf_chapter, '1001'::varchar bnf_section,
+       v.bnf::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
+       null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
+       null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
+       null::number estimated_cost, null::varchar statement_medication_name,
+       v.code::varchar mapped_concept_code, null::varchar mapped_concept_display
+       from (values ('SYN_ONE','SYN_ONE','100101SYN'),('SYN_TWO','SYN_TWO','100101SYN'),('SYN_THREE','SYN_THREE','100101SYN'),('SYN_FOUR','SYN_FOUR','100101SYN')) v(id,code,bnf)
+  - input: ref('stg_olids_patient')
+    format: sql
+    rows: select 'SYN_PAT'::varchar id,-9200::number person_id,null::number sk_patient_id
+  - input: ref('dmd_product')
+    format: sql
+    rows: >-
+      select code::varchar product_code,vtm::varchar vtm_id from (values
+      ('SYN_ONE','775123001'),('SYN_TWO','SYN_MELOXICAM'),('SYN_FOUR','370187009')) v(code,vtm)
+  expect:
+    rows:
+    - medication_order_id: SYN_ONE
+      is_non_selective: false
+      nsaid_type: COX2_SELECTIVE
+      is_cox2_selective: true
+    - medication_order_id: SYN_TWO
+      is_non_selective: true
+      nsaid_type: NON_SELECTIVE
+      is_cox2_selective: false
+    - medication_order_id: SYN_THREE
+      is_non_selective: null
+      nsaid_type: OTHER_NSAID
+      is_cox2_selective: null
+    - medication_order_id: SYN_FOUR
+      nsaid_type: COX2_SELECTIVE
+      is_cox2_selective: true
+      is_non_selective: false
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar medication_order_id,null::boolean is_non_selective,null::varchar nsaid_type,null::boolean
+        is_cox2_selective where false
+- name: ics_combination_by_ingredient_count
+  model: int_inhaled_corticosteroid_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,
+       current_date()::date clinical_effective_date, '03'::varchar bnf_chapter, '0302'::varchar bnf_section,
+       v.bnf::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
+       null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
+       null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
+       null::number estimated_cost, null::varchar statement_medication_name,
+       v.code::varchar mapped_concept_code, null::varchar mapped_concept_display
+       from (values ('SYN_ONE','SYN_ONE','030200SYN'),('SYN_TWO','SYN_TWO','030200SYN'),('SYN_THREE','SYN_THREE','030200SYN'),('SYN_FOUR','SYN_FOUR','030200SYN')) v(id,code,bnf)
+  - input: ref('stg_olids_patient')
+    format: sql
+    rows: select 'SYN_PAT'::varchar id,-9200::number person_id,null::number sk_patient_id
+  - input: ref('dmd_product')
+    format: sql
+    rows: >-
+      select code::varchar product_code,n::number ingredient_count from (values
+      ('SYN_ONE',1),('SYN_TWO',2),('SYN_THREE',3),('SYN_FOUR',null)) v(code,n)
+  expect:
+    rows:
+    - medication_order_id: SYN_ONE
+      ics_type: SINGLE_AGENT
+      is_single_agent: true
+      is_combination_therapy: false
+    - medication_order_id: SYN_TWO
+      ics_type: COMBINATION
+      is_single_agent: false
+      is_combination_therapy: true
+    - medication_order_id: SYN_THREE
+      ics_type: COMBINATION
+      is_single_agent: false
+      is_combination_therapy: true
+    - medication_order_id: SYN_FOUR
+      ics_type: OTHER_ICS
+      is_single_agent: null
+      is_combination_therapy: null
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar medication_order_id,null::varchar ics_type,null::boolean
+        is_single_agent,null::boolean is_combination_therapy where false
+- name: systemic_corticosteroid_mineralocorticoid
+  model: int_systemic_corticosteroid_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,
+       current_date()::date clinical_effective_date, '06'::varchar bnf_chapter, '0603'::varchar bnf_section,
+       v.bnf::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
+       null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
+       null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
+       null::number estimated_cost, null::varchar statement_medication_name,
+       v.code::varchar mapped_concept_code, null::varchar mapped_concept_display
+       from (values ('SYN_ONE','SYN_ONE','060302SYN'),('SYN_TWO','SYN_TWO','060302SYN'),('SYN_THREE','SYN_THREE','060302SYN')) v(id,code,bnf)
+  - input: ref('stg_olids_patient')
+    format: sql
+    rows: select 'SYN_PAT'::varchar id,-9200::number person_id,null::number sk_patient_id
+  - input: ref('dmd_product')
+    format: sql
+    rows: >-
+      select code::varchar product_code,vtm::varchar vtm_id from (values
+      ('SYN_ONE','775983003'),('SYN_TWO','SYN_PREDNISOLONE')) v(code,vtm)
+  expect:
+    rows:
+    - medication_order_id: SYN_ONE
+      corticosteroid_type_dmd: MINERALOCORTICOID
+      is_mineralocorticoid: true
+    - medication_order_id: SYN_TWO
+      corticosteroid_type_dmd: GLUCOCORTICOID
+      is_mineralocorticoid: false
+    - medication_order_id: SYN_THREE
+      corticosteroid_type_dmd: UNKNOWN
+      is_mineralocorticoid: null
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar medication_order_id,null::varchar corticosteroid_type_dmd,null::boolean
+        is_mineralocorticoid where false
+- name: valproate_formulation_from_dmd
+  model: int_valproate_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select null::varchar mapped_concept_id, v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,
+       current_date()::date clinical_effective_date, '04'::varchar bnf_chapter, '0408'::varchar bnf_section,
+       v.bnf::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
+       null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
+       null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
+       null::number estimated_cost, null::varchar statement_medication_name,
+       v.code::varchar mapped_concept_code, null::varchar mapped_concept_display
+       from (values ('SYN_MR','SYN_MR','040801SYN'),('SYN_GR','SYN_GR','040801SYN'),('SYN_SOL','SYN_SOL','040801SYN'),('SYN_MISSING','SYN_MISSING','040801SYN'),('SYN_CAP','SYN_CAP','040801SYN'),('SYN_PRO','SYN_PRO','040801SYN'),('SYN_GRAN','SYN_GRAN','040801SYN')) v(id,code,bnf)
+  - input: ref('stg_olids_patient')
+    format: sql
+    rows: select 'SYN_PAT'::varchar id,-9200::number person_id,null::number sk_patient_id
+  - input: ref('stg_reference_valproate_prog_codes')
+    format: sql
+    rows: >-
+      select null::varchar code,null::varchar code_category,null::varchar valproate_product_term
+      where false
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: >-
+      select code::varchar code,'VALPROATE'::varchar cluster_id,'ECL_CACHE'::varchar
+      source,'Synthetic valproate'::varchar cluster_description from (values
+      ('SYN_MR'),('SYN_GR'),('SYN_SOL'),('SYN_MISSING'),('SYN_CAP'),('SYN_PRO'),('SYN_GRAN')) v(code)
+  - input: ref('dim_person')
+    format: sql
+    rows: select -9200::number person_id,null::varchar current_practice_id,1::number total_patients
+  - input: ref('dmd_product')
+    format: sql
+    rows: >-
+      select code::varchar product_code,form::varchar form_description from (values
+      ('SYN_MR','Modified-release tablet'),('SYN_GR','Gastro-resistant tablet'),('SYN_SOL','Oral
+      solution'),('SYN_CAP','Capsule'),('SYN_PRO','Prolonged-release granules'),('SYN_GRAN','Granules')) v(code,form)
+  expect:
+    rows:
+    - medication_order_id: SYN_MR
+      formulation_type: MODIFIED_RELEASE
+      dmd_formulation_type: Modified-release tablet
+      is_modified_release: true
+    - medication_order_id: SYN_GR
+      formulation_type: TABLET
+      dmd_formulation_type: Gastro-resistant tablet
+      is_modified_release: false
+    - medication_order_id: SYN_SOL
+      formulation_type: LIQUID
+      dmd_formulation_type: Oral solution
+      is_modified_release: false
+    - medication_order_id: SYN_MISSING
+      formulation_type: UNKNOWN_FORMULATION
+      dmd_formulation_type: UNKNOWN
+      is_modified_release: null
+    - medication_order_id: SYN_CAP
+      formulation_type: CAPSULE
+      dmd_formulation_type: Capsule
+      is_modified_release: false
+    - medication_order_id: SYN_PRO
+      formulation_type: MODIFIED_RELEASE
+      dmd_formulation_type: Prolonged-release granules
+      is_modified_release: true
+    - medication_order_id: SYN_GRAN
+      formulation_type: UNKNOWN_FORMULATION
+      dmd_formulation_type: Granules
+      is_modified_release: false
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar medication_order_id,null::varchar formulation_type,null::varchar
+        dmd_formulation_type,null::boolean is_modified_release where false
+
+- name: anticoagulant_national_membership_and_source
+  model: int_anticoagulant_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,
+       current_date()::date clinical_effective_date, '02'::varchar bnf_chapter, '0208'::varchar bnf_section,
+       v.bnf::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
+       null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
+       null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
+       null::number estimated_cost, null::varchar statement_medication_name,
+       v.id::varchar mapped_concept_code, null::varchar mapped_concept_display
+       from (values ('SYN_DOAC','020802SYN'),('SYN_VKA','020802SYN'),('SYN_OUT','0208020ZSYN'),('SYN_WRONG','020802SYN')) v(id,bnf)
+  - input: ref('stg_olids_patient')
+    format: sql
+    rows: |-
+      select 'SYN_PAT'::varchar id,-9200::number person_id,null::varchar sk_patient_id
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      select code::varchar code, cluster::varchar cluster_id, src::varchar source, 'Synthetic list'::varchar cluster_description from (values ('SYN_DOAC','NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD','OPENCODELISTS'),('SYN_VKA','NHS_DRUG_REFSETS/VITKANTAGDRUG_COD','OPENCODELISTS'),('SYN_WRONG','NHS_DRUG_REFSETS/DIRECTORANTICOAGDRUG_COD','ECL_CACHE')) v(code,cluster,src)
+  expect:
+    format: sql
+    rows: |-
+      select column1::varchar medication_order_id,column2::boolean is_in_national_anticoagulant_list,column3::varchar anticoagulant_type_national from values ('SYN_DOAC',true,'DOAC'),('SYN_VKA',true,'VKA'),('SYN_OUT',false,null),('SYN_WRONG',false,null)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as medication_order_id, null::boolean as is_in_national_anticoagulant_list, null::varchar as anticoagulant_type_national where false
+
+- name: arb_national_list_defines_scope
+  model: int_arb_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,
+       current_date()::date clinical_effective_date, '02'::varchar bnf_chapter, '0208'::varchar bnf_section,
+       v.bnf::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
+       null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
+       null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
+       null::number estimated_cost, null::varchar statement_medication_name,
+       v.id::varchar mapped_concept_code, null::varchar mapped_concept_display
+       from (values ('SYN_ARB','0103050SYN'),('SYN_UNLISTED','020505SYN'),('SYN_WRONG','020505SYN')) v(id,bnf)
+  - input: ref('stg_olids_patient')
+    format: sql
+    rows: |-
+      select 'SYN_PAT'::varchar id,-9200::number person_id,null::varchar sk_patient_id
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      select code::varchar code, cluster::varchar cluster_id, src::varchar source, 'Synthetic list'::varchar cluster_description from (values ('SYN_ARB','NHS_DRUG_REFSETS/AII_COD','OPENCODELISTS'),('SYN_WRONG','NHS_DRUG_REFSETS/AII_COD','ECL_CACHE')) v(code,cluster,src)
+  expect:
+    format: sql
+    rows: |-
+      select 'SYN_ARB'::varchar medication_order_id
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as medication_order_id where false
+
+- name: beta_blocker_licensed_and_unlicensed_lists
+  model: int_beta_blocker_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,
+       current_date()::date clinical_effective_date, '02'::varchar bnf_chapter, '0208'::varchar bnf_section,
+       v.bnf::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
+       null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
+       null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
+       null::number estimated_cost, null::varchar statement_medication_name,
+       v.id::varchar mapped_concept_code, null::varchar mapped_concept_display
+       from (values ('SYN_L','0204SYN'),('SYN_U','0204SYN'),('SYN_OUT','0204SYN')) v(id,bnf)
+  - input: ref('stg_olids_patient')
+    format: sql
+    rows: |-
+      select 'SYN_PAT'::varchar id,-9200::number person_id,null::varchar sk_patient_id
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      select code::varchar code, cluster::varchar cluster_id, src::varchar source, 'Synthetic list'::varchar cluster_description from (values ('SYN_L','NHS_DRUG_REFSETS/LBB_COD','OPENCODELISTS'),('SYN_U','NHS_DRUG_REFSETS/ULBB_COD','OPENCODELISTS')) v(code,cluster,src)
+  expect:
+    format: sql
+    rows: |-
+      select 'SYN_L'::varchar medication_order_id,true::boolean is_hf_licensed union all select 'SYN_U',false
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as medication_order_id, null::boolean as is_hf_licensed where false
+
+- name: mra_national_scope_and_finerenone_vtms
+  model: int_mra_medications_all
+  given:
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select v.id::varchar id, 'SYN_PAT'::varchar patient_id, -9200::number person_id,
+       current_date()::date clinical_effective_date, '02'::varchar bnf_chapter, '0208'::varchar bnf_section,
+       v.bnf::varchar bnf_code, null::varchar bnf_name, null::varchar medication_statement_id,
+       null::varchar medication_name, null::timestamp_ntz date_recorded, null::varchar dose,
+       null::number quantity_value, null::varchar quantity_unit, null::number duration_days,
+       null::number estimated_cost, null::varchar statement_medication_name,
+       v.id::varchar mapped_concept_code, null::varchar mapped_concept_display
+       from (values ('SYN_FIN1','0202SYN'),('SYN_FIN2','0202SYN'),('SYN_SPIR','0202SYN'),('SYN_MISSING','0202SYN'),('SYN_UNLISTED','0202SYN')) v(id,bnf)
+  - input: ref('stg_olids_patient')
+    format: sql
+    rows: |-
+      select 'SYN_PAT'::varchar id,-9200::number person_id,null::varchar sk_patient_id
+  - input: ref('stg_reference_combined_codesets')
+    format: sql
+    rows: |-
+      select code::varchar code, cluster::varchar cluster_id, src::varchar source, 'Synthetic list'::varchar cluster_description from (values ('SYN_FIN1','NHS_DRUG_REFSETS/MRADRUG_COD','OPENCODELISTS'),('SYN_FIN2','NHS_DRUG_REFSETS/MRADRUG_COD','OPENCODELISTS'),('SYN_SPIR','NHS_DRUG_REFSETS/MRADRUG_COD','OPENCODELISTS'),('SYN_MISSING','NHS_DRUG_REFSETS/MRADRUG_COD','OPENCODELISTS')) v(code,cluster,src)
+  - input: ref('dmd_product')
+    format: sql
+    rows: |-
+      select column1::varchar product_code,column2::varchar vtm_id from values ('SYN_FIN1','1163351002'),('SYN_FIN2','40634211000001108'),('SYN_SPIR','SYN_STEROID')
+  expect:
+    format: sql
+    rows: |-
+      select column1::varchar medication_order_id,column2::boolean is_steroidal_mra from values ('SYN_FIN1',false),('SYN_FIN2',false),('SYN_SPIR',true),('SYN_MISSING',null)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as medication_order_id, null::boolean as is_steroidal_mra where false

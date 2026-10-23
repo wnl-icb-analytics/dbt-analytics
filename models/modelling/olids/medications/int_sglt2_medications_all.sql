@@ -79,9 +79,7 @@ sglt2_enhanced AS (
         END AS sglt2_drug,
 
         -- Order recency flags (SGLT2 inhibitors are typically long-term therapy)
-        sob.order_date >= CURRENT_DATE() - INTERVAL '3 months' AS is_recent_3m,
-        sob.order_date >= CURRENT_DATE() - INTERVAL '6 months' AS is_recent_6m,
-        sob.order_date >= CURRENT_DATE() - INTERVAL '12 months' AS is_recent_12m
+        {{ medication_date_flags('sob.order_date') }}
     FROM sglt2_orders_base sob
     LEFT JOIN drug_clusters dc
         ON sob.mapped_concept_code = dc.mapped_concept_code

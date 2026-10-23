@@ -1,13 +1,32 @@
-
 macros:
   - name: get_observations
     description: >
-      Retrieves standardised observation data filtered by specified cluster IDs.
-      Joins to patient and concept mapping tables to provide a complete view of observations.
+      One row per observation and matched cluster, plus spec_version when versioned=true.
+      Joins stg_olids_observation on mapped_concept_code to stg_reference_combined_codesets,
+      or stg_reference_ukhsa_codecluster_versions when versioned. Person status is not filtered.
+      clinical_effective_date uses observation_clinical_date: a clinical date after a real
+      recorded date (1900 or later) becomes the recorded date. A pre-1900 recorded date is an
+      EMIS placeholder and never replaces the clinical date, so a clinical date after such a
+      placeholder is kept even when it is in the future; apply your own date ceiling where a
+      future event would be wrong. A missing clinical date becomes
+      1900-01-01; filter clinical_effective_date_raw IS NOT NULL to exclude undated evidence.
+      The result type is TIMESTAMP_NTZ. clinical_effective_date_raw is the supplied date:
+      a row was corrected when it is NULL or differs from clinical_effective_date.
+      Planned-date concepts, such as due dates and EDD, should use clinical_effective_date_raw.
     arguments:
       - name: cluster_ids
         type: string
-        description: Comma-separated list of cluster IDs to filter observations by
+        description: Comma-separated list of quoted cluster IDs to filter observations by.
+      - name: source
+        type: string
+        description: Optional source filter for the code clusters.
+      - name: include_history
+        type: boolean
+        description: >
+          Adds retired SNOMED predecessors via the NHS England history substitution table. Ambiguous predecessors are included only when every successor is in the same cluster; a code that is direct in any requested cluster is never added to another.
+      - name: versioned
+        type: boolean
+        description: Reads every published UKHSA cluster version and adds spec_version; cannot include history.
     meta:
       tests:
         - test_get_observations

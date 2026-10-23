@@ -1,7 +1,7 @@
 models:
   - name: int_ltc_lcs_moc_base
     description: |-
-      LTC LCS register members, one row per person at the build date. Registration status is not filtered. Adult asthma requires age 18 or over. Excluded people remain for CYP-only reporting.
+      LTC LCS register members, one row per person at the build date. Registration status is not filtered. Adult asthma requires age 18 or over. People excluded from the EMIS MoC base search remain: CYP-only asthma people outside the MoC base, and LR single-condition people inside it on the Check & Test-only pathway.
     config:
       meta:
         owner:
@@ -45,7 +45,7 @@ models:
       - name: is_on_stroke_tia_register
         description: Person is on the stroke tia register.
       - name: moc_base_exclusion_reason
-        description: Adult MoC exclusion; null means included.
+        description: EMIS MoC base search exclusion; null otherwise. LR rows stay in the MoC base on the Check & Test-only pathway.
         data_tests:
           - accepted_values:
               arguments:
@@ -54,7 +54,17 @@ models:
                   - LR hypertension only
                   - LR adult asthma only
       - name: is_in_moc_base
-        description: Included in the adult MoC population after the EMIS exclusions.
+        description: In the adult MoC base - the EMIS MoC base search population plus Check & Test-only LR members. CYP-only asthma people are excluded.
+        data_tests:
+          - not_null
+      - name: is_cyp_asthma_only
+        description: On the CYP asthma register and no other LTC LCS register; follows the CYP annual and desktop review pathway.
+        data_tests:
+          - not_null
+      - name: is_moc_check_test_only
+        description: LR hypertension-only or LR adult-asthma-only. Excluded from the EMIS MoC base search but kept in the MoC base; the programme requires only the annual Check & Test for them.
+        data_tests:
+          - not_null
     data_tests:
       - dbt_utils.at_least_one:
           arguments:

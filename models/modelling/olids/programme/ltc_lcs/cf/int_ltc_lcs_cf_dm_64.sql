@@ -1,6 +1,7 @@
 {{ config(materialized='table') }}
 
 -- LTC LCS DM case finding indicator DM_64: latest BMI >= 35 (>= 32.5 BAME), no HbA1c in 2y
+-- Equivalent local roots permit mapped matches; other local roots match source codes exactly.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/diabetes/icb-cf-dm-64.md
 -- ICB_CF_DM_64 = ICB_CF_DM_64_woEX, then Rule 1 (final, exclude if matched):
 --   exclude "annual review declined" (1-code marker, pinned id) within the last 3 years.

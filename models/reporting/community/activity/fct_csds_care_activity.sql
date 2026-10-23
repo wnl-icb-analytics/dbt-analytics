@@ -101,27 +101,40 @@ left join {{ ref('clinical_unit_of_measurement') }} as unit
     on trim(a.ucum_unit_of_measurement) = unit.code
 left join {{ ref('organisation') }} as provider
     on upper(trim(a.organisation_code_provider)) = provider.organisation_code
+-- Read codes submitted under the wrong Read scheme resolve in the other one, as in fct_csds_clinical_record.
 left join {{ ref('snomed_concept') }} as procedure_snomed
     on trim(a.coded_procedure_clinical_terminology) = procedure_snomed.snomed_code
     and trim(a.procedure_scheme_in_use_community_care) = '06'
+left join {{ ref('read_code_scheme_correction') }} as procedure_correction
+    on trim(a.coded_procedure_clinical_terminology) = procedure_correction.code
+    and procedure_correction.submitted_coding_system = case trim(a.procedure_scheme_in_use_community_care)
+        when '04' then 'read_v2' when '05' then 'ctv3' end
 left join {{ ref('read_code') }} as procedure_read
     on trim(a.coded_procedure_clinical_terminology) = procedure_read.code
-    and ((trim(a.procedure_scheme_in_use_community_care) = '04' and procedure_read.coding_system = 'read_v2')
-        or (trim(a.procedure_scheme_in_use_community_care) = '05' and procedure_read.coding_system = 'ctv3'))
+    and procedure_read.coding_system = coalesce(procedure_correction.resolved_coding_system, case trim(a.procedure_scheme_in_use_community_care)
+        when '04' then 'read_v2' when '05' then 'ctv3' end)
 left join {{ ref('snomed_concept') }} as finding_snomed
     on trim(a.coded_finding_coded_clinical_entry) = finding_snomed.snomed_code
     and trim(a.finding_scheme_in_use_community_care) = '04'
+left join {{ ref('read_code_scheme_correction') }} as finding_correction
+    on trim(a.coded_finding_coded_clinical_entry) = finding_correction.code
+    and finding_correction.submitted_coding_system = case trim(a.finding_scheme_in_use_community_care)
+        when '02' then 'read_v2' when '03' then 'ctv3' end
 left join {{ ref('read_code') }} as finding_read
     on trim(a.coded_finding_coded_clinical_entry) = finding_read.code
-    and ((trim(a.finding_scheme_in_use_community_care) = '02' and finding_read.coding_system = 'read_v2')
-        or (trim(a.finding_scheme_in_use_community_care) = '03' and finding_read.coding_system = 'ctv3'))
+    and finding_read.coding_system = coalesce(finding_correction.resolved_coding_system, case trim(a.finding_scheme_in_use_community_care)
+        when '02' then 'read_v2' when '03' then 'ctv3' end)
 left join {{ ref('snomed_concept') }} as observation_snomed
     on trim(a.coded_observation_clinical_terminology) = observation_snomed.snomed_code
     and trim(a.observation_scheme_in_use_community_care) = '03'
+left join {{ ref('read_code_scheme_correction') }} as observation_correction
+    on trim(a.coded_observation_clinical_terminology) = observation_correction.code
+    and observation_correction.submitted_coding_system = case trim(a.observation_scheme_in_use_community_care)
+        when '01' then 'read_v2' when '02' then 'ctv3' end
 left join {{ ref('read_code') }} as observation_read
     on trim(a.coded_observation_clinical_terminology) = observation_read.code
-    and ((trim(a.observation_scheme_in_use_community_care) = '01' and observation_read.coding_system = 'read_v2')
-        or (trim(a.observation_scheme_in_use_community_care) = '02' and observation_read.coding_system = 'ctv3'))
+    and observation_read.coding_system = coalesce(observation_correction.resolved_coding_system, case trim(a.observation_scheme_in_use_community_care)
+        when '01' then 'read_v2' when '02' then 'ctv3' end)
 left join {{ ref('icd10_code') }} as finding_icd
     on replace({{ clean_icd10_code('upper(trim(a.coded_finding_coded_clinical_entry))') }}, '.', '') = finding_icd.code
     and trim(a.finding_scheme_in_use_community_care) = '01'

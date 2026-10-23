@@ -186,7 +186,7 @@ from population as pop
 cross join mean_ratio as mr
 left join {{ ref('int_organisation_borough_mapping') }} as org_bor
     on pop.practice_code = org_bor.practice_code
-left join {{ ref('stg_reference_wnl_gp_practice_neighbourhood') }} as nb_reg
+left join {{ ref('practice_wnl_all') }} as nb_reg
     on pop.practice_code = nb_reg.practice_code
 left join practice_weights as w
     on pop.practice_code = w.practice_code
