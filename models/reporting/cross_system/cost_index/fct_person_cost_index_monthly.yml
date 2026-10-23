@@ -2,9 +2,11 @@ version: 2
 models:
   - name: fct_person_cost_index_monthly
     description: |
-      Monthly patient-level cost and activity for WNL resource analysis
-      (NCL and NWL). SLAM supplies agreed actual provider costs, not national
-      tariff prices; EPD supplies actual reimbursed GP prescribing costs.
+      Monthly patient-level cost and activity for WNL resource analysis.
+      SLAM and EPD cover the WNL footprint (NCL and NWL); MHSDS and CSDS are
+      not filtered to WNL commissioners or residents. SLAM supplies agreed
+      actual provider costs, not national tariff prices; EPD supplies actual
+      reimbursed GP prescribing costs.
       MHSDS supplies mental health inpatient bed days and crisis and community
       contacts; CSDS supplies community health contacts. MHSDS and CSDS costs
       are proxy estimates based on activity and NHS England 2026/27 currency
@@ -15,18 +17,20 @@ models:
 
       Retains available history for each source, with no rolling window or
       restriction to shared months. SLAM starts in April 2021 and excludes
-      its latest incomplete submitted month. Source coverage and delivery lag
-      differ; check int_cost_index_source_coverage for month ranges by source
-      and cost basis. GP appointments and separate high-cost drugs/devices
-      patient-level feeds are not included.
+      the most recent submitted month, which is still provisional. Source
+      coverage and delivery lag differ; check int_cost_index_source_coverage
+      for month ranges by source and cost basis. GP appointments and separate
+      high-cost drugs/devices patient-level feeds are not included.
 
       Includes unidentified SLAM activity and non-patient-attributable costs.
       Filter is_patient_attributable = TRUE and exclude null sk_patient_id
       for analysis of identified patients. Do not sum across sources or mix
       actual and proxy costs without checking overlap. SLAM mental health and
       community block payments may cover the same care as MHSDS and CSDS proxy
-      costs. The attributable flag does not establish that sources are mutually
-      exclusive. Keep unlike activity units separate.
+      costs, and patient-attributable SLAM Community and Therapies lines can
+      cover care also recorded in CSDS. The attributable flag does not
+      establish that sources are mutually exclusive. Keep unlike activity
+      units separate.
 
       This model is patient-level and applies no small-number suppression.
       Aggregate outputs and apply small-number suppression before sharing.

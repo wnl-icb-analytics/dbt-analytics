@@ -3,10 +3,12 @@ version: 2
 models:
   - name: sem_cost_index
     description: |
-      Monthly patient-level cost and activity for the WNL footprint (NCL and
-      NWL). The cost table is fct_person_cost_index_monthly. One row represents
-      patient x activity month x service grouping x service x attributable flag
-      x cost basis x cost source x activity unit. It retains available history
+      Monthly patient-level cost and activity. SLAM and EPD cover the WNL
+      footprint (NCL and NWL); MHSDS and CSDS are not filtered to WNL
+      commissioners or residents. The cost table is
+      fct_person_cost_index_monthly. One row represents patient x activity
+      month x service grouping x service x attributable flag x cost basis x
+      cost source x activity unit. It retains available history
       for each source, including SLAM rows without an identified patient and
       costs that cannot be attributed to patients.
 
@@ -22,9 +24,10 @@ models:
 
       activity_month is the first day of the month: SLAM uses its financial
       period, EPD its prescribing processing period, and MHSDS and CSDS their
-      activity dates. SLAM starts in April 2021 and excludes its latest
-      incomplete submitted month. Source coverage and delivery lag differ;
-      this view does not restrict months to shared coverage. Check
+      activity dates. SLAM starts in April 2021 and excludes the most recent
+      submitted month, which is still provisional. Source coverage and
+      delivery lag differ; this view does not restrict months to shared
+      coverage. Check
       int_cost_index_source_coverage for month ranges by source and cost basis.
 
       service_grouping includes Planned, Crisis, Community, Mental Health,
@@ -39,8 +42,9 @@ models:
       total_cost sums costs in GBP within the selected source and cost basis.
       Do not sum across sources or mix actual and proxy costs without checking
       overlap. SLAM mental health and community block payments may cover the
-      same care as MHSDS and CSDS proxy costs. The attributable flag does not
-      establish that sources are mutually exclusive.
+      same care as MHSDS and CSDS proxy costs, and patient-attributable SLAM
+      Community and Therapies lines can cover care also recorded in CSDS. The
+      attributable flag does not establish that sources are mutually exclusive.
 
       total_activity sums the source activity in activity_unit: slam_activity
       for SLAM, prescription_item for EPD, bed_day for MHSDS inpatient care,
