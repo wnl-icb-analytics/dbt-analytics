@@ -1,11 +1,36 @@
 models:
   - name: int_fa_lsacm_monthly_sub_ytd
     description: >
-      Records of monthly submissions into LSACM for the latest financial year and month using STG_SDL_META_FILE_REGISTRY.
+      One row per submitted LSACM file, for every financial month and file version of the latest financial year, for a fixed list of 10 providers. Filter to the latest version or month downstream.
     config:
       meta:
         owner:
           name: KateHomer55
+    columns:
+      - name: provider_code
+        description: Provider ODS code.
+      - name: organisation_name
+        description: Full name of the provider organisation.
+      - name: meta_file_id
+        description: SDL source file identifier from META_FILE_REGISTRY.
+      - name: activity_month
+        description: Month of actual activity in YYYY-MM format.
+      - name: fy_month_submitted
+        description: Financial month number from 1 (April) to 12 (March).
+      - name: financial_year
+        description: Financial year for the submission as YY/YY format.
+      - name: file_version
+        description: Version number of the submitted file from META_FILE_REGISTRY.
+      - name: required_submission_date
+        description: Required submission date for the month from timetable.
+      - name: date_received
+        description: Date when the submission was received into OneLondon.
+      - name: date_submitted
+        description: Date when the submission was actually made from META_FILE_REGISTRY.
+      - name: submitted_row_count
+        description: Row count of the submitted file from META_FILE_REGISTRY.
+      - name: submission_status
+        description: Submission status derived from the expected and actual submission dates.
     tests:
       - dbt_expectations.expect_table_row_count_to_be_between:
           arguments:

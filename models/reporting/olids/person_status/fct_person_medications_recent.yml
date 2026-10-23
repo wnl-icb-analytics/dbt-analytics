@@ -1,19 +1,11 @@
 models:
   - name: fct_person_medications_recent
-    description: |
-      Medications prescribed within the last 30 days and last year per person.
-
-      Person-level snapshot of recent medication prescriptions with counts and active ingredient analysis.
-      Includes all medication orders (not just repeat prescriptions) from the last 30 days and last year, and separates current repeat medicines from non-repeat medicines.
-
-      Active Ingredient Analysis:
-      - Uses VTM (Virtual Therapeutic Moiety) from BNF/dm+d to identify unique active ingredients
-      - VTM represents the active ingredient/therapeutic moiety in the UK dm+d classification system
-      - Medications without VTM mapping (NULL vtm_code) are excluded from active ingredient counts
-      - Unique medication count uses medication names (BNF name or original medication name)
-
-      Grain: One row per person with medications in last 30 days or last year
-
+    description: >-
+      Prescribing in the 365 days to the build date in OLIDS, one row per person in dim_person with
+      a named medication order. Includes repeat and non-repeat orders, without a
+      current-registration restriction. Distinct medicines use BNF names where
+      available, otherwise recorded names. Active-ingredient counts exclude medicines
+      without a dm+d Virtual Therapeutic Moiety (VTM) mapping.
     config:
       meta:
         owner:
@@ -51,7 +43,9 @@ models:
               arguments:
                 min_value: 0
       - name: unique_medication_count_30d
-        description: Count of distinct medication names prescribed in the last 30 days
+        description: >-
+          Distinct medicines prescribed in the last 30 days, using the BNF name where
+          available, otherwise the recorded medication name.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -77,7 +71,9 @@ models:
               arguments:
                 min_value: 0
       - name: unique_medication_count_12mo
-        description: Count of distinct medication names prescribed in the last year (365 days)
+        description: >-
+          Distinct medicines prescribed in the last 365 days, using the BNF name where
+          available, otherwise the recorded medication name.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -97,3 +93,35 @@ models:
           - dbt_utils.accepted_range:
               arguments:
                 min_value: 0
+
+unit_tests:
+- name: medications_recent_named_eligible_orders_in_person_population
+  model: fct_person_medications_recent
+  given:
+  - input: ref('dim_person')
+    format: sql
+    rows: |-
+      select -18315::number person_id
+  - input: ref('int_medication_orders_repeat_current')
+    format: sql
+    rows: |-
+      select null::number person_id,null::varchar mapped_concept_code,null::date latest_order_date where false
+  - input: ref('stg_reference_bnf_latest')
+    format: sql
+    rows: |-
+      select null::varchar snomed_code,null::varchar bnf_name,null::varchar vtm,null::varchar vtm_name where false
+  - input: ref('stg_olids_medication_order')
+    format: sql
+    rows: |-
+      select person::number person_id,'SYN_UNMAPPED'::varchar patient_id,'SYN_PRODUCT'::varchar mapped_concept_code,
+       dateadd(day,days,current_date())::date clinical_effective_date,name::varchar medication_name,null::varchar statement_medication_name
+       from (values (-18315,-10,'Synthetic named medicine'),(-18316,-10,'Synthetic named medicine'),
+       (-18315,1,'Synthetic future medicine'),(-18315,-10,null)) v(person,days,name)
+  expect:
+    format: sql
+    rows: |-
+      select -18315::number person_id,1::number total_prescriptions_12mo,1::number total_prescriptions_30d
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::number as person_id, null::number as total_prescriptions_12mo, null::number as total_prescriptions_30d where false

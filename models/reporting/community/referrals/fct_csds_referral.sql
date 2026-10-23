@@ -51,12 +51,12 @@ select
 from {{ ref('stg_csds_referral') }} as r
 left join {{ ref('stg_csds_bridging') }} as b on r.person_id = b.person_id
 left join {{ ref('csds_source_of_referral') }} as s on trim(r.source_of_referral_for_community) = s.code
-left join {{ ref('csds_referral_code_lookup') }} as reason
-    on reason.code_set_name = 'reason_for_referral' and trim(r.primary_reason_for_referral_community_care) = reason.code
-left join {{ ref('csds_referral_code_lookup') }} as priority
-    on priority.code_set_name = 'priority_type' and trim(r.priority_type_code) = priority.code
-left join {{ ref('csds_referral_code_lookup') }} as staff
-    on staff.code_set_name = 'referring_staff_group' and trim(r.referring_care_professional_staff_group_community_care) = staff.code
+left join {{ ref('csds_reason_for_referral') }} as reason
+    on trim(r.primary_reason_for_referral_community_care) = reason.code
+left join {{ ref('nhs_dd_priority_type') }} as priority
+    on trim(r.priority_type_code) = priority.code
+left join {{ ref('csds_care_professional_staff_group') }} as staff
+    on trim(r.referring_care_professional_staff_group_community_care) = staff.code
 left join {{ ref('organisation') }} as provider
     on upper(trim(r.organisation_code_provider)) = provider.organisation_code
 left join {{ ref('organisation') }} as commissioner

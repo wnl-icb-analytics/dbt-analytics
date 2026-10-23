@@ -1,16 +1,15 @@
 models:
   - name: stg_sus_apc_spell_episodes_clinical_coding_procedure_opcs
-    description: SUS APC episode clinical procedures (OPCS-4)
+    description: >-
+      SUS APC episode procedures at one row per recorded procedure position. Identical
+      source replays with the same code and procedure date are retained once. Conflicting
+      codes or dates at the same position remain visible and fail the grain test.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests:
+    data_tests:
       - dbt_utils.unique_combination_of_columns:
-          config:
-            severity: error
-            error_if: ">1000"
-            warn_if: ">10"
           arguments:
             combination_of_columns:
               - primarykey_id
@@ -20,6 +19,10 @@ models:
           arguments:
             min_value: 1
     columns:
+      - name: procedure_id
+        description: Stable procedure slot key from the spell, episode and procedure position.
+      - name: procedure_date
+        description: Supplied procedure date. Null when absent or unparseable; not replaced with the admission date.
       - name: primarykey_id
         description: Primary key from main APC spell (FK)
         tests:

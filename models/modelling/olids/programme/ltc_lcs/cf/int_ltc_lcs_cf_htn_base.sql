@@ -8,20 +8,18 @@
 --   - ICS_METABOLIC_LTC                          (has_metabolic_excluding_condition = true)
 --   - CF_NHSHC2Y (NHS health check last 24m)     (had_nhs_health_check_24m = true)
 --   - Hypertension resolved / White coat HTN     (uclp_priority_groups_base_vs1, 2 codes, ever)
---   - latest HYP_COD = on-register hypertension  (uclp_priority_groups_base_vs3, 181 codes):
---       canon "Include patients who do NOT match ... Latest 1 where code IN HYP_COD" ->
---       exclude anyone whose latest HYP_COD record exists (largely overlaps the HTN register
---       inside ICS_METABOLIC_LTC, implemented explicitly per canon). vs2 (HYPRES_COD, 2 codes)
---       is a subset of vs1 so the resolved arm is covered by vs1.
+--   - the latest record across HYPRES_COD and HYP_COD, only if that kept record is
+--     in HYP_COD. A later resolution defeats an older diagnosis in this rule.
+--     The earlier ever-resolved exclusion still applies independently.
 --
--- CAVEAT: ICB_CF_HTN_61_Base also references two EMIS library items
---   (3de35e4f-7964-4f24-a0b4-fd42930a1dd1, ea06414e-6bec-4593-837f-5b854c54a8c7) whose logic is
---   NOT in the XML export. Omitted here pending EMIS verification (flagged in canon caveats).
+-- Excludes QOF palliative care register membership (EMIS library ea06414e).
+-- Library 3de35e4f lacks a complete exported definition and remains omitted.
 
 with base as (
     select person_id
     from {{ ref('int_ltc_lcs_cf_base_population') }}
     where has_metabolic_excluding_condition = false
+        and is_on_palliative_care_register = false
         and had_nhs_health_check_24m = false
 ),
 
@@ -31,10 +29,13 @@ hypertension_resolved as (
     from ({{ get_ltc_lcs_observations("uclp_priority_groups_base_vs1") }})
 ),
 
--- Latest HYP_COD (on-register hypertension) exists -> exclude (carve-back per canon)
+-- Rank diagnosis and resolution together, then test the kept record for HYP_COD.
 hyp_cod_latest as (
     select person_id
-    from ({{ get_ltc_lcs_observations_latest("uclp_priority_groups_base_vs3") }})
+    from ({{ get_ltc_lcs_latest_record_in_set(
+        "uclp_priority_groups_base_vs2, uclp_priority_groups_base_vs3",
+        "uclp_priority_groups_base_vs3"
+    ) }})
 )
 
 select distinct b.person_id

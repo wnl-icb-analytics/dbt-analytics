@@ -1,6 +1,6 @@
 {{
     config(
-        materialized='view'
+        materialized='table'
     )
 }}
 
@@ -17,6 +17,8 @@ select
     , start_time
     , end_date
     , end_time
+    , decided_to_admit_date
+    , discharge_ready_date
     , estimated_discharge_date
     , has_estimated_discharge_date
     , estimated_discharge_date_method
@@ -25,6 +27,8 @@ select
     , duration_to_date
     , unadjusted_length_of_stay_days
     , excess_bed_days
+    , admission_administrative_category_code
+    , admission_administrative_category_name
     , spell_admission_method
     , admission_method_name
     , admission_method_group

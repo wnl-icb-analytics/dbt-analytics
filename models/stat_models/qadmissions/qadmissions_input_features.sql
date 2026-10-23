@@ -4,7 +4,7 @@
         cluster_by=['sk_patient_id'],
         tags=['qadmissions', 'risk_scores'],
         meta={
-            'custom_message': 'QAdmissions feature set for Snowflake model registry. Derived from the QAdmissions 2013 v4.1 reference implementation (AGPL-3.0, ClinRisk Ltd). Displaying any score produced from these features requires the ClinRisk disclaimer.'
+            'custom_message': 'QAdmissions feature set for Snowflake model registry. Derived from the QAdmissions 2013 v4.1 reference implementation (AGPL-3.0, ClinRisk Ltd). Displaying any score produced from these features requires the ClinRisk disclaimer. A missing BMI is imputed (see is_bmi_imputed).'
         }
     )
 }}
@@ -19,10 +19,20 @@
 
     Grain
       One row per active, non-deceased person in dim_person_demographics whose
-      recorded gender is Male or Female and age is between 18-100. bmi and
-      town are passed through as NULL when missing, so those rows need
-      handling at scoring. alcohol_cat6 defaults to 0 (NonDrinker) when
-      there is no Full AUDIT score.
+      recorded gender is Male or Female and age is between 18-100. A
+      missing bmi is imputed (see below). town is passed through as NULL
+      when missing, so those rows need handling at scoring. alcohol_cat6
+      defaults to 0 (NonDrinker) when there is no Full AUDIT score.
+
+    BMI imputation
+      A missing BMI is filled with the mean recorded BMI of eligible people
+      with the same sex, age decade and ethnicity category, falling back to
+      sex and age decade, then sex, when a group has fewer than 100 recorded
+      BMIs (var qadmissions_bmi_imputation_min_group;
+      macros/clinical/qadmissions_impute_bmi.sql). bmi_recorded keeps
+      the recorded value, and is_bmi_imputed and bmi_imputation_group show
+      what was imputed and from which group. Imputed values are not clipped,
+      so one outside 20-40 is rejected by the model.
 
     AGPL / ClinRisk attribution
       QAdmissions is published by ClinRisk Ltd under the GNU Affero General
@@ -145,8 +155,11 @@ emergency_admissions AS (
 ),
 
 -- Lab features use the int_*_latest models, which exclude negative values and
--- extreme outliers. qadmissions_input_features_history keeps extreme outliers,
--- so c_hb, high_platelet and high_lft can differ between the two models.
+-- extreme outliers. qadmissions_input_features_validation keeps extreme outliers
+-- for platelets and LFTs, so high_platelet and high_lft can differ between the
+-- two models. Both drop out-of-range haemoglobin, which under the current
+-- observation_value_bounds covers every extreme outlier, so c_hb uses the same
+-- results in both.
 
 -- Lab thresholds from the qadmissions_lab_thresholds seed, pivoted to one row.
 lab_thresholds AS (
@@ -229,6 +242,35 @@ ethrisk_lookup AS (
         person_id,
         ethrisk
     FROM {{ ref('qadmissions_ethrisk') }}
+),
+
+-- Ethnicity category per person (White, Asian, Black, Mixed, Other or
+-- Not Recorded), used only to group the BMI imputation. qadmissions_ethrisk
+-- carries the subcategory, not the category.
+ethnicity AS (
+    SELECT
+        person_id,
+        ethnicity_category
+    FROM {{ ref('dim_person_ethnicity') }}
+),
+
+-- What the BMI imputation groups on, for every eligible person. The group
+-- means come from everyone here with a recorded BMI.
+bmi_imputation_input AS (
+    SELECT
+        base.person_id,
+        base.gender                                                    AS sex,
+        FLOOR(base.age / 10) * 10                                      AS age_decade,
+        {{ qadmissions_bmi_ethnicity_group('ethn.ethnicity_category') }} AS ethnicity_group,
+        bmi.bmi_value                                                  AS bmi_recorded
+    FROM base_spine base
+    LEFT JOIN bmi            ON base.person_id = bmi.person_id
+    LEFT JOIN ethnicity ethn ON base.person_id = ethn.person_id
+),
+
+-- One row per eligible person: the recorded BMI, or the imputed mean.
+bmi_imputed AS (
+    {{ qadmissions_impute_bmi('bmi_imputation_input') }}
 )
 
 SELECT
@@ -242,10 +284,17 @@ SELECT
     base.sk_patient_id,
     base.age,
     CASE WHEN base.gender = 'Male' THEN 'male' ELSE 'female' END           AS sex,
-    bmi.bmi_value                                                          AS bmi,
 
-    -- Constants
-    5                                                                      AS sha1,
+    -- BMI: the latest recorded value, or the imputed mean when there is
+    -- none. bmi is what the model scores.
+    bmi_imp.bmi,
+    bmi_imp.bmi_recorded,
+    bmi_imp.is_bmi_imputed,
+    bmi_imp.bmi_imputation_group,
+
+    -- Constants. sha1 is the Strategic Health Authority; QAdmissions numbers
+    -- the regions alphabetically, so London is 3 (5 is North West).
+    3                                                                      AS sha1,
     {{ var('qadmissions_horizon_years', 1) }}                              AS surv,
 
     -- Disease booleans from dim_person_conditions
@@ -309,7 +358,7 @@ SELECT
 FROM base_spine                       base
 CROSS JOIN lab_thresholds             t
 LEFT JOIN conditions                  cond ON base.person_id     = cond.person_id
-LEFT JOIN bmi                              ON base.person_id     = bmi.person_id
+LEFT JOIN bmi_imputed                 bmi_imp ON base.person_id  = bmi_imp.person_id
 LEFT JOIN diabetes                    diab ON base.person_id     = diab.person_id
 LEFT JOIN smoking                     smk  ON base.person_id     = smk.person_id
 LEFT JOIN medication_flags            med  ON base.person_id     = med.person_id

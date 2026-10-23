@@ -1,13 +1,8 @@
 version: 2
 models:
   - name: int_ltc_lcs_rs_person_risk_summary
-    description: |
-      Person-level roll-up of LTC LCS risk stratification across conditions.
-
-      One row per person who appears in any condition-level rs model. Each condition
-      column holds the highest risk group the person is in for that condition
-      (HRC > HR > MR > MRa/MRb > LR). overall_risk_group is the highest risk group
-      the person is in across all conditions; MRa/MRb are both reported as MR.
+    description: |-
+      Adult MoC risk groups, one row per eligible person with a condition risk result at the build date. Covers the adult MoC base, including the LR hypertension-only and LR adult-asthma-only Check & Test-only members. CYP-only people are excluded; Type 1 diabetes contributes HRC separately.
     config:
       meta:
         owner:
@@ -59,7 +54,8 @@ models:
               arguments:
                 values: ['HRC', 'HR', 'MR']
       - name: diabetes_risk_group
-        description: Highest Diabetes risk group the person is in (HRC/HR/MR/MRa/MRb/LR); null if not stratified
+        description: Highest Diabetes risk group the person is in (HRC/HR/MR/MRa/MRb/LR); null if not
+          stratified
         data_tests:
           - accepted_values:
               arguments:
@@ -71,7 +67,8 @@ models:
               arguments:
                 values: ['HR', 'MR']
       - name: hypertension_risk_group
-        description: Highest Hypertension risk group the person is in (HRC/HR/MRa/MRb/LR); null if not stratified
+        description: Highest Hypertension risk group the person is in (HRC/HR/MRa/MRb/LR); null if not
+          stratified
         data_tests:
           - accepted_values:
               arguments:
@@ -95,7 +92,8 @@ models:
               arguments:
                 values: ['HRC', 'HR', 'MR']
       - name: overall_risk_group
-        description: Highest risk group the person is in across all conditions (HRC/HR/MR/LR); MRa/MRb collapse to MR
+        description: Highest risk group the person is in across all conditions (HRC/HR/MR/LR); MRa/MRb
+          collapse to MR
         data_tests:
           - not_null
           - accepted_values:
@@ -105,3 +103,5 @@ models:
         description: Numeric rank of overall_risk_group (1=HRC highest, 5=LR lowest)
         data_tests:
           - not_null
+      - name: is_type_1_diabetes_hrc
+        description: Latest diabetes diagnosis/resolution qualifies for the separate EMIS Type 1 HRC rule.

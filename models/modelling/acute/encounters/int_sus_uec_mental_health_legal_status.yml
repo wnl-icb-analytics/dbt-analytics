@@ -27,6 +27,8 @@ models:
               arguments:
                 to: ref('int_sus_uec_encounter')
                 field: visit_occurrence_id
+              config:
+                tags: ["reconciliation"]
       - name: sk_patient_id
         description: Pseudonymised patient key from the attendance.
       - name: attendance_date
@@ -44,3 +46,9 @@ models:
         description: When the legal status was assigned.
       - name: expires_at
         description: When the legal status expired, where recorded.
+      - name: legal_status_start_date
+        description: Assignment start date from assigned_at, or from the separate start date in older deliveries.
+          Null when neither is recorded; the attendance date is not substituted.
+      - name: legal_status_start_at
+        description: Unzoned assignment start timestamp from assigned_at, or from the separate start date and
+          time in older deliveries. Null without a recorded start time.

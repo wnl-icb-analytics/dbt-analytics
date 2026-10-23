@@ -1,15 +1,18 @@
 models:
   - name: int_ltc_lcs_rs_ckd_pg2_hr
-    description: |
-      CKD Register Priority Group 2 - High Risk.
-      Patients on CKD register (excluding PG1 HRC) meeting any inclusion rule:
-      - Rule 2: eGFR 45-59 AND ACR > 30
-      - Rule 3: eGFR 30-44 AND ACR > 3
-      - Rule 4: eGFR 15-29
-      - Rule 5: ACR 70-250
-      - Rule 6: 3+ repeat antihypertensive prescriptions in last 3 months
-      - Rule 7: Latest BP in last 12 months with diastolic > 90
-      - Rule 8: Latest BP in last 12 months with systolic > 150
+    description: >
+      One row per person on the CKD register, excluding Priority Group 1, with
+      latest eGFR 45-59 and ACR > 30, eGFR 30-44 and ACR > 3, eGFR 15-29, or
+      ACR >= 70 and < 250.
+      Otherwise, people with at least three repeat antihypertensive issues in the
+      last three months can qualify on blood pressure: their latest complete clinic
+      reading with diastolic > 90 or systolic > 150 mmHg, when their latest linked
+      diastolic reading in the last 12 months was a clinic reading (or the same
+      thresholds on their latest home/ambulatory reading, when the latest complete
+      reading was taken at home). The setting check and the threshold reading can
+      come from different dates. Every one of their latest 100 BP records in that setting must
+      be within the last 12 months, so anyone with older BP history in that setting
+      cannot qualify through it.
     config:
       meta:
         owner:
@@ -22,10 +25,14 @@ models:
             valuesets:
               - on_ckd_reg_pg2_hr_vs1
               - on_ckd_reg_pg2_hr_vs2
-      - cluster_ids_exist:
-          arguments:
-            cluster_ids: REPEAT_PRESCRIPTION
-            source: ECL_CACHE
+              - on_ckd_reg_pg2_hr_vs4
+              - on_ckd_reg_pg2_hr_vs5
+              - on_ckd_reg_pg2_hr_vs6
+              - on_ckd_reg_pg2_hr_vs7
+              - on_ckd_reg_pg2_hr_vs8
+              - on_ckd_reg_pg2_hr_vs9
+              - on_ckd_reg_pg2_hr_vs10
+              - on_ckd_reg_pg2_hr_vs11
     columns:
       - name: person_id
         tests:

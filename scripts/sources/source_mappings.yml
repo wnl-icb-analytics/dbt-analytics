@@ -172,6 +172,16 @@ sources:
     raw_prefix: raw_dictionary_ip
     domain: shared
 
+  # Dictionary geography boundaries
+  - source_name: dictionary_geo
+    database: Dictionary
+    schema: Geo
+    description: NHS organisation boundary geometry used for geographic assignment
+    raw_prefix: raw_dictionary_geo
+    domain: shared
+    tables:
+      - OS_CCG_Map
+
     # eRS dictionary
   - source_name: dictionary_eRS
     database: Dictionary
@@ -192,6 +202,8 @@ sources:
     description: OLIDS stable layer - cleaned and filtered patient records
     raw_prefix: raw_olids
     domain: olids
+    exclude_tables:
+      - EPISODE_OF_CARE_V2  # LDS retires V2 on 20 October 2026 (#1298).
 
   # Dictionary/Reference Data SNOMED
   - source_name: dictionary_snomed
@@ -220,6 +232,21 @@ sources:
     description: Reference terminology data including SNOMED, BNF, and other code sets
     raw_prefix: raw_reference
     domain: shared
+    # Moved on 11 October 2026; exclude compatibility views and migration backups.
+    exclude_tables:
+      - COMBINED_CODESETS
+      - ECL_CACHE
+      - ECL_CACHE_METADATA
+      - ECL_CLUSTERS
+      - ECL_CLUSTER_CHANGES
+      - ECL_CLUSTER_VERSIONS
+      - COMBINED_CODESETS__PRE_MIGRATION
+      - ECL_CACHE__PRE_MIGRATION
+      - ECL_CACHE_METADATA__PRE_MIGRATION
+      - ECL_CLUSTERS__PRE_MIGRATION
+      - ECL_CLUSTER_CHANGES__PRE_MIGRATION
+      - ECL_CLUSTER_VERSIONS__PRE_MIGRATION
+      - LTC_LCS_ORIGINAL_CODES_BACKUP_20261022
 
     # PTL
   - source_name: ptl
@@ -238,6 +265,7 @@ sources:
     domain: shared
     exclude_tables:
       - WNL  # Broken view retained upstream; unused by dbt.
+      - NEIGHBOURHOODS_LSOAS_LOOKUP_20260505  # Legacy; use REFERENCE.GEO.NEIGHBOURHOOD_LSOA.
 
   # CANCER schemas in DATA_LAKE__NCL
   - source_name: reference_cancer_cwt_alliance
@@ -314,14 +342,16 @@ sources:
     domain: shared
     tables:
       - NEIGHBOURHOOD_LSOA
+      - NEIGHBOURHOOD_WARD
       - LSOA_WARD_EW
       - LSOA_WIDER_LOOKUP
       - LSOA21_SICBL26_ICB26_NHSER26_LAD26
+      - LSOA_21_WNL
 
   - source_name: reference_terminology_curated
     database: REFERENCE
     schema: TERMINOLOGY
-    description: Curated Primary Care Domain terminology releases
+    description: Curated terminology releases and combined clinical code sets
     raw_prefix: raw_reference_terminology
     domain: shared
     manual: true
@@ -345,6 +375,8 @@ sources:
     description: EMIS extract for c-ltcs pipeline from PID environment via MESH and other local lookups
     raw_prefix: raw_cltcs_emis
     domain: pid_env
+    exclude_tables:
+      - CLTCS_LOCAL_MAPPING_NH_GP  # Replaced by overrides in cltcs_practice_neighbourhood.
 
   # ========================================
   # FACT SCHEMAS IN DATA_LAKE
@@ -366,6 +398,21 @@ sources:
     raw_prefix: raw_fact_practice
     domain: shared
 
+
+  # ========================================
+  # SCHEMAS IN UKHFD (Automatic)
+  # ========================================
+  # Only use for UKHFD schemas where the entire schema is being pulled into dbt.
+  # For other cases see MANUAL SOURCES below
+
+  # LSOA to Sub ICB
+  - source_name: ukhfd_lsoa_to_sub_icb_plus
+    database: UKHFD
+    schema: LSOA_Sub_ICB_ICB_NHSER_LAD
+    description: Mapping between LSOA and Sub-ICB including higher NHSE geographies
+    raw_prefix: raw_ukhfd_lsoa_sub_icb_plus
+    domain: shared
+
   # ========================================
   # MANUAL SOURCES (not auto-generated)
   # ========================================
@@ -376,24 +423,42 @@ sources:
   # generation steps; their column lists come from the manual YAML instead.
 
   # ServicesDataLocal feeds (permanent home; the DATA_LAKE__NCL.SDL copy was
-  # dropped 2026-09). Only the SLAM contract-monitoring feeds, MHCORL and the
-  # pipeline META observability objects are pulled; the schema holds 20+
-  # other feeds (CONTROL_* tables stay in DATA_LAKE only).
+  # dropped 2026-09). All feed base tables plus the pipeline META observability
+  # objects are pulled. CONTROL_* tables, SDL_REJECTED_ROWS and the per-feed
+  # _RAW/_MAPPED views stay in DATA_LAKE only.
   - source_name: sdl_wnl
     database: DATA_LAKE
     schema: SDL
-    description: ServicesDataLocal canonical-named feeds, WNL footprint (SLAM contract monitoring)
+    description: ServicesDataLocal canonical-named feeds, WNL footprint
     raw_prefix: raw_sdl_wnl
     domain: commissioning
     tables:
-      - LSACM
-      - LSPLCM
-      - LSDRPLCM
-      - LSDEPLCM
+      - AMB
+      - AQP_DIAG
+      - CALL_LOG_111
+      - CC
+      - CCWIPL
+      - COMBI_111
+      - COMIPL
       - COMOPL
-      - REF
+      - DA
+      - LOS
+      - LSACM
+      - LSDEPLCM
+      - LSDRPLCM
+      - LSPLCM
+      - LSREF
+      - MAT
       - MH
+      - MHCLUL
       - MHCORL
+      - MSK
+      - OUM
+      - OUMCO
+      - RAID
+      - REF
+      - REFAGG
+      - UCC
       - META_FILE_REGISTRY
       - META_SCHEMA_VERSIONS
       - META_FILE_VERSIONS
@@ -428,6 +493,16 @@ sources:
     domain: shared
     manual: true
 
+  # SNOMED Cluster Manager app. Only the expansion cache is consumed by dbt.
+  # Keep app-internal definitions, versions, change logs and metadata out of dbt.
+  - source_name: snomed_cluster_manager
+    database: APPLICATIONS
+    schema: SNOMED_CLUSTER_MANAGER
+    description: SNOMED Cluster Manager app - expanded ECL code clusters
+    raw_prefix: raw_snomed_cluster_manager
+    domain: shared
+    manual: true
+
   # MYRIA - Project Myria (BEVC) canonical inputs. Two tables (ENROLLED_PATIENTS,
   # MATCHED_PATIENTS) loaded by DATA_LAKE__NCL.MYRIA.LOAD_NEW_FILES(). Manual so the
   # column list is controlled; FILE_DATE versions each upload.
@@ -458,6 +533,13 @@ sources:
     description: Analyst-managed reference datasets and business rules in the MODELLING environment
     raw_prefix: raw_reference_lookup_ncl
     domain: shared
+    # Legacy neighbourhood lookups; use REFERENCE.GEO / REFERENCE.PRIMARY_CARE.
+    exclude_tables:
+      - NCL_GP_PRACTICE_NEIGHBOURHOOD
+      - NCL_NEIGHBOURHOOD
+      - NCL_NEIGHBOURHOOD_LSOA_2021
+      - NCL_NEIGHBOURHOOD_LSOA_2021_LATEST
+      - NEIGHBOURHOODS_2011
 
   # C-LTCS tables
   - source_name: c_ltcs

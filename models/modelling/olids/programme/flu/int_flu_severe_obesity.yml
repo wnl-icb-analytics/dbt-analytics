@@ -1,20 +1,10 @@
 models:
   - name: int_flu_severe_obesity
-    description: 'Flu vaccination eligibility for people with severe obesity using their latest BMI and BMI stage evidence.
-
-      Key Features:
-
-      • BMI threshold: latest BMI ≥40 when not superseded by a later BMI stage
-
-      • Severe obesity codes qualify only when they are the latest BMI stage
-
-      • Age restriction: 18+ years (adults only)
-
-      • Uses latest BMI values and severe obesity stage codes
-
-      • Generates data for every campaign in flu_reported_campaign_ids()
-
-      Purpose: Identify people with severe obesity eligible for flu vaccination due to increased infection risk.'
+    description: >-
+      Flu severe obesity group in OLIDS, one row per person and campaign aged at least
+      18 at its audit end. Requires latest positive BMI_COD at least 40 kg/m2 without
+      later BMI_STAGE_COD, or latest stage in SEV_OBESITY_COD later than any numeric
+      BMI. Evidence uses campaign-specific UKHSA_FLU codes through audit end.
     config:
       meta:
         indicator:
@@ -96,7 +86,7 @@ models:
       - name: birth_date_approx
         description: 'Approximate birth date used for age calculation'
       - name: age_months_at_ref_date
-        description: 'Age in months at campaign reference date (18-64 years required)'
+        description: 'Age in months at campaign reference date (eligibility requires age 18 or over at audit end, no upper age limit)'
       - name: age_years_at_ref_date
         description: 'Age in years at campaign reference date'
       - name: created_at

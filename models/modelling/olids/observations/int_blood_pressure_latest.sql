@@ -15,6 +15,7 @@ SELECT
     diastolic_value,
     is_home_bp_event,
     is_abpm_bp_event,
+    bp_context_group,
     is_hypertensive_range,
     -- Additional metadata for traceability
     result_unit_display,

@@ -13,6 +13,13 @@ with fiscal_years as (
     from {{ ref('uk_cost_indices') }}
 )
 
+, fiscal_year_bounds as (
+    select
+        min(fiscal_year_start) as first_fiscal_year_start
+        , max(fiscal_year_start) as last_fiscal_year_start
+    from {{ ref('uk_cost_indices') }}
+)
+
 , price_base_deflator as (
     select max(gdp_deflator) as base_gdp_deflator
     from {{ ref('uk_cost_indices') }}
@@ -72,7 +79,12 @@ select
     ) as proxy_cost
 from priced as p
 cross join price_base_deflator as pb
+cross join fiscal_year_bounds as b
+-- The equality on the contact's financial year, clamped to the indexed years,
+-- lets Snowflake hash join; the range check keeps the open-ended end years exact.
 left join fiscal_years as fy
-    on p.care_contact_date between fy.fy_range_start and fy.fy_range_end
+    on least(greatest(year(dateadd(month, -3, p.care_contact_date)), b.first_fiscal_year_start), b.last_fiscal_year_start)
+        = fy.fiscal_year_start
+    and p.care_contact_date between fy.fy_range_start and fy.fy_range_end
 left join {{ ref('provider_market_forces_factor_2026_27') }} as mff
     on p.org_id_prov = mff.provider_code

@@ -1,0 +1,39 @@
+version: 2
+models:
+  - name: stg_ukhfd_ons_codes_equivalents
+    description: >-
+      UKHFD copy of the ONS Register of Geographic Codes equivalents, one row per
+      supplied code definition. A code can appear more than once with different
+      names, dates or status. Includes terminated codes.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - geography_code
+              - geography_name
+              - geography_code_status
+              - register_year
+              - introduced_date
+              - terminated_date
+    columns:
+      - name: geography_code
+        description: Nine-character ONS geography code.
+        data_tests: [not_null]
+      - name: geography_name
+        description: Supplied English name.
+      - name: entity_code
+        description: ONS entity code, the three-character code prefix identifying the geography type.
+      - name: geography_code_status
+        description: Supplied status, live or terminated.
+      - name: register_year
+        description: Supplied year; equals the introduction year for almost all rows.
+      - name: introduced_date
+        description: Supplied date the code was introduced.
+      - name: terminated_date
+        description: Supplied date the code was terminated; null if none is recorded.
+      - name: ons_geography_code
+        description: Equivalent code used by ONS, where supplied. Other `_geography_code` columns hold equivalents used by DCLG, DH, Scottish, NI and Welsh government.

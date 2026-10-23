@@ -6,10 +6,12 @@
 --
 -- Canon: every ICB_CF_*_BASE starts from "Currently registered patients", then excludes
 -- the relevant LTC set:
---   - metabolic CF (AF, CKD, CVD, DM, HF, HTN): ICS_METABOLIC_LTC (+ CF_NHSHC2Y on most)
+--   - AF, CKD, CVD, DM, HF, HTN: ICS_METABOLIC_LTC (+ CF_NHSHC2Y on most)
 --   - respiratory CF (CYP asthma):             ICS_RESP_LTC
 -- ICS_METABOLIC_LTC / ICS_RESP_LTC membership comes from int_ltc_lcs_cf_exclusions.
--- CF_NHSHC2Y = any completed NHS health check in the last 24 months.
+-- ICS_METABOLIC_LTC includes hyperlipidaemia ever, with descendants.
+-- CF_NHSHC2Y = the nine-code NHS Health Check set in the last 24 months.
+-- QOF palliative care membership is excluded by CVD and HTN bases only.
 --
 -- The exclusions are exposed as FLAGS (not pre-filtered) so each int_ltc_lcs_cf_<cond>_<n>
 -- applies exactly the set its canon report requires (e.g. HF_61 and CKD_61/64 do NOT
@@ -18,7 +20,6 @@
 with current_registered as (
     select distinct person_id
     from {{ ref('dim_person_current_practice') }}
-    where registration_end_date is null
 ),
 
 person_age as (
@@ -40,10 +41,17 @@ exclusions as (
 ),
 
 nhs_health_check_24m as (
-    -- CF_NHSHC2Y: completed NHS health check in the last 24 months
+    -- CF_NHSHC2Y: completed NHS health check in the last 24 months (inclusive).
     select distinct person_id
     from {{ ref('int_ltc_lcs_nhs_health_checks') }}
     where clinical_effective_date >= dateadd(month, -24, current_date())
+),
+
+palliative_care as (
+    -- EMIS library ea06414e: QOF palliative care register.
+    select person_id
+    from {{ ref('fct_person_palliative_care_register') }}
+    where is_on_register = true
 )
 
 select
@@ -53,7 +61,8 @@ select
     pa.age_months,
     coalesce(ex.has_metabolic_excluding_condition, false) as has_metabolic_excluding_condition,
     coalesce(ex.has_respiratory_excluding_condition, false) as has_respiratory_excluding_condition,
-    (hc.person_id is not null) as had_nhs_health_check_24m
+    (hc.person_id is not null) as had_nhs_health_check_24m,
+    (pc.person_id is not null) as is_on_palliative_care_register
 from current_registered as pop
 inner join person_age as pa
     on pop.person_id = pa.person_id
@@ -61,4 +70,6 @@ left join exclusions as ex
     on pop.person_id = ex.person_id
 left join nhs_health_check_24m as hc
     on pop.person_id = hc.person_id
+left join palliative_care as pc
+    on pop.person_id = pc.person_id
 where coalesce(pa.is_deceased, false) = false

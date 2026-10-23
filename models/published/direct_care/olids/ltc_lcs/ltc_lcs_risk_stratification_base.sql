@@ -7,7 +7,7 @@
 
 -- LTC LCS Risk Stratification Base Table
 -- Combines the person-level risk summary with demographics and population health filter flags.
--- One row per person on the LTC LCS MOC base population.
+-- One row per adult MoC base member (including Check & Test-only LR members) or CYP-only asthma child (EMIS CYPAST pathway).
 
 select
     -- ============================================================
@@ -121,12 +121,36 @@ select
     -- ============================================================
     -- MOC: pathway identity
     -- ============================================================
+    rs.is_in_moc_base,
+    rs.moc_base_exclusion_reason,
+    rs.is_cyp_asthma_only,
+    rs.is_moc_check_test_only,
+    rs.is_type_1_diabetes_hrc,
     rs.moc_pathway,
     rs.moc_risk_category,
 
     -- ============================================================
     -- MOC: activity flags + dates (last 12 months), in pathway order
     -- ============================================================
+    rs.moc_mdt_review_completed,
+    rs.moc_mdt_review_date,
+    rs.moc_stage_1_completed,
+    rs.moc_stage_3_completed,
+    rs.moc_stage_4_completed,
+    rs.moc_requires_check_test,
+    rs.moc_requires_stage_2,
+    rs.moc_requires_mdt_review,
+    rs.moc_requires_careplan_sharing,
+    rs.moc_requires_discussion,
+    rs.moc_requires_followup,
+    rs.moc_ct_overdue,
+    rs.moc_discussion_overdue,
+    rs.cyp_annual_review_completed,
+    rs.cyp_requires_annual_review,
+    rs.cyp_requires_desktop_review,
+    rs.cyp_desktop_review_completed,
+    rs.cyp_annual_review_date,
+    rs.cyp_desktop_review_date,
     rs.moc_check_test_completed,
     rs.moc_check_test_date,
     rs.moc_remote_desktop_review_completed,
@@ -207,20 +231,21 @@ select
     rs.moc_next_expiry_date,
 
     -- ============================================================
-    -- Outcome: hypertension BP control (HTN register members only; null otherwise)
+    -- Outcome: hypertension BP control (ICS_HTN_21; results null when not eligible)
     -- Rolling = current position (last known BP, trailing 12 months);
     -- FY = current financial year YTD (last known BP since 1 April).
     -- ============================================================
-    htn_roll.is_bp_controlled as htn_bp_controlled_rolling,
-    htn_roll.has_bp_in_window as htn_bp_control_rolling_has_reading,
-    htn_roll.latest_bp_date as htn_bp_control_rolling_bp_date,
-    htn_roll.latest_systolic_value as htn_bp_control_rolling_systolic,
-    htn_roll.latest_diastolic_value as htn_bp_control_rolling_diastolic,
-    htn_fy.is_bp_controlled as htn_bp_controlled_fy,
-    htn_fy.has_bp_in_window as htn_bp_control_fy_has_reading,
-    htn_fy.latest_bp_date as htn_bp_control_fy_bp_date,
-    htn_fy.latest_systolic_value as htn_bp_control_fy_systolic,
-    htn_fy.latest_diastolic_value as htn_bp_control_fy_diastolic,
+    coalesce(oc.is_htn_bp_control_eligible, false) as is_htn_bp_control_eligible,
+    oc.htn_bp_controlled_rolling,
+    oc.htn_bp_control_rolling_has_reading,
+    oc.htn_bp_control_rolling_bp_date,
+    oc.htn_bp_control_rolling_systolic,
+    oc.htn_bp_control_rolling_diastolic,
+    oc.htn_bp_controlled_fy,
+    oc.htn_bp_control_fy_has_reading,
+    oc.htn_bp_control_fy_bp_date,
+    oc.htn_bp_control_fy_systolic,
+    oc.htn_bp_control_fy_diastolic,
 
     -- ============================================================
     -- Metadata
@@ -239,7 +264,5 @@ left join {{ ref('fct_person_complex_adults') }} ca
     on rs.person_id = ca.person_id
 left join {{ ref('dim_person_housebound_status') }} hb
     on rs.person_id = hb.person_id
-left join {{ ref('fct_person_ltc_lcs_outcomes_htn_bp_control') }} htn_roll
-    on rs.person_id = htn_roll.person_id
-left join {{ ref('fct_person_ltc_lcs_outcomes_htn_bp_control_fy') }} htn_fy
-    on rs.person_id = htn_fy.person_id
+left join {{ ref('fct_person_ltc_lcs_outcomes') }} oc
+    on rs.person_id = oc.person_id

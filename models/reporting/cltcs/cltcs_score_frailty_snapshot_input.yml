@@ -1,21 +1,34 @@
 models:
   - name: cltcs_score_frailty_snapshot_input
-    description: >
-      Thin snapshot-input projection of cltcs_score_frailty: sk_patient_id, the
-      scaled frailty subdomain scores, score_exclusions and the final score_frailty
-      (plus table_refresh_date). Feeds cltcs_score_frailty_snapshot; kept narrow so
-      the SCD2 snapshot stores only the score state needed for control-cohort matching.
+    description: >-
+      Current C-LTCS frailty scores for change-history capture, one row per patient and
+      qualifying inclusion rule. People meeting both the original and Adults with
+      Complexity criteria have two rows. Scores and component measures are relative to
+      the patient's neighbourhood and cohort; a care-home exclusion flag is also
+      retained.
     config:
       meta:
         owner:
           name: Emily Baldwin
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - sk_patient_id
+              - inclusion_rule
     columns:
       - name: sk_patient_id
         data_type: number
-        description: "Unique patient identifier; one row per patient (snapshot unique_key)."
+        description: "Unique patient identifier; one row per patient per cohort."
         data_tests:
-          - unique
           - not_null
+          
+      - name: inclusion_rule
+        data_type: varchar
+        description: >
+          Cohort this row is scored in: 'original_criteria' (original C-LTCS
+          inclusion criteria) or 'adults_with_complexity' (Adults with Complexity
+          cohort, fct_person_complex_adults). Part of the snapshot unique_key.
 
       - name: score_frailty
         data_type: number

@@ -1,3 +1,4 @@
+{{ config(tags=['reconciliation']) }}
 -- stg_epd_pc_meds replaces complete processing periods incrementally. The EPD
 -- source carries no unique row identifier and the staging model preserves
 -- every row in the selected delivery version. Its grain cannot be tested with

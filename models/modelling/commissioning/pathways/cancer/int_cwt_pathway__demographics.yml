@@ -1,0 +1,129 @@
+models:
+  - name: int_cwt_pathway__demographics
+    description: >
+      Demographics for records in the CWT Pathway level dataset.
+      Each row has 3 categories of demographic items:
+        - Demographics: Mostly static patient demographics including gender, dob, and ethnicity
+          Note these fields use the latest available values
+        - Registered: Information about where the patient was registered at the time of activity
+        - Residence: Information about where the patient resided at the time of activity. 
+      This model also handles the required joins to map demographic fields to name and higher geography levels.
+      Flag fields are included to identify rows belonging to WNL sub ICBs or WNL itself.
+
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns:
+      - name: record_id
+        description: Source record identifier from the raw CWT pathway table.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: demographics__gender
+        description: Patient gender, latest available value.
+
+      - name: demographics__date_of_birth
+        description: Patient date of birth (may be canonicalised to the first of the month).
+
+      - name: demographics__date_of_death
+        description: Date of death if recorded; null where no death is recorded or unknown.
+
+      - name: demographics__ethnictity_code
+        description: One-digit BK ethnicity code.
+
+      - name: demographics__ethnicity_name
+        description: Canonical ethnicity group name.
+
+      - name: demographics__ethnicity_subcategory
+        description: More detailed ethnicity descriptor (subcategory).
+
+      - name: registered__wnl_registered_flag
+        description: Flag indicating patient was registered within WNL at the time of the event.
+
+      - name: registered__ncl_registered_flag
+        description: Flag indicating patient was registered within the NCL sub-ICB at the time of the event.
+
+      - name: registered__nwl_registered_flag
+        description: Flag indicating patient was registered within the NWL sub-ICB at the time of the event.
+
+      - name: registered__practice_code
+        description: GP practice ODS code recorded at the time of the event.
+
+      - name: registered__practice_name
+        description: Registered GP practice name at the time of the event.
+
+      - name: registered__practice_end_date
+        description: Practice close date where the practice has closed; null for active practices.
+
+      - name: registered__pcn_code
+        description: Primary Care Network (PCN) code for the registered practice.
+
+      - name: registered__pcn_name
+        description: Primary Care Network (PCN) name for the registered practice.
+
+      - name: registered__subicb_code
+        description: Sub-ICB code for the registered practice.
+
+      - name: registered__subicb_name
+        description: Sub-ICB name for the registered practice.
+
+      - name: registered__icb_code
+        description: Integrated Care Board (ICB) code for the registered practice.
+
+      - name: registered__icb_name
+        description: Integrated Care Board (ICB) name for the registered practice.
+
+      - name: registered__borough
+        description: Registered borough for the practice; 'Non-WNL' for out-of-area, 'Unknown' where borough lookup fails.
+
+      - name: registered__imd_decile
+        description: Index of Multiple Deprivation decile mapped to the registered practice.
+
+      - name: registered__cancer_alliance_code
+        description: Cancer alliance code mapped from the registered sub-ICB.
+
+      - name: registered__cancer_alliance_name
+        description: Cancer alliance name mapped from the registered sub-ICB.
+
+      - name: residence__wnl_residence_flag
+        description: Flag indicating patient residence falls within WNL at time of event.
+
+      - name: residence__ncl_residence_flag
+        description: Flag indicating patient residence falls within the sub-ICB NCL at time of event.
+
+      - name: residence__nwl_residence_flag
+        description: Flag indicating patient residence falls within the sub-ICB NWL at time of event.
+
+      - name: residence__lsoa_code
+        description: Patient residence LSOA code (2021 schema) at time of event.
+
+      - name: residence__subicb_code
+        description: Sub-ICB code for the residence location derived from LSOA mapping.
+
+      - name: residence__icb_code
+        description: Integrated Care Board code for the residence location (derived from LSOA mapping).
+
+      - name: residence__icb_name
+        description: Integrated Care Board name for the residence location.
+
+      - name: residence__borough
+        description: Local authority (borough) name for the residence; 'Non-WNL' for out-of-area records.
+
+      - name: residence__imd_decile
+        description: Index of Multiple Deprivation decile for the residence LSOA (imd mapping, 2025 where applicable).
+
+      - name: residence__neighbourhood_name
+        description: WNL neighbourhood name for residence; 'Non-WNL' or 'Unknown' for out-of-area or unmapped LSOAs.
+
+      - name: residence__cancer_alliance_code
+        description: Cancer alliance code mapped from the residence LSOA.
+
+      - name: residence__cancer_alliance_name
+        description: Cancer alliance name mapped from the residence LSOA.
+      
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

@@ -1,12 +1,18 @@
 models:
   - name: int_inhaled_corticosteroid_medications_all
-    description: 'Inhaled corticosteroid medication orders using BNF classification
-      for respiratory conditions.'
+    description: >-
+      Inhaled corticosteroid orders in BNF 0302 for all people, one row per dated order.
+      Combination means more than one current dm+d ingredient (ICS/LABA or ICS/LABA/LAMA),
+      not a BNF paragraph.
     config:
       meta:
         owner:
           name: EddieDavison92
-    tests: []
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - medication_order_id
     columns:
       - name: person_id
         description: 'Person identifier'
@@ -39,14 +45,16 @@ models:
       - name: bnf_name
         description: 'BNF classification name'
       - name: ics_type
-        description: 'ICS type (single agent, combination)'
+        description: 'SINGLE_AGENT for one dm+d ingredient, COMBINATION for at least two, OTHER_ICS when no ingredient count is available. Existing labels are retained.'
       - name: is_single_agent
-        description: 'Flag for single agent ICS'
+        description: 'One current dm+d ingredient; null when unknown.'
       - name: is_combination_therapy
-        description: 'Flag for combination therapy ICS'
+        description: 'At least two current dm+d ingredients; null when unknown.'
       - name: is_recent_3m
-        description: 'Order within last 3 months'
+        description: 'Order in the 3 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_6m
-        description: 'Order within last 6 months'
+        description: 'Order in the 6 calendar months up to and including the build date; lower bound excluded.'
       - name: is_recent_12m
-        description: 'Order within last 12 months'
+        description: 'Order in the 12 calendar months up to and including the build date; lower bound excluded.'
+      - name: is_future_dated
+        description: Order dated after the build date; kept as source evidence, never recent.

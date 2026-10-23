@@ -48,7 +48,8 @@ postcode_geography AS (
         yr_2011_lsoa,
         yr_2011_msoa,
         yr_2021_lsoa,
-        yr_2021_msoa
+        yr_2021_msoa,
+        ward
     FROM {{ ref('stg_olids_postcode_hash') }}
     WHERE postcode_hash IS NOT NULL
     QUALIFY ROW_NUMBER() OVER (
@@ -58,13 +59,28 @@ postcode_geography AS (
 ),
 
 neighbourhood_reference AS (
-    -- Get NCL neighbourhood data (based on 2021 LSOA codes)
-    SELECT DISTINCT
+    -- WNL neighbourhood per 2021 LSOA (one row per LSOA); fallback only
+    SELECT
         lsoa_2021_code,
         neighbourhood_name
-    FROM {{ ref('stg_reference_ncl_neighbourhood_lsoa_2021') }}
-    WHERE lsoa_2021_code IS NOT NULL
-        AND neighbourhood_name IS NOT NULL
+    FROM {{ ref('stg_reference_geo_neighbourhood_lsoa') }}
+),
+
+ward_reference AS (
+    -- 2025 ward names (one row per ward). Covers wards that are an LSOA best-fit ward,
+    -- which includes every WNL ward; a few small wards elsewhere are absent.
+    SELECT DISTINCT
+        wd25_cd,
+        wd25_nm
+    FROM {{ ref('stg_reference_lsoa21_ward25_lad25') }}
+),
+
+neighbourhood_ward AS (
+    -- WNL neighbourhood per 2025 ward (one row per ward)
+    SELECT
+        ward_code,
+        neighbourhood_name
+    FROM {{ ref('stg_reference_geo_neighbourhood_ward') }}
 ),
 
 london_areas AS (
@@ -96,9 +112,9 @@ SELECT
     COALESCE(la.lad25_cd, pg.local_authority_organisation) as local_authority_code,
     COALESCE(la.lad25_nm, la_map.name) as local_authority_name,
 
-    -- Ward information from LSOA reference
-    la.wd25_cd as ward_code,
-    la.wd25_nm as ward_name,
+    -- Ward of the postcode; LSOA best-fit ward if the postcode ward is not in the ward lookup
+    COALESCE(pw.wd25_cd, la.wd25_cd) as ward_code,
+    COALESCE(pw.wd25_nm, la.wd25_nm) as ward_name,
 
     -- Borough resident - only populated for London areas
     CASE
@@ -115,8 +131,11 @@ SELECT
     lsoa_map.name as lsoa_name_21,
     pg.yr_2021_msoa as msoa_code_21,
 
-    -- NCL Neighbourhood (from 2021 LSOA)
-    nr.neighbourhood_name as neighbourhood_resident,
+    -- WNL neighbourhood of residence from the postcode ward (LSOA route if the ward is not in the lookup); null outside WNL
+    CASE
+        WHEN pw.wd25_cd IS NOT NULL THEN nw.neighbourhood_name
+        ELSE nr.neighbourhood_name
+    END as neighbourhood_resident,
 
     -- IMD 2019 data from dedicated IMD model
     imd.imd_decile_19,
@@ -171,5 +190,9 @@ LEFT JOIN {{ ref('townsend_lsoa_2011') }} tds
     ON pg.yr_2011_lsoa = tds.lsoa_2011_code
 
 -- Join neighbourhood reference
+LEFT JOIN ward_reference pw
+    ON pg.ward = pw.wd25_cd
+LEFT JOIN neighbourhood_ward nw
+    ON pw.wd25_cd = nw.ward_code
 LEFT JOIN neighbourhood_reference nr
     ON pg.yr_2021_lsoa = nr.lsoa_2021_code
