@@ -28,7 +28,7 @@ TABLES(
 DIMENSIONS(
     ri.sk_patient_id AS sk_patient_id COMMENT = 'Pseudonymised patient key for cross-dataset linkage to sem_olids_population.sk_patient_id. Join CTEs on sk_patient_id, then aggregate. Never return sk_patient_id in final results.',
     ri.gender AS gender COMMENT = 'Gender at the resource-index window end',
-    ri.age AS age COMMENT = 'Age at the window reference date, or at death if death occurred on or before that date',
+    ri.age AS age COMMENT = 'Age on the first day of the window''s last month, or at death if death occurred on or before that date',
     ri.age_band AS age_band COMMENT = 'NHS age band used for the cost curve',
     ri.ethnicity AS ethnicity COMMENT = 'Ethnicity',
     ri.months_registered AS months_registered COMMENT = 'Months registered in the rolling window',
