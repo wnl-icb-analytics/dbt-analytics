@@ -706,7 +706,7 @@ CONTACT_ENRICHED AS (
         FACD.FIRST_CARE_CONTACT_DATE,
 
         NGH_RES.NEIGHBOURHOOD_NAME AS RESIDENCE_NEIGHBOURHOOD_NAME,
-        PRAC_NGH.NEIGHBOURHOOD_NAME AS PRACTICE_NEIGHBOURHOOD_NAME
+        PRAC_WNL.NEIGHBOURHOOD_NAME AS PRACTICE_NEIGHBOURHOOD_NAME
 
     FROM DATA_LAKE.CSDS_SIMPLE."tblCare_Contact" CCON
 
@@ -734,24 +734,21 @@ CONTACT_ENRICHED AS (
         ON PAT1."Lower_super_output_area_(Residence)"
             = IMD.LSOA_CODE_2021
 
-    LEFT JOIN {{ ref('attendance_status') }} CSLK1
+    LEFT JOIN {{ ref('nhs_dd_attendance_status') }} CSLK1
         ON CCON."Attended_or_did_not_attend_code" = CSLK1.CODE
        AND CSLK1.SOURCE_CODE_SET_NAME = 'Attendance_Status'
 
-    LEFT JOIN {{ ref('consultation_mechanism') }} CSLK3
+    LEFT JOIN {{ ref('nhs_dd_consultation_mechanism') }} CSLK3
         ON CCON."Consultation_medium_used" = CSLK3.CODE
        AND CSLK3.SOURCE_CODE_SET_NAME = 'Consultation_Mechanism'
 
-    LEFT JOIN {{ ref('activity_location_type') }} CSLK4
+    LEFT JOIN {{ ref('nhs_dd_activity_location_type') }} CSLK4
         ON CCON."Activity_location_type_code" = CSLK4.CODE
        AND CSLK4.SOURCE_CODE_SET_NAME = 'Activity_Location_Type_Code'
 
     LEFT JOIN PRACTICE_CONTEXT PRAC_WNL
         ON PAT1.GPCODE = PRAC_WNL.PRACTICE_CODE    
         
-    LEFT JOIN {{ ref('stg_reference_wnl_gp_practice_neighbourhood') }} PRAC_NGH
-        ON PAT1.GPCODE = PRAC_NGH.PRACTICE_CODE
-
     LEFT JOIN DATA_LAKE.CSDS_SIMPLE."tblReferral" REF
         ON CCON."Unique_service_request_identifier"
             = REF."Unique_service_request_identifier"

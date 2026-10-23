@@ -1,0 +1,1 @@
+{{ select_data_dictionary_history('stg_ukhfd_data_dictionary_child_protection_plan_indicator') }}

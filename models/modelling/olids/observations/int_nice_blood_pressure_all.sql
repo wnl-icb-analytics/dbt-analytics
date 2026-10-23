@@ -5,7 +5,8 @@ WITH reading_rows AS (
     SELECT
         person_id,
         effective_date::DATE AS reading_date,
-        COALESCE(parent_observation_id::VARCHAR, 'NOPARENT') AS reading_id,
+        COALESCE(parent_observation_id::VARCHAR, 'NOPARENT:' || bp_context_group) AS reading_id,
+        bp_context_group,
         result_value,
         is_systolic_row,
         is_diastolic_row,
@@ -21,14 +22,14 @@ complete_readings AS (
         reading_date,
         reading_id,
         -- Unparented components use plausible maxima, retaining invalid-only evidence.
-        CASE WHEN reading_id = 'NOPARENT' THEN
+        CASE WHEN STARTSWITH(reading_id, 'NOPARENT:') THEN
             COALESCE(
                 MAX(CASE WHEN is_systolic_row AND result_value BETWEEN 40 AND 350 THEN result_value END),
                 MAX(CASE WHEN is_systolic_row THEN result_value END)
             )
         ELSE MAX(CASE WHEN is_systolic_row THEN result_value END)
         END AS systolic_value,
-        CASE WHEN reading_id = 'NOPARENT' THEN
+        CASE WHEN STARTSWITH(reading_id, 'NOPARENT:') THEN
             COALESCE(
                 MAX(CASE WHEN is_diastolic_row AND result_value BETWEEN 20 AND 200 THEN result_value END),
                 MAX(CASE WHEN is_diastolic_row THEN result_value END)
@@ -51,7 +52,8 @@ assessed AS (
         systolic_value,
         diastolic_value,
         systolic_value BETWEEN 40 AND 350
-            AND diastolic_value BETWEEN 20 AND 200 AS is_valid_bp,
+            AND diastolic_value BETWEEN 20 AND 200
+            AND systolic_value > diastolic_value AS is_valid_bp,
         is_home_bp_event,
         is_abpm_bp_event
     FROM complete_readings

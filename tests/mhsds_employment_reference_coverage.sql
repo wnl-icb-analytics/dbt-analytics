@@ -5,6 +5,6 @@ with required_codes as (
 )
 select e.code
 from required_codes as e
-left join {{ ref('mhsds_domain_code_lookup') }} as actual
-    on actual.code_set_name = 'employment_status' and e.code = actual.code
+left join {{ ref('mhsds_employment_status') }} as actual
+    on e.code = actual.code
 where actual.description is null

@@ -1,0 +1,32 @@
+models:
+  - name: int_cwt_pathway__metadata_period
+    description: >
+      Table containing information about the 'completed' months of data 
+      available in the Snowflake environment. 
+      
+      Attempts to group rows into clusters of month periods by looking at
+      which months have a large number of records and when the bulk of these
+      were ingested.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns: 
+      - name: data_period_month
+        description: Date (truncated to the first) for the month for a complete period of data.
+
+      - name: ingestion_date
+        description: >
+          Date that the data period month was ingested. 
+          Derived by looking at the most frequent date of ingestion for records in a given data period.
+
+      - name: row_count_estimate
+        description: >
+          Number of records in a given data period. 
+          Estimated by looking at the number of records with a cancer referral 
+          to treatment period start date in the data period month.
+    
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 12

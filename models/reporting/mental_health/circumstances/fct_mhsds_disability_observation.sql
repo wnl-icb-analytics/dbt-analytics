@@ -18,7 +18,7 @@ from {{ ref('stg_mhsds_disability') }} as s
 left join {{ ref('stg_mhsds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('int_mhsds_organisation') }} as provider
     on upper(s.org_id_prov) = upper(provider.organisation_code)
-left join {{ ref('mhsds_domain_code_lookup') }} as disability_label
-    on upper(trim(s.disab_code::varchar)) = disability_label.code and disability_label.code_set_name = 'disability'
-left join {{ ref('mhsds_domain_code_lookup') }} as impact_label
-    on upper(trim(s.disab_impac_percep::varchar)) = impact_label.code and impact_label.code_set_name = 'disability_impact'
+left join {{ ref('nhs_dd_disability') }} as disability_label
+    on upper(trim(s.disab_code::varchar)) = disability_label.code
+left join {{ ref('nhs_dd_disability_impact_perception') }} as impact_label
+    on upper(trim(s.disab_impac_percep::varchar)) = impact_label.code

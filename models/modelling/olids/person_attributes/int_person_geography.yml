@@ -1,27 +1,11 @@
 models:
   - name: int_person_geography
-    description: 'Person geography mapping using refactored intermediate geography
-      tables.
-
-      Key Features:
-
-      • Uses refactored geography models for clean separation of concerns
-
-      • Selects most recent/active address for each person
-
-      • Maps to 2011 and 2021 census geographies via plain postcode
-
-      • Includes IMD 2019 data from dedicated IMD model
-
-      • Includes IMD 2025 data from dedicated IMD model
-
-      • Includes the Townsend Deprivation Score (via 2011 LSOA)
-
-      • Maps to NCL neighbourhoods (via 2021 LSOA)
-
-      • Includes London borough identification from dedicated model
-
-      • All geographic joins are LEFT JOINs for residents outside London/NCL'
+    description: >-
+      Residential geography and deprivation for people in OLIDS with a valid
+      patient-person mapping and hashed postcode, one row per person. An address
+      without an end date takes priority, otherwise the most recently started address.
+      Includes inactive and deceased people and residents outside London. Postcode and
+      LSOA geography can disagree; unmatched areas remain null.
     config:
       meta:
         owner:
@@ -46,18 +30,21 @@ models:
       - name: icb_resident
         description: 'ICB name where patient resides (from geography mappings)'
       - name: local_authority_code
-        description: 'Local Authority District 2025 code (LAD25CD) from LSOA reference,
-          fallback to organisation code'
+        description: >-
+          Local Authority District 2025 code from the LSOA reference, falling back to
+          organisation code. Can differ from the postcode ward assignment.
       - name: local_authority_name
         description: 'Local Authority District 2025 name (LAD25NM) from LSOA reference,
           fallback to organisation name'
       - name: ward_code
-        description: '2025 Ward code (WD25CD) from LSOA reference'
+        description: >-
+          2025 postcode ward where recognised, otherwise the 2021 LSOA best-fit ward.
       - name: ward_name
-        description: '2025 Ward name (WD25NM) from LSOA reference'
+        description: '2025 ward name (WD25NM), matching ward_code'
       - name: borough_resident
-        description: 'Borough name where patient resides (only populated for London
-          boroughs)'
+        description: >-
+          London borough from the LSOA. It can differ from the postcode ward's borough. Null
+          outside London.
       - name: lsoa_code_11
         description: '2011 Census Lower Layer Super Output Area code'
       - name: msoa_code_11
@@ -69,7 +56,10 @@ models:
       - name: msoa_code_21
         description: '2021 Census Middle Layer Super Output Area code'
       - name: neighbourhood_resident
-        description: 'NCL neighbourhood of residence (from 2021 LSOA)'
+        description: >-
+          WNL neighbourhood from the recognised postcode ward. The 2021 LSOA fallback applies
+          only when the ward is unrecognised, not when a recognised ward lacks a neighbourhood
+          mapping. Null outside mapped WNL neighbourhoods.
       - name: imd_decile_19
         description: 'IMD 2019 decile from dedicated IMD model'
       - name: imd_quintile_19

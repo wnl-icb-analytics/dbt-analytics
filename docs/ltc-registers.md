@@ -37,8 +37,11 @@ The two copies differ in inputs and dates:
 - Macros read `int_*_all` modelling event models through `ref()`, never staging observations.
   Live obesity reads the person-level `int_bmi_qof` and `int_ethnicity_qof` instead.
 - Live facts keep future-dated evidence; macros only count evidence known by the reference date.
-- Live facts use `dim_person_age`. Macros derive age at the reference date from `dim_person_birth_death.birth_date_approx`
-  as `FLOOR(DATEDIFF('month', birth_date_approx, reference_date) / 12)`.
+- Live facts use `dim_person_age`. Macros derive age from `dim_person_birth_death.birth_date_approx`
+  as `FLOOR(DATEDIFF('month', birth_date_approx, age_date) / 12)`. `age_date` is the death date when
+  that date is on or before the reference date, and the reference date otherwise. Someone who died
+  before the age threshold is not aged forward to the reference date. Someone recorded as deceased
+  without a usable death date has no age, as in `dim_person_age`. `ltc_register_age_at` holds this rule.
 - Live FH, gestational diabetes and NAFLD join `dim_person_active_patients`; other live facts use different demographic joins.
   Do not assume every live fact is limited to registered, living people.
 
@@ -53,12 +56,12 @@ It controls PIT views only. Override it with `--vars` to evaluate a QOF year-end
 ### Code clusters
 
 `get_observations` and `get_medication_orders` resolve cluster membership through `stg_reference_combined_codesets`,
-which reads `DATA_LAKE__NCL.TERMINOLOGY.COMBINED_CODESETS`. Register clusters come from three sources:
+which reads `REFERENCE.TERMINOLOGY.COMBINED_CODESETS`. Register clusters come from three sources:
 
 | Source | Clusters | Updated by |
 |---|---|---|
 | `PCD` | All register diagnosis, resolution and supporting observation clusters not listed below | NHS England Primary Care Domain refset release, loaded outside this repo |
-| `ECL_CACHE` | QOF drug clusters (`ASTTRT_COD`, `EPILDRUG_COD`, obesity2's `STAT_COD`, `EZETIMIBE_COD`, `BEMPACID_COD`, `INCLISIRAN_COD`, `PCSK9I_COD`), plus local clusters `LIT_COD`, `HYPOTHY_COD`, `MASLD_DX_CODES`, `OA_COD` | ECL definitions in `DATA_LAKE__NCL.TERMINOLOGY.ECL_CLUSTERS`, refreshed weekly with `REFRESH_ECL_CLUSTER` |
+| `ECL_CACHE` | QOF drug clusters (`ASTTRT_COD`, `EPILDRUG_COD`, obesity2's `STAT_COD`, `EZETIMIBE_COD`, `BEMPACID_COD`, `INCLISIRAN_COD`, `PCSK9I_COD`), plus local clusters `LIT_COD`, `HYPOTHY_COD`, `MASLD_DX_CODES`, `OA_COD` | ECL definitions in `APPLICATIONS.SNOMED_CLUSTER_MANAGER.ECL_CLUSTERS`, refreshed weekly with `REFRESH_ECL_CLUSTER` |
 | `LTC_LCS` | `SYSBP_COD`, `DIASBP_COD` (hypertension BP staging only) | LTC LCS value sets |
 
 The PCD load does not include QOF's dm+d drug refsets, so each QOF drug cluster is an ECL cache of its v51 refset

@@ -45,6 +45,8 @@ select
     , core.appointment_date as start_date
     , core.appointment_time as start_time
     , core.appointment_expected_duration as expected_duration
+    , core.appointment_consultation_medium as consultation_medium_used_code
+    , medium.description as consultation_medium_used_name
     
     /* Outcome information */
     , core.appointment_outcome as appointment_outcome
@@ -84,6 +86,7 @@ select
 
     /* Referral information */
     , core.appointment_referral_referring_organisation as referral_organisation_id
+    , referring.organisation_name as referral_organisation_name
     , core.appointment_referral_received_date as referral_organisation_date
     , core.appointment_referral_source_op as referral_source_op
     , dict_appt_referral_source.referral_group as referral_source_op_desc
@@ -155,6 +158,12 @@ left join
     on core.appointment_commissioning_service_agreement_provider = dict_provider.service_provider_full_code
 
 -- referral source
+left join {{ ref('stg_dictionary_dbo_organisation') }} as referring
+    on core.appointment_referral_referring_organisation = referring.organisation_code
+
+left join {{ ref('nhs_dd_consultation_medium_used') }} as medium
+    on core.appointment_consultation_medium = medium.code
+
 left join
     {{ ref('stg_dictionary_op_sourceofreferrals') }} as dict_appt_referral_source
     on core.appointment_referral_source_op = dict_appt_referral_source.bk_source_of_referral_code

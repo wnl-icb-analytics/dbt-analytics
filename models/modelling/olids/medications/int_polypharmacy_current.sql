@@ -13,7 +13,7 @@ Calculates current state directly from int_polypharmacy_medications_current
 (source of truth for current medications) rather than relying on historical
 SCD table which uses smoothing and may not reflect exact current state.
 
-Polypharmacy thresholds (NHSBSA standard):
+Polypharmacy thresholds:
 - 5+ medications: Standard polypharmacy threshold
 - 10+ medications: Severe/complex polypharmacy threshold
 

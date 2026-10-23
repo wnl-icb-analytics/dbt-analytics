@@ -1,6 +1,7 @@
 {{ config(materialized='table') }}
 
 -- LTC LCS DM case finding indicator DM_61: latest HbA1c >= 48 and no diabetes diagnosis
+-- Equivalent local roots permit mapped matches; other local roots match source codes exactly.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/diabetes/icb-cf-dm-61.md
 -- ICB_CF_DM_61 = ICB_CF_DM_61_woEX, then Rule 1 (final, exclude if matched):
 --   exclude patients with "High risk of diabetes mellitus annual review declined"

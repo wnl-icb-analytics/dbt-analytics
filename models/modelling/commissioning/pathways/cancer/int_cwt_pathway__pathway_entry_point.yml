@@ -1,0 +1,30 @@
+models:
+  - name: int_cwt_pathway__pathway_entry_point
+    description: >
+      CWT pathway entry point classification for each pathway record based on 
+      the official CWT definitions. Treatments without a prior diagnosis (incl. 
+      all subsequent treatments) are classfied in their own category.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    columns:
+      - name: record_id
+        description: Source record identifier from the `int_cwt_pathway__data_tidy` intermediate table.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: pathway_entry_point
+        description: >
+          Derived entry point category for a pathway record. Values are `USC`,
+          `Breast Symptomatic`, `Screening`, `Upgrade`, `Treatment` or `Unknown`.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['USC', 'Breast Symptomatic', 'Screening', 'Upgrade', 'Treatment', 'Unknown']
+
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1

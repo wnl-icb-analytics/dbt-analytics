@@ -3,7 +3,10 @@ macros:
   - name: get_ltc_lcs_observations_latest
     description: >
       Returns the most recent observation per person and valueset.
-      Filters by LTC/LCS valueset IDs or friendly names, ordered by clinical_effective_date desc.
+      Filters by LTC/LCS valueset IDs or friendly names. Orders by clinical_effective_date descending
+      with nulls last, date_recorded descending with nulls last, then observation_id descending.
+      Same-day records use EMIS save time; result values do not break ties.
+      Inherits P2 root permissions from get_ltc_lcs_observations.
 
 
     arguments:
@@ -12,3 +15,8 @@ macros:
         description: >
           Comma-separated valueset IDs or friendly names to filter by.
           Can be passed as 'VS001,VS002' or "'VS001','VS002'"
+      - name: match_paths
+        type: string
+        description: >
+          Both mapped and source matches by default. 'mapped' omits source matches;
+          'source' returns exact original-source matches only.

@@ -11,12 +11,39 @@ with spell as (
     select * from {{ ref('stg_mhsds_mhs903warddetails') }}
 )
 
+{%- set inpatient_code_lists = [
+    ('admission_source', 'nhs_dd_admission_source'),
+    ('admission_method', 'nhs_dd_admission_method'),
+    ('planned_discharge_destination', 'nhs_dd_planned_discharge_destination'),
+    ('discharge_method', 'nhs_dd_discharge_method'),
+    ('discharge_destination', 'nhs_dd_discharge_destination'),
+    ('ward_intended_sex', 'nhs_dd_ward_intended_sex'),
+    ('ward_clinical_care_intensity', 'nhs_dd_ward_intended_clinical_care_intensity'),
+    ('ward_intended_age_group', 'mhsds_ward_intended_age_group'),
+    ('ward_setting', 'mhsds_ward_setting_type'),
+    ('ward_security_level', 'nhs_dd_ward_security_level'),
+    ('locked_ward_indicator', 'nhs_dd_locked_ward_indicator'),
+    ('mental_health_admitted_patient_classification', 'nhs_dd_mental_health_admitted_patient_classification_type'),
+] %}
+
 , code_lookup_history as (
-    select * from {{ ref('mhsds_inpatient_code_lookup_history') }}
+    {%- for code_set_name, model_name in inpatient_code_lists %}
+    select '{{ code_set_name }}' as code_set_name, code, is_latest_definition, is_currently_valid
+    from {{ ref(model_name ~ '_history') }}
+    {%- if not loop.last %}
+    union all
+    {%- endif %}
+    {%- endfor %}
 )
 
 , code_lookup as (
-    select * from {{ ref('mhsds_inpatient_code_lookup') }}
+    {%- for code_set_name, model_name in inpatient_code_lists %}
+    select '{{ code_set_name }}' as code_set_name, code
+    from {{ ref(model_name) }}
+    {%- if not loop.last %}
+    union all
+    {%- endif %}
+    {%- endfor %}
 )
 
 , summary as (
@@ -392,7 +419,7 @@ with spell as (
 , code_lookup_coverage as (
     select
         'lookup_integrity' as profile_section
-        , 'mhsds_inpatient_code_lookup' as model_name
+        , 'inpatient_code_lists' as model_name
         , 'latest_history_code_coverage' as metric
         , null::varchar as dimension_value
         , count_if(code_lookup.code is not null) as numerator
@@ -404,7 +431,7 @@ with spell as (
 
     union all
 
-    select 'lookup_integrity', 'mhsds_inpatient_code_lookup'
+    select 'lookup_integrity', 'inpatient_code_lists'
         , 'codes_with_retired_latest_definition', null
         , count_if(has_retired_latest_definition), count(*)
     from latest_code_history_keys

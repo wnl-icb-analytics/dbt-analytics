@@ -54,8 +54,7 @@ left join {{ ref('stg_csds_referral_history') }} as r
 left join {{ ref('stg_csds_bridging') }} as b on s.person_id = b.person_id
 left join {{ ref('organisation') }} as provider
     on upper(trim(s.organisation_code_provider)) = provider.organisation_code
-left join {{ ref('csds_referral_code_lookup') }} as measure_label
-    on measure_label.code_set_name = 'waiting_time_measurement_type'
-    and trim(s.waiting_time_measurement_type_community_care) = measure_label.code
+left join {{ ref('csds_waiting_time_measurement_type') }} as measure_label
+    on trim(s.waiting_time_measurement_type_community_care) = measure_label.code
 left join {{ ref('stg_dictionary_dbo_rttperiodstatus') }} as status
     on trim(s.referral_to_treatment_period_status) = status.rtt_period_status_code
