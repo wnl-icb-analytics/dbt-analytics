@@ -1,31 +1,11 @@
 models:
   - name: dim_person_age_historical
-    description: 'Historical Person Age Dimension Table (Type 2 SCD)
-
-      Calculates age and age bands using modern Type 2 slowly changing dimensions approach. Only creates rows when age bands actually change.
-
-      Key Features:
-
-      • Type 2 SCD with effective_start_date and effective_end_date (NULL = current period)
-
-      • 5-year rolling history window for performance optimisation
-
-      • Modern SCD2 implementation without sentinel dates (no 9999-12-31 values)
-
-      • Age milestones trigger new periods (every 5 years for age band changes)
-
-      • Efficient storage - periods created only when age bands change, not monthly
-
-      Implementation Notes:
-
-      • Uses NULL effective_end_date for current periods (not sentinel dates)
-
-      • Limited to last 5 years of data to balance completeness with performance
-
-      • Change points triggered by: age milestones at 5-year intervals (0, 5, 10, 15, etc.)
-
-      For analysis queries, join using: WHERE analysis_date >= effective_start_date AND (effective_end_date IS NULL OR analysis_date < effective_end_date)'
-
+    description: >-
+      Age at five-year birthday milestones in OLIDS, one row per person and retained
+      milestone from age 0 to 100. Covers the window from the start of the build month
+      five years ago to the build date or death. People without a milestone in that
+      window are excluded. Age stays fixed within each period. End dates are
+      exclusive; null marks the last retained period, including for deceased people.
     config:
       meta:
         owner:
@@ -42,16 +22,18 @@ models:
           - not_null
 
       - name: effective_end_date
-        description: 'SCD2: Period end date for temporal tracking (NULL = current period)'
-
+        description: >-
+          Exclusive end of the retained age period. Null marks the last retained period,
+          including for deceased people.
       - name: period_sequence
         description: 'SCD2: Sequential number for each temporal period per person'
         tests:
           - not_null
 
       - name: age
-        description: 'SCD2: Age calculated as of effective_start_date (temporal)'
-
+        description: >-
+          Age at the birthday milestone starting this period. It stays fixed during the
+          period.
       - name: age_band_5y
         description: 'SCD2: 5-year age band as of effective_start_date (temporal)'
 
@@ -68,7 +50,9 @@ models:
         description: 'SCD2: Life stage as of effective_start_date (temporal)'
 
       - name: is_current_period
-        description: 'SCD2: Flag indicating if this is the current active period'
+        description: >-
+          True for the last retained age period, including for deceased people; it does
+          not establish current registration or living status.
         tests:
           - not_null
           - accepted_values:

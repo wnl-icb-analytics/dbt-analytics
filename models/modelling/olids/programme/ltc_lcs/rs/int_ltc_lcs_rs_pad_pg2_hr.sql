@@ -56,7 +56,7 @@ latest_bp as (
         diastolic_value,
         coalesce(is_home_bp_event or is_abpm_bp_event, false) as is_home_or_abpm
     from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+    where clinical_effective_date > dateadd(month, -12, current_date())
 ),
 
 ages as (

@@ -3,13 +3,18 @@ version: 2
 models:
   - name: int_ltc_lcs_cf_hf_61_base_woEX
     description: >
-      ICB_CF_HF_61_woEX shared parent: currently-registered patients not in
-      ICS_METABOLIC_LTC and not on the AF/HF register and without any HF-evidence
-      code (eligible_for_hf_casefinding_vs1), who match any HF inclusion arm
-      (HF-specific meds / SGLT2-digoxin group / pro-BNP > 400 / pro-BNP > 2000
-      within 2y / cardiomyopathy + breathlessness / digoxin / spironolactone, meds
-      in last 3 months), minus the PCOS-pattern carve-out (age < 40 + Female +
-      hirsutism). Pre-Rule-1 population consumed by HF_61. CF_NHSHC2Y not applied.
+      One row per currently registered, living person outside the metabolic LTC
+      population, not on the AF/HF register and without an HF-evidence code.
+      Includes HF-specific medication, SGLT2/digoxin-group or digoxin orders
+      strictly within three months; latest pro-BNP > 400 without a cardiology
+      referral, HF-excluded or normal/diastolic-dysfunction LV echo code on or
+      after its date; or latest pro-BNP strictly within two years > 2000 without
+      HF excluded on or after its date. Also includes people whose latest record
+      in each cardiomyopathy/HF-excluded and breathlessness/HF-excluded pool is
+      not HF excluded. Otherwise includes spironolactone orders strictly within
+      three months, except females aged under 40 with hirsutism, acne or alopecia.
+      This carve-out applies only to the spironolactone route. HF_61 applies the
+      final three-year HF-excluded rule. NHS Health Check exclusions do not apply.
     config:
       meta:
         owner:
@@ -24,6 +29,7 @@ models:
               - hf_case_finding_eligible_patients_vs3
               - hf_case_finding_eligible_patients_vs4
               - hf_case_finding_eligible_patients_vs5
+              - hf_case_finding_eligible_patients_vs6
               - hf_case_finding_eligible_patients_vs7
               - hf_case_finding_eligible_patients_vs8
               - hf_case_finding_eligible_patients_vs9

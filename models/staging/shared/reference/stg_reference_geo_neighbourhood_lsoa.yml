@@ -1,12 +1,26 @@
 version: 2
 models:
 - name: stg_reference_geo_neighbourhood_lsoa
-  description: Staged NCL LSOA 2021 -> neighbourhood (INT) from REFERENCE.GEO.NEIGHBOURHOOD_LSOA.
+  description: 'WNL LSOA 2021 to neighbourhood (INT) lookup, one row per LSOA,
+    covering every LSOA in the 13 WNL boroughs (NCL and NWL). Maintained in the
+    primary care org manager app: each LSOA takes the neighbourhood assigned to
+    its electoral ward. Codes and names use the canonical REFERENCE scheme (e.g.
+    BAR01 / "Barnet East").'
   config:
     meta:
       owner:
         name: Jonathan Linney
-  tests:
-    - dbt_expectations.expect_table_row_count_to_be_between:
-        arguments:
-          min_value: 1
+  columns:
+    - name: lsoa_2021_code
+      description: LSOA 2021 code
+      data_tests:
+        - unique
+        - not_null
+    - name: lsoa_2021_name
+      description: LSOA 2021 name
+    - name: neighbourhood_code
+      description: Neighbourhood (INT) code, canonical REFERENCE scheme (e.g. BAR01)
+      data_tests:
+        - not_null
+    - name: neighbourhood_name
+      description: Neighbourhood (INT) name

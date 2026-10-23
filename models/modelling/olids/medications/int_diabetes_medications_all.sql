@@ -104,15 +104,7 @@ SELECT
 
 
     -- Order recency flags
-    CASE
-        WHEN DATEDIFF(day, bo.order_date, CURRENT_DATE()) <= 90 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_3m,
-
-    CASE
-        WHEN DATEDIFF(day, bo.order_date, CURRENT_DATE()) <= 180 THEN TRUE
-        ELSE FALSE
-    END AS is_recent_6m
+    {{ medication_date_flags('bo.order_date', months=[3, 6]) }}
 
 FROM base_orders bo
 LEFT JOIN glp1 g

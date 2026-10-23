@@ -22,7 +22,19 @@ models:
       - name: person_id
         description: MHSDS person identifier.
       - name: nhsd_legal_status
-        description: NHSD legal-status code.
+        description: NHSD-derived legal-status code, distinct from the submitted legal_status_code.
+      - name: legal_status_code
+        description: Submitted LegalStatusCode classification, trimmed and upper-cased without NHSD recoding.
+          Null for a blank submission.
+      - name: legal_status_class_period_start_reason
+        description: Submitted reason for the start of this legal-status assignment period, trimmed and
+          upper-cased. Null when blank; labels are supplied by the reporting fact.
+      - name: legal_status_class_period_end_reason
+        description: Submitted reason for the end of this legal-status assignment period, trimmed and
+          upper-cased. Null when blank; an absent reason does not establish that the period remains open.
+      - name: mental_cat
+        description: Submitted Mental Health Act 2007 mental category, trimmed and upper-cased.
+          Describes the primary reason for detention, not a diagnosis. Null when blank.
       - name: start_date_mh_act_legal_status_class
         description: >-
           Legal-status period start date, as a date. Source values before 1901
@@ -32,10 +44,17 @@ models:
           Legal-status period end date, as a date. Null while the period is
           open. Source values before 1901 are Excel-epoch missing-value
           sentinels and are null here.
+      - name: start_time_mh_act_legal_status_class
+        description: Legal-status period start time.
+      - name: end_time_mh_act_legal_status_class
+        description: Legal-status period end time.
       - name: expiry_date_mh_act_legal_status_class
         description: >-
           Legal-status period expiry date, as a date. Source values before 1901
           are Excel-epoch missing-value sentinels and are null here.
+      - name: expiry_time_mh_act_legal_status_class
+        description: Recorded clock time when the legal-status classification expires. Null when not
+          supplied; midnight is retained when supplied.
       - name: org_id_prov
         description: Provider organisation code.
       - name: unique_local_patient_id

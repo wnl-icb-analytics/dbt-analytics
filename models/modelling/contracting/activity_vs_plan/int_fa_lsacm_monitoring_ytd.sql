@@ -3,14 +3,23 @@
         materialized='table',
         tags=['fa_checks'])
 }}
---testing monitoring table
-with expected_providers as (
-/*    Using current provider list rather than historical is safer because providers may enter or leave the submission programme. */
-    SELECT distinct
+WITH wnl_reporting_names AS (
+    SELECT DISTINCT
         provider_code,
-        organisation_name
-        FROM {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }}
-    --FROM DEV__MODELLING.CONTRACTING.INT_FA_LSACM_MONTHLY_SUB_YTD_LATEST
+        provider_shorthand,
+        provider_name
+        FROM {{ ref('stg_reference_wnl_reporting_names') }}
+    --FROM STAGING.REFERENCE.STG_REFERENCE_WNL_REPORTING_NAMES
+)
+,expected_providers as (
+/*    Using current provider list rather than historical is safer because providers may enter or leave the submission programme. */
+    select distinct
+        l.provider_code,
+        n.provider_name,
+        n.provider_shorthand
+        FROM {{ ref('int_fa_lsacm_monthly_sub_ytd_latest') }} l
+    --FROM MODELLING.CONTRACTING.INT_FA_LSACM_MONTHLY_SUB_YTD_LATEST l
+    LEFT JOIN wnl_reporting_names n  using (provider_code)
 ),
 submission_dates as (
     SELECT
@@ -29,7 +38,6 @@ submission_dates as (
 provider_submissions as (
     SELECT 
     provider_code,
-    organisation_name,
 	meta_file_id,
 	activity_month,
     fy_month_submitted,
@@ -47,7 +55,8 @@ provider_submissions as (
 monitor as (
     SELECT
         p.provider_code,
-        p.organisation_name,
+        p.provider_name,
+        p.provider_shorthand,
         s.meta_file_id,
         s.activity_month,
         d.fy_submission_month_number,
@@ -62,7 +71,7 @@ monitor as (
            and current_date() < coalesce(d.next_required_submission_date,'9999-12-31'::date) THEN 'Overdue' 
            WHEN s.date_submitted is null and current_date() >= d.next_required_submission_date THEN 'Missing' 
            WHEN s.date_submitted is null and current_date() <= d.required_submission_date THEN 'Awaiting submission'
-        ELSE s.submission_status end as DASHBOARD_STATUS,
+        ELSE s.submission_status end as dashboard_status,
         case
             when s.DATE_SUBMITTED is not null then
                 datediff('day',d.required_submission_date,s.DATE_SUBMITTED)

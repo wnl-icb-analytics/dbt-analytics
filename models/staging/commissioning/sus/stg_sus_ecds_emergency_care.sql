@@ -18,6 +18,7 @@ derived as (
 )
 
 select core.primarykey_id
+    , try_to_timestamp_ntz(core.system_interchange_received_date::varchar) as source_received_at
     , system_transaction_cds_unique_identifier
     , {{ consistent_sk_patient_id_format('patient_nhs_number_value_pseudo') }} as sk_patient_id
     , patient_local_patient_identifier_value as local_patient_identifier
@@ -35,6 +36,10 @@ select core.primarykey_id
         as patient_gp_registration_general_practitioner
     , nullif(upper(trim(commissioning_service_agreement_commissioner)), '')
         as commissioning_service_agreement_commissioner
+    , nullif(upper(trim(commissioning_commissioner_assignment_commissioner)), '')
+        as commissioning_commissioner_assignment_commissioner
+    , nullif(trim(commissioning_commissioner_assignment_flowchart_reference), '')
+        as commissioning_commissioner_assignment_flowchart_reference
     , case when provider.organisation_code is not null
         then core.attendance_location_hes_provider_3
         else left(core.attendance_location_hes_provider_3, 3)
@@ -101,7 +106,10 @@ select core.primarykey_id
     , clinical_injury_place_type
     , nullif(clinical_injury_date::date, '1900-01-01'::date) as clinical_injury_date
     , clinical_injury_time::time as clinical_injury_time
-    , clinical_disease_notification_code
+    -- SUS splits notification codes across two columns; the older one also holds descriptions.
+    , coalesce(clinical_disease_notification_code,
+        iff(regexp_like(trim(clinical_disease_notification), '[0-9]{6,18}'),
+            trim(clinical_disease_notification), null)) as clinical_disease_notification_code
 
     -- cost
     , commissioning_grouping_health_resource_group

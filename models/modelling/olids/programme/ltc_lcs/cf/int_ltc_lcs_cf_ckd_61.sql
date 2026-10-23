@@ -1,12 +1,12 @@
 {{ config(materialized='table') }}
 
--- LTC LCS CKD case finding indicator CKD_61: latest eGFR < 60, not on CKD register
--- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/ckd/icb-cf-ckd-61-1d.md (+ -61-1n.md)
--- ICB_CF_CKD_61 = ICB_CF_CKD_61_1D_woEX, then:
---   Rule 1 (1D, exclude if matched): "Chronic kidney disease screening" code (1-code marker,
---     name collides with the 8-code woEX set -> pinned id) within the last 3 years.
---   Rule 1 (1N, exclude if matched): on the LTC LCS CKD Register.
---   Both applied -> net included population.
+-- CKD_61: one row per eligible, registered, living person aged at least 17.
+-- The latest positive six-code eGFR and latest positive result on an earlier date
+-- must both be < 60, with at least two positive eight-code observations.
+-- Excludes screening strictly within three years and current CKD register membership.
+-- Register membership uses the QOF CKD register (fct_person_ckd_register)
+-- as a proxy for the EMIS LTC LCS CKD register.
+-- Authority: EMIS R5 CKD case-finding reports; full result rules are in the helper.
 
 with base_woex as (
     select person_id
@@ -17,7 +17,7 @@ with base_woex as (
 ckd_screened as (
     select person_id
     from ({{ get_ltc_lcs_observations("6e168908-5577-8967-f124-d109c66126e1") }})
-    where clinical_effective_date >= dateadd(year, -3, current_date())
+    where clinical_effective_date > dateadd(year, -3, current_date())
 ),
 
 -- Rule 1 (1N): on the CKD register

@@ -1,0 +1,294 @@
+version: 2
+
+models:
+  - name: stg_ukhfd_dmd_vmp
+    description: >-
+      Current dm+d vmp records. One row per vpid. Removed source records remain available;
+      is_in_latest_source marks current source membership.
+    columns:
+      - name: vpid
+        description: SNOMED CT identifier of the virtual medicinal product (VMP).
+        data_tests:
+          - not_null
+          - unique
+      - name: vtm_id
+        description: SNOMED CT identifier of the virtual therapeutic moiety (VTM), independent of strength
+          and form.
+      - name: vmp_name
+        description: dm+d name of the generic product, including strength and dose form.
+      - name: is_invalid
+        description: Whether dm+d marks this product identifier invalid; null when no flag is supplied.
+      - name: combination_product_code
+        description: Supplied dm+d combination-product lookup code; null when absent.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports this retained record in its latest source data.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+  - name: stg_ukhfd_dmd_amp
+    description: >-
+      Current dm+d amp records. One row per apid. Removed source records remain available;
+      is_in_latest_source marks current source membership.
+    columns:
+      - name: apid
+        description: SNOMED CT identifier of the actual medicinal product (AMP).
+        data_tests:
+          - not_null
+          - unique
+      - name: vpid
+        description: SNOMED CT identifier of the virtual medicinal product (VMP).
+      - name: amp_name
+        description: dm+d name of the branded or supplier-specific medicinal product.
+      - name: is_invalid
+        description: Whether dm+d marks this product identifier invalid; null when no flag is supplied.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports this retained record in its latest source data.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+  - name: stg_ukhfd_dmd_vmp_drug_form
+    description: >-
+      Current dm+d vmp drug form records. One row per vpid. Removed source records remain available;
+      is_in_latest_source marks current source membership.
+    columns:
+      - name: vpid
+        description: SNOMED CT identifier of the virtual medicinal product (VMP).
+        data_tests:
+          - not_null
+          - unique
+      - name: form_code
+        description: dm+d dose-form lookup code.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports this retained record in its latest source data.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+  - name: stg_ukhfd_dmd_lookup_form
+    description: >-
+      Current dm+d lookup form records. One row per form_code. Removed source records remain
+      available; is_in_latest_source marks current source membership.
+    columns:
+      - name: form_code
+        description: dm+d dose-form lookup code.
+        data_tests:
+          - not_null
+          - unique
+      - name: form_description
+        description: dm+d dose-form text, such as Modified-release tablet.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports this retained record in its latest source data.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+  - name: stg_ukhfd_dmd_vmp_ingredient
+    description: >-
+      Latest retained dm+d active ingredient record per virtual product and ingredient substance.
+      Removed records remain available; is_in_latest_source marks current source membership.
+      Strength values retain their supplied units.
+    columns:
+      - name: vpid
+        description: SNOMED CT identifier of the virtual medicinal product (VMP).
+        data_tests:
+          - not_null
+      - name: ingredient_substance_id
+        description: SNOMED CT identifier of the active ingredient substance in the virtual product.
+        data_tests:
+          - not_null
+      - name: basis_strength_code
+        description: dm+d lookup code for how the ingredient strength is expressed.
+      - name: strength_numerator_value
+        description: Supplied numerator of the ingredient strength, in strength_numerator_unit_code units.
+      - name: strength_numerator_unit_code
+        description: dm+d unit code for the ingredient strength numerator; null when absent.
+      - name: strength_denominator_value
+        description: Supplied denominator of the ingredient strength, in strength_denominator_unit_code units.
+      - name: strength_denominator_unit_code
+        description: dm+d unit code for the ingredient strength denominator; null when absent.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports this retained record in its latest source data.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - vpid
+              - ingredient_substance_id
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+  - name: stg_ukhfd_dmd_vtm
+    description: >-
+      Current dm+d vtm records. One row per vtm_id. Removed source records remain available;
+      is_in_latest_source marks current source membership.
+    columns:
+      - name: vtm_id
+        description: SNOMED CT identifier of the virtual therapeutic moiety (VTM), independent of strength
+          and form.
+        data_tests:
+          - not_null
+          - unique
+      - name: vtm_name
+        description: dm+d name of the therapeutic moiety or combination of moieties.
+      - name: previous_vtm_id
+        description: Previous SNOMED CT moiety identifier supplied by dm+d; null when absent.
+      - name: is_in_latest_source
+        description: Whether UKHFD reports this retained record in its latest source data.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+
+unit_tests:
+- name: dmd_vmp_retained_latest_precedence
+  model: stg_ukhfd_dmd_vmp
+  given:
+  - input: ref('raw_ukhfd_dmd_vmp')
+    format: sql
+    rows: |-
+      select k as vpid, 'SYN_' || label as vtmid, label as nm, iff(k='SYN_V2',1,0) as invalid, null::varchar as combprodcd, 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+       from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic removed competitor',0,'2024-02-01','2024-02-01','2024-02-01'),
+       ('SYN_IMPORT','Synthetic old import',1,'2024-01-01','2024-01-01','2024-03-01'),
+       ('SYN_IMPORT','Synthetic new import',1,'2024-01-01','2024-02-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic old created',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic new created',1,'2024-01-01','2024-01-01','2024-02-01'),
+       ('SYN_V2','Synthetic removed',0,'2024-01-01','2024-01-01','2024-01-01')) v(k,label,src,eff,imp,created)
+  expect:
+    format: sql
+    rows: |-
+      select k::varchar as vpid, 'SYN_' || label::varchar as vtm_id, label::varchar as vmp_name, (k='SYN_V2')::boolean as is_invalid, (src=1)::boolean as is_in_latest_source from (values ('SYN_V1','Synthetic new',1),('SYN_SOURCE','Synthetic source',1),('SYN_IMPORT','Synthetic new import',1),('SYN_CREATED','Synthetic new created',1),('SYN_V2','Synthetic removed',0)) v(k,label,src)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as vpid, null::varchar as vtm_id, null::varchar as vmp_name, null::boolean as is_invalid, null::boolean as is_in_latest_source where false
+
+- name: dmd_amp_retained_latest_precedence
+  model: stg_ukhfd_dmd_amp
+  given:
+  - input: ref('raw_ukhfd_dmd_amp')
+    format: sql
+    rows: |-
+      select k as apid, 'SYN_' || label as vpid, label as nm, iff(k='SYN_V2',1,0) as invalid, 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+       from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic removed competitor',0,'2024-02-01','2024-02-01','2024-02-01'),
+       ('SYN_IMPORT','Synthetic old import',1,'2024-01-01','2024-01-01','2024-03-01'),
+       ('SYN_IMPORT','Synthetic new import',1,'2024-01-01','2024-02-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic old created',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic new created',1,'2024-01-01','2024-01-01','2024-02-01'),
+       ('SYN_V2','Synthetic removed',0,'2024-01-01','2024-01-01','2024-01-01')) v(k,label,src,eff,imp,created)
+  expect:
+    format: sql
+    rows: |-
+      select k::varchar as apid, 'SYN_' || label::varchar as vpid, label::varchar as amp_name, (k='SYN_V2')::boolean as is_invalid, (src=1)::boolean as is_in_latest_source from (values ('SYN_V1','Synthetic new',1),('SYN_SOURCE','Synthetic source',1),('SYN_IMPORT','Synthetic new import',1),('SYN_CREATED','Synthetic new created',1),('SYN_V2','Synthetic removed',0)) v(k,label,src)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as apid, null::varchar as vpid, null::varchar as amp_name, null::boolean as is_invalid, null::boolean as is_in_latest_source where false
+
+- name: dmd_vtm_retained_latest_precedence
+  model: stg_ukhfd_dmd_vtm
+  given:
+  - input: ref('raw_ukhfd_dmd_vtm')
+    format: sql
+    rows: |-
+      select k as vtmid, label as nm, null::varchar as vtmidprev, 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+       from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic removed competitor',0,'2024-02-01','2024-02-01','2024-02-01'),
+       ('SYN_IMPORT','Synthetic old import',1,'2024-01-01','2024-01-01','2024-03-01'),
+       ('SYN_IMPORT','Synthetic new import',1,'2024-01-01','2024-02-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic old created',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic new created',1,'2024-01-01','2024-01-01','2024-02-01'),
+       ('SYN_V2','Synthetic removed',0,'2024-01-01','2024-01-01','2024-01-01')) v(k,label,src,eff,imp,created)
+  expect:
+    format: sql
+    rows: |-
+      select k::varchar as vtm_id, label::varchar as vtm_name, (src=1)::boolean as is_in_latest_source from (values ('SYN_V1','Synthetic new',1),('SYN_SOURCE','Synthetic source',1),('SYN_IMPORT','Synthetic new import',1),('SYN_CREATED','Synthetic new created',1),('SYN_V2','Synthetic removed',0)) v(k,label,src)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as vtm_id, null::varchar as vtm_name, null::boolean as is_in_latest_source where false
+
+- name: dmd_vmp_drug_form_retained_latest_precedence
+  model: stg_ukhfd_dmd_vmp_drug_form
+  given:
+  - input: ref('raw_ukhfd_dmd_vmp_drug_form')
+    format: sql
+    rows: |-
+      select k as vpid, label as formcd, 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+       from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic removed competitor',0,'2024-02-01','2024-02-01','2024-02-01'),
+       ('SYN_IMPORT','Synthetic old import',1,'2024-01-01','2024-01-01','2024-03-01'),
+       ('SYN_IMPORT','Synthetic new import',1,'2024-01-01','2024-02-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic old created',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic new created',1,'2024-01-01','2024-01-01','2024-02-01'),
+       ('SYN_V2','Synthetic removed',0,'2024-01-01','2024-01-01','2024-01-01')) v(k,label,src,eff,imp,created)
+  expect:
+    format: sql
+    rows: |-
+      select k::varchar as vpid, label::varchar as form_code, (src=1)::boolean as is_in_latest_source from (values ('SYN_V1','Synthetic new',1),('SYN_SOURCE','Synthetic source',1),('SYN_IMPORT','Synthetic new import',1),('SYN_CREATED','Synthetic new created',1),('SYN_V2','Synthetic removed',0)) v(k,label,src)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as vpid, null::varchar as form_code, null::boolean as is_in_latest_source where false
+
+- name: dmd_lookup_form_retained_latest_precedence
+  model: stg_ukhfd_dmd_lookup_form
+  given:
+  - input: ref('raw_ukhfd_dmd_lookup_form')
+    format: sql
+    rows: |-
+      select k as cd, label as "DESC", 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+       from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic removed competitor',0,'2024-02-01','2024-02-01','2024-02-01'),
+       ('SYN_IMPORT','Synthetic old import',1,'2024-01-01','2024-01-01','2024-03-01'),
+       ('SYN_IMPORT','Synthetic new import',1,'2024-01-01','2024-02-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic old created',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic new created',1,'2024-01-01','2024-01-01','2024-02-01'),
+       ('SYN_V2','Synthetic removed',0,'2024-01-01','2024-01-01','2024-01-01')) v(k,label,src,eff,imp,created)
+  expect:
+    format: sql
+    rows: |-
+      select k::varchar as form_code, label::varchar as form_description, (src=1)::boolean as is_in_latest_source from (values ('SYN_V1','Synthetic new',1),('SYN_SOURCE','Synthetic source',1),('SYN_IMPORT','Synthetic new import',1),('SYN_CREATED','Synthetic new created',1),('SYN_V2','Synthetic removed',0)) v(k,label,src)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as form_code, null::varchar as form_description, null::boolean as is_in_latest_source where false
+
+- name: dmd_vmp_ingredient_retained_latest_precedence
+  model: stg_ukhfd_dmd_vmp_ingredient
+  given:
+  - input: ref('raw_ukhfd_dmd_vmp_ingredient')
+    format: sql
+    rows: |-
+      select k as vpid, 'SYN_I1' as isid, label as basis_strntcd, null::number as strnt_nmrtr_val, null::varchar as strnt_nmrtr_uomcd, null::number as strnt_dnmtr_val, null::varchar as strnt_dnmtr_uomcd, 1::number is_latest,src::number in_source_data,eff::timestamp_ntz effective_from,imp::timestamp_ntz import_date,created::timestamp_ntz created_date
+       from (values ('SYN_V1','Synthetic old',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_V1','Synthetic new',1,'2024-02-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic source',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_SOURCE','Synthetic removed competitor',0,'2024-02-01','2024-02-01','2024-02-01'),
+       ('SYN_IMPORT','Synthetic old import',1,'2024-01-01','2024-01-01','2024-03-01'),
+       ('SYN_IMPORT','Synthetic new import',1,'2024-01-01','2024-02-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic old created',1,'2024-01-01','2024-01-01','2024-01-01'),
+       ('SYN_CREATED','Synthetic new created',1,'2024-01-01','2024-01-01','2024-02-01'),
+       ('SYN_V2','Synthetic removed',0,'2024-01-01','2024-01-01','2024-01-01')) v(k,label,src,eff,imp,created)
+  expect:
+    format: sql
+    rows: |-
+      select k::varchar as vpid, label::varchar as basis_strength_code, (src=1)::boolean as is_in_latest_source from (values ('SYN_V1','Synthetic new',1),('SYN_SOURCE','Synthetic source',1),('SYN_IMPORT','Synthetic new import',1),('SYN_CREATED','Synthetic new created',1),('SYN_V2','Synthetic removed',0)) v(k,label,src)
+  overrides:
+    macros:
+      get_empty_subquery_sql: >-
+        select null::varchar as vpid, null::varchar as basis_strength_code, null::boolean as is_in_latest_source where false

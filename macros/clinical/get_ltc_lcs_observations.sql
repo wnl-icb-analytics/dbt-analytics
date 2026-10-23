@@ -1,4 +1,4 @@
-{% macro get_ltc_lcs_observations(valuesets, match_paths='both') %}
+{% macro get_ltc_lcs_observations(valuesets, match_paths='both', include_date_recorded=false) %}
 
 {#
     Returns observations for one or more LTC LCS valuesets via two parallel paths:
@@ -10,11 +10,13 @@
     to translate EMIS codes to SNOMED. When both paths match the same observation, the
     'mapped' row wins via the qualify ordering.
 
-    Note: original_codes.include_children is not yet expanded (parent codes only).
+    Public and equivalent EMIS-local roots permit mapped concepts and XML-requested
+    descendants. Other local roots match their original source code only.
 
     Params:
       valuesets    - comma-separated list of valueset_id or valueset_friendly_name tokens
       match_paths  - 'both' (default), 'mapped', or 'source'
+      include_date_recorded - also return date_recorded, the EMIS save time, for same-day ordering.
 #}
 
 {%- if valuesets is none -%}
@@ -38,13 +40,19 @@
 {%- set valuesets_quoted = "'" ~ valueset_tokens | join("','") ~ "'" -%}
 {%- set valuesets_upper_quoted = "'" ~ (valueset_tokens | map('upper') | join("','")) ~ "'" -%}
 
-with matched_observations as (
+with permitted_mapped_codes as (
+    {{ ltc_lcs_permitted_mapped_codes(valuesets_quoted, valuesets_upper_quoted) }}
+),
+matched_observations as (
 {%- if match_paths in ['both', 'mapped'] %}
     select
         o.id as observation_id,
         o.patient_id,
         o.person_id,
         o.clinical_effective_date,
+        {%- if include_date_recorded %}
+        o.date_recorded,
+        {%- endif %}
         o.result_value,
         o.result_units_source_concept_id,
         o.result_unit_display,
@@ -61,7 +69,7 @@ with matched_observations as (
         vs.valueset_friendly_name,
         'mapped' as match_path
     from {{ ref('stg_olids_observation') }} as o
-    inner join {{ ref('stg_reference_ltc_lcs_expanded_concepts') }} as ec
+    inner join permitted_mapped_codes as ec
         on o.mapped_concept_code = ec.snomed_code
     left join {{ ref('stg_reference_ltc_lcs_valuesets') }} as vs
         on ec.valueset_id = vs.valueset_id
@@ -79,6 +87,9 @@ with matched_observations as (
         o.patient_id,
         o.person_id,
         o.clinical_effective_date,
+        {%- if include_date_recorded %}
+        o.date_recorded,
+        {%- endif %}
         o.result_value,
         o.result_units_source_concept_id,
         o.result_unit_display,

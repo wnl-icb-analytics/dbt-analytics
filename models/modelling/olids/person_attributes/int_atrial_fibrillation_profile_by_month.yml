@@ -5,7 +5,7 @@ models:
     have since left or died remain in earlier months; test patients are excluded by consuming indicators.
     Holds latest stroke scores, separate lifetime/prior-period maxima, anticoagulant order dates and types,
     exceptions and reviews. Invalid latest scores remain null without fallback. CHADS2 latest selection
-    stops before 1 April 2015. DOAC not-indicated evidence needs a valued TTR record of at least 65% in
+    stops before 1 April 2015. DOAC not-indicated evidence needs a valued TTR record between 65% and 100% in
     six months. Covers the last 60 completed month-ends using current code lists and retained records.
     Non-register evidence uses corrected clinical/order dates through the month-end, rather than a complete
     reconstruction of recorded-date knowledge.
@@ -68,8 +68,8 @@ models:
       Antiphospholipid syndrome is handled as a DOAC exception instead.
     name: is_doac_ineligible
   - description: A DOAC contraindication or antiphospholipid syndrome at any time, a DOAC decline in 12
-      months, or a not-indicated code in 12 months with latest non-null TTR at least 65% in six months,
-      following QOF v51 AF008.
+      months, or a not-indicated code in 12 months with latest non-null TTR between 65% and 100% in six months,
+      following QOF v51 AF008. An invalid latest valued result does not fall back to an earlier result.
     name: has_doac_exception
   - description: Date of the latest anticoagulant medication review or AF annual review record; null if
       none.
@@ -216,3 +216,59 @@ unit_tests:
     tags:
     - monthly-full
     - nice-history
+- name: nice_history_af_ttr_invalid_latest_no_fallback
+  model: int_atrial_fibrillation_profile_by_month
+  given:
+  - input: ref('fct_person_atrial_fibrillation_register_by_month')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER person_id, '2026-09-30'::DATE month_end_date,
+          '2020-01-01'::TIMESTAMP_NTZ earliest_diagnosis_date,
+          NULL::TIMESTAMP_NTZ latest_diagnosis_date
+      FROM VALUES (-98110), (-98111), (-98112), (-98113), (-98114), (-98115)
+  - input: ref('int_stroke_risk_score_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER person_id, NULL::VARCHAR id, NULL::TIMESTAMP_NTZ clinical_effective_date,
+          NULL::NUMBER score_value, NULL::VARCHAR score_type WHERE FALSE
+  - input: ref('int_ttr_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER person_id, column2::VARCHAR id,
+          column3::TIMESTAMP_NTZ clinical_effective_date, column4::VARCHAR original_result_value,
+          TRY_CAST(column4::VARCHAR AS FLOAT) ttr_percentage
+      FROM VALUES
+          (-98110, 'SYN_EARLIER_HIGH', '2026-09-01', '70'),
+          (-98110, 'SYN_LATEST_HIGH', '2026-09-20', '101'),
+          (-98111, 'SYN_EARLIER_NEGATIVE', '2026-09-01', '70'),
+          (-98111, 'SYN_LATEST_NEGATIVE', '2026-09-20', '-1'),
+          (-98112, 'SYN_EARLIER_TEXT', '2026-09-01', '70'),
+          (-98112, 'SYN_LATEST_TEXT', '2026-09-20', 'synthetic'),
+          (-98113, 'SYN_65', '2026-09-20', '65'),
+          (-98114, 'SYN_100', '2026-09-20', '100'),
+          (-98115, 'SYN_64', '2026-09-20', '64')
+  - input: ref('int_anticoagulant_medications_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER person_id, NULL::VARCHAR medication_order_id, NULL::DATE order_date,
+          NULL::VARCHAR anticoagulant_type, FALSE is_doac, FALSE is_vka WHERE FALSE
+  - input: ref('int_anticoagulant_exception_all')
+    format: sql
+    rows: |-
+      SELECT column1::NUMBER person_id, 'SYN_EXCEPTION'::VARCHAR id,
+          '2026-09-01'::TIMESTAMP_NTZ clinical_effective_date,
+          'DOAC_NOT_INDICATED'::VARCHAR exception_type
+      FROM VALUES (-98110), (-98111), (-98112), (-98113), (-98114), (-98115)
+  - input: ref('int_anticoagulant_review_all')
+    format: sql
+    rows: |-
+      SELECT NULL::NUMBER person_id, NULL::VARCHAR id,
+          NULL::TIMESTAMP_NTZ clinical_effective_date WHERE FALSE
+  expect:
+    rows:
+    - {person_id: -98110, has_doac_exception: false}
+    - {person_id: -98111, has_doac_exception: false}
+    - {person_id: -98112, has_doac_exception: false}
+    - {person_id: -98113, has_doac_exception: true}
+    - {person_id: -98114, has_doac_exception: true}
+    - {person_id: -98115, has_doac_exception: false}

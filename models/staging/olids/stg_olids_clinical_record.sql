@@ -4,8 +4,14 @@ select
     source_record_id,
     person_id,
     patient_id,
-    {{ consistent_sk_patient_id_format('sk_patient_id') }} as sk_patient_id,
+    -- The stable key is already canonical text. TRIM prevents partition pruning here.
+    nullif(sk_patient_id::varchar, '1') as sk_patient_id,
     encounter_id,
+    is_encounter_person_consistent,
+    encounter_date,
+    encounter_date_precision_code,
+    encounter_date_precision_name,
+
     clinical_record_date,
     clinical_date_precision_code,
     clinical_date_precision_name,
