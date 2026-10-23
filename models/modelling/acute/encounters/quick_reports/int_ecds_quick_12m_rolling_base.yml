@@ -1,0 +1,97 @@
+models:
+  - name: int_ecds_quick_12m_rolling_base
+    description: >
+      Base table AE Encounters for rolling 12m view from OBT_ENCOUNTER_UEC reporting table with missing demographics imputed from PDS Demographics and COMM GROUP is WNL.
+    columns:
+      - name: sk_patient_id
+        description: Pseudonymised patient identifier used to link to person-level demographics and other patient records.
+      - name: commissioner_code
+        description: Commissioner code recorded for the attendance event.
+      - name: comm_group
+        description: Commissioner grouping used for this encounter, set to WNL for the selected commissioner codes and Other otherwise.
+      - name: practice_code
+        description: Registered GP practice code for the patient at the event date.
+      - name: practice_name
+        description: Registered GP practice name for the patient at the event date.
+      - name: pcn_name
+        description: Primary care network name for the registered GP practice at the event date.
+      - name: practice_neighbourhood
+        description: Neighbourhood name for the registered GP practice at the event date.
+      - name: health_borough
+        description: Health borough name for the registered GP practice at the event date.
+      - name: is_wnl_registered
+        description: Flag showing whether the patient was registered to a WNL health borough.
+      - name: is_wnl_resident
+        description: Flag showing whether WNL borough of residence is populated for the event.
+      - name: borough_resident
+        description: Borough of residence recorded at the event.
+      - name: provider_code
+        description: Organisation code for the acute provider that delivered the attendance.
+      - name: provider_shorthand
+        description: Short name for the acute provider from the WNL reporting names reference table.
+      - name: provider_name
+        description: Full provider name from the WNL reporting names reference table.
+      - name: site_id
+        description: Site identifier for the attendance.
+      - name: site_name
+        description: Site name for the attendance.
+      - name: dept_code
+        description: Department or pod code for the attendance.
+      - name: dept_type_desc
+        description: Department type description derived from the departmental code.
+      - name: attendance_date
+        description: Start date of the attendance.
+      - name: duration
+        description: Attendance duration in minutes.
+      - name: financial_year_label
+        description: Financial year label for the attendance date, such as 2024/25.
+      - name: attendance_month_sort
+        description: Numeric month key used for ordering attendance periods in YYYYMM format.
+      - name: attendance_month_label
+        description: Human-readable month label for the attendance date, such as January-2025.
+      - name: is_4_hour_breach
+        description: Flag showing whether the attendance exceeded 240 minutes.
+      - name: is_12_hour_breach
+        description: Flag showing whether the attendance exceeded 720 minutes when a duration is available.
+      - name: is_72_hour_breach
+        description: Flag showing whether the attendance exceeded 4320 minutes when a duration is available.
+      - name: arrival_mode_desc
+        description: Description of the patient's arrival mode.
+      - name: hrg_code
+        description: Healthcare Resource Group code used for the attendance.
+      - name: core_hrg_desc
+        description: Core HRG description for the attendance.
+      - name: chief_complaint_desc
+        description: Description of the patient's chief complaint.
+      - name: chief_complaint_ecds_group1
+        description: Group 1 chief complaint classification from the ECDS coding set.
+      - name: primary_diagnosis_desc_ecds_group1
+        description: Group 1 description of the primary diagnosis recorded for the attendance.
+      - name: is_mental_health_related_attendance
+        description: Flag indicating whether the attendance was mental-health related.
+      - name: acuity_desc
+        description: Clinical acuity description for the attendance.
+      - name: admission_status
+        description: Discharge destination group mapped to an admission status label.
+      - name: age_band_nhs
+        description: NHS age band assigned at the event date.
+      - name: gender
+        description: Patient gender, with the PDS value used where the event value is missing.
+      - name: ethnicity_code
+        description: Ethnicity code, with the PDS value used where the event value is missing.
+      - name: ethnicity
+        description: Ethnicity description, with the PDS value used where the event value is missing.
+      - name: imd_decile_25
+        description: Index of Multiple Deprivation decile, with the PDS value used where the event value is missing.
+      - name: lsoa_21
+        description: LSOA 2021 code, with the PDS value used where the event value is missing.
+      - name: attendance_count
+        description: Count of attendances represented by this row.
+    config:
+      meta:
+        owner:
+          name: KateHomer55
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
