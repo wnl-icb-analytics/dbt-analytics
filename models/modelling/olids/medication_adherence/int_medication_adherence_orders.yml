@@ -1,0 +1,102 @@
+models:
+  - name: int_medication_adherence_orders
+    description: >
+      Base medication orders for the medicines-adherence (PDC) pipeline: orders
+      in the five adherence drug classes selected by BNF paragraph via
+      get_medication_orders (020505 RAAS, 020400 beta-blockers, 020602 CCBs,
+      060102 non-insulin anti-diabetics, 021200 lipid lowering), restricted to
+      the last 3 years of orders (month-truncated cutoff, var
+      medication_adherence_order_lookback_years — chains older than the
+      horizon are left-truncated; a divergence from the original, which
+      processed full history), restricted to oral solid forms, with
+      missing-value sentinels normalised to NULL and drug_name resolved to
+      VTM (therapeutic-moiety) grain via stg_reference_bnf_latest. Port of the NCL meds_adherence Snowpark
+      extraction + normalise_missing_values + filter_oral_medications; see the
+      model header for documented divergences. One row per medication order.
+    config:
+      meta:
+        owner:
+          name: em-baldwin
+    columns:
+      - name: medication_order_id
+        description: >
+          Source medication order id. Unique — a failure would mean an order
+          matched more than one BNF paragraph, which cannot happen with
+          non-overlapping paragraph prefixes.
+        tests:
+          - unique
+          - not_null
+      - name: person_id
+        description: Person identifier (via int_patient_person_unique).
+        tests:
+          - not_null
+      - name: order_date
+        description: Order date (clinical_effective_date).
+        tests:
+          - not_null
+      - name: drug_name
+        description: >
+          Drug grouping key for refill chains and PDC, at VTM
+          (therapeutic-moiety) grain where resolvable — replicating the
+          original pipeline's VTM grouping. Holds the VTM code (stable
+          dm+d/SNOMED identifier); vtm_name carries the readable label. Falls
+          back to mapped_concept_display when no VTM match; see
+          drug_name_source.
+        tests:
+          - not_null
+      - name: drug_name_source
+        description: >
+          Resolution level of drug_name — VTM_SNOMED (snomed_code match),
+          VTM_BNF (BNF chemical-substance match, LEFT(bnf_code, 9)), or
+          CONCEPT_DISPLAY (fallback, product grain). Monitor the fallback
+          share via the validation analysis.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - VTM_SNOMED
+                  - VTM_BNF
+                  - CONCEPT_DISPLAY
+      - name: vtm_name
+        description: >
+          Readable VTM label for the resolved drug_name code; NULL on
+          CONCEPT_DISPLAY fallback rows. Not part of any grouping key.
+      - name: drug_class
+        description: Adherence drug class label (from the BNF paragraph mapping).
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - RAAS
+                  - Beta-blocker
+                  - Calcium-channel blocker
+                  - Non-insulin anti-diabetic
+                  - Lipid lowering drugs
+      - name: bnf_code
+        description: Full presentation-level BNF code of the order.
+      - name: bnf_name
+        description: BNF name of the order.
+      - name: dose
+        description: Free-text dose instructions (sentinel-normalised).
+      - name: duration_days
+        description: Source-recorded duration in days.
+      - name: quantity_unit
+        description: Quantity unit; guaranteed to be one of the oral-form keywords by the model filter.
+        tests:
+          - not_null
+      - name: quantity_value
+        description: Quantity value (number of tablets/capsules).
+      - name: mapped_concept_code
+        description: Mapped SNOMED concept code.
+      - name: mapped_concept_display
+        description: Mapped SNOMED concept display term.
+      - name: is_repeat_order
+        description: >
+          TRUE when the order's medication statement carries a
+          REPEAT_PRESCRIPTION authorisation type. Additive column (not in the
+          original pipeline); used by the reporting snapshot to restrict its
+          cohort to repeat chains — plays no part in the PDC computation.
+        tests:
+          - not_null
