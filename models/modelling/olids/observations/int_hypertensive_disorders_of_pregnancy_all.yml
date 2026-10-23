@@ -1,0 +1,43 @@
+models:
+  - name: int_hypertensive_disorders_of_pregnancy_all
+    description: 'One row per hypertensive-disorder-of-pregnancy (HDP) observation for all people, including inactive and deceased people.
+
+      Uses the ECL_CACHE HYPERTENSIVE_DISORDERS_OF_PREGNANCY cluster, covering chronic and gestational hypertension, pre-eclampsia, HELLP and eclampsia variants. Includes historical and inactive SNOMED codes through ECL history expansion and include_history.
+      Used for cohort exclusion windows and maternity-related BP context.'
+    config:
+      meta:
+        owner:
+          name: EddieDavison92
+    data_tests:
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: HYPERTENSIVE_DISORDERS_OF_PREGNANCY
+            source: ECL_CACHE
+            versioned: false
+      - dbt_utils.at_least_one:
+          arguments:
+            column_name: id
+    columns:
+      - name: id
+        description: 'Identifier for the clinical observation'
+        data_tests:
+          - not_null
+          - unique
+      - name: person_id
+        description: 'Unique identifier for the person'
+        data_tests:
+          - not_null
+      - name: clinical_effective_date
+        description: 'Date when the HDP observation was recorded'
+        data_tests:
+          - not_null
+      - name: concept_code
+        description: 'SNOMED concept code for the HDP observation'
+      - name: concept_display
+        description: 'Human-readable description of the HDP observation'
+      - name: source_cluster_id
+        description: 'Source cluster identifier, expected to be HYPERTENSIVE_DISORDERS_OF_PREGNANCY'
+      - name: patient_id
+        description: 'Patient identifier from source system'
+      - name: is_hdp_code
+        description: 'Boolean flag indicating HDP code (always TRUE for these observations)'
