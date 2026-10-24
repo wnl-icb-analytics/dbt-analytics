@@ -15,7 +15,7 @@ SELECT
         fa.provider_shorthand,
         fa.meta_file_id,
         l.financial_month as Latest_month,
-        TO_NUMBER(fa.commissioned_service_category_code) as commissioned_service_category_code,
+        fa.commissioned_service_category_code,
         CONCAT(fa.commissioned_service_category_code, ' - ', fa.cscc_name) as commissioned_service,
         fa.point_of_delivery_code,
         SUM(fa.activity_plan) AS activity_plan_sub,
@@ -68,5 +68,9 @@ SELECT
 FROM sub_plan s
 FULL OUTER JOIN iap_plan i
     ON s.provider_shorthand = i.provider_shorthand
-   AND s.commissioned_service_category_code = i.commissioned_service_category_code
    AND s.point_of_delivery_code = i.point_of_delivery_code
+   --allows for LNWH where there is no commissioned_service_category_code
+   AND (
+        s.commissioned_service_category_code = i.commissioned_service_category_code
+        OR i.commissioned_service_category_code IS NULL
+   )
