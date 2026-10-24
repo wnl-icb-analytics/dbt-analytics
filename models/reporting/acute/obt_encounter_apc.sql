@@ -42,6 +42,11 @@ select
     , main_specialty_category
     , treatment_function_code
     , treatment_function_code_desc
+    , assigned_commissioner_code_at_event
+    , assigned_commissioner_name_at_event
+    , is_assigned_commissioner_recognised
+    , derived_commissioner_code_at_event
+    , derived_commissioner_name_at_event
     , hrg_code
     , core_hrg_desc
     , core_hrg_chapter

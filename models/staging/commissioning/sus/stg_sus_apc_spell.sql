@@ -40,6 +40,11 @@ select core.primarykey_id
     , {{ clean_organisation_id('SPELL_COMMISSIONING_SERVICE_AGREEMENT_PROVIDER') }} as SPELL_COMMISSIONING_SERVICE_AGREEMENT_PROVIDER
     , core.spell_care_location_site_code_of_treatment
 
+    /* commissioner details */
+    , core.spell_commissioning_service_agreement_commissioner
+    , core.spell_commissioning_service_agreement_is_commissioner_recognised
+    , core.spell_commissioning_service_agreement_commissioner_derived
+
      /* Time and date */
     , core.spell_admission_date::date as spell_admission_date 
     , core.spell_admission_time::time as spell_admission_time
