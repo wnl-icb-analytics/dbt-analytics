@@ -16,6 +16,11 @@ models:
     NICE NG115. Code lists: COPDDIAG_COD, COPDPROC_COD, COPDRES_COD, MRC_COD, PULRHBOFF_COD,
     PULRHBDEC_COD, PULRHBATT_COD, PULRHBPU_COD, COPDINVITE_COD, COPDRVW_COD (PCD);
     PULREHAB_OFFERED_COD (ECL cache).
+
+
+    External validation: matches QOF COPD008 (2022/23, by practice) once a known difference is
+    allowed for. NICE counts an offer (or a decline) after a breathlessness score in the last 15
+    months; QOF counted referrals in a shorter window.
   config:
     meta:
       owner:
@@ -46,6 +51,12 @@ models:
         usage_contexts:
         - NICE_GUIDANCE
         sort_order: NICE_IND101
+        external_validation:
+          status: validated
+          result: difference_explained
+          comparator: "QOF COPD008 (2022/23, by practice)"
+          note: "NICE counts an offer (or a decline) after a breathlessness score in the last 15 months; QOF counted referrals in a shorter window"
+          reference: docs/nice-benchmarks.md
   data_tests:
   - dbt_utils.unique_combination_of_columns:
       arguments:

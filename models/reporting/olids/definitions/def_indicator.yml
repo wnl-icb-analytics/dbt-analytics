@@ -85,6 +85,34 @@ models:
         description: >-
           Sort key supplied by indicator metadata or generated from its type and name.
 
+      - name: is_externally_validated
+        description: >-
+          Whether the indicator lines up with a published figure (QOF, CVDPREVENT or a national
+          audit), directly or once a known difference is allowed for and tested. False when only a
+          related figure exists, a plausible difference could not be tested, or nothing comparable
+          is published. Null for indicators not yet checked. See docs/nice-benchmarks.md.
+
+      - name: external_validation_result
+        description: >-
+          Outcome of the external check: Matches; Matches once a known difference is allowed
+          for; Plausible difference, not tested; Only a related published figure; or No published
+          figure.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - Matches
+                  - Matches once a known difference is allowed for
+                  - Plausible difference, not tested
+                  - Only a related published figure
+                  - No published figure
+
+      - name: external_validation_comparator
+        description: Published figure the indicator was checked against, with its source and period.
+
+      - name: external_validation_note
+        description: Known difference between the indicator and the published figure, if any.
+
       - name: metadata_extracted_at
         description: >-
           Timestamp when the catalogue table was built from indicator metadata.

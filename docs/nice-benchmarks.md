@@ -10,6 +10,14 @@ have no like-for-like published figure.
 The 27 NICE registers were also checked against QOF and other published register sizes. Four
 follow NICE's own definitions and differ from QOF by design (described below).
 
+Each measure's result is also recorded with the indicator:
+- in its dbt metadata (`meta.indicator.external_validation`);
+- in its model description;
+- in `REPORTING.OLIDS_DEFINITIONS.DEF_INDICATOR` (`is_externally_validated` and the
+  `external_validation_` columns);
+- as the Snowflake tag `DATA_LAKE.CONTROL.EXTERNAL_VALIDATION` (`VALIDATED` or `NOT_VALIDATED`) on
+  the indicator's table.
+
 Where the comparison found an error in our indicators, we fixed it before publishing these figures.
 Indicator definitions are in [nice-indicators.md](nice-indicators.md).
 
