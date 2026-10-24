@@ -46,12 +46,22 @@ select
     , uec_site_label
     , start_date
     , start_time
+    , timestamp_tz_from_parts(
+        year(start_date), month(start_date), day(start_date)
+        , coalesce(hour(start_time), 0), coalesce(minute(start_time), 0)
+        , coalesce(second(start_time), 0), 0, 'Europe/London'
+    ) as arrival_at
     , financial_year
     , financial_month
     , financial_month_name
     , week_end_date
     , end_date
     , end_time
+    , timestamp_tz_from_parts(
+        year(end_date), month(end_date), day(end_date)
+        , coalesce(hour(end_time), 0), coalesce(minute(end_time), 0)
+        , coalesce(second(end_time), 0), 0, 'Europe/London'
+    ) as departure_at
     , duration
     , initial_assessment_date
     , initial_assessment_time
