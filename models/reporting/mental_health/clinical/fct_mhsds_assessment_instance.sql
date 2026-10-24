@@ -33,8 +33,8 @@ select
     , count(*) as n_observations
     , count(distinct assessment_concept_code) as n_distinct_concepts
     , count(assessment_score_numeric) as n_numeric_scores
-    , count_if(assessment_response_status = 'known_non_score') as n_known_non_score_responses
-    , count_if(assessment_response_status in ('response_unmatched','reference_not_available')) as n_unmatched_responses
+    , count_if(assessment_response_status = 'non-score response') as n_known_non_score_responses
+    , count_if(assessment_response_status in ('unmatched response','reference unavailable')) as n_unmatched_responses
     , count(*) > count(distinct assessment_concept_code) as has_repeated_or_missing_concepts
     , min(reporting_period_end_date) as first_reporting_period_end_date
     , max(reporting_period_end_date) as reporting_period_end_date

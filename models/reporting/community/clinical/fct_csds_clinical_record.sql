@@ -102,12 +102,18 @@ with submitted as (
         , read_code.match_type as read_code_match_type
         , read_code.snomed_ct_code::varchar as dictionary_snomed_code
         , mapped_snomed.preferred_term as dictionary_snomed_description
+        , coalesce(snomed.snomed_code, read_mapping.snomed_code) as snomed_code
+        , case when snomed.snomed_code is not null then snomed.preferred_term
+            else read_mapping.snomed_code_name end as snomed_code_name
+        , case when snomed.snomed_code is not null then 'Recorded as SNOMED CT'
+            else read_mapping.snomed_mapping_method end as snomed_mapping_method
+        , iff(snomed.snomed_code is null, read_mapping.is_assured, null) as is_snomed_mapping_assured
         , case
             when r.clinical_code is null and r.coding_scheme_kind = 'data_element' then 'defined_by_data_element'
             when r.clinical_code is null then 'code_missing'
             when r.coding_scheme_kind = 'code_list' then case
                 when code_list.code is not null then 'labelled'
-                when code_list_sets.code_set_name is null then 'reference_not_available'
+                when code_list_sets.code_set_name is null then 'reference unavailable'
                 else 'code_or_expression_unmatched'
             end
             when (r.coding_scheme_kind in ('procedure', 'finding', 'observation') and scheme.code is null)
@@ -116,7 +122,7 @@ with submitted as (
             when snomed.snomed_code is not null or icd.code is not null or read_code.code is not null then 'labelled'
             when (r.coding_scheme_kind = 'procedure' and trim(r.coding_scheme_code) not in ('04', '05', '06'))
                 or (r.coding_scheme_kind = 'diagnosis' and r.resolver_system is null)
-                then 'reference_not_available'
+                then 'reference unavailable'
             else 'code_or_expression_unmatched'
         end as clinical_label_status
         , coalesce(unit.description, unit_alias.description) as unit_of_measurement_description
@@ -133,27 +139,27 @@ with submitted as (
         , r.clinical_record_type = 'person_length' and try_to_decimal(r.clinical_value, 38, 9) = 99.9 as is_clinical_value_unknown
         , iff(is_clinical_value_unknown, null, try_to_decimal(r.clinical_value, 38, 9)) as clinical_value_numeric
         , case
-            when r.clinical_value is null then 'value_missing'
-            when is_clinical_value_unknown then 'value_unknown'
-            when clinical_value_numeric is null then 'not_numeric_or_out_of_range'
+            when r.clinical_value is null then 'no value'
+            when is_clinical_value_unknown then 'unknown value'
+            when clinical_value_numeric is null then 'not numeric or out of range'
             when not regexp_like(trim(r.clinical_value), '[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)')
-                then 'numeric_format_unverified'
+                then 'numeric (format not checked)'
             when not regexp_like(trim(r.clinical_value), '[+-]?([0-9]+([.][0-9]{0,9}0*)?|[.][0-9]{1,9}0*)')
-                then 'numeric_rounded'
+                then 'numeric (rounded)'
             else 'numeric'
         end as clinical_value_parse_status
         , case
             when r.clinical_record_type not in ('referral_assessment', 'activity_assessment') then null
-            when r.clinical_value is null then 'value_missing'
-            when response.is_non_score_response then 'known_non_score'
-            when response.response_code is not null then 'enumerated_response'
+            when r.clinical_value is null then 'no value'
+            when response.is_non_score_response then 'non-score response'
+            when response.response_code is not null then 'listed response'
             when scale.numeric_range_count = 1 and clinical_value_parse_status = 'numeric'
                 and clinical_value_numeric between scale.minimum_numeric_value and scale.maximum_numeric_value
                 and scale.decimal_places is not null
                 and clinical_value_numeric = round(clinical_value_numeric, scale.decimal_places)
-                then 'within_published_range'
-            when scale.concept_code is null then 'reference_not_available'
-            else 'response_unmatched'
+                then 'within published range'
+            when scale.concept_code is null then 'reference unavailable'
+            else 'unmatched response'
         end as assessment_response_status
         , reference.concept_code is not null
             and r.source_table = 'CYP202' as is_assessment_code_in_activity_component
@@ -192,6 +198,10 @@ with submitted as (
         on trim(r.clinical_code) = read_code.code
         and ((read_code.coding_system = 'read_v2' and r.resolver_system = 'Read v2')
             or (read_code.coding_system = 'ctv3' and r.resolver_system = 'CTV3'))
+    left join {{ ref('read_code_snomed_map') }} as read_mapping
+        on trim(r.clinical_code) = read_mapping.code
+        and read_mapping.coding_system = case r.resolver_system
+            when 'Read v2' then 'read_v2' when 'CTV3' then 'ctv3' end
     left join {{ ref('snomed_concept') }} as mapped_snomed
         on read_code.snomed_ct_code::varchar = mapped_snomed.snomed_code
     left join {{ ref('clinical_unit_of_measurement') }} as unit
@@ -233,6 +243,10 @@ select
     , read_code_match_type
     , dictionary_snomed_code
     , dictionary_snomed_description
+    , snomed_code
+    , snomed_code_name
+    , snomed_mapping_method
+    , is_snomed_mapping_assured
     , clinical_code_system
     , submitted_clinical_code_system
     , is_clinical_code_system_corrected
@@ -251,7 +265,7 @@ select
     , clinical_value_description
     , clinical_value_numeric
     , clinical_value_parse_status
-    , iff(assessment_response_status in ('enumerated_response', 'within_published_range')
+    , iff(assessment_response_status in ('listed response', 'within published range')
         and clinical_value_parse_status = 'numeric',
         clinical_value_numeric, null) as assessment_score_numeric
     , assessment_response_status

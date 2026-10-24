@@ -12,7 +12,6 @@ select
     visit_occurrence_id::varchar as parent_record_id,
     'emergency_care_attendance' as parent_record_type,
     'obt_encounter_uec' as parent_model_name,
-    'recorded_parent' as relationship_type,
     observed_at::timestamp_ntz as clinical_record_at,
     observed_at::date as clinical_record_date,
     iff(observed_at is null, 'unknown', 'timestamp') as clinical_time_precision,
@@ -42,7 +41,6 @@ select
     visit_occurrence_id::varchar as parent_record_id,
     'emergency_care_attendance' as parent_record_type,
     'obt_encounter_uec' as parent_model_name,
-    'recorded_parent' as relationship_type,
     validated_at::timestamp_ntz as clinical_record_at,
     validated_at::date as clinical_record_date,
     iff(validated_at is null, 'unknown', 'timestamp') as clinical_time_precision,
@@ -55,7 +53,7 @@ select
     null::varchar as result_unit_name,
     null::varchar as result_unit_symbol,
     assessment_tool_name,
-    iff(value_parse_status = 'value_missing', 'value_missing', 'not_validated') as assessment_response_status,
+    iff(value_parse_status = 'no value', 'no value', 'not validated') as assessment_response_status,
     organisation_id::varchar as provider_organisation_code,
     organisation_name::varchar as provider_organisation_name,
     'ODS' as provider_code_authority
@@ -75,12 +73,11 @@ select
         e.sk_patient_id is distinct from r.sk_patient_id
         or e.clinical_record_type is distinct from r.clinical_record_type
         or e.source_model_name is distinct from r.source_model_name
-        or e.source_code is distinct from r.source_code
-        or e.source_coding_system is distinct from r.source_coding_system
+        or e.source_code is distinct from r.original_code
+        or e.source_coding_system is distinct from r.original_coding_system
         or e.parent_record_id is distinct from r.parent_record_id
         or e.parent_record_type is distinct from r.parent_record_type
         or e.parent_model_name is distinct from r.parent_model_name
-        or e.relationship_type is distinct from r.relationship_type
         or e.clinical_record_at is distinct from r.clinical_record_at
         or e.clinical_record_date is distinct from r.clinical_record_date
         or e.clinical_time_precision is distinct from r.clinical_time_precision

@@ -14,8 +14,8 @@ Both facts retain all delivered records. They preserve reported codes, text
 values, source approval flags and import identifiers. Numeric values are parsed
 separately as `NUMBER(38,9)`; parsing does not establish clinical validity. Raw
 text remains available when parsing fails or rounds a value. `value_parse_status`
-uses the CSDS vocabulary: `numeric_rounded` marks values that lost digits beyond
-nine decimal places, and `numeric_format_unverified` marks forms other than a
+uses the CSDS vocabulary: `numeric (rounded)` marks values that lost digits beyond
+nine decimal places, and `numeric (format not checked)` marks forms other than a
 plain decimal, such as exponents. The source timestamps
 are already `TIMESTAMP_NTZ`, so the original timezone offset cannot be recovered.
 
@@ -83,8 +83,8 @@ context. These records do not enter the procedure model or encounter code arrays
 Observation values, categorical labels and reported units populate the shared
 result fields. Resolved unit labels do not establish compatibility with the
 observation. Scores populate the raw and parsed result fields; the tool code is
-`source_code`, with its label in `assessment_tool_name`. A supplied score has
-`assessment_response_status = 'not_validated'`; an absent value is `value_missing`.
+`original_code`, with its label in `assessment_tool_name`. A supplied score has
+`assessment_response_status = 'not validated'`; an absent value is `no value`.
 `assessment_score_numeric` stays null because numeric parsing alone does not
 establish a usable tool-specific score.
 

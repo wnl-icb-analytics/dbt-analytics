@@ -2,13 +2,17 @@
 with records as (
     {% for system in ['csds', 'mhsds', 'ecds'] %}
     select source_dataset, source_code, source_coding_system,
-        mapped_code, mapped_code_name, mapped_coding_system
+        mapped_code, mapped_code_name, mapped_coding_system, snomed_mapping_method,
+        {% if system == 'ecds' %}null::boolean{% else %}is_snomed_mapping_assured{% endif %} as is_snomed_mapping_assured
     from {{ ref('int_' ~ system ~ '_person_clinical_record') }}
     {% if not loop.last %}union all{% endif %}
     {% endfor %}
 )
 select
     r.source_dataset,
+    r.source_coding_system,
+    r.snomed_mapping_method,
+    r.is_snomed_mapping_assured,
     count(*) as record_count,
     count_if(r.mapped_code is not null) as mapped_record_count,
     count_if(source_concept.snomed_code is not null) as recognised_source_snomed_count,
@@ -24,4 +28,5 @@ left join {{ ref('snomed_concept') }} as source_concept
     and r.source_coding_system like 'SNOMED CT%'
 left join {{ ref('snomed_concept') }} as mapped_concept
     on r.mapped_code = mapped_concept.snomed_code
-group by r.source_dataset
+group by r.source_dataset, r.source_coding_system, r.snomed_mapping_method, r.is_snomed_mapping_assured
+having count(*) >= 100
