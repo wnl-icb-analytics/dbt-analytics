@@ -593,6 +593,21 @@ WITH schema_metadata AS (
   
   UNION ALL
   
+    -- ukhfd_data_dictionary: NHS Data Model and Dictionary terminology history held in UKHFD.
+  SELECT 
+    'UKHFD' as database_name,
+    'Data_Dictionary' as schema_name,
+    table_name,
+    column_name,
+    data_type,
+    numeric_precision,
+    numeric_scale,
+    ordinal_position
+  FROM "UKHFD".INFORMATION_SCHEMA.COLUMNS
+  WHERE table_schema = 'Data_Dictionary'
+  
+  UNION ALL
+  
     -- ukhfd_lsoa_to_sub_icb_plus: Mapping between LSOA and Sub-ICB including higher NHSE geographies
   SELECT 
     'UKHFD' as database_name,

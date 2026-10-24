@@ -1,0 +1,1 @@
+{{ select_ukhfd_data_dictionary_code_set('raw_ukhfd_data_dictionary_mental_health_clinically_ready_for_discharge_period_attributable_to_indication_code') }}
