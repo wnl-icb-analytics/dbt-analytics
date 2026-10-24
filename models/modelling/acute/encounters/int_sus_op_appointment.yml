@@ -62,6 +62,13 @@ models:
         data_type: time
         description: "The time for the appointment"
 
+      - name: financial_year
+        data_type: varchar
+        description: >-
+          NHS April-to-March financial year of start_date, formatted YYYYYY,
+          for example 202425. Use right(financial_year, 4) for the legacy ERNI
+          zFinancialYear format, for example 2425.
+
       - name: expected_duration
         data_type: varchar
         description: "Expected Duration of Appointment"
@@ -133,6 +140,10 @@ models:
         data_type: varchar
         description: "Primary OPCS procedure description for the appointment"
 
+      - name: consultant_code
+        data_type: varchar
+        description: Consultant code supplied with the SUS+ appointment. Null means no code was supplied.
+
       - name: main_specialty_code
         data_type: varchar
         description: "Code: The specialty in which the consultant is contracted or
@@ -197,6 +208,29 @@ models:
           than the Royal College or Faculty specialty, is required on most activity
           returns and in the Commissioning Data Sets."
 
+      - name: assigned_commissioner_code_at_event
+        data_type: varchar
+        description: >-
+          Service-agreement commissioner code supplied with the SUS+ appointment.
+          This corresponds to OrganisationCodeCodeofCommissioner in the legacy
+          ERNI Outpatient table. Null means no code was supplied.
+
+      - name: assigned_commissioner_name_at_event
+        data_type: varchar
+        description: Latest retained commissioner name for the supplied code. Null when the code is missing or has no lookup match.
+
+      - name: is_assigned_commissioner_recognised
+        data_type: boolean
+        description: SUS+-supplied indicator that the supplied commissioner code was recognised. Null means no indicator was supplied.
+
+      - name: derived_commissioner_code_at_event
+        data_type: varchar
+        description: Commissioner code derived by SUS+ for the appointment. This is distinct from the supplied ERNI comparison field.
+
+      - name: derived_commissioner_name_at_event
+        data_type: varchar
+        description: Latest retained commissioner name for the SUS+-derived code. Null when the code is missing or has no lookup match.
+
       - name: spec_comm_flag
         data_type: varchar
         description: "Specialised Commission Flag"
@@ -235,7 +269,7 @@ models:
 
       - name: cost
         data_type: number
-        description: "The final calculated national SUS listed price"
+        description: "Final calculated price supplied by SUS+. This is not an actual provider cost."
 
       - name: age_at_event
         data_type: number

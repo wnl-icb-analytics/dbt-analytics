@@ -60,6 +60,11 @@ models:
         description: >
           The date the appointment took place or will take place if in the future
 
+      - name: financial_year
+        description: >
+          NHS April-to-March financial year of start_date, formatted YYYYYY, for
+          example 202425. Use right(financial_year, 4) for the legacy ERNI format.
+
       - name: start_time
         description: >
           The time for the appointment
@@ -122,6 +127,11 @@ models:
         description: >
           Primary OPCS procedure description for the appointment
 
+      - name: consultant_code
+        description: >
+          Consultant code supplied with the SUS+ appointment. Null means no code was
+          supplied.
+
       - name: main_specialty_code
         description: >
           Code: The specialty in which the consultant is contracted or recognised and
@@ -175,6 +185,23 @@ models:
           Desc: The priority of a request for services as assessed by or on behalf of
           the consultant
 
+      - name: assigned_commissioner_code_at_event
+        description: >
+          Supplied service-agreement commissioner code matching ERNI
+          OrganisationCodeCodeofCommissioner.
+
+      - name: assigned_commissioner_name_at_event
+        description: Latest retained commissioner name for the supplied code.
+
+      - name: is_assigned_commissioner_recognised
+        description: SUS+-supplied indicator that the supplied commissioner code was recognised.
+
+      - name: derived_commissioner_code_at_event
+        description: Commissioner code derived by SUS+, kept separate from the supplied commissioner.
+
+      - name: derived_commissioner_name_at_event
+        description: Latest retained commissioner name for the SUS+-derived code.
+
       - name: spec_comm_flag
         description: >
           Specialised Commission Flag
@@ -217,7 +244,7 @@ models:
 
       - name: cost
         description: >
-          The final calculated national SUS listed price
+          Final calculated price supplied by SUS+. This is not an actual provider cost.
 
       - name: age_at_event
         description: >

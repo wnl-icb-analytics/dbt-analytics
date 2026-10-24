@@ -26,6 +26,14 @@ ethnicity_codes as (
 gender_codes as (
     select distinct gender_code, gender
     from {{ref('stg_dictionary_dbo_gender')}}
+    ),
+commissioner_codes as (
+    select commissioner_code, commissioner_name
+    from {{ ref('stg_dictionary_dbo_commissioner') }}
+    qualify row_number() over (
+        partition by commissioner_code
+        order by coalesce(end_date, '9999-12-31'::date) desc, start_date desc
+    ) = 1
     )
 
 select 
@@ -44,6 +52,7 @@ select
      /* Time and date */
     , core.appointment_date as start_date
     , core.appointment_time as start_time
+    , {{ fin_year_from_date('core.appointment_date') }} as financial_year
     , core.appointment_expected_duration as expected_duration
     , core.appointment_consultation_medium as consultation_medium_used_code
     , medium.description as consultation_medium_used_name
@@ -78,6 +87,7 @@ select
     ,dict_proc.description AS primary_procedure_name
 
     /* Clinician information */
+    , core.appointment_care_professional_consultant as consultant_code
     , core.appointment_care_professional_main_specialty as main_specialty_code
     , dict_spec.specialty_name as main_specialty_name
     , dict_spec.specialty_category as main_specialty_category
@@ -94,6 +104,19 @@ select
     , dict_appt_priority.priority_type_desc as referral_acuity_desc
 
     /* Commissioning information */
+    , core.appointment_commissioning_service_agreement_commissioner as assigned_commissioner_code_at_event
+    , coalesce(
+        assigned_commissioner_exact.commissioner_name
+        , assigned_commissioner_fallback.commissioner_name
+    ) as assigned_commissioner_name_at_event
+    , core.appointment_commissioning_service_agreement_is_commissioner_recognised
+        as is_assigned_commissioner_recognised
+    , core.appointment_commissioning_service_agreement_commissioner_derived
+        as derived_commissioner_code_at_event
+    , coalesce(
+        derived_commissioner_exact.commissioner_name
+        , derived_commissioner_fallback.commissioner_name
+    ) as derived_commissioner_name_at_event
     , iff(core.spec_comm_code is null, 'N','Y') as spec_comm_flag -- Adding Spec_comm   
     , core.spec_comm_code as spec_comm_code
     , dict_pss_sc.spec_comm_desc
@@ -188,6 +211,28 @@ left join ethnicity_codes as eth
 
 left join gender_codes as gen
     on core.appointment_patient_identity_gender = gen.gender_code
+
+left join commissioner_codes as assigned_commissioner_exact
+    on core.appointment_commissioning_service_agreement_commissioner
+    = assigned_commissioner_exact.commissioner_code
+
+left join commissioner_codes as assigned_commissioner_fallback
+    on assigned_commissioner_exact.commissioner_code is null
+    and length(core.appointment_commissioning_service_agreement_commissioner) = 5
+    and right(core.appointment_commissioning_service_agreement_commissioner, 2) = '00'
+    and left(core.appointment_commissioning_service_agreement_commissioner, 3)
+    = assigned_commissioner_fallback.commissioner_code
+
+left join commissioner_codes as derived_commissioner_exact
+    on core.appointment_commissioning_service_agreement_commissioner_derived
+    = derived_commissioner_exact.commissioner_code
+
+left join commissioner_codes as derived_commissioner_fallback
+    on derived_commissioner_exact.commissioner_code is null
+    and length(core.appointment_commissioning_service_agreement_commissioner_derived) = 5
+    and right(core.appointment_commissioning_service_agreement_commissioner_derived, 2) = '00'
+    and left(core.appointment_commissioning_service_agreement_commissioner_derived, 3)
+    = derived_commissioner_fallback.commissioner_code
 
 left join
     {{ ref('pss_spec_comm')}} as dict_pss_sc

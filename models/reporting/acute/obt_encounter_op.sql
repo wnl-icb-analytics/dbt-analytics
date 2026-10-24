@@ -15,6 +15,7 @@ select
     , site_name
     , start_date
     , start_time
+    , financial_year
     , expected_duration
     , appointment_outcome
     , outcome_desc
@@ -28,6 +29,7 @@ select
     , primary_procedure_code
     , primary_procedure_category
     , primary_procedure_name
+    , consultant_code
     , main_specialty_code
     , main_specialty_name
     , main_specialty_category
@@ -39,6 +41,11 @@ select
     , referral_source_op_desc
     , referral_acuity
     , referral_acuity_desc
+    , assigned_commissioner_code_at_event
+    , assigned_commissioner_name_at_event
+    , is_assigned_commissioner_recognised
+    , derived_commissioner_code_at_event
+    , derived_commissioner_name_at_event
     , spec_comm_flag
     , spec_comm_code
     , spec_comm_desc

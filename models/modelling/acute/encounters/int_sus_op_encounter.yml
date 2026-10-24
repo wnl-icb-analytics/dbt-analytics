@@ -57,6 +57,13 @@ models:
         description: "The date the appointment took place or will take place if in
           the future"
 
+      - name: financial_year
+        data_type: varchar
+        description: >-
+          NHS April-to-March financial year of start_date, formatted YYYYYY,
+          for example 202425. Use right(financial_year, 4) for the legacy ERNI
+          zFinancialYear format, for example 2425.
+
       - name: expected_duration
         data_type: varchar
         description: "Expected Duration of Appointment"
@@ -118,6 +125,10 @@ models:
         description: "Code: The specialty in which the consultant is contracted or
           recognised and the code identifies a specialty as designated by Royal Colleges."
 
+      - name: consultant_code
+        data_type: varchar
+        description: Consultant code supplied with the SUS+ appointment. Null means no code was supplied.
+
       - name: main_specialty_name
         data_type: varchar
         description: "Desc: The specialty in which the consultant is contracted or
@@ -177,6 +188,26 @@ models:
           than the Royal College or Faculty specialty, is required on most activity
           returns and in the Commissioning Data Sets."
 
+      - name: assigned_commissioner_code_at_event
+        data_type: varchar
+        description: Supplied service-agreement commissioner code matching ERNI OrganisationCodeCodeofCommissioner.
+
+      - name: assigned_commissioner_name_at_event
+        data_type: varchar
+        description: Latest retained commissioner name for the supplied code.
+
+      - name: is_assigned_commissioner_recognised
+        data_type: boolean
+        description: SUS+-supplied indicator that the supplied commissioner code was recognised.
+
+      - name: derived_commissioner_code_at_event
+        data_type: varchar
+        description: Commissioner code derived by SUS+, kept separate from the supplied commissioner.
+
+      - name: derived_commissioner_name_at_event
+        data_type: varchar
+        description: Latest retained commissioner name for the SUS+-derived code.
+
       - name: spec_comm_code
         data_type: varchar
         description: "Specialised Commission Code"
@@ -215,7 +246,7 @@ models:
 
       - name: cost
         data_type: number
-        description: "The final calculated national SUS listed price"
+        description: "Final calculated price supplied by SUS+. This is not an actual provider cost."
 
       - name: age_at_event
         data_type: number
