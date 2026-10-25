@@ -1,0 +1,156 @@
+unit_tests:
+- name: heart_failure_completed_confirmation_calendar_boundaries
+  model: fct_person_heart_failure_confirmation_ind192_breakdown
+  given:
+  - input: ref('fct_person_heart_failure_confirmation_ind192')
+    format: sql
+    rows: select column1::number person_id,column2::date reporting_date,column3::date diagnosis_date,column4::boolean
+      is_in_numerator from values (-9101, '2026-09-30', '2026-06-30', true), (-9102, '2026-09-30', '2026-06-30',
+      true), (-9103, '2026-09-30', '2026-06-30', false), (-9104, '2026-09-30', '2026-06-30', false), (-9105, '2026-09-30',
+      '2026-06-30', true), (-9106, '2026-09-30', '2026-06-30', true), (-9107, '2026-09-30', '2026-06-30', false),
+      (-9108, '2026-09-30', '2026-08-31', false), (-9109, '2026-08-31', '2026-05-31', true), (-9110, '2024-08-31',
+      '2024-05-31', true)
+  - input: ref('int_heart_failure_confirmation_all')
+    format: sql
+    rows: select column1::number person_id,column2::date clinical_effective_date,column3::boolean is_completed_confirmation
+      from values (-9101, '2026-03-30', true), (-9102, '2026-09-30', true), (-9103, '2026-03-29', true), (-9104,
+      '2026-10-01', true), (-9105, '2026-07-01', false), (-9106, '2026-06-30', true), (-9106, '2026-09-01', true),
+      (-9106, '2026-09-01', true), (-9108, '2026-10-01', true), (-9109, '2026-02-28', true), (-9110, '2024-02-29',
+      true)
+  expect:
+    rows:
+    - person_id: -9101
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: '2026-03-30'
+      has_completed_confirmation: true
+    - person_id: -9102
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: '2026-09-30'
+      has_completed_confirmation: true
+    - person_id: -9103
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: false
+      latest_completed_confirmation_date: null
+      has_completed_confirmation: false
+    - person_id: -9104
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: false
+      latest_completed_confirmation_date: null
+      has_completed_confirmation: false
+    - person_id: -9105
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: null
+      has_completed_confirmation: false
+    - person_id: -9106
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: '2026-09-01'
+      has_completed_confirmation: true
+    - person_id: -9107
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: false
+      latest_completed_confirmation_date: null
+      has_completed_confirmation: false
+    - person_id: -9108
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: false
+      latest_completed_confirmation_date: null
+      has_completed_confirmation: false
+    - person_id: -9109
+      reporting_date: '2026-08-31'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: '2026-02-28'
+      has_completed_confirmation: true
+    - person_id: -9110
+      reporting_date: '2024-08-31'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: '2024-02-29'
+      has_completed_confirmation: true
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number as person_id, null::date as reporting_date, null::boolean as has_headline_confirmation,
+        null::date as latest_completed_confirmation_date, null::boolean as has_completed_confirmation where false
+- name: heart_failure_completed_confirmation_calendar_boundaries_by_month
+  model: fct_person_heart_failure_confirmation_ind192_breakdown_by_month
+  config:
+    tags: [monthly-full, nice-history]
+  given:
+  - input: ref('fct_person_heart_failure_confirmation_ind192_by_month')
+    format: sql
+    rows: select column1::number person_id,column2::date reporting_date,column3::date diagnosis_date,column4::boolean
+      is_in_numerator from values (-9101, '2026-09-30', '2026-06-30', true), (-9102, '2026-09-30', '2026-06-30',
+      true), (-9103, '2026-09-30', '2026-06-30', false), (-9104, '2026-09-30', '2026-06-30', false), (-9105, '2026-09-30',
+      '2026-06-30', true), (-9106, '2026-09-30', '2026-06-30', true), (-9107, '2026-09-30', '2026-06-30', false),
+      (-9108, '2026-09-30', '2026-08-31', false), (-9109, '2026-08-31', '2026-05-31', true), (-9110, '2024-08-31',
+      '2024-05-31', true), (-9102, '2026-10-31', '2026-06-30', true)
+  - input: ref('int_heart_failure_confirmation_all')
+    format: sql
+    rows: select column1::number person_id,column2::date clinical_effective_date,column3::boolean is_completed_confirmation
+      from values (-9101, '2026-03-30', true), (-9102, '2026-09-30', true), (-9103, '2026-03-29', true), (-9104,
+      '2026-10-01', true), (-9105, '2026-07-01', false), (-9106, '2026-06-30', true), (-9106, '2026-09-01', true),
+      (-9106, '2026-09-01', true), (-9108, '2026-10-01', true), (-9109, '2026-02-28', true), (-9110, '2024-02-29',
+      true)
+  expect:
+    rows:
+    - person_id: -9101
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: '2026-03-30'
+      has_completed_confirmation: true
+    - person_id: -9102
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: '2026-09-30'
+      has_completed_confirmation: true
+    - person_id: -9103
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: false
+      latest_completed_confirmation_date: null
+      has_completed_confirmation: false
+    - person_id: -9104
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: false
+      latest_completed_confirmation_date: null
+      has_completed_confirmation: false
+    - person_id: -9105
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: null
+      has_completed_confirmation: false
+    - person_id: -9106
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: '2026-09-01'
+      has_completed_confirmation: true
+    - person_id: -9107
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: false
+      latest_completed_confirmation_date: null
+      has_completed_confirmation: false
+    - person_id: -9108
+      reporting_date: '2026-09-30'
+      has_headline_confirmation: false
+      latest_completed_confirmation_date: null
+      has_completed_confirmation: false
+    - person_id: -9109
+      reporting_date: '2026-08-31'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: '2026-02-28'
+      has_completed_confirmation: true
+    - person_id: -9110
+      reporting_date: '2024-08-31'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: '2024-02-29'
+      has_completed_confirmation: true
+    - person_id: -9102
+      reporting_date: '2026-10-31'
+      has_headline_confirmation: true
+      latest_completed_confirmation_date: '2026-09-30'
+      has_completed_confirmation: true
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number as person_id, null::date as reporting_date, null::boolean as has_headline_confirmation,
+        null::date as latest_completed_confirmation_date, null::boolean as has_completed_confirmation where false

@@ -25,8 +25,8 @@ confirmation AS (
     FROM candidates
     LEFT JOIN {{ ref('int_heart_failure_confirmation_all') }} AS evidence
         ON candidates.person_id = evidence.person_id
-        AND evidence.clinical_effective_date::DATE BETWEEN DATEADD(month, -3, candidates.diagnosis_date)
-            AND LEAST(DATEADD(month, 3, candidates.diagnosis_date), candidates.reporting_date)
+        AND {{ nice_ind192_confirmation_window('evidence.clinical_effective_date::DATE',
+            'candidates.diagnosis_date', 'candidates.reporting_date') }}
     GROUP BY candidates.person_id, candidates.reporting_date
 )
 SELECT

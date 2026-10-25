@@ -1,0 +1,78 @@
+unit_tests:
+- name: heart_failure_confirmation_preserves_headline_and_marks_completed_imaging
+  model: int_heart_failure_confirmation_all
+  given:
+  - input: ref('stg_olids_observation')
+    format: sql
+    rows: select column1::number id,column1::number person_id,column2::varchar mapped_concept_code,'2026-06-30'::timestamp_ntz
+      clinical_effective_date,'2026-07-01'::timestamp_ntz date_recorded,null::varchar patient_id, null::varchar
+      result_value, null::varchar result_units_source_concept_id, null::varchar result_unit_code, null::varchar
+      result_unit_display, null::varchar result_text, null::varchar allergy_medication_name, null::varchar is_problem,
+      null::varchar is_review, null::varchar problem_end_date, null::varchar mapped_concept_id, null::varchar mapped_concept_display,
+      null::varchar episodicity_source_concept_id, null::varchar age_at_event, null::varchar lds_transform_datetime
+      from values (-9001,'SYN_ECHO'),(-9002,'SYN_RESULT'),(-9003,'SYN_REQUEST'),(-9004,'SYN_REFERRAL'),(-9005,'SYN_NTPROBNP'),(-9006,'SYN_UNKNOWN')
+  - input: ref('stg_reference_combined_codesets')
+    rows:
+    - code: SYN_ECHO
+      cluster_id: ECOG_COD
+      source: PCD
+      cluster_description: Synthetic echo list
+      code_description: SYN_ECHO
+    - code: SYN_RESULT
+      cluster_id: ECOG_COD
+      source: PCD
+      cluster_description: Synthetic echo list
+      code_description: SYN_RESULT
+    - code: SYN_REQUEST
+      cluster_id: ECOG_COD
+      source: PCD
+      cluster_description: Synthetic echo list
+      code_description: SYN_REQUEST
+    - code: SYN_REFERRAL
+      cluster_id: ECOG_COD
+      source: PCD
+      cluster_description: Synthetic echo list
+      code_description: SYN_REFERRAL
+    - code: SYN_UNKNOWN
+      cluster_id: ECOG_COD
+      source: PCD
+      cluster_description: Synthetic echo list
+      code_description: SYN_UNKNOWN
+    - code: SYN_ECHO
+      cluster_id: ECOG_COD
+      source: PCD
+      cluster_description: Synthetic duplicate membership
+      code_description: Synthetic echo
+  - input: ref('snomed_evidence_type')
+    rows:
+    - snomed_code: SYN_ECHO
+      evidence_type: completed
+    - snomed_code: SYN_RESULT
+      evidence_type: finding
+    - snomed_code: SYN_REQUEST
+      evidence_type: requested_or_referred
+    - snomed_code: SYN_REFERRAL
+      evidence_type: requested_or_referred
+    - snomed_code: SYN_UNKNOWN
+      evidence_type: null
+  overrides:
+    macros:
+      get_empty_subquery_sql: select null::number id,null::varchar evidence_type,null::boolean is_completed_confirmation
+        where false
+  expect:
+    rows:
+    - id: -9001
+      evidence_type: completed
+      is_completed_confirmation: true
+    - id: -9002
+      evidence_type: finding
+      is_completed_confirmation: true
+    - id: -9003
+      evidence_type: requested_or_referred
+      is_completed_confirmation: false
+    - id: -9004
+      evidence_type: requested_or_referred
+      is_completed_confirmation: false
+    - id: -9006
+      evidence_type: null
+      is_completed_confirmation: false

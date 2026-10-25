@@ -5,6 +5,7 @@
             'PCD': ['NUTRIASS_COD'],
             'OPENCODELISTS': ['NHSD_PRIMARY_CARE_DOMAIN_REFSETS/DIETITIAN_COD']
         },
+        'heart_failure_confirmation': {'PCD': ['ECOG_COD']},
         'medication_review': {'ECL_CACHE': ['SMI_LONGER_LIVES_MEDICINES_REVIEW']},
         'weight_management': {
             'all': ['SMI_LONGER_LIVES_WEIGHT_MANAGEMENT', 'WTMGINT_COD', 'WTMGINTDEC_COD'],
