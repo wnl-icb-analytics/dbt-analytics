@@ -4,25 +4,16 @@ models:
       One row per person on the CKD register, excluding Priority Group 1, with
       latest eGFR 45-59 and ACR > 30, eGFR 30-44 and ACR > 3, eGFR 15-29, or
       ACR >= 70 and < 250.
-      Otherwise, at least three distinct repeat medication issues strictly within
-      three months are required for the BP routes. EMIS group 2011000033113
-      "Antihypertensive Drugs" is BNF section 2.5 per XML legacyValue 2.5,
-      including renin-angiotensin drugs. Products use dm+d VMP/AMP codes mapped
-      to BNF prefix 0205. Products without a BNF mapping can qualify through the
-      same VMP, VTM and form, complete precise-ingredient set and form, or SNOMED
-      descent from a directly mapped product. Backfill retains ingredient
-      combinations and never overrides a known BNF mapping. This reconstructs
-      section membership; it is not an exported EMIS product list.
-      BP qualifies with diastolic > 90 or systolic > 150 mmHg and the other
-      component >= 1. The shared macro's CKD option links each parent pool by
-      calendar date to its selected child before ranking by date, save time and
-      observation ID. Clinic setting requires the latest positive combined-pool
-      diastolic to be clinic-coded within 12 months, with same-date systolic
-      evidence. The clinic threshold reading must also be within 12 months. Home readings require the latest
-      home diastolic to have same-date systolic and home-marker evidence, plus
-      a home threshold reading within 12 months. A later clinic reading does not
-      veto the home chain. Setting and threshold dates may differ. Any retained marker can satisfy Latest N;
-      older BP history does not reject a qualifying recent reading.
+      Otherwise, people with at least three distinct repeat issues strictly within
+      three months from BNF section 2.5 qualify on blood pressure. This is EMIS
+      group 2011000033113, XML legacyValue 2.5, and includes renin-angiotensin
+      drugs. Diastolic must be > 90 or systolic > 150 mmHg, with the other
+      component >= 1, on the latest clinic or home reading within 12 months,
+      using the shared LTC LCS BP selector.
+      Orders without a BNF code can qualify through dm+d products with the same
+      VTM and form, complete ingredient set and form, or SNOMED descent from a
+      mapped product. This reconstructs the section; it is not an exported EMIS
+      product list and does not override known BNF mappings.
     config:
       meta:
         owner:
@@ -35,21 +26,6 @@ models:
             valuesets:
               - on_ckd_reg_pg2_hr_vs1
               - on_ckd_reg_pg2_hr_vs2
-              - b0862f52-94d7-4831-9c3c-fa2cc8f8ca98
-              - b2592e74-731e-0d97-247a-ac3839913b70
-              - c2e9b41e-e9f9-5eee-f816-ee2543dddbdd
-              - 3ddd36f2-7c5b-e43f-4620-46a0eb1283ee
-              - f27b2fe6-df28-de7d-5baa-089badef474d
-              - 4c90ff98-51ec-2b89-e0c7-dc2ab98daed9
-              - 830a121c-275c-0ebc-990e-e9699b9875c4
-              - 5aad8a47-dfac-2d96-493d-44fc69d61770
-              - 09a3d8a7-e54b-d710-9a86-58b3de69d1f4
-              - 8da5f7b1-024b-c20c-97e9-415ea3b9a64a
-              - 5083eb15-91a9-f20e-7fb1-06e908a70e5f
-              - dbace9e1-ca62-3166-049c-82206d3e041d
-      - cluster_ids_exist:
-          arguments:
-            cluster_ids: ABPM_COD
     columns:
       - name: person_id
         tests:

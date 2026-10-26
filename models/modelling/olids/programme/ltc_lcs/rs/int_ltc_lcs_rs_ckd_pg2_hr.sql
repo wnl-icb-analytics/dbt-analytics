@@ -3,9 +3,7 @@
 --
 -- One row per included person. Rules 2-5 select independently; otherwise rule 6
 -- (3+ repeat antihypertensive issues strictly within three months) gates rules 7-10.
--- BP links each parent pool to its selected XML child before ranking that pool.
--- Same-day ties use save time, then observation ID. The setting and threshold
--- checks can use different dates. Older markers do not reject a recent reading.
+-- BP uses the shared LTC LCS selector for clinic and home readings.
 -- Thresholds are diastolic > 90 and systolic >= 1, or systolic > 150 and
 -- diastolic >= 1. XML descriptions mentioning 140/90 or 135/85 are stale.
 
@@ -109,13 +107,7 @@ rule_6_ingredients as (
     group by vpid
 ),
 
-rule_6_products as (
-    select product_code as snomed_code from rule_6_bnf_products
-    union
-    select p.product_code
-    from rule_6_unmapped_products as p
-    inner join rule_6_bnf_products as b on p.vpid = b.vpid
-    union
+rule_6_backfill_products as (
     select p.product_code
     from rule_6_unmapped_products as p
     inner join rule_6_bnf_products as b on p.vtm_id = b.vtm_id and p.form_code = b.form_code
@@ -133,23 +125,30 @@ rule_6_products as (
     inner join rule_6_bnf_products as b on t.super_type_id::varchar = b.product_code
 ),
 
-rule_6_antihypertensive as (
-    select mo.person_id
+rule_6_orders as (
+    select medication_order_id, medication_statement_id, person_id, order_date
+    from ({{ get_medication_orders(bnf_code='0205') }})
+    union all
+    select mo.id, mo.medication_statement_id, mo.person_id, mo.clinical_effective_date
     from {{ ref('stg_olids_medication_order') }} as mo
-    inner join rule_6_products as p on mo.mapped_concept_code = p.snomed_code
-    inner join {{ ref('stg_olids_medication_statement') }} as ms
-        on mo.medication_statement_id = ms.id
-    where mo.clinical_effective_date > dateadd(month, -3, current_date())
-        and ms.authorisation_type_source_code = 'Repeat'
-    group by mo.person_id
-    having count(distinct mo.id) >= 3
+    inner join rule_6_backfill_products as p on mo.mapped_concept_code = p.product_code
+    where mo.bnf_code is null
 ),
 
--- Reuse the shared BP pools with the CKD-specific nested selection order.
--- Latest N passes when any retained record passes, so older markers do not veto.
+rule_6_antihypertensive as (
+    select mo.person_id
+    from rule_6_orders as mo
+    inner join {{ ref('stg_olids_medication_statement') }} as ms
+        on mo.medication_statement_id = ms.id
+    where mo.order_date > dateadd(month, -3, current_date())
+        and ms.authorisation_type_source_code = 'Repeat'
+    group by mo.person_id
+    having count(distinct mo.medication_order_id) >= 3
+),
+
 bp_latest as (
     select *
-    from ({{ get_ltc_lcs_bp_latest_by_setting(ckd_pg2=true) }})
+    from {{ ref('int_ltc_lcs_bp_latest_by_setting') }}
 ),
 
 rule_7_bp_diastolic as (
