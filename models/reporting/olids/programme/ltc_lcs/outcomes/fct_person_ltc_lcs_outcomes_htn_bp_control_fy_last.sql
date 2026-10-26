@@ -6,7 +6,7 @@
 }}
 
 -- LTC LCS Outcomes: Hypertension good blood pressure control - LAST COMPLETED FINANCIAL YEAR.
--- Window: last known paired BP within the previous complete FY (1 April -> 31 March).
+-- Window: latest date-linked BP within the previous complete FY (1 April -> 31 March).
 -- Useful as the fixed end-of-year achievement baseline alongside the rolling/current-FY views.
 -- FY bounds are computed inline from current_date() and passed to the shared
 -- get_ltc_lcs_htn_bp_control macro as date expressions.

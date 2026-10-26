@@ -2,7 +2,7 @@ version: 2
 models:
   - name: int_ltc_lcs_rs_ast_pg2_hr
     description: |
-      Asthma Adult Register Priority Group 2 - High Risk.
+      Adult asthma HR membership, one row per register member aged 18+ outside PG1.
       Excludes PG1 (HRC). Parent population is the asthma register restricted
       to age >= 18 (EMIS 'LTC LCS: Asthma Adult Register*').
 
@@ -12,12 +12,13 @@ models:
         last 12 months
       - Rule 4: >= 3 prednisolone orders in last 12 months
       - Rule 5: >= 3 antibiotics orders in last 12 months
-      - Rule 6: >= 3 high-dose ICS/LABA inhaler orders in last 6 months
+      - Rule 6: any high-dose ICS/LABA inhaler order in last 6 months
       - Rule 7: beclometasone/formoterol combination and Beclazone-type
         inhaler both in last 6 months
 
-      Issue counts follow the live EMIS search definitions; the agent-API
-      parse of the R5 XML drops count restrictions.
+      Rule 6 excludes products explicitly listed in rule 7's moderate-dose value sets
+      (vs8/vs9), pending correction of the analyser's over-broad SCT_PREP expansion.
+      Rules 4 and 5 retain their XML issue counts; rule 6 has no count threshold.
     config:
       meta:
         owner:

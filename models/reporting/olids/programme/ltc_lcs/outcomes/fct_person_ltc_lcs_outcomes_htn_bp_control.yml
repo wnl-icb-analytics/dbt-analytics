@@ -15,13 +15,17 @@ models:
       item OR'd with end of life care is not in the export and is not applied. The EMIS
       search also requires current registration; filter on is_active downstream for that.
 
-      Numerator: the last paired reading dated after today minus 12 months is below target on
+      Numerator: the latest date-linked reading dated after today minus 12 months is below target on
       both values:
         - under 80: clinic < 140/90, home/ABPM < 135/85
         - 80 and over: clinic < 150/90, home/ABPM < 145/85
       No ACR/CKD/diabetes target tightening. People with no reading in the window are
       uncontrolled (is_bp_controlled = false, has_bp_in_window = false). Logic lives in the
       get_ltc_lcs_htn_bp_control macro; the _fy and _fy_last variants use financial-year windows.
+      BP uses the shared LTC LCS clinic/home selector: raw clinical date, save time, then
+      observation ID; calendar-date links; values >=1 without plausibility fallback.
+      Frailty uses raw clinical dates and the same tie order, then tests only the moderate/severe
+      finding codes. Missing clinical dates do not qualify. Same-second entry order is unknown.
     config:
       meta:
         indicator:
@@ -35,7 +39,8 @@ models:
             Percentage of people on the hypertension register, excluding those aged 90+, at end
             of life, in a care home or with moderate/severe frailty, whose last blood pressure in
             the last 12 months is below the NICE target: clinic < 140/90 (< 150/90 aged 80+),
-            home/ABPM < 135/85 (< 145/85 aged 80+).
+            home/ABPM < 135/85 (< 145/85 aged 80+). Uses raw-date clinic/home chains ordered by
+            save time then ID, values >=1 and the latest moderate/severe-only frailty exclusion.
           is_qof: false
           source_column: "is_bp_controlled"
           sort_order: "LTC_LCS_OUTCOME_001"
@@ -56,21 +61,21 @@ models:
       - name: age
         description: Current age in years (from the hypertension register / dim_person_age); sets the age band for the targets
       - name: latest_bp_date
-        description: Date of the last known paired BP reading within the window (null if none)
+        description: Date of the latest date-linked BP reading within the window (null if none)
       - name: latest_systolic_value
-        description: Systolic value (mmHg) of the last known paired reading in the window (null if none)
+        description: Systolic value (mmHg) of the latest date-linked reading in the window (null if none)
       - name: latest_diastolic_value
-        description: Diastolic value (mmHg) of the last known paired reading in the window (null if none)
+        description: Diastolic value (mmHg) of the latest date-linked reading in the window (null if none)
       - name: is_home_bp_event
-        description: True if the reading was a home BP measurement; home/ABPM targets apply
+        description: True if the selected chain is home BP rather than ABPM; home/ABPM targets apply
       - name: is_abpm_bp_event
-        description: True if the reading was an ABPM measurement; home/ABPM targets apply
+        description: True if the selected home-chain diastolic is in ABPM_COD; home/ABPM targets apply
       - name: systolic_threshold
         description: Systolic value (mmHg) the reading must be below. Under 80 - clinic 140, home/ABPM 135; 80 and over - clinic 150, home/ABPM 145. Clinic targets apply when there is no reading.
       - name: diastolic_threshold
         description: Diastolic value (mmHg) the reading must be below. Clinic 90, home/ABPM 85. Clinic target applies when there is no reading.
       - name: has_bp_in_window
-        description: True if the person has at least one paired BP reading in the window
+        description: True if the latest setting has a resolved date-linked chain in the window; threshold validity is assessed separately.
         data_tests:
           - not_null
       - name: is_bp_controlled

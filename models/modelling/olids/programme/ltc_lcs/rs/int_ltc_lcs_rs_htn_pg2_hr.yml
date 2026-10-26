@@ -1,21 +1,7 @@
 models:
   - name: int_ltc_lcs_rs_htn_pg2_hr
-    description: |
-      Hypertension Register Priority Group 2 - High Risk.
-      Exclusion-shaped per the EMIS v3 search (wrapper over Priority Group 2a/2b
-      ICB v3): patients with a BP monitoring code in the last 12 months,
-      not in PG1, are included via either arm:
-
-      PG2a - latest paired BP NOT controlled at stage 2:
-      - Clinic: systolic <= 160 and diastolic <= 100
-      - Home/ABPM: systolic <= 150 and diastolic <= 95
-      Patients whose monitoring codes have no resolvable paired reading
-      are included, mirroring the EMIS exclude-the-controlled structure.
-
-      PG2b - ethnicity (vs3) AND comorbidity AND latest paired BP NOT
-      controlled at stage 1 (clinic <= 140/90, home/ABPM <= 135/85).
-      Comorbidity (any): vs4 CHD, vs5+vs6 Stroke/TIA, vs7 PAD (episode type
-      not Review or Ended), vs8 CKD, vs9 eGFR < 60, vs10 Diabetes, vs11 BMI > 35.
+    description: >
+      Hypertension HR membership, one row per register member outside PG1 with BP monitoring in 12 months. Includes uncontrolled stage 2 BP (clinic <=160/100; home <=150/95 defines control), or ethnicity plus comorbidity without stage 1 control (clinic <=140/90; home <=135/85). Unresolved chains remain included. BP components rank by clinical date, save time and observation ID, then link by calendar date to the XML setting markers. Values need only be >=1; there is no plausibility fallback.
     config:
       meta:
         owner:

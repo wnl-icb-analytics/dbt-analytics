@@ -1,15 +1,7 @@
 models:
   - name: int_ltc_lcs_rs_htn_pg1_hrc
-    description: |
-      Hypertension Register Priority Group 1 - High Risk & Complex.
-      Exclusion-shaped per the EMIS v3 search: patients with a BP monitoring
-      code in the last 12 months are included unless their latest paired BP
-      reading is controlled:
-      - Clinic: systolic <= 180 and diastolic <= 120
-      - Home/ABPM: systolic <= 170 and diastolic <= 115
-
-      Patients whose monitoring codes have no resolvable paired reading are
-      included, mirroring the EMIS exclude-the-controlled structure.
+    description: >
+      Hypertension HRC membership, one row per register member with BP monitoring in 12 months and no controlled latest clinic/home chain. Clinic control is <=180/120; home/ABPM is <=170/115. Unresolved chains remain included. BP components rank by clinical date, save time and observation ID, then link by calendar date to the XML setting markers. Values need only be >=1; there is no plausibility fallback.
     config:
       meta:
         owner:

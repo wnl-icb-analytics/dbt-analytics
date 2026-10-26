@@ -55,15 +55,14 @@ rule_6_cardiac as (
 
 -- Rule 6: Diabetes medications in last 6 months (inclusion)
 -- GLP-1 agonists (vs7) or Insulins
--- Note: vs6 is empty (EMIS DRUG Group didn't resolve to SNOMED codes)
--- Using BNF code 060101 (Insulins) instead
+-- The XML insulin group has no expansion. Use national dm+d insulin codes and their current hierarchy.
 rule_6_medications as (
     select person_id
     from ({{ get_ltc_lcs_medication_orders_latest("on_dm_reg_pg1_hrc_vs7") }})
     where order_date >= dateadd(month, -6, current_date())
     union
     select person_id
-    from ({{ get_medication_orders(bnf_code='060101') }})
+    from ({{ get_ltc_lcs_insulin_medication_orders() }})
     where order_date >= dateadd(month, -6, current_date())
     qualify row_number() over (partition by person_id order by order_date desc) = 1
 ),

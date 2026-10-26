@@ -1,22 +1,7 @@
 models:
   - name: int_ltc_lcs_rs_htn_pg3a_mra
-    description: |
-      Hypertension Register Priority Group 3A - Medium Risk (a).
-      Exclusion-shaped per the EMIS v3 search: patients with a BP monitoring
-      code in the last 12 months, not in PG1 or PG2, with a qualifying
-      comorbidity, are included unless their latest paired BP reading is
-      controlled at stage 1 (clinic <= 140/90, home/ABPM <= 135/85).
-      Patients whose monitoring codes have no resolvable paired reading
-      are included, mirroring the EMIS exclude-the-controlled structure.
-
-      Comorbidities (any one):
-      - vs3: CHD (episode type not Review or Ended)
-      - vs4+vs5: Stroke/TIA (episode type not Review or Ended)
-      - vs6: PAD (episode type not Review or Ended)
-      - vs7: CKD
-      - vs8: eGFR < 60
-      - vs9: Diabetes
-      - vs10: Ethnicity (EMIS-defined valueset)
+    description: >
+      Hypertension MRa membership, one row per register member outside PG1/PG2 with BP monitoring in 12 months and a qualifying comorbidity or ethnicity. Excludes latest clinic BP <=140/90 or home/ABPM <=135/85; unresolved chains remain included. BP components rank by clinical date, save time and observation ID, then link by calendar date to the XML setting markers. Values need only be >=1; there is no plausibility fallback.
     config:
       meta:
         owner:

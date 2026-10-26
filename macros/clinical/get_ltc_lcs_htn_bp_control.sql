@@ -13,11 +13,10 @@
 -- EMIS library item ea06414e-6bec-4593-837f-5b854c54a8c7 (OR'd with end of life care) is not
 -- in the XML export and is omitted pending EMIS verification.
 --
--- Numerator: last known paired BP in the window is below the NICE target for its context:
---   - age < 80:  clinic < 140/90, home/ABPM < 135/85
---   - age >= 80: clinic < 150/90, home/ABPM < 145/85
--- The EMIS linked-record chain (latest CLINBP_COD or HOMEAMBBP_COD event, then its same-date
--- systolic and diastolic) is represented by int_blood_pressure_all's paired readings.
+-- Numerator: latest date-linked clinic/home components meet strict NICE targets.
+-- Components rank by clinical date, save time, then observation ID before links and tests.
+-- Under 80: clinic <140/90, home/ABPM <135/85. At 80+: clinic <150/90, home/ABPM <145/85.
+-- Both values must be >=1. An implausible latest reading never falls back to an older one.
 --
 -- The EMIS search also requires current registration. That is left to consumers, which
 -- filter on is_active (e.g. the LTC LCS dashboard via ltc_lcs_risk_stratification_base).
@@ -42,19 +41,20 @@ care_home as (
     from ({{ get_ltc_lcs_observations("htn_reg_without_outcome_exclusions_vs2") }})
 ),
 
--- Latest coded frailty record; a same-date moderate/severe finding wins the tie.
+-- Use source clinical dates, without get_observations' date substitution or missing-date sentinel.
 latest_frailty as (
     select
-        person_id,
-        concept_code in (
+        f.person_id,
+        f.concept_code in (
             '925831000000107', -- Moderate frailty
             '925861000000102'  -- Severe frailty
         ) as is_moderate_or_severe_finding
-    from {{ ref('int_frailty_diagnoses_all') }}
-    where clinical_effective_date <= current_date()
+    from {{ ref('int_frailty_diagnoses_all') }} as f
+    inner join {{ ref('stg_olids_observation') }} as o on f.id = o.id
+    where o.clinical_effective_date::date <= current_date()
     qualify row_number() over (
-        partition by person_id
-        order by clinical_effective_date desc, is_moderate_or_severe_finding desc, id desc
+        partition by f.person_id
+        order by o.clinical_effective_date::date desc, o.date_recorded desc nulls last, f.id desc
     ) = 1
 ),
 
@@ -69,51 +69,42 @@ denominator as (
         and not coalesce(lf.is_moderate_or_severe_finding, false)
 ),
 
--- Last known paired reading within the window. Tie-break mirrors int_blood_pressure_latest
--- (lowest-of-day) so a multi-reading final date resolves deterministically.
-bp_in_window as (
-    select
-        person_id,
-        effective_date as latest_bp_date,
-        systolic_value as latest_systolic_value,
-        diastolic_value as latest_diastolic_value,
-        is_home_bp_event,
-        is_abpm_bp_event
-    from {{ ref('int_blood_pressure_all') }}
-    where effective_date >= ({{ window_start }})
-      and effective_date <= ({{ window_end }})
-      and systolic_value is not null
-      and diastolic_value is not null
-    qualify row_number() over (
-        partition by person_id
-        order by effective_date desc, systolic_value asc, diastolic_value asc
-    ) = 1
+bp_evidence as (
+    {{ get_ltc_lcs_bp_latest_by_setting(as_at=window_end) }}
 ),
 
 control as (
     select
         d.person_id,
         d.age,
-        bp.latest_bp_date,
-        bp.latest_systolic_value,
-        bp.latest_diastolic_value,
-        bp.is_home_bp_event,
-        bp.is_abpm_bp_event,
-        coalesce(bp.is_home_bp_event or bp.is_abpm_bp_event, false) as is_home_or_abpm,
-        (bp.person_id is not null) as has_bp_in_window
+        -- Home and clinic use the selected chain's own values and dates.
+        case when bp.is_latest_reading_home then bp.home_reading_date
+            when bp.is_latest_reading_clinic then bp.clinic_reading_date end as selected_bp_date,
+        case when bp.is_latest_reading_home then bp.home_systolic_value
+            when bp.is_latest_reading_clinic then bp.clinic_systolic_value end as selected_systolic_value,
+        case when bp.is_latest_reading_home then bp.home_diastolic_value
+            when bp.is_latest_reading_clinic then bp.clinic_diastolic_value end as selected_diastolic_value,
+        coalesce(bp.is_latest_reading_home, false) as is_home_or_abpm,
+        coalesce(bp.is_home_reading_abpm, false) as is_selected_abpm,
+        coalesce(
+            (bp.is_latest_reading_clinic
+                and bp.latest_reading_date >= ({{ window_start }})
+                and bp.clinic_reading_date >= ({{ window_start }}))
+            or (bp.is_latest_reading_home and bp.home_reading_date >= ({{ window_start }})),
+            false
+        ) as has_bp_in_window
     from denominator as d
-    left join bp_in_window as bp
-        on d.person_id = bp.person_id
+    left join bp_evidence as bp on d.person_id = bp.person_id
 )
 
 select
     person_id,
     age,
-    latest_bp_date,
-    latest_systolic_value,
-    latest_diastolic_value,
-    is_home_bp_event,
-    is_abpm_bp_event,
+    iff(has_bp_in_window, selected_bp_date, null) as latest_bp_date,
+    iff(has_bp_in_window, selected_systolic_value, null) as latest_systolic_value,
+    iff(has_bp_in_window, selected_diastolic_value, null) as latest_diastolic_value,
+    has_bp_in_window and is_home_or_abpm and not is_selected_abpm as is_home_bp_event,
+    has_bp_in_window and is_home_or_abpm and is_selected_abpm as is_abpm_bp_event,
     case
         when age >= 80 and is_home_or_abpm then 145
         when age >= 80 then 150
@@ -122,11 +113,10 @@ select
     end as systolic_threshold,
     case when is_home_or_abpm then 85 else 90 end as diastolic_threshold,
     has_bp_in_window,
-    -- Good control: both values strictly below target. People with no reading in the window
-    -- are uncontrolled (false), flagged via has_bp_in_window.
     coalesce(
-        latest_systolic_value < systolic_threshold
-        and latest_diastolic_value < diastolic_threshold,
+        has_bp_in_window
+        and latest_systolic_value >= 1 and latest_systolic_value < systolic_threshold
+        and latest_diastolic_value >= 1 and latest_diastolic_value < diastolic_threshold,
         false
     ) as is_bp_controlled
 from control

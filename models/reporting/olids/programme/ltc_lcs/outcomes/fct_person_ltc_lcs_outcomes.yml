@@ -6,6 +6,7 @@ models:
       LTC LCS outcome measures, one row per person eligible for at least one measure at the build date. Each measure has an is_<measure>_eligible flag and result columns that are null when the person is not eligible.
 
       Hypertension BP control (ICS_HTN_21) is the only measure so far; eligibility and targets are defined in fct_person_ltc_lcs_outcomes_htn_bp_control. Registration status is not filtered; consumers filter is_active.
+      BP components rank by raw clinical date, save time and observation ID, then link by calendar date to clinic/home markers. Values need only be >=1; there is no plausibility fallback. Frailty uses raw dates and the same tie order, then tests the two moderate/severe finding codes.
     config:
       meta:
         owner:
@@ -24,26 +25,26 @@ models:
           - not_null
           - unique
       - name: is_htn_bp_control_eligible
-        description: In the ICS_HTN_21 denominator - on the hypertension register, excluding people aged 90 or over, with an end of life care or care home code, or whose latest frailty record is moderate or severe.
+        description: In the ICS_HTN_21 denominator - on the hypertension register, excluding people aged 90 or over, with an end of life care or care home code, or whose latest raw-date frailty record is the moderate or severe finding code. Clinical Frailty Scale codes do not exclude.
         data_tests:
           - not_null
       - name: htn_bp_controlled_rolling
-        description: "True if the last paired BP in the last 12 months is below target: under 80, clinic < 140/90 and home/ABPM < 135/85; 80 and over, clinic < 150/90 and home/ABPM < 145/85. False with no reading. Null when not eligible."
+        description: "True if the latest date-linked BP in the last 12 months is below target: under 80, clinic < 140/90 and home/ABPM < 135/85; 80 and over, clinic < 150/90 and home/ABPM < 145/85. False with no reading. Null when not eligible."
       - name: htn_bp_control_rolling_has_reading
-        description: True if the person has a paired BP reading in the last 12 months. Null when not eligible.
+        description: True if the person has a date-linked BP reading in the last 12 months. Null when not eligible.
       - name: htn_bp_control_rolling_bp_date
-        description: Date of the last paired BP reading in the last 12 months; null if none or not eligible.
+        description: Date of the latest date-linked BP reading in the last 12 months; null if none or not eligible.
       - name: htn_bp_control_rolling_systolic
-        description: Systolic value (mmHg) of the last paired reading in the last 12 months.
+        description: Systolic value (mmHg) of the latest date-linked reading in the last 12 months.
       - name: htn_bp_control_rolling_diastolic
-        description: Diastolic value (mmHg) of the last paired reading in the last 12 months.
+        description: Diastolic value (mmHg) of the latest date-linked reading in the last 12 months.
       - name: htn_bp_controlled_fy
-        description: True if the last paired BP since 1 April is below target (as htn_bp_controlled_rolling). False with no reading. Null when not eligible.
+        description: True if the latest date-linked BP since 1 April is below target (as htn_bp_controlled_rolling). False with no reading. Null when not eligible.
       - name: htn_bp_control_fy_has_reading
-        description: True if the person has a paired BP reading since 1 April. Null when not eligible.
+        description: True if the person has a date-linked BP reading since 1 April. Null when not eligible.
       - name: htn_bp_control_fy_bp_date
-        description: Date of the last paired BP reading since 1 April; null if none or not eligible.
+        description: Date of the latest date-linked BP reading since 1 April; null if none or not eligible.
       - name: htn_bp_control_fy_systolic
-        description: Systolic value (mmHg) of the last paired reading since 1 April.
+        description: Systolic value (mmHg) of the latest date-linked reading since 1 April.
       - name: htn_bp_control_fy_diastolic
-        description: Diastolic value (mmHg) of the last paired reading since 1 April.
+        description: Diastolic value (mmHg) of the latest date-linked reading since 1 April.
