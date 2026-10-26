@@ -108,7 +108,7 @@ bp_observations as (
         boolor_agg(valueset_friendly_name = 'on_ckd_reg_pg2_hr_vs9') as is_clinic_diastolic,
         boolor_agg(valueset_friendly_name = 'on_ckd_reg_pg2_hr_vs10') as is_home_systolic,
         boolor_agg(valueset_friendly_name = 'on_ckd_reg_pg2_hr_vs11') as is_home_diastolic
-    from ({{ get_ltc_lcs_observations("on_ckd_reg_pg2_hr_vs4, on_ckd_reg_pg2_hr_vs5, on_ckd_reg_pg2_hr_vs6, on_ckd_reg_pg2_hr_vs7, on_ckd_reg_pg2_hr_vs8, on_ckd_reg_pg2_hr_vs9, on_ckd_reg_pg2_hr_vs10, on_ckd_reg_pg2_hr_vs11") }})
+    from ({{ get_ltc_lcs_observations("on_ckd_reg_pg2_hr_vs4, on_ckd_reg_pg2_hr_vs5, on_ckd_reg_pg2_hr_vs6, on_ckd_reg_pg2_hr_vs7, on_ckd_reg_pg2_hr_vs8, on_ckd_reg_pg2_hr_vs9, on_ckd_reg_pg2_hr_vs10, on_ckd_reg_pg2_hr_vs11", exclude_result_headers=true) }})
     group by observation_id, person_id, clinical_effective_date, result_value
 ),
 

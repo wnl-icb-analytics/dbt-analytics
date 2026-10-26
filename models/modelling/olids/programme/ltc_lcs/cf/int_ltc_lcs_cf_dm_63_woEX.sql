@@ -21,7 +21,7 @@ with base as (
 
 latest_hba1c as (
     select person_id, result_value, clinical_effective_date
-    from ({{ get_ltc_lcs_observations("160ec384-bb4f-915b-9a8e-66d118eefe0c", include_date_recorded=true) }})
+    from ({{ get_ltc_lcs_observations("160ec384-bb4f-915b-9a8e-66d118eefe0c", include_date_recorded=true, exclude_result_headers=true) }})
     where result_value > 0
     qualify row_number() over (
         partition by person_id

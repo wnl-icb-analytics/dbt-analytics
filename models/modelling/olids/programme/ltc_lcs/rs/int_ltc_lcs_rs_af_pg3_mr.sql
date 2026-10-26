@@ -129,7 +129,7 @@ rockwood_score_6 as (
 -- Latest CHA2DS2-VASc score (vs10, refset)
 latest_chadsvasc as (
     select person_id, result_value, clinical_effective_date
-    from ({{ get_ltc_lcs_observations("on_af_reg_pg3_mr_vs10") }})
+    from ({{ get_ltc_lcs_observations("on_af_reg_pg3_mr_vs10", exclude_result_headers=true) }})
     where clinical_effective_date <= current_date()
     qualify row_number() over (
         partition by person_id
