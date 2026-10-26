@@ -14,8 +14,11 @@
 #      in-flight deploy) stay selected on every candidate until a deploy
 #      publishes them, exactly as the next deploy will build them. It also
 #      means config-only changes (dbt_project.yml etc.) get a real DEV build,
-#      not just a compile. UEC code changes also rebuild their encounter parent
-#      so relationship tests do not compare fresh codes with older encounters.
+#      not just a compile. Unmodified nodes that sit between two modified
+#      nodes are rebuilt too, so a modified model never reads a stale prod
+#      copy of something derived from another modified model. UEC code
+#      changes also rebuild their encounter parent so relationship tests do
+#      not compare fresh codes with older encounters.
 #
 # Queue runs NEVER publish the manifest - only production deploys advance
 # deploy state. When no state manifest exists, falls back to building the
@@ -234,10 +237,12 @@ jobs:
             exit 0
           fi
 
-          # Preserve the state selection and its tests; add the UEC encounter
-          # parent when its code models need it. Other parents stay deferred.
-          # Reconciliation tests are excluded; scheduled builds run them.
-          python .github/scripts/validate_dbt_models.py --state state --select state:modified
+          # Preserve the state selection and its tests; add nodes between
+          # modified nodes (descendants of one that are also ancestors of
+          # another) and the UEC encounter parent when its code models need it.
+          # Other parents stay deferred. Reconciliation tests are excluded;
+          # scheduled builds run them.
+          python .github/scripts/validate_dbt_models.py --state state --select state:modified "state:modified+,+state:modified"
 
       - name: Cleanup credentials
         if: always() && env.RUNTIME_BUILD == 'true'
