@@ -1,8 +1,8 @@
 {% macro get_ltc_lcs_bp_latest_by_setting(as_at='current_date()') %}
 {# One row per person: latest LTC LCS blood pressure readings by setting, as at as_at.
-   EMIS links BP components by calendar date. Each Latest restriction ranks its own pool by date
-   (save time, then observation ID, break same-day ties), linked criteria keep ranked records
-   on the linked date, then tests apply. Clinic/home pools use the CKD PG2 value-set instances
+   EMIS links BP components by calendar date before ranking eligible records by date
+   (save time, then observation ID, break same-day ties). Only the home-setting wrapper
+   ranks before linking. Clinic/home pools use the CKD PG2 value-set instances
    shared by the HTN, PAD and Stroke chains.
    Diabetes retains its distinct BP_COD and component pools. No plausibility fallback applies. #}
 with bp as (
@@ -57,6 +57,7 @@ bp_days as (
         boolor_agg(is_home_marker) as has_home_marker,
         boolor_agg(is_systolic) as has_systolic,
         boolor_agg(is_clinic_systolic) as has_clinic_systolic,
+        boolor_agg(is_home_systolic) as has_home_systolic,
         boolor_agg(is_diabetes_marker) as has_diabetes_marker,
         boolor_agg(is_diabetes_link_systolic) as has_diabetes_link_systolic
     from bp
@@ -67,13 +68,10 @@ latest_diastolic as (
     select person_id, bp_date, date_recorded, observation_id, is_clinic_marker
     from bp
     where is_diastolic
-    qualify row_number() over (partition by person_id order by bp_date desc, date_recorded desc nulls last, observation_id desc) = 1
-),
-
-latest_clinic_systolic as (
-    select person_id, bp_date, date_recorded, observation_id, result_value
-    from bp
-    where is_clinic_systolic
+        and (person_id, bp_date) in (
+            select person_id, bp_date from bp_days
+            where has_systolic and (has_clinic_marker or has_home_marker)
+        )
     qualify row_number() over (partition by person_id order by bp_date desc, date_recorded desc nulls last, observation_id desc) = 1
 ),
 
@@ -81,14 +79,20 @@ latest_clinic_diastolic as (
     select person_id, bp_date, date_recorded, observation_id, result_value
     from bp
     where is_clinic_diastolic
+        and (person_id, bp_date) in (
+            select person_id, bp_date from bp_days where has_clinic_systolic and has_clinic_marker
+        )
     qualify row_number() over (partition by person_id order by bp_date desc, date_recorded desc nulls last, observation_id desc) = 1
 ),
 
-latest_home_systolic as (
-    select person_id, bp_date, date_recorded, observation_id, result_value
-    from bp
-    where is_home_systolic
-    qualify row_number() over (partition by person_id order by bp_date desc, date_recorded desc nulls last, observation_id desc) = 1
+latest_clinic_systolic as (
+    select b.person_id, b.bp_date, b.date_recorded, b.observation_id, b.result_value
+    from bp as b
+    inner join latest_clinic_diastolic as d on b.person_id = d.person_id and b.bp_date = d.bp_date
+    where b.is_clinic_systolic
+    qualify row_number() over (
+        partition by b.person_id order by b.date_recorded desc nulls last, b.observation_id desc
+    ) = 1
 ),
 
 latest_home_diastolic as (
@@ -96,21 +100,41 @@ latest_home_diastolic as (
         concept_code in (select code from abpm_codes) as is_abpm
     from bp
     where is_home_diastolic
+        and (person_id, bp_date) in (
+            select person_id, bp_date from bp_days where has_home_systolic and has_home_marker
+        )
     qualify row_number() over (partition by person_id order by bp_date desc, date_recorded desc nulls last, observation_id desc) = 1
+),
+
+latest_home_systolic as (
+    select b.person_id, b.bp_date, b.date_recorded, b.observation_id, b.result_value
+    from bp as b
+    inner join latest_home_diastolic as d on b.person_id = d.person_id and b.bp_date = d.bp_date
+    where b.is_home_systolic
+    qualify row_number() over (
+        partition by b.person_id order by b.date_recorded desc nulls last, b.observation_id desc
+    ) = 1
 ),
 
 latest_diabetes_systolic as (
     select person_id, bp_date, result_value
     from bp
     where is_diabetes_systolic
+        and (person_id, bp_date) in (
+            select person_id, bp_date from bp_days where has_diabetes_marker and has_diabetes_link_systolic
+        )
     qualify row_number() over (
         partition by person_id order by bp_date desc, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
+
 latest_diabetes_diastolic as (
     select person_id, bp_date, result_value
     from bp
     where is_diabetes_diastolic
+        and (person_id, bp_date) in (
+            select person_id, bp_date from bp_days where has_diabetes_marker and has_diabetes_link_systolic
+        )
     qualify row_number() over (
         partition by person_id order by bp_date desc, date_recorded desc nulls last, observation_id desc
     ) = 1
@@ -121,7 +145,7 @@ people as (
 
 select
     p.person_id,
-    -- Clinic setting: latest positive diastolic is clinic-coded with a same-day systolic.
+    -- Clinic setting: latest linked positive diastolic is clinic-coded.
     ld.bp_date as latest_reading_date,
     coalesce(ld.is_clinic_marker and ldd.has_systolic, false) as is_latest_reading_clinic,
     -- Home setting: latest home reading is valid and no valid clinic reading is later.
@@ -141,7 +165,7 @@ select
         ),
         false
     ) as is_latest_reading_home,
-    -- Clinic reading: latest clinic systolic, with the latest clinic diastolic on the same date.
+    -- Clinic reading: latest complete linked date, then latest systolic on that date.
     iff(lcd.bp_date = lcs.bp_date and lcsd.has_clinic_marker, lcs.bp_date, null) as clinic_reading_date,
     iff(lcd.bp_date = lcs.bp_date and lcsd.has_clinic_marker, lcs.result_value, null) as clinic_systolic_value,
     iff(lcd.bp_date = lcs.bp_date and lcsd.has_clinic_marker, lcd.result_value, null) as clinic_diastolic_value,
@@ -150,7 +174,7 @@ select
     iff(lhd.bp_date = lhs.bp_date and lhsd.has_home_marker, lhs.result_value, null) as home_systolic_value,
     iff(lhd.bp_date = lhs.bp_date and lhsd.has_home_marker, lhd.result_value, null) as home_diastolic_value,
     coalesce(lhd.is_abpm, false) as is_home_reading_abpm,
-    -- Diabetes tests each latest component on its own date, linked through BP_COD and systolic evidence.
+    -- Diabetes ranks each component among dates with BP_COD and linked systolic evidence.
     iff(dss.has_diabetes_marker and dss.has_diabetes_link_systolic, ds.result_value, null) as diabetes_systolic_value,
     iff(dsd.has_diabetes_marker and dsd.has_diabetes_link_systolic, dd.result_value, null) as diabetes_diastolic_value
 from people as p

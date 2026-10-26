@@ -14,7 +14,8 @@
 -- in the XML export and is omitted pending EMIS verification.
 --
 -- Numerator: latest date-linked clinic/home components meet strict NICE targets.
--- Components rank by clinical date, save time, then observation ID before links and tests.
+-- Components link by date before ranking by clinical date, save time and observation ID.
+-- Only the home-setting wrapper ranks before linking; thresholds test the selected values.
 -- Under 80: clinic <140/90, home/ABPM <135/85. At 80+: clinic <150/90, home/ABPM <145/85.
 -- Both values must be >=1. An implausible latest reading never falls back to an older one.
 --
@@ -70,7 +71,11 @@ denominator as (
 ),
 
 bp_evidence as (
+    {% if window_end == 'current_date()' %}
+    select * from {{ ref('int_ltc_lcs_bp_latest_by_setting') }}
+    {% else %}
     {{ get_ltc_lcs_bp_latest_by_setting(as_at=window_end) }}
+    {% endif %}
 ),
 
 control as (
@@ -84,7 +89,6 @@ control as (
             when bp.is_latest_reading_clinic then bp.clinic_systolic_value end as selected_systolic_value,
         case when bp.is_latest_reading_home then bp.home_diastolic_value
             when bp.is_latest_reading_clinic then bp.clinic_diastolic_value end as selected_diastolic_value,
-        coalesce(bp.is_latest_reading_home, false) as is_home_or_abpm,
         coalesce(bp.is_home_reading_abpm, false) as is_selected_abpm,
         coalesce(
             (bp.is_latest_reading_clinic
@@ -92,7 +96,8 @@ control as (
                 and bp.clinic_reading_date >= ({{ window_start }}))
             or (bp.is_latest_reading_home and bp.home_reading_date >= ({{ window_start }})),
             false
-        ) as has_bp_in_window
+        ) as has_bp_in_window,
+        has_bp_in_window and coalesce(bp.is_latest_reading_home, false) as is_home_or_abpm
     from denominator as d
     left join bp_evidence as bp on d.person_id = bp.person_id
 )

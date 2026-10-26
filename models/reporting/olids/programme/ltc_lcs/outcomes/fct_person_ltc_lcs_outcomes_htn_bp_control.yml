@@ -22,8 +22,9 @@ models:
       No ACR/CKD/diabetes target tightening. People with no reading in the window are
       uncontrolled (is_bp_controlled = false, has_bp_in_window = false). Logic lives in the
       get_ltc_lcs_htn_bp_control macro; the _fy and _fy_last variants use financial-year windows.
-      BP uses the shared LTC LCS clinic/home selector: raw clinical date, save time, then
-      observation ID; calendar-date links; values >=1 without plausibility fallback.
+      BP components link by calendar date before ranking by raw clinical date, save time and
+      observation ID. Only the home-setting wrapper ranks before linking. Values must be >=1,
+      without plausibility fallback.
       Frailty uses raw clinical dates and the same tie order, then tests only the moderate/severe
       finding codes. Missing clinical dates do not qualify. Same-second entry order is unknown.
     config:
@@ -39,8 +40,9 @@ models:
             Percentage of people on the hypertension register, excluding those aged 90+, at end
             of life, in a care home or with moderate/severe frailty, whose last blood pressure in
             the last 12 months is below the NICE target: clinic < 140/90 (< 150/90 aged 80+),
-            home/ABPM < 135/85 (< 145/85 aged 80+). Uses raw-date clinic/home chains ordered by
-            save time then ID, values >=1 and the latest moderate/severe-only frailty exclusion.
+            home/ABPM < 135/85 (< 145/85 aged 80+). Links clinic/home components by date before ranking by raw clinical date,
+            save time and ID. Only the home-setting wrapper ranks before linking. Values must be
+            >=1; frailty excludes only the latest moderate/severe finding.
           is_qof: false
           source_column: "is_bp_controlled"
           sort_order: "LTC_LCS_OUTCOME_001"

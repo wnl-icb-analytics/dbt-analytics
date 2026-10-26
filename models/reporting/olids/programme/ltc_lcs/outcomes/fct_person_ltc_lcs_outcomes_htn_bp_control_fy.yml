@@ -11,8 +11,9 @@ models:
       Matches the QOF-style "FY year-to-date since 1st April" denominator; the numerator is
       effectively YTD since no future readings exist.
       Exclusions are assessed on the build date.
-      BP uses the shared LTC LCS clinic/home selector: raw clinical date, save time, then
-      observation ID; calendar-date links; values >=1 without plausibility fallback.
+      BP components link by calendar date before ranking by raw clinical date, save time and
+      observation ID. Only the home-setting wrapper ranks before linking. Values must be >=1,
+      without plausibility fallback.
       Frailty uses raw clinical dates and the same tie order, then tests only the moderate/severe
       finding codes. Missing clinical dates do not qualify. Same-second entry order is unknown.
     config:
@@ -26,8 +27,8 @@ models:
           description_short: "Hypertension register members with BP below NICE target (latest date-linked reading, current FY year-to-date)"
           description_long: >
             Hypertension BP control in the current financial year, one row per eligible register member.
-            Latest raw-date clinic/home chains rank by clinical date, save time and ID, then link
-            by calendar date. Values must be >=1 and below strict NICE targets. Frailty excludes
+            Raw-date clinic/home components link by calendar date before ranking by clinical date, save time and ID.
+            Only the home-setting wrapper ranks before linking. Values must be >=1 and below strict NICE targets. Frailty excludes
             only a latest moderate/severe finding, with the same date and save-time ordering.
           is_qof: false
           source_column: "is_bp_controlled"

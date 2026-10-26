@@ -2,8 +2,7 @@ version: 2
 models:
   - name: int_ltc_lcs_bp_latest_by_setting
     description: LTC LCS BP evidence, one row per person with clinic/home or diabetes BP observations on or
-      before the build date. BP components rank by clinical date, save time and observation ID, then link by
-      calendar date to the XML setting markers. Values need only be >=1; there is no plausibility fallback.
+      before the build date. BP components link by calendar date to the XML setting markers before ranking by clinical date, save time and observation ID. Only the home-setting wrapper ranks before linking. Values need only be >=1; there is no plausibility fallback.
       Clinic and home use separate XML component pools. Diabetes retains its own BP_COD and component pools;
       each latest component links on its own date. Same-second ties use observation ID and cannot recover EMIS
       entry order.
@@ -37,7 +36,8 @@ models:
           - not_null
           - unique
       - name: latest_reading_date
-        description: Date of the latest positive diastolic in the combined XML pool. Null when absent.
+        description: Date of the latest positive combined-pool diastolic with same-date systolic and
+          clinic/home marker evidence. Null when absent.
       - name: is_latest_reading_clinic
         description: Whether the latest combined diastolic is clinic-coded with positive systolic evidence on
           its date.

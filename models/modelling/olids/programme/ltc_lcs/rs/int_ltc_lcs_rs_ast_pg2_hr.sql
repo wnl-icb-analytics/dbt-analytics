@@ -73,9 +73,9 @@ rule_5_antibiotics as (
 ),
 
 -- Rule 6 has no issue count in the XML. Exclude products explicitly listed in rule 7
--- until the analyser's SCT_PREP expansion stops absorbing moderate-dose brands.
+-- vs8/vs9 until the analyser's SCT_PREP expansion stops absorbing moderate-dose brands.
 moderate_dose_products as (
-    select distinct original_code, translated_to_snomed_code, display_name
+    select distinct original_code, translated_to_snomed_code
     from {{ ref('stg_reference_ltc_lcs_original_codes') }}
     where valueset_id in ('3c6a4c09-3104-0c3d-d812-9a35e9208512', '7f679be0-8ad9-434f-ad03-e0c29ac330f4')
 ),
@@ -87,7 +87,6 @@ rule_6_high_dose_inhaler as (
             select 1 from moderate_dose_products as moderate
             where moderate.original_code = mo.concept_code
                 or moderate.translated_to_snomed_code = mo.concept_code
-                or moderate.display_name = mo.concept_display
         )
 ),
 

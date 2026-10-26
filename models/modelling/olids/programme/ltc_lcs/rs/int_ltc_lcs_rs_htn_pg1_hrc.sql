@@ -12,7 +12,8 @@
 -- Because EMIS excludes the controlled rather than including the severe,
 -- patients with a BP monitoring code whose same-date reading chains do not
 -- resolve are INCLUDED (data-quality catch). This port mirrors that: the
--- gate comes from monitoring-code value sets. BP uses the latest clinic/home date-linked components, ordered by save time then ID.
+-- gate comes from monitoring-code value sets. BP uses the latest date-linked clinic/home
+-- components, ordered by save time then ID.
 
 with
 -- Parent population: Patients currently on hypertension register
