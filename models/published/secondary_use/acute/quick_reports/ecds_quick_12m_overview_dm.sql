@@ -1,9 +1,9 @@
 {{
     config(
-        materialized='table',
+        materialized='view',
         tags=['quick_reports'])
 }}
-/*Aggregate table for OVERVIEW describing AE Encounters as rolling 12m from INT_ECDS_QUICK_12M_ROLLING_BASE table. Commisionned by WNL ~1 million rows.
+/*FINAL MODEL Aggregate table for OVERVIEW describing AE Encounters as rolling 12m from INT_ECDS_QUICK_12M_ROLLING_BASE table. Commisionned by WNL ~1 million rows.
 Data Quality flag if duration is missing (2.5k)
 */ 
 SELECT 
