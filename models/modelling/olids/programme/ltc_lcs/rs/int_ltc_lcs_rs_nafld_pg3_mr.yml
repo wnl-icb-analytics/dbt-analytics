@@ -2,7 +2,7 @@ version: 2
 models:
   - name: int_ltc_lcs_rs_nafld_pg3_mr
     description: |
-      NAFLD Register Priority Group 3 - Medium Risk.
+      NAFLD Register Priority Group 3 - Medium Risk, one row per included person.
       NB: NAFLD has no PG1/PG2; PG3 is its only priority group.
 
       Patients on the LTC LCS NAFLD register (int_ltc_lcs_nafld_register,
@@ -11,6 +11,8 @@ models:
       - Rule 1: latest NAFLD fibrosis score > 3.25 (include on pass)
       - Rule 2: latest NAFLD fibrosis score > 1.3 and <= 3.25 with latest
         ELF score >= 9.8 (include on pass)
+      Scores rank by clinical date, save time (missing last), then observation ID.
+      A null latest result does not fall back to an older score.
     config:
       meta:
         owner:

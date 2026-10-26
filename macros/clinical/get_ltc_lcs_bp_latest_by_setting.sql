@@ -1,9 +1,11 @@
-{% macro get_ltc_lcs_bp_latest_by_setting(as_at='current_date()') %}
+{% macro get_ltc_lcs_bp_latest_by_setting(as_at='current_date()', ckd_pg2=false) %}
 {# One row per person: latest LTC LCS blood pressure readings by setting, as at as_at.
    EMIS links BP components by calendar date before ranking eligible records by date
-   (save time, then observation ID, break same-day ties). Only the home-setting wrapper
+   (save time, then observation ID, break same-day ties). By default only the home-setting wrapper
    ranks before linking. Clinic/home pools use the CKD PG2 value-set instances
    shared by the HTN, PAD and Stroke chains.
+   ckd_pg2 selects CKD's deepest systolic records before linking their parent
+   diastolic pools and keeps its separate clinic/home setting chains.
    Diabetes retains its distinct BP_COD and component pools. No plausibility fallback applies. #}
 with bp as (
     select
@@ -68,13 +70,68 @@ latest_diastolic as (
     select person_id, bp_date, date_recorded, observation_id, is_clinic_marker
     from bp
     where is_diastolic
+        {% if not ckd_pg2 %}
         and (person_id, bp_date) in (
             select person_id, bp_date from bp_days
             where has_systolic and (has_clinic_marker or has_home_marker)
         )
+        {% endif %}
     qualify row_number() over (partition by person_id order by bp_date desc, date_recorded desc nulls last, observation_id desc) = 1
 ),
 
+{% if ckd_pg2 %}
+-- CKD's deepest systolic criterion ranks first. Its parent diastolic pool is
+-- restricted to that date before ranking; setting checks remain separate.
+latest_clinic_systolic as (
+    select person_id, bp_date, date_recorded, observation_id, result_value
+    from bp
+    where is_clinic_systolic
+    qualify row_number() over (
+        partition by person_id order by bp_date desc, date_recorded desc nulls last, observation_id desc
+    ) = 1
+),
+
+latest_clinic_diastolic as (
+    select b.person_id, b.bp_date, b.date_recorded, b.observation_id, b.result_value
+    from bp as b
+    inner join latest_clinic_systolic as s on b.person_id = s.person_id and b.bp_date = s.bp_date
+    where b.is_clinic_diastolic
+    qualify row_number() over (
+        partition by b.person_id order by b.date_recorded desc nulls last, b.observation_id desc
+    ) = 1
+),
+
+latest_home_systolic as (
+    select person_id, bp_date, date_recorded, observation_id, result_value
+    from bp
+    where is_home_systolic
+    qualify row_number() over (
+        partition by person_id order by bp_date desc, date_recorded desc nulls last, observation_id desc
+    ) = 1
+),
+
+latest_home_diastolic as (
+    select b.person_id, b.bp_date, b.date_recorded, b.observation_id, b.result_value,
+        b.concept_code in (select code from abpm_codes) as is_abpm
+    from bp as b
+    inner join latest_home_systolic as s on b.person_id = s.person_id and b.bp_date = s.bp_date
+    where b.is_home_diastolic
+    qualify row_number() over (
+        partition by b.person_id order by b.date_recorded desc nulls last, b.observation_id desc
+    ) = 1
+),
+
+-- The CKD home wrapper links its clinic/home union to a valid home chain before
+-- Latest 1. A later clinic reading therefore does not veto that home chain.
+latest_home_setting_diastolic as (
+    select person_id, bp_date
+    from bp
+    where is_home_diastolic
+    qualify row_number() over (
+        partition by person_id order by bp_date desc, date_recorded desc nulls last, observation_id desc
+    ) = 1
+),
+{% else %}
 latest_clinic_diastolic as (
     select person_id, bp_date, date_recorded, observation_id, result_value
     from bp
@@ -116,6 +173,8 @@ latest_home_systolic as (
     ) = 1
 ),
 
+{% endif %}
+
 latest_diabetes_systolic as (
     select person_id, bp_date, result_value
     from bp
@@ -145,9 +204,12 @@ people as (
 
 select
     p.person_id,
-    -- Clinic setting: latest linked positive diastolic is clinic-coded.
+    -- Clinic setting tests clinic coding and systolic evidence on the selected diastolic date.
     ld.bp_date as latest_reading_date,
     coalesce(ld.is_clinic_marker and ldd.has_systolic, false) as is_latest_reading_clinic,
+    {% if ckd_pg2 %}
+    coalesce(hsd.has_home_marker and hsd.has_home_systolic, false) as is_latest_reading_home,
+    {% else %}
     -- Home setting: latest home reading is valid and no valid clinic reading is later.
     coalesce(
         lhs.bp_date = lhd.bp_date
@@ -165,7 +227,8 @@ select
         ),
         false
     ) as is_latest_reading_home,
-    -- Clinic reading: latest complete linked date, then latest systolic on that date.
+    {% endif %}
+    -- Clinic components and marker must share the selected calendar date.
     iff(lcd.bp_date = lcs.bp_date and lcsd.has_clinic_marker, lcs.bp_date, null) as clinic_reading_date,
     iff(lcd.bp_date = lcs.bp_date and lcsd.has_clinic_marker, lcs.result_value, null) as clinic_systolic_value,
     iff(lcd.bp_date = lcs.bp_date and lcsd.has_clinic_marker, lcd.result_value, null) as clinic_diastolic_value,
@@ -188,6 +251,10 @@ left join latest_home_systolic as lhs on lhs.person_id = p.person_id
 left join bp_days as lhsd on lhsd.person_id = lhs.person_id and lhsd.bp_date = lhs.bp_date
 left join latest_home_diastolic as lhd on lhd.person_id = p.person_id
 left join bp_days as lhdd on lhdd.person_id = lhd.person_id and lhdd.bp_date = lhd.bp_date
+{% if ckd_pg2 %}
+left join latest_home_setting_diastolic as hsdia on hsdia.person_id = p.person_id
+left join bp_days as hsd on hsd.person_id = hsdia.person_id and hsd.bp_date = hsdia.bp_date
+{% endif %}
 left join latest_diabetes_systolic as ds on ds.person_id = p.person_id
 left join bp_days as dss on dss.person_id = ds.person_id and dss.bp_date = ds.bp_date
 left join latest_diabetes_diastolic as dd on dd.person_id = p.person_id
