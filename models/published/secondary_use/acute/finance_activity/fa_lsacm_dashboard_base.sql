@@ -303,27 +303,22 @@ SELECT
         )
 */
         THEN 'Elective' ELSE 'Fixed'  END AS "API Type",
-
      CASE
         WHEN ACM.COMMISSIONER_CODE IN ('13Q','13R') 
             THEN 'Retained'
-
         WHEN ACM.SERVICE_CODE = 'NCBPSXXX' THEN
              CASE WHEN COMMISSIONED_SERVICE_CATEGORY_CODE = '21' THEN 'Retained'
                   WHEN COMMISSIONED_SERVICE_CATEGORY_CODE = '25' THEN 'Delegated'
                   ELSE 'Retained' END
-
         WHEN ACM.SERVICE_CODE LIKE '%TOP%' THEN
              CASE WHEN COMMISSIONED_SERVICE_CATEGORY_CODE = '21' THEN 'Retained'
                   WHEN COMMISSIONED_SERVICE_CATEGORY_CODE = '25' THEN 'Delegated'
                   WHEN COMMISSIONED_SERVICE_CATEGORY_CODE = '12' THEN 'ICB-commissioned'
                   ELSE 'Retained' END
-
         WHEN ACM.SERVICE_CODE IN ('CCGPS08S_EXC','99999999','NULL') 
              OR ACM.SERVICE_CODE LIKE '%99999%' 
              OR ACM.SERVICE_CODE IS NULL 
             THEN 'ICB-commissioned'
-
         WHEN ACM.DV_FINANCIAL_YEAR <= '202526' THEN 
             CASE 
                 WHEN SER.ICB_DELEGATION_25_26 IN ('RED','BLUE','NOT APPLICABLE') 
@@ -334,7 +329,6 @@ SELECT
 
                 ELSE 'Invalid Service Code'
             END
-
         WHEN ACM.DV_FINANCIAL_YEAR = '202627' THEN 
             CASE 
                 WHEN SER.ICB_DELEGATION_26_27 IN ('RED','BLUE','NOT APPLICABLE') 
@@ -342,10 +336,8 @@ SELECT
 
                 WHEN SER.ICB_DELEGATION_26_27 = 'GREEN' 
                     THEN 'Delegated'
-
                 ELSE 'Invalid Service Code'
             END
-
         ELSE 'Invalid Service Code' 
     END AS SPECCOMMFLAG
 --new version of spec_comm - if happy then replace above logic with this
