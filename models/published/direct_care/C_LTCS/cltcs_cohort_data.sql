@@ -137,8 +137,10 @@ select il.patient_id
     -- frailty flags: NULL = not assessed, which is clinically distinct from a genuine low/zero score. Do not COALESCE to 0.
     , fr.efi_score
     , coalesce(fr.category, 'Unknown') as efi_category
+    , fr.end_date as efi_date
     , coalesce(rockwood.frailty_level, 'Unknown') as frailty_level
     , coalesce(rockwood.frailty_category, 'Unknown') as frailty_category
+    , rockwood.clinical_effective_date as rockwood_latest_date
     , frr.latest_frailty_severity as frailty_register_latest_severity
     , frr.latest_diagnosis_date as frailty_register_latest_date
     -- combined frailty evidence used by the C-LTCS frailty score
