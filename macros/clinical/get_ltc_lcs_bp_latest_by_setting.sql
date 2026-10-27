@@ -38,7 +38,8 @@ with bp as (
          8da5f7b1-024b-c20c-97e9-415ea3b9a64a,
          5083eb15-91a9-f20e-7fb1-06e908a70e5f,
          dbace9e1-ca62-3166-049c-82206d3e041d",
-        include_date_recorded=true
+        include_date_recorded=true,
+        exclude_result_headers=true
     ) }})
     where clinical_effective_date::date <= {{ as_at }}
     group by person_id, observation_id, bp_date, date_recorded, concept_code, result_value

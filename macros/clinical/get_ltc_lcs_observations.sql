@@ -1,4 +1,4 @@
-{% macro get_ltc_lcs_observations(valuesets, match_paths='both', include_date_recorded=false) %}
+{% macro get_ltc_lcs_observations(valuesets, match_paths='both', include_date_recorded=false, exclude_result_headers=false) %}
 
 {#
     Returns observations for one or more LTC LCS valuesets via two parallel paths:
@@ -17,6 +17,7 @@
       valuesets    - comma-separated list of valueset_id or valueset_friendly_name tokens
       match_paths  - 'both' (default), 'mapped', or 'source'
       include_date_recorded - also return date_recorded, the EMIS save time, for same-day ordering.
+      exclude_result_headers - omit upstream-flagged headers before result selection; defaults to false.
 #}
 
 {%- if valuesets is none -%}
@@ -77,6 +78,9 @@ matched_observations as (
         ec.valueset_id in ({{ valuesets_quoted }})
         or upper(vs.valueset_friendly_name) in ({{ valuesets_upper_quoted }})
     )
+    {%- if exclude_result_headers %}
+        and not o.is_result_header
+    {%- endif %}
 {%- endif %}
 {%- if match_paths == 'both' %}
     union all
@@ -116,6 +120,9 @@ matched_observations as (
         oc.valueset_id in ({{ valuesets_quoted }})
         or upper(vs.valueset_friendly_name) in ({{ valuesets_upper_quoted }})
     )
+    {%- if exclude_result_headers %}
+        and not o.is_result_header
+    {%- endif %}
 {%- endif %}
 )
 select *
