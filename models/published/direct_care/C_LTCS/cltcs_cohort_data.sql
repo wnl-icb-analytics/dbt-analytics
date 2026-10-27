@@ -206,7 +206,6 @@ select il.patient_id
     -- barriers to care (as used in the treatment and frailty score barrier domains).
     -- Substance misuse reads int_illicit_drug_use_latest directly: int_smi_lifestyle only
     -- covers the SMI population.
-    , coalesce(pss.is_housebound, false) as is_housebound
     , coalesce(idu.illicit_drug_pattern is not null
         and idu.illicit_drug_pattern <> 'Does not misuse drugs', false) as has_substance_misuse
     -- current status to consider
@@ -357,8 +356,6 @@ left join {{ref('fct_person_asc_service_recent')}} asc_cld
     on il.patient_id = asc_cld.sk_patient_id
 LEFT JOIN {{ref('dim_person_care_home')}} ch
     on il.olids_id = ch.person_id
-left join {{ ref('dim_person_status_summary') }} pss
-    on il.olids_id = pss.person_id
 left join {{ ref('int_illicit_drug_use_latest') }} idu
     on il.olids_id = idu.person_id
 left join {{ref('int_qrisk_latest')}} qrk
