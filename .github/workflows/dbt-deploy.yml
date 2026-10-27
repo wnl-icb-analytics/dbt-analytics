@@ -11,6 +11,12 @@
 # fresh and stale relations. The full-build fallback and scheduled builds run them.
 # Falls back to a full build when no state manifest exists or on manual dispatch.
 #
+# When a PR in the push has the opt-in 🔄full-refresh label, the state-based
+# build adds --full-refresh, so modified models and their downstream models
+# rebuild from scratch. Models configured full_refresh=false keep their history.
+# The label is checked before compile: a failed lookup keeps the prior baseline
+# and the run can be re-run.
+#
 # Runs that pass Fusion compile publish target/manifest.json + run_results.json
 # + meta.json as the next baseline, even if execution later fails. This prevents
 # later unrelated deploys from retrying failed nodes. A compile failure, or a
@@ -168,6 +174,14 @@ jobs:
       - name: Install dbt packages
         run: dbt deps
 
+      - name: Check full-refresh label
+        id: refresh
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: python3 .github/scripts/full_refresh_label.py "$BEFORE_SHA..$GITHUB_SHA"
+
       - name: Compile project
         id: compile
         run: dbt compile --target prod --profiles-dir .
@@ -179,6 +193,8 @@ jobs:
 
       - name: dbt build
         id: build
+        env:
+          FULL_REFRESH: ${{ steps.refresh.outputs.full_refresh }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ steps.state.outputs.has_state }}" != "true" ]; then
             command=(dbt build --target prod --profiles-dir .)
@@ -186,6 +202,10 @@ jobs:
           else
             command=(python3 .github/scripts/validate_dbt_models.py --target prod --state state --select "state:modified+" "tag:indicator_definitions+")
             echo "State-based build: modified + downstream and indicator definitions + downstream"
+            if [ "$FULL_REFRESH" = "true" ]; then
+              command+=(--full-refresh)
+              echo "Full refresh requested by the 🔄full-refresh label"
+            fi
           fi
           echo "dbt_command=${command[*]}" >> "$GITHUB_OUTPUT"
           "${command[@]}"

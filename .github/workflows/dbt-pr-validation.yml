@@ -28,7 +28,14 @@
 # merged with current main, then removes the label. It reports as a separate,
 # non-required "DEV build (snowflake-ci)" check so it never blocks or masks the
 # required check. Later commits do not rebuild; re-add the label to validate
-# again. Fork PRs are excluded.
+# again. Fork PRs are excluded. Stacked PRs based on another PR's branch can use
+# the label too; their build includes the PRs beneath them.
+#
+# The opt-in 🔄full-refresh label stays on the PR. Its label, merge-queue and
+# deploy builds add --full-refresh to the whole selection: here the modified
+# nodes and those between them, in the deploy everything downstream too.
+# Models configured full_refresh=false keep their history. A merge candidate
+# refreshes when any PR it contains has the label.
 #
 # Uses --defer --favor-state against the last deployed manifest (from the
 # DBT_ARTIFACTS stage): unselected parents resolve to prod relations, so
@@ -44,9 +51,10 @@ name: dbt PR Validation
 
 on:
   workflow_dispatch:
+  # No base-branch filter: stacked PRs target another PR's branch, and a
+  # filter on main silently dropped their snowflake-ci label events.
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
-    branches: [main]
   # Required checks must handle merge_group or queued PRs cannot merge.
   merge_group:
     types: [checks_requested]
@@ -71,6 +79,7 @@ jobs:
       queue: max
     permissions:
       contents: read
+      pull-requests: read  # full-refresh labels on merge candidates
     env:
       RUNTIME_BUILD: ${{ github.event_name != 'pull_request' || (github.event.action == 'labeled' && github.event.label.name == '❄️snowflake-ci' && github.event.pull_request.head.repo.full_name == github.repository) }}
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
@@ -108,6 +117,20 @@ jobs:
       - name: Check validation selection
         if: env.RUNTIME_BUILD == 'true'
         run: python -m unittest discover -s .github/scripts -p test_validate_dbt_models.py
+
+      - name: Check full-refresh label
+        id: refresh
+        if: env.RUNTIME_BUILD == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          PR_LABELLED: ${{ contains(github.event.pull_request.labels.*.name, '🔄full-refresh') }}
+        run: |
+          if [ "${{ github.event_name }}" = "merge_group" ]; then
+            python .github/scripts/full_refresh_label.py "$MERGE_GROUP_BASE_SHA..HEAD"
+          else
+            echo "full_refresh=$PR_LABELLED" >> "$GITHUB_OUTPUT"
+          fi
 
       # Fallback selection (no state manifest) and diagnostics: lets a failed
       # candidate see at a glance whether a failing node came from this PR's
@@ -222,7 +245,11 @@ jobs:
         env:
           NODE_COUNT: ${{ steps.changes.outputs.node_count }}
           HAS_STATE: ${{ steps.state.outputs.has_state }}
+          FULL_REFRESH: ${{ steps.refresh.outputs.full_refresh }}
         run: |
+          refresh_args=()
+          if [ "$FULL_REFRESH" = "true" ]; then refresh_args=(--full-refresh); fi
+
           if [ "$HAS_STATE" != "true" ]; then
             # No deployed baseline (first activation / stage wiped): fall back
             # to the candidate's directly changed nodes - bounded, and never
@@ -233,7 +260,7 @@ jobs:
             fi
             echo "No state manifest - falling back to $NODE_COUNT directly changed nodes"
             read -r -a pr_select_args < "$RUNNER_TEMP/pr_select.txt"
-            python .github/scripts/validate_dbt_models.py --select "${pr_select_args[@]}"
+            python .github/scripts/validate_dbt_models.py "${refresh_args[@]}" --select "${pr_select_args[@]}"
             exit 0
           fi
 
@@ -242,7 +269,7 @@ jobs:
           # another) and the UEC encounter parent when its code models need it.
           # Other parents stay deferred. Reconciliation tests are excluded;
           # scheduled builds run them.
-          python .github/scripts/validate_dbt_models.py --state state --select state:modified "state:modified+,+state:modified"
+          python .github/scripts/validate_dbt_models.py "${refresh_args[@]}" --state state --select state:modified "state:modified+,+state:modified"
 
       - name: Cleanup credentials
         if: always() && env.RUNTIME_BUILD == 'true'
