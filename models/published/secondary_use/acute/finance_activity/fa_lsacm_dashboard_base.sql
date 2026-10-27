@@ -33,6 +33,30 @@ AND financial_year = (SELECT MAX(financial_year) FROM {{ ref('stg_sdl_meta_file_
 --AND financial_year = (SELECT MAX(financial_year) FROM STAGING.SDL.STG_SDL_META_FILE_REGISTRY WHERE feed = 'LSACM')
 QUALIFY ROW_NUMBER() OVER (PARTITION BY dv_provider_code ORDER BY financial_month DESC,file_version DESC) = 1
 )
+--make a new freeze file CTE from latest LSACM - historical files from previous two financial years
+,freeze_files as (
+select distinct fileid 
+from (
+select acm.dv_provider_code, acm.dv_financial_year, acm.dv_financial_month, MAX(acm.META_FILE_ID) AS fileid
+FROM {{ ref('stg_lsacm_latest')}} acm
+--from STAGING.SLAM.STG_LSACM_LATEST acm
+where dv_financial_year BETWEEN '202425'  AND '202526'
+and acm.DV_PROVIDER_CODE IN (
+        'RAP','RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS',
+        'R1H', -- Barts
+        'RJ1', -- GSTT
+        'RJ7', -- St George's
+        'RJZ', -- King's
+        'RQX',  -- Homerton
+        'RPY', -- The Royal Marsden NHS Foundation Trust
+        'RTK', -- Ashford and St Peter's Hospitals NHS Foundation Trust
+        'RWG', -- West Hertfordshire Teaching Hospitals NHS Trust
+        'RWH', -- East and North Hertfordshire Teaching NHS Trust
+          -- ,'NT411', -- Clementine Churchill Hospital - excluded as not in log processing event table
+        'RDU')
+    GROUP BY ALL
+    ) a
+)
 /*
     filtered_acm:
     This is the main performance improvement.
@@ -48,87 +72,35 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY dv_provider_code ORDER BY financial_mont
     However, UNION has been changed to UNION ALL for slightly improved performance, as the two branches shouldn't overlap as the latest is using fileIDs
 */
 ,filtered_acm AS (
-    /*
-        Branch 1:
-        Rows from the M12 freeze file list.
-        Original logic:
-            FREEZE.FILEID IS NOT NULL
-            AND ACM.FINANCIAL_YEAR >= 202425
-            AND provider in your provider list
-    */
-    --CAN'T DO THIS SECTION WITHOUT THE FREEZE FILE IN DBT
---     SELECT 
---         ACM.*
---     FROM  {{ ref('stg_lsacm') }} acm
---     --FROM STAGING.SLAM.STG_LSACM ACM
---     --The original query used LEFT JOIN FREEZE then WHERE FREEZE.FILEID IS NOT NULL. That is effectively an INNER JOIN, so we make it explicit here.
---     INNER JOIN DATA_LAKE__NCL.ANALYST_MANAGED.LSACM_M12_FREEZE_FILE_IDS FREEZE
---         ON ACM.META_FILE_ID = FREEZE.FILEID
---      WHERE ACM.DV_FINANCIAL_YEAR >= 202425
---         AND ACM.DV_PROVIDER_CODE in (
---           'RAP','RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS',
---           'R1H', -- Barts
---           'RJ1', -- GSTT
---           'RJ7', -- St George's
---           'RJZ', -- King's
---           'RQX',  -- Homerton
---           'RPY', -- The Royal Marsden NHS Foundation Trust
---           'RTK', -- Ashford and St Peter's Hospitals NHS Foundation Trust
---           'RWG', -- West Hertfordshire Teaching Hospitals NHS Trust
---           'RWH', -- East and North Hertfordshire Teaching NHS Trust
---             -- ,'NT411', -- Clementine Churchill Hospital - excluded as not in log processing event                 table
---           'RDU' -- Frimley Health NHS Foundation Trust
---       )
---           --Commissioner filter applied inside this branch, so it reduces rows before joins.
---      AND ACM.COMMISSIONER_CODE in (
---           '07X','07M','08H','08D','07R','93C','07P','07W','07Y',
---           '08C','08E','08G','08Y','09A','W2U3Z','Y05','T04',
---           'Z9B2Z','QMJ','QRV',
---           '13R','13Q'
---       )
--- --19,700,580 million rows
---     UNION ALL
-    /*
-        Branch 2:
-        Rows from the latest available file per provider.
-        Original logic:
-            META_FILE_ID IN latest files AND provider in your provider list
-        Added logic:
-            AND NOT (ACM.FINANCIAL_YEAR = 202627 AND ACM.FINANCIAL_MONTH > 2)
-        This now applies only to this latest-file branch, matching where it had been placed before.
-    */
+
+    --  Branch 1: files from freeze file list in the last 2 financial years already filtered by provider
+
+SELECT 
+        ACM.*
+    FROM {{ ref('stg_lsacm') }} acm
+    --FROM STAGING.SLAM.STG_LSACM ACM
+    INNER JOIN freeze_files freeze
+        ON ACM.META_FILE_ID = FREEZE.FILEID
+          --Commissioner filter applied inside this branch, so it reduces rows before joins.
+     AND ACM.COMMISSIONER_CODE in (
+          '07X','07M','08H','08D','07R','93C','07P','07W','07Y',
+          '08C','08E','08G','08Y','09A','W2U3Z','Y05','T04',
+          'Z9B2Z','QMJ','QRV',
+          '13R','13Q'
+      )
+--new query = 19,381,972 rows
+  UNION ALL
+
+    --Branch 2: Rows from the latest available file per provider already filtered by provider.
+
     SELECT 
         ACM.*
     FROM {{ ref('stg_lsacm') }} acm
     --FROM STAGING.SLAM.STG_LSACM ACM
     INNER JOIN latest_files LF ON ACM.META_FILE_ID = LF.FILEID
-    AND ACM.DV_PROVIDER_CODE in (
-          'RAP','RAL','RKE','RRV','RAN','RP4','RP6','R1K','RYJ','RQM','RAS',
-          'R1H', -- Barts
-          'RJ1', -- GSTT
-          'RJ7', -- St George's
-          'RJZ', -- King's
-          'RQX',  -- Homerton
-          'RPY', -- The Royal Marsden NHS Foundation Trust
-          'RTK', -- Ashford and St Peter's Hospitals NHS Foundation Trust
-          'RWG', -- West Hertfordshire Teaching Hospitals NHS Trust
-          'RWH', -- East and North Hertfordshire Teaching NHS Trust
-            -- ,'NT411', -- Clementine Churchill Hospital - excluded as not in log processing event                 table
-          'RDU' -- Frimley Health NHS Foundation Trust
-      )
-    --This is one of the lines that was slowing things down in the old query. It is now applied before all the lookup joins, and only within the latest-file branch.
-      AND NOT (
-          ACM.DV_FINANCIAL_YEAR = 202627
-          AND ACM.DV_FINANCIAL_MONTH > 6
-      )
-      /*
-          Commissioner filter applied inside this branch too.
-          This avoids the SQL precedence issue where:
-              A OR B AND commissioner_filter
-          is interpreted as:
-              A OR (B AND commissioner_filter)
-          Here it clearly applies to both branches.
-      */
+    -- don't have to keep changing the query every month
+    AND acm.dv_financial_month <= lf.financial_month 
+    -- same commissioning codes as branch 1
       AND ACM.COMMISSIONER_CODE in (
           '07X','07M','08H','08D','07R','93C','07P','07W','07Y',
           '08C','08E','08G','08Y','09A','W2U3Z','Y05','T04',
@@ -343,8 +315,8 @@ SELECT
     END AS SPECCOMMFLAG
 --new version of spec_comm - if happy then replace above logic with this
     ,CASE
-    WHEN acm.service_code IN ('CCGPS08S_EXC','99999999','NULL') OR acm.service_code IS NULL OR acm.service_code LIKE '%99999%' THEN 'ICB-commissioned'
     WHEN acm.COMMISSIONER_CODE IN ('13Q','13R') THEN 'Retained' 
+    WHEN acm.service_code IN ('CCGPS08S_EXC','99999999','NULL') OR acm.service_code IS NULL OR acm.service_code LIKE '%99999%' THEN 'ICB-commissioned'
     WHEN UPPER(acm.service_code) LIKE '%XXX' THEN cs.funding_status 
     WHEN ser.service_code IS NOT NULL AND UPPER(acm.service_code) NOT LIKE '%XXX' AND ser.icb_delegation_26_27 <> 'BLUE' THEN ser.current_funding_status
     WHEN ser.service_code IS NOT NULL AND UPPER(acm.service_code) NOT LIKE '%XXX' AND ser.icb_delegation_26_27 = 'BLUE' THEN cs.funding_status
