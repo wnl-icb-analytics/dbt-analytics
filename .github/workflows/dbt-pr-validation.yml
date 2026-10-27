@@ -14,8 +14,11 @@
 #      in-flight deploy) stay selected on every candidate until a deploy
 #      publishes them, exactly as the next deploy will build them. It also
 #      means config-only changes (dbt_project.yml etc.) get a real DEV build,
-#      not just a compile. UEC code changes also rebuild their encounter parent
-#      so relationship tests do not compare fresh codes with older encounters.
+#      not just a compile. Unmodified nodes that sit between two modified
+#      nodes are rebuilt too, so a modified model never reads a stale prod
+#      copy of something derived from another modified model. UEC code
+#      changes also rebuild their encounter parent so relationship tests do
+#      not compare fresh codes with older encounters.
 #
 # Queue runs NEVER publish the manifest - only production deploys advance
 # deploy state. When no state manifest exists, falls back to building the
@@ -25,7 +28,14 @@
 # merged with current main, then removes the label. It reports as a separate,
 # non-required "DEV build (snowflake-ci)" check so it never blocks or masks the
 # required check. Later commits do not rebuild; re-add the label to validate
-# again. Fork PRs are excluded.
+# again. Fork PRs are excluded. Stacked PRs based on another PR's branch can use
+# the label too; their build includes the PRs beneath them.
+#
+# The opt-in 🔄full-refresh label stays on the PR. Its label, merge-queue and
+# deploy builds add --full-refresh to the whole selection: here the modified
+# nodes and those between them, in the deploy everything downstream too.
+# Models configured full_refresh=false keep their history. A merge candidate
+# refreshes when any PR it contains has the label.
 #
 # Uses --defer --favor-state against the last deployed manifest (from the
 # DBT_ARTIFACTS stage): unselected parents resolve to prod relations, so
@@ -41,9 +51,10 @@ name: dbt PR Validation
 
 on:
   workflow_dispatch:
+  # No base-branch filter: stacked PRs target another PR's branch, and a
+  # filter on main silently dropped their snowflake-ci label events.
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
-    branches: [main]
   # Required checks must handle merge_group or queued PRs cannot merge.
   merge_group:
     types: [checks_requested]
@@ -68,6 +79,7 @@ jobs:
       queue: max
     permissions:
       contents: read
+      pull-requests: read  # full-refresh labels on merge candidates
     env:
       RUNTIME_BUILD: ${{ github.event_name != 'pull_request' || (github.event.action == 'labeled' && github.event.label.name == '❄️snowflake-ci' && github.event.pull_request.head.repo.full_name == github.repository) }}
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
@@ -105,6 +117,20 @@ jobs:
       - name: Check validation selection
         if: env.RUNTIME_BUILD == 'true'
         run: python -m unittest discover -s .github/scripts -p test_validate_dbt_models.py
+
+      - name: Check full-refresh label
+        id: refresh
+        if: env.RUNTIME_BUILD == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          PR_LABELLED: ${{ contains(github.event.pull_request.labels.*.name, '🔄full-refresh') }}
+        run: |
+          if [ "${{ github.event_name }}" = "merge_group" ]; then
+            python .github/scripts/full_refresh_label.py "$MERGE_GROUP_BASE_SHA..HEAD"
+          else
+            echo "full_refresh=$PR_LABELLED" >> "$GITHUB_OUTPUT"
+          fi
 
       # Fallback selection (no state manifest) and diagnostics: lets a failed
       # candidate see at a glance whether a failing node came from this PR's
@@ -171,7 +197,8 @@ jobs:
             } | sort -u | tr '\n' ' '
           )
           COUNT=$(echo "$SELECT" | wc -w)
-          echo "select=$SELECT" >> $GITHUB_OUTPUT
+          # A file, not an output: large selections exceed the 128 KB env var limit.
+          printf '%s' "$SELECT" > "$RUNNER_TEMP/pr_select.txt"
           echo "node_count=$COUNT" >> $GITHUB_OUTPUT
           echo "Found $COUNT changed nodes: $SELECT"
           [ -n "$YML_FILES" ] && echo "YML changes detected - included associated models" || true
@@ -203,7 +230,7 @@ jobs:
         if: env.RUNTIME_BUILD == 'true'
         run: dbt compile --target ci-prod --profiles-dir .
 
-      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         if: env.RUNTIME_BUILD == 'true'
         with:
           version: "0.9.x"
@@ -217,9 +244,12 @@ jobs:
         if: env.RUNTIME_BUILD == 'true'
         env:
           NODE_COUNT: ${{ steps.changes.outputs.node_count }}
-          PR_SELECT: ${{ steps.changes.outputs.select }}
           HAS_STATE: ${{ steps.state.outputs.has_state }}
+          FULL_REFRESH: ${{ steps.refresh.outputs.full_refresh }}
         run: |
+          refresh_args=()
+          if [ "$FULL_REFRESH" = "true" ]; then refresh_args=(--full-refresh); fi
+
           if [ "$HAS_STATE" != "true" ]; then
             # No deployed baseline (first activation / stage wiped): fall back
             # to the candidate's directly changed nodes - bounded, and never
@@ -228,16 +258,18 @@ jobs:
               echo "No state manifest and no changed dbt files - nothing to validate"
               exit 0
             fi
-            echo "No state manifest - falling back to $NODE_COUNT directly changed nodes: $PR_SELECT"
-            read -r -a pr_select_args <<< "$PR_SELECT"
-            python .github/scripts/validate_dbt_models.py --select "${pr_select_args[@]}"
+            echo "No state manifest - falling back to $NODE_COUNT directly changed nodes"
+            read -r -a pr_select_args < "$RUNNER_TEMP/pr_select.txt"
+            python .github/scripts/validate_dbt_models.py "${refresh_args[@]}" --select "${pr_select_args[@]}"
             exit 0
           fi
 
-          # Preserve the state selection and its tests; add the UEC encounter
-          # parent when its code models need it. Other parents stay deferred.
-          # Reconciliation tests are excluded; scheduled builds run them.
-          python .github/scripts/validate_dbt_models.py --state state --select state:modified
+          # Preserve the state selection and its tests; add nodes between
+          # modified nodes (descendants of one that are also ancestors of
+          # another) and the UEC encounter parent when its code models need it.
+          # Other parents stay deferred. Reconciliation tests are excluded;
+          # scheduled builds run them.
+          python .github/scripts/validate_dbt_models.py "${refresh_args[@]}" --state state --select state:modified "state:modified+,+state:modified"
 
       - name: Cleanup credentials
         if: always() && env.RUNTIME_BUILD == 'true'

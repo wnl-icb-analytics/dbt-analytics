@@ -3,7 +3,11 @@ macros:
   - name: get_ltc_lcs_observations
     description: >
       Retrieves observations filtered by LTC/LCS valueset IDs or friendly names.
-      Joins to expanded concepts and valuesets reference data.
+      Public roots and equivalent EMIS-local roots permit their translated concept,
+      plus descendants only when include_children is true. Other local roots match
+      the original source code only. Incoming local descriptions can still match
+      a public concept permitted by another root. Existing expansions and their
+      exception subtraction remain the limit on mapped membership.
 
 
     arguments:
@@ -12,14 +16,19 @@ macros:
         description: >
           Comma-separated valueset IDs or friendly names to filter by.
           Can be passed as 'VS001,VS002' or "'VS001','VS002'"
-      - name: emis_local_exact
-        type: boolean
+      - name: match_paths
+        type: string
         description: >
-          Defaults to false. When true, EMIS-local codes in namespace 1000006
-          match only their original source code. Other roots retain their mapped
-          concepts and permitted descendants within the existing expanded value set.
+          Both mapped and exact source matches by default. 'mapped' omits exact
+          source matches. 'source' uses exact original-source matches only.
       - name: include_date_recorded
         type: boolean
         description: >
           Defaults to false. When true, also returns date_recorded, the time the
           record was saved in EMIS, for ordering records on the same clinical date.
+      - name: exclude_result_headers
+        type: boolean
+        description: >
+          Defaults to false. When true, excludes upstream-flagged empty result
+          headers before ranking or linking. Does not require a result value;
+          genuine result-less entries remain eligible.

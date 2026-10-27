@@ -12,9 +12,8 @@
 -- Because EMIS excludes the controlled rather than including the severe,
 -- patients with a BP monitoring code whose same-date reading chains do not
 -- resolve are INCLUDED (data-quality catch). This port mirrors that: the
--- gate comes from the monitoring-code valuesets and the controlled check
--- from the single latest paired BP event (int_blood_pressure_latest, the
--- established rs convention).
+-- gate comes from monitoring-code value sets. BP uses the latest date-linked clinic/home
+-- components, ordered by save time then ID.
 
 with
 -- Parent population: Patients currently on hypertension register
@@ -31,19 +30,12 @@ rule_1_bp_code as (
     where clinical_effective_date > dateadd(month, -12, current_date())
 ),
 
--- Rules 2-3: latest paired BP event is controlled
+-- Rules 2-3: the latest reading's setting is controlled
 -- Clinic: SBP <= 180 and DBP <= 120; Home/ABPM: SBP <= 170 and DBP <= 115
 rules_2_3_bp_controlled as (
     select person_id
-    from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date > dateadd(month, -12, current_date())
-      and (
-          (not coalesce(is_home_bp_event or is_abpm_bp_event, false)
-           and systolic_value <= 180 and diastolic_value <= 120)
-          or
-          (coalesce(is_home_bp_event or is_abpm_bp_event, false)
-           and systolic_value <= 170 and diastolic_value <= 115)
-      )
+    from {{ ref('int_ltc_lcs_bp_latest_by_setting') }}
+    where {{ ltc_lcs_bp_is_controlled(180, 120, 170, 115) }}
 ),
 
 -- Combine rule results for all hypertension register patients

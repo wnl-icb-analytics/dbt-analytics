@@ -71,8 +71,11 @@
 --             (encounters, no missing-date imputation).
 --   smoke     Same-day ties: history breaks them with id DESC, live is
 --             arbitrary.
---   town,     Both read the same current-value model, so expect 0
---   ethrisk   disagreements. Any difference here is a bug.
+--   town      Both read the same current-value model, so expect 0
+--             disagreements. Any difference here is a bug.
+--   ethrisk   History takes the record known by the month-end, with the
+--             same selection rule as dim_person_ethnicity, so it differs
+--             only for ethnicity dated or entered after the month-end.
 --   age       Live is age today, history is age at the month-end. Only
 --             birthdays in between differ.
 --   bmi       bmi_recorded behaves like the other as-at features: it differs

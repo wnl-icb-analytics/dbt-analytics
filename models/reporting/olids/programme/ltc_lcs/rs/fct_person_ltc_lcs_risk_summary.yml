@@ -3,6 +3,8 @@ models:
   - name: fct_person_ltc_lcs_risk_summary
     description: |-
       LTC LCS risk and MoC status, one row per eligible adult MoC member (including Check & Test-only LR members) or CYP-only asthma member at the build date. LR hypertension-only and LR adult-asthma-only people are in the MoC base on a Check & Test-only pathway (is_moc_check_test_only); exclude them for figures matching the EMIS MoC base search. Includes inactive and deceased people; filter is_active in the published base. Next actions use observation-based EMIS work lists; future diary lists are unavailable.
+      BP components link by calendar date to the XML setting markers before ranking by clinical date, save time and observation ID. Only the home-setting wrapper ranks before linking. Values need only be >=1; there is no plausibility fallback. Diabetes keeps its XML component pools and 140/90 rule; CKD PG2 retains its existing BP rule.
+      Type 1 HRC applies within the full MoC base; the single-condition Check & Test-only extension remains LR.
     config:
       meta:
         owner:
@@ -345,7 +347,7 @@ models:
       - name: is_moc_check_test_only
         description: True for LR hypertension-only and LR adult-asthma-only people. In the MoC base but excluded from the EMIS MoC base search; the programme requires only the annual Check & Test, so other stage columns are false and the cycle completes with the C&T.
       - name: is_type_1_diabetes_hrc
-        description: Qualifies for the separate EMIS Type 1 HRC rule; not added to diabetes_risk_group.
+        description: Qualifies for the EMIS Type 1 HRC rule within the full MoC base; not added to diabetes_risk_group. False for the Check & Test-only extension.
       - name: moc_mdt_review_completed
         description: Annual MDT review event in the inclusive trailing 12 months, HRCS/HRS only; separate from stage 2
           completion.

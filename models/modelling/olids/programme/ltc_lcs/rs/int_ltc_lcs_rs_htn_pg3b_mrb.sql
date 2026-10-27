@@ -18,10 +18,7 @@
 -- systolic thresholds (rules 3-4 exclusions are subsets of rules 6-7 for
 -- over-80s). No comorbidity required.
 --
--- Because EMIS excludes the controlled, gated patients whose readings do not
--- resolve to a paired value are INCLUDED. Controlled checks use the single
--- latest paired BP event (int_blood_pressure_latest, the established rs
--- convention).
+-- Unresolved latest readings remain included, as the XML excludes only controlled readings.
 
 with
 -- Parent population: Patients currently on hypertension register
@@ -49,40 +46,15 @@ rule_1_bp_code as (
     where clinical_effective_date > dateadd(month, -12, current_date())
 ),
 
--- Latest paired BP event within 12 months
-latest_bp as (
-    select
-        person_id,
-        systolic_value,
-        diastolic_value,
-        coalesce(is_home_bp_event or is_abpm_bp_event, false) as is_home_or_abpm
-    from {{ ref('int_blood_pressure_latest') }}
-    where clinical_effective_date > dateadd(month, -12, current_date())
-),
-
 -- Rules 3-4 / 6-7: latest reading controlled at age-banded thresholds
 -- Age <= 80: clinic <= 140/90, home/ABPM <= 135/85
 -- Age > 80:  clinic <= 150/90, home/ABPM <= 145/85
 bp_controlled as (
-    select hr.person_id
-    from hypertension_register hr
-    inner join latest_bp bp on hr.person_id = bp.person_id
-    where (
-        coalesce(hr.age, 0) <= 80
-        and (
-            (not bp.is_home_or_abpm and bp.systolic_value <= 140 and bp.diastolic_value <= 90)
-            or
-            (bp.is_home_or_abpm and bp.systolic_value <= 135 and bp.diastolic_value <= 85)
-        )
-    )
-    or (
-        coalesce(hr.age, 0) > 80
-        and (
-            (not bp.is_home_or_abpm and bp.systolic_value <= 150 and bp.diastolic_value <= 90)
-            or
-            (bp.is_home_or_abpm and bp.systolic_value <= 145 and bp.diastolic_value <= 85)
-        )
-    )
+    select bp.person_id
+    from {{ ref('int_ltc_lcs_bp_latest_by_setting') }} as bp
+    inner join hypertension_register as a on bp.person_id = a.person_id
+    where {{ ltc_lcs_bp_is_controlled(140, 90, 135, 85) }}
+        or (a.age > 80 and {{ ltc_lcs_bp_is_controlled(150, 90, 145, 85) }})
 ),
 
 -- Combine rule results for all hypertension register patients

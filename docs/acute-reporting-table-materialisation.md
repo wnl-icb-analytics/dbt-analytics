@@ -28,7 +28,7 @@ The following models are changed from views to tables:
 - `obt_encounter_apc`
 - `obt_encounter_op`
 
-The `models/reporting/acute` folder is tagged `daily` in `dbt_project.yml`. The scheduled daily selector uses `+tag:daily`, so dbt selects the acute models and their upstream dependencies. The existing workflow runs the daily job at 04:00 UTC from Tuesday to Sunday; the Monday weekly build also includes these models. This gives the acute tables one scheduled rebuild each day.
+The `models/reporting/acute` folder is tagged `daily` in `dbt_project.yml`. The scheduled daily selector uses `+tag:daily`, so dbt selects the acute models and their upstream dependencies. A Snowflake task dispatches the daily job at 06:00 Europe/London from Tuesday to Sunday; the Monday weekly build also includes these models. This gives the acute tables one scheduled rebuild each day.
 
 ## Operational effect
 

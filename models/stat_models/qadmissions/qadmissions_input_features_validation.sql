@@ -37,14 +37,14 @@
       (fct_person_*_register_by_month), built with the QOF register macros
       (macros/qof_registers), the as-at pairs of the live
       fct_person_*_register models behind dim_person_conditions.
-      Two features are exceptions and take today's value at every index
-      date: town (current LSOA, as address history is not held) and ethrisk
-      (latest recorded ethnicity, as the QAdmissions paper did). The BMI
-      imputation groups people by today's ethnicity category, for the same
-      reason. A person's ethnicity doesn't change, but whether it has been
-      recorded does: someone first recorded after an index date is grouped
-      by their real category instead of Not Recorded, so Not Recorded is
-      smaller at early index dates than it really was.
+      Ethnicity (ethrisk and the BMI imputation group) is the record
+      dim_person_ethnicity would have chosen from the records known by the
+      index date, so someone first recorded later counts as Not Recorded
+      (ethrisk 1) until then, as in live scoring at that date. The
+      QAdmissions paper instead used the latest recorded ethnicity,
+      including records made after baseline. One feature takes today's value
+      at every index date: town (current LSOA, as address history is not
+      held).
 
     BMI imputation
       As in qadmissions_input_features, a missing BMI is filled with the mean
@@ -503,29 +503,69 @@ townsend AS (
     FROM {{ ref('int_person_geography') }}
 ),
 
--- Ethnicity risk group (1-9) from the person's latest recorded ethnicity, the
--- same value at every index date. The QAdmissions paper also used the latest
--- recorded ethnicity, including records made after baseline. One row per
--- person.
-ethrisk_lookup AS (
+-- Ethnicity records that can be selected at some index date, reduced as for
+-- lab_candidates.
+ethnicity_candidates AS (
     SELECT
-        person_id,
-        ethrisk
-    FROM {{ ref('qadmissions_ethrisk') }}
+        e.person_id,
+        e.ethnicity_category,
+        e.ethnicity_subcategory,
+        e.clinical_effective_date,
+        e.date_recorded,
+        e.deprioritise_flag,
+        e.preference_rank,
+        e.observation_lds_id,
+        e.clinical_effective_date::DATE <= f.first_end_date
+            AND (e.date_recorded IS NULL OR CAST(e.date_recorded AS DATE) <= f.first_end_date)
+            AS is_visible_at_first_index_date
+    FROM {{ ref('int_ethnicity_all') }} AS e
+    CROSS JOIN first_index_date AS f
+    QUALIFY NOT is_visible_at_first_index_date
+        OR ROW_NUMBER() OVER (
+            PARTITION BY e.person_id, is_visible_at_first_index_date
+            ORDER BY e.deprioritise_flag ASC, e.preference_rank ASC,
+                e.clinical_effective_date DESC, e.observation_lds_id DESC
+        ) = 1
 ),
 
--- Ethnicity category per person, used only to group the BMI imputation.
--- Today's value at every index date, like ethrisk. One row per person.
+-- Ethnicity at each index date: of the records with a clinical date and,
+-- where held, a recording date on or before it, the one dim_person_ethnicity
+-- would choose. Same ordering as dim_person_ethnicity; keep the two in step.
+-- People with no record known by the index date have no row.
 ethnicity AS (
     SELECT
-        person_id,
-        ethnicity_category
-    FROM {{ ref('dim_person_ethnicity') }}
+        i.end_date,
+        c.person_id,
+        c.ethnicity_category,
+        c.ethnicity_subcategory
+    FROM index_dates AS i
+    INNER JOIN ethnicity_candidates AS c
+        ON c.clinical_effective_date::DATE <= i.end_date
+        AND (c.date_recorded IS NULL OR CAST(c.date_recorded AS DATE) <= i.end_date)
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY i.end_date, c.person_id
+        ORDER BY c.deprioritise_flag ASC, c.preference_rank ASC,
+            c.clinical_effective_date DESC, c.observation_lds_id DESC
+    ) = 1
+),
+
+-- Ethnicity risk group (1-9) at each index date, mapped from the subcategory
+-- as qadmissions_ethrisk maps today's. The final SELECT gives 1 (White /
+-- NotRecorded) to people with no record known by then or an unmapped
+-- subcategory, as qadmissions_ethrisk does.
+ethrisk_lookup AS (
+    SELECT
+        eth.end_date,
+        eth.person_id,
+        eth_map.ethrisk
+    FROM ethnicity AS eth
+    INNER JOIN {{ ref('qadmissions_eth2016_to_ethrisk9') }} AS eth_map
+        ON eth.ethnicity_subcategory = eth_map.ethnicity_subcategory
 ),
 
 -- What the BMI imputation groups on, per person and index date: sex and age
--- at the month-end, today's ethnicity category, and the latest BMI known by
--- the index date. Each index date's group means use only its own rows.
+-- at the month-end, the ethnicity category and the latest BMI known by the
+-- index date. Each index date's group means use only its own rows.
 bmi_imputation_input AS (
     SELECT
         base.end_date,
@@ -538,7 +578,7 @@ bmi_imputation_input AS (
     LEFT JOIN bmi_latest AS bmi
         ON base.person_id = bmi.person_id AND base.end_date = bmi.end_date
     LEFT JOIN ethnicity AS ethn
-        ON base.person_id = ethn.person_id
+        ON base.person_id = ethn.person_id AND base.end_date = ethn.end_date
 ),
 
 -- One row per person and index date: the recorded BMI, or the mean for their
@@ -548,10 +588,10 @@ bmi_imputed AS (
 )
 
 -- One row per eligible person per index date. The as-at feature CTEs are
--- keyed on (end_date, person_id) and the current-value CTEs (townsend,
--- ethrisk_lookup) on person_id, so each LEFT JOIN adds at most one row per
--- spine row. People absent from a feature CTE had no qualifying evidence by
--- the index date, so their flags default to FALSE.
+-- keyed on (end_date, person_id) and the current-value townsend CTE on
+-- person_id, so each LEFT JOIN adds at most one row per spine row. People
+-- absent from a feature CTE had no qualifying evidence by the index date, so
+-- their flags default to FALSE.
 SELECT
     -- Identifiers and demographics at the index date.
     base.end_date,
@@ -629,8 +669,9 @@ SELECT
     -- the index date, as in the live model.
     COALESCE(alc.alcohol_cat6, 0)                                          AS alcohol_cat6,
 
-    -- Ethnicity risk group 1-9 from the latest recorded ethnicity. No match
-    -- defaults to 1 (White / NotRecorded), as in the live model.
+    -- Ethnicity risk group 1-9 from the ethnicity known by the index date. No
+    -- record by then, or no match, defaults to 1 (White / NotRecorded), as in
+    -- the live model.
     COALESCE(eth.ethrisk, 1)                                               AS ethrisk
 
 FROM base_spine                       base
@@ -661,4 +702,4 @@ LEFT JOIN alcohol_highest             alc
 LEFT JOIN townsend                    twn
     ON base.person_id = twn.person_id
 LEFT JOIN ethrisk_lookup              eth
-    ON base.person_id = eth.person_id
+    ON base.person_id = eth.person_id  AND base.end_date = eth.end_date

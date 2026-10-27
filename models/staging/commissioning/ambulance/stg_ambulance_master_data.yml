@@ -9,249 +9,195 @@ sources:
       - name: AMB
         identifier: amb
         description: >
-          Master ambulance dataset (~160 columns). Grain to be confirmed with
-          business users (e.g. one row per incident, dispatch or status update).
+          Staged LAS data. Grain to be confirmed. Note each incident (identifid by IncidentID) appears in both the Flex version and Freeze version.
+          
         columns:
           # TODO: replace with the real key once confirmed in exploration
           - name: dlp_flexor_freeze
-            description: 'Indicates if flex or freeze data'
-            tests:
-              - not_null
-
+            description: 'Indicates whether the record is in the flex or frozen data submission'
+          
           - name: dlp_commissioner_code
-            description: ''
-            tests:
-              - not_null
-
+            description: 'Code of the commissioner (ICB) responsible for the activity'
+       
           - name: dlp_financial_month
-            description: ''
+            description: 'Financial month of the incident'
     
           - name: dlp_financial_year
-            description: ''
+            description: 'Financial year of the incident'
           
           - name: dlp_baseline_financial_month
-            description: ''
-            tests:
-              - not_null
-
+            description: 'Financial month used for baseline comparison'
+       
           - name: incident_id
-            description: 'Month as integer (1-12)'
-            tests:
-              - not_null
-
+            description: 'Unique identifier for ambulance incident'
+    
           - name: cad_number
-            description: 'Calendar quarter as integer (1-4)'
-            tests:
-              - not_null
-
+            description: 'Computer Aided Dispatch reference for the incident'
+        
           - name: date_value
-            description: 'Readable month-year label'
-            tests:
-              - not_null
-
+            description: 'Date of incident'
+            
           - name: call_time
-            description: 'UK financial year label'
-            tests:
-              - not_null
-
+            description: 'Time the call was received or connected'
+          
           - name: clock_start_time
-            description: 'Starting year of financial year as integer '
-            tests:
-              - not_null
-
+            description: 'Time the response-time clock starts'
+        
           - name: arrive_on_scene_first_vehicle
-            description: 'UK financial quarter label'
-            tests:
-              - not_null
-
+            description: 'Time the first vehicle arrived on scene'
+          
           - name: arrive_on_scene_first_transporting_vehicle
-            description: 'UK financial quarter as integer'
-            tests:
-              - not_null
-
+            description: 'Time the first vehicle able to transport the patient arrived'
+           
           - name: conveying_datetime
-            description: 'Birth year'
+            description: 'Date and time the patient left the scene for the destination'
 
           - name: pre_triaged_questions_time
-            description: 'Conservative age calculation using end of birth month'
-            tests:
-              - not_null
-              
+            description: 'Time the pre-triage questions were completed'
+                          
           - name: locality
-            description: 'Birth date approximated to end of birth month'
+            description: 'Local borough/health borough of the incident'
 
           - name: icb
-            description: 'Death year if deceased'
+            description: 'Integrated Care Board for the incident location'
 
           - name: cross_border_flag
-            description: 'Death month if deceased'
+            description: 'Whether the incident or patient crosses the LAS boundary or an ICB boundary'
 
           - name: dv_lsoa
-            description: 'Approximate death date if deceased'
+            description: 'Derived Lower Layer Super Output Area for the incident'
 
           - name: dv_partial_post_code
-            description: 'Death status flag'
-            tests:
-            - not_null
-
+            description: 'Derived partial postcode'
+          
           - name: dv_partial_post_code_destination_postcode
-            description: 'Gender'
-            tests:
-              - not_null
-              - accepted_values:
-                  arguments:
-                    values: ['Male', 'Female', 'Indeterminate sex', 'Unknown']
-
+            description: 'Derived partial destination postcode'
+        
           - name: dv_recipient_code
-            description: 'Ethnicity category from latest recording'
-            tests:
-              - not_null
-
+            description: 'Derived code for the organisation receiving the activity'
+       
           - name: nhs_sitecode
-            description: 'Ethnicity subcategory from latest recording'
-            tests:
-              - not_null
-
+            description: 'ODS site code of the destination'
+          
           - name: gp_location
-            description: 'Detailed ethnicity from latest recording'
-            tests:
-              - not_null
+            description: 'Location of patient GP practice'
 
           - name: call_age
-            description: 'Sort order for ethnicity category'
+            description: 'Patient age as recorded at the call'
 
           - name: call_gender
-            description: 'Display sort key for ethnicity'
+            description: 'Patient gender as recorded at the call'
 
           - name: sk_patient_id_nhs_number
-            description: 'Main language'
+            description: 'Surrogate patient key derived from the NHS number'
 
           - name: care_home_location_flag
-            description: 'Language type classification'
+            description: 'Whether the incident took place at a care home'
 
           - name: determinant_code
-            description: ''
+            description: 'Advanced Medical Priority Dispatch System (AMPDS) determinant, which sets the response level and descriptor'
 
           - name: chief_complaint_code
-            description: 'Interpreter needed flag'
-            tests:
-              - not_null
+            description: 'AMPDS protocol (chief complaint) number'
 
           - name: ampds_code_version
-            description: 'Current registration status'
-            tests:
-              - not_null
+            description: 'Version of the AMPDS code set used'
 
           - name: incident_code
-            description: 'Reason for inactive status (Deceased, Registration ended, No registration history, or NULL)'
+            description: 'Code for the incident type'
 
           - name: illness_code_1
-            description: 'Current age in years (or age at death)'
+            description: 'Primary illness code'
 
           - name: illness_code_2
-            description: 'Conservative age calculation using end of birth month'
+            description: 'Secondary illness code'
 
           - name: illness_incident_code_version
-            description: '5-year age bands (0-4, 5-9, 10-14, ..., 80-84, 85+)'
+            description: 'Version of the illness code set'
 
           - name: do_h_category
-            description: '10-year age bands (0-9, 10-19, 20-29, ..., 70-79, 80+)'
+            description: 'The DoH priority category recorded against the incident, showing its urgency and request type'
 
           - name: full_doh_category
-            description: 'NHS Digital age bands (0-4, 5-14, 15-24, 25-34, 35-44, 45-54, 55-64, 65-74, 75-84, 85+)'
+            description: 'A more detailed version of the DoH category, including additional healthcare professional and inter-facility transfer codes'
 
           - name: sub_category
-            description: 'ONS age bands (0-4, 5-9, 10-14, 15-19, 20-24, 25-29, ..., 80-84, 85+)'
+            description: 'Sub-classification within the response category'
 
           - name: call_hrg_code
-            description: ''
+            description: 'Healthcare Resource Group assigned from the call'
 
           - name: incident_hrg_code
-            description: 'Life stage categories (Infant, Toddler, Child, Adolescent, Young Adult, Adult, Senior, Elderly, Very Elderly)'
+            description: 'Healthcare Resource Group assigned from the full incident'
 
           - name: hrg_version_number
-            description: 'Flag indicating age between birth and age 5'
+            description: 'Version of the HRG grouper'
           
           - name: pre_triaged_questions
-            description: 'Flag indicating primary school age (Reception to Year 6)'
-            tests:
-              - not_null
-
+            description: 'Pre-triage questions'
+    
           - name: additional_h_t
-            description: 'Flag indicating secondary school age (Year 7 to Year 13)'
-            tests:
-              - not_null
-
+            description: 'Additional hear and treat indicator'
+  
           - name: call_type
-            description: 'Current or latest practice code'
-            tests:
-              - not_null
+            description: 'Source of call'
 
           - name: destination_referral_outcome
-            description: 'Practice borough where patient is registered'
+            description: 'Where the patient went or was referred'
 
           - name: mode_of_transport_flag
-            description: 'Integrated Care Board (ICB) code where patient is registered (practice-based)'
+            description: 'Type of transport used'
 
           - name: mode_of_transport_first_responder
-            description: 'Integrated Care Board (ICB) name where patient is registered (practice-based)'
+            description: 'Mode of the first responder'
 
           - name: conveying_crew_type
-            description: 'Practice postcode'
+            description: 'Crew type of the conveying vehicle'
 
           - name: first_responder_crew_type
-            description: 'Practice LSOA'
+            description: 'Crew type of the first responder'
 
           - name: department_type_flag
-            description: 'Practice MSOA'
+            description: 'Type of receiving department'
 
           - name: pre_alert_blue_call_flag
-            description: 'Practice latitude coordinate'
+            description: 'Whether the hospital was pre-alerted by blue call'
 
           - name: h_t_taxi_flag
-            description: 'Practice longitude coordinate'
+            description: 'Whether the patient was sent by taxi after hear and treat'
 
           - name: baseline_setting_inclusions
-            description: 'Practice neighbourhood classification'
+            description: 'Whether or how the record counts in the baseline'
 
           - name: mh_callsign_s_t
-            description: 'Patient residential address postcode hash for privacy protection'
+            description: 'Mental health callsign for see and treat'
 
           - name: hmh_callsign_s_t_base
-            description: 'Patient address Unique Property Reference Number hash (placeholder for future use)'
+            description: 'Base or station of the S&T mental health vehicle'
 
           - name: mh_callsign_s_c
-            description: 'Household identifier linking persons at same address (placeholder for future use)'
+            description: 'Mental health callsign for see and convey'
 
           - name: mh_callsign_mhta
-            description: ' resides (from postcode lookup)'
+            description: 'Mental health response callsign'
 
           - name: mh_S136
-            description: 'Integrated Care Board (ICB) name where patient resides (distinct from registration ICB)'
+            description: 'Whether the incident involved a Section 136 Mental Health Act detention'
 
           - name: callsign_ucr
-            description: 'Local Authority District 2025 code (LAD25CD) where patient resides'
+            description: 'Urgent Community Response callsign'
 
           - name: green_time_s_t
-            description: 'Local Authority District 2025 name (LAD25NM) where patient resides'
+            description: 'Timestamp or duration tied to see and treat'
 
           - name: h_t_clinically_closed
-            description: 'London borough where patient resides (NULL for non-London residents)'
+            description: 'Whether a clinician closed the call after hear and treat'
 
           - name: outcome_dispostion
-            description: 'Flag indicating if patient resides in Greater London area'
+            description: 'Final disposition of the incident'
 
           - name: outcome_dispostion_code
-            description: 'London area classification (NCL, Other London, Outside London)'
+            description: 'Code for the disposition'
 
           - name: conveyance_group_revised
-            description: 'Lower Layer Super Output Area 2021 census code where patient resides'
-
- 
-        data_tests:
-          - dbt_utils.unique_combination_of_columns:
-              arguments:
-                combination_of_columns:
-                  - person_id
-                  - analysis_month
-        
+            description: 'Revised grouping of conveyance outcome'      

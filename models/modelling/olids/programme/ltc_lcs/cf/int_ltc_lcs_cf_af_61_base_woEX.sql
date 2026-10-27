@@ -2,11 +2,12 @@
 
 -- AF_61 candidates before the final AF marker exclusion. One row per person at build date.
 -- Currently registered, living patients outside ICS_METABOLIC_LTC and CF_NHSHC2Y.
--- Include current Automatic, Repeat or Repeat Dispensing courses of oral
--- anticoagulants, digoxin, flecainide, propafenone or cardiac glycosides, without a
--- course-start lookback. Separately include anticoagulant/protamine issues strictly
+-- Include current Automatic, Repeat or Repeat Dispensing cardiac glycoside courses,
+-- without a course-start lookback. Separately include anticoagulant/protamine issues strictly
 -- after six months ago, without a current-course or repeat-prescription restriction.
--- Oral anticoagulants use the national OPENCODELISTS DOAC and vitamin K antagonist lists.
+-- XML course criterion b799351b requires both Drug filters: oral anticoagulants AND
+-- digoxin/flecainide/propafenone. No course meets both, so that criterion selects none.
+-- Oral anticoagulant issues use the national OPENCODELISTS DOAC and vitamin K antagonist lists.
 -- Glycosides (BNF 02.01.01) and protamine (02.08.03) await reviewed dm+d clusters.
 -- The issue rule excludes parenteral anticoagulants (02.08.01) and reversal agents,
 -- including idarucizumab and andexanet, as in the XML.
@@ -21,8 +22,6 @@ with base as (
         and had_nhs_health_check_24m = false
 ),
 
--- National oral anticoagulant lists. Matched directly so undated courses still count,
--- as in the XML; get_medication_statements drops courses without a clinical date.
 national_oral_anticoagulant_codes as (
     select distinct code
     from {{ ref('stg_reference_combined_codesets') }}
@@ -31,17 +30,6 @@ national_oral_anticoagulant_codes as (
             'NHS_DRUG_REFSETS/VITKANTAGDRUG_COD'
         )
         and source = 'OPENCODELISTS'
-),
-
--- Keep both mapped and source-code matches for the XML ingredient list.
-af_course_codes as (
-    select medication_statement_id
-    from ({{ get_ltc_lcs_medication_statements("98b8e1d3-7db0-0653-9412-2fdf795e6f61") }})
-    union
-    select ms.id as medication_statement_id
-    from {{ ref('stg_olids_medication_statement') }} as ms
-    inner join national_oral_anticoagulant_codes as c
-        on ms.mapped_concept_code = c.code
 ),
 
 -- The XML names these reversal preparations; exclude their dm+d roots and descendants.
@@ -82,10 +70,7 @@ af_medication as (
         and ms.authorisation_type_source_code in (
             'Automatic', 'Repeat', 'Repeat Dispensing'
         )
-        and (
-            ms.bnf_code like '020101%'
-            or ms.id in (select medication_statement_id from af_course_codes)
-        )
+        and ms.bnf_code like '020101%'
     union
     -- The issue arm is independent of course status and prescription type.
     select person_id
@@ -102,7 +87,7 @@ af_medication as (
 woex_excluded as (
     -- vs1: 223-code DVT/PE/antiphospholipid set (name collides with the 2-code Rule-1 marker -> pin id)
     select person_id
-    from ({{ get_ltc_lcs_observations("f4f774b1-0949-b062-b74a-d03f7d820a81", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("f4f774b1-0949-b062-b74a-d03f7d820a81") }})
     union
     -- vs2: atrial fibrillation / flutter (8 codes)
     select person_id

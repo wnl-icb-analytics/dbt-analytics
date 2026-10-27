@@ -21,7 +21,7 @@ with base as (
 -- CKD-stage carriers: exclude (162-code stage 3/4/5 + related set)
 ckd_stage_coded as (
     select person_id
-    from ({{ get_ltc_lcs_observations("d83d89d4-dfed-6717-12ce-15a4002c9167", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("d83d89d4-dfed-6717-12ce-15a4002c9167") }})
 )
 
 select distinct b.person_id

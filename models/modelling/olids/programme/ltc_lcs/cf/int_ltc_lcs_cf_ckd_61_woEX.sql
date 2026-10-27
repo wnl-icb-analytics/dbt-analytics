@@ -11,10 +11,10 @@ with base as (
     from {{ ref('int_ltc_lcs_cf_ckd_61_base') }}
 ),
 
--- EMIS-local laboratory codes match their original source codes only.
+-- Equivalent local laboratory roots also permit mapped concepts and requested descendants.
 positive_egfr as (
     select o.person_id, o.observation_id, o.clinical_effective_date, o.date_recorded, o.result_value, o.valueset_id
-    from ({{ get_ltc_lcs_observations("cc380a59-cc4c-ee42-4a2e-30ab9286dc71,c9896ca5-15c8-0009-a57a-bd6f5067dcad", match_paths='source', include_date_recorded=true) }}) as o
+    from ({{ get_ltc_lcs_observations("cc380a59-cc4c-ee42-4a2e-30ab9286dc71,c9896ca5-15c8-0009-a57a-bd6f5067dcad", match_paths='both', include_date_recorded=true, exclude_result_headers=true) }}) as o
     inner join base as b on o.person_id = b.person_id
     where o.result_value > 0
 ),

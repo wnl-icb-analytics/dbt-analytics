@@ -5,7 +5,7 @@
 -- Excludes the latest explicit statin-product issue or STAT_COD event within 12 months,
 -- and latest statin decline within five years, selecting records on or before today.
 -- Excludes persistent statin adverse reactions at any date and contraindication,
--- statin not indicated or not tolerated events on or before today. Local adverse codes match exactly.
+-- statin not indicated or not tolerated events on or before today. Local adverse codes use the shared equivalence rule.
 -- Excludes QOF palliative care register membership (EMIS library ea06414e).
 -- XML library exclusion 3de35e4f lacks a complete exported definition.
 -- Authority: EMIS R5 ICB_CF_CVD_61_BASE, structured filters and tests.
@@ -70,7 +70,7 @@ on_statin_code as (
 
 statin_adverse as (
     select person_id
-    from ({{ get_ltc_lcs_observations("38fdc3b5-7de4-b15c-6577-3f3142bb313e", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("38fdc3b5-7de4-b15c-6577-3f3142bb313e") }})
 ),
 
 statin_contra as (

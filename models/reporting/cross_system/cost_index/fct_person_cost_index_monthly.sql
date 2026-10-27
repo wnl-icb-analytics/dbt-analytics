@@ -27,8 +27,10 @@ per-patient resource cuts (excludes SLAM block/adjustment lines);
 keep all rows for provider/system totals.
 
 MH/community provider block payments inside SLAM are mostly not
-patient-attributable, so patient-attributable cuts do not double count; whole-
-system totals mixing SLAM block lines with these proxy sources may double count.
+patient-attributable. Overlap between sources is not excluded and may exist
+even in patient-attributable cuts, as SLAM Community and Therapies remain
+included. Whole-system totals mixing SLAM block lines with these proxy
+sources may also double count.
 */
 
 with slam as (

@@ -5,7 +5,7 @@
 -- Rejects STAT_COD issues/events within 12 months and statin decline within five years,
 -- selecting the latest record on or before today before applying each recency test.
 -- Rejects persistent statin adverse reactions at any date and contraindication,
--- statin not indicated or not tolerated events on or before today. Local adverse codes match exactly.
+-- statin not indicated or not tolerated events on or before today. Local adverse codes use the shared equivalence rule.
 -- Requires no QRISK event on or after the five-year anniversary, regardless of its value.
 -- Excludes QOF palliative care register membership (EMIS library ea06414e).
 -- XML library exclusion 3de35e4f lacks a complete exported definition.
@@ -77,7 +77,7 @@ on_statin as (
     where clinical_effective_date > dateadd(month, -12, current_date())
     union
     select person_id
-    from ({{ get_ltc_lcs_observations("75140610-d834-c931-9efa-3f47eaf12f5a", emis_local_exact=true) }})
+    from ({{ get_ltc_lcs_observations("75140610-d834-c931-9efa-3f47eaf12f5a") }})
     union
     select person_id
     from ({{ get_ltc_lcs_observations("4b0f96a0-5505-e71e-1db3-09f5f557ce99") }})

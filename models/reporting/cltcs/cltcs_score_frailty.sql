@@ -23,6 +23,84 @@ inclusion_list as (
     where meets_adults_with_complexity
 ),
 
+-- Frailty evidence is tiered. Clinician assessments (Rockwood CFS and coded frailty
+-- severity) take precedence; eFI2 is used only as a fallback.
+-- Severity: 0 fit, 1 mild (CFS 4-5), 2 moderate (CFS 6), 3 severe (CFS 7-9).
+clinical_assessments as (
+    select r.person_id
+        , r.clinical_effective_date as assessed_date
+        , 1 as source_priority
+        , case r.frailty_category
+            when 'Severe Frailty' then 3
+            when 'Moderate Frailty' then 2
+            when 'Mild Frailty' then 1
+            when 'Vulnerable' then 1
+            else 0
+        end as severity
+    from {{ ref('int_rockwood_all') }} r
+    inner join spine s on r.person_id = s.person_id
+    where r.is_valid_rockwood_code
+    union all
+    select d.person_id
+        , d.clinical_effective_date
+        , 2
+        , case d.frailty_severity
+            when 'Severe' then 3
+            when 'Moderate' then 2
+            else 1
+        end
+    from {{ ref('int_frailty_diagnoses_all') }} d
+    inner join spine s on d.person_id = s.person_id
+    where d.clinical_effective_date <= current_date()
+),
+
+-- Most recent clinical assessment; on the same date Rockwood is preferred over a
+-- coded severity, then the more severe finding.
+latest_clinical as (
+    select person_id, assessed_date, severity
+    from clinical_assessments
+    qualify row_number() over (
+        partition by person_id
+        order by assessed_date desc, source_priority, severity desc) = 1
+),
+
+frailty_evidence as (
+    select s.person_id
+        , lc.assessed_date as clinical_frailty_assessed_date
+        , lc.assessed_date >= dateadd(month, -24, current_date()) as is_clinical_current
+        , lc.severity as clinical_severity
+        , case lower(efi.category)
+            when 'severe frailty' then 3
+            when 'moderate frailty' then 2
+            when 'mild frailty' then 1
+            when 'robust' then 0
+        end as efi2_severity
+    from spine s
+    left join latest_clinical lc on s.person_id = lc.person_id
+    left join {{ ref('fct_person_efi2') }} efi on s.person_id = efi.person_id
+),
+
+-- A current clinical assessment stands in either direction. A stale one is kept as
+-- a floor that eFI2 may raise, since frailty is largely progressive. eFI2 alone is
+-- used only where there is no clinical assessment; it covers ages 65+ only.
+combined_frailty as (
+    select person_id
+        , clinical_frailty_assessed_date
+        , case
+            when is_clinical_current then 'clinical_current'
+            when clinical_severity is not null and efi2_severity > clinical_severity then 'clinical_stale_efi2_higher'
+            when clinical_severity is not null then 'clinical_stale'
+            when efi2_severity is not null then 'efi2_fallback'
+            else 'not_assessed'
+        end as frailty_evidence_source
+        , case
+            when is_clinical_current then clinical_severity
+            when clinical_severity is not null then greatest(clinical_severity, zeroifnull(efi2_severity))
+            else efi2_severity
+        end as frailty_severity
+    from frailty_evidence
+),
+
 encoding_features as (
     select
         il.sk_patient_id,
@@ -43,32 +121,19 @@ encoding_features as (
         case when pc.has_osteoarthritis = true then 1 else 0 end as has_osteoarthritis_flag, 
         case when pc.has_rheumatoid_arthritis = true then 1 else 0 end as has_rheumatoid_arthritis_flag, 
         case when pc.has_stroke_tia  = true then 1 else 0 end as has_stroke_tia_flag, 
-        case when pc.has_parkinsons = true then 1 else 0 end as has_parkinsons_flag, 
-        case when pc.has_frailty = true then 1 else 0 end as has_frailty_flag, 
+        case when pc.has_parkinsons = true then 1 else 0 end as has_parkinsons_flag,
 
-        -- frailty
-        zeroifnull(efi.efi_score) as efi2_score,
-        case
-            when lower(efi.category) = 'severe frailty' then 3
-            when lower(efi.category) = 'moderate frailty' then 2
-            when lower(efi.category) = 'mild frailty' then 1
+        -- frailty: clinical evidence first, eFI2 discounted as a fallback
+        cf.frailty_severity,
+        cf.frailty_evidence_source,
+        cf.clinical_frailty_assessed_date,
+        zeroifnull(cf.frailty_severity) * case cf.frailty_evidence_source
+            when 'clinical_current' then 1.0
+            when 'clinical_stale' then 0.85
+            when 'clinical_stale_efi2_higher' then 0.6
+            when 'efi2_fallback' then 0.6
             else 0
-        end as efi2_category_weight,
-        zeroifnull(rockwood.rockwood_score) as rockwood_score,
-        case
-            when rockwood.rockwood_score is null then 0
-            when rockwood.rockwood_score >= 7 then 3
-            when rockwood.rockwood_score >= 5 then 2
-            when rockwood.rockwood_score >= 3 then 1
-            else 0
-        end as rockwood_category_weight,
-        case 
-            when fr.latest_frailty_severity is null then 0
-            when fr.latest_frailty_severity = 'Severe' then 3
-            when fr.latest_frailty_severity = 'Moderate' then 2
-            when fr.latest_frailty_severity = 'Mild' then 1
-            else 0
-        end as frailty_severity_weight,
+        end as frailty_evidence_weight,
 
         -- medicines management
         case 
@@ -81,7 +146,7 @@ encoding_features as (
             when polyp.is_polypharmacy_10plus then 1 
             else 0 
             end as polypharmacy_10plus_flag,
-        zeroifnull(polyp.medication_count) as medication_count,
+        zeroifnull(polyp.medication_count) as polypharmacy_count,
 
         -- emergency use
         zeroifnull(aea.ae_tot_12mo) as ae_tot_12mo,
@@ -91,6 +156,8 @@ encoding_features as (
         zeroifnull(apca.apc_los_12mo) as apc_los_12mo,
         zeroifnull(apca.acs_nel_12mo) as acs_nel_12mo,
         ln(1 + greatest(zeroifnull(aea.ae_tot_3mo) - zeroifnull(aea.ae_tot_12mo) / 4.0, 0)) as uec_recency_excess,
+        -- predicted one-year emergency admission risk (%); null when not scored
+        iff(qa.is_scored, qa.score_percent, null) as qadmissions_score_percent,
 
         -- residential / social factors
         case when ch.is_care_home_resident = true then 1 else 0 end as is_care_home_flag,
@@ -122,12 +189,8 @@ encoding_features as (
         on il.sk_patient_id =aea.sk_patient_id
     left join {{ ref('fct_person_sus_apc_recent') }} apca
         on il.sk_patient_id =apca.sk_patient_id
-    left join {{ ref('fct_person_efi2') }} efi
-        on il.person_id =efi.person_id
-    left join {{ ref('fct_person_frailty_register') }} fr
-        on il.person_id =fr.person_id
-    left join {{ ref('int_rockwood_latest') }} rockwood
-        on il.person_id =rockwood.person_id
+    left join combined_frailty cf
+        on il.person_id =cf.person_id
     left join {{ ref('fct_person_polypharmacy_current') }} polyp
         on il.person_id =polyp.person_id
     left join {{ ref('int_illicit_drug_use_latest') }} id
@@ -136,6 +199,8 @@ encoding_features as (
         on il.person_id =ch.person_id
     left join {{ref('fct_person_asc_service_recent')}} asc_cld
         on il.sk_patient_id = asc_cld.sk_patient_id
+    left join {{ ref('qadmissions_predictions') }} qa
+        on il.person_id = qa.person_id
 
 ),
 
@@ -145,6 +210,9 @@ domain_sub_scores as (
         neighbourhood_code,
         practice_code,
         age,
+        frailty_severity,
+        frailty_evidence_source,
+        clinical_frailty_assessed_date,
         -- clinical complexity / multimorbidity
         ( has_atrial_fibrillation_flag
         + has_coronary_heart_disease_flag
@@ -161,8 +229,7 @@ domain_sub_scores as (
         + has_parkinsons_flag *3
         + ln(1+apc_los_12mo) ) as score_clinical_complexity,
         -- clinical frailty
-        ( has_frailty_flag
-        + greatest(frailty_severity_weight, rockwood_category_weight, efi2_category_weight) * 2
+        ( frailty_evidence_weight
         ) as score_clinical_frailty,
         -- medicines management
         ( polypharmacy_5plus_flag
@@ -174,7 +241,9 @@ domain_sub_scores as (
         + ln(1+apc_nel_12mo)
         + uec_recency_excess * 2
             -- TO DO: add specific discharge reason flags, add attendances related to geriatric syndromes
-        ) as score_emergency_use,
+        ) as score_emergency_use_history,
+        -- QAdmissions term is added per cohort below, where missing values are imputed
+        ln(1 + qadmissions_score_percent / 10 ) as qadmissions_term,
         -- indicators of lack of independence
         ( is_housebound_flag * 3
         + has_learning_disability_flag
@@ -202,6 +271,13 @@ cohort_sub_scores as(
     select dss.*
     , il.inclusion_rule
     , il.is_applicable_rule
+    -- People QAdmissions does not score (outside 18-100, sex not male/female, or
+    -- rejected inputs) take the median term for their neighbourhood and cohort.
+    , dss.score_emergency_use_history
+        + zeroifnull(coalesce(
+            dss.qadmissions_term,
+            median(dss.qadmissions_term) over (partition by dss.neighbourhood_code, il.inclusion_rule)
+        )) as score_emergency_use
     from inclusion_list il
     inner join domain_sub_scores dss on il.sk_patient_id = dss.sk_patient_id
 ),
@@ -214,6 +290,9 @@ composite_scores as (
         inclusion_rule,
         is_applicable_rule,
         age,
+        frailty_severity,
+        frailty_evidence_source,
+        clinical_frailty_assessed_date,
         (score_clinical_complexity - avg(score_clinical_complexity) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_clinical_complexity) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_clinical_complexity,
         (score_clinical_frailty - avg(score_clinical_frailty) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_clinical_frailty) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_clinical_frailty,
         (score_medicines_management - avg(score_medicines_management) over (partition by neighbourhood_code, inclusion_rule)) / nullif(stddev(score_medicines_management) over (partition by neighbourhood_code, inclusion_rule), 0) as scaled_score_medicines_management,
