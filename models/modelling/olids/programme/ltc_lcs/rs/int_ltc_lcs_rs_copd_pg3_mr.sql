@@ -80,11 +80,13 @@ rule_4d_medication_issues as (
     where order_date >= dateadd(month, -12, current_date())
     qualify row_number() over (partition by person_id order by order_date desc) = 1
 ),
--- Rule 5: Medication issues (Trimbow/Trelegy Ellipta inhalers) within last 6 months
+-- Rule 5: Medication issues (Trimbow/Trelegy Ellipta inhalers) within last 6 months.
+-- The XML names the two brands, so other triple inhalers in the cluster (Trixeo, Enerzair) are excluded.
 rule_5_medication_issues as (
     select person_id
     from ({{ get_medication_orders(cluster_id='COPD_TRIPLE_THERAPY_INHALERS') }})
     where order_date >= dateadd(month, -6, current_date())
+        and mapped_concept_display ilike any ('%trimbow%', '%trelegy%')
     qualify row_number() over (partition by person_id order by order_date desc) = 1
 ),
 -- Rule 6a: Medication issues (steroids) within last 6 months
