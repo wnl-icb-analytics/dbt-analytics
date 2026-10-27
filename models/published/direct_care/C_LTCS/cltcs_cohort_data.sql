@@ -56,6 +56,16 @@ with inclusion_list as (
     from {{ ref('fct_person_ltc_lcs_risk_summary') }}
     )
 
+-- Combined frailty evidence is per person and repeats on each inclusion-rule row.
+, combined_frailty as (
+    select sk_patient_id
+        , frailty_severity
+        , frailty_evidence_source
+        , clinical_frailty_assessed_date
+    from {{ ref('cltcs_score_frailty') }}
+    qualify row_number() over (partition by sk_patient_id order by is_applicable_rule desc) = 1
+    )
+
 select il.patient_id
       ,{{ hxflake_pseudo_generation('il.patient_id') }} AS re_id_key
     -- , il.fragmented_sk_patient_id_flag -- include as DQ check 
@@ -111,6 +121,9 @@ select il.patient_id
     , coalesce(pc.has_rheumatoid_arthritis, false) as has_rheumatoid_arthritis
     , coalesce(pc.has_severe_mental_illness, false) as has_severe_mental_illness
     , coalesce(pc.has_stroke_tia, false) as has_stroke_tia
+    , coalesce(pc.has_multiple_sclerosis, false) as has_multiple_sclerosis
+    , coalesce(pc.has_osteoarthritis, false) as has_osteoarthritis
+    , coalesce(pc.has_parkinsons, false) as has_parkinsons
     , coalesce(pc.total_conditions, 0) as total_conditions
     , coalesce(pc.total_qof_conditions, 0) as total_qof_conditions 
     , coalesce(pc.total_non_qof_conditions, 0) as total_non_qof_conditions
@@ -126,6 +139,18 @@ select il.patient_id
     , coalesce(fr.category, 'Unknown') as efi_category
     , coalesce(rockwood.frailty_level, 'Unknown') as frailty_level
     , coalesce(rockwood.frailty_category, 'Unknown') as frailty_category
+    , frr.latest_frailty_severity as frailty_register_latest_severity
+    , frr.latest_diagnosis_date as frailty_register_latest_date
+    -- combined frailty evidence used by the C-LTCS frailty score
+    , cf.frailty_severity
+    , cf.frailty_evidence_source
+    , cf.clinical_frailty_assessed_date
+    -- eFI2 moderate/severe with no clinician frailty assessment in the last 24 months:
+    -- a prompt to record a Clinical Frailty Scale. Null when the patient was not scored.
+    , iff(cf.frailty_evidence_source is null, null
+        , cf.frailty_evidence_source <> 'clinical_current'
+            and coalesce(fr.category in ('MODERATE FRAILTY', 'SEVERE FRAILTY'), false)
+        ) as has_unassessed_frailty_signal
 
     -- mulimorb flags: NULL = not computed.
     , ccms.cambridge_comorbidity_score
@@ -135,6 +160,9 @@ select il.patient_id
     , qrk.qrisk_type
     , qrk.cvd_risk_category
     , qrk.warrants_statin_consideration -- add actionable flag cross referencing statin prescription
+    -- QAdmissions: displaying the score requires the ClinRisk disclaimer (see qadmissions_input_features). NULL = not scored, do not COALESCE to 0.
+    , iff(qa.is_scored, qa.score_percent, null) as qadmissions_score_percent
+    , qa.is_scored as qadmissions_is_scored
        
       -- Lifestyle and behavioural factors
     , coalesce(br.smoking_status, 'Not Recorded') as smoking_status
@@ -162,6 +190,7 @@ select il.patient_id
     , coalesce(asc_cld.has_sensory_support_dual_impairment, false) as has_sensory_support_dual_impairment
     , coalesce(asc_cld.has_social_support_asylum_seeker, false) as has_social_support_asylum_seeker
     , coalesce(asc_cld.has_asc_service, 0) as has_asc_service
+    , coalesce(ss.is_housebound, false) as is_housebound
     , coalesce(ch.is_care_home_resident, false) as is_care_home_resident
     , coalesce(ch.is_nursing_home_resident, false) as is_nursing_home_resident
     , coalesce(ch.is_temporary_resident, false) as is_temporary_resident
@@ -197,6 +226,7 @@ select il.patient_id
     ,zeroifnull(aea.ae_t1_12mo) as ae_t1_12mo
     ,zeroifnull(aea.ae_inj_12mo) as ae_inj_12mo
     ,zeroifnull(aea.ae_tot_12mo) as ae_tot_12mo
+    ,zeroifnull(aea.ae_tot_3mo) as ae_tot_3mo
     ,zeroifnull(gpa.gp_att_tot_12mo) as gp_att_tot_12mo
     ,zeroifnull(gpa.gp_app_tot_12mo) as gp_app_tot_12mo
     ,zeroifnull(gpa.gp_dna_tot_12mo) as gp_dna_tot_12mo
@@ -297,3 +327,11 @@ LEFT JOIN {{ref('dim_person_care_home')}} ch
     on il.olids_id = ch.person_id
 left join {{ref('int_qrisk_latest')}} qrk
     on il.olids_id = qrk.person_id
+left join {{ref('qadmissions_predictions')}} qa
+    on il.olids_id = qa.person_id
+left join {{ref('fct_person_frailty_register')}} frr
+    on il.olids_id = frr.person_id
+left join combined_frailty cf
+    on il.patient_id = cf.sk_patient_id
+left join {{ref('dim_person_status_summary')}} ss
+    on il.olids_id = ss.person_id

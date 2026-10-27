@@ -181,6 +181,66 @@ models:
         data_type: boolean
         description: "Flag for stroke/TIA"
 
+      - name: has_multiple_sclerosis
+        data_type: boolean
+        description: "Flag for multiple sclerosis"
+
+      - name: has_osteoarthritis
+        data_type: boolean
+        description: "Flag for osteoarthritis"
+
+      - name: has_parkinsons
+        data_type: boolean
+        description: "Flag for Parkinson's disease"
+
+      - name: frailty_register_latest_severity
+        data_type: varchar
+        description: >
+          Severity (Mild, Moderate or Severe) of the most recent coded frailty finding
+          on the frailty register (fct_person_frailty_register). Null when the patient
+          has never had a coded frailty severity. Check frailty_register_latest_date
+          for how current it is.
+
+      - name: frailty_register_latest_date
+        data_type: date
+        description: "Date of the most recent coded frailty severity on the frailty register. Null when there is none."
+
+      - name: frailty_severity
+        data_type: number
+        description: >
+          Combined frailty severity used in the C-LTCS frailty score, from
+          cltcs_score_frailty: 0 fit or robust, 1 mild (Clinical Frailty Scale 4-5),
+          2 moderate (CFS 6), 3 severe (CFS 7-9). A clinician assessment within 24
+          months is used as recorded; an older one can be raised by eFI2; eFI2 alone
+          is used only without a clinician assessment. Null when there is no evidence
+          or the patient was not scored; null is not the same as fit.
+
+      - name: frailty_evidence_source
+        data_type: varchar
+        description: >
+          Evidence behind frailty_severity: clinical_current, clinical_stale,
+          clinical_stale_efi2_higher, efi2_fallback or not_assessed. See
+          cltcs_score_frailty. Null when the patient was not scored, for example rows
+          from the shortlist.
+
+      - name: clinical_frailty_assessed_date
+        data_type: date
+        description: >
+          Date of the latest clinician frailty assessment (Rockwood or coded
+          severity). Null when there is none. Assessments over 24 months old may need
+          repeating.
+
+      - name: has_unassessed_frailty_signal
+        data_type: boolean
+        description: >
+          True when eFI2 is moderate or severe and there is no clinician frailty
+          assessment (Rockwood or coded frailty severity) in the last 24 months, so a
+          Clinical Frailty Scale assessment is suggested. Includes people never
+          assessed and people whose last assessment is older than 24 months. eFI2
+          covers patients aged 65 and over only, so younger patients are never
+          flagged. This is an action prompt and does not feed the C-LTCS scores. Null
+          when the patient was not scored, for example rows from the shortlist.
+
       - name: total_conditions
         data_type: number
         description: "Total count of long‑term conditions"
@@ -220,6 +280,22 @@ models:
       - name: geriatric_conditions
         data_type: number
         description: "Count of geriatric conditions"
+
+      - name: qadmissions_score_percent
+        data_type: float
+        description: >
+          QAdmissions predicted risk of an emergency admission within one year, as a
+          percentage (0-100), from qadmissions_predictions. Null when the patient was
+          not scored: outside ages 18-100, sex not recorded as male or female, or
+          inputs rejected. Any display of this score must show the ClinRisk
+          disclaimer required by the QAdmissions licence (see
+          qadmissions_input_features).
+
+      - name: qadmissions_is_scored
+        data_type: boolean
+        description: >
+          True when QAdmissions produced a score, false when it rejected the inputs.
+          Null when the patient is outside the QAdmissions population.
 
       - name: smoking_status
         data_type: varchar
@@ -332,6 +408,14 @@ models:
       - name: ae_tot_12mo
         data_type: number
         description: "Total A&E attendances in last 12 months"
+
+      - name: ae_tot_3mo
+        data_type: number
+        description: "Total A&E attendances in last 3 months. Compared with a quarter of ae_tot_12mo, shows a recent rise in A&E use."
+
+      - name: is_housebound
+        data_type: boolean
+        description: "Flag for housebound status, from dim_person_status_summary"
 
       - name: gp_att_tot_12mo
         data_type: number
