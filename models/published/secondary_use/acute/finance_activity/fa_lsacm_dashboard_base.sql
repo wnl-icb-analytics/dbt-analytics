@@ -29,7 +29,8 @@ WHERE DV_PROVIDER_CODE IN (
         'RDU') -- Frimley Health NHS Foundation Trust
 AND feed = 'LSACM'
 --latest financial year and latest month submitted and latest version submitted
-AND financial_year = (SELECT MAX(financial_year) FROM STAGING.SDL.STG_SDL_META_FILE_REGISTRY WHERE feed = 'LSACM')
+AND financial_year = (SELECT MAX(financial_year) FROM S{{ ref('stg_sdl_meta_file_registry') }} WHERE feed = 'LSACM')
+--AND financial_year = (SELECT MAX(financial_year) FROM STAGING.SDL.STG_SDL_META_FILE_REGISTRY WHERE feed = 'LSACM')
 QUALIFY ROW_NUMBER() OVER (PARTITION BY dv_provider_code ORDER BY financial_month DESC,file_version DESC) = 1
 )
 /*
