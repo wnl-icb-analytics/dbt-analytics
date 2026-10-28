@@ -1,20 +1,19 @@
 models:
   - name: int_ltc_lcs_rs_ckd_pg2_hr
-    description: |-
-      CKD Register Priority Group 2 - High Risk.
-      Patients on CKD register (excluding PG1 HRC) meeting any of rules 2-5, or rule 6
-      together with rule 7 or 8. BP rules use the latest reading across settings; the
-      EMIS search has separate clinic and home/ambulatory BP chains (its rules 7-10).
-      - Rule 2: eGFR 45-59 AND ACR > 30
-      - Rule 3: eGFR 30-44 AND ACR > 3
-      - Rule 4: eGFR 15-29
-      - Rule 5: ACR 70-250
-      - Rule 6: 3+ repeat antihypertensive prescriptions in last 3 months (gate for rules 7-8;
-        does not include on its own)
-      - Rule 7: Latest BP in last 12 months with diastolic > 90
-      - Rule 8: Latest BP in last 12 months with systolic > 150
-
-      Repeat issues use source authorisation code Repeat only, strictly within three months. The project antihypertensive list remains broader than the EMIS drug group.
+    description: >
+      One row per person on the CKD register, excluding Priority Group 1, with
+      latest eGFR 45-59 and ACR > 30, eGFR 30-44 and ACR > 3, eGFR 15-29, or
+      ACR >= 70 and < 250.
+      Otherwise, people with at least three distinct repeat issues strictly within
+      three months from BNF section 2.5 qualify on blood pressure. This is EMIS
+      group 2011000033113, XML legacyValue 2.5, and includes renin-angiotensin
+      drugs. Diastolic must be > 90 or systolic > 150 mmHg, with the other
+      component >= 1, on the latest clinic or home reading within 12 months,
+      using the shared LTC LCS BP selector.
+      Orders without a BNF code can qualify through dm+d products with the same
+      VTM and form, complete ingredient set and form, or SNOMED descent from a
+      mapped product. This reconstructs the section; it is not an exported EMIS
+      product list and does not override known BNF mappings.
     config:
       meta:
         owner:

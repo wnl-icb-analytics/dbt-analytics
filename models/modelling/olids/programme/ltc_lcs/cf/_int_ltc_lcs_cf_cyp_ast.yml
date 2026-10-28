@@ -3,12 +3,19 @@ version: 2
 models:
   - name: int_ltc_lcs_cf_cyp_ast_61_base_woEX
     description: >
-      ICB_CF_CYPAST_61_woEX eligible population: registered children/young people aged 18
-      months to 17 years, not on a respiratory register (ICS_RESP_LTC) and whose latest asthma
-      record is not an active asthma code (children whose latest record is asthma resolved, or
-      who have no asthma record, are kept), with asthma medication or symptom activity in the last 12 months
-      (asthma med products, respiratory drug groups via BNF 03, prednisolone, montelukast,
-      suspected asthma, viral induced wheeze). Pre-Rule-1 population consumed by CYP_AST_61.
+      One row per currently registered, living CYP_AST_61 candidate, assessed on the build
+      date. Includes children aged 18 months to under 18 years outside the ICS_RESP_LTC
+      respiratory registers whose latest asthma/resolved-asthma record is not active asthma.
+      Requires asthma products or drug-group issues strictly after 12 months ago and before
+      today, or prednisolone, montelukast, suspected asthma or viral induced wheeze strictly
+      after one year ago. The prednisolone constituent excludes the XML's rectal and
+      injectable products and their descendants. The other prednisolone lists remain
+      independent alternatives. Those latter rules have no upper date bound. The eight XML drug
+      groups have no expanded concepts; BNF 03.01, 03.02 and 03.03 approximate bronchodilators,
+      inhaled corticosteroids and asthma prophylaxis, excluding other chapter 03 medicines.
+      This is not a proven exact expansion of the XML groups. Children whose latest asthma
+      record is resolved, or who have no asthma record, remain eligible. The final CYP_AST_61
+      model applies the respiratory screening exclusion.
     config:
       meta:
         owner:
@@ -20,12 +27,12 @@ models:
               - e49a6f96-d7a8-ad43-7448-2166a2858204  # asthma_casefinding_vs1
               - be433490-3609-4849-20b6-045ddfbdc032  # asthma_casefinding_vs2
               - 54940f0f-b140-2393-9d8d-0104b3103367  # asthma_casefinding_eligible_patients_vs1
-              - asthma_casefinding_eligible_patients_vs3
-              - asthma_casefinding_eligible_patients_vs4
-              - asthma_casefinding_eligible_patients_vs5
-              - asthma_casefinding_eligible_patients_vs6
-              - asthma_casefinding_eligible_patients_vs7
-              - asthma_casefinding_eligible_patients_vs8
+              - f1fdb838-2556-257c-fd9d-c621ad7ea0f3  # asthma_casefinding_eligible_patients_vs3
+              - 3ad6ed82-b887-ed90-a8e7-254979cf33c1  # asthma_casefinding_eligible_patients_vs4
+              - 48b40183-3fce-b10b-dcbe-3ef134f2426f  # asthma_casefinding_eligible_patients_vs5
+              - fbf51055-a383-65db-3bfe-7d5b3f508d1c  # asthma_casefinding_eligible_patients_vs6
+              - c61ece91-03d9-3fc8-3ea9-39a98be4ad5a  # asthma_casefinding_eligible_patients_vs7
+              - 52527265-508f-4c80-7d04-ef7605e8b3e0  # asthma_casefinding_eligible_patients_vs8
     columns:
       - name: person_id
         data_tests: [not_null, unique]
@@ -33,7 +40,8 @@ models:
   - name: int_ltc_lcs_cf_cyp_ast_61
     description: >
       ICB_CF_CYPAST_61: woEX eligible CYP asthma candidates excluding anyone with a
-      "Respiratory disease screening" code in the last 3 years. One row per included person.
+      "Respiratory disease screening" code recorded strictly after three years before the
+      build date, with no upper date bound. One row per included person.
     config:
       meta:
         owner:

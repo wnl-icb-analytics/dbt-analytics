@@ -1,28 +1,19 @@
 {{ config(materialized='table') }}
 
--- LTC LCS CYP asthma case finding: ICB_CF_CYPAST_61_woEX eligible population (shared parent)
--- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/asthma_cyp/icb-cf-cypast-61.md
---
--- The pre-Rule-1 eligible population. RESPIRATORY case-finding domain (NOT metabolic):
---   ICB_CF_CYPAST_61_BASE: currently registered, age 18 months to 17 years inclusive,
---     NOT on a respiratory register (ICS_RESP_LTC = COPD/asthma/CYP-asthma), and whose
---     latest asthma event (AST_COD or ASTRES_COD) is NOT an active AST_COD code. No CF_NHSHC2Y exclusion and no
---     metabolic exclusion (canon _BASE lists neither).
---   ICB_CF_CYPAST_61_woEX: then keep only patients with asthma medication/symptom activity
---     in the last 12 months (any arm):
---       vs1 asthma med products (SCT_PREP, 469 codes, expanded -> valueset id pinned [collision])
---       vs2 drug groups Bronchodilators/Corticosteroids For Inhalation/Drugs For Prophylaxis
---           Of Asthma +5 (dm+d drug group, UNEXPANDED 0/8 -> BNF chapter 03 respiratory)
---       vs3/vs4/vs5 prednisolone (SCT, expanded -> valuesets)
---       vs6 montelukast (SCT, expanded -> valueset)
---       vs7 Suspected asthma (clinical code, last 12 months)
---       vs8 Viral induced wheeze (clinical code, last 12 months; NO age>=6 floor per canon)
---
--- COLLISION: asthma_casefinding_eligible_patients_vs1 has two copies -- the woEX med-product
---   set (id 54940f0f, 469 codes) used here, and the headline Rule-1 marker (id 0bda5482,
---   'Respiratory disease screening', 1 code) used in int_ltc_lcs_cf_cyp_ast_61. Pin ids.
--- EMIS verification flag: canon _BASE also references library item ee5b135f-... whose logic
---   is not in the XML export -- not implemented here, verify in EMIS before final sign-off.
+-- CYP_AST_61 candidates before screening exclusions. One row per person at build date.
+-- Currently registered, living children aged 18 months to under 18 years, outside
+-- ICS_RESP_LTC, whose latest AST_COD/ASTRES_COD event is not active asthma.
+-- Include asthma products or drug groups issued strictly after 12 months ago and
+-- before today, or prednisolone, montelukast, suspected asthma or viral induced
+-- wheeze recorded strictly after one year ago. The latter arms have no upper bound.
+-- XML drug groups have no expanded concepts. BNF 03.01/03.02/03.03 approximate
+-- bronchodilators, inhaled corticosteroids and asthma prophylaxis, not all chapter 03.
+-- XML authority: ICB_CF_CYPAST_61_BASE / _woEX, R5 updated 27 November 2025.
+-- Library ee5b135f is absent from the export but is already within ICS_RESP_LTC
+-- through the XML COPD register. The product and screening sets share a name, so
+-- their warehouse value-set IDs are pinned separately.
+-- The prednisolone constituent excludes the XML's rectal and injectable products
+-- and their descendants. The other prednisolone lists remain independent alternatives.
 
 with base as (
     select person_id
@@ -39,8 +30,8 @@ with base as (
 -- the UNION of both sets; REJECT when that latest event is an active AST_COD code (current
 -- asthma activity). Keep patients whose latest asthma event is 'resolved', or who have none.
 ast_union_events as (
-    select person_id, observation_id, clinical_effective_date, valueset_id
-    from ({{ get_ltc_lcs_observations("e49a6f96-d7a8-ad43-7448-2166a2858204, be433490-3609-4849-20b6-045ddfbdc032") }})
+    select person_id, observation_id, clinical_effective_date, date_recorded, valueset_id
+    from ({{ get_ltc_lcs_observations("e49a6f96-d7a8-ad43-7448-2166a2858204, be433490-3609-4849-20b6-045ddfbdc032", include_date_recorded=true) }})
 ),
 
 latest_ast_event as (
@@ -48,7 +39,7 @@ latest_ast_event as (
     from ast_union_events
     qualify row_number() over (
         partition by person_id
-        order by clinical_effective_date desc, observation_id desc
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
     ) = 1
 ),
 
@@ -65,37 +56,62 @@ base_carved as (
     where b.person_id not in (select person_id from active_asthma_latest)
 ),
 
+prednisolone_exception_roots as (
+    select translated_to_snomed_code as concept_code
+    from {{ ref('stg_reference_ltc_lcs_exceptions') }}
+    where valueset_id = 'f1fdb838-2556-257c-fd9d-c621ad7ea0f3'
+),
+
+prednisolone_exceptions as (
+    select concept_code from prednisolone_exception_roots
+    union
+    select tc.sub_type_id::varchar as concept_code
+    from {{ ref('stg_nhsd_snomed_sct_transitive_closure') }} as tc
+    inner join prednisolone_exception_roots as ex
+        on tc.super_type_id::varchar = ex.concept_code
+),
+
 -- woEX eligible arms (any match in the relevant window)
 eligible as (
-    -- vs1 asthma med products (last 12 months) [collision -> woEX id 54940f0f]
+    -- Any issue within the XML window qualifies, even when a newer issue is today.
     select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("54940f0f-b140-2393-9d8d-0104b3103367") }})
-    where order_date >= dateadd(month, -12, current_date())
+    from ({{ get_ltc_lcs_medication_orders("54940f0f-b140-2393-9d8d-0104b3103367") }})
+    where order_date > dateadd(month, -12, current_date())
+        and order_date < current_date()
     union
-    -- vs2 drug groups (UNEXPANDED 0/8) recovered via BNF chapter 03 (respiratory system) (last 12 months)
+    -- Unexpanded XML drug groups use their BNF sections, excluding allergy medicines.
     select distinct person_id
     from ({{ get_medication_orders(bnf_code='03') }})
-    where order_date >= dateadd(month, -12, current_date())
+    where bnf_section in ('0301', '0302', '0303')
+        and order_date > dateadd(month, -12, current_date())
+        and order_date < current_date()
     union
     -- vs3/vs4/vs5 prednisolone (last 12 months / "last 1 year")
     select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("asthma_casefinding_eligible_patients_vs3, asthma_casefinding_eligible_patients_vs4, asthma_casefinding_eligible_patients_vs5") }})
-    where order_date >= dateadd(month, -12, current_date())
+    from ({{ get_ltc_lcs_medication_orders("f1fdb838-2556-257c-fd9d-c621ad7ea0f3, 3ad6ed82-b887-ed90-a8e7-254979cf33c1, 48b40183-3fce-b10b-dcbe-3ef134f2426f") }}) as mo
+    where order_date > dateadd(month, -12, current_date())
+        and (
+            mo.valueset_id != 'f1fdb838-2556-257c-fd9d-c621ad7ea0f3'
+            or not exists (
+                select 1 from prednisolone_exceptions as ex
+                where ex.concept_code = mo.concept_code
+            )
+        )
     union
     -- vs6 montelukast (last 12 months / "last 1 year")
     select person_id
-    from ({{ get_ltc_lcs_medication_orders_latest("asthma_casefinding_eligible_patients_vs6") }})
-    where order_date >= dateadd(month, -12, current_date())
+    from ({{ get_ltc_lcs_medication_orders_latest("fbf51055-a383-65db-3bfe-7d5b3f508d1c") }})
+    where order_date > dateadd(month, -12, current_date())
     union
     -- vs7 Suspected asthma (clinical code, last 12 months)
     select person_id
-    from ({{ get_ltc_lcs_observations("asthma_casefinding_eligible_patients_vs7") }})
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+    from ({{ get_ltc_lcs_observations("c61ece91-03d9-3fc8-3ea9-39a98be4ad5a") }})
+    where clinical_effective_date > dateadd(month, -12, current_date())
     union
     -- vs8 Viral induced wheeze (clinical code, last 12 months; NO age>=6 gate per canon)
     select person_id
-    from ({{ get_ltc_lcs_observations("asthma_casefinding_eligible_patients_vs8") }})
-    where clinical_effective_date >= dateadd(month, -12, current_date())
+    from ({{ get_ltc_lcs_observations("52527265-508f-4c80-7d04-ef7605e8b3e0") }})
+    where clinical_effective_date > dateadd(month, -12, current_date())
 )
 
 select distinct bc.person_id

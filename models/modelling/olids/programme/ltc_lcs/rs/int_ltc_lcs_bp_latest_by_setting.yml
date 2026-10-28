@@ -1,0 +1,72 @@
+version: 2
+models:
+  - name: int_ltc_lcs_bp_latest_by_setting
+    description: LTC LCS BP evidence, one row per person with clinic/home or diabetes BP observations on or
+      before the build date. BP components link by calendar date to the XML setting markers before ranking by clinical date, save time and observation ID. Only the home-setting wrapper ranks before linking. Values need only be >=1; there is no plausibility fallback.
+      Clinic and home use separate XML component pools. Diabetes retains its own BP_COD and component pools;
+      each latest component links on its own date. Same-second ties use observation ID and cannot recover EMIS
+      entry order.
+    config:
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - valuesets_have_codes:
+          arguments:
+            valuesets:
+              - b0862f52-94d7-4831-9c3c-fa2cc8f8ca98
+              - b2592e74-731e-0d97-247a-ac3839913b70
+              - c2e9b41e-e9f9-5eee-f816-ee2543dddbdd
+              - 3ddd36f2-7c5b-e43f-4620-46a0eb1283ee
+              - f27b2fe6-df28-de7d-5baa-089badef474d
+              - 4c90ff98-51ec-2b89-e0c7-dc2ab98daed9
+              - 830a121c-275c-0ebc-990e-e9699b9875c4
+              - 5aad8a47-dfac-2d96-493d-44fc69d61770
+              - 09a3d8a7-e54b-d710-9a86-58b3de69d1f4
+              - 8da5f7b1-024b-c20c-97e9-415ea3b9a64a
+              - 5083eb15-91a9-f20e-7fb1-06e908a70e5f
+              - dbace9e1-ca62-3166-049c-82206d3e041d
+      - cluster_ids_exist:
+          arguments:
+            cluster_ids: ABPM_COD
+    columns:
+      - name: person_id
+        description: Person with BP evidence, regardless of current registration or register membership.
+        data_tests:
+          - not_null
+          - unique
+      - name: latest_reading_date
+        description: Date of the latest positive combined-pool diastolic with same-date systolic and
+          clinic/home marker evidence. Null when absent.
+      - name: is_latest_reading_clinic
+        description: Whether the latest combined diastolic is clinic-coded with positive systolic evidence on
+          its date.
+      - name: is_latest_reading_home
+        description: Whether the latest valid home chain is not preceded by a later valid clinic chain in the
+          deterministic order.
+      - name: clinic_reading_date
+        description: Date shared by the latest clinic components and clinic marker. Null when the chain does
+          not link.
+      - name: home_reading_date
+        description: Date shared by the latest home components and home marker. Null when the chain does not
+          link.
+      - name: is_home_reading_abpm
+        description: Whether the selected home diastolic is in ABPM_COD. False when absent.
+      - name: diabetes_systolic_value
+        description: mmHg. Latest diabetes systolic-test-pool value linked to BP_COD and systolic evidence on
+          its date. Null when unresolved.
+      - name: diabetes_diastolic_value
+        description: mmHg. Latest diabetes diastolic value linked to BP_COD and systolic evidence on its date.
+          Null when unresolved.
+      - name: clinic_systolic_value
+        description: mmHg. Latest clinic systolic value, with the other component and setting marker on the
+          same date. Null when unresolved.
+      - name: clinic_diastolic_value
+        description: mmHg. Latest clinic diastolic value, with the other component and setting marker on the
+          same date. Null when unresolved.
+      - name: home_systolic_value
+        description: mmHg. Latest home systolic value, with the other component and setting marker on the same
+          date. Null when unresolved.
+      - name: home_diastolic_value
+        description: mmHg. Latest home diastolic value, with the other component and setting marker on the
+          same date. Null when unresolved.

@@ -22,10 +22,10 @@ clean-targets:
 
 model-paths: ["models"]
 
-# Configuration moved to macros/config/ - see macros/config/README.md
 vars:
   dbt_audit_schema: "test_audit"
-  auto_schema_domains: ['olids']
+  auto_schema_domains: ['cancer', 'olids']
+  auto_schema_domains_double_underscores: ['cancer']
   qof_reference_date: "2025-11-04"  # EMIS QOF extract date, override via --vars
   # Elementary observability
   disable_dbt_artifacts_autoupload: "{{ target.name not in ['prod', 'snowflake-prod'] }}"
@@ -125,6 +125,8 @@ models:
         +schema: "CCMS"
       EFI2:
         +schema: "EFI2"
+      biomarker_trajectories:
+        +schema: "BIOMARKER_TRAJECTORIES"
       qadmissions:
         +schema: "QADMISSIONS"
 
@@ -187,6 +189,9 @@ models:
           {%- else -%}
           DEV__PUBLISHED_REPORTING__PARTNER.SECURITY.PARTNER_POLICY on (sk_patient_id)
           {%- endif -%}
+      # PARTNER_POLICY reads SECURITY.PARTNER_MAPPING by name.
+      security:
+        +schema: "SECURITY"
 
     # Published layer - production-ready datasets for end users
     published:

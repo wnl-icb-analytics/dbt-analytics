@@ -55,7 +55,7 @@ WHEN acm.service_code IS NULL THEN 'Missing Code'
 ELSE 'Valid' END AS service_code_dq,
  --define SPEC_COMM_FLAG for reporting. icb_delegation_26_27 = 'BLUE' is locally commissioned so use the CSSC code for Funding Status
 CASE
-    WHEN acm.service_code = 'NULL' OR acm.service_code IS NULL THEN 'ICB-commissioned'
+    WHEN acm.service_code IN ('CCGPS08S_EXC','99999999','NULL') OR acm.service_code IS NULL OR acm.service_code LIKE '%99999%' THEN 'ICB-commissioned'
     WHEN acm.commissioner_code IN ('13Q','13R') THEN 'Retained' 
     WHEN UPPER(acm.service_code) LIKE '%XXX' THEN cs.funding_status 
     WHEN ser.service_code IS NOT NULL AND UPPER(acm.service_code) NOT LIKE '%XXX' AND ser.icb_delegation_26_27 <> 'BLUE' THEN ser.current_funding_status

@@ -1,0 +1,208 @@
+version: 2
+
+models:
+  - name: stg_ambulance_master_data
+    description: >-
+      Staging model for the London Ambulance Service data landed in Snowflake. Grain to be confirmed.
+      Note each incident (identifid by IncidentID) appears in both the Flex version and Freeze version.
+    config:
+      meta:
+        owner:
+          name: SusieRahman
+         
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+       
+            
+    columns:
+       # TODO: replace with the real key once confirmed in exploration
+       - name: dlp_flexor_freeze
+         description: 'Indicates whether the record is in the flex or frozen data submission'
+          
+       - name: dlp_commissioner_code
+         description: 'Code of the commissioner (ICB) responsible for the activity'
+       
+       - name: dlp_financial_month
+         description: 'Financial month of the incident'
+    
+       - name: dlp_financial_year
+         description: 'Financial year of the incident'
+          
+       - name: dlp_baseline_financial_month
+         description: 'Financial month used for baseline comparison'
+       
+       - name: incident_id
+         description: 'Unique identifier for ambulance incident'
+    
+       - name: cad_number
+         description: 'Computer Aided Dispatch reference for the incident'
+        
+       - name: date_value
+         description: 'Date of incident'
+            
+       - name: call_time
+         description: 'Time the call was received or connected'
+          
+       - name: clock_start_time
+         description: 'Time the response-time clock starts'
+        
+       - name: arrive_on_scene_first_vehicle
+         description: 'Time the first vehicle arrived on scene'
+          
+       - name: arrive_on_scene_first_transporting_vehicle
+         description: 'Time the first vehicle able to transport the patient arrived'
+           
+       - name: conveying_datetime
+         description: 'Date and time the patient left the scene for the destination'
+
+       - name: pre_triaged_questions_time
+         description: 'Time the pre-triage questions were completed'
+                          
+       - name: locality
+         description: 'Local borough/health borough of the incident'
+
+       - name: icb
+         description: 'Integrated Care Board for the incident location'
+
+       - name: cross_border_flag
+         description: 'Whether the incident or patient crosses the LAS boundary or an ICB boundary'
+
+       - name: dv_lsoa
+         description: 'Derived Lower Layer Super Output Area for the incident'
+
+       - name: dv_partial_post_code
+         description: 'Derived partial postcode'
+          
+       - name: dv_partial_post_code_destination_postcode
+         description: 'Derived partial destination postcode'
+        
+       - name: dv_recipient_code
+         description: 'Derived code for the organisation receiving the activity'
+       
+       - name: nhs_sitecode
+         description: 'ODS site code of the destination'
+          
+       - name: gp_location
+         description: 'Location of patient GP practice'
+
+       - name: call_age
+         description: 'Patient age as recorded at the call'
+
+       - name: call_gender
+         description: 'Patient gender as recorded at the call'
+
+       - name: sk_patient_id_nhs_number
+         description: 'Surrogate patient key derived from the NHS number'
+
+       - name: care_home_location_flag
+         description: 'Whether the incident took place at a care home'
+
+       - name: determinant_code
+         description: 'Advanced Medical Priority Dispatch System (AMPDS) determinant, which sets the response level and descriptor'
+
+       - name: chief_complaint_code
+         description: 'AMPDS protocol (chief complaint) number'
+
+       - name: ampds_code_version
+         description: 'Version of the AMPDS code set used'
+
+       - name: incident_code
+         description: 'Code for the incident type'
+
+       - name: illness_code_1
+         description: 'Primary illness code'
+
+       - name: illness_code_2
+         description: 'Secondary illness code'
+
+       - name: illness_incident_code_version
+         description: 'Version of the illness code set'
+
+       - name: do_h_category
+         description: 'The DoH priority category recorded against the incident, showing its urgency and request type'
+
+       - name: full_doh_category
+         description: 'A more detailed version of the DoH category, including additional healthcare professional and inter-facility transfer codes'
+
+       - name: sub_category
+         description: 'Sub-classification within the response category'
+
+       - name: call_hrg_code
+         description: 'Healthcare Resource Group assigned from the call'
+
+       - name: incident_hrg_code
+         description: 'Healthcare Resource Group assigned from the full incident'
+
+       - name: hrg_version_number
+         description: 'Version of the HRG grouper'
+          
+       - name: pre_triaged_questions
+         description: 'Pre-triage questions'
+    
+       - name: additional_h_t
+         description: 'Additional hear and treat indicator'
+  
+       - name: call_type
+         description: 'Source of call'
+
+       - name: destination_referral_outcome
+         description: 'Where the patient went or was referred'
+
+       - name: mode_of_transport_flag
+         description: 'Type of transport used'
+
+       - name: mode_of_transport_first_responder
+         description: 'Mode of the first responder'
+
+       - name: conveying_crew_type
+         description: 'Crew type of the conveying vehicle'
+
+       - name: first_responder_crew_type
+         description: 'Crew type of the first responder'
+
+       - name: department_type_flag
+         description: 'Type of receiving department'
+
+       - name: pre_alert_blue_call_flag
+         description: 'Whether the hospital was pre-alerted by blue call'
+
+       - name: h_t_taxi_flag
+         description: 'Whether the patient was sent by taxi after hear and treat'
+
+       - name: baseline_setting_inclusions
+         description: 'Whether or how the record counts in the baseline'
+
+       - name: mh_callsign_s_t
+         description: 'Mental health callsign for see and treat'
+
+       - name: hmh_callsign_s_t_base
+         description: 'Base or station of the S&T mental health vehicle'
+
+       - name: mh_callsign_s_c
+         description: 'Mental health callsign for see and convey'
+
+       - name: mh_callsign_mhta
+         description: 'Mental health response callsign'
+
+       - name: mh_S136
+         description: 'Whether the incident involved a Section 136 Mental Health Act detention'
+
+       - name: callsign_ucr
+         description: 'Urgent Community Response callsign'
+
+       - name: green_time_s_t
+         description: 'Timestamp or duration tied to see and treat'
+
+       - name: h_t_clinically_closed
+         description: 'Whether a clinician closed the call after hear and treat'
+
+       - name: outcome_dispostion
+         description: 'Final disposition of the incident'
+
+       - name: outcome_dispostion_code
+         description: 'Code for the disposition'
+
+       - name: conveyance_group_revised
+         description: 'Revised grouping of conveyance outcome'      

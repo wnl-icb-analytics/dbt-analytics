@@ -1,41 +1,58 @@
 {{ config(materialized='table') }}
 
--- LTC LCS CKD case finding: ICB_CF_CKD_61_1D_woEX population (pre-Rule-1 helper)
--- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/ckd/icb-cf-ckd-61-1d.md
---
--- From ICB_CF_CKD_61_BASE, include patients with an eGFR > 0 recorded in vs1 (8 codes)
---   AND whose LATEST eGFR (vs2, 6 codes; value > 0) is < 60.
--- Canon reads "...vs1 where Value > 0 AND vs2 where Value > 0 then Latest 1 where value < 60":
---   vs1 is an existence precondition (any eGFR > 0); the latest-value < 60 test runs on vs2.
---   The "2" in the report title is legacy naming - the rule is Latest 1, not two consecutive lows.
--- Collision: both vs1 ids share the friendly name; vs2 has a distinct name. The vs1 used here
---   is the 8-code woEX existence set (pinned id), NOT the 1-code Rule-1 screening marker.
---
--- Consumed by int_ltc_lcs_cf_ckd_61 (adds Rule 1) and by 62/63/64 woEX mutual exclusions.
+-- CKD_61 helper: one row per eligible, registered, living person aged at least 17.
+-- EMIS XML requires at least two positive eGFR records, then tests the latest
+-- positive result and the latest positive result on an earlier calendar date < 60.
+-- There is no recency window or minimum interval beyond the earlier date.
+-- Used before screening exclusions and by the later CKD helper exclusions.
 
 with base as (
     select person_id
     from {{ ref('int_ltc_lcs_cf_ckd_61_base') }}
 ),
 
--- vs1 (8-code woEX set, pinned id): existence of an eGFR result > 0
-egfr_recorded as (
-    select person_id
-    from ({{ get_ltc_lcs_observations("cc380a59-cc4c-ee42-4a2e-30ab9286dc71") }})
-    where result_value > 0
+-- Equivalent local laboratory roots also permit mapped concepts and requested descendants.
+positive_egfr as (
+    select o.person_id, o.observation_id, o.clinical_effective_date, o.date_recorded, o.result_value, o.valueset_id
+    from ({{ get_ltc_lcs_observations("cc380a59-cc4c-ee42-4a2e-30ab9286dc71,c9896ca5-15c8-0009-a57a-bd6f5067dcad", match_paths='both', include_date_recorded=true, exclude_result_headers=true) }}) as o
+    inner join base as b on o.person_id = b.person_id
+    where o.result_value > 0
 ),
 
--- vs2 (6 codes): latest eGFR per person, require value < 60
-latest_egfr_low as (
+repeated_egfr as (
     select person_id
-    from ({{ get_ltc_lcs_observations_latest("with_most_recent_2_egfr60_and_not_on_ckd_reg_vs2") }})
-    where result_value > 0
-        and result_value < 60
+    from positive_egfr
+    where valueset_id = 'cc380a59-cc4c-ee42-4a2e-30ab9286dc71'
+    group by person_id
+    having count(distinct observation_id) >= 2
+),
+
+latest_egfr as (
+    select person_id, clinical_effective_date, result_value
+    from positive_egfr
+    where valueset_id = 'c9896ca5-15c8-0009-a57a-bd6f5067dcad'
+    qualify row_number() over (
+        partition by person_id
+        order by clinical_effective_date desc nulls last, date_recorded desc nulls last, observation_id desc
+    ) = 1
+),
+
+-- Rank within the earlier-date pool before testing the retained result.
+earlier_egfr as (
+    select child.person_id, child.result_value
+    from positive_egfr as child
+    inner join latest_egfr as parent on child.person_id = parent.person_id
+        and child.clinical_effective_date::date < parent.clinical_effective_date::date
+    where child.valueset_id = 'c9896ca5-15c8-0009-a57a-bd6f5067dcad'
+    qualify row_number() over (
+        partition by child.person_id
+        order by child.clinical_effective_date desc nulls last, child.date_recorded desc nulls last, child.observation_id desc
+    ) = 1
 )
 
-select distinct b.person_id
-from base as b
-inner join egfr_recorded as e
-    on b.person_id = e.person_id
-inner join latest_egfr_low as l
-    on b.person_id = l.person_id
+select latest.person_id
+from latest_egfr as latest
+inner join repeated_egfr as repeated on latest.person_id = repeated.person_id
+inner join earlier_egfr as earlier on latest.person_id = earlier.person_id
+where latest.result_value < 60
+    and earlier.result_value < 60

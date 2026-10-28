@@ -14,7 +14,7 @@ Every pull request receives fast feedback:
 | `dbt-code-quality.yml` | Checks hardcoded relations, raw/source layer boundaries, model descriptions and test coverage |
 | `dbt-compile.yml` | Runs Fusion compile against development metadata |
 | `model-ownership.yml` | Comments when changed models lack ownership metadata |
-| `dbt-pr-validation.yml` | Reports that runtime validation will run in the merge queue, or builds in development once when the `❄️snowflake-ci` label is added |
+| `dbt-pr-validation.yml` | Reports that runtime validation will run in the merge queue, or builds in development once when the `❄️snowflake-ci` label is added. The `🔄full-refresh` label adds `--full-refresh` |
 
 The staging-reference check enforces the raw boundary in changed models. Staging
 may use `ref()` to a generated raw model but not `source()`; every other
@@ -44,7 +44,23 @@ To validate a pull request in development before queueing it, add the
 head, builds it the same way and removes the label. The result appears as a
 separate `DEV build (snowflake-ci)` check that does not block merging. Later
 commits are not rebuilt; add the label again to repeat the build. Fork pull
-requests are excluded.
+requests are excluded. Stacked pull requests can use the label; their build
+includes the pull requests beneath them.
+
+### Full refresh
+
+Add the `🔄full-refresh` label when a change needs incremental models rebuilt
+from scratch, such as new columns on an append-only model. The label stays on
+the pull request, and these builds add `--full-refresh`:
+
+- the `❄️snowflake-ci` development build;
+- merge-queue validation, when any pull request in the candidate has the label;
+- the production deployment, when any pull request in the push has the label.
+
+The flag applies to the whole selection, so production also rebuilds
+downstream incremental models. Models configured with `full_refresh=false`,
+such as the CLTCS monthly captures, keep their history. Builds without the
+label stay incremental.
 
 Merge-queue, label and manual runtime builds run one at a time because they
 share development relations. They do not publish deployment state.
@@ -62,7 +78,8 @@ It:
 6. reports failures through a GitHub issue.
 
 A commit or pull-request title containing `[skip deploy]` or `[skip-deploy]`
-skips the automatic production deployment. Scheduled runs do not advance the
+skips the automatic production deployment. The `🔄full-refresh` label adds
+`--full-refresh` to the state-based build (see [Full refresh](#full-refresh)). Scheduled runs do not advance the
 deployment-state manifest.
 
 ## Other workflows

@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: sem_olids_nice_indicators_history
+    description: |
+      Monthly NICE indicator results over the latest 60 completed
+      month-ends. One row represents one eligible person, one NICE
+      indicator and one month-end.
+
+      Monthly companion to sem_olids_nice_indicators, over
+      fct_person_nice_indicator_status_by_month. People must be
+      registered at the month-end and meet the indicator's population
+      rules. Every row is already in the denominator. Each month is
+      recalculated with current rules, code lists and records, so later
+      corrections can change past months.
+
+      Demographics, practice and geography come from
+      person_month_analysis_base for the same person and month-end.
+      Practice, age and ethnicity are as at that month; PCN, borough and
+      neighbourhood use the practice's current mapping. Gender, language,
+      residence and deprivation use the current record for every month,
+      because upstream address history is unavailable.
+
+      Filter or group by indicator_id and reporting_date before using
+      metrics: a person appears once per indicator per month, so
+      distinct counts across several months are not monthly figures.
+
+      Personalised care adjustments are not applied. Do not describe
+      these rates as final QOF performance.
+
+      Secondary-use consumers must apply National Data Opt-Out and
+      Type 1 opt-out filtering themselves. This view does not join
+      opt-out models.
+
+      Never return person_id or sk_patient_id in final results.
+
+      The person_id, indicator_id and reporting_date grain is tested on
+      fct_person_nice_indicator_status_by_month.
+      nice_indicator_history_semantic_counts checks that people per
+      indicator and month match the fact's rows, and that the
+      person-month join drops no one. It errors in production and warns
+      elsewhere, because CI can compare a DEV fact with a semantic view
+      deferred to production.
+    config:
+      materialized: semantic_view
+      schema: SEMANTIC
+      meta:
+        owner:
+          name: Eddie Davison
+    data_tests:
+      - nice_indicator_history_semantic_counts:
+          config:
+            severity: "{{ 'error' if target.name in ['prod', 'snowflake-prod'] else 'warn' }}"

@@ -1,0 +1,36 @@
+version: 2
+seeds:
+  - name: cwt_cancer_icd10_code_groups
+    description: >-
+      The CWT dataset grouping for the ICD10 codes to cancer type as defined by NHSE.
+      Source: https://www.england.nhs.uk/long-read/national-cancer-waiting-times-monitoring-dataset-guidance/
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+      column_types:
+        code: varchar(5)
+        description: varchar(200)
+        cancer_site_group: varchar(60)
+        cwt_group_hg: varchar(60)
+        cwt_group_lg: varchar(60)
+        stagable_cosd: boolean
+        stagable_rcrd: boolean
+    columns:
+      - name: code
+        description: ICD10 code for cancer type being treated.
+        data_tests: [not_null, unique]
+      - name: description
+        description: Description of ICD10 code.
+        data_tests: [not_null]
+      - name: cancer_site_group
+        description: CWT cancer type group (HG and LG combined).
+        data_tests: [not_null]
+      - name: cwt_group_hg
+        description: Higher granularity CWT cancer group.
+      - name: cwt_group_lg
+        description: Lower granularity CWT cancer group.
+      - name: stageable_cosd
+        description: Boolean indicating if the cancer type is stagable in COSD.
+      - name: stageable_rcrd
+        description: Boolean indicating if the cancer type is stagable in RCRD.

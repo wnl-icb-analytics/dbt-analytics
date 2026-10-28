@@ -1,0 +1,24 @@
+models:
+  - name: stg_ukhfd_data_dictionary_cancer_cwt_waiting_time_adjustment_reason
+    description: >
+      Waiting time adjustment for CWT Performance metrics.
+
+      Source: UKHFD.Data_Dictionary.dim_Waiting_Time_Adjustment_Reason_SCD
+      (source 'ukhfd_cwt_data_dictionary' in models/sources/manual_ukhfd.yml)
+      via raw_ukhfd_waiting_time_adjustment_reason.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: main_code_text
+        data_tests:
+          - unique
+          - not_null
+      - name: main_description
+        data_tests:
+          - not_null

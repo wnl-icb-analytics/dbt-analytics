@@ -10,8 +10,14 @@ models:
       Actual cost sums SLAM, EPD, MHSDS and CSDS; GP appointments are
       excluded. The window ends at the latest month all four cover. Calculate resource ratio as
       SUM(actual_cost_12m) / SUM(expected_cost_12m), never an average of
-      person-level ratios. Carr-Hill expected-cost allocation lags the cost
-      window by about one year; weighted_ratio_imputed flags the fallback.
+      person-level ratios. Expected cost is the observed WNL age-sex cost
+      rate per registered month in the same window x the patient's registered
+      months. UKHFD Core Services weighting separately supplies
+      weighted_months_12m: the practice's weighted/registered ratio x the
+      patient's registered months, excluding the health-inequalities component.
+      It uses the latest allocation base year not later than the window
+      reference date. weighted_ratio_imputed flags use of the WNL
+      exposure-weighted mean when no eligible practice ratio is available.
 
       Exposes sk_patient_id for aggregate-only CTE joins to
       sem_olids_population. Never return sk_patient_id in final results.

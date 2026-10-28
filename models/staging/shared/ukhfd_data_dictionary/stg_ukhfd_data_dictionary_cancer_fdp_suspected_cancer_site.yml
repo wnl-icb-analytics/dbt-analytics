@@ -1,0 +1,24 @@
+models:
+  - name: stg_ukhfd_data_dictionary_cancer_fdp_suspected_cancer_site
+    description: >
+      Suspected cancer type for the FDS Pathway.
+
+      Source: UKHFD.Data_Dictionary.dim_Primary_Cancer_Site_For_Cancer_Faster_Diagnosis_Pathway_SCD
+      (source 'ukhfd_cwt_data_dictionary' in models/sources/manual_ukhfd.yml)
+      via raw_ukhfd_data_dictionary_primary_cancer_site_for_cancer_faster_diagnosis_pathway.
+    config:
+      meta:
+        owner:
+          name: Jake Kealey
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          arguments:
+            min_value: 1
+    columns:
+      - name: main_code_text
+        data_tests:
+          - unique
+          - not_null
+      - name: main_description
+        data_tests:
+          - not_null

@@ -1,6 +1,7 @@
 {{ config(materialized='table') }}
 
 -- LTC LCS DM case finding indicator DM_63: latest HbA1c 46-47, no HbA1c in the last year
+-- Equivalent local roots permit mapped matches; other local roots match source codes exactly.
 -- Canon: docs/emis_specs/ltc_lcs_r5/casefinding/specs/conditions/diabetes/icb-cf-dm-63.md
 -- ICB_CF_DM_63 = ICB_CF_DM_63_woEX, then Rule 1 (final, exclude if matched):
 --   exclude "annual review declined" (1-code marker, pinned id) within the last 3 years.
